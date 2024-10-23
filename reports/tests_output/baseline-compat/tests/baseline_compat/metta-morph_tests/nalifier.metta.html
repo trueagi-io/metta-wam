@@ -14,26 +14,534 @@
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi90 { color: #7f7f7f; }
 </style>
 </head>
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 20:48:14+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-ERROR:    '<meta-call>'/1: Unknown procedure: metta_file_buffer/5
-ERROR:      However, there are definitions for:
-ERROR:            metta_file_buffer/7
-ERROR:            metta_file_buffer/7
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-Warning:    Goal (directive) failed: user:set_is_unit_test(false)
+Script started on 2024-10-23 21:29:35+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
+;           (set_option_value  compat false)
+
+P;HTML|
+;           (set_option_value  compatio false)
+
+P;HTML|
+;           (set_option_value  src_indents false)
+
+P;HTML|
+;         (set_option_value  devel false)
+
+P;HTML|
+;         (set_option_value  stack-max 500)
+
+P;HTML|
+;         (set_option_value  limit inf)
+
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+
+P;HTML|
+;         (set_option_value  answer-format show)
+
+P;HTML|
+;         (set_option_value  repeats true)
+
+P;HTML|
+;         (set_option_value  time true)
+
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+
+P;HTML|
+;         (set_option_value  optimize true)
+
+P;HTML|
+;         (set_option_value  transpiler silent)
+
+P;HTML|
+;          (set_debug  transpiler false)
+
+P;HTML|
+;         (set_option_value  compile false)
+
+P;HTML|
+;         (set_option_value  tabling auto)
+
+P;HTML|
+;         (set_option_value  log false)
+
+P;HTML|
+;         (set_option_value  output ./)
+
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+
+P;HTML|
+;         (set_option_value  halt false)
+
+P;HTML|
+;         (set_option_value  trace-length 500)
+
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+
+P;HTML|
+;          (set_debug  overtime 4.0)
+
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+
+P;HTML|
+;          (set_debug  overflow 1000)
+
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+
+P;HTML|
+;          (set_debug  eval false)
+
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+
+P;HTML|
+;          (set_debug  load silent)
+
+P;HTML|
+;          (set_debug  trace-on-load false)
+
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+
+P;HTML|
+;          (set_debug  exec false)
+
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+
+P;HTML|
+;          (set_debug  error non-type)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;          (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  trace-on-test true)
+
+P;HTML|
+;          (set_debug  test true)
+
+P;HTML|
+;         (set_option_value  repl-on-error true)
+
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+
+P;HTML|
+;         (set_option_value  repl auto)
+
+P;HTML|
+;         (set_option_value  prolog false)
+
+P;HTML|
+;         (set_option_value  exec noskip)
+
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+
+P;HTML|
+;         (set_option_value  html false)
+
+P;HTML|
+;         (set_option_value  python true)
+
+P;HTML|
+;         (set_option_value  trace-on-test false)
+
+P;HTML|
+;         (set_debug  test false)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;         (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  load show)
+
+P;HTML|
+;         (set_option_value  test false)
+P;HTML|
+;          (is_cmd_option  prescan halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  prescan stdin --stdin=tty tty)
+P;HTML|
+;           (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  prescan stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  prescan stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;          (set_option_value  compat false)
+P;HTML|
+;          (set_option_value  compatio false)
+P;HTML|
+;          (set_option_value  src_indents false)
+P;HTML|
+;          (set_option_value  devel false)
+P;HTML|
+;          (set_option_value  stack-max 500)
+P;HTML|
+;          (set_option_value  limit inf)
+P;HTML|
+;          (set_option_value  initial-result-count 10)
+P;HTML|
+;          (set_option_value  answer-format show)
+P;HTML|
+;          (set_option_value  repeats true)
+P;HTML|
+;          (set_option_value  time true)
+P;HTML|
+;          (set_option_value  synth-unit-tests false)
+P;HTML|
+;          (set_option_value  optimize true)
+P;HTML|
+;          (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;          (set_option_value  compile false)
+P;HTML|
+;          (set_option_value  tabling auto)
+P;HTML|
+;          (set_option_value  log false)
+P;HTML|
+;          (set_option_value  output ./)
+P;HTML|
+;          (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;          (set_option_value  halt false)
+P;HTML|
+;          (set_option_value  trace-length 500)
+P;HTML|
+;          (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;          (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;          (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;          (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;          (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;          (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;          (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;          (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;          (set_option_value  repl-on-error true)
+P;HTML|
+;          (set_option_value  repl-on-fail false)
+P;HTML|
+;          (set_option_value  exit-on-fail false)
+P;HTML|
+;          (set_option_value  repl auto)
+P;HTML|
+;          (set_option_value  prolog false)
+P;HTML|
+;          (set_option_value  exec noskip)
+P;HTML|
+;          (set_option_value  maximum-result-count inf)
+P;HTML|
+;          (set_option_value  html false)
+P;HTML|
+;          (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;        (is_cmd_option  execute python --python=enable enable)
+P;HTML|
+;         (set_option_value  python enable)
+P;HTML|
+;        (is_cmd_option  execute timeout --timeout=40 40)
+P;HTML|
+;         (set_option_value  timeout 40)
+P;HTML|
+;         (is_cmd_option  execute output --output=./reports/tests_output/baseline-compat/ ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (set_option_value  output ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (is_cmd_option  execute html --html true)
+P;HTML|
+;          (set_option_value  html true)
+P;HTML|
+;         (is_cmd_option  execute test --test true)
+P;HTML|
+;          (set_option_value  test true)
+
+; (load_metta_file  &self tests/baseline_compat/metta-morph_tests/nalifier.metta)
+P;HTML|
+;                       (track_load_into_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta)
+P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta)
+P;HTML|
+;                                         (= 1  "[(((ExtSet sam) --> duck) (1.0 0.618320610687023))]")
+P;HTML|
+;                                         (= 2  "4.40user 0.00system 0:04.40elapsed 99%CPU (0avgtext+0avgdata 36268maxresident)k")
+P;HTML|
+;                                         (= 2  "0inputs+0outputs (0major+5013minor)pagefaults 0swaps")
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta is 4.74K bytes (120 lines)
+</span>P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta)
+
+;;[:,If,[->,Bool,Atom,Atom]]
+;;[=,[If,True,_then],_then]
+;;[=,[If,False,_then],[let,_x,0,[let,_x,1,_x]]]
+;;[:,If,[->,Bool,Atom,Atom,Atom]]
+;;[=,[If,_cond,_then,_else],[if,_cond,_then,_else]]
+;;[:,sequential,[->,Expression,%Undefined%]]
+;;[=,[sequential,_1],[superpose,_1]]
+;;[:,do,[->,Expression,%Undefined%]]
+;;[=,[do,_1],[case,_1,[]]]
+;;[=,[max,_1,_2],[if,[>,_1,_2],_1,_2]]
+;;[=,[min,_1,_2],[if,[<,_1,_2],_1,_2]]
+;;[=,[abs,_x],[If,[<,_x,0],[-,0,_x],_x]]
+;;[=,[TupleConcat,_Ev1,_Ev2],[collapse,[superpose,[[superpose,_Ev1],[superpose,_Ev2]]]]]
+;;;; Truth functions
+;;[=,[Truth_c2w,_c],[/,_c,[-,1,_c]]]
+;;[=,[Truth_w2c,_w],[/,_w,[+,_w,1]]]
+;;[=,[Truth_Deduction,[_f1,_c1],[_f2,_c2]],[[*,_f1,_f2],[*,[*,_f1,_f2],[*,_c1,_c2]]]]
+;;[=,[Truth_Abduction,[_f1,_c1],[_f2,_c2]],[_f2,[Truth_w2c,[*,[*,_f1,_c1],_c2]]]]
+;;[=,[Truth_Induction,_T1,_T2],[Truth_Abduction,_T2,_T1]]
+;;[=,[Truth_Revision,[_f1,_c1],[_f2,_c2]],[let*,[[_w1,[Truth_c2w,_c1]],[_w2,[Truth_c2w,_c2]],[_w,[+,_w1,_w2]],[_f,[/,[+,[*,_w1,_f1],[*,_w2,_f2]],_w]],[_c,[Truth_w2c,_w]]],[[min,1.0,_f],[min,0.99,[max,[max,_c,_c1],_c2]]]]]
+;;[=,[Truth_Expectation,[_f,_c]],[+,[*,_c,[-,_f,0.5]],0.5]]
+;;;;NAL-1
+;;;;!Syllogistic rules for Inheritance:
+;;[=,[|-,[_T,_T1],[_T,_T2]],[_T,[Truth_Revision,_T1,_T2]]]
+;;[=,[|-,[[_a,-->,_b],_T1],[[_b,-->,_c],_T2]],[[_a,-->,_c],[Truth_Deduction,_T1,_T2]]]
+;;[=,[|-,[[_a,-->,_b],_T1],[[_a,-->,_c],_T2]],[[_c,-->,_b],[Truth_Induction,_T1,_T2]]]
+;;[=,[|-,[[_a,-->,_c],_T1],[[_b,-->,_c],_T2]],[[_b,-->,_a],[Truth_Abduction,_T1,_T2]]]
+;;;Whether evidence was just counted once
+;;[=,[StampDisjoint,_Ev1,_Ev2],[==,[],[collapse,[let*,[[_x,[superpose,_Ev1]],[_y,[superpose,_Ev2]]],[case,[==,_x,_y],[[True,overlap]]]]]]]
+;;;actually that is quite cool and 4x faster in MeTTa than below (yet still 130 times slower than metta-morph with below)
+;;;but it depends on more advanced pattern matching features which are not yet in metta-morph
+;;;(= (query $Term)
+;;;   (match &self (, (= (|- ($A $T1) ($B $T2)) ($Term ($f $T1 $T2)))
+;;;                   (($A $T1) $Ev1) (($B $T2) $Ev2))
+;;;          (If (StampDisjoint $Ev1 $Ev2)
+;;;              (($Term ($f $T1 $T2)) (TupleConcat $Ev1 $Ev2)))))
+;;[=,[query,_Term],[match,&self,[,,[[_A,_T1],_Ev1],[[_B,_T2],_Ev2]],[let,[_TermNew,_T],[|-,[_A,_T1],[_B,_T2]],[If,[and,[==,_TermNew,_Term],[StampDisjoint,_Ev1,_Ev2]],[[_Term,_T],[TupleConcat,_Ev1,_Ev2]]]]]]
+;;;choice between two options of different term
+;;[=,[Choice,[[_Term1,_T1],_ev1],[[_Term2,_T2],_ev2]],[If,[>,[Truth_Expectation,_T1],[Truth_Expectation,_T2]],[[_Term1,_T1],_ev1],[[_Term2,_T2],_ev2]]]
+;;;revise if there is no evidential overlap, else use higher-confident candidate
+;;[=,[RevisionAndChoice,[[_Term1,[_f1,_c1]],_ev1],[[_Term2,[_f2,_c2]],_ev2]],[let,_ConclusionStamp,[TupleConcat,_ev1,_ev2],[If,[StampDisjoint,_ev1,_ev2],[[_Term2,[Truth_Revision,[_f1,_c1],[_f2,_c2]]],_ConclusionStamp],[If,[>,_c1,_c2],[[_Term1,[_f1,_c1]],_ev1],[[_Term2,[_f2,_c2]],_ev2]]]]]
+;;;reduce beliefs
+;;[=,[reduceBeliefs,_revChoiceOrBoth,_option,_options],[If,[==,_options,[]],_option,[let*,[[_head,[car-atom,_options]],[_rest,[cdr-atom,_options]],[_revi,[_revChoiceOrBoth,_option,_head]]],[reduceBeliefs,_revChoiceOrBoth,_revi,_rest]]]]
+;;;an empty event for reduction purposes
+;;[=,[EmptyEvent,todo],[[x,[1.0,0.0]],[]]]
+;;;evidence query tries to maximize evidence for the passed statement term
+;;[=,[evidenceQuery,_Term],[reduceBeliefs,RevisionAndChoice,[EmptyEvent,todo],[collapse,[query,_Term]]]]
+;;;choice query picks the option of highest truth expectation among the options of different term
+;;[=,[choiceQuery,_Terms],[let,_options,[collapse,[evidenceQuery,[superpose,_Terms]]],[reduceBeliefs,Choice,[EmptyEvent,todo],_options]]]
+;;[[[dog,-->,[IntSet,brown]],[1.0,0.9]],[1]]
+;;[[[dog,-->,[IntSet,small]],[1.0,0.9]],[2]]
+;;[[[dog,-->,[IntSet,furry]],[1.0,0.9]],[3]]
+;;[[[dog,-->,[IntSet,barks]],[1.0,0.9]],[4]]
+;;[[[duck,-->,[IntSet,yellow]],[1.0,0.9]],[5]]
+;;[[[duck,-->,[IntSet,small]],[1.0,0.9]],[6]]
+;;[[[duck,-->,[IntSet,feathered]],[1.0,0.9]],[7]]
+;;[[[duck,-->,[IntSet,quacks]],[1.0,0.9]],[8]]
+;;[[[swan,-->,[IntSet,white]],[1.0,0.9]],[9]]
+;;[[[swan,-->,[IntSet,big]],[1.0,0.9]],[10]]
+;;[[[swan,-->,[IntSet,feathered]],[1.0,0.9]],[11]]
+;;[[[[ExtSet,sam],-->,[IntSet,white]],[1.0,0.9]],[12]]
+;;[[[[ExtSet,sam],-->,[IntSet,small]],[1.0,0.9]],[13]]
+;;[[[[ExtSet,sam],-->,[IntSet,quacks]],[1.0,0.9]],[14]]
+;;exec([let,[_S,_EV],[choiceQuery,[[[ExtSet,sam],-->,duck],[[ExtSet,sam],-->,swan],[[ExtSet,sam],-->,dog]]],_S])
+;;;  !(repl!)
+<span class="ansi32"
+>% 251,177 inferences, 0.044 CPU in 0.046 seconds (96% CPU, 5652879 Lips)
+</span>P;HTML|
+;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta  0)
+<br/> <a href="#" onclick="window.history.back(); return false;"
+>Return to summaries</a><br/>
+P;HTML|
+;         (is_cmd_option  execute halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  execute stdin --stdin=tty tty)
+P;HTML|
+;          (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  execute stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  execute stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;         (set_option_value  compat false)
+P;HTML|
+;         (set_option_value  compatio false)
+P;HTML|
+;         (set_option_value  src_indents false)
+P;HTML|
+;         (set_option_value  devel false)
+P;HTML|
+;         (set_option_value  stack-max 500)
+P;HTML|
+;         (set_option_value  limit inf)
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+P;HTML|
+;         (set_option_value  answer-format show)
+P;HTML|
+;         (set_option_value  repeats true)
+P;HTML|
+;         (set_option_value  time true)
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+P;HTML|
+;         (set_option_value  optimize true)
+P;HTML|
+;         (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;         (set_option_value  compile false)
+P;HTML|
+;         (set_option_value  tabling auto)
+P;HTML|
+;         (set_option_value  log false)
+P;HTML|
+;         (set_option_value  output ./)
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;         (set_option_value  halt false)
+P;HTML|
+;         (set_option_value  trace-length 500)
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;         (set_option_value  repl-on-error true)
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+P;HTML|
+;         (set_option_value  repl auto)
+P;HTML|
+;         (set_option_value  prolog false)
+P;HTML|
+;         (set_option_value  exec noskip)
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+P;HTML|
+;         (set_option_value  html false)
+P;HTML|
+;         (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;         (maybe_halt  7)
+<span class="ansi31"
+>(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 20:48:54+00:00 [COMMAND_EXIT_CODE="143"]
+Script done on 2024-10-23 21:29:41+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
 
 </html>
-\033[1;33mCompleted (EXITCODE=143) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/metta-morph_tests/nalifier.metta" --halt=true\033[0m
+\033[0;32mCompleted successfully (EXITCODE=7) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/metta-morph_tests/nalifier.metta" --halt=true\033[0m

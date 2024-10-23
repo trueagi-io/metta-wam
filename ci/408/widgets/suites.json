@@ -1,0 +1,1 @@
+{"total":2,"items":[{"uid":"89c2cb09d1df69fd8af10ce51ed9a084","name":"SYNTH-BUFFER","statistic":{"failed":6,"broken":0,"skipped":0,"passed":0,"unknown":0,"total":6}},{"uid":"392b3e4653d4f35316c73a07d04204c0","name":"WHOLE-TESTS","statistic":{"failed":1,"broken":0,"skipped":0,"passed":110,"unknown":0,"total":111}}]}

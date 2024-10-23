@@ -14,26 +14,597 @@
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi90 { color: #7f7f7f; }
 </style>
 </head>
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 19:53:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-ERROR:    '<meta-call>'/1: Unknown procedure: metta_file_buffer/5
-ERROR:      However, there are definitions for:
-ERROR:            metta_file_buffer/7
-ERROR:            metta_file_buffer/7
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-Warning:    Goal (directive) failed: user:set_is_unit_test(false)
+Script started on 2024-10-23 21:19:16+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
+;           (set_option_value  compat false)
+
+P;HTML|
+;           (set_option_value  compatio false)
+
+P;HTML|
+;           (set_option_value  src_indents false)
+
+P;HTML|
+;         (set_option_value  devel false)
+
+P;HTML|
+;         (set_option_value  stack-max 500)
+
+P;HTML|
+;         (set_option_value  limit inf)
+
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+
+P;HTML|
+;         (set_option_value  answer-format show)
+
+P;HTML|
+;         (set_option_value  repeats true)
+
+P;HTML|
+;         (set_option_value  time true)
+
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+
+P;HTML|
+;         (set_option_value  optimize true)
+
+P;HTML|
+;         (set_option_value  transpiler silent)
+
+P;HTML|
+;          (set_debug  transpiler false)
+
+P;HTML|
+;         (set_option_value  compile false)
+
+P;HTML|
+;         (set_option_value  tabling auto)
+
+P;HTML|
+;         (set_option_value  log false)
+
+P;HTML|
+;         (set_option_value  output ./)
+
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+
+P;HTML|
+;         (set_option_value  halt false)
+
+P;HTML|
+;         (set_option_value  trace-length 500)
+
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+
+P;HTML|
+;          (set_debug  overtime 4.0)
+
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+
+P;HTML|
+;          (set_debug  overflow 1000)
+
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+
+P;HTML|
+;          (set_debug  eval false)
+
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+
+P;HTML|
+;          (set_debug  load silent)
+
+P;HTML|
+;          (set_debug  trace-on-load false)
+
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+
+P;HTML|
+;          (set_debug  exec false)
+
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+
+P;HTML|
+;          (set_debug  error non-type)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;          (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  trace-on-test true)
+
+P;HTML|
+;          (set_debug  test true)
+
+P;HTML|
+;         (set_option_value  repl-on-error true)
+
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+
+P;HTML|
+;         (set_option_value  repl auto)
+
+P;HTML|
+;         (set_option_value  prolog false)
+
+P;HTML|
+;         (set_option_value  exec noskip)
+
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+
+P;HTML|
+;         (set_option_value  html false)
+
+P;HTML|
+;         (set_option_value  python true)
+
+P;HTML|
+;         (set_option_value  trace-on-test false)
+
+P;HTML|
+;         (set_debug  test false)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;         (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  load show)
+
+P;HTML|
+;         (set_option_value  test false)
+P;HTML|
+;          (is_cmd_option  prescan halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  prescan stdin --stdin=tty tty)
+P;HTML|
+;           (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  prescan stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  prescan stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;          (set_option_value  compat false)
+P;HTML|
+;          (set_option_value  compatio false)
+P;HTML|
+;          (set_option_value  src_indents false)
+P;HTML|
+;          (set_option_value  devel false)
+P;HTML|
+;          (set_option_value  stack-max 500)
+P;HTML|
+;          (set_option_value  limit inf)
+P;HTML|
+;          (set_option_value  initial-result-count 10)
+P;HTML|
+;          (set_option_value  answer-format show)
+P;HTML|
+;          (set_option_value  repeats true)
+P;HTML|
+;          (set_option_value  time true)
+P;HTML|
+;          (set_option_value  synth-unit-tests false)
+P;HTML|
+;          (set_option_value  optimize true)
+P;HTML|
+;          (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;          (set_option_value  compile false)
+P;HTML|
+;          (set_option_value  tabling auto)
+P;HTML|
+;          (set_option_value  log false)
+P;HTML|
+;          (set_option_value  output ./)
+P;HTML|
+;          (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;          (set_option_value  halt false)
+P;HTML|
+;          (set_option_value  trace-length 500)
+P;HTML|
+;          (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;          (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;          (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;          (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;          (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;          (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;          (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;          (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;          (set_option_value  repl-on-error true)
+P;HTML|
+;          (set_option_value  repl-on-fail false)
+P;HTML|
+;          (set_option_value  exit-on-fail false)
+P;HTML|
+;          (set_option_value  repl auto)
+P;HTML|
+;          (set_option_value  prolog false)
+P;HTML|
+;          (set_option_value  exec noskip)
+P;HTML|
+;          (set_option_value  maximum-result-count inf)
+P;HTML|
+;          (set_option_value  html false)
+P;HTML|
+;          (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;        (is_cmd_option  execute python --python=enable enable)
+P;HTML|
+;         (set_option_value  python enable)
+P;HTML|
+;        (is_cmd_option  execute timeout --timeout=40 40)
+P;HTML|
+;         (set_option_value  timeout 40)
+P;HTML|
+;         (is_cmd_option  execute output --output=./reports/tests_output/baseline-compat/ ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (set_option_value  output ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (is_cmd_option  execute html --html true)
+P;HTML|
+;          (set_option_value  html true)
+P;HTML|
+;         (is_cmd_option  execute test --test true)
+P;HTML|
+;          (set_option_value  test true)
+
+; (load_metta_file  &self tests/baseline_compat/anti-regression/mettalogTestCurried.metta)
+P;HTML|
+;                       (track_load_into_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta)
+P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta)
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta is 21.0K bytes (314 lines)
+</span>P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta)
+
+;;;;;;;;;;;
+;;;; Nat ;;
+;;;;;;;;;;;
+;;;; Define Nat
+;;[:,Nat,Type]
+;;[:,Z,Nat]
+;;[:,S,[->,Nat,Nat]]
+;;;; Define <=
+;;[:,<=,[->,_a,_a,Bool]]
+;;[=,[<=,_x,_y],[or,[<,_x,_y],[==,_x,_y]]]
+;;;; Define cast functions between Nat and Number
+;;[:,fromNumber,[->,Number,Nat]]
+;;[=,[fromNumber,_n],[if,[<=,_n,0],Z,[S,[fromNumber,[-,_n,1]]]]]
+;;[:,fromNat,[->,Nat,Number]]
+;;[=,[fromNat,Z],0]
+;;[=,[fromNat,[S,_k]],[+,1,[fromNat,_k]]]
+;;;; Define max
+;;[:,max,[->,_a,_a,_a]]
+;;[=,[max,_x,_y],[if,[>,_x,_y],_x,_y]]
+;;;; Define min
+;;[:,min,[->,_a,_a,_a]]
+;;[=,[min,_x,_y],[if,[<,_x,_y],_x,_y]]
+;;;; Tuple count grounded python function
+;;;;!(extend-py! ../utils/helper.py)
+;;;; This is very slow, use the grounded python function instead
+;;[=,[tuple-count,_tuple],[if,[==,_tuple,[]],0,[+,1,[tuple-count,[cdr-atom,_tuple]]]]]
+;;exec([bind!,&specializations,[new-space]])
+;;exec([bind!,&abstractions,[new-space]])
+;;;; Initialization
+;;[=,[init-miner,_db,_msup,_highsurp],[superpose,[[extract-valuation,_db],[add-atom,&self,[=,[refdb],_db]],[add-atom,&self,[=,[msNat],[fromNumber,_msup]]],[add-atom,&self,[=,[highsurp],_highsurp]]]]]
+;;;; Search for Triplets in DB 
+;;;; collect valuation sets and generate specializations
+;;[=,[extract-valuation,_db],[match,_db,[_link,_x,_y],[superpose,[[build-specialization,[_link,_x,[VarIdx,[S,Z]]]],[build-specialization,[_link,[VarIdx,Z],_y]],[add-abstractions,[_link,[VarIdx,Z],[VarIdx,[S,Z]]]]]]]]
+;;[=,[build-specialization,_sp],[case,[match,&specializations,_sp,_sp],[[%void%,[add-atom,&specializations,_sp]]]]]
+;;[=,[add-abstractions,_aptrn],[case,[match,&abstractions,_aptrn,_aptrn],[[%void%,[add-atom,&abstractions,_aptrn]]]]]
+;;;; Get unique links
+;;[=,[get-links],[match,&abstractions,[_link,_x,_y],_link]]
+;;;; Get abstract patterns
+;;[=,[abstract-patterns],[match,&abstractions,_aptrn,_aptrn]]
+;;;; Specialize a pattern
+;;[=,[specialize,_link],[match,&specializations,[_link,_x,_y],[_link,_x,_y]]]
+;;;; all Specializations
+;;[=,[all-specialization],[match,&specializations,_x,_x]]
+;;;; Todo: implement Debruijn index
+;;;; Define DeBruijn Index
+;;[:,DeBruijn,Type]
+;;[:,VarIdx,[->,Nat,DeBruijn]]
+;;[=,[fromDeb,_pattern,_Xvar,_Yvar],[case,[[get-metatype,_pattern],_pattern],[[[Variable,__],_pattern],[[__,_pattern],[let,[_link,_a,_b],_pattern,[case,[_link,[get-type,_a],[get-type,_b]],[[[_link,DeBruijn,%Undefined%],[_link,_Xvar,_b]],[[_link,%Undefined%,DeBruijn],[_link,_a,_Yvar]],[[_link,DeBruijn,DeBruijn],[_link,_Xvar,_Yvar]],[__,_pattern]]]]],[__,_pattern]]]]
+;;[=,[fromDebruijn,_ptrn,_Xvar,_Yvar],[case,_ptrn,[[[,,_p1,_p2],[,,[fromDeb,_p1,_Xvar,_Yvar],[fromDeb,_p2,_Xvar,_Yvar]]],[[,,_p1,_p2,_p3],[,,[fromDeb,_p1,_Xvar,_Yvar],[fromDeb,_p2,_Xvar,_Yvar],[fromDeb,_p3,_Xvar,_Yvar]]],[__,[fromDeb,_ptrn,_Xvar,_Yvar]]]]]
+;;; Count the number of instances of a given pattern
+;;[=,[count,_pattern],[let,_result,[case,[match,&self,[=,[refdb],_db],_db],[[_db,[let,_dptrn,[fromDebruijn,_pattern,_Xvar,_Yvar],[collapse,[match,_db,_dptrn,_dptrn]]]],[%void%,[]]]],[tuple-count,_result]]]
+;;[=,[countNat,_pattern],[fromNumber,[count,_pattern]]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Knowledge and rule base ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Test
+;;; !(import! &db ../data/sample.metta)
+;;exec([bind!,&db,[new-space]])
+;;exec([add-atom,&db,[Inheritance,B,A]])
+;;exec([add-atom,&db,[Inheritance,C,A]])
+;;exec([add-atom,&db,[Inheritance,D,E]])
+;;exec([add-atom,&db,[Inheritance,C,E]])
+;;;; Parameters
+;;[=,[highsurp],0.8]
+;;[=,[ms],1]
+;;exec([init-miner,&db,[ms],[highsurp]])
+;;exec([bind!,&kb,[new-space]])
+;;[:,->,[->,Atom,Atom,Type]]
+;;exec([let*,[[_mn,[msNat]],[_atom,[:,ms_Threshold,[ms_threshold,_mn]]]],[add-atom,&kb,_atom]])
+;;;; Import a lookup file for ⍃
+;;exec([import!,&kb2,succAxiom])
+;;exec([match,&kb2,_1,[add-atom,&kb,_1]])
+;;;; add specialization of most abstract patterns
+;;exec([let*,[[[_link,_a,_b],[abstract-patterns]],[_aptrn,[_link,[VarIdx,Z],[VarIdx,[S,Z]]]],[_sptrn,[specialize,_link]],[_atom,[:,[sp_witness,_sptrn],[specializationOf,_sptrn,_aptrn]]]],[add-atom,&kb,_atom]])
+;;;; Minimum support rule
+;;exec([add-atom,&kb,[:,minsupport,[->,[supportOf,_ptrn,_cnt],[->,[ms_threshold,_ms],[->,[⍃,_ms,_cnt],[minsup,_ptrn]]]]]])
+;;;; apriori-rule
+;;exec([add-atom,&kb,[:,apriori-rule,[->,[minsup,_aptrn],[->,[specializationOf,_sptrn,_aptrn],[supportOf,_sptrn,[countNat,_sptrn]]]]]])
+;;;; Conjunction rule
+;;;; TODO: add a premise that $ptrn1 and $ptrn2 are different
+;;exec([add-atom,&kb,[:,support-cnj,[->,[minsup,_ptrn1],[->,[minsup,_ptrn2],[supportOf,[,,_ptrn1,_ptrn2],[countNat,[,,_ptrn1,_ptrn2]]]]]]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; DTL Backward chaining Curried ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Base case
+;;[:,bc,[->,_a,Nat,_a]]
+;;[=,[bc,[:,_prf,_ccln],__],[match,&kb,[:,_prf,_ccln],[:,_prf,_ccln]]]
+;;;; Recursive step
+;;[=,[bc,[:,[_prfabs,_prfarg],_ccln],[S,_k]],[let*,[[[:,_prfabs,[->,_prms,_ccln]],[bc,[:,_prfabs,[->,_prms,_ccln]],_k]],[[:,_prfarg,_prms],[bc,[:,_prfarg,_prms],_k]]],[:,[_prfabs,_prfarg],_ccln]]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; DTL Forward chaining Curried  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Base case
+;;;; The source is assumed to be true
+;;[:,fc,[->,_a,Nat,_a]]
+;;[=,[fc,[:,_proof,_premise],__],[:,_proof,_premise]]
+;;;; Recursive steps
+;;[=,[fc,[:,_prfarg,_premise],[S,_k]],[let,[:,_prfabs,[->,_premise,_ccln]],[bc,[:,_prfabs,[->,_premise,_ccln]],_k],[fc,[:,[_prfabs,_prfarg],_ccln],_k]]]
+;;[=,[fc,[:,_prfabs,[->,_prms,_ccln]],[S,_k]],[let,[:,_prfarg,_prms],[bc,[:,_prfarg,_prms],_k],[fc,[:,[_prfabs,_prfarg],_ccln],_k]]]
+;;;;;;;;;;;;;;
+;;;; Helper ;;
+;;;;;;;;;;;;;;
+;;;; Define ad-atom-nodup, that adds an atom only if it is not already
+;;;; in the atomspace
+;;[:,add-atom-nodup,[->,_st,Atom,[]]]
+;;[=,[add-atom-nodup,_space,_atom],[case,[match,_space,_atom,_atom],[[_atom,[]],[%void%,[add-atom,_space,_atom]]]]]
+;;;; Add all atoms from an expression to a given atomspace
+;;[:,add-atoms-nodup,[->,_st,Expression,[]]]
+;;[=,[add-atoms-nodup,_space,_atoms],[if,[==,_atoms,[]],[],[let*,[[_head,[car-atom,_atoms]],[_tail,[cdr-atom,_atoms]],[_dummy,[add-atom-nodup,_space,_head]]],[add-atoms-nodup,_space,_tail]]]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Iterative Chainer Wrapped Around Forward DTL Curried (collapse) ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Call the forward revertant chainer iteratively, adding the
+;;;; conclusions to the knowledge space after each iterations.  To avoid
+;;;; irreproducible behavior (due to the side effects of modifying the
+;;;; atomspace), each call of the forward revertant chainer collapses
+;;;; between iterations.
+;;[:,ifc,[->,_a,Nat,Nat,_a]]
+;;; Conclusion
+;;;; Base case.  For now it terminates at exactly iteration Z to avoid
+;;;; collecting too many redundant results.
+;;[=,[ifc,_prms,_depth,Z],_prms]
+;;;; Iterative step
+;;[=,[ifc,_prms,_depth,[S,_k]],[let*,[[_cres,[collapse,[fc,_prms,_depth]]],[_dummy,[add-atoms-nodup,&kb,_cres]]],[ifc,[superpose,_cres],_depth,_k]]]
+;;;;;;;;;;;;
+;;;; Test ;;
+;;;;;;;;;;;;
+;;[=,[expectedHedras],[[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,Z]],[minsup,[Inheritance,B,[VarIdx,[S,Z]]]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,$VAR(_ms-991746)],[->,[⍃,$VAR(_ms-991746),[S,Z]],[minsup,[Inheritance,B,[VarIdx,[S,Z]]]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,B,[VarIdx,[S,Z]]],[S,Z]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],A]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],A]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],[->,[ms_threshold,$VAR(_ms-1280957)],[->,[⍃,$VAR(_ms-1280957),[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],A]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]],[supportOf,[Inheritance,[VarIdx,Z],A],[S,[S,Z]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,Z]],[minsup,[Inheritance,D,[VarIdx,[S,Z]]]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,$VAR(_ms-1776441)],[->,[⍃,$VAR(_ms-1776441),[S,Z]],[minsup,[Inheritance,D,[VarIdx,[S,Z]]]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,D,[VarIdx,[S,Z]]],[S,Z]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],E]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],E]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],[->,[ms_threshold,$VAR(_ms-2065652)],[->,[⍃,$VAR(_ms-2065652),[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],E]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]],[supportOf,[Inheritance,[VarIdx,Z],E],[S,[S,Z]]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,$VAR(_ms-2574671)],[->,[⍃,$VAR(_ms-2574671),[S,[S,Z]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,C,[VarIdx,[S,Z]]],[S,[S,Z]]]],[:,[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[->,[specializationOf,$VAR(_sptrn-785335),[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[supportOf,$VAR(_sptrn-785335),[countNat,$VAR(_sptrn-785335)]]]],,,[:,[support-cnj,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[->,[minsup,$VAR(_ptrn2-785333)],[supportOf,[,,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],$VAR(_ptrn2-785333)],[countNat,[,,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],$VAR(_ptrn2-785333)]]]]],[:,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],[:,[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]]],[:,[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],[->,[ms_threshold,$VAR(_ms-607716)],[->,[⍃,$VAR(_ms-607716),[S,[S,[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]]]],[:,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[supportOf,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],[S,[S,[S,[S,Z]]]]]]]]
+;;[=,[expected],[[:,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[supportOf,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],[S,[S,[S,[S,Z]]]]]],[:,[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],[->,[ms_threshold,_ms_643543],[->,[⍃,_ms_643543,[S,[S,[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]]]],[:,[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]]],[:,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]],[minsup,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],[:,[support-cnj,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[->,[minsup,_ptrn2_649976],[supportOf,[,,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],_ptrn2_649976],[countNat,[,,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],_ptrn2_649976]]]]],[:,[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[->,[specializationOf,_sptrn_649978,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[supportOf,_sptrn_649978,[countNat,_sptrn_649978]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,B,[VarIdx,[S,Z]]],[S,Z]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,_ms_674183],[->,[⍃,_ms_674183,[S,Z]],[minsup,[Inheritance,B,[VarIdx,[S,Z]]]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,B,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,Z]],[minsup,[Inheritance,B,[VarIdx,[S,Z]]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]],[supportOf,[Inheritance,[VarIdx,Z],A],[S,[S,Z]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],[->,[ms_threshold,_ms_778237],[->,[⍃,_ms_778237,[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],A]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],A]]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],A]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],A]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,C,[VarIdx,[S,Z]]],[S,[S,Z]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,_ms_1059493],[->,[⍃,_ms_1059493,[S,[S,Z]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,C,[VarIdx,[S,Z]]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,C,[VarIdx,[S,Z]]]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]],[supportOf,[Inheritance,[VarIdx,Z],E],[S,[S,Z]]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],[->,[ms_threshold,_ms_1343428],[->,[⍃,_ms_1343428,[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],E]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],ms_Threshold],[->,[⍃,[S,Z],[S,[S,Z]]],[minsup,[Inheritance,[VarIdx,Z],E]]]],[:,[[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,[VarIdx,Z],E]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,Z]]]]],[minsup,[Inheritance,[VarIdx,Z],E]]],[:,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]],[supportOf,[Inheritance,D,[VarIdx,[S,Z]]],[S,Z]]],[:,[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]]],[->,[ms_threshold,_ms_1624566],[->,[⍃,_ms_1624566,[S,Z]],[minsup,[Inheritance,D,[VarIdx,[S,Z]]]]]]],[:,[[minsupport,[[apriori-rule,[[[minsupport,[supportwitness,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],ms_Threshold],[WitnessOf,[⍃,[S,Z],[S,[S,[S,[S,Z]]]]]]]],[sp_witness,[Inheritance,D,[VarIdx,[S,Z]]]]]],ms_Threshold],[->,[⍃,[S,Z],[S,Z]],[minsup,[Inheritance,D,[VarIdx,[S,Z]]]]]]]]
+;;[=,[eachfc],[let*,[[_aptrn,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[_cnt,[countNat,_aptrn]],[_atom,[:,[supportwitness,_aptrn],[supportOf,_aptrn,_cnt]]],[_depth,[fromNumber,8]]],[fc,_atom,_depth]]]
+;;;; !(eachfc)
+;;exec([let,_expected,[expected],[assertEqualToResult,[eachfc],_expected]])
+;;; !(expected)
+;;exec([let,_expected,[expected],[assertEqualToResult,[let,_aptrn,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]],[fc,[:,[supportwitness,_aptrn],[supportOf,_aptrn,[countNat,_aptrn]]],[fromNumber,8]]],_expected]])
+<span class="ansi32"
+>% 1,005,702 inferences, 0.155 CPU in 0.157 seconds (99% CPU, 6483529 Lips)
+</span>P;HTML|
+;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried.metta  0)
+<br/> <a href="#" onclick="window.history.back(); return false;"
+>Return to summaries</a><br/>
+P;HTML|
+;         (is_cmd_option  execute halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  execute stdin --stdin=tty tty)
+P;HTML|
+;          (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  execute stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  execute stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;         (set_option_value  compat false)
+P;HTML|
+;         (set_option_value  compatio false)
+P;HTML|
+;         (set_option_value  src_indents false)
+P;HTML|
+;         (set_option_value  devel false)
+P;HTML|
+;         (set_option_value  stack-max 500)
+P;HTML|
+;         (set_option_value  limit inf)
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+P;HTML|
+;         (set_option_value  answer-format show)
+P;HTML|
+;         (set_option_value  repeats true)
+P;HTML|
+;         (set_option_value  time true)
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+P;HTML|
+;         (set_option_value  optimize true)
+P;HTML|
+;         (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;         (set_option_value  compile false)
+P;HTML|
+;         (set_option_value  tabling auto)
+P;HTML|
+;         (set_option_value  log false)
+P;HTML|
+;         (set_option_value  output ./)
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;         (set_option_value  halt false)
+P;HTML|
+;         (set_option_value  trace-length 500)
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;         (set_option_value  repl-on-error true)
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+P;HTML|
+;         (set_option_value  repl auto)
+P;HTML|
+;         (set_option_value  prolog false)
+P;HTML|
+;         (set_option_value  exec noskip)
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+P;HTML|
+;         (set_option_value  html false)
+P;HTML|
+;         (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;         (maybe_halt  7)
+<span class="ansi31"
+>(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 19:53:55+00:00 [COMMAND_EXIT_CODE="143"]
+Script done on 2024-10-23 21:19:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
 
 </html>
-\033[1;33mCompleted (EXITCODE=143) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/anti-regression/mettalogTestCurried.metta" --halt=true\033[0m
+\033[0;32mCompleted successfully (EXITCODE=7) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/anti-regression/mettalogTestCurried.metta" --halt=true\033[0m

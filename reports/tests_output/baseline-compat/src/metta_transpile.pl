@@ -156,7 +156,7 @@ functional_predicate_arg(F, A, L):-
   \+ decl_functional_predicate_arg(F, A, _).
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L).
 
-metta_atom_file_buffer(Atom):- metta_file_buffer(+,Atom,_NamedVarsList,_Filename,_LineCount).
+metta_atom_file_buffer(Atom):- metta_file_buffer(0,_Ord,Kind,Atom,_NamedVarsList,_Filename,_LineCount).
 metta_atom_file_buffer(Atom):- metta_atom(Atom).
 
 file_decl_arity(F,A):- freeze(Arity, 'Arity' == Arity), metta_atom_file_buffer([Arity,F,A]).
@@ -271,7 +271,7 @@ compile_for_exec(Res,I,O):-
 compile_for_exec0(Res,I,u_assign(I,Res)):- is_ftVar(I),!.
 compile_for_exec0(Res,(:- I),O):- !,
   compile_for_exec0(Res,I,O).
-compile_for_exec0(Res,(?- I),O):- !,
+compile_for_exec0(Res,('?-'(I)),O):- !,
   compile_for_exec0(Res,I,O).
 compile_for_exec0(Res,I,BB):-
    %ignore(Res='$VAR'('RetResult')),

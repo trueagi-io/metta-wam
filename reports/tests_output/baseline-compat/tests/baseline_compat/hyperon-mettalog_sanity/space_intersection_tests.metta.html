@@ -14,26 +14,602 @@
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi90 { color: #7f7f7f; }
 </style>
 </head>
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 20:30:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-ERROR:    '<meta-call>'/1: Unknown procedure: metta_file_buffer/5
-ERROR:      However, there are definitions for:
-ERROR:            metta_file_buffer/7
-ERROR:            metta_file_buffer/7
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-Warning:    Goal (directive) failed: user:set_is_unit_test(false)
+Script started on 2024-10-23 21:25:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
+;           (set_option_value  compat false)
+
+P;HTML|
+;           (set_option_value  compatio false)
+
+P;HTML|
+;           (set_option_value  src_indents false)
+
+P;HTML|
+;         (set_option_value  devel false)
+
+P;HTML|
+;         (set_option_value  stack-max 500)
+
+P;HTML|
+;         (set_option_value  limit inf)
+
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+
+P;HTML|
+;         (set_option_value  answer-format show)
+
+P;HTML|
+;         (set_option_value  repeats true)
+
+P;HTML|
+;         (set_option_value  time true)
+
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+
+P;HTML|
+;         (set_option_value  optimize true)
+
+P;HTML|
+;         (set_option_value  transpiler silent)
+
+P;HTML|
+;          (set_debug  transpiler false)
+
+P;HTML|
+;         (set_option_value  compile false)
+
+P;HTML|
+;         (set_option_value  tabling auto)
+
+P;HTML|
+;         (set_option_value  log false)
+
+P;HTML|
+;         (set_option_value  output ./)
+
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+
+P;HTML|
+;         (set_option_value  halt false)
+
+P;HTML|
+;         (set_option_value  trace-length 500)
+
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+
+P;HTML|
+;          (set_debug  overtime 4.0)
+
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+
+P;HTML|
+;          (set_debug  overflow 1000)
+
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+
+P;HTML|
+;          (set_debug  eval false)
+
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+
+P;HTML|
+;          (set_debug  load silent)
+
+P;HTML|
+;          (set_debug  trace-on-load false)
+
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+
+P;HTML|
+;          (set_debug  exec false)
+
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+
+P;HTML|
+;          (set_debug  error non-type)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;          (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  trace-on-test true)
+
+P;HTML|
+;          (set_debug  test true)
+
+P;HTML|
+;         (set_option_value  repl-on-error true)
+
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+
+P;HTML|
+;         (set_option_value  repl auto)
+
+P;HTML|
+;         (set_option_value  prolog false)
+
+P;HTML|
+;         (set_option_value  exec noskip)
+
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+
+P;HTML|
+;         (set_option_value  html false)
+
+P;HTML|
+;         (set_option_value  python true)
+
+P;HTML|
+;         (set_option_value  trace-on-test false)
+
+P;HTML|
+;         (set_debug  test false)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;         (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  load show)
+
+P;HTML|
+;         (set_option_value  test false)
+P;HTML|
+;          (is_cmd_option  prescan halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  prescan stdin --stdin=tty tty)
+P;HTML|
+;           (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  prescan stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  prescan stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;          (set_option_value  compat false)
+P;HTML|
+;          (set_option_value  compatio false)
+P;HTML|
+;          (set_option_value  src_indents false)
+P;HTML|
+;          (set_option_value  devel false)
+P;HTML|
+;          (set_option_value  stack-max 500)
+P;HTML|
+;          (set_option_value  limit inf)
+P;HTML|
+;          (set_option_value  initial-result-count 10)
+P;HTML|
+;          (set_option_value  answer-format show)
+P;HTML|
+;          (set_option_value  repeats true)
+P;HTML|
+;          (set_option_value  time true)
+P;HTML|
+;          (set_option_value  synth-unit-tests false)
+P;HTML|
+;          (set_option_value  optimize true)
+P;HTML|
+;          (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;          (set_option_value  compile false)
+P;HTML|
+;          (set_option_value  tabling auto)
+P;HTML|
+;          (set_option_value  log false)
+P;HTML|
+;          (set_option_value  output ./)
+P;HTML|
+;          (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;          (set_option_value  halt false)
+P;HTML|
+;          (set_option_value  trace-length 500)
+P;HTML|
+;          (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;          (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;          (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;          (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;          (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;          (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;          (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;          (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;          (set_option_value  repl-on-error true)
+P;HTML|
+;          (set_option_value  repl-on-fail false)
+P;HTML|
+;          (set_option_value  exit-on-fail false)
+P;HTML|
+;          (set_option_value  repl auto)
+P;HTML|
+;          (set_option_value  prolog false)
+P;HTML|
+;          (set_option_value  exec noskip)
+P;HTML|
+;          (set_option_value  maximum-result-count inf)
+P;HTML|
+;          (set_option_value  html false)
+P;HTML|
+;          (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;        (is_cmd_option  execute python --python=enable enable)
+P;HTML|
+;         (set_option_value  python enable)
+P;HTML|
+;        (is_cmd_option  execute timeout --timeout=40 40)
+P;HTML|
+;         (set_option_value  timeout 40)
+P;HTML|
+;         (is_cmd_option  execute output --output=./reports/tests_output/baseline-compat/ ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (set_option_value  output ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (is_cmd_option  execute html --html true)
+P;HTML|
+;          (set_option_value  html true)
+P;HTML|
+;         (is_cmd_option  execute test --test true)
+P;HTML|
+;          (set_option_value  test true)
+
+; (load_metta_file  &self tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta)
+P;HTML|
+;                       (track_load_into_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta)
+P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta)
+P;HTML|
+;                                         (= 1  "[()]")
+P;HTML|
+;                                         (= 2  "[()]")
+P;HTML|
+;                                         (= 3  "[()]")
+P;HTML|
+;                                         (= 4  "[()]")
+P;HTML|
+;                                         (= 5  "[(Error (assertEqual (intersection (get-atoms GroundingSpace-0x1c96418) (get-atoms GroundingSpace-0x1c9a4a8)) (superpose ((= (foo $x $y) (+ $x $y)) (foo 1 2) (foo (foo 1 2) 3)))) ")
+P;HTML|
+;                                         (= 5  "Expected: [(= (foo $x $y) (+ $x $y)), (foo 1 2), (foo (foo 1 2) 3)]")
+P;HTML|
+;                                         (= 5  "Got: []")
+P;HTML|
+;                                         (= 6  "Missed result: (= (foo $x $y) (+ $x $y)))]")
+P;HTML|
+;                                         (= 6  "0.01user 0.00system 0:00.02elapsed 82%CPU (0avgtext+0avgdata 25168maxresident)k")
+P;HTML|
+;                                         (= 6  "536inputs+0outputs (5major+3046minor)pagefaults 0swaps")
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta is 8.60K bytes (199 lines)
+</span>P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta)
+
+;;;; Spaces and Alpha Equivalency in Intersection:
+;;;;
+;;;; When performing intersections between atoms in different spaces, the system 
+;;;; applies alpha equivalency to match atoms. This means that atoms with 
+;;;; equivalent structures and logically equivalent variables (even if they 
+;;;; have different names) are considered identical for the purposes of the 
+;;;; intersection. For example, an atom (foo $x $y) in one space will intersect 
+;;;; with (foo $a $b) in another space as long as the structure and the 
+;;;; relationships between the variables are the same.
+;;;;
+;;;; However, alpha equivalency does not apply when the logical relationships 
+;;;; between variables differ. For instance, the atoms (foo $a $b) and (foo $x $x)
+;;;; will not intersect because the latter enforces that both variables must 
+;;;; be the same, while the former does not impose this constraint.
+;;;;
+;;;; This ensures that intersections between spaces are flexible and recognize 
+;;;; logically equivalent atoms, regardless of the specific variable names used 
+;;;; in each space.
+;;;;
+;;;; However, when atoms from a space are compared to atoms not associated with 
+;;;; any space, strict variable matching may be enforced, meaning only atoms 
+;;;; with exactly matching variable names will be considered identical.
+;;;; Test intersection between Space 1 and Space 2 using alpha equivalency
+;;;; This should return the common atoms: (foo 1 2) and (foo (foo 1 2) 3)
+;;exec([bind!,&space1,[new-space]])
+;;exec([bind!,&space2,[new-space]])
+;;exec([add-atom,&space1,[superpose,[[=,[foo,_x,_y],[+,_x,_y]],[foo,1,2],[foo,3,4],[foo,_x,10],[foo,_x,_x],[foo,[foo,1,2],3]]]])
+;;exec([add-atom,&space2,[superpose,[[=,[foo,_a,_b],[+,_a,_b]],[foo,1,2],[foo,5,6],[foo,5,10],[foo,9,9],[foo,[foo,1,2],3]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space1],[get-atoms,&space2]],[superpose,[[=,[foo,_x,_y],[+,_x,_y]],[foo,1,2],[foo,[foo,1,2],3]]]])
+;;;; Test intersection with a space having a unique atom
+;;;; This should return an empty set as there is no intersection.
+;;exec([bind!,&space3,[new-space]])
+;;exec([add-atom,&space3,[superpose,[[foo,7,8]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space1],[get-atoms,&space3]],[superpose,[]]])
+;;;; Test intersection with variables using alpha equivalency
+;;;; The intersection should consider variables as equivalent even if they are named differently.
+;;exec([bind!,&space4,[new-space]])
+;;exec([add-atom,&space4,[superpose,[[foo,1,2],[foo,3,4],[foo,_m,_n]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space1],[get-atoms,&space4]],[superpose,[[foo,1,2],[foo,3,4]]]])
+;;;; Test intersection with overlapping variables using alpha equivalency
+;;;; This test ensures that overlapping variables in atoms are correctly intersected, treating equivalent variables as equal.
+;;exec([bind!,&space5,[new-space]])
+;;exec([add-atom,&space5,[superpose,[[foo,[foo,1,2],3],[foo,[foo,3,4],7],[foo,_p,_q]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space4],[get-atoms,&space5]],[superpose,[[foo,_m,_n]]]])
+;;;; Test intersection with a variable and a fixed value using alpha equivalency
+;;;; This test checks that an atom with a variable intersects correctly with a matching fixed value, using alpha equivalency.
+;;exec([bind!,&space6,[new-space]])
+;;exec([add-atom,&space6,[superpose,[[foo,[foo,1,2],3],[foo,7,7],[foo,[foo,_r,2],3]]]])
+;;exec([assertEqual,[pred-intersection,unified,[get-atoms,&space4],[get-atoms,&space6]],[superpose,[[foo,7,7]]]])
+;;;; Test intersection with nested variables using alpha equivalency
+;;;; This test checks the behavior when intersecting nested structures containing variables, treating equivalent variables as equal.
+;;exec([bind!,&space7,[new-space]])
+;;exec([add-atom,&space7,[superpose,[[foo,_x,_x],[foo,7,7],[foo,[foo,1,2],3]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space6],[get-atoms,&space7]],[superpose,[[foo,[foo,1,2],3]]]])
+;;;; Test intersection with identical self-referential structures using alpha equivalency
+;;;; This test ensures that intersecting identical self-referential structures returns the structure itself, treating variables as equal.
+;;exec([assertEqual,[intersection,[get-atoms,&space7],[get-atoms,&space6]],[superpose,[[foo,[foo,1,2],3]]]])
+;;)
+;;;; Test intersection with alpha equivalency (variable renaming)
+;;;; This test ensures that atoms with equivalent variables but different names are considered equal.
+;;exec([bind!,&space8,[new-space]])
+;;exec([bind!,&space9,[new-space]])
+;;exec([add-atom,&space8,[superpose,[[foo,_a,_b],[foo,3,_c]]]])
+;;exec([add-atom,&space9,[superpose,[[foo,_y,_z],[foo,3,_d]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space8],[get-atoms,&space9]],[superpose,[[foo,3,_c]]]])
+;;;; Test intersection with strict variable identity to ensure non-matching variables are excluded
+;;;; This test ensures that only exact variable names match and others are excluded.
+;;exec([assertEqual,[intersection,[get-atoms,&space1],[get-atoms,&space8]],[superpose,[]]])
+;;;; Test intersection with different variables using alpha equivalency
+;;;; This checks that when variables are equivalent but differently named, they are considered equal.
+;;exec([assertEqual,[intersection,[get-atoms,&space4],[get-atoms,&space8]],[superpose,[]]])
+;;;; Test intersection between a fresh space and another space using alpha equivalency
+;;;; This should return the common atom: (foo (foo 1 2) 3)
+;;exec([bind!,&space10,[new-space]])
+;;exec([add-atom,&space10,[superpose,[[foo,[foo,1,2],3]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space10],[get-atoms,&space2]],[superpose,[[foo,[foo,1,2],3]]]])
+;;;; Test intersection between fresh Space 11 and Space 12 with self-referential atoms
+;;;; The intersection should correctly handle the self-referential atom using alpha equivalency.
+;;exec([bind!,&space11,[new-space]])
+;;exec([bind!,&space12,[new-space]])
+;;exec([add-atom,&space11,[superpose,[[foo,_x,_x]]]])
+;;exec([add-atom,&space12,[superpose,[[foo,_y,_y]]]])
+;;exec([assertEqual,[intersection,[get-atoms,&space11],[get-atoms,&space12]],[superpose,[[foo,_x,_x]]]])
+;;;; Test intersection between Space 1 and a non-space2 atom list
+;;;; This should return the common atoms between Space 1 and the provided atom list.
+;;exec([bind!,&space21,[new-space]])
+;;exec([add-atom,&space21,[superpose,[[foo,1,2],[foo,3,4],[foo,5,6]]]])
+;;;; Intersect with a list of atoms not associated with any space2.
+;;exec([assertEqual,[intersection,[get-atoms,&space21],[superpose,[[foo,1,2],[foo,7,8]]]],[superpose,[[foo,1,2]]]])
+;;;; Test intersection between Space 2 and a non-space2 atom list with variables
+;;;; This should correctly instantiate the variable and return the matching atom.
+;;exec([bind!,&space22,[new-space]])
+;;exec([add-atom,&space22,[superpose,[[foo,_x,10],[foo,3,4],[foo,_y,_y]]]])
+;;;; Intersect with a list of atoms, some of which contain variables.
+;;exec([assertEqual,[intersection,[get-atoms,&space22],[superpose,[[foo,5,10],[foo,3,_z]]]],[superpose,[[foo,5,10],[foo,3,4]]]])
+;;;; Test intersection between Space 3 and a non-space2 atom with strict matching
+;;;; This should return an empty set because the variables in the non-space2 atom do not match the space2 atoms exactly.
+;;exec([bind!,&space23,[new-space]])
+;;exec([add-atom,&space23,[superpose,[[foo,_a,_b],[foo,3,4],[foo,_c,_c]]]])
+;;;; Intersect with a non-space2 atom list with different variable names
+;;exec([assertEqual,[intersection,[get-atoms,&space23],[superpose,[[foo,_x,_y],[foo,3,4]]]],[superpose,[[foo,3,4]]]])
+;;;; Test intersection between Space 4 and a single non-space2 atom
+;;;; This should return the single atom if it matches any in the space2.
+;;exec([bind!,&space24,[new-space]])
+;;exec([add-atom,&space24,[superpose,[[foo,7,7],[foo,[foo,1,2],3],[foo,_z,_z]]]])
+;;;; Intersect with a single non-space2 atom
+;;exec([assertEqual,[intersection,[get-atoms,&space24],[superpose,[[foo,7,7]]]],[superpose,[[foo,7,7]]]])
+;;;; Test intersection between Space 5 and multiple non-space2 atoms
+;;;; This should return only the atoms that match, considering variable instantiation.
+;;exec([bind!,&space25,[new-space]])
+;;exec([add-atom,&space25,[superpose,[[foo,[foo,3,4],7],[foo,_p,_p],[foo,5,5]]]])
+;;;; Intersect with multiple non-space2 atoms
+;;exec([assertEqual,[intersection,[get-atoms,&space25],[superpose,[[foo,5,5],[foo,7,8]]]],[superpose,[[foo,5,5]]]])
+;;;; Test intersection with a nested non-space2 structure
+;;;; The intersection should correctly handle the nested structure.
+;;exec([bind!,&space26,[new-space]])
+;;exec([add-atom,&space26,[superpose,[[foo,[foo,1,2],3],[foo,_x,_y],[foo,[foo,3,4],7]]]])
+;;;; Intersect with a nested non-space2 structure
+;;exec([assertEqual,[intersection,[get-atoms,&space26],[superpose,[[foo,[foo,1,2],3]]]],[superpose,[[foo,[foo,1,2],3]]]])
+<span class="ansi32"
+>% 301,256 inferences, 0.054 CPU in 0.056 seconds (97% CPU, 5585073 Lips)
+</span>P;HTML|
+;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta  0)
+<br/> <a href="#" onclick="window.history.back(); return false;"
+>Return to summaries</a><br/>
+P;HTML|
+;         (is_cmd_option  execute halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  execute stdin --stdin=tty tty)
+P;HTML|
+;          (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  execute stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  execute stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;         (set_option_value  compat false)
+P;HTML|
+;         (set_option_value  compatio false)
+P;HTML|
+;         (set_option_value  src_indents false)
+P;HTML|
+;         (set_option_value  devel false)
+P;HTML|
+;         (set_option_value  stack-max 500)
+P;HTML|
+;         (set_option_value  limit inf)
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+P;HTML|
+;         (set_option_value  answer-format show)
+P;HTML|
+;         (set_option_value  repeats true)
+P;HTML|
+;         (set_option_value  time true)
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+P;HTML|
+;         (set_option_value  optimize true)
+P;HTML|
+;         (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;         (set_option_value  compile false)
+P;HTML|
+;         (set_option_value  tabling auto)
+P;HTML|
+;         (set_option_value  log false)
+P;HTML|
+;         (set_option_value  output ./)
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;         (set_option_value  halt false)
+P;HTML|
+;         (set_option_value  trace-length 500)
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;         (set_option_value  repl-on-error true)
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+P;HTML|
+;         (set_option_value  repl auto)
+P;HTML|
+;         (set_option_value  prolog false)
+P;HTML|
+;         (set_option_value  exec noskip)
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+P;HTML|
+;         (set_option_value  html false)
+P;HTML|
+;         (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;         (maybe_halt  7)
+<span class="ansi31"
+>(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 20:30:54+00:00 [COMMAND_EXIT_CODE="137"]
+Script done on 2024-10-23 21:25:36+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
 
 </html>
-\033[1;33mCompleted (EXITCODE=137) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta" --halt=true\033[0m
+\033[0;32mCompleted successfully (EXITCODE=7) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/hyperon-mettalog_sanity/space_intersection_tests.metta" --halt=true\033[0m

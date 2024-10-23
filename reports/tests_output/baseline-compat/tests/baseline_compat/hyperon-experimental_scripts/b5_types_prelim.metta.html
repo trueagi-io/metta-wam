@@ -14,26 +14,669 @@
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi90 { color: #7f7f7f; }
 </style>
 </head>
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 20:02:25+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-ERROR:    '<meta-call>'/1: Unknown procedure: metta_file_buffer/5
-ERROR:      However, there are definitions for:
-ERROR:            metta_file_buffer/7
-ERROR:            metta_file_buffer/7
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-Warning:    Goal (directive) failed: user:set_is_unit_test(false)
+Script started on 2024-10-23 21:20:48+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
+;           (set_option_value  compat false)
+
+P;HTML|
+;           (set_option_value  compatio false)
+
+P;HTML|
+;           (set_option_value  src_indents false)
+
+P;HTML|
+;         (set_option_value  devel false)
+
+P;HTML|
+;         (set_option_value  stack-max 500)
+
+P;HTML|
+;         (set_option_value  limit inf)
+
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+
+P;HTML|
+;         (set_option_value  answer-format show)
+
+P;HTML|
+;         (set_option_value  repeats true)
+
+P;HTML|
+;         (set_option_value  time true)
+
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+
+P;HTML|
+;         (set_option_value  optimize true)
+
+P;HTML|
+;         (set_option_value  transpiler silent)
+
+P;HTML|
+;          (set_debug  transpiler false)
+
+P;HTML|
+;         (set_option_value  compile false)
+
+P;HTML|
+;         (set_option_value  tabling auto)
+
+P;HTML|
+;         (set_option_value  log false)
+
+P;HTML|
+;         (set_option_value  output ./)
+
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+
+P;HTML|
+;         (set_option_value  halt false)
+
+P;HTML|
+;         (set_option_value  trace-length 500)
+
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+
+P;HTML|
+;          (set_debug  overtime 4.0)
+
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+
+P;HTML|
+;          (set_debug  overflow 1000)
+
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+
+P;HTML|
+;          (set_debug  eval false)
+
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+
+P;HTML|
+;          (set_debug  load silent)
+
+P;HTML|
+;          (set_debug  trace-on-load false)
+
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+
+P;HTML|
+;          (set_debug  exec false)
+
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+
+P;HTML|
+;          (set_debug  error non-type)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;          (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  trace-on-test true)
+
+P;HTML|
+;          (set_debug  test true)
+
+P;HTML|
+;         (set_option_value  repl-on-error true)
+
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+
+P;HTML|
+;         (set_option_value  repl auto)
+
+P;HTML|
+;         (set_option_value  prolog false)
+
+P;HTML|
+;         (set_option_value  exec noskip)
+
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+
+P;HTML|
+;         (set_option_value  html false)
+
+P;HTML|
+;         (set_option_value  python true)
+
+P;HTML|
+;         (set_option_value  trace-on-test false)
+
+P;HTML|
+;         (set_debug  test false)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;         (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  load show)
+
+P;HTML|
+;         (set_option_value  test false)
+P;HTML|
+;          (is_cmd_option  prescan halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  prescan stdin --stdin=tty tty)
+P;HTML|
+;           (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  prescan stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  prescan stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;          (set_option_value  compat false)
+P;HTML|
+;          (set_option_value  compatio false)
+P;HTML|
+;          (set_option_value  src_indents false)
+P;HTML|
+;          (set_option_value  devel false)
+P;HTML|
+;          (set_option_value  stack-max 500)
+P;HTML|
+;          (set_option_value  limit inf)
+P;HTML|
+;          (set_option_value  initial-result-count 10)
+P;HTML|
+;          (set_option_value  answer-format show)
+P;HTML|
+;          (set_option_value  repeats true)
+P;HTML|
+;          (set_option_value  time true)
+P;HTML|
+;          (set_option_value  synth-unit-tests false)
+P;HTML|
+;          (set_option_value  optimize true)
+P;HTML|
+;          (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;          (set_option_value  compile false)
+P;HTML|
+;          (set_option_value  tabling auto)
+P;HTML|
+;          (set_option_value  log false)
+P;HTML|
+;          (set_option_value  output ./)
+P;HTML|
+;          (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;          (set_option_value  halt false)
+P;HTML|
+;          (set_option_value  trace-length 500)
+P;HTML|
+;          (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;          (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;          (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;          (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;          (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;          (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;          (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;          (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;          (set_option_value  repl-on-error true)
+P;HTML|
+;          (set_option_value  repl-on-fail false)
+P;HTML|
+;          (set_option_value  exit-on-fail false)
+P;HTML|
+;          (set_option_value  repl auto)
+P;HTML|
+;          (set_option_value  prolog false)
+P;HTML|
+;          (set_option_value  exec noskip)
+P;HTML|
+;          (set_option_value  maximum-result-count inf)
+P;HTML|
+;          (set_option_value  html false)
+P;HTML|
+;          (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;        (is_cmd_option  execute python --python=enable enable)
+P;HTML|
+;         (set_option_value  python enable)
+P;HTML|
+;        (is_cmd_option  execute timeout --timeout=40 40)
+P;HTML|
+;         (set_option_value  timeout 40)
+P;HTML|
+;         (is_cmd_option  execute output --output=./reports/tests_output/baseline-compat/ ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (set_option_value  output ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (is_cmd_option  execute html --html true)
+P;HTML|
+;          (set_option_value  html true)
+P;HTML|
+;         (is_cmd_option  execute test --test true)
+P;HTML|
+;          (set_option_value  test true)
+
+; (load_metta_file  &self tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta)
+P;HTML|
+;                       (track_load_into_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta)
+P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta)
+P;HTML|
+;                                         (= 1  "[()]")
+P;HTML|
+;                                         (= 2  "[(set-debug! e)]")
+P;HTML|
+;                                         (= 3  "[()]")
+P;HTML|
+;                                         (= 4  "[()]")
+P;HTML|
+;                                         (= 5  "[()]")
+P;HTML|
+;                                         (= 6  "[()]")
+P;HTML|
+;                                         (= 7  "[()]")
+P;HTML|
+;                                         (= 8  "[()]")
+P;HTML|
+;                                         (= 9  "[(Error (assertEqualToResult (Cons S (Cons Z Nil)) ((Error (Cons Z Nil) BadType))) ")
+P;HTML|
+;                                         (= 9  "Expected: [(Error (Cons Z Nil) BadType)]")
+P;HTML|
+;                                         (= 9  "Got: [(Error Z BadType)]")
+P;HTML|
+;                                         (= 10  "Missed result: (Error (Cons Z Nil) BadType))]")
+P;HTML|
+;                                         (= 10  "0.05user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 31116maxresident)k")
+P;HTML|
+;                                         (= 10  "0inputs+0outputs (0major+3666minor)pagefaults 0swaps")
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta is 8.47K bytes (261 lines)
+</span>P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Symbols are typed. If no type definition is provided,
+;;; the type is %Undefined%, which can match against any
+;;; other type in a gradual typing fashion.
+;;; Automatic type checking is off by default ATM, so
+;;; incorrectly typed expressions can be added to Atomspace.
+;;; However, the interpreter checks types in runtime, and
+;;; evaluation of badly typed expressions leads to a error expression.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[=,[Add,_x,Z],_x]
+;;[=,[Add,_x,[S,_y]],[Add,[S,_x],_y]]
+;;; `(Add S Z)` will be reduced to `S` without type definitions
+;;exec([assertEqual,[Add,S,Z],S])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Adding type definitions.
+;;; Arrow (->) is a built-in symbol of the type system
+;;; `Nat` is a custom symbol
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[:,Z,Nat]
+;;; (: S Oper)
+;;[:,S,[->,Nat,Nat]]
+;;[:,Add,[->,Nat,Nat,Nat]]
+;;exec([set-debug!,e])
+;;; Now the result of its evaluation will be a error expression, because `S` is not `Nat`
+;;exec([assertEqualToResult,[Add,S,Z],[[Error,S,BadType]]])
+;;; But these other examples works normally
+;;exec([assertEqual,[Add,[S,Z],Z],[S,Z]])
+;;exec([assertEqual,[Add,Z,[S,Z]],[S,Z]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Adding to an untyped symbol (Something) will still work,
+;;; because it might be `Nat`
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;exec([assertEqual,[Add,Something,Z],Something])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Types can be nondeterministic
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[:,Ten,Nat]
+;;[:,Ten,Int]
+;;; The following will be accepted by the interpreter
+;;exec([assertEqualToResult,[Add,Z,Ten],[[Add,Z,Ten]]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Types can be parameterized
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; List has a function type. Its argument should be of Type type.
+;;; The type of the whole expression, e.g. (List String), will also have Type type.
+;;[:,List,[->,Type,Type]]
+;;; Nil's type is parametrized as the type returned by List when it
+;;; takes parameter $t (which, per the definition above,
+;;; is the same type as $t)
+;;[:,Nil,[List,_t]]
+;;; Cons is defined as a parametrized List constructor
+;;; Based on the definition of List above, Cons' arguments
+;;; are equally typed, and it returns the same type
+;;; as its arguments.
+;;[:,Cons,[->,_t,[List,_t],[List,_t]]]
+;;; This list is well typed and evaluated to itself
+;;exec([assertEqualToResult,[Cons,[S,Z],[Cons,Z,Nil]],[[Cons,[S,Z],[Cons,Z,Nil]]]])
+;;; TODO: MINIMAL This test has different behavior in old and new versions of the
+;;;       interpreter versions. Uncomment it after migration to the minimal MeTTa.
+;;; This list is badly typed, because S and Z are not the same type
+;;exec([assertEqualToResult,[Cons,S,[Cons,Z,Nil]],[[Error,[Cons,Z,Nil],BadType]]])
+;;;; We uncomment this because it still works in MeTTaLog !
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Another example
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[:,T,Type]
+;;; The type definition of `eq` specifies both its arguments
+;;; must be of the same type, but its own type is left undefined,
+;;; just as a Type.
+;;[:,eq,[->,_t,_t,Type]]
+;;; The definition of `eq` specifies its actual type (T)
+;;[=,[eq,_x,_x],T]
+;;; Accepted and reduced
+;;exec([assertEqual,[eq,[Add,Z,Z],Z],T])
+;;; Accepted, not reduced because no definition is known
+;;; for `eq` when its arguments are not the same
+;;exec([assertEqualToResult,[eq,Z,[S,Z]],[[eq,Z,[S,Z]]]])
+;;; Not accepted, because Z and S are not the same type
+;;exec([assertEqualToResult,[eq,Z,S],[[Error,S,BadType]]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Type (symbols) are not prohibited from being elements
+;;; of other custom types
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[:,Color,Property]
+;;[:,Green,Color]
+;;[:,Red,Color]
+;;[:,Shape,Property]
+;;[:,Square,Shape]
+;;[:,Circle,Shape]
+;;; This type definition is the same as that of `eq` above
+;;[:,of-same-type,[->,_t,_t,Type]]
+;;; It returns True for any pair of arguments, as long as there
+;;; is not Type error
+;;; Accepted
+;;[=,[of-same-type,_x,_y],T]
+;;exec([assertEqual,[of-same-type,Color,Shape],T])
+;;exec([assertEqual,[of-same-type,Green,Red],T])
+;;; Not accepted
+;;exec([assertEqualToResult,[of-same-type,Green,Color],[[Error,Color,BadType]]])
+;;exec([assertEqualToResult,[of-same-type,Green,Circle],[[Error,Circle,BadType]]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; There are some meta-types, which may influence
+;;; the process of interpretation. One of them is `Atom`.
+;;; If a function expects `Atom` as its argument,
+;;; this argument is not reduced before passing to
+;;; the function, so the function can process the
+;;; original expression itself.
+;;; The `match` function expects an `Atom` type as argument.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; In the following example, `(Green $who)` is evaluated
+;;; to `T`. However, it is not reduced as `match` argument,
+;;; and the query returns `Sam`.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;[Green,Sam]
+;;[=,[Green,Sam],T]
+;;exec([assertEqual,[Green,_who],T])
+;;exec([assertEqual,[match,&self,[Green,_who],_who],Sam])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; It should be noted that the result of `match` will be
+;;; evaluated further. In the following, `match` first
+;;; returns `(Green Sam)`, which is then evaluated to `T`.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;exec([assertEqual,[match,&self,[Green,_who],[Green,_who]],T])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; If one wants to evaluate an expression before passing it
+;;; to `match`, `let` can be used:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;exec([assertEqual,[let,_r,[Add,[S,Z],Z],[match,&self,[=,[eq,_r,[S,Z]],_tv],_tv]],T])
+;;; but it will not work inside `match`:
+;;exec([assertEqualToResult,[match,&self,[=,[eq,[Add,[S,Z],Z],[S,Z]],_tv],_tv],[]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; The second argument of `let` is not `Atom` and evaluated
+;;; by the interpreter before executing `let`, while
+;;; the third argument is `Atom`, which is transformed by `let`
+;;; as an expression, and then returned for further evaluation.
+;;; `match` and `let` are implemented as an ordinary grounded operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; In fact, one can use patterns instead of variables in `let`
+;;; in order to deconstruct the result immediately.
+;;; This example binds the result of (Add (S Z) (S Z)) to
+;;; the whole pattern (S (S $r)), and extracts the inner variable $r
+;;; This is cleaner than binding and re-matching.
+;;exec([assertEqual,[let,[S,[S,_r]],[Add,[S,Z],[S,Z]],_r],Z])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; One can use `let*` for convenience, when multiple consequent
+;;; substitutions are needed
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;exec([assertEqual,[let*,[[_r1,[Add,Z,Z]],[_r2,[Add,_r1,[S,Z]]],[_r3,[Add,_r2,[S,Z]]]],[match,&self,[=,[eq,[S,[S,Z]],_r3],_tv],_tv]],T])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Atom type can be required in custom functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; `eqa` will compare expressions:
+;;[:,eqa,[->,Atom,Atom,Type]]
+;;[=,[eqa,_x,_x],T]
+;;; These expressions are identical:
+;;exec([assertEqual,[eqa,[Add,Z,Z],[Add,Z,Z]],T])
+;;; while this will not be reduced because the expressions
+;;; are not the same (even if their evaluation would be)
+;;; (`eqa` is not total)
+;;exec([assertEqualToResult,[eqa,Z,[Add,Z,Z]],[[eqa,Z,[Add,Z,Z]]]])
+;;;;!(repl!)
+;;; In contrast to this:
+;;exec([assertEqual,[eq,Z,[Add,Z,Z]],T])
+;;; Or this:
+;;exec([assertEqual,[let,_z,[Add,Z,Z],[eqa,Z,_z]],T])
+<span class="ansi32"
+>% 280,293 inferences, 0.055 CPU in 0.057 seconds (97% CPU, 5095863 Lips)
+</span>P;HTML|
+;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta  0)
+<br/> <a href="#" onclick="window.history.back(); return false;"
+>Return to summaries</a><br/>
+P;HTML|
+;         (is_cmd_option  execute halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  execute stdin --stdin=tty tty)
+P;HTML|
+;          (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  execute stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  execute stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;         (set_option_value  compat false)
+P;HTML|
+;         (set_option_value  compatio false)
+P;HTML|
+;         (set_option_value  src_indents false)
+P;HTML|
+;         (set_option_value  devel false)
+P;HTML|
+;         (set_option_value  stack-max 500)
+P;HTML|
+;         (set_option_value  limit inf)
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+P;HTML|
+;         (set_option_value  answer-format show)
+P;HTML|
+;         (set_option_value  repeats true)
+P;HTML|
+;         (set_option_value  time true)
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+P;HTML|
+;         (set_option_value  optimize true)
+P;HTML|
+;         (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;         (set_option_value  compile false)
+P;HTML|
+;         (set_option_value  tabling auto)
+P;HTML|
+;         (set_option_value  log false)
+P;HTML|
+;         (set_option_value  output ./)
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;         (set_option_value  halt false)
+P;HTML|
+;         (set_option_value  trace-length 500)
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;         (set_option_value  repl-on-error true)
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+P;HTML|
+;         (set_option_value  repl auto)
+P;HTML|
+;         (set_option_value  prolog false)
+P;HTML|
+;         (set_option_value  exec noskip)
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+P;HTML|
+;         (set_option_value  html false)
+P;HTML|
+;         (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;         (maybe_halt  7)
+<span class="ansi31"
+>(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 20:03:05+00:00 [COMMAND_EXIT_CODE="143"]
+Script done on 2024-10-23 21:20:53+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
 
 </html>
-\033[1;33mCompleted (EXITCODE=143) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta" --halt=true\033[0m
+\033[0;32mCompleted successfully (EXITCODE=7) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/hyperon-experimental_scripts/b5_types_prelim.metta" --halt=true\033[0m

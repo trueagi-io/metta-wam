@@ -14,26 +14,545 @@
 .inv_background { background-color: #AAAAAA; }
 .ansi1 { font-weight: bold; }
 .ansi31 { color: #aa0000; }
+.ansi32 { color: #00aa00; }
+.ansi90 { color: #7f7f7f; }
 </style>
 </head>
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 19:52:34+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
-<span class="ansi1 ansi31"
->ERROR: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-ERROR:    '<meta-call>'/1: Unknown procedure: metta_file_buffer/5
-ERROR:      However, there are definitions for:
-ERROR:            metta_file_buffer/7
-ERROR:            metta_file_buffer/7
-</span><span class="ansi31"
->Warning: /home/runner/work/metta-wam/metta-wam/src/canary/metta_interp.pl:835:
-Warning:    Goal (directive) failed: user:set_is_unit_test(false)
+Script started on 2024-10-23 21:19:09+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+P;HTML|
+;           (set_option_value  compat false)
+
+P;HTML|
+;           (set_option_value  compatio false)
+
+P;HTML|
+;           (set_option_value  src_indents false)
+
+P;HTML|
+;         (set_option_value  devel false)
+
+P;HTML|
+;         (set_option_value  stack-max 500)
+
+P;HTML|
+;         (set_option_value  limit inf)
+
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+
+P;HTML|
+;         (set_option_value  answer-format show)
+
+P;HTML|
+;         (set_option_value  repeats true)
+
+P;HTML|
+;         (set_option_value  time true)
+
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+
+P;HTML|
+;         (set_option_value  optimize true)
+
+P;HTML|
+;         (set_option_value  transpiler silent)
+
+P;HTML|
+;          (set_debug  transpiler false)
+
+P;HTML|
+;         (set_option_value  compile false)
+
+P;HTML|
+;         (set_option_value  tabling auto)
+
+P;HTML|
+;         (set_option_value  log false)
+
+P;HTML|
+;         (set_option_value  output ./)
+
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+
+P;HTML|
+;         (set_option_value  halt false)
+
+P;HTML|
+;         (set_option_value  trace-length 500)
+
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+
+P;HTML|
+;          (set_debug  overtime 4.0)
+
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+
+P;HTML|
+;          (set_debug  overflow 1000)
+
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+
+P;HTML|
+;          (set_debug  eval false)
+
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+
+P;HTML|
+;          (set_debug  load silent)
+
+P;HTML|
+;          (set_debug  trace-on-load false)
+
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+
+P;HTML|
+;          (set_debug  exec false)
+
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+
+P;HTML|
+;          (set_debug  error non-type)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;          (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  trace-on-test true)
+
+P;HTML|
+;          (set_debug  test true)
+
+P;HTML|
+;         (set_option_value  repl-on-error true)
+
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+
+P;HTML|
+;         (set_option_value  repl auto)
+
+P;HTML|
+;         (set_option_value  prolog false)
+
+P;HTML|
+;         (set_option_value  exec noskip)
+
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+
+P;HTML|
+;         (set_option_value  html false)
+
+P;HTML|
+;         (set_option_value  python true)
+
+P;HTML|
+;         (set_option_value  trace-on-test false)
+
+P;HTML|
+;         (set_debug  test false)
+
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+
+P;HTML|
+;         (set_debug  fail false)
+
+P;HTML|
+;         (set_option_value  load show)
+
+P;HTML|
+;         (set_option_value  test false)
+P;HTML|
+;          (is_cmd_option  prescan halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  prescan stdin --stdin=tty tty)
+P;HTML|
+;           (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  prescan stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  prescan stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;          (set_option_value  compat false)
+P;HTML|
+;          (set_option_value  compatio false)
+P;HTML|
+;          (set_option_value  src_indents false)
+P;HTML|
+;          (set_option_value  devel false)
+P;HTML|
+;          (set_option_value  stack-max 500)
+P;HTML|
+;          (set_option_value  limit inf)
+P;HTML|
+;          (set_option_value  initial-result-count 10)
+P;HTML|
+;          (set_option_value  answer-format show)
+P;HTML|
+;          (set_option_value  repeats true)
+P;HTML|
+;          (set_option_value  time true)
+P;HTML|
+;          (set_option_value  synth-unit-tests false)
+P;HTML|
+;          (set_option_value  optimize true)
+P;HTML|
+;          (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;          (set_option_value  compile false)
+P;HTML|
+;          (set_option_value  tabling auto)
+P;HTML|
+;          (set_option_value  log false)
+P;HTML|
+;          (set_option_value  output ./)
+P;HTML|
+;          (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;          (set_option_value  halt false)
+P;HTML|
+;          (set_option_value  trace-length 500)
+P;HTML|
+;          (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;          (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;          (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;          (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;          (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;          (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;          (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;          (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;          (set_option_value  repl-on-error true)
+P;HTML|
+;          (set_option_value  repl-on-fail false)
+P;HTML|
+;          (set_option_value  exit-on-fail false)
+P;HTML|
+;          (set_option_value  repl auto)
+P;HTML|
+;          (set_option_value  prolog false)
+P;HTML|
+;          (set_option_value  exec noskip)
+P;HTML|
+;          (set_option_value  maximum-result-count inf)
+P;HTML|
+;          (set_option_value  html false)
+P;HTML|
+;          (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;        (is_cmd_option  execute python --python=enable enable)
+P;HTML|
+;         (set_option_value  python enable)
+P;HTML|
+;        (is_cmd_option  execute timeout --timeout=40 40)
+P;HTML|
+;         (set_option_value  timeout 40)
+P;HTML|
+;         (is_cmd_option  execute output --output=./reports/tests_output/baseline-compat/ ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (set_option_value  output ./reports/tests_output/baseline-compat/)
+P;HTML|
+;         (is_cmd_option  execute html --html true)
+P;HTML|
+;          (set_option_value  html true)
+P;HTML|
+;         (is_cmd_option  execute test --test true)
+P;HTML|
+;          (set_option_value  test true)
+
+; (load_metta_file  &self tests/baseline_compat/anti-regression/mettalogTestCurried2.metta)
+P;HTML|
+;                       (track_load_into_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta)
+P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta)
+P;HTML|
+;                                         (= 1  "[()]")
+P;HTML|
+;                                         (= 2  "[()]")
+P;HTML|
+;                                         (= 3  "[()]")
+P;HTML|
+;                                         (= 4  "[()]")
+P;HTML|
+;                                         (= 5  "[()]")
+P;HTML|
+;                                         (= 6  "[()]")
+P;HTML|
+;                                         (= 7  "[()]")
+P;HTML|
+;                                         (= 8  "[()]")
+P;HTML|
+;                                         (= 9  "[(: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))), (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))), (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))]")
+P;HTML|
+;                                         (= 10  "0.13user 0.00system 0:00.14elapsed 99%CPU (0avgtext+0avgdata 25572maxresident)k")
+P;HTML|
+;                                         (= 10  "0inputs+0outputs (0major+3131minor)pagefaults 0swaps")
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta is 3.56K bytes (112 lines)
+</span>P;HTML|
+;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta)
+
+;;;;;;;;;;;
+;;;; Nat ;;
+;;;;;;;;;;;
+;;;; Define Nat
+;;[:,Nat,Type]
+;;[:,Z,Nat]
+;;[:,S,[->,Nat,Nat]]
+;;;; Define <=
+;;[:,<=,[->,_a,_a,Bool]]
+;;[=,[<=,_x,_y],[or,[<,_x,_y],[==,_x,_y]]]
+;;;; Define cast functions between Nat and Number
+;;[:,fromNumber,[->,Number,Nat]]
+;;[=,[fromNumber,_n],[if,[<=,_n,0],Z,[S,[fromNumber,[-,_n,1]]]]]
+;;[:,fromNat,[->,Nat,Number]]
+;;[=,[fromNat,Z],0]
+;;[=,[fromNat,[S,_k]],[+,1,[fromNat,_k]]]
+;;;; Todo: implement Debruijn index
+;;;; Define DeBruijn Index
+;;[:,DeBruijn,Type]
+;;[:,VarIdx,[->,Nat,DeBruijn]]
+;;[=,[fromDeb,_pattern,_Xvar,_Yvar],[case,[[get-metatype,_pattern],_pattern],[[[Variable,__],_pattern],[[__,_pattern],[let,[_link,_a,_b],_pattern,[case,[_link,[get-type,_a],[get-type,_b]],[[[_link,DeBruijn,%Undefined%],[_link,_Xvar,_b]],[[_link,%Undefined%,DeBruijn],[_link,_a,_Yvar]],[[_link,DeBruijn,DeBruijn],[_link,_Xvar,_Yvar]],[__,_pattern]]]]],[__,_pattern]]]]
+;;[=,[fromDebruijn,_ptrn,_Xvar,_Yvar],[case,_ptrn,[[[,,_p1,_p2],[,,[fromDeb,_p1,_Xvar,_Yvar],[fromDeb,_p2,_Xvar,_Yvar]]],[[,,_p1,_p2,_p3],[,,[fromDeb,_p1,_Xvar,_Yvar],[fromDeb,_p2,_Xvar,_Yvar],[fromDeb,_p3,_Xvar,_Yvar]]],[__,[fromDeb,_ptrn,_Xvar,_Yvar]]]]]
+;;[=,[tuple-count,_tuple],[if,[==,_tuple,[]],0,[+,1,[tuple-count,[cdr-atom,_tuple]]]]]
+;;; Count the number of instances of a given pattern
+;;[=,[count,_pattern],[let,_result,[case,[match,&self,[=,[refdb],_db],_db],[[_db,[let,_dptrn,[fromDebruijn,_pattern,_Xvar,_Yvar],[collapse,[match,_db,_dptrn,_dptrn]]]],[%void%,[]]]],[tuple-count,_result]]]
+;;[=,[countNat,_pattern],[fromNumber,[count,_pattern]]]
+;;exec([bind!,&kb,[new-space]])
+;;[:,->,[->,Atom,Atom,Type]]
+;;;; KB
+;;exec([let,_sptrn,[:,SP,[specializationOf,[Inheritance,B,[VarIdx,[S,Z]]],[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]]],[add-atom,&kb,_sptrn]])
+;;;; apriori-rule
+;;exec([add-atom,&kb,[:,apriori-rule,[->,[minsup,_aptrn],[->,[specializationOf,_sptrn,_aptrn],[supportOf,_sptrn,[countNat,_sptrn]]]]]])
+;;;; Test
+;;; !(import! &db ../data/sample.metta)
+;;exec([bind!,&db,[new-space]])
+;;exec([add-atom,&db,[Inheritance,B,A]])
+;;exec([add-atom,&db,[Inheritance,C,A]])
+;;exec([add-atom,&db,[Inheritance,D,E]])
+;;exec([add-atom,&db,[Inheritance,C,E]])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; DTL Backward chaining Curried ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Base case
+;;[:,bc,[->,_a,Nat,_a]]
+;;[=,[bc,[:,_prf,_ccln],__],[match,&kb,[:,_prf,_ccln],[:,_prf,_ccln]]]
+;;;; Recursive step
+;;[=,[bc,[:,[_prfabs,_prfarg],_ccln],[S,_k]],[let*,[[[:,_prfabs,[->,_prms,_ccln]],[bc,[:,_prfabs,[->,_prms,_ccln]],_k]],[[:,_prfarg,_prms],[bc,[:,_prfarg,_prms],_k]]],[:,[_prfabs,_prfarg],_ccln]]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; DTL Forward chaining Curried  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Base case
+;;;; The source is assumed to be true
+;;[:,fc,[->,_a,Nat,_a]]
+;;[=,[fc,[:,_proof,_premise],__],[:,_proof,_premise]]
+;;;; Recursive steps
+;;[=,[fc,[:,_prfarg,_premise],[S,_k]],[let,[:,_prfabs,[->,_premise,_ccln]],[bc,[:,_prfabs,[->,_premise,_ccln]],_k],[fc,[:,[_prfabs,_prfarg],_ccln],_k]]]
+;;[=,[fc,[:,_prfabs,[->,_prms,_ccln]],[S,_k]],[let,[:,_prfarg,_prms],[bc,[:,_prfarg,_prms],_k],[fc,[:,[_prfabs,_prfarg],_ccln],_k]]]
+;;;; Test
+;;[=,[refdb],&db]
+;;exec([let,[:,_prf,_concl],[let*,[[_aptrn,[Inheritance,[VarIdx,Z],[VarIdx,[S,Z]]]],[_atom,[:,MP,[minsup,_aptrn]]],[_depth,[fromNumber,2]]],[fc,_atom,_depth]],[:,PROOFTrace,_concl]])
+<span class="ansi32"
+>% 255,291 inferences, 0.047 CPU in 0.050 seconds (95% CPU, 5428794 Lips)
+</span>P;HTML|
+;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
+<br/> <a href="#" onclick="window.history.back(); return false;"
+>Return to summaries</a><br/>
+P;HTML|
+;         (is_cmd_option  execute halt --halt=true true)
+P;HTML|
+;          (set_option_value  halt true)
+P;HTML|
+;          (is_cmd_option  execute stdin --stdin=tty tty)
+P;HTML|
+;          (set_option_value  stdin tty)
+P;HTML|
+;          (is_cmd_option  execute stdout --stdout=tty tty)
+P;HTML|
+;           (set_option_value  stdout tty)
+P;HTML|
+;          (is_cmd_option  execute stderr --stderr=tty tty)
+P;HTML|
+;           (set_option_value  stderr tty)
+P;HTML|
+;         (set_option_value  compat false)
+P;HTML|
+;         (set_option_value  compatio false)
+P;HTML|
+;         (set_option_value  src_indents false)
+P;HTML|
+;         (set_option_value  devel false)
+P;HTML|
+;         (set_option_value  stack-max 500)
+P;HTML|
+;         (set_option_value  limit inf)
+P;HTML|
+;         (set_option_value  initial-result-count 10)
+P;HTML|
+;         (set_option_value  answer-format show)
+P;HTML|
+;         (set_option_value  repeats true)
+P;HTML|
+;         (set_option_value  time true)
+P;HTML|
+;         (set_option_value  synth-unit-tests false)
+P;HTML|
+;         (set_option_value  optimize true)
+P;HTML|
+;         (set_option_value  transpiler silent)
+P;HTML|
+;          (set_debug  transpiler false)
+P;HTML|
+;         (set_option_value  compile false)
+P;HTML|
+;         (set_option_value  tabling auto)
+P;HTML|
+;         (set_option_value  log false)
+P;HTML|
+;         (set_option_value  output ./)
+P;HTML|
+;         (set_option_value  exeout ./Sav.gitlab.MeTTaLog)
+P;HTML|
+;         (set_option_value  halt false)
+P;HTML|
+;         (set_option_value  trace-length 500)
+P;HTML|
+;         (set_option_value  trace-on-overtime 4.0)
+P;HTML|
+;          (set_debug  overtime 4.0)
+P;HTML|
+;         (set_option_value  trace-on-overflow 1000)
+P;HTML|
+;          (set_debug  overflow 1000)
+P;HTML|
+;         (set_option_value  trace-on-eval false)
+P;HTML|
+;          (set_debug  eval false)
+P;HTML|
+;         (set_option_value  trace-on-load silent)
+P;HTML|
+;          (set_debug  load silent)
+P;HTML|
+;          (set_debug  trace-on-load false)
+P;HTML|
+;         (set_option_value  trace-on-exec false)
+P;HTML|
+;          (set_debug  exec false)
+P;HTML|
+;         (set_option_value  trace-on-error non-type)
+P;HTML|
+;          (set_debug  error non-type)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  trace-on-test true)
+P;HTML|
+;          (set_debug  test true)
+P;HTML|
+;         (set_option_value  repl-on-error true)
+P;HTML|
+;         (set_option_value  repl-on-fail false)
+P;HTML|
+;         (set_option_value  exit-on-fail false)
+P;HTML|
+;         (set_option_value  repl auto)
+P;HTML|
+;         (set_option_value  prolog false)
+P;HTML|
+;         (set_option_value  exec noskip)
+P;HTML|
+;         (set_option_value  maximum-result-count inf)
+P;HTML|
+;         (set_option_value  html false)
+P;HTML|
+;         (set_option_value  python true)
+P;HTML|
+;         (set_option_value  trace-on-test false)
+P;HTML|
+;          (set_debug  test false)
+P;HTML|
+;         (set_option_value  trace-on-fail false)
+P;HTML|
+;          (set_debug  fail false)
+P;HTML|
+;         (set_option_value  load show)
+P;HTML|
+;         (set_option_value  test true)
+P;HTML|
+;         (maybe_halt  7)
+<span class="ansi31"
+>(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 19:53:14+00:00 [COMMAND_EXIT_CODE="143"]
+Script done on 2024-10-23 21:19:14+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
 
 </html>
-\033[1;33mCompleted (EXITCODE=143) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/anti-regression/mettalogTestCurried2.metta" --halt=true\033[0m
+\033[0;32mCompleted successfully (EXITCODE=7) Under 40 seconds: ./mettalog '--output=./reports/tests_output/baseline-compat/' --timeout=40 --html --repl=false  --test "tests/baseline_compat/anti-regression/mettalogTestCurried2.metta" --halt=true\033[0m
