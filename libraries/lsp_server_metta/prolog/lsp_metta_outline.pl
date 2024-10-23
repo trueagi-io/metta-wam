@@ -66,12 +66,14 @@ xrefed_outline_type_kind(What,Outline,KindName):-
    type_kind(TypeName,KindName),!.
 
 
-outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,S=Str.
-outline_name(Str,S):- is_ftVar(Str),wots(M, write_src_woi(Str)),!,outline_name(M,S).
-outline_name(Str,S):- is_list(Str), wots(M, write_src_woi(Str)),!,outline_name(M,S).
-outline_name(Str,S):- Str = exec(_),wots(M, write_src_woi(Str)),!,outline_name(M,S).
-outline_name(Cmt,S):- Cmt = '$COMMENT'(Str,_,_),!,outline_name(Str,S).
-outline_name(Str,S):- sformat(S,'~w',[Str]),atom_length(S,Len),Len>5.
+outline_name(Str,S):- string(Str),!,atom_length(Str,Len),Len>2,!,sformat(S,'~q',[Str]).
+outline_name(Str,S):- is_ftVar(Str),wots(S, write_src_woi(Str)),!.
+outline_name(Str,S):- is_list(Str), wots(S, write_src_woi(Str)),!.
+outline_name(Str,S):- Str = exec(_),wots(S, write_src_woi(Str)),!.
+outline_name(Cmt,S):- Cmt = '$COMMENT'(Str,_,_),!,sformat(S,'~q',[Str]).
+outline_name(Str,S):- symbol(Str), !, sformat(S,'~w',[Str]).
+outline_name(Str,S):- wots(S, write_src_woi(Str)),!.
+outline_name(Str,S):- sformat(S,'~q',[Str]).
 
 next_line(S:SC,E:SC):- number(S),!,succl(S,E).
 next_line(S,E):- number(S),!,succl(S,E).
