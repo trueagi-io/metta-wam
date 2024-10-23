@@ -25,6 +25,7 @@
 ; !(remove-st (name id-001) )
 ;!(remove-st id-001 )
 
+; ready works
 ;</pre>
 !(assertEqualToResult (get-st (name id-001) )  ( Fritz )  )
 ; (get-st (name id-001))      [[S('Fritz' &nbsp &nbsp ) 

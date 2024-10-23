@@ -4,4 +4,5 @@
 (= (h) (Hello world))
 ! (h)
 
-;  !(assertEqualToResult ( )  (  )  ) 
+; ready works
+!(assertEqualToResult ( h )  ( (Hello world) )  ) 

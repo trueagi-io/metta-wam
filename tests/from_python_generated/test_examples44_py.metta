@@ -31,7 +31,7 @@
 ;!(match &self (= (frog Fritz) $res)  $res)
 ; !(if (and (croaks $x) (eats_flies $x)) (= (frog $x) True) nop)
 ; !(assertEqualToResult ( )  (  )  )
-
+; ready works
 !(assertEqualToResult 
   ( if (and (croaks $x) (eats_flies $x)) (= (frog $x) True) nop )   
   ( (= (frog Fritz) True)  )

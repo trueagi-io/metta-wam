@@ -32,5 +32,6 @@
    ;     '''
    ;     runner = MeTTa(env_builder=Environment.test_env())
 ;</pre>
+; ready works 
 !(assertEqualToResult ( green Fritz )  ( T )  )
 ; <br>  lastline 51 <br> 

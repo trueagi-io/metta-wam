@@ -9,6 +9,6 @@
  ;           !(match &self ($x isprime) $x)
 ;        """)
 ;</pre>
-; ready!!
+; ready works !!
 !(assertEqualToResult ( match &self ($x isprime) $x )  ( three )  )
 ; <br>  lastline 33 <br> 

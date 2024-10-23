@@ -3,6 +3,13 @@
 ;  !(assertEqualToResult ( )  (  )  ) 
 (= (brother Mike) Tom)
 (= (brother Sam) Bob)
-! (brother $x) ; just Tom and Bob are returned
+;! (brother $x) 
 
-;  !(assertEqualToResult ( )  (  )  ) 
+; ready works
+; !(assertEqualToResult (brother $x)  ( Tom Bob )  ) 
+
+; just Tom and Bob are returned
+
+; ! ((brother $x) is the brother of $x)
+; notready
+; !(assertEqualToResult ( (brother $x) is the brother of $x )  (( Bob is the brother of Sam) (Tom is the brother of Mike )  ) ) 
