@@ -30,7 +30,6 @@
 % PROGRAM FUNCTION: Translate Prolog code to MeTTa code
 %*********************************************************************************************
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,8 +39,8 @@
 % This operator could be used for a specialized equality or pattern-matching operation in the program.
 :- op(700,xfx,'=~').
 
-% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
-% the correct order independent of which file is loaded first the needed predicates and ops are defined.
+% Ensures that the file 'metta_interp' is loaded, which likely contains the main interpretation or processing logic 
+% for the system.
 :- ensure_loaded(metta_interp).
 
 % ===============================
