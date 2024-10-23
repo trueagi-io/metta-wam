@@ -14,7 +14,7 @@ The main components of the module are:
 ### Multifile Declarations:
 This module makes use of the following multifile predicates, which can be extended across different modules:
   - `afn_stem_filename/3`: Associates the absolute file name, file name stem, and the original file name.
-  - `metta_file_buffer/5`: Stores processed S-expression data along with its file position and source file.
+  - `metta_file_buffer/7`: Stores processed S-expression data along with its file position and source file.
   - `metta_file_comment/5`: Stores processed comment data along with its file position and source file.
 
 ### Example Use Case:
@@ -30,6 +30,9 @@ handling of lists and individual items.s * *
 */
 
 
+% Ensure that the `metta_interp` library is loaded,
+% That loads all the predicates called from this file
+:- ensure_loaded(metta_interp).
 
 %!  parse_sexpr_untyped(+Input, -Output) is det.
 %
@@ -668,9 +671,13 @@ format_time_remaining(Seconds, FormattedTime) :-
 %
 % The process involves reading the stream for S-expressions, comments, and positions,
 % then writing those as structured facts to the output. This includes handling multifile
-% declarations (`afn_stem_filename/3`, `metta_file_buffer/5`, and `metta_file_comments/5`)
+% declarations (`afn_stem_filename/3`, `metta_file_buffer/7`, and `metta_file_comments/5`)
 % for modular handling of facts across multiple files.
 :- dynamic ok_to_stop/1.
+
+process_expressions(FileName,_InStream, _OutStream) :- atomic(FileName), fail,
+    symbol_concat(FileName, '.buffer~', BufferFile),
+    exists_file(BufferFile),ensure_loaded(BufferFile), !.
 
 process_expressions(FileName, InStream, OutStream) :-
     % Get total number of lines in the file
@@ -689,34 +696,33 @@ process_expressions(FileName, InStream, OutStream) :-
     ignore(Stem = FileName),  % Assign the input file name if no stream file name.
     absolute_file_name(Stem, AFNStem),  % Get the absolute path of the file.
 
-    % Declare multifile predicates for storing file-related facts.
-    write_readably(OutStream, :- multifile(afn_stem_filename/3)),
-    write_readably(OutStream, :- dynamic(metta_file_buffer/5)),
-    write_readably(OutStream, :- multifile(metta_file_buffer/5)),
+   
+   WriteOutput = write_readably(OutStream),
 
-    % Record the absolute file name, file name stem, and the original file name.
-    write_readably(OutStream, afn_stem_filename(AFNStem, Stem, FileName)),
+   % Record the absolute file name, file name stem, and the original file name.
+   call(WriteOutput,  afn_stem_filename(AFNStem, Stem, FileName)),
+   % Declare multifile predicates for storing file-related facts.
+   call(WriteOutput, :- multifile(afn_stem_filename/3)),
+   call(WriteOutput, :- dynamic(metta_file_buffer/7)),
+   call(WriteOutput, :- multifile(metta_file_buffer/7)),
+    
+    locally(nb_setval('$file_src_name', AFNStem),
+     locally(nb_setval('$file_src_write_readably', WriteOutput),
+     locally(nb_setval('$file_src_depth', 0),
+       setup_call_cleanup(flag('$file_src_ordinal', Was, 0),
+        % Start reading and processing expressions from the input stream.
+         process_expressions_now(FileName, InStream),
+                          flag('$file_src_ordinal', _, Was))))).
 
-    % Start reading and processing expressions from the input stream.
+
+process_expressions_now(FileName, InStream):-
     repeat,
-    read_position(InStream, _Line_It, _Col_It, _CharPos_Item, Position),  % Retrieve line, column, and character position.
-    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
-
-    % Write any stored comments to the output.
-    forall(retract(metta_file_comment(_Line, _Col, _CharPos, Comment, Pos)),
-           write_readably(OutStream, metta_file_buffer(+, Comment, [], AFNStem, Pos))),
-
+    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.    
+    Item = end_of_file, !,
     % If end of file is reached, stop processing and update the ok_to_stop flag.
-    (   Item = end_of_file ->
-       (retractall(ok_to_stop(FileName, _)),  % Remove the previous value
-        assertz(ok_to_stop(FileName, true)),  % Set ok_to_stop to true to signal the thread to stop
-        !)
-    ;   % Write the contents and make assertions for the processed item.
-      (once((write_readably(OutStream, metta_file_buffer(+, Item, [], AFNStem, Position)),
-        %make_DL(InStream, OutStream, AFNStem, Item),
-        %flush_output(OutStream),  % Ensure the output is flushed.
-       true)), fail)  % Continue processing the next item.
-    ).
+    retractall(ok_to_stop(FileName, _)),  % Remove the previous value
+    assertz(ok_to_stop(FileName, true)),  % Set ok_to_stop to true to signal the thread to stop
+    !.
 
 %! make_DL(+InStream:stream, +OutStream:stream, +FileName:atom, +Item:term) is det.
 %
@@ -746,9 +752,11 @@ make_DL(InStream, OutStream, FileName, Item) :-
 % Writes a Prolog term to the output stream in a human-readable form.
 % @arg OutStream Stream to which the term is written.
 % @arg Item The term to be written.
-write_readably(OutStream, Item) :-
+write_readably(OutStream, Item) :- is_stream(OutStream),!, 
     write_term(OutStream, Item, [quoted(true)]),
     writeln(OutStream, '.').  % Append a period and a newline.
+write_readably(OutputP1, Item) :- callable(OutputP1),!, ignore(call(OutputP1, Item)).
+write_readably(_, _).
 
 %! read_sexpr(+Stream:stream, -Item) is det.
 %
@@ -757,27 +765,86 @@ write_readably(OutStream, Item) :-
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(I,O):- cont_sexpr(')', I, O).
+read_sexpr(I,O):- 
+  setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1000),
+    setup_call_cleanup(
+       (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
+        cont_sexpr(is_delimiter(),I, O),
+        b_setval('$file_src_depth', Lvl)),
+   nop(flag('$file_src_ordinal',_,Ordinal))).
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %
 % Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
 % Throws an error with stream position if the S-expression cannot be parsed.
-% @arg EndChar Character that denotes the end of a symbol.
+% @arg EndChar that denotes the end of a symbol.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
-cont_sexpr(EndChar, Stream, Item) :-
+
+
+cont_sexpr(EndChar,  Stream, Item):- 
+   skip_spaces(Stream),  % Ignore whitespace before reading the expression.   
+   read_line_char(Stream, StartRange),      
+   cont_sexpr_once(EndChar,  Stream, Item), !,
+   read_line_char(Stream, EndRange),
+   Range = range(StartRange,EndRange),
+   push_item_range(Item, Range).
+
+
+cont_sexpr_once(EndChar,  Stream, Item):- 
     skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
     (   Char = '(' -> read_list(')', Stream, Item)  % If '(', read an S-expression list.
     ;   Char = '[' -> (read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
     ;   Char = '{' -> (read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
     ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
-    ;   Char = '!' -> (read_sexpr(Stream, Subr), Item = exec(Subr))  % Read called directive
+    ;  (Char = '!', nb_current('$file_src_depth', 0)) -> (cont_sexpr_once(EndChar, Stream, Subr), Item = exec(Subr))  % Read called directive
     ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
     ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
     ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
-    ; read_symbolic(EndChar, Stream, Char, Item)            % Otherwise, read a symbolic expression.
+    ; read_symbolic(EndChar,  Stream, Char, Item)            % Otherwise, read a symbolic expression.
     ), !.
+
+can_do_level(0).
+can_do_level(_).
+
+push_item_range(Item, Range):- 
+    ignore((
+     nb_current('$file_src_depth', Lvl), can_do_level(Lvl),
+     subst_vars(Item, Term, [], NamedVarsList),
+     flag('$file_src_ordinal',Ordinal,Ordinal),
+     Buffer = metta_file_buffer(Lvl,Ordinal,indexed(TypeName,Outline),Term,NamedVarsList,Context,Range),
+     xrefed_outline_type(Term,Outline,TypeName),
+        % Assert the parsed content into the Metta buffer part
+       ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
+       ignore((nb_current('$file_src_write_readably', P1), callable(P1), call(P1, Buffer))))),
+       ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
+       !.
+
+xrefed_outline_type('$COMMENT'(Cmt,_,_),Cmt,metta_comment):-!.
+xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type('exec'(Cmt),'exec'(Cmt),metta_other):-!.
+xrefed_outline_type([EQ,Outline|_],Outline,metta_defun):- EQ=='=',!.
+xrefed_outline_type([CT,Outline|Stuff],[CT,Outline|Stuff],metta_typedecl):- CT==':',!.
+xrefed_outline_type([Op|Rest],[Op|Rest],KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type(Decl,Decl,metta_other):- is_list(Decl),!.
+xrefed_outline_type(ELSE,ELSE,metta_unknown):-!.
+
+op_execkind(Op,_):- \+ atomic(Op),!,is_list(Op).
+op_execkind(Op,metta_import):- op_type(import,Op),!.
+op_execkind(Op,metta_directive):- atom(Op),atom_concat(_,'!',Op),!.
+op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
+
+op_type(_,Op):- \+ atom(Op),!,fail.
+op_type(import,Op):- import_op(Op).
+op_type(decl(use),'bind!'). op_type(decl(use),'pragma!'). op_type(decl(doc),'@doc').
+op_type(ref_assert,Op):- atom_concat('assert',_,Op). 
+op_type(decl(impl),'='). op_type(decl(ftype),':'). op_type(decl(ftype),':<').
+
+import_op(Op):- \+ atom(Op),!,fail.
+import_op(Op):- atom_contains(Op,"include").
+import_op(Op):- atom_contains(Op,"import").
+import_op(Op):- atom_contains(Op,"load").
+       
 
 %! throw_stream_error(+Stream:stream, +Reason:term) is det.
 %
@@ -795,9 +862,12 @@ throw_stream_error(Stream, Reason) :-
 % @arg Stream The input stream from which to read.
 read_single_line_comment(Stream) :-
     % read_char(Stream, ';'),  % Skip the ';' character.
-    read_position(Stream, Line, Col, CharPos, Pos),
+    read_line_char(Stream, line_char(Line1, Col)),        
+    %succ(Col0, Col1),
     read_line_to_string(Stream, Comment),
-    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
+    atom_length(Comment,Len), EndCol is Col + Len,
+   Range = range(line_char(Line1, Col), line_char(Line1, EndCol)),
+   push_item_range('$COMMENT'(Comment, Line1, Col), Range).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %
@@ -812,6 +882,9 @@ read_position(Stream, Line, Col, CharPos, Position) :-
     stream_position_data(line_count, Position, Line),  % Extract the line number.
     stream_position_data(line_position, Position, Col),  % Extract the column number.
     stream_position_data(char_count, Position, CharPos).  % Extract the character position.
+
+read_line_char(Stream, line_char(Line0, Col)):-
+  read_position(Stream, Line, Col, _, _), succ(Line0, Line).
 
 %! skip_spaces(+Stream:stream) is det.
 %
@@ -863,11 +936,14 @@ skip_block_comment(Stream) :-
 %
 % @arg Stream The input stream from which to read the block comment.
 read_block_comment(Stream) :-
-    read_position(Stream, Line, Col, CharPos, Pos),  % Capture the start position.
+    read_line_char(Stream, StartRange),  % Capture the start position.    
     get_string(Stream, 2, _),  % Skip the '/*' characters.
     read_nested_block_comment(Stream, 1, Chars),  % Read the block comment, supporting nested ones.
-    string_chars(Comment, Chars),
-    assertz(metta_file_comment(Line, Col, CharPos, '$COMMENT'(Comment, Line, Col), Pos)).
+    string_chars(Comment, Chars),    
+   read_line_char(Stream, EndRange),   %capture the end pos
+   Range = range(StartRange,EndRange),
+   StartRange = line_char(Line, Col),
+   push_item_range('$COMMENT'(Comment, Line, Col), Range).
 
 %! read_nested_block_comment(+Stream:stream, +Level:int, -Comment:list) is det.
 %
@@ -908,17 +984,26 @@ read_nested_block_comment(Stream, Level, Acc, Comment) :-
 % Throws an error with stream position if the list cannot be parsed correctly.
 % @arg Stream Stream from which to read.
 % @arg List The list read from the stream.
-% @arg EndChar Character that denotes the end of the list.
-read_list(EndChar, Stream, List) :-
+% @arg EndChar that denotes the end of the list.
+read_list(EndChar,  Stream, List):- 
+  nb_current('$file_src_depth', LvL),
+  flag('$file_src_ordinal',Ordinal,Ordinal+1),
+  succ(LvL,LvLNext),
+  nb_setval('$file_src_depth', LvLNext),  
+  read_list_cont(EndChar,  Stream, List),
+  nb_setval('$file_src_depth', LvL).
+
+read_list_cont(EndChar,  Stream, List) :- 
     skip_spaces(Stream),  % Skip any leading spaces before reading.
+    
     peek_char(Stream, Char), !,
-    ( Char = EndChar ->  % Closing parenthesis signals the end of the list.
+    ( chall(EndChar,Char) ->  % Closing parenthesis signals the end of the list.
         get_char(Stream, _),  % Consume the closing parenthesis.
         List = []
     ; Char = end_of_file ->  % Unexpected end of file inside the list.
         throw_stream_error(Stream, syntax_error(unexpected_end_of_file, "Unexpected end of file in list"))
-    ; ( cont_sexpr(EndChar, Stream, Element),  % Read the next S-expression.
-        read_list(EndChar, Stream, Rest),  % Continue reading the rest of the list.
+    ; ( cont_sexpr(EndChar,  Stream, Element),  % Read the next S-expression.
+        read_list_cont(EndChar,  Stream, Rest),  % Continue reading the rest of the list.
         List = [Element | Rest])  % Add the element to the result list.
     ), !.
 
@@ -928,10 +1013,10 @@ read_list(EndChar, Stream, List) :-
 % Handles escape sequences within the string.
 % Throws an error with stream position if the quoted string cannot be parsed.
 % @arg Stream Stream from which to read.
-% @arg EndChar Character that denotes the end of the quoted string.
+% @arg EndChar that denotes the end of the quoted string.
 % @arg String The string read from the stream.
-read_quoted_string(Stream, EndChar, String) :-
-    read_until_char(Stream, EndChar, Chars),  % Read characters until the ending quote.
+read_quoted_string(Stream, EndChar,  String) :-
+    read_until_char(Stream, EndChar,  Chars),  % Read characters until the ending quote.
     string_chars(String, Chars).  % Convert the list of characters to a string.
 
 %! read_quoted_symbol(+Stream:stream, +EndChar:atom, -Symbol:atom) is det.
@@ -939,10 +1024,10 @@ read_quoted_string(Stream, EndChar, String) :-
 % Reads a quoted symbol from the stream, handling escapes and storing the result as a symbol.
 % Throws an error with stream position if the quoted symbol cannot be parsed.
 % @arg Stream Stream from which to read.
-% @arg EndChar Character that closes the quoted symbol.
+% @arg EndChar that closes the quoted symbol.
 % @arg Symbol The symbol read from the stream.
-read_quoted_symbol(Stream, EndChar, Symbol) :-
-    read_until_char(Stream, EndChar, Chars),
+read_quoted_symbol(Stream, EndChar,  Symbol) :-
+    read_until_char(Stream, was_end(EndChar),  Chars),
     ((EndChar == '\'', Chars = [Char])
              -> Symbol='#\\'(Char); atom_chars(Symbol, Chars)).
 
@@ -952,19 +1037,22 @@ read_quoted_symbol(Stream, EndChar, Symbol) :-
 % This function is used to help read quoted strings and symbols.
 % Throws an error with stream position if the end character is not found.
 % @arg Stream Stream from which to read.
-% @arg EndChar Character that indicates the end of the reading.
+% @arg EndChar that indicates the end of the reading.
 % @arg Chars List of characters read until the end character.
-read_until_char(Stream, EndChar, Chars) :-
+read_until_char(Stream, EndChar,  Chars) :-
     get_char(Stream, Char),
     (   Char = end_of_file -> throw_stream_error(Stream, unexpected_end_of_file(read_until_char(EndChar)))
-    ;   Char = EndChar -> Chars = []
+    ;   chall(EndChar,Char) -> Chars = []
     ;   Char = '\\' -> get_char(Stream, NextChar),
                        maybe_escape(Char, NextChar, CharRead),
-                       read_until_char(Stream, EndChar, RestChars),
+                       read_until_char(Stream, EndChar,  RestChars),
                        Chars = [CharRead | RestChars]
-    ;   read_until_char(Stream, EndChar, RestChars),
+    ;   read_until_char(Stream, EndChar,  RestChars),
         Chars = [Char | RestChars]
     ).
+
+chall(Test,Char):- \+ compound(Test),!, Test == Char.
+chall(Test,Char):- call(Test,Char),!.
 
 maybe_escape('\\', 'n', '\n').
 maybe_escape('\\', 't', '\t').
@@ -976,12 +1064,12 @@ maybe_escape(_Char, NextChar, NextChar).
 %
 % Reads a symbolic expression starting with a specific character, possibly incorporating more complex syntaxes.
 % Throws an error with stream position if the symbolic expression cannot be parsed.
-% @arg EndChar Character that indicates the end of the reading unless escaped.
+% @arg EndChar that indicates the end of the reading unless escaped.
 % @arg Stream Stream from which to read.
 % @arg FirstChar The first character of the symbolic expression.
 % @arg Symbolic The complete symbolic expression read.
-read_symbolic(EndChar, Stream, FirstChar, Symbolic) :-
-    read_symbolic_cont(EndChar, Stream, RestChars),
+read_symbolic(EndChar,  Stream, FirstChar, Symbolic) :-
+    read_symbolic_cont(EndChar,  Stream, RestChars),
     classify_and_convert_charseq([FirstChar| RestChars], Symbolic), !.
 
 %! classify_and_convert_charseq(+Chars:list, -Symbolic:term) is det.
@@ -1030,19 +1118,19 @@ classify_and_convert_charseq_(Chars, Symbolic) :-
 %
 % Continues reading symbolic characters from the stream until a delimiter is encountered.
 % If a backslash is followed by a delimiter, the delimiter is added as a regular character.
-% @arg EndChar Character that indicates the end of the reading unless escaped.
+% @arg EndChar that indicates the end of the reading unless escaped.
 % @arg Stream Stream from which to read.
 % @arg Chars List of characters read, forming part of a symbolic expression.
-read_symbolic_cont(EndChar, Stream, Chars) :-
+read_symbolic_cont(EndChar,  Stream, Chars) :-
     peek_char(Stream, NextChar),
     (   is_delimiter(NextChar) -> Chars = []  % Stop when a delimiter is found.
-    ;   EndChar == NextChar -> Chars = []  % Stop when an EndChar is found.
+    ;   (chall(EndChar,NextChar)) -> Chars = []  % Stop when an EndChar is found.
     ; ( get_char(Stream, NextChar),
         (   NextChar = '\\' ->  % If it's a backslash, read the next char.
           ( get_char(Stream, EscapedChar),
-            read_symbolic_cont(EndChar, Stream, RestChars),
+            read_symbolic_cont(EndChar,  Stream, RestChars),
             Chars = [EscapedChar | RestChars] ) % Add the escaped char normally.
-        ; ( read_symbolic_cont(EndChar, Stream, RestChars),
+        ; ( read_symbolic_cont(EndChar,  Stream, RestChars),
             Chars = [NextChar | RestChars] ) % Continue reading the symbolic characters.
         ))
     ), !.

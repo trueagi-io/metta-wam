@@ -26,9 +26,10 @@
 %
 %  =Help= is the documentation for the term under the cursor at line
 %  =Line=, character =Char= in the file =Path=.
-help_at_position(Path, Line, Char0, S) :-
+help_at_position(Path, Line0, Char0, S) :-
+    succ(Line0, Line1),
     %debug(server,"help_at_position",[]),
-    clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line, Char0)),
+    clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char0)),
     % TODO - add this in when I can import eval_args
     %debug(server,"Clause=~w",[Clause]),
     predicate_help(Path,Clause,Arity,S).
@@ -77,24 +78,25 @@ find_at_doc_aux2(Term,[_|T]) :-
     find_at_doc_aux2(Term,T).
 
 
-%!  clause_with_arity_in_file_at_position(-Clause, -Arity, +Path, +Position) is det.
+%!  clause_with_arity_in_file_at_position(-Term, -Arity, +Path, +Position) is det.
 %
-%   Reads the clause located at the specified position within the given file.
+%   Reads the Term (such as the Symbol) located at the specified position within the given file.
 %
-%   @arg Clause is the clause found at the specified position.
+%   @arg Term is the term found at the specified position.
 %   @arg Path is the path to the file being analyzed.
 %   @arg Position is the position in the file (typically line/character position).
 %
 %   @example Example usage:
-%       ?- clause_with_arity_in_file_at_position(Clause, 'file.pl', line_char(5, 10)).
+%       ?- clause_with_arity_in_file_at_position(Term, 'file.pl', line_char(5, 10)).
 %       Clause = (some_prolog_fact :- some_prolog_goal).
 %
-clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line, Char)) :-
+clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
     lsp_metta_changes:doc_text(Path,SplitText),
-    split_document_get_section_only(Line,LinesLeft,SplitText,d(_,Text,_EndPosition,_Meta)),
+    succ(Line0, Line1),
+    split_document_get_section_only(Line0,LinesLeft,SplitText,d(_,Text,_EndPosition,_Meta)),
     %string_codes(Text,TextChars),
-    %debug(server,"Input ~w",[TextChars]),
+    %debug(server,"Input ~w",[TextChars]),    
     setup_call_cleanup(
         open_string(Text,Stream),
         annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
@@ -102,6 +104,8 @@ clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line, Char)
     %debug(server,"1 ~w ~w ~w",[ItemList,0,Char]),
     (find_term_in_annotated_stream(0,ItemList,LinesLeft,Char,Clause,Arity) -> true ; Clause='',Arity=0).
     %debug(server,"2 ~w ~w",[Clause,Arity]).
+
+
 
 find_term_in_annotated_stream(_,a(Lpos,S,E,Term),Lpos,CPos,Term,-1) :- CPos=<E,!,S=<CPos.
 find_term_in_annotated_stream(Depth,[a(Lpos,S,E,Term)|T],Lpos,CPos,Term,Arity) :- CPos=<E,!,S=<CPos,
