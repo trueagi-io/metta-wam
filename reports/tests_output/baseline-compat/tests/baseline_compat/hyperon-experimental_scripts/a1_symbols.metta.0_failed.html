@@ -40,7 +40,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-22 20:23:22+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-23 10:09:56+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -394,7 +394,7 @@ Script started on 2024-10-22 20:23:22+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000532 secs. (532.14 microseconds) 
+; took 0.000465 secs. (464.88 microseconds) 
 
 !(assertEqualToResult (match &self (($x leaf2) leaf3) $x) (leaf1 (leaf0 leaf1)))
 
@@ -421,7 +421,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000879 secs. (878.84 microseconds) 
+; took 0.000787 secs. (787.46 microseconds) 
 
 !(assertEqualToResult (match &self ($who is a $what) ($who the $what)) ((Sam the frog) (Tom the cat) (Sophia the robot)))
 
@@ -448,7 +448,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000472 secs. (471.88 microseconds) 
+; took 0.000374 secs. (373.85 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Green $who) T) ($who is really green)) ((Sam is really green)))
 
@@ -464,7 +464,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000699 secs. (699.17 microseconds) 
+; took 0.000562 secs. (561.68 microseconds) 
 
 !(assertEqualToResult (match &self (:= ($color $who) T) ($who is really $color)) ((Sam is really Green) (Tom is really White)))
 
@@ -480,7 +480,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000835 secs. (835.23 microseconds) 
+; took 0.000809 secs. (808.59 microseconds) 
 
 !(assertEqualToResult (match &self (:= ($color $who) $tv) ('It's' $tv that $who is $color)) (('It's' T that Sam is Green) ('It's' T that Tom is White) ('It's' F that Tom is Green)))
 
@@ -497,7 +497,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.06</h3>
 ; 
 ; EVAL TEST
-; took 0.000169 secs. (168.64 microseconds) 
+; took 0.000173 secs. (173.32 microseconds) 
 
 !(assertEqualToResult (match &self (:= (Green Tom) $tv) $tv) (F))
 
@@ -523,7 +523,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A1-SYMBOLS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.000189 secs. (189.18 microseconds) 
+; took 0.000194 secs. (193.66 microseconds) 
 
 !(assertEqualToResult (match &self (isa $color color) $color) (red green blue))
 
@@ -532,7 +532,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 324,795 inferences, 0.087 CPU in 0.087 seconds (100% CPU, 3729782 Lips)
+% 324,431 inferences, 0.087 CPU in 0.087 seconds (100% CPU, 3733641 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a1_symbols.metta  0)
 <span class="ansi1"
@@ -678,7 +678,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-22 20:23:27+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-23 10:10:02+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

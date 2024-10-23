@@ -40,7 +40,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-22 20:21:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-23 10:08:07+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -364,9 +364,9 @@ Script started on 2024-10-22 20:21:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 5  "[(), (), ()]")
 P;HTML|
-;                                         (= 6  "0.08user 0.01system 0:00.09elapsed 100%CPU (0avgtext+0avgdata 25604maxresident)k")
+;                                         (= 6  "0.07user 0.01system 0:00.09elapsed 98%CPU (0avgtext+0avgdata 25696maxresident)k")
 P;HTML|
-;                                         (= 6  "0inputs+16outputs (0major+2995minor)pagefaults 0swaps")
+;                                         (= 6  "0inputs+16outputs (0major+3017minor)pagefaults 0swaps")
 P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-145/print_graph.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-145/print_graph.metta)
 
@@ -389,7 +389,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (y y (ɑ 0))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.77 milliseconds) 
+; took 0.002 secs. (1.98 milliseconds) 
 
 !(assertEqualToResult (add-atom &ex1 (y y (ɑ 0))) (()))
 
@@ -411,7 +411,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (x z (ɑ 0))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.89 milliseconds) 
+; took 0.002 secs. (1.99 milliseconds) 
 
 !(assertEqualToResult (add-atom &ex1 (x z (ɑ 0))) (()))
 
@@ -433,7 +433,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > ((ɑ 0) 1 A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.87 milliseconds) 
+; took 0.002 secs. (1.96 milliseconds) 
 
 !(assertEqualToResult (add-atom &ex1 ((ɑ 0) 1 A)) (()))
 
@@ -471,7 +471,7 @@ nx -> ɑ0 [label="nz"]
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 288,569 inferences, 0.077 CPU in 0.077 seconds (100% CPU, 3760461 Lips)
+% 288,677 inferences, 0.076 CPU in 0.077 seconds (99% CPU, 3774032 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/issues/metta-wam-issue-145/print_graph.metta  0)
 <span class="ansi1"
@@ -615,7 +615,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-22 20:21:37+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-23 10:08:12+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

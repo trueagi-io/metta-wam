@@ -33,7 +33,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-22 20:35:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-23 10:21:57+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -367,7 +367,7 @@ Script started on 2024-10-22 20:35:17+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000195 secs. (195.05 microseconds) 
+; took 0.000177 secs. (176.89 microseconds) 
 
 !(assertEqualToResult (superpose (a b c)) (a b c))
 
@@ -387,7 +387,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000235 secs. (234.62 microseconds) 
+; took 0.000279 secs. (279.40 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)))) (a b c))
 
@@ -407,7 +407,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000337 secs. (336.78 microseconds) 
+; took 0.000427 secs. (426.65 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) (superpose (x y z)))) (a b c x y z))
 
@@ -427,7 +427,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERPOSE-NESTED.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000368 secs. (367.73 microseconds) 
+; took 0.000328 secs. (327.94 microseconds) 
 
 !(assertEqualToResult (superpose ((superpose (a b c)) x y z)) (a b c x y z))
 
@@ -436,7 +436,7 @@ Deterministic: ()<span class="ansi38-255165009"
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 184,542 inferences, 0.050 CPU in 0.050 seconds (100% CPU, 3714296 Lips)
+% 184,686 inferences, 0.050 CPU in 0.050 seconds (100% CPU, 3723080 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/superpose_nested.metta  0)
 <span class="ansi1"
@@ -579,7 +579,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-22 20:35:23+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-23 10:22:03+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
