@@ -383,7 +383,7 @@ into_result_object(Help,Response):-  Help=Response,!.
 
 :- discontiguous(handle_msg/3).
 
-handle_msg(Method, Msg, Response):- 
+handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
 
 % messages (with a response)
