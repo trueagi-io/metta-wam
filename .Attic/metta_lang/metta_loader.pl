@@ -810,6 +810,10 @@ my_line_count(In, seek($,0,current,CC)):-
 my_line_count(In,/*position*/(Pos)):-
    stream_property(In,position(Pos)).
 
+% For old code still using metta_file_buffer/5  
+metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount):-
+  metta_file_buffer(0,_Ord,_Kind, Expr, NamedVarsList,Filename, LineCount).
+
 
 load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
