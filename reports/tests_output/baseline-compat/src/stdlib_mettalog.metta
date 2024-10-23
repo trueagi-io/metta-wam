@@ -1442,10 +1442,10 @@
 
 ; TODO: Segmentation fault (core dumped) when calling !(help &self)
 ; TODO: help! not working for &self (segmentation fault)
-;(@doc &self
-;  (@desc "Returns reference to the current atomspace")
-;  (@params ())
-;  (@return "Reference to the current atomspace"))
+(@doc &self
+  (@desc "Returns reference to the current atomspace")
+  (@params ())
+  (@return "Reference to the current atomspace"))
 
 ; TODO: help! not working for operations which are defined in both Python and
 ; Rust standard library: +, -, *, /, %, <, >, <=, >=, ==
@@ -1600,7 +1600,7 @@
 ; !(import! &corelib "src/canary/stdlib_mettalog.metta")
 ;!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc findall!
   (@desc "Takes a Template and a Goal. Returns the list resulting from substituting all bindings from solving Goal into Template.
   See Prolog's built-in predicate findall/3.")
@@ -1611,6 +1611,7 @@
 (: findall! (-> Expression Expression Expression))
 
 ;; Functional Programming
+;; Public MeTTaLog
 (@doc maplist!
   (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
  The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
@@ -1626,6 +1627,7 @@
 (: maplist! (-> Function Expression Expression Expression Expression))
 
 ;; Functional Programming
+;; Public MeTTaLog
 (@doc concurrent-maplist!
   (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
  The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
@@ -1641,7 +1643,7 @@
 (: concurrent-maplist! (-> Function Expression Expression Expression))
 (: concurrent-maplist! (-> Function Expression Expression Expression Expression))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc throw
   (@desc "Raises an exception. See also `catch`; the system will look for the innermost catch such that Exception unifies with Catcher.")
   (@params (
@@ -1649,7 +1651,7 @@
   (@return "Does not return - raises an exception"))
 (: throw (-> Atom ErrorType))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc catch
   (@desc "Executes Form. If an exception is raised with `throw` during execution of Form while this is the innermost catch such that Catcher unifies with Exception, the exception is caught. Recover is then executed with bindings from Catcher.")
   (@params (
@@ -1659,7 +1661,7 @@
   (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
 (: catch (-> Atom Atom Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc max-time!
   (@desc "Executes Form. If execution takes longer than Time, will raise a time_limit_exceeded exception. See also `catch`.")
   (@params (
@@ -1668,7 +1670,7 @@
   (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
 (: max-time! (-> Number Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc sleep!
   (@desc "Sleeps for N seconds.")
   (@params (
@@ -1676,7 +1678,7 @@
   (@return "Returns True after sleeping completes."))
 (: sleep! (-> Number Bool))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc limit!
   (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
   (@params (
@@ -1685,7 +1687,7 @@
   (@return "First Limit results of Form."))
 (: limit! (-> Number Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc number-of
   (@desc "Returns the number of results Form generates")
   (@params (
@@ -1693,7 +1695,7 @@
   (@return "Number of results of Form."))
 (: number-of (-> Atom Number))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc offset!
   (@desc "Executes Form ignoring the first Count results. Results are returned as soon as they become available.")
   (@params (
@@ -1702,7 +1704,7 @@
   (@return "Results of Form after ignoring the first Count results that are generated."))
 (: offset! (-> Number Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc call!
   (@desc "Trampolines to Prolog's call. Only works when the predicate and each arg are provided separately. e.g. !(call! ls /) will print the root directory but !(call! ls(/)) will fail.")
   (@params (
@@ -1710,15 +1712,15 @@
   (@return "True if the call succeeds, False otherwise."))
 (: call! (-> Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
   (@params (
-    (@param "String")))
+    (@param "PrologSrc")))
   (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
 (: call-string! (-> String Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc call-cleanup!
   (@desc "Same as (setup-call-cleanup! true Form Cleanup). setup-call-cleanup! is recommended instead if Cleanup is intended to undo prior side-effects - place those side-effects in Setup.")
   (@params (
@@ -1727,7 +1729,7 @@
   (@return "Result of Form."))
 (: call-cleanup! (-> Atom Atom Atom))
 
-;; Public MeTTa
+;; Public MeTTaLog
 (@doc setup-call-cleanup!
   (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception. For each result of Setup, Form is run to completion, then Cleanup is run.")
   (@params (

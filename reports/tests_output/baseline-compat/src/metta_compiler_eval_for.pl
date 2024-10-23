@@ -223,7 +223,7 @@ functional_predicate_arg(F, A, L):-
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L),
   \+ is_absorbed_return(F,_,_Bool).
 
-metta_atom_file_buffer(Atom):- metta_file_buffer(+, Atom,_NamedVarsList,_Filename,_LineCount).
+metta_atom_file_buffer(Atom):- metta_file_buffer(0,_Ord,Kind, Atom,_NamedVarsList,_Filename,_LineCount).
 metta_atom_file_buffer(Atom):- metta_atom(Atom).
 
 file_decl_arity(F,A):- freeze(Arity, 'PredArity' == Arity), metta_atom_file_buffer([Arity,F,A]).

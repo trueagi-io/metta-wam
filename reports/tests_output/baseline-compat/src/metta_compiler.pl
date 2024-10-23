@@ -64,8 +64,11 @@
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_parser).
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
+% the correct order independent of which file is loaded first the needed predicates and ops are defined.
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
+
 % =======================================
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).
@@ -253,7 +256,7 @@ functional_predicate_arg(F, A, L):-
 functional_predicate_arg(F, A, L):- functional_predicate_arg_tricky(F, A, L),
   \+ is_absorbed_return(F,_,_Bool).
 
-metta_atom_file_buffer(Atom):- metta_file_buffer(+,Atom,_NamedVarsList,_Filename,_LineCount).
+metta_atom_file_buffer(Atom):- metta_file_buffer(0,_Ord, _Kind,Atom,_NamedVarsList,_Filename,_LineCount).
 metta_atom_file_buffer(Atom):- metta_atom(Atom).
 
 file_decl_arity(F,A):- freeze(Arity, 'PredArity' == Arity), metta_atom_file_buffer([Arity,F,A]).
@@ -896,6 +899,7 @@ p2s(P,S):- into_list_args(P,S).
 get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),symbol(DT).
 
 numeric(N):- number(N),!.
+numeric(N):- compound(N), !, fail.
 numeric(N):- get_attr(N,'Number','Number').
 numeric(N):- get_decl_type(N,DT),(DT=='Int',DT=='Number').
 decl_numeric(N):- numeric(N),!.
