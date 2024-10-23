@@ -102,7 +102,7 @@ offset_line_char(Stream, Offset, position(Line, Char)) :-
 collapse_adjacent([X|Rst], [X|CRst]) :-
     collapse_adjacent(X, Rst, CRst).
 collapse_adjacent(X, [Y|Rst], CRst) :-
-    succ(X, Y), !,
+    succl(X, Y), !,
     collapse_adjacent(Y, Rst, CRst).
 collapse_adjacent(_, [X|Rst], [X|CRst]) :- !,
     collapse_adjacent(X, Rst, CRst).
@@ -128,7 +128,7 @@ relative_ref_location(Here, _, position(Line0, Char1),
 relative_ref_location(Here, _, local(Line1),
                       _{uri: Here, range: _{start: _{line: Line0, character: 1},
                                             end: _{line: NextLine, character: 0}}}) :-
-    !, succ(Line0, Line1), succ(Line1, NextLine).
+    !, succl(Line0, Line1), succ(Line1, NextLine).
 relative_ref_location(_, Goal, imported(Path), Location) :-
     path_doc(Path, ThereUri),
     xref_source(Path),

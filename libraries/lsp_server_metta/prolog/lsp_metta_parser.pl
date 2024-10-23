@@ -13,7 +13,7 @@ annotated_post_newline(p(L,_),p(L1,0)) :-
 annotated_read_sexpr_list(LC0,LC0,Stream,[]) :- at_end_of_stream(Stream),!.
 annotated_read_sexpr_list(LC0,LC2,Stream,[Item|L]) :-
     annotated_read_sexpr(LC0,LC1,Stream,Item),
-    %debug(server,"x ~w",[Item]),
+    %debug(lsp(low),"x ~w",[Item]),
     annotated_read_sexpr_list(LC1,LC2,Stream,L).
 
 annotated_read_sexpr(LC0,LC1,I,O):- annotated_cont_sexpr(LC0,LC1,')',I,O).

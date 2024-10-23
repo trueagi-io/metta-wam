@@ -99,7 +99,7 @@ handle_completions("textDocument/completion", Msg, _{id: Id, result: Completions
      _{textDocument: _{uri: Uri},
        position: _{line: Line0, character: Char0}} :< Params,
      path_doc(Path, Uri),
-     succ(Line0, Line1),
+     succl(Line0, Line1),
      completions_at(Path, line_char(Line1, Char0), Completions).
 
 

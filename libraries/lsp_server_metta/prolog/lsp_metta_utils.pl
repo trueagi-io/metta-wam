@@ -19,6 +19,7 @@
 % Module with a bunch of helper predicates for looking through prolog
 % source and stuff.
 %
+% @author Roy Ward
 % @author James Cash
 % */
 
@@ -27,11 +28,11 @@
 %  =Help= is the documentation for the term under the cursor at line
 %  =Line=, character =Char= in the file =Path=.
 help_at_position(Path, Line0, Char0, S) :-
-    succ(Line0, Line1),
-    %debug(server,"help_at_position",[]),
+    succl(Line0, Line1),
+    %debug(lsp(low),"help_at_position",[]),
     clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char0)),
     % TODO - add this in when I can import eval_args
-    %debug(server,"Clause=~w",[Clause]),
+    %debug(lsp(low),"Clause=~w",[Clause]),
     predicate_help(Path,Clause,Arity,S).
 
 predicate_help(_,Var,_,S) :- var(Var),!,format(string(S),"Var: ~w",[Var]).
@@ -93,17 +94,17 @@ find_at_doc_aux2(Term,[_|T]) :-
 clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
     lsp_metta_changes:doc_text(Path,SplitText),
-    succ(Line0, Line1),
+    succl(Line0, Line1),
     split_document_get_section_only(Line0,LinesLeft,SplitText,d(_,Text,_EndPosition,_Meta)),
     %string_codes(Text,TextChars),
-    %debug(server,"Input ~w",[TextChars]),    
+    %debug(lsp(low),"Input ~w",[TextChars]),    
     setup_call_cleanup(
         open_string(Text,Stream),
         annotated_read_sexpr_list(p(0,0),_,Stream,ItemList),
         close(Stream)),
-    %debug(server,"1 ~w ~w ~w",[ItemList,0,Char]),
+    %debug(lsp(low),"1 ~w ~w ~w",[ItemList,0,Char]),
     (find_term_in_annotated_stream(0,ItemList,LinesLeft,Char,Clause,Arity) -> true ; Clause='',Arity=0).
-    %debug(server,"2 ~w ~w",[Clause,Arity]).
+    %debug(lsp(low),"2 ~w ~w",[Clause,Arity]).
 
 
 
@@ -125,12 +126,12 @@ get_document_symbol_aux([d(L,Text,_,_)|Rest],Line0,Result) :-
         open_string(Text,Stream),
         annotated_read_sexpr_list(p(Line0,0),_,Stream,ItemList),
         close(Stream)),
-    %debug(server,"XXXXXXXXXXXXX: ~w~w",[Line0,ItemList]),
+    %debug(lsp(low),"XXXXXXXXXXXXX: ~w~w",[Line0,ItemList]),
     get_document_symbol_aux2(ItemList,R0),
-    %debug(server,"X1",[]),
+    %debug(lsp(low),"X1",[]),
     Line1 is Line0+L,
     get_document_symbol_aux(Rest,Line1,Result0),
-    %debug(server,"X2",[]),
+    %debug(lsp(low),"X2",[]),
     append(R0,Result0,Result).
 
 get_atom_kind_name('',0,'') :- !.
