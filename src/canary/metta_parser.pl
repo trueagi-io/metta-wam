@@ -807,21 +807,119 @@ cont_sexpr_once(EndChar,  Stream, Item):-
 can_do_level(0).
 can_do_level(_).
 
+
+%!  maybe_name_vars(+List) is det.
+%
+%   Conditionally sets the variable names if the list is not empty.
+%
+%   @arg List is the list of variable names.
+maybe_name_vars(List):- \+ is_list(List), !.
+maybe_name_vars([]):-!.
+maybe_name_vars([N=Var|List]):-
+    ignore((n_to_vn(N,NN),Var = '$VAR'(NN))),
+    maybe_name_vars(List).
+n_to_vn(N,NN):- var(N),!,sformat(NN,'~p',[N]).
+n_to_vn(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
+n_to_vn(N,NN):- \+ atom(N),!,sformat(NN,'~p',[N]).
+n_to_vn('_','_'):-!.
+n_to_vn(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn(N,NN):-!,sformat(NN,'~w',[N]).
+
+better_typename(TypeName1,TypeName2,array):- var(TypeName1),var(TypeName2),!.
+better_typename(TypeName1,TypeName2,TypeName1):- var(TypeName2),!.
+better_typename(TypeName1,TypeName2,TypeName2):- var(TypeName1),!.
+better_typename(TypeName1,TypeName2,TypeName1):- TypeName2=unknown,!.
+better_typename(metta_unknown,TypeName,TypeName).
+better_typename(metta_other,TypeName,TypeName).
+better_typename(_,TypeName,TypeName).
+
 push_item_range(Item, Range):- 
     ignore((
      nb_current('$file_src_depth', Lvl), can_do_level(Lvl),
      subst_vars(Item, Term, [], NamedVarsList),
      flag('$file_src_ordinal',Ordinal,Ordinal),
-     Buffer = metta_file_buffer(Lvl,Ordinal,indexed(TypeName,Outline),Term,NamedVarsList,Context,Range),
-     xrefed_outline_type(Term,Outline,TypeName),
+     Buffer = metta_file_buffer(Lvl,Ordinal,TypeNameCompound,Term,NamedVarsList,Context,Range),
+     ignore(xrefed_outline_type(Term,Outline,TypeName1)),
+     ignore((Lvl==0,type_symbol_clause(TypeName2,_Symbol,Term), \+ member(TypeName2,[ref(_)]))),
+     better_typename(TypeName1,TypeName2,TypeName),
+     ((nonvar(Outline),Outline\=@=Item) -> TypeNameCompound=indexed(TypeName,Outline); TypeNameCompound=TypeName),
         % Assert the parsed content into the Metta buffer part
        ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
        ignore((nb_current('$file_src_write_readably', P1), callable(P1), call(P1, Buffer))))),
        ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
        !.
 
+
+metta_caller(Clause, Symbol):- is_definition(decl(_),Symbol,Clause).
+metta_callee(Clause, Symbol):- is_definition(ref(_) ,Symbol,Clause).
+
+into_op_head_body(Clause,Op,Head,Body):- var(Clause),!,freeze(into_op_head_body(Clause,Op,Head,Body)).
+into_op_head_body(exec(List),Op,Head,Body):- !, into_op_head_body_exec(List,Op,Head,Body).
+into_op_head_body('$COMMENT'(List,_,_),none,[],List):- !.
+into_op_head_body([Op|List],Op,Head,Body):- nonvar(Op), op_type(import,Op),!,append(Body,[Head],List).
+into_op_head_body([Op,Head|Body],Op,Head,Body):- nonvar(Op), op_type(_,Op),!.
+into_op_head_body(Head,'=',Head,[]):- is_list(Head).
+
+into_op_head_body_exec([Op|List],Op,Head,Body):- nonvar(Op), op_type(import,Op),!,append(Body,[Head],List).
+into_op_head_body_exec([Op,Head|Body],Op,Head,Body):- nonvar(Op), op_type(_,Op),!.
+into_op_head_body_exec(Body,[],[],Body).
+
+is_exec(exec(_)).
+
+is_definition(Type,Symbol,Clause):- 
+   freeze(Type, (is_exec(Clause),compound(Type))),
+   freeze(Clause, (is_exec(Clause),compound(Type))),
+   into_op_fun_rest_body(Clause,Op,Fun,Rest,Body), 
+   type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
+
+type_symbol_clause(Type,Symbol,Clause):-
+  clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
+
+clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
+   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
+   once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
+   type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
+   
+
+into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):- 
+  into_op_head_body(Clause,Op,Head,Body), split_head(Head,Fun,Rest).
+
+split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
+split_head(Head,Head,[]).
+
+type_op_head_rest_body(decl(use), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
+type_op_head_rest_body(ref(a), Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
+
+type_op_head_rest_body(ref(a), Symbol,_Op,_Head, Rest, Body):- not_promiscuous(Symbol),sub_symbol(Symbol,[Body, Rest]).
+type_op_head_rest_body(Type,Symbol, Op, Head,_Rest,_Body):- op_type(Type,Op),!,sub_symbol(Symbol,Head).
+
+not_promiscuous(Symbol):- var(Symbol), !, freeze(Symbol,not_promiscuous(Symbol)).
+not_promiscuous(Symbol):- number(Symbol),!, fail.
+not_promiscuous(Symbol):- \+ promiscuous_symbol(Symbol).
+
+%promiscuous_symbol(+Term) is semidet.
+promiscuous_symbol(Term):- \+ atom(Term),!,fail.
+promiscuous_symbol('=').
+promiscuous_symbol(':').
+promiscuous_symbol('->').
+%promiscuous_symbol(Atom):- sub_atom(Atom,0,1,After,Sub),(After==0->(!,fail);true),promiscuous_symbol_S(Sub).
+promiscuous_symbol(Atom):- atom_concat(_,'=',Atom),!.
+promiscuous_symbol(Atom):- atom_concat('@',_,Atom),!.
+
+sub_symbol(Symbol,Head):- ground(Symbol),!,sub_var(Symbol,Head),!.
+sub_symbol(Symbol,Head):- \+ var(Symbol), once(sub_term(Symbol,Head)),!.
+sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atom(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term(Symbol,Head),string(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atomic(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term(Symbol,Head),!.
+
+xrefed_outline_type(Val,Val,variable):- is_ftVar(Val),!.
+xrefed_outline_type(Val,Val,number):- number(Val),!.
+xrefed_outline_type(Val,Val,string):- string(Val),!.
+xrefed_outline_type(Val,Val,constant):- symbolic(Val),!.
 xrefed_outline_type('$COMMENT'(Cmt,_,_),Cmt,metta_comment):-!.
-xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),!.
+xrefed_outline_type('exec'([Op|Rest]),'exec'([Op|Rest]),KindNumber):- op_execkind(Op,KindNumber),nonvar(KindNumber),!.
 xrefed_outline_type('exec'(Cmt),'exec'(Cmt),metta_other):-!.
 xrefed_outline_type([EQ,Outline|_],Outline,metta_defun):- EQ=='=',!.
 xrefed_outline_type([CT,Outline|Stuff],[CT,Outline|Stuff],metta_typedecl):- CT==':',!.
@@ -1053,6 +1151,7 @@ read_until_char(Stream, EndChar,  Chars) :-
 
 chall(Test,Char):- \+ compound(Test),!, Test == Char.
 chall(Test,Char):- call(Test,Char),!.
+was_end(X,Y):- X==Y.
 
 maybe_escape('\\', 'n', '\n').
 maybe_escape('\\', 't', '\t').

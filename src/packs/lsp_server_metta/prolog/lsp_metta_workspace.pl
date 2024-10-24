@@ -75,24 +75,6 @@ metta_atom_xref(Atom, Path, Loc):-
     Atom =@= Copy,
     ignore(maybe_name_vars(NamedVarsList)).
 
-%!  maybe_name_vars(+List) is det.
-%
-%   Conditionally sets the variable names if the list is not empty.
-%
-%   @arg List is the list of variable names.
-maybe_name_vars(List):- \+ is_list(List), !.
-maybe_name_vars([]):-!.
-maybe_name_vars([N=Var|List]):-
-    ignore((n_to_vn(N,NN),Var = '$VAR'(NN))),
-    maybe_name_vars(List).
-n_to_vn(N,NN):- var(N),!,sformat(NN,'~p',[N]).
-n_to_vn(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
-n_to_vn(N,NN):- \+ atom(N),!,sformat(NN,'~p',[N]).
-n_to_vn('_','_'):-!.
-n_to_vn(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
-n_to_vn(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'~w',[N1]).
-n_to_vn(N,NN):-!,sformat(NN,'~w',[N]).
-
 
 %!  predicate_help_hook(+HookType, +Path, +Term, +Arity, -S) is semidet.
 %
@@ -325,14 +307,7 @@ about_term([_,[Atom|_]|_],Term):- sub_var(Term,Atom),!.
 about_term([_,Atom|_],Term):- ==(Term,Atom),!.
 about_term([Atom|_],Term):- \+ promiscuous_symbol(Term), sub_var(Term,Atom),!.
 about_term(exec(Atom),Term):-!, sub_var(Term, Atom).
-%promiscuous_symbol(+Term) is semidet.
-promiscuous_symbol(Term):- \+ atom(Term),!,fail.
-promiscuous_symbol('=').
-promiscuous_symbol(':').
-promiscuous_symbol('->').
-%promiscuous_symbol(Atom):- sub_atom(Atom,0,1,After,Sub),(After==0->(!,fail);true),promiscuous_symbol_S(Sub).
-promiscuous_symbol(Atom):- atom_concat(_,'=',Atom),!.
-promiscuous_symbol(Atom):- atom_concat('@',_,Atom),!.
+
 
 :- multifile(user:handle_msg_hook/3).
 :- dynamic(user:handle_msg_hook/3).
