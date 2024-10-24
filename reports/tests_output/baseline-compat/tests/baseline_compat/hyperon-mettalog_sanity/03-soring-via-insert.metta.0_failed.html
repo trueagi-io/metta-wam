@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -35,7 +36,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:13:10+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:55:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -358,7 +359,10 @@ Script started on 2024-10-23 10:13:10+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 7  "0.07user 0.00system 0:00.08elapsed 98%CPU (0avgtext+0avgdata 31456maxresident)k")
 P;HTML|
 ;                                         (= 7  "0inputs+0outputs (0major+3749minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta is 773 bytes (32 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -388,12 +392,12 @@ Script started on 2024-10-23 10:13:10+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000251 secs. (251.48 microseconds) 
+; took 0.000246 secs. (246.16 microseconds) 
 
 !(assertEqualToResult (get-type insert) ((-> $a#2 (List $a#2) (List $a#2))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((-> $_10362 (List $_10362) (List $_10362))) ((-> $_3966 (List $_3966) (List $_3966)))))
+>(loonit_success  (equal_enough_for_test  ((-> $_10366 (List $_10366) (List $_10366))) ((-> $_3972 (List $_3972) (List $_3972)))))
 </span>
 Deterministic: ()<span class="ansi38-255165000"
 > (= (insert $x Nil) (Cons $x Nil))
@@ -407,7 +411,7 @@ Deterministic: ()<span class="ansi38-255165000"
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.02</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.79 milliseconds) 
+; took 0.003 secs. (2.77 milliseconds) 
 
 !(assertEqual (insert 2 (insert 1 Nil)) (Cons 1 (Cons 2 Nil)))
 
@@ -423,7 +427,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000488 secs. (488.00 microseconds) 
+; took 0.000439 secs. (438.97 microseconds) 
 
 !(assertEqual (Cons 1 Nil) (Cons 1 Nil))
 
@@ -439,7 +443,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000770 secs. (770.46 microseconds) 
+; took 0.000788 secs. (788.15 microseconds) 
 
 !(assertEqual (insert 1 Nil) (Cons 1 Nil))
 
@@ -455,7 +459,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.05</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.19 milliseconds) 
+; took 0.002 secs. (2.07 milliseconds) 
 
 !(assertEqual (insert 1 (insert 2 Nil)) (Cons 1 (Cons 2 Nil)))
 
@@ -471,7 +475,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.03-SORING-VIA-INSERT.06</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.70 milliseconds) 
+; took 0.007 secs. (7.21 milliseconds) 
 
 !(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
@@ -480,7 +484,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 380,916 inferences, 0.091 CPU in 0.091 seconds (100% CPU, 4188621 Lips)
+% 449,477 inferences, 0.111 CPU in 0.114 seconds (98% CPU, 4031988 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta  0)
 <span class="ansi1"
@@ -625,7 +629,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:13:16+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:55:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -31,7 +32,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:20:17+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:02:16+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -346,7 +347,10 @@ Script started on 2024-10-23 10:20:17+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 3  "0.06user 0.00system 0:00.07elapsed 98%CPU (0avgtext+0avgdata 31128maxresident)k")
 P;HTML|
 ;                                         (= 3  "0inputs+0outputs (0major+3690minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/let_superpose_if_case.metta is 597 bytes (24 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/let_superpose_if_case.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/let_superpose_if_case.metta)
 <span class="ansi38-255165000"
 > (: If (-> Bool Atom Atom))
@@ -373,7 +377,7 @@ Script started on 2024-10-23 10:20:17+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.LET-SUPERPOSE-IF-CASE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.32 milliseconds) 
+; took 0.003 secs. (2.51 milliseconds) 
 
 !(assertEqualToResult (let $y (superpose (3 4 5)) (If (> $y 3) (case (1 $y) (((1 3) (f 0)) ((1 4) (42 42)) ($else (1 1)))))) ((42 42) (1 1)))
 
@@ -389,7 +393,7 @@ Deterministic: ()
 >;; METTA-MORPH-TESTS.LET-SUPERPOSE-IF-CASE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.16 milliseconds) 
+; took 0.002 secs. (2.37 milliseconds) 
 
 !(assertEqualToResult (let $y (superpose (3 4 5)) (If (> $y 3) (case (1 $y) (((1 3) (f 0)) ((1 4) (42 42)) ($else (1 1)))))) ((42 42) (1 1)))
 
@@ -398,7 +402,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 204,543 inferences, 0.053 CPU in 0.053 seconds (100% CPU, 3861463 Lips)
+% 246,907 inferences, 0.074 CPU in 0.076 seconds (97% CPU, 3342089 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/let_superpose_if_case.metta  0)
 <span class="ansi1"
@@ -539,7 +543,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:20:22+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:02:22+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

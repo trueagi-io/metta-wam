@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165009 { color: #FFA509; }
@@ -27,7 +28,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:19:18+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:01:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -340,7 +341,10 @@ Script started on 2024-10-23 10:19:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "0.04user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30800maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+3661minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/add_atom_match.metta is 325 bytes (17 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/add_atom_match.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/add_atom_match.metta)
 <span class="ansi38-255165000"
 > (: sequential (-> Expression %Undefined%))
@@ -367,7 +371,7 @@ Script started on 2024-10-23 10:19:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 > (man mortal)
 </span>; 
 ; EVAL TEST
-; took 0.003 secs. (2.65 milliseconds) 
+; took 0.003 secs. (2.86 milliseconds) 
 
 !(assertEqualToResult (sequential ((add-atom &self (man mortal)) (match &self ($A mortal) (mortal $A)))) (() (mortal man)))
 
@@ -376,7 +380,7 @@ Script started on 2024-10-23 10:19:18+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 127,422 inferences, 0.040 CPU in 0.040 seconds (100% CPU, 3152609 Lips)
+% 151,546 inferences, 0.055 CPU in 0.057 seconds (97% CPU, 2746617 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/add_atom_match.metta  0)
 <span class="ansi1"
@@ -516,7 +520,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:19:23+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:01:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

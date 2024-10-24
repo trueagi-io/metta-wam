@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -25,7 +26,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:10:04+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:52:02+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -338,7 +339,10 @@ Script started on 2024-10-23 10:10:04+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "0.05user 0.00system 0:00.06elapsed 98%CPU (0avgtext+0avgdata 31192maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+3665minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a2_opencoggy.metta is 915 bytes (35 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a2_opencoggy.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a2_opencoggy.metta)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -362,7 +366,7 @@ Script started on 2024-10-23 10:10:04+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.A2-OPENCOGGY.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000737 secs. (736.95 microseconds) 
+; took 0.000866 secs. (865.60 microseconds) 
 
 !(assertEqualToResult (match &self (EvaluationLink (PredicateNode "eats") (ListLink $x (ConceptNode "flies"))) $x) ((ConceptNode "Sam") (ConceptNode "Fritz")))
 
@@ -371,7 +375,7 @@ Script started on 2024-10-23 10:10:04+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 130,838 inferences, 0.039 CPU in 0.039 seconds (100% CPU, 3318980 Lips)
+% 157,961 inferences, 0.057 CPU in 0.059 seconds (96% CPU, 2764390 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/a2_opencoggy.metta  0)
 <span class="ansi1"
@@ -511,7 +515,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:10:09+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:52:08+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

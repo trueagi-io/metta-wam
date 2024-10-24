@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -38,20 +39,6 @@
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-013099040 { color: #0D6328; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
-.ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -72,7 +59,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:11:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:53:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -397,7 +384,10 @@ Script started on 2024-10-23 10:11:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 8  "0.05user 0.00system 0:00.06elapsed 100%CPU (0avgtext+0avgdata 31732maxresident)k")
 P;HTML|
 ;                                         (= 8  "0inputs+0outputs (0major+3895minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces.metta is 1.81K bytes (58 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces.metta)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -410,7 +400,10 @@ Script started on 2024-10-23 10:11:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 
 </span>P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta)
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta is 264 bytes (18 lines)
+</span>P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta)
 <span class="ansi38-255165000"
 > (Green is-a Color)
@@ -452,7 +445,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000552 secs. (552.28 microseconds) 
+; took 0.000644 secs. (644.15 microseconds) 
 
 !(assertEqualToResult (match &kb (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
@@ -469,7 +462,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000155 secs. (154.93 microseconds) 
+; took 0.000215 secs. (214.54 microseconds) 
 
 !(assertEqualToResult (match &self ($p is-a Color) $p) ())
 
@@ -489,7 +482,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.03</h3>
 ; 
 ; EVAL TEST
-; took 0.000302 secs. (302.48 microseconds) 
+; took 0.000374 secs. (373.71 microseconds) 
 
 !(assertEqual (match &kb (, (Venus orbit $x au) (Mars orbit $y au)) (- $y $x)) 0.8)
 
@@ -513,7 +506,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.04</h3>
 ; 
 ; EVAL TEST
-; took 0.000600 secs. (600.10 microseconds) 
+; took 0.000704 secs. (703.61 microseconds) 
 
 !(assertEqualToResult (match &kb ($prop is-a Color) (match &self ($obj is $prop) $obj)) (Ball))
 
@@ -531,37 +524,12 @@ Deterministic: ()
 
 </span>P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta)
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta is 264 bytes (18 lines)
+</span>P;HTML|
 ;                                         (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces_kb.metta)
 <span class="ansi38-255165000"
-> (Green is-a Color)
-</span><span class="ansi38-255165000"
-> (White is-a Color)
-</span><span class="ansi38-255165000"
-> (Blue is-a Color)
-</span><span class="ansi38-255165000"
-> (Red is-a Color)
-</span><span class="ansi38-255165000"
-> (Brown is-a Color)
-</span><span class="ansi38-255165000"
-> (Yellow is-a Color)
-</span><span class="ansi38-255165000"
-> (Earth is-a Planet)
-</span><span class="ansi38-255165000"
-> (Mars is-a Planet)
-</span><span class="ansi38-255165000"
-> (Venus is-a Planet)
-</span><span class="ansi38-255165000"
-> (Mars is Red)
-</span><span class="ansi38-255165000"
-> (Blood is Red)
-</span><span class="ansi38-255165000"
-> (Venus orbit 0.7 au)
-</span><span class="ansi38-255165000"
-> (Earth orbit 1 au)
-</span><span class="ansi38-255165000"
-> (Mars orbit 1.5 au)
-</span><span class="ansi38-255165000"
 > (Green is-a Color)
 </span><span class="ansi38-255165000"
 > (White is-a Color)
@@ -599,7 +567,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.C2-SPACES.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000496 secs. (495.70 microseconds) 
+; took 0.000664 secs. (663.79 microseconds) 
 
 !(assertEqualToResult (match &self (, ($obj is $prop) ($prop is-a Color) ($obj is-a Planet)) (Color of Planet $obj is $prop)) ((Color of Planet Mars is Red)))
 
@@ -608,7 +576,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 414,066 inferences, 0.122 CPU in 0.122 seconds (100% CPU, 3381008 Lips)
+% 476,381 inferences, 0.151 CPU in 0.158 seconds (95% CPU, 3163964 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/c2_spaces.metta  0)
 <span class="ansi1"
@@ -754,7 +722,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:11:17+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:53:18+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

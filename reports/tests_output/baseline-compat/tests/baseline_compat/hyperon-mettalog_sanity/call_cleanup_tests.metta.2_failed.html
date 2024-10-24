@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-013099040 { color: #0D6328; }
@@ -36,7 +37,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:13:33+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:55:38+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -354,10 +355,13 @@ Script started on 2024-10-23 10:13:33+00:00 [TERM="xterm-256color" TTY="/dev/pts
 P;HTML|
 ;                                         (= 3  "Missed result: 1)]")
 P;HTML|
-;                                         (= 3  "0.03user 0.02system 0:00.05elapsed 100%CPU (0avgtext+0avgdata 25440maxresident)k")
+;                                         (= 3  "0.04user 0.01system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 26364maxresident)k")
 P;HTML|
-;                                         (= 3  "0inputs+0outputs (0major+2894minor)pagefaults 0swaps")
-P;HTML|
+;                                         (= 3  "0inputs+0outputs (0major+3152minor)pagefaults 0swaps")
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_cleanup_tests.metta is 3.44K bytes (81 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_cleanup_tests.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_cleanup_tests.metta)
 
 ;;;; setup
@@ -376,7 +380,7 @@ Deterministic: ()<span class="ansi38-255165000"
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.01</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.88 milliseconds) 
+; took 0.003 secs. (2.83 milliseconds) 
 
 !(assertEqualToResult (sequential ((call-cleanup! (increment) (increment)) (increment))) (1 3))
 
@@ -389,7 +393,7 @@ Deterministic: ()
 >!(change-state! &var 0)
 
 </span>
-Deterministic: (State  0 $_3622)
+Deterministic: (State  0 $_3628)
 ;;;; call-cleanup! still calls cleanup if evaluation errors
 <span class="ansi38-013099040"
 >!(assertEqualToResult (catch (call-cleanup! (throw foo) (increment)) foo (increment)) (2))
@@ -399,7 +403,7 @@ Deterministic: (State  0 $_3622)
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.16 milliseconds) 
+; took 0.002 secs. (2.03 milliseconds) 
 
 !(assertEqualToResult (catch (call-cleanup! (throw foo) (increment)) foo (increment)) (2))
 
@@ -416,7 +420,7 @@ Deterministic: ()
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.03</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.92 milliseconds) 
+; took 0.003 secs. (2.88 milliseconds) 
 
 !(assertEqualToResult (sequential ((setup-call-cleanup! (change-state! &var 0) (increment) (increment)) (increment))) (1 3))
 
@@ -436,7 +440,7 @@ Deterministic: ()
 
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.79 milliseconds) 
+; took 0.004 secs. (4.03 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (setup-call-cleanup! (sequential ((sleep! 2) (change-state! &var 0))) ((increment) (increment)) (increment))) time_limit_exceeded (time_limit_exceeded (get-state! &var))) ((time_limit_exceeded 1)))
 
@@ -452,7 +456,7 @@ Deterministic: ((Error  (got  ((time_limit_exceeded 3))) (expected  ((time_limit
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000868 secs. (868.02 microseconds) 
+; took 0.000882 secs. (882.37 microseconds) 
 
 !(assertEqualToResult (not (== (get-state! &var) 0)) (True))
 
@@ -466,22 +470,25 @@ Deterministic: ()
 </span>
 ;<h3 id="HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.06"
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.06</h3>
+P;HTML|
+;                                         (eval_call  (apply  sleep (2)) $TF)
+
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.84 milliseconds) 
+; took 0.004 secs. (3.74 milliseconds) 
 
 !(assertEqualToResult (catch (max-time! 1 (setup-call-cleanup! ((sleep! 2) (change-state! &var 0)) ((increment) (increment)) (increment))) time_limit_exceeded (time_limit_exceeded (get-state! &var))) ((time_limit_exceeded 1)))
 
 <span class="ansi31"
->(loonit_failureR  (equal_enough_for_test  ((time_limit_exceeded 0)) ((time_limit_exceeded 1))))
+>(loonit_failureR  (equal_enough_for_test  ((time_limit_exceeded 3)) ((time_limit_exceeded 1))))
 </span>
-Deterministic: ((Error  (got  ((time_limit_exceeded 0))) (expected  ((time_limit_exceeded 1)))))
+Deterministic: ((Error  (got  ((time_limit_exceeded 3))) (expected  ((time_limit_exceeded 1)))))
 ;;;; setup-call-cleanup! returns Form for each result of Setup
 <span class="ansi38-013099040"
 >!(change-state! &var 0)
 
 </span>
-Deterministic: (State  0 $_3622)
+Deterministic: (State  0 $_3628)
 <span class="ansi38-013099040"
 >!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4)) (increment) ignore) (1 2 3 4))
 
@@ -490,7 +497,7 @@ Deterministic: (State  0 $_3622)
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.07</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.61 milliseconds) 
+; took 0.004 secs. (3.73 milliseconds) 
 
 !(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4)) (increment) ignore) (1 2 3 4))
 
@@ -503,7 +510,7 @@ Deterministic: ()
 >!(change-state! &var 0)
 
 </span>
-Deterministic: (State  0 $_3622)
+Deterministic: (State  0 $_3628)
 <span class="ansi38-013099040"
 >!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4)) (increment) (increment)) (1 3 5 7))
 
@@ -526,7 +533,7 @@ Deterministic: ()
 >!(change-state! &var 0)
 
 </span>
-Deterministic: (State  0 $_3622)
+Deterministic: (State  0 $_3628)
 <span class="ansi38-013099040"
 >!(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4)) (superpose ((increment) (increment))) (increment)) (1 2 4 5 7 8 10 11))
 
@@ -535,7 +542,7 @@ Deterministic: (State  0 $_3622)
 >;; HYPERON-METTALOG-SANITY.CALL-CLEANUP-TESTS.09</h3>
 ; 
 ; EVAL TEST
-; took 0.010 secs. (9.89 milliseconds) 
+; took 0.010 secs. (9.96 milliseconds) 
 
 !(assertEqualToResult (setup-call-cleanup! (superpose (1 2 3 4)) (superpose ((increment) (increment))) (increment)) (1 2 4 5 7 8 10 11))
 
@@ -544,7 +551,7 @@ Deterministic: (State  0 $_3622)
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 606,975 inferences, 0.122 CPU in 2.120 seconds (6% CPU, 4977483 Lips)
+% 711,147 inferences, 0.148 CPU in 2.148 seconds (7% CPU, 4816700 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/call_cleanup_tests.metta  0)
 <span class="ansi1"
@@ -680,24 +687,24 @@ Deterministic: ()<span class="ansi32"
 ;         (set_option_value  test true)
 [()]
 [()]
-[(State  0 $_3622)]
+[(State  0 $_3628)]
 [()]
 [()]
 [((Error  (got  ((time_limit_exceeded 3))) (expected  ((time_limit_exceeded 1)))))]
 [()]
-[((Error  (got  ((time_limit_exceeded 0))) (expected  ((time_limit_exceeded 1)))))]
-[(State  0 $_3622)]
+[((Error  (got  ((time_limit_exceeded 3))) (expected  ((time_limit_exceeded 1)))))]
+[(State  0 $_3628)]
 [()]
-[(State  0 $_3622)]
+[(State  0 $_3628)]
 [()]
-[(State  0 $_3622)]
+[(State  0 $_3628)]
 [()]
 P;HTML|
 ;         (maybe_halt  7)
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:13:40+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:55:46+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

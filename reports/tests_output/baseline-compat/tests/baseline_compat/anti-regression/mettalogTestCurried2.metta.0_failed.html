@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -76,7 +77,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:08:14+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:50:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -405,7 +406,10 @@ Script started on 2024-10-23 10:08:14+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 10  "0.13user 0.00system 0:00.14elapsed 99%CPU (0avgtext+0avgdata 25572maxresident)k")
 P;HTML|
 ;                                         (= 10  "0inputs+0outputs (0major+3131minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta is 3.56K bytes (112 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta)
 
 ;;;;;;;;;;;
@@ -473,7 +477,7 @@ Deterministic: ()<span class="ansi38-255165000"
 > (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z)))))
 </span>; 
 ; EVAL TEST
-; took 0.004 secs. (3.66 milliseconds) 
+; took 0.004 secs. (4.07 milliseconds) 
 
 !(assertEqualToResult (let $sptrn (: SP (specializationOf (Inheritance B (VarIdx (S Z))) (Inheritance (VarIdx Z) (VarIdx (S Z))))) (add-atom &kb $sptrn)) (()))
 
@@ -494,10 +498,10 @@ Deterministic: ()
 ;<h3 id="ANTI-REGRESSION.METTALOGTESTCURRIED2.02"
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.02</h3>
 <span class="ansi38-255165000"
-> (: apriori-rule (-> (minsup $_74318) (-> (specializationOf $_74372 $_74318) (supportOf $_74372 (countNat $_74372)))))
+> (: apriori-rule (-> (minsup $_74724) (-> (specializationOf $_74778 $_74724) (supportOf $_74778 (countNat $_74778)))))
 </span>; 
 ; EVAL TEST
-; took 0.006 secs. (6.37 milliseconds) 
+; took 0.007 secs. (6.92 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: apriori-rule (-> (minsup $aptrn) (-> (specializationOf $sptrn $aptrn) (supportOf $sptrn (countNat $sptrn)))))) (()))
 
@@ -526,7 +530,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.80 milliseconds) 
+; took 0.002 secs. (1.99 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
@@ -548,7 +552,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.90 milliseconds) 
+; took 0.002 secs. (2.00 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
@@ -570,7 +574,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.97 milliseconds) 
+; took 0.002 secs. (1.98 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
@@ -592,7 +596,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.28 milliseconds) 
+; took 0.002 secs. (1.51 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
@@ -641,16 +645,16 @@ Deterministic: ()
 >;; ANTI-REGRESSION.METTALOGTESTCURRIED2.07</h3>
 ; 
 ; EVAL TEST
-; took 0.050 secs. (50.07 milliseconds) 
+; took 0.049 secs. (49.38 milliseconds) 
 
 !(assertEqualToResult (let (: $prf $concl) (let* (($aptrn (Inheritance (VarIdx Z) (VarIdx (S Z)))) ($atom (: MP (minsup $aptrn))) ($depth (fromNumber 2))) (fc $atom $depth)) (: PROOFTrace $concl)) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $sptrn#463 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $sptrn#463 (countNat $sptrn#463)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))))
 
 <span class="ansi36"
->(loonit_success  (equal_enough_for_test  ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_950622 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_950622 (countNat $_950622)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_287388 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_287388 (countNat $_287388)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))))))
+>(loonit_success  (equal_enough_for_test  ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_885810 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_885810 (countNat $_885810)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z)))) ((: PROOFTrace (minsup (Inheritance (VarIdx Z) (VarIdx (S Z))))) (: PROOFTrace (-> (specializationOf $_289218 (Inheritance (VarIdx Z) (VarIdx (S Z)))) (supportOf $_289218 (countNat $_289218)))) (: PROOFTrace (supportOf (Inheritance B (VarIdx (S Z))) (S Z))))))
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 943,003 inferences, 0.202 CPU in 0.202 seconds (100% CPU, 4673039 Lips)
+% 1,077,886 inferences, 0.243 CPU in 0.246 seconds (99% CPU, 4436575 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/mettalogTestCurried2.metta  0)
 <span class="ansi1"
@@ -798,7 +802,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:08:20+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:50:17+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

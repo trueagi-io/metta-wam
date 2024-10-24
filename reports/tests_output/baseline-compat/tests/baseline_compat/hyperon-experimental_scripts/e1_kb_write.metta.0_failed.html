@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -34,7 +35,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:12:03+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:54:05+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -351,7 +352,10 @@ Script started on 2024-10-23 10:12:03+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 4  "0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30956maxresident)k")
 P;HTML|
 ;                                         (= 4  "0inputs+0outputs (0major+3669minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta is 895 bytes (34 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -397,7 +401,7 @@ Deterministic: ()
 > (Green Sam)
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (4.82 milliseconds) 
+; took 0.005 secs. (5.38 milliseconds) 
 
 !(assertEqualToResult (ift (green $x) (add-atom &kb (Green $x))) (() ()))
 
@@ -414,7 +418,7 @@ Deterministic: ()
 >;; HYPERON-EXPERIMENTAL-SCRIPTS.E1-KB-WRITE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.000228 secs. (228.07 microseconds) 
+; took 0.000251 secs. (251.11 microseconds) 
 
 !(assertEqualToResult (match &kb (Green $x) $x) (Fritz Sam))
 
@@ -423,7 +427,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 186,696 inferences, 0.061 CPU in 0.061 seconds (100% CPU, 3083044 Lips)
+% 230,514 inferences, 0.081 CPU in 0.083 seconds (97% CPU, 2856983 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/hyperon-experimental_scripts/e1_kb_write.metta  0)
 <span class="ansi1"
@@ -565,7 +569,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:12:09+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:54:11+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

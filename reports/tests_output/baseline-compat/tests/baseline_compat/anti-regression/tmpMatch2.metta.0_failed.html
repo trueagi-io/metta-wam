@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -96,7 +97,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:09:49+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:51:46+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -429,7 +430,10 @@ Script started on 2024-10-23 10:09:49+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 9  "0.02user 0.00system 0:00.02elapsed 100%CPU (0avgtext+0avgdata 25088maxresident)k")
 P;HTML|
 ;                                         (= 9  "0inputs+0outputs (0major+2940minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta is 8.22K bytes (239 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta)
 
 ;;;;;;;;;;;
@@ -548,11 +552,7 @@ Deterministic: ()
 </span>;;;; iSurprisingness formula
 <span class="ansi38-255165000"
 > (= (iSurprisingness $pattern) (case $pattern (((candidate (, $p1 $p2) $cnt) (let* (($pp1 (prob (count $p1))) ($pp2 (prob (count $p2))) ($p1p2 (* $pp1 $pp2)) ($p (prob $cnt))) (/ (max (- $p $p1p2) (- $p1p2 $p)) $p))) ((candidate (, $p1 $p2 $p3) $cnt) (let* (($pp1 (prob (count $p1))) ($pp2 (prob (count $p2))) ($pp3 (prob (count $p3))) ($pp1p2 (prob (count (, $p1 $p2)))) ($pp1p3 (prob (count (, $p1 $p3)))) ($pp2p3 (prob (count (, $p2 $p3)))) ($maxP (max (* $pp1p2 $pp3) (max (* $pp1p3 $pp2) (max (* $pp2p3 $pp1) (* $pp1 (* $pp2 $pp3)))))) ($minP (min (* $pp1p2 $pp3) (min (* $pp1p3 $pp2) (min (* $pp2p3 $pp1) (* $pp1 (* $pp2 $pp3)))))) ($p (prob $cnt))) (/ (max (- $p $maxP) (- $minP $p)) $p))) ($ 0))))
-</span>;;;; probability estimate 
-;;;; empirical
-;;;; probability estimate
-;;;; empirical
-<span class="ansi38-255165000"
+</span><span class="ansi38-255165000"
 > (= (isurp? ($ptrn $cnt)) (if (> (iSurprisingness (candidate $ptrn $cnt)) (highsurp)) true false))
 </span>;;;; MeTTa port of pattern miner, using match.
 ;;;; Given a collection of data trees db, a minimum support ms and an
@@ -601,7 +601,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance B A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.89 milliseconds) 
+; took 0.002 secs. (1.96 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance B A)) (()))
 
@@ -623,7 +623,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance C A)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.89 milliseconds) 
+; took 0.002 secs. (1.97 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C A)) (()))
 
@@ -645,7 +645,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance D E)
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.84 milliseconds) 
+; took 0.002 secs. (1.99 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance D E)) (()))
 
@@ -667,7 +667,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (Inheritance C E)
 </span>; 
 ; EVAL TEST
-; took 0.001 secs. (1.32 milliseconds) 
+; took 0.001 secs. (1.48 milliseconds) 
 
 !(assertEqualToResult (add-atom &db (Inheritance C E)) (()))
 
@@ -711,12 +711,12 @@ Deterministic: ()
 </span><span class="ansi38-255165000"
 > (= (msNat) (fromNumber 1))
 </span><span class="ansi38-255165000"
-> (= (highsurp) $_363926)
+> (= (highsurp) $_367378)
 </span><span class="ansi38-255165000"
-> (= (universe-size) (let $_617016 (collapse (match &db $_617052 1)) (tuple-count $_617016)))
+> (= (universe-size) (let $_620468 (collapse (match &db $_620504 1)) (tuple-count $_620468)))
 </span>; 
 ; EVAL TEST
-; took 0.128 secs. (127.69 milliseconds) 
+; took 0.113 secs. (112.82 milliseconds) 
 
 !(assertEqualToResult (miner &db (ms) (depth)) (() () () () () () () () () () (candidate (Inheritance (VarIdx Z) E) 2) (candidate (Inheritance (VarIdx Z) A) 2) (candidate (Inheritance B (VarIdx (S Z))) 1) (candidate (Inheritance C (VarIdx (S Z))) 2) (candidate (Inheritance D (VarIdx (S Z))) 1)))
 
@@ -725,7 +725,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 1,428,728 inferences, 0.299 CPU in 0.299 seconds (100% CPU, 4778521 Lips)
+% 1,565,036 inferences, 0.340 CPU in 0.342 seconds (99% CPU, 4604092 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/tmpMatch2.metta  0)
 <span class="ansi1"
@@ -872,7 +872,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:09:55+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:51:52+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

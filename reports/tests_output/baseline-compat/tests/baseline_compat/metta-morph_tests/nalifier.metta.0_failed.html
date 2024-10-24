@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -70,7 +71,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:21:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:03:11+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -383,7 +384,10 @@ Script started on 2024-10-23 10:21:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "4.40user 0.00system 0:04.40elapsed 99%CPU (0avgtext+0avgdata 36268maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+5013minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta is 4.74K bytes (120 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta)
 <span class="ansi38-255165000"
 > (: If (-> Bool Atom Atom))
@@ -507,7 +511,7 @@ Script started on 2024-10-23 10:21:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.NALIFIER.01</h3>
 ; 
 ; EVAL TEST
-; took 2.05 seconds.
+; took 1.857 secs. (1856.51 milliseconds) 
 
 !(assertEqualToResult (let ($S $EV) (choiceQuery (((ExtSet sam) --> duck) ((ExtSet sam) --> swan) ((ExtSet sam) --> dog))) $S) ((((ExtSet sam) --> duck) (1.0 0.618320610687023))))
 
@@ -517,7 +521,7 @@ Script started on 2024-10-23 10:21:11+00:00 [TERM="xterm-256color" TTY="/dev/pts
 Deterministic: ()
 ;;;  !(repl!)
 <span class="ansi32"
->% 14,322,247 inferences, 2.171 CPU in 2.172 seconds (100% CPU, 6595779 Lips)
+>% 13,464,343 inferences, 2.014 CPU in 2.016 seconds (100% CPU, 6685329 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/nalifier.metta  0)
 <span class="ansi1"
@@ -657,7 +661,7 @@ Deterministic: ()
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:21:18+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:03:19+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

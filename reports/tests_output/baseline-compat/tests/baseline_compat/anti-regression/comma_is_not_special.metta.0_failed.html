@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-013099040 { color: #0D6328; }
 </style>
@@ -23,7 +24,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:06:45+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:48:31+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -336,7 +337,10 @@ Script started on 2024-10-23 10:06:45+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "0.01user 0.00system 0:00.01elapsed 94%CPU (0avgtext+0avgdata 24320maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+2749minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/comma_is_not_special.metta is 162 bytes (13 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/comma_is_not_special.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/comma_is_not_special.metta)
 
 ;;;; the comma only works in match 
@@ -350,7 +354,7 @@ Script started on 2024-10-23 10:06:45+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; ANTI-REGRESSION.COMMA-IS-NOT-SPECIAL.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.04 milliseconds) 
+; took 0.001 secs. (1.12 milliseconds) 
 
 !(assertEqualToResult (test-func2 world) ((, hello world)))
 
@@ -359,7 +363,7 @@ Script started on 2024-10-23 10:06:45+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 114,090 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 2987127 Lips)
+% 134,163 inferences, 0.053 CPU in 0.056 seconds (96% CPU, 2515737 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/comma_is_not_special.metta  0)
 <span class="ansi1"
@@ -499,7 +503,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:06:50+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:48:37+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

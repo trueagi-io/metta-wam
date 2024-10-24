@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -50,7 +51,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:21:50+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:03:51+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -377,7 +378,10 @@ Script started on 2024-10-23 10:21:50+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 9  "0.40user 0.00system 0:00.41elapsed 99%CPU (0avgtext+0avgdata 33572maxresident)k")
 P;HTML|
 ;                                         (= 9  "0inputs+0outputs (0major+4247minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/supercollapse.metta is 642 bytes (38 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/supercollapse.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/supercollapse.metta)
 <span class="ansi38-255165000"
 > (: If (-> Bool Atom Atom Atom))
@@ -399,7 +403,7 @@ Script started on 2024-10-23 10:21:50+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.003 secs. (2.76 milliseconds) 
+; took 0.002 secs. (2.44 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) (e f g)) ((a b c e f g)))
 
@@ -419,7 +423,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.02</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.74 milliseconds) 
+; took 0.002 secs. (1.71 milliseconds) 
 
 !(assertEqualToResult (TupleConcat () (e f g)) ((e f g)))
 
@@ -439,7 +443,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.03</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (1.86 milliseconds) 
+; took 0.002 secs. (1.63 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) ()) ((a b c)))
 
@@ -461,7 +465,7 @@ Deterministic: ()<span class="ansi38-255165000"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.04</h3>
 ; 
 ; EVAL TEST
-; took 0.002 secs. (2.20 milliseconds) 
+; took 0.002 secs. (2.16 milliseconds) 
 
 !(assertEqualToResult (TupleConcat (a b c) (range 1 1)) ((a b c)))
 
@@ -483,7 +487,7 @@ Deterministic: ()<span class="ansi38-255165000"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.05</h3>
 ; 
 ; EVAL TEST
-; took 0.000564 secs. (563.60 microseconds) 
+; took 0.000521 secs. (521.31 microseconds) 
 
 !(assertEqualToResult (range 1 1) (()))
 
@@ -503,7 +507,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.06</h3>
 ; 
 ; EVAL TEST
-; took 0.004 secs. (3.70 milliseconds) 
+; took 0.003 secs. (3.48 milliseconds) 
 
 !(assertEqualToResult (range 1 3) ((1 2)))
 
@@ -523,7 +527,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.07</h3>
 ; 
 ; EVAL TEST
-; took 0.008 secs. (7.64 milliseconds) 
+; took 0.007 secs. (7.13 milliseconds) 
 
 !(assertEqualToResult (range 2 6) ((2 3 4 5)))
 
@@ -543,7 +547,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; METTA-MORPH-TESTS.SUPERCOLLAPSE.08</h3>
 ; 
 ; EVAL TEST
-; took 0.018 secs. (17.53 milliseconds) 
+; took 0.016 secs. (16.42 milliseconds) 
 
 !(assertEqualToResult (range 1 10) ((1 2 3 4 5 6 7 8 9)))
 
@@ -552,7 +556,7 @@ Deterministic: ()<span class="ansi38-255165009"
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 554,409 inferences, 0.117 CPU in 0.117 seconds (100% CPU, 4731037 Lips)
+% 611,665 inferences, 0.135 CPU in 0.137 seconds (98% CPU, 4529875 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/supercollapse.metta  0)
 <span class="ansi1"
@@ -699,7 +703,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:21:56+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:03:57+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

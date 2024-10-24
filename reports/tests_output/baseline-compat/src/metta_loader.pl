@@ -756,6 +756,13 @@ prefer_temp(Filename,BufferFile):-
     BufferSize >= 0.25 * MettaSize.
 
 
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
+    atomic(Filename), symbol_concat(Filename, '.buffer~', BufferFile),
+    exists_file(BufferFile),
+    (   prefer_temp(Filename,BufferFile)
+    ->  (use_fast_buffer, fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
+    ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
+    ).
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
  symbolic_list_concat([_,_,_|_],'.',Filename),
@@ -765,14 +772,6 @@ load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
   read_line_to_string(S,I),
   accept_line(Self,I),
   I==end_of_file,!.
-
-load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
-    symbol_concat(Filename, '.buffer~', BufferFile),
-    exists_file(BufferFile),
-    (   prefer_temp(Filename,BufferFile)
-    ->  (use_fast_buffer, fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
-    ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
-    ).
 
 load_metta_file_stream_fast(_Size,_P2,Filename,Self,In):-
   make_metta_file_buffer(use_fast_buffer,Filename,In),
@@ -810,7 +809,7 @@ my_line_count(In, seek($,0,current,CC)):-
 my_line_count(In,/*position*/(Pos)):-
    stream_property(In,position(Pos)).
 
-% For old code still using metta_file_buffer/5  
+% For old code still using metta_file_buffer/5
 metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount):-
   metta_file_buffer(0,_Ord,_Kind, Expr, NamedVarsList,Filename, LineCount).
 
@@ -819,9 +818,10 @@ load_metta_buffer(Self,Filename):-
    set_exec_num(Filename,1),
    load_answer_file(Filename),
    set_exec_num(Filename,0),
+   Mode = '+',
    pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
    forall(metta_file_buffer(0,_Ord,_Kind,Expr,NamedVarsList,Filename,_LineCount),
-       (maplist(maybe_assign,NamedVarsList),
+       (maybe_name_vars(NamedVarsList),
         must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))
              ->true
               ; (trace,pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr))))))).
@@ -999,7 +999,7 @@ new_parse_sexpr_metta_IO1(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
 new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!, get_char(S,Char), parse_sexpr_metta_IO(S,F1).
 new_parse_sexpr_metta_IO1(S,_F1):- S = InStream,
    once((
-    read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.    
+    read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.
     read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
     read_position(S, EndLine, EndCol, _E_CharPos_Item, _EndPosition),
     assertz(metta_file_comment(Line, Col, CharPos_Item, Item, range(line_char(Line, Col), line_char(EndLine, EndCol)))))),
@@ -1385,7 +1385,7 @@ generate_interpreter_stubs:-
    asserta(did_generate_interpreter_stubs),
    forall(metta_type('&corelib',Symb,Def),
         gen_interp_stubs('&corelib',Symb,Def)).
-        
+
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
 metta_atom_asserted_deduced('&corelib', Term):- fail,
@@ -1394,13 +1394,14 @@ metta_atom_asserted_deduced('&corelib', Term):- fail,
    wdmsg(metta_atom_corelib_types(Term)).
 
 load_corelib_file:- really_using_corelib_file,!.
-load_corelib_file:- asserta(really_using_corelib_file), fail.
 %load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
-load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!.
+load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!,metta_atom('&corelib', [:, 'Any', 'Type']).
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
+ exists_file(Filename),
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
-     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))).
+     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))),
+    asserta(really_using_corelib_file).
 
 

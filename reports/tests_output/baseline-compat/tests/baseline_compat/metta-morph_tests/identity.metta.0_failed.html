@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165009 { color: #FFA509; }
 .ansi38-255238088 { color: #FFEE58; }
@@ -25,7 +26,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:19:55+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:01:53+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -338,7 +339,10 @@ Script started on 2024-10-23 10:19:55+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30928maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+3666minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/identity.metta is 30 bytes (4 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/identity.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/identity.metta)
 <span class="ansi38-255165000"
 > (= (f $x) (* $x $x))
@@ -355,7 +359,7 @@ Script started on 2024-10-23 10:19:55+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.IDENTITY.01</h3>
 ; 
 ; EVAL TEST
-; took 0.000489 secs. (489.19 microseconds) 
+; took 0.000667 secs. (667.01 microseconds) 
 
 !(assertEqualToResult (f 1) (1))
 
@@ -364,7 +368,7 @@ Script started on 2024-10-23 10:19:55+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 107,445 inferences, 0.038 CPU in 0.038 seconds (100% CPU, 2856383 Lips)
+% 126,526 inferences, 0.048 CPU in 0.050 seconds (96% CPU, 2613745 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/identity.metta  0)
 <span class="ansi1"
@@ -504,7 +508,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:20:00+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:01:59+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

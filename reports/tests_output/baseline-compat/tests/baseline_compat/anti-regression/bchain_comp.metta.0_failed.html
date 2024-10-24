@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-013099040 { color: #0D6328; }
 .ansi38-255165000 { color: #FFA500; }
 .ansi38-255165000 { color: #FFA500; }
@@ -70,7 +71,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:06:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 15:48:15+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -397,7 +398,10 @@ Script started on 2024-10-23 10:06:30+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 9  "0.08user 0.00system 0:00.08elapsed 100%CPU (0avgtext+0avgdata 25588maxresident)k")
 P;HTML|
 ;                                         (= 9  "0inputs+0outputs (0major+3105minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta is 1.90K bytes (79 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta)
 
 <span class="ansi38-013099040"
@@ -413,19 +417,19 @@ Deterministic: ()<span class="ansi38-255165000"
 > (= (is-variable $x) (== (get-metatype $x) Variable))
 </span>  :- dynamic'is-variable'/1.
 
-  'is-variable'(_x1) :-
-    eval([==, ['get-metatype', _x1], 'Variable'], _x1).
+  'is-variable'('$VAR'(x1)) :-
+    eval([==, ['get-metatype', '$VAR'(x1)], 'Variable'], '$VAR'(x1)).
 <span class="ansi38-255165000"
 > (: lazy-or (-> Bool Atom Bool))
 </span><span class="ansi38-255165000"
 > (= (lazy-or False $x) $x)
 </span>  :- dynamic'lazy-or'/2.
 
-  'lazy-or'(A, _x2) :-
+  'lazy-or'(A, '$VAR'(x2)) :-
     eval_false(A).
 <span class="ansi38-255165005"
 ></span><span class="ansi38-064064100"
->'lazy-or'(A, _x2) :-
+>'lazy-or'(A, '$VAR'(x2)) :-
     eval_false(A).
 
 </span>
@@ -433,63 +437,63 @@ Deterministic: ()<span class="ansi38-255165000"
 > (= (lazy-or True $x) True)
 </span>  :- dynamic'lazy-or'/2.
 
-  'lazy-or'(A, _x3) :-
+  'lazy-or'(A, '$VAR'(x3)) :-
     eval_true(A),
-    _x3='True'.
+    '$VAR'(x3)='True'.
 <span class="ansi38-255165000"
 > (: is-expression (-> Atom Bool))
 </span><span class="ansi38-255165000"
 > (= (is-expression $x) (== (get-metatype $x) Expression))
 </span>  :- dynamic'is-expression'/1.
 
-  'is-expression'(_x4) :-
-    eval([==, ['get-metatype', _x4], 'Expression'], _x4).
+  'is-expression'('$VAR'(x4)) :-
+    eval([==, ['get-metatype', '$VAR'(x4)], 'Expression'], '$VAR'(x4)).
 <span class="ansi38-255165000"
 > (: is-closed (-> Atom Bool))
 </span><span class="ansi38-255165000"
 > (= (is-closed $x) (if (is-variable $x) False (if (== () $x) True (if (is-expression $x) (and (let $head (car-atom $x) (is-closed $head)) (let $tail (cdr-atom $x) (is-closed $tail))) True))))
 </span>  :- dynamic'is-closed'/1.
 
-  'is-closed'(_x5) :-
-    (   eval_true(['is-variable', _x5])
-    *-> _x5='False'
-    ;   (   eval_true([==, [], _x5])
+  'is-closed'('$VAR'(x5)) :-
+    (   eval_true(['is-variable', '$VAR'(x5)])
+    *-> '$VAR'(x5)='False'
+    ;   (   eval_true([==, [], '$VAR'(x5)])
         *-> A='True'
-        ;   (   eval_true(['is-expression', _x5])
-            *-> ( eval(['car-atom', _x5], _head1),
-                  'is-closed'(_head1, B),
-                  eval(['cdr-atom', _x5], _tail1)
+        ;   (   eval_true(['is-expression', '$VAR'(x5)])
+            *-> ( eval(['car-atom', '$VAR'(x5)], '$VAR'(head1)),
+                  'is-closed'('$VAR'(head1), B),
+                  eval(['cdr-atom', '$VAR'(x5)], '$VAR'(tail1))
                 ),
-                'is-closed'(_tail1, B),
+                'is-closed'('$VAR'(tail1), B),
                 B=C
             ;   C='True'
             ),
             C=A
         ),
-        A=_x5
+        A='$VAR'(x5)
     ).
 <span class="ansi38-255165005"
 ></span><span class="ansi38-064064100"
->'is-closed'(_x5) :-
-    (   eval_true(['is-variable', _x5])
+>'is-closed'('$VAR'(x5)) :-
+    (   eval_true(['is-variable', '$VAR'(x5)])
     *-> A='False',
-        A=_x5
-    ;   (   eval_true([==, [], _x5])
+        A='$VAR'(x5)
+    ;   (   eval_true([==, [], '$VAR'(x5)])
         *-> B='True',
             B=C
-        ;   (   eval_true(['is-expression', _x5])
-            *-> ( eval(['car-atom', _x5], _head1),
-                  eval(['is-closed', _head1], D)
+        ;   (   eval_true(['is-expression', '$VAR'(x5)])
+            *-> ( eval(['car-atom', '$VAR'(x5)], '$VAR'(head1)),
+                  eval(['is-closed', '$VAR'(head1)], D)
                 ),
-                eval(['cdr-atom', _x5], _tail1),
-                eval(['is-closed', _tail1], D),
+                eval(['cdr-atom', '$VAR'(x5)], '$VAR'(tail1)),
+                eval(['is-closed', '$VAR'(tail1)], D),
                 D=E
             ;   F='True',
                 F=E
             ),
             E=C
         ),
-        C=_x5
+        C='$VAR'(x5)
     ).
 
 </span>
@@ -535,7 +539,7 @@ Deterministic: ()<span class="ansi38-255165009"
 > (: axiom (nums 2 3))
 </span>; 
 ; EVAL TEST
-; took 0.002 secs. (1.87 milliseconds) 
+; took 0.002 secs. (1.93 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: axiom (nums 2 3))) (()))
 
@@ -558,8 +562,8 @@ Deterministic: ()<span class="ansi38-255165009"
                                       [ :,
                                         rule1,
                                         [ ->,
-                                          [nums, _x, _y],
-                                          [rule1output, _x, _y]
+                                          [nums, '$VAR'("x"), '$VAR'("y")],
+                                          [rule1output, '$VAR'("x"), '$VAR'("y")]
                                         ]
                                       ]
                                     ],
@@ -573,13 +577,10 @@ Deterministic: ()<span class="ansi38-255165009"
                                                     [ :,
                                                       rule1,
                                                       [ ->,
-                                                        [ nums,
-                                                          _x,
-                                                          _y
-                                                        ],
+                                                        [nums, '$VAR'("x"), '$VAR'("y")],
                                                         [ rule1output,
-                                                          _x,
-                                                          _y
+                                                          '$VAR'("x"),
+                                                          '$VAR'("y")
                                                         ]
                                                       ]
                                                     ]
@@ -593,10 +594,10 @@ Deterministic: ()<span class="ansi38-255165009"
 ;<h3 id="ANTI-REGRESSION.BCHAIN-COMP.02"
 >;; ANTI-REGRESSION.BCHAIN-COMP.02</h3>
 <span class="ansi38-255165000"
-> (: rule1 (-> (nums $_4806 $_4824) (rule1output $_4806 $_4824)))
+> (: rule1 (-> (nums $_4844 $_4862) (rule1output $_4844 $_4862)))
 </span>; 
 ; EVAL TEST
-; took 0.005 secs. (5.09 milliseconds) 
+; took 0.005 secs. (5.16 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule1 (-> (nums $x $y) (rule1output $x $y)))) (()))
 
@@ -619,10 +620,10 @@ Deterministic: ()<span class="ansi38-255165009"
                                       [ :,
                                         rule,
                                         [ ->,
-                                          [rule1output, _x, _y],
+                                          [rule1output, '$VAR'("x"), '$VAR'("y")],
                                           [ ->,
-                                            [⍃, _x, _y],
-                                            [less, _x, _y]
+                                            [⍃, '$VAR'("x"), '$VAR'("y")],
+                                            [less, '$VAR'("x"), '$VAR'("y")]
                                           ]
                                         ]
                                       ]
@@ -638,17 +639,14 @@ Deterministic: ()<span class="ansi38-255165009"
                                                       rule,
                                                       [ ->,
                                                         [ rule1output,
-                                                          _x,
-                                                          _y
+                                                          '$VAR'("x"),
+                                                          '$VAR'("y")
                                                         ],
                                                         [ ->,
-                                                          [ ⍃,
-                                                            _x,
-                                                            _y
-                                                          ],
+                                                          [⍃, '$VAR'("x"), '$VAR'("y")],
                                                           [ less,
-                                                            _x,
-                                                            _y
+                                                            '$VAR'("x"),
+                                                            '$VAR'("y")
                                                           ]
                                                         ]
                                                       ]
@@ -663,10 +661,10 @@ Deterministic: ()<span class="ansi38-255165009"
 ;<h3 id="ANTI-REGRESSION.BCHAIN-COMP.03"
 >;; ANTI-REGRESSION.BCHAIN-COMP.03</h3>
 <span class="ansi38-255165000"
-> (: rule (-> (rule1output $_4974 $_4992) (-> (⍃ $_4974 $_4992) (less $_4974 $_4992))))
+> (: rule (-> (rule1output $_5012 $_5030) (-> (⍃ $_5012 $_5030) (less $_5012 $_5030))))
 </span>; 
 ; EVAL TEST
-; took 0.007 secs. (6.92 milliseconds) 
+; took 0.007 secs. (6.90 milliseconds) 
 
 !(assertEqualToResult (add-atom &kb (: rule (-> (rule1output $x $y) (-> (⍃ $x $y) (less $x $y))))) (()))
 
@@ -686,46 +684,46 @@ Deterministic: ()
 > (: bc (-> $a Nat $a))
 </span>;;;; Base case
 <span class="ansi38-255165000"
-> (= (bc (: $prf $ccln) $_1) (match &kb (: $prf $ccln) (: $prf $ccln)))
+> (= (bc (: $prf $ccln) $1) (match &kb (: $prf $ccln) (: $prf $ccln)))
 </span>  :- dynamic bc/2.
 
-  bc(A, __11) :-
-    u_assign(A, [:, _prf1, _ccln1]),
+  bc(A, _11) :-
+    u_assign(A, [:, '$VAR'(prf1), '$VAR'(ccln1)]),
     B='&kb',
-    metta_atom_iter(B, [:, _prf1, _ccln1]),
-    eval([:, _prf1, _ccln1], __11).
+    metta_atom_iter(B, [:, '$VAR'(prf1), '$VAR'(ccln1)]),
+    eval([:, '$VAR'(prf1), '$VAR'(ccln1)], _11).
 ;;;; if conclusion equals (⍃ $X $Y), then return (: CPU (⍃ $X $Y)) 
 ;;;; if $x and $Y are fully grounded and (< $X $Y)
 <span class="ansi38-255165000"
-> (= (bc (: CPU (⍃ $X $Y)) $_2) (if (and (and (is-closed $X) (is-closed $Y)) (< $X $Y)) (: CPU (⍃ $X $Y)) (empty)))
+> (= (bc (: CPU (⍃ $X $Y)) $2) (if (and (and (is-closed $X) (is-closed $Y)) (< $X $Y)) (: CPU (⍃ $X $Y)) (empty)))
 </span>  :- dynamic bc/2.
 
-  bc(A, __21) :-
-    u_assign(A, [:, 'CPU', [⍃, _X1, _Y1]]),
-    (   ( eval(['is-closed', _X1], B),
-          eval(['is-closed', _Y1], B)
+  bc(A, _21) :-
+    u_assign(A, [:, 'CPU', [⍃, X1, Y1]]),
+    (   ( eval(['is-closed', X1], B),
+          eval(['is-closed', Y1], B)
         ),
-        <(_X1, _Y1, B),
+        <(X1, Y1, B),
         is_True(B)
-    *-> eval([:, 'CPU', [⍃, _X1, _Y1]], __21)
+    *-> eval([:, 'CPU', [⍃, X1, Y1]], _21)
     ;   !,
         fail,
-        _=__21
+        _=_21
     ).
 <span class="ansi38-255165005"
 ></span><span class="ansi38-064064100"
->bc(A, __21) :-
-    u_assign(A, [:, 'CPU', [⍃, _X1, _Y1]]),
-    (   ( eval(['is-closed', _X1], B),
-          eval(['is-closed', _Y1], B)
+>bc(A, _21) :-
+    u_assign(A, [:, 'CPU', [⍃, X1, Y1]]),
+    (   ( eval(['is-closed', X1], B),
+          eval(['is-closed', Y1], B)
         ),
-        eval([<, _X1, _Y1], B),
+        eval([<, X1, Y1], B),
         is_True(B)
-    *-> eval([:, 'CPU', [⍃, _X1, _Y1]], C),
-        C=__21
+    *-> eval([:, 'CPU', [⍃, X1, Y1]], C),
+        C=_21
     ;   !,
         fail,
-        _=__21
+        _=_21
     ).
 
 </span>
@@ -734,14 +732,14 @@ Deterministic: ()
 > (= (bc (: ($prfabs $prfarg) $ccln) (S $k)) (let* (((: $prfabs (-> $prms $ccln)) (bc (: $prfabs (-> $prms $ccln)) $k)) ((: $prfarg $prms) (bc (: $prfarg $prms) $k))) (: ($prfabs $prfarg) $ccln)))
 </span>  :- dynamic bc/2.
 
-  bc(A, ['S', _k1]) :-
-    u_assign(A, [:, [_prfabs1, _prfarg1], _ccln2]),
-    eval([bc, [:, _prfabs1, [->, _prms1, _ccln2]], _k1],
-         [->, _prms1, _ccln2]),
-    _prfabs1:[->, _prms1, _ccln2],
-    eval([bc, [:, _prfarg1, _prms1], _k1], _prms1),
-    _prfarg1:_prms1,
-    eval([:, [_prfabs1, _prfarg1], _ccln2], 'True').
+  bc(A, ['S', '$VAR'(k1)]) :-
+    u_assign(A, [:, ['$VAR'(prfabs1), '$VAR'(prfarg1)], '$VAR'(ccln2)]),
+    eval([bc, [:, '$VAR'(prfabs1), [->, '$VAR'(prms1), '$VAR'(ccln2)]], '$VAR'(k1)],
+         [->, '$VAR'(prms1), '$VAR'(ccln2)]),
+    '$VAR'(prfabs1):[->, '$VAR'(prms1), '$VAR'(ccln2)],
+    eval([bc, [:, '$VAR'(prfarg1), '$VAR'(prms1)], '$VAR'(k1)], '$VAR'(prms1)),
+    '$VAR'(prfarg1):'$VAR'(prms1),
+    eval([:, ['$VAR'(prfabs1), '$VAR'(prfarg1)], '$VAR'(ccln2)], 'True').
 ;;; Test
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -772,7 +770,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.04</h3>
 ; 
 ; EVAL TEST
-; took 0.007 secs. (6.80 milliseconds) 
+; took 0.007 secs. (6.77 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 2 3)) Z) ((: CPU (⍃ 2 3))))
 
@@ -807,7 +805,7 @@ Deterministic: ()<span class="ansi38-255165009"
 >;; ANTI-REGRESSION.BCHAIN-COMP.05</h3>
 ; 
 ; EVAL TEST
-; took 0.005 secs. (5.46 milliseconds) 
+; took 0.005 secs. (5.48 milliseconds) 
 
 !(assertEqualToResult (bc (: CPU (⍃ 4 3)) Z) ())
 
@@ -829,7 +827,7 @@ Deterministic: ()
 >answer(A) :-
     loonit_assert_source_tf_empty([ assertEqualToResult,
                                     [ bc,
-                                      [:, _prf, [less, _x, _y]],
+                                      [:, '$VAR'("prf"), [less, '$VAR'("x"), '$VAR'("y")]],
                                       ['S', ['S', ['S', 'Z']]]
                                     ],
                                     [ [ :,
@@ -843,8 +841,8 @@ Deterministic: ()
                                   findall_ne(C,
                                              eval([ bc,
                                                     [ :,
-                                                      _prf,
-                                                      [less, _x, _y]
+                                                      '$VAR'("prf"),
+                                                      [less, '$VAR'("x"), '$VAR'("y")]
                                                     ],
                                                     ['S', ['S', ['S', 'Z']]]
                                                   ],
@@ -867,7 +865,7 @@ Deterministic: ()
 >;; ANTI-REGRESSION.BCHAIN-COMP.06</h3>
 ; 
 ; EVAL TEST
-; took 0.022 secs. (22.13 milliseconds) 
+; took 0.022 secs. (21.93 milliseconds) 
 
 !(assertEqualToResult (bc (: $prf (less $x $y)) (S (S (S Z)))) ((: ((rule (rule1 axiom)) CPU) (less 2 3))))
 
@@ -876,7 +874,7 @@ Deterministic: ()
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 3,325,443 inferences, 0.371 CPU in 0.371 seconds (100% CPU, 8974334 Lips)
+% 3,428,730 inferences, 0.476 CPU in 0.478 seconds (99% CPU, 7205451 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/anti-regression/bchain_comp.metta  0)
 <span class="ansi1"
@@ -1023,7 +1021,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:06:36+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 15:48:21+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>

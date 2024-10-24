@@ -16,6 +16,7 @@
 .ansi31 { color: #aa0000; }
 .ansi32 { color: #00aa00; }
 .ansi36 { color: #00aaaa; }
+.ansi90 { color: #7f7f7f; }
 .ansi38-255165009 { color: #FFA509; }
 .ansi38-255238088 { color: #FFEE58; }
 .ansi38-013099040 { color: #0D6328; }
@@ -24,7 +25,7 @@
 <body class="body_foreground body_background" style="font-size: normal;" >
 <pre class="ansi2html-content"
 >
-Script started on 2024-10-23 10:19:32+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+Script started on 2024-10-24 16:01:30+00:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
 P;HTML|
 ;           (set_option_value  compat false)
 
@@ -337,7 +338,10 @@ Script started on 2024-10-23 10:19:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 ;                                         (= 2  "0.05user 0.00system 0:00.05elapsed 98%CPU (0avgtext+0avgdata 30984maxresident)k")
 P;HTML|
 ;                                         (= 2  "0inputs+0outputs (0major+3667minor)pagefaults 0swaps")
-P;HTML|
+<span class="ansi1 ansi90"
+>
+Info: File /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/collapse.metta is 21 bytes (2 lines)
+</span>P;HTML|
 ;                                        (load_answer_file  /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/collapse.metta.answers /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/collapse.metta)
 <span class="ansi38-255165009"
 >;; In file as:  
@@ -352,7 +356,7 @@ Script started on 2024-10-23 10:19:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 >;; METTA-MORPH-TESTS.COLLAPSE.01</h3>
 ; 
 ; EVAL TEST
-; took 0.001 secs. (1.15 milliseconds) 
+; took 0.000875 secs. (875.08 microseconds) 
 
 !(assertEqualToResult (collapse (1 2 3)) (((1 2 3))))
 
@@ -361,7 +365,7 @@ Script started on 2024-10-23 10:19:32+00:00 [TERM="xterm-256color" TTY="/dev/pts
 </span>
 Deterministic: ()<span class="ansi32"
 >
-% 109,635 inferences, 0.036 CPU in 0.036 seconds (100% CPU, 3063689 Lips)
+% 127,164 inferences, 0.049 CPU in 0.051 seconds (96% CPU, 2619259 Lips)
 </span>P;HTML|
 ;                       (= /home/runner/work/metta-wam/metta-wam/tests/baseline_compat/metta-morph_tests/collapse.metta  0)
 <span class="ansi1"
@@ -501,7 +505,7 @@ Deterministic: ()<span class="ansi32"
 <span class="ansi31"
 >(in  (maybe_halt  7) (unwind  (halt  7)))
 </span>
-Script done on 2024-10-23 10:19:38+00:00 [COMMAND_EXIT_CODE="7"]
+Script done on 2024-10-24 16:01:36+00:00 [COMMAND_EXIT_CODE="7"]
 
 </pre>
 </body>
