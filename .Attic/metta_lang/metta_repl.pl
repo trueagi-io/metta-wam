@@ -52,8 +52,8 @@
  */
 
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION:  Implements a REPL (Read-Eval-Print Loop) for the Mettalog interpreter, providing 
+%*********************************************************************************************
+% PROGRAM FUNCTION:  Implements a REPL (Read-Eval-Print Loop) for the Mettalog interpreter, providing
 % interactive execution, debugging, and command handling capabilities.
 %*********************************************************************************************
 
@@ -71,7 +71,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % In order to run some of the specialized commands below like "repl1" and "history_file_location"
 % you must start the mettalog repl by entering "mettalog" and then enter Prolog mode by
-% entering "Prolog." This gives you the '?-' swipl prompt. Then you can enter eg., "repl1." 
+% entering "Prolog." This gives you the '?-' swipl prompt. Then you can enter eg., "repl1."
 % to execute the desired command (no quotes around any of these commands when actually entered).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -198,7 +198,7 @@ load_and_trim_history :-
 %
 %   @example Start the REPL:
 %     ?- repl.
-%     metta> 
+%     metta>
 %
 repl :-
     % Catch any end_of_input exception and terminate the REPL gracefully.
@@ -210,7 +210,7 @@ repl :-
 %
 %   @example Start the REPL with internal options:
 %     ?- repl1.
-%     metta> 
+%     metta>
 %
 repl1 :-
     % Set the option 'doing_repl' to true.
@@ -224,7 +224,7 @@ repl1 :-
 %
 %   @example Start the REPL loop:
 %     ?- repl2.
-%     metta> 
+%     metta>
 %
 repl2 :-
     % Load the REPL history and clean it up if necessary.
@@ -248,7 +248,7 @@ repl2 :-
 %
 %   @example Display the REPL prompt:
 %     ?- write_metta_prompt.
-%     metta> 
+%     metta>
 %
 write_metta_prompt :-
     % Ensure any pending output is flushed to the terminal.
@@ -268,7 +268,7 @@ write_metta_prompt :-
 %
 %   @example Set up the REPL prompt and call repl4:
 %     ?- repl3.
-%     metta> 
+%     metta>
 %
 repl3 :-
     % Create the prompt by writing it to an atom `P`.
@@ -289,7 +289,7 @@ repl3 :-
 %
 %   @example Execute the main REPL logic:
 %     ?- repl4.
-%     metta> 
+%     metta>
 %
 repl4 :-
     % Reset the evaluation number to ensure expressions are counted properly.
@@ -319,8 +319,8 @@ repl4 :-
 
 %!  check_has_directive(+V) is nondet.
 %
-%   Processes a given input `V` to determine if it contains a recognized directive 
-%   and executes the associated logic. This predicate handles several types of directives, 
+%   Processes a given input `V` to determine if it contains a recognized directive
+%   and executes the associated logic. This predicate handles several types of directives,
 %   such as switching modes, assigning values, or invoking debugging utilities.
 %
 %   This predicate fails if the input `V` is a variable or if no matching directive is found.
@@ -330,7 +330,7 @@ repl4 :-
 %   - Assignments of the form `call(N=V)`.
 %   - Special debugging and REPL controls using `@` or other characters.
 %
-%   @arg V The input term to be checked and processed. This can be a variable, 
+%   @arg V The input term to be checked and processed. This can be a variable,
 %          an atom, or a more complex term like an assignment.
 %
 %   @example
@@ -368,10 +368,10 @@ check_has_directive(_).
 
 %!  set_directive(+N, +V) is det.
 %
-%   Assigns the value `V` to the directive `N`. Handles special cases such as 
+%   Assigns the value `V` to the directive `N`. Handles special cases such as
 %   REPL mode changes differently from general directives.
 %
-%   @arg N The name of the directive to set. It can be a general option or 
+%   @arg N The name of the directive to set. It can be a general option or
 %          a specific control like `mode`.
 %   @arg V The value to assign to the directive.
 %
@@ -501,7 +501,7 @@ next_expr(ExprI, Expr) :- ExprI = Expr.
 
 %!  repl_read(+In, -Expr) is det.
 %
-%   Reads an expression from the given input stream, processes it with 
+%   Reads an expression from the given input stream, processes it with
 %   `next_expr/2`, and returns the result.
 %
 %   @arg In   The input stream from which the expression is read.
@@ -520,7 +520,7 @@ repl_read(In, Expr) :-
 
 %!  repl_read(-Expr) is det.
 %
-%   Reads an expression without a specific input stream, processes it with 
+%   Reads an expression without a specific input stream, processes it with
 %   `next_expr/2`, and returns the result.
 %
 %   @arg Expr The resulting expression after reading and processing.
@@ -557,8 +557,8 @@ comment_buffer(Comment) :-
 %!  repl_read_next(+NewAccumulated, -Expr) is det.
 %
 %   Reads the next expression by interpreting the accumulated input. It handles
-%   special cases (such as symbols `'!'` and `'+'`), manages syntax errors, 
-%   balances parentheses, and normalizes spaces in input. If an error occurs, 
+%   special cases (such as symbols `'!'` and `'+'`), manages syntax errors,
+%   balances parentheses, and normalizes spaces in input. If an error occurs,
 %   the reading process may be restarted.
 %
 %   @arg NewAccumulated The accumulated input to be processed.
@@ -568,7 +568,7 @@ comment_buffer(Comment) :-
 %     % Read a valid metta expression from input.
 %     ?- repl_read_next("write(hello)", Expr).
 %     Expr = call(write(hello)).
-%       
+%
 repl_read_next(NewAccumulated, Expr) :-
     % Concatenate the input with '.' and try to interpret it as an atom.
     symbol_concat(Atom,'.',NewAccumulated),
@@ -622,7 +622,7 @@ repl_read_next(Accumulated, Expr) :-
 
 %!  repl_read_next(+Accumulated, +Line, -Expr) is det.
 %
-%   Handles reading input, including special cases such as end-of-file. 
+%   Handles reading input, including special cases such as end-of-file.
 %   Accumulates lines of input and processes them to form valid expressions.
 %   It gracefully manages EOF, concatenates input, and continues reading.
 %
@@ -666,11 +666,11 @@ repl_read_next(Expr) :-
 
 %!  add_history_string(+Str) is det.
 %
-%   Adds a string to the REPL history if the input is coming from a terminal (TTY). 
-%   This helps maintain a history of inputs, which can be useful for interactive 
+%   Adds a string to the REPL history if the input is coming from a terminal (TTY).
+%   This helps maintain a history of inputs, which can be useful for interactive
 %   sessions.
 %
-%   If the input stream is not from a terminal, the predicate simply succeeds without 
+%   If the input stream is not from a terminal, the predicate simply succeeds without
 %   taking any action.
 %
 %   @arg Str The string to be added to the REPL history.
@@ -748,7 +748,7 @@ add_history_pl(Exec) :-
 
 %!  call_for_term_variables5(+Term, +DC, +Vars1, +Vars2, -CallTerm, -DCVars, -TF) is det.
 %
-%   Processes term variables and generates a call structure based on the provided term, 
+%   Processes term variables and generates a call structure based on the provided term,
 %   handling cases with ground terms, single variables, and multiple variables.
 %
 %   @arg Term     The input term to process.
@@ -1208,7 +1208,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
              user_io(with_indents(is_mettalog,
              color_g_mesg_ok(yellow,
               \+ \+
-               (maplist(maybe_assign,NamedVarsList),
+               (maybe_name_vars(NamedVarsList),
                 not_compatio(write_bsrc(Output)),
                 true)))) )) ))),
      in_answer_io(write_asrc(Output)),
@@ -1781,7 +1781,7 @@ write_compiled_exec(Exec, Goal):-
 
 %!  verbose_unify(+Term) is det.
 %
-%   Activates verbose unification mode for variables in the given term. If no 
+%   Activates verbose unification mode for variables in the given term. If no
 %   specific trace context is provided, it defaults to 'trace'.
 %
 %   @arg Term The term whose variables will be traced.
