@@ -59,8 +59,8 @@
 */
 
 %********************************************************************************************* 
-% PROGRAM FUNCTION: provides support for logical rules, triggers, and fact management with 
-% features like dependency tracking and truth maintenance.
+% PROGRAM FUNCTION: provides forward chaining support for logical rules, triggers, and fact 
+% management with features like dependency tracking and truth maintenance.
 %*********************************************************************************************
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,7 +120,7 @@ quietly_ex(X) :-
 
 % @TODO undisable when we have defined into_type/3 to not fail
 
-%!  control_arg_types(+A, +B) is semidet.
+%!  control_arg_types(+A, +B) is nondet.
 %
 %   @arg A The first argument to be controlled.
 %   @arg B The second argument to be controlled.
@@ -139,7 +139,6 @@ control_arg_types(A, B) :-
     A \== B,
     % Use a cut to prevent further backtracking.
     !.
-
 
 %:- listing(control_arg_types/3).
 
@@ -258,8 +257,7 @@ do_control_1arg_type(Max, FofN, _, Pre, A, B):-
     Max0 is Max - 1, 
     control_arg_types1(Max0, [FofN | Pre], A, B).
 
-
-%!  arg_n_isa(+F, +N, -ISA) is semidet.
+%!  arg_n_isa(+F, +N, -ISA) is nondet.
 %
 %   Retrieves the type constraint ISA for the N-th argument of a functor F.
 %   If no such constraint is found, the predicate fails.
@@ -505,7 +503,7 @@ setof_or_nil(T, G, L) :-
 %
 call_u(G) :- pfcCallSystem(G).
 
-%!  clause_u(+Head, -Body) is semidet.
+%!  clause_u(+Head, -Body) is nondet.
 %
 %   Retrieves a clause with the given head and body.
 %
@@ -615,7 +613,6 @@ pfc_retract(P) :- fbugio(pfc_retract(P)), pfcRetract(P).
 %     false.
 %
 pfc_retractall(P) :- fbugio(pfc_retractall(P)), pfcRetractAll(P).
-
 
 %!  ~(+Term) is det.
 %
@@ -818,7 +815,7 @@ mpred_test_why(X) :-
     % If the goal fails, still apply `pfcTF1/1` but fail afterwards.
     ; (pfcTF1(X), !, fail).
 
-%!  mpred_literal(+X) is semidet.
+%!  mpred_literal(+X) is nondet.
 %
 %   Checks if X is a literal in the PFC (Prolog Forward Chaining) system.
 %
@@ -834,7 +831,7 @@ mpred_test_why(X) :-
 mpred_literal(X) :-
     pfcLiteral(X).
 
-%!  mpred_positive_literal(+X) is semidet.
+%!  mpred_positive_literal(+X) is nondet.
 %
 %   Checks if X is a positive literal in the PFC system.
 %
@@ -850,7 +847,7 @@ mpred_literal(X) :-
 mpred_positive_literal(X) :-
     pfcPositiveLiteral(X).
 
-%!  pfcAtom(+X) is semidet.
+%!  pfcAtom(+X) is nondet.
 %
 %   Determines whether X is an atom in the PFC system.
 %
@@ -944,7 +941,7 @@ thread_pool:create_pool(ain_pool) :-
 % Provides predicates to manage and create thread pools for concurrent task execution.
 :- use_module(library(thread_pool)).  
 
-%!  is_ain_pool_empty is semidet.
+%!  is_ain_pool_empty is nondet.
 %
 %   Checks if the `ain_pool` thread pool is currently empty.
 %   The predicate succeeds if no threads are running in the pool.
@@ -1148,11 +1145,10 @@ pfcLoad.
 :- op(1100, fx, ('==>')).        % Declares '==>' as a prefix operator with precedence 1100.
 :- op(1150, xfx, ('::::')).      % Declares '::::' as an infix operator with precedence 1150.
 
-
 % declare that pfctmp:knows_will_table_as/2 can be modified at runtime.
 :- dynamic(pfctmp:knows_will_table_as/2).
 
-%!  will_table_as(+Stuff, +As) is semidet.
+%!  will_table_as(+Stuff, +As) is nondet.
 %
 %   Determines whether a specific `Stuff` is known to be tabled as `As`.
 %   If not, it asserts the knowledge and triggers the tabling reaction.
@@ -1198,7 +1194,7 @@ react_tabling(Stuff, _) :-
 :- dynamic(lmconf:is_treated_like_pfc_file/1).
 :- dynamic(lmconf:is_pfc_module/1).
 
-%!  if_pfc_indicated is semidet.
+%!  if_pfc_indicated is nondet.
 %
 %   Determines if the current source file or module is treated as a PFC (Prolog Forward Chaining) source.
 %   It checks if the file has a `.pfc` extension or is marked to behave like a PFC file.
@@ -1219,7 +1215,7 @@ if_pfc_indicated :-
     lmconf:is_pfc_module(M),
     !.
 
-%!  skip_pfc_term_expansion(+Term) is semidet.
+%!  skip_pfc_term_expansion(+Term) is nondet.
 %
 %   Determines if the given term should be excluded from PFC term expansion.
 %   It skips terms like variables or special markers such as `begin_of_file` or `end_of_file`.
@@ -1395,7 +1391,6 @@ termf_subst(Subst, F, F2) :-
 
 :- use_module(library(lists)).
 
-
 %==>(_).
 
 % ==>(G):- arc_assert(G).
@@ -1487,7 +1482,7 @@ pfcDefault(GeneralTerm, Default) :-
    % Otherwise, assert the default term.
    ; assert(Default).
 
-%!  fcTmsMode/1 is det.
+%   fcTmsMode/1 is det.
 %
 %   Controls the Truth Maintenance System (TMS) algorithm by setting its mode. 
 %   The mode can be one of the following:
@@ -1502,7 +1497,7 @@ pfcDefault(GeneralTerm, Default) :-
 % Ensure the default TMS mode is 'cycles' if not defined.
 :- pfcDefault(fcTmsMode(_), fcTmsMode(cycles)).
 
-%!  pfcSearch/1 is det.
+%   pfcSearch/1 is det.
 %
 %   Specifies the search strategy used by the PFC (Prolog Forward Chaining) 
 %   system. The strategy can be one of:
@@ -1520,35 +1515,55 @@ pfcDefault(GeneralTerm, Default) :-
 % 
 
 %!  pfcAdd(+P) is det.
-%!  pfcAdd(+P, +S) is det.
 %
-%   The `pfcAdd/2` and `pfcPost/2` predicates are the main ways to assert new 
-%   clauses into the database and initiate forward reasoning. The `pfcAdd/2` predicate 
-%   asserts a clause `P` into the database with support from `S`.
+%   Adds a new clause or fact `P` to the database. This version retrieves the 
+%   current context (support) using `current_why_UU/1` and passes it to 
+%   `pfcAdd/2` for further processing.
 %
 %   @arg P  The clause or fact to be added to the database.
-%   @arg S  The supporting context or reason for asserting the clause.
 %
 %   @example
-%     % Add a fact with support.
+%     % Add a fact using the current context.
+%     ?- pfcAdd(my_fact).
+%
+pfcAdd(P) :- 
+    % Retrieve the current support context.
+    must_ex(current_why_UU(UU)),
+    % Add the clause or fact with the retrieved context as support.
+    pfcAdd(P, UU).
+
+% % Alternative version using with_current_why (commented out):
+% % pfcAdd(P) :- must_ex(current_why_UU(UU)), 
+% %              with_current_why(pfcAdd(P), pfcAdd(P, UU)).
+
+%!  pfcAdd(+P, +S) is det.
+%
+%   Adds a clause or fact `P` to the database with the given support `S`. 
+%   If the term is in the form `(==>P)`, it strips the implication head and adds 
+%   only the body `P` with the specified support. After adding the clause, 
+%   forward reasoning is initiated.
+%
+%   @arg P  The clause or fact to be added.
+%   @arg S  The support context or reason for adding the clause.
+%
+%   @example
+%     % Add a fact with explicit support.
 %     ?- pfcAdd(my_fact, some_reason).
 %
-% Ensure `current_why_UU/1` is used to retrieve the context for `P`.
-pfcAdd(P) :- 
-   must_ex(current_why_UU(UU)),
-   pfcAdd(P, UU).
-% % pfcAdd(P) :- must_ex(current_why_UU(UU)), % with_current_why(pfcAdd(P), pfcAdd(P, UU)).
-% If the term is in the form (==>P), strip the head and add the body with support `S`.
+%     % Add an implication, storing only the body.
+%     ?- pfcAdd((==>my_fact), some_reason).
+%
 pfcAdd((==>P), S) :- 
-   !, pfcAdd(P, S).
-% Add the clause `P` with support `S` and run forward reasoning.
+    % If the term is an implication (==>P), add only the body `P` with support `S`.
+    !, pfcAdd(P, S).
 pfcAdd(P, S) :-
-   pfcPost(P, S),
-   pfcRun, !.
+    % Add the clause with the given support and initiate forward reasoning.
+    pfcPost(P, S),pfcRun, !.
+% % Fallback for debugging purposes (commented out):
 % % pfcAdd(_, _).
 pfcAdd(P, S) :- 
-   % Log a warning if the addition failed.
-   pfcWarn("pfcAdd(~p,~p) failed", [P, S]).
+    % Log a warning if the addition of the clause fails.
+    pfcWarn("pfcAdd(~p, ~p) failed", [P, S]).
 
 %!  pfcPost(+Ps, +S) is det.
 %
@@ -1648,7 +1663,7 @@ pfcPost2(P, S) :-
    must_ex(pfcEnqueue(P, S)),
    !.  % Commit the enqueuing step.
 
-%!  is_asserted_exact(+MH, -B) is semidet.
+%!  is_asserted_exact(+MH, -B) is nondet.
 %
 %   Checks if a given clause with the module-qualified head `MH` and body `B` 
 %   is exactly asserted in the database. This ensures that the clause exists 
@@ -1668,7 +1683,7 @@ is_asserted_exact(MH, B) :-
    strip_module(MH, M, H),  
    is_asserted_exact(M, H, B).
 
-%!  is_asserted_exact(+MHB) is semidet.
+%!  is_asserted_exact(+MHB) is nondet.
 %
 %   Checks if a given module-qualified head-body term `MHB` is exactly 
 %   asserted in the database. This version expands the input term into 
@@ -1689,7 +1704,7 @@ is_asserted_exact(MHB) :-
    expand_to_hb(HB, H, B),    
    is_asserted_exact(M, H, B).
 
-%!  is_asserted_exact(+M, +H, -B) is semidet.
+%!  is_asserted_exact(+M, +H, -B) is nondet.
 %
 %   Checks if a clause with the specified module `M`, head `H`, and body `B` 
 %   is exactly asserted in the database. This predicate performs a detailed 
@@ -1714,7 +1729,7 @@ is_asserted_exact(M, H, B) :-
    % Continue with full clause check.
    is_asserted_exact(MM, H, B, Ref).
 
-%!  is_asserted_exact(+M, +H, +B, +Ref) is semidet.
+%!  is_asserted_exact(+M, +H, +B, +Ref) is nondet.
 %
 %   Verifies the exact match of a clause's content by comparing the heads 
 %   and bodies using the clause reference `Ref`. This ensures that the 
@@ -1748,7 +1763,7 @@ is_asserted_exact(_, H, B, Ref) :-
 %pfcPost1(P,S) :-
  %pfcWarn("pfcPost1: ~p\n (support: ~p) failed",[P,S]).
 
-% %   pfcAddDbToHead(+P,-NewP) is semidet.
+% %   pfcAddDbToHead(+P,-NewP) is nondet.
 % talkes a fact P or a conditioned fact
 % (P:-C) and adds the Db context.
 %
@@ -1962,7 +1977,7 @@ pfcRemoveOldVersion0((Identifier :::: Body)) :-
 % If no matching rule is found, succeed without action.
 pfcRemoveOldVersion0(_).
 
-%!  with_fc_mode(+Mode, :Goal) is semidet.
+%!  with_fc_mode(+Mode, :Goal) is nondet.
 %
 %   Temporarily switches to the specified forward-chaining propagation mode 
 %   while executing the given `Goal`. The original mode is restored after the 
@@ -2046,7 +2061,7 @@ pfcStep :-
    pfcdo(pfcFwd(P)),  
    !.
 
-%!  get_next_fact(-P) is semidet.
+%!  get_next_fact(-P) is nondet.
 %
 %   Retrieves the next fact to be processed from the `pfcQueue` and removes it. 
 %   This predicate fails if the queue is empty.
@@ -2083,8 +2098,7 @@ remove_selection(P) :-
    % Log a debugging message if the fact was not found on the queue.
    brake(pfcPrintf("pfc:get_next_fact - selected fact not on Queue: ~p", [P])).
 
-
-%!  select_next_fact(-P) is semidet.
+%!  select_next_fact(-P) is nondet.
 %
 %   Identifies the next fact to reason from. This predicate first tries the 
 %   user-defined predicate `pfcSelect/1`. If that fails, it falls back to the 
@@ -2105,7 +2119,7 @@ select_next_fact(P) :-
    defaultpfcSelect(P),  
    !.
 
-%!  defaultpfcSelect(-P) is semidet.
+%!  defaultpfcSelect(-P) is nondet.
 %
 %   The default selection predicate, which selects the item at the front of 
 %   the `pfcQueue`. This serves as a fallback when no user-defined selection 
@@ -2240,7 +2254,7 @@ pfcBtPtCombine(Head, Body, Support) :-
    fail.
 pfcBtPtCombine(_, _, _) :- !.
 
-%!  pfcGetTriggerQuick(+Trigger) is semidet.
+%!  pfcGetTriggerQuick(+Trigger) is nondet.
 %
 %   Quickly checks if a trigger exists in the system. It succeeds if the trigger 
 %   is defined as a clause or can be executed with `pfc_call/1`.
@@ -2269,7 +2283,6 @@ pfcCallSystem(Trigger) :-
    % Execute the trigger with `pfc_call/1`.
    pfc_call(Trigger).
 
-
 % % 
 % %
 % %  predicates for manipulating action traces.
@@ -2291,7 +2304,7 @@ pfcAddActionTrace(Action, Support) :-
    % Add an action trace and its support.
    pfcAddSupport(pfcAction(Action), Support).
 
-%!  pfcRemActionTrace(+pfcAction(A)) is det.
+%!  pfcRemActionTrace(+PfcAction) is det.
 %
 %   Removes an action trace by executing the corresponding undo method. If an 
 %   undo method is defined for the action, it is called using the system's 
@@ -2333,70 +2346,45 @@ pfcRetract(X) :-
    pfcRetractType(Type, X),
    !.
 
-%!  pfcRetractType(fact(_), +X) is det.
+%!  pfcRetractType(+Type, +X) is det.
 %
-%   Retracts a fact from the database. If the fact has been stored with a 
-%   database context, it retracts the modified version; otherwise, it retracts 
-%   the original fact.
+%   Retracts an entity from the database based on its type. The predicate handles
+%   facts, rules, triggers, and actions differently, ensuring the correct version
+%   (with or without database context) is retracted. For actions, it removes the 
+%   associated action trace. If a trigger is not found, a warning is issued.
 %
-%   @arg X  The fact to be retracted.
+%   @arg Type  The type of the element to be retracted (e.g., `fact(_)`, `rule(_)`, `trigger(Pos)`, `action`).
+%   @arg X     The specific entity to be retracted.
 %
 %   @example
 %     % Retract a fact with or without database context.
 %     ?- pfcRetractType(fact(_), my_fact).
 %
-pfcRetractType(fact(_), X) :-
-   % Handle facts with or without a database context.
-   pfcAddDbToHead(X, X2) -> retract(X2) ; retract(X).
-
-%!  pfcRetractType(rule(_), +X) is det.
-%
-%   Retracts a rule from the database. If the rule has been stored with a 
-%   database context, it retracts the modified version; otherwise, it retracts 
-%   the original rule.
-%
-%   @arg X  The rule to be retracted.
-%
-%   @example
-%     % Retract a rule with or without database context.
+%     % Retract a rule with database context if present.
 %     ?- pfcRetractType(rule(_), my_rule).
 %
-pfcRetractType(rule(_), X) :-
-   % Handle rules with or without a database context.
-   pfcAddDbToHead(X, X2) -> retract(X2) ; retract(X).
-
-%!  pfcRetractType(trigger(Pos), +X) is det.
+%     % Retract a trigger and clean up forward chaining.
+%     ?- pfcRetractType(trigger(+), my_trigger).
 %
-%   Retracts a trigger from the database. If the trigger is found, it is 
-%   retracted, and `unFc/1` is called to handle any necessary cleanup. 
-%   If the trigger is not found, a warning is issued.
-%
-%   @arg Pos  The position or type of the trigger (positive, negative).
-%   @arg X    The trigger to be retracted.
-%
-%   @example
-%     % Retract a positive trigger.
-%     ?- pfcRetractType(trigger(positive), my_trigger).
-%
-pfcRetractType(trigger(Pos), X) :-
-   retract(X)
-   -> unFc(X)
-   ;  pfcWarn("Trigger(~p) not found to retract: ~p", [Pos, X]).
-
-%!  pfcRetractType(action, +X) is det.
-%
-%   Retracts an action trace by invoking `pfcRemActionTrace/1`.
-%
-%   @arg X  The action trace to be removed.
-%
-%   @example
 %     % Retract an action trace.
 %     ?- pfcRetractType(action, pfcAction(my_action)).
 %
+pfcRetractType(fact(_), X) :-
+    % Handle facts, with or without a database context.
+    pfcAddDbToHead(X, X2) -> retract(X2) ; retract(X).
+pfcRetractType(rule(_), X) :-
+    % Handle rules, with or without a database context.
+    pfcAddDbToHead(X, X2) -> retract(X2) ; retract(X).
+pfcRetractType(trigger(Pos), X) :-
+    % Attempt to retract the trigger.
+    retract(X)
+    -> % If successful, perform additional cleanup.
+       unFc(X)
+    ;  % If not found, issue a warning.
+       pfcWarn("Trigger(~p) not found to retract: ~p", [Pos, X]).
 pfcRetractType(action, X) :- 
-   % Remove the action trace.
-   pfcRemActionTrace(X).
-
+    % Remove the action trace using the appropriate helper.
+    pfcRemActionTrace(X).
 
 %!  pfcAddType1(+X) is det.
 %
@@ -2419,13 +2407,13 @@ pfcAddType1(X) :-
    % Call the appropriate predicate based on the type.
    pfcAddType(Type, X2).
 
-%!  pfcAddType(fact(Type), +X) is det.
+%!  pfcAddType(+FactType, +X) is det.
 %
 %   Adds a fact to the database. If the fact is unique, it is asserted; 
 %   otherwise, it is skipped.
 %
-%   @arg Type  The specific type of the fact.
-%   @arg X     The fact to be added.
+%   @arg factType  The specific type of the fact.
+%   @arg X         The fact to be added.
 %
 %   @example
 %     % Add a unique fact to the database.
@@ -2590,7 +2578,7 @@ pfcRetractAll(P, _S0) :-
 
 pfcRetractAll(_, _).
 
-%!  pfcSupportedBy(+P, +S, -How) is semidet.
+%!  pfcSupportedBy(+P, +S, -How) is nondet.
 %
 %   Determines how the entity `P` is supported by the support `S`. It checks 
 %   both the forward and backward support relationships.
@@ -2713,7 +2701,6 @@ pfcRemoveSupportsQuietly(F) :-
 pfcRemoveSupportsQuietly(_).
 
 % fcUndo(X) undoes X.
-
 
 %!  fcUndo(+P) is det.
 %
@@ -2851,7 +2838,7 @@ removeIfUnsupported(P) :-
    -> pfcTraceMsg(fcSupported(P)) 
    ;  fcUndo(P).
 
-%!  fcSupported(+P) is semidet.
+%!  fcSupported(+P) is nondet.
 %
 %   Succeeds if the given fact, rule, or trigger `P` is "supported". The 
 %   meaning of "supported" depends on the TMS (Truth Maintenance System) 
@@ -2868,7 +2855,7 @@ fcSupported(P) :-
    must_ex(fcTmsMode(Mode)),
    supported(Mode, P).
 
-%!  supported(+Mode, +P) is semidet.
+%!  supported(+Mode, +P) is nondet.
 %
 %   Determines whether the given entity `P` is supported based on the 
 %   current TMS mode. Different modes have different criteria for support:
@@ -2889,7 +2876,7 @@ supported(_, _P) :-
    % In other modes, assume everything is supported.
    true.
 
-%!  wellFounded(+Fact) is semidet.
+%!  wellFounded(+Fact) is nondet.
 %
 %   Determines whether the given `Fact` is well-founded. A fact is considered 
 %   well-founded if it is supported by the user (axiom) or assumption, or if 
@@ -2905,7 +2892,7 @@ wellFounded(Fact) :-
    % Start the well-foundedness check with an empty list of descendants.
    wf(Fact, []).
 
-%!  wf(+F, +Descendants) is semidet.
+%!  wf(+F, +Descendants) is nondet.
 %
 %   Recursively checks whether the given fact `F` is well-founded. It ensures 
 %   that the fact is not part of a dependency loop and that all its supporters 
@@ -2950,7 +2937,7 @@ wflist([X | Rest], L) :-
 % together allow one to deduce F.  One of the facts will typically be a rule.
 % The supports for a user-defined fact are: [user].
 
-%!  supports(+F, -ListOfSupporters) is semidet.
+%!  supports(+F, -ListOfSupporters) is nondet.
 %
 %   Determines a list of supporters (`ListOfSupporters`) for a given fact `F`. 
 %   The list represents one justification for `F`, consisting of facts and 
@@ -2970,7 +2957,7 @@ supports(F, [Fact | MoreFacts]) :-
    % Determine the additional supports from the trigger.
    triggerSupports(Trigger, MoreFacts).
 
-%!  triggerSupports(+Trigger, -AllSupport) is semidet.
+%!  triggerSupports(+Trigger, -AllSupport) is nondet.
 %
 %   Retrieves the list of all supporters for the given trigger. If the trigger 
 %   has no additional supporters, an axiomatic check is performed.
@@ -2988,7 +2975,7 @@ triggerSupports(Trigger, AllSupport) :-
     triggerSupports1(Trigger, AllSupport) *-> true ; 
     triggerSupports2(Trigger, AllSupport).
 
-%!  triggerSupports1(+Trigger, -AllSupport) is semidet.
+%!  triggerSupports1(+Trigger, -AllSupport) is nondet.
 %
 %   Retrieves supporters for the given trigger. This method retrieves the fact 
 %   and a secondary trigger, recursively determining all supporters.
@@ -3004,7 +2991,7 @@ triggerSupports1(Trigger, AllSupport) :-
    % Construct the complete list of supporters.
    [Fact | MoreFacts] = AllSupport.
 
-%!  triggerSupports2(+Trigger, -AllSupport) is semidet.
+%!  triggerSupports2(+Trigger, -AllSupport) is nondet.
 %
 %   Alternative strategy for retrieving supporters. This version is currently 
 %   disabled with a `fail` directive.
@@ -3018,7 +3005,7 @@ triggerSupports2(Trigger, AllSupport) :-
    (triggerSupports(AnotherTrigger, MoreFacts) *-> true ; MoreFacts = [AnotherTrigger]),
    [Fact | MoreFacts] = AllSupport.
 
-%!  axiomatic_supporter(+U) is semidet.
+%!  axiomatic_supporter(+U) is nondet.
 %
 %   Checks if the given entity `U` is an axiomatic supporter, meaning it provides 
 %   fundamental or assumed support (e.g., user input or assumptions).
@@ -3039,7 +3026,7 @@ axiomatic_supporter(U) :-
    !.
 axiomatic_supporter(ax) :- !.
 
-%!  is_file_ref(+A) is semidet.
+%!  is_file_ref(+A) is nondet.
 %
 %   Checks if the given term `A` is a file reference.
 %
@@ -3087,7 +3074,7 @@ triggerSupports1(_, X, [X]) :-
    % Use this strategy only if permitted by system configuration.
    may_cheat.
 
-%!  may_cheat is semidet.
+%!  may_cheat is nondet.
 %
 %   Determines if fallback strategies are allowed by checking a system flag.
 %
@@ -3145,7 +3132,7 @@ pfcFwd1(Fact) :-
    % Check and process negative triggers.
    ignore(fcnt(Fact, F)).
 
-%!  fc_rule_check(+P) is semidet.
+%!  fc_rule_check(+P) is nondet.
 %
 %   Performs special built-in forward chaining if the input `P` is a rule. 
 %   It processes both unidirectional (`==>`) and bidirectional (`<==>`) rules.
@@ -3600,7 +3587,7 @@ pfc_call(P) :-
   (clause(P, Condition), Condition \== true, pfc_call(Condition)).
 */
 
-%!  undoable(+A) is semidet.
+%!  undoable(+A) is nondet.
 %
 %   Determines if an action `A` is undoable by checking if there is a method 
 %   available for undoing it.
@@ -3771,275 +3758,733 @@ pfc_nf_negation(Form, {\+ X}) :-
    !.
 pfc_nf_negation(X, X).
 
-     % %  constrain_meta(+Lhs, ?Guard) is semidet.
-     %
-     % Creates a somewhat sane Guard.
-     %
-     % To turn this feature off...
-     % ?- set_prolog_flag(constrain_meta,false).
-     %
-     %
-     constrain_meta(_,_):- current_prolog_flag(constrain_meta,false),!,fail.
-     % FACT
-     constrain_meta(P,mpred_positive_fact(P)):- is_ftVar(P),!.
-     % NEG chaining
-     constrain_meta(~ P, CP):- !,  constrain_meta(P,CP).
-     constrain_meta(\+ P, CP):- !,  constrain_meta(P,CP).
-     % FWD chaining
-     constrain_meta((_==>Q),nonvar(Q)):- !, is_ftVar(Q).
-     % EQV chaining
-     constrain_meta((P<==>Q),(nonvar(Q);nonvar(P))):- (is_ftVar(Q);is_ftVar(P)),!.
-     % BWD chaining
-     constrain_meta((Q <- _),mpred_literal(Q)):- is_ftVar(Q),!.
-     constrain_meta((Q <- _),CQ):- !, constrain_meta(Q,CQ).
-     % CWC chaining
-     constrain_meta((Q :- _),mpred_literal(Q)):- is_ftVar(Q),!.
-     constrain_meta((Q :- _),CQ):- !, constrain_meta(Q,CQ).
+%!  constrain_meta(+Lhs, ?Guard) is nondet.
+%
+%   Generates a guard condition based on the provided logical structure.
+%   Guards are constraints or checks to ensure that certain properties hold 
+%   for the logical terms in Prolog. This predicate applies rules to various 
+%   logical constructs to generate corresponding guards.
+%
+%   If the `constrain_meta` flag is set to `false`, this predicate fails immediately, 
+%   effectively disabling the guard creation logic.
+%
+%   You can disable this feature by setting the following Prolog flag:
+%
+%   @example
+%     ?- set_prolog_flag(constrain_meta, false).
+%
+%   @arg Lhs   The left-hand side of the logical construct (e.g., a term or rule).
+%   @arg Guard The guard that corresponds to the logical construct in `Lhs`. 
+%              This is unified with a generated constraint or check.
+%
+constrain_meta(_, _) :-
+    % Check if the constrain_meta flag is set to false.
+    % If so, immediately fail and prevent guard creation.
+    current_prolog_flag(constrain_meta, false), !, fail.
+% FACT case: Generate a positive fact guard.
+constrain_meta(P, mpred_positive_fact(P)) :-
+    % If P is a free term variable, generate a positive fact guard.
+    is_ftVar(P), !.
+% NEG chaining: Handle negated expressions (~P or \+ P).
+constrain_meta(~P, CP) :-
+    % Recursively apply the guard logic on the inner term P.
+    !, constrain_meta(P, CP).
+constrain_meta(\+P, CP) :-
+    % Recursively apply the guard logic on the inner term P.
+    !, constrain_meta(P, CP).
+% FWD chaining: Handle forward chaining rules (_ ==> Q).
+constrain_meta((_ ==> Q), nonvar(Q)) :-
+    % If Q is a free term variable, generate a nonvar check for Q.
+    !, is_ftVar(Q).
+% EQV chaining: Handle equivalence rules (P <==> Q).
+constrain_meta((P <==> Q), (nonvar(Q); nonvar(P))) :-
+    % If either P or Q is a free term variable, generate nonvar checks.
+    (is_ftVar(Q); is_ftVar(P)), !.
+% BWD chaining: Handle backward chaining rules (Q <- _).
+constrain_meta((Q <- _), mpred_literal(Q)) :-
+    % If Q is a free term variable, generate a literal check for Q.
+    is_ftVar(Q), !.
+constrain_meta((Q <- _), CQ) :-
+    % Recursively apply the guard logic on Q.
+    !, constrain_meta(Q, CQ).
+% CWC chaining: Handle conditional rules (Q :- _).
+constrain_meta((Q :- _), mpred_literal(Q)) :-
+    % If Q is a free term variable, generate a literal check for Q.
+    is_ftVar(Q), !.
+constrain_meta((Q :- _), CQ) :-
+    % Recursively apply the guard logic on Q.
+    !, constrain_meta(Q, CQ).
 
+%!  is_simple_lhs(+ActN) is nondet.
+%
+%   Checks whether the given term is a "simple" left-hand side (LHS).
+%   A "simple" LHS is defined as one that is not negated, divided, or 
+%   a conjunction or disjunction of complex terms. This predicate applies
+%   several checks to ensure the simplicity of the LHS structure.
+%
+%   @arg ActN The term to be checked. It can be any valid Prolog term.
+%
+%   The predicate fails if the term matches any of the complex or negated
+%   patterns, and succeeds if none of those conditions hold. 
+%
+%   Below are the cases where the predicate will explicitly fail:
+%     1. The term is a free variable.
+%     2. The term is negated (\+ or ~).
+%     3. The term contains division or complex logical structures.
+%
+is_simple_lhs(ActN) :-
+    % If the term is a free variable, fail immediately.
+    is_ftVar(ActN), !, fail.
+% Fail if the LHS is explicitly negated.
+is_simple_lhs(\+ _) :- !, fail.
+is_simple_lhs(~ _)  :- !, fail.
+% Fail if the LHS contains a division structure (/) or complex parts.
+is_simple_lhs(_ / _) :- !, fail.
+% Handle conjunctions (Lhs1, Lhs2): Both parts must be simple LHSs.
+is_simple_lhs((Lhs1, Lhs2)) :-
+    % Recursively check both parts of the conjunction.
+    !, is_simple_lhs(Lhs1),
+    is_simple_lhs(Lhs2).
+% Handle disjunctions (Lhs1; Lhs2): Both parts must be simple LHSs.
+is_simple_lhs((Lhs1; Lhs2)) :-
+    % Recursively check both parts of the disjunction.
+    !, is_simple_lhs(Lhs1),
+    is_simple_lhs(Lhs2).
+is_simple_lhs(ActN) :-
+    % Fail if the term is an "active" LHS (as defined by is_active_lhs/1).
+    is_active_lhs(ActN), !, fail.
+% Handle complex division structures (Lhs1 / Lhs2).
+is_simple_lhs((Lhs1 / Lhs2)) :-
+    % Fail immediately but ensure both sides are checked for simplicity.
+    !, fail, 
+    is_simple_lhs(Lhs1),
+    is_simple_lhs(Lhs2).
+% Succeed if the term passes all checks and is considered a "simple" LHS.
+is_simple_lhs(_).
 
+%!  is_active_lhs(+ActN) is nondet.
+%
+%   Checks whether the given term represents an "active" left-hand side (LHS).
+%   An "active" LHS includes specific terms that are recognized as control constructs,
+%   such as cuts or certain wrapped terms. This predicate identifies such terms
+%   through pattern matching and recursive checks.
+%
+%   @arg ActN The term to be checked. It can be any valid Prolog term.
+%
+%   The predicate fails if the input term is a variable. For compound terms
+%   (e.g., conjunctions, disjunctions, and divisions), it recursively checks 
+%   the parts of the term to determine if any component is active.
+%
+is_active_lhs(ActN) :-
+    % Fail immediately if the term is a free variable.
+    var(ActN), !, fail.
+% Recognize the cut operator (!) as an active LHS.
+is_active_lhs(!).
+% Recognize the `cut_c` atom as an active LHS.
+is_active_lhs(cut_c).
+% Recognize terms of the form `actn/1` as active.
+is_active_lhs(actn(_Act)).
+% Recognize terms wrapped in `{}/1` as active.
+is_active_lhs('{}'(_Act)).
+% Handle division structures (Lhs1 / Lhs2) by recursively checking both sides.
+is_active_lhs((Lhs1 / Lhs2)) :-
+    % Succeed if either LHS1 or LHS2 is active.
+    !, is_active_lhs(Lhs1); is_active_lhs(Lhs2).
+% Handle conjunctions (Lhs1, Lhs2) by recursively checking both sides.
+is_active_lhs((Lhs1, Lhs2)) :-
+    % Succeed if either LHS1 or LHS2 is active.
+    !, is_active_lhs(Lhs1); is_active_lhs(Lhs2).
+% Handle disjunctions (Lhs1; Lhs2) by recursively checking both sides.
+is_active_lhs((Lhs1; Lhs2)) :-
+    % Succeed if either LHS1 or LHS2 is active.
+    !, is_active_lhs(Lhs1); is_active_lhs(Lhs2).
 
+%!  add_lhs_cond(+Lhs1, +Lhs2, -Result) is det.
+%
+%   Combines two left-hand side (LHS) terms with an additional condition.
+%   If the first term is already a division (Lhs1 / Cond), the second LHS 
+%   is added to the condition part. Otherwise, a new division is formed 
+%   by combining both terms.
+%
+%   @arg Lhs1   The first LHS term, which may already include a condition.
+%   @arg Lhs2   The second LHS term to be added as a condition.
+%   @arg Result The resulting LHS term with the new condition applied.
+%
+%   @examples
+%     % Combine two LHS terms directly:
+%     ?- add_lhs_cond(foo, bar, Result).
+%     Result = foo/bar.
+%
+%     % Add a new condition to an existing condition:
+%     ?- add_lhs_cond(foo/old_cond, new_cond, Result).
+%     Result = foo/(old_cond, new_cond).
+%
+add_lhs_cond(Lhs1 / Cond, Lhs2, Lhs1 / (Cond, Lhs2)) :- !.
+add_lhs_cond(Lhs1, Lhs2, Lhs1 / Lhs2).
 
+%!  buildRhs(+Conjunction, -Rhs) is det.
+%
+%   Constructs a right-hand side (RHS) list from a given conjunction of terms.
+%   This predicate recursively processes a conjunction `(A, B)` by converting 
+%   each part into a compiled RHS term using `pfcCompileRhsTerm/2` and collecting 
+%   the results in a list. If the input is a single term, it is wrapped in a list.
+%
+%   @arg Conjunction The input term, which can be a conjunction `(A, B)` or a 
+%                    single term. If it is a conjunction, each part will be processed 
+%                    and added to the result list.
+%   @arg Rhs         The output list containing the compiled RHS terms.
+%
+%   @examples
+%     % Process a single term:
+%     ?- buildRhs(foo, Rhs).
+%     Rhs = [foo].
+%
+%     % Process a conjunction:
+%     ?- buildRhs((foo, bar), Rhs).
+%     Rhs = [foo, bar].
+%
+buildRhs(X, [X]) :-
+    % If the input is a variable, wrap it in a list and stop.
+    var(X), 
+    !.
+buildRhs((A, B), [A2 | Rest]) :-
+    % If the input is a conjunction, process the first term (A).
+    % Compile A into A2, and recursively build the RHS for the rest.
+    !,
+    pfcCompileRhsTerm(A, A2),
+    buildRhs(B, Rest).
+buildRhs(X, [X2]) :-
+    % If the input is a single non-variable term, compile it and wrap it in a list.
+    pfcCompileRhsTerm(X, X2).
 
-     is_simple_lhs(ActN):- is_ftVar(ActN),!,fail.
-     is_simple_lhs( \+ _ ):-!,fail.
-     is_simple_lhs( ~ _ ):-!,fail.
-     is_simple_lhs( _  / _ ):-!,fail.
-     is_simple_lhs((Lhs1,Lhs2)):- !,is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).
-     is_simple_lhs((Lhs1;Lhs2)):- !,is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).
-     is_simple_lhs(ActN):- is_active_lhs(ActN),!,fail.
-     is_simple_lhs((Lhs1/Lhs2)):- !,fail, is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).
-     is_simple_lhs(_).
+%!  pfcCompileRhsTerm(+Term, -CompiledTerm) is det.
+%
+%   Compiles a term for use on the right-hand side (RHS) of a rule.
+%   If the term has the form `P / C`, it is rewritten as `(P :- C)`. 
+%   Otherwise, the term is left unchanged.
+%
+%   @arg Term          The input term to be compiled. It can be a term of the form 
+%                      `P / C` or any other valid Prolog term.
+%   @arg CompiledTerm  The output term, which is either the rewritten `(P :- C)` 
+%                      or the original term if no rewriting is needed.
+%
+%   @examples
+%     % Compile a term with a condition:
+%     ?- pfcCompileRhsTerm(foo / bar, Compiled).
+%     Compiled = (foo :- bar).
+%
+%     % Compile a simple term:
+%     ?- pfcCompileRhsTerm(foo, Compiled).
+%     Compiled = foo.
+%
+pfcCompileRhsTerm((P / C), ((P :- C))) :- 
+    % Rewrite `P / C` as `(P :- C)` to form a valid Prolog rule.
+    !.
+pfcCompileRhsTerm(P, P).
+    % Leave the term unchanged if it is not of the form `P / C`.
 
+%!  pfc_unnegate(+N, -P) is nondet.
+%
+%   True if `N` is a negated term, and `P` is the corresponding term 
+%   with the negation operator removed. This predicate handles multiple
+%   types of negation, including `~`, `-`, and `\+/1`.
+%
+%   @arg N The potentially negated term.
+%   @arg P The unnegated form of the term.
+%
+%   @example
+%     ?- pfc_unnegate(~foo, Result).
+%     Result = foo.
+%
+pfc_unnegate(P, _) :-
+    % Fail if the term is a variable.
+    var(P), !, fail.
 
-     is_active_lhs(ActN):- var(ActN),!,fail.
-     is_active_lhs(!).
-     is_active_lhs(cut_c).
-     is_active_lhs(actn(_Act)).
-     is_active_lhs('{}'(_Act)).
-     is_active_lhs((Lhs1/Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
-     is_active_lhs((Lhs1,Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
-     is_active_lhs((Lhs1;Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
+pfc_unnegate((~P), P) :-
+    % Handle negation using `~` if `tilded_negation` is disabled.
+    \+ tilded_negation.
 
+pfc_unnegate((-P), P).
+    % Handle negation using `-`.
 
-     add_lhs_cond(Lhs1/Cond,Lhs2,Lhs1/(Cond,Lhs2)):-!.
-     add_lhs_cond(Lhs1,Lhs2,Lhs1/Lhs2).
+pfc_unnegate((\+(P)), P).
+    % Handle negation using Prolog's `\+/1` operator.
 
-
-
-% %
-% %  buildRhs(+Conjunction,-Rhs)
-% %
-
-buildRhs(X,[X]) :-
-  var(X),
-  !.
-
-buildRhs((A,B),[A2|Rest]) :-
-  !,
-  pfcCompileRhsTerm(A,A2),
-  buildRhs(B,Rest).
-
-buildRhs(X,[X2]) :-
-   pfcCompileRhsTerm(X,X2).
-
-pfcCompileRhsTerm((P/C),((P:-C))) :- !.
-
-pfcCompileRhsTerm(P,P).
-
-
-% %  pfc_unnegate(N,P) is true if N is a negated term and P is the term
-% %  with the negation operator stripped.
-
-pfc_unnegate(P,_):- var(P),!,fail.
-pfc_unnegate((~P),P):-  \+ tilded_negation.
-pfc_unnegate((-P),P).
-pfc_unnegate((\+(P)),P).
-
+%!  pfcNegatedLiteral(+P) is nondet.
+%
+%   True if `P` is a negated literal. This predicate uses `pfc_unnegate/2` 
+%   to determine if the literal is negated and then checks if the inner term 
+%   is a positive literal using `pfcPositiveLiteral/1`.
+%
+%   @arg P The literal to check.
+%
+%   @example
+%     ?- pfcNegatedLiteral(\+foo).
+%     true.
+%
 pfcNegatedLiteral(P) :-
-  callable(P),
-  pfc_unnegate(P,Q),
-  pfcPositiveLiteral(Q).
+    % Ensure that P is a callable term.
+    callable(P),
+    % Unnegate the term and check if the result is a positive literal.
+    pfc_unnegate(P, Q),
+    pfcPositiveLiteral(Q).
 
-pfcLiteral(X) :- pfcNegatedLiteral(X).
-pfcLiteral(X) :- pfcPositiveLiteral(X).
+%!  pfcLiteral(+X) is nondet.
+%
+%   True if `X` is either a negated or positive literal.
+%
+%   @arg X The literal to check.
+%
+%   @example
+%     ?- pfcLiteral(foo).
+%     true.
+%
+pfcLiteral(X) :-
+    % Check if the term is a negated literal.
+    pfcNegatedLiteral(X).
+pfcLiteral(X) :-
+    % Check if the term is a positive literal.
+    pfcPositiveLiteral(X).
 
+%!  pfcPositiveLiteral(+X) is nondet.
+%
+%   True if `X` is a positive literal. A positive literal is a callable term
+%   that does not use any of the predefined connectives.
+%
+%   @arg X The literal to check.
+%
+%   @example
+%     ?- pfcPositiveLiteral(bar).
+%     true.
+%
 pfcPositiveLiteral(X) :-
-  callable(X),
-  functor(X,F,_),
-  \+ pfcConnective(F).
+    % Ensure that X is a callable term.
+    callable(X),
+    % Extract the functor from X.
+    functor(X, F, _),
+    % Fail if the functor is a known connective.
+    \+ pfcConnective(F).
 
-pfcConnective(';').
-pfcConnective(',').
-pfcConnective('/').
-pfcConnective('|').
-pfcConnective(('==>')).
-pfcConnective(('<-')).
-pfcConnective('<==>').
+%!  pfcConnective(+F) is nondet.
+%
+%   True if `F` is a known connective used in logical terms. Connectives
+%   are operators or symbols used to combine terms.
+%
+%   @arg F The functor to check.
+%
+%   @example
+%     ?- pfcConnective(';').
+%     true.
+%
+pfcConnective(';').      % Disjunction
+pfcConnective(',').      % Conjunction
+pfcConnective('/').      % Division
+pfcConnective('|').      % Alternative
+pfcConnective(('==>')).  % Forward implication
+pfcConnective(('<-')).   % Backward implication
+pfcConnective('<==>').   % Bi-conditional
+pfcConnective('-').      % Negation with `-`
 
-pfcConnective('-').
-pfcConnective('~'):- \+ tilded_negation.
-pfcConnective(( \+ )).
+pfcConnective('~') :-
+    % Use `~` as a connective only if `tilded_negation` is disabled.
+    \+ tilded_negation.
 
-is_implicitly_prolog(Callable):- \+ callable(Callable),!, fail.
+pfcConnective((\+)).     % Prolog's negation operator
+
+%!  is_implicitly_prolog(+Callable) is nondet.
+%
+%   True if `Callable` is a valid Prolog construct. 
+%
+%   @arg Callable A term to be checked if it is a valid Prolog construct.
+%
+%   @example
+%     ?- is_implicitly_prolog(X is 2).
+%     true.
+%
+is_implicitly_prolog(Callable) :-
+    % Fail if the term is not callable.
+    \+ callable(Callable), !, fail.
+
 is_implicitly_prolog(_ is _).
+    % Handle Prolog's `is/2` arithmetic evaluation.
 
-processRule(Lhs,Rhs,ParentRule) :-
-  copy_term(ParentRule,ParentRuleCopy),
-  buildRhs(Rhs,Rhs2),
-  current_why_U(USER), % @TODO REVIEW _U
-  pfcForEach(pfc_nf(Lhs,Lhs2),
-          buildRule(Lhs2,rhs(Rhs2),(ParentRuleCopy,USER))).
-
-buildRule(Lhs,Rhs,Support) :-
-  buildTrigger(Lhs,Rhs,Trigger),
-  fcEvalLHS(Trigger,Support).
-
-buildTrigger([],Consequent,Consequent).
-
-buildTrigger([Test|Triggers],Consequent,(Test *-> X)) :- is_implicitly_prolog(Test),
-  !,
-  buildTrigger(Triggers,Consequent,X).
-
-buildTrigger([V|Triggers],Consequent,'$pt$'(V,X)) :-
-  var(V),
-  !,
-  buildTrigger(Triggers,Consequent,X).
-
-
-buildTrigger([(T1/Test)|Triggers],Consequent,'$nt$'(T2,Test2,X)) :-
-  pfc_unnegate(T1,T2),
-  !,
-  buildNtTest(T2,Test,Test2),
-  buildTrigger(Triggers,Consequent,X).
-
-buildTrigger([(T1)|Triggers],Consequent,'$nt$'(T2,Test,X)) :-
-  pfc_unnegate(T1,T2),
-  !,
-  buildNtTest(T2,true,Test),
-  buildTrigger(Triggers,Consequent,X).
-
-buildTrigger([{Test}|Triggers],Consequent,(Test *-> X)) :-
-  !,
-  buildTrigger(Triggers,Consequent,X).
-
-buildTrigger([T/Test|Triggers],Consequent,'$pt$'(T,X)) :-
-  !,
-  buildTest(Test,Test2),
-  buildTrigger([{Test2}|Triggers],Consequent,X).
-
-
-%buildTrigger([snip|Triggers],Consequent,snip(X)) :-
-%  !,
-%  buildTrigger(Triggers,Consequent,X).
-
-buildTrigger([T|Triggers],Consequent,'$pt$'(T,X)) :-
-  !,
-  buildTrigger(Triggers,Consequent,X).
-
-% %
-% %  buildNtTest(+,+,-).
-% %
-% %  builds the test used in a negative trigger(-) ('$nt$'/3).  This test is a
-% %  conjunction of the check than no matching facts are in the db and any
-% %  additional test specified in the rule attached to this ~ term.
-% %
-     %  tilded_negation.
-buildNtTest(T,Testin,Testout) :-
-  buildTest(Testin,Testmid),
-  pfcConjoin((pfc_call(T)),Testmid,Testout).
-
-
-% this just strips away any currly brackets.
-
-buildTest({Test},Test) :- !.
-buildTest(Test,Test).
-
-% % 
-
-
-% %  pfcType(+VALUE1, ?Type) is semidet.
+%!  processRule(+Lhs, +Rhs, +ParentRule) is det.
 %
-% PFC Database Type.
+%   Processes a rule by building the RHS and constructing new rules.
+%   This predicate creates a copy of the `ParentRule`, compiles the RHS,
+%   and processes each normalized form of the LHS.
 %
-%  simple typeing for Pfc objects
+%   @arg Lhs        The left-hand side (LHS) of the rule.
+%   @arg Rhs        The right-hand side (RHS) of the rule.
+%   @arg ParentRule The original rule being processed.
 %
+%   @example
+%     ?- processRule(foo, bar, my_rule).
+%
+processRule(Lhs, Rhs, ParentRule) :-
+    % Create a copy of the parent rule for later use.
+    copy_term(ParentRule, ParentRuleCopy),
+    % Build the RHS by compiling the terms into a list.
+    buildRhs(Rhs, Rhs2),
+    % Retrieve the current user context (USER).
+    current_why_U(USER),  % @TODO: Review _U usage.
+    % Process each normalized form of the LHS.
+    pfcForEach(
+        pfc_nf(Lhs, Lhs2),
+        buildRule(Lhs2, rhs(Rhs2), (ParentRuleCopy, USER))
+    ).
+
+%!  buildRule(+Lhs, +Rhs, +Support) is det.
+%
+%   Constructs a rule by building a trigger from the LHS and RHS, and 
+%   evaluating the trigger using `fcEvalLHS/2`.
+%
+%   @arg Lhs     The left-hand side of the rule.
+%   @arg Rhs     The right-hand side of the rule.
+%   @arg Support The supporting information for the rule, typically including 
+%                the original rule and user context.
+%
+%   @example
+%     ?- buildRule(foo, bar, some_support).
+%
+buildRule(Lhs, Rhs, Support) :-
+    % Build a trigger from the LHS and RHS.
+    buildTrigger(Lhs, Rhs, Trigger),
+    % Evaluate the trigger with the given support.
+    fcEvalLHS(Trigger, Support).
 
 
-pfcType(Var,Type):- var(Var),!, Type=fact(_FT).
-pfcType(_:X,Type):- !, pfcType(X,Type).
-pfcType(~_,Type):- !, Type=fact(_FT).
-pfcType(('==>'(_,_)),Type):- !, Type=rule(fwd).
-pfcType( '==>'(X),Type):- !, pfcType(X,Type), pfcWarn(pfcType( '==>'(X), Type)).
-pfcType(('<==>'(_,_)),Type):- !, Type=rule(<==>).
-pfcType(('<-'(_,_)),Type):- !, Type=rule(bwc).
-pfcType((':-'(_,_)),Type):- !, Type=rule(cwc).
-pfcType('$pt$'(_,_,_),Type):- !, Type=trigger(+).
-pfcType('$pt$'(_,_),Type):- !, Type=trigger(+).
-pfcType('$nt$'(_,_,_),Type):- !,  Type=trigger(-).
-pfcType('$bt$'(_,_),Type):- !,  Type=trigger(?).
-pfcType(pfcAction(_),Type):- !, Type=action.
-pfcType((('::::'(_,X))),Type):- !, pfcType(X,Type).
-pfcType(_,fact(_FT)):-
-  %  if it''s not one of the above, it must_ex be a fact!
-  !.
+%!  buildTrigger(+Triggers, +Consequent, -Result) is det.
+%
+%   Constructs a trigger from a list of conditions (triggers) and a consequent. 
+%   This predicate recursively processes the triggers and assembles the resulting 
+%   structure based on the nature of each trigger. 
+%
+%   If a trigger is a test or involves Prolog constructs, it handles them 
+%   accordingly. Special treatment is given to negated triggers and variables.
+%
+%   @arg Triggers   The list of conditions (triggers) to process.
+%   @arg Consequent The consequent to be associated with the triggers.
+%   @arg Result     The resulting trigger structure.
+%
+%   @example
+%     ?- buildTrigger([X > 0, foo], bar, Result).
+%     Result = (X > 0 *-> '$pt$(foo, bar)').
+%
+buildTrigger([], Consequent, Consequent).
+    % If no triggers are left, the result is simply the consequent.
+buildTrigger([Test | Triggers], Consequent, (Test *-> X)) :-
+    % If the current trigger is a Prolog construct, process it using `*->/2`.
+    is_implicitly_prolog(Test),
+    !,
+    buildTrigger(Triggers, Consequent, X).
+buildTrigger([V | Triggers], Consequent, '$pt$'(V, X)) :-
+    % Handle variables as triggers by wrapping them in a `$pt$/2` structure.
+    var(V),
+    !,
+    buildTrigger(Triggers, Consequent, X).
+buildTrigger([(T1 / Test) | Triggers], Consequent, '$nt$'(T2, Test2, X)) :-
+    % Handle negated triggers with a test. Use `pfc_unnegate/2` to remove negation.
+    pfc_unnegate(T1, T2),
+    !,
+    buildNtTest(T2, Test, Test2),
+    buildTrigger(Triggers, Consequent, X).
+buildTrigger([(T1) | Triggers], Consequent, '$nt$'(T2, Test, X)) :-
+    % Handle simple negated triggers without a test.
+    pfc_unnegate(T1, T2),
+    !,
+    buildNtTest(T2, true, Test),
+    buildTrigger(Triggers, Consequent, X).
+buildTrigger([{Test} | Triggers], Consequent, (Test *-> X)) :-
+    % Handle triggers wrapped in curly braces using `*->/2`.
+    !,
+    buildTrigger(Triggers, Consequent, X).
+buildTrigger([T / Test | Triggers], Consequent, '$pt$'(T, X)) :-
+    % Handle a trigger with a test.
+    !,
+    buildTest(Test, Test2),
+    buildTrigger([{Test2} | Triggers], Consequent, X).
+% buildTrigger([snip | Triggers], Consequent, snip(X)) :-
+%   !,
+%   buildTrigger(Triggers, Consequent, X).
+buildTrigger([T | Triggers], Consequent, '$pt$'(T, X)) :-
+    % Handle general triggers by wrapping them in a `$pt$/2` structure.
+    !,
+    buildTrigger(Triggers, Consequent, X).
 
-pfcAssert(P,Support) :-
-  (pfc_clause(P) ; assert(P)),
-  !,
-  pfcAddSupport(P,Support).
+%!  buildNtTest(+Trigger, +TestIn, -TestOut) is det.
+%
+%   Constructs the test used in a negative trigger ('$nt$'/3). The resulting 
+%   test is a conjunction of the check that no matching facts exist in the 
+%   database and any additional test specified in the rule associated with 
+%   the negated term.
+%
+%   This predicate ensures that negated conditions are correctly evaluated 
+%   by combining the `pfc_call/1` on the trigger with the additional test.
+%
+%   @arg Trigger  The negated trigger term.
+%   @arg TestIn   The initial test term (if provided).
+%   @arg TestOut  The resulting combined test.
+%
+%   @example
+%     ?- buildNtTest(foo, X > 0, TestOut).
+%     TestOut = (pfc_call(foo), X > 0).
+%
+buildNtTest(T, Testin, Testout) :-
+    % Build the intermediate test from the input test.
+    buildTest(Testin, Testmid),
+    % Conjoin the call to `pfc_call/1` on the trigger with the intermediate test.
+    pfcConjoin((pfc_call(T)), Testmid, Testout).
 
-pfcAsserta(P,Support) :-
-  (pfc_clause(P) ; asserta(P)),
-  !,
-  pfcAddSupport(P,Support).
+%!  buildTest(+InputTest, -OutputTest) is det.
+%
+%   Strips away any curly brackets from the given test term. If the input 
+%   is wrapped in curly brackets, it removes them and returns the inner term.
+%
+%   @arg InputTest   The original test term, possibly wrapped in curly brackets.
+%   @arg OutputTest  The unwrapped test term.
+%
+%   @example
+%     ?- buildTest({X > 0}, Test).
+%     Test = (X > 0).
+%
+%     ?- buildTest(Y > 1, Test).
+%     Test = (Y > 1).
+%
+buildTest({Test}, Test) :- 
+    % If the test is wrapped in curly brackets, remove them.
+    !.
+buildTest(Test, Test).
+    % If the test is not wrapped, return it unchanged.
 
-pfcAssertz(P,Support) :-
-  (pfc_clause(P) ; assertz(P)),
-  !,
-  pfcAddSupport(P,Support).
 
+%!  pfcType(+Value, ?Type) is nondet.
+%
+%   Determines the PFC (Prolog Forward Chaining) database type for a given term.
+%   This predicate performs simple typing for PFC objects, identifying whether 
+%   the term is a fact, rule, trigger, or action. It recursively inspects nested 
+%   terms and applies specific type rules.
+%
+%   @arg Value  The PFC object to type-check. This can be a fact, rule, trigger, 
+%               or action.
+%   @arg Type   The resulting type of the given value. It is unified with a term 
+%               indicating the type, such as `fact/1`, `rule/1`, or `trigger/1`.
+%
+%   @example
+%     ?- pfcType(foo, Type).
+%     Type = fact(_FT).
+%
+%     ?- pfcType('==>'(a, b), Type).
+%     Type = rule(fwd).
+%
+pfcType(Var, Type) :-
+    % If the input is a variable, type it as a `fact/1`.
+    var(Var), !, Type = fact(_FT).
+pfcType(_:X, Type) :-
+    % Handle module-qualified terms by stripping the module prefix.
+    !, pfcType(X, Type).
+pfcType(~_, Type) :-
+    % Handle negated facts, typing them as `fact/1`.
+    !, Type = fact(_FT).
+pfcType(('==>'(_, _)), Type) :-
+    % Identify forward rules using `==>/2`.
+    !, Type = rule(fwd).
+pfcType('==>'(X), Type) :-
+    % Handle improperly formatted forward rules and warn.
+    !, pfcType(X, Type),pfcWarn(pfcType('==>'(X), Type)).
+pfcType(('<==>'(_, _)), Type) :-
+    % Identify bi-conditional rules using `<==>/2`.
+    !, Type = rule(<==>).
+pfcType(('<-'(_, _)), Type) :-
+    % Identify backward rules using `<-/2`.
+    !, Type = rule(bwc).
+pfcType((':-'(_, _)), Type) :-
+    % Identify conditional rules using `:-/2`.
+    !, Type = rule(cwc).
+pfcType('$pt$'(_, _, _), Type) :-
+    % Identify positive triggers using `$pt$/3`.
+    !, Type = trigger(+).
+pfcType('$pt$'(_, _), Type) :-
+    % Identify positive triggers using `$pt$/2`.
+    !, Type = trigger(+).
+pfcType('$nt$'(_, _, _), Type) :-
+    % Identify negative triggers using `$nt$/3`.
+    !, Type = trigger(-).
+pfcType('$bt$'(_, _), Type) :-
+    % Identify neutral triggers using `$bt$/2`.
+    !, Type = trigger(?).
+pfcType(pfcAction(_), Type) :-
+    % Identify actions using `pfcAction/1`.
+    !, Type = action.
+pfcType((('::::'(_, X))), Type) :-
+    % Recursively process terms prefixed with `::::`.
+    !,pfcType(X, Type).
+pfcType(_, fact(_FT)) :-
+    % If none of the above cases apply, type the term as a FACT!
+    % This assumes the term is a fact by default.
+    !.
+
+%!  pfcAssert(+P, +Support) is det.
+%
+%   Asserts a clause or fact `P` into the database with associated support.
+%   If the clause or fact already exists, it is not re-asserted, but the 
+%   support information is added.
+%
+%   @arg P        The clause or fact to assert.
+%   @arg Support  The supporting information to associate with the clause or fact.
+%
+%   @example
+%     ?- pfcAssert(foo, support_info).
+%
+pfcAssert(P, Support) :-
+    % If the clause already exists, skip assertion; otherwise, assert it.
+    (pfc_clause(P) ; assert(P)),
+    !,
+    % Add support information to the asserted clause or fact.
+    pfcAddSupport(P, Support).
+
+%!  pfcAsserta(+P, +Support) is det.
+%
+%   Asserts a clause or fact `P` to the beginning of the database with support.
+%   If it already exists, it is not re-asserted, but the support information is added.
+%
+%   @arg P        The clause or fact to assert.
+%   @arg Support  The supporting information to associate with the clause or fact.
+%
+%   @example
+%     ?- pfcAsserta(foo, support_info).
+%
+pfcAsserta(P, Support) :-
+    (pfc_clause(P) ; asserta(P)),!,pfcAddSupport(P, Support).
+
+%!  pfcAssertz(+P, +Support) is det.
+%
+%   Asserts a clause or fact `P` to the end of the database with support.
+%   If it already exists, it is not re-asserted, but the support information is added.
+%
+%   @arg P        The clause or fact to assert.
+%   @arg Support  The supporting information to associate with the clause or fact.
+%
+%   @example
+%     ?- pfcAssertz(foo, support_info).
+%
+pfcAssertz(P, Support) :-
+    (pfc_clause(P) ; assertz(P)),!,pfcAddSupport(P, Support).
+
+%!  pfc_clause(+Clause) is nondet.
+%
+%   Checks if the given clause already exists in the database. It ensures the clause 
+%   matches exactly by comparing terms after copying them.
+%
+%   @arg Clause  The clause to check for existence in the database.
+%
+%   @example
+%     ?- pfc_clause((foo :- bar)).
+%     true.
+%
 pfc_clause((Head :- Body)) :-
-  !,
-  copy_term(Head,Head_copy),
-  copy_term(Body,Body_copy),
-  clause(Head,Body),
-  variant(Head,Head_copy),
-  variant(Body,Body_copy).
-
+    !,
+    % Copy the Head and Body to prevent unwanted unification.
+    copy_term(Head, Head_copy),
+    copy_term(Body, Body_copy),
+    % Check if a matching clause exists in the database.
+    clause(Head, Body),
+    % Ensure the copied terms are variants of the original.
+    variant(Head, Head_copy),
+    variant(Body, Body_copy).
 pfc_clause(Head) :-
-  % find a unit clause identical to Head by finding one which unifies,
-  % and then checking to see if it is identical
-  copy_term(Head,Head_copy),
-  clause(Head_copy,true),
-  variant(Head,Head_copy).
+    % Handle unit clauses without a body.
+    copy_term(Head, Head_copy),
+    clause(Head_copy, true),
+    variant(Head, Head_copy).
 
-pfcForEach(Binder,Body) :- Binder,pfcdo(Body),fail.
-pfcForEach(_,_).
+%!  pfcForEach(+Binder, +Body) is det.
+%
+%   Executes the `Body` for each solution of the `Binder`. If no solutions exist, 
+%   it succeeds without side effects.
+%
+%   @arg Binder  A Prolog goal that generates solutions.
+%   @arg Body    The body to execute for each solution.
+%
+%   @example
+%     ?- pfcForEach(member(X, [1,2,3]), writeln(X)).
+%     1
+%     2
+%     3
+%
+pfcForEach(Binder, Body) :-
+    % Execute the body for each solution of the binder.
+    Binder,
+    pfcdo(Body),
+    fail.
+pfcForEach(_, _).
 
-% pfcdo(X) executes X once and always succeeds.
-pfcdo(X) :- X,!.
+%!  pfcdo(+Goal) is det.
+%
+%   Executes a goal once and always succeeds, even if the goal fails.
+%
+%   @arg Goal  The goal to execute.
+%
+%   @example
+%     ?- pfcdo(writeln('Hello, World!')).
+%     Hello, World!
+%     true.
+%
+pfcdo(X) :-
+    % Execute the goal. If it succeeds, cut to avoid backtracking.
+    X, !.
 pfcdo(_).
+    % If the goal fails, succeed without side effects.
 
+%!  pfcUnion(+List1, +List2, -Union) is det.
+%
+%   Computes the union of two sets represented as lists. Duplicates are removed 
+%   by checking membership before adding elements.
+%
+%   @arg List1  The first input list.
+%   @arg List2  The second input list.
+%   @arg Union  The resulting union of the two input lists.
+%
+%   @example
+%     ?- pfcUnion([a, b], [b, c], Union).
+%     Union = [a, b, c].
+%
+pfcUnion([], L, L).
+    % If the first list is empty, the union is the second list.
+pfcUnion([Head | Tail], L, Tail2) :-
+    % If the head of the first list is already in the second list, skip it.
+    memberchk(Head, L),!,pfcUnion(Tail, L, Tail2).
+pfcUnion([Head | Tail], L, [Head | Tail2]) :-
+    % Otherwise, add the head to the result and continue processing.
+    pfcUnion(Tail, L, Tail2).
 
-% %  pfcUnion(L1,L2,L3) - true if set L3 is the result of appending sets
-% %  L1 and L2 where sets are represented as simple lists.
-
-pfcUnion([],L,L).
-pfcUnion([Head|Tail],L,Tail2) :-
-  memberchk(Head,L),
-  !,
-  pfcUnion(Tail,L,Tail2).
-pfcUnion([Head|Tail],L,[Head|Tail2]) :-
-  pfcUnion(Tail,L,Tail2).
-
-
-% %  pfcConjoin(+Conjunct1,+Conjunct2,?Conjunction).
-% %  arg3 is a simplified expression representing the conjunction of
-% %  args 1 and 2.
-
-pfcConjoin(true,X,X) :- !.
-pfcConjoin(X,true,X) :- !.
-pfcConjoin(C1,C2,(C1,C2)).
+%!  pfcConjoin(+Conjunct1, +Conjunct2, -Conjunction) is det.
+%
+%   Simplifies the conjunction of two expressions. If either conjunct 
+%   is `true`, the result is the other conjunct. Otherwise, the result 
+%   is the conjunction of both expressions.
+%
+%   @arg Conjunct1    The first expression to conjoin.
+%   @arg Conjunct2    The second expression to conjoin.
+%   @arg Conjunction  The resulting simplified conjunction of the two expressions.
+%
+%   @example
+%     % Simplify conjunction with true:
+%     ?- pfcConjoin(true, X > 0, Result).
+%     Result = (X > 0).
+%
+%     % Conjoin two non-trivial expressions:
+%     ?- pfcConjoin(X > 0, Y < 10, Result).
+%     Result = ((X > 0), (Y < 10)).
+%
+pfcConjoin(true, X, X) :- 
+    % If the first conjunct is `true`, return the second conjunct.
+    !.
+pfcConjoin(X, true, X) :- 
+    % If the second conjunct is `true`, return the first conjunct.
+    !.
+pfcConjoin(C1, C2, (C1, C2)).
+    % If both conjuncts are non-trivial, return their conjunction.
 
 
 %   File   : pfcdb.pl
@@ -4050,9 +4495,18 @@ pfcConjoin(C1,C2,(C1,C2)).
 %   Purpose: predicates to manipulate a pfc database (e.g. save,
 % %     restore, reset, etc.0
 
-% pfcDatabaseTerm(P/A) is true iff P/A is something that pfc adds to
-% the database and should not be present in an empty pfc database
-
+%!  pfcDatabaseTerm(+PA) is nondet.
+%
+%   True if `PA` is a term that PFC adds to the database and should not 
+%   be present in an empty PFC database. This predicate identifies terms 
+%   that are specific to the PFC system, such as rules, triggers, and queues.
+%
+%   @arg P/A  A functor/arity pair representing a term in the PFC database.
+%
+%   @example
+%     ?- pfcDatabaseTerm('$pt$'/2).
+%     true.
+%
 pfcDatabaseTerm('$spft$'/3).
 pfcDatabaseTerm('$pt$'/2).
 pfcDatabaseTerm('$bt$'/2).
@@ -4062,32 +4516,83 @@ pfcDatabaseTerm('<==>'/2).
 pfcDatabaseTerm('<-'/2).
 pfcDatabaseTerm(pfcQueue/1).
 
-% removes all forward chaining rules and justifications from db.
-
+%!  pfcReset is det.
+%
+%   Removes all forward chaining rules and justifications from the database.
+%   If the database is not empty after attempting to reset, an error is raised.
+%
+%   @example
+%     ?- pfcReset.
+%
 pfcReset :-
-  pfc_spft(P,F,Trigger),
-  pfcRetractOrWarn(P),
-  pfcRetractOrWarn('$spft$'(P,F,Trigger)),
-  fail.
+    % Iterate over all PFC facts and justifications to remove them.
+    pfc_spft(P, F, Trigger),
+    pfcRetractOrWarn(P),
+    pfcRetractOrWarn('$spft$'(P, F, Trigger)),
+    fail.
 pfcReset :-
-  (pfcDatabaseItem(T)*->
-   (pfcError("Pfc database not empty after pfcReset, e.g., ~p.~n",[T]),fail)
-    ; true).
+    % If the database is not empty, raise an error.
+    (pfcDatabaseItem(T) *->
+        (pfcError("Pfc database not empty after pfcReset, e.g., ~p.~n", [T]), fail)
+    ; 
+        true).
 
+%!  pfcDatabaseItem(:TermBody) is nondet.
+%
+%   True if the given `Term :- Body` is a "PFC-specific" item in the database.
+%   These items correspond to terms that PFC adds, which should not be present 
+%   in an empty database.
+%
+%   @arg Term  The term representing a PFC database entry.
+%   @arg Body  The body of the clause associated with the term.
+%
+%   @example
+%     ?- pfcDatabaseItem(Term :- Body).
+%
+pfcDatabaseItem(Term :- Body) :-
+    % Check if the term matches a known PFC database term.
+    pfcDatabaseTerm(P/A),
+    functor(Term, P, A),
+    % Ensure the clause exists in the database.
+    clause(Term, Body).
 
-% true if there is some pfc crud still in the database.
-pfcDatabaseItem(Term:-Body) :-
-  pfcDatabaseTerm(P/A),
-  functor(Term,P,A),
-  clause(Term,Body).
-
-pfcRetractOrWarn(X) :-  retract(X), !.
+%!  pfcRetractOrWarn(+X) is det.
+%
+%   Retracts the given clause or fact `X` from the database. If the retraction 
+%   fails, a warning message is generated.
+%
+%   @arg X  The clause or fact to retract.
+%
+%   @example
+%     ?- pfcRetractOrWarn(foo).
+%
 pfcRetractOrWarn(X) :-
-  pfcWarn("Couldn't retract ~p.",[X]),nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))),!.
+    % Attempt to retract the clause or fact.
+    retract(X), 
+    !.
+pfcRetractOrWarn(X) :-
+    % If retraction fails, issue a warning.
+    pfcWarn("Couldn't retract ~p.", [X]),
+    nop((dumpST, pfcWarn("Couldn't retract ~p.", [X]))),
+    !.
 
-pfcRetractOrQuietlyFail(X) :-  retract(X), !.
+%!  pfcRetractOrQuietlyFail(+X) is nondet.
+%
+%   Attempts to retract the given clause or fact `X`. If retraction fails, 
+%   the operation quietly fails without raising an error or warning.
+%
+%   @arg X  The clause or fact to retract.
+%
+%   @example
+%     ?- pfcRetractOrQuietlyFail(foo).
+%
 pfcRetractOrQuietlyFail(X) :-
-  nop((pfcTraceMsg("Trace: Couldn't retract ~p.",[X]),nop((dumpST,pfcWarn("Couldn't retract ~p.",[X]))))),
-  !,fail.
-
-
+    % Attempt to retract the clause or fact.
+    retract(X), 
+    !.
+pfcRetractOrQuietlyFail(X) :-
+    % If retraction fails, log a trace message and quietly fail.
+    nop((pfcTraceMsg("Trace: Couldn't retract ~p.", [X]), 
+        nop((dumpST, pfcWarn("Couldn't retract ~p.", [X]))))),
+    !, 
+    fail.
