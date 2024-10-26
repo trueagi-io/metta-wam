@@ -4,13 +4,13 @@ not_mod_lsp_metta_utils
                         ]).
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
-:- use_module(lsp_metta_changes, [handle_doc_changes/2]).
+:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 :- use_module(lsp_metta_parser, [annotated_read_sexpr_list/4]).
 :- use_module(lsp_metta_split, [
         split_document_get_section_only/4
 ]).
 
-:- dynamic lsp_metta_changes:doc_text/2.
+:- dynamic lsp_metta_changes:doc_text_d4/2.
 
 % /** <module> LSP Utils
 %
@@ -39,7 +39,7 @@ clause_with_arity_in_file_at_position(Clause, Arity, Doc, Loc) :-
    clause_with_arity_in_file_at_position(Clause, Arity, Path, Loc).
 clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char)) :-
     % Setup a stream to read the file and find the clause at the specified position.
-    lsp_metta_changes:doc_text(Path,SplitText),
+    lsp_metta_changes:doc_text_d4(Path,SplitText),
     succl(Line0, Line1),
     split_document_get_section_only(Line0,LinesLeft,SplitText,d(_,Text,_EndPosition,_Meta)),
     %string_codes(Text,TextChars),

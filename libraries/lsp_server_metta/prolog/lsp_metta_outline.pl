@@ -38,7 +38,7 @@ xref_document_symbol_examples(_Path, Outline, KindNumber, Start:1, End:0):-
 
 % Roy's `d/4`s
 xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd):-
-   doc_path(Doc,Path),lsp_metta_changes:doc_text(Path,D4s),
+   doc_path(Doc,Path),lsp_metta_changes:doc_text_d4(Path,D4s),
    nth1(Nth,D4s,D4), nonvar(D4),
    d4_document_symbol(Nth,D4, PrettyString, KindNumber, StartEnd).
 
