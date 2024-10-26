@@ -1,8 +1,8 @@
-:- module(lsp_metta_changes, [handle_doc_changes/2,
+:- module(lsp_metta_changes, [handle_doc_changes_d4/2,
                       doc_text_fallback/2,
-                       doc_text/2]).
+                       doc_text_d4/2]).
 :- use_module(lsp_metta_split, [
-    split_text_document/2,
+    split_text_document_d4/2,
     split_document_get_multiple_sections/7,
     coalesce_text/2
 ]).
@@ -17,18 +17,18 @@
 :- use_module(library(readutil), [read_file_to_codes/3]).
 :- user:ensure_loaded(lsp_metta_utils).
 
-:- dynamic doc_text/2.
+:- dynamic doc_text_d4/2.
 
-%! handle_doc_changes(+File:atom, +Changes:list) is det.
+%! handle_doc_changes_d4(+File:atom, +Changes:list) is det.
 %
 %  Track =Changes= to the file =File=.
 
-handle_doc_changes(_, []) :- !.
-handle_doc_changes(Path, [Change|Changes]) :-
-    handle_doc_change(Path, Change),
-    handle_doc_changes(Path, Changes).
+handle_doc_changes_d4(_, []) :- !.
+handle_doc_changes_d4(Path, [Change|Changes]) :-
+    handle_doc_change_d4(Path, Change),
+    handle_doc_changes_d4(Path, Changes).
 
-handle_doc_change(Path, Change) :-
+handle_doc_change_d4(Path, Change) :-
     _{range: _{start: _{line: StartLine, character: StartChar},
                end:   _{line: EndLine,   character: _EndChar}},
       rangeLength: ReplaceLen, text: Text} :< Change,
@@ -46,15 +46,15 @@ handle_doc_change(Path, Change) :-
     %debug(lsp(low),"3:~w",[NewCodes]),
     string_codes(NewText,NewCodes),
     %debug(lsp(low),"4:~w",[NewText]),
-    split_text_document(NewText,NewSplitText),
+    split_text_document_d4(NewText,NewSplitText),
     %debug(lsp(low),"5:~w",[NewSplitText]),
     append([Pre,NewSplitText,Post],NewDocument),
-    retractall(doc_text(Path, _)),
-    assertz(doc_text(Path, NewDocument)).
-handle_doc_change(Path, Change) :-
-    retractall(doc_text(Path, _)),
+    retractall(doc_text_d4(Path, _)),
+    assertz(doc_text_d4(Path, NewDocument)).
+handle_doc_change_d4(Path, Change) :-
+    retractall(doc_text_d4(Path, _)),
     atom_codes(Change.text, TextCodes),
-    assertz(doc_text(Path, TextCodes)).
+    assertz(doc_text_d4(Path, TextCodes)).
 
 %! doc_text_fallback(+Path:atom, -Text:text) is det.
 %
@@ -62,11 +62,11 @@ handle_doc_change(Path, Change) :-
 %  been tracking in memory, or from the file on disc if no edits have
 %  occured.
 doc_text_fallback_d4(Path, Text) :-
-  doc_text(Path, Text), !.
+  doc_text_d4(Path, Text), !.
 doc_text_fallback_d4(Path, Text) :-
   read_file_to_string(Path, Text, []),
-  split_text_document(Text,SplitText),
-  assertz(doc_text(Path, SplitText)).
+  split_text_document_d4(Text,SplitText),
+  assertz(doc_text_d4(Path, SplitText)).
 
 %! doc_text_fallback(+Path:atom, -Text:text) is det.
 %
@@ -74,11 +74,11 @@ doc_text_fallback_d4(Path, Text) :-
 %  been tracking in memory, or from the file on disc if no edits have
 %  occured.
 doc_text_fallback(Path, Text) :-
-  doc_text(Path, Text), !.
+  doc_text_d4(Path, Text), !.
 doc_text_fallback(Path, Text) :-
   read_file_to_string(Path, Text, []),
-  split_text_document(Text,SplitText),
-  assertz(doc_text(Path, SplitText)).
+  split_text_document_d4(Text,SplitText),
+  assertz(doc_text_d4(Path, SplitText)).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-

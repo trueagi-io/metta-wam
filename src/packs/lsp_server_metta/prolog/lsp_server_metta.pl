@@ -36,7 +36,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
 :- use_module(lsp_json_parser, [lsp_metta_request//1]).
-:- use_module(lsp_metta_changes, [handle_doc_changes/2]).
+:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 :- ensure_loaded(lsp_metta_completion).
 :- use_module(lsp_metta_colours, [
 %                            file_colours/2,
@@ -45,7 +45,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
 :- use_module(lsp_metta_split, [
-        split_text_document/2,
+        split_text_document_d4/2,
         coalesce_text/2
 ]).
 
@@ -62,7 +62,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 %:- user:ensure_loaded(lsp_prolog_colours).
 %:- user:ensure_loaded(lsp_prolog_utils).
 
-:- dynamic lsp_metta_changes:doc_text/2.
+:- dynamic lsp_metta_changes:doc_text_d4/2.
 
 :- discontiguous lsp_server_metta:handle_msg/3.
 
@@ -533,7 +533,7 @@ handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !
 %    {insertText:handle_request(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_request/3},
 %    {insertText:handle_msg(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_msg/3},
 %    {insertText:hover_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:hover_at_position/4},
-%    {insertText:handle_doc_changes(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes/2}]}
+%    {insertText:handle_doc_changes_d4(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes_d4/2}]}
 % OUT: {id:123,result:[]}
 handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
      _{id: Id, params: Params} :< Msg,
@@ -562,6 +562,7 @@ handle_msg("textDocument/semanticTokens/full", Msg, _{id: Msg.id, result: []}) :
 % CALL: textDocument/semanticTokens/range
 % IN: {range:{end:{character:0,line:40},{character:0,line:0}},textDocument:{uri:file://<FILE_PATH>}}
 % No Example from Prolog yet FIXME
+
 handle_msg("textDocument/semanticTokens/range", Msg,
             _{id: Id, result: _{data: Highlights}}) :- fail,
      _{id: Id, params: Params} :< Msg,
@@ -590,13 +591,13 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{uri: FileUri} :< TextDoc,
     _{text: FullText} :< TextDoc,
     %debug(lsp(low),"~w",[FullText]),
-    split_text_document(FullText,SplitText),
+    split_text_document_d4(FullText,SplitText),
     debug(lsp(low),"~w",[SplitText]),
     doc_path(FileUri, Path),
-    retractall(lsp_metta_changes:doc_text(Path, _)),
-    assertz(lsp_metta_changes:doc_text(Path, SplitText)),
+    retractall(lsp_metta_changes:doc_text_d4(Path, _)),
+    assertz(lsp_metta_changes:doc_text_d4(Path, SplitText)),
     ( in_editor(Path) -> true ; assertz(in_editor(Path)) ),
-    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
+    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
     xref_maybe(Path, DocFullText), % Check if changed and enqueue the reindexing
     check_errors_resp(FileUri, Resp).
 
@@ -607,8 +608,8 @@ handle_msg("textDocument/didChange", Msg, false) :-
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
     doc_path(Uri, Path),
-    handle_doc_changes(Path, Changes),
-    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
+    handle_doc_changes_d4(Path, Changes),
+    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
     xref_maybe(Path, DocFullText). % Check if changed and enqueue the reindexing
 
 % Handle document save notifications

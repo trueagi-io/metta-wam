@@ -241,7 +241,7 @@ resolve_code_lens(CodeLens, ResolvedCodeLens) :-
 % Get document lines from URI
 get_document_lines(Uri, Lines) :-
     path_doc(Path, Uri),
-    lsp_metta_changes:doc_text(Path, SplitText),
+    lsp_metta_changes:doc_text_d4(Path, SplitText),
     coalesce_text(SplitText, Text),
     split_string(Text, "\n", "", Lines).
 

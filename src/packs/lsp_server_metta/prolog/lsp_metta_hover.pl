@@ -115,7 +115,7 @@ format_metta_doc(Term, Arity, [['@desc', Description], ['@params', Params], ['@r
 format_metta_Param(['@param', P], Pf) :- format(string(Pf), "Param: ~w", [P]).
 
 find_at_doc(Term, S) :-
-  lsp_metta_changes:doc_text(Path, SplitFile),
+  lsp_metta_changes:doc_text_d4(Path, SplitFile),
   find_at_doc_aux(Path, Term, SplitFile, S).
 
 find_at_doc_aux(_Path, Term, [d(_, Doc, _, Metadata)|_], S) :-

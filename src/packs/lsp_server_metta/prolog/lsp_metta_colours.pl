@@ -51,7 +51,7 @@ token_modifiers([declaration,
 :- use_module(library(sgml), [load_html/3]).
 
 get_document_symbols(Path, S) :-
-    lsp_metta_changes:doc_text(Path,SplitText),
+    lsp_metta_changes:doc_text_d4(Path,SplitText),
     get_document_symbol_aux(SplitText,0,S).
 
 get_document_symbol_aux([],_,[]).
