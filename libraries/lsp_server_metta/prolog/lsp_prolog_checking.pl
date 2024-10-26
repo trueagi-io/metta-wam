@@ -1,4 +1,4 @@
-:- module(lsp_prolog_checking, [check_errors/2]).
+:- module(lsp_prolog_checking, [prolog_check_errors/2]).
 /** <module> LSP Checking
 
 Module for checking Prolog source files for errors and warnings.
@@ -24,7 +24,7 @@ Module for checking Prolog source files for errors and warnings.
 %
 %  =Errors= is a list of the errors in the file given by =Path=.
 %  This predicate changes the =user:message_hook/3= hook.
-check_errors(Path, Errors) :-
+prolog_check_errors(Path, Errors) :-
     nb_setval(checking_errors, []),
     Hook = (user:message_hook(Term, Kind, Lines) :-
                 prolog_load_context(term_position, Pos),

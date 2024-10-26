@@ -145,7 +145,7 @@ help_at_position(Path, Line1, Char0, S) :-
     format_help(S0, HS)) -> sformat(S, "Write this for MeTTa: `~q`\n ~w", [Clause,HS]);
       sformat(S,"```metta\n;; MeTTa Docs : ~w \n; Line: ~w, Column:~w\n```\n",
             [Path,Line1, Char0]).
-    
+
 
 %! format_help(+Help0, -Help1) is det.
 %
@@ -321,3 +321,9 @@ find_var({SubTerm}, Offset, brace_term_position(F, T, SubPos), Var) =>
     between(F, T, Offset),
     find_var(SubTerm, Offset, SubPos, Var).
 find_var(Term, Offset, SubPos, Var), Term \== Var => fail.
+
+
+
+
+
+

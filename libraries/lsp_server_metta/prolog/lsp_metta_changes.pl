@@ -15,7 +15,7 @@
 */
 
 :- use_module(library(readutil), [read_file_to_codes/3]).
-:- use_module(lsp_metta_utils).
+:- user:ensure_loaded(lsp_metta_utils).
 
 :- dynamic doc_text/2.
 
@@ -61,12 +61,24 @@ handle_doc_change(Path, Change) :-
 %  Get the contents of the file at =Path=, either with the edits we've
 %  been tracking in memory, or from the file on disc if no edits have
 %  occured.
+doc_text_fallback_d4(Path, Text) :-
+  doc_text(Path, Text), !.
+doc_text_fallback_d4(Path, Text) :-
+  read_file_to_string(Path, Text, []),
+  split_text_document(Text,SplitText),
+  assertz(doc_text(Path, SplitText)).
+
+%! doc_text_fallback(+Path:atom, -Text:text) is det.
+%
+%  Get the contents of the file at =Path=, either with the edits we've
+%  been tracking in memory, or from the file on disc if no edits have
+%  occured.
 doc_text_fallback(Path, Text) :-
-    doc_text(Path, Text), !.
+  doc_text(Path, Text), !.
 doc_text_fallback(Path, Text) :-
-    read_file_to_string(Path, Text, []),
-    split_text_document(Text,SplitText),
-    assertz(doc_text(Path, SplitText)).
+  read_file_to_string(Path, Text, []),
+  split_text_document(Text,SplitText),
+  assertz(doc_text(Path, SplitText)).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-

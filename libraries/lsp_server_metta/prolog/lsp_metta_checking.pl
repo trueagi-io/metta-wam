@@ -42,7 +42,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:handle_msg_hook("textDocument/didSave", Msg, Result) :- fail, % FAIL for now (allow other code to do their things)
     _{params: _{textDocument: _{uri: Uri}}} :< Msg,
-    source_file_text(Uri, Text), 
+    source_file_text(Uri, Text),
     analyze_document_for_diagnostics(Text, Diagnostics),  % Analyze the document
     publish_diagnostics(Uri, Diagnostics, Result), !.  % Publish the diagnostics
 
@@ -53,7 +53,7 @@ lsp_hooks:handle_msg_hook("textDocument/didSave", Msg, Result) :- fail, % FAIL f
 %  This predicate checks the =metta_file_buffer/7= cache for saved errors.
 
 % will do some real error checking later
-metta_check_errors(Uri, Diagnostics):- 
+metta_check_errors(Uri, Diagnostics):-
     source_file_text(Uri, Text),  % Retrieve the saved document text
     analyze_document_for_diagnostics(Text, Diagnostics),!.  % Analyze the document
     % publish_diagnostics(Uri, Diagnostics), !.  % Publish the diagnostics
@@ -63,9 +63,10 @@ metta_check_errors(_,[]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Analyze the Document for Issues and Generate Diagnostics
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-analyze_document_for_diagnostics(Text, Diagnostics) :-
+analyze_document_for_diagnostics(Text, ValidDiagnostics) :-
     split_string(Text, "\n", "", Lines),  % Split the text into lines
-    analyze_lines(Lines, 0, Diagnostics).  % Analyze each line for issues
+    analyze_lines(Lines, 0, Diagnostics),!,  % Analyze each line for issues
+    exclude(=([]), Diagnostics, ValidDiagnostics).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Analyze Each Line and Collect Diagnostic Information
@@ -98,7 +99,7 @@ find_issue_in_line(Line, LineNum, Diagnostic) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Example Diagnostic: Check for Unmatched Parentheses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-has_unmatched_parens(Line) :-
+has_unmatched_parens(Line) :- fail,
     count_open_close_parens(Line, Opens, Closes),
     Opens \= Closes.
 

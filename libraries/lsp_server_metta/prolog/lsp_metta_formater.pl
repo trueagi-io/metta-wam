@@ -18,7 +18,7 @@
 %   - Ensuring consistent line breaks between nested forms.
 % - Returns a list of text edits to apply to the document.
 %
-% Author: Douglas Miles   
+% Author: Douglas Miles
 % Date: 10-21-2024
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
