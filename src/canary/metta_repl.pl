@@ -69,10 +69,10 @@
 :- at_halt(save_history).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% In order to run some of the specialized commands below like "repl1" and "history_file_location"
-% you must start the mettalog repl by entering "mettalog" and then enter Prolog mode by
-% entering "Prolog." This gives you the '?-' swipl prompt. Then you can enter eg., "repl1."
-% to execute the desired command (no quotes around any of these commands when actually entered).
+% You can debug mettalog using the repl:
+%   1) enter "mettalog" on your command line 
+%   2) enter Prolog mode by entering "prolog." This gives you the '?-' swipl prompt. 
+% This method gives you a handy means of debugging.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %! history_file_location(-Filename) is det.
