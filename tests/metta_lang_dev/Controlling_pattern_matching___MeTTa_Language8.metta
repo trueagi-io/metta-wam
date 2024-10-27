@@ -1,8 +1,17 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
-! (pragma! type-check auto) ; ()
-(: foo (-&gt; Number Bool))
-(= (foo $x) (+ $x 1)) ; BadType
 
-;  !(assertEqualToResult ( )  (  )  ) 
+
+(= (call-by-value $f $arg)
+   ($f $arg))
+
+
+;! (call-by-value quote (+ 1 2)) 
+
+; (quote 3)
+
+
+
+; ready works 
+!(assertEqualToResult ( call-by-value quote (+ 1 2) )  ( (quote 3) )  ) 

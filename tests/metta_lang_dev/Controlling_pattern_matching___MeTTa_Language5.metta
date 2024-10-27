@@ -4,6 +4,7 @@
 
 (+ 1 False)
 ;! () ; OK
+; ready works
 !(assertEqualToResult ( match &self (+ 1 False) OK )  ( OK )  ) 
 
 
