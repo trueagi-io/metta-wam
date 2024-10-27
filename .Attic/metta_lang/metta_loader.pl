@@ -1399,9 +1399,11 @@ load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_m
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
  exists_file(Filename),
+ debug(lsp(main),"~q",[start_really_use_corelib_file(Dir,File)]),
  locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
      with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))),
-    asserta(really_using_corelib_file).
+    asserta(really_using_corelib_file),
+  debug(lsp(main),"~q",[end_really_use_corelib_file(Dir,File)]).
 
 

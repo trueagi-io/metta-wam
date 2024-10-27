@@ -47,6 +47,9 @@
 (= (: $F P1) (PredicateArity $F 1))
 (: : SrcPredicate)
 (: If SrcFunction)
+(: NotReducible MeTTaResult)
+(: Empty MeTTaResult)
+(: MeTTaResult Type)
 
 ; Public MeTTa
 (@doc = 
@@ -1392,6 +1395,7 @@
 ;; Implemented from Interpreters
 
 (:> ValueAtom Atom)
+(: ForeignObject Type)
 (:> ValueAtom Grounded)
 (:> ForeignObject ValueAtom)
 (:> PyObject ForeignObject)
