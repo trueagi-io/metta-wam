@@ -90,8 +90,9 @@ string_contains(String, Substring) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Roy's initial impl of Hover
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+use_vitalys_help :- true.
 
-lsp_hooks:hover_hook(Path, _Loc, Term, Arity, S):-
+lsp_hooks:hover_hook(Path, _Loc, Term, Arity, S):- \+ use_vitalys_help,
   metta_predicate_help(Path, Term, Arity, S).
 
 metta_predicate_help(_, Var, _, S) :- var(Var), !, format(string(S), "Var: ~w", [Var]).
@@ -102,7 +103,7 @@ metta_predicate_help(_, ')', _, "") :- !.
 metta_predicate_help(_, ']', _, "") :- !.
 metta_predicate_help(_, '}', _, "") :- !.
 metta_predicate_help(_, Term, _, S) :- find_at_doc(Term, S), !.
-metta_predicate_help(_, Term, Arity, S) :- metta_atom(_KB, ['@doc', Term|Help]),
+metta_predicate_help(_, Term, Arity, S) :- fail, metta_atom(_KB, ['@doc', Term|Help]),
   format_metta_doc(Term, Arity, Help, S), !.
 
 format_metta_doc(Term, Arity, [['@desc', Description], ['@params', Params], ['@return', Return]], String) :-
@@ -120,7 +121,10 @@ find_at_doc(Term, S) :-
 
 find_at_doc_aux(_Path, Term, [d(_, Doc, _, Metadata)|_], S) :-
   find_at_doc_aux2(Term, Metadata), !,
-  format(string(S), "@doc found: ~w", [Doc]).
+  %format(string(S), "@doc found: ~w", [Doc]).
+  format(string(S), "~w", [Doc]).
+
+
 find_at_doc_aux(Path, Term, [_|T], S) :-
   find_at_doc_aux(Path, Term, T, S).
 
@@ -139,23 +143,6 @@ lsp_hooks:hover_hook(Path, Loc, Term, Arity, S):-
 
 :- multifile(lsp_hooks:handle_msg_hook/3).
 :- dynamic(lsp_hooks:handle_msg_hook/3).
-
-
-:- dynamic(user:last_request/2).
-% Save the last Msg.body Object for each method
-lsp_hooks:handle_msg_hook(Method, MsgBody, _) :-
-    once(( retractall(user:last_request(Method,_)),
-      asserta(user:last_request(Method,MsgBody)))),
-      fail.
-
-:- dynamic(user:last_range/2).
-lsp_hooks:handle_msg_hook(Method, Msg, _) :- Method \== "textDocument/hover",
-   % "textDocument/codeAction" is the most authoratative
-    once((  _{params: Params} :< Msg,
-      _{ range: Range } :< Params,
-      retractall(user:last_range(Method,_)),
-      asserta(user:last_range(Method,Range)))),
-      fail.
 
 %!  is_documented(+Symbol) is semidet.
 %
@@ -229,20 +216,19 @@ show_term_info(Term):-
 term_info_string_resolved(_Path,_Loc, Term, _Arity, _Str):- var(Term),!.
 term_info_string_resolved( Path, Loc, resolved(Term), Arity, Str):- !,
   term_info_string_resolved(Path, Loc, Term, Arity, Str).
-term_info_string_resolved(Path, Loc, Term, Arity, S):-
-  clause(lsp_hooks:term_info(Path, Loc, Term, Arity), Body),
-  with_output_to(string(S0), forall(Body,true)),  % Generate a string output for the term's arity help.
+term_info_string_resolved(Path, Loc, Term, Arity, Str):-
+  wots(S0, lsp_hooks:term_info(Path, Loc, Term, Arity)),  % Generate a string output for the term's arity help.
   string(S0),  % Ensure that the output is a valid string.
   trim_white_lines(S0, S),
   S \= "",  % Ensure that the string is not empty.
   atom_length(S, Len),
-  Len > 1. % Ensure the string has a minimum length.
-  %format(string(Str), "```lisp~n~w~n```", [S]),
+  Len > 1, % Ensure the string has a minimum length.
+  format(string(Str), "~w", [S]).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-in_markdown(G):- setup_call_cleanup(format('~N```~n', []), G, format('~N```lisp~n')).
+in_markdown(G):- setup_call_cleanup(format('~n```~n', []), G, format('~n```lisp~n')).
 banner_for(Type, Target):- in_markdown(format('---~n ## ~w: ~w', [Type, Target])).
 lsp_separator():- in_markdown(format('---',[])).
 
@@ -270,18 +256,33 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :- fail, % (for debugging) commenting
       write_src_xref(Term, Type, AtPath, AtLoc), nl))))),
    banner_for('rest-of', Target).
 
-lsp_hooks:term_info(_Path, Loc, Term, Arity) :-
-   (user:last_range(Method,Range)-> true ; (Method='unknown',Range='unknown')),
-   in_markdown((format("*Loc*: **~q**~n~n",  [[Range, Method, Loc, Term, Arity]]))).   % Format the output as a help string.
-
-lsp_hooks:term_info(Path, Loc, _Term, _Arity) :-
-   get_code_at_range_type(Type),
-   (get_code_at_range(Type, Path, Loc, Code) *-> true; Code='failed'),
-   in_markdown((format("*Code* **~@**: ~@~n~n",  [write_src_xref(Type),  write_src_xref(Code)]))).
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vitaly's initial impl of Help
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lsp_hooks:term_info(_Path,_Loc, Target, _) :- use_vitalys_help,
+  lsp_separator(),
+  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
 
 lsp_hooks:term_info(_Path,_Loc, Target, _) :-
-  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+  in_markdown((
+  show_checked("show_docs", "(-)", "Show Docs "),
+  show_checked("show_refs", "(+)", "Show Refs "),
+  show_checked("show_pdbg", "(-)", "Debug Pos "),
+  show_checked("show_menu", "(+)", "Show Menu: "),
+  format("**~q**", [Target]))).
+
+
+lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
+  lsp_separator(),
+   (((some_arities(Term,Arity, Try, _TryArity),
+     get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
+     true)))*->true; (Try=Term,Type='%Undefined%')),
+   in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvars(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
+   lsp_separator().
+
+some_arities(Term,_,Term,term). % Bare Term
+some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
+some_arities(Term,N,Try,return(N)):- symbol(Term), between(0,5,N), some_arities(Term,N,Try).
 
 lsp_hooks:term_info(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
@@ -289,32 +290,30 @@ lsp_hooks:term_info(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
   format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator() .  % Output a message if there's an arity mismatch.
 
-lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
- in_markdown((
-    some_arities(Term,Arity,Try,TryArity),
-   (( get_type(Try,  Type), (Type \=='%Undefined%', Type \==[] )) *-> true ; Type='%Undefined%'), % Get the type of the term or default to 'unknownType'.
-   numbervars(Try,0,_,[singletons(true),attvars(skip)]),
-   format("*Type* **~@**: ~@ (~w)~n~n",  [write_src_xref(Type),  write_src_xref(Try),  TryArity]))).   % Format the output as a help string.
-
-some_arities(Term,_,Term,term). % Bare Term
-some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
-some_arities(Term,N,Try,return(N)):- symbol(Term), between(0,5,N), some_arities(Term,N,Try).
 
 lsp_hooks:term_info(_Path,_Loc, Target, _) :-
-  in_markdown((
-  show_checked("show_docs", "(-)", "Show Docs "),
-  show_checked("show_refs", "(+)", "Show Refs "),
-  show_checked("show_menu", "(+)", "Show Menu "),
-  format("for: ~w", [Target]))).
-
-lsp_hooks:term_info(_Path,_Loc, Target, _) :-
+  lsp_separator(),
   each_type_at_sorted(Target, Term, AtPath, AtLoc, Type),
   write_src_xref(Term, Type, AtPath, AtLoc).  % Write the source cross-reference for the atom.
 
-get_code_at_range_type(exact).
 get_code_at_range_type(term).
-get_code_at_range_type(toplevel_form).
 get_code_at_range_type(expression).
+get_code_at_range_type(toplevel_form).
+get_code_at_range_type(exact).
+get_code_at_range_type(symbol).
+
+lsp_hooks:term_info(_Path, Loc, Term, Arity) :- lsp_separator(), lsp_separator(),
+   in_markdown((format("*Debug Positions*:\t\t(this and below is normally hidden)~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
+
+lsp_hooks:term_info(_Path, _Loc, _Term, _Arity) :-
+   user:last_range(Method,Range),
+   numbervars(Range,0,_,[singletons(true),attvars(skip)]),
+   in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
+
+lsp_hooks:term_info(Path, Loc, _Term, _Arity) :-
+   get_code_at_range_type(Type),
+   (get_code_at_range(Type, Path, Loc, Code) *-> true; Code='failed'),
+   in_markdown((format("**~@**: ~@~n~n",  [write_src_xref(Type),  write_src_xref(Code)]))).
 
 
 
@@ -426,11 +425,11 @@ next_clause(Ref, NextTerm) :-
 
 %   ~n```~n*~w*~n```lisp~n
 write_file_link(Type, Path, Position):-
-  must_succeed1(position_line(Position, Line)),
-  in_markdown(format('[~w:~w](file://~w#L~w) _(~w)_', [Path, Line, Path, Line, Type])).
+  must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
+  in_markdown(format('[~w:~w](file://~w#L~w) _(~w)_', [Path, Line1, Path, Line1, Type])).
 write_file_link(Path, Position):-
-  must_succeed1(position_line(Position, Line)),
-  in_markdown(format('[~w:~w](file://~w#L~w)', [Path, Line, Path, Line])).
+  must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
+  in_markdown(format('[~w:~w](file://~w#L~w)', [Path, Line1, Path, Line1])).
 
 
 position_line(Position, Line2):-

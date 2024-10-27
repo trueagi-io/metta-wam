@@ -696,7 +696,7 @@ process_expressions(FileName, InStream, OutStream) :-
     ignore(Stem = FileName),  % Assign the input file name if no stream file name.
     absolute_file_name(Stem, AFNStem),  % Get the absolute path of the file.
 
-   
+
    WriteOutput = write_readably(OutStream),
 
    % Record the absolute file name, file name stem, and the original file name.
@@ -705,7 +705,7 @@ process_expressions(FileName, InStream, OutStream) :-
    call(WriteOutput, :- multifile(afn_stem_filename/3)),
    call(WriteOutput, :- dynamic(metta_file_buffer/7)),
    call(WriteOutput, :- multifile(metta_file_buffer/7)),
-    
+
     locally(nb_setval('$file_src_name', AFNStem),
      locally(nb_setval('$file_src_write_readably', WriteOutput),
      locally(nb_setval('$file_src_depth', 0),
@@ -717,7 +717,7 @@ process_expressions(FileName, InStream, OutStream) :-
 
 process_expressions_now(FileName, InStream):-
     repeat,
-    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.    
+    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
     Item = end_of_file, !,
     % If end of file is reached, stop processing and update the ok_to_stop flag.
     retractall(ok_to_stop(FileName, _)),  % Remove the previous value
@@ -752,7 +752,7 @@ make_DL(InStream, OutStream, FileName, Item) :-
 % Writes a Prolog term to the output stream in a human-readable form.
 % @arg OutStream Stream to which the term is written.
 % @arg Item The term to be written.
-write_readably(OutStream, Item) :- is_stream(OutStream),!, 
+write_readably(OutStream, Item) :- is_stream(OutStream),!,
     write_term(OutStream, Item, [quoted(true)]),
     writeln(OutStream, '.').  % Append a period and a newline.
 write_readably(OutputP1, Item) :- callable(OutputP1),!, ignore(call(OutputP1, Item)).
@@ -765,7 +765,7 @@ write_readably(_, _).
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(I,O):- 
+read_sexpr(I,O):-
   setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1_000_000),
     setup_call_cleanup(
        (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
@@ -781,16 +781,16 @@ read_sexpr(I,O):-
 % @arg Item The item read from the stream.
 
 
-cont_sexpr(EndChar,  Stream, Item):- 
-   skip_spaces(Stream),  % Ignore whitespace before reading the expression.   
-   read_line_char(Stream, StartRange),      
+cont_sexpr(EndChar,  Stream, Item):-
+   skip_spaces(Stream),  % Ignore whitespace before reading the expression.
+   read_line_char(Stream, StartRange),
    cont_sexpr_once(EndChar,  Stream, Item), !,
    read_line_char(Stream, EndRange),
    Range = range(StartRange,EndRange),
    push_item_range(Item, Range).
 
 
-cont_sexpr_once(EndChar,  Stream, Item):- 
+cont_sexpr_once(EndChar,  Stream, Item):-
     skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
     (   Char = '(' -> read_list(')', Stream, Item)  % If '(', read an S-expression list.
@@ -834,20 +834,21 @@ better_typename(metta_unknown,TypeName,TypeName).
 better_typename(metta_other,TypeName,TypeName).
 better_typename(_,TypeName,TypeName).
 
-push_item_range(Item, Range):- 
+push_item_range(Item, Range):-
     ignore((
      nb_current('$file_src_depth', Lvl), can_do_level(Lvl),
      subst_vars(Item, Term, [], NamedVarsList),
      flag('$file_src_ordinal',Ordinal,Ordinal),
-     Buffer = metta_file_buffer(Lvl,Ordinal,TypeNameCompound,Term,NamedVarsList,Context,Range),
+     Buffer = metta_file_buffer(Lvl,Ordinal,TypeNameCompound, Term,  NamedVarsList, Context,Range),
+     BufferC= metta_file_buffer(Lvl,Ordinal,TypeNameCompound,_TermC,_NamedVarsListC,Context,Range),
+     copy_term(Buffer,BufferC),
      ignore(xrefed_outline_type(Term,Outline,TypeName1)),
      ignore((Lvl==0,type_symbol_clause(TypeName2,_Symbol,Term), \+ member(TypeName2,[ref(_)]))),
      better_typename(TypeName1,TypeName2,TypeName),
      ((nonvar(Outline),Outline\=@=Item) -> TypeNameCompound=indexed(TypeName,Outline); TypeNameCompound=TypeName),
         % Assert the parsed content into the Metta buffer part
-       ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
-       ignore((nb_current('$file_src_write_readably', P1), callable(P1), call(P1, Buffer))))),
-       ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(Buffer))),
+       ignore((nb_current('$file_src_name', Context),\+ Buffer, assert(BufferC))),
+       ignore((nb_current('$file_src_write_readably', P1), callable(P1), call(P1, BufferC))))),
        !.
 
 
@@ -867,22 +868,23 @@ into_op_head_body_exec(Body,[],[],Body).
 
 is_exec(exec(_)).
 
-is_definition(Type,Symbol,Clause):- 
+is_definition(Type,Symbol,Clause):-
    freeze(Type, (is_exec(Clause),compound(Type))),
    freeze(Clause, (is_exec(Clause),compound(Type))),
-   into_op_fun_rest_body(Clause,Op,Fun,Rest,Body), 
+   into_op_fun_rest_body(Clause,Op,Fun,Rest,Body),
    type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
 
 type_symbol_clause(Type,Symbol,Clause):-
   clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
 
 clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
-   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),ignore(maybe_name_vars(VL)))),
+   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),
+           ignore(maybe_name_vars(VL)))),
    once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
    type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
-   
 
-into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):- 
+
+into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):-
   into_op_head_body(Clause,Op,Head,Body), split_head(Head,Fun,Rest).
 
 split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
@@ -935,14 +937,14 @@ op_execkind(Op,metta_symbol):- atom(Op),atom_concat('&',_,Op),!.
 op_type(_,Op):- \+ atom(Op),!,fail.
 op_type(import,Op):- import_op(Op).
 op_type(decl(use),'bind!'). op_type(decl(use),'pragma!'). op_type(decl(doc),'@doc').
-op_type(ref_assert,Op):- atom_concat('assert',_,Op). 
+op_type(ref_assert,Op):- atom_concat('assert',_,Op).
 op_type(decl(impl),'='). op_type(decl(ftype),':'). op_type(decl(ftype),':<').
 
 import_op(Op):- \+ atom(Op),!,fail.
 import_op(Op):- atom_contains(Op,"include").
 import_op(Op):- atom_contains(Op,"import").
 import_op(Op):- atom_contains(Op,"load").
-       
+
 
 %! throw_stream_error(+Stream:stream, +Reason:term) is det.
 %
@@ -960,7 +962,7 @@ throw_stream_error(Stream, Reason) :-
 % @arg Stream The input stream from which to read.
 read_single_line_comment(Stream) :-
     % read_char(Stream, ';'),  % Skip the ';' character.
-    read_line_char(Stream, line_char(Line1, Col)),        
+    read_line_char(Stream, line_char(Line1, Col)),
     %succ(Col0, Col1),
     read_line_to_string(Stream, Comment),
     atom_length(Comment,Len), EndCol is Col + Len,
@@ -1034,10 +1036,10 @@ skip_block_comment(Stream) :-
 %
 % @arg Stream The input stream from which to read the block comment.
 read_block_comment(Stream) :-
-    read_line_char(Stream, StartRange),  % Capture the start position.    
+    read_line_char(Stream, StartRange),  % Capture the start position.
     get_string(Stream, 2, _),  % Skip the '/*' characters.
     read_nested_block_comment(Stream, 1, Chars),  % Read the block comment, supporting nested ones.
-    string_chars(Comment, Chars),    
+    string_chars(Comment, Chars),
    read_line_char(Stream, EndRange),   %capture the end pos
    Range = range(StartRange,EndRange),
    StartRange = line_char(Line, Col),
@@ -1083,17 +1085,17 @@ read_nested_block_comment(Stream, Level, Acc, Comment) :-
 % @arg Stream Stream from which to read.
 % @arg List The list read from the stream.
 % @arg EndChar that denotes the end of the list.
-read_list(EndChar,  Stream, List):- 
+read_list(EndChar,  Stream, List):-
   nb_current('$file_src_depth', LvL),
   flag('$file_src_ordinal',Ordinal,Ordinal+1),
   succ(LvL,LvLNext),
-  nb_setval('$file_src_depth', LvLNext),  
+  nb_setval('$file_src_depth', LvLNext),
   read_list_cont(EndChar,  Stream, List),
   nb_setval('$file_src_depth', LvL).
 
-read_list_cont(EndChar,  Stream, List) :- 
+read_list_cont(EndChar,  Stream, List) :-
     skip_spaces(Stream),  % Skip any leading spaces before reading.
-    
+
     peek_char(Stream, Char), !,
     ( chall(EndChar,Char) ->  % Closing parenthesis signals the end of the list.
         get_char(Stream, _),  % Consume the closing parenthesis.

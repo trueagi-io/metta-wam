@@ -742,17 +742,17 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
     % Reset the output stream to its original state
     set_output(CurrentOut),
     % Read the captured content from the memory file
-    (nonvar(MemFile) -> 
+    (nonvar(MemFile) ->
       (nb_setarg(1, State, _),
        open_memory_file(MemFile, read, ReadStream, [encoding(CurrentEncoding)]),
        read_string(ReadStream, _, Content),
        close(ReadStream),
        % Free the memory file
-       free_memory_file(MemFile),       
+       free_memory_file(MemFile),
        % Write the content to the streams, handling encoding differences
        write_to_stream(AnswerOut, Content, CurrentEncoding),
        (   AnswerOut \== StdOutStream ->  nop(write_to_stream(user_error, Content, CurrentEncoding)) ;   true )) ; true).
-    
+
 
 %!  handle_catcher(+Catcher) is det.
 %
@@ -1329,7 +1329,7 @@ load_hook0(Load,Assertion):- fail,
        assertion_hb(Assertion,Self,H,B),
        functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
-% old compiler hook       
+% old compiler hook
 load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
      rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
@@ -1766,7 +1766,7 @@ call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
   call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
   must_be(callable,Term).
 
-into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- 
+into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
  \+ never_compile(TermV),
  is_transpiling, !,
  must_det_ll((((
@@ -2197,7 +2197,7 @@ fix_message_hook:-
 %:- ensure_loaded(metta_help).
 :- initialization(use_corelib_file).
 
-:- ignore(((
+immediate_ignore:- ignore(((
    %wdmsg(init_prog),
    use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),

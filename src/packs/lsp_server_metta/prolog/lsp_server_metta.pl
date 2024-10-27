@@ -10,6 +10,8 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 @author James Cash
 */
 
+:- debug(lsp(main)).
+
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
 :- use_module(library(http/json), [atom_json_dict/3]).
@@ -418,6 +420,24 @@ server_capabilities(
 :- dynamic in_editor/1.
 
 :- discontiguous(handle_msg/3).
+
+:- dynamic(user:last_request/2).
+% Save the last Msg.body Object for each method
+handle_msg( Method, MsgBody, _) :-
+    once(( retractall(user:last_request(Method,_)),
+      asserta(user:last_request(Method,MsgBody)))),
+      fail.
+
+:- dynamic(user:last_range/2).
+handle_msg(Method, Msg, _) :-
+   %Method \== "textDocument/hover",
+   Method \== "textDocument/semanticTokens/range",
+   % Method =="textDocument/codeAction" % is the most authoratative
+    once((  _{params: Params} :< Msg,
+      _{ range: Range } :< Params,
+      retractall(user:last_range(Method,_)),
+      asserta(user:last_range(Method,Range)))),
+      fail.
 
 handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
