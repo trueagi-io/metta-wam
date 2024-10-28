@@ -58,13 +58,148 @@
 % to handling different logical constructs and performing conversions between
 % functions and predicates.
 % ==============================
+:- dynamic(metta_compiled_predicate/3).
+:- multifile(metta_compiled_predicate/3).
+
+:- include(metta_compiler_werk).
+
+compile_for_assert_eq(_Eq,H,B,Result):-
+  compile_for_assert(H,B,Result), !.
+
+:- dynamic(metta_compiled_predicate/3).
+
+unnumbervars_clause(Cl,ClU):-
+  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
+% ===============================
+%  Compile in memory buffer
+% ===============================
+is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
+  expand_to_hb(UAC,H,B),clause(H,B,Ref),clause(HH,BB,Ref),
+  strip_m(HH,HHH),HHH=@=H,
+  strip_m(BB,BBB),BBB=@=B,!.
+
+strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
+strip_m(BB,BB).
+
+get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
+
+
+:- dynamic(needs_tabled/2).
+
+
+add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
+add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
+%add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
+
+add_assertion1(Space,ACC) :-
+ must_det_ll((
+     copy_term(ACC,AC,_),
+     expand_to_hb(AC,H,_),
+     as_functor_args(H,F,A), as_functor_args(HH,F,A),
+    % assert(AC),
+    % Get the current clauses of my_predicate/1
+    findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
+    copy_term(Prev,CPrev,_),
+    % Create a temporary file and add the new assertion along with existing clauses
+    append(CPrev,[AC],NewList),
+    cl_list_to_set(NewList,Set),
+    length(Set,N),
+    if_t(N=2,
+        (Set=[X,Y],
+          numbervars(X),
+          numbervars(Y),
+        nl,display(X),
+        nl,display(Y),
+        nl)),
+    %wdmsg(list_to_set(F/A,N)),
+    abolish(/*'&self':*/F/A),
+    create_and_consult_temp_file(Space,F/A, Set))).
+
+
+cl_list_to_set([A|List],Set):-
+  member(B,List),same_clause(A,B),!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([New|List],[New|Set]):-!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
+cl_list_to_set(List,Set):- list_to_set(List,Set).
+
+same_clause(A,B):- A==B,!.
+same_clause(A,B):- A=@=B,!.
+same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
+same_clause1(A,B):- A=@=B.
+same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
+
+%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
+
+% Predicate to create a temporary file and write the tabled predicate
+create_and_consult_temp_file(Space,F/A, PredClauses) :-
+  must_det_ll((
+    % Generate a unique temporary memory buffer
+    tmp_file_stream(text, TempFileName, TempFileStream),
+    % Write the tabled predicate to the temporary file
+    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
+    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
+    %if_t( \+ option_value('tabling',false),
+    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
+    maplist(write_clause(TempFileStream), PredClauses),
+    % Close the temporary file
+    close(TempFileStream),
+    % Consult the temporary file
+    % abolish(F/A),
+    /*'&self':*/
+    consult(TempFileName),
+
+    listing(F/A),
+    % Delete the temporary file after consulting
+    %delete_file(TempFileName),
+    asserta(metta_compiled_predicate(Space,F,A)),
+    current_predicate(F/A),
+    listing(metta_compiled_predicate/3),
+    true)).
+
+%metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
+
+% Helper predicate to write a clause to the file
+write_clause(Stream, Clause) :-
+    subst_vars(Clause,Can),
+    write_canonical(Stream, Can),
+    write(Stream, '.'),
+    nl(Stream).
+
+same(X,Y):- X =~ Y.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+end_of_file.
+
+
 
 % Loading various library files
 :- ensure_loaded(swi_support).
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_parser).
-% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in
 % the correct order independent of which file is loaded first the needed predicates and ops are defined.
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
@@ -76,8 +211,8 @@
 
 eopfc:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
-:- dynamic(metta_compiled_predicate/2).
-:- multifile(metta_compiled_predicate/2).
+%:- dynamic(metta_compiled_predicate/2).
+%:- multifile(metta_compiled_predicate/2).
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
@@ -449,24 +584,6 @@ head_as_is('If',3).
 rewrite_sym(S,F):- \+ atomic(S),!,F=S.
 rewrite_sym(':',F):- var(F),!, 'iz' == F,!.
 rewrite_sym(F,F).
-
-as_functor_args(AsPred,F,A):-
-  as_functor_args(AsPred,F,A,_ArgsL),!.
-
-as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
-  (is_list(ArgsL);(integer(A),A>=0)),!,
-   length(ArgsL,A),
-   (symbol(F)->AsPred =..[F|ArgsL]; (AsPred = [F|ArgsL])).
-
-as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
-as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
-  AsPred=..List,!, as_functor_args(List,F,A,ArgsL),!.
-%as_functor_args([Eq,R,Stuff],F,A,ArgsL):- (Eq == '='),
-%   into_list_args(Stuff,List),append(List,[R],AsPred),!,
-%   as_functor_args(AsPred,F,A,ArgsL).
-as_functor_args([F|ArgsL],F,A,ArgsL):-  length(ArgsL,A),!.
-
-
 
 
 
@@ -2320,103 +2437,6 @@ create_unifier_goals([],[],true).
 transform(OneHead, NewHead, Body, NewBody):- create_unifier(OneHead,NewHead,Guard),
    combine_code(Guard,Body,NewBody).
 
-
-unnumbervars_clause(Cl,ClU):-
-  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
-% ===============================
-%  Compile in memory buffer
-% ===============================
-is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
-  expand_to_hb(UAC,H,B),clause(H,B,Ref),clause(HH,BB,Ref),
-  strip_m(HH,HHH),HHH=@=H,
-  strip_m(BB,BBB),BBB=@=B,!.
-
-strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
-strip_m(BB,BB).
-
-get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
-
-:- dynamic(needs_tabled/2).
-
-add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
-add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
-add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
-
-add_assertion1(_KB,ACC) :-
-     copy_term(ACC,AC,_),
-     expand_to_hb(AC,H,_),
-     as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    % assert(AC),
-    % Get the current clauses of my_predicate/1
-    findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
-    copy_term(Prev,CPrev,_),
-    % Create a temporary file and add the new assertion along with existing clauses
-    append(CPrev,[AC],NewList),
-    cl_list_to_set(NewList,Set),
-    length(Set,N),
-    if_t(N=2,
-        (Set=[X,Y],
-          numbervars(X),
-          numbervars(Y),
-        nl,display(X),
-        nl,display(Y),
-        nl)),
-    %wdmsg(list_to_set(F/A,N)),
-    abolish(/*'&self':*/F/A),
-    create_and_consult_temp_file(F/A, Set).
-
-
-cl_list_to_set([A|List],Set):-
-  member(B,List),same_clause(A,B),!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([New|List],[New|Set]):-!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
-cl_list_to_set(List,Set):- list_to_set(List,Set).
-
-same_clause(A,B):- A==B,!.
-same_clause(A,B):- A=@=B,!.
-same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
-same_clause1(A,B):- A=@=B.
-same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
-
-%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
-
-% Predicate to create a temporary file and write the tabled predicate
-create_and_consult_temp_file(F/A, PredClauses) :-
-    % Generate a unique temporary memory buffer
-    tmp_file_stream(text, TempFileName, TempFileStream),
-    % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
-    %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
-    maplist(write_clause(TempFileStream), PredClauses),
-    % Close the temporary file
-    close(TempFileStream),
-    % Consult the temporary file
-    % abolish(F/A),
-    /*'&self':*/
-    consult(TempFileName),
-    % Delete the temporary file after consulting
-    %delete_file(TempFileName),
-    asserta(metta_compiled_predicate(F,A)),
-    true.
-
-:- dynamic(metta_compiled_predicate/2).
-
-metta_compiled_predicate(_,F,A):-
-  metta_compiled_predicate(F,A).
-
-% Helper predicate to write a clause to the file
-write_clause(Stream, Clause) :-
-    subst_vars(Clause,Can),
-    write_canonical(Stream, Can),
-    write(Stream, '.'),
-    nl(Stream).
-
-same(X,Y):- X =~ Y.
 
 
 

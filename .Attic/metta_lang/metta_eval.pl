@@ -51,7 +51,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in
 % the correct order independent of which file is loaded first the needed predicates and ops are defined.
 :- ensure_loaded(metta_interp).
 
@@ -1653,13 +1653,13 @@ eval_20(Eq,RetType,Depth,Self,['with-output-to',S,NE],R):-  !,
    with_output_to_stream(OUT,
       eval_args(Eq,RetType,Depth,Self,NE,R)).
 
-eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):- 
- arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl), 
+eval_20(Eq,RetType,Depth,Self,[Excl|Rest],Res):-
+ arg(_, v('catch!','throw!','number-of!','limit!','offset!','max-time!','findall!','setup-call-cleanup!','call-cleanup!','call-cleanup!','with-output-to!'), Excl),
  sub_atom(Excl,_,_,1,NoExcl),!,
  eval_20(Eq,RetType,Depth,Self,[NoExcl|Rest],Res).
 
 
-%sig_atomic_no_cut(Goal):- sig_atomic(Goal). 
+%sig_atomic_no_cut(Goal):- sig_atomic(Goal).
 sig_atomic_no_cut(Goal):- call(Goal).
 
 % =================================================================
@@ -1841,14 +1841,17 @@ empty('Empty').
 minus(A,B,C):- plus(B,C,A).
 
 
-eval_20(Eq,RetType,Depth,Self,[AE|More],Res):-
+eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):- trace,
+    AE = MettaPred,
     metta_compiled_predicate(Self,AE,Len),
-    len_or_unbound(More,Len), Pred = AE,
+    len_or_unbound([AE|More],Len),
+
+  must_det_ll((
     current_predicate(AE/Arity),
-    maplist(as_prolog, More , Adjusted),!,
-    eval_201(Eq,RetType,Depth,Self,Pred,Adjusted,Arity,Len,Res),
+    maplist(as_prolog, More , Adjusted))),!,
+    eval_201(Eq,RetType,Depth,Self,MettaPred,Adjusted,Arity,Len,Res),
     nonvar(Res),
-    check_returnval(Eq,RetType,Res).
+      must_det_ll((check_returnval(Eq,RetType,Res))).
 
 
 eval_201(_Eq,_RetType,_Depth,_Self,Pred,AdjustedM1,Arity,Len,Res):- Arity > Len,!,
@@ -2638,7 +2641,7 @@ cwtl(Time, Goal) :-
 cwtl_goal(AlarmID, Goal) :-
     install_alarm(AlarmID),
     call(Goal).
-    
+
 
 %findall_eval(Eq,RetType,Depth,Self,X,L):- findall_eval(Eq,RetType,_RT,Depth,Self,X,L).
 %findall_eval(Eq,RetType,Depth,Self,X,S):- findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
