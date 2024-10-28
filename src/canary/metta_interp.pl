@@ -1271,7 +1271,9 @@ assert_preds(Self,Load,Preds):-
            not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
       not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
 
-  if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
+  %if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
+  % allow errors and warning rather than silently doing nothing as the clause above would have done
+  if_t(is_transpiling, add_assertion(Self,Preds)),
   nop(metta_anew1(Load,Preds)).
 
 
