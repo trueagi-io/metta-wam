@@ -126,7 +126,7 @@ fbdebug1(Message) :-
     %format(user_error, "~n/* ~p. */~n", [Message]),  % Preserved commented-out code.
     flush_output(user_error).
 
-%!  swi_only(:Goal) is semidet.
+%!  swi_only(:Goal) is nondet.
 %
 %   Executes the given goal only if running on SWI-Prolog. If the current
 %   environment is Scryer-Prolog, the predicate fails immediately.
@@ -140,7 +140,7 @@ swi_only(G) :-
     % Execute the goal in SWI-Prolog.
     call(G).
 
-%!  is_scryer is semidet.
+%!  is_scryer is nondet.
 %
 %   Succeeds if the current Prolog environment is Scryer-Prolog.
 %
@@ -219,7 +219,7 @@ with_option(N, V, G) :-
     (was_option_value(N, W) -> true ; W = []),
     setup_call_cleanup(set_option_value(N, V), G, set_option_value(N, W)).
 
-%!  was_option_value(+Name, -Value) is semidet.
+%!  was_option_value(+Name, -Value) is nondet.
 %
 %   Retrieves the current value of an option, if it exists, using Prolog flags,
 %   load context, or non-backtrackable variables.
@@ -284,7 +284,7 @@ option_else0(_N, V, Else) :-
     % Use the fallback value if the option is unavailable.
     !, V = Else.
 
-%!  option_value(+Name, -Value) is semidet.
+%!  option_value(+Name, -Value) is nondet.
 %
 %   Retrieves the current value of an option, with special handling for boolean
 %   values (`true` or `false`).
@@ -309,7 +309,7 @@ option_value(N, V) :-
     % Retrieve the option value without tracing.
     notrace(option_value0(N, V)).
 
-%!  option_value0(+Name, -Value) is semidet.
+%!  option_value0(+Name, -Value) is nondet.
 %
 %   Retrieves the raw option value or returns an empty list if unavailable.
 %
@@ -403,7 +403,7 @@ kaggle_arc :-
 
 %:- kaggle_arc.
 
-%!  all_upper_symbol(+Symbol) is semidet.
+%!  all_upper_symbol(+Symbol) is nondet.
 %
 %   Succeeds if the given Symbol is an uppercase atom.
 %
@@ -451,7 +451,7 @@ concat_symbol(A, B, C) :- concat_atom(A, B, C).
 %
 downcase_symbol(A, B) :- downcase_atom(A, B).
 
-%!  non_empty_symbol(+Symbol) is semidet.
+%!  non_empty_symbol(+Symbol) is nondet.
 %
 %   Succeeds if the given atom is non-empty.
 %
@@ -474,7 +474,7 @@ non_empty_symbol(A) :- non_empty_atom(A).
 %
 string_to_symbol(A, B) :- string_to_atom(A, B).
 
-%!  sub_string_or_symbol(+Input, +Before, +Length, +After, -Substring) is semidet.
+%!  sub_string_or_symbol(+Input, +Before, +Length, +After, -Substring) is nondet.
 %
 %   Extracts a substring from an atom or string.
 %
@@ -489,7 +489,7 @@ string_to_symbol(A, B) :- string_to_atom(A, B).
 %
 sub_string_or_symbol(A, B, C, D, E) :- sub_string_or_atom(A, B, C, D, E).
 
-%!  sub_symbol(+Atom, +Before, +Length, +After, -SubAtom) is semidet.
+%!  sub_symbol(+Atom, +Before, +Length, +After, -SubAtom) is nondet.
 %
 %   Extracts a sub-atom from an atom.
 %
@@ -504,7 +504,7 @@ sub_string_or_symbol(A, B, C, D, E) :- sub_string_or_atom(A, B, C, D, E).
 %
 sub_symbol(A, B, C, D, E) :- sub_atom(A, B, C, D, E).
 
-%!  symbol(+Term) is semidet.
+%!  symbol(+Term) is nondet.
 %
 %   Succeeds if the given Term is an atom.
 %
@@ -552,7 +552,7 @@ symbol_codes(A, B) :- atom_codes(A, B).
 %
 symbol_concat(A, B, C) :- atom_concat(A, B, C).
 
-%!  symbol_contains(+Symbol, +Substring) is semidet.
+%!  symbol_contains(+Symbol, +Substring) is nondet.
 %
 %   Succeeds if the Symbol contains the given Substring.
 %
@@ -576,7 +576,7 @@ symbol_contains(A, B) :- atom_contains(A, B).
 %
 symbol_length(A, B) :- atom_length(A, B).
 
-%!  symbol_number(+Symbol, -Number) is semidet.
+%!  symbol_number(+Symbol, -Number) is nondet.
 %
 %   Converts an atom to a number if possible.
 %
@@ -612,7 +612,7 @@ symbol_string(A, B) :- atom_string(A, B).
 %
 symbol_upper(A, B) :- upcase_atom(A, B).
 
-%!  symbolic(+Term) is semidet.
+%!  symbolic(+Term) is nondet.
 %
 %   Succeeds if the given Term is atomic (an atom or number).
 %
