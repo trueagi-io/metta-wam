@@ -1,9 +1,23 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
-    ()) ; ()(= (eq $x $x) True)
-! (eq a b) ; (eq a b)
-(= (eq $x $y) (empty))
-! (eq a b) ; no result
+
+(Parent Bob Ann)
+
+; notready 
+! (assertEqualToResult
+    (match &self (Parent Tom $x) $x)
+    (empty)) 
+
+; ()
+
+; ready works 
+! (assertEqualToResult
+    (match &self (Parent Tom $x) $x)
+    ()) 
+
+; ()
+
+
 
 ;  !(assertEqualToResult ( )  (  )  ) 

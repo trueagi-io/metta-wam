@@ -1,11 +1,20 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
-(: my-if (-&gt; Bool Atom Atom Atom))
-(= (my-if True $then $else) $then)
-(= (my-if False $then $else) $else)
-(= (loop) (loop))
-(= (OK) OK!)
-! (my-if (&gt; 0 1) (loop) (OK))
+
+
+(: swap-arguments-atom (-> Atom Atom))
+(= (swap-arguments-atom ($op $arg1 $arg2))
+   ($op $arg2 $arg1)
+)
+
+;! (swap-arguments-atom (- 15 8))
+; [-7]
+
+
+
+!(println "xx 39 ") 
+; notready 
+!(assertEqualToResult ( swap-arguments-atom (- 15 8) ) ( -7 ) ) 
 
 ;  !(assertEqualToResult ( )  (  )  ) 

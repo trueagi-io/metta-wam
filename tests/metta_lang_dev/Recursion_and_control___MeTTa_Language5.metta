@@ -1,9 +1,20 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
+
+
 (= (factorial $x)
-   (if (&gt; $x 0)
-       (* $x (factorial (- $x 1)))
-       1))
+   (case $x
+     ((0 1)
+      ($_ (* $x (factorial (- $x 1)))))
+   )
+)
+; ! (factorial 5) 
+; 120
+
+
+!(println "xx 68 ") 
+ ; ready works 
+!(assertEqualToResult ( factorial 5 ) ( 120 ) ) 
 
 ;  !(assertEqualToResult ( )  (  )  ) 
