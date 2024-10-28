@@ -208,6 +208,9 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :-multifile(user:loaded_into_kb/2).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
+:- multifile(metta_compiled_predicate/3).
+:- dynamic(metta_compiled_predicate/3).
+
 
 once_writeq_nl(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_nl(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
@@ -1254,9 +1257,10 @@ fn_append1(Term,X,eval_H(Term,X)).
 
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
-assert_preds(_Self,Load,Preds):-
-  expand_to_hb(Preds,H,_B),functor(H,F,A),
-  if_t((show_transpiler),
+assert_preds(Self,Load,Preds):-
+  expand_to_hb(Preds,H,_B),
+  functor(H,F,A), %trace,
+  if_t(true, % (show_transpiler),
     color_g_mesg_ok('#005288',(
    ignore((
       % \+ predicate_property(H,defined),
@@ -1267,12 +1271,8 @@ assert_preds(_Self,Load,Preds):-
            not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
       not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
 
-
-  if_t(is_transpiling,
-   if_t( \+ predicate_property(H,static),
-   %add_assertion(Self,Preds)
-   true)),
-   nop(metta_anew1(Load,Preds)).
+  if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
+  nop(metta_anew1(Load,Preds)).
 
 
 %load_hook(_Load,_Hooked):- !.
@@ -1316,18 +1316,18 @@ rtrace_on_failure_and_break(G):-
 assertion_hb(metta_eq_def(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_defn(Self,H,B),Self,'=',H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
-assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
-assertion_hb(metta_atom(Self,[Eq,H|B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
+assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
+assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
+assertion_hb(asserted_metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
 
-assert_type_cl(Eq):- \+ symbol(Eq),!,fail.
-assert_type_cl('=').
-assert_type_cl(':-').
+assertion_neck_cl(Eq):- \+ symbol(Eq),!,fail.
+assertion_neck_cl('=').
+assertion_neck_cl(':-').
 
 
-load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
-load_hook0(Load,Assertion):- fail,
-       assertion_hb(Assertion,Self,H,B),
-       functs_to_preds([=,H,B],Preds),
+load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
+load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
+       functs_to_preds([Eq,H,B],Preds),
        assert_preds(Self,Load,Preds).
 % old compiler hook
 load_hook0(Load,Assertion):-
@@ -1786,7 +1786,8 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   nop(nl))))),
   nop(maplist(verbose_unify,Vars)),
   %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes), X = RealRes)))),!.
+  var(RealRes),
+  X = RealRes)))),!.
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
