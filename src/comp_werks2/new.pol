@@ -208,9 +208,6 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :-multifile(user:loaded_into_kb/2).
 :-dynamic(user:loaded_into_kb/2).
 :- dynamic(user:is_metta_dir/1).
-:- multifile(metta_compiled_predicate/3).
-:- dynamic(metta_compiled_predicate/3).
-
 
 once_writeq_nl(_):- \+ clause(pfcTraceExecution,true),!.
 once_writeq_nl(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
@@ -623,13 +620,10 @@ user_io(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flus
 user_err(G):- original_user_error(Out), !, with_output_to(Out,G).
 with_output_to_s(Out,G):- current_output(COut),
   redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
-                     set_prolog_IO(user_input,COut,user_error)).
+                    set_prolog_IO(user_input,COut,user_error)).
 
  not_compatio(G):- if_t(once(is_mettalog;is_testing),user_err(G)).
-
  extra_answer_padding(_).
-
-
 %!  in_answer_io(+G) is det.
 %
 %   Main predicate for executing a goal while capturing its output and handling it appropriately.
@@ -637,75 +631,84 @@ with_output_to_s(Out,G):- current_output(COut),
 %   If output is not suspended, it captures the output based on the streams involved.
 %
 %   @arg G The goal to be executed.
-in_answer_io(_):- nb_current(suspend_answers,true),!.
+in_answer_io(_) :- nb_current(suspend_answers, true), !.  % If answer output is suspended (suspend_answers is true), cut and do nothing.
+% in_answer_io(G):- answer_output(Out), !, with_output_to(string(S), G), write(user_error, S), answer_output(Out), !, write(Out, S).
 in_answer_io(G) :-
-    % Get the answer_output stream
+    % Get the answer output stream.
     answer_output(AnswerOut),
-    % Get the current output stream
+    % Get the current output stream.
     current_output(CurrentOut),
-    % Get the standard output stream via file_no(1)
+    % Get the standard output stream (file_no(1) corresponds to stdout).
     get_stdout_stream(StdOutStream),
-    % If the output is already visible to the user, execute G directly
-   ((   AnswerOut == CurrentOut ;   AnswerOut == StdOutStream )
+    % If the answer output is already visible to the user (same as CurrentOut or StdOutStream), 
+    % execute G directly without capturing.
+    (
+        (AnswerOut == CurrentOut ; AnswerOut == StdOutStream)
     ->  call(G)
-    ; ( % Otherwise, capture and process the output
-        % Determine the encoding
-        stream_property(CurrentOut, encoding(CurrentEncoding0)),
-        (   CurrentEncoding0 == text
-        ->  stream_property(AnswerOut, encoding(CurrentEncoding))
-        ;   CurrentEncoding = CurrentEncoding0
-        ),
-        % Start capturing output per solution
-        capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding))).
+    ;   (
+            % Otherwise, capture and process the output of G.
+            % Get the current encoding of the output stream.
+            stream_property(CurrentOut, encoding(CurrentEncoding0)),
+            (
+                % If the current encoding is 'text', use the encoding of AnswerOut.
+                CurrentEncoding0 == text
+            ->  stream_property(AnswerOut, encoding(CurrentEncoding))
+            ;   CurrentEncoding = CurrentEncoding0
+            ),
+            % Capture output per solution.
+            capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding)
+        )
+    ).
 
 %!  get_stdout_stream(-StdOutStream) is det.
 %
 %   Helper predicate to retrieve the standard output stream.
-%This uses `current_stream/3` to find the stream associated with file descriptor 1 (stdout).
+%   This uses `current_stream/3` to find the stream associated with file descriptor 1 (stdout).
 %
-%@argStdOutStreamUnifieswiththestandardoutputstream.
+%   @arg StdOutStream Unifies with the standard output stream.
 get_stdout_stream(StdOutStream) :-
     current_stream(_, write, StdOutStream),
-    stream_property(StdOutStream, file_no(1)),!.
+    stream_property(StdOutStream, file_no(1)).
 
 %!  capture_output_per_solution(+G, +CurrentOut, +AnswerOut, +StdOutStream, +CurrentEncoding) is det.
 %
 %   Captures and processes the output for each solution of a nondeterministic goal.
-%Usesamemoryfiletotemporarilystoretheoutputandthenfinalizestheoutputhandling.
+%   Uses a memory file to temporarily store the output and then finalizes the output handling.
 %
-%@argGThegoalwhoseoutputisbeingcaptured.
-%@argCurrentOutThecurrentoutputstream.
-%@argAnswerOutTheansweroutputstream.
-%@argStdOutStreamThestandardoutputstream.
-%@argCurrentEncodingTheencodingusedforcapturingandwritingoutput.
+%   @arg G The goal whose output is being captured.
+%   @arg CurrentOut The current output stream.
+%   @arg AnswerOut The answer output stream.
+%   @arg StdOutStream The standard output stream.
+%   @arg CurrentEncoding The encoding used for capturing and writing output.
 capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding) :-
-    % Prepare initial memory file and write stream
+    % Create an initial state for holding the memory file and its associated write stream.
     State = state(_, _),
+    % Prepare a new memory file and redirect output to it.
     set_output_to_memfile(State, CurrentEncoding),
-    % Use setup_call_catcher_cleanup to handle execution and cleanup
+    % Use setup_call_catcher_cleanup to manage execution, handling failures and exceptions.
     setup_call_catcher_cleanup(
         true,
         (
-           (call(G),
-            % Check determinism after G succeeds
+            % Execute the goal and capture output.
+            (call(G),
+            % Check if the goal is deterministic after it succeeds.
             deterministic(Det)),
-            % Process the captured output
+            % Process the captured output.
             process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding),
-            % If there are more solutions, prepare for the next one
-            (   Det == false
-            ->  % Prepare a new memory file and write stream for the next solution
-                set_output_to_memfile(State,CurrentEncoding)
-            ;   % If deterministic, leave cleanup for process_and_finalize_output
-                true
+            (
+                % If nondeterministic, prepare for capturing output from the next solution.
+                Det == false
+            ->  set_output_to_memfile(State, CurrentEncoding)
+            ;   true
             )
         ),
         Catcher,
         (
-            % Final cleanup
+            % Ensure final output processing even if exceptions occur.
             process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding)
         )
     ),
-    % Handle exceptions and failures
+    % Handle exceptions or failures based on the catcher.
     handle_catcher(Catcher).
 
 %!  set_output_to_memfile(+State, +CurrentEncoding) is det.
@@ -715,7 +718,7 @@ capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncod
 %
 %   @arg State The state holding the memory file and write stream.
 %   @arg CurrentEncoding The encoding to use for the memory file.
-set_output_to_memfile(State,CurrentEncoding):-
+set_output_to_memfile(State, CurrentEncoding) :-
     % Create a new memory file.
     new_memory_file(NewMemFile),
     % Open the memory file for writing with the specified encoding.
@@ -740,22 +743,25 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
     % Retrieve the memory file and write stream from the state.
     arg(1, State, MemFile),
     arg(2, State, WriteStream),
-    % Close the write stream to flush the output
-    (nonvar(WriteStream) -> (close(WriteStream),nb_setarg(2, State, _)) ; true),
-    % Reset the output stream to its original state
+    % Close the write stream if it exists to flush the captured content.
+    (nonvar(WriteStream) -> (nb_setarg(2, State, _), close(WriteStream)) ; true),
+    % Restore the original output stream.
     set_output(CurrentOut),
-    % Read the captured content from the memory file
-    (nonvar(MemFile) ->
-      (nb_setarg(1, State, _),
-       open_memory_file(MemFile, read, ReadStream, [encoding(CurrentEncoding)]),
-       read_string(ReadStream, _, Content),
-       close(ReadStream),
-       % Free the memory file
-       free_memory_file(MemFile),
-       % Write the content to the streams, handling encoding differences
-       write_to_stream(AnswerOut, Content, CurrentEncoding),
-       (   AnswerOut \== StdOutStream ->  nop(write_to_stream(user_error, Content, CurrentEncoding)) ;   true )) ; true).
-
+    % If a memory file was created, process its contents.
+    (nonvar(MemFile) -> 
+      (
+        nb_setarg(1, State, _),
+        % Open the memory file for reading with the appropriate encoding.
+        open_memory_file(MemFile, read, ReadStream, [encoding(CurrentEncoding)]),
+        read_string(ReadStream, _, Content),
+        close(ReadStream),
+        % Free the memory file resources.
+        free_memory_file(MemFile),       
+        % Write the captured content to the answer output stream and possibly the user error stream.
+        write_to_stream(AnswerOut, Content, CurrentEncoding),
+        (AnswerOut \== StdOutStream -> write_to_stream(user_error, Content, CurrentEncoding) ; true)
+      )
+    ; true).
 
 %!  handle_catcher(+Catcher) is det.
 %
@@ -765,9 +771,9 @@ process_and_finalize_output(State, CurrentOut, AnswerOut, StdOutStream, CurrentE
 handle_catcher(Var) :-
     % If the catcher is unbound, the call succeeded.
     var(Var), !.
-handle_catcher(exit).  % Success, do nothing.
-handle_catcher(fail) :- fail.  % Failure, propagate it.
-handle_catcher(exception(Exception)) :- throw(Exception).  % Exception, re-throw it.
+handle_catcher(exit) :- !.  % Success, do nothing.
+handle_catcher(fail) :- !, fail.  % Failure, propagate it.
+handle_catcher(exception(Exception)) :- notrace(throw(Exception)).  % Exception, re-throw it.
 
 %!  write_to_stream(+Stream, +Content, +ContentEncoding) is det.
 %
@@ -1257,10 +1263,9 @@ fn_append1(Term,X,eval_H(Term,X)).
 
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
-assert_preds(Self,Load,Preds):-
-  expand_to_hb(Preds,H,_B),
-  functor(H,F,A), %trace,
-  if_t(true, % (show_transpiler),
+assert_preds(_Self,Load,Preds):-
+  expand_to_hb(Preds,H,_B),functor(H,F,A),
+  if_t((show_transpiler),
     color_g_mesg_ok('#005288',(
    ignore((
       % \+ predicate_property(H,defined),
@@ -1271,10 +1276,12 @@ assert_preds(Self,Load,Preds):-
            not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
       not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
 
-  %if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
-  % allow errors and warning rather than silently doing nothing as the clause above would have done
-  if_t(is_transpiling, add_assertion(Self,Preds)),
-  nop(metta_anew1(Load,Preds)).
+
+  if_t(is_transpiling,
+   if_t( \+ predicate_property(H,static),
+   %add_assertion(Self,Preds)
+   true)),
+   nop(metta_anew1(Load,Preds)).
 
 
 %load_hook(_Load,_Hooked):- !.
@@ -1318,20 +1325,20 @@ rtrace_on_failure_and_break(G):-
 assertion_hb(metta_eq_def(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_defn(Self,H,B),Self,'=',H,B):-!.
 assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
-assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
-assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
-assertion_hb(asserted_metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
+assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
+assertion_hb(metta_atom(Self,[Eq,H|B]),Self,Eq,H,B):- assert_type_cl(Eq),!.
 
-assertion_neck_cl(Eq):- \+ symbol(Eq),!,fail.
-assertion_neck_cl('=').
-assertion_neck_cl(':-').
+assert_type_cl(Eq):- \+ symbol(Eq),!,fail.
+assert_type_cl('=').
+assert_type_cl(':-').
 
 
-load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
-load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
-       functs_to_preds([Eq,H,B],Preds),
+load_hook0(_,_):- \+ show_transpiler, \+ is_transpiling, !.
+load_hook0(Load,Assertion):- fail,
+       assertion_hb(Assertion,Self,H,B),
+       functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
-% old compiler hook
+% old compiler hook       
 load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
      rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
@@ -1768,7 +1775,7 @@ call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
   call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
   must_be(callable,Term).
 
-into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
+into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):- 
  \+ never_compile(TermV),
  is_transpiling, !,
  must_det_ll((((
@@ -1782,15 +1789,13 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   notrace((color_g_mesg('#114411',print_pl_source(answer(Res):-ExecGoal)))),
   %nl,writeq(Term),nl,
   ((\+ \+
-  ((
-  %numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(skip)]),
+  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
   %nb_current(variable_names,NamedVarsList),
   %nl,print(subst_vars(Term,NamedVarsList,Vars)),
   nop(nl))))),
   nop(maplist(verbose_unify,Vars)),
   %NamedVarsList=[_=RealRealRes|_],
-  %var(RealRes),
-  X = RealRes)))),!.
+  var(RealRes), X = RealRes)))),!.
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
@@ -2201,7 +2206,7 @@ fix_message_hook:-
 %:- ensure_loaded(metta_help).
 :- initialization(use_corelib_file).
 
-immediate_ignore:- ignore(((
+:- ignore(((
    %wdmsg(init_prog),
    use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
@@ -2238,3 +2243,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
+
