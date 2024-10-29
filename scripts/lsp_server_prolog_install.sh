@@ -3,7 +3,7 @@
 # Define the target directory and symlink source and destination
 TARGET_DIR="$HOME/.local/share/swi-prolog/pack"
 LINK_NAME="$TARGET_DIR/lsp_server_metta"
-LINK_TARGET="$HOME/metta-wam/packs/lsp_server_metta"
+LINK_TARGET="$HOME/metta-wam/src/packs/lsp_server_metta"
 
 # Check if the directory already exists
 if [ -e "$TARGET_DIR" ]; then
