@@ -1782,13 +1782,14 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   notrace((color_g_mesg('#114411',print_pl_source(answer(Res):-ExecGoal)))),
   %nl,writeq(Term),nl,
   ((\+ \+
-  ((numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(bind)]),
+  ((
+  %numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(skip)]),
   %nb_current(variable_names,NamedVarsList),
   %nl,print(subst_vars(Term,NamedVarsList,Vars)),
   nop(nl))))),
   nop(maplist(verbose_unify,Vars)),
   %NamedVarsList=[_=RealRealRes|_],
-  var(RealRes),
+  %var(RealRes),
   X = RealRes)))),!.
 
 

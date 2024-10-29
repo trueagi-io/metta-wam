@@ -1345,7 +1345,9 @@ can_rrtrace:- nb_setval(cant_rrtrace, f).
 %
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
 % Write the failure to source output and fail, without any additional action.
-md_failed(P1, X):- notrace((write_src_uo(failed(P1, X)), fail)).
+md_failed(P1, X):- notrace((write_src_uo(failed(P1, X)))),
+   on_mettalog_error(failed(P1, X)),
+   notrace(fail).
 % If tracing is enabled, trace the failure of the goal with visible trace options.
 md_failed(P1, X):- tracing, visible_rtrace([-all, +fail, +call, +exception], call(P1, X)).
 % If tracing is disabled, trace the failure with visible trace options but avoid full tracing.
@@ -1427,6 +1429,7 @@ rrtrace(X):- rrtrace(etrace, X).
 stack_dump:- ignore(catch(dumpST,_,fail)),!. %ignore(catch(bts,_,true)).
 stack_dump:- ignore(catch(bt, _, true)).
 
+
 %!  ugtrace(+Why, :G) is det.
 %
 %   Executes the goal `G` with tracing enabled, and provides different behavior depending on
@@ -1440,12 +1443,22 @@ stack_dump:- ignore(catch(bt, _, true)).
 %   ?- ugtrace(error(my_reason), my_goal).
 %
 
+:- set_prolog_flag(mettalog_error,unset).
+%:- set_prolog_flag(mettalog_error,break).
+%:- set_prolog_flag(mettalog_error,keep_going).
+on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,wdmsg(on_mettalog_error(break,Why)),break.
+on_mettalog_error(Why):- wdmsg(on_mettalog_error(Why)).
+
+% super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`
+super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(failed(G)))).
+
+% If there is an error, log it, perform a stack dump
+ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
+
+ugtrace(Why, _):- on_mettalog_error(Why), fail.
 % If tracing is already enabled, log the reason and trace the goal G.
+ugtrace(Why, G):- tracing, !, notrace, rtrace(G), trace.
 
-% If there is an error, log it, perform a stack dump, and trace the goal G.
-ugtrace(error(Why), _):- notrace(( write_src_uo(error(Why)), stack_dump, write_src_uo(error(Why)), fail)).
-
-ugtrace(Why, G):- tracing, !, notrace, write_src(Why), rtrace(G).
 % If testing is enabled, handle the failure and abort.
 ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
 % Otherwise, log the reason, trace the goal G, and abort.
