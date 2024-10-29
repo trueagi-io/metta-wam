@@ -1449,15 +1449,12 @@ stack_dump:- ignore(catch(bt, _, true)).
 on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,wdmsg(on_mettalog_error(break,Why)),break.
 on_mettalog_error(Why):- wdmsg(on_mettalog_error(Why)).
 
-% super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`
-super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(failed(G)))).
-
 % If there is an error, log it, perform a stack dump
 ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
 
 ugtrace(Why, _):- on_mettalog_error(Why), fail.
 % If tracing is already enabled, log the reason and trace the goal G.
-ugtrace(Why, G):- tracing, !, notrace, rtrace(G), trace.
+ugtrace(_Why, G):- tracing, !, notrace, rtrace(G), trace.
 
 % If testing is enabled, handle the failure and abort.
 ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
