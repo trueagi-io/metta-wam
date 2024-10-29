@@ -958,6 +958,9 @@ f2p(HeadIs,RetResult,Convert, Converted) :-
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
+    % For OVER-REACHING categorization of dataobjs %
+    % wdmsg(data_term(Convert)),
+    %trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
 
 % If Convert is an "is" function, we convert it to the equivalent "is" predicate.
@@ -997,21 +1000,23 @@ into_u_assign(RetResultL,RetResult,Code):- Code = u_assign(RetResultL,RetResult)
 
 
 % If Convert is a list, we convert it to its termified form and then proceed with the functs_to_preds conversion.
-f2p(HeadIs,RetResult,Convert, Converted) :- is_list(Convert),
+f2p(HeadIs,RetResult,Convert, Converted) :- fail,
+   is_list(Convert),
    once((sexpr_s2p(Convert,IS), \+ IS=@=Convert)), !,  % Check if Convert is a list and not in predicate form
    must_det_ll((f2p(HeadIs,RetResult, IS, Converted))).  % Proceed with the conversion of the predicate form of the list.
 
-f2p(HeadIs,RetResult, ConvertL, Converted) :- is_list(ConvertL),
+f2p(HeadIs,RetResult, ConvertL, Converted) :- fail,
+   is_list(ConvertL),
    maplist(f2p_assign(HeadIs),RetResultL,ConvertL, ConvertedL),
    list_to_conjuncts(ConvertedL,Conjs),
    into_u_assign(RetResultL,RetResult,Code),
    combine_code(Conjs,Code,Converted).
 
 
-
-f2p(HeadIs,RetResultL, ConvertL, Converted) :- is_list(ConvertL),
+f2p(HeadIs,RetResultL, ConvertL, Converted) :- fail,
+   is_list(ConvertL),
    ConvertL = [Convert],
-   f2p(HeadIs,RetResult,Convert, Code),!,
+   f2p(HeadIs,RetResult,Convert, Code), !,
    into_equals(RetResultL,[RetResult],Equals),
    combine_code(Code,Equals,Converted).
 
@@ -1083,6 +1088,10 @@ call4(G):- call(G).
 call5(G):- call(G).
 
 trace_break:- trace,break.
+
+:- if(debugging(metta(compiler_bugs))).
+:- set_prolog_flag(gc,false).
+:- endif.
 
 u_assign(FList,R):- is_list(FList),!,eval_args(FList,R).
 u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
