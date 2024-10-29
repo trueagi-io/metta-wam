@@ -176,7 +176,6 @@ eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
 
 eval_args(Eq,RetType,Depth,Self,X,Y):-
     notrace(nonvar(Y)), var(RetType),
-% super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings (THUS WOULDNT HAVE WORED HERE) and can be said to be wrapped in `once/1`
     super_safety_checks(copy_term(Y,YC)),
     get_type(Depth,Self,Y,WasType),
     super_safety_checks(must_det_ll(Y=@=YC)),
@@ -188,6 +187,8 @@ eval_args(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)),!,
 
 eval_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], number(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
 
+% super safety checks is optional code that can be ran .. using that is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`
+super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(G))).
 
 /*
 eval_args(Eq,RetType,Depth,Self,[F|X],Y):-
@@ -1845,7 +1846,7 @@ empty('Empty').
 minus(A,B,C):- plus(B,C,A).
 
 
-eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):- trace,
+eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):-
     AE = MettaPred,
     metta_compiled_predicate(Self,AE,Len),
     len_or_unbound([AE|More],Len),
