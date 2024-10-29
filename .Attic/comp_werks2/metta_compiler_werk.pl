@@ -958,9 +958,8 @@ f2p(HeadIs,RetResult,Convert, Converted) :-
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
-    % For OVER-REACHING categorization of dataobjs %
-    % wdmsg(data_term(Convert)),
-    %trace_break,
+    wdmsg(data_term(Convert)),
+    trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
 
 % If Convert is an "is" function, we convert it to the equivalent "is" predicate.
@@ -1089,9 +1088,7 @@ call5(G):- call(G).
 
 trace_break:- trace,break.
 
-:- if(debugging(metta(compiler_bugs))).
 :- set_prolog_flag(gc,false).
-:- endif.
 
 u_assign(FList,R):- is_list(FList),!,eval_args(FList,R).
 u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
