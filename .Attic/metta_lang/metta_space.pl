@@ -51,6 +51,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: provides predicates for managing and querying atoms/facts in different 
+% types of spaces along with various utility functions for statistics tracking and debugging.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Ensure that the `metta_interp` library is loaded,
 % That loads all the predicates called from this file
@@ -61,56 +69,283 @@
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).
 
+% Declare 'is_pre_statistic/2' as a multifile predicate, allowing it to be defined across multiple files.
 :- multifile(is_pre_statistic/2).
+% Declare 'is_pre_statistic/2' as a dynamic predicate, meaning it can be modified during execution (e.g., asserted or retracted).
 :- dynamic(is_pre_statistic/2).
-save_pre_statistic(Name):- is_pre_statistic(Name,_)-> true; (statistics(Name,AS),term_number(AS,FN),
-              pfcAdd_Now(is_pre_statistic(Name,FN))).
-pre_statistic(N,V):- is_pre_statistic(N,V)-> true ; V = 0.
-post_statistic(N,V):- statistics(N,VV),term_number(VV,FV),pre_statistic(N,WV), V0 is FV-WV, (V0<0 -> V = 0 ; V0=V).
-term_number(T,N):- sub_term(N,T),number(N).
 
+%!  save_pre_statistic(+Name) is det.
+%
+%   Saves the current value of a given statistic. If a previous value for 
+%   the statistic `Name` is already stored, the predicate does nothing.
+%   Otherwise, it fetches the current value using `statistics/2`, converts 
+%   it to a number with `term_number/2`, and stores it with `pfcAdd_Now/1`.
+%
+%   @arg Name The name of the statistic to be saved.
+%
+%   @example
+%     % Save the statistic for memory usage.
+%     ?- save_pre_statistic(memory).
+%
+save_pre_statistic(Name) :- 
+    is_pre_statistic(Name, _) -> true ; 
+    (statistics(Name, AS), term_number(AS, FN), pfcAdd_Now(is_pre_statistic(Name, FN))).
 
-call_match([G]):-!, call(G).
-call_match([G|GG]):- !, call(G), call_match(GG).
-call_match(G):- call(G).
+%!  pre_statistic(+Name, -Value) is det.
+%
+%   Retrieves the previously saved value for the statistic `Name`.
+%   If the statistic exists, the value is unified with `Value`. 
+%   If not, `Value` is set to 0.
+%
+%   @arg Name  The name of the statistic to retrieve.
+%   @arg Value The value of the statistic, or 0 if it does not exist.
+%
+%   @example
+%     % Get the saved memory statistic.
+%     ?- pre_statistic(memory, Value).
+%     Value = 1024.
+%
+pre_statistic(N, V) :- is_pre_statistic(N, V) -> true ; V = 0.
 
-'save-space!'(Space,File):-
- setup_call_cleanup(
-  open(File,write,Out,[]),
-  with_output_to(Out,
-   forall(get_atoms(Space,Atom),
-      write_src(Atom))),
-  close(Out)).
+%!  post_statistic(+Name, -Value) is det.
+%
+%   Computes the difference between the current and previously saved 
+%   value of the statistic `Name`. If the difference is negative, 
+%   `Value` is set to 0; otherwise, the difference is assigned to `Value`.
+%
+%   @arg Name  The name of the statistic to compute.
+%   @arg Value The computed difference, or 0 if the difference is negative.
+%
+%   @example
+%     % Calculate the change in memory usage since the last save.
+%     ?- post_statistic(memory, Value).
+%     Value = 256.
+%
+post_statistic(N, V) :- 
+    statistics(N, VV), term_number(VV, FV), pre_statistic(N, WV), 
+    V0 is FV - WV, (V0 < 0 -> V = 0 ; V0 = V).
 
+%!  term_number(+Term, -Number) is nondet.
+%
+%   Extracts a numeric subterm from a given term. If `Term` contains 
+%   a numeric subterm, it is unified with `Number`. This predicate 
+%   succeeds for each numeric subterm found within the term.
+%
+%   @arg Term   The term to search for numeric subterms.
+%   @arg Number A numeric subterm found within the given term.
+%
+%   @example
+%     % Extract numbers from a term.
+%     ?- term_number(foo(1, bar(2)), N).
+%     N = 1 ;
+%     N = 2.
+%
+term_number(T, N) :- sub_term(N, T), number(N).
 
+%!  call_match(+Goals) is det.
+%
+%   Executes a goal or a list of goals sequentially. If the input is a single 
+%   goal, it calls that goal directly. If the input is a list, it recursively 
+%   executes each goal in the list in order. This predicate ensures all goals 
+%   are executed in sequence using `call/1`.
+%
+%   @arg Goals A goal or a list of goals to be executed.
+%
+%   @example
+%     % Call a list of goals.
+%     ?- call_match([write('Hello'), nl, write('World')]).
+%     Hello
+%     World
+%
+% Call a single goal from a list containing only one element.
+call_match([G]) :- !, call(G).
+% Call the first goal in the list, then recursively call the rest of the goals.
+call_match([G | GG]) :- !, call(G), call_match(GG).
+% Call a single goal that is not part of a list.
+call_match(G) :- call(G).
+
+%!  'save-space!'(+Space, +File) is det.
+%
+%   Saves all atoms from the given `Space` to the specified `File`. 
+%   This predicate ensures the file is properly opened, written to, 
+%   and closed, using `setup_call_cleanup/3` to handle resources safely.
+%
+%   @arg Space The space from which atoms are retrieved.
+%   @arg File  The file where the atoms will be saved.
+%
+%   @example
+%     % Save atoms from a space to a file.
+%     ?- 'save-space!'(my_space, 'output.txt').
+%
+% Use setup_call_cleanup to ensure the file is opened and closed properly.
+'save-space!'(Space, File) :-
+    setup_call_cleanup(
+        % Open the specified File in write mode.
+        open(File, write, Out, []),
+        % Write all atoms from the Space to the file using with_output_to/2.
+        with_output_to(Out,
+            % For each atom retrieved from the space, write it to the file.
+            forall(get_atoms(Space, Atom), write_src(Atom))),
+        % Ensure the output stream is closed after writing.
+        close(Out)).
+
+% declare dynamic predicates, meaning they can be modified during execution (e.g., asserted or retracted).
 :- dynamic(repeats/1).
 :- dynamic(not_repeats/1).
-assert_new(P):- notrace(catch(call(P),_,fail)),!,
-  assert_new1(repeats(P)).
-assert_new(P):- pfcAdd_Now(P), flag(assert_new,TA,TA+1),assert_new1(not_repeats(P)),!.
 
-retract1(P):- \+ call(P),!.
-retract1(P):- ignore(\+ retract(P)).
+%!  assert_new(+P) is det.
+%
+%   Asserts a new fact or rule if it is not already present in the database.
+%   If the fact already exists, it asserts it as a repeated fact with `repeats/1`.
+%   If it is new, the predicate is added using `pfcAdd_Now/1`, and a counter is updated.
+%
+%   @arg P The fact or rule to be asserted.
+%
+%   @example
+%     % Assert a new fact.
+%     ?- assert_new(my_fact).
+%
+%     % Assert an already existing fact to track repeats.
+%     ?- assert_new(my_fact).
+%     % Fact is now marked as repeated with repeats(my_fact).
+%
+% If the fact P exists, assert it as a repeated fact.
+assert_new(P) :- 
+    notrace(catch(call(P), _, fail)), !,
+    assert_new1(repeats(P)).
+% If the fact P does not exist, assert it as new and increment the counter.
+assert_new(P) :- 
+    pfcAdd_Now(P),
+    flag(assert_new, TA, TA + 1),
+    assert_new1(not_repeats(P)), !.
 
-assert_new1(P):- \+ \+ call(P),!.
-assert_new1(P):- pfcAdd_Now(P).
+%!  retract1(+P) is det.
+%
+%   Retracts a fact or rule from the database if it exists. If it does not exist,
+%   the predicate succeeds without error. This predicate ensures that if the 
+%   retraction fails, it is ignored to avoid unnecessary failures.
+%
+%   @arg P The fact or rule to be retracted.
+%
+%   @example
+%     % Retract a fact if it exists.
+%     ?- retract1(my_fact).
+%
+%     % Attempting to retract a non-existent fact succeeds silently.
+%     ?- retract1(non_existent_fact).
+%     true.
+%
+% If the fact P does not exist, succeed without action.
+retract1(P) :- \+ call(P), !.
+% If the fact P exists, retract it, ignoring any failures during retraction.
+retract1(P) :- ignore(\+ retract(P)).
 
+%!  assert_new1(+P) is det.
+%
+%   Asserts a fact or rule only if it does not already exist. This is a helper 
+%   predicate used by `assert_new/1` to ensure that duplicates are not added.
+%
+%   @arg P The fact or rule to be asserted.
+%
+%   @example
+%     % Assert a helper fact.
+%     ?- assert_new1(helper_fact).
+%
+% If the fact P exists, do nothing.
+assert_new1(P) :- \+ \+ call(P), !.
+% If the fact P does not exist, assert it.
+assert_new1(P) :- pfcAdd_Now(P).
 
+% dynamic predicates, meaning they can be modified during execution (e.g., asserted or retracted).
 :- dynamic(fb_pred/3).
 :- dynamic(mod_f_a/3).
-decl_m_fb_pred(Mod,Fn,A):- var(Mod),!,mod_f_a(Mod,Fn,A).
-decl_m_fb_pred(Mod,Fn,A):- mod_f_a(Mod,Fn,A)->true;
-   (dynamic(Mod:Fn/A),
-  pfcAdd_Now(mod_f_a(Mod,Fn,A))).
+
+%!  decl_m_fb_pred(+Mod, +Fn, +A) is det.
+%
+%   Declares a module-function-arity predicate if not already defined.
+%
+%   This predicate ensures that the given module, function name, and arity 
+%   combination is declared. If the module is not instantiated (i.e., it is a variable),
+%   it binds the `Mod` to the value obtained from `mod_f_a/3`. Otherwise, it checks if the 
+%   predicate is already known using `mod_f_a/3`. If it exists, it succeeds. If not, 
+%   it declares the predicate as `dynamic` and uses `pfcAdd_Now/1` to add the new definition.
+%
+%   @arg Mod The module where the predicate belongs.
+%   @arg Fn  The name of the function or predicate.
+%   @arg A   The arity (number of arguments) of the function or predicate.
+%
+%   @example Declare a new predicate:
+%     ?- decl_m_fb_pred(my_module, my_predicate, 2).
+%
+%   @example If the module is a variable, bind it:
+%     ?- decl_m_fb_pred(Mod, my_predicate, 2).
+%     Mod = inferred_module.
+%
+decl_m_fb_pred(Mod, Fn, A) :-
+    % If Mod is unbound (a variable), bind it using mod_f_a/3.
+    var(Mod),!,mod_f_a(Mod, Fn, A).
+decl_m_fb_pred(Mod, Fn, A) :-
+    % If mod_f_a/3 succeeds, the predicate is already declared; do nothing.
+    mod_f_a(Mod, Fn, A) -> true ;
+    % Otherwise, declare it as dynamic and add it using pfcAdd_Now/1.
+    (dynamic(Mod:Fn/A),pfcAdd_Now(mod_f_a(Mod, Fn, A))).
+
+% a dynamic predicate can be modified during execution (e.g., asserted or retracted).
 :- dynamic(fb_pred_file/3).
-decl_fb_pred(Fn,A):-
-   (fb_pred(Fn,A)-> true; (dynamic(Fn/A),pfcAdd_Now(fb_pred(Fn,A)))),
-   ignore((nb_current(loading_file,File),
-    (fb_pred_file(Fn,A,File)-> true; pfcAdd_Now(fb_pred_file(Fn,A,File))))).
+
+%!  decl_fb_pred(+Fn, +A) is det.
+%
+%   Declares a function-arity predicate if not already defined and associates it with the current loading file.
+%
+%   This predicate ensures that the function name and arity combination is declared, and it also records
+%   the file from which the predicate is being loaded. If the predicate is already known via `fb_pred/2`, 
+%   it succeeds without changes. Otherwise, it declares the predicate as `dynamic` and adds it using 
+%   `pfcAdd_Now/1`. Additionally, if the `loading_file` is defined in the current environment, 
+%   it associates the predicate with the file using `fb_pred_file/3`.
+%
+%   @arg Fn  The name of the function or predicate.
+%   @arg A   The arity (number of arguments) of the function or predicate.
+%
+%   @example Declare a new function-arity predicate:
+%     ?- decl_fb_pred(my_predicate, 2).
+%
+%   @example Associate a predicate with the current loading file:
+%     ?- nb_setval(loading_file, 'my_file.pl'),
+%        decl_fb_pred(my_predicate, 2).
+%
+decl_fb_pred(Fn, A) :-
+    % Check if the predicate is already known. If not, declare it as dynamic and add it.
+    (fb_pred(Fn, A) -> true ;
+     (dynamic(Fn/A), pfcAdd_Now(fb_pred(Fn, A)))),
+    % Attempt to associate the predicate with the current loading file, if available.
+    ignore((
+        nb_current(loading_file, File),  % Get the current loading file, if set.
+        % If the predicate-file association doesn't exist, add it.
+        (fb_pred_file(Fn, A, File) -> true ; 
+         pfcAdd_Now(fb_pred_file(Fn, A, File))))).
+
 % Import necessary libraries
 :- use_module(library(readutil)).
 
-
+%!  skip(+X) is det.
+%
+%   A no-op (no-operation) predicate that succeeds for any input.
+%
+%   This predicate always succeeds regardless of the argument provided. It is typically used 
+%   as a placeholder or to ignore certain inputs or steps in a larger computation.
+%
+%   @arg X Any input, which is ignored by the predicate.
+%
+%   @example Demonstrate that `skip/1` succeeds for any input:
+%     ?- skip(42).
+%     true.
+%
+%     ?- skip(foo).
+%     true.
+%
+%     ?- skip(_).
+%     true.
+%
 skip(_).
 
 % ===============================
@@ -121,80 +356,289 @@ skip(_).
 % %%%% Atom Manipulations
 % ============================
 
-% Clear all atoms from a space
+%!  'clear-atoms'(+SpaceNameOrInstance) is det.
+%
+%   Clears all atoms from the specified space.
+%
+%   This predicate removes all atoms from a given space, which can be identified
+%   either by its name or by an instance. It logs the operation using `dout/2` and
+%   invokes the appropriate method for the space's type using `space_type_method/3`.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to be cleared.
+%
+%   @example Clear all atoms from a space:
+%     ?- 'clear-atoms'('my_space').
+%
 'clear-atoms'(SpaceNameOrInstance) :-
-  dout(space,['clear-atoms',SpaceNameOrInstance]),
-  space_type_method(Type,clear_space,Method), call(Type,SpaceNameOrInstance),!,
-  dout(space,['type-method',Type,Method]),
-  call(Method,SpaceNameOrInstance).
+    % Log the operation of clearing atoms from the specified space.
+    dout(space, ['clear-atoms', SpaceNameOrInstance]),
+    % Retrieve the appropriate method for clearing the space based on its type.
+    space_type_method(Type, clear_space, Method),
+    % Call the type predicate to ensure the space type matches.
+    call(Type, SpaceNameOrInstance), 
+    !,
+    % Log the type-method used.
+    dout(space, ['type-method', Type, Method]),
+    % Invoke the method to clear the space.
+    call(Method, SpaceNameOrInstance).
 
-% Add an atom to the space
-'add-atom'(SpaceNameOrInstance, Atom) :-      % dout(space,['add-atom',SpaceNameOrInstance, Atom]),
- ((   space_type_method(Type,add_atom,Method), call(Type,SpaceNameOrInstance),!,
-    if_t((SpaceNameOrInstance\=='&self' ; Type\=='is_asserted_space'),
-       dout(space,['type-method',Type,Method,SpaceNameOrInstance,Atom])),
-    call(Method,SpaceNameOrInstance,Atom))).
-% Add Atom
-'add-atom'(Environment, AtomDeclaration, Result):-
-      eval_args(['add-atom', Environment, AtomDeclaration], Result).
+%!  'add-atom'(+SpaceNameOrInstance, +Atom) is det.
+%
+%   Adds an atom to the specified space.
+%
+%   This predicate adds an atom to a given space by invoking the appropriate
+%   method for the space's type. It conditionally logs the operation depending 
+%   on whether the space is self-referential or asserted.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to which the atom is added.
+%   @arg Atom The atom to be added to the space.
+%
+%   @example Add an atom to a space:
+%     ?- 'add-atom'('my_space', my_atom).
+%
+'add-atom'(SpaceNameOrInstance, Atom) :-
+    % Retrieve the method for adding an atom based on the space type.
+    space_type_method(Type, add_atom, Method),
+    % Ensure the space type matches by calling the type predicate.
+    call(Type, SpaceNameOrInstance),
+    !,
+    % Log the operation if the space is not self-referential or asserted.
+    if_t((SpaceNameOrInstance \== '&self' ; Type \== 'is_asserted_space'),
+         dout(space, ['type-method', Type, Method, SpaceNameOrInstance, Atom])),
+    % Invoke the method to add the atom to the space.
+    call(Method, SpaceNameOrInstance, Atom).
 
-% remove an atom from the space
+%!  'add-atom'(+Environment, +AtomDeclaration, -Result) is det.
+%
+%   Adds an atom to the environment using the given declaration and returns the result.
+%
+%   This variant of `add-atom/2` allows adding an atom to the environment by evaluating
+%   a set of arguments. The result of the operation is returned in `Result`.
+%
+%   @arg Environment The environment in which the atom is added.
+%   @arg AtomDeclaration The declaration of the atom to be added.
+%   @arg Result The result of the evaluation after adding the atom.
+%
+%   @example Add an atom to an environment:
+%     ?- 'add-atom'(env, my_atom_declaration, Result).
+%
+'add-atom'(Environment, AtomDeclaration, Result) :-
+    % Evaluate the arguments to perform the add-atom operation.
+    eval_args(['add-atom', Environment, AtomDeclaration], Result).
+
+%!  'remove-atom'(+SpaceNameOrInstance, +Atom) is det.
+%
+%   Removes an atom from the specified space.
+%
+%   This predicate removes an atom from a given space by invoking the appropriate
+%   method for the space's type. It logs the operation for traceability.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space from which the atom is removed.
+%   @arg Atom The atom to be removed from the space.
+%
+%   @example Remove an atom from a space:
+%     ?- 'remove-atom'('my_space', my_atom).
+%
 'remove-atom'(SpaceNameOrInstance, Atom) :-
-    dout(space,['remove-atom',SpaceNameOrInstance, Atom]),
-    space_type_method(Type,remove_atom,Method), call(Type,SpaceNameOrInstance),!,
-    dout(space,['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom).
-% Remove Atom
-'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
+    % Log the operation of removing an atom from the specified space.
+    dout(space, ['remove-atom', SpaceNameOrInstance, Atom]),
+    % Retrieve the method for removing an atom based on the space type.
+    space_type_method(Type, remove_atom, Method),
+    % Ensure the space type matches by calling the type predicate.
+    call(Type, SpaceNameOrInstance),
+    !,
+    % Log the type-method used.
+    dout(space, ['type-method', Type, Method]),
+    % Invoke the method to remove the atom from the space.
+    call(Method, SpaceNameOrInstance, Atom).
 
-% Add an atom to the space
+%!  'remove-atom'(+Environment, +AtomDeclaration, -Result) is det.
+%
+%   Removes an atom from the environment using the given declaration and returns the result.
+%
+%   This variant of `remove-atom/2` allows removing an atom from the environment by evaluating
+%   a set of arguments. The result of the operation is returned in `Result`.
+%
+%   @arg Environment The environment from which the atom is removed.
+%   @arg AtomDeclaration The declaration of the atom to be removed.
+%   @arg Result The result of the evaluation after removing the atom.
+%
+%   @example Remove an atom from an environment:
+%     ?- 'remove-atom'(env, my_atom_declaration, Result).
+%
+'remove-atom'(Environment, AtomDeclaration, Result) :-
+    % Evaluate the arguments to perform the remove-atom operation.
+    eval_args(['remove-atom', Environment, AtomDeclaration], Result).
+
+
+%!  'replace-atom'(+SpaceNameOrInstance, +Atom, +New) is det.
+%
+%   Replaces an existing atom with a new atom in the specified space.
+%
+%   This predicate finds and replaces an atom in a space, identified by 
+%   its name or instance. It logs the operation and invokes the appropriate 
+%   method for the space's type using `space_type_method/3`.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space where the atom is replaced.
+%   @arg Atom The atom to be replaced.
+%   @arg New The new atom to replace the old one.
+%
+%   @example Replace an atom in a space:
+%     ?- 'replace-atom'('my_space', old_atom, new_atom).
+%
 'replace-atom'(SpaceNameOrInstance, Atom, New) :-
-    dout(space,['replace-atom',SpaceNameOrInstance, Atom, New]),
-    space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
-    dout(space,['type-method',Type,Method]),
-    call(Method,SpaceNameOrInstance,Atom, New).
-% Replace Atom
-'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
+    dout(space, ['replace-atom', SpaceNameOrInstance, Atom, New]),
+    space_type_method(Type, replace_atom, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    dout(space, ['type-method', Type, Method]),
+    call(Method, SpaceNameOrInstance, Atom, New).
 
-% Count atoms in a space
+%!  'atom-replace'(+Environment, +OldAtom, +NewAtom, -Result) is det.
+%
+%   Replaces an atom in an environment by evaluating the given arguments.
+%
+%   @arg Environment The environment where the replacement occurs.
+%   @arg OldAtom The old atom to be replaced.
+%   @arg NewAtom The new atom to replace the old one.
+%   @arg Result The result of the replacement operation.
+%
+%   @example Replace an atom in an environment:
+%     ?- 'atom-replace'(env, old_atom, new_atom, Result).
+%
+'atom-replace'(Environment, OldAtom, NewAtom, Result) :-
+    eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
+
+%!  'atom-count'(+SpaceNameOrInstance, -Count) is det.
+%
+%   Counts the number of atoms in the specified space.
+%
+%   This predicate retrieves the atom count from the given space by invoking the 
+%   appropriate method for the space's type. The result is logged for traceability.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to be queried.
+%   @arg Count The number of atoms in the space.
+%
+%   @example Count the atoms in a space:
+%     ?- 'atom-count'('my_space', Count).
+%
 'atom-count'(SpaceNameOrInstance, Count) :-
-    dout(space,['atom-count',SpaceNameOrInstance]),
-    space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
-    call(Method,SpaceNameOrInstance,Count),
-    dout(space,['type-method-result',Type,Method,Count]).
-% Count Atoms
-'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
+    dout(space, ['atom-count', SpaceNameOrInstance]),
+    space_type_method(Type, atom_count, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    call(Method, SpaceNameOrInstance, Count),
+    dout(space, ['type-method-result', Type, Method, Count]).
 
-% Fetch all atoms from a space
+%!  'atom-count'(+Environment, -Count) is det.
+%
+%   Counts the number of atoms in the given environment by evaluating the arguments.
+%
+%   @arg Environment The environment to be queried.
+%   @arg Count The result of the atom count.
+%
+%   @example Count the atoms in an environment:
+%     ?- 'atom-count'(env, Count).
+%
+'atom-count'(Environment, Count) :-
+    eval_args(['atom-count', Environment], Count).
+
+%!  'get-atoms'(+SpaceNameOrInstance, -AtomsL) is det.
+%
+%   Fetches all atoms from the specified space.
+%
+%   This predicate retrieves all atoms from a space, identified by its name or instance.
+%   It logs the operation for traceability.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to be queried.
+%   @arg AtomsL The list of atoms retrieved from the space.
+%
+%   @example Get atoms from a space:
+%     ?- 'get-atoms'('my_space', Atoms).
+%
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
-    dout(space,['get-atoms',SpaceNameOrInstance]),
-    space_type_method(Type,get_atoms,Method), call(Type,SpaceNameOrInstance),!,
-    call(Method,SpaceNameOrInstance, AtomsL),
-    %dout(space,['type-method-result',Type,Method,Count]).
-    %length(AtomsL,Count),
-    true.
-% Get Atoms
-'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
+    dout(space, ['get-atoms', SpaceNameOrInstance]),
+    space_type_method(Type, get_atoms, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    call(Method, SpaceNameOrInstance, AtomsL).
 
-% Iterate all atoms from a space
+%!  'get-atoms'(+Environment, -Atoms) is det.
+%
+%   Fetches all atoms from the given environment by evaluating the arguments.
+%
+%   @arg Environment The environment to be queried.
+%   @arg Atoms The list of atoms retrieved from the environment.
+%
+%   @example Get atoms from an environment:
+%     ?- 'get-atoms'(env, Atoms).
+%
+'get-atoms'(Environment, Atoms) :-
+    eval_args(['get-atoms', Environment], Atoms).
+
+%!  'atoms_iter'(+SpaceNameOrInstance, -Iter) is det.
+%
+%   Iterates over all atoms in the specified space.
+%
+%   This predicate retrieves an iterator for the atoms in a space, identified by
+%   its name or instance. The operation is logged for traceability.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to iterate.
+%   @arg Iter The iterator over the atoms in the space.
+%
+%   @example Iterate over atoms in a space:
+%     ?- 'atoms_iter'('my_space', Iter).
+%
 'atoms_iter'(SpaceNameOrInstance, Iter) :-
-    dout(space,['atoms_iter',SpaceNameOrInstance]),
-    space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
-    call(Method,SpaceNameOrInstance, Iter),
-    dout(space,['type-method-result',Type,Method,Iter]).
+    dout(space, ['atoms_iter', SpaceNameOrInstance]),
+    space_type_method(Type, atoms_iter, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    call(Method, SpaceNameOrInstance, Iter),
+    dout(space, ['type-method-result', Type, Method, Iter]).
 
-% Match all atoms from a space
+%!  'atoms_match'(+SpaceNameOrInstance, -Atoms, +Template, +Else) is det.
+%
+%   Matches all atoms in the specified space against a template.
+%
+%   This predicate retrieves atoms from a space that match a given template. If no 
+%   matches are found, it executes an alternative `Else` clause.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to search.
+%   @arg Atoms The list of atoms that match the template.
+%   @arg Template The template used to match the atoms.
+%   @arg Else An alternative clause if no matches are found.
+%
+%   @example Match atoms in a space:
+%     ?- 'atoms_match'('my_space', Atoms, my_template, else_clause).
+%
 'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
-    space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
-    call(Method,SpaceNameOrInstance, Atoms, Template, Else),
-    dout(space,['type-method-result',Type,Method,Atoms, Template, Else]).
+    space_type_method(Type, atoms_match, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    call(Method, SpaceNameOrInstance, Atoms, Template, Else),
+    dout(space, ['type-method-result', Type, Method, Atoms, Template, Else]).
 
-
-% Query all atoms from a space
+%!  'space_query'(+SpaceNameOrInstance, +QueryAtom, -Result) is det.
+%
+%   Queries the specified space for a matching atom and returns the result.
+%
+%   This predicate executes a query in a space, identified by its name or instance, 
+%   and logs the result for traceability.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to query.
+%   @arg QueryAtom The atom used as the query.
+%   @arg Result The result of the query.
+%
+%   @example Query a space for an atom:
+%     ?- 'space_query'('my_space', query_atom, Result).
+%
 'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
-    space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
-    call(Method,SpaceNameOrInstance, QueryAtom, Result),
-    dout(space,['type-method-result',Type,Method,Result]).
+    space_type_method(Type, query, Method), 
+    call(Type, SpaceNameOrInstance),
+    !,
+    call(Method, SpaceNameOrInstance, QueryAtom, Result),
+    dout(space, ['type-method-result', Type, Method, Result]).
 
 
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
@@ -687,4 +1131,3 @@ guess_metta_vars(What):-
 name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
 
 alpha_unify(What,What0):- What=@=What0,(nonvar(What)->What=What0;What==What0).
-
