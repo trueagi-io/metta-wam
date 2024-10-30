@@ -157,6 +157,7 @@ term_number(T, N) :- sub_term(N, T), number(N).
 %     Hello
 %     World
 %
+
 % Call a single goal from a list containing only one element.
 call_match([G]) :- !, call(G).
 % Call the first goal in the list, then recursively call the rest of the goals.
@@ -209,6 +210,7 @@ call_match(G) :- call(G).
 %     ?- assert_new(my_fact).
 %     % Fact is now marked as repeated with repeats(my_fact).
 %
+
 % If the fact P exists, assert it as a repeated fact.
 assert_new(P) :- 
     notrace(catch(call(P), _, fail)), !,
@@ -235,6 +237,7 @@ assert_new(P) :-
 %     ?- retract1(non_existent_fact).
 %     true.
 %
+
 % If the fact P does not exist, succeed without action.
 retract1(P) :- \+ call(P), !.
 % If the fact P exists, retract it, ignoring any failures during retraction.
@@ -251,6 +254,7 @@ retract1(P) :- ignore(\+ retract(P)).
 %     % Assert a helper fact.
 %     ?- assert_new1(helper_fact).
 %
+
 % If the fact P exists, do nothing.
 assert_new1(P) :- \+ \+ call(P), !.
 % If the fact P does not exist, assert it.
@@ -398,7 +402,7 @@ skip(_).
 %
 'add-atom'(SpaceNameOrInstance, Atom) :-
     % Retrieve the method for adding an atom based on the space type.
-    space_type_method(Type, add_atom, Method),
+  ((space_type_method(Type, add_atom, Method),
     % Ensure the space type matches by calling the type predicate.
     call(Type, SpaceNameOrInstance),
     !,
@@ -406,7 +410,7 @@ skip(_).
     if_t((SpaceNameOrInstance \== '&self' ; Type \== 'is_asserted_space'),
          dout(space, ['type-method', Type, Method, SpaceNameOrInstance, Atom])),
     % Invoke the method to add the atom to the space.
-    call(Method, SpaceNameOrInstance, Atom).
+    call(Method, SpaceNameOrInstance, Atom))).
 
 %!  'add-atom'(+Environment, +AtomDeclaration, -Result) is det.
 %
@@ -569,7 +573,10 @@ skip(_).
     call(Type, SpaceNameOrInstance), 
     !,
     % Invoke the method to retrieve the atoms.
-    call(Method, SpaceNameOrInstance, AtomsL).
+    call(Method, SpaceNameOrInstance, AtomsL),
+    %dout(space,['type-method-result',Type,Method,Count]).
+    %length(AtomsL,Count),
+    true.
 'get-atoms'(Environment, Atoms) :-
     % Evaluate the arguments to retrieve the atoms from the given environment.
     eval_args(['get-atoms', Environment], Atoms).
@@ -751,6 +758,7 @@ is_python_space_not_prolog(X) :-
 %     ?- is_as_nb_space('&nb').
 %     true.
 %
+
 % Check if the space is the predefined `&nb` space.
 is_as_nb_space('&nb').
 % Check if the space is valid through multiple conditions.
@@ -795,6 +803,7 @@ is_nb_space(G) :- nonvar(G), is_as_nb_space(G).
 %     ?- 'match'('env1', some_pattern, some_template, Result).
 %     Result = matched_result.
 %
+
 % Evaluate arguments for the 'match' operation within the environment.
 'match'(Environment, Pattern, Template, Result) :-
     eval_args(['match', Environment, Pattern, Template], Result).
@@ -901,6 +910,7 @@ add_nb_atom(SpaceNameOrInstance, Atom) :-
 %     ?- atom_nb_count('example_space', Count).
 %     Count = 3.
 %
+
 % Count atoms in a space.
 atom_nb_count(SpaceNameOrInstance, Count) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
@@ -918,7 +928,6 @@ atom_nb_count(SpaceNameOrInstance, Count) :-
 %     % Remove an atom from 'example_space'.
 %     ?- remove_nb_atom('example_space', my_atom).
 %
-% Remove an atom from a space.
 remove_nb_atom(SpaceNameOrInstance, Atom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
@@ -937,7 +946,6 @@ remove_nb_atom(SpaceNameOrInstance, Atom) :-
 %     ?- get_nb_atoms('example_space', Atoms).
 %     Atoms = [atom1, atom2].
 %
-% Fetch all atoms from a space.
 get_nb_atoms(SpaceNameOrInstance, Atoms) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms).
@@ -954,8 +962,6 @@ get_nb_atoms(SpaceNameOrInstance, Atoms) :-
 %     % Replace an atom in 'example_space'.
 %     ?- replace_nb_atom('example_space', old_atom, new_atom).
 %
-
-% Replace an atom in the space.
 replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
@@ -977,7 +983,6 @@ replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
 %     ?- is_valid_nb_space('Space'([])).
 %     true.
 %
-% Ensure the term is a compound structure and has 'Space' as its functor.
 is_valid_nb_space(Space) :- 
     compound(Space), 
     functor(Space, 'Space', _).
@@ -994,7 +999,6 @@ is_valid_nb_space(Space) :-
 %     % Find the original name of a space.
 %     ?- space_original_name('Space'([]), Name).
 %
-% Check if the name is registered and fetch the associated space.
 space_original_name(Space, Name) :-is_registered_space_name(Name),nb_current(Name, Space).
 
 %!  init_space(+Name) is det.
@@ -1008,7 +1012,6 @@ space_original_name(Space, Name) :-is_registered_space_name(Name),nb_current(Nam
 %     % Initialize a new space named 'example_space'.
 %     ?- init_space('example_space').
 %
-% Create a new empty space structure.
 init_space(Name) :-
     Space = 'Space'([]),
     % Register the space name in the system.
@@ -1027,7 +1030,6 @@ init_space(Name) :-
 %     % Fetch or create a space named 'example_space'.
 %     ?- fetch_or_create_space('example_space').
 %
-% Fetch or create the space without returning the instance.
 fetch_or_create_space(Name) :- fetch_or_create_space(Name, _).
 
 %!  fetch_or_create_space(+NameOrInstance, -Space) is det.
@@ -1045,7 +1047,6 @@ fetch_or_create_space(Name) :- fetch_or_create_space(Name, _).
 %     ?- fetch_or_create_space('example_space', Space).
 %     Space = 'Space'([]).
 %
-% Handle cases where the input is a name (atom).
 fetch_or_create_space(NameOrInstance, Space) :-
     (   atom(NameOrInstance)
     % If the name is registered, fetch the associated space.
@@ -1075,6 +1076,7 @@ fetch_or_create_space(NameOrInstance, Space) :-
 %     % Match a pattern in a space and produce a template.
 %     ?- 'match'('example_space', some_pattern, Template).
 %
+
 % Retrieve all atoms from the space and perform the pattern match.
 'match'(Space, Pattern, Template) :-
     'get-atoms'(Space, Atoms),
@@ -1094,6 +1096,7 @@ fetch_or_create_space(NameOrInstance, Space) :-
 %     ?- 'match-pattern'([a, b, c], b, Template).
 %     Template = b.
 %
+
 % If the atom list is empty, the match fails, and the template is empty.
 'match-pattern'([], _, []).
 % If the head of the list matches the pattern, return it as the template.
@@ -1117,6 +1120,7 @@ fetch_or_create_space(NameOrInstance, Space) :-
 %     % Ensure the space 'example_space' is available.
 %     ?- ensure_space('example_space', Result).
 %
+
 % Attempt to ensure the space using `ensure_space_py/2`. 
 % Catch any exception and fail gracefully.
 ensure_space(X, Y) :- catch(ensure_space_py(X, Y), _, fail),!.
@@ -1140,6 +1144,7 @@ ensure_space(_N, _V) :- fail.
 %     % Run a goal in debug mode if the environment allows it.
 %     ?- if_metta_debug(write('Debug message')).
 %
+
 % Check if 'VSPACE_VERBOSE' is set to '2', and if so, call the goal.
 if_metta_debug(Goal) :- getenv('VSPACE_VERBOSE', '2'), !, ignore(call(Goal)).
 % If the condition fails, succeed silently.
@@ -1159,6 +1164,7 @@ if_metta_debug(Goal) :- !, ignore(call(Goal)).
 %     % Print debug information with a tag.
 %     ?- dout(info, some_debug_data).
 %
+
 % Succeed silently if debugging is not active.
 dout(_, _) :- !.
 % Output formatted debugging information if enabled.
@@ -1183,6 +1189,7 @@ dout(W, Term) :- notrace(if_metta_debug((format('~N; ~w ~@~n', [W, write_src(Ter
 %     ?- space_type_method(is_asserted_space, add_atom, Method).
 %     Method = metta_assertdb_add.
 %
+
 % Map the 'new_space' operation to the 'init_space' method for asserted spaces.
 space_type_method(is_asserted_space, new_space, init_space).
 % Map the 'clear_space' operation to the 'clear_nb_atoms' method for asserted spaces.
@@ -1271,6 +1278,7 @@ metta_assertdb_rem(KB, Old) :-
 %   @arg KB The knowledge base from which the atom is deleted.
 %   @arg Atom The atom to delete, with variables substituted.
 %
+
 % Substitute variables and delete the atom from the knowledge base.
 metta_assertdb_del(KB, Atom) :-
     % Substitute variables in the atom.
@@ -1298,7 +1306,6 @@ metta_assertdb_del(KB, Atom) :-
 %   @arg Old The atom to be replaced.
 %   @arg New The atom to insert in place of the old one.
 %
-% Replace the old atom with the new one.
 metta_assertdb_replace(KB, Old, New) :-
     % Delete the old atom.
     metta_assertdb_del(KB, Old),
@@ -1829,6 +1836,7 @@ is_dash('-').
 %     ?- tterm(['hello', 'world'], Term).
 %     Term = world(hello).
 %
+
 % If the list contains a single element, return it as the term.
 tterm([A], A) :- !.
 % If the list starts with an atom followed by a colon, 
