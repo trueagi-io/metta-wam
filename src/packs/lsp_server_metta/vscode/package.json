@@ -50,7 +50,7 @@
 			"type": "object",
 			"title": "Example configuration",
 			"properties": {
-				"metta-lsp.maxNumberOfProblems": {
+				"metta-lsp.trace.maxNumberOfProblems": {
 					"scope": "resource",
 					"type": "number",
 					"default": 1000,
@@ -62,10 +62,11 @@
 					"enum": [
 						"off",
 						"messages",
-						"verbose"
+						"verbose",
+						"experimental"
 					],
 					"default": "off",
-					"description": "Traces the communication between VS Code and the language server."
+					"description": "Traces the communication between VS Code and the language server. (experimental = verbose + hover diagnostics + include incomplete features)"
 				},
 				"metta-lsp.sendDiagnostics": {
 					"scope": "window",
@@ -76,6 +77,26 @@
 					],
 					"default": "true",
 					"description": "Send diagnostics or not."
+				},
+				"metta-lsp.showIncompleteFeatures": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"false",
+						"true"
+					],
+					"default": "false",
+					"description": "Show features not totally complete and working."
+				},
+				"metta-lsp.trace.showDeveloperHoverDebug": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"false",
+						"true"
+					],
+					"default": "false",
+					"description": "Include extra diagnostics in Hovers."
 				}
 			}
 	   }		
