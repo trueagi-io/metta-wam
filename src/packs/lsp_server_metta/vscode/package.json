@@ -45,8 +45,40 @@
       "language": "metta",
       "scopeName": "source.metta",
       "path": "./syntaxes/mettalanguage.json"
-    }]
-
+    }],
+		"configuration": {
+			"type": "object",
+			"title": "Example configuration",
+			"properties": {
+				"metta-lsp.maxNumberOfProblems": {
+					"scope": "resource",
+					"type": "number",
+					"default": 1000,
+					"description": "Controls the maximum number of problems produced by the server."
+				},
+				"metta-lsp.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				},
+				"metta-lsp.sendDiagnostics": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"false",
+						"true"
+					],
+					"default": "true",
+					"description": "Send diagnostics or not."
+				}
+			}
+	   }		
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
