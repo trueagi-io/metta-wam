@@ -1345,8 +1345,8 @@ can_rrtrace:- nb_setval(cant_rrtrace, f).
 %
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
 % Write the failure to source output and fail, without any additional action.
-md_failed(P1, X):- notrace((write_src_uo(failed(P1, X)))), 
-   on_mettalog_error(failed(P1, X)), 
+md_failed(P1, X):- notrace((write_src_uo(failed(P1, X)))),
+   on_mettalog_error(failed(P1, X)),
    notrace(fail).
 % If tracing is enabled, trace the failure of the goal with visible trace options.
 md_failed(P1, X):- tracing, visible_rtrace([-all, +fail, +call, +exception], call(P1, X)).
@@ -1428,6 +1428,7 @@ rrtrace(X):- rrtrace(etrace, X).
 % Perform a backtrace dump (bt), ignore any failure.
 stack_dump:- ignore(catch(dumpST,_,fail)),!. %ignore(catch(bts,_,true)).
 stack_dump:- ignore(catch(bt, _, true)).
+
 
 %!  ugtrace(+Why, :G) is det.
 %
