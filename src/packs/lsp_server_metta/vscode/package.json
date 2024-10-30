@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "categories": [
     "Other"
   ],
@@ -48,7 +48,7 @@
     }],
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
+			"title": "MeTTa LSP configuration",
 			"properties": {
 				"metta-lsp.maxNumberOfProblems": {
 					"scope": "resource",
@@ -65,17 +65,7 @@
 						"verbose"
 					],
 					"default": "off",
-					"description": "Traces the communication between VS Code and the language server."
-				},
-				"metta-lsp.sendDiagnostics": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"false",
-						"true"
-					],
-					"default": "true",
-					"description": "Send diagnostics or not."
+					"description": "Controls the level of tracing for communications between VS Code and the language server. Setting this to 'verbose' enables detailed hover diagnostics and includes features that are still under development."
 				}
 			}
 	   }		
