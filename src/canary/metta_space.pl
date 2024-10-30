@@ -398,7 +398,7 @@ skip(_).
 %
 'add-atom'(SpaceNameOrInstance, Atom) :-
     % Retrieve the method for adding an atom based on the space type.
-  ((  space_type_method(Type, add_atom, Method),
+    space_type_method(Type, add_atom, Method),
     % Ensure the space type matches by calling the type predicate.
     call(Type, SpaceNameOrInstance),
     !,
@@ -406,7 +406,7 @@ skip(_).
     if_t((SpaceNameOrInstance \== '&self' ; Type \== 'is_asserted_space'),
          dout(space, ['type-method', Type, Method, SpaceNameOrInstance, Atom])),
     % Invoke the method to add the atom to the space.
-    call(Method, SpaceNameOrInstance, Atom))).
+    call(Method, SpaceNameOrInstance, Atom).
 
 %!  'add-atom'(+Environment, +AtomDeclaration, -Result) is det.
 %
@@ -569,10 +569,7 @@ skip(_).
     call(Type, SpaceNameOrInstance), 
     !,
     % Invoke the method to retrieve the atoms.
-    call(Method, SpaceNameOrInstance, AtomsL),
-    %dout(space,['type-method-result',Type,Method,Count]).
-    %length(AtomsL,Count),
-    true.
+    call(Method, SpaceNameOrInstance, AtomsL).
 'get-atoms'(Environment, Atoms) :-
     % Evaluate the arguments to retrieve the atoms from the given environment.
     eval_args(['get-atoms', Environment], Atoms).
