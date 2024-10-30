@@ -1,6 +1,32 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
-! (get-hello) ; &amp;hello! (bind! &amp;x (foo1 (foo2 3) 45 (A (v))))
+
+
+;! (bind! &res (println! "test"))
+; "test"
+
+
+!(println "xx 124 ") 
+; notready 
+!(assertEqualToResult ( bind! &res (println! "test") ) ( "test" ) ) 
+
+
+!(println "xx 125 ") 
+;! &res
+;[()]
+; notready 
+!(assertEqualToResult ( &res )  (  )  )
+
+
+!(println "xx 126 ") 
+! &res
+;[()]
+; notready 
+!(assertEqualToResult ( &res )  (  )  )
+
+
+;[()]
+
 
 ;  !(assertEqualToResult ( )  (  )  ) 
