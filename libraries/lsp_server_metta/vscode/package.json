@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "categories": [
     "Other"
   ],
@@ -48,9 +48,9 @@
     }],
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
+			"title": "MeTTa LSP configuration",
 			"properties": {
-				"metta-lsp.trace.maxNumberOfProblems": {
+				"metta-lsp.maxNumberOfProblems": {
 					"scope": "resource",
 					"type": "number",
 					"default": 1000,
@@ -62,41 +62,10 @@
 					"enum": [
 						"off",
 						"messages",
-						"verbose",
-						"experimental"
+						"verbose"
 					],
 					"default": "off",
-					"description": "Traces the communication between VS Code and the language server. (experimental = verbose + hover diagnostics + include incomplete features)"
-				},
-				"metta-lsp.sendDiagnostics": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"false",
-						"true"
-					],
-					"default": "true",
-					"description": "Send diagnostics or not."
-				},
-				"metta-lsp.showIncompleteFeatures": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"false",
-						"true"
-					],
-					"default": "false",
-					"description": "Show features not totally complete and working."
-				},
-				"metta-lsp.showDeveloperHoverDebug": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"false",
-						"true"
-					],
-					"default": "false",
-					"description": "Include extra diagnostics in Hovers."
+					"description": "Controls the level of tracing for communications between VS Code and the language server. Setting this to 'verbose' enables detailed hover diagnostics and includes features that are still under development."
 				}
 			}
 	   }		
