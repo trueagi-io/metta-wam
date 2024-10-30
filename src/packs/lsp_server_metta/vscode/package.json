@@ -88,7 +88,7 @@
 					"default": "false",
 					"description": "Show features not totally complete and working."
 				},
-				"metta-lsp.trace.showDeveloperHoverDebug": {
+				"metta-lsp.showDeveloperHoverDebug": {
 					"scope": "window",
 					"type": "string",
 					"enum": [
