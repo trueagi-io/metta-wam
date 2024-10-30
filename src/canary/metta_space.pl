@@ -157,6 +157,7 @@ term_number(T, N) :- sub_term(N, T), number(N).
 %     Hello
 %     World
 %
+
 % Call a single goal from a list containing only one element.
 call_match([G]) :- !, call(G).
 % Call the first goal in the list, then recursively call the rest of the goals.
@@ -209,6 +210,7 @@ call_match(G) :- call(G).
 %     ?- assert_new(my_fact).
 %     % Fact is now marked as repeated with repeats(my_fact).
 %
+
 % If the fact P exists, assert it as a repeated fact.
 assert_new(P) :- 
     notrace(catch(call(P), _, fail)), !,
@@ -235,6 +237,7 @@ assert_new(P) :-
 %     ?- retract1(non_existent_fact).
 %     true.
 %
+
 % If the fact P does not exist, succeed without action.
 retract1(P) :- \+ call(P), !.
 % If the fact P exists, retract it, ignoring any failures during retraction.
@@ -251,6 +254,7 @@ retract1(P) :- ignore(\+ retract(P)).
 %     % Assert a helper fact.
 %     ?- assert_new1(helper_fact).
 %
+
 % If the fact P exists, do nothing.
 assert_new1(P) :- \+ \+ call(P), !.
 % If the fact P does not exist, assert it.
@@ -398,7 +402,7 @@ skip(_).
 %
 'add-atom'(SpaceNameOrInstance, Atom) :-
     % Retrieve the method for adding an atom based on the space type.
-    space_type_method(Type, add_atom, Method),
+  ((space_type_method(Type, add_atom, Method),
     % Ensure the space type matches by calling the type predicate.
     call(Type, SpaceNameOrInstance),
     !,
@@ -406,7 +410,7 @@ skip(_).
     if_t((SpaceNameOrInstance \== '&self' ; Type \== 'is_asserted_space'),
          dout(space, ['type-method', Type, Method, SpaceNameOrInstance, Atom])),
     % Invoke the method to add the atom to the space.
-    call(Method, SpaceNameOrInstance, Atom).
+    call(Method, SpaceNameOrInstance, Atom))).
 
 %!  'add-atom'(+Environment, +AtomDeclaration, -Result) is det.
 %
@@ -509,49 +513,72 @@ skip(_).
 'atom-replace'(Environment, OldAtom, NewAtom, Result) :-
     eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
 
-%!  'atom-count'(+SpaceNameOrInstance, -Count) is det.
+%!  'atom-count'(+Input, -Count) is det.
 %
-%   Counts the number of atoms in the specified space.
+%   Counts the atoms in a space or environment. If `Input` is a space, it uses the 
+%   space's type-specific method. If it is an environment, it evaluates the arguments 
+%   to determine the count.
 %
-%   This predicate retrieves the atom count from the given space by invoking the 
-%   appropriate method for the space's type. The result is logged for traceability.
+%   @arg Input A space name, space instance, or environment identifier.
+%   @arg Count The number of atoms found.
 %
-%   @arg SpaceNameOrInstance The name or instance of the space to be queried.
-%   @arg Count The number of atoms in the space.
-%
-%   @example Count the atoms in a space:
+%   @example
+%     % Count the atoms in a space named 'my_space'.
 %     ?- 'atom-count'('my_space', Count).
+%     Count = 42.
+%
+%   @example
+%     % Count the atoms in an environment named 'env'.
+%     ?- 'atom-count'(env, Count).
+%     Count = 10.
 %
 'atom-count'(SpaceNameOrInstance, Count) :-
     dout(space, ['atom-count', SpaceNameOrInstance]),
-    space_type_method(Type, atom_count, Method), 
-    call(Type, SpaceNameOrInstance),
-    !,
+    space_type_method(Type, atom_count, Method),
+    call(Type, SpaceNameOrInstance), !,
     call(Method, SpaceNameOrInstance, Count),
     dout(space, ['type-method-result', Type, Method, Count]).
 'atom-count'(Environment, Count) :-
     eval_args(['atom-count', Environment], Count).
 
-%!  'get-atoms'(+SpaceNameOrInstance, -AtomsL) is det.
+%!  'get-atoms'(+Input, -Atoms) is det.
 %
-%   Fetches all atoms from the specified space.
+%   Retrieves atoms from either a space or an environment. The behavior depends on 
+%   the type of `Input`. If the input corresponds to a space (by name or instance), 
+%   it fetches atoms from that space by determining the appropriate retrieval method.
+%   If the input corresponds to an environment, it evaluates the relevant arguments 
+%   to obtain the list of atoms.
 %
-%   This predicate retrieves all atoms from a space, identified by its name or instance.
-%   It logs the operation for traceability.
+%   @arg Input Can be either:
+%        - A `SpaceNameOrInstance`: The name or instance of a space from which atoms are retrieved.
+%        - An `Environment`: An environment identifier from which atoms will be fetched.
+%   @arg Atoms A list that will unify with the atoms retrieved from the specified input.
 %
-%   @arg SpaceNameOrInstance The name or instance of the space to be queried.
-%   @arg AtomsL The list of atoms retrieved from the space.
+%   @example
+%     % Retrieve atoms from a space named 'example_space'.
+%     ?- get-atoms('example_space', Atoms).
+%     Atoms = [atom1, atom2, atom3].
 %
-%   @example Get atoms from a space:
-%     ?- 'get-atoms'('my_space', Atoms).
+%   @example
+%     % Retrieve atoms from an environment named 'env1'.
+%     ?- get-atoms('env1', Atoms).
+%     Atoms = [atomA, atomB, atomC].
 %
 'get-atoms'(SpaceNameOrInstance, AtomsL) :-
+    % Output a debug message indicating the 'get-atoms' request to the space.
     dout(space, ['get-atoms', SpaceNameOrInstance]),
-    space_type_method(Type, get_atoms, Method), 
-    call(Type, SpaceNameOrInstance),
+    % Determine the method for retrieving atoms based on the space type.
+    space_type_method(Type, get_atoms, Method),
+    % Call the type predicate to ensure the space is valid.
+    call(Type, SpaceNameOrInstance), 
     !,
-    call(Method, SpaceNameOrInstance, AtomsL).
+    % Invoke the method to retrieve the atoms.
+    call(Method, SpaceNameOrInstance, AtomsL),
+    %dout(space,['type-method-result',Type,Method,Count]).
+    %length(AtomsL,Count),
+    true.
 'get-atoms'(Environment, Atoms) :-
+    % Evaluate the arguments to retrieve the atoms from the given environment.
     eval_args(['get-atoms', Environment], Atoms).
 
 %!  'atoms_iter'(+SpaceNameOrInstance, -Iter) is det.
@@ -618,17 +645,46 @@ skip(_).
     call(Method, SpaceNameOrInstance, QueryAtom, Result),
     dout(space, ['type-method-result', Type, Method, Result]).
 
-
+%!  subst_pattern_template(+SpaceNameOrInstance, +Pattern, -Template) is det.
+%
+%   Substitutes atoms in the given space according to the specified pattern, producing a template.
+%   The matching process is handled by the `'atoms_match'/4` predicate.
+%
+%   @arg SpaceNameOrInstance The name or instance of the space to be processed.
+%   @arg Pattern The pattern used to match atoms in the space.
+%   @arg Template The result after applying the substitution based on the pattern.
+%
+%   @example
+%     % Apply a pattern substitution in 'example_space'.
+%     ?- subst_pattern_template('example_space', some_pattern, Template).
+%     Template = [substituted_atom1, substituted_atom2].
+%
 subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
-    dout(space,[subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
+    % Log the operation for traceability.
+    dout(space, [subst_pattern_template, SpaceNameOrInstance, Pattern, Template]),
+    % Match and substitute atoms in the given space according to the pattern.
     'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
 
 /*
 space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
     fetch_or_create_space(SpaceNameOrInstance, Space),
     call_metta(Space,Query,Vars).
-*/ :- dynamic(was_asserted_space/1).
+*/ 
 
+:- dynamic(was_asserted_space/1).
+
+%!  was_asserted_space(+SpaceName) is nondet.
+%
+%   Checks if the specified space was asserted. These facts indicate whether certain 
+%   spaces, identified by their names, have been registered or asserted in the system.
+%
+%   @arg SpaceName The name of the space being checked.
+%
+%   @example
+%     % Check if the '&self' space was asserted.
+%     ?- was_asserted_space('&self').
+%     true.
+%
 was_asserted_space('&self').
 was_asserted_space('&stdlib').
 was_asserted_space('&corelib').
@@ -641,24 +697,89 @@ was_asserted_space('&tempset').
 was_asserted_space('&concepts').
 was_asserted_space('&belief_events').
 */
-is_asserted_space(X):- was_asserted_space(X).
-is_asserted_space(X):-          \+ is_as_nb_space(X), \+ py_named_space(X),!.
 
-is_python_space_not_prolog(X):- \+ is_as_nb_space(X), \+ is_asserted_space(X).
+%!  is_asserted_space(+Space) is nondet.
+%
+%   Succeeds if the given space has been asserted. A space is considered asserted if 
+%   it matches one of the known asserted spaces or does not qualify as a notebook 
+%   or Python-named space.
+%
+%   @arg Space The space to check.
+%
+%   @example
+%     % Check if '&self' is an asserted space.
+%     ?- is_asserted_space('&self').
+%     true.
+%
+is_asserted_space(X) :- 
+    was_asserted_space(X).
+is_asserted_space(X) :- 
+    \+ is_as_nb_space(X), 
+    \+ py_named_space(X), 
+    !.
 
+%!  is_python_space_not_prolog(+Space) is nondet.
+%
+%   Succeeds if the given space is neither a Prolog notebook space nor an asserted space.
+%   This predicate is used to identify spaces that are likely Python spaces.
+%
+%   @arg Space The space to check.
+%
+%   @example
+%     % Check if 'unknown_space' is a Python space, not a Prolog space.
+%     ?- is_python_space_not_prolog('unknown_space').
+%     true.
+%
+is_python_space_not_prolog(X) :- 
+    \+ is_as_nb_space(X), 
+    \+ is_asserted_space(X).
+
+% dynamic predicates, meaning they can be modified during execution (e.g., asserted or retracted).
 :- dynamic(is_python_space/1).
-
 :- dynamic(py_named_space/1).
 
 %py_named_space('&self').
 %py_named_space('&vspace').
-% Function to check if an atom is registered as a space name
-:- dynamic is_registered_space_name/1.
-is_as_nb_space('&nb').
-is_as_nb_space(G):- is_valid_nb_space(G) -> true ;
-                 is_registered_space_name(G),nb_current(G,S),is_valid_nb_space(S).
 
-is_nb_space(G):- nonvar(G), is_as_nb_space(G).
+% Function to check if an atom is registered as a space name
+
+:- dynamic is_registered_space_name/1.
+
+%!  is_as_nb_space(+Space) is nondet.
+%
+%   Succeeds if the given space is recognized as a notebook space. A space is 
+%   considered a notebook space if it matches the predefined `&nb` space, 
+%   or if it is a registered space name associated with a valid notebook space.
+%
+%   @arg Space The space to check.
+%
+%   @example
+%     % Check if '&nb' is a notebook space.
+%     ?- is_as_nb_space('&nb').
+%     true.
+%
+
+% Check if the space is the predefined `&nb` space.
+is_as_nb_space('&nb').
+% Check if the space is valid through multiple conditions.
+is_as_nb_space(G) :- is_valid_nb_space(G) -> true ; 
+    is_registered_space_name(G), nb_current(G, S), is_valid_nb_space(S).
+
+%!  is_nb_space(+Space) is nondet.
+%
+%   Succeeds if the given space is a notebook space and the input is not a variable.
+%
+%   @arg Space The space to check.
+%
+%   @example
+%     % Check if a given space 'G' is a notebook space.
+%     ?- is_nb_space('&nb').
+%     true.
+%
+
+% Ensure the input is non-variable and check if it is a notebook space.
+is_nb_space(G) :- nonvar(G), is_as_nb_space(G).
+
 % ============================
 % %%%% Pattern Matching
 % ============================
@@ -666,219 +787,701 @@ is_nb_space(G):- nonvar(G), is_as_nb_space(G).
 %'match'(Environment, Pattern, Template, ElseBranch, Result):-
 %  eval_args(['match', Environment, Pattern, Template, ElseBranch], Result).
 % Pattern Matching without an else branch
-'match'(Environment, Pattern, Template, Result):-
-  eval_args(['match', Environment, Pattern, Template], Result).
+
+%!  'match'(+Environment, +Pattern, +Template, -Result) is det.
+%
+%   Matches the given pattern and template within the specified environment,
+%   returning the result of the operation.
+%
+%   @arg Environment The environment where the matching takes place.
+%   @arg Pattern The pattern to be matched.
+%   @arg Template The template used for the match.
+%   @arg Result The result of the match operation.
+%
+%   @example
+%     % Perform a match operation within 'env1' with a pattern and template.
+%     ?- 'match'('env1', some_pattern, some_template, Result).
+%     Result = matched_result.
+%
+
+% Evaluate arguments for the 'match' operation within the environment.
+'match'(Environment, Pattern, Template, Result) :-
+    eval_args(['match', Environment, Pattern, Template], Result).
 %'match'(_Environment, Pattern, Template, Result):- callable(Pattern),!, call(Pattern),Result=Template.
 %'match'(_Environment, Pattern, Template, Result):- !, is_True(Pattern),Result=Template.
 
-
-'new-space'(Space):- gensym('hyperon::space::DynSpace@_',Name),
-   fetch_or_create_space(Name, Space).
+%!  'new-space'(-Space) is det.
+%
+%   Creates a new dynamic space with a unique name. The name is generated using 
+%   the `gensym/2` predicate and the space is either fetched or created.
+%
+%   @arg Space The newly created or fetched space.
+%
+%   @example
+%     % Create a new dynamic space.
+%     ?- 'new-space'(Space).
+%     Space = some_unique_space_name.
+%
+% Generate a unique name and fetch or create the space.
+'new-space'(Space) :- 
+    gensym('hyperon::space::DynSpace@_', Name),
+    fetch_or_create_space(Name, Space).
 
 :- dynamic(is_python_space/1).
+
 % ===============================
 % MeTTa Python incoming interface
 % ===============================
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
-space_type_method(is_as_nb_space,new_space,init_space).
-space_type_method(is_as_nb_space,clear_space,clear_nb_atoms).
-space_type_method(is_as_nb_space,add_atom,add_nb_atom).
-space_type_method(is_as_nb_space,remove_atom,remove_nb_atom).
-space_type_method(is_as_nb_space,replace_atom,replace_nb_atom).
-space_type_method(is_as_nb_space,atom_count,atom_nb_count).
-space_type_method(is_as_nb_space,get_atoms,get_nb_atoms).
-%space_type_method(is_as_nb_space,get_atoms,arg(1)).
-space_type_method(is_as_nb_space,atom_iter,atom_nb_iter).
-%space_type_method(is_as_nb_space,query,space_nb_query).
 
-% Clear all atoms from a space
+%!  space_type_method(+SpaceType, +Operation, -Method) is det.
+%
+%   Associates a space type with a specific operation and its corresponding method. 
+%   This mapping defines how different operations are handled for notebook spaces.
+%
+%   @arg SpaceType The type of space, such as `is_as_nb_space`.
+%   @arg Operation The operation to be performed (e.g., `new_space`, `add_atom`).
+%   @arg Method The method that implements the operation.
+%
+%   @example
+%     % Find the method for adding an atom in a notebook space.
+%     ?- space_type_method(is_as_nb_space, add_atom, Method).
+%     Method = add_nb_atom.
+%
+
+% Define methods for various operations on notebook spaces.
+space_type_method(is_as_nb_space, new_space, init_space).
+space_type_method(is_as_nb_space, clear_space, clear_nb_atoms).
+space_type_method(is_as_nb_space, add_atom, add_nb_atom).
+space_type_method(is_as_nb_space, remove_atom, remove_nb_atom).
+space_type_method(is_as_nb_space, replace_atom, replace_nb_atom).
+space_type_method(is_as_nb_space, atom_count, atom_nb_count).
+space_type_method(is_as_nb_space, get_atoms, get_nb_atoms).
+% space_type_method(is_as_nb_space, get_atoms, arg(1)).
+space_type_method(is_as_nb_space, atom_iter, atom_nb_iter).
+% space_type_method(is_as_nb_space, query, space_nb_query).
+
+%!  clear_nb_atoms(+SpaceNameOrInstance) is det.
+%
+%   Clears all atoms from the specified space by resetting its atom list to empty.
+%
+%   @arg SpaceNameOrInstance The space to clear.
+%
+%   @example
+%     % Clear all atoms from 'example_space'.
+%     ?- clear_nb_atoms('example_space').
+%
+
+% Clear all atoms from a space.
 clear_nb_atoms(SpaceNameOrInstance) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     nb_setarg(1, Space, []).
 
-% Add an atom to the space
+%!  add_nb_atom(+SpaceNameOrInstance, +Atom) is det.
+%
+%   Adds an atom to the specified space by prepending it to the atom list.
+%
+%   @arg SpaceNameOrInstance The space to which the atom is added.
+%   @arg Atom The atom to add.
+%
+%   @example
+%     % Add an atom to 'example_space'.
+%     ?- add_nb_atom('example_space', my_atom).
+%
+
+% Add an atom to the space.
 add_nb_atom(SpaceNameOrInstance, Atom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     NewAtoms = [Atom | Atoms],
     nb_setarg(1, Space, NewAtoms).
 
-% Count atoms in a space
+%!  atom_nb_count(+SpaceNameOrInstance, -Count) is det.
+%
+%   Counts the number of atoms in the specified space.
+%
+%   @arg SpaceNameOrInstance The space to query.
+%   @arg Count The number of atoms found.
+%
+%   @example
+%     % Count the atoms in 'example_space'.
+%     ?- atom_nb_count('example_space', Count).
+%     Count = 3.
+%
+
+% Count atoms in a space.
 atom_nb_count(SpaceNameOrInstance, Count) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     length(Atoms, Count).
 
-% Remove an atom from a space
+%!  remove_nb_atom(+SpaceNameOrInstance, +Atom) is nondet.
+%
+%   Removes the specified atom from the space's atom list if present.
+%
+%   @arg SpaceNameOrInstance The space from which to remove the atom.
+%   @arg Atom The atom to remove.
+%
+%   @example
+%     % Remove an atom from 'example_space'.
+%     ?- remove_nb_atom('example_space', my_atom).
+%
 remove_nb_atom(SpaceNameOrInstance, Atom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
     select(Atom, Atoms, UpdatedAtoms),
     nb_setarg(1, Space, UpdatedAtoms).
 
-% Fetch all atoms from a space
+%!  get_nb_atoms(+SpaceNameOrInstance, -Atoms) is det.
+%
+%   Retrieves all atoms from the specified space.
+%
+%   @arg SpaceNameOrInstance The space to query.
+%   @arg Atoms The list of atoms retrieved.
+%
+%   @example
+%     % Fetch atoms from 'example_space'.
+%     ?- get_nb_atoms('example_space', Atoms).
+%     Atoms = [atom1, atom2].
+%
 get_nb_atoms(SpaceNameOrInstance, Atoms) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms).
 
-% Replace an atom in the space
+%!  replace_nb_atom(+SpaceNameOrInstance, +OldAtom, +NewAtom) is nondet.
+%
+%   Replaces an old atom with a new one in the space's atom list if the old atom is found.
+%
+%   @arg SpaceNameOrInstance The space where the replacement takes place.
+%   @arg OldAtom The atom to be replaced.
+%   @arg NewAtom The atom to insert in place of the old atom.
+%
+%   @example
+%     % Replace an atom in 'example_space'.
+%     ?- replace_nb_atom('example_space', old_atom, new_atom).
+%
 replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
     fetch_or_create_space(SpaceNameOrInstance, Space),
     arg(1, Space, Atoms),
-    ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
+    ( (select(Found, Atoms, TempAtoms), OldAtom =@= Found)
     ->  NewAtoms = [NewAtom | TempAtoms],
         nb_setarg(1, Space, NewAtoms)
     ;   false
     ).
 
+%!  is_valid_nb_space(+Space) is nondet.
+%
+%   Confirms if the given term represents a valid notebook space. 
+%   A valid space must be a compound term with the functor 'Space'.
+%
+%   @arg Space The term to check.
+%
+%   @example
+%     % Check if a term is a valid notebook space.
+%     ?- is_valid_nb_space('Space'([])).
+%     true.
+%
+is_valid_nb_space(Space) :- 
+    compound(Space), 
+    functor(Space, 'Space', _).
 
+%!  space_original_name(+Space, -Name) is nondet.
+%
+%   Retrieves the original name of a given space by checking if the name 
+%   is registered and corresponds to the provided space instance.
+%
+%   @arg Space The space instance whose original name is to be found.
+%   @arg Name The original name of the space.
+%
+%   @example
+%     % Find the original name of a space.
+%     ?- space_original_name('Space'([]), Name).
+%
+space_original_name(Space, Name) :-is_registered_space_name(Name),nb_current(Name, Space).
 
-% Function to confirm if a term represents a space
-is_valid_nb_space(Space):- compound(Space),functor(Space,'Space',_).
-
-% Find the original name of a given space
-space_original_name(Space, Name) :-
-    is_registered_space_name(Name),
-    nb_current(Name, Space).
-
-% Register and initialize a new space
+%!  init_space(+Name) is det.
+%
+%   Registers and initializes a new space with the given name.
+%   The new space is represented as 'Space'([]).
+%
+%   @arg Name The name of the space to be initialized.
+%
+%   @example
+%     % Initialize a new space named 'example_space'.
+%     ?- init_space('example_space').
+%
 init_space(Name) :-
     Space = 'Space'([]),
+    % Register the space name in the system.
     asserta(is_registered_space_name(Name)),
+    % Store the newly created space under the registered name.
     nb_setval(Name, Space).
 
-fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
-% Fetch an existing space or create a new one
+%!  fetch_or_create_space(+NameOrInstance) is det.
+%
+%   Fetches an existing space or creates a new one if it doesn't exist. 
+%   The space can be referred to by its name or passed directly as an instance.
+%
+%   @arg NameOrInstance The name or instance of the space to fetch or create.
+%
+%   @example
+%     % Fetch or create a space named 'example_space'.
+%     ?- fetch_or_create_space('example_space').
+%
+fetch_or_create_space(Name) :- fetch_or_create_space(Name, _).
+
+%!  fetch_or_create_space(+NameOrInstance, -Space) is det.
+%
+%   Fetches the specified space or creates a new one if it does not exist.
+%   If the input is an atom (name), it checks if the space is registered 
+%   and initializes it if necessary. If the input is already a valid space 
+%   instance, it is returned directly.
+%
+%   @arg NameOrInstance The name or instance of the space to fetch or create.
+%   @arg Space The fetched or created space instance.
+%
+%   @example
+%     % Fetch an existing space or create a new one if necessary.
+%     ?- fetch_or_create_space('example_space', Space).
+%     Space = 'Space'([]).
+%
 fetch_or_create_space(NameOrInstance, Space) :-
     (   atom(NameOrInstance)
+    % If the name is registered, fetch the associated space.
     ->  (is_registered_space_name(NameOrInstance)
         ->  nb_current(NameOrInstance, Space)
+        % Otherwise, initialize a new space and fetch it.
         ;   init_space(NameOrInstance),
             nb_current(NameOrInstance, Space))
+    % If the input is already a valid space instance, return it directly.
     ;   is_valid_nb_space(NameOrInstance)
     ->  Space = NameOrInstance
+    % Print an error message for invalid input.
     ;   writeln('Error: Invalid input.')
     ),
+    % Ensure the fetched or created entity is a valid space.
     is_valid_nb_space(Space).
 
+%!  'match'(+Space, +Pattern, -Template) is det.
+%
+%   Matches a pattern against the atoms in the specified space and produces a template.
+%
+%   @arg Space The space in which to match the pattern.
+%   @arg Pattern The pattern to match against the atoms.
+%   @arg Template The result template produced from the match.
+%
+%   @example
+%     % Match a pattern in a space and produce a template.
+%     ?- 'match'('example_space', some_pattern, Template).
+%
 
-% Match Pattern in Space and produce Template
+% Retrieve all atoms from the space and perform the pattern match.
 'match'(Space, Pattern, Template) :-
     'get-atoms'(Space, Atoms),
     'match-pattern'(Atoms, Pattern, Template).
 
-% Simple pattern match
+%!  'match-pattern'(+Atoms, +Pattern, -Template) is nondet.
+%
+%   Performs a simple pattern match on a list of atoms. If the pattern matches 
+%   any atom in the list, it produces the matched atom as the template.
+%
+%   @arg Atoms The list of atoms to search through.
+%   @arg Pattern The pattern to be matched.
+%   @arg Template The result of the match, if found.
+%
+%   @example
+%     % Perform a simple match on a list of atoms.
+%     ?- 'match-pattern'([a, b, c], b, Template).
+%     Template = b.
+%
+
+% If the atom list is empty, the match fails, and the template is empty.
 'match-pattern'([], _, []).
-'match-pattern'([H |_T], H, H) :- !.
-'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
+% If the head of the list matches the pattern, return it as the template.
+'match-pattern'([H |_T], H, H) :- 
+    !.  % Cut to prevent backtracking after a successful match.
+% If the head does not match, continue matching with the tail.
+'match-pattern'([_H| T], Pattern, Template) :- 
+    'match-pattern'(T, Pattern, Template).
 
 %is_python_space(X):- python_object(X).
 
-ensure_space(X,Y):- catch(ensure_space_py(X,Y),_,fail),!.
-ensure_space(_N,_V):- fail.
+%!  ensure_space(+X, -Y) is nondet.
+%
+%   Ensures that the given space is available by attempting to execute 
+%   `ensure_space_py/2`. If an exception occurs, it fails gracefully.
+%
+%   @arg X The input related to the space being ensured.
+%   @arg Y The result or output associated with the space operation.
+%
+%   @example
+%     % Ensure the space 'example_space' is available.
+%     ?- ensure_space('example_space', Result).
+%
+
+% Attempt to ensure the space using `ensure_space_py/2`. 
+% Catch any exception and fail gracefully.
+ensure_space(X, Y) :- catch(ensure_space_py(X, Y), _, fail),!.
+% If the first clause fails, this fallback clause ensures that 
+% the predicate as a whole fails.
+ensure_space(_N, _V) :- fail.
 
 % ===============================
 % Clause Database interface
 % ===============================
 %dout(space,Call):- skip(Call).
-if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
-if_metta_debug(_):-!.
-if_metta_debug(Goal):- !,ignore(call(Goal)).
-dout(_,_):-!.
-dout(W,Term):- notrace(if_metta_debug((format('~N; ~w ~@~n',[W,write_src(Term)])))).
+
+%!  if_metta_debug(+Goal) is det.
+%
+%   Executes the given `Goal` if the environment variable `VSPACE_VERBOSE` is set to '2'.
+%   Otherwise, the goal is ignored. This predicate is useful for conditional debugging.
+%
+%   @arg Goal The goal to be executed for debugging purposes.
+%
+%   @example
+%     % Run a goal in debug mode if the environment allows it.
+%     ?- if_metta_debug(write('Debug message')).
+%
+
+% Check if 'VSPACE_VERBOSE' is set to '2', and if so, call the goal.
+if_metta_debug(Goal) :- getenv('VSPACE_VERBOSE', '2'), !, ignore(call(Goal)).
+% If the condition fails, succeed silently.
+if_metta_debug(_) :- !.
+% If the condition is bypassed by previous clauses, call the goal and ignore failures.
+if_metta_debug(Goal) :- !, ignore(call(Goal)).
+
+%!  dout(+Tag, +Term) is det.
+%
+%   Outputs debugging information if `if_metta_debug/1` allows it. 
+%   Uses `notrace/1` to ensure no side effects from tracing.
+%
+%   @arg Tag A tag or label to identify the type of debug output.
+%   @arg Term The term to be printed.
+%
+%   @example
+%     % Print debug information with a tag.
+%     ?- dout(info, some_debug_data).
+%
+
+% Succeed silently if debugging is not active.
+dout(_, _) :- !.
+% Output formatted debugging information if enabled.
+dout(W, Term) :- notrace(if_metta_debug((format('~N; ~w ~@~n', [W, write_src(Term)])))).
 
 :- multifile(space_type_method/3).
 :- dynamic(space_type_method/3).
-space_type_method(is_asserted_space,new_space,init_space).
-space_type_method(is_asserted_space,clear_space,clear_nb_atoms).
-space_type_method(is_asserted_space,add_atom,metta_assertdb_add).
-space_type_method(is_asserted_space,remove_atom,metta_assertdb_rem).
-space_type_method(is_asserted_space,replace_atom,metta_assertdb_replace).
-space_type_method(is_asserted_space,atom_count,metta_assertdb_count).
-space_type_method(is_asserted_space,get_atoms,metta_assertdb_get_atoms).
-space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
+
+%!  space_type_method(+SpaceType, +Operation, -Method) is det.
+%
+%   Defines the mapping between a space type (`is_asserted_space`) and the corresponding 
+%   methods used to handle various operations on that space. This mapping ensures that 
+%   operations like adding, removing, or retrieving atoms are correctly delegated to 
+%   the appropriate methods.
+%
+%   @arg SpaceType The type of the space (e.g., `is_asserted_space`).
+%   @arg Operation The operation to perform (e.g., `new_space`, `add_atom`).
+%   @arg Method The method implementing the operation.
+%
+%   @example
+%     % Find the method for adding an atom in an asserted space.
+%     ?- space_type_method(is_asserted_space, add_atom, Method).
+%     Method = metta_assertdb_add.
+%
+
+% Map the 'new_space' operation to the 'init_space' method for asserted spaces.
+space_type_method(is_asserted_space, new_space, init_space).
+% Map the 'clear_space' operation to the 'clear_nb_atoms' method for asserted spaces.
+space_type_method(is_asserted_space, clear_space, clear_nb_atoms).
+% Map the 'add_atom' operation to the 'metta_assertdb_add' method for asserted spaces.
+space_type_method(is_asserted_space, add_atom, metta_assertdb_add).
+% Map the 'remove_atom' operation to the 'metta_assertdb_rem' method for asserted spaces.
+space_type_method(is_asserted_space, remove_atom, metta_assertdb_rem).
+% Map the 'replace_atom' operation to the 'metta_assertdb_replace' method for asserted spaces.
+space_type_method(is_asserted_space, replace_atom, metta_assertdb_replace).
+% Map the 'atom_count' operation to the 'metta_assertdb_count' method for asserted spaces.
+space_type_method(is_asserted_space, atom_count, metta_assertdb_count).
+% Map the 'get_atoms' operation to the 'metta_assertdb_get_atoms' method for asserted spaces.
+space_type_method(is_asserted_space, get_atoms, metta_assertdb_get_atoms).
+% Map the 'atom_iter' operation to the 'metta_assertdb_iter' method for asserted spaces.
+space_type_method(is_asserted_space, atom_iter, metta_assertdb_iter).
 %space_type_method(is_asserted_space,query,space_nb_query).
 
 %:- dynamic(for_metta/2).
 %for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
-metta_assertdb_ls(KB):-
-     AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),
-     MP =.. [AMA,KB,_],
-  listing(MP).
 
-metta_assertdb_add(KB,AtomIn):-
- must_det_ll((subst_vars(AtomIn,Atom),
-     AMA = metta_atom_asserted,
-     decl_m_fb_pred(user,AMA,2),
-     MP =.. [AMA,KB,Atom],
-  assert_new(MP))).
-metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
-metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
-  decl_m_fb_pred(user,metta_atom_asserted,2),
-   MP = metta_atom(KB,Old),
-  copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
-metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
+%!  metta_assertdb_ls(+KB) is det.
+%
+%   Lists all asserted atoms in the specified knowledge base (KB).
+%
+%   @arg KB The knowledge base from which to list asserted atoms.
+%
+%   @example
+%     % List atoms in the 'example_kb' knowledge base.
+%     ?- metta_assertdb_ls('example_kb').
+%
+metta_assertdb_ls(KB) :-
+    % Predicate for asserted atoms.
+    AMA = metta_atom_asserted,
+    % Declare the predicate for the asserted atoms with arity 2.
+    decl_m_fb_pred(user, AMA, 2),
+    % Construct the predicate term dynamically.
+    MP =.. [AMA, KB, _],
+    % List the matching predicates.
+    listing(MP).
 
+%!  metta_assertdb_add(+KB, +AtomIn) is det.
+%
+%   Adds a new atom to the specified knowledge base (KB).
+%
+%   @arg KB The knowledge base to which the atom is added.
+%   @arg AtomIn The atom to add, with variables substituted as needed.
+%
+%   @example
+%     % Add an atom to the 'example_kb' knowledge base.
+%     ?- metta_assertdb_add('example_kb', my_atom).
+%
+metta_assertdb_add(KB, AtomIn) :-
+    must_det_ll((
+        % Substitute variables in the atom to produce a standardized version.
+        subst_vars(AtomIn, Atom),
+        % Predicate for asserted atoms.
+        AMA = metta_atom_asserted,
+        % Declare the predicate for the asserted atoms with arity 2.
+        decl_m_fb_pred(user, AMA, 2),
+        % Construct the predicate term dynamically.
+        MP =.. [AMA, KB, Atom],
+        % Assert the new predicate.
+        assert_new(MP)
+    )).
 
+%!  metta_assertdb_rem(+KB, +Old) is det.
+%
+%   Removes an atom from the specified knowledge base (KB).
+%
+%   @arg KB The knowledge base from which the atom is removed.
+%   @arg Old The atom to remove.
+%
+%   @example
+%     % Remove an atom from the 'example_kb' knowledge base.
+%     ?- metta_assertdb_rem('example_kb', my_atom).
+%
+metta_assertdb_rem(KB, Old) :-
+    % Delegate to metta_assertdb_del/2 for removal.
+    metta_assertdb_del(KB, Old).
 
-atom_count_provider(Self,Count):-
-    user:loaded_into_kb(Self,Filename),
-     once(user:asserted_metta_pred(Mangle,Filename)),
-     mangle_iz(Mangle,Iz),
-     member(P,[Mangle,Iz]),
-     between(2,8,Arity),
-     functor(Data,P,Arity),
-     predicate_property(Data,number_of_clauses(CC)),
-     predicate_property(Data,number_of_rules(RC)),
-     Count is CC - RC.
+%!  metta_assertdb_del(+KB, +Atom) is det.
+%
+%   Deletes the specified atom from the knowledge base (KB) if it exists.
+%
+%   @arg KB The knowledge base from which the atom is deleted.
+%   @arg Atom The atom to delete, with variables substituted.
+%
 
-atom_count_provider(KB,Count):-
- must_det_ll((
-  AMA = metta_atom_asserted,
-  decl_m_fb_pred(user,AMA,2),
-  MP =.. [AMA,KB,_],
-  predicate_property(MP,number_of_clauses(SL2)),
-  predicate_property(MP,number_of_rules(SL3)),
-  %metta_assertdb_ls(KB),
-      full_atom_count(SL1),
-  Count is SL1 + SL2 - SL3)),!.
+% Substitute variables and delete the atom from the knowledge base.
+metta_assertdb_del(KB, Atom) :-
+    % Substitute variables in the atom.
+    subst_vars(Atom, Old),
+    % Declare the predicate for the asserted atoms with arity 2.
+    decl_m_fb_pred(user, metta_atom_asserted, 2),
+    % Construct the predicate term dynamically.
+    MP = metta_atom(KB, Old),
+    % Create a copy of the term for comparison.
+    copy_term(MP, Copy),
+    % Retrieve the clause reference.
+    clause(MP, true, Ref),
+    % Ensure structural equality between terms.
+    MP =@= Copy,
+    !,  % Cut to prevent backtracking.
+    % Erase the clause reference to remove the atom.
+    erase(Ref).
+    % ,metta_assertdb('DEL',Old).  % (Commented-out code left untouched)
 
-metta_assertdb_count(KB,Count):-
-    findall(C,atom_count_provider(KB,C),CL),
-    sumlist(CL,Count).
+%!  metta_assertdb_replace(+KB, +Old, +New) is det.
+%
+%   Replaces an old atom with a new one in the specified knowledge base (KB).
+%
+%   @arg KB The knowledge base in which the replacement occurs.
+%   @arg Old The atom to be replaced.
+%   @arg New The atom to insert in place of the old one.
+%
+metta_assertdb_replace(KB, Old, New) :-
+    % Delete the old atom.
+    metta_assertdb_del(KB, Old),
+    % Add the new atom.
+    metta_assertdb_add(KB, New).
 
+%!  atom_count_provider(+Input, -Count) is det.
+%
+%   Provides the atom count for the given knowledge base (KB) or context.
+%   If the input refers to a context, it calculates the count based on the 
+%   predicates associated with that context. If the input is a KB, it calculates 
+%   the total count using clause and rule properties, along with other atom counts.
+%
+%   @arg Input The knowledge base or context to query.
+%   @arg Count The number of atoms found.
+%
+%   @example
+%     % Get the atom count for a specific context.
+%     ?- atom_count_provider('example_kb', Count).
+%     Count = 42.
+%
+%   @example
+%     % Get the atom count for a loaded context.
+%     ?- atom_count_provider(some_context, Count).
+%
+atom_count_provider(Self, Count) :-
+    % Check if the context has been loaded into a knowledge base (KB).
+    user:loaded_into_kb(Self, Filename),
+    % Retrieve the associated predicate for the given filename.
+    once(user:asserted_metta_pred(Mangle, Filename)),
+    % Derive a related predicate from the original.
+    mangle_iz(Mangle, Iz),
+    % Select a predicate from the possible options.
+    member(P, [Mangle, Iz]),
+    % Ensure the arity is between 2 and 8.
+    between(2, 8, Arity),
+    % Construct the predicate term dynamically.
+    functor(Data, P, Arity),
+    % Retrieve the number of clauses for the predicate.
+    predicate_property(Data, number_of_clauses(CC)),
+    % Retrieve the number of rules for the predicate.
+    predicate_property(Data, number_of_rules(RC)),
+    % Calculate the atom count as the difference between clauses and rules.
+    Count is CC - RC.
+atom_count_provider(KB, Count) :-
+    must_det_ll((
+        % Predicate for asserted atoms.
+        AMA = metta_atom_asserted,
+        % Declare the predicate with arity 2.
+        decl_m_fb_pred(user, AMA, 2),
+        % Construct the predicate term dynamically.
+        MP =.. [AMA, KB, _],
+        % Get the number of clauses for the predicate.
+        predicate_property(MP, number_of_clauses(SL2)),
+        % Get the number of rules for the predicate.
+        predicate_property(MP, number_of_rules(SL3)),
+        % Retrieve the full atom count.
+        %metta_assertdb_ls(KB),  % (Commented-out code left unchanged)
+        full_atom_count(SL1),
+        % Calculate the final atom count.
+        Count is SL1 + SL2 - SL3
+    )), !.
 
-
+%!  metta_assertdb_count(+KB, -Count) is det.
+%
+%   Counts the total number of atoms in the specified knowledge base (KB).
+%   It aggregates the counts from multiple sources using `atom_count_provider/2`.
+%
+%   @arg KB The knowledge base to query.
+%   @arg Count The total number of atoms found.
+%
+%   @example
+%     % Get the total atom count for a knowledge base.
+%     ?- metta_assertdb_count('example_kb', Count).
+%
+metta_assertdb_count(KB, Count) :-
+    % Collect all counts from the knowledge base.
+    findall(C, atom_count_provider(KB, C), CL),
+    % Sum the counts to get the total atom count.
+    sumlist(CL, Count).
 %metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
-metta_assertdb_iter(KB,Atoms):-
-     MP =.. [metta_atom,KB,Atoms],
-     call(MP).
+
+%!  metta_assertdb_iter(+KB, -Atoms) is nondet.
+%
+%   Iterates over the atoms in the specified knowledge base (KB).
+%   This predicate dynamically constructs the predicate for atoms 
+%   in the given KB and calls it to retrieve matching atoms.
+%
+%   @arg KB The knowledge base to iterate over.
+%   @arg Atoms The atoms found during the iteration.
+%
+%   @example
+%     % Iterate over atoms in 'example_kb' and retrieve them.
+%     ?- metta_assertdb_iter('example_kb', Atom).
+%
+metta_assertdb_iter(KB, Atoms) :-
+    % Dynamically construct the predicate for the given KB.
+    MP =.. [metta_atom, KB, Atoms],
+    % Call the constructed predicate to retrieve atoms.
+    call(MP).
+
+%!  metta_iter_bind(+KB, +Query, -Vars, +VarNames) is det.
+%
+%   Binds the variables in a query against the specified knowledge base (KB). 
+%   It aligns the variable names with the variables from the query and logs 
+%   the matching process.
+%
+%   @arg KB The knowledge base to query.
+%   @arg Query The query to execute against the knowledge base.
+%   @arg Vars The variables bound by the query.
+%   @arg VarNames The names of the variables to align with the query variables.
+%
+%   @example
+%     % Execute a query against the KB and bind variables.
+%     ?- metta_iter_bind('example_kb', my_query(X), Vars, ['X']).
+%
+metta_iter_bind(KB, Query, Vars, VarNames) :-
+    % Extract all variables from the query.
+    term_variables(Query, QVars),
+    % Align the provided variable names with the query variables.
+    align_varnames(VarNames, Vars),
+    % Log the query matching process (used for debugging).
+    TV = dout(space, ['match', KB, Query, QVars, Vars, VarNames]),
+    % \+ \+ (numbervars(TV, 0, _, []), print(tv = TV), nl),
+    % Ensure the query variables match the provided variables.
+    ignore(QVars = Vars),
+    % \+ \+ (numbervars(TV, 0, _, []), print(qv = TV), nl),
+    % Log the aligned variables and ensure the query succeeds.
+    \+ \+ (
+        % numbervars(TV, 0, _, []),  % Another debugging block (commented-out).
+        writeq(av = TV), nl
+    ),
+    % Execute the query against the KB and ensure the result is not 'False'.
+    space_query_vars(KB, Query, TF), TF \== 'False'.
+
+%!  space_query_vars(+KB, +Query, -Vars) is det.
+%
+%   Queries the specified knowledge base (KB) and retrieves the variables 
+%   bound by the query. If the KB is an asserted space, it uses the predicate 
+%   `metta_atom_asserted/2` to execute the query.
+%
+%   @arg KB The knowledge base to query.
+%   @arg Query The query to execute.
+%   @arg Vars The variables bound by the query result.
+%
+%   @example
+%     % Query the KB and retrieve bound variables.
+%     ?- space_query_vars('example_kb', my_query(X), Vars).
+%
+space_query_vars(KB, Query, Vars) :-
+    % Check if the knowledge base is an asserted space.
+    is_asserted_space(KB), !,
+    % Declare the predicate for asserted atoms with arity 2.
+    decl_m_fb_pred(user, metta_atom_asserted, 2),
+    % Execute the query with the provided variables.
+    call_metta(KB, Query, Vars),
+    % Log the result of the query.
+    dout('RES', space_query_vars(KB, Query, Vars)).
 
 
+%!  metta_assertdb_get_atoms(+KB, -Atom) is nondet.
+%
+%   Retrieves atoms from the specified knowledge base (KB). This predicate 
+%   iterates over the atoms in the KB by calling the `metta_atom/2` predicate.
+%
+%   @arg KB The knowledge base from which to retrieve atoms.
+%   @arg Atom The atoms found in the specified KB.
+%
+%   @example
+%     % Retrieve atoms from the 'example_kb' knowledge base.
+%     ?- metta_assertdb_get_atoms('example_kb', Atom).
+%
+metta_assertdb_get_atoms(KB, Atom) :-
+    % Call the predicate to retrieve atoms from the KB.
+    metta_atom(KB, Atom).
 
-metta_iter_bind(KB,Query,Vars,VarNames):-
-  term_variables(Query,QVars),
-  align_varnames(VarNames,Vars),
-  TV = dout(space,['match',KB,Query,QVars,Vars,VarNames]),
-%  \+ \+ (numbervars(TV,0,_,[]),print(tv=TV),nl),
-  ignore(QVars=Vars),
-%  \+ \+ (numbervars(TV,0,_,[]),print(qv=TV),nl),
-  \+ \+ (%numbervars(TV,0,_,[]),
-         writeq(av=TV),nl),
-  space_query_vars(KB,Query,TF),TF\=='False'.
-
-
-% Query from hyperon.base.GroundingSpace
-space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
-    decl_m_fb_pred(user,metta_atom_asserted,2),
-    call_metta(KB,Query,Vars),
-    dout('RES',space_query_vars(KB,Query,Vars)).
-
-
-metta_assertdb_get_atoms(KB,Atom):- metta_atom(KB,Atom).
 /*
 
 %metta_assertdb_iter_bind(KB,Query,Template,AtomsL):-
@@ -901,88 +1504,461 @@ metta_assertdb_iter_bind(KB,Atoms,Vars):-
 */
 
 
-align_varnames(VarNames,Vars):-
-  list_to_set(VarNames,NameSet),
-  merge_named_vars(NameSet,VarNames,Vars).
+%!  align_varnames(+VarNames, -Vars) is det.
+%
+%   Aligns the given variable names with the variables provided. 
+%   Converts the list of variable names into a set and merges them with 
+%   the variables.
+%
+%   @arg VarNames The list of variable names to align.
+%   @arg Vars The aligned variables.
+%
+%   @example
+%     % Align variables with names.
+%     ?- align_varnames(['X', 'Y'], Vars).
+%
+align_varnames(VarNames, Vars) :-
+    % Convert the list of variable names to a set.
+    list_to_set(VarNames, NameSet),
+    % Merge the named variables with the variable names.
+    merge_named_vars(NameSet, VarNames, Vars).
 
-merge_named_vars([],_VarNames,_Vars):-!.
-merge_named_vars([N|NameSet],VarNames,Vars):-
-  merge_named(N,_V,VarNames,Vars),
-  merge_named_vars(NameSet,VarNames,Vars).
-%merge_named_vars(_,_,_).
+%!  merge_named_vars(+NameSet, +VarNames, -Vars) is det.
+%
+%   Merges a set of variable names with their corresponding variables.
+%
+%   @arg NameSet The set of unique variable names.
+%   @arg VarNames The list of variable names.
+%   @arg Vars The resulting list of variables.
+%
+merge_named_vars([], _VarNames, _Vars) :- !.
+merge_named_vars([N | NameSet], VarNames, Vars) :-
+    % Merge the current variable name with its corresponding variable.
+    merge_named(N, _V, VarNames, Vars),
+    % Recursively merge the remaining variable names.
+    merge_named_vars(NameSet, VarNames, Vars).
+%merge_named_vars(_, _, _).  % (Commented-out code left unchanged)
 
-merge_named(_,_,[],[]):-!.
-merge_named(N,V,[N|VarNames],[V|Vars]):-
-  merge_named(N,V,VarNames,Vars).
+%!  merge_named(+Name, -Var, +VarNames, -Vars) is det.
+%
+%   Merges a single named variable with the corresponding variable list. 
+%   It matches the given name with elements from the variable names list 
+%   and binds the corresponding variables.
+%
+%   @arg Name The name of the variable to merge.
+%   @arg Var The variable associated with the name.
+%   @arg VarNames The list of variable names.
+%   @arg Vars The list of variables corresponding to the names.
+%
+%   @example
+%     % Merge a variable named 'X' with its corresponding variables.
+%     ?- merge_named('X', V, ['X', 'Y'], [VarX, VarY]).
+%     V = VarX.
+%
+merge_named(_, _, [], []) :- 
+    % Base case: When both lists are empty, stop merging.
+    !.
+merge_named(N, V, [N | VarNames], [V | Vars]) :- 
+    % When the head of the names list matches the given name, 
+    % associate the corresponding variable and continue merging.
+    merge_named(N, V, VarNames, Vars).
 
-
-call_metta( KB,Query,_Vars):- metta_atom(KB,Query).
-call_metta(_KB,Query,_Vars):- metta_to_pyswip([],Query,Call),!,
-  %print(user:Call),nl,
+%!  call_metta(+KB, +Query, -Vars) is det.
+%
+%   Executes a query against the specified knowledge base (KB).
+%   If the KB contains the query as an asserted atom, it succeeds.
+%   Otherwise, it converts the query to a PySWIP call and executes it.
+%
+%   @arg KB The knowledge base to query.
+%   @arg Query The query to execute.
+%   @arg Vars The variables involved in the query.
+%
+call_metta(KB, Query, _Vars) :-
+    % Execute the query directly if it matches an asserted atom.
+    metta_atom(KB, Query).
+call_metta(_KB, Query, _Vars) :-
+    % Convert the query to a PySWIP-compatible call.
+    metta_to_pyswip([], Query, Call), !,
+    % Execute the PySWIP call.
+    %print(user:Call), nl,  % (Commented-out code left unchanged)
     user:call(Call).
 
-metta_to_pyswip(_PS,Query,Call):- var(Query),!,Call=Query.
-metta_to_pyswip(_PS,Query,Call):- \+ compound(Query),!,Call=Query,!.
-metta_to_pyswip(PS,Query,Call):- is_list(Query),Query=[Q|Uery],!,cmpd_to_pyswip(PS,Q,Uery,Call).
-metta_to_pyswip(PS,Query,Call):- Query=..[Q|Uery], cmpd_to_pyswip(PS,Q,Uery,Call).
+%!  metta_to_pyswip(+PS, +Query, -Call) is det.
+%
+%   Converts a query into a PySWIP-compatible call. 
+%   Handles variables, non-compound terms, lists, and compound terms.
+%
+%   @arg PS A list of predicates used during conversion.
+%   @arg Query The query to convert.
+%   @arg Call The resulting PySWIP-compatible call.
+%
+metta_to_pyswip(_PS, Query, Call) :-
+    % If the query is a variable, return it directly.
+    var(Query), !, Call = Query.
+metta_to_pyswip(_PS, Query, Call) :-
+    % If the query is not compound, return it directly.
+    \+ compound(Query), !, Call = Query, !.
+metta_to_pyswip(PS, Query, Call) :-
+    % Handle list queries by converting the head and tail.
+    is_list(Query), Query = [Q | Uery], !,cmpd_to_pyswip(PS, Q, Uery, Call).
+metta_to_pyswip(PS, Query, Call) :-
+    % Handle compound queries by decomposing them into functors and arguments.
+    Query =.. [Q | Uery], cmpd_to_pyswip(PS, Q, Uery, Call).
 
-cmpd_to_pyswip(PS,Q,Uery,Call):- atom(Q),maplist(metta_to_pyswip([Q|PS]),Uery,Cery),Call=..[Q|Cery].
-cmpd_to_pyswip(PS,"and",Uery,Call):- maplist(metta_to_pyswip(PS),Uery,Args),list_to_conjuncts(Args,Call).
+%!  cmpd_to_pyswip(+PS, +Q, +Uery, -Call) is det.
+%
+%   Converts a compound term into a PySWIP-compatible call.
+%   Handles atom-based queries and "and" conjunctions.
+%
+%   @arg PS A list of predicates used during conversion.
+%   @arg Q The functor of the compound term.
+%   @arg Uery The arguments of the compound term.
+%   @arg Call The resulting PySWIP-compatible call.
+%
+cmpd_to_pyswip(PS, Q, Uery, Call) :-
+    % Handle atom-based queries by mapping their arguments recursively.
+    atom(Q), maplist(metta_to_pyswip([Q | PS]), Uery, Cery), Call =.. [Q | Cery].
+cmpd_to_pyswip(PS, "and", Uery, Call) :-
+    % Handle "and" conjunctions by converting the list to conjuncts.
+    maplist(metta_to_pyswip(PS), Uery, Args),list_to_conjuncts(Args, Call).
 
+%!  'show-metta-def'(+Pred, +Args) is det.
+%
+%   Displays the Metta definition of the given predicate. 
+%   It retrieves the source code for the predicate and prints each line.
+%
+%   @arg Pred The predicate whose definition is displayed.
+%   @arg Args Additional arguments (usually an empty list).
+%
+%   @example
+%     % Show the Metta definition for a predicate.
+%     ?- 'show-metta-def'(some_predicate, []).
+%
+'show-metta-def'(Pred, []) :-
+    % Retrieve the Metta source code for the predicate.
+    'get-metta-src'(Pred, [_ | SrcL]),
+    % Print each line of the source code.
+    maplist(write_src_nl, SrcL).
 
-'show-metta-def'(Pred, []):-
-  'get-metta-src'(Pred,[_|SrcL]),
-  maplist(write_src_nl,SrcL).
+%!  write_src_nl(+Src) is det.
+%
+%   Prints a source line followed by a newline.
+%
+%   @arg Src The source line to print.
+%
+write_src_nl(Src) :-
+    % Print a newline, the source line, and another newline.
+    format('~N'), write_src(Src), format('~N').
 
-write_src_nl(Src):- format('~N'),write_src(Src),format('~N').
+%'get-metta-src'(Pred,[Len|SrcL]):- 
+%    findall(['AtomDef',Src], 'get-metta-src1'(Pred,Src), SrcL), 
+%    length(SrcL, Len).
 
-%'get-metta-src'(Pred,[Len|SrcL]):- findall(['AtomDef',Src],'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
-'get-metta-src'(Pred,[Len|SrcL]):- findall(Src,'get-metta-src1'(Pred,Src),SrcL), length(SrcL,Len).
-'get-metta-src1'(Pred,Src):-
-  current_self(Space),
-  metta_atom(Space,F,A,List),
-  once((sub_var(Pred,A)->Src = [F,A,List];sub_var(Pred,F)->Src = [F,A|List])).
+%!  'get-metta-src'(+Pred, -Src) is det.
+%
+%   Retrieves the source code for the given predicate. 
+%   It collects all matching sources into a list and calculates the length.
+%
+%   @arg Pred The predicate whose source is being retrieved.
+%   @arg Src The list containing the length of the source and the source lines.
+%
+'get-metta-src'(Pred, [Len | SrcL]) :-
+    % Find all source lines matching the predicate.
+    findall(Src, 'get-metta-src1'(Pred, Src), SrcL),
+    % Calculate the length of the source list.
+    length(SrcL, Len).
 
-% is a quine
-'AtomDef'(X,['AtomDef',X]).
+%!  'get-metta-src1'(+Pred, -Src) is det.
+%
+%   Retrieves individual source lines for the given predicate. 
+%   It checks if the predicate matches the functor or arguments of an atom.
+%
+%   @arg Pred The predicate to search for.
+%   @arg Src The source line corresponding to the predicate.
+%
+'get-metta-src1'(Pred, Src) :-
+    % Retrieve the current space.
+    current_self(Space),
+    % Retrieve an atom from the current space.
+    metta_atom(Space, F, A, List),
+    % Check if the predicate matches the arguments or the functor.
+    once((
+        sub_var(Pred, A) -> Src = [F, A, List]
+    ;   sub_var(Pred, F) -> Src = [F, A | List]
+    )).
 
+%!  'AtomDef'(+X, -Def) is det.
+%
+%   Creates a self-referential structure (a quine) for the given term.
+%
+%   @arg X The input term.
+%   @arg Def The quine structure containing the input term.
+%
+'AtomDef'(X, ['AtomDef', X]).
 
-sort_on(C,R,A,B):- (A==B-> R= (=) ; must_det_ll((call(C,A,AA),call(C,B,BB),!,compare(R,AA+A,BB+B)))),!.
-tokens(X,VL):- unaccent_atom(X,A),!, findall(E,(is_tokenizer(T),call(T,A,E)),L),predsort(sort_on(length_fw_len),L,S),last(S,VL).
+%!  sort_on(+Comparator, -Relation, +A, +B) is det.
+%
+%   Compares two elements `A` and `B` using the provided comparator.
+%   If the elements are equal, the result is `=`. Otherwise, the comparator 
+%   is applied to both elements, and the results are compared lexicographically.
+%
+%   @arg Comparator The predicate used to compare the elements.
+%   @arg Relation The resulting relation (`<`, `=`, or `>`).
+%   @arg A The first element to compare.
+%   @arg B The second element to compare.
+%
+%   @example
+%     % Compare two atoms by length using atom_length/2 as the comparator.
+%     ?- sort_on(atom_length, R, 'hello', 'hi').
+%     R = (>).
+%
+%   @example
+%     % Compare two lists based on their length.
+%     ?- sort_on(length, R, [1,2,3], [1,2]).
+%     R = (>).
+%
+sort_on(C, R, A, B) :-
+    (A == B -> R = (=)
+    ;   must_det_ll((
+            % Apply the comparator to both elements.
+            call(C, A, AA),
+            call(C, B, BB),
+            % Compare the results lexicographically.
+            !, compare(R, AA + A, BB + B)
+        ))
+    ), 
+    !.
 
-length_fw_len([W|List],L+WL):- length(List,L),atom_length(W,WL).
+%!  tokens(+Input, -Result) is det.
+%
+%   Tokenizes the given input atom using multiple tokenizers. 
+%   The most relevant tokenized result is selected based on sorting by length.
+%
+%   @arg Input The input atom to tokenize.
+%   @arg Result The most relevant tokenized result.
+%
+%   @example
+%     % Tokenize the input atom 'hello-world'.
+%     ?- tokens('hello-world', VL).
+%     VL = ['hello', 'world'].
+%
+%   @example
+%     % Tokenize the input 'Prolog'.
+%     ?- tokens('Prolog', VL).
+%     VL = ['Prolog'].
+%
+tokens(X, VL) :-
+    % Unaccent the input atom.
+    unaccent_atom(X, A),
+    !,
+    % Collect tokenized results using all available tokenizers.
+    findall(E, (is_tokenizer(T), call(T, A, E)), L),
+    % Sort the tokens based on their length.
+    predsort(sort_on(length_fw_len), L, S),
+    % Select the last (best) tokenized result.
+    last(S, VL).
 
-print_token_args:- make,
-   fb_arg(X),tokens(X,A0),
-   exclude(is_dash,A0,A),tterm(A,AT),writeq(X),write('    '),writeq(AT),write('  '),write_src(A),nl,fail.
+%!  length_fw_len(+List, -Score) is det.
+%
+%   Computes a sorting score for a tokenized list. The score is the sum 
+%   of the length of the list and the length of the first element.
+%
+%   @arg List The tokenized list to score.
+%   @arg Score The computed score.
+%
+%   @example
+%     % Compute the score for a tokenized list.
+%     ?- length_fw_len(['hello', 'world'], Score).
+%     Score = 2 + 5.
+%
+%   @example
+%     % Compute the score for a single-element list.
+%     ?- length_fw_len(['Prolog'], Score).
+%     Score = 0 + 6.
+%
+length_fw_len([W | List], L + WL) :-
+    % Calculate the length of the list (excluding the first element).
+    length(List, L),
+    % Calculate the length of the first element.
+    atom_length(W, WL).
+
+%!  print_token_args is det.
+%
+%   Prints tokenized arguments from the knowledge base, excluding dashes. 
+%   It retrieves arguments, tokenizes them, excludes dash tokens, converts 
+%   them to terms, and prints the results.
+%
+%   @example
+%     % Execute the printing of tokenized arguments.
+%     ?- print_token_args.
+%
+print_token_args :-
+    make,  % Compile necessary files.
+    fb_arg(X),  % Retrieve arguments from the knowledge base.
+    tokens(X, A0),  % Tokenize the arguments.
+    exclude(is_dash, A0, A),  % Exclude dash tokens.
+    tterm(A, AT),  % Convert the tokens to a term.
+    % Print the argument, tokenized term, and original token list.
+    writeq(X), write('    '), writeq(AT), write('  '), write_src(A), nl,
+    fail.
+
+%!  is_dash(+Atom) is nondet.
+%
+%   Checks if the given atom is a dash ('_' or '-').
+%
+%   @arg Atom The atom to check.
+%
+%   @example
+%     % Check if an atom is a dash.
+%     ?- is_dash('_').
+%     true.
+%
+%     ?- is_dash('x').
+%     false.
+%
 is_dash('_').
 is_dash('-').
-tterm([A],A):-!.
-tterm([A,':',B|M],BA):- atom(A),!,BA=..[A,B|M].
-tterm([A,B|M],BA):- atom(B),!,BA=..[B,A|M].
-tterm([A|B],BA):- atom(A),!,BA=..[B|A].
-tterm(A,A).
 
+%!  tterm(+List, -Term) is det.
+%
+%   Converts a list of tokens into a term. If the list contains specific 
+%   separators like colons, the tokens are rearranged into terms accordingly.
+%
+%   @arg List The list of tokens to convert.
+%   @arg Term The resulting term.
+%
+%   @example
+%     % Convert a list with a colon separator to a term.
+%     ?- tterm(['fun', ':', 'arg'], Term).
+%     Term = fun(arg).
+%
+%     % Convert a list of tokens to a term.
+%     ?- tterm(['hello', 'world'], Term).
+%     Term = world(hello).
+%
+
+% If the list contains a single element, return it as the term.
+tterm([A], A) :- !.
+% If the list starts with an atom followed by a colon, 
+% construct a term using the atom as the functor and the rest as arguments.
+tterm([A, ':', B | M], BA) :- atom(A), !, BA =.. [A, B | M].
+% If the list starts with two atoms, use the second atom as the functor 
+% and the first as the first argument, followed by the rest.
+tterm([A, B | M], BA) :- atom(B), !, BA =.. [B, A | M].
+% If the list starts with an atom, build a term with the atom and the rest of the list.
+tterm([A | B], BA) :- atom(A), !, BA =.. [B | A].
+% If none of the above patterns match, return the input as-is.
+tterm(A, A).
+
+%!  is_tokenizer(+Tokenizer) is nondet.
+%
+%   Defines available tokenizers that can be used on input atoms. 
+%   These tokenizers process input atoms in various ways to extract meaningful tokens.
+%
+%   @example
+%     % Check if 'tokenize_atom' is a valid tokenizer.
+%     ?- is_tokenizer(tokenize_atom).
+%     true.
+%
 is_tokenizer(into_list).
 is_tokenizer(to_case_break_atoms).
 is_tokenizer(atom_to_stem_list).
 is_tokenizer(tokenize_atom).
-%is_tokenizer(double_metaphone).
+%is_tokenizer(double_metaphone).  
 
+%!  is_an_arg_type(+String, -Type) is nondet.
+%
+%   Checks if the given string corresponds to a known argument type by querying 
+%   the FlyBase system.
+%
+%   @arg String The input string to check.
+%   @arg Type The identified type of the argument.
+%
+%   @example
+%     % Check if 'FBgn12345' is a valid FlyBase identifier.
+%     ?- is_an_arg_type('FBgn12345', Type).
+%
+is_an_arg_type(S, T) :- 
+    % Look up the identifier in the FlyBase system.
+    flybase_identifier(S, T), 
+    !.
 
+%!  has_type(+String, -Type) is nondet.
+%
+%   Checks if the given string has a specific type by matching its prefix.
+%   It extracts the first four characters of the input string and checks 
+%   against known FlyBase types.
+%
+%   @arg String The input string to check.
+%   @arg Type The identified type.
+%
+%   @example
+%     % Check if 'FBgn...' has a valid type.
+%     ?- has_type('FBgn12345', Type).
+%
+has_type(S, Type) :- 
+    % Extract the first 4 characters (prefix).
+    sub_atom(S, 0, 4, Aft, FB), 
+    % Check if the prefix matches a known FlyBase type.
+    flybase_identifier(FB, Type), 
+    !, 
+    % Ensure there is more to the string beyond the prefix.
+    Aft > 0.
 
-is_an_arg_type(S,T):- flybase_identifier(S,T),!.
-has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
-
-
-call_sexpr(S):- once_writeq_nl(call_sexpr(S)).
-%call_sexpr(Space,Expr,Result):-
+%!  call_sexpr(+SExpr) is det.
+%
+%   Executes a symbolic expression (SExpr) and prints the result. 
+%   This predicate ensures that the expression is only printed once.
+%
+%   @arg SExpr The symbolic expression to execute.
+%
+%   @example
+%     % Execute and print a symbolic expression.
+%     ?- call_sexpr('(print "Hello World")').
+%
+call_sexpr(S) :- 
+    % Print the result only once.
+    once_writeq_nl(call_sexpr(S)).
+%call_sexpr(Space, Expr, Result) :-  
 
 :- dynamic(fb_pred/2).
 
-full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
-full_atom_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+%!  full_atom_count(-Count) is det.
+%
+%   Retrieves the total number of loaded atoms. If the flag `total_loaded_atoms` 
+%   is greater than 1, it returns that count. Otherwise, it calculates the count 
+%   by summing all predicate statistics.
+%
+%   @arg Count The total number of atoms loaded.
+%
+%   @example
+%     % Get the total count of atoms.
+%     ?- full_atom_count(Count).
+%
+full_atom_count(SL) :- 
+    % Retrieve the current atom count from the flag.
+    flag(total_loaded_atoms, SL, SL), 
+    % Ensure there is more than one loaded atom.
+    SL > 1,!.
+full_atom_count(SL) :- 
+    % Retrieve the stats for each predicate and sum them.
+    findall(NC, (fb_pred(F, A), metta_stats(F, A, NC)), Each), 
+    sumlist(Each, SL).
 
+%!  heartbeat is det.
+%
+%   Prints a heartbeat message every 60 seconds to track activity.
+%   It checks the difference between the current time and the last 
+%   recorded time. If the difference is greater than or equal to 
+%   60 seconds, it prints a status message using `metta_stats/0`.
+%
+%   This predicate uses global variables to store and retrieve the 
+%   last printed time efficiently.
+%
+%   @example
+%     % Trigger the heartbeat check.
+%     ?- heartbeat.
+%
 heartbeat :-
     % Get the current time and the last printed time
     get_time(CurrentTime),
@@ -1005,78 +1981,229 @@ heartbeat :-
         true
     ).
 
-metta_stats:- gc_now,
-   writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
-   full_atom_count(SL),
-   format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
-   get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
-   post_statistic(memory,Mem),
-   post_statistic(atom_space,AS),
-   post_statistic(cputime,TotalSeconds),
-   post_statistic(atoms,Concepts),
-   flag(assert_new,CTs,CTs),
-   post_statistic(stack,StackMem),
+metta_stats :-
+    % Run garbage collection to free memory.
+    gc_now,
 
+    % Print decorative separator lines.
+    writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+    writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+    full_atom_count(SL),
+    format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
 
-   PM is Mem + StackMem,
-   RM is Mem-AS,
-   PA is RM//(SL+1),
-   APS is 60*floor(SL/(TotalSeconds+1)),
-   ACS is AS//(Concepts+1),
+    % Update the last printed time with the current time.
+    get_time(CurrentTime), 
+    nb_setval(last_printed_time, CurrentTime),
 
-   pl_stats('SymbolAtoms',Concepts),
-   pl_stats('Random samples',CTs),
-   skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
-   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
-   %pl_stats('Queryspace Memory',StackMem),
-   %CPU is CPUTime-57600,
-   format_time(TotalSeconds, Formatted),
-   skip((pl_stats('Atoms per minute',APS))),
-   pl_stats('Total Memory Used',PM),
-   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
-   nl,nl,!.
-metta_stats(F):- for_all(fb_pred(F,A),metta_stats(F,A)).
-metta_stats(F,A):- metta_stats(F,A,NC), pl_stats(F/A,NC).
-metta_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
-pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
-pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
-pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
+    % Collect statistics for memory, atom space, and CPU time.
+    post_statistic(memory, Mem),
+    post_statistic(atom_space, AS),
+    post_statistic(cputime, TotalSeconds),
+    post_statistic(atoms, Concepts),
+    flag(assert_new, CTs, CTs),  % Retrieve the assert_new counter.
+    post_statistic(stack, StackMem),
 
+    % Calculate various memory metrics.
+    PM is Mem + StackMem,  % Total memory used.
+    RM is Mem - AS,  % Relational memory.
+    PA is RM // (SL + 1),  % Bytes per atom (average).
+    APS is 60 * floor(SL / (TotalSeconds + 1)),  % Atoms per minute.
+    ACS is AS // (Concepts + 1),  % Bytes per concept node (average).
 
-% AsPred to print the formatted result.
-format_value(Value) :- float(Value),!,format("~2f",[Value]),!.
-format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
-format_value(Term)  :- format("~w",[Term]).
-%  Base case: If the number is 1G or more, show it in gigabytes (G).
-format_bytes(Bytes, Formatted) :-  Bytes >= 1073741824, GB is Bytes / 1073741824, format(string(Formatted), '~2fG', [GB]).
-% If the number is less than 1G, show it in megabytes (M).
-format_bytes(Bytes, Formatted) :- Bytes >= 104857600, Bytes < 1073741824, !, MB is Bytes / 1048576, D is floor(MB), format(string(Formatted), '~DM', [D]).
-% If the number is less than 1K, show it in bytes (B).
-format_bytes(Bytes, Formatted) :- format(string(Formatted), '~D', [Bytes]).
+    % Print collected statistics.
+    pl_stats('SymbolAtoms', Concepts),
+    pl_stats('Random samples', CTs),
+    skip((
+        pl_stats('Bytes Per Atom (Average)', PA),
+        pl_stats('Bytes Per ConceptNode (Average)', ACS)
+    )),
+    skip((
+        pl_stats('Relational Memory', RM),
+        pl_stats('ConceptNode Memory', AS)
+    )),
+    % pl_stats('Queryspace Memory', StackMem),
+    % Format the total CPU time into days, hours, minutes, and seconds.
+    format_time(TotalSeconds, Formatted),
+    skip((pl_stats('Atoms per minute', APS))),
+    % Print the total memory used.
+    pl_stats('Total Memory Used', PM),
+    % Print the formatted runtime.
+    pl_stats('Runtime (days:hh:mm:ss)', Formatted),
+    % Print two newlines and cut to prevent backtracking.
+    nl, nl, !.
+
+%!  metta_stats(+F) is det.
+%
+%   Collects statistics for all predicates with the specified functor `F`.
+%   It applies `metta_stats/2` for each matching predicate.
+%
+%   @arg F The functor whose predicates are analyzed.
+%
+%   @example
+%     % Collect statistics for predicates with the functor 'my_pred'.
+%     ?- metta_stats(my_pred).
+%
+metta_stats(F) :- 
+    % Iterate over all predicates with the given functor.
+    for_all(fb_pred(F, A), metta_stats(F, A)).
+
+%!  metta_stats(+F, +A) is det.
+%
+%   Collects and prints statistics for the predicate with functor `F` 
+%   and arity `A`.
+%
+%   @arg F The functor of the predicate.
+%   @arg A The arity of the predicate.
+%
+metta_stats(F, A) :- 
+    % Retrieve the number of clauses for the predicate.
+    metta_stats(F, A, NC), 
+    % Print the statistic.
+    pl_stats(F / A, NC).
+
+%!  metta_stats(+F, +A, -NC) is det.
+%
+%   Retrieves the number of clauses for the predicate with functor `F` 
+%   and arity `A`.
+%
+%   @arg F The functor of the predicate.
+%   @arg A The arity of the predicate.
+%   @arg NC The number of clauses in the predicate.
+%
+metta_stats(F, A, NC) :- 
+    % Create a term with the specified functor and arity.
+    functor(P, F, A), 
+    % Retrieve the number of clauses for the term.
+    predicate_property(P, number_of_clauses(NC)).
+
+%!  pl_stats(+Stat) is det.
+%
+%   Collects and prints statistics for a given statistic type.
+%
+%   @arg Stat The statistic type to collect.
+%
+pl_stats(Stat) :- 
+    % Retrieve statistics for the specified type.
+    statistics(Stat, Value), 
+    % Print the statistic value.
+    pl_stats(Stat, Value).
+
+%!  pl_stats(+Stat, +Value) is det.
+%
+%   Prints the formatted result for a statistic and its value.
+%
+%   @arg Stat The statistic type.
+%   @arg Value The value of the statistic.
+%
+pl_stats(Stat, [Value | _]) :- 
+    % If the value is non-variable, print it.
+    nonvar(Value), !, pl_stats(Stat, Value).
+pl_stats(Stat, Value) :- 
+    % Format and print the statistic and its value.
+    format("~N;\t\t~@: ~`.t ~@~100|", [format_value(Stat), format_value(Value)]), !.
+
+%!  format_value(+Value) is det.
+%
+%   Formats a value for printing based on its type (float, integer, or term).
+%
+%   @arg Value The value to format.
+%
+format_value(Value) :- 
+    float(Value),  % Format as a float with two decimal places.
+    !, format("~2f", [Value]), !.
+format_value(Bytes) :- 
+    integer(Bytes),  % If it's an integer, format it as bytes.
+    format_bytes(Bytes, Formatted), write(Formatted).
+format_value(Term) :- 
+    % Format any other term as a string.
+    format("~w", [Term]).
+
+%!  format_bytes(+Bytes, -Formatted) is det.
+%
+%   Converts a byte count into a human-readable format (GB, MB, or B).
+%
+%   @arg Bytes The byte count to format.
+%   @arg Formatted The resulting formatted string.
+%
+%   @example
+%     % Format 1073741824 bytes as 1G.
+%     ?- format_bytes(1073741824, F).
+%     F = "1.00G".
+%
+format_bytes(Bytes, Formatted) :- 
+    Bytes >= 1073741824,  % If it's 1G or more, format as gigabytes.
+    GB is Bytes / 1073741824, format(string(Formatted), '~2fG', [GB]).
+format_bytes(Bytes, Formatted) :- 
+    Bytes >= 104857600, Bytes < 1073741824,  % Format as megabytes if < 1G.
+    !, MB is Bytes / 1048576, D is floor(MB), format(string(Formatted), '~DM', [D]).
+format_bytes(Bytes, Formatted) :- 
+    % If the value is less than 1K, show it in bytes.
+    format(string(Formatted), '~D', [Bytes]).
+
 % % If the number is less than 1M, show it in kilobytes (K).
 %format_bytes(Bytes, Formatted) :- Bytes >= 1024, Bytes < 1048576, !, KB is Bytes / 1024, format(string(Formatted), '~0fK', [KB]).
 
-% Convert total seconds to days, hours, minutes, seconds, and milliseconds.
+%!  format_time(+TotalSeconds, -Formatted) is det.
+%
+%   Converts a total number of seconds into a formatted string with 
+%   days and time in `HH:MM:SS` format. Handles cases where the time 
+%   exceeds one day by computing the number of days and the remaining time.
+%
+%   @arg TotalSeconds The total number of seconds to format.
+%   @arg Formatted The resulting formatted time string.
+%
+%   @example
+%     % Convert 90061 seconds to a formatted string.
+%     ?- format_time(90061, Formatted).
+%     Formatted = "1:01:01:01".
+%
 format_time(TotalSeconds, Formatted) :-
+    % Convert total seconds to an integer (discard decimals).
     Seconds is floor(TotalSeconds),
-    % Get days, remaining seconds
-    Days is div(Seconds, 86400),
-    Remain1 is mod(Seconds, 86400)-57600,
-    format_time(string(Out),'%T',Remain1),
-    % Format the result
+        % Calculate the number of days.
+    Days is div(Seconds, 86400),  % 86400 seconds in a day.
+    % Calculate the remaining seconds after accounting for days.
+    Remain1 is mod(Seconds, 86400) - 57600,  % Adjusting time zone (offset by 16 hours).
+    % Format the remaining time into HH:MM:SS format.
+    format_time(string(Out), '%T', Remain1),
+    % Combine the days and formatted time into the final result.
     format(string(Formatted), '~w:~w', [Days, Out]).
 
-% AsPred to print the formatted time.
+%!  print_formatted_time(+TotalSeconds) is det.
+%
+%   Prints the formatted time string for a given total number of seconds.
+%   It converts the total seconds into a readable format using `format_time/2`.
+%
+%   @arg TotalSeconds The total number of seconds to format and print.
+%
+%   @example
+%     % Print the formatted time for 90061 seconds.
+%     ?- print_formatted_time(90061).
+%     1:01:01:01
+%
 print_formatted_time(TotalSeconds) :-
+    % Format the total seconds into a readable string.
     format_time(TotalSeconds, Formatted),
+    % Print the formatted time string.
     writeln(Formatted).
 
-
-metta_final:-
+%!  metta_final is det.
+%
+%   Performs final actions by saving statistics related to memory, 
+%   atoms, and the atom space.
+%
+%   @example
+%     % Execute the final statistics saving process.
+%     ?- metta_final.
+%
+metta_final :-
+    % Save statistics for memory usage.
     save_pre_statistic(memory),
+    % Save statistics for the total number of atoms.
     save_pre_statistic(atoms),
+    % Save statistics for the atom space.
     save_pre_statistic(atom_space).
+
 /*
 symbol(X):- atom(X).
 symbol_number(S,N):- atom_number(S,N).
@@ -1088,24 +2215,109 @@ symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
 symbolic_list_concat(A,B):- atomic_list_concat(A,B).
 symbol_contains(T,TT):- atom_contains(T,TT).
 */
-search_for1(X):-
-  forall((metta_atom(_Where,What),contains_var(X,What)),
-    (nl,write_src_nl(What))).
+%!  search_for1(+X) is det.
+%
+%   Searches for occurrences of the variable `X` within all atoms in the 
+%   Metta knowledge base and prints each matching atom.
+%
+%   @arg X The variable to search for.
+%
+%   @example
+%     % Search for a variable in the knowledge base.
+%     ?- search_for1('$VAR(A)').
+%
+search_for1(X) :-
+    % Iterate over all atoms, checking if they contain the variable X.
+    forall(
+        (metta_atom(_Where, What), contains_var(X, What)),
+        (nl, write_src_nl(What))  % Print matching atoms.
+    ).
 
-search_for2(X):-
-  forall((metta_file_src(_Where,What),contains_var(X,What)),
-    (nl,write_src_nl(What))).
+%!  search_for2(+X) is det.
+%
+%   Searches for occurrences of the variable `X` within all source files 
+%   loaded into the Metta system and prints each matching entry.
+%
+%   @arg X The variable to search for.
+%
+%   @example
+%     % Search for a variable in loaded source files.
+%     ?- search_for2('$VAR(A)').
+%
+search_for2(X) :-
+    % Iterate over all source entries, checking if they contain the variable X.
+    forall(
+        (metta_file_src(_Where, What), contains_var(X, What)),
+        (nl, write_src_nl(What))  % Print matching entries.
+    ).
 
+%!  metta_file_src(-Where, -What) is nondet.
+%
+%   Retrieves source entries from loaded files in the Metta system. Each 
+%   source entry is associated with a specific location and buffer.
+%
+%   @arg Where The location where the source entry was loaded.
+%   @arg What The content of the source entry.
+%
+metta_file_src(Where, What) :-
+    % Retrieve the loaded file and its buffer information.
+    loaded_into_kb(Where, File),
+    metta_file_buffer(0, _Ord, _Kind, What, Vars, File, _Loc),
+    % Attempt to name the variables within the entry.
+    ignore(maplist(name_the_var, Vars)).
 
-metta_file_src(Where,What):-
-  loaded_into_kb(Where,File), metta_file_buffer(0,_Ord,_Kind,What,Vars,File,_Loc),
-  ignore(maplist(name_the_var,Vars)).
+%!  guess_metta_vars(+What) is det.
+%
+%   Attempts to guess the variables in a given term by unifying it with 
+%   entries in the Metta file buffer.
+%
+%   @arg What The term to analyze and match.
+%
+%   @example
+%     % Guess variables within a term.
+%     ?- guess_metta_vars(my_term).
+%
+guess_metta_vars(What) :-
+    % Attempt to match the term with entries from the Metta file buffer.
+    ignore(
+        once((
+            metta_file_buffer(0, _Ord, _Kind, What0, Vars, _File, _Loc),
+            alpha_unify(What, What0),  % Perform alpha-unification.
+            maplist(name_the_var, Vars)  % Name the variables.
+        ))
+    ).
 
+%!  name_the_var(+Pair) is det.
+%
+%   Assigns a name to a variable if it is unnamed, following the 
+%   convention of prefixing the name with an underscore.
+%
+%   @arg Pair A variable and its name in the form `N=V`.
+%
+%   @example
+%     % Name a variable following the convention.
+%     ?- name_the_var('_X' = V).
+%
+name_the_var(N = V) :-
+    ignore((
+        atom_concat('_', NV, N),  % Create a new variable name.
+        V = '$VAR'(NV)  % Assign the new name to the variable.
+    )).
 
-guess_metta_vars(What):-
-  ignore(once((metta_file_buffer(0,_Ord,_Kind,What0,Vars,_File,_Loc),
-     alpha_unify(What,What0),
-     maplist(name_the_var,Vars)))).
-name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
-
-alpha_unify(What,What0):- What=@=What0,(nonvar(What)->What=What0;What==What0).
+%!  alpha_unify(+Term1, +Term2) is nondet.
+%
+%   Checks if two terms are structurally identical, accounting for 
+%   alpha-equivalence. If they are, it unifies them.
+%
+%   @arg Term1 The first term to compare.
+%   @arg Term2 The second term to compare.
+%
+%   @example
+%     % Perform alpha-unification on two terms.
+%     ?- alpha_unify(foo(X), foo(Y)).
+%     X = Y.
+%
+alpha_unify(What, What0) :-
+    What =@= What0,  % Check structural equivalence.
+    % If the terms are non-variable, unify them.
+    (nonvar(What) -> What = What0; What == What0).
