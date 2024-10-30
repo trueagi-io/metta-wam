@@ -175,6 +175,7 @@
 			<F N="scripts/flybase_setup.sh"/>
 			<F N="scripts/html_pass_fail.sh"/>
 			<F N="scripts/into_junit.py"/>
+			<F N="scripts/lsp_server_prolog_install.sh"/>
 			<F N="scripts/metta-jupyter-kernel"/>
 			<F N="scripts/metta-jupyter-kernel-debug"/>
 			<F N="scripts/mettalog-docker"/>

@@ -36,10 +36,46 @@ else
     ln -s "$LINK_TARGET" "$LINK_NAME"
     if [ $? -eq 0 ]; then
         echo "Symlink created successfully."
-        exit 0
     else
         echo "Failed to create symlink."
         exit 1
     fi
 fi
 
+# Source and target directories
+SOURCE_DIR="$HOME/metta-wam/src/packs"
+TARGET_DIR="$HOME/.local/share/swi-prolog/pack"
+
+
+# Debugging output to see which directories are being checked
+echo "Checking directories in: $SOURCE_DIR"
+
+# Loop over each directory in the source directory
+for dir in "$SOURCE_DIR"/*/; do
+    # Ensure that path expansion is happening correctly
+    if [ -d "$dir" ]; then
+        #echo "Inspecting directory: $dir"
+
+        # Check if the directory contains a file named 'pack.pl'
+        if [ -f "${dir}pack.pl" ]; then
+            # Get the name of the directory
+            dir_name=$(basename "$dir")
+
+            # Define the link name in the target directory
+            link_name="$TARGET_DIR/$dir_name"
+
+            # Check if a symlink already exists
+            if [ -L "$link_name" ]; then
+                echo "Symlink already exists for $link_name, skipping..."
+            else
+                # Create a symbolic link
+                ln -s "$dir" "$link_name"
+                echo "Created symlink for $dir at $link_name"
+            fi
+        else
+            : #echo "No 'pack.pl' found in $dir, skipping..."
+        fi
+    else
+        echo "Directory not found or glob did not expand: $dir"
+    fi
+done

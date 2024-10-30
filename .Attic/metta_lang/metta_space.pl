@@ -529,17 +529,6 @@ skip(_).
     !,
     call(Method, SpaceNameOrInstance, Count),
     dout(space, ['type-method-result', Type, Method, Count]).
-
-%!  'atom-count'(+Environment, -Count) is det.
-%
-%   Counts the number of atoms in the given environment by evaluating the arguments.
-%
-%   @arg Environment The environment to be queried.
-%   @arg Count The result of the atom count.
-%
-%   @example Count the atoms in an environment:
-%     ?- 'atom-count'(env, Count).
-%
 'atom-count'(Environment, Count) :-
     eval_args(['atom-count', Environment], Count).
 
@@ -562,17 +551,6 @@ skip(_).
     call(Type, SpaceNameOrInstance),
     !,
     call(Method, SpaceNameOrInstance, AtomsL).
-
-%!  'get-atoms'(+Environment, -Atoms) is det.
-%
-%   Fetches all atoms from the given environment by evaluating the arguments.
-%
-%   @arg Environment The environment to be queried.
-%   @arg Atoms The list of atoms retrieved from the environment.
-%
-%   @example Get atoms from an environment:
-%     ?- 'get-atoms'(env, Atoms).
-%
 'get-atoms'(Environment, Atoms) :-
     eval_args(['get-atoms', Environment], Atoms).
 
