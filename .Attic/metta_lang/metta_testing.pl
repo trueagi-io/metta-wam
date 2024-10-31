@@ -17,8 +17,8 @@
 
 :- ensure_loaded(library(occurs)).
 
-% Ensure that the `metta_interp` library is loaded
-% This loads all the predicates called from this file
+% Ensure that the `metta_interp` library is loaded.
+% This loads all the predicates called from this file.
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_utils).
 
