@@ -116,11 +116,19 @@
 
 ; Public MeTTa
 (@doc compile!
-  (@desc "Compiles the Function - its definition will no longer change as atoms are added or retracted to the current space.")
+  (@desc "Compiles the Function - its definition will no longer change as atoms are added or retracted to the current space. Prints the compiled definition.")
   (@params (
     (@param "Function to compile")))
   (@return "Returns () if the Function compiles."))
 (: compile! (-> Function Expression))
+
+; Public MeTTa
+(@doc compile-space!
+  (@desc "Compiles all functions defined in the Space, as compile!. Prints the compiled definitions.")
+  (@params (
+    (@param "Space to compile")))
+  (@return "Returns () if the Space compiles."))
+(: compile-space! (-> hyperon::space::DynSpace Expression))
 
 ; Public MinimalMeTTa
 (@doc chain
