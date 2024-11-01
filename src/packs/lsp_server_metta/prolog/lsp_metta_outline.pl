@@ -4,7 +4,7 @@
 
 :- dynamic(gave_document_symbols/2).
 :- retractall(gave_document_symbols(_, _)). % when we reload this file
-xref_document_symbols(Doc, Symbols):- debugging(optimize(no_cache)),gave_document_symbols(Doc, Symbols),!.
+xref_document_symbols(Doc, Symbols):- debugging(optimize(no_cache)),gave_document_symbols(Doc, Symbols),Symbols\==[],!.
 xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
     xref_metta_source(Doc),
     maybe_doc_path(Doc,Path),!,
