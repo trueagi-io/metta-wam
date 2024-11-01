@@ -157,17 +157,31 @@ skip_xref_atom([Pred | _]):-
 %   @arg Path The file path of the Metta file.
 %   @arg NewText The current text content to compare.
 
+xref_maybe(Doc, NewText) :- maybe_doc_path(Doc,Path), !, xref_maybe(Path, NewText).
 xref_maybe(Path, NewText) :- user:next_text(Path, OldText), OldText = NewText, !,
-    debug(lsp(high), 'NewText for "~w" has not changed, skipping reload.~n', [Path]).
+    debug(lsp(xref), 'NewText for "~w" has not changed, skipping reload.', [Path]).
 xref_maybe(Path, NewText) :- user:full_text(Path, OldText), OldText = NewText, !,
-    debug(lsp(high), 'FullText for "~w" has not changed, skipping reload.~n', [Path]).
-xref_maybe(Path, NewText) :- retractall(user:full_text(Path, _)), assertz(user:full_text(Path, NewText)),!.
+    debug(lsp(xref), 'FullText for "~w" has not changed, skipping reload.', [Path]).
+%xref_maybe(Path, NewText) :- retractall(user:full_text(Path, _)), assertz(user:full_text(Path, NewText)),!.
 xref_maybe(Path, NewText) :-
-    debug(lsp(high), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),
-    retractall(user:full_text(Path, _)),
+    user:full_text(Path, _), retractall(user:full_text(Path, _)),
+    debug(lsp(xref), 'Text for "~w" has changed, Maybe reprocessing buffer.', [Path]),
     xref_source_expired(Path),
+    retractall(user:next_text(Path, _)),
     asserta(user:next_text(Path, NewText)),
-    xref_enqueue_file(Path).
+    xref_source_path(Path).
+xref_maybe(Path, NewText) :-
+    \+ has_xref_info(Path),
+    debug(lsp(xref), 'No XRef Info for buffer: ~q', [Path]),
+    retractall(user:next_text(Path, _)),
+    asserta(user:next_text(Path, NewText)),!,
+    xref_source_path(Path).
+xref_maybe(Path, NewText) :-
+    has_xref_info(Path),
+    debug(lsp(xref), 'HAVE XRef Info for buffer ~q', [Path]),
+    retractall(user:next_text(Path, _)),
+    asserta(user:next_text(Path, NewText)),
+    xref_source_path(Path).
 
 
 xref_source_dir(Dirs) :- exists_directory(Dirs), enumerate_directory_files(Dirs, FileList), !, maplist(xref_metta_source, FileList).
@@ -194,11 +208,20 @@ xref_metta_source(Path) :- ignore(xref_source_path(Path)).
 % Check if the file or directory should be processed
 xref_source_path(Doc) :- var(Doc),!.
 xref_source_path(List):- is_list(List),!,maplist(xref_source_path,List).
+xref_source_path(Str) :- string(Str),atom_string(Path,Str),!,xref_source_path(Path).
+xref_source_path(Str) :- \+ atom(Str),!, debug(lsp(xref), 'not a xref_source_path: ~q', [Str]), !.
 xref_source_path(Doc) :- maybe_doc_path(Doc, Path), !, xref_source_path(Path).
 xref_source_path(Dirs) :- exists_directory(Dirs), !,nop( xref_source_dir(Dirs)).
-xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(lsp(xrefTime), 'Skipping check for "~w" as 20 seconds have not passed.~n', [Path]), !.
+%xref_source_path(Path):- has_xref_info(Path), !, debug(lsp(xref), 'Has xref info: ~w.', [Path]), !.
+xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(lsp(xref), 'Skipping check for "~w" as 20 seconds have not passed.', [Path]), !.
 xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the file has a .metta extension.
 xref_source_path(Path) :- xref_enqueue_file(Path).
+
+has_xref_info(Path):- user:full_text(Path, OldText), user:next_text(Path, NextText), NextText\==OldText,!,fail.
+has_xref_info(Path):- metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
+has_xref_info(Path):- made_metta_file_buffer(Path),!.
+
+
 
 :- dynamic
    xref_file_state/2,
@@ -310,16 +333,16 @@ get_current_text(Path, NewText) :-
 %
 %   @arg Path    The file path.
 %   @arg NewText The current text content to compare.
-:- dynamic(last_retrieved_string/2).
+:- dynamic(user:full_text/2).
 compare_and_update_string(Path, NewText) :-
-    (   last_retrieved_string(Path, OldText),  % Retrieve the last known content.
+    (   user:full_text(Path, OldText),  % Retrieve the last known content.
         OldText \= NewText  % Check if the content has changed.
-    -> (debug(lsp(xref), 'Text for "~w" has changed, reprocessing buffer.~n', [Path]),  % Log the change.
-        retractall(last_retrieved_string(Path, _)),  % Remove the old content entry.
-        asserta(last_retrieved_string(Path, NewText)),  % Update with the new content.
+    -> (debug(lsp(xref), 'Text for "~w" has changed, reprocessing buffer.', [Path]),  % Log the change.
+        retractall(user:full_text(Path, _)),  % Remove the old content entry.
+        asserta(user:full_text(Path, NewText)),  % Update with the new content.
         xref_source_expired(Path),
         xref_metta_file_text('&xref', Path, NewText))   % Reprocess the file with the new content.
-    ;   (debug(lsp(xref), 'Text for "~w" has not changed, skipping reload.~n', [Path]),  % Log if no change is detected.
+    ;   (debug(lsp(xref), 'Text for "~w" has not changed, Still cross-reference the file for consistency.', [Path]),  % Log if no change is detected.
         xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
 
@@ -429,7 +452,7 @@ xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fai
 %   reading.
 xref_metta_file_text(_Self, Path, Text) :-
     asserta(made_metta_file_buffer(Path)),!,
-    debug(lsp(xref), "xref_metta_file_text ~w", [Path]),  % Log the file path being processed.
+    debug(lsp(xref), "made_metta_file_buffer ~w", [Path]),  % Log the file path being processed.
     must_det_ll((
         % Convert the file path to an absolute path
         absolute_file_name(Path, Filename),
@@ -485,10 +508,10 @@ maybe_process_directives(+, exec([Op|List])):-
 source_file_text(Doc, FullText) :- maybe_doc_path(Doc,Path), !, source_file_text(Path, FullText).
 source_file_text(Path, FullText) :- user:next_text(Path, FullText),!.
 source_file_text(Path, FullText) :- user:full_text(Path, FullText),!.
-source_file_text(Path, String) :-
+source_file_text(Path, String) :- fail,
     % Tries to retrieve text using doc_text_fallback/2 first.
     findall(Str,
-        (lsp_metta_changes:doc_text_fallback(Path, D4s),
+        (lsp_metta_changes:doc_text_fallback_d4(Path, D4s),
          sub_term(d(_, Str, _, _), D4s),
          string(Str)),
     List),

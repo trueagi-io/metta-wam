@@ -37,7 +37,11 @@ not_mod_lsp_metta_utils
 clause_with_arity_in_file_at_position(Clause, Arity, Doc, Loc) :-
    maybe_doc_path(Doc,Path), !,
    clause_with_arity_in_file_at_position(Clause, Arity, Path, Loc).
-clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char)) :-
+
+clause_with_arity_in_file_at_position(Clause, _Arity, Path, Range):- !,
+        get_code_at_range(symbol, Path, Range, Clause), !.
+
+clause_with_arity_in_file_at_position(Clause, Arity, Path, line_char(Line1, Char)) :- fail,
     % Setup a stream to read the file and find the clause at the specified position.
     lsp_metta_changes:doc_text_d4(Path,SplitText),
     succl(Line0, Line1),
@@ -217,12 +221,38 @@ get_code_at_range(TargetType, Uri, Range, Target):-
 
 get_code_at_range(text, Uri, Range, Target):- !, get_code_at_range(symbol, Uri, Range, Target).
 
-get_code_at_range(symbol, Path, Range, Target):- !,
+
+get_code_at_range(symbol, Path, Range, Code):-
+    into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
+    metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
+    \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
+    \+ is_list(Code),!,maybe_name_vars(Vs), !.
+    %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
+
+get_code_at_range(symbol_arity, Path, Range, Code):-
+    get_code_at_range(symbol, Path, Range, Symbol),
+    metta_file_buffer(_, _Ord, _Kind, [Head|Rest], _Vs, Path, _BRange),  Head == Symbol,
+    Head == Symbol, is_list(Rest), length(Rest,Len),Code = Symbol/Len,!.
+get_code_at_range(symbol_arity, Path, Range, Symbol/0):-
+    get_code_at_range(symbol, Path, Range, Symbol), !.
+
+get_code_at_range(nonsymbol, Path, Range, Code):-
+    into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
+    metta_file_buffer(0, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
+    \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
+    is_list(Code),
+    %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
+    maybe_name_vars(Vs), !.
+
+
+get_code_at_range(symbol, Path, Range, Target):- fail, !,
     must_succeed((
         _{start: RStart, end: _REnd} :< Range,  % Extract the start and end from the LSP range.
         _{line: StartLine0, character: StartChar} :< RStart,  % Get line and character from the start position.
         Start = line_char(StartLine0, StartChar),  % Convert to a line_char pair.
-        lsp_metta_utils:clause_with_arity_in_file_at_position(Target, _Arity, Path, Start)  % Get the clause at the specified position.
+        clause_with_arity_in_file_at_position(Target, _Arity, Path, Start)  % Get the clause at the specified position.
     )).
 
 get_code_at_range(toplevel_form, Path, Range, Code) :-
@@ -251,15 +281,15 @@ get_code_at_range(term, Path, Range, Code) :-
 
 % For `expression`, it first resolves the symbol and then looks for the code within the buffer at the range.
 get_code_at_range(expression, Path, Range, Code) :-
-    get_code_at_range(symbol, Path, Range, Target),  % First, get the symbol at the range.
-    Target \== '',
+    %get_code_at_range(symbol, Path, Range, Target),  % First, get the symbol at the range.
+    %Target \== '',
     %path_doc(Path, Uri),  % Extract the file path from the URI.
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
     metta_file_buffer(N, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
-    sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
+    %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
-    (N > 0 -> is_list(Code) ; true),
+    (N > 0 -> compound(Code) ; true),
     maybe_name_vars(Vs), !.
 
 get_code_at_range(expression, Path, Range, Code) :-
@@ -271,7 +301,7 @@ get_code_at_range(expression, Path, Range, Code) :-
     %(N > 0 -> is_list(Code) ; true),
     maybe_name_vars(Vs), !.
 
-get_code_at_range(expression, Uri, Range, Target):- get_code_at_range(symbol, Uri, Range, Target), Target \== '' , !.
+get_code_at_range(expression, Uri, Range, Target):- get_code_at_range(term, Uri, Range, Target), Target \== '' , !.
 get_code_at_range(expression, Uri, Range, Code):- get_code_at_range(exact, Uri, Range, Code).
 % brange_to_dict(BRange,CodeRange), get_code_at_range(exact, Uri, BRange, Code).  % Refine the code extraction with exact range.
 
