@@ -1,8 +1,8 @@
 :- module(lsp_metta_split, [
-    split_text_document/2,
+    split_text_document_d4/2,
     split_document_get_multiple_sections/7,
     split_document_get_section_only/4,
-    coalesce_text/2
+    coalesce_text_d4/2
 ]).
 :- use_module(lsp_metta_parser, [
     annotated_get_blank_lines/3,
@@ -51,10 +51,10 @@ split_document_get_multiple_sections(N1,N2,N1,[d(L,Body,EndPosition,Meta)|SplitT
 
 % Choose the split strategy
 % Have only one of these commented out - any split strategy should work as long as lines are not broken up
-%split_text_document(FullText,SplitText) :- split_text_single_lines(FullText,SplitText).
+%split_text_document_d4(FullText,SplitText) :- split_text_single_lines(FullText,SplitText).
 % should use the number of lines in the file, but that would need to be calculated
-%split_text_document(FullText,[d(Big,FullText,Big,[])]) :- current_prolog_flag(max_tagged_integer,Big).
-split_text_document(FullText,SplitText) :- split_text_document_by_clause(FullText,SplitText).
+%split_text_document_d4(FullText,[d(Big,FullText,Big,[])]) :- current_prolog_flag(max_tagged_integer,Big).
+split_text_document_d4(FullText,SplitText) :- split_text_document_by_clause(FullText,SplitText).
 
 split_text_document_by_clause(FullText,SplitText) :-
     setup_call_cleanup(
@@ -130,6 +130,6 @@ split_text_single_lines(FullText,SplitText) :-
     split_string(FullText, "\n", "", SplitText0),
     maplist(create_line_entry(1),SplitText0,[],SplitText).
 
-coalesce_text(SplitText,FullText) :-
+coalesce_text_d4(SplitText,FullText) :-
     maplist(extract_line_entry,SplitText,Strings),
     concat_strings(Strings,FullText).

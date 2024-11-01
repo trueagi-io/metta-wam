@@ -1,0 +1,134 @@
+% Main predicate: in_answer_io/1
+% Executes the goal G while capturing its output and handling it appropriately.
+in_answer_io(G) :-
+    % Get the answer_output stream
+    answer_output(AnswerOut),
+    % Get the current output stream
+    current_output(CurrentOut),
+    % Get the standard output stream via file_no(1)
+    get_stdout_stream(StdOutStream),
+    % If the output is already visible to the user, execute G directly
+    (   AnswerOut == CurrentOut
+    ;   AnswerOut == StdOutStream
+    )
+    ->  call(G)
+    ;   % Otherwise, capture and process the output
+        % Determine the encoding
+        stream_property(CurrentOut, encoding(CurrentEncoding0)),
+        (   CurrentEncoding0 == text
+        ->  stream_property(AnswerOut, encoding(CurrentEncoding))
+        ;   CurrentEncoding = CurrentEncoding0
+        ),
+        % Start capturing output per solution
+        capture_output_per_solution(G, AnswerOut, StdOutStream, CurrentEncoding).
+
+% Helper predicate: get_stdout_stream/1
+% Retrieves the standard output stream based on file_no(1)
+get_stdout_stream(StdOutStream) :-
+    current_stream(_, write, StdOutStream),
+    stream_property(StdOutStream, file_no(1)).
+
+% Predicate: capture_output_per_solution/4
+% Captures and processes output for each solution of G
+capture_output_per_solution(G, AnswerOut, StdOutStream, CurrentEncoding) :-
+    % Prepare initial memory file and write stream
+    new_memory_file(MemFile),
+    open_memory_file(MemFile, write, WriteStream, [encoding(CurrentEncoding)]),
+    % Initialize state as a compound term
+    State = state(MemFile, WriteStream),
+    % Redirect output to the memory file
+    set_output(WriteStream),
+    % Use setup_call_catcher_cleanup to handle execution and cleanup
+    setup_call_catcher_cleanup(
+        true,
+        (
+            G,
+            % Check determinism after G succeeds
+            deterministic(Det),
+            % Process the captured output
+            process_and_finalize_output(State, AnswerOut, StdOutStream, CurrentEncoding),
+            % If there are more solutions, prepare for the next one
+            (   Det == false
+            ->  % Prepare a new memory file and write stream for the next solution
+                new_memory_file(NewMemFile),
+                open_memory_file(NewMemFile, write, NewWriteStream, [encoding(CurrentEncoding)]),
+                % Update the state non-backtrackably
+                nb_setarg(1, State, NewMemFile),
+                nb_setarg(2, State, NewWriteStream),
+                % Redirect output to the new write stream
+                set_output(NewWriteStream)
+            ;   % If deterministic, leave cleanup for finalize_output
+                true
+            )
+        ),
+        Catcher,
+        (
+            % Final cleanup
+            finalize_output(State, AnswerOut, StdOutStream, CurrentEncoding)
+        )
+    ),
+    % Handle exceptions and failures
+    handle_catcher(Catcher).
+
+% Predicate: process_and_finalize_output/4
+% Processes and finalizes the captured output
+process_and_finalize_output(State, AnswerOut, StdOutStream, CurrentEncoding) :-
+    % Extract MemFile and WriteStream from State
+    arg(1, State, MemFile),
+    arg(2, State, WriteStream),
+    % Close the write stream to flush the output
+    close(WriteStream),
+    % Reset the output stream to its original state
+    set_output(user_output),
+    % Read the captured content from the memory file
+    open_memory_file(MemFile, read, ReadStream, [encoding(CurrentEncoding)]),
+    read_string(ReadStream, _, Content),
+    close(ReadStream),
+    % Write the content to the streams, handling encoding differences
+    write_to_stream(AnswerOut, Content, CurrentEncoding),
+    (   AnswerOut \== StdOutStream
+    ->  write_to_stream(user_error, Content, CurrentEncoding)
+    ;   true
+    ),
+    % Free the memory file
+    free_memory_file(MemFile).
+
+% Predicate: finalize_output/4
+% Finalizes the output by processing any remaining captured output
+finalize_output(State, AnswerOut, StdOutStream, CurrentEncoding) :-
+    % Process and finalize the output
+    process_and_finalize_output(State, AnswerOut, StdOutStream, CurrentEncoding).
+
+% Predicate: handle_catcher/1
+% Handles the Catcher to decide how to proceed
+handle_catcher(exit).  % Goal succeeded; do nothing
+handle_catcher(fail) :- fail.  % Goal failed; fail the predicate
+handle_catcher(exception(Exception)) :- throw(Exception).  % Re-throw exceptions
+
+% Predicate: write_to_stream/3
+% Writes content to a stream, handling encoding differences
+write_to_stream(Stream, Content, ContentEncoding) :-
+    % Get the encoding of the destination stream
+    stream_property(Stream, encoding(StreamEncoding)),
+    (   StreamEncoding == ContentEncoding
+    ->  % Encodings match; write content directly
+        with_output_to(Stream, write(Content))
+    ;   % Encodings differ; transcode content
+        transcode_content(Content, ContentEncoding, StreamEncoding, TranscodedContent),
+        with_output_to(Stream, write(TranscodedContent))
+    ).
+
+% Predicate: transcode_content/4
+% Transcodes content from one encoding to another
+transcode_content(Content, FromEncoding, ToEncoding, TranscodedContent) :-
+    % Write the content to a temporary memory file with the original encoding
+    new_memory_file(TempMemFile),
+    open_memory_file(TempMemFile, write, TempWriteStream, [encoding(FromEncoding)]),
+    write(TempWriteStream, Content),
+    close(TempWriteStream),
+    % Read the content from the temporary memory file with the target encoding
+    open_memory_file(TempMemFile, read, TempReadStream, [encoding(ToEncoding), encoding_errors(replace)]),
+    read_string(TempReadStream, _, TranscodedContent),
+    close(TempReadStream),
+    % Free the temporary memory file
+    free_memory_file(TempMemFile).

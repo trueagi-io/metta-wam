@@ -16,3 +16,4 @@
 !(match &self (GreaterThan $x $y)
     (If (and (== (get-type $x) Number) (== (get-type $y) Number))
         (If (EqualOrGreater $x $y) yay)))
+

@@ -10,6 +10,15 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 @author James Cash
 */
 
+:- debug(lsp(main)).
+:- debug(lsp(errors)),
+   debug(lsp(todo)),
+   debug(lsp(threads)),
+   debug(lsp(high)),
+   debug(lsp(xref)),
+   debug(lsp(todo)),
+   debug(lsp(position)),!.
+
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
 :- use_module(library(http/json), [atom_json_dict/3]).
@@ -20,31 +29,51 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- use_module(library(utf8), [utf8_codes//1]).
 :- use_module(library(yall)).
 
-:- use_module(lsp_metta_utils).
+
+
+
+:- discontiguous(lsp_hooks:handle_msg_hook/3).
+
+:- multifile(lsp_hooks:handle_msg_hook/3).
+:-   dynamic(lsp_hooks:handle_msg_hook/3).
+:- multifile(user:predicate_help_hook/5).
+:-   dynamic(user:predicate_help_hook/5).
+:- multifile(lsp_hooks:hover_hook/5).
+:-   dynamic(lsp_hooks:hover_hook/5).
+
+
+:- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
 :- use_module(lsp_json_parser, [lsp_metta_request//1]).
-:- use_module(lsp_metta_changes, [handle_doc_changes/2]).
+%:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 :- ensure_loaded(lsp_metta_completion).
-:- use_module(lsp_metta_colours, [
-%                            file_colours/2,
-%                            file_range_colours/4,
+:- use_module(lsp_prolog_colours, [
+                            file_colours/2,
+                            file_range_colours/4,
                             token_types/1,
                             token_modifiers/1]).
 :- use_module(lsp_metta_xref).
+/*
 :- use_module(lsp_metta_split, [
-        split_text_document/2,
-        coalesce_text/2
+        split_text_document_d4/2,
+        coalesce_text_d4/2
 ]).
-
+*/
 
 % will change to module in a few days (easier to test externally from `user`)
 :- user:ensure_loaded(lsp_metta_code_actions).
 %:- user:ensure_loaded(lsp_metta_save_actions).
+:- user:ensure_loaded(lsp_metta_hover).
 :- user:ensure_loaded(lsp_metta_workspace).
+:- user:ensure_loaded(lsp_metta_references).
 :- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
 :- dynamic(user:full_text/2).
+:- user:ensure_loaded(lsp_prolog_changes).
+%:- user:ensure_loaded(lsp_prolog_checking).
+%:- user:ensure_loaded(lsp_prolog_colours).
+%:- user:ensure_loaded(lsp_prolog_utils).
 
-:- dynamic lsp_metta_changes:doc_text/2.
+:- dynamic lsp_metta_changes:doc_text_d4/2.
 
 :- discontiguous lsp_server_metta:handle_msg/3.
 
@@ -58,7 +87,10 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 % 2 is a good default as it needs to be able to implement interruptions anyway
 % (this is separate from the file indexer threads)
 :- dynamic(lsp_worker_threads/1).
-lsp_worker_threads(0).
+%lsp_worker_threads(0). % no threads thus "$/cancelRequest" cant be implemented
+%lsp_worker_threads(1). % 1 thread thus "$/cancelRequest" is working
+%lsp_worker_threads(3). % 3 thread thus "$/cancelRequest" is working
+lsp_worker_threads(10). % 10 threads might be OK but overkill
 
 % Main entry point
 main :-
@@ -66,8 +98,16 @@ main :-
     set_prolog_flag(report_error, true),
     set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
-    debug(server),
-    debug(server(high)),
+    nodebug(lsp(_)), % Everything
+    prolog_ide(debug_monitor),
+    %debug(lsp(low)),
+    debug(lsp(main)),
+    debug(lsp(errors)),
+    debug(lsp(threads)),
+    debug(lsp(high)),
+    debug(lsp(todo)),
+    debug(lsp(position)),
+    debug(lsp(xref)),
     load_mettalog_xref,
     ignore(handle_threads(Args)),  % Handle threading based on max threads.
     start(Args).
@@ -77,25 +117,29 @@ handle_threads([MaxThreadsArg | _]) :-
     ignore((atom_number(MaxThreadsArg, MaxThreadsN),
     retractall(lsp_worker_threads(_)),
     assertz(lsp_worker_threads(MaxThreadsN)))).
-    
-start_lsp_worker_threads:-    
+
+:- dynamic(started_lsp_worker_threads/0).
+start_lsp_worker_threads:- started_lsp_worker_threads,!.
+start_lsp_worker_threads:-
+    assert(started_lsp_worker_threads),
     lsp_worker_threads(MaxThreads),
     ( MaxThreads > 0
     -> create_workers('$lsp_worker_pool', MaxThreads) % Create thread pool if max threads > 0
-    ; debug(server, "Running synchronously since max threads = 0", [])  % Sync mode
+    ; debug_lsp(threads, "Running synchronously since max threads = 0", [])  % Sync mode
     ).
 
 % Worker pool implementation
 % Create a pool with Id and number of workers.
 % After the pool is created, post_job/1 can be used to send jobs to the pool.
 
-create_workers(Id, N) :-
-    message_queue_create(Id),
+create_workers(QueueId, N) :-
+    message_queue_create(QueueId),
     forall(between(1, N, _),
-           thread_create(do_work(Id), _, [])).
+          thread_create(do_work(QueueId), _, [])),
+  debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
 
 % Dynamic predicates for cancellation mechanism
-:- dynamic thread_request/2.
+:- dynamic task_thread/2.
 :- dynamic id_was_canceled/1.
 
 :- if( \+ prolog_load_context(reloading,true)).
@@ -106,39 +150,33 @@ create_workers(Id, N) :-
 
 do_work(QueueId) :-
     repeat,
-      thread_get_message(QueueId, Task),
-      ( Task = lsp_task(Out, Req) ->
+    catch(do_work_stuff(QueueId),_,true),
+    fail.
+
+do_work_stuff(QueueId):-
+    thread_get_message(QueueId, Task),
+    Task = lsp_task(Out, Req),
     thread_self(ThreadId),
-    ( get_dict(id, Req.body, RequestId) ->
-        true
-    ; RequestId = none ),
+    request_id(Req, RequestId),
     % Register this thread handling RequestId
-    ( id_was_canceled(RequestId) ->
-        debug(server, "Request ~w was canceled before it got started!", [RequestId])
-    ; ( with_mutex('$lsp_request_mutex', assertz(thread_request(RequestId, ThreadId))),
-        debug(server, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
+    ( with_mutex('$lsp_request_mutex', id_was_canceled(RequestId)) ->
+        debug_lsp(threads, "Request ~w was canceled before it got started!", [RequestId])
+    ; ( with_mutex('$lsp_request_mutex', assertz(task_thread(RequestId, ThreadId))),
+        debug_lsp(threads, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
         catch(
             handle_request(Out, Req),
             canceled,
-            ( debug(server, "Request ~w was canceled", [RequestId]),
+            ( debug_lsp(threads, "Request ~w was canceled", [RequestId]),
               send_cancellation_response(Out, RequestId)
-            )
-        ),
+            )),
         % Clean up after handling
-        with_mutex('$lsp_request_mutex',
-            retract(thread_request(RequestId, ThreadId))
-        )
-      )
-          )
-      ; % Handle other types of tasks if needed
-        true
-    ),
-    fail.
+        with_mutex('$lsp_request_mutex', retract(task_thread(RequestId, ThreadId)))
+    )).
 
 % Post a job to be executed by one of the pool's workers.
-
-post_job(Id, Task) :-
-    thread_send_message(Id, Task).
+post_job(QueueId, Task) :-
+    thread_send_message(QueueId, Task),
+    nop(debug_lsp(threads, "~q", [posted_job(Task)])).
 
 % Send a cancellation response if necessary
 send_cancellation_response(_OutStream, _RequestId) :-
@@ -151,10 +189,10 @@ send_cancellation_response(_OutStream, _RequestId) :-
 
 % Start the server based on input arguments
 start([stdio]) :- !,
-    debug(server, "Starting stdio client", []),
+    debug_lsp(threads, "Starting stdio client", []),
     stdio_server.
 start(Args) :-
-    debug(server, "Unknown args ~w", [Args]).
+    debug_lsp(threads, "Unknown args ~w", [Args]).
 
 % stdio server initialization
 stdio_server :-
@@ -171,80 +209,6 @@ stdio_server :-
     set_stream(Out, encoding(utf8)),
     %stdio_handler_io(In, Out). %(might use this one later)
     stdio_handler(A-A, In, Out).
-
-
-
-/*
-% Handling requests from input/ouput stream (might use this one later)
-stdio_handler_io(In, Out) :-
-    lsp_worker_threads(MaxThreads),
-    read_message(In, Codes),
-    ( Codes == end_of_file ->
-        true
-    ; phrase(lsp_metta_request(Req), Codes, RemainingCodes),
-      handle_parsed_request(Req, Out, MaxThreads),
-      ( RemainingCodes == [] ->
-          stdio_handler(In, Out)
-      ; % There might be multiple requests in the buffer
-        process_remaining_requests(RemainingCodes, Out, MaxThreads),
-        stdio_handler(In, Out)
-      )
-    ).
-
-% Process remaining requests in the buffer
-process_remaining_requests(Codes, Out, MaxThreads) :-
-    ( phrase(lsp_metta_request(Req), Codes, RemainingCodes) ->
-        handle_parsed_request(Req, Out, MaxThreads),
-        ( RemainingCodes == [] ->
-            true
-        ; process_remaining_requests(RemainingCodes, Out, MaxThreads)
-        )
-    ; % Could not parse a complete request, ignore or handle error
-      true
-    ).
-    
-
-% Read a complete message from the input stream
-read_message(In, Codes) :-
-    read_header(In, ContentLength),
-    ( ContentLength = end_of_file ->
-        Codes = end_of_file
-    ; read_codes(In, ContentLength, Codes)
-    ).
-
-% Read the header to get Content-Length
-read_header(In, ContentLength) :-
-    read_line_to_codes(In, HeaderCodes),
-    ( HeaderCodes == end_of_file ->
-        ContentLength = end_of_file
-    ; atom_codes(HeaderLine, HeaderCodes),
-      ( HeaderLine = '' ->
-          % Empty line, headers end
-          read_header(In, ContentLength)
-      ; split_string(HeaderLine, ": ", "", ["Content-Length", LengthStr]) ->
-          number_string(ContentLength, LengthStr),
-          % Read the blank line after headers
-          read_line_to_codes(In, _)
-      ; % Other headers, ignore
-        read_header(In, ContentLength)
-      )
-    ).
-
-% Read the message body based on Content-Length
-read_codes(In, ContentLength, Codes) :-
-    read_n_codes(In, ContentLength, Codes).
-
-% Helper to read N codes from input
-read_n_codes(In, N, Codes) :-
-    ( N > 0 ->
-        get_code(In, C),
-        N1 is N - 1,
-        read_n_codes(In, N1, RestCodes),
-        Codes = [C|RestCodes]
-    ; Codes = []
-    ).
-*/
-% Handling requests from input stream
 
 
 
@@ -269,13 +233,26 @@ handle_requests(Out, InCodes, Tail) :-
     ; handle_requests(Out, Rest, Tail) ).
 handle_requests(_, T, T).
 
+
+immediate_method(Request):- is_dict(Request), !, immediate_request(Request).
+immediate_method("$/cancelRequest"). % Handle cancel immediately
+immediate_method(TM):- cancelable_method(TM), !, fail.
+% immediate_method(_).
+
+immediate_request(Req):- Method = Req.body.method, !, immediate_method(Method).
+immediate_request(Req):- Body = Req.body, !, immediate_request(Body).
+immediate_request(Body):- Method = Body.method, !, immediate_method(Method).
+
+cancelable_method('textDocument/documentSymbol').
+cancelable_method('textDocument/hover').
+% cancelable_method('textDocument/didOpen').
+
 % Handle parsed requests
 handle_parsed_request(Out, Req) :-
-    ( Req.body.method == "$/cancelRequest" ->
-        handle_msg(Req.body.method, Req.body, _)  % Handle cancel immediately
-    ; lsp_worker_threads(0) ->
-        handle_request(Out, Req)
-    ; post_job('$lsp_worker_pool', lsp_task(Out, Req))
+    ( ( lsp_worker_threads(0) ; immediate_request(Req) )
+    -> handle_request(Out, Req)
+    ;
+        (    post_job('$lsp_worker_pool', lsp_task(Out, Req)), debug_lsp(threads, "~q", [posted_job(Req.body.method)]) )
     ).
 
 % Backtrace error handler
@@ -283,7 +260,7 @@ catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
         ( Err == canceled ->
             throw(canceled)
-        ; ( debug(server(high), "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+        ; ( debug(lsp(errors), "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
             throw(Err)
           )
         )
@@ -299,30 +276,57 @@ send_message(Stream, Msg) :-
     format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
     flush_output(Stream))).
 
+debug_lsp(Topic,Format,Args):-
+ ignore((% debugging(Topic),
+   \+ \+ ((maplist(hide_gvars,Args),
+           flush_output(user_error), format(user_error, '~N~w ',[Topic]),format(user_error, Format, Args), nl(user_error),nl(user_error),flush_output(user_error),
+           debug(lsp(Topic),Format,Args))))).
+
+hide_gvars(Arg):- numbervars(Arg,696,_,[attvar(skip),singletons(true)]).
+
+request_id(Req, RequestId):- \+ is_dict(Req), !, RequestId = not_dict(Req).
+request_id(Req, RequestId):- get_dict(id, Req, RequestId), !.
+request_id(Req, RequestId):- get_dict(body, Req, Body), !, request_id(Body, RequestId).
+request_id(  _, none).
+
+first_dict_key(_Key, Req, RequestId):- \+ is_dict(Req), !, RequestId = not_dict(Req).
+first_dict_key( Key, Req, RequestId):- get_dict(Key, Req, RequestId), !.
+first_dict_key( Key, Req, RequestId):- get_dict(_, Req, Body), first_dict_key(Key, Body, RequestId), RequestId\==none, RequestId\=not_dict(_), !.
+first_dict_key(_Key,   _, none).
+
+
+
 % Handle individual requests
 handle_request(OutStream, Req) :-
-    debug(server(high), "Request ~q", [Req.body]),
+    Method = Req.body.method,
+    first_dict_key(uri,Req.body,URI),
+    request_id(Req, Id),
+    debug_lsp(high, "Request id ~q: ~q", [Id=Method, uri=URI]),
     catch(
-        ( catch_with_backtrace(handle_msg(Req.body.method, Req.body, Resp)),
-          ignore((user:nodebug_lsp_response(Req.body.method) ->
-                  debug(server(high), "response id: ~q", [Resp.id])
-                ; debug(server(high), "response ~q", [Resp])
+        ( catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
+          request_id(Resp, RespIdNone),
+         (number(RespIdNone) -> RespId = RespIdNone ; RespId = Id),
+          ignore((
+               (user:nodebug_lsp_response(Method),Resp\==false)
+               -> debug_lsp(high, "Response id: ~q (~q) <nodebug>", [RespId,Method])
+                ; debug_lsp(high, "Response id: ~q (~q) ~q", [RespId,Method,Resp])
                 )),
           ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
         Err,
         ( Err == canceled ->
             throw(canceled)
-        ; ( debug(server, "error handling msg ~q", [Err]),
-          get_dict(id, Req.body, Id),
-          send_message(OutStream, _{id: Id,
+        ; ( debug(lsp(errors), "error handling msg ~q", [Err]),
+          ignore((get_dict(id, Req.body, Id),
+                  send_message(OutStream, _{id: Id,
                            error: _{code: -32001,
-                                             message: "server error"}})
+                                             message: "server error"}})))
           )
         )).
 
 % Hide responses for certain methods
-%user:nodebug_lsp_response("textDocument/hover").
+user:nodebug_lsp_response("textDocument/hover").
 user:nodebug_lsp_response("textDocument/documentSymbol").
+user:nodebug_lsp_response("textDocument/codeAction").
 
 
 % Server capabilities declaration
@@ -342,7 +346,7 @@ server_capabilities(
       workspaceSymbolProvider: true,  % Workspace symbol provider
 
       definitionProvider: true,
-      declarationProvider: true,
+      declarationProvider: false, % we are using menu for "definition" for declarations for now
       implementationProvider: true,
       typeDefinitionProvider: true,
       referencesProvider: true,
@@ -352,36 +356,50 @@ server_capabilities(
 
 
       codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
-      documentFormattingProvider: true,
+      documentFormattingProvider: false, % [TODO] almost finished
       %% documentOnTypeFormattingProvider: false,
       renameProvider: false,
       % documentLinkProvider: false,
-      % colorProvider: true,
+      colorProvider: false,
       foldingRangeProvider: false,
-      executeCommandProvider: _{commands: ["execute_code", "query_metta", "assert_metta"]},
-      semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
+      executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta", "source_gpt_comment", "refactor_gpt_rewrite", "run_all_tests"]},
+     /* semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
                                           tokenModifiers: TokenModifiers},
                                 range: true,
                                 % [TODO] implement deltas
-                                full: _{delta: false}},
+                                full: _{delta: false}},*/
+      semanticTokensProvider: false,
 
       workspace: _{workspaceFolders: _{supported: true,
                                        changeNotifications: true}}
      }
-) :-
-    token_types(TokenTypes),
-    token_modifiers(TokenModifiers).
+) :- !.
+    %token_types(TokenTypes),
+    %token_modifiers(TokenModifiers).
 
-
+:- dynamic(user:client_capabilities/1).
 
 :- dynamic in_editor/1.
 
-% is not already an object?
-into_result_object(Help,Response):- \+ is_dict(Help),
-   Response = _{contents: _{kind: plaintext, value: Help}}.
-into_result_object(Help,Response):-  Help=Response,!.
-
 :- discontiguous(handle_msg/3).
+
+:- dynamic(user:last_request/2).
+% Save the last Msg.body Object for each method
+handle_msg( Method, MsgBody, _) :-
+    once(( retractall(user:last_request(Method,_)),
+      asserta(user:last_request(Method,MsgBody)))),
+      fail.
+
+:- dynamic(user:last_range/2).
+handle_msg(Method, Msg, _) :-
+   %Method \== "textDocument/hover",
+   Method \== "textDocument/semanticTokens/range",
+   % Method =="textDocument/codeAction" % is the most authoratative
+    once((  _{params: Params} :< Msg,
+      _{ range: Range } :< Params,
+      retractall(user:last_range(Method,_)),
+      asserta(user:last_range(Method,Range)))),
+      fail.
 
 handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
@@ -393,12 +411,12 @@ handle_msg("initialize", Msg,
     ( Params.rootUri \== null
     -> xref_metta_source(Params.rootUri)
     ; true ),
-    assert(client_capabilities(Params)),
+    assert(user:client_capabilities(Params)),
     server_capabilities(ServerCapabilities).
 
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
     _{id: Id} :< Msg,
-    debug(server, "received shutdown message", []).
+    debug(lsp(main), "received shutdown message", []).
 
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
@@ -406,11 +424,9 @@ handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
 handle_msg("textDocument/hover", Msg, _{id: Id, result: Response}) :- % fail,
     _{params: _{position: _{character: Char0, line: Line0},
                 textDocument: _{uri: Doc}}, id: Id} :< Msg,
-    doc_path(Doc, Path),
-    (  help_at_position(Path, Line0, Char0, Help)
-    -> into_result_object(Help, Response)
-    ;  Response = null), !.
+    hover_at_position(Doc, Line0, Char0, Response), !.
 handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallback
+
 
 % CALL: textDocument/documentSymbol
 % IN: params:{textDocument:{uri:file://<FILEPATH>}}
@@ -442,10 +458,10 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
        _{id: Id, params: Params} :< Msg,
        _{textDocument: _{uri: Doc},
          position: _{line: Line0, character: Char0}} :< Params,
-    path_doc(HintPath, Doc),   Loc = line_char(Line0, Char0),
+    path_doc(HintPath, Doc),
     Loc = line_char(Line0, Char0),
     lsp_metta_utils:clause_with_arity_in_file_at_position(Name, Arity, HintPath, Loc),
-        debug(server(high),"~n~q~n",[message_id_target(_Msg, Id, Doc, HintPath, Loc, Name/Arity)]).
+        nop(debug(lsp(position),"~q",[message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity)])).
 
 % CALL: method:textDocument/definition
 % IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILEPATH>}}
@@ -454,7 +470,6 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
 % textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
 handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-     debug(server(high),"~q",[defined_at(definition, HintPath, Target, Location)]),
      defined_at(definition,HintPath, Target, Location),!.
 handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
 
@@ -499,10 +514,10 @@ handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !
 %    {insertText:handle_requests(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_requests/3},
 %    {insertText:handle_request(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_request/3},
 %    {insertText:handle_msg(${1:_}, ${2:_}, ${3:_})$0,insertTextFormat:2,label:handle_msg/3},
-%    {insertText:help_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:help_at_position/4},
-%    {insertText:handle_doc_changes(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes/2}]}
+%    {insertText:hover_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:hover_at_position/4},
+%    {insertText:handle_doc_changes_d4(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes_d4/2}]}
 % OUT: {id:123,result:[]}
-handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
+handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :- fail,
      _{id: Id, params: Params} :< Msg,
      _{textDocument: _{uri: Uri},
        position: _{line: Line0, character: Char0}} :< Params,
@@ -529,6 +544,7 @@ handle_msg("textDocument/semanticTokens/full", Msg, _{id: Msg.id, result: []}) :
 % CALL: textDocument/semanticTokens/range
 % IN: {range:{end:{character:0,line:40},{character:0,line:0}},textDocument:{uri:file://<FILE_PATH>}}
 % No Example from Prolog yet FIXME
+
 handle_msg("textDocument/semanticTokens/range", Msg,
             _{id: Id, result: _{data: Highlights}}) :- fail,
      _{id: Id, params: Params} :< Msg,
@@ -556,31 +572,32 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
     _{text: FullText} :< TextDoc,
-    %debug(server,"~w",[FullText]),
-    split_text_document(FullText,SplitText),
-    debug(server,"~w",[SplitText]),
     doc_path(FileUri, Path),
-    retractall(lsp_metta_changes:doc_text(Path, _)),
-    assertz(lsp_metta_changes:doc_text(Path, SplitText)),
-    ( in_editor(Path) ; assertz(in_editor(Path)) ),
-    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
-    xref_maybe(Path, DocFullText), % Check if changed and enqueue the reindexing
-    check_errors_resp(FileUri, Resp).
+    %debug(lsp(low),"~w",[FullText]),
+    /*split_text_document_d4(FullText,SplitText),
+    debug(lsp(low),"~w",[SplitText]),
+    retractall(lsp_metta_changes:doc_text_d4(Path, _)),
+    assertz(lsp_metta_changes:doc_text_d4(Path, SplitText)),*/
+    ( in_editor(Path) -> true ; assertz(in_editor(Path)) ),
+    %source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
+    xref_maybe(Path, FullText), % Check if changed and enqueue the reindexing
+    check_errors_resp(FileUri, Resp), !.
 
 % Handle document change notifications
+%  returning false in handle_msg/3 is because no response is expected from the lsp server
 handle_msg("textDocument/didChange", Msg, false) :-
     _{params: _{textDocument: TextDoc,
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
     doc_path(Uri, Path),
     handle_doc_changes(Path, Changes),
-    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text/2
+    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
     xref_maybe(Path, DocFullText). % Check if changed and enqueue the reindexing
 
 % Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
     _{params: Params} :< Msg,
-    % xref_source_expired(Params.textDocument.uri),
+    xref_source_expired(Params.textDocument.uri),
     check_errors_resp(Params.textDocument.uri, Resp).
 
 % Handle document close notifications
@@ -590,32 +607,32 @@ handle_msg("textDocument/didClose", Msg, false) :-
     doc_path(FileUri, Path),
     retractall(in_editor(Path)).
 
-handle_msg("initialized", Msg, false) :-
-    debug(server, "initialized ~w", [Msg]).
+handle_msg("initialized", Msg, false) :- !,
+    debug(lsp(main), "initialized ~w", [Msg]).
 
 handle_msg("$/setTrace", _Msg, false).
 
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-
     _{params: _{id: CancelId}} :< Msg,
-    debug(server, "Cancel request received for ID ~w", [CancelId]),
+    debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
     with_mutex('$lsp_request_mutex',
-        (   thread_request(CancelId, ThreadId)
+        (   task_thread(CancelId, ThreadId)
         ->  % Attempt to interrupt the thread
-            debug(server, "Attempting to cancel thread ~w", [ThreadId]),
+            debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
             catch(thread_signal(ThreadId, throw(canceled)), _, true),  % In case thread is already gone
-            ignore(retract(thread_request(CancelId, ThreadId)))        % In case thread retracted it
-        ;   ( debug(server, "No running thread found for request ID ~w", [CancelId]),
+            ignore(retract(task_thread(CancelId, ThreadId)))        % In case thread retracted it
+        ;   ( debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
               assertz(id_was_canceled(CancelId))
             )
         )).
 
 % Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
-    debug(server, "Received exit, shutting down", []),
+    debug(lsp(main), "Received exit, shutting down", []),
     halt.
 
-    
+
 % Handle the 'workspace/symbol' Request
 handle_msg("workspace/symbol", Msg, _{id: Id, result: Symbols}) :-
     _{id: Id, params: Params} :< Msg,
@@ -652,20 +669,21 @@ get_symbol_name(Symbol, Name) :-
 % wildcard
 handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented"}}) :-
     _{id: Id} :< Msg, !,
-    debug(server, "unknown message ~w", [Msg]).
+    debug(lsp(todo), "unknown message ~w", [Msg]).
 handle_msg(_, Msg, false) :-
-    debug(server, "unknown notification ~w", [Msg]).
+    debug(lsp(todo), "unknown notification ~w", [Msg]).
 
 % [TODO]Check errors and respond with diagnostics
 check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
                              params: _{uri: FileUri, diagnostics: Errors}}) :-
     doc_path(FileUri, Path),
-    metta_check_errors(Path, Errors).
+    metta_check_errors(Path, Errors).  % only notices unbalanced parens (and not smart about ones found in quotes)
+
 % [TODO]Check errors and respond with diagnostics
 check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
-                             params: _{uri: FileUri, diagnostics: Errors}}) :-
+                             params: _{uri: FileUri, diagnostics: Errors}}) :- fail,
     doc_path(FileUri, Path),
     prolog_check_errors(Path, Errors).
 check_errors_resp(_, false) :-
-    debug(server, "Failed checking errors", []).
+    debug(lsp(errors), "Failed checking errors", []).
 

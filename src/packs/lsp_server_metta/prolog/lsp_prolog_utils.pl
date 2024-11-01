@@ -20,7 +20,7 @@ source and stuff.
 :- use_module(library(apply), [maplist/3, exclude/3]).
 :- use_module(library(prolog_xref)).
 :- use_module(library(prolog_source), [read_source_term_at_location/3]).
-:- use_module(library(help), [help_html/3, help_objects/3]).
+:- use_module(library(help)).
 :- use_module(library(lynx/html_text), [html_text/1]).
 :- use_module(library(solution_sequences), [distinct/2]).
 :- use_module(library(lists), [append/3, member/2, selectchk/4]).
@@ -145,7 +145,7 @@ help_at_position(Path, Line1, Char0, S) :-
     format_help(S0, HS)) -> sformat(S, "Write this for MeTTa: `~q`\n ~w", [Clause,HS]);
       sformat(S,"```metta\n;; MeTTa Docs : ~w \n; Line: ~w, Column:~w\n```\n",
             [Path,Line1, Char0]).
-    
+
 
 %! format_help(+Help0, -Help1) is det.
 %
@@ -163,8 +163,8 @@ format_help(HelpFull, Help) :-
 
 predicate_help(_, Pred, Help) :-
     nonvar(Pred),
-    help_objects(Pred, exact, Matches), !,
-    catch(help_html(Matches, exact-exact, HtmlDoc), _, fail),
+    prolog_help:help_objects(Pred, exact, Matches), !,
+    catch(prolog_help:help_html(Matches, exact-exact, HtmlDoc), _, fail),
     setup_call_cleanup(open_string(HtmlDoc, In),
                        load_html(stream(In), Dom, []),
                        close(In)),
@@ -180,8 +180,8 @@ predicate_help(HerePath, Pred, Help) :-
     memberchk(predicate(_, Summary, _), Parsed),
     format(string(Help), "  ~w is ~w.~n~n~w", [Signature, Mode, Summary]).
 predicate_help(_, Pred/_Arity, Help) :-
-    help_objects(Pred, dwim, Matches), !,
-    catch(help_html(Matches, dwim-Pred, HtmlDoc), _, fail),
+    prolog_help:help_objects(Pred, dwim, Matches), !,
+    catch(prolog_help:help_html(Matches, dwim-Pred, HtmlDoc), _, fail),
     setup_call_cleanup(open_string(HtmlDoc, In),
                        load_html(stream(In), Dom, []),
                        close(In)),
@@ -320,4 +320,10 @@ find_var(Term, Offset, parentheses_term_position(F, T, SubPoses), Var) =>
 find_var({SubTerm}, Offset, brace_term_position(F, T, SubPos), Var) =>
     between(F, T, Offset),
     find_var(SubTerm, Offset, SubPos, Var).
-find_var(Term, Offset, SubPos, Var), Term \== Var => fail.
+find_var(Term, _Offset, _SubPos, Var), Term \== Var => fail.
+
+
+
+
+
+
