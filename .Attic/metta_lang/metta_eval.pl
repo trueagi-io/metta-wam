@@ -1848,7 +1848,7 @@ minus(A,B,C):- plus(B,C,A).
 eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):-
     AE = MettaPred,
     metta_compiled_predicate(Self,AE,Len),
-    len_or_unbound([AE|More],Len),
+    len_or_unbound(More,Len),
 
   must_det_ll((
     current_predicate(AE/Arity),

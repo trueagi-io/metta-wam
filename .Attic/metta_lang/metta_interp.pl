@@ -1258,9 +1258,10 @@ fn_append1(Term,X,eval_H(Term,X)).
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
+
   expand_to_hb(Preds,H,_B),
   functor(H,F,A), %trace,
-  if_t(true, % (show_transpiler),
+  if_t((show_transpiler),
     color_g_mesg_ok('#005288',(
    ignore((
       % \+ predicate_property(H,defined),
