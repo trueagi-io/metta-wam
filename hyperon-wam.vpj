@@ -199,6 +199,11 @@
 			<F N="scripts/total_loonits.sh"/>
 		</Folder>
 		<Folder Name="src">
+			<Folder Name="packs">
+				<Folder Name="lsp_server_metta">
+					<F N="src/packs/lsp_server_metta/lsp-metta.el"/>
+				</Folder>
+			</Folder>
 			<F
 				N="src/*.*"
 				Recurse="1"
