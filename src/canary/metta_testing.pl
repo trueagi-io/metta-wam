@@ -80,12 +80,45 @@ loonit_number(FS) :-
     % Calculates total count with a base of 1.
     FS is Successes + Failures + 1.
 
+%!  string_replace(+Original, +Search, +Replace, -Replaced) is det.
+%
+%   Replaces all occurrences of `Search` in `Original` with `Replace`,
+%   producing `Replaced`. This predicate breaks `Original` into segments
+%   split by `Search`, then concatenates these segments with `Replace`
+%   between each.
+%
+%   @arg Original The original string to search within.
+%   @arg Search   The substring to search for and replace.
+%   @arg Replace  The substring to insert in place of `Search`.
+%   @arg Replaced The resulting string after all replacements.
+%
+%   @example
+%     % Replace all occurrences of "foo" with "bar" in the string:
+%     ?- string_replace("foo_test_foo", "foo", "bar", Replaced).
+%     Replaced = "bar_test_bar".
+%
 string_replace(Original, Search, Replace, Replaced) :-
     symbolic_list_concat(Split, Search, Original),
     symbolic_list_concat(Split, Replace, Replaced),!.
 
-get_test_name(Number,TestName) :-
-   ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
+%!  get_test_name(+Number, -TestName) is det.
+%
+%   Generates a test name by appending a formatted `Number` to the base
+%   path or filename currently loaded. If `loading_file` is defined
+%   with a non-empty path, it is used as the base; otherwise, a default
+%   path ('SOME/UNIT-TEST') is used.
+%
+%   @arg Number   The test number to include in the name.
+%   @arg TestName The generated test name, combining the base path with
+%                 the test number in a standardized format.
+%
+%   @example
+%     % Generate a test name for test number 5:
+%     ?- get_test_name(5, TestName).
+%     TestName = 'SOME/UNIT-TEST.05'.
+%
+get_test_name(Number, TestName) :-
+   ((nb_current(loading_file, FilePath), FilePath \== []) -> true ; FilePath = 'SOME/UNIT-TEST'),
    make_test_name(FilePath, Number, TestName).
 
 %!  ensure_basename(+FilePath0, -FilePath) is det.
