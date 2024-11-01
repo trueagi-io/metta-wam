@@ -601,6 +601,11 @@ check_metalog_in_path() {
 # Call the function to check and update PATH
 check_metalog_in_path
 
+# Ensure the script is executable
+chmod +x ./scripts/lsp_server_prolog_install.sh
+# Call the lsp_server_prolog_install.sh script
+( ./scripts/lsp_server_prolog_install.sh )
+
 echo -e "${GREEN}SWIPL executable is: ${NC}$(which swipl)"
 
 echo -e "${GREEN}Installation and setup complete${NC}!"

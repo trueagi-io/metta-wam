@@ -53,84 +53,47 @@
 	<CustomFolders>
 		<Folder
 			Name="Source Files"
-			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d">
-		</Folder>
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d"></Folder>
 		<Folder
 			Name="Header Files"
-			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
-		</Folder>
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if"></Folder>
 		<Folder
 			Name="Resource Files"
-			Filters="*.ico;*.cur;*.dlg">
-		</Folder>
+			Filters="*.ico;*.cur;*.dlg"></Folder>
 		<Folder
 			Name="Bitmaps"
 			Filters="*.bmp"/>
 		<Folder
 			Name="Other Files"
-			Filters="">
-		</Folder>
+			Filters=""></Folder>
 	</CustomFolders>
 	<List Name="RTE">
 	</List>
 	<Files AutoFolders="DirectoryView">
-		<Folder Name="../.vscode">
-			<Folder Name="extensions">
-				<Folder Name="royward.metta-lsp-0.0.2">
-					<F
-						N="../.vscode/extensions/royward.metta-lsp-0.0.2/*.*"
-						Recurse="1"
-						Excludes=".git/;*.metta.html;*.bak;build/"
-						L="1"/>
-				</Folder>
-			</Folder>
-		</Folder>
-		<Folder Name="../hyperon-experimental">
-			<F
-				N="../hyperon-experimental/*.*"
-				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
-		</Folder>
-		<Folder Name="/usr">
-			<Folder Name="local">
-				<Folder Name="lib">
-					<Folder Name="swipl">
-						<Folder Name="library">
-							<Folder Name="ext">
-								<Folder Name="swipy">
-									<Folder Name="python">
-										<F N="/usr/local/lib/swipl/library/ext/swipy/python/janus.py"/>
-										<F N="/usr/local/lib/swipl/library/ext/swipy/python/janus_swi.py"/>
-									</Folder>
-								</Folder>
-							</Folder>
-						</Folder>
-					</Folder>
-				</Folder>
-			</Folder>
-		</Folder>
 		<Folder Name="t:/">
-			<Folder Name="root/.local">
-				<Folder Name="share">
-					<Folder Name="swi-prolog">
-						<Folder Name="pack">
-							<Folder Name="function_expansion">
-								<F
-									N="t:/root/.local/share/swi-prolog/pack/function_expansion/*.*"
-									Recurse="1"
-									Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
-							</Folder>
-							<Folder Name="prolog_graphviz">
-								<F
-									N="t:/root/.local/share/swi-prolog/pack/prolog_graphviz/*.*"
-									Recurse="1"
-									Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
-							</Folder>
-							<Folder Name="prolog_library_collection">
-								<F
-									N="t:/root/.local/share/swi-prolog/pack/prolog_library_collection/*.*"
-									Recurse="1"
-									Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+			<Folder Name="root">
+				<Folder Name=".local">
+					<Folder Name="share">
+						<Folder Name="swi-prolog">
+							<Folder Name="pack">
+								<Folder Name="function_expansion">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/function_expansion/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
+								<Folder Name="prolog_graphviz">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/prolog_graphviz/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
+								<Folder Name="prolog_library_collection">
+									<F
+										N="t:/root/.local/share/swi-prolog/pack/prolog_library_collection/*.*"
+										Recurse="1"
+										Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+								</Folder>
 							</Folder>
 						</Folder>
 					</Folder>
@@ -142,9 +105,26 @@
 				<F N=".github/workflows/ci.yml"/>
 			</Folder>
 		</Folder>
+		<Folder Name="../.vscode">
+			<Folder Name="extensions">
+				<Folder Name="royward.metta-lsp-0.0.2">
+					<F
+						N="../.vscode/extensions/royward.metta-lsp-0.0.2/*.*"
+						Recurse="1"
+						Excludes=".git/;*.metta.html;*.bak;build/"
+						L="1"/>
+				</Folder>
+			</Folder>
+		</Folder>
 		<Folder Name="docs">
 			<F
 				N="docs/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		</Folder>
+		<Folder Name="../hyperon-experimental">
+			<F
+				N="../hyperon-experimental/*.*"
 				Recurse="1"
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 		</Folder>
@@ -195,6 +175,7 @@
 			<F N="scripts/flybase_setup.sh"/>
 			<F N="scripts/html_pass_fail.sh"/>
 			<F N="scripts/into_junit.py"/>
+			<F N="scripts/lsp_server_prolog_install.sh"/>
 			<F N="scripts/metta-jupyter-kernel"/>
 			<F N="scripts/metta-jupyter-kernel-debug"/>
 			<F N="scripts/mettalog-docker"/>
@@ -218,6 +199,11 @@
 			<F N="scripts/total_loonits.sh"/>
 		</Folder>
 		<Folder Name="src">
+			<Folder Name="packs">
+				<Folder Name="lsp_server_metta">
+					<F N="src/packs/lsp_server_metta/lsp-metta.el"/>
+				</Folder>
+			</Folder>
 			<F
 				N="src/*.*"
 				Recurse="1"
@@ -230,6 +216,24 @@
 				Recurse="1"
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
+		</Folder>
+		<Folder Name="/usr">
+			<Folder Name="local">
+				<Folder Name="lib">
+					<Folder Name="swipl">
+						<Folder Name="library">
+							<Folder Name="ext">
+								<Folder Name="swipy">
+									<Folder Name="python">
+										<F N="/usr/local/lib/swipl/library/ext/swipy/python/janus.py"/>
+										<F N="/usr/local/lib/swipl/library/ext/swipy/python/janus_swi.py"/>
+									</Folder>
+								</Folder>
+							</Folder>
+						</Folder>
+					</Folder>
+				</Folder>
+			</Folder>
 		</Folder>
 		<Folder Name="wiki">
 			<F

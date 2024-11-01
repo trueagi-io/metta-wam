@@ -21,7 +21,7 @@
 :- use_module(library(lists), [numlist/3]).
 :- use_module(library(yall)).
 %:- use_module(lsp_metta_utils, [linechar_offset/3]).
-:- use_module(lsp_metta_changes, [doc_text_fallback/2]).
+:- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
 
 % James added
 :- use_module(library(prolog_xref), [xref_defined/3, xref_source/2]).
@@ -52,7 +52,7 @@ get_prefix_codes(Stream, Offset0, Codes0, Codes) :-
 get_prefix_codes(_, _, Codes, Codes).
 %
 prefix_at(File, Position, Prefix) :-
-    doc_text_fallback(File, DocCodes),
+    source_file_text(File, DocCodes),
     setup_call_cleanup(
         open_string(DocCodes, Stream),
         ( linechar_offset(Stream, Position, _),
@@ -241,9 +241,8 @@ resolve_code_lens(CodeLens, ResolvedCodeLens) :-
 % Get document lines from URI
 get_document_lines(Uri, Lines) :-
     path_doc(Path, Uri),
-    lsp_metta_changes:doc_text(Path, SplitText),
-    coalesce_text(SplitText, Text),
-    split_string(Text, "\n", "", Lines).
+    source_file_text(Path, DocFullText),
+    split_string(DocFullText, "\n", "", Lines).
 
 % Check if a line contains a symbol and get the symbol positions
 contains_symbol(Line, Symbol, StartChar, EndChar) :-
@@ -302,7 +301,7 @@ symbol_documentation(_, "No documentation available.").
 call_openai_for_completions(Word, Completions, ApiKey) :-
     % Set up the OpenAI API URL and Headers
     OpenAIURL = 'https://api.openai.com/v1/chat/completions',
-    
+
     % Construct the request payload for gpt-3.5-turbo model
     RequestPayload = _{
         model: "gpt-3.5-turbo",
@@ -365,10 +364,10 @@ call_openai_for_completions_with_context(Word, Context, Completions, ApiKey) :-
     % Prepare a combined prompt using the context and word
     atom_concat(Context, '\n\nUser: ', PrePrompt),
     atom_concat(PrePrompt, Word, Prompt),
-    
+
     % Set up the OpenAI API URL and Headers
     OpenAIURL = 'https://api.openai.com/v1/chat/completions',
-    
+
     % Construct the request payload for gpt-3.5-turbo model
     RequestPayload = _{
         model: "gpt-3.5-turbo",
@@ -498,7 +497,7 @@ test_for_completions_with_context(FilePath) :-
     call_openai_for_completions_with_context("test", Context, Completions, ApiKey), nl, nl,
     writeq(Completions), nl.
 
-test_for_completions_with_context:- 
+test_for_completions_with_context:-
   test_for_completions_with_context('context_file.txt').
 
 

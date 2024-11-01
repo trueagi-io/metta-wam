@@ -20,25 +20,25 @@ This is a slightly modified version of the directions found at https://www.swi-p
 
 * Make sure that you are in the `metta-wam/src/packs` directory. From the `metta-wam` directory:
 
-  ```bash
+```bash
 cd src/packs
 ```
 
 * Create a `.tgz` (tarred and gzipped) file. Note that the suffix should be `.tgz`, not the more usual `.tar.gz`.
 
-  ```bash
+```bash
 tar -zcvf lsp_server_metta-0.0.3.tgz --exclude=vscode lsp_server_metta
 ```
 
 * From SWI-Prolog, install the file directly as a package:
 
-  ```prolog
+```prolog
 ?- pack_install('lsp_server_metta-0.0.3.tgz').
 ```
 
 * You may need to install the `logicmoo_utils` package. If you already have this (you can check with `pack_list('logicmoo_utils').`, where `i` as the first character of the return line means installed, `p` means not installed), it won't hurt to install it again:
 
-  ```prolog
+```prolog
 pack_install('logicmoo_utils').
 ```
 
