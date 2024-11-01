@@ -99,7 +99,7 @@ main :-
     set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
     nodebug(lsp(_)), % Everything
-    prolog_ide(debug_monitor),
+    %prolog_ide(debug_monitor),
     %debug(lsp(low)),
     debug(lsp(main)),
     debug(lsp(errors)),
