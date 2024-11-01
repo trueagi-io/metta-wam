@@ -109,10 +109,10 @@
 (@doc eval-for
   (@desc "Evaluates input Atom for results of Type. As eval save that only results of Type are returned. Note that as only one evaluation step is performed, if evaluation continues on the return value of this function the final result may not be of Type.")
   (@params (
-    (@param "Atom to be evaluated")
-    (@param "Type to evaluate for")))
+    (@param "Type to evaluate for")
+    (@param "Atom to be evaluated")))
   (@return "Result of evaluation of Type"))
-(: eval-for (-> Atom Type Atom))
+(: eval-for (-> Type Atom Atom))
 
 ; Public MeTTa
 (@doc compile!
