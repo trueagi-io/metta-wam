@@ -1767,3 +1767,17 @@
     (@param "Cleanup")))
   (@return "Result of Form."))
 (: setup-call-cleanup! (-> Atom Atom Atom Atom))
+
+;; Public MeTTaLog
+(@doc predicate-arity
+  (@desc "Returns the arity of Function's predicate form, i.e. the function-arity + 1. (The additional argument being the function's result as an argument to the predicate.)")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function's predicate form."))
+
+;; Public MeTTaLog
+(@doc function-arity
+  (@desc "Returns the arity of Function.")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function."))
