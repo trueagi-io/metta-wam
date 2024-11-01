@@ -224,10 +224,10 @@ get_code_at_range(text, Uri, Range, Target):- !, get_code_at_range(symbol, Uri, 
 
 get_code_at_range(symbol, Path, Range, Code):-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(_Lvl, _Ord, _Kind, Code, _Vs, Path, BRange),  % Get the buffer contents for the file.
+    metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
-    \+ is_list(Code),!.
+    \+ is_list(Code),!,maybe_name_vars(Vs), !.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
 
 get_code_at_range(symbol_arity, Path, Range, Code):-

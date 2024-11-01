@@ -150,12 +150,16 @@ create_workers(QueueId, N) :-
 
 do_work(QueueId) :-
     repeat,
-        thread_get_message(QueueId, Task),
-      ( Task = lsp_task(Out, Req) ->
+    catch(do_work_stuff(QueueId),_,true),
+    fail.
+
+do_work_stuff(QueueId):-
+    thread_get_message(QueueId, Task),
+    Task = lsp_task(Out, Req),
     thread_self(ThreadId),
     request_id(Req, RequestId),
     % Register this thread handling RequestId
-    ( id_was_canceled(RequestId) ->
+    ( with_mutex('$lsp_request_mutex', id_was_canceled(RequestId)) ->
         debug_lsp(threads, "Request ~w was canceled before it got started!", [RequestId])
     ; ( with_mutex('$lsp_request_mutex', assertz(task_thread(RequestId, ThreadId))),
         debug_lsp(threads, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
@@ -164,18 +168,10 @@ do_work(QueueId) :-
             canceled,
             ( debug_lsp(threads, "Request ~w was canceled", [RequestId]),
               send_cancellation_response(Out, RequestId)
-            )
-        ),
+            )),
         % Clean up after handling
-        with_mutex('$lsp_request_mutex',
-            retract(task_thread(RequestId, ThreadId))
-        )
-      )
-          )
-      ; % Handle other types of tasks if needed
-        true
-    ),
-    fail.
+        with_mutex('$lsp_request_mutex', retract(task_thread(RequestId, ThreadId)))
+    )).
 
 % Post a job to be executed by one of the pool's workers.
 post_job(QueueId, Task) :-
@@ -283,6 +279,7 @@ send_message(Stream, Msg) :-
 debug_lsp(Topic,Format,Args):-
  ignore((% debugging(Topic),
    \+ \+ ((maplist(hide_gvars,Args),
+           flush_output(user_error), format(user_error, '~N~w ',[Topic]),format(user_error, Format, Args), nl(user_error),nl(user_error),flush_output(user_error),
            debug(lsp(Topic),Format,Args))))).
 
 hide_gvars(Arg):- numbervars(Arg,696,_,[attvar(skip),singletons(true)]).
@@ -290,22 +287,29 @@ hide_gvars(Arg):- numbervars(Arg,696,_,[attvar(skip),singletons(true)]).
 request_id(Req, RequestId):- \+ is_dict(Req), !, RequestId = not_dict(Req).
 request_id(Req, RequestId):- get_dict(id, Req, RequestId), !.
 request_id(Req, RequestId):- get_dict(body, Req, Body), !, request_id(Body, RequestId).
-% request_id(Req, RequestId):- get_dict(params, Req, Body), !, request_id(Body, RequestId).
-request_id(_, none).
+request_id(  _, none).
+
+first_dict_key(_Key, Req, RequestId):- \+ is_dict(Req), !, RequestId = not_dict(Req).
+first_dict_key( Key, Req, RequestId):- get_dict(Key, Req, RequestId), !.
+first_dict_key( Key, Req, RequestId):- get_dict(_, Req, Body), first_dict_key(Key, Body, RequestId), RequestId\==none, RequestId\=not_dict(_), !.
+first_dict_key(_Key,   _, none).
+
 
 
 % Handle individual requests
 handle_request(OutStream, Req) :-
     Method = Req.body.method,
+    first_dict_key(uri,Req.body,URI),
     request_id(Req, Id),
-    debug_lsp(high, "Request ~q: ~q", [Id, Method]),
+    debug_lsp(high, "Request id ~q: ~q", [Id=Method, uri=URI]),
     catch(
         ( catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
           request_id(Resp, RespIdNone),
          (number(RespIdNone) -> RespId = RespIdNone ; RespId = Id),
-          ignore((user:nodebug_lsp_response(Method)
-               -> debug_lsp(high, "response id: ~q (~q) <nodebog>", [RespId,Method])
-                ; debug_lsp(high, "response id: ~q (~q) ~q", [RespId,Method,Resp])
+          ignore((
+               (user:nodebug_lsp_response(Method),Resp\==false)
+               -> debug_lsp(high, "Response id: ~q (~q) <nodebug>", [RespId,Method])
+                ; debug_lsp(high, "Response id: ~q (~q) ~q", [RespId,Method,Resp])
                 )),
           ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
         Err,
@@ -335,31 +339,30 @@ server_capabilities(
                           willSaveWaitUntil: true %???
                           },
       hoverProvider: true,
-      %completionProvider: _{},
+      completionProvider: _{},
 
 
       documentSymbolProvider: true,
       workspaceSymbolProvider: true,  % Workspace symbol provider
 
-   /* definitionProvider: true,
+      definitionProvider: true,
       declarationProvider: false, % we are using menu for "definition" for declarations for now
       implementationProvider: true,
       typeDefinitionProvider: true,
       referencesProvider: true,
 
       documentHighlightProvider: false,
-      % codeActionProvider: true,  % Changed from false to true
-      codeActionProvider: false,  % Changed from false to true
+      codeActionProvider: true,  % Changed from false to true
 
-*/
-      % codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
+
+      codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
       documentFormattingProvider: false, % [TODO] almost finished
       %% documentOnTypeFormattingProvider: false,
       renameProvider: false,
       % documentLinkProvider: false,
       colorProvider: false,
       foldingRangeProvider: false,
-     % executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta", "source_gpt_comment", "refactor_gpt_rewrite", "run_all_tests"]},
+      executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta", "source_gpt_comment", "refactor_gpt_rewrite", "run_all_tests"]},
      /* semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
                                           tokenModifiers: TokenModifiers},
                                 range: true,
