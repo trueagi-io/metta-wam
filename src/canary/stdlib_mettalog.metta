@@ -1741,6 +1741,13 @@
   (@return "True if the call succeeds, False otherwise."))
 (: call! (-> Atom Atom))
 
+(@doc call-p!
+  (@desc "See call!")
+  (@params (
+    (@param "Form")))
+  (@return "True if the call succeeds, False otherwise."))
+(: call-p! (-> Atom Atom))
+
 ;; Public MeTTaLog
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
