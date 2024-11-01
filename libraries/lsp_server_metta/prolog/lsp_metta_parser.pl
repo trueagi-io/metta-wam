@@ -228,7 +228,7 @@ annotated_read_symbolic(LC0, LC1, EndChar, Stream, FirstChar, Item) :-
 % @param Symbolic The resultant Prolog term or symbol.
 
 % Case 1: If the character sequence starts with '$', treat it as a variable.
-annotated_classify_and_convert_charseq_(['$'| RestChars], var(Symbolic)) :-
+annotated_classify_and_convert_charseq_(['$'| RestChars], '$VAR'(Symbolic)) :-
     !,atom_chars(Symbolic, RestChars).  % Convert the rest of the characters into a variable name.
 % Case 2: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
 % This handles more complex syntaxes like numbers, dates, etc.

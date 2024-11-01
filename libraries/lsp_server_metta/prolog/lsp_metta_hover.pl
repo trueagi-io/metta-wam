@@ -43,7 +43,23 @@ combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
 combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
   list_to_set(SS, Set),
   maplist(into_markdown, Set, Strings),
-  atomics_to_string(Strings, S).
+  atomics_to_string(Strings, S1),
+  string_replace_each(S1,
+ ["```lisp\n\n"="```lisp\n",
+  "```\n\n"="```\n",
+  "\n\n```"="\n```",
+  %"```lisp\n```\n```lisp\n```\n"="```lisp\n```\n",
+  "```lisp\n```\n"="\n",
+  %"```lisp\n```\n--\n```lisp\n```\n"="--\n",
+  % "\n\n\n"="\n\n",
+  "fooooo"="barrrrrr"],S), !.
+
+string_replace_each(S1,[],S1):-!.
+string_replace_each(S1,[F=R|List],S):-
+      string_replace(S1,F,R,S2),
+      string_replace(S2,F,R,S3),
+ string_replace_each(S3,List,S).
+
 
 into_markdown(Ans, S):- \+ is_dict(Ans), sformat(Str, '~w', [Ans]),
   into_markdown_s(Str, S).
@@ -97,7 +113,7 @@ lsp_hooks:hover_hook(Path, _Loc, Term, Arity, S):- \+ use_vitalys_help,
 
 metta_predicate_help(_, Var, _, S) :- var(Var), !, format(string(S), "Var: ~w", [Var]).
 metta_predicate_help(_, '', _, "") :- !.
-metta_predicate_help(_, var(Term), _, S) :- !, format(string(S), "Variable: ~w", [Term]).
+metta_predicate_help(_, '$VAR'(Term), _, S) :- !, format(string(S), "Variable: ~w", [Term]).
 metta_predicate_help(_, Term, _, "") :- number(Term), !.
 metta_predicate_help(_, ')', _, "") :- !.
 metta_predicate_help(_, ']', _, "") :- !.
@@ -257,12 +273,8 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :- fail, % (for debugging) commenting
    banner_for('rest-of', Target).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Vitaly's initial impl of Help
+% Douglas' initial impl of Hover Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:term_info(_Path,_Loc, Target, _) :- use_vitalys_help,
-  lsp_separator(),
-  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
-
 lsp_hooks:term_info(_Path,_Loc, Target, _) :-
   in_markdown((
   show_checked("show_docs", "(-)", "Show Docs "),
@@ -270,6 +282,13 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :-
   show_checked("show_pdbg", "(-)", "Debug Pos "),
   show_checked("show_menu", "(+)", "Show Menu: "),
   format("**~q**", [Target]))).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vitaly's initial impl of Help
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lsp_hooks:term_info(_Path,_Loc, Target, _) :- use_vitalys_help,
+  lsp_separator(),
+  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
 
 
 lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
@@ -282,7 +301,7 @@ lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
 
 some_arities(Term,_,Term,term). % Bare Term
 some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
-some_arities(Term,N,Try,return(N)):- symbol(Term), between(0,5,N), some_arities(Term,N,Try).
+some_arities(Term,N,Try,RN):- symbol(Term), between(0,5,N), some_arities(Term,N,Try,RN).
 
 lsp_hooks:term_info(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
@@ -299,18 +318,32 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :-
 get_code_at_range_type(term).
 get_code_at_range_type(expression).
 get_code_at_range_type(toplevel_form).
-get_code_at_range_type(exact).
-get_code_at_range_type(symbol).
+%get_code_at_range_type(exact).
+%get_code_at_range_type(symbol).
 
-lsp_hooks:term_info(_Path, Loc, Term, Arity) :- lsp_separator(), lsp_separator(),
-   in_markdown((format("*Debug Positions*:\t\t(this and below is normally hidden)~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
+debug_positions.
+/*
+<details>
+<summary>Q1: What is the best X in the World? </summary>
+A1: whY
+</details>
+*/
+lsp_hooks:term_info(Path, Loc, Term, Arity):- debug_positions,
+  lsp_separator(),
+  setup_call_cleanup(
+     lsp_separator(),
+     debug_positions(Path, Loc, Term, Arity),
+     in_markdown(format('~n</details>~n'))).
 
-lsp_hooks:term_info(_Path, _Loc, _Term, _Arity) :-
+debug_positions(_Path, Loc, Term, Arity) :-
+   in_markdown((format("*Debug Positions*:\t\t<details><summary>(this and below is normally hidden)</summary>~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
+
+debug_positions(_Path, _Loc, _Term, _Arity) :-
    user:last_range(Method,Range),
    numbervars(Range,0,_,[singletons(true),attvars(skip)]),
    in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
 
-lsp_hooks:term_info(Path, Loc, _Term, _Arity) :-
+debug_positions(Path, Loc, _Term, _Arity) :-
    get_code_at_range_type(Type),
    (get_code_at_range(Type, Path, Loc, Code) *-> true; Code='failed'),
    in_markdown((format("**~@**: ~@~n~n",  [write_src_xref(Type),  write_src_xref(Code)]))).

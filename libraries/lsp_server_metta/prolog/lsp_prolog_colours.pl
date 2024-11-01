@@ -1,7 +1,7 @@
 :- module(lsp_prolog_colours, [file_colours/2,
-                        file_range_colours/4
-                        %token_types/1,
-                        %token_modifiers/1
+                        file_range_colours/4,
+                        token_types/1,
+                        token_modifiers/1
                         ]).
 /** <module> LSP Colours
 

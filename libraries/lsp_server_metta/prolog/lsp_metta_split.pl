@@ -2,7 +2,7 @@
     split_text_document_d4/2,
     split_document_get_multiple_sections/7,
     split_document_get_section_only/4,
-    coalesce_text/2
+    coalesce_text_d4/2
 ]).
 :- use_module(lsp_metta_parser, [
     annotated_get_blank_lines/3,
@@ -130,6 +130,6 @@ split_text_single_lines(FullText,SplitText) :-
     split_string(FullText, "\n", "", SplitText0),
     maplist(create_line_entry(1),SplitText0,[],SplitText).
 
-coalesce_text(SplitText,FullText) :-
+coalesce_text_d4(SplitText,FullText) :-
     maplist(extract_line_entry,SplitText,Strings),
     concat_strings(Strings,FullText).

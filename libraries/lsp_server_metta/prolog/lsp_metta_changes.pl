@@ -1,10 +1,10 @@
 :- module(lsp_metta_changes, [handle_doc_changes_d4/2,
-                      doc_text_fallback/2,
+                       doc_text_fallback_d4/2,
                        doc_text_d4/2]).
 :- use_module(lsp_metta_split, [
     split_text_document_d4/2,
     split_document_get_multiple_sections/7,
-    coalesce_text/2
+    coalesce_text_d4/2
 ]).
 
 /** <module> LSP changes
@@ -34,10 +34,10 @@ handle_doc_change_d4(Path, Change) :-
       rangeLength: ReplaceLen, text: Text} :< Change,
     !,
     atom_codes(Text, ChangeCodes),
-    doc_text_fallback(Path, OrigDocument),
+    doc_text_fallback_d4(Path, OrigDocument),
     split_document_get_multiple_sections(StartLine,EndLine,NewStartLine,OrigDocument,Pre,This,Post),
     %debug(lsp(low),"0:~w ~w ~w ~w ~w",[NewStartLine,EndLine,StartChar,ReplaceLen,This]),
-    coalesce_text(This,TextBlock),
+    coalesce_text_d4(This,TextBlock),
     %debug(lsp(low),"1:~w",[TextBlock]),
     string_codes(TextBlock,OrigCodes),
     %debug(lsp(low),"2:~w",[OrigCodes]),
@@ -56,7 +56,7 @@ handle_doc_change_d4(Path, Change) :-
     atom_codes(Change.text, TextCodes),
     assertz(doc_text_d4(Path, TextCodes)).
 
-%! doc_text_fallback(+Path:atom, -Text:text) is det.
+%! doc_text_fallback_d4(+Path:atom, -Text:text) is det.
 %
 %  Get the contents of the file at =Path=, either with the edits we've
 %  been tracking in memory, or from the file on disc if no edits have
@@ -68,17 +68,6 @@ doc_text_fallback_d4(Path, Text) :-
   split_text_document_d4(Text,SplitText),
   assertz(doc_text_d4(Path, SplitText)).
 
-%! doc_text_fallback(+Path:atom, -Text:text) is det.
-%
-%  Get the contents of the file at =Path=, either with the edits we've
-%  been tracking in memory, or from the file on disc if no edits have
-%  occured.
-doc_text_fallback(Path, Text) :-
-  doc_text_d4(Path, Text), !.
-doc_text_fallback(Path, Text) :-
-  read_file_to_string(Path, Text, []),
-  split_text_document_d4(Text,SplitText),
-  assertz(doc_text_d4(Path, SplitText)).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-

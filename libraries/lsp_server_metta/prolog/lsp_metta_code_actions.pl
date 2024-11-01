@@ -315,7 +315,7 @@ gpt_comment_code(Code, CommentedCode) :-
 call_openai_for_gpt_task(Code, Task, Result) :-
     getenv('OPENAI_API_KEY', ApiKey),
     OpenAIURL = 'https://api.openai.com/v1/chat/completions',
-    Prompt = format("Task: ~w\n\nCode:\n~w", [Task, Code]),
+    sformat(Prompt, "Task: ~w\n\nCode:\n~w", [Task, Code]),
     RequestPayload = _{
         model: "gpt-3.5-turbo",
         messages: [
