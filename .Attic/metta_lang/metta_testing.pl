@@ -7,7 +7,7 @@
 %:- encoding(iso_latin_1).
 
 %********************************************************************************************* 
-% PROGRAM FUNCTION: provides provides a framework for executing, tracking, and logging Prolog 
+% PROGRAM FUNCTION: provides a framework for executing, tracking, and logging Prolog 
 % unit tests with structured reporting and ANSI-formatted output for readability.
 %*********************************************************************************************
 
@@ -44,7 +44,7 @@ loonit_reset :-
     % Resets the success counter to zero.
     flag(loonit_success, _, 0).
 
-%!  has_loonit_results is semidet.
+%!  has_loonit_results is nondet.
 %
 %   Succeeds if there are any test results (either successes or failures).
 %
@@ -1240,91 +1240,234 @@ count_brackets([Char|Rest], Open, Close, Balance) :-
           NewClose = Close)))))),
       count_brackets(Rest, NewOpen, NewClose, Balance).
 */
-parse_answer_string("[]",[]):- !.
-%parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
-parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
-parse_answer_string(String,_Metta):- string_concat("Expected: [",Mid,String),string_concat(_Expected_Inner,"]",Mid),!,fail.
-parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Got_Inner,"]",Mid),!,parse_answer_inner(Got_Inner,Metta).
-parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),!,parse_answer_inner(Inner0,Metta).
 
+%!  parse_answer_string(+String, -Metta) is nondet.
+%
+%   Parses a given String and converts it into a Prolog term `Metta`.
+%   This predicate handles various formats of input strings, performing
+%   specific parsing based on the format. If the String matches certain
+%   error patterns, the predicate will fail.
+%
+%   @arg String The input string that represents some answer or assertion result.
+%   @arg Metta  The output variable where the parsed result will be unified, if parsing is successful.
+%
+%   @example Parsing an empty list:
+%       ?- parse_answer_string("[]", Result).
+%       Result = [].
+%
+%   @example Handling an error assertion:
+%       ?- parse_answer_string("[(Error (assert ...))]", Result).
+%       false.
+%
 
-parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),
-     skip((\+ sub_var(',',rc(Metta)))))).
+% Parse an empty list, unifying with an empty list if the string is "[]".
+parse_answer_string("[]", []) :- !.
+% parse_answer_string(String, Metta) :- string_concat("(", _, String), !, parse_sexpr_metta(String, Metta), !.
+% Fail if the string starts with an assertion error pattern.
+parse_answer_string(String, _Metta) :- string_concat("[(Error (assert", _, String), !, fail.
+% Fail if the string begins with "Expected: [" and contains an expected inner pattern.
+parse_answer_string(String, _Metta) :- string_concat("Expected: [", Mid, String), string_concat(_Expected_Inner, "]", Mid), !, fail.
+% Parse a `Got` response by extracting the inner content from "Got: [ ... ]".
+parse_answer_string(String, Metta) :- string_concat("Got: [", Mid, String), string_concat(Got_Inner, "]", Mid), !, parse_answer_inner(Got_Inner, Metta).
+% Parse generic bracketed content by extracting the inner part from "[ ... ]".
+parse_answer_string(String, Metta) :- string_concat("[", Mid, String), string_concat(Inner0, "]", Mid), !, parse_answer_inner(Inner0, Metta).
 
-parse_answer_str(Inner,[C|Metta]):-
-    atomics_to_string(["(",Inner,")"],Str),
-    parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
-   ((remove_m_commas(MettaC,Metta),
-     \+ sub_var(',',rc(Metta)))).
-parse_answer_str(Inner0,Metta):- symbolic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
-parse_answer_str(Inner0,Metta):-
-   (( replace_in_string([' , '=' '],Inner0,Inner),
-   atomics_to_string(["(",Inner,")"],Str),!,
-   parse_sexpr_metta(Str,Metta),!,
-   skip((must_det_ll(\+ sub_var(',',rc3(Metta))))),
-   skip((\+ sub_var(',',rc(Metta)))))).
+%!  parse_answer_inner(+Inner0, -Metta) is det.
+%
+%   Converts the content of `Inner0` into a Prolog term `Metta` by replacing specific patterns,
+%   parsing the modified string, and conditionally skipping processing if certain variables are detected.
+%
+%   @arg Inner0 The input string to parse.
+%   @arg Metta  The resulting parsed Prolog term.
+%
+%   @example
+%       ?- parse_answer_inner("some,content", Result).
+%       Result = parsed_term.
+%
 
+parse_answer_inner(Inner0, Metta) :-     
+    must_det_ll((
+        % Replace specific character patterns in Inner0 to create Inner.
+        replace_in_string([', '=' , '], Inner0, Inner),           
+        % Parse modified string Inner into Metta.
+        parse_answer_str(Inner, Metta),
+        % Skip processing if Metta meets the specified condition.
+        skip((\+ sub_var(',', rc(Metta))))
+    )).
+
+%!  parse_answer_str(+Inner0, -Metta) is det.
+%
+%   Parses the content of `Inner0` into a structured Prolog term `Metta` by handling various formats.
+%   Depending on the format, it may apply transformations, handle comma removal, and check for
+%   certain variable conditions.
+%
+%   @arg Inner0 The input string to parse.
+%   @arg Metta  The resulting parsed Prolog term.
+%
+%   @example
+%       ?- parse_answer_str("some content", Result).
+%       Result = parsed_term.
+%
+
+% Parse a string with specific formatting, building the term as a list starting with C.
+parse_answer_str(Inner, [C|Metta]) :-
+    atomics_to_string(["(", Inner, ")"], Str),parse_sexpr_metta(Str, CMettaC), CMettaC = [C|MettaC],
+    % Remove commas from MettaC to create Metta, if conditions are met.
+    ((remove_m_commas(MettaC, Metta),\+ sub_var(',', rc(Metta)))).
+% Handle concatenated symbols in Inner0 by converting them into a list and parsing each element.
+parse_answer_str(Inner0, Metta) :- symbolic_list_concat(InnerL, ' , ', Inner0),
+    maplist(atom_string, InnerL, Inner),maplist(parse_sexpr_metta, Inner, Metta),
+    skip((must_det_ll(( \+ sub_var(',', rc2(Metta)))))), !.
+% Apply replacements in Inner0 and parse as a single expression.
+parse_answer_str(Inner0, Metta) :-
+    ((replace_in_string([' , '=' '], Inner0, Inner),atomics_to_string(["(", Inner, ")"], Str), !,
+    parse_sexpr_metta(Str, Metta), !,skip((must_det_ll(\+ sub_var(',', rc3(Metta))))),
+    skip((\+ sub_var(',', rc(Metta)))))).
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
 
-remove_m_commas(Metta,Metta):- \+ sub_var(',',Metta),!.
-remove_m_commas([C,H|T],[H|TT]):- C=='and', !, remove_m_commas(T,TT).
-remove_m_commas([C,H|T],[H|TT]):- C==',', !, remove_m_commas(T,TT).
-remove_m_commas([H|T],[H|TT]):- !, remove_m_commas(T,TT).
+%!  remove_m_commas(+InputList, -OutputList) is det.
+%
+%   Removes specific elements (such as commas or "and") from `InputList`, creating `OutputList`.
+%   If `InputList` does not contain any commas as variables, `OutputList` is identical to `InputList`.
+%
+%   @arg InputList  The list to process, potentially containing unwanted elements.
+%   @arg OutputList The resulting list with specific elements removed.
+%
+%   @example
+%       ?- remove_m_commas([and, item1, ',', item2, and, item3], Result).
+%       Result = [item1, item2, item3].
+%
 
+% Return the list as-is if it contains no commas as variables.
+remove_m_commas(Metta, Metta) :- \+ sub_var(',', Metta), !.
+% Remove 'and' from the beginning of the list and continue processing.
+remove_m_commas([C, H | T], [H | TT]) :- C == 'and', !, remove_m_commas(T, TT).
+% Remove ',' from the beginning of the list and continue processing.
+remove_m_commas([C, H | T], [H | TT]) :- C == ',', !, remove_m_commas(T, TT).
+% Process remaining elements recursively.
+remove_m_commas([H | T], [H | TT]) :- !, remove_m_commas(T, TT).
 
-% Example usage:
-% ?- change_extension('path/to/myfile.txt', 'pdf', NewFileName).
-% NewFileName = 'path/to/myfile.pdf'.
+%!  change_extension(+OriginalFileName, +NewExtension, -NewBaseName) is det.
+%
+%   Changes the file extension of `OriginalFileName` to `NewExtension`, producing `NewBaseName`.
+%   This predicate extracts the base name without the original extension and appends the
+%   specified `NewExtension` to create the new file name.
+%
+%   @arg OriginalFileName The original file path with an extension to be changed.
+%   @arg NewExtension     The new extension to use for the file.
+%   @arg NewBaseName      The resulting file name with the new extension.
+%
+%   @example
+%       ?- change_extension('path/to/myfile.txt', 'pdf', NewFileName).
+%       NewFileName = 'path/to/myfile.pdf'.
+%
 change_extension(OriginalFileName, NewExtension, NewBaseName) :-
-    %file_base_name(OriginalFileName, BaseName),          % Extract base name
-    file_name_extension(BaseWithoutExt, _, OriginalFileName),    % Split extension
-    file_name_extension(BaseWithoutExt, NewExtension, NewBaseName),!. % Create new base name with new extension
-    %directory_file_path(Directory, NewBaseName, NewFileName). % Join with directory path
-% Example usage:
-% ?- ensure_extension('path/to/myfile.txt', 'txt', NewFileName).
-% NewFileName = 'path/to/myfile.txt'.
+    % Split the original file name to extract the base without its extension.
+    file_name_extension(BaseWithoutExt, _, OriginalFileName),    
+    % Create a new file name by appending the new extension to the base.
+    file_name_extension(BaseWithoutExt, NewExtension, NewBaseName), !.
+
+%!  ensure_extension(+OriginalFileName, +Extension, -NewFileName) is det.
+%
+%   Ensures that `OriginalFileName` has the specified `Extension`. If it already has the extension, 
+%   `NewFileName` is identical to `OriginalFileName`. Otherwise, the `Extension` is appended.
+%
+%   @arg OriginalFileName The original file path, potentially with or without the desired extension.
+%   @arg Extension        The required extension for the file.
+%   @arg NewFileName      The resulting file name, with the ensured extension.
+%
+%   @example
+%       ?- ensure_extension('path/to/myfile', 'txt', NewFileName).
+%       NewFileName = 'path/to/myfile.txt'.
+%
 ensure_extension(OriginalFileName, Extension, NewFileName) :-
+    % Extract the current extension of the file, if any.
     file_name_extension(_, CurrentExt, OriginalFileName),
+    % If the current extension matches the desired one, keep the original file name.
     (   CurrentExt = Extension
     ->  NewFileName = OriginalFileName
+    % Otherwise, append the new extension to create NewFileName.
     ;   atom_concat(OriginalFileName, '.', TempFileName),
         atom_concat(TempFileName, Extension, NewFileName)
     ).
+
 % Example usage:
 % ?- remove_specific_extension('path/to/myfile.txt', 'txt', NewFileName).
 % NewFileName = 'path/to/myfile'.
 
-% ?- remove_specific_extension('path/to/myfile.txt', 'pdf', NewFileName).
-% NewFileName = 'path/to/myfile.txt'.
+%!  remove_specific_extension(+OriginalFileName, +Extension, -FileNameWithoutExtension) is det.
+%
+%   Removes a specific extension from `OriginalFileName` if it matches `Extension`.
+%   If `OriginalFileName` does not have the specified `Extension`, it is returned unchanged.
+%
+%   @arg OriginalFileName         The original file path, possibly with an extension.
+%   @arg Extension                The specific extension to remove.
+%   @arg FileNameWithoutExtension The resulting file name without the specified extension.
+%
+%   @example
+%       ?- remove_specific_extension('path/to/myfile.txt', 'pdf', NewFileName).
+%       NewFileName = 'path/to/myfile.txt'.
+%
 remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension) :-
+    % Extract the extension of the file, if any.
     file_name_extension(FileNameWithoutExtension, Ext, OriginalFileName),
+    % If the extracted extension matches the specified one, return the base name;
+    % otherwise, retain the original file name.
     ( Ext = Extension -> true ; FileNameWithoutExtension = OriginalFileName ).
 
-
-quick_test:-
-  %set_prolog_flag(encoding,iso_latin_1),
-   forall(quick_test(Test),
-                  forall(open_string(Test,Stream),
-                    load_metta_stream('&self',Stream))).
+%!  quick_test is det.
+%
+%   Runs a quick test by executing each test case in `quick_test/1` and loading it 
+%   into the system via `load_metta_stream/2`. Each test case is opened as a string
+%   stream and processed with a predefined entity identifier `&self`.
+%
+%   This predicate is intended for streamlined testing by iterating over all 
+%   available quick test cases.
+%
+%   @example
+%       ?- quick_test.
+%       % Runs all quick tests in quick_test/1 through load_metta_stream.
+%
+quick_test :-
+    % For each test in quick_test/1, open the test as a stream and load it.
+    forall(quick_test(Test),
+           forall(open_string(Test, Stream),
+                  load_metta_stream('&self', Stream))).
 
 /*
  tests for term expander
 
-
 */
 % :- debug(term_expansion).
-:- if(( false, debugging(term_expansion))).
+
+% Enable conditional compilation if debugging for term expansion is active.
+:- if((false, debugging(term_expansion))).
+% Enable ARC-specific term expansions if the condition is met.
 :- enable_arc_expansion.
+% Suppress warnings about singleton variables in this section.
 :- style_check(-singleton).
-dte:- set(_X.local) = val.
-dte:- gset(_X.global) = gval.
-dte:- must_det_ll((set(_X.a) = b)).
-dte:- must_det_ll(locally(nb_setval(e,X.locally),dte([foo|set(X.tail)]))).
-dte:- member(set(V.element),set(V.list)).
-dte(set(E.v)):- set(E.that)=v.
+% Define various test cases for deterministic term expansion.
+% Each `dte` clause represents a different expansion or assertion pattern.
+% Set a local variable.
+dte :- set(_X.local) = val.
+% Set a global variable.
+dte :- gset(_X.global) = gval.
+% Assert that setting `_X.a` to `b` must succeed deterministically.
+dte :- must_det_ll((set(_X.a) = b)).
+% Use `must_det_ll` to ensure that `nb_setval/2` runs locally and call `dte` recursively
+% with a modified term involving `X.tail`.
+dte :- must_det_ll(locally(nb_setval(e, X.locally), dte([foo | set(X.tail)]))).
+% Check if `set(V.element)` is a member of `set(V.list)`.
+dte :- member(set(V.element), set(V.list)).
+% Define a specific expansion for `dte/1` with input `set(E.v)` when `set(E.that)` equals `v`.
+dte(set(E.v)) :- set(E.that) = v.
+% Restore the default singleton variable warnings.
 :- style_check(+singleton).
+% Disable ARC-specific term expansions after this section.
 :- disable_arc_expansion.
+% List all clauses of `dte/1` for inspection.
 :- listing(dte).
+% End the conditional compilation.
 :- endif.
 
 
@@ -1361,41 +1504,111 @@ dte(set(E.v)):- set(E.that)=v.
 
 
 
-% 1. Recursive Approach
+%!  factorial_recursive(+N, -Result) is det.
+%
+%   Computes the factorial of N using a simple recursive approach.
+%   This predicate multiplies N by the factorial of (N-1) until it reaches 0.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_recursive(5, Result).
+%       Result = 120.
+%
 factorial_recursive(0, 1).
 factorial_recursive(N, Result) :-
-    N > 0,
-    N1 is N - 1,
-    factorial_recursive(N1, Result1),
-    Result is N * Result1.
+    N > 0,N1 is N - 1,factorial_recursive(N1, Result1),Result is N * Result1.
 
-% 2. Tail Recursive Approach
+%!  factorial_tail_recursive(+N, -Result) is det.
+%
+%   Computes the factorial of N using a tail-recursive approach with an accumulator.
+%   This method is optimized for large values of N due to tail-call optimization.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_tail_recursive(5, Result).
+%       Result = 120.
+%
 factorial_tail_recursive(N, Result) :- factorial_tail_helper(N, 1, Result).
 
+%!  factorial_tail_helper(+N, +Acc, -Result) is det.
+%
+%   Helper predicate for factorial_tail_recursive/2 that accumulates the result
+%   in `Acc`, allowing the computation to proceed in a tail-recursive manner.
+%
+%   @arg N      The current value being processed in the factorial calculation.
+%   @arg Acc    The accumulator holding the intermediate factorial result.
+%   @arg Result The final factorial value.
+%
 factorial_tail_helper(0, Acc, Acc).
 factorial_tail_helper(N, Acc, Result) :-
-    N > 0,
-    NewAcc is Acc * N,
-    N1 is N - 1,
-    factorial_tail_helper(N1, NewAcc, Result).
+    N > 0,NewAcc is Acc * N,N1 is N - 1,factorial_tail_helper(N1, NewAcc, Result).
 
-% 3. Accumulator Approach
+%!  factorial_accumulator(+N, -Result) is det.
+%
+%   Computes the factorial of N using an accumulator-based approach,
+%   accumulating the result in a helper predicate.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_accumulator(5, Result).
+%       Result = 120.
+%
 factorial_accumulator(N, Result) :- factorial_acc(N, 1, Result).
 
+%!  factorial_acc(+N, +Acc, -Result) is det.
+%
+%   Helper predicate for factorial_accumulator/2 that uses an accumulator
+%   to store intermediate results, iterating until N reaches 0.
+%
+%   @arg N      The current value being processed in the factorial calculation.
+%   @arg Acc    The accumulator holding the intermediate factorial result.
+%   @arg Result The final factorial value.
+%
 factorial_acc(0, Result, Result).
-factorial_acc(N, Acc, Result) :-
-    N > 0,
-    NewAcc is Acc * N,
-    N1 is N - 1,
-    factorial_acc(N1, NewAcc, Result).
+factorial_acc(N, Acc, Result) :- N > 0,NewAcc is Acc * N,N1 is N - 1,factorial_acc(N1, NewAcc, Result).
+
 
 % You can test each one by querying, for example:
 % ?- factorial_recursive(5, X
 
 
 
-
-
+% The following code defines several test cases and example usages for manipulating spaces, or knowledge bases, using
+% predicates such as `add-atom`, `remove-atom`, `replace-atom`, and `get-atoms`. These predicates
+% simulate basic CRUD (Create, Read, Update, Delete) operations on a conceptual data structure, `Space`,
+% with operations applied to atoms within the space.
+%
+% The code includes:
+%
+% 1. **Basic Operations (`example_usages`)**:
+%    Demonstrates initialization, addition, replacement, and retrieval of atoms in a space. Each operation's result
+%    is output to show changes in the space's state after each operation.
+%
+% 2. **Test Cases for Clearing and Modifying Spaces**:
+%    - `test_clear_space`: Initializes a space, adds atoms, verifies the count and content, clears it, and confirms
+%      that the atoms and count reset.
+%    - `test_operations`: Tests sequential additions, removals, and replacements of atoms in a space.
+%
+% 3. **Multiple Operations in a Shared Space (`test_my_space`)**:
+%    Initializes a space and performs various atomic operations in sequence to verify the changes at each step.
+%    This includes ensuring atoms can be added, counted, replaced, removed, and that the original space name is retained.
+%
+% 4. **Isolated Space Manipulation**:
+%    Additional tests on separate spaces, such as `&kb22` and `&kb2`, demonstrate similar operations, providing
+%    results to confirm that each operation succeeds independently.
+%
+% 5. **Run All Test Cases (`run_tests`)**:
+%    A convenience predicate `run_tests` that executes `test_clear_space` and `test_operations` to validate
+%    all defined atomic operations.
+%
+% The code serves as a comprehensive suite for verifying that atom manipulation functions behave as expected across
+% various spaces, with each test printing intermediate results to facilitate debugging and validation of functionality.
 
 % Example-usage
 example_usages :-
@@ -1465,7 +1678,6 @@ run_tests :-
     writeln('Running test_operations:'),
     test_operations.
 
-
 % Test case for various operations on a space
 test_my_space :-
     fetch_or_create_space('&KB', InstanceOfKB),
@@ -1506,7 +1718,6 @@ test_my_space :-
     'get-atoms'(InstanceOfKB, Atoms6),
     writeln('Should print [c,z]: ' : Atoms6).
 
-
 % Test the code
 test_clr_my_kb22 :-
     fetch_or_create_space('&kb22'),
@@ -1520,7 +1731,6 @@ test_clr_my_kb22 :-
 
   %a:- !, be(B), (iF(A,B)  -> tHEN(A) ).
   %a:- !, be(B), (iF(A,B) *-> tHEN(A) ; eLSE(B)  ).
-
 
 % Test the code
 test_my_kb2:-
@@ -1546,8 +1756,11 @@ test_my_kb2:-
 
 
 
-
-end_of_file. % comment this out once to get these files in your readline history
+% This code loads a collection of `.metta` files across various directories and contexts, adding each to the read history.
+% Each file path is specified via `mf/1`, and `add_history1(load_metta(H))` loads the file while logging it for quick
+% access and debugging. 
+% Comment `end_of_file` out once to get these files in your readline history
+end_of_file. % 
 mf('./1-VSpaceTest.metta').
 mf('./2-VSpaceTest.metta').
 mf('./3-Learn-Rules.metta').
