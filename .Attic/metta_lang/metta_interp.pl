@@ -1258,7 +1258,6 @@ fn_append1(Term,X,eval_H(Term,X)).
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
-
   expand_to_hb(Preds,H,_B),
   functor(H,F,A), %trace,
   if_t((show_transpiler),
@@ -1331,7 +1330,7 @@ assertion_neck_cl(':-').
 load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
        functs_to_preds([Eq,H,B],Preds),
-       assert_preds(Self,Load,Preds).
+       assert_preds(Self,Load,Preds),!.
 % old compiler hook
 load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
