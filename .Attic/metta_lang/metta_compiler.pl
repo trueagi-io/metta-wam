@@ -83,116 +83,6 @@
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
-:- include(metta_compiler_werk).
-
-compile_for_assert_eq(_Eq,H,B,Result):-
-  compile_for_assert(H,B,Result), !.
-
-:- dynamic(metta_compiled_predicate/3).
-
-unnumbervars_clause(Cl,ClU):-
-  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
-% ===============================
-%  Compile in memory buffer
-% ===============================
-is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
-  expand_to_hb(UAC,H,B),clause(H,B,Ref),clause(HH,BB,Ref),
-  strip_m(HH,HHH),HHH=@=H,
-  strip_m(BB,BBB),BBB=@=B,!.
-
-strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
-strip_m(BB,BB).
-
-get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
-
-
-:- dynamic(needs_tabled/2).
-
-
-add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
-add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
-%add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
-
-add_assertion1(Space,ACC) :-
- must_det_ll((
-     copy_term(ACC,AC,_),
-     expand_to_hb(AC,H,_),
-     as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    % assert(AC),
-    % Get the current clauses of my_predicate/1
-    findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
-    copy_term(Prev,CPrev,_),
-    % Create a temporary file and add the new assertion along with existing clauses
-    append(CPrev,[AC],NewList),
-    cl_list_to_set(NewList,Set),
-    length(Set,N),
-    if_t(N=2,
-        (Set=[X,Y],
-          numbervars(X),
-          numbervars(Y),
-        nl,display(X),
-        nl,display(Y),
-        nl)),
-    %wdmsg(list_to_set(F/A,N)),
-    abolish(/*'&self':*/F/A),
-    create_and_consult_temp_file(Space,F/A, Set))).
-
-
-cl_list_to_set([A|List],Set):-
-  member(B,List),same_clause(A,B),!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([New|List],[New|Set]):-!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
-cl_list_to_set(List,Set):- list_to_set(List,Set).
-
-same_clause(A,B):- A==B,!.
-same_clause(A,B):- A=@=B,!.
-same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
-same_clause1(A,B):- A=@=B.
-same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
-
-%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
-
-% Predicate to create a temporary file and write the tabled predicate
-create_and_consult_temp_file(Space,F/A, PredClauses) :-
-  must_det_ll((
-    % Generate a unique temporary memory buffer
-    tmp_file_stream(text, TempFileName, TempFileStream),
-    % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
-    %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
-    maplist(write_clause(TempFileStream), PredClauses),
-    % Close the temporary file
-    close(TempFileStream),
-    % Consult the temporary file
-    % abolish(F/A),
-    /*'&self':*/
-    consult(TempFileName),
-
-    listing(F/A),
-    % Delete the temporary file after consulting
-    %delete_file(TempFileName),
-    asserta(metta_compiled_predicate(Space,F,A)),
-    current_predicate(F/A),
-    listing(metta_compiled_predicate/3),
-    true)).
-
-%metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
-
-% Helper predicate to write a clause to the file
-write_clause(Stream, Clause) :-
-    subst_vars(Clause,Can),
-    write_canonical(Stream, Can),
-    write(Stream, '.'),
-    nl(Stream).
-
-same(X,Y):- X =~ Y.
-
-
 
 % =======================================
 % TODO move non flybase specific code between here and the compiler
@@ -1652,43 +1542,104 @@ transform(OneHead, NewHead, Body, NewBody):- create_unifier(OneHead,NewHead,Guar
    combine_code(Guard,Body,NewBody).
 
 
-/*
 
+compile_for_assert_eq(_Eq,H,B,Result):-
+  compile_for_assert(H,B,Result), !.
+
+:- dynamic(metta_compiled_predicate/3).
+
+unnumbervars_clause(Cl,ClU):-
+  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
 % ===============================
 %  Compile in memory buffer
 % ===============================
+is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
+  expand_to_hb(UAC,H,B),clause(H,B,Ref),clause(HH,BB,Ref),
+  strip_m(HH,HHH),HHH=@=H,
+  strip_m(BB,BBB),BBB=@=B,!.
+
+strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
+strip_m(BB,BB).
+
+get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
+
+
+:- dynamic(needs_tabled/2).
+
+
 add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
-add_assertion(_Space,NewAssertion) :-
+add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
+%add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
+
+add_assertion1(Space,ACC) :-
  must_det_ll((
-     expand_to_hb(NewAssertion,H,_),
-     functor(H,F,A), functor(HH,F,A),
-     unnumbervars_clause(NewAssertion,NewAssertionClause),
-     assert(NewAssertionClause),
+     copy_term(ACC,AC,_),
+     expand_to_hb(AC,H,_),
+     as_functor_args(H,F,A), as_functor_args(HH,F,A),
+    % assert(AC),
     % Get the current clauses of my_predicate/1
-    findall(HH:-B,clause(HH,B),Prev),
+    findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
+    copy_term(Prev,CPrev,_),
     % Create a temporary file and add the new assertion along with existing clauses
-    abolish(F/A),
-    create_and_consult_temp_file(F/A, Prev))).
+    append(CPrev,[AC],NewList),
+    cl_list_to_set(NewList,Set),
+    length(Set,N),
+    if_t(N=2,
+        (Set=[X,Y],
+          numbervars(X),
+          numbervars(Y),
+        nl,display(X),
+        nl,display(Y),
+        nl)),
+    %wdmsg(list_to_set(F/A,N)),
+    abolish(/*'&self':*/F/A),
+    create_and_consult_temp_file(Space,F/A, Set))).
+
+
+cl_list_to_set([A|List],Set):-
+  member(B,List),same_clause(A,B),!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([New|List],[New|Set]):-!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
+cl_list_to_set(List,Set):- list_to_set(List,Set).
+
+same_clause(A,B):- A==B,!.
+same_clause(A,B):- A=@=B,!.
+same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
+same_clause1(A,B):- A=@=B.
+same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
+
+%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
 
 % Predicate to create a temporary file and write the tabled predicate
-create_and_consult_temp_file(PredName/Arity, PredClauses) :-
+create_and_consult_temp_file(Space,F/A, PredClauses) :-
+  must_det_ll((
     % Generate a unique temporary memory buffer
     tmp_file_stream(text, TempFileName, TempFileStream),
     % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [PredName, Arity]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [PredName, Arity]),
+    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
+    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
     %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(PredName/Arity)])),
+    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
     maplist(write_clause(TempFileStream), PredClauses),
     % Close the temporary file
     close(TempFileStream),
     % Consult the temporary file
+    % abolish(F/A),
+    /*'&self':*/
     consult(TempFileName),
 
-    listing(PredName/Arity),
+    listing(F/A),
     % Delete the temporary file after consulting
-    delete_file(TempFileName),
-    assert(metta_compiled_predicate(PredName,Arity)).
+    %delete_file(TempFileName),
+    asserta(metta_compiled_predicate(Space,F,A)),
+    current_predicate(F/A),
+    listing(metta_compiled_predicate/3),
+    true)).
+
+%metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
 
 % Helper predicate to write a clause to the file
 write_clause(Stream, Clause) :-
@@ -1697,5 +1648,7 @@ write_clause(Stream, Clause) :-
     write(Stream, '.'),
     nl(Stream).
 
-*/
+same(X,Y):- X =~ Y.
+
+
 
