@@ -82,16 +82,6 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- discontiguous(lsp_hooks:handle_msg_hook/3).
 
 
-% If the max worked thread count is 0, it processes requests synchronously;
-% otherwise, it uses a thread pool for parallel processing.
-% 2 is a good default as it needs to be able to implement interruptions anyway
-% (this is separate from the file indexer threads)
-:- dynamic(lsp_worker_threads/1).
-%lsp_worker_threads(0). % no threads thus "$/cancelRequest" cant be implemented
-%lsp_worker_threads(1). % 1 thread thus "$/cancelRequest" is working
-%lsp_worker_threads(3). % 3 thread thus "$/cancelRequest" is working
-lsp_worker_threads(10). % 10 threads might be OK but overkill
-
 % Main entry point
 main :-
     set_prolog_flag(debug_on_error, false),
@@ -109,90 +99,15 @@ main :-
     debug(lsp(position)),
     debug(lsp(xref)),
     load_mettalog_xref,
-    ignore(handle_threads(Args)),  % Handle threading based on max threads.
     start(Args).
 
-% Handle thread pool or synchronous mode based on max threads.
-handle_threads([MaxThreadsArg | _]) :-
-    ignore((atom_number(MaxThreadsArg, MaxThreadsN),
-    retractall(lsp_worker_threads(_)),
-    assertz(lsp_worker_threads(MaxThreadsN)))).
-
-:- dynamic(started_lsp_worker_threads/0).
-start_lsp_worker_threads:- started_lsp_worker_threads,!.
-start_lsp_worker_threads:-
-    assert(started_lsp_worker_threads),
-    lsp_worker_threads(MaxThreads),
-    ( MaxThreads > 0
-    -> create_workers('$lsp_worker_pool', MaxThreads) % Create thread pool if max threads > 0
-    ; debug_lsp(threads, "Running synchronously since max threads = 0", [])  % Sync mode
-    ).
-
-% Worker pool implementation
-% Create a pool with Id and number of workers.
-% After the pool is created, post_job/1 can be used to send jobs to the pool.
-
-create_workers(QueueId, N) :-
-    message_queue_create(QueueId),
-    forall(between(1, N, _),
-          thread_create(do_work(QueueId), _, [])),
-  debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
-
-% Dynamic predicates for cancellation mechanism
-:- dynamic task_thread/2.
-:- dynamic id_was_canceled/1.
-
-:- if( \+ prolog_load_context(reloading,true)).
-% Create a mutex for synchronization
-:- mutex_create('$lsp_request_mutex').
-:- endif.
-
-
-do_work(QueueId) :-
-    repeat,
-    catch(do_work_stuff(QueueId),_,true),
-    fail.
-
-do_work_stuff(QueueId):-
-    thread_get_message(QueueId, Task),
-    Task = lsp_task(Out, Req),
-    thread_self(ThreadId),
-    request_id(Req, RequestId),
-    % Register this thread handling RequestId
-    ( with_mutex('$lsp_request_mutex', id_was_canceled(RequestId)) ->
-        debug_lsp(threads, "Request ~w was canceled before it got started!", [RequestId])
-    ; ( with_mutex('$lsp_request_mutex', assertz(task_thread(RequestId, ThreadId))),
-        debug_lsp(threads, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
-        catch(
-            handle_request(Out, Req),
-            canceled,
-            ( debug_lsp(threads, "Request ~w was canceled", [RequestId]),
-              send_cancellation_response(Out, RequestId)
-            )),
-        % Clean up after handling
-        with_mutex('$lsp_request_mutex', retract(task_thread(RequestId, ThreadId)))
-    )).
-
-% Post a job to be executed by one of the pool's workers.
-post_job(QueueId, Task) :-
-    thread_send_message(QueueId, Task),
-    nop(debug_lsp(threads, "~q", [posted_job(Task)])).
-
-% Send a cancellation response if necessary
-send_cancellation_response(_OutStream, _RequestId) :-
-    % According to LSP, the server should not send a response to a canceled request,
-    % but some clients may expect a response indicating cancellation.
-    % Uncomment the following lines if you want to send such a response.
-    % Response = _{jsonrpc: "2.0", id: RequestId, error: _{code: -32800, message: "Request canceled"}},
-    % send_message(OutStream, Response),
-    true.
 
 % Start the server based on input arguments
 start([stdio]) :- !,
-    debug_lsp(threads, "Starting stdio client", []),
+    debug_lsp(main, "Starting stdio client", []),
     stdio_server.
 start(Args) :-
-    debug_lsp(threads, "Unknown args ~w", [Args]).
+    debug_lsp(main, "Unknown args ~w", [Args]).
 
 % stdio server initialization
 stdio_server :-
@@ -201,7 +116,6 @@ stdio_server :-
     set_stream(In, newline(posix)),
     set_stream(In, tty(false)),
     set_stream(In, representation_errors(error)),
-    start_lsp_worker_threads,
     % Handling UTF decoding in JSON parsing, but doing the auto-translation
     % causes Content-Length to be incorrect
     set_stream(In, encoding(octet)),
@@ -209,8 +123,6 @@ stdio_server :-
     set_stream(Out, encoding(utf8)),
     %stdio_handler_io(In, Out). %(might use this one later)
     stdio_handler(A-A, In, Out).
-
-
 
 % [TODO] add multithreading? Guess that will also need a message queue
 % to write to stdout
@@ -234,26 +146,154 @@ handle_requests(Out, InCodes, Tail) :-
 handle_requests(_, T, T).
 
 
-immediate_method(Request):- is_dict(Request), !, immediate_request(Request).
-immediate_method("$/cancelRequest"). % Handle cancel immediately
-immediate_method(TM):- cancelable_method(TM), !, fail.
-% immediate_method(_).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN Threading/Queueing System
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-immediate_request(Req):- Method = Req.body.method, !, immediate_method(Method).
-immediate_request(Req):- Body = Req.body, !, immediate_request(Body).
-immediate_request(Body):- Method = Body.method, !, immediate_method(Method).
+% Handle requests that need immediate or cancellable responses
+immediate_method(Request) :- is_dict(Request), !, immediate_request(Request).
+immediate_method("$/cancelRequest").
+immediate_method(TM) :- cancelable_method(TM), !, fail.
+% immediate_method(_). % This line would act as a fallback for "immediate" methods, allowing any request method not specified as "cancellable" to be treated as immediate if uncommented.
+
+immediate_request(Req) :- Method = Req.body.method, !, immediate_method(Method).
+immediate_request(Req) :- Body = Req.body, !, immediate_request(Body).
+immediate_request(Body) :- Method = Body.method, !, immediate_method(Method).
 
 cancelable_method('textDocument/documentSymbol').
 cancelable_method('textDocument/hover').
-% cancelable_method('textDocument/didOpen').
+% cancelable_method('textDocument/didOpen'). % This line is an option to make 'textDocument/didOpen' cancelable if needed
 
 % Handle parsed requests
 handle_parsed_request(Out, Req) :-
-    ( ( lsp_worker_threads(0) ; immediate_request(Req) )
-    -> handle_request(Out, Req)
-    ;
-        (    post_job('$lsp_worker_pool', lsp_task(Out, Req)), debug_lsp(threads, "~q", [posted_job(Req.body.method)]) )
+    (lsp_worker_threads(0) ; immediate_request(Req)) ->
+        handle_request(Out, Req)
+    ; post_job('$lsp_worker_pool', lsp_task(Out, Req)),
+      debug_lsp(threads, "~q", [posted_job(Req.body.method)]).
+
+
+% If the max worker thread count is 0, it processes requests synchronously;
+% otherwise, it uses a thread pool for parallel processing.
+:- dynamic(lsp_worker_threads_max/1).
+
+% Handle threading based on max threads.
+lsp_worker_threads(N) :- lsp_worker_threads_max(N), !.
+lsp_worker_threads(MaxThreads) :-
+    current_prolog_flag(argv, Args),
+    append(_, ['--workers', MaxThreadsArg | _], Args),
+    atom_number(MaxThreadsArg, MaxThreads),
+    assert(lsp_worker_threads_max(MaxThreads)),
+    !.
+% The following commented-out lines are configuration options for the worker threads:
+% lsp_worker_threads(0). % no threads, thus "$/cancelRequest" cannot be implemented as requests are processed synchronously
+% lsp_worker_threads(1). % 1 thread, enabling "$/cancelRequest" since requests are handled one at a time asynchronously
+% lsp_worker_threads(3). % 3 threads, allows some parallel processing and handling of "$/cancelRequest"
+lsp_worker_threads(10). % 10 threads is the current setting, allowing high concurrency but could be overkill for some cases
+
+:- dynamic(started_lsp_worker_threads/0).
+
+% Start worker threads or run synchronously based on max threads.
+start_lsp_worker_threads :-
+    started_lsp_worker_threads, !.
+start_lsp_worker_threads :-
+    assert(started_lsp_worker_threads),
+    lsp_worker_threads(MaxThreads),
+    (MaxThreads > 0 ->
+        create_workers('$lsp_worker_pool', MaxThreads)
+    ; debug_lsp(threads, "Running synchronously since max threads = 0", [])
     ).
+
+% Worker pool implementation
+create_workers(QueueId, N) :-
+    message_queue_create(QueueId),
+    forall(between(1, N, _),
+           thread_create(do_work(QueueId), _, [])),
+    debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
+
+% Dynamic predicates for task management and cancellation
+:- dynamic task_thread/2.
+:- dynamic id_was_canceled/1.
+
+% Create a mutex for synchronization
+:- if(\+ prolog_load_context(reloading, true)).
+:- mutex_create('$lsp_request_mutex').
+:- endif.
+
+    % Worker loop
+    do_work(QueueId) :-
+        repeat,
+        catch(do_work_stuff(QueueId), _, true),
+        fail.
+
+    do_work_stuff(QueueId) :-
+        thread_self(ThreadId),
+        repeat,
+        once(do_work_stuff_tid(QueueId, ThreadId)),
+        fail.
+
+    do_work_stuff_tid(QueueId, ThreadId) :-
+        repeat,
+        thread_get_message(QueueId, Task),
+        Task = lsp_task(Out, Req),
+        request_id(Req, RequestId),
+
+        % Register this thread handling RequestId
+        with_mutex('$lsp_request_mutex', (
+            (id_was_canceled(RequestId) ->
+                debug_lsp(threads, "Request ~w was canceled before it got started!", [RequestId])
+            ; assertz(task_thread(RequestId, ThreadId))
+        ))),
+
+        debug_lsp(threads, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
+
+        % Process the request and handle cancellation
+        catch(
+            handle_request(Out, Req),
+            canceled,
+            ( debug_lsp(threads, "Request ~w was canceled", [RequestId]),
+              send_cancellation_response(Out, RequestId)
+            )
+        ),
+
+        % Clean up task_thread
+        with_mutex('$lsp_request_mutex', (
+            retract(task_thread(RequestId, ThreadId))
+        )).
+
+% Post a job to the worker pool, ensuring synchronization
+post_job(QueueId, Task) :-
+    with_mutex('$lsp_request_mutex', (
+        start_lsp_worker_threads,
+        thread_send_message(QueueId, Task),
+        debug_lsp(threads, "~q", [posted_job(Task)])
+    )).
+
+% Cancel a specific task by ID
+cancel_taskid(CancelId) :-
+    debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
+    with_mutex('$lsp_request_mutex', (
+        (task_thread(CancelId, ThreadId) ->
+            debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
+            catch(thread_signal(ThreadId, throw(canceled)), _, true),
+            ignore(retract(task_thread(CancelId, ThreadId)))
+        ; debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
+          assertz(id_was_canceled(CancelId))
+        )
+    )).
+
+% Send a cancellation response if required
+send_cancellation_response(OutStream, RequestId) :-
+    % According to LSP, the server should not send a response to a canceled request,
+    % but some clients may expect a response indicating cancellation.
+    % Uncomment the following lines if you want to send such a response.
+    nop((Response = _{jsonrpc: "2.0", id: RequestId, error: _{code: -32800, message: "Request canceled"}},
+    send_message(OutStream, Response))),
+    true.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END Threading/Queueing System
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % Backtrace error handler
 catch_with_backtrace(Goal):-
@@ -615,17 +655,7 @@ handle_msg("$/setTrace", _Msg, false).
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-
     _{params: _{id: CancelId}} :< Msg,
-    debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
-    with_mutex('$lsp_request_mutex',
-        (   task_thread(CancelId, ThreadId)
-        ->  % Attempt to interrupt the thread
-            debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
-            catch(thread_signal(ThreadId, throw(canceled)), _, true),  % In case thread is already gone
-            ignore(retract(task_thread(CancelId, ThreadId)))        % In case thread retracted it
-        ;   ( debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
-              assertz(id_was_canceled(CancelId))
-            )
-        )).
+    ignore(cancel_taskid(CancelId)).
 
 % Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
