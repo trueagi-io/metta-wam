@@ -72,9 +72,13 @@
 :- dynamic lsp_hooks:handle_msg_hook/3.
 :- discontiguous lsp_hooks:handle_msg_hook/3.
 
-:- multifile lsp_hooks:code_action/3.
-:- dynamic lsp_hooks:code_action/3.
-:- discontiguous lsp_hooks:code_action/3.
+:- multifile lsp_hooks:exec_code_action/3.
+:- dynamic lsp_hooks:exec_code_action/3.
+:- discontiguous lsp_hooks:exec_code_action/3.
+
+:- multifile lsp_hooks:compute_code_action/3.
+:- dynamic lsp_hooks:compute_code_action/3.
+:- discontiguous lsp_hooks:compute_code_action/3.
 
 
 :- discontiguous handle_code_action_msg/3.
@@ -108,50 +112,12 @@ must_succeed1(G):- call(G)->true;(wdmsg(failed_succeed(G)),throw(failed_succeed(
 handle_code_action_msg("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
     _{id: Id, params: Params} :< Msg,
    _{textDocument: _{uri: Uri}, range: Range, context: _Context} :< Params,
-    compute_code_actions(Uri, Range, Actions).
+    findall(Action, lsp_hooks:compute_code_action(Uri, Range ,Action), Actions), !.
 
-% Compute Code Actions for Specified Kinds, with symbols in titles
-compute_code_actions(Uri, Range, Actions) :- % Extract the symbol from the code at the range
-    get_code_at_range(term, Uri, Range, Symbol), %symbol(Symbol),
-    compute_symbol_code_actions(Uri, Range, Symbol, Actions),!.
-compute_code_actions(_Uri,_Range, []).
 
-% nb_append_code_actions(+HT, +ElementToAppend)
-% Destructively append ElementToAppend to the end of HT by finding the last cons cell.
-nb_append_code_actions(HT, ElementToAppend) :-
-    arg(2, HT, Tail),  % Get the second argument (the tail) of the cons cell
-    ( Tail == []  % If the tail is the empty list, we've reached the end
-    -> nb_setarg(2, HT, [ElementToAppend])  % Destructively append the new element
-    ; nb_append_code_actions(Tail, ElementToAppend)  % Otherwise, keep traversing the list
-    ).
-
-% nb_append_code_actions(+HT, +ElementToAppend)
-% Destructively append ElementToAppend to the end of HT by finding the last cons cell.
-nb_append_code_actions(HT, ElementToAppend) :-
-    arg(2, HT, Tail),  % Get the second argument (the tail) of the cons cell
-    ( Tail == []  % If the tail is the empty list, we've reached the end
-    -> nb_setarg(2, HT, [ElementToAppend])  % Destructively append the new element
-    ; nb_append_code_actions(Tail, ElementToAppend)  % Otherwise, keep traversing the list
-    ).
-
-% get_filepart(+Uri, -FilePart)
-% Extracts the part of the URI after the last '/'.
-get_filepart(Uri, FilePart) :-
-    atomic_list_concat(Segments, '/', Uri),  % Split the URI by '/'
-    last(Segments, FilePart).  % Get the last segment, which is the file part
-
-compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
-    get_src_code_at_range(toplevel_form, Uri, Range, Expression),
-    get_src_code_at_range(expression, Uri, Range, SubExpression),
-    get_src_code_at_range(block, Uri, Range, Code),
+% Run All Tests Action
+lsp_hooks:compute_code_action(Uri, _Range, FirstAction) :-
     get_filepart(Uri, FilePart),
-    trim_to_length(Code, 300, Block),
-
-    % Initialize Actions as an open list with one element (Run All Tests action)
-    Actions = [FirstAction],
-
-    % Run All Tests Action
-    into_line_char_range(Range,LCR),
     sformat(AllTestsTitle, "Run All Tests in File: '~w'", [FilePart]),
     FirstAction = _{
         title: AllTestsTitle,
@@ -161,83 +127,47 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
             command: "run_all_tests",
             arguments: [Uri]
         }
-    },
+    }.
 
-    % Append Refactor: Rename Symbol, only if Symbol is not empty
-    ( (fail, debugging(lsp(position)), Symbol \== '' ) ->
-       (sformat(RefactorTitle, "Refactor: Rename Symbol '~w' (TODO) ~w", [Symbol, LCR]),
-        RefactorAction = _{
-           title: RefactorTitle,
-           kind: "refactor.rename",
-           command: _{
-               title: "Rename Symbol",
-               command: "refactor_rename",
-               arguments: [Uri, Range]
-           }
-        },
-        nb_append_code_actions(Actions, RefactorAction))
-    ; true),
+% get_filepart(+Uri, -FilePart)
+% Extracts the part of the URI after the last '/'.
+get_filepart(Uri, FilePart) :-
+    atomic_list_concat(Segments, '/', Uri),  % Split the URI by '/'
+    last(Segments, FilePart).  % Get the last segment, which is the file part
 
-    % Conditional placeholder for GPT Rewrite Block action
-    ( debugging(lsp(todo)) /* Condition for GPT Rewrite */ ->
-       (sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w' (TODO)", [Block]),
-        RewriteAction = _{
-           title: RewriteTitle,
-           kind: "refactor.rewrite",
-           command: _{
-               title: "Rewrite Code",
-               command: "refactor_gpt_rewrite",
-               arguments: [Uri, Range]
-           }
-        },
-        nb_append_code_actions(Actions, RewriteAction))
-    ; true),
 
-    % Conditional placeholder for GPT Comment Block action
-    ( debugging(lsp(todo)) /* Condition for GPT Comment */ ->
-       (sformat(CommentTitle, "Source: Comment this file: '~w...' (TODO)", [FilePart]),
-        CommentCodeAction = _{
-            title: CommentTitle,
-            kind: "refactor.comment",
-            command: _{
-                title: CommentTitle,
-                command: "source_gpt_comment",
-                arguments: [Uri, Range]
-            }
-        },
-        nb_append_code_actions(Actions, CommentCodeAction))
-    ; true),
+% Rename Symbol, only if Symbol is not empty
+lsp_hooks:compute_code_action(Uri, Range, RefactorAction) :-
+   debugging(lsp(todo)),
+   get_code_at_range(term, Uri, Range, Symbol), symbol(Symbol),Symbol \== '',
+   fail,  debugging(lsp(position)),
+   sformat(RefactorTitle, "Refactor: Rename Symbol '~w' (TODO)", [Symbol]),
+    RefactorAction = _{
+       title: RefactorTitle,
+       kind: "refactor.rename",
+       command: _{
+           title: "Rename Symbol",
+           command: "refactor_rename",
+           arguments: [Uri, Range, Symbol]
+       }
+    }.
 
-    % Conditional placeholder for Eval Metta action
-    ( true ->
-       (sformat(EvalMettaTitle, "Run Metta: ~w", [Expression]),
-        EvalMettaAction = _{
-            title: EvalMettaTitle,
-            kind: "quickfix.eval",
-            command: _{
-                title: "Run Metta",
-                command: "load_metta",
-                arguments: [Uri, Range, Expression]
-            }
-        },
-        nb_append_code_actions(Actions, EvalMettaAction))
-    ; true),
 
-    % Conditional placeholder for Eval Metta action
-    ( (SubExpression \=@= Expression) ->
-       (sformat(EvalMettaSubTitle, "Eval Sub-expression: ~w", [SubExpression]),
-        EvalMettaSubAction = _{
-            title: EvalMettaSubTitle,
-            kind: "quickfix.eval",
-            command: _{
-                title: "Eval SubExpression",
-                command: "eval_metta",
-                arguments: [Uri, Range, SubExpression]
-            }
-        },
-        nb_append_code_actions(Actions, EvalMettaSubAction))
-    ; true).
-
+% GPT Rewrite Block action
+lsp_hooks:compute_code_action(Uri, Range, RewriteAction) :-
+    debugging(lsp(todo)), /* Condition for GPT Rewrite */
+    get_src_code_at_range(block, Uri, Range, Code),
+    trim_to_length(Code, 300, Block),
+    sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w' (TODO)", [Block]),
+    RewriteAction = _{
+       title: RewriteTitle,
+       kind: "refactor.rewrite",
+       command: _{
+           title: "Rewrite Code",
+           command: "refactor_gpt_rewrite",
+           arguments: [Uri, Range]
+       }
+    }.
 
 
 % trim_to_length(+InputString, +MaxLength, -TrimmedString)
@@ -252,6 +182,56 @@ trim_to_length(InputString, MaxLength, TrimmedString) :-
     ;
       sub_string(InputString, 0, MaxLength, _, TrimmedString)  % Otherwise, trim it to MaxLength.
     ).
+
+
+% GPT Comment Block action
+lsp_hooks:compute_code_action(Uri, _Range, CommentCodeAction) :-
+    get_filepart(Uri, FilePart),
+    debugging(lsp(todo)), /* Condition for GPT Comment */
+    sformat(CommentTitle, "Source: Comment this file: '~w...' (TODO)", [FilePart]),
+    CommentCodeAction = _{
+        title: CommentTitle,
+        kind: "refactor.comment",
+        command: _{
+            title: CommentTitle,
+            command: "source_gpt_comment",
+            arguments: [Uri]
+        }
+    }.
+
+% Conditional placeholder for File Metta action
+lsp_hooks:compute_code_action(Uri, Range, MettaFileAction) :-
+    get_src_code_at_range(toplevel_form, Uri, Range, Expression),
+    RunLoadTitle = "Run/Load Metta",
+    sformat(RunLoadTitleExpression, "~w: ~w", [RunLoadTitle, Expression]),
+    MettaFileAction = _{
+        title: RunLoadTitleExpression,
+        kind: "quickfix.file",
+        command: _{
+            title: RunLoadTitle,
+            command: "load_metta",
+            arguments: [Uri, Range, Expression]
+        }
+    }.
+
+
+% Conditional placeholder for Eval Metta action
+lsp_hooks:compute_code_action(Uri, Range, EvalMettaAction) :-
+    once(get_src_code_at_range(toplevel_form, Uri, Range, TopExpression)),
+    get_src_code_at_range(expression, Uri, Range, Expression),
+    TopExpression \=@= Expression,
+    EvalTitle = "Eval Expression",
+    sformat(EvalTitleExpression, "~w: ~w", [EvalTitle, Expression]),
+    EvalMettaAction = _{
+        title: EvalTitleExpression,
+        kind: "quickfix.eval",
+        command: _{
+            title: EvalTitle,
+            command: "eval_metta",
+            arguments: [Uri, Range, Expression]
+        }
+    }.
+
 
 
 
@@ -290,10 +270,6 @@ send_feedback_message(Message, MessageType) :-
     send_client_message(Msg).
 
 
-
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Lens Handlers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -318,51 +294,46 @@ compute_code_lenses(Uri, CodeLenses) :-
 
 % Compute Code Lenses for the given document
 compute_each_lens(Uri, _, CodeLens) :-
-    member(CodeLens, [
+   CodeLens =
         _{range: _{start: _{line: 0, character: 0}, end: _{line: 1, character: 20}},
-          command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}},
-        %_{range: _{start: _{line: 15, character: 0}, end: _{line: 15, character: 25}},
-        %  command: _{title: "Find References", command: "find_references", arguments: [Uri]}},
-        _{range: _{start: _{line: 20, character: 0}, end: _{line: 20, character: 30}},
-          command: _{title: "Show Documentation", command: "show_documentation", arguments: [Uri]}}
-    ]).
+          command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}}.
 
 compute_each_lens(Uri, Path, CodeLens):-
-        metta_file_buffer(0, Ord, Kind, What, VL, Path, Range),
-        compute_each_buffer_lens(Uri, Ord, Kind, What, VL, Path, Range, CodeLens).
+    Lvl = 0,
+    metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
+    compute_each_buffer_lens(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, CodeLens).
 
-compute_each_buffer_lens(Uri, _Ord, Kind, What, VL, _Path, Range, CodeLens):-
-            \+ is_list(What), !,
-            What = exec(_), !,
-            into_json_range(Range, JRange),
-            maybe_name_vars(VL),
-            wots(Title,(write("Run "), nop( write_src(Kind)))),
-            wots(Src,write_src(What)),
-            CodeLens = _{
-                range: JRange,
-                command: _{title: Title, command: "eval_metta", arguments: [Uri, JRange, Src]}
-            }.
+compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens):-
+    \+ is_list(What), !,
+    What = exec(_), !,
+    into_json_range(BRange, Range),
+    maybe_name_vars(VL),
+    wots(Title,(write("Run "), nop( write_src(Kind)))),
+    wots(Src,write_src(What)),
+    CodeLens = _{
+        range: Range,
+        command: _{title: Title, command: "eval_metta", arguments: [Uri, Range, Src]}
+    }.
 
-compute_each_buffer_lens(Uri, _Ord, Kind, What, VL, _Path, Range, CodeLens):-
-            into_json_range(Range, JRange),
-            maybe_name_vars(VL),
-            wots(Title,(write("Load "), nop( write_src(Kind)))),
-            wots(Src,write_src(What)),
-            CodeLens = _{
-                range: JRange,
-                command: _{title: Title, command: "load_metta", arguments: [Uri, JRange, Src]}
-            },!.
+compute_each_buffer_lens(Uri, Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens):-  Lvl = 0,
+    into_json_range(BRange, Range),
+    maybe_name_vars(VL),
+    wots(Title,(write("Load "), nop( write_src(Kind)))),
+    wots(Src,write_src(What)),
+    CodeLens = _{
+        range: Range,
+        command: _{title: Title, command: "load_metta", arguments: [Uri, Range, Src]}
+    }, !.
 
-/*
-compute_each_buffer_lens(_Uri, _Ord, _Kind, What, _VL, _Path, Range, CodeLens):-
-            is_list(What), sub_term(Symbol, What), atom(Symbol), \+ upcase_symbol(Symbol, Symbol),
-            into_json_range(Range, JRange),
-            %maybe_name_vars(VL), wots(Src,write_src(What)),
-            CodeLens = _{
-                range: JRange,
-                data: Symbol  % Include symbol name for resolve
-            }.
-*/
+% unused currently since Lvl = 0 always
+compute_each_buffer_lens(_Uri, Lvl, _Ord, _Kind, Symbol, _VL, _Path, BRange, CodeLens):-  Lvl >= 1,
+    symbol(Symbol), \+ upcase_symbol(Symbol, Symbol),
+    into_json_range(BRange, Range),
+    CodeLens = _{
+        range: Range,
+        data: Symbol  % Include symbol name for resolve
+    }.
+
 
 % Handle "codeLens/resolve" request
 handle_code_action_msg("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
@@ -405,14 +376,10 @@ symbol_reference_uri(Symbol, Location) :-
         range: JRange                  % Range within the document
     }.
 
-
-
 % Execute specific Code Lens commands
-lsp_hooks:code_action("find_references", [Uri, Symbol], ExecutionResult) :-
+lsp_hooks:exec_code_action("find_references", [Uri, Symbol], ExecutionResult) :-
     find_symbol_references(Uri, Symbol, References),
     format_reference_result(References, ExecutionResult).
-lsp_hooks:code_action("show_documentation", [Uri|_], _{status: "Showing Documentation", uri: Uri}).
-
 
 % Helper to find all references of a given symbol in a specified URI
 find_symbol_references(Uri, Symbol, References) :-
@@ -443,16 +410,16 @@ format_reference_entry(Location, Formatted) :-
 handle_code_action_msg("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
     _{id: Id, params: Params} :< Msg,
     _{command: Command, arguments: Arguments} :< Params,
-    lsp_hooks:code_action(Command, Arguments, ExecutionResult),
+    % Execute Command Implementation
+    lsp_hooks:exec_code_action(Command, Arguments, ExecutionResult), !,
     into_message_result(ExecutionResult, Result).
 
 into_message_result(ExecutionResult, Result):- is_dict(ExecutionResult), !, Result = ExecutionResult.
 into_message_result(ExecutionResult, Result):-
     Result = _{message: ExecutionResult}.
 
-% Execute Command Implementation
 
-lsp_hooks:code_action("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
+lsp_hooks:exec_code_action("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
     % Check if a new name was provided
     (   NewName == '' ->
         % If no new name is provided, return a message indicating cancellation
@@ -465,39 +432,37 @@ lsp_hooks:code_action("refactor_rename", [Uri, Range, NewName], ExecutionResult)
 
 
 % GPT-based refactor rewrite command
-lsp_hooks:code_action("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
-    get_code_at_range(block, Uri, Range, Code),
+lsp_hooks:exec_code_action("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
+    get_src_code_at_range(block, Uri, Range, Code),
     gpt_rewrite_code(Code, ExecutionResult).
 
 % GPT-based comment suggestion command
-lsp_hooks:code_action("source_gpt_comment", [Uri], ExecutionResult) :-
+lsp_hooks:exec_code_action("source_gpt_comment", [Uri], ExecutionResult) :-
+    % Retrieves the entire code content from a file given its URI.
     source_file_text(Uri, Text),
     gpt_comment_code(Text, ExecutionResult).
 
 % Evaluate Metta code
-lsp_hooks:code_action("eval_metta", [Uri, Range, Code], ExecutionResult) :-
+lsp_hooks:exec_code_action("eval_metta", [Uri, Range, Code], ExecutionResult) :-
     %get_code_at_range(expression, Uri, Range, Code),
-    load_metta(exec, Uri, Code, ExecutionResult),
+    load_metta_code(exec, Uri, Code, ExecutionResult),
     report_diagnostics(Uri, Range, ExecutionResult).
 
 % Evaluate Metta code
-lsp_hooks:code_action("load_metta", [Uri, Range, Code], ExecutionResult) :-
+lsp_hooks:exec_code_action("load_metta", [Uri, Range, Code], ExecutionResult) :-
     %get_code_at_range(expression, Uri, Range, Code),
-    load_metta(+, Uri, Code, ExecutionResult),
+    load_metta_code(+, Uri, Code, ExecutionResult),
     report_diagnostics(Uri, Range, ExecutionResult).
 
 % Run all tests and report results
-lsp_hooks:code_action("run_all_tests", [Uri], ExecutionResult) :-
+lsp_hooks:exec_code_action("run_all_tests", [Uri], ExecutionResult) :-
     run_all_tests(Uri, ResultList),
     format_tests_summary(ResultList, ExecutionResult).
 
-% Fallback for unrecognized commands
-lsp_hooks:code_action(_, _, "Command not recognized.").
 
-% Retrieves the entire code content from a file given its URI.
-get_code_from_file(Uri, Code) :-
-    path_doc(Path, Uri),  % Extract the file path from the URI.
-    read_file_to_string(Path, Code, []).  % Read the entire file content into Code.
+% Fallback for unrecognized commands
+lsp_hooks:exec_code_action(_, _, "Command not recognized.").
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -544,9 +509,9 @@ call_openai_for_gpt_task(Code, Task, Result) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Execute the Code
 load_metta(For, Uri, Code, Result):-
-  wots(_Str, load_metta4(For, Uri, Code, Result)).
+  wots(_Str, load_run_metta_now(For, Uri, Code, Result)).
 
-load_metta4(For, Uri, Code, Result) :-
+load_run_metta_now(For, Uri, Code, Result) :-
     % For safety, catch any errors during execution
     catch_with_backtrace((
         % Replace with actual code execution logic
@@ -559,8 +524,12 @@ load_metta4(For, Uri, Code, Result) :-
         sformat(Result,"~w ; Error: ~q",[Code,Error])
     )).
 % Evaluate Metta Code (Dummy Implementation)
-load_metta4(For,_Uri, Code, Result) :-
+load_run_metta_now(_For,_Uri, Code, Result) :-
     sformat(Result, "Evaluating Metta code: '~w'", [Code]).
+
+
+
+
 
 
 maybe_parse_sexpr_metta1(Code, Parsed):- string(Code),!, parse_sexpr_metta1(Code, Parsed).
@@ -571,7 +540,8 @@ load_metta_code(For, Uri, Code, Out):-
     current_self(Self),
     maybe_parse_sexpr_metta1(Code, Parsed), !,
     % Execute the form and generate the output using do_metta/5.
-    do_metta(file(Path), For, Self, Parsed, Out), !.
+    wdmsg(do_metta(file(lsp(Path)), For, Self, Parsed, Out)),
+   with_answer_output(do_metta(file(lsp(Path)), For, Self, Parsed, _Out),Out).
 
 % Run all tests (Dummy Test Results)
 run_all_tests(_, [pass("Test 1"), fail("Test 2"), error("Test 3", "Some error")]).
@@ -611,7 +581,8 @@ error_test(error(_, _)).
 
 % Helper to apply the rename across the specified range
 apply_rename(Uri, _Range, OldSymbol, NewName) :-
-    get_code_from_file(Uri, Code),
+    % Retrieves the entire code content from a file given its URI.
+    source_file_text(Uri, Code),
     % Replace occurrences of OldSymbol with NewName in the code at the specified range
     replace_symbol_in_code(OldSymbol, NewName, Code, UpdatedCode),
     save_updated_code(Uri, UpdatedCode).
