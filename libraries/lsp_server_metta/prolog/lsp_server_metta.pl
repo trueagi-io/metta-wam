@@ -589,7 +589,7 @@ server_capabilities(
         foldingRangeProvider: false  % Folding support is disabled as it is not required currently
     }
 ) :-
-  findall(Command, (clause(lsp_hooks:code_action(Command, _, _), _),string(Command)), CommandsList).  % Collect all commands using clause/2
+  findall(Command, (clause(lsp_hooks:exec_code_action(Command, _, _), _),string(Command)), CommandsList).  % Collect all commands using clause/2
     % token_types(TokenTypes),  % Token types configuration placeholder for future semantic token support
     % token_modifiers(TokenModifiers).  % Token modifiers configuration placeholder for future semantic token support
 
