@@ -164,7 +164,7 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
     },
 
     % Append Refactor: Rename Symbol, only if Symbol is not empty
-    ( ( debugging(lsp(position)), Symbol \== '' ) ->
+    ( (fail, debugging(lsp(position)), Symbol \== '' ) ->
        (sformat(RefactorTitle, "Refactor: Rename Symbol '~w' (TODO) ~w", [Symbol, LCR]),
         RefactorAction = _{
            title: RefactorTitle,
@@ -210,13 +210,13 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
 
     % Conditional placeholder for Eval Metta action
     ( true ->
-       (sformat(EvalMettaTitle, "Eval Metta: '~w'", [Expression]),
+       (sformat(EvalMettaTitle, "Run Metta: ~w", [Expression]),
         EvalMettaAction = _{
             title: EvalMettaTitle,
             kind: "quickfix.eval",
             command: _{
-                title: "Eval Metta",
-                command: "eval_metta",
+                title: "Run Metta",
+                command: "load_metta",
                 arguments: [Uri, Range, Expression]
             }
         },
@@ -225,7 +225,7 @@ compute_symbol_code_actions(Uri, Range, Symbol, Actions) :-
 
     % Conditional placeholder for Eval Metta action
     ( (SubExpression \=@= Expression) ->
-       (sformat(EvalMettaSubTitle, "Eval Sub-expression: '~w'", [SubExpression]),
+       (sformat(EvalMettaSubTitle, "Eval Sub-expression: ~w", [SubExpression]),
         EvalMettaSubAction = _{
             title: EvalMettaSubTitle,
             kind: "quickfix.eval",
@@ -350,7 +350,7 @@ compute_each_buffer_lens(Uri, _Ord, Kind, What, VL, _Path, Range, CodeLens):-
             wots(Src,write_src(What)),
             CodeLens = _{
                 range: JRange,
-                command: _{title: Title, command: "eval_metta", arguments: [Uri, JRange, Src]}
+                command: _{title: Title, command: "load_metta", arguments: [Uri, JRange, Src]}
             },!.
 
 /*
@@ -477,7 +477,13 @@ lsp_hooks:code_action("source_gpt_comment", [Uri], ExecutionResult) :-
 % Evaluate Metta code
 lsp_hooks:code_action("eval_metta", [Uri, Range, Code], ExecutionResult) :-
     %get_code_at_range(expression, Uri, Range, Code),
-    eval_metta(Uri, Code, ExecutionResult),
+    load_metta(exec, Uri, Code, ExecutionResult),
+    report_diagnostics(Uri, Range, ExecutionResult).
+
+% Evaluate Metta code
+lsp_hooks:code_action("load_metta", [Uri, Range, Code], ExecutionResult) :-
+    %get_code_at_range(expression, Uri, Range, Code),
+    load_metta(+, Uri, Code, ExecutionResult),
     report_diagnostics(Uri, Range, ExecutionResult).
 
 % Run all tests and report results
@@ -537,32 +543,35 @@ call_openai_for_gpt_task(Code, Task, Result) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Execute the Code
-eval_metta(Uri, Code, Result) :-
+load_metta(For, Uri, Code, Result):-
+  wots(_Str, load_metta4(For, Uri, Code, Result)).
+
+load_metta4(For, Uri, Code, Result) :-
     % For safety, catch any errors during execution
     catch_with_backtrace((
         % Replace with actual code execution logic
         % For demonstration, we'll just unify Result with Code
         % In practice, you might use metta:eval_string/2 or similar
         maybe_parse_sexpr_metta1(Code, Parsed),
-        eval_metta_code(Uri, Parsed, CodeResult),
+        load_metta_code(For, Uri, Parsed, CodeResult),
         sformat(Result,"; ~@",[write_src_wi(CodeResult)])
     ), Error, (
         sformat(Result,"~w ; Error: ~q",[Code,Error])
     )).
 % Evaluate Metta Code (Dummy Implementation)
-eval_metta(_Uri, Code, Result) :-
+load_metta4(For,_Uri, Code, Result) :-
     sformat(Result, "Evaluating Metta code: '~w'", [Code]).
 
 
 maybe_parse_sexpr_metta1(Code, Parsed):- string(Code),!, parse_sexpr_metta1(Code, Parsed).
 maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 
-eval_metta_code(Uri, Code, Out):-
+load_metta_code(For, Uri, Code, Out):-
     doc_path(Uri, Path),
     current_self(Self),
     maybe_parse_sexpr_metta1(Code, Parsed), !,
     % Execute the form and generate the output using do_metta/5.
-    do_metta(file(Path), +, Self, Parsed, Out), !.
+    do_metta(file(Path), For, Self, Parsed, Out), !.
 
 % Run all tests (Dummy Test Results)
 run_all_tests(_, [pass("Test 1"), fail("Test 2"), error("Test 3", "Some error")]).
