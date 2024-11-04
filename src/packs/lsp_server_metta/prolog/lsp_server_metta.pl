@@ -1,4 +1,4 @@
-:- module(lsp_server_metta, [main/0 ]).
+﻿:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3 ]).
 /** <module> LSP Server
 
 The main entry point for the Language Server implementation with dynamic handling based on max threads.
@@ -40,6 +40,8 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :-   dynamic(user:predicate_help_hook/5).
 :- multifile(lsp_hooks:hover_hook/5).
 :-   dynamic(lsp_hooks:hover_hook/5).
+:- multifile(lsp_hooks:code_action/3).
+:-   dynamic(lsp_hooks:code_action/3).
 
 
 :- user:ensure_loaded(lsp_metta_utils).
@@ -82,16 +84,6 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- discontiguous(lsp_hooks:handle_msg_hook/3).
 
 
-% If the max worked thread count is 0, it processes requests synchronously;
-% otherwise, it uses a thread pool for parallel processing.
-% 2 is a good default as it needs to be able to implement interruptions anyway
-% (this is separate from the file indexer threads)
-:- dynamic(lsp_worker_threads/1).
-%lsp_worker_threads(0). % no threads thus "$/cancelRequest" cant be implemented
-%lsp_worker_threads(1). % 1 thread thus "$/cancelRequest" is working
-%lsp_worker_threads(3). % 3 thread thus "$/cancelRequest" is working
-lsp_worker_threads(10). % 10 threads might be OK but overkill
-
 % Main entry point
 main :-
     set_prolog_flag(debug_on_error, false),
@@ -99,7 +91,7 @@ main :-
     set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
     nodebug(lsp(_)), % Everything
-    prolog_ide(debug_monitor),
+    %prolog_ide(debug_monitor),
     %debug(lsp(low)),
     debug(lsp(main)),
     debug(lsp(errors)),
@@ -109,90 +101,15 @@ main :-
     debug(lsp(position)),
     debug(lsp(xref)),
     load_mettalog_xref,
-    ignore(handle_threads(Args)),  % Handle threading based on max threads.
     start(Args).
 
-% Handle thread pool or synchronous mode based on max threads.
-handle_threads([MaxThreadsArg | _]) :-
-    ignore((atom_number(MaxThreadsArg, MaxThreadsN),
-    retractall(lsp_worker_threads(_)),
-    assertz(lsp_worker_threads(MaxThreadsN)))).
-
-:- dynamic(started_lsp_worker_threads/0).
-start_lsp_worker_threads:- started_lsp_worker_threads,!.
-start_lsp_worker_threads:-
-    assert(started_lsp_worker_threads),
-    lsp_worker_threads(MaxThreads),
-    ( MaxThreads > 0
-    -> create_workers('$lsp_worker_pool', MaxThreads) % Create thread pool if max threads > 0
-    ; debug_lsp(threads, "Running synchronously since max threads = 0", [])  % Sync mode
-    ).
-
-% Worker pool implementation
-% Create a pool with Id and number of workers.
-% After the pool is created, post_job/1 can be used to send jobs to the pool.
-
-create_workers(QueueId, N) :-
-    message_queue_create(QueueId),
-    forall(between(1, N, _),
-          thread_create(do_work(QueueId), _, [])),
-  debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
-
-% Dynamic predicates for cancellation mechanism
-:- dynamic task_thread/2.
-:- dynamic id_was_canceled/1.
-
-:- if( \+ prolog_load_context(reloading,true)).
-% Create a mutex for synchronization
-:- mutex_create('$lsp_request_mutex').
-:- endif.
-
-
-do_work(QueueId) :-
-    repeat,
-    catch(do_work_stuff(QueueId),_,true),
-    fail.
-
-do_work_stuff(QueueId):-
-    thread_get_message(QueueId, Task),
-    Task = lsp_task(Out, Req),
-    thread_self(ThreadId),
-    request_id(Req, RequestId),
-    % Register this thread handling RequestId
-    ( with_mutex('$lsp_request_mutex', id_was_canceled(RequestId)) ->
-        debug_lsp(threads, "Request ~w was canceled before it got started!", [RequestId])
-    ; ( with_mutex('$lsp_request_mutex', assertz(task_thread(RequestId, ThreadId))),
-        debug_lsp(threads, "Worker ~w processing task with ID ~w", [ThreadId, RequestId]),
-        catch(
-            handle_request(Out, Req),
-            canceled,
-            ( debug_lsp(threads, "Request ~w was canceled", [RequestId]),
-              send_cancellation_response(Out, RequestId)
-            )),
-        % Clean up after handling
-        with_mutex('$lsp_request_mutex', retract(task_thread(RequestId, ThreadId)))
-    )).
-
-% Post a job to be executed by one of the pool's workers.
-post_job(QueueId, Task) :-
-    thread_send_message(QueueId, Task),
-    nop(debug_lsp(threads, "~q", [posted_job(Task)])).
-
-% Send a cancellation response if necessary
-send_cancellation_response(_OutStream, _RequestId) :-
-    % According to LSP, the server should not send a response to a canceled request,
-    % but some clients may expect a response indicating cancellation.
-    % Uncomment the following lines if you want to send such a response.
-    % Response = _{jsonrpc: "2.0", id: RequestId, error: _{code: -32800, message: "Request canceled"}},
-    % send_message(OutStream, Response),
-    true.
 
 % Start the server based on input arguments
 start([stdio]) :- !,
-    debug_lsp(threads, "Starting stdio client", []),
+    debug_lsp(main, "Starting stdio client", []),
     stdio_server.
 start(Args) :-
-    debug_lsp(threads, "Unknown args ~w", [Args]).
+    debug_lsp(main, "Unknown args ~w", [Args]).
 
 % stdio server initialization
 stdio_server :-
@@ -201,7 +118,6 @@ stdio_server :-
     set_stream(In, newline(posix)),
     set_stream(In, tty(false)),
     set_stream(In, representation_errors(error)),
-    start_lsp_worker_threads,
     % Handling UTF decoding in JSON parsing, but doing the auto-translation
     % causes Content-Length to be incorrect
     set_stream(In, encoding(octet)),
@@ -209,8 +125,6 @@ stdio_server :-
     set_stream(Out, encoding(utf8)),
     %stdio_handler_io(In, Out). %(might use this one later)
     stdio_handler(A-A, In, Out).
-
-
 
 % [TODO] add multithreading? Guess that will also need a message queue
 % to write to stdout
@@ -234,37 +148,219 @@ handle_requests(Out, InCodes, Tail) :-
 handle_requests(_, T, T).
 
 
-immediate_method(Request):- is_dict(Request), !, immediate_request(Request).
-immediate_method("$/cancelRequest"). % Handle cancel immediately
-immediate_method(TM):- cancelable_method(TM), !, fail.
-% immediate_method(_).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN Threading/Queueing System
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-immediate_request(Req):- Method = Req.body.method, !, immediate_method(Method).
-immediate_request(Req):- Body = Req.body, !, immediate_request(Body).
-immediate_request(Body):- Method = Body.method, !, immediate_method(Method).
+% Handle requests that need immediate or cancellable responses
+immediate_method(Request) :- is_dict(Request), !, immediate_request(Request).
+immediate_method("$/cancelRequest").
+immediate_method(TM) :- cancelable_method(TM), !, fail.
+% immediate_method(_). % This line would act as a fallback for "immediate" methods, allowing any request method not specified as "cancellable" to be treated as immediate if uncommented.
 
 cancelable_method('textDocument/documentSymbol').
 cancelable_method('textDocument/hover').
-% cancelable_method('textDocument/didOpen').
+% cancelable_method('textDocument/didOpen'). % This line is an option to make 'textDocument/didOpen' cancelable if needed
+
+% Extract everything after the last '/' in the FileUri
+after_slash(FileUri, FileUriAS) :-
+    % Split the URI on '/' and get the last segment
+    atomic_list_concat(Segments, '/', FileUri),
+    last(Segments, FileUriAS), !.
+after_slash(FileUri, FileUriAS) :-
+    % Fallback to formatted string if no '/' is found
+    sformat(FileUriAS, '~q', [FileUri]), !.
 
 % Handle parsed requests
 handle_parsed_request(Out, Req) :-
-    ( ( lsp_worker_threads(0) ; immediate_request(Req) )
-    -> handle_request(Out, Req)
-    ;
-        (    post_job('$lsp_worker_pool', lsp_task(Out, Req)), debug_lsp(threads, "~q", [posted_job(Req.body.method)]) )
+    % Extract the method name, request ID, and URI for logging
+    first_dict_key(method, Req, Method),
+    first_dict_key(command;data;uri, Req, FileUri),
+    request_id(Req, RequestId),
+    after_slash(Method,MethodAS),
+    after_slash(FileUri,FileUriAS),
+    atomic_list_concat([MethodAS,FileUriAS,''],'_',Stem),
+    (number(RequestId) -> JobId = RequestId ; gensym(Stem, JobId)),
+    get_time(Time), asserta(post_time(JobId, Time)),
+    (number(RequestId)-> ( assert(id_info(RequestId,JobInfo))) ; true),
+    sformat(JobInfo, "JID: ~w ~q=~q", [JobId, Method, FileUri]),
+    % Handle the request based on threading mode or immediacy
+    ((lsp_worker_threads(0) ; immediate_method(Method)) ->
+        (handle_request(JobId, JobInfo, Out, Req))
+    ;( post_job('$lsp_worker_pool', lsp_task(Out, JobId, JobInfo, Req)),
+       debug_lsp(threads, "Posted job for ~w", [JobInfo]))).
+
+% Post a job by storing it in the database and posting the job ID to the queue
+post_job(QueueId, Task) :-
+    % Determine the JobId to use: use the RequestId if available, otherwise generate a unique ID
+    (  (Task = lsp_task(_, JobId, _JobInfo, _))
+    ->  true
+    ;   gensym(job_id_, JobId)  % Generate a unique ID if RequestId is absent
+    ),
+
+    % Store the job in the database with the chosen JobId
+    assertz(job_data(JobId, Task)),
+
+    % Post only the JobId to the message queue
+    with_mutex('$lsp_request_mutex', (
+        start_lsp_worker_threads,
+        thread_send_message(QueueId, JobId),
+        nop(debug_lsp(threads, "Posted job with ID ~w", [JobId]))
+    )).
+
+% New dynamic predicate to store job data in the database
+:- dynamic job_data/2.
+:- dynamic id_info/2.
+
+% Worker loop
+do_work(QueueId) :-
+    repeat,
+    catch(do_work_stuff(QueueId), _, true),
+    fail.
+
+do_work_stuff(QueueId) :-
+    thread_self(ThreadId),
+    repeat,
+    once(do_work_stuff_tid(QueueId, ThreadId)),
+    fail.
+
+do_work_stuff_tid(QueueId, ThreadId) :-
+    repeat,
+    % Retrieve the job ID from the queue
+    thread_get_message(QueueId, JobId),
+
+    % Fetch the actual job data from the database
+    (   retract(job_data(JobId, Task))
+    -> (Task = lsp_task(Out, _, JobInfo, Req),
+        request_id(Req, RequestId),
+        (JobId==RequestId -> JR = JobId  ; JR = (JobId/RequestId)),
+        % Register this thread handling RequestId
+        with_mutex('$lsp_request_mutex', (
+            (id_was_canceled(RequestId) ->
+               (debug_lsp(threads, "Request ~w was canceled before it got started! ~w", [JR, JobInfo]),
+                ignore(retract(job_data(RequestId,_))),
+                ignore(id_was_canceled(RequestId))),
+                ignore(retract(id_info(RequestId,_))),
+                debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
+                send_cancellation_response(Out, RequestId),
+                throw(canceled),
+                true)
+            ; assertz(task_thread(RequestId, ThreadId))
+        ))),
+
+        debug_lsp(threads, "Worker ~w processing task with JobId ~w: ~w", [ThreadId, JR, JobInfo]),
+
+        % Process the request and handle cancellation
+        catch(
+            handle_request(JobId, JobInfo, Out, Req),
+            canceled,
+            ( debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
+              send_cancellation_response(Out, RequestId)
+            )
+        ),
+
+        % Clean up task_thread
+        with_mutex('$lsp_request_mutex', (
+            ignore(retract(task_thread(RequestId, ThreadId))),
+            true))
+    ;   debug_lsp(threads, "Job ID ~w not found in the database", [JobId])
     ).
+
+
+
+% If the max worker thread count is 0, it processes requests synchronously;
+% otherwise, it uses a thread pool for parallel processing.
+:- dynamic(lsp_worker_threads_max/1).
+
+% Handle threading based on max threads.
+lsp_worker_threads(N) :- lsp_worker_threads_max(N), !.
+lsp_worker_threads(MaxThreads) :-
+    current_prolog_flag(argv, Args),
+    append(_, ['--workers', MaxThreadsArg | _], Args),
+    atom_number(MaxThreadsArg, MaxThreads),
+    assert(lsp_worker_threads_max(MaxThreads)),
+    !.
+% The following commented-out lines are configuration options for the worker threads:
+% lsp_worker_threads(0). % no threads, thus "$/cancelRequest" cannot be implemented as requests are processed synchronously
+% lsp_worker_threads(1). % 1 thread, enabling "$/cancelRequest" since requests are handled one at a time asynchronously
+% lsp_worker_threads(3). % 3 threads, allows some parallel processing and handling of "$/cancelRequest"
+lsp_worker_threads(10). % 10 threads is the current setting, allowing high concurrency but could be overkill for some cases
+
+:- dynamic(started_lsp_worker_threads/0).
+
+% Start worker threads or run synchronously based on max threads.
+start_lsp_worker_threads :-
+    started_lsp_worker_threads, !.
+start_lsp_worker_threads :-
+    assert(started_lsp_worker_threads),
+    lsp_worker_threads(MaxThreads),
+    (MaxThreads > 0 ->
+        create_workers('$lsp_worker_pool', MaxThreads)
+    ; debug_lsp(threads, "Running synchronously since max threads = 0", [])
+    ).
+
+% Worker pool implementation
+create_workers(QueueId, N) :-
+    message_queue_create(QueueId),
+    forall(between(1, N, _),
+           thread_create(do_work(QueueId), _, [])),
+    debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
+
+% Dynamic predicates for task management and cancellation
+:- dynamic task_thread/2.
+:- dynamic id_was_canceled/1.
+
+% Create a mutex for synchronization
+:- if(\+ prolog_load_context(reloading, true)).
+    :- mutex_create('$lsp_request_mutex').
+    :- mutex_create('$lsp_response_mutex').
+:- endif.
+
+% Cancel a specific task by ID
+cancel_taskid(CancelId) :-
+    debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
+    with_mutex('$lsp_request_mutex', (
+        ignore(retract(job_data(CancelId, _))),
+        (task_thread(CancelId, ThreadId) ->
+           (debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
+            catch(thread_signal(ThreadId, throw(canceled)), _, true),  % in case the thread is gone
+            ignore(retract(task_thread(CancelId, ThreadId))),
+            ignore(retract(id_info(CancelId, _))),
+            ignore(retract(task_thread(CancelId, ThreadId))))  % in case it didnt clean up after itself
+        ; (debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
+           assertz(id_was_canceled(CancelId)))
+        )
+    )).
+
+% Send a cancellation response if required
+send_cancellation_response(OutStream, RequestId) :-
+    % According to LSP, the server should not send a response to a canceled request,
+    % but some clients may expect a response indicating cancellation.
+    % Uncomment the following lines if you want to send such a response.
+    nop((Response = _{jsonrpc: "2.0", id: RequestId, error: _{code: -32800, message: "Request canceled"}},
+    send_message(OutStream, Response))),
+    true.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% END Threading/Queueing System
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % Backtrace error handler
 catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
         ( Err == canceled ->
             throw(canceled)
-        ; ( debug(lsp(errors), "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+        ; ( debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
             throw(Err)
           )
         )
      ).
+
+
+send_client_message(Msg) :-
+  ignore((nb_current('$message_out', OutStream),
+    send_message(OutStream,Msg))).
 
 % Send LSP message to client
 send_message(Stream, Msg) :-
@@ -273,13 +369,14 @@ send_message(Stream, Msg) :-
     atom_json_dict(JsonCodes, VersionedMsg, [as(codes), width(0)]),
     phrase(utf8_codes(JsonCodes), UTF8Codes),
     length(UTF8Codes, ContentLength),
-    format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
-    flush_output(Stream))).
+    with_mutex('$lsp_response_mutex',
+         (format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
+          flush_output(Stream))))).
 
 debug_lsp(Topic,Format,Args):-
  ignore((% debugging(Topic),
    \+ \+ ((maplist(hide_gvars,Args),
-           flush_output(user_error), format(user_error, '~N~w ',[Topic]),format(user_error, Format, Args), nl(user_error),nl(user_error),flush_output(user_error),
+           % flush_output(user_error), format(user_error, '~N~w ',[Topic]),format(user_error, Format, Args), nl(user_error),nl(user_error),flush_output(user_error),
            debug(lsp(Topic),Format,Args))))).
 
 hide_gvars(Arg):- numbervars(Arg,696,_,[attvar(skip),singletons(true)]).
@@ -290,38 +387,102 @@ request_id(Req, RequestId):- get_dict(body, Req, Body), !, request_id(Body, Requ
 request_id(  _, none).
 
 first_dict_key(_Key, Req, RequestId):- \+ is_dict(Req), !, RequestId = not_dict(Req).
-first_dict_key( Key, Req, RequestId):- get_dict(Key, Req, RequestId), !.
+first_dict_key( Key, Req, RequestId):- each_key(Key,Try), get_dict(Try, Req, RequestId), !.
 first_dict_key( Key, Req, RequestId):- get_dict(_, Req, Body), first_dict_key(Key, Body, RequestId), RequestId\==none, RequestId\=not_dict(_), !.
 first_dict_key(_Key,   _, none).
 
-
+each_key(Key,Try):- \+ compound(Key),!,atom(Key),Try=Key.
+each_key(Key,Try):- arg(_,Key,Maybe),each_key(Maybe,Try).
 
 % Handle individual requests
-handle_request(OutStream, Req) :-
+% Predicate to store the posting time of each job by JobId
+:- dynamic post_time/2.
+
+% Helper to calculate and format time difference with appropriate units
+% If Description is provided, it prepends it to the formatted time. If not applicable, returns an empty string.
+time_diff_string(Start, End, Description, DurationString) :-
+    Duration is End - Start,
+    (   Duration < 0.01
+    ->  _Microseconds is Duration * 1_000_000,
+        format(atom(DurationString), "~w: usecs", [Description])
+    ;   Duration < 1
+    ->  Milliseconds is Duration * 1_000,
+        format(atom(DurationString), "~w: ~2f ms", [Description, Milliseconds])
+    ;   format(atom(DurationString), "~w: ~2f secs!!!!", [Description, Duration])
+    ), !.
+
+time_diff_string(Start, End, Description, DurationString) :-
+    Duration is End - Start,
+    (   Duration < 0.001
+    ->  Microseconds is Duration * 1_000_000,
+        format(atom(DurationString), "~w: ~2f usecs", [Description, Microseconds])
+    ;   Duration < 1
+    ->  Milliseconds is Duration * 1_000,
+        format(atom(DurationString), "~w: ~2f ms", [Description, Milliseconds])
+    ;   format(atom(DurationString), "~w: ~2f secs", [Description, Duration])
+    ).
+time_diff_string(_, _, "", "").  % If no Description, return empty string
+
+% Handle the job and log all time durations
+handle_request(JobId, JobInfo, OutStream, Req) :-
+    nb_setval('$message_out', OutStream),
+    % Retrieve post time
+    (retract(post_time(JobId, PostTime)) -> true ; get_time(PostTime)),
     Method = Req.body.method,
-    first_dict_key(uri,Req.body,URI),
     request_id(Req, Id),
-    debug_lsp(high, "Request id ~q: ~q", [Id=Method, uri=URI]),
     catch(
-        ( catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
+        ( get_time(StartTime),
+          time_diff_string(PostTime, StartTime, "Waited", DurationPostToStart),
+          debug_lsp(high, "Request ~w started after ~w~n~n~q~n~n", [JobInfo, DurationPostToStart, Req]),
+
+          % Process the request
+          catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
+
+          get_time(EndTime),
+          time_diff_string(StartTime, EndTime, "Processed", DurationStartToEnd),
+          time_diff_string(PostTime, EndTime, "Total", DurationPostToEnd),
           request_id(Resp, RespIdNone),
-         (number(RespIdNone) -> RespId = RespIdNone ; RespId = Id),
+          (number(RespIdNone) -> RespId = RespIdNone ; RespId = Id),
+
+          % Calculate time for sending response if needed
+          ( is_dict(Resp) ->
+              get_time(SendStartTime),
+              send_message(OutStream, Resp),
+              get_time(SendEndTime),
+              time_diff_string(SendStartTime, SendEndTime, "Response", SendTime)
+          ;  SendTime = ""  % No response to send, so no send time
+          ),
+
+          % Log all durations including SendTime
           ignore((
-               (user:nodebug_lsp_response(Method),Resp\==false)
-               -> debug_lsp(high, "Response id: ~q (~q) <nodebug>", [RespId,Method])
-                ; debug_lsp(high, "Response id: ~q (~q) ~q", [RespId,Method,Resp])
-                )),
-          ( is_dict(Resp) -> send_message(OutStream, Resp) ; true ) ),
+               (user:nodebug_lsp_response(Method), Resp \== false)
+               -> debug_lsp(high, "Response id: ~q (~w) <.. hidden debug ...> -- ~w, ~w, ~w, ~w",
+                            [RespId, JobInfo, DurationPostToEnd, DurationPostToStart, DurationStartToEnd, SendTime])
+               ; debug_lsp(high, "Response id: ~q (~w) ~q -- ~w, ~w, ~w, ~w",
+                            [RespId, JobInfo, Resp, DurationPostToEnd, DurationPostToStart, DurationStartToEnd, SendTime])
+               ))
+        ),
         Err,
         ( Err == canceled ->
-            throw(canceled)
-        ; ( debug(lsp(errors), "error handling msg ~q", [Err]),
-          ignore((get_dict(id, Req.body, Id),
-                  send_message(OutStream, _{id: Id,
-                           error: _{code: -32001,
-                                             message: "server error"}})))
-          )
-        )).
+            ( get_time(CancelTime),
+              time_diff_string(StartTime, CancelTime, "Processed", DurationStartToEnd),
+              time_diff_string(PostTime, CancelTime, "Total", DurationPostToEnd),
+              debug_lsp(high, "Request id ~w canceled after -- ~q, ~q, ~q",
+                        [JobInfo, DurationPostToEnd, DurationPostToStart, DurationStartToEnd]),
+              throw(canceled)
+            )
+        ; ( get_time(ErrorTime),
+            time_diff_string(StartTime, ErrorTime, "Processed", DurationStartToEnd),
+            time_diff_string(PostTime, ErrorTime, "Total", DurationPostToEnd),
+            debug_lsp(errors, "Error handling msg ~q in ~w after -- ~q, ~q, ~q",
+                      [Err, JobInfo, DurationPostToEnd, DurationPostToStart, DurationStartToEnd]),
+            ignore((
+                get_dict(id, Req.body, Id),
+                send_message(OutStream, _{id: Id,
+                           error: _{code: -32001, message: "server error"}}))
+            )
+        ))
+    ).
 
 % Hide responses for certain methods
 user:nodebug_lsp_response("textDocument/hover").
@@ -330,52 +491,108 @@ user:nodebug_lsp_response("textDocument/codeAction").
 
 
 % Server capabilities declaration
-
 server_capabilities(
-    _{textDocumentSync: _{openClose: true,
-                          change: 2, %incremental
-                          save: _{includeText: false},
-                          willSave: false,
-                          willSaveWaitUntil: true %???
-                          },
-      hoverProvider: true,
-      completionProvider: _{},
+    _{
+        % Configuration change notifications
+        workspace: _{
+            workspaceFolders: _{
+                supported: true,
+                changeNotifications: true  % Notify server of added/removed workspace folders
+            },
+            didChangeConfiguration: true,  % Notify server when configuration changes
+            didChangeWatchedFiles: _{
+                watchers: [_{globPattern: "**/*"}]  % Watch all files in the workspace
+            }
+        },
 
+        textDocumentSync: _{
+            openClose: false,
+            change: 2,  % incremental
+            save: _{includeText: false},
+            willSave: true,
+            willSaveWaitUntil: true
+        },
 
-      documentSymbolProvider: true,
-      workspaceSymbolProvider: true,  % Workspace symbol provider
+        /*
+        Explanation of textDocumentSync settings:
 
-      definitionProvider: true,
-      declarationProvider: false, % we are using menu for "definition" for declarations for now
-      implementationProvider: true,
-      typeDefinitionProvider: true,
-      referencesProvider: true,
+        1. openClose: false
+           - The server does not receive notifications when documents are opened (`didOpen`) or closed (`didClose`).
+           - Although `openClose` is disabled, we can still obtain information about open documents through `documentSymbol` requests, as they can only be requested for documents currently open in the editor.
 
-      documentHighlightProvider: false,
-      codeActionProvider: true,  % Changed from false to true
+        2. change: 2
+           - Specifies that the server wants to receive only incremental changes when a document is modified (`didChange`).
+           - This setting reduces the amount of data sent, as only differences (not the full document) are sent with each change.
 
+        3. save: _{includeText: false}
+           - On save (`didSave`), the server will receive a notification but not the full document content.
+           - If `includeText` were true, the entire document text would be included in each save notification.
 
-      codeLensProvider: _{resolveProvider: true},  % Enabled resolveProvider
-      documentFormattingProvider: false, % [TODO] almost finished
-      %% documentOnTypeFormattingProvider: false,
-      renameProvider: false,
-      % documentLinkProvider: false,
-      colorProvider: false,
-      foldingRangeProvider: false,
-      executeCommandProvider: _{commands: ["eval_metta", "query_metta", "assert_metta", "source_gpt_comment", "refactor_gpt_rewrite", "run_all_tests"]},
-     /* semanticTokensProvider: _{legend: _{tokenTypes: TokenTypes,
-                                          tokenModifiers: TokenModifiers},
-                                range: true,
-                                % [TODO] implement deltas
-                                full: _{delta: false}},*/
-      semanticTokensProvider: false,
+        4. willSave: true
+           - Enables `willSave` notifications, letting the server know when a document is about to be saved.
+           - This allows the server to prepare for the save, such as performing any necessary validation.
 
-      workspace: _{workspaceFolders: _{supported: true,
-                                       changeNotifications: true}}
-     }
-) :- !.
-    %token_types(TokenTypes),
-    %token_modifiers(TokenModifiers).
+        5. willSaveWaitUntil: true
+           - Enables `willSaveWaitUntil` requests, which allow the server to make edits on the document before it is saved.
+           - This can be useful for pre-save formatting or other modifications to ensure the document is in a desired state before it’s saved.
+
+        Summary:
+        - This configuration reduces data by using incremental changes (`change: 2`) and disabling full text on save (`includeText: false`).
+        - The server can respond to `willSaveWaitUntil` requests to modify documents right before they are saved.
+        */
+
+        % Popups
+        hoverProvider: true,
+        codeLensProvider: _{resolveProvider: true},  % Code lens resolve provider enabled to support resolving additional data on code lenses
+        codeActionProvider: true,  % Enabled to support code actions
+        % Dynamically enumerate commands for Popups
+        executeCommandProvider: _{
+            commands: CommandsList  % List available Code Lens commands
+        },
+
+        % Outline Panels
+        documentSymbolProvider: true,
+
+        % Completion
+        workspaceSymbolProvider: true,  % Enables workspace symbol provider
+        completionProvider: _{},  % Completion provider configuration
+
+        % Menu/Links
+        definitionProvider: true,
+        declarationProvider: false,  % Currently using a menu for "definition" for declarations
+        implementationProvider: true,
+        typeDefinitionProvider: true,
+        referencesProvider: true,
+        documentLinkProvider: false,  % Commented out; may implement later if document linking is required
+
+        % Refactoring
+        renameProvider: false,  % Rename support disabled for now
+
+        % Colors
+        documentHighlightProvider: false,  % Highlights are currently disabled
+        colorProvider: false,  % No color provider support
+
+        /* semanticTokensProvider: _{
+            legend: _{
+                tokenTypes: TokenTypes,
+                tokenModifiers: TokenModifiers
+            },
+            range: true,
+            % [TODO] Implement deltas
+            full: _{delta: false}
+        }, */
+        % semanticTokensProvider: false,  % Semantic tokens provider disabled as not fully implemented
+
+        % Formatting
+        documentFormattingProvider: false,  % [TODO] Formatting provider is almost finished
+        documentOnTypeFormattingProvider: false,  % Disabled as it is not yet implemented
+        foldingRangeProvider: false  % Folding support is disabled as it is not required currently
+    }
+) :-
+  findall(Command, (clause(lsp_hooks:exec_code_action(Command, _, _), _),string(Command)), CommandsList).  % Collect all commands using clause/2
+    % token_types(TokenTypes),  % Token types configuration placeholder for future semantic token support
+    % token_modifiers(TokenModifiers).  % Token modifiers configuration placeholder for future semantic token support
+
 
 :- dynamic(user:client_capabilities/1).
 
@@ -383,13 +600,18 @@ server_capabilities(
 
 :- discontiguous(handle_msg/3).
 
+
+% recompile/update code for the lsp server
+handle_msg( _, _, _) :- notrace(catch(make,_,true)),fail.
+
+% Save the last Msg.body Object for each method  (must fail to allow further processing)
 :- dynamic(user:last_request/2).
-% Save the last Msg.body Object for each method
 handle_msg( Method, MsgBody, _) :-
     once(( retractall(user:last_request(Method,_)),
-      asserta(user:last_request(Method,MsgBody)))),
+      asserta(user:last_request(Method, MsgBody)))),
       fail.
 
+%  Saves last infos that might be realivant to context (must fail to allow further processing)
 :- dynamic(user:last_range/2).
 handle_msg(Method, Msg, _) :-
    %Method \== "textDocument/hover",
@@ -400,6 +622,7 @@ handle_msg(Method, Msg, _) :-
       retractall(user:last_range(Method,_)),
       asserta(user:last_range(Method,Range)))),
       fail.
+
 
 handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
@@ -416,7 +639,7 @@ handle_msg("initialize", Msg,
 
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
     _{id: Id} :< Msg,
-    debug(lsp(main), "received shutdown message", []).
+    debug_lsp(main, "received shutdown message", []).
 
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
@@ -461,7 +684,7 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
     path_doc(HintPath, Doc),
     Loc = line_char(Line0, Char0),
     lsp_metta_utils:clause_with_arity_in_file_at_position(Name, Arity, HintPath, Loc),
-        nop(debug(lsp(position),"~q",[message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity)])).
+        nop(debug_lsp((position),"~q",[message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity)])).
 
 % CALL: method:textDocument/definition
 % IN: params:{position:{character:55,line:174},textDocument:{uri:file://<FILEPATH>}}
@@ -573,9 +796,9 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     _{uri: FileUri} :< TextDoc,
     _{text: FullText} :< TextDoc,
     doc_path(FileUri, Path),
-    %debug(lsp(low),"~w",[FullText]),
+    %debug_lsp((low),"~w",[FullText]),
     /*split_text_document_d4(FullText,SplitText),
-    debug(lsp(low),"~w",[SplitText]),
+    debug_lsp(low,"~w",[SplitText]),
     retractall(lsp_metta_changes:doc_text_d4(Path, _)),
     assertz(lsp_metta_changes:doc_text_d4(Path, SplitText)),*/
     ( in_editor(Path) -> true ; assertz(in_editor(Path)) ),
@@ -608,28 +831,18 @@ handle_msg("textDocument/didClose", Msg, false) :-
     retractall(in_editor(Path)).
 
 handle_msg("initialized", Msg, false) :- !,
-    debug(lsp(main), "initialized ~w", [Msg]).
+    debug_lsp(main, "initialized ~w", [Msg]).
 
 handle_msg("$/setTrace", _Msg, false).
 
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-
     _{params: _{id: CancelId}} :< Msg,
-    debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
-    with_mutex('$lsp_request_mutex',
-        (   task_thread(CancelId, ThreadId)
-        ->  % Attempt to interrupt the thread
-            debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
-            catch(thread_signal(ThreadId, throw(canceled)), _, true),  % In case thread is already gone
-            ignore(retract(task_thread(CancelId, ThreadId)))        % In case thread retracted it
-        ;   ( debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
-              assertz(id_was_canceled(CancelId))
-            )
-        )).
+    ignore(cancel_taskid(CancelId)).
 
 % Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
-    debug(lsp(main), "Received exit, shutting down", []),
+    debug_lsp(main, "Received exit, shutting down", []),
     halt.
 
 
@@ -669,9 +882,9 @@ get_symbol_name(Symbol, Name) :-
 % wildcard
 handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented"}}) :-
     _{id: Id} :< Msg, !,
-    debug(lsp(todo), "unknown message ~w", [Msg]).
+    debug_lsp(todo, "unknown message ~w", [Msg]).
 handle_msg(_, Msg, false) :-
-    debug(lsp(todo), "unknown notification ~w", [Msg]).
+    debug_lsp(todo, "unknown notification ~w", [Msg]).
 
 % [TODO]Check errors and respond with diagnostics
 check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
@@ -685,5 +898,5 @@ check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
     doc_path(FileUri, Path),
     prolog_check_errors(Path, Errors).
 check_errors_resp(_, false) :-
-    debug(lsp(errors), "Failed checking errors", []).
+    debug_lsp(errors, "Failed checking errors", []).
 
