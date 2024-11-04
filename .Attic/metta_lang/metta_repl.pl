@@ -70,8 +70,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % You can debug mettalog using the repl:
-%   1) enter "mettalog" on your command line 
-%   2) enter Prolog mode by entering "prolog." This gives you the '?-' swipl prompt. 
+%   1) enter "mettalog" on your command line
+%   2) enter Prolog mode by entering "prolog." This gives you the '?-' swipl prompt.
 % This method gives you a handy means of debugging.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -816,6 +816,7 @@ is_interactive(From) :- notrace(is_interactive0(From)).
 %     ?- is_interactive0(repl_true).
 %     true.
 %
+is_interactive0(From) :- compound(From), From = file(_), !, fail.
 is_interactive0(From) :-
     % Check if the source is repl_true, meaning it is interactive.
     From == repl_true, !.
@@ -1051,6 +1052,8 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
           % If an error occurs, log it along with the source and the term.
           write_src(error(Error,From,TermV))).
 
+each_pair_list(A-B,A,B).
+
 %! interactively_do_metta_exec00(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
 %   A helper function that handles the core logic of the interactive metta execution, catching potential aborts.
 %   This is the next layer in the call stack after interactively_do_metta_exec/9.
@@ -1064,6 +1067,10 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
 %   @arg Was is the previous state before execution.
 %   @arg Output is the output generated from the execution.
 %   @arg FOut is the final output, after additional processing.
+interactively_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
+   findall(Output-FOut,interactively_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
+   maplist(each_pair_list,List,OutputL,FOutL).
+
 interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
     catch(interactively_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
@@ -1172,7 +1179,6 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
       % Debug output in interactive mode, showing evaluated terms and results
       prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL),writeln('.'))))),
       true))))),
-
    % Print formatted answer output
    in_answer_io(format('~N[')),!,
 

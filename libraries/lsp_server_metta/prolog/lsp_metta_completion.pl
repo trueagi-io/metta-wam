@@ -187,54 +187,6 @@ get_word_codes(_, []).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Code Lens Handlers
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_codelens(Method,Msg,Response),!.
-
-% Handle the 'textDocument/codeLens' Request
-handle_codelens("textDocument/codeLens", Msg, _{id: Id, result: CodeLenses}) :-
-    _{id: Id, params: Params} :< Msg,
-    _{textDocument: _{uri: Uri}} :< Params,
-    compute_code_lenses(Uri, CodeLenses).
-
-% Compute Code Lenses for the given document
-compute_code_lenses(Uri, CodeLenses) :-
-    get_document_lines(Uri, Lines),
-    findall(CodeLens,
-        (
-            nth0(LineIndex, Lines, Line),
-            contains_symbol(Line, Symbol, StartChar, EndChar),
-            CodeLens = _{
-                range: _{
-                    start: _{line: LineIndex, character: StartChar},
-                    end: _{line: LineIndex, character: EndChar}
-                },
-                data: Symbol  % Include symbol name for resolve
-            }
-        ),
-        CodeLenses).
-
-% Handle the 'codeLens/resolve' Request
-handle_codelens("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
-    _{id: Id, params: CodeLens} :< Msg,
-    resolve_code_lens(CodeLens, ResolvedCodeLens).
-
-% Resolve Code Lens
-resolve_code_lens(CodeLens, ResolvedCodeLens) :-
-    get_dict(data, CodeLens, Symbol),
-    symbol_reference_locations(Symbol, Locations),
-    % Build the command with the resolved locations
-    Command = _{
-        title: "Show References",
-        command: "editor.action.showReferences",
-        arguments: [
-            CodeLens.range.start,  % Position of the symbol
-            Locations              % List of locations where the symbol is referenced
-        ]
-    },
-    put_dict(command, CodeLens, Command, ResolvedCodeLens).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper Predicates
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -263,11 +215,6 @@ is_whole_word(Line, StartChar, EndChar) :-
     ; true  % End of line
     ).
 
-% Get symbol reference locations (stub implementation)
-symbol_reference_locations(_Symbol, Locations) :-
-    % For demonstration purposes, we return an empty list.
-    % In a real implementation, you would find all locations where the symbol is referenced.
-    Locations = [].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Symbol Definitions and Documentation

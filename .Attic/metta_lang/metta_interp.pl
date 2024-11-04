@@ -602,21 +602,41 @@ real_notrace(Goal) :-
 
 
 :- dynamic(is_answer_output_stream/2).
+
 %answer_output(Stream):- is_testing,original_user_output(Stream),!.
 %answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
-answer_output(Stream):- is_answer_output_stream(_,Stream),!.
-answer_output(Stream):- tmp_file('answers',File),
-   open(File,write,Stream,[encoding(utf8)]),
-   asserta(is_answer_output_stream(File,Stream)).
+answer_output(Stream) :-
+    is_answer_output_stream(_, Stream), !.  % Use existing stream if already open
+answer_output(Stream) :-
+    new_memory_file(MemFile),                              % Create a new memory file
+    open_memory_file(MemFile, write, Stream, [encoding(utf8)]),  % Open it as a stream
+    asserta(is_answer_output_stream(MemFile, Stream)).  % Store memory file and stream reference
 
-write_answer_output:-
-  retract(is_answer_output_stream(File,Stream)),!,
-  ignore(catch_log(close(Stream))),
-  read_file_to_string(File,String,[encoding(utf8)]),
-  write(String).
+write_answer_output :-
+    retract(is_answer_output_stream(MemFile, Stream)), !,  % Retrieve and remove memory file reference
+    ignore(catch_log(close(Stream))),                     % Close the stream
+    memory_file_to_string(MemFile, String),               % Read contents from the memory file
+    write(String),                                        % Write the contents to output
+    free_memory_file(MemFile).                            % Free the memory file
 write_answer_output.
-:- at_halt(write_answer_output).
 
+:- at_halt(write_answer_output).  % Ensure cleanup at halt
+
+
+with_answer_output(Goal, S) :-
+    new_memory_file(MemFile),                         % Create a new memory file
+    open_memory_file(MemFile, write, Stream, [encoding(utf8)]),  % Open it as a stream
+    asserta(is_answer_output_stream(MemFile, Stream), Ref),
+    setup_call_cleanup(
+        true,
+        (call(Goal)),                                  % Execute the Goal
+        (
+            close(Stream),                             % Close the stream after Goal
+            memory_file_to_string(MemFile, S),         % Retrieve content as a string
+            free_memory_file(MemFile),                 % Free the memory file
+            erase(Ref)                                 % Retract the temporary predicate
+        )
+    ).
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
 user_io(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
@@ -1748,10 +1768,10 @@ do_metta(From,exec,Self,TermV,Out):- !,
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
- ignore(catch(((not_compatio(write_exec(TermV)),
+ (catch(((not_compatio(write_exec(TermV)),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
-   give_up(Why),pp_m(red,gave_up(Why)))),!.
+   give_up(Why),pp_m(red,gave_up(Why)))).
 
 
 o_s(['assertEqual'|O],S):- nonvar(O), o_s(O,S).
