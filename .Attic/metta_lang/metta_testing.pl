@@ -6,163 +6,527 @@
 */
 %:- encoding(iso_latin_1).
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: provides a framework for executing, tracking, and logging Prolog 
+% unit tests with structured reporting and ANSI-formatted output for readability.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 :- ensure_loaded(library(occurs)).
 
-% Ensure that the `metta_interp` library is loaded,
-% That loads all the predicates called from this file
+% Ensure that the `metta_interp` library is loaded.
+% This loads all the predicates called from this file.
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_utils).
 
 % Reset loonit counters
+
+%!  loonit_reset is det.
+%
+%   Resets all counters related to testing outcomes. Specifically, it clears
+%   any previous test results by resetting both the success and failure flags
+%   to zero.
+%
+%   This predicate is useful for initializing or reinitializing test metrics
+%   before starting a new set of tests.
 loonit_reset :-
+    % Ensures any pending output is written before resetting.
     flush_output,
+    % Calls a report function.
     loonit_report,
+    % Flushes output again after reporting.
     flush_output,
+    % Resets the failure counter to zero.
     flag(loonit_failure, _, 0),
+    % Resets the success counter to zero.
     flag(loonit_success, _, 0).
 
-has_loonit_results :- loonit_number(FS),FS>1.
+%!  has_loonit_results is nondet.
+%
+%   Succeeds if there are any test results (either successes or failures).
+%
+%   This predicate is used to check if tests have been run by examining the
+%   cumulative count of results. If the count (FS) is greater than 1, it
+%   indicates results exist.
+has_loonit_results :-
+    % Retrieves the current test count.
+    loonit_number(FS),
+    % Succeeds if there are results (count > 1).
+    FS > 1.
 
-loonit_number(FS) :- flag(loonit_test_number,FS,FS),FS>0,!.
+%!  loonit_number(-FS) is det.
+%
+%   Retrieves the total number of tests executed so far, including both
+%   successes and failures. The result (FS) unifies with this count.
+%
+%   This predicate first tries to retrieve the test number flag. If no test
+%   number flag exists or has a zero value, it calculates the count based on
+%   success and failure flags, adding one as a base count.
+%
+%   @arg FS The unified test count.
 loonit_number(FS) :-
+    % Tries to read the test number flag.
+    flag(loonit_test_number, FS, FS),
+    % If the flag exists and is non-zero, succeeds.
+    FS > 0,!.
+loonit_number(FS) :-
+    % Retrieves the success count.
     flag(loonit_success, Successes, Successes),
+    % Retrieves the failure count.
     flag(loonit_failure, Failures, Failures),
-    FS is Successes+Failures+1.
+    % Calculates total count with a base of 1.
+    FS is Successes + Failures + 1.
 
-
+%!  string_replace(+Original, +Search, +Replace, -Replaced) is det.
+%
+%   Replaces all occurrences of `Search` in `Original` with `Replace`,
+%   producing `Replaced`. This predicate breaks `Original` into segments
+%   split by `Search`, then concatenates these segments with `Replace`
+%   between each.
+%
+%   @arg Original The original string to search within.
+%   @arg Search   The substring to search for and replace.
+%   @arg Replace  The substring to insert in place of `Search`.
+%   @arg Replaced The resulting string after all replacements.
+%
+%   @example
+%     % Replace all occurrences of "foo" with "bar" in the string:
+%     ?- string_replace("foo_test_foo", "foo", "bar", Replaced).
+%     Replaced = "bar_test_bar".
+%
 string_replace(Original, Search, Replace, Replaced) :-
     symbolic_list_concat(Split, Search, Original),
     symbolic_list_concat(Split, Replace, Replaced),!.
 
-get_test_name(Number,TestName) :-
-   ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
+%!  get_test_name(+Number, -TestName) is det.
+%
+%   Generates a test name by appending a formatted `Number` to the base
+%   path or filename currently loaded. If `loading_file` is defined
+%   with a non-empty path, it is used as the base; otherwise, a default
+%   path ('SOME/UNIT-TEST') is used.
+%
+%   @arg Number   The test number to include in the name.
+%   @arg TestName The generated test name, combining the base path with
+%                 the test number in a standardized format.
+%
+%   @example
+%     % Generate a test name for test number 5:
+%     ?- get_test_name(5, TestName).
+%     TestName = 'SOME/UNIT-TEST.05'.
+%
+get_test_name(Number, TestName) :-
+   ((nb_current(loading_file, FilePath), FilePath \== []) -> true ; FilePath = 'SOME/UNIT-TEST'),
    make_test_name(FilePath, Number, TestName).
 
-ensure_basename(FilePath,FilePath):- \+ directory_file_path(('.'), _, FilePath),!.
-ensure_basename(FilePath0,FilePath):-
-  absolute_file_name(FilePath0,FilePath),!.
-ensure_basename(FilePath,FilePath).
+%!  ensure_basename(+FilePath0, -FilePath) is det.
+%
+%   Ensures that FilePath is a base name without directory components.
+%   If FilePath0 already lacks directory components, it is returned as-is.
+%   Otherwise, it is converted to an absolute path.
+%
+%   @arg FilePath0 Initial file path, potentially with directories.
+%   @arg FilePath  Resulting base name or absolute path.
+%
+%   @example
+%     % Convert an absolute file path with directories:
+%     ?- ensure_basename('/home/user/test.pl', FilePath).
+%     FilePath = '/home/user/test.pl'.
+%
+ensure_basename(FilePath, FilePath) :-
+    % Succeeds if FilePath is already a simple file name without directory components.
+    \+ directory_file_path(('.'), _, FilePath), !.
+ensure_basename(FilePath0, FilePath) :-
+    % Converts FilePath0 to an absolute path, stored in FilePath.
+    absolute_file_name(FilePath0, FilePath), !.
+ensure_basename(FilePath, FilePath).
 
+%!  make_test_name(+FilePath0, +Number, -TestName) is det.
+%
+%   Generates a standardized test name based on a given file path and a test number.
+%   The test name combines the uppercase parent directory and base file name,
+%   with underscores replaced by hyphens, followed by a zero-padded test number.
+%
+%   @arg FilePath0 Initial file path used to create the test name.
+%   @arg Number     Numeric identifier for the test, formatted as two digits.
+%   @arg TestName   Resulting standardized test name.
+%
+%   @example
+%     % Generate a test name from a file path and test number:
+%     ?- make_test_name('/home/user/test_file.pl', 5, TestName).
+%     TestName = 'HOME.TEST-FILE.05'.
 make_test_name(FilePath0, Number, TestName) :-
-    % Extract the file name and its parent directory from the file path
-    ensure_basename(FilePath0,FilePath),
+    % Normalize the file path to a base name.
+    ensure_basename(FilePath0, FilePath),
+    % Extracts the base file name from the path.
     file_base_name(FilePath, FileName),
+    % Retrieves the parent directory of the file.
     directory_file_path(ParentDir, FileName, FilePath),
+    % Extracts the base name of the parent directory.
     file_base_name(ParentDir, ParentDirBase),
-    % Remove file extension
+    % Removes the file extension from the base file name.
     file_name_extension(Base, _, FileName),
-    % Convert to uppercase
+    % Converts the parent directory base name to uppercase.
     string_upper(ParentDirBase, UpperParentDirBase),
+    % Converts the base file name to uppercase.
     string_upper(Base, UpperBase),
-    % Replace "_" with "-"
+    % Replaces underscores with hyphens in the base name.
     string_replace(UpperBase, "_", "-", NoUnderscore),
+    % Replaces underscores with hyphens in the parent directory name.
     string_replace(UpperParentDirBase, "_", "-", NoUnderscoreParent),
-    % Format the test name
-    wots(NS,format('~`0t~d~2|',[Number])),
+    % Formats the test number as a zero-padded two-digit string.
+    wots(NS, format('~`0t~d~2|', [Number])),
+    % Combines parent directory, file base, and test number to form the test name.
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
+%!  color_g_mesg(+Color, :Goal) is det.
+%
+%   Executes the given Goal with color formatting, if conditions allow.
+%   This predicate evaluates whether to display a message in color based on
+%   system settings (e.g., compatibility or silent loading modes). If conditions
+%   permit, it applies the specified color to the Goal's output.
+%
+%   @arg Color The color to apply if messages are displayed.
+%   @arg Goal  The goal to execute and display, formatted with the specified color.
+%
+%   @example
+%     % Display a message in cyan if not in silent mode:
+%     ?- color_g_mesg(cyan, writeln('Test message')).
 
-%color_g_mesg(_,_):- is_compatio,!.
-%color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):-
-  notrace((nop(check_silent_loading),
-    color_g_mesg_ok(C,G))).
-color_g_mesg_ok(_,G):- is_compatio,!,call(G).
-color_g_mesg_ok(C,G):-
- quietly((
-   wots(S,must_det_ll(user:G)),
-     (S == "" -> true ; our_ansi_format(C, '~w~n', [S])))),!.
+% color_g_mesg(_, _) :- is_compatio, !.
+% color_g_mesg(_, _) :- silent_loading, !.
+color_g_mesg(C, G) :-
+    % Checks if output is allowed, skipping if silent mode is active.
+    notrace((
+        % Determines if silent loading mode should suppress output.
+        nop(check_silent_loading),
+        % Executes the color message output if permissible.
+        color_g_mesg_ok(C, G)
+    )).
 
-our_ansi_format(C, Fmt,Args):- \+ atom(C), % set_stream(current_output,encoding(utf8)),
-    ansi_format(C, Fmt,Args).
-our_ansi_format(C, Fmt,Args):- our_ansi_format([fg(C)], Fmt,Args).
+%!  color_g_mesg_ok(+Color, :Goal) is det.
+%
+%   Internal helper to apply color formatting conditionally and execute Goal.
+%   This predicate first checks compatibility mode and, if active, simply calls
+%   the Goal without formatting. If compatibility mode is inactive, it formats
+%   the output in the specified color using `our_ansi_format/3`.
+%
+%   @arg Color The color in which the Goal output is formatted.
+%   @arg Goal  The goal to execute with or without color formatting.
+%
+%   @example
+%     % Execute a message with color formatting if allowed:
+%     ?- color_g_mesg_ok(red, writeln('Important message')).
+color_g_mesg_ok(_, G) :-
+    % In compatibility mode, simply execute the Goal without formatting.
+    is_compatio, !, call(G).
+color_g_mesg_ok(C, G) :-
+    % Quietly executes Goal and formats output, suppressing if empty.
+    quietly((
+        % Writes the output of Goal to S, if any.
+        wots(S, must_det_ll(user:G)),
+        % Applies color formatting if there is non-empty output in S.
+        (S == "" -> true ; our_ansi_format(C, '~w~n', [S]))
+    )), !.
 
-print_current_test:-
-   loonit_number(Number),
-   get_test_name(Number,TestName),format('~N~n;<h3 id="~w">;; ~w</h3>~n',[TestName,TestName]).
+%!  our_ansi_format(+Color, +Format, +Args) is det.
+%
+%   Formats and outputs text in the specified color if Color is an atom,
+%   otherwise uses `ansi_format/3` directly. This predicate allows for conditional
+%   colorized output, with fallback formatting if color settings are not provided.
+%
+%   @arg Color  The color to apply to the text. If non-atomic, falls back to default formatting.
+%   @arg Format The format string.
+%   @arg Args   The arguments for the format string.
+%
+%   @example
+%     % Apply color formatting directly:
+%     ?- our_ansi_format(green, 'Success: ~w', ['All tests passed']).
+our_ansi_format(C, Fmt, Args) :-
+    % If Color is not an atom, apply ansi_format directly.
+    \+ atom(C), % set_stream(current_output,encoding(utf8)),
+    ansi_format(C, Fmt, Args).
+our_ansi_format(C, Fmt, Args) :-
+    % If Color is atomic, set the foreground color and format the output.
+    our_ansi_format([fg(C)], Fmt, Args).
 
-% Increment loonit counters based on goal evaluation
-
-ensure_increments(Goal):-
-    setup_call_cleanup(
-    get_pass_fail(_,_,TotalStart),
-    Goal,
-    ((get_pass_fail(_,_,TotalEnd),
-    if_t(TotalEnd==TotalStart,
-        flag(loonit_failure,Failures,Failures+1))))).
-
-get_pass_fail(Successes,Failures,Total):-
-    flag(loonit_success,Successes,Successes),
-    flag(loonit_failure,Failures,Failures),!,
-    Total is Successes+Failures.
-
-
-loonit_asserts(S,Pre,G):-
-   ensure_increments(loonit_asserts0(S,Pre,G)).
-
-loonit_asserts0(S,Pre,G):-
-  flag(loonit_test_number,X,X+1),
-  copy_term(Pre,Pro),
-  print_current_test,
-  once(Pre),!,
-  ((nb_current(exec_src,Exec),Exec\==[])->true;S=Exec),
-  write_src(exec(Exec)),nl,nl,
- % wots(S,((((nb_current(exec_src,WS),WS\==[])->writeln(WS);write_src(exec(TestSrc)))))),
-  once(loonit_asserts1(Exec,Pro,G)).
-
-give_pass_credit(TestSrc,_Pre,_G):- fail,
-     inside_assert(TestSrc,BaseEval),
-    always_exec(BaseEval),!.
-give_pass_credit(TestSrc,_Pre,G):-
-    write_pass_fail(TestSrc,'PASS',G),
-    flag(loonit_success, X, X+1),!,
-    color_g_mesg(cyan,write_src(loonit_success(G))),!.
-
-write_pass_fail([P,C,_],PASS_FAIL,G):-
- must_det_ll((
+%!  print_current_test is det.
+%
+%   Prints the current test's name in an HTML heading format. The test name is
+%   retrieved based on the current `loonit_test_number`.
+%
+%   @example
+%     % Display the current test in an HTML format:
+%     ?- print_current_test.
+print_current_test :-
+    % Retrieves the current test number.
     loonit_number(Number),
-    get_test_name(Number,TestName),
-    arg(1,G,G1),arg(2,G,G2), write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2))).
+    % Generates the test name based on the current number.
+    get_test_name(Number, TestName),
+    % Prints the test name in an HTML heading format.
+    format('~N~n;<h3 id="~w">;; ~w</h3>~n', [TestName, TestName]).
 
-write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
+%!  ensure_increments(:Goal) is det.
+%
+%   Executes a Goal and increments the failure counter if it does not alter the
+%   pass/fail counts. This predicate is useful for tracking test failures during
+%   a Goal's execution.
+%
+%   @arg Goal The goal whose outcome is tracked for increments.
+%
+%   @example
+%     % Track a goal and increment failure count if it fails:
+%     ?- ensure_increments(writeln('Running test goal...')).
+ensure_increments(Goal) :-
+    % Sets up initial conditions and executes Goal, adjusting counters afterward.
+    setup_call_cleanup(
+        % Retrieves initial test result counts.
+        get_pass_fail(_, _, TotalStart),
+        % Executes the given Goal.
+        Goal,
+        % After execution, increments failure counter if pass/fail counts remain unchanged.
+        ((get_pass_fail(_, _, TotalEnd),
+         if_t(TotalEnd == TotalStart,
+              flag(loonit_failure, Failures, Failures + 1))))).
+
+%!  get_pass_fail(-Successes, -Failures, -Total) is det.
+%
+%   Retrieves the current counts of successful and failed tests.
+%
+%   @arg Successes Unified with the current success count.
+%   @arg Failures  Unified with the current failure count.
+%   @arg Total     Unified with the sum of Successes and Failures.
+%
+%   @example
+%     % Query the current pass and fail counts:
+%     ?- get_pass_fail(S, F, T).
+%     S = 10, F = 2, T = 12.
+get_pass_fail(Successes, Failures, Total) :-
+    % Retrieves the success count.
+    flag(loonit_success, Successes, Successes),
+    % Retrieves the failure count.
+    flag(loonit_failure, Failures, Failures),
+    % Sums successes and failures to get the total count.
+    !,
+    Total is Successes + Failures.
+
+%!  loonit_asserts(+Src, +Precondition, +Goal) is det.
+%
+%   Ensures that assertions for a Goal are properly tracked and increments the
+%   counters based on the result. It calls `loonit_asserts0/3` as the core logic.
+%
+%   @arg Src         The source identifier for the assertion.
+%   @arg Precondition The precondition to be met before running the Goal.
+%   @arg Goal        The goal to assert.
+%
+%   @example
+%     % Assert a goal with a precondition and track the result:
+%     ?- loonit_asserts('test_source', true, writeln('Testing...')).
+loonit_asserts(S, Pre, G) :-
+    % Wraps `loonit_asserts0/3` with increment tracking.
+    ensure_increments(loonit_asserts0(S, Pre, G)).
+
+%!  loonit_asserts0(+Src, +Precondition, +Goal) is det.
+%
+%   Asserts a Goal if its preconditions are met and increments the test counter.
+%   Displays the current test in a structured format and tracks the Goal’s execution.
+%
+%   @arg Src         The source identifier for the assertion.
+%   @arg Precondition The precondition to be met before running the Goal.
+%   @arg Goal        The goal to assert.
+%
+%   @example
+%     % Perform assertion with tracking, assuming precondition holds:
+%     ?- loonit_asserts0('source', true, writeln('Executing goal')).
+loonit_asserts0(S, Pre, G) :-
+    % Increments the test number.
+    flag(loonit_test_number, X, X + 1),
+    % Copies the precondition term to avoid modifications.
+    copy_term(Pre, Pro),
+    % Displays the current test name.
+    print_current_test,
+    % Evaluates the precondition once.
+    once(Pre), !,
+    % Sets the execution source if available.
+    ((nb_current(exec_src, Exec), Exec \== []) -> true ; S = Exec),
+    % Writes the execution source for logging.
+    write_src(exec(Exec)), nl, nl,
+    % wots(S, ((((nb_current(exec_src, WS), WS \== []) -> writeln(WS); write_src(exec(TestSrc)))))),
+    % Evaluates the main assertion goal.
+    once(loonit_asserts1(Exec, Pro, G)).
+
+%!  give_pass_credit(+TestSrc, +Precondition, +Goal) is det.
+%
+%   Marks a test as passed and updates the success counter if conditions are met.
+%   This predicate either fails if assertions do not hold or logs the test as passed,
+%   updating the `loonit_success` counter.
+%
+%   @arg TestSrc     The source identifier of the test.
+%   @arg Precondition A placeholder for the precondition, not actively used here.
+%   @arg Goal        The goal representing the test to be evaluated.
+%
+%   @example
+%     % Increment success counter and log a test as passed:
+%     ?- give_pass_credit('test_source', true, writeln('Goal succeeded')).
+give_pass_credit(TestSrc, _Pre, _G) :-
+    % This branch fails immediately, used if assertions don't hold.
+    fail,
+    % Retrieves base evaluation from within assertion context.
+    inside_assert(TestSrc, BaseEval),
+    % Executes the base evaluation.
+    always_exec(BaseEval), !.
+give_pass_credit(TestSrc, _Pre, G) :-
+    % Logs the test as passed with 'PASS' status.
+    write_pass_fail(TestSrc, 'PASS', G),
+    % Increments the success counter.
+    flag(loonit_success, X, X + 1), !,
+    % Displays a success message in cyan color.
+    color_g_mesg(cyan, write_src(loonit_success(G))), !.
+
+%!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
+%
+%   Logs the test's result, including the test name, status, and key arguments
+%   of the goal. This predicate structures test details and formats them for output.
+%
+%   @arg TestDetails A list containing information about the test source, category, and type.
+%   @arg Status      A string representing the result status (e.g., 'PASS' or 'FAIL').
+%   @arg Goal        The goal being evaluated, with selected arguments logged.
+%
+%   @example
+%     % Log the details of a test with a passing status:
+%     ?- write_pass_fail(['source', 'category', 'type'], 'PASS', some_goal(arg1, arg2)).
+write_pass_fail([P, C, _], PASS_FAIL, G) :-
+    % Ensures deterministic logging of the test result.
+    must_det_ll((
+        % Retrieves the current test number.
+        loonit_number(Number),
+        % Generates the test name.
+        get_test_name(Number, TestName),
+        % Extracts arguments from the goal for structured output.
+        arg(1, G, G1),
+        arg(2, G, G2),
+        % Logs the formatted test name, source, category, status, and arguments.
+        write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2))).
+
+%!  write_pass_fail(+TestName, +Source, +Category, +Status, +GoalArg1, +GoalArg2) is det.
+%
+%   Formats and appends test results to a shared log file, including metadata like
+%   source, category, status, and duration. It generates a detailed, linkable log entry 
+%   for each test, facilitating comprehensive result tracking and HTML output per test.
+%
+%   @arg TestName  The name of the test being logged.
+%   @arg Source    The test source identifier.
+%   @arg Category  The category identifier for the test.
+%   @arg Status    The result status (e.g., 'PASS' or 'FAIL').
+%   @arg GoalArg1  The first argument of the goal being logged.
+%   @arg GoalArg2  The second argument of the goal being logged.
+%
+%   @example
+%     % Write formatted test results to the log file:
+%     ?- write_pass_fail('Test1', 'source', 'category', 'PASS', arg1, arg2).
+write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
+    % Check if the current file path is loaded; if not, set a default.
     ignore(((
-   (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    symbolic_list_concat([_,R],'tests/',FilePath),
-    file_name_extension(Base, _, R))),
-      nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
-      must_det_ll((
-      (tee_file(TEE_FILE)->true;'TEE.ansi'=TEE_FILE),
-      (( %atom_concat(TEE_FILE,'.UNITS',UNITS),
-      shared_units(UNITS),
-      open(UNITS, append, Stream,[encoding(utf8)]),
-      once(getenv('HTML_FILE',HTML_OUT);sformat(HTML_OUT,'~w.metta.html',[Base])),
-      compute_html_out_per_test(HTML_OUT,TEE_FILE,TestName,HTML_OUT_PerTest),
-      get_last_call_duration(Duration),
-      DurationX1000 is Duration * 1000,
-      format(Stream,'| ~w | ~w |[~w](https://trueagi-io.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
-      [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
-        trim_gstring_bar_I(write_src_woi([P,C]),600),
-        trim_gstring_bar_I(write_src_woi(G1),600),
-        trim_gstring_bar_I(write_src_woi(G2),600),
-        DurationX1000,
-        HTML_OUT_PerTest]),!,
-      close(Stream))))).
+        (nb_current(loading_file, FilePath), FilePath \== []) -> true ; FilePath = 'SOME/UNIT-TEST.metta'),
+        % Concatenate for the file base.
+        symbolic_list_concat([_, R], 'tests/', FilePath),
+        file_name_extension(Base, _, R))),
+        % Optional format output for HTML log entry.
+        nop(format('<h3 id="~w">;; ~w</h3>', [TestName, TestName])),
+        % Log test details deterministically.
+        must_det_ll((
+            (tee_file(TEE_FILE) -> true ; 'TEE.ansi' = TEE_FILE),
+            ((
+                % Optional shared units for organized logging.
+                shared_units(UNITS),
+                open(UNITS, append, Stream, [encoding(utf8)]),
+                % Retrieve or create HTML file name.
+                once(getenv('HTML_FILE', HTML_OUT) ; sformat(HTML_OUT, '~w.metta.html', [Base])),
+                % Compute and store a per-test HTML output.
+                compute_html_out_per_test(HTML_OUT, TEE_FILE, TestName, HTML_OUT_PerTest),
+                % Measure and format the duration of the last call.
+                get_last_call_duration(Duration),
+                DurationX1000 is Duration * 1000,
+                % Write the detailed formatted log entry.
+                format(Stream,'| ~w | ~w |[~w](https://trueagi-io.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+                    [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
+                    trim_gstring_bar_I(write_src_woi([P,C]),600),
+                    trim_gstring_bar_I(write_src_woi(G1),600),
+                    trim_gstring_bar_I(write_src_woi(G2),600),
+                    DurationX1000,
+                    HTML_OUT_PerTest]),!,
+                % Close the log stream
+                close(Stream))))).
 
 % Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
-output_directory(OUTPUT_DIR):- getenv('METTALOG_OUTPUT',OUTPUT_DIR),!.
-output_directory(OUTPUT_DIR):- getenv('OUTPUT_DIR',OUTPUT_DIR),!.
 
-shared_units(UNITS):- getenv('SHARED_UNITS',UNITS),!.  % Needs not to be relative to CWD
-shared_units(UNITS):- output_directory(OUTPUT_DIR),!,directory_file_path(OUTPUT_DIR,'SHARED.UNITS',UNITS).
-shared_units(UNITS):- UNITS = '/tmp/SHARED.UNITS'.
+%!  output_directory(-OutputDir) is det.
+%
+%   Retrieves the output directory from environment variables. First, it checks
+%   for the `METTALOG_OUTPUT` variable; if unset, it falls back to `OUTPUT_DIR`.
+%
+%   @arg OutputDir The directory path for output logs.
+%
+%   @example
+%     % Query the output directory for logging:
+%     ?- output_directory(Dir).
+%     Dir = '/path/to/output'.
+output_directory(OUTPUT_DIR) :- getenv('METTALOG_OUTPUT', OUTPUT_DIR), !.
+output_directory(OUTPUT_DIR) :- getenv('OUTPUT_DIR', OUTPUT_DIR), !.
+
+%!  shared_units(-UnitsFile) is det.
+%
+%   Retrieves the file path for shared units logging. This checks for the
+%   `SHARED_UNITS` environment variable; if unset, it defaults to a standard
+%   file within the output directory or `/tmp/SHARED.UNITS`.
+%
+%   @arg UnitsFile The path to the shared units file.
+%
+%   @example
+%     % Get the shared units file path:
+%     ?- shared_units(Units).
+%     Units = '/path/to/SHARED.UNITS'.
+shared_units(UNITS) :-
+    % Needs not to be relative to CWD
+    getenv('SHARED_UNITS', UNITS), !.  
+shared_units(UNITS) :-
+    output_directory(OUTPUT_DIR),  !,
+    directory_file_path(OUTPUT_DIR, 'SHARED.UNITS', UNITS).
+shared_units(UNITS) :-
+    UNITS = '/tmp/SHARED.UNITS'.
 
 % currently in a shared file per TestCase class..
-%   but we might make each test dump its stuffg to its own html file for easier spotting why test failed
-compute_html_out_per_test(HTML_OUT,_TEE_FILE,_TestName,HTML_OUT_PerTest):-
-   HTML_OUT=HTML_OUT_PerTest.
+%   but we might make each test dump its stuff to its own HTML file for easier spotting why test failed
 
-% Executes Goal and records the execution duration in '$last_call_duration'.
-% The duration is recorded regardless of whether Goal succeeds or fails.
+%!  compute_html_out_per_test(+HTML_OUT, +TeeFile, +TestName, -HTML_OUT_PerTest) is det.
+%
+%   Sets the HTML output path for a specific test based on the given HTML output directory.
+%
+%   @arg HTML_OUT         The main HTML output directory path.
+%   @arg TeeFile          A file used for tee-style output (not actively used).
+%   @arg TestName         The name of the test for which output is being generated.
+%   @arg HTML_OUT_PerTest The computed output path for the individual test's HTML.
+%
+%   @example
+%     % Compute the HTML output for an individual test:
+%     ?- compute_html_out_per_test('/output/main.html', _, 'Test1', HTMLPerTest).
+%     HTMLPerTest = '/output/main.html'.
+compute_html_out_per_test(HTML_OUT, _TEE_FILE, _TestName, HTML_OUT_PerTest) :-
+    HTML_OUT = HTML_OUT_PerTest.
+
+%!  record_call_duration(:Goal) is det.
+%
+%   Executes the given Goal and records the execution duration in milliseconds
+%   in a global variable. This duration is updated regardless of whether the
+%   Goal succeeds or fails.
+%
+%   @arg Goal The goal whose execution duration is to be measured.
+%
+%   @example
+%     % Record the duration of a sample goal:
+%     ?- record_call_duration((writeln('Sample goal'), sleep(1))).
 record_call_duration(Goal) :-
     nb_setval('$last_call_duration', 120),
     statistics(cputime, Start),  % Get the start CPU time
@@ -175,31 +539,51 @@ record_call_duration(Goal) :-
     nb_setval('$last_call_duration', Duration),  % Set the global variable non-backtrackably
     EndResult.                   % Preserve the result of the Goal
 
-% Helper to retrieve the last call duration stored in the global variable.
+%!  get_last_call_duration(-Duration) is det.
+%
+%   Retrieves the duration of the last executed goal, which is stored in a global
+%   variable by `record_call_duration/1`.
+%
+%   @arg Duration The duration of the last goal in milliseconds.
+%
+%   @example
+%     % Retrieve the duration of the last recorded call:
+%     ?- get_last_call_duration(Dur).
+%     Dur = 1.234.
 get_last_call_duration(Duration) :-
-    nb_getval('$last_call_duration', Duration),!.
+    nb_getval('$last_call_duration', Duration), !.
 
-
+%!  trim_gstring_bar_I(:Goal, +MaxLen) is det.
+%
+%   Executes a goal to generate a string, replaces certain characters, and trims
+%   the result to a maximum length. This is primarily used for logging formatted
+%   results within a limited display space.
+%
+%   @arg Goal   The goal that produces the string output.
+%   @arg MaxLen The maximum allowable length for the output.
+%
+%   @example
+%     % Trim and modify the output of a goal for display:
+%     ?- trim_gstring_bar_I(writeln('Example|output\nNewline'), 10).
 trim_gstring_bar_I(Goal, MaxLen) :-
-    wots(String0,Goal),
-    string_replace(String0,'|','I',String1),
-    string_replace(String1,'\n','\\n',String),
+    wots(String0, Goal),
+    string_replace(String0, '|', 'I', String1),
+    string_replace(String1, '\n', '\\n', String),
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
-    ;  (sub_string(String, 0, MaxLen, LeftOver, SubStr),
-        format(string(Trimmed),'~w...(~w)',[SubStr,LeftOver]))
+    ;   (sub_string(String, 0, MaxLen, LeftOver, SubStr),
+        format(string(Trimmed), '~w...(~w)', [SubStr, LeftOver]))
     ),
     write(Trimmed).
-
 
 %! tst_cwdl(+Goal, +MaxDepth) is det.
 %
 %  Call Goal with a depth limit of MaxDepth. If the depth limit is exceeded,
 %  an exception `over_test_resource_limit(depth_limit, MaxDepth, 1)` is thrown.
 %
-%  @param Goal The Prolog goal to be called.
-%  @param MaxDepth The maximum depth allowed for the call.
+%  @arg Goal The Prolog goal to be called.
+%  @arg MaxDepth The maximum depth allowed for the call.
 %
 %  @throws over_test_resource_limit(depth_limit, MaxDepth, 1)
 %  If the depth limit is exceeded.
@@ -221,20 +605,36 @@ tst_cwdl(Goal, MaxDepth) :-
     call_with_depth_limit(Goal, MaxDepth, Result),
     cwdl_handle_result(Result, MaxDepth).
 
-% Processes the result of the depth-limited call.
-cwdl_handle_result(depth_limit_exceeded,MaxDepth) :- !,
+%!  cwdl_handle_result(+Result, +MaxDepth) is det.
+%
+%   Processes the result of a depth-limited call. If the result indicates that
+%   the depth limit was exceeded, it throws an exception with details of the
+%   maximum allowed depth. For other results, it succeeds without action.
+%
+%   @arg Result   The outcome of the depth-limited call (e.g., `depth_limit_exceeded`).
+%   @arg MaxDepth The maximum allowable depth for the call.
+%
+%   @example
+%     % Handle a depth limit exceeded result:
+%     ?- cwdl_handle_result(depth_limit_exceeded, 5).
+%     ERROR: over_test_resource_limit(depth_limit, 5, 1).
+%
+%     % Handle a successful result without exceeding the limit:
+%     ?- cwdl_handle_result(success, 5).
+%     true.
+cwdl_handle_result(depth_limit_exceeded, MaxDepth) :- 
+    % If depth limit is exceeded, throw an exception with max depth details.
+    !,
     throw(over_test_resource_limit(depth_limit, MaxDepth, 1)).
 cwdl_handle_result(_, _).
-
-
 
 %! tst_cwil(+Goal, +MaxInference) is det.
 %
 %  Call Goal with a inference limit of MaxInference. If the inference limit is exceeded,
 %  an exception `over_test_resource_limit(inference_limit, MaxInference, 1)` is thrown.
 %
-%  @param Goal The Prolog goal to be called.
-%  @param MaxInference The maximum inference allowed for the call.
+%  @arg Goal The Prolog goal to be called.
+%  @arg MaxInference The maximum inference allowed for the call.
 %
 %  @throws over_test_resource_limit(inference_limit, MaxInference, 1)
 %  If the inference limit is exceeded.
@@ -256,19 +656,35 @@ tst_cwil(Goal, MaxInference) :-
     call_with_inference_limit(Goal, MaxInference, Result),
     cwil_handle_result(Result, MaxInference).
 
-% Processes the result of the inference-limited call.
-cwil_handle_result(inference_limit_exceeded,MaxInference) :- !,
+%!  cwil_handle_result(+Result, +MaxInference) is det.
+%
+%   Processes the result of an inference-limited call. If the inference limit
+%   is exceeded, it throws an exception with details of the maximum inferences allowed.
+%
+%   @arg Result       The result from `call_with_inference_limit/3`, indicating success or limit exceeded.
+%   @arg MaxInference The maximum inference count allowed for the call.
+%
+%   @example
+%     % Handle an inference limit exceeded result:
+%     ?- cwil_handle_result(inference_limit_exceeded, 5).
+%     ERROR: Unhandled exception: over_test_resource_limit(inference_limit, 5, 1).
+%
+%     % Handle a result within inference limits:
+%     ?- cwil_handle_result(success, 5).
+%     true.
+cwil_handle_result(inference_limit_exceeded, MaxInference) :- 
+    % If inference limit is exceeded, throw an exception with max inference details.
+    !,
     throw(over_test_resource_limit(inference_limit, MaxInference, 1)).
 cwil_handle_result(_, _).
-
 
 %! tst_cwtl(+Goal, +TimeLimit) is det.
 %
 %  Call Goal with a time limit of TimeLimit seconds. If the time limit is exceeded,
 %  an exception `over_test_resource_limit(time_limit, TimeLimit, exceeded)` is thrown.
 %
-%  @param Goal The Prolog goal to be called.
-%  @param TimeLimit The maximum time allowed for the call in seconds.
+%  @arg Goal The Prolog goal to be called.
+%  @arg TimeLimit The maximum time allowed for the call in seconds.
 %
 %  @throws over_test_resource_limit(time_limit, TimeLimit, exceeded)
 %  If the time limit is exceeded.
@@ -287,18 +703,53 @@ cwil_handle_result(_, _).
 tst_cwtl(Goal, TimeLimit) :-
     catch(call_with_time_limit(TimeLimit,Goal),time_limit_exceeded,throw(over_test_resource_limit(time_limit, TimeLimit, exceeded))).
 
-test_alarm:- !.
-test_alarm:- time(catch((call_with_time_limit(0.5,(forall(between(1,15,_),sleep(0.1)),wdmsg(failed_test_alarm)))),time_limit_exceeded,wdmsg(passed_test_alarm))).
+%!  test_alarm is det.
+%
+%   Tests for alarm-triggered time limits. Sets a time limit of 0.5 seconds for
+%   a goal. If the limit is exceeded, the exception is caught, and a "passed"
+%   message is displayed; otherwise, it displays "failed."
+%
+%   @example
+%     % Run the alarm test:
+%     ?- test_alarm.
+%     % Output depends on whether the time limit is exceeded.
+test_alarm :- 
+    !.
+test_alarm :- 
+    % Set time limit and attempt goal within 0.5 seconds.
+    time(catch(
+        % Run goal with time limit; fail if it exceeds limit.
+        (call_with_time_limit(0.5, 
+            (forall(between(1, 15, _), sleep(0.1)), 
+            wdmsg(failed_test_alarm)))),
+        % If limit is exceeded, catch exception and display "passed."
+        time_limit_exceeded,
+        wdmsg(passed_test_alarm)
+    )).
 
+%!  loonit_divisor(-TestNumber) is det.
+%
+%   Retrieves the current test number, defaulting to 1 if no tests have run.
+%   This ensures a minimum divisor of 1.
+%
+%   @arg TestNumber The divisor, based on the current test number or 1 if unset.
+%
+%   @example
+%     % Get the test divisor:
+%     ?- loonit_divisor(Divisor).
+%     Divisor = 1.
 loonit_divisor(TestNumber) :-
-    loonit_number(TN), ( TN > 0 -> TestNumber = TN ; TestNumber = 1), !.
+    % Get current test number or default to 1 if unset.
+    loonit_number(TN), 
+    (TN > 0 -> TestNumber = TN ; TestNumber = 1), 
+    !.
 
 %! compute_available_time(-ActualTimeout) is det.
 %
 %  Computes the actual timeout based on the available timeout and test number,
 %  ensuring it is at least 4 seconds.
 %
-%  @param ActualTimeout The computed timeout value, ensuring a minimum of 4 seconds.
+%  @arg ActualTimeout The computed timeout value, ensuring a minimum of 4 seconds.
 %
 %  @example
 %    % Assuming `loonit_number/1` returns 3 and available timeout is 120 seconds:
@@ -324,7 +775,7 @@ compute_available_time(ActualTimeout) :-
 %  Calls the Goal with a depth limit of 1000 and a time limit calculated based on
 %  the available timeout divided by the test number, ensuring the timeout is at least 4 seconds.
 %
-%  @param Goal The Prolog goal to be called.
+%  @arg Goal The Prolog goal to be called.
 %
 %  @throws over_test_resource_limit(time_limit, ActualTimeout, exceeded)
 %  if the time limit is exceeded.
@@ -354,9 +805,25 @@ tst_call_limited(Goal) :-
         (ansi_format([fg(red)],'~n~n~q~n~n',[failing(Goal, Exception)]), !, fail)
     ).
 
-loonit_asserts1(TestSrc,Pre,G) :- _=nop(Pre),record_call_duration((G)),
-  give_pass_credit(TestSrc,Pre,G),!.
-
+%!  loonit_asserts1(+TestSrc, +Precondition, +Goal) is det.
+%
+%   Executes the Goal with a given precondition and records its duration.
+%   If the Goal succeeds, it gives pass credit; if it fails, it logs the failure.
+%
+%   @arg TestSrc     The source identifier for the assertion.
+%   @arg Precondition The precondition to be met before running the Goal.
+%   @arg Goal        The goal to be asserted.
+%
+%   @example
+%     % Run an assertion and handle pass/fail logging:
+%     ?- loonit_asserts1('source', true, writeln('Goal executed successfully')).
+loonit_asserts1(TestSrc, Pre, G) :- 
+    % Run precondition and record duration of Goal execution.
+    _ = nop(Pre),
+    record_call_duration((G)),
+    % Log as passed if Goal succeeds.
+    give_pass_credit(TestSrc, Pre, G), 
+    !.
 /*
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
     sub_var('BadType',TestSrc), \+ check_type,!,
@@ -366,154 +833,409 @@ loonit_asserts1(TestSrc,Pre,G) :-  fail,
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
 */
-
-loonit_asserts1(TestSrc,Pre,G) :-
-   must_det_ll((
-    color_g_mesg(red,write_src(loonit_failureR(G))),
-    write_pass_fail(TestSrc,'FAIL',G),
-    flag(loonit_failure, X, X+1),
-     %itrace, G.
-    if_t(option_value('on-fail','repl'),repl),
-    if_t(option_value('on-fail','trace'),
-       setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
-    %(thread_self(main)->trace;sleep(0.3))
+loonit_asserts1(TestSrc, Pre, G) :-
+    % Handle failed Goal by logging, flagging failure, and optionally tracing.
+    must_det_ll((
+        color_g_mesg(red, write_src(loonit_failureR(G))),
+        write_pass_fail(TestSrc, 'FAIL', G),
+        flag(loonit_failure, X, X + 1),
+        % Optional trace or REPL on failure based on settings.
+        if_t(option_value('on-fail', 'repl'), repl),
+        if_t(option_value('on-fail', 'trace'),
+            setup_call_cleanup(debug(metta(eval)), call((Pre, G)), nodebug(metta(eval)))
+        )
+    )).
+    % (thread_self(main)->trace;sleep(0.3)
 
 % Generate loonit report with colorized output
 :- dynamic(gave_loonit_report/0).
-loonit_report:- gave_loonit_report,!.
+
+%!  loonit_report is det.
+%
+%   Generates a colorized report of test successes and failures, ensuring the
+%   report is only generated once. If there are no successes or any failures,
+%   optionally launches a REPL based on settings.
+%
+%   @example
+%     % Generate a loonit report:
+%     ?- loonit_report.
+loonit_report :- 
+    % Skip if report already generated in this session.
+    gave_loonit_report, 
+    !.
 loonit_report :-
+    % Mark the report as generated.
     assert(gave_loonit_report),
+    % Retrieve current counts of successes and failures.
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
-    loonit_report(Successes,Failures),
-    if_t((Successes==0;Failures>0),
-      if_t(option_value(repl,failures);option_value(frepl,true),repl)).
+    % Display the report based on these counts.
+    loonit_report(Successes, Failures),
+    % If no successes or any failures, open REPL if settings permit.
+    if_t((Successes == 0 ; Failures > 0),
+         if_t(option_value(repl, failures) ; option_value(frepl, true), repl)).
 
+% Ensure loonit report runs at program halt.
 :- at_halt(loonit_report).
 
-
-loonit_report(0,0):-!. % ansi_format([fg(yellow)], 'Nothing to report~n', []).
-loonit_report(Successes,Failures):-
-    ansi_format([bold], 'LoonIt Report~n',[]),
+%!  loonit_report(+Successes, +Failures) is det.
+%
+%   Outputs a formatted report of test results with colorized success and failure counts.
+%
+%   @arg Successes The count of successful tests.
+%   @arg Failures  The count of failed tests.
+%
+%   @example
+%     % Display the report with specified counts:
+%     ?- loonit_report(5, 2).
+loonit_report(0, 0) :- 
+    !. % Skip report if no successes or failures.
+loonit_report(Successes, Failures) :-
+    % Display report header in bold.
+    ansi_format([bold], 'LoonIt Report~n', []),
     format('------------~n'),
+    % Display success count in green.
     ansi_format([fg(green)], 'Successes: ~w~n', [Successes]),
-    ((integer(Failures),Failures>0) -> ansi_format([fg(red)], 'Failures: ~w~n', [Failures]);ansi_format([fg(green)], 'Failures: ~w~n', [Failures])).
+    % Display failure count in red if any; otherwise, green.
+    ((integer(Failures), Failures > 0) 
+     -> ansi_format([fg(red)], 'Failures: ~w~n', [Failures]) 
+     ; ansi_format([fg(green)], 'Failures: ~w~n', [Failures])).
 
-% Resets loonit counters, consults the given file, and prints the status report.
+%!  loon_metta(+File) is det.
+%
+%   Resets test counters, loads a specified file, and generates a status report.
+%   This is useful for reinitializing test metrics before loading files.
+%
+%   @arg File The file to load and evaluate.
+%
+%   @example
+%     % Load a file and generate a status report:
+%     ?- loon_metta('test_file.pl').
 loon_metta(File) :-
+    % Save current success and failure counts, then reset counters.
     flag(loonit_success, WasSuccesses, 0),
     flag(loonit_failure, WasFailures, 0),
+    % Load the specified file.
     load_metta(File),
+    % Generate report after loading.
     loonit_report,
+    % Restore previous success and failure counts.
     flag(loonit_success, _, WasSuccesses),
-    flag(loonit_failure, _, WasFailures),!.
+    flag(loonit_failure, _, WasFailures), 
+    !.
 
-
+% dynamic means that the predicate can be modified at runtime.
 :- dynamic(file_answers/3).
 :- dynamic(file_exec_num/2).
 
-% set_exec_num/2
-% Update or assert the execution number for the given file.
-
+%!  set_exec_num(+SFileName, +Val) is det.
+%
+%   Updates or asserts the execution number for the specified file. If an execution
+%   number already exists for the file, it is replaced with the new value; otherwise,
+%   the value is asserted as a new entry.
+%
+%   @arg SFileName The source file name, which is converted to an absolute path.
+%   @arg Val       The execution number to set for the file.
+%
+%   @example
+%     % Set the execution number for a file:
+%     ?- set_exec_num('test_file.pl', 3).
 set_exec_num(SFileName, Val) :-
-  absolute_file_name(SFileName,FileName),
-    (   retract(file_exec_num(FileName, _)) % If an entry exists, retract it
+    % Convert to absolute file path.
+    absolute_file_name(SFileName, FileName),
+    % If an entry exists for FileName, retract it; otherwise, do nothing.
+    (   retract(file_exec_num(FileName, _)) 
     ->  true
-    ;   true                               % Otherwise, do nothing
+    ;   true
     ),
-    asserta(file_exec_num(FileName, Val)).  % Assert the new value
+    % Assert the new execution number for FileName.
+    asserta(file_exec_num(FileName, Val)).
 
-% get_exec_num/2
-% Retrieve the execution number for the given file. If none exists, it returns 0.
-get_exec_num(Val):-
-  current_exec_file_abs(FileName),
-    file_exec_num(FileName, Val),!.
+%!  get_exec_num(-Val) is det.
+%
+%   Retrieves the execution number for the current file. If no execution number
+%   is set for the current file, it returns 0.
+%
+%   @arg Val The current execution number for the file or 0 if not set.
+%
+%   @example
+%     % Retrieve the execution number for the current file, defaulting to 0:
+%     ?- get_exec_num(Val).
+%     Val = 3.
+get_exec_num(Val) :-
+    % Get the absolute path of the current file.
+    current_exec_file_abs(FileName),
+    % Retrieve the execution number for FileName, stopping after one result.
+    file_exec_num(FileName, Val), 
+    !.
+
+%!  get_exec_num(+FileName, -Val) is det.
+%
+%   Retrieves the execution number for the specified file. If none exists, it returns 0.
+%
+%   @arg FileName The file name for which to retrieve the execution number.
+%   @arg Val      The current execution number or 0 if not set.
+%
+%   @example
+%     % Retrieve the execution number for a file, defaulting to 0 if not set:
+%     ?- get_exec_num('test_file.pl', Val).
+%     Val = 3.
 get_exec_num(FileName, Val) :-
+    % If an entry exists for FileName, retrieve its value; otherwise, return 0.
     (   file_exec_num(FileName, CurrentVal)
     ->  Val = CurrentVal
     ;   Val = 0
     ).
 
- current_exec_file_abs(FileName):-
-        current_exec_file(SFileName),
-        absolute_file_name(SFileName,FileName),!.
+%!  current_exec_file_abs(-FileName) is det.
+%
+%   Retrieves the absolute path of the currently executing file.
+%
+%   @arg FileName The absolute file path of the current execution file.
+%
+%   @example
+%     % Get the absolute path of the current execution file:
+%     ?- current_exec_file_abs(FileName).
+current_exec_file_abs(FileName) :-
+    % Obtain the file name of the current execution file and convert it to absolute path.
+    current_exec_file(SFileName),
+    absolute_file_name(SFileName, FileName), 
+    !.
 
+%!  get_expected_result(-Ans) is det.
+%
+%   Retrieves the expected result (answer) for the current file and execution number,
+%   if it is available.
+%
+%   @arg Ans The expected answer for the current file execution.
+%
+%   @example
+%     % Retrieve the expected answer for the current file and execution:
+%     ?- get_expected_result(Ans).
+get_expected_result(Ans) :-
+    ignore((
+        % Get absolute file name, execution number, and retrieve answer.
+        current_exec_file_abs(FileName),
+        file_exec_num(FileName, Nth),
+        file_answers(FileName, Nth, Ans)
+    )), 
+    !.
 
-get_expected_result(Ans):-
- ignore((
-  current_exec_file_abs(FileName),
-  file_exec_num(FileName, Nth),
-  file_answers(FileName, Nth, Ans))),!.
+%!  got_exec_result(+Val) is det.
+%
+%   Records the actual result (`Val`) of the current execution and compares it with
+%   the expected result. If the result matches, it logs a pass; otherwise, it logs a fail.
+%
+%   @arg Val The actual result produced during the current execution.
+%
+%   @example
+%     % Record and evaluate an execution result:
+%     ?- got_exec_result(Result).
+got_exec_result(Val) :-
+    ignore((
+        % Get file name, execution number, expected answer, and evaluate result.
+        current_exec_file_abs(FileName),
+        file_exec_num(FileName, Nth),
+        file_answers(FileName, Nth, Ans),
+        got_exec_result(Val, Ans)
+    )).
 
+%!  got_exec_result(+Val, +Ans) is det.
+%
+%   Compares the actual result (`Val`) with the expected result (`Ans`). If the results
+%   match, it logs a pass; otherwise, it logs a fail.
+%
+%   @arg Val The actual result produced.
+%   @arg Ans The expected result.
+%
+%   @example
+%     % Compare an actual result with the expected answer:
+%     ?- got_exec_result(actual_val, expected_ans).
+got_exec_result(Val, Ans) :-
+    must_det_ll((
+        % Get file name, execution number, and test name for logging.
+        current_exec_file_abs(FileName),
+        file_exec_num(FileName, Nth),
+        Nth100 is Nth + 100,
+        get_test_name(Nth100, TestName),
+        % Retrieve execution context and compare actual vs. expected result.
+        nb_current(exec_src, Exec),
+        (equal_enough_for_test(Val, Ans)
+         -> write_pass_fail_result(TestName, exec, Exec, 'PASS', Ans, Val)
+          ; write_pass_fail_result(TestName, exec, Exec, 'FAIL', Ans, Val)
+        )
+    )).
 
+%!  write_pass_fail_result(+TestName, +Exec, +ExecContext, +PassFail, +Ans, +Val) is det.
+%
+%   Logs the result of a test, specifying whether it passed or failed.
+%
+%   @arg TestName     The name of the test.
+%   @arg Exec         Execution identifier (e.g., 'exec').
+%   @arg ExecContext  The context of the execution.
+%   @arg PassFail     Result status ('PASS' or 'FAIL').
+%   @arg Ans          The expected result.
+%   @arg Val          The actual result produced.
+%
+%   @example
+%     % Log the result of a test as pass or fail:
+%     ?- write_pass_fail_result('Test1', exec, context, 'PASS', expected_ans, actual_val).
+write_pass_fail_result(TestName, exec, Exec, PASS_FAIL, Ans, Val) :-
+    % Output and log the result as a pass or fail.
+    nl, writeq(write_pass_fail_result(TestName, exec, Exec, PASS_FAIL, Ans, Val)), nl,
+    write_pass_fail(TestName, exec, Exec, PASS_FAIL, Ans, Val).
 
-got_exec_result(Val):-
- ignore((
-  current_exec_file_abs(FileName),
-  file_exec_num(FileName, Nth),
-  file_answers(FileName, Nth, Ans),
-  got_exec_result(Val,Ans))).
+%!  current_exec_file(-FileName) is det.
+%
+%   Retrieves the current execution file name if set.
+%
+%   @arg FileName The current file name in execution.
+%
+%   @example
+%     % Get the current file in execution:
+%     ?- current_exec_file(FileName).
+current_exec_file(FileName) :- 
+    nb_current(loading_file, FileName).
 
-
-got_exec_result(Val,Ans):-
- must_det_ll((
-  current_exec_file_abs(FileName),
-  file_exec_num(FileName, Nth),
-  Nth100 is Nth+100,
-  get_test_name(Nth100,TestName),
-  nb_current(exec_src,Exec),
-  (equal_enough_for_test(Val,Ans)
-     -> write_pass_fail_result(TestName,exec,Exec,'PASS',Ans,Val)
-      ; write_pass_fail_result(TestName,exec,Exec,'FAIL',Ans,Val)))).
-
-write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
-  nl,writeq(write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val)),nl,
-  write_pass_fail(TestName,exec,Exec,PASS_FAIL,Ans,Val).
-
-
-current_exec_file(FileName):- nb_current(loading_file,FileName).
-
-% inc_exec_num/1
-% Increment the execution number for the given file. If no entry exists, initialize it to 1.
-inc_exec_num :- current_exec_file_abs(FileName),!,inc_exec_num(FileName).
+%!  inc_exec_num(+FileName) is det.
+%
+%   Increments the execution number for the given file. If no entry exists for
+%   the file, it initializes the execution number to 1.
+%
+%   @arg FileName The name of the file for which to increment the execution number.
+%
+%   @example
+%     % Increment the execution number for the current file:
+%     ?- inc_exec_num('test_file.pl').
+inc_exec_num :-
+    % Get the absolute path of the current execution file.
+    current_exec_file_abs(FileName), 
+    !, 
+    inc_exec_num(FileName).
 inc_exec_num(FileName) :-
+    % If an entry exists, increment its value; otherwise, set it to 1.
     (   retract(file_exec_num(FileName, CurrentVal))
     ->  NewVal is CurrentVal + 1
     ;   NewVal = 1
     ),
+    % Assert the updated execution number.
     asserta(file_exec_num(FileName, NewVal)).
 
+%!  load_answer_file(+File) is det.
+%
+%   Loads the answer file specified by `File`, handling path resolution and
+%   initialization of execution tracking. If the file does not exist or is not
+%   specified as an absolute path, it attempts to resolve it.
+%
+%   @arg File The path to the answer file to load.
+%
+%   @example
+%     % Load an answer file with automatic path resolution:
+%     ?- load_answer_file('answers_file.ans').
+load_answer_file(File) :-
+    % Resolve to an absolute file path if necessary.
+    (   \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
+    absolute_file_name(File, AbsFile), File\=@=AbsFile, 
+    load_answer_file_now(AbsFile), 
+    !.
+load_answer_file(File) :- 
+    load_answer_file_now(File), 
+    !.
 
-load_answer_file(File):-  ( \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
-    absolute_file_name(File,AbsFile), File\=@=AbsFile, load_answer_file_now(AbsFile),!.
-load_answer_file(File):- load_answer_file_now(File),!.
+%!  load_answer_file_now(+File) is det.
+%
+%   Processes and loads the specified answer file, initializing or updating
+%   execution tracking for the file.
+%
+%   @arg File The file path of the answer file to load.
+%
+%   @example
+%     % Begin loading an answer file, initializing execution tracking:
+%     ?- load_answer_file_now('/path/to/answers_file.ans').
 load_answer_file_now(File) :-
     ignore((
-    ensure_extension(File, answers, AnsFile),
-    remove_specific_extension(AnsFile, answers, StoredAs),
-    set_exec_num(StoredAs,1),
-    fbug(load_answer_file(AnsFile,StoredAs)),
-    load_answer_file(AnsFile,StoredAs))).
+        % Ensure correct file extension for answer files.
+        ensure_extension(File, answers, AnsFile),
+        remove_specific_extension(AnsFile, answers, StoredAs),
+        % Initialize execution count and start loading.
+        set_exec_num(StoredAs, 1),
+        fbug(load_answer_file(AnsFile, StoredAs)),
+        load_answer_file(AnsFile, StoredAs)
+    )).
 
-load_answer_file(AnsFile,StoredAs):-
-    (   file_answers(StoredAs,_, _) ->  true
-    ;   (   \+ exists_file(AnsFile) ->  true
-        ;   (setup_call_cleanup(
+%!  load_answer_file(+AnsFile, +StoredAs) is det.
+%
+%   Loads answers from `AnsFile` into the system under the identifier `StoredAs`.
+%   If answers are already loaded or the file does not exist, it skips loading.
+%
+%   @arg AnsFile  The path of the answer file to load.
+%   @arg StoredAs The identifier under which the answers are stored.
+%
+%   @example
+%     % Load answers from a file into the system under an identifier:
+%     ?- load_answer_file('answers_file.ans', 'stored_as').
+load_answer_file(AnsFile, StoredAs) :-
+    % If answers are already loaded or file is absent, skip loading.
+    (   file_answers(StoredAs, _, _) 
+    ->  true
+    ;   (   \+ exists_file(AnsFile) 
+        ->  true
+        ;   % Open file and load answers from stream.
+            (setup_call_cleanup(
                 open(AnsFile, read, Stream, [encoding(utf8)]),
-                (load_answer_stream(1,StoredAs, Stream)),
-                close(Stream))))),
-  set_exec_num(StoredAs,1),!.
+                (load_answer_stream(1, StoredAs, Stream)),
+                close(Stream))
+            )
+        )
+    ),
+    % Initialize execution number after loading.
+    set_exec_num(StoredAs, 1), 
+    !.
 
+% This allows Prolog to print debug information related to the metta(answers) topic
 :- debug(metta(answers)).
-load_answer_stream(_Nth, StoredAs, Stream):- at_end_of_stream(Stream),!,
-  if_trace((answers),
-    prolog_only(listing(file_answers(StoredAs,_,_)))).
-load_answer_stream(Nth, StoredAs, Stream):-
+
+%!  load_answer_stream(+Nth, +StoredAs, +Stream) is det.
+%
+%   Reads and loads answers from a given stream, associating each answer with the
+%   identifier `StoredAs` and an index `Nth`. If the end of the stream is reached,
+%   it lists all loaded answers for debugging if `answers` tracing is enabled.
+%
+%   @arg Nth      The index of the current answer being read.
+%   @arg StoredAs The identifier under which the answers are stored.
+%   @arg Stream   The input stream from which answers are read.
+%
+%   @example
+%     % Load answers from a stream and associate them with an identifier:
+%     ?- open('answers.txt', read, Stream), load_answer_stream(1, 'stored_as', Stream).
+load_answer_stream(_Nth, StoredAs, Stream) :-
+    % Stop if end of the stream is reached, optionally listing loaded answers.
+    at_end_of_stream(Stream), 
+    !,
+    if_trace((answers), prolog_only(listing(file_answers(StoredAs, _, _)))).
+load_answer_stream(Nth, StoredAs, Stream) :-
+    % Read a line from the stream and process it recursively.
     read_line_to_string(Stream, String),
     load_answer_stream(Nth, StoredAs, String, Stream).
+
+%!  load_answer_stream(+Nth, +StoredAs, +String, +Stream) is det.
+%
+%   Processes a string read from the stream, parsing it as an answer, storing
+%   it with `StoredAs`, and continuing to the next line. If parsing is successful,
+%   it stores the answer using `pfcAdd_Now/1` with an incremented index.
+%
+%   @arg Nth      The index of the current answer being processed.
+%   @arg StoredAs The identifier under which the answer is stored.
+%   @arg String   The string representation of the answer.
+%   @arg Stream   The input stream for reading additional lines if needed.
+%
+%   @example
+%     % Process an answer string from the stream and store it:
+%     ?- load_answer_stream(1, 'stored_as', "[Answer]", Stream).
+
 /*
 load_answer_stream(Nth, StoredAs, String, Stream) :- fail,
-    atom_chars(String,Chars),
+    atom_chars(String, Chars),
     count_brackets(Chars, 0, 0, Balance),
     (   Balance =< 0
     ->  StoredAs = String
@@ -523,15 +1245,22 @@ load_answer_stream(Nth, StoredAs, String, Stream) :- fail,
         load_answer_stream(Nth, StoredAs, CombinedString, Stream)
     ).
 */
-load_answer_stream(Nth, StoredAs, String, Stream):- % string_concat("[",_,String),!,
+load_answer_stream(Nth, StoredAs, String, Stream) :- % string_concat("[", _, String), !
+    % Debugging statement to show the answer being processed.
     fbug(Nth = String),
-    parse_answer_string(String,Metta),!,
-    %if_t(sub_var(',',Metta),rtrace(parse_answer_string(String,_Metta2))),
-    pfcAdd_Now(file_answers(StoredAs,Nth,Metta)),
-    skip(must_det_ll(\+ sub_var(',',Metta))),
-    Nth2 is Nth+1,load_answer_stream(Nth2, StoredAs, Stream).
-
-load_answer_stream(Nth, StoredAs, _, Stream):- load_answer_stream(Nth, StoredAs, Stream).
+    % Parse answer string into a Prolog term.
+    parse_answer_string(String, Metta),
+    !,
+    % Store the parsed answer.
+    pfcAdd_Now(file_answers(StoredAs, Nth, Metta)),
+    % Skip if the answer contains a comma.
+    skip(must_det_ll(\+ sub_var(',', Metta))),
+    % Increment index and continue processing next line.
+    Nth2 is Nth + 1, 
+    load_answer_stream(Nth2, StoredAs, Stream).
+load_answer_stream(Nth, StoredAs, _, Stream) :-
+    % Fall back to reading the next line if no answer is processed.
+    load_answer_stream(Nth, StoredAs, Stream).
 /*
 count_brackets([], Open, Close, Balance) :- !,
     Balance is Open - Close.
@@ -544,91 +1273,234 @@ count_brackets([Char|Rest], Open, Close, Balance) :-
           NewClose = Close)))))),
       count_brackets(Rest, NewOpen, NewClose, Balance).
 */
-parse_answer_string("[]",[]):- !.
-%parse_answer_string(String,Metta):- string_concat("(",_,String),!,parse_sexpr_metta(String,Metta),!.
-parse_answer_string(String,_Metta):- string_concat("[(Error (assert",_,String),!,fail.
-parse_answer_string(String,_Metta):- string_concat("Expected: [",Mid,String),string_concat(_Expected_Inner,"]",Mid),!,fail.
-parse_answer_string(String,Metta):- string_concat("Got: [",Mid,String),string_concat(Got_Inner,"]",Mid),!,parse_answer_inner(Got_Inner,Metta).
-parse_answer_string(String,Metta):- string_concat("[",Mid,String),string_concat(Inner0,"]",Mid),!,parse_answer_inner(Inner0,Metta).
 
+%!  parse_answer_string(+String, -Metta) is nondet.
+%
+%   Parses a given String and converts it into a Prolog term `Metta`.
+%   This predicate handles various formats of input strings, performing
+%   specific parsing based on the format. If the String matches certain
+%   error patterns, the predicate will fail.
+%
+%   @arg String The input string that represents some answer or assertion result.
+%   @arg Metta  The output variable where the parsed result will be unified, if parsing is successful.
+%
+%   @example Parsing an empty list:
+%       ?- parse_answer_string("[]", Result).
+%       Result = [].
+%
+%   @example Handling an error assertion:
+%       ?- parse_answer_string("[(Error (assert ...))]", Result).
+%       false.
+%
 
-parse_answer_inner(Inner0,Metta):- must_det_ll(( replace_in_string([', '=' , '],Inner0,Inner), parse_answer_str(Inner,Metta),
-     skip((\+ sub_var(',',rc(Metta)))))).
+% Parse an empty list, unifying with an empty list if the string is "[]".
+parse_answer_string("[]", []) :- !.
+% parse_answer_string(String, Metta) :- string_concat("(", _, String), !, parse_sexpr_metta(String, Metta), !.
+% Fail if the string starts with an assertion error pattern.
+parse_answer_string(String, _Metta) :- string_concat("[(Error (assert", _, String), !, fail.
+% Fail if the string begins with "Expected: [" and contains an expected inner pattern.
+parse_answer_string(String, _Metta) :- string_concat("Expected: [", Mid, String), string_concat(_Expected_Inner, "]", Mid), !, fail.
+% Parse a `Got` response by extracting the inner content from "Got: [ ... ]".
+parse_answer_string(String, Metta) :- string_concat("Got: [", Mid, String), string_concat(Got_Inner, "]", Mid), !, parse_answer_inner(Got_Inner, Metta).
+% Parse generic bracketed content by extracting the inner part from "[ ... ]".
+parse_answer_string(String, Metta) :- string_concat("[", Mid, String), string_concat(Inner0, "]", Mid), !, parse_answer_inner(Inner0, Metta).
 
-parse_answer_str(Inner,[C|Metta]):-
-    atomics_to_string(["(",Inner,")"],Str),
-    parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
-   ((remove_m_commas(MettaC,Metta),
-     \+ sub_var(',',rc(Metta)))).
-parse_answer_str(Inner0,Metta):- symbolic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
-parse_answer_str(Inner0,Metta):-
-   (( replace_in_string([' , '=' '],Inner0,Inner),
-   atomics_to_string(["(",Inner,")"],Str),!,
-   parse_sexpr_metta(Str,Metta),!,
-   skip((must_det_ll(\+ sub_var(',',rc3(Metta))))),
-   skip((\+ sub_var(',',rc(Metta)))))).
+%!  parse_answer_inner(+Inner0, -Metta) is det.
+%
+%   Converts the content of `Inner0` into a Prolog term `Metta` by replacing specific patterns,
+%   parsing the modified string, and conditionally skipping processing if certain variables are detected.
+%
+%   @arg Inner0 The input string to parse.
+%   @arg Metta  The resulting parsed Prolog term.
+%
+%   @example
+%       ?- parse_answer_inner("some,content", Result).
+%       Result = parsed_term.
+%
 
+parse_answer_inner(Inner0, Metta) :-     
+    must_det_ll((
+        % Replace specific character patterns in Inner0 to create Inner.
+        replace_in_string([', '=' , '], Inner0, Inner),           
+        % Parse modified string Inner into Metta.
+        parse_answer_str(Inner, Metta),
+        % Skip processing if Metta meets the specified condition.
+        skip((\+ sub_var(',', rc(Metta))))
+    )).
+
+%!  parse_answer_str(+Inner0, -Metta) is det.
+%
+%   Parses the content of `Inner0` into a structured Prolog term `Metta` by handling various formats.
+%   Depending on the format, it may apply transformations, handle comma removal, and check for
+%   certain variable conditions.
+%
+%   @arg Inner0 The input string to parse.
+%   @arg Metta  The resulting parsed Prolog term.
+%
+%   @example
+%       ?- parse_answer_str("some content", Result).
+%       Result = parsed_term.
+%
+
+% Parse a string with specific formatting, building the term as a list starting with C.
+parse_answer_str(Inner, [C|Metta]) :-
+    atomics_to_string(["(", Inner, ")"], Str),parse_sexpr_metta(Str, CMettaC), CMettaC = [C|MettaC],
+    % Remove commas from MettaC to create Metta, if conditions are met.
+    ((remove_m_commas(MettaC, Metta),\+ sub_var(',', rc(Metta)))).
+% Handle concatenated symbols in Inner0 by converting them into a list and parsing each element.
+parse_answer_str(Inner0, Metta) :- symbolic_list_concat(InnerL, ' , ', Inner0),
+    maplist(atom_string, InnerL, Inner),maplist(parse_sexpr_metta, Inner, Metta),
+    skip((must_det_ll(( \+ sub_var(',', rc2(Metta)))))), !.
+% Apply replacements in Inner0 and parse as a single expression.
+parse_answer_str(Inner0, Metta) :-
+    ((replace_in_string([' , '=' '], Inner0, Inner),atomics_to_string(["(", Inner, ")"], Str), !,
+    parse_sexpr_metta(Str, Metta), !,skip((must_det_ll(\+ sub_var(',', rc3(Metta))))),
+    skip((\+ sub_var(',', rc(Metta)))))).
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
 
-remove_m_commas(Metta,Metta):- \+ sub_var(',',Metta),!.
-remove_m_commas([C,H|T],[H|TT]):- C=='and', !, remove_m_commas(T,TT).
-remove_m_commas([C,H|T],[H|TT]):- C==',', !, remove_m_commas(T,TT).
-remove_m_commas([H|T],[H|TT]):- !, remove_m_commas(T,TT).
+%!  remove_m_commas(+InputList, -OutputList) is det.
+%
+%   Removes specific elements (such as commas or "and") from `InputList`, creating `OutputList`.
+%   If `InputList` does not contain any commas as variables, `OutputList` is identical to `InputList`.
+%
+%   @arg InputList  The list to process, potentially containing unwanted elements.
+%   @arg OutputList The resulting list with specific elements removed.
+%
+%   @example
+%       ?- remove_m_commas([and, item1, ',', item2, and, item3], Result).
+%       Result = [item1, item2, item3].
+%
 
+% Return the list as-is if it contains no commas as variables.
+remove_m_commas(Metta, Metta) :- \+ sub_var(',', Metta), !.
+% Remove 'and' from the beginning of the list and continue processing.
+remove_m_commas([C, H | T], [H | TT]) :- C == 'and', !, remove_m_commas(T, TT).
+% Remove ',' from the beginning of the list and continue processing.
+remove_m_commas([C, H | T], [H | TT]) :- C == ',', !, remove_m_commas(T, TT).
+% Process remaining elements recursively.
+remove_m_commas([H | T], [H | TT]) :- !, remove_m_commas(T, TT).
 
-% Example usage:
-% ?- change_extension('path/to/myfile.txt', 'pdf', NewFileName).
-% NewFileName = 'path/to/myfile.pdf'.
+%!  change_extension(+OriginalFileName, +NewExtension, -NewBaseName) is det.
+%
+%   Changes the file extension of `OriginalFileName` to `NewExtension`, producing `NewBaseName`.
+%   This predicate extracts the base name without the original extension and appends the
+%   specified `NewExtension` to create the new file name.
+%
+%   @arg OriginalFileName The original file path with an extension to be changed.
+%   @arg NewExtension     The new extension to use for the file.
+%   @arg NewBaseName      The resulting file name with the new extension.
+%
+%   @example
+%       ?- change_extension('path/to/myfile.txt', 'pdf', NewFileName).
+%       NewFileName = 'path/to/myfile.pdf'.
+%
 change_extension(OriginalFileName, NewExtension, NewBaseName) :-
-    %file_base_name(OriginalFileName, BaseName),          % Extract base name
-    file_name_extension(BaseWithoutExt, _, OriginalFileName),    % Split extension
-    file_name_extension(BaseWithoutExt, NewExtension, NewBaseName),!. % Create new base name with new extension
-    %directory_file_path(Directory, NewBaseName, NewFileName). % Join with directory path
-% Example usage:
-% ?- ensure_extension('path/to/myfile.txt', 'txt', NewFileName).
-% NewFileName = 'path/to/myfile.txt'.
+    % Split the original file name to extract the base without its extension.
+    file_name_extension(BaseWithoutExt, _, OriginalFileName),    
+    % Create a new file name by appending the new extension to the base.
+    file_name_extension(BaseWithoutExt, NewExtension, NewBaseName), !.
+
+%!  ensure_extension(+OriginalFileName, +Extension, -NewFileName) is det.
+%
+%   Ensures that `OriginalFileName` has the specified `Extension`. If it already has the extension, 
+%   `NewFileName` is identical to `OriginalFileName`. Otherwise, the `Extension` is appended.
+%
+%   @arg OriginalFileName The original file path, potentially with or without the desired extension.
+%   @arg Extension        The required extension for the file.
+%   @arg NewFileName      The resulting file name, with the ensured extension.
+%
+%   @example
+%       ?- ensure_extension('path/to/myfile', 'txt', NewFileName).
+%       NewFileName = 'path/to/myfile.txt'.
+%
 ensure_extension(OriginalFileName, Extension, NewFileName) :-
+    % Extract the current extension of the file, if any.
     file_name_extension(_, CurrentExt, OriginalFileName),
+    % If the current extension matches the desired one, keep the original file name.
     (   CurrentExt = Extension
     ->  NewFileName = OriginalFileName
+    % Otherwise, append the new extension to create NewFileName.
     ;   atom_concat(OriginalFileName, '.', TempFileName),
         atom_concat(TempFileName, Extension, NewFileName)
     ).
+
 % Example usage:
 % ?- remove_specific_extension('path/to/myfile.txt', 'txt', NewFileName).
 % NewFileName = 'path/to/myfile'.
 
-% ?- remove_specific_extension('path/to/myfile.txt', 'pdf', NewFileName).
-% NewFileName = 'path/to/myfile.txt'.
+%!  remove_specific_extension(+OriginalFileName, +Extension, -FileNameWithoutExtension) is det.
+%
+%   Removes a specific extension from `OriginalFileName` if it matches `Extension`.
+%   If `OriginalFileName` does not have the specified `Extension`, it is returned unchanged.
+%
+%   @arg OriginalFileName         The original file path, possibly with an extension.
+%   @arg Extension                The specific extension to remove.
+%   @arg FileNameWithoutExtension The resulting file name without the specified extension.
+%
+%   @example
+%       ?- remove_specific_extension('path/to/myfile.txt', 'pdf', NewFileName).
+%       NewFileName = 'path/to/myfile.txt'.
+%
 remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension) :-
+    % Extract the extension of the file, if any.
     file_name_extension(FileNameWithoutExtension, Ext, OriginalFileName),
+    % If the extracted extension matches the specified one, return the base name;
+    % otherwise, retain the original file name.
     ( Ext = Extension -> true ; FileNameWithoutExtension = OriginalFileName ).
 
-
-quick_test:-
-  %set_prolog_flag(encoding,iso_latin_1),
-   forall(quick_test(Test),
-                  forall(open_string(Test,Stream),
-                    load_metta_stream('&self',Stream))).
+%!  quick_test is det.
+%
+%   Runs a quick test by executing each test case in `quick_test/1` and loading it 
+%   into the system via `load_metta_stream/2`. Each test case is opened as a string
+%   stream and processed with a predefined entity identifier `&self`.
+%
+%   This predicate is intended for streamlined testing by iterating over all 
+%   available quick test cases.
+%
+%   @example
+%       ?- quick_test.
+%       % Runs all quick tests in quick_test/1 through load_metta_stream.
+%
+quick_test :-
+    % For each test in quick_test/1, open the test as a stream and load it.
+    forall(quick_test(Test),
+           forall(open_string(Test, Stream),
+                  load_metta_stream('&self', Stream))).
 
 /*
  tests for term expander
 
-
 */
 % :- debug(term_expansion).
-:- if(( false, debugging(term_expansion))).
+
+% Enable conditional compilation if debugging for term expansion is active.
+:- if((false, debugging(term_expansion))).
+% Enable ARC-specific term expansions if the condition is met.
 :- enable_arc_expansion.
+% Suppress warnings about singleton variables in this section.
 :- style_check(-singleton).
-dte:- set(_X.local) = val.
-dte:- gset(_X.global) = gval.
-dte:- must_det_ll((set(_X.a) = b)).
-dte:- must_det_ll(locally(nb_setval(e,X.locally),dte([foo|set(X.tail)]))).
-dte:- member(set(V.element),set(V.list)).
-dte(set(E.v)):- set(E.that)=v.
+% Define various test cases for deterministic term expansion.
+% Each `dte` clause represents a different expansion or assertion pattern.
+% Set a local variable.
+dte :- set(_X.local) = val.
+% Set a global variable.
+dte :- gset(_X.global) = gval.
+% Assert that setting `_X.a` to `b` must succeed deterministically.
+dte :- must_det_ll((set(_X.a) = b)).
+% Use `must_det_ll` to ensure that `nb_setval/2` runs locally and call `dte` recursively
+% with a modified term involving `X.tail`.
+dte :- must_det_ll(locally(nb_setval(e, X.locally), dte([foo | set(X.tail)]))).
+% Check if `set(V.element)` is a member of `set(V.list)`.
+dte :- member(set(V.element), set(V.list)).
+% Define a specific expansion for `dte/1` with input `set(E.v)` when `set(E.that)` equals `v`.
+dte(set(E.v)) :- set(E.that) = v.
+% Restore the default singleton variable warnings.
 :- style_check(+singleton).
+% Disable ARC-specific term expansions after this section.
 :- disable_arc_expansion.
+% List all clauses of `dte/1` for inspection.
 :- listing(dte).
+% End the conditional compilation.
 :- endif.
 
 
@@ -665,41 +1537,111 @@ dte(set(E.v)):- set(E.that)=v.
 
 
 
-% 1. Recursive Approach
+%!  factorial_recursive(+N, -Result) is det.
+%
+%   Computes the factorial of N using a simple recursive approach.
+%   This predicate multiplies N by the factorial of (N-1) until it reaches 0.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_recursive(5, Result).
+%       Result = 120.
+%
 factorial_recursive(0, 1).
 factorial_recursive(N, Result) :-
-    N > 0,
-    N1 is N - 1,
-    factorial_recursive(N1, Result1),
-    Result is N * Result1.
+    N > 0,N1 is N - 1,factorial_recursive(N1, Result1),Result is N * Result1.
 
-% 2. Tail Recursive Approach
+%!  factorial_tail_recursive(+N, -Result) is det.
+%
+%   Computes the factorial of N using a tail-recursive approach with an accumulator.
+%   This method is optimized for large values of N due to tail-call optimization.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_tail_recursive(5, Result).
+%       Result = 120.
+%
 factorial_tail_recursive(N, Result) :- factorial_tail_helper(N, 1, Result).
 
+%!  factorial_tail_helper(+N, +Acc, -Result) is det.
+%
+%   Helper predicate for factorial_tail_recursive/2 that accumulates the result
+%   in `Acc`, allowing the computation to proceed in a tail-recursive manner.
+%
+%   @arg N      The current value being processed in the factorial calculation.
+%   @arg Acc    The accumulator holding the intermediate factorial result.
+%   @arg Result The final factorial value.
+%
 factorial_tail_helper(0, Acc, Acc).
 factorial_tail_helper(N, Acc, Result) :-
-    N > 0,
-    NewAcc is Acc * N,
-    N1 is N - 1,
-    factorial_tail_helper(N1, NewAcc, Result).
+    N > 0,NewAcc is Acc * N,N1 is N - 1,factorial_tail_helper(N1, NewAcc, Result).
 
-% 3. Accumulator Approach
+%!  factorial_accumulator(+N, -Result) is det.
+%
+%   Computes the factorial of N using an accumulator-based approach,
+%   accumulating the result in a helper predicate.
+%
+%   @arg N      The non-negative integer for which to calculate the factorial.
+%   @arg Result The resulting factorial value of N.
+%
+%   @example
+%       ?- factorial_accumulator(5, Result).
+%       Result = 120.
+%
 factorial_accumulator(N, Result) :- factorial_acc(N, 1, Result).
 
+%!  factorial_acc(+N, +Acc, -Result) is det.
+%
+%   Helper predicate for factorial_accumulator/2 that uses an accumulator
+%   to store intermediate results, iterating until N reaches 0.
+%
+%   @arg N      The current value being processed in the factorial calculation.
+%   @arg Acc    The accumulator holding the intermediate factorial result.
+%   @arg Result The final factorial value.
+%
 factorial_acc(0, Result, Result).
-factorial_acc(N, Acc, Result) :-
-    N > 0,
-    NewAcc is Acc * N,
-    N1 is N - 1,
-    factorial_acc(N1, NewAcc, Result).
+factorial_acc(N, Acc, Result) :- N > 0,NewAcc is Acc * N,N1 is N - 1,factorial_acc(N1, NewAcc, Result).
+
 
 % You can test each one by querying, for example:
 % ?- factorial_recursive(5, X
 
 
 
-
-
+% The following code defines several test cases and example usages for manipulating spaces, or knowledge bases, using
+% predicates such as `add-atom`, `remove-atom`, `replace-atom`, and `get-atoms`. These predicates
+% simulate basic CRUD (Create, Read, Update, Delete) operations on a conceptual data structure, `Space`,
+% with operations applied to atoms within the space.
+%
+% The code includes:
+%
+% 1. **Basic Operations (`example_usages`)**:
+%    Demonstrates initialization, addition, replacement, and retrieval of atoms in a space. Each operation's result
+%    is output to show changes in the space's state after each operation.
+%
+% 2. **Test Cases for Clearing and Modifying Spaces**:
+%    - `test_clear_space`: Initializes a space, adds atoms, verifies the count and content, clears it, and confirms
+%      that the atoms and count reset.
+%    - `test_operations`: Tests sequential additions, removals, and replacements of atoms in a space.
+%
+% 3. **Multiple Operations in a Shared Space (`test_my_space`)**:
+%    Initializes a space and performs various atomic operations in sequence to verify the changes at each step.
+%    This includes ensuring atoms can be added, counted, replaced, removed, and that the original space name is retained.
+%
+% 4. **Isolated Space Manipulation**:
+%    Additional tests on separate spaces, such as `&kb22` and `&kb2`, demonstrate similar operations, providing
+%    results to confirm that each operation succeeds independently.
+%
+% 5. **Run All Test Cases (`run_tests`)**:
+%    A convenience predicate `run_tests` that executes `test_clear_space` and `test_operations` to validate
+%    all defined atomic operations.
+%
+% The code serves as a comprehensive suite for verifying that atom manipulation functions behave as expected across
+% various spaces, with each test printing intermediate results to facilitate debugging and validation of functionality.
 
 % Example-usage
 example_usages :-
@@ -769,7 +1711,6 @@ run_tests :-
     writeln('Running test_operations:'),
     test_operations.
 
-
 % Test case for various operations on a space
 test_my_space :-
     fetch_or_create_space('&KB', InstanceOfKB),
@@ -810,7 +1751,6 @@ test_my_space :-
     'get-atoms'(InstanceOfKB, Atoms6),
     writeln('Should print [c,z]: ' : Atoms6).
 
-
 % Test the code
 test_clr_my_kb22 :-
     fetch_or_create_space('&kb22'),
@@ -824,7 +1764,6 @@ test_clr_my_kb22 :-
 
   %a:- !, be(B), (iF(A,B)  -> tHEN(A) ).
   %a:- !, be(B), (iF(A,B) *-> tHEN(A) ; eLSE(B)  ).
-
 
 % Test the code
 test_my_kb2:-
@@ -850,8 +1789,11 @@ test_my_kb2:-
 
 
 
-
-end_of_file. % comment this out once to get these files in your readline history
+% This code loads a collection of `.metta` files across various directories and contexts, adding each to the read history.
+% Each file path is specified via `mf/1`, and `add_history1(load_metta(H))` loads the file while logging it for quick
+% access and debugging. 
+% Comment `end_of_file` out once to get these files in your readline history
+end_of_file. % 
 mf('./1-VSpaceTest.metta').
 mf('./2-VSpaceTest.metta').
 mf('./3-Learn-Rules.metta').

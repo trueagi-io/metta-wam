@@ -3,7 +3,27 @@
 # Define the target directory and symlink source and destination
 TARGET_DIR="$HOME/.local/share/swi-prolog/pack"
 LINK_NAME="$TARGET_DIR/lsp_server_metta"
-LINK_TARGET="$HOME/metta-wam/src/packs/lsp_server_metta"
+
+# Determine the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Define the relative path to LINK_TARGET
+RELATIVE_LINK_TARGET="../src/packs/lsp_server_metta"
+
+# Combine SCRIPT_DIR with the relative path
+LINK_TARGET="${SCRIPT_DIR}/${RELATIVE_LINK_TARGET}"
+
+# Resolve LINK_TARGET to an absolute path
+if readlink -f / >/dev/null 2>&1; then
+    # readlink supports -f
+    LINK_TARGET="$(readlink -f "${LINK_TARGET}")"
+elif command -v realpath >/dev/null 2>&1; then
+    # realpath is available
+    LINK_TARGET="$(realpath "${LINK_TARGET}")"
+else
+    # Fallback method using directory change
+    LINK_TARGET="$(cd "${LINK_TARGET}" && pwd)"
+fi
 
 # Check if the directory already exists
 if [ -e "$TARGET_DIR" ]; then
