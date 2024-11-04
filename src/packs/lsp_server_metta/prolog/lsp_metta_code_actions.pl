@@ -72,12 +72,17 @@
 :- dynamic lsp_hooks:handle_msg_hook/3.
 :- discontiguous lsp_hooks:handle_msg_hook/3.
 
-:- discontiguous code_action_hook/3.
-:- discontiguous lsp_hooks:handle_msg_hook/3.
+:- multifile lsp_hooks:code_action/3.
+:- dynamic lsp_hooks:code_action/3.
+:- discontiguous lsp_hooks:code_action/3.
+
+
+:- discontiguous handle_code_action_msg/3.
+
 
 % can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
-   code_action_hook(Method, Msg, Result), !.
+   handle_code_action_msg(Method, Msg, Result), !.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -100,7 +105,7 @@ must_succeed1(G):- call(G)->true;(wdmsg(failed_succeed(G)),throw(failed_succeed(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-code_action_hook("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
+handle_code_action_msg("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
     _{id: Id, params: Params} :< Msg,
    _{textDocument: _{uri: Uri}, range: Range, context: _Context} :< Params,
     compute_code_actions(Uri, Range, Actions).
@@ -249,17 +254,205 @@ trim_to_length(InputString, MaxLength, TrimmedString) :-
     ).
 
 
+
+% Example function to create and send diagnostics for a file
+report_diagnostics(Uri, Range, Message) :-
+    sformat(SMessage, '~w', [Message]),
+    into_json_range(Range, JRange),
+    Diagnostics = [
+        _{
+            range: JRange,
+            % Severity of the diagnostic (1 = Error, 2 = Warning, 3 = Information, 4 = Hint).
+            severity: 3,
+            message: SMessage
+        }
+    ],
+    Msg = _{
+        method: "textDocument/publishDiagnostics",
+        params: _{
+            uri: Uri,
+            diagnostics: Diagnostics
+        }
+    },
+    send_client_message(Msg).
+
+
+% Send a feedback message to VSCode via LSP
+send_feedback_message(Message, MessageType) :-
+    sformat(SMessage, '~w', [Message]),
+    Msg = _{
+        method: "window/showMessage",
+        params: _{
+            type: MessageType,  % 1 = Info, 2 = Warning, 3 = Error
+            message: SMessage
+        }
+    },
+    send_client_message(Msg).
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Code Lens Handlers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_code_action_msg(Method,Msg,Response),!.
+
+% Handle the 'textDocument/codeLens' Request
+handle_code_action_msg("textDocument/codeLens", Msg, _{id: Id, result: CodeLenses}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{textDocument: _{uri: Uri}} :< Params,
+    compute_code_lenses(Uri, CodeLenses).
+% Example fallback for "textDocument/codeLens" request
+handle_code_action_msg("textDocument/codeLens", Msg, _{id: Msg.id, result: []}) :- !.  % No code lenses if none are found
+
+% Generate a list of code lenses for a document
+compute_code_lenses(Uri, CodeLenses) :-
+    doc_path(Uri, Path),
+    findall(CodeLens,
+        (
+            compute_each_lens(Uri, Path, CodeLens)
+        ),
+        CodeLenses).
+
+% Compute Code Lenses for the given document
+compute_each_lens(Uri, _, CodeLens) :-
+    member(CodeLens, [
+        _{range: _{start: _{line: 0, character: 0}, end: _{line: 1, character: 20}},
+          command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}},
+        %_{range: _{start: _{line: 15, character: 0}, end: _{line: 15, character: 25}},
+        %  command: _{title: "Find References", command: "find_references", arguments: [Uri]}},
+        _{range: _{start: _{line: 20, character: 0}, end: _{line: 20, character: 30}},
+          command: _{title: "Show Documentation", command: "show_documentation", arguments: [Uri]}}
+    ]).
+
+compute_each_lens(Uri, Path, CodeLens):-
+        metta_file_buffer(0, Ord, Kind, What, VL, Path, Range),
+        compute_each_buffer_lens(Uri, Ord, Kind, What, VL, Path, Range, CodeLens).
+
+compute_each_buffer_lens(Uri, _Ord, Kind, What, VL, _Path, Range, CodeLens):-
+            \+ is_list(What), !,
+            What = exec(_), !,
+            into_json_range(Range, JRange),
+            maybe_name_vars(VL),
+            wots(Title,(write("Run "), nop( write_src(Kind)))),
+            wots(Src,write_src(What)),
+            CodeLens = _{
+                range: JRange,
+                command: _{title: Title, command: "eval_metta", arguments: [Uri, JRange, Src]}
+            }.
+
+compute_each_buffer_lens(Uri, _Ord, Kind, What, VL, _Path, Range, CodeLens):-
+            into_json_range(Range, JRange),
+            maybe_name_vars(VL),
+            wots(Title,(write("Load "), nop( write_src(Kind)))),
+            wots(Src,write_src(What)),
+            CodeLens = _{
+                range: JRange,
+                command: _{title: Title, command: "eval_metta", arguments: [Uri, JRange, Src]}
+            },!.
+
+/*
+compute_each_buffer_lens(_Uri, _Ord, _Kind, What, _VL, _Path, Range, CodeLens):-
+            is_list(What), sub_term(Symbol, What), atom(Symbol), \+ upcase_symbol(Symbol, Symbol),
+            into_json_range(Range, JRange),
+            %maybe_name_vars(VL), wots(Src,write_src(What)),
+            CodeLens = _{
+                range: JRange,
+                data: Symbol  % Include symbol name for resolve
+            }.
+*/
+
+% Handle "codeLens/resolve" request
+handle_code_action_msg("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
+    _{params: CodeLensParams, id: Id} :< Msg,
+    resolve_code_lens(CodeLensParams, ResolvedCodeLens), !.
+handle_code_action_msg("codeLens/resolve", Msg, _{id: Msg.id, result: null}) :- !.  % Fallback if resolution fails
+
+% Resolve Code Lens
+resolve_code_lens(CodeLens, ResolvedCodeLens) :-
+    get_dict(data, CodeLens, Symbol),
+    symbol_reference_locations(Symbol, Locations),
+    % Build the command with the resolved locations
+    Command = _{
+        title: "Show References",
+        command: "editor.action.showReferences",
+        arguments: [
+            CodeLens.range.start,  % Position of the symbol
+            Locations              % List of locations where the symbol is referenced
+        ]
+    },
+    put_dict(command, CodeLens, Command, ResolvedCodeLens).
+
+% Resolve additional information for a code lens
+resolve_code_lens(CodeLens, ResolvedCodeLens) :-
+    % Here, we could add more specific details or dynamically update the Code Lens if needed
+    ResolvedCodeLens = CodeLens.
+
+% Helper predicate to find all locations where the symbol is referenced.
+symbol_reference_locations(Symbol, Locations) :-
+    findall(Location, symbol_reference_uri(Symbol, Location), Locations).
+
+% Get each symbol reference location and convert it to the JSON format.
+symbol_reference_uri(Symbol, Location) :-
+    % Retrieve symbol's information including file path and range
+    metta_file_buffer(_Lvl, _Ord, _Kind, Symbol, _VL, Path, Range),
+    path_doc(Path, Uri),               % Convert file path to URI
+    into_json_range(Range, JRange),     % Convert range to JSON-compatible range format
+    Location = _{
+        uri: Uri,                      % Document URI for the symbol reference
+        range: JRange                  % Range within the document
+    }.
+
+
+
+% Execute specific Code Lens commands
+lsp_hooks:code_action("find_references", [Uri, Symbol], ExecutionResult) :-
+    find_symbol_references(Uri, Symbol, References),
+    format_reference_result(References, ExecutionResult).
+lsp_hooks:code_action("show_documentation", [Uri|_], _{status: "Showing Documentation", uri: Uri}).
+
+
+% Helper to find all references of a given symbol in a specified URI
+find_symbol_references(Uri, Symbol, References) :-
+    % Retrieve all locations of the symbol in the specified file
+    findall(Location, symbol_reference_uri(Symbol, Location), References),
+    ( References == [] ->
+        References = [_{uri: Uri, message: "No references found for symbol."}]
+    ; true
+    ).
+
+% Format the references result to send back to the client
+format_reference_result(References, Result) :-
+    % Convert the list of references into a string format, if needed
+    maplist(format_reference_entry, References, Entries),
+    atomic_list_concat(Entries, "\n", Result).
+
+% Helper to format each reference entry
+format_reference_entry(Location, Formatted) :-
+    get_dict(uri, Location, Uri),
+    get_dict(range, Location, Range),
+    format(string(Formatted), "Reference found in ~w at ~w", [Uri, Range]).
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the workspace/executeCommand Request
-code_action_hook("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+handle_code_action_msg("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
     _{id: Id, params: Params} :< Msg,
     _{command: Command, arguments: Arguments} :< Params,
-    execute_command(Command, Arguments, ExecutionResult),
+    lsp_hooks:code_action(Command, Arguments, ExecutionResult),
+    into_message_result(ExecutionResult, Result).
+
+into_message_result(ExecutionResult, Result):- is_dict(ExecutionResult), !, Result = ExecutionResult.
+into_message_result(ExecutionResult, Result):-
     Result = _{message: ExecutionResult}.
 
 % Execute Command Implementation
 
-execute_command("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
+lsp_hooks:code_action("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
     % Check if a new name was provided
     (   NewName == '' ->
         % If no new name is provided, return a message indicating cancellation
@@ -272,27 +465,29 @@ execute_command("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
 
 
 % GPT-based refactor rewrite command
-execute_command("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
+lsp_hooks:code_action("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
     get_code_at_range(block, Uri, Range, Code),
     gpt_rewrite_code(Code, ExecutionResult).
 
 % GPT-based comment suggestion command
-execute_command("source_gpt_comment", [Uri], ExecutionResult) :-
+lsp_hooks:code_action("source_gpt_comment", [Uri], ExecutionResult) :-
     source_file_text(Uri, Text),
     gpt_comment_code(Text, ExecutionResult).
 
 % Evaluate Metta code
-execute_command("eval_metta", [_Uri, _Range, Code], ExecutionResult) :-
+lsp_hooks:code_action("eval_metta", [Uri, Range, Code], ExecutionResult) :-
     %get_code_at_range(expression, Uri, Range, Code),
-    eval_metta(Code, ExecutionResult).
+    eval_metta(Uri, Code, ExecutionResult),
+    report_diagnostics(Uri, Range, ExecutionResult).
 
 % Run all tests and report results
-execute_command("run_all_tests", [Uri], ExecutionResult) :-
+lsp_hooks:code_action("run_all_tests", [Uri], ExecutionResult) :-
     run_all_tests(Uri, ResultList),
     format_tests_summary(ResultList, ExecutionResult).
 
 % Fallback for unrecognized commands
-execute_command(_, _, "Command not recognized.").
+lsp_hooks:code_action(_, _, "Command not recognized.").
+
 % Retrieves the entire code content from a file given its URI.
 get_code_from_file(Uri, Code) :-
     path_doc(Path, Uri),  % Extract the file path from the URI.
@@ -341,25 +536,36 @@ call_openai_for_gpt_task(Code, Task, Result) :-
     ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Evaluate Metta Code (Dummy Implementation)
-eval_metta(Code, Result) :-
-    sformat(Result, "Evaluating Metta code: '~w'", [Code]).
 % Execute the Code
-execute_code(Code, Result) :-
+eval_metta(Uri, Code, Result) :-
     % For safety, catch any errors during execution
     catch_with_backtrace((
         % Replace with actual code execution logic
         % For demonstration, we'll just unify Result with Code
         % In practice, you might use metta:eval_string/2 or similar
-        eval(Code,CodeResult),
-        sformat(Result,"~w ; ~q",[Code,CodeResult])
+        maybe_parse_sexpr_metta1(Code, Parsed),
+        eval_metta_code(Uri, Parsed, CodeResult),
+        sformat(Result,"; ~@",[write_src_wi(CodeResult)])
     ), Error, (
         sformat(Result,"~w ; Error: ~q",[Code,Error])
     )).
+% Evaluate Metta Code (Dummy Implementation)
+eval_metta(_Uri, Code, Result) :-
+    sformat(Result, "Evaluating Metta code: '~w'", [Code]).
 
+
+maybe_parse_sexpr_metta1(Code, Parsed):- string(Code),!, parse_sexpr_metta1(Code, Parsed).
+maybe_parse_sexpr_metta1(PreParsed, PreParsed).
+
+eval_metta_code(Uri, Code, Out):-
+    doc_path(Uri, Path),
+    current_self(Self),
+    maybe_parse_sexpr_metta1(Code, Parsed), !,
+    % Execute the form and generate the output using do_metta/5.
+    do_metta(file(Path), +, Self, Parsed, Out), !.
 
 % Run all tests (Dummy Test Results)
-run_all_tests([pass("Test 1"), fail("Test 2"), error("Test 3", "Some error")]).
+run_all_tests(_, [pass("Test 1"), fail("Test 2"), error("Test 3", "Some error")]).
 
 % Format the test summary
 format_tests_summary(ResultList, Summary) :-
