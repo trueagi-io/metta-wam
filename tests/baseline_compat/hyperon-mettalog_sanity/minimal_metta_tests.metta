@@ -94,8 +94,7 @@
 
 !(assertEqual ;; nested chain
 	(chain (chain A $x (p $x)) $y (quote $y))
-	(quote (p A))
-)
+	(quote (p A)))
 !(assertEqual ;; cons-atom is minimal metta, got evaluated
 	(chain (cons-atom p (q)) $v (quote $v))
 	(quote (p q)))
