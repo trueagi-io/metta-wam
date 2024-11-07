@@ -105,6 +105,31 @@
 (: eval (-> Atom Atom))
 ;; Implemented from Interpreters
 
+; Public MeTTa
+(@doc eval-for
+  (@desc "Evaluates input Atom for results of Type. As eval save that only results of Type are returned. Note that as only one evaluation step is performed, if evaluation continues on the return value of this function the final result may not be of Type.")
+  (@params (
+    (@param "Type to evaluate for")
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation of Type"))
+(: eval-for (-> Type Atom Atom))
+
+; Public MeTTa
+(@doc compile!
+  (@desc "Compiles the Function - its definition will no longer change as atoms are added or retracted to the current space. Prints the compiled definition.")
+  (@params (
+    (@param "Function to compile")))
+  (@return "Returns () if the Function compiles."))
+(: compile! (-> Function Expression))
+
+; Public MeTTa
+(@doc compile-space!
+  (@desc "Compiles all functions defined in the Space, as compile!. Prints the compiled definitions.")
+  (@params (
+    (@param "Space to compile")))
+  (@return "Returns () if the Space compiles."))
+(: compile-space! (-> hyperon::space::DynSpace Expression))
+
 ; Public MinimalMeTTa
 (@doc chain
   (@desc "Evaluates first argument Atom, binds it to the Variable (second argument) and then evaluates third argument Template with Variable substituted in. When evaluation of the first Atom brings more than a single result, chain returns one instance of the Template expression for each result. The first argument Atom is only evaluated if it is part of the Minimal MeTTa specification; evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
@@ -1716,6 +1741,13 @@
   (@return "True if the call succeeds, False otherwise."))
 (: call! (-> Atom Atom))
 
+(@doc call-p!
+  (@desc "See call!")
+  (@params (
+    (@param "Form")))
+  (@return "True if the call succeeds, False otherwise."))
+(: call-p! (-> Atom Atom))
+
 ;; Public MeTTaLog
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
@@ -1742,3 +1774,17 @@
     (@param "Cleanup")))
   (@return "Result of Form."))
 (: setup-call-cleanup! (-> Atom Atom Atom Atom))
+
+;; Public MeTTaLog
+(@doc predicate-arity
+  (@desc "Returns the arity of Function's predicate form, i.e. the function-arity + 1. (The additional argument being the function's result as an argument to the predicate.)")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function's predicate form."))
+
+;; Public MeTTaLog
+(@doc function-arity
+  (@desc "Returns the arity of Function.")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function."))
