@@ -816,9 +816,7 @@ is_interactive(From) :- notrace(is_interactive0(From)).
 %     ?- is_interactive0(repl_true).
 %     true.
 %
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: Start : this somehow got deleted. Why?
 is_interactive0(From) :- compound(From), From = file(_), !, fail.
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: End : this somehow got deleted. Why?
 is_interactive0(From) :-
     % Check if the source is repl_true, meaning it is interactive.
     From == repl_true, !.
@@ -1054,9 +1052,7 @@ interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut
           % If an error occurs, log it along with the source and the term.
           write_src(error(Error,From,TermV))).
 
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: Start : this somehow got deleted. Why?
 each_pair_list(A-B,A,B).
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: End : this somehow got deleted. Why?
 
 %! interactively_do_metta_exec00(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
 %   A helper function that handles the core logic of the interactive metta execution, catching potential aborts.
@@ -1071,11 +1067,9 @@ each_pair_list(A-B,A,B).
 %   @arg Was is the previous state before execution.
 %   @arg Output is the output generated from the execution.
 %   @arg FOut is the final output, after additional processing.
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: Start : this somehow got deleted. Why?
 interactively_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
    findall(Output-FOut,interactively_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
    maplist(each_pair_list,List,OutputL,FOutL).
-%%%%%%%%%%%%%%%%%%%%% TODO FIXME: End : this somehow got deleted. Why?
 
 interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
