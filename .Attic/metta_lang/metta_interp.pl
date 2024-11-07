@@ -1768,10 +1768,13 @@ do_metta(From,exec,Self,TermV,Out):- !,
 
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
+   %format("########################X0 ~w ~w ~w\n",[Self,TermV,FOut]),
  (catch(((not_compatio(write_exec(TermV)),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
+   %format("########################X1 ~w ~w ~w ~w\n",[Term,X,NamedVarsList,Output]),
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
    give_up(Why),pp_m(red,gave_up(Why)))).
+   %format("########################X2 ~w ~w ~w\n",[Self,TermV,FOut]).
 
 
 o_s(['assertEqual'|O],S):- nonvar(O), o_s(O,S).
@@ -1791,11 +1794,12 @@ call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
  \+ never_compile(TermV),
  is_transpiling, !,
- must_det_ll((((
+  must_det_ll((((
 
  % ignore(Res = '$VAR'('ExecRes')),
   RealRes = Res,
   compile_for_exec(Res,TermV,ExecGoal),!,
+  %format("~w ~w\n",[Res,ExecGoal]),
   subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
   copy_term_g(NamedVarsList,Was),
   term_variables(Term,Vars),

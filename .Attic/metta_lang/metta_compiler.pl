@@ -90,6 +90,9 @@
 % =======================================
 %:- set_option_value(encoding,utf8).
 
+%transpile_prefix('').
+transpile_prefix('mc__').
+
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
 for_all(G1,G2):- forall(G1,G2).
@@ -357,7 +360,10 @@ as_functor_args(AsPred,F,A):- as_functor_args(AsPred,F,A,_ArgsL),!.
 as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
   (is_list(ArgsL);(integer(A),A>=0)),!,
    length(ArgsL,A),
-   (symbol(F)->AsPred =..[F|ArgsL]; (AsPred = [F|ArgsL])).
+   (symbol(F)->
+      AsPred =..[F|ArgsL]
+   ;
+      (AsPred = [F|ArgsL])).
 
 %as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
 as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
@@ -795,10 +801,14 @@ compile_case_bodies(HeadIs,[Match,Body],caseStruct(MatchResult,If,BodyResult,Bod
 compile_case_bodies(HeadIs,MatchBody,CS):- compound(MatchBody), MatchBody =~ MB,compile_case_bodies(HeadIs,MB,CS).
 
 compile_flow_control(HeadIs,RetResult,Convert,CodeForValueConverted) :-
-    Convert =~ [Plus,N,Value], atom(Plus), current_predicate(Plus/3), number(N),
+    % TODO: Plus seems an odd name for a variable - get an idea why?
+    transpile_prefix(Prefix),
+    Convert =~ [Plus,N,Value], atom(Plus),
+    atom_concat(Prefix,Plus,PrefixPlus),
+    current_predicate(PrefixPlus/3), number(N),
     \+ number(Value), \+ is_ftVar(Value),!,
     f2p(HeadIs,ValueResult,Value,CodeForValue),!,
-    Converted =.. [Plus,N,ValueResult,RetResult],
+    Converted =.. [PrefixPlus,N,ValueResult,RetResult],
     combine_code(CodeForValue,Converted,CodeForValueConverted).
 
 compound_equals(COL1,COL2):- COL1=@=COL2,!,COL1=COL2.
@@ -1554,14 +1564,19 @@ unnumbervars_clause(Cl,ClU):-
 %  Compile in memory buffer
 % ===============================
 is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
-  expand_to_hb(UAC,H,B),clause(H,B,Ref),clause(HH,BB,Ref),
-  strip_m(HH,HHH),HHH=@=H,
+  expand_to_hb(UAC,H,B),
+  H=..[Fh|Args],
+  transpile_prefix(Prefix),
+  atom_concat(Prefix,Fh,FPrefixed),
+  H2=..[FPrefixed|Args],
+  clause(H2,B,Ref),clause(HH,BB,Ref),
+  strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
 
 strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
 strip_m(BB,BB).
 
-get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
+%get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
 
 
 :- dynamic(needs_tabled/2).
@@ -1574,9 +1589,19 @@ add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 
 add_assertion1(Space,ACC) :-
  must_det_ll((
-     copy_term(ACC,AC,_),
+     % add the prefix
+      (ACC = (ACCH :- ACCB),ACCH=..[ACCf|ACCa] ->
+         transpile_prefix(Prefix),
+         atom_concat(Prefix,ACCf,ACCfp),
+         ACCH2=..[ACCfp|ACCa],
+         %ACC2=(ACCH2 :- ACCB)
+         ACC2=(ACCH2 :- (write('################################################################# '),writeln(ACCf),ACCB))
+      ; ACC2=ACC),
+     copy_term(ACC2,AC,_),
      expand_to_hb(AC,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
+    %format("H:~w F:~w A:~w HH:~w\n", [H,F,A,HH]),
+    %format("AC:~w\n", [AC]),
     % assert(AC),
     % Get the current clauses of my_predicate/1
     findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
