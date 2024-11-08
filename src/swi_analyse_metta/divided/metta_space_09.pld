@@ -1,0 +1,63 @@
+format_value(Bytes) :- integer(Bytes),format_bytes(Bytes, Formatted), write(Formatted).
+format_value(Term)  :- format("~w",[Term]).
+%  Base case: If the number is 1G or more, show it in gigabytes (G).
+format_bytes(Bytes, Formatted) :-  Bytes >= 1073741824, GB is Bytes / 1073741824, format(string(Formatted), '~2fG', [GB]).
+% If the number is less than 1G, show it in megabytes (M).
+format_bytes(Bytes, Formatted) :- Bytes >= 104857600, Bytes < 1073741824, !, MB is Bytes / 1048576, D is floor(MB), format(string(Formatted), '~DM', [D]).
+% If the number is less than 1K, show it in bytes (B).
+format_bytes(Bytes, Formatted) :- format(string(Formatted), '~D', [Bytes]).
+% % If the number is less than 1M, show it in kilobytes (K).
+%format_bytes(Bytes, Formatted) :- Bytes >= 1024, Bytes < 1048576, !, KB is Bytes / 1024, format(string(Formatted), '~0fK', [KB]).
+
+% Convert total seconds to days, hours, minutes, seconds, and milliseconds.
+format_time(TotalSeconds, Formatted) :-
+    Seconds is floor(TotalSeconds),
+    % Get days, remaining seconds
+    Days is div(Seconds, 86400),
+    Remain1 is mod(Seconds, 86400)-57600,
+    format_time(string(Out),'%T',Remain1),
+    % Format the result
+    format(string(Formatted), '~w:~w', [Days, Out]).
+
+% AsPred to print the formatted time.
+print_formatted_time(TotalSeconds) :-
+    format_time(TotalSeconds, Formatted),
+    writeln(Formatted).
+
+
+metta_final:-
+    save_pre_statistic(memory),
+    save_pre_statistic(atoms),
+    save_pre_statistic(atom_space).
+/*
+symbol(X):- atom(X).
+symbol_number(S,N):- atom_number(S,N).
+symbol_string(S,N):- atom_string(S,N).
+symbol_chars(S,N):- atom_chars(S,N).
+symbol_length(S,N):- atom_length(S,N).
+symbol_concat(A,B,C):- atom_concat(A,B,C).
+symbolic_list_concat(A,B,C):- atomic_list_concat(A,B,C).
+symbolic_list_concat(A,B):- atomic_list_concat(A,B).
+symbol_contains(T,TT):- atom_contains(T,TT).
+*/
+search_for1(X):-
+  forall((metta_atom(_Where,What),contains_var(X,What)),
+    (nl,write_src_nl(What))).
+
+search_for2(X):-
+  forall((metta_file_src(_Where,What),contains_var(X,What)),
+    (nl,write_src_nl(What))).
+
+
+metta_file_src(Where,What):-
+  loaded_into_kb(Where,File), metta_file_buffer(_,What,Vars,File,_Loc),
+  ignore(maplist(name_the_var,Vars)).
+
+
+guess_metta_vars(What):-
+  ignore(once((metta_file_buffer(_,What0,Vars,_File,_Loc),
+     alpha_unify(What,What0),
+     maplist(name_the_var,Vars)))).
+name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
+
+alpha_unify(What,What0):- What=@=What0,(nonvar(What)->What=What0;What==What0).

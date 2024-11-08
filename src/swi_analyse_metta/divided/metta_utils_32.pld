@@ -1,0 +1,59 @@
+pc_msg_color(link(P,_),C):- pp_msg_color(P,C).
+pc_msg_color((_->P),C):- pp_msg_color(P,C).
+pc_msg_color([P|_],C):- pp_msg_color(P,C).
+pc_msg_color(diff(P),C):- pp_msg_color(P,C).
+
+%:- meta_predicate(wots_hs(0)).
+%wots_hs(G):- wots_hs(S,G),write(S).
+
+:- meta_predicate(wots_ansi(-,0)).
+wots_ansi(S,Goal):- wots(S,woto_ansi(Goal)).
+:- meta_predicate(wots_ansi(-,0)).
+wots_html(S,Goal):- wots(S,woto_html(Goal)).
+
+:- meta_predicate(woto_ansi(0)).
+woto_ansi(Goal):- with_toplevel_pp(ansi,Goal).
+:- meta_predicate(woto_html(0)).
+woto_html(Goal):- with_toplevel_pp(http,Goal).
+
+:- meta_predicate(wots_hs(-,0)).
+%wots_hs(S,G):- \+ wants_html,!,wots(S,G).
+%wots_hs(S,G):- wots(S,G),!.
+wots_hs(S,G):- wots(SS,G),notrace(remove_huge_spaces(SS,S)).
+:- meta_predicate(wots_vs(-,0)).
+wots_vs(OOO,G):- wots(S,G),notrace(fix_vspace(S,OOO)).
+
+fix_vspace(S,OOO):-
+ strip_vspace(S,SS), (atom_contains(SS,'\n') ->
+   wots_hs(SSS,(nl_now,write('   '),write(SS),nl_now));SSS=SS),
+   remove_huge_spaces(SSS,OOO).
+
+
+write_tall(L):- is_list(L),!,my_maplist(write_tall,L).
+write_tall(E):- wots_vs(S,wqs_c(E)),writeln(S).
+write_wide(L):- is_list(L),!,my_maplist(write_wide,L).
+write_wide(E):- wots_vs(S,wqs_c(E)),write(S),write_nbsp.
+
+p_to_br(S,SS):- fix_br_nls(S,S0),
+  cr_to_br(S0,SSS),
+  replace_in_string(['<p>'='<br>','<br/>'='<br>','</p>'=' ','<p/>'='<br>','<br><br>'='<br>'],SSS,SSSS),
+  cr_to_br(SSSS,SS).
+
+cr_to_br(S,SSS):- wants_html,!,cr_to_br_html(S,SSS).
+cr_to_br(S,SSS):- cr_to_br_ansi(S,SSS).
+
+cr_to_br_html(S,SSS):- replace_in_string(['\r\n'='<br>','\r'='<br>','\n'='<br>'],S,SSS).
+cr_to_br_ansi(S,SSS):- replace_in_string(['<br>'='\n','&nbsp;'=' '],S,SSS).
+
+fix_br_nls(S,O):- replace_in_string(
+ ['<br/>\n'='<br/>','<br>\n'='<br>','</p>\n'='</p>','<p/>\n'='<p/>','<p>\n'='<p>',
+  '\n<br>'='<br>','\n<br/>'='<br/>','\n</p>'='</p>','\n<p/>'='<p/>','\n<p>'='<p>'],S,O).
+
+remove_huge_spaces(S,O):- notrace((fix_br_nls(S,SS),!,p_to_br(SS,O))),!.
+/*
+remove_huge_spaces(S,O):- fix_br_nls(S,S0),
+  replace_in_string(['          '='     ',
+    '                                                                          '='     ',
+    '                                                                          '='     ',
+    '                                                                                                                                                                                                                                                                                                                                                                                                               '='  ',
+    '                                                                                                                                                                                                                                                                                   '='   ',

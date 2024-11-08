@@ -1,0 +1,87 @@
+space_type_method(is_asserted_space,atom_count,metta_assertdb_count).
+space_type_method(is_asserted_space,get_atoms,metta_assertdb_get_atoms).
+space_type_method(is_asserted_space,atom_iter,metta_assertdb_iter).
+%space_type_method(is_asserted_space,query,space_nb_query).
+
+%:- dynamic(for_metta/2).
+%for_metta(_,T):- fb_pred(F,A),functor(T,F,A),call(T).
+metta_assertdb_ls(KB):-
+     AMA = metta_atom_asserted,
+     decl_m_fb_pred(user,AMA,2),
+     MP =.. [AMA,KB,_],
+  listing(MP).
+
+metta_assertdb_add(KB,AtomIn):-
+ must_det_ll((subst_vars(AtomIn,Atom),
+     AMA = metta_atom_asserted,
+     decl_m_fb_pred(user,AMA,2),
+     MP =.. [AMA,KB,Atom],
+  assert_new(MP))).
+metta_assertdb_rem(KB,Old):- metta_assertdb_del(KB,Old).
+metta_assertdb_del(KB,Atom):- subst_vars(Atom,Old),
+  decl_m_fb_pred(user,metta_atom_asserted,2),
+   MP = metta_atom(KB,Old),
+  copy_term(MP,Copy), clause(MP,true,Ref), MP=@= Copy, !, erase(Ref). % ,metta_assertdb('DEL',Old).
+metta_assertdb_replace(KB,Old,New):- metta_assertdb_del(KB,Old), metta_assertdb_add(KB,New).
+
+
+
+atom_count_provider(Self,Count):-
+    user:loaded_into_kb(Self,Filename),
+     once(user:asserted_metta_pred(Mangle,Filename)),
+     mangle_iz(Mangle,Iz),
+     member(P,[Mangle,Iz]),
+     between(2,8,Arity),
+     functor(Data,P,Arity),
+     predicate_property(Data,number_of_clauses(CC)),
+     predicate_property(Data,number_of_rules(RC)),
+     Count is CC - RC.
+
+atom_count_provider(KB,Count):-
+ must_det_ll((
+  AMA = metta_atom_asserted,
+  decl_m_fb_pred(user,AMA,2),
+  MP =.. [AMA,KB,_],
+  predicate_property(MP,number_of_clauses(SL2)),
+  predicate_property(MP,number_of_rules(SL3)),
+  %metta_assertdb_ls(KB),
+      full_atom_count(SL1),
+  Count is SL1 + SL2 - SL3)),!.
+
+metta_assertdb_count(KB,Count):-
+    findall(C,atom_count_provider(KB,C),CL),
+    sumlist(CL,Count).
+
+
+
+%metta_assertdb_count(KB,Count):- writeln(metta_assertdb_count_in(KB,Count)), findall(Atom,for_metta(KB,Atom),AtomsL),length(AtomsL,Count),writeln(metta_assertdb_count_out(KB,Count)).
+metta_assertdb_iter(KB,Atoms):-
+     MP =.. [metta_atom,KB,Atoms],
+     call(MP).
+
+
+
+metta_iter_bind(KB,Query,Vars,VarNames):-
+  term_variables(Query,QVars),
+  align_varnames(VarNames,Vars),
+  TV = dout(space,['match',KB,Query,QVars,Vars,VarNames]),
+%  \+ \+ (numbervars(TV,0,_,[]),print(tv=TV),nl),
+  ignore(QVars=Vars),
+%  \+ \+ (numbervars(TV,0,_,[]),print(qv=TV),nl),
+  \+ \+ (%numbervars(TV,0,_,[]),
+         writeq(av=TV),nl),
+  space_query_vars(KB,Query,TF),TF\=='False'.
+
+
+% Query from hyperon.base.GroundingSpace
+space_query_vars(KB,Query,Vars):- is_asserted_space(KB),!,
+    decl_m_fb_pred(user,metta_atom_asserted,2),
+    call_metta(KB,Query,Vars),
+    dout('RES',space_query_vars(KB,Query,Vars)).
+
+
+metta_assertdb_get_atoms(KB,Atom):- metta_atom(KB,Atom).
+/*
+
+%metta_assertdb_iter_bind(KB,Query,Template,AtomsL):-
+decl_m_fb_pred(user,metta_atom_asserted,2), findall(Template,metta_atom(KB,Query),AtomsL).

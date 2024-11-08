@@ -1,0 +1,19 @@
+/*****************************************************************************
+
+		Copyright (c) Singularity
+
+ Project:  PARSE_USE
+ FileName: parse_use.PRE
+ Purpose: Predicate definitions for PARSE_USE.PRO
+ Written by: R. van Vessum
+ Comments:
+******************************************************************************/
+
+%BEGIN_DECL, System generated global predicates
+GLOBAL PREDICATES
+
+  project_ShowHelpContext(INTEGER Index) - (i)
+  dlg_about_dialog_Create(WINDOW Parent) - (i)
+  tb_project_toolbar_Create(WINDOW Parent) - (i)
+  tb_help_line_Create(WINDOW Parent) - (i)
+%END_DECL

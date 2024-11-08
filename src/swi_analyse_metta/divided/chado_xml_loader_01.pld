@@ -1,0 +1,99 @@
+:- use_module(library(sgml)).
+%:- use_module(library(logicmoo/xml_reader)).
+
+% Predicate to load XML and extract DTD file name
+extract_dtd_file(XMLFile, DTDFileName) :-
+    open(XMLFile, read, Stream),
+    load_structure(Stream, _XML, [dialect(xml), doctype(Doctype)]),
+    close(Stream),
+    dtd_file_from_doctype(Doctype, DTDFileName).
+
+% Helper to extract DTD file name from DOCTYPE declaration
+dtd_file_from_doctype(Doctype, FileName) :-
+    nonvar(Doctype),
+    Doctype = doctype(_Name, ExternalID),
+    extract_system_id(ExternalID, FileName).
+
+% Extract SYSTEM identifier which usually contains the DTD file name
+extract_system_id(ExternalID, FileName) :-
+    nonvar(ExternalID),
+    ExternalID = system(FileName).
+
+
+/*
+root@gitlab:/wam/data/FB_current# du . -h
+14M     ./precomputed_files/insertions
+26M     ./precomputed_files/stocks
+231M    ./precomputed_files/references
+3.9M    ./precomputed_files/human_disease
+43M     ./precomputed_files/synonyms
+293M    ./precomputed_files/ontologies
+34M     ./precomputed_files/clones
+22M     ./precomputed_files/orthologs
+4.9G    ./precomputed_files/genes
+1.4M    ./precomputed_files/species
+102M    ./precomputed_files/alleles
+148K    ./precomputed_files/map_conversion
+35M     ./precomputed_files/go
+125M    ./precomputed_files/collaborators
+988K    ./precomputed_files/transposons
+1.9G    ./precomputed_files/metadata
+7.6G    ./precomputed_files
+11G     ./dmel_r6.56/fasta
+6.3G    ./dmel_r6.56/gff
+75M     ./dmel_r6.56/gtf
+47G     ./dmel_r6.56/chado-xml
+139M    ./dmel_r6.56/dna
+64G     ./dmel_r6.56
+329G    ./chado-xml
+400G    .
+
+
+*/
+/*
+load_dtd(DTDFile, DTD) :-
+    catch(
+        (
+            open(DTDFile, read, Stream),
+            load_structure(Stream, DTD, [dtd(DTD), dialect(xml)]),
+            close(Stream)
+        ),
+        Error,
+        (   print_message(error, Error),
+            fail
+        )
+    ).
+*/
+    lfb0:-
+      fileToLineInfoElements(_Ctx,'/wam/data/FB_current/chado-xml/chado_FBim.xml',XML),
+      writeln(XML),!.
+    lfb1:-
+      load_chado_xml('/wam/data/FB_current/chado-xml/chado_FBgn.xml').
+    lfb2:-
+      load_chado_xml('/wam/data/FB_current/dmel_r6.56/chado-xml/chado_dmel_gene_models.xml').
+    lfb3:-
+      load_chado_xml('/wam/data/FB_current/dmel_r6.56/chado-xml/chado_dmel_predicted.xml').
+
+
+load_chado_xml(File) :-
+        open(File, read, In),
+        new_sgml_parser(Parser, []),
+        set_sgml_parser(Parser, file(File)),
+        set_sgml_parser(Parser, dialect(xml)),
+        set_sgml_parser(Parser, space(remove)),
+
+        sgml_parse(Parser,
+                   [ source(In),
+                     call(begin, on_begin),
+                     call(end, on_end)
+                   ]),
+        close(In).
+
+:- dynamic(feature_data/3).
+
+on_end('feature', _) :-  !,
+  finish_feature_data,!,
+  listing(feature_data(_,_,_)),
+  retractall(feature_data(_,_,_)),
+  sleep(0.1),!.
+%on_end(Tag, _Parser):- current_tag(Is), Is = Tag, !, pop_tag(Tag), finish_tag(Tag).

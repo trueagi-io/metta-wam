@@ -1,0 +1,171 @@
+
+intersection(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
+  intersection_univ(APoints,BPoints,Intersected,LeftOverA,LeftOverB),!.
+
+same_univ(A,B):- (plain_var(A)->A==B;(B=@=A->true; (fail, \+ (A \=B )))).
+
+intersection_univ(APoints,BPoints,Intersected):-
+  intersection_univ(APoints,BPoints,Intersected,_,_),!.
+intersection_univ(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
+  pred_intersection(same_univ,APoints,BPoints,Intersected,_,LeftOverA,LeftOverB).
+
+intersection_eq(APoints,BPoints,Intersected):-
+  intersection_eq(APoints,BPoints,Intersected,_,_),!.
+intersection_eq(APoints,BPoints,Intersected,LeftOverA,LeftOverB):-
+  pred_intersection(same_univ,APoints,BPoints,Intersected,_,LeftOverA,LeftOverB).
+
+/*
+intersection_u([],LeftOverB,[],[],LeftOverB):-!.
+intersection_u(LeftOverA,[],[],LeftOverA,[]):-!.
+intersection_u([A|APoints],BPoints,[A|Intersected],LeftOverA,LeftOverB):-
+  select(A,BPoints,BPointsMinusA),!,
+  intersection_u(APoints,BPointsMinusA,Intersected,LeftOverA,LeftOverB).
+intersection_u([A|APoints],BPoints,Intersected,[A|LeftOverA],LeftOverB):-
+  intersection_u(APoints,BPoints,Intersected,LeftOverA,LeftOverB).
+*/
+
+:- meta_predicate(each_obj(?,?,0)).
+each_obj([],_,_):-!.
+each_obj([Obj|List],Obj,Goal):- ignore(Goal), each_obj(List,Obj,Goal).
+
+pred_intersection(_P2, [],LeftOverB, [],[], [],LeftOverB):-!.
+pred_intersection(_P2, LeftOverA,[], [],[], LeftOverA,[]):-!.
+pred_intersection(P2, [A|APoints],BPoints,[A|IntersectedA],[B|IntersectedB],LeftOverA,LeftOverB):-
+  select(B,BPoints,BPointsMinusA),
+  \+ \+ p2_call(P2, A,B),!,
+  pred_intersection(P2, APoints,BPointsMinusA,IntersectedA,IntersectedB,LeftOverA,LeftOverB).
+pred_intersection(P2, [A|APoints],BPoints,IntersectedA,IntersectedB,[A|LeftOverA],LeftOverB):-
+  pred_intersection(P2, APoints,BPoints,IntersectedA,IntersectedB,LeftOverA,LeftOverB).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pp(PP):-pp_m(PP).
+pp(Color,PP):- ansi_format([fg(Color)],'~@',[pp(PP)]).
+
+
+warn_skip(P):- pp(warn_skip(P)).
+
+with_set_stream(_,_,G):- call(G).
+
+fake_impl(M:F/A):- functor(P,F,A), asserta((M:P :- !, fail)).
+fake_impl(F/A):- functor(P,F,A), asserta((P :- !, fail)).
+
+
+:- fake_impl(arc_setval/3).
+:- fake_impl(cast_to_grid/3).
+:- fake_impl(dot_cfg:dictoo_decl/8).
+:- fake_impl(get_param_sess/2).
+:- fake_impl(into_list/2).
+:- fake_impl(into_type/3).
+:- fake_impl(is_grid/1).
+:- fake_impl(is_hooked_obj/1).
+:- fake_impl(is_vm_map/1).
+:- fake_impl(ld_logicmoo_webui/0).
+:- fake_impl(must_grid_call/3).
+:- fake_impl(o_m_v/3).
+:- fake_impl(quick_test/1).
+:- fake_impl(url_decode_term/2).
+:- fake_impl(xlisting_web:find_http_session/1).
+:- fake_impl(xlisting_web:is_cgi_stream/0).
+
+
+end_of_file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:- encoding(iso_latin_1).
+/*
+  this is part of (H)MUARC  https://logicmoo.org/xwiki/bin/view/Main/ARC/
+
+  This work may not be copied and used by anyone other than the author Douglas Miles

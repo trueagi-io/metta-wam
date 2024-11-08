@@ -1,0 +1,57 @@
+%finish_eval(Eq,RetType,Depth,Self,[V|Nil],[O]):- Nil==[], once(eval_args(Eq,RetType,Depth,Self,V,O)),V\=@=O,!.
+finish_eval(Eq,RetType,Depth,Self,[H|T],[HH|TT]):- !,
+    eval_args(Depth,Self,H,HH),
+    finish_eval(Eq,RetType,Depth,Self,T,TT).
+finish_eval(_Eq,_RetType,Depth,Self,T,TT):- eval_args(Depth,Self,T,TT).
+
+   %eval_args(Eq,RetType,Depth,Self,X,Y):- eval_20(Eq,RetType,Depth,Self,X,Y)*->true;Y=[].
+
+%eval_20(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
+%eval_20(Eq,RetType,Depth,_,X,Y):- Depth<3, !, ground(X), (Y=X).
+%eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+
+% Kills zero arity functions eval_20(Eq,RetType,Depth,Self,[X|Nil],[Y]):- Nil ==[],!,eval_args(Eq,RetType,Depth,Self,X,Y).
+
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  METTLOG PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
+eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
+eval_20(Eq,RetType,Depth,Self,['maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
+      maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Res):-
+      eval_args(Eq,RetType,Depth,Self,[Pred,Arg1],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Res):-
+      eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2],Res).
+  eval_pred(Eq,RetType,Depth,Self,Pred,Arg1,Arg2,Arg3,Res):-
+      eval_args(Eq,RetType,Depth,Self,[Pred,Arg1,Arg2,Arg3],Res).
+
+eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1],ResL):- !,
+      metta_concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ResL).
+eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2],ResL):- !,
+      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ResL).
+eval_20(Eq,RetType,Depth,Self,['concurrent-maplist!',Pred,ArgL1,ArgL2,ArgL3],ResL):- !,
+      concurrent_maplist(eval_pred(Eq,RetType,Depth,Self,Pred),ArgL1,ArgL2,ArgL3,ResL).
+eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],NoResult):- !,
+      maplist(s2p,Options,POptions),
+      call(thread:concurrent_forall(
+            user:eval_ne(Eq,RetType,Depth,Self,Gen,_),
+            user:forall(eval_args(Eq,RetType,Depth,Self,Test,_),true),
+            POptions)),
+     make_nop(RetType,[],NoResult).
+
+eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
+
+
+% =================================================================

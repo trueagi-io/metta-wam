@@ -1,0 +1,25 @@
+properties('&corelib','println!', [output, qhelp("Prints text with newline to output."), text_printing]).
+properties('&corelib','with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).
+properties('&corelib','print', [output, qhelp("Prints text to output."), text_printing]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).
+properties('&corelib','assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).
+properties('&corelib','assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).
+properties('&corelib','assertEqualToResult', [testing, qhelp("Asserts equality to a result."), assertion]).
+
+% --- System Integration and State Management ---
+properties('&corelib','change-state!', [state_management, qhelp("Changes the state of a system component."), system_integration]).
+properties('&corelib','set-state', [state_management, qhelp("Sets the state of a component or system.")]).
+properties('&corelib','get-state', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]).
+
+% --- List Operations ---
+properties('&corelib','car-atom', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]).
+properties('&corelib','cdr-atom', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]).
+properties('&corelib','range', [list_operations, qhelp("Generates a range of numbers."), range_generation]).
+properties('&corelib','make_list', [list_operations, qhelp("Creates a list with specified elements."), creation]).
+properties('&corelib','Cons', [list_operations, qhelp("Constructs a list."), construction]).
+properties('&corelib','length', [list_operations, qhelp("Determines the length of a list."), length_determination]).
+properties('&corelib','countElement', [list_operations, qhelp("Counts occurrences of an element."), element_counting]).
+properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples within a structure."), counting]).
+%properties('&corelib','TupleConcat', [data_structures, qhelp("Concatenates tuples."), concatenation]).
+%properties('&corelib','collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).

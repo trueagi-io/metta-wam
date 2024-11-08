@@ -1,0 +1,56 @@
+    eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
+
+eval_20(_Eq,_RetType,Depth,Self,['get-type',Val],Type):- is_list(Val), !,
+    catch_metta_return(get_type(Depth,Self,Val,Type),TypeM),
+    var(TypeM), Type \== '%Undefined%'.
+
+eval_20(Eq,RetType,Depth,Self,['get-type',Val],TypeO):- !,
+    if_or_else(get_type(Depth,Self,Val,Type),Type='%Undefined%'),
+    %term_singletons(Type,[]),
+    %Type\==[], Type\==Val,!,
+    do_expander(Eq,RetType,Type,TypeO).
+
+eval_20(Eq,RetType,Depth,Self,['get-type-space',Other,Val],Type):- !,
+   into_space(Depth,Self,Other,Space),
+   eval_20(Eq,RetType,Depth,Space,['get-type',Val],Type).
+
+eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['get-metatype',Val],TypeO):- !,
+  'get-metatype'(Val,TypeO).
+
+'get-metatype'(Val,Type):- get_metatype0(Val,Was),!,Type=Was.
+    get_metatype0(Val,'Variable'):- var(Val),!.
+    get_metatype0(Val,Type):- symbol(Val), !, get_symbol_metatype(Val,Type).
+    get_metatype0(Val,'Expression'):- is_list(Val),!.
+get_metatype0(_Val,'Grounded').
+
+get_symbol_metatype(Val,Type):- get_type(Val,Want),get_symbol_metatype(Val,Want,Type).
+get_symbol_metatype(_Vl,'Bool','Grounded').
+get_symbol_metatype(Val,_Want,Type):- nb_current(Val,NewVal),'get-metatype'(NewVal,Type).
+get_symbol_metatype(_Vl,'%Undefined%','Symbol').
+get_symbol_metatype(_Vl,_Want,'Grounded').
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  STRINGS
+% =================================================================
+% =================================================================
+% =================================================================
+
+as_metta_char(X,'#\\'(X)).
+
+eval_20(Eq,RetType,Depth,Self,['stringToChars',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars).
+eval_20(Eq,RetType,Depth,Self,['charsToString',Chars],String):- !, eval_args(Eq,RetType,Depth,Self,Chars,CC), maplist(as_metta_char,CC0,CC), string_chars(String,CC0).
+
+% We deal with indexing, but not formatting (the stuff following the ':')(yet)
+% https://doc.rust-lang.org/std/fmt/ used as a reference
+
+format_args_get_index([C|FormatRest1], FormatRest2, Index2) :- char_code(C, Ccode), Ccode >= 48, Ccode =< 57, !, % in the range ['0'..'9']
+    Index1 is Ccode-48,
+    format_args_get_index1(FormatRest1, FormatRest2, Index1, Index2).
+format_args_get_index(FormatRest, FormatRest, none).
+
+% have at least one digit already. This is separate from format_args_get_index to distinguish {} and {0} cases

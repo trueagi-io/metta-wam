@@ -1,0 +1,96 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ */
+
+
+%:- multifile(baseKB:agent_action_queue/3).
+%:- dynamic(baseKB:agent_action_queue/3).
+
+:- set_prolog_flag(gc,true).
+
+:- thread_local(t_l:disable_px/0).
+:- retractall(t_l:disable_px).
+
+:- must(\+ t_l:disable_px).
+
+:- op(500,fx,'~').
+:- op(1050,xfx,('=>')).
+:- op(1050,xfx,'<==>').
+:- op(1050,xfx,('<-')).
+:- op(1100,fx,('==>')).
+:- op(1150,xfx,('::::')).
+:-
+ current_prolog_flag(access_level,Was),
+ set_prolog_flag(access_level,system),
+ op(1190,xfx,('::::')),
+ op(1180,xfx,('==>')),
+ op(1170,xfx,'<==>'),
+ op(1160,xfx,('<-')),
+ op(1150,xfx,'=>'),
+ op(1140,xfx,'<='),
+ op(1130,xfx,'<=>'),
+ op(600,yfx,'&'),
+ op(600,yfx,'v'),
+ op(350,xfx,'xor'),
+ op(300,fx,'~'),
+ op(300,fx,'-'),
+ op(1199,fx,('==>')),
+ set_prolog_flag(access_level,Was).
+
+%:- style_check(-discontiguous).
+%:- enable_mpred_expansion.
+%:- expects_dialect(pfc).
+
+/*
+:- dynamic   lmcache:session_io/4, lmcache:session_agent/2, lmcache:agent_session/2,   telnet_fmt_shown/3,   agent_action_queue/3).
+:- dynamic lmcache:session_io/4, lmcache:session_agent/2, lmcache:agent_session/2,   telnet_fmt_shown/3,   agent_action_queue/3).
+
+*/
+%:- nop('$set_source_module'( baseKB)).
+:- set_prolog_flag(runtime_speed, 0).
+:- set_prolog_flag(runtime_safety, 2).
+:- set_prolog_flag(runtime_debug, 2).
+:- set_prolog_flag(unsafe_speedups, false).
+:- set_prolog_flag(expect_pfc_file,always).
+
+
+
+:- set_prolog_flag(pfc_term_expansion,false).
+
+
+params_and_return_type([->|TypeList],Len,Params,Ret):-
+   append(Params,[Ret], TypeList),
+   length(Params,Len).
+
+merge_fp(_,_,N) :- N<1.
+merge_fp(T1,T2,N) :-
+  N>0,
+  arg(N,T1,X),
+  arg(N,T2,X),
+  N1 is N-1,
+  merge_fp(T1,T2,N1).
+
+:- set_prolog_flag(pfc_term_expansion,true).
+
+'functional-predicate'(Name,Arity) ==>
+  {functor(P1,Name,Arity),
+   functor(P2,Name,Arity),
+   arg(Arity,P1,PV1),

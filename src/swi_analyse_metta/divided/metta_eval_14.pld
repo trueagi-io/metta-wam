@@ -1,0 +1,74 @@
+
+%metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
+metta_atom_iter(Eq,Depth,Self,Other,X):-
+  %copy_term(X,XX),
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
+
+metta_atom_true(_Eq,Depth,Self,Other,H):-
+      can_be_ok(metta_atom_true,H),
+      into_space(Depth,Self,Other,Space),
+      metta_atom(Space,H).
+% is this OK?
+%metta_atom_true(Eq,Depth,Self,Other,H):- nonvar(H), metta_eq_def(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Self,B).
+% is this OK?
+%metta_atom_true(Eq,Depth,Self,Other,H):- Other\==Self, nonvar(H), metta_eq_def(Eq,Other,H,B), D2 is Depth -1, eval_args_true(Eq,_,D2,Other,B).
+
+
+
+eval_args_true_r(Eq,RetType,Depth,Self,X,TF1):-
+  ((eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1));
+     ( \+  is_False(TF1),metta_atom_true(Eq,Depth,Self,Self,X))).
+
+eval_args_true(Eq,RetType,Depth,Self,X):-
+ % can_be_ok(eval_args_true,X),
+ % metta_atom_true(Eq,Depth,Self,Self,X);
+   (nonvar(X),eval_ne(Eq,RetType,Depth,Self,X,TF1),  \+  is_False(TF1)).
+
+
+metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom_asserted(Other,H),true,Ref).
+can_be_ok(A,B):- cant_be_ok(A,B),!,fbug(cant_be_ok(A,B)),trace.
+can_be_ok(_,_).
+
+cant_be_ok(_,[Let|_]):- Let==let.
+% =================================================================
+% =================================================================
+% =================================================================
+%  CASE/SWITCH
+% =================================================================
+% =================================================================
+% =================================================================
+% Macro: case
+:- nodebug(metta(case)).
+
+eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
+  eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
+
+eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+   eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
+% if there is only a void then always return nothing for each Case
+eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
+   '%void%' == Void,
+   eval_args(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
+
+% if there is nothing for case just treat like a collapse
+eval_20(Eq,RetType,Depth,Self,['case',A,[]],NoResult):- !,
+  %forall(eval_args(Eq,_RetType2,Depth,Self,Expr,_),true),
+  once(eval_args(Eq,_RetType2,Depth,Self,A,_)),
+  make_nop(RetType,[],NoResult).
+
+
+into_case_keys(_,[],[]).
+into_case_keys(Nth,[Case0|CASES],[Key-Value|KVs]):-
+  Nth1 is Nth+1,
+  is_case(Key,Case0,Value),
+  if_trace((case),(format('~N'),writeqln(c(Nth,Key)=Value))),
+  into_case_keys(Nth1,CASES,KVs).
+
+% Macro: case
+eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
+   must_det_ll(T==[]),
+   into_case_list(CL,CASES),
+   into_case_keys(1,CASES,KVs),
+   eval_case(Eq,RetType,Depth,Self,A,KVs,Res).
+
+eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-

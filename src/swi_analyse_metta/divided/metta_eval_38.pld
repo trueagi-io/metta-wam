@@ -1,0 +1,64 @@
+eval_defn_choose_candidates(_Eq,_RetType,_Depth,_Self,_X,_Y):- \+ is_debugging(metta_defn),!,fail.
+eval_defn_choose_candidates(_Eq,_RetType,_Depth,_Self,X,_Y):-
+   color_g_mesg('#773700',write(no_def(X))),!,fail.
+:- endif.
+
+pl_clause_num(Head,Body,Ref,Index):-
+    clause(Head,Body,Ref),
+    nth_clause(Head,Index,Ref).
+
+same_len_copy(Args,NewArgs):- length(Args,N),length(NewArgs,N).
+
+get_defn_expansions(Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
+   metta_eq_def(Eq,Self,[H|NewArgs],B0).
+
+get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),
+    same_len_copy(Start,NewStart),
+    X = [H|NewStart],
+    findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
+    XXB0L\=[], if_trace((defn;metta_defn;eval_args),maplist(print_templates(Depth,'curry 1'),XXB0L)),!,
+    member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
+    light_eval(Eq,RetType,Depth,Self,B0,Y),
+    same_len_copy(T1,NewT1).
+
+get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],RW,Y):- is_list(Start), append(Start,T1,Args),
+  get_defn_expansions(Eq,RetType,Depth,Self,[H|Args],RW,Y),
+  if_trace((defn;metta_defn;eval_args),indentq_d(Depth,'curry 2 ', [[[H|Start]|T1] ,'----->', RW])).
+
+print_templates(Depth,_T,guarded_defn(Types,XX,B0)):-!,
+   Depth2 is Depth+2,
+    if_t(is_list(Types),indentq_d(Depth,'guarded',['->'|Types])),
+    indentq_d(Depth2,'(=',XX),
+    indentq_d(Depth2,' ',ste('',B0,')')).
+print_templates(Depth,_T,XX->B0):-!,
+    indentq_d(Depth,'(=',XX),
+    indentq_d(Depth,'',ste('',B0,')')).
+print_templates(Depth,T,XXB0):- ignore(indentq_d(Depth,'<<>>'(T),template(XXB0))),!.
+
+light_eval(Depth,Self,X,B):-
+  light_eval(_Eq,_RetType,Depth,Self,X,B).
+light_eval(_Eq,_RetType,_Depth,_Self,B,B).
+
+not_template_arg(TArg):- var(TArg), !, \+ attvar(TArg).
+not_template_arg(TArg):- atomic(TArg),!.
+%not_template_arg(TArg):- is_list(TArg),!,fail.
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  AGREGATES
+% =================================================================
+% =================================================================
+% =================================================================
+
+cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
+
+cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded(_),fail).
+
+
+%findall_eval(Eq,RetType,Depth,Self,X,L):- findall_eval(Eq,RetType,_RT,Depth,Self,X,L).
+%findall_eval(Eq,RetType,Depth,Self,X,S):- findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
+findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,L=[X].
+findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
+findall_eval(Eq,RetType,Depth,Self,Funcall,L):-

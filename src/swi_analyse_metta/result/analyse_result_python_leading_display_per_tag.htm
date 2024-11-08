@@ -1,0 +1,423 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+include_metta_files </H2> 
+ <H2> 
+display_per_tag </H2> 
+ <H2> 
+python_leading </H2> 
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> (py-dot</i></b>  <a onclick="prompt('copy path','(py-dot');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_examples.py  <br> 
+        metta.run('!(<b>(py-dot</b> (Setter pglob 5) act))') (py-dot   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_04_numpy_simple_import.metta  <br> 
+!(bind! linalg (py-atom numpy.linalg))
+!(bind! numpy (py-atom numpy))
+
+!(bind! m1 (<b>(py-dot</b> numpy random.rand) 3 3 ))
+!(bind! m1_inv ( (py-dot linalg inv) m1))
+!( (py-dot numpy matmul) m1 m1_inv)
+ (py-dot   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/jetta/test_basic_jetta.metta  <br> 
+     (<b>(py-dot</b> (py-dot   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/jetta/test_expr_compile.metta  <br> 
+     (<b>(py-dot</b> (py-dot   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> change-st</i></b>  <a onclick="prompt('copy path','change-st');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_examples.py  <br> 
+        metta.run('!(<b>change-st</b> (name id-001) Fritz)') change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta  <br> 
+!(nop (<b>change-st</b>ate! (status (Goal lunch-order)) active)) change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta  <br> 
+!(nop (<b>change-st</b>ate! &state-active inactive)) change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (get-type (<b>change-st</b>ate! (new-state "S") "V")) change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (<b>change-st</b>ate! &state-token 1) change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (<b>change-st</b>ate! (new-state 1) "S") change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+!(nop (<b>change-st</b>ate! &state-token (C D))) change-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+     (<b>change-st</b>ate! $x (+ (get-state $x) 1))) change-st   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-st</i></b>  <a onclick="prompt('copy path','get-st');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_examples.py  <br> 
+        self.assertEqualMettaRunnerResults(metta.run('!(<b>get-st</b> (name id-001))'), get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta  <br> 
+  (<b>get-st</b>ate (status (Goal lunch-order))) get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta  <br> 
+  (<b>get-st</b>ate (status (Goal lunch-order))) get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e3_match_states.metta  <br> 
+  (if (== (<b>get-st</b>ate (status (Goal $goal))) get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+   (<b>get-st</b>ate (get-token)) get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+   (<b>get-st</b>ate (get-token)) get-st   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+; !(<b>get-st</b>ate (let $x (new-state 1) $x)) get-st   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> get-type</i></b>  <a onclick="prompt('copy path','get-type');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_examples.py  <br> 
+        self.assertEqualMettaRunnerResults(metta.run('!(<b>get-type</b> "A")'), [[S('String')]]) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Self],Type):- current_self(Self), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Other],Type):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(_Eq,_RetType,Depth,Self,['<b>get-type</b>',Val],Type):- is_list(Val), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val],TypeO):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>get-type</b>'(Value, Type):- eval_H(['get-type', Value], Type). get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs  <br> 
+        tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">  ../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs  <br> 
+    tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/03-soring-via-insert.metta  <br> 
+!(<b>get-type</b> insert) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta  <br> 
+  (chain (eval (<b>get-type</b> $atom $space)) $actual-type get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/00_lang_ok_to_redefine.metta  <br> 
+    (chain (eval (<b>get-type</b> $op $space)) $op-type get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (Mortal Plato)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (HumansAreMortal SocratesIsHuman)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (HumansAreMortal (Human Socrates))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (= SocratesIsMortal (HumansAreMortal SocratesIsHuman))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (= (Mortal Socrates) (Mortal Plato))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (= SocratesIsMortal (HumansAreMortal PlatoIsHuman))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (= SocratesIsHuman PlatoIsHuman)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d4_type_prop.metta  <br> 
+  (<b>get-type</b> (= SocratesIsHuman SocratesIsMortal)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/f1_imports.metta  <br> 
+  ((let $x (get-atoms &self) (<b>get-type</b> $x))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/f1_imports.metta  <br> 
+  (superpose (((<b>get-type</b> &self)) ((get-type &self))))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/f1_imports.metta  <br> 
+   (let* (($type (<b>get-type</b> $atom)) ($space (get-type &self))) (== $type $space))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  (<b>get-type</b> (Cons 0 (Cons 1 Nil))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  (<b>get-type</b> (drop (Cons 1 Nil))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  (<b>get-type</b> (drop Nil)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  (<b>get-type</b> (ConsN "1" (ConsN "2" NilN))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  (<b>get-type</b> (dropN (ConsN "1" NilN))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d3_deptypes.metta  <br> 
+  ((<b>get-type</b> (dropN (dropN (ConsN "1" NilN))))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (<b>get-type</b> (new-state 2)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (let $v (new-state 1) (<b>get-type</b> $v)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/e2_states.metta  <br> 
+  (<b>get-type</b> &state-token) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> (curry +)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> ((curry +) 2)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> (curry-a + 2)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> ((curry-a + 2) 3)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> ((curry-a + 2) "S")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+;   (<b>get-type</b> (lambda ($x $y) (+ $x $y))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> (fmap (curry-a + 1) (Left 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+  (<b>get-type</b> (fmap (curry-a + 2) (Left "5"))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+;  (<b>get-type</b> (fmap (curry-a + 2) (UntypedC "5"))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d2_higherfunc.metta  <br> 
+;  (<b>get-type</b> (fmap (curry-a + 2) (UntypedC (Null) 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> 5) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (+ 5 7)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> +) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (+ 5 "4")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (+ -)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> Either) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (Left 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (isLeft (Right 5))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (isLeft 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (LeftP 5)) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (pair (LeftP 5) "String")) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (Cons 5 (Cons 6 Nil))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (<b>get-type</b> (Cons 5 (Cons "6" Nil))) get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/tests/scripts/d1_gadt.metta  <br> 
+  (let (List $t) (<b>get-type</b> (Cons 5 (Cons 6 Nil))) get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> parse</i></b>  <a onclick="prompt('copy path','parse');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        #self.assertEqualMettaRunnerResults(metta.run('!(<b>parse</b> "$X")'), parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20( Eq, RetType, Depth, Self, [ '<b>parse</b>' , L ] , Exp ):-  parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>parse</b>'( Strx, Atom_metta ):- eval_H( [ parse, Strx ], Atom_metta ). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>parse</b>', [data_structures, qhelp("Parse a string to an expression."), parse ]). parse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/parse_test.metta  <br> 
+
+
+; <b>parse</b>
+!(assertEqualToResult (parse "(foo 1 2 3)" )  ((foo 1 2 3)) )
+
+
+ parse   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> py-chain</i></b>  <a onclick="prompt('copy path','py-chain');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        self.assertEqual(metta.run('!(<b>py-chain</b> (1 2 3 4))'), [[ValueAtom( 7 )]]) py-chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta  <br> 
+!(bind! chain1 (<b>py-chain</b>  (prompt model (StrOutputParser)) )) py-chain   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta  <br> 
+!(bind! chain2 (<b>py-chain</b> (prompt2 model (StrOutputParser)) )) py-chain   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> py-dict</i></b>  <a onclick="prompt('copy path','py-dict');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        self.assertEqual(metta.run('!(<b>py-dict</b> ())'), [[ValueAtom( {} )]]) py-dict   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta  <br> 
+!( (py-dot chain1 invoke) (<b>py-dict</b> ())) py-dict   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta  <br> 
+!((py-dot chain2 invoke) (<b>py-dict</b> (("foo" "dogs")))) py-dict   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> py-list</i></b>  <a onclick="prompt('copy path','py-list');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        self.assertEqual(metta.run('!(<b>py-list</b> ())'), [[ValueAtom( [] )]]) py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,_Dpth,_Slf,['<b>py-list</b>',Atom_list],CDR_Y):-  py-list   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_02_numpy.metta  <br> 
+!(bind! np (py-atom numpy))
+
+!(bind! a1 ( (py-dot np array) (py-atom (py-tuple (1 2 3)) )))
+!(bind! a2 ( (py-dot a1 __mul__) 3))
+!(bind! a3 ( (py-dot a1 __add__) a2))
+
+
+!(a1)
+!(a2)
+!(a3)
+
+!(bind! m1 ((py-dot np array) (py-atom (<b>py-list</b> ((1 2 3) (py-list (4 4 5)) (py-tuple (6 7 8))) ))))
+!(bind! linalg (py-atom numpy.linalg))
+!(bind! m1_inv ( (py-dot linalg inv) m1))
+
+!( (py-dot np matmul) m1 m1_inv)
+ py-list   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> py-tuple</i></b>  <a onclick="prompt('copy path','py-tuple');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        self.assertEqual(metta.run('!(<b>py-tuple</b> ())'), [[ValueAtom( () )]]) py-tuple   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #ECED99">  ../../../hyperon-experimental/python/sandbox/simple_import/example_03_langchain.metta  <br> 
+!(bind! prompt2 ( (py-dot ChatPromptTemplate from_messages ) (<b>py-tuple</b> (("system" "You are very funny") ("user" "tell me joke about {foo}"))))) py-tuple   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stringToChars</i></b>  <a onclick="prompt('copy path','stringToChars');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('')" style="cursor:pointer">  Close </a>
+
+<div id="" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">  ../../../hyperon-experimental/python/tests/test_stdlib.py  <br> 
+        self.assertEqualMettaRunnerResults(metta.run('!(<b>stringToChars</b> "ABC")'), stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_eval.pl  <br> 
+eval_20(Eq,RetType,Depth,Self,['<b>stringToChars</b>',String],Chars):- !, eval_args(Eq,RetType,Depth,Self,String,SS), string_chars(SS,Chars0), maplist(as_metta_char,Chars0,Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_interp.pl  <br> 
+'<b>stringToChars</b>'(String, Chars) :- eval_H(['stringToChars', String], Chars). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF">  ../canary/metta_ontology.pfc.pl  <br> 
+properties('&corelib','<b>stringToChars</b>', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]). stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> "xyzzy") ('x' 'y' 'z' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> "") ()) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (charsToString (<b>stringToChars</b> "xyzzy")) "xyzzy") stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> (charsToString ('x' 'y' 'z' 'z' 'y'))) ('x' 'y' 'z' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> "xy zy") ('x' 'y' ' ' 'z' 'y')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> " ") (' ')) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #ECED99">  ../../tests/baseline_compat/hyperon-mettalog_sanity/string-tests.metta  <br> 
+!(assertEqual (<b>stringToChars</b> (superpose ("ab" "cd" "ef"))) (superpose (('a' 'b') ('c' 'd') ('e' 'f')))) stringToChars   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+ Tags not found - uncovered <br>
+<b>  intent</b> <br> 
+<b>  achieve</b> <br> 
+<b>  "A")')),</b> <br> 

@@ -1,0 +1,66 @@
+
+%tersifyL(I,I):- is_ftVar(I),!.
+%tersifyL(I,I):- \+ compound(I),!.
+tersifyL(I,O):- \+ is_cons(I),!,O=I.
+tersifyL([H|I],[HH|I]):- \+ is_list(I),!,tersify(H,HH).
+tersifyL([H|I],O):- nonvar(H), \+ is_group(I), display_length(I,N) , N>170,
+  length(I,LL),tersify(H,HH),(('...'(HH,LL,'...'(N)))=O),!.
+tersifyL(I,O):- tersify0(I,O),!.
+tersifyL([H|TT],[HH|TT]):- tersify(H,HH),!,tersifyL(TT,TT),!.
+tersifyL(I,O):- tersify1(I,O),!.
+tersifyL(I,I).
+
+tersify2(I,O):- compound(I),(I=(N=V)),tersify2(N,NN),tersify2(V,VV),!,O=(NN=VV).
+tersify2(I,O):- simple_enough(I),!,I=O.
+tersify2(I,O):- compound(I),tersify1(I,O),!.
+tersify2(I,O):- tersify0(I,O),!.
+tersify2(I,O):- is_list(I), !, my_maplist(tersify2,I,O).
+tersify2(I,O):- compound(I), !, compound_name_arguments(I,F,IA), my_maplist(tersify,IA,OA), compound_name_arguments(O,F,OA).
+tersify2(I,I).
+
+tersify3(I,O):- compound(I),(I=(N=V)),tersify3(N,NN),tersify3(V,VV),!,O=(NN=VV).
+tersify3(I,O):- simple_enough(I),!,I=O.
+tersify3(I,O):- compound(I),tersify1(I,O),!.
+tersify3(I,O):- tersify0(I,O),!.
+tersify3([H|I],O):- is_list(I), ((display_length(I,N), N>170) ->
+  (length(I,LL),tersify(H,HH),(('...'(HH,LL,'...'(N)))=O)); I=O),!.
+tersify3(I,O):- is_list(I), !, my_maplist(tersify3,I,O).
+tersify3(I,O):- compound(I), !, compound_name_arguments(I,F,IA), my_maplist(tersify,IA,OA), compound_name_arguments(O,F,OA).
+tersify3(I,I).
+
+write_map(G,Where):- is_vm(G), !, write('...VM_'),write(Where),write('...').
+write_map(G,Where):- is_vm_map(G), !, write('...Map_'),write(Where),write('...').
+write_map(G,Where):- is_dict(G), !, write('...Dict_'),write(Where),write('...').
+write_map(_G,Where):- write('...'),write(Where),write('...').
+
+
+
+non_empty_wqs_c(V):- \+ empty_wqs_c(V).
+empty_wqs_c(V):- var(V),!,fail.
+empty_wqs_c(A):- atom(A),atom_string(A,S),!,empty_wqs_c(S).
+empty_wqs_c([]).
+empty_wqs_c("").
+empty_wqs_c("&nbsp;").
+empty_wqs_c(" ").
+empty_wqs_c("\n").
+
+is_writer_goal(H):- \+ callable(H),!,fail.
+is_writer_goal(H):- is_list(H),!,fail.
+is_writer_goal(A):- atom(A),!,is_writer_goal_f(A).
+is_writer_goal(H):- \+ compound(H),!,fail.
+%is_writer_goal((C1,C2)):- !, (is_writer_goal(C1);is_writer_goal(C2)).
+is_writer_goal(C):- compound_name_arity(C,F,_),once(is_writer_goal_f(F);(tc_arg(_,C,E),is_writer_goal(E))).
+
+
+is_writer_goal_f(wqs_c).
+is_writer_goal_f(F):- is_writer_goal_l(F),!.
+is_writer_goal_f(F):- \+ atom(F),!, term_to_atom(F,A),is_writer_goal_f(A).
+is_writer_goal_f(F):- not_writer_goal_r(R),atom_concat(_,R,F),!,fail.
+is_writer_goal_f(F):- is_writer_goal_l(L),atom_concat(L,_,F),!.
+is_writer_goal_f(F):- is_writer_goal_l(R),atom_concat(_,R,F),!.
+not_writer_goal_r(test). is_writer_goal_l(msg). is_writer_goal_l(call).
+is_writer_goal_l(nl).  is_writer_goal_l(format). is_writer_goal_l(with_).
+is_writer_goal_l(locally).
+
+is_writer_goal_l(html).  is_writer_goal_l(ptcol).  is_writer_goal_l(wots).
+is_writer_goal_l(print). is_writer_goal_l(flush_output).  is_writer_goal_l(wqs).

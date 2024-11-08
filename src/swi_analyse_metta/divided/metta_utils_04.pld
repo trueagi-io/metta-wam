@@ -1,0 +1,66 @@
+   fbug(message_hook(Term, Kind, Lines)),fail.
+
+:- meta_predicate(must_det_ll(0)).
+:- meta_predicate(must_det_ll1(1,0)).
+:- meta_predicate(md_failed(1,0)).
+:- meta_predicate(must_not_error(0)).
+%:- meta_predicate(must_det_l(0)).
+
+%:- no_xdbg_flags.
+:- meta_predicate(wno_must(0)).
+
+wno_must(G):- locally(nb_setval(no_must_det_ll,t),locally(nb_setval(cant_rrtrace,t),call(G))).
+
+md_maplist(_MD,_,[]):-!.
+md_maplist(MD,P1,[H|T]):- call(MD,call(P1,H)), md_maplist(MD,P1,T).
+
+md_maplist(_MD,_,[],[]):-!.
+md_maplist(MD,P2,[HA|TA],[HB|TB]):- call(MD,call(P2,HA,HB)), md_maplist(MD,P2,TA,TB).
+
+md_maplist(_MD,_,[],[],[]):-!.
+md_maplist(MD,P3,[HA|TA],[HB|TB],[HC|TC]):- call(MD,call(P3,HA,HB,HC)), md_maplist(MD,P3,TA,TB,TC).
+
+%must_det_ll(G):- !, once((/*notrace*/(G)*->true;md_failed(P1,G))).
+
+%:- if( \+ current_predicate(must_det_ll/1)).
+must_det_ll(X):- tracing,!,once(X).
+must_det_ll(X):- md(once,X).
+%:- endif.
+
+md(P1,G):- tracing,!, call(P1,G). % once((call(G)*->true;md_failed(P1,G))).
+md(P1,G):- remove_must_det(MD), wraps_each(MD,P1),!,call(G).
+md(P1,G):- never_rrtrace,!, call(P1,G).
+md(P1,G):- /*notrace*/(arc_html),!, ignore(/*notrace*/(call(P1,G))),!.
+%md(P1,X):- !,must_not_error(X).
+md(P1,(X,Goal)):- is_trace_call(X),!,call((itrace,call(P1,Goal))).
+md(_, X):- is_trace_call(X),!,itrace.
+md(P1, X):- nb_current(no_must_det_ll,t),!,call(P1,X).
+md(P1,X):- \+ callable(X), !, throw(md_not_callable(P1,X)).
+md(P1,(A*->X;Y)):- !,(must_not_error(A)*->md(P1,X);md(P1,Y)).
+md(P1,(A->X;Y)):- !,(must_not_error(A)->md(P1,X);md(P1,Y)).
+md(P1,(X,Cut)):- (Cut==(!)),md(P1,X),!.
+md(MD,maplist(P1,List)):- !, call(MD,md_maplist(MD,P1,List)).
+md(MD,maplist(P2,ListA,ListB)):- !, call(MD,md_maplist(MD,P2,ListA,ListB)).
+md(MD,maplist(P3,ListA,ListB,ListC)):- !, call(MD,md_maplist(MD,P3,ListA,ListB,ListC)).
+md(P1,(X,Cut,Y)):- (Cut==(!)), !, (md(P1,X),!,md(P1,Y)).
+md(P1,(X,Y)):- !, (md(P1,X),md(P1,Y)).
+%md(P1,X):- /*notrace*/(ncatch(X,_,fail)),!.
+%md(P1,X):- conjuncts_to_list(X,List),List\=[_],!,maplist(must_det_ll,List).
+md(_,must_det_ll(X)):- !, must_det_ll(X).
+md(_,grid_call(P2,I,O)):- !, must_grid_call(P2,I,O).
+%md(P1,call(P2,I,O)):- !, must_grid_call(P2,I,O).
+%md(P1,(X,Y,Z)):- !, (md(P1,X)->md(P1,Y)->md(P1,Z)).
+%md(P1,(X,Y)):- !, (md(P1,X)->md(P1,Y)).
+%md(P1,if_t(X,Y)):- !, if_t(must_not_error(X),md(P1,Y)).
+md(P1,forall(X,Y)):- !, md(P1,forall(must_not_error(X),must_not_error(Y))).
+md(P1,\+ (X, \+ Y)):- !, md(P1,forall(must_not_error(X),must_not_error(Y))).
+
+md(P1,(X;Y)):- !, ((must_not_error(X);must_not_error(Y))->true;md_failed(P1,X;Y)).
+md(P1,\+ (X)):- !, (\+ must_not_error(X) -> true ; md_failed(P1,\+ X)).
+%md(P1,(M:Y)):- nonvar(M), !, M:md(P1,Y).
+md(P1,X):-
+  ncatch(must_det_ll1(P1,X),
+  md_failed(P1,G,N), % <- ExceptionTerm
+   % bubble up and start running
+  ((M is N -1, M>0)->throw(md_failed(P1,G,M));(ugtrace(md_failed(P1,G,M),X),throw('$aborted')))),!.
+%must_det_ll(X):- must_det_ll1(P1,X),!.

@@ -1,0 +1,81 @@
+
+arc_portray_t(G, _):- is_vm_map(G), !, write_map(G,'arc_portray_t').
+arc_portray_t(G, _):- is_grid(G),  !, data_type(G,W),writeq(grid(W)).
+arc_portray_t(G, _):- print(G),!.
+
+arc_portray(G, _):- is_vm_map(G),  !, write_map(G,'arc_portray').
+arc_portray(G, TF):- TF == true, portray_terse, arc_portray_t(G, TF),!.
+arc_portray(G, TF):- catch(arc_portray_nt(G, TF),E,(writeln(E),never_let_arc_portray_again,fail)),!.
+%arc_portray(G, _TF):- writeq(G),!.
+
+% Portray In Debugger
+
+arc_portray_nt(G, false):- is_grid(G), print_grid(G),!.
+%arc_portray_nt([G|L],_False):- is_object(G), !, pp([G|L]).
+%arc_portray_nt(G0, true):- is_group(G0), ppt(G0),!.
+%arc_portray_nt(G0, false):- is_group(G0), ppt(G0),!.
+arc_portray_nt(G0, Tracing):- is_group(G0), into_list(G0,G), length(G,L),% L>1, !,
+   maplist(tersify,G0,GG), write(GG),
+   if_t(Tracing==false,
+    in_cmt((
+     dash_chars,
+     once(((why_grouped(_TestID,Why,WG),WG=@=G,fail);(Why = (size2D=L)))),!,
+     print_grid(Why,G),nl_now,
+
+     %underline_print(writeln(Why)),
+     %print_info_l(G),
+     dash_chars))).
+
+
+arc_portray_nt(G,_False):- is_object(G), wots(S,writeg(G)),
+  global_grid(G,GG),!,
+  print_grid(GG),
+  write(S),!. % show_indiv(S,G).
+  %object_grid(G,OG),
+  %neighbor_map(OG,NG), !,
+  %print_grid(object_grid,NG),nl_now,
+  %underline_print(print_info(G)),
+
+arc_portray_nt(G,false):- via_print_grid(G),!, grid_size(G,H,V),!,H>0,V>0, print_grid(H,V,G).
+
+% Portray In tracer
+arc_portray_nt(G,true):- is_object(G),underline_print((ppt(G))).
+arc_portray_nt(G,true):- via_print_grid(G),write_nbsp,underline_print((ppt(G))),write_nbsp.
+arc_portray_nt(G,true):- tersify(G,O),write_nbsp,writeq(O),write_nbsp.
+arc_portray_nt(G0, _):- \+ is_gridoid(G0),!,print(G0).
+
+
+arc_portray_pairs(Type,TF,Pairs):-
+  length(Pairs,N),
+  writeln(arc_portray_pairs(Type,TF,len(N))),
+  swap_kv(Pairs,VKPairs),
+  keysort(VKPairs,SVKPairs),
+  my_maplist(tc_arg(2),SVKPairs,SVKPairs2),
+  arc_portray_type_pairs(TF,SVKPairs2).
+
+arc_portray_type_pairs(TF,Pairs):- append(Left,[K1-V1,K2-V2|Right],Pairs),is_grid(V1),is_grid(V2),!,
+  append(Left,[call-print_side_by_side(yellow,V1,K1,_,V2,K2)|Right],PairsM),
+  arc_portray_type_pairs(TF,PairsM).
+arc_portray_type_pairs(TF,Pairs):-
+  forall(member(K-V,Pairs),arc_portray_pair(Pairs,K,V,TF)).
+
+swap_kv([_-V|Pairs],VKPairs):- plain_var(V),!, swap_kv(Pairs,VKPairs).
+swap_kv([K-V|Pairs],['-'(Type,K-V)|VKPairs]):-
+  data_type(V,Type),
+  swap_kv(Pairs,VKPairs).
+swap_kv([],[]).
+
+
+arc_portray_pair(Ps,K,Val,TF):-
+ nl_if_needed,
+ arc_portray_1_pair(Ps,K,Val,TF),
+ nl_if_needed_ansi.
+
+arc_portray_1_pair(_Ps,call,Val,_TF):- !, call(Val).
+arc_portray_1_pair(Ps,K,Val,TF):-
+ (via_print_grid(Val) -> print_grid(K,Val)
+   ;  (print(K),write('= '),once(arc_portray(Val,TF);print(Val)))),
+ ignore(arc_portray_pair_optional(Ps,K,Val,TF)),!.
+
+arc_portray_pair_optional(Ps,K,Val,TF):-
+ once(( Val\==[], is_list(Val),my_maplist(is_object,Val),

@@ -1,0 +1,92 @@
+  % %  db
+  pfcAddDbToHead(X,X2) ->  retract(X2) ; retract(X).
+
+pfcRetractType(trigger(Pos),X) :-
+  retract(X)
+    -> unFc(X)
+     ; pfcWarn("Trigger(~p) not found to retract: ~p",[Pos,X]).
+
+pfcRetractType(action,X) :- pfcRemActionTrace(X).
+
+
+% %  pfcAddType1(X) adds item X to some database
+
+pfcAddType1(X) :-
+  % what type of X do we have?
+  pfcType(X,Type),
+  pfcAddDbToHead(X,X2),
+  % call the appropriate predicate.
+  pfcAddType(Type,X2).
+
+pfcAddType(fact(Type),X) :-
+  pfcUnique(fact(Type),X),
+  assert(X),!.
+pfcAddType(rule(Type),X) :-
+  pfcUnique(rule(Type),X),
+  assert(X),!.
+pfcAddType(trigger(Pos),X) :-
+  pfcUnique(trigger(Pos),X) -> assert(X) ;
+   (pfcWarn(not_pfcUnique(X)),assert(X)).
+
+pfcAddType(action,_Action) :- !.
+
+
+
+
+% pfcWithdraw/1  withdraws any "direct" support for P.
+% If a list, iterates down the list
+pfcWithdraw(P) :- is_list(P),!,my_maplist(pfcWithdraw,P).
+pfcWithdraw(P) :- matches_why_UU(UU), pfcWithdraw(P,UU).
+% %  pfcWithdraw(P,S) removes support S from P and checks to see if P is still supported.
+% %  If it is not, then the fact is retractred from the database and any support
+% %  relationships it participated in removed.
+pfcWithdraw(P,S) :-
+  % pfcDebug(pfcPrintf("removing support ~p from ~p",[S,P])),
+  pfcGetSupport(P,S),
+  matterialize_support_term(S,Sup),
+  pfcTraceMsg('    Withdrawing direct support: ~p   \n   From: ~p~n',[Sup,P]),
+   (pfcRemOneSupportOrQuietlyFail(P,S)
+      -> pfcTraceMsg('    Success removing support: ~p   \n   From: ~p~n',[Sup,P])
+      ; pfcWarn("pfcRemOneSupport/2 Could not find support ~p thus\n    Did not pfcRemOneSupport: ~p",
+                 [Sup,P])),
+   removeIfUnsupported(P).
+
+pfcWithdraw(P,S) :-
+  matterialize_support_term(S,Sup),
+  pfcTraceMsg('    No support matching: ~p   \n   For: ~p~n',[Sup,P]),!,
+  removeIfUnsupported(P).
+
+% pfcRetractAll/1  withdraws any "direct" and "indirect" support for P.
+% If a list, iterates down the list
+pfcRetractAll(P) :- is_list(P),!,my_maplist(pfcRetractAll,P).
+pfcRetractAll(P) :- matches_why_UU(UU), pfcRetractAll(P,UU).
+
+% %  pfcRetractAll(P,S) removes support S from P and checks to see if P is still supported.
+% %  If it is not, then the fact is retreactred from the database and any support
+% %  relationships it participated in removed.
+
+pfcRetractAll(Fact,S) :- control_arg_types(Fact,Fixed),!,pfcRetractAll(Fixed,S).
+pfcRetractAll(P,S) :-
+  \+ \+ pfcWithdraw(P,S),
+  fail.
+pfcRetractAll(P,S) :-
+  pfcGetSupport(P,(P2,_)),
+  pfcType(P2,fact(_)),
+  pfcSupportedBy(P2,S,_How),
+   pfcRetractAll(P2),
+    \+ fcSupported(P),!,
+    fcUndo(P).
+pfcRetractAll(P,S) :-
+  pfcGetSupport( P,(_,T)),
+    pfcGetSupport(T,(P2,_)),
+    pfcSupportedBy(P2,S,_How),
+    pfcType(P2,fact(_)),
+   pfcRetractAll(P2),
+    \+ fcSupported(P),!,
+    fcUndo(P).
+pfcRetractAll(P,S) :-
+  fcSupported(P),
+  pfcGetSupport(P,(P2,_)),
+  pfcSupportedBy(P2,S,_How),
+  pfcType(P2,rule(_)),
+   pfcRetractAll(P2),

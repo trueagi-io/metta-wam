@@ -1,0 +1,103 @@
+num;function;Rust;Prolog;Occurs in metta-files;Has metta-files;Has @doc;@doc TYPE decl;Num of metta-test;Has metta-testf
+1;bind!;;yes;3;Working_with_spaces___MeTTa_Language10;b NO b @doc;b No typeb @doc;;has no metta test
+2;call!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+3;call-cleanup!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+4;call-fn!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+5;call-fn-nth!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+6;call-string!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+7;car-atom;;yes;5;Operations_over_atoms___MeTTa_Language1;b NO b @doc;b No typeb @doc;;has no metta test
+8;case;;yes;8;Control_flow___MeTTa_Language15;b NO b @doc;b No typeb @doc;;has no metta test
+9;catch;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+10;cdr-atom;;yes;3;Operations_over_atoms___MeTTa_Language2;b NO b @doc;b No typeb @doc;;has no metta test
+11;chain;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+12;change-state!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+13;charstostring;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+14;coerce;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+15;collapse;;yes;6;Handling_nondeterministic_results___MeTTa_Language7;b NO b @doc;b No typeb @doc;2;Handling_nondeterministic_results___MeTTa_Language8
+16;collapse-bind;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+17;compile!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+18;compile-space!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+19;concurrent-forall!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+20;concurrent-maplist!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+21;cons;;yes;38;Basic_evaluation___MeTTa_Language13;b NO b @doc;b No typeb @doc;17;Basic_evaluation___MeTTa_Language13
+22;countelement;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+23;decons;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+24;decons-atom;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+25;echo;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+26;eval-for;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+27;extend-py!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+28;filter-atom;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+29;findall!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+30;foldl-atom;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+31;format-args;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+32;fromnumber;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+33;function;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+34;function-arity;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+35;get-metatype;;yes;8;Metatypes___MeTTa_Language1;b NO b @doc;b No typeb @doc;;has no metta test
+36;get-state;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+37;get-type;;yes;69;Concrete_types___MeTTa_Language1;b NO b @doc;b No typeb @doc;4;Concrete_types___MeTTa_Language5
+38;get-type-space;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+39;get-types;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+40;hyperpose;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+41;if-equal;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+42;if-unify;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+43;import!;;yes;1;Working_with_spaces___MeTTa_Language13;b NO b @doc;b No typeb @doc;;has no metta test
+44;include;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+45;include!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+46;intersection;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+47;length;;yes;3;Recursion_and_control___MeTTa_Language1;b NO b @doc;b No typeb @doc;;has no metta test
+48;let*;;yes;4;Control_flow___MeTTa_Language13;b NO b @doc;b No typeb @doc;;has no metta test
+49;limit;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+50;limit!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+51;load-ascii;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+52;load-file!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+53;make_list;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+54;map-atom;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+55;maplist!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+56;max-time;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+57;max-time!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+58;new-state;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+59;no-rtrace!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+60;number-of;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+61;offset;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+62;offset!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+63;output-to-string;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+64;parse;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+65;pragma!;;yes;1;Controlling_pattern_matching___MeTTa_Language7;b NO b @doc;b No typeb @doc;;has no metta test
+66;pred-intersection;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+67;pred-subtraction;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+68;pred-union;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+69;pred-unique;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+70;predicate-arity;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+71;print;;yes;213;Console_output_and_debugging___MeTTa_Language1;b NO b @doc;b No typeb @doc;2;Control_flow___MeTTa_Language6
+72;profile!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+73;py-atom;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+74;py-dict;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+75;py-dot;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+76;py-eval;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+77;py-list;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+78;py-tuple;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+79;register-module!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+80;repr;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+81;return;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+82;rtrace!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+83;rust;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+84;rust!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+85;save-space!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+86;sealed;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+87;sequential;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+88;setup-call-cleanup!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+89;stringtochars;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+90;subtraction;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+91;superpose-bind;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+92;switch;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+93;throw;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+94;time!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+95;trace;;yes;3;Console_output_and_debugging___MeTTa_Language3;b NO b @doc;b No typeb @doc;;has no metta test
+96;trace!;;yes;8;Console_output_and_debugging___MeTTa_Language2;b NO b @doc;b No typeb @doc;1;Console_output_and_debugging___MeTTa_Language2
+97;transfer!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+98;type-cast;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+99;unify;;yes;10;Console_output_and_debugging___MeTTa_Language10;b NO b @doc;b No typeb @doc;3;Console_output_and_debugging___MeTTa_Language10
+100;union;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+101;unique;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+102;with-output-to!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test

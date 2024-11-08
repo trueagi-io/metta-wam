@@ -1,0 +1,73 @@
+%  - E2^Call2: The second goal (Call2) generating elements (E2).
+%  - E: The resulting element after subtracting elements of the second set from the first set.
+lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
+    % Step 1: Evaluate Call1 to generate E1
+    call(Call1),
+    % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
+    lazy_findall(E2, Call2, List2),
+    % Step 3: Perform the subtraction logic
+    % Only return E1 if it is not a member of List2
+    \+ (member(E2, List2), call(P2, E1, E2)).
+
+
+eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
+  Do_more_defs = do_more_defs(true),
+  clause(eval_21(Eq,RetType,Depth,Self,PredDecl,Res),Body),
+  Do_more_defs == do_more_defs(true),
+  call_ndet(Body,DET),
+  nb_setarg(1,Do_more_defs,false),
+ (DET==true -> ! ; true).
+
+% Temporarily in this file
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',Res,List],TF):-!, as_tf(fb_member(Res,List),TF).
+% Temporarily in this file
+eval_21(_Eq,_RetType,_Depth,_Self,['fb-member',List],Res):-!, fb_member(Res,List).
+
+% Temporarily in this file
+eval_21(Eq,RetType,Depth,Self,['CollapseCardinality',List],Len):-!,
+ findall_eval(Eq,RetType,Depth,Self,List,Res),
+ length(Res,Len).
+/*
+eval_21(_Eq,_RetType,_Depth,_Self,['TupleCount', [N]],N):- number(N),!.
+*/
+
+% Temporarily in this file
+eval_21(Eq,_RetType,Depth,Self,['Tuple-Count',List],Len):- fail,!,
+ (\+ is_list(List)->findall_eval(Eq,_,Depth,Self,List,Res);Res=List),!,
+ length(Res,Len).
+% Temporarily in this file
+eval_21(_Eq,_RetType,_Depth,_Self,['tuple-count',List],Len):-!,
+ length(List,Len).
+
+
+%eval_20(Eq,RetType,Depth,Self,['colapse'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
+
+eval_20(_Eq,_OuterRetType,_Depth,_Self,[P,_,B],_):-P=='/',B==0,!,fail.
+
+% Temporarily in this file
+eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1),check_returnval(Eq,RetType,Res).
+% Temporarily in this file
+eval_20(Eq,RetType,_Dpth,_Slf,['make_list',List],MettaList):- !, into_metta_cons(List,MettaList),check_returnval(Eq,RetType,MettaList).
+
+simple_math(Var):- attvar(Var),!,fail.
+simple_math([F|XY]):- !, atom(F),atom_length(F,1), is_list(XY),maplist(simple_math,XY),!.
+simple_math(X):- number(X),!.
+
+
+eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-string!'(Str,NoResult).
+
+'call-string!'(Str,NoResult):-
+               read_term_from_atom(Str,Term,[variables(Vars)]),!,
+               call(Term),NoResult=Vars.
+
+
+/*
+into_values(List,Many):- List==[],!,Many=[].
+into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
+into_values(Many,Many).
+eval_40(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+*/
+% Macro Functions
+%eval_20(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
+/*
+eval_40(_Eq,_RetType,Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).

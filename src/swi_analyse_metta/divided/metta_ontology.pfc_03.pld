@@ -1,0 +1,105 @@
+
+
+
+:- dynamic(can_compile/2).
+
+src_code_for(KB,F,Len) ==>  ( \+ metta_compiled_predicate(KB,F,Len) ==> do_compile(KB,F,Len)).
+
+do_compile_space(KB) ==> (src_code_for(KB,F,Len) ==> do_compile(KB,F,Len)).
+
+%do_compile_space('&self').
+
+do_compile(KB,F,Len),src_code_for(KB,F,Len) ==> really_compile(KB,F,Len).
+
+
+metta_defn(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
+   really_compile_src(KB,F,Len,Args,BodyFn),{dedupe_ls(F)}.
+
+really_compile_src(KB,F,Len,Args,BodyFn),
+   {compile_metta_defn(KB,F,Len,Args,BodyFn,Clause)}
+       ==> (compiled_clauses(KB,F,Clause)).
+
+
+
+%:- ensure_loaded('metta_ontology_level_1.pfc').
+
+
+
+
+a==>b.
+b==>bb.
+
+a.
+:- b.
+:- bb.
+
+%:- pfcWhy1(a).
+%:- pfcWhy1(b).
+
+:- set_prolog_flag(expect_pfc_file,never).
+:- set_prolog_flag(pfc_term_expansion,false).
+
+
+test_fwc:-
+  pfcAdd_Now(c(X)==>d(X)),
+  pfcAdd_Now(c(1)),
+  c(_),
+  d(_),
+  pfcWhy1(c(_)),
+  pfcWhy1(d(_)),
+  pfcAdd(e(2)),
+  e(_),
+  pfcAdd(e(X)<==>f(X)),
+  f(_),
+  pfcWhy1(e(_)),
+  pfcWhy1(f(_)).
+
+
+%:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
+
+%:- break.
+
+%:- must_det_ll(property('length',list_operations)).
+
+
+
+
+end_of_file.
+
+
+
+/*
+    really_compile(KB,F,Len)==>
+      ((metta_defn(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
+        ==> (compiled_clauses(KB,F,Clause))).
+*/
+
+
+
+
+% Predicate and Function Arity Definitions:
+% Specifies the number of arguments (arity) for predicates and functions, which is fundamental
+% for understanding the complexity and capabilities of various logical constructs. Predicates are defined
+% from Nullary (no arguments) up to Denary (ten arguments), reflecting a range of logical conditions or assertions.
+% Functions are similarly defined but focus on operations that return a value, extending up to Nonary (nine arguments).
+% Enforcing Equivalency Between Predicates and Functions:
+% Establishes a logical framework to equate the conceptual roles of predicates and functions based on arity.
+% This equivalence bridges the functional programming and logical (declarative) paradigms within Prolog,
+% allowing a unified approach to defining operations and assertions.
+
+(equivalentTypes(PredType,FunctType) ==>
+  ( property(KB,FunctorObject,PredType)
+    <==>
+    property(KB,FunctorObject,FunctType))).
+% Automatically generating equivalency rules based on the arity of predicates and functions.
+% This facilitates a dynamic and flexible understanding of function and predicate equivalences,
+% enhancing Prolog's expressive power and semantic richness.
+(((p_arity(PredType,PA), {plus(KB,FA,1,PA), FA>=0}, f_arity(KB,FunctType,FA)))
+  ==> equivalentTypes(PredType,FunctType)).
+
+p_arity('NullaryPredicate', 0).  % No arguments.
+p_arity('UnaryPredicate', 1).    % One argument.
+p_arity('BinaryPredicate', 2).   % Two arguments.
+p_arity('TernaryPredicate', 3).  % Three arguments, and so on.
+p_arity('QuaternaryPredicate', 4).
+p_arity('QuinaryPredicate', 5).

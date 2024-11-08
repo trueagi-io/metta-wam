@@ -1,0 +1,111 @@
+
+pfcDefault(GeneralTerm,Default) :-
+  clause(GeneralTerm,true) -> true ; assert(Default).
+
+% %  fcTmsMode is one of {none,local,cycles} and controles the tms alg.
+:- pfcDefault(fcTmsMode(_), fcTmsMode(cycles)).
+
+% Pfc Search strategy. pfcSearch(X) where X is one of {direct,depth,breadth}
+:- pfcDefault(pfcSearch(_), pfcSearch(direct)).
+
+
+% 
+
+% %  pfcAdd/2 and pfcPost/2 are the main ways to assert new clauses into the
+% %  database and have forward reasoning done.
+
+% %  pfcAdd(P,S) asserts P into the dataBase with support from S.
+
+pfcAdd(P) :- must_ex(current_why_UU(UU)),
+  pfcAdd(P, UU).
+
+%pfcAdd(P) :- must_ex(current_why_UU(UU)),%with_current_why(pfcAdd(P), pfcAdd(P, UU)).
+
+pfcAdd((==>P),S) :- !, pfcAdd(P,S).
+
+pfcAdd(P,S) :-
+  pfcPost(P,S),
+  pfcRun,!.
+
+%pfcAdd(_,_).
+pfcAdd(P,S) :- pfcWarn("pfcAdd(~p,~p) failed",[P,S]).
+
+
+% pfcPost(+Ps,+S) tries to add a fact or set of fact to the database.  For
+% each fact (or the singelton) pfcPost1 is called. It always succeeds.
+
+pfcPost(List,S):- pfcPost_rev(S,List).
+
+pfcPost_rev(S,Term) :-
+  is_list(Term)
+  -> my_maplist(pfcPost_rev(S),Term)
+  ; pfcPost1(Term,S).
+
+
+% pfcPost1(+P,+S) tries to add a fact to the database, and, if it succeeded,
+% adds an entry to the pfc queue for subsequent forward chaining.
+% It always succeeds.
+
+pfcPost1(Fact,S) :- control_arg_types(Fact,Fixed),!,pfcPost1(Fixed,S).
+
+
+pfcPost1(P,S):-
+  locally(set_prolog_flag(occurs_check, true),
+    catch(pfcPost11(P,S),E,(notrace,wdmsg(P => E),trace))).
+
+pfcPost11(P,S) :-
+  % %  db pfcAddDbToHead(P,P2),
+  % pfcRemoveOldVersion(P),
+  must_ex(pfcAddSupport(P,S)),
+  (pfcUnique(post, P)-> pfcPost2(P,S) ; nop(pfcWarn(not_pfcUnique(post, P)))).
+
+pfcPost2(P,S):-
+  must_ex(once(\+ \+ is_asserted_exact(P);assert(P))),
+  must_ex(pfcTraceAdd(P,S)),
+  !,
+  must_ex(pfcEnqueue(P,S)),
+  !.
+
+is_asserted_exact(MH,B):-
+  strip_module(MH,M,H),
+  is_asserted_exact(M,H,B).
+is_asserted_exact(MHB):-
+  strip_module(MHB,M,HB),
+  expand_to_hb(HB,H,B),
+  is_asserted_exact(M,H,B).
+is_asserted_exact(M,H,B):-
+    M=MM,
+    (MM:clause(M:H,B,Ref)*->true; M:clause(MM:H,B,Ref)),
+    %clause_ref_module(Ref),
+    clause_property(Ref,module(MM)),
+  %module_checks_out
+   is_asserted_exact(MM,H,B,Ref).
+is_asserted_exact(_,H,B,Ref):-
+    clause(CH,CB,Ref),strip_m(CH,HH),HH=@=H,strip_m(CB,BB),cl(HH,BB)=@=cl(H,B).
+
+
+
+%pfcPost1(_,_).
+%pfcPost1(P,S) :-
+ %pfcWarn("pfcPost1: ~p\n (support: ~p) failed",[P,S]).
+
+% %   pfcAddDbToHead(+P,-NewP) is semidet.
+% talkes a fact P or a conditioned fact
+% (P:-C) and adds the Db context.
+%
+
+pfcAddDbToHead(P,NewP) :-
+  pfcCallSystem(pfcCurrentDb(Db)),
+  (Db=true        -> NewP = P;
+   P=(Head:-Body) -> NewP = (Head :- (Db,Body));
+   true      -> NewP = (P :- Db)).
+
+:- dynamic(pfcCurrentDb/1).
+pfcCurrentDb(true).
+
+% %  pfcUnique(X) is det.
+%
+% is true if there is no assertion X in the prolog db.
+%
+
+pfcUnique(Type,(Head:-Tail)) :- !,pfcUnique(Type,Head,Tail).

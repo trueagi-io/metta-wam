@@ -1,0 +1,65 @@
+
+must_det_ll1(P1,X):- tracing,!,must_not_error(call(P1,X)),!.
+must_det_ll1(P1,once(A)):- !, once(md(P1,A)).
+must_det_ll1(P1,X):-
+  strip_module(X,M,P),functor(P,F,A),
+  setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
+    nop(trace(M:F/A,-fail))),!.
+
+
+%must_not_error(G):- must(once(G)).
+
+must_not_error(G):- (tracing;never_rrtrace),!,call(G).
+must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
+%must_not_error(X):- is_guitracer,!, call(X).
+%must_not_error(G):- !, call(G).
+must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(error(E),X))).
+must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrace=X),
+  trace,
+  rrtrace(visible_rtrace([-all,+exception]),X)))).
+
+
+always_rethrow('$aborted').
+always_rethrow(md_failed(_,_,_)).
+always_rethrow(return(_)).
+always_rethrow(metta_return(_)).
+always_rethrow(give_up(_)).
+always_rethrow(time_limit_exceeded(_)).
+always_rethrow(depth_limit_exceeded).
+always_rethrow(restart_reading).
+always_rethrow(E):- never_rrtrace,!,throw(E).
+
+%catch_non_abort(Goal):- cant_rrtrace(Goal).
+catch_non_abort(Goal):- catch(cant_rrtrace(Goal),E,rethrow_abort(E)),!.
+rethrow_abort(E):- format(user_error,'~N~q~n',[catch_non_abort_or_abort(E)]),fail.
+%rethrow_abort(time_limit_exceeded):-!.
+rethrow_abort('$aborted'):- !, throw('$aborted'),!,forall(between(1,700,_),sleep(0.01)),writeln(timeout),!,fail.
+rethrow_abort(E):- ds,!,format(user_error,'~N~q~n',[catch_non_abort(E)]),!.
+
+cant_rrtrace(Goal):- never_rrtrace,!,call(Goal).
+cant_rrtrace(Goal):- setup_call_cleanup(cant_rrtrace,Goal,can_rrtrace).
+
+main_debug:- main_thread,current_prolog_flag(debug,true).
+cant_rrtrace:- nb_setval(cant_rrtrace,t).
+can_rrtrace:- nb_setval(cant_rrtrace,f).
+%md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
+
+md_failed(P1,X):- notrace((write_src_uo(failed(P1,X)),fail)).
+md_failed(P1,X):- tracing,visible_rtrace([-all,+fail,+call,+exception],call(P1,X)).
+md_failed(P1,X):- \+ tracing, !, visible_rtrace([-all,+fail,+exit,+call,+exception],call(P1,X)).
+md_failed(P1,G):- is_cgi, \+ main_debug, !, u_dmsg(arc_html(md_failed(P1,G))),fail.
+md_failed(_P1,G):- option_value(testing,true),!,
+      T='FAILEDDDDDDDDDDDDDDDDDDDDDDDDDD!!!!!!!!!!!!!'(G),
+      write_src_uo(T), give_up(T,G).
+md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+%md_failed(P1,G):- tracing,call(P1,G).
+md_failed(_,_):- never_rrtrace,!,fail.
+md_failed(P1,X):- notrace,is_guitracer,u_dmsg(failed(X))/*,arcST*/,nortrace,atrace,call(P1,X).
+md_failed(P1,G):- main_debug,/*notrace*/(write_src_uo(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
+% must_det_ll(X):- must_det_ll(X),!.
+
+write_src_uo(G):-
+ stream_property(S,file_no(1)),
+    with_output_to(S,
+     (format('~N~n~n',[]),
+      write_src(G),

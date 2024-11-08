@@ -1,0 +1,115 @@
+num;function;Rust;Prolog;Occurs in metta-files;Has metta-files;Has @doc;@doc TYPE decl;Num of metta-test;Has metta-testf
+1;bind!;yes;yes;233;04_prompt_call;has @doc; bind! - Symbol %Undefined% -;1;use-one-server
+2;car-atom;yes;yes;34;basic;has @doc; car-atom - Expression Atom;6;first_answer
+3;case;yes;yes;177;00_lang_case;has @doc; case - Expression Atom Atom;40;00_lang_case
+4;cdr-atom;yes;yes;24;bug;has @doc; cdr-atom - Expression Expression;13;stdlib_mettalog_test
+5;change-state!;yes;yes;51;creation;has @doc; change-state! - StateMonad $tcso $tcso StateMonad $tcso;3;or_test
+6;collapse;yes;yes;103;00_lang_case;has @doc; collapse - Atom Atom;35;00_lang_case
+7;format-args;yes;yes;10;string-tests;has @doc; format-args - String Atom String;10;string-tests
+8;get-metatype;yes;yes;46;bc_comp;has @doc; get-metatype - Atom Atom;2;stdlib_mettalog_test
+9;get-state;yes;yes;73;creation;has @doc; get-state - StateMonad $tgso $tgso;11;define_if_like
+10;get-type;yes;yes;253;03-soring-via-insert;has @doc; get-type - Atom Type;16;f1_imports
+11;get-type-space;yes;yes;;has no metta;has @doc; get-type-space - Atom Atom Atom;;has no metta test
+12;import!;yes;yes;355;01_basic_chatgpt;has @doc; import! - hyperonspaceDynSpace Atom -;;has no metta test
+13;include;yes;yes;13;prover;has @doc; include - Atom Atom;;has no metta test
+14;intersection;yes;yes;56;base_test_repr_parse_intersection;has @doc; intersection - Atom Atom Atom;5;base_test_repr_parse_intersection
+15;let*;yes;yes;218;DeductionEntailTest;has @doc; let* - Expression Atom Atom;41;backward-chainer-xp
+16;new-state;yes;yes;133;creation;has @doc; new-state - $tnso StateMonad $tnso;8;e2_states
+17;pragma!;yes;yes;171;DeductionDTLTest;has @doc; pragma! - Atom Atom -;1;stdlib_mettalog_test
+18;register-module!;yes;yes;;has no metta;has @doc; register-module! - Atom -;;has no metta test
+19;sealed;yes;yes;23;chapter_1_3_2;has @doc; sealed - Expression Atom Atom;10;sealed_test
+20;subtraction;yes;yes;18;constructive;has @doc; subtraction - Atom Atom Atom;;has no metta test
+21;trace!;yes;yes;15;bc-xp;has @doc; trace! - %Undefined% $a $a;1;stdlib_mettalog_test
+22;union;yes;yes;29;constructive;has @doc; union - Atom Atom Atom;1;represent_and_parse_tests
+23;unique;yes;yes;18;constructive;has @doc; unique - Atom Atom;;has no metta test
+24;add-atom;yes;;540;04_prompt_call;has @doc; add-atom - hyperonspaceDynSpace Atom -;3;add-remove-match-integer
+25;capture;yes;;;has no metta;has @doc; capture - Atom Atom;;has no metta test
+26;cons-atom;yes;;;has no metta;has @doc; cons-atom - Atom Expression Expression;;has no metta test
+27;flip;yes;;2;flip_test;has @doc;b No typeb @doc;2;flip_test
+28;get-atoms;yes;;67;00_lang_case;has @doc; get-atoms - hyperonspaceDynSpace Atom;37;add-remove-match-float
+29;git-module!;yes;;;has no metta;has @doc; git-module! - Atom -;;has no metta test
+30;match;yes;;524;00_lang_case;has @doc; match - hyperonspaceDynSpace Atom Atom %Undefined%;70;00_lang_case
+31;mod-space!;yes;;;has no metta;has @doc; mod-space! - Atom hyperonspaceDynSpace;;has no metta test
+32;new-space;yes;;22;add-atom-naive-fib;has @doc; new-space - hyperonspaceDynSpace;;has no metta test
+33;print-mods!;yes;;;has no metta;has @doc; print-mods! - -;;has no metta test
+34;println!;yes;;6;chapter_1_3_2;has @doc; println! - %Undefined% -;;has no metta test
+35;remove-atom;yes;;45;add-remove-match-float;has @doc; remove-atom - hyperonspaceDynSpace Atom -;15;add-remove-match-float
+36;call!;;yes;2;compiler_walkthru;b NO b @doc;b No typeb @doc;2;compiler_walkthru
+37;call-cleanup!;;yes;2;file-output;b NO b @doc;b No typeb @doc;;has no metta test
+38;call-fn!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+39;call-fn-nth!;;yes;1;compiler_walkthru;b NO b @doc;b No typeb @doc;2;compiler_walkthru
+40;call-string!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+41;catch;;yes;17;catch_throw_tests;has @doc; catch - Atom Atom Atom Atom;15;catch_throw_tests
+42;chain;;yes;54;00_lang_ok_to_redefine;has @doc; chain - Atom Variable Atom Atom;21;stdlib_mettalog_test
+43;charstostring;;yes;4;string-tests;has @doc; charsToString - Expression String;4;string-tests
+44;coerce;;yes;6;rule-base;b NO b @doc;b No typeb @doc;;has no metta test
+45;collapse-bind;;yes;2;stdlib_mettalog_test_pt2;has @doc; collapse-bind - Atom Atom  We specialize but leaving the old defs in case;1;stdlib_mettalog_test_pt2
+46;compile!;;yes;21;bc_comp;b NO b @doc;b No typeb @doc;;has no metta test
+47;compile-space!;;yes;1;let_superpose_list;b NO b @doc;b No typeb @doc;;has no metta test
+48;concurrent-forall!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+49;concurrent-maplist!;;yes;3;builtins;has @doc; concurrent-maplist! - Function Expression Expression;;has no metta test
+50;cons;;yes;497;00_lang_ok_to_redefine;has @doc; cons - Atom Atom Atom;56;03-soring-via-insert
+51;countelement;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+52;decons;;yes;;has no metta;has @doc; decons - Atom Atom;;has no metta test
+53;decons-atom;;yes;20;stdlib_mettalog_test;has @doc; decons-atom - Expression Expression;14;stdlib_mettalog_test
+54;echo;;yes;8;basic_direct_call;b NO b @doc;b No typeb @doc;2;basic_script_call
+55;eval-for;;yes;1;use-two-servers;b NO b @doc;b No typeb @doc;1;use-two-servers
+56;extend-py!;;yes;14;example1;b NO b @doc;b No typeb @doc;;has no metta test
+57;filter-atom;;yes;6;stdlib_mettalog_test;has @doc; filter-atom - Expression Variable Atom Expression;6;stdlib_mettalog_test
+58;findall!;;yes;7;find_all_tests;has @doc; findall! - Expression Expression Expression;7;find_all_tests
+59;foldl-atom;;yes;8;stdlib_mettalog_test;has @doc; foldl-atom - Expression Atom Variable Variable Atom Atom;8;stdlib_mettalog_test
+60;fromnumber;;yes;479;DeductionImplicationDirectIntroductionDTLTest;b NO b @doc;b No typeb @doc;12;NumTest
+61;function;;yes;24;01_basic_chatgpt;has @doc; function - Atom Atom;1;compiler_walkthru
+62;function-arity;;yes;;has no metta;has @doc; function-arity - Symbol Number;;has no metta test
+63;get-types;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+64;hyperpose;;yes;62;builtins;b NO b @doc;b No typeb @doc;60;cml-unshared
+65;if-equal;;yes;4;00_lang_ok_to_redefine;has @doc;b No typeb @doc;;has no metta test
+66;if-unify;;yes;;has no metta;has @doc; if-unify - Atom Atom Atom Atom %Undefined%;;has no metta test
+67;include!;;yes;1;stdlib_mettalog_test;b NO b @doc;b No typeb @doc;;has no metta test
+68;length;;yes;6;fast_mu;b NO b @doc;b No typeb @doc;2;stdlib_mettalog_test
+69;limit;;yes;11;first_answer;b NO b @doc;b No typeb @doc;1;first_answer
+70;limit!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+71;load-ascii;;yes;3;pln-xp;b NO b @doc;b No typeb @doc;;has no metta test
+72;load-file!;;yes;1;graphml_test;b NO b @doc;b No typeb @doc;;has no metta test
+73;make_list;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+74;map-atom;;yes;8;stdlib_mettalog_test;has @doc; map-atom - Expression Variable Atom Expression;8;stdlib_mettalog_test
+75;maplist!;;yes;5;functional_programming_tests;has @doc; maplist! - Function Expression Expression;5;functional_programming_tests
+76;max-time;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+77;max-time!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+78;no-rtrace!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+79;number-of;;yes;1;test_spo_116378;b NO b @doc;b No typeb @doc;1;test_spo_116378
+80;offset;;yes;1;sparql_functions_test;b NO b @doc;b No typeb @doc;;has no metta test
+81;offset!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+82;output-to-string;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+83;parse;;yes;18;base_test_repr_parse_intersection;has @doc; parse - String Atom;17;base_test_repr_parse_intersection
+84;pred-intersection;;yes;3;intersection_tests;b NO b @doc;b No typeb @doc;;has no metta test
+85;pred-subtraction;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+86;pred-union;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+87;pred-unique;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+88;predicate-arity;;yes;1;compiler_walkthru;has @doc; predicate-arity - Symbol Number;1;compiler_walkthru
+89;print;;yes;81;07_dialog;has @doc;b No typeb @doc;10;or_test
+90;profile!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+91;py-atom;;yes;19;fs;b NO b @doc;b No typeb @doc;;has no metta test
+92;py-dict;;yes;7;requests;b NO b @doc;b No typeb @doc;;has no metta test
+93;py-dot;;yes;3;requests;b NO b @doc;b No typeb @doc;;has no metta test
+94;py-eval;;yes;;has no metta;has @doc; py-eval - String PyObject;;has no metta test
+95;py-list;;yes;11;fs;has @doc; py-list - Expression PyObject;;has no metta test
+96;py-tuple;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+97;repr;;yes;8;base_test_repr_parse_intersection;has @doc; repr - Atom String;3;base_test_repr_parse_intersection
+98;return;;yes;11;00_lang_ok_to_redefine;has @doc; return - Atom ReturnType;4;stdlib_mettalog_test_pt2
+99;rtrace!;;yes;3;b3_direct;b NO b @doc;b No typeb @doc;1;e2_states
+100;rust;;yes;2;compileme;b NO b @doc;b No typeb @doc;;has no metta test
+101;rust!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+102;save-space!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+103;sequential;;yes;28;add_atom_match;b NO b @doc;b No typeb @doc;9;add_atom_match
+104;setup-call-cleanup!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+105;stringtochars;;yes;7;string-tests;has @doc; stringToChars - String Expression;7;string-tests
+106;superpose-bind;;yes;1;stdlib_mettalog_test_pt2;has @doc; superpose-bind - Expression Atom;1;stdlib_mettalog_test_pt2
+107;switch;;yes;13;00_lang_ok_to_redefine;has @doc; switch - %Undefined% Expression Atom;5;stdlib_mettalog_test
+108;throw;;yes;2;catch_throw_tests;has @doc; throw - Atom ErrorType;;has no metta test
+109;time!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test
+110;trace;;yes;1;stdlib_mettalog_test;b NO b @doc;b No typeb @doc;1;stdlib_mettalog_test
+111;transfer!;;yes;11;benchmark;b NO b @doc;b No typeb @doc;;has no metta test
+112;type-cast;;yes;30;00_lang_ok_to_redefine;has @doc; type-cast - Atom Atom Atom Atom;28;stdlib_mettalog_test
+113;unify;;yes;60;Unify;has @doc; unify - Atom Atom Atom Atom %Undefined%;25;stdlib_mettalog_test
+114;with-output-to!;;yes;;has no metta;b NO b @doc;b No typeb @doc;;has no metta test

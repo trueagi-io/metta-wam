@@ -1,0 +1,70 @@
+%  STATE EDITING
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq,RetType,Depth,Self,['change-state!',StateExpr, UpdatedValue], Ret):- !,
+ call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad),
+  eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),
+  catch_metta_return('change-state!'(Depth,Self,StateMonad, Value, Ret),Ret)))).
+eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
+  call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad)))).
+eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
+  call_in_shared_space((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value))).
+
+call_in_shared_space(G):- call_in_thread(main,G).
+
+% eval_20(Eq,RetType,Depth,Self,['get-state',Expr],Value):- !, eval_args(Eq,RetType,Depth,Self,Expr,State), arg(1,State,Value).
+
+
+check_state_type:- !.
+check_type:- option_else(typecheck,TF,'False'),!, TF=='True'.
+
+:- dynamic is_registered_state/1.
+:- flush_output.
+:- setenv('RUST_BACKTRACE',full).
+
+% Function to check if an value is registered as a state name
+:- dynamic(is_registered_state/1).
+is_nb_state(G):- is_valid_nb_state(G) -> true ;
+                 is_registered_state(G),nb_bound(G,S),is_valid_nb_state(S).
+
+
+:- multifile(state_type_method/3).
+:- dynamic(state_type_method/3).
+state_type_method(is_nb_state,new_state,init_state).
+state_type_method(is_nb_state,clear_state,clear_nb_values).
+state_type_method(is_nb_state,add_value,add_nb_value).
+state_type_method(is_nb_state,remove_value,'change-state!').
+state_type_method(is_nb_state,replace_value,replace_nb_value).
+state_type_method(is_nb_state,value_count,value_nb_count).
+state_type_method(is_nb_state,'get-state','get-state').
+state_type_method(is_nb_state,value_iter,value_nb_iter).
+%state_type_method(is_nb_state,query,state_nb_query).
+
+% Clear all values from a state
+clear_nb_values(StateNameOrInstance) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    nb_setarg(1, State, []).
+
+
+
+% Function to confirm if a term represents a state
+is_valid_nb_state(State):- compound(State),compound_name_arity(State,'State',N),N>0.
+
+% Find the original name of a given state
+state_original_name(State, Name) :-
+    is_registered_state(Name),
+    call_in_shared_space(nb_bound(Name, State)).
+
+% Register and initialize a new state
+init_state(Name) :-
+    State = 'State'(_,_),
+    asserta(is_registered_state(Name)),
+    call_in_shared_space(nb_setval(Name, State)).
+
+% Change a value in a state
+'change-state!'(Depth,Self,StateNameOrInstance, UpdatedValue, Out) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(2, State, Type),
+    ( (check_type,\+ get_type(Depth,Self,UpdatedValue,Type))
