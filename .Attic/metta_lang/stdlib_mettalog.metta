@@ -1371,6 +1371,15 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
+(@doc include!
+  (@desc "Works just like import!. So everything from input file will be included in the current atomspace and evaluated")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: include! (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
 (@doc bind!
   (@desc "Registers a new token which is replaced with an atom during the parsing of the rest of the program")
   (@params (
@@ -1827,7 +1836,7 @@
 
 ;; Public MeTTa
 (@doc load-ascii
-  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file.")
   (@params (
     (@param "Space")
     (@param "Filename")))
