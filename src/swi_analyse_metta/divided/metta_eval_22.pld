@@ -1,0 +1,56 @@
+format_args_get_index1([C|FormatRest1], FormatRest2, Index1, Index3) :- char_code(C, Ccode), Ccode >= 48, Ccode =< 57, !, % in the range ['0'..'9']
+    Index2 is (Index1*10)+(Ccode-48),
+    format_args_get_index1(FormatRest1, FormatRest2, Index2, Index3).
+format_args_get_index1(FormatRest, FormatRest, Index, Index).
+
+% Placeholder to deal with formatting {<n>:<format>} later
+format_args_get_format(FormatRest, FormatRest, _).
+
+format_args_write(Arg,_) :- string(Arg), !, write(Arg).
+format_args_write('#\\'(Arg),_) :- !, write(Arg).
+format_args_write(Arg,_) :- write_src_woi(Arg).
+
+format_nth_args([], _, _).
+format_nth_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['}','}'|FormatRest], Iterator, Args) :- !, put('}'), format_nth_args(FormatRest, Iterator, Args). % escaped
+format_nth_args(['{'|FormatRest1], Iterator1, Args) :-
+    format_args_get_index(FormatRest1, FormatRest2, Index),
+    format_args_get_format(FormatRest2, ['}'|FormatRest3], Format),
+    % check that the closing '}' is not escaped with another '}'
+    ((FormatRest3=[] ; ((FormatRest3=[C|_],C\='}')) )),
+    % The Rust behaviour of advancing the iterator if an index is not specified
+    (((Index == none))
+        -> ((nth0(Iterator1,Args,Arg),Iterator2 is Iterator1+1))
+        ; ((nth0(Index,Args,Arg), Iterator2 is Iterator1))),
+    format_args_write(Arg,Format),
+    format_nth_args(FormatRest3, Iterator2, Args).
+format_nth_args([C|FormatRest], Iterator, Args) :- put(C), format_nth_args(FormatRest, Iterator, Args).
+
+eval_20(Eq,RetType,Depth,Self,['format-args',Format,Args],Result):-
+   eval_args(Eq,RetType,Depth,Self,Format,EFormat),
+   %eval_args(Eq,'Expression',Depth,Self,Args,EArgs),
+   Args=EArgs,
+   is_list(EArgs),string_chars(EFormat, FormatChars), !,
+   user_io(with_output_to_str( Result, format_nth_args(FormatChars, 0, EArgs))).
+eval_20(Eq,RetType,Depth,Self,['format-args',_Fmt,Args],_Result) :-
+   eval_args(Eq,RetType,Depth,Self,Args,EArgs),
+   \+ is_list(EArgs),!,throw_metta_return(['Error',Args,'BadType']).
+
+eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
+   ignore(RetType='Bool'), !, as_tf(random(0,2,0),Bool),
+   check_returnval(Eq,RetType,Bool).
+
+eval_20( Eq, RetType, Depth, Self, [ 'parse' , L ] , Exp ):- !,
+    eval_args( Eq, RetType, Depth, Self, L, Str ),
+    once(parse_sexpr_metta1( Str, Exp )).
+
+eval_20( _Eq, _RetType, _Depth, _Self, [ 'repr' , L ] , Sxx ):- !,
+   %eval_args( Eq, RetType, Depth, Self, L, Lis2 ),
+    with_output_to_str( Sxx , write_src_woi( L ) ).
+
+eval_20( Eq, RetType, Depth, Self, [ 'output-to-string' , L ] , Sxx ):- !,
+   with_output_to_str( Sxx , eval_args( Eq, RetType, Depth, Self, L, _ )).
+
+% =================================================================
+% =================================================================
+% =================================================================

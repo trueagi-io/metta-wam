@@ -1,0 +1,59 @@
+%pp_sex_l('$VAR'(S))):-
+pp_sexi_l([=,H,B]):- pp_sexi_hb(H,B),!.
+
+pp_sexi_l([H|T]) :- \+ no_src_indents, symbol(H),member(H,['If','cond','let','let*']),!,
+  with_indents(true,w_proper_indent(2,w_in_p(pp_sex([H|T])))).
+
+pp_sexi_l([H|T]) :- is_list(T), length(T,Args),Args =< 2, fail,
+   wots(SS,((with_indents(false,(write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')')))))),
+   ((symbol_length(SS,Len),Len < 20) ->write(SS);
+      with_indents(true,w_proper_indent(2,w_in_p(pp_sex_c([H|T]))))),!.
+/*
+
+pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
+   with_indents(false,(write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')'))).
+
+%pp_sex([H,B,C|T]) :- T==[],!,
+%  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
+*/
+
+pp_sexi_hb(H,B):-
+  write('(= '), with_indents(false,pp_sex(H)), write('  '),
+        ((is_list(B),maplist(is_list,B))
+      ->with_indents(true,maplist(write_src_inl,B))
+      ;with_indents(true,pp_sex(B))),
+    write(')').
+
+write_src_inl(B):- nl, write('    '),pp_sex(B).
+
+pp_sex_c(V):- pp_sexi_c(V),!.
+pp_sexi_c(V) :- is_final_write(V),!.
+pp_sexi_c((USER:Body)) :- USER==user,!, pp_sex(Body).
+pp_sexi_c(exec([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
+pp_sexi_c(!([H|T])) :- is_list(T),!,write('!'),pp_sex_l([H|T]).
+%pp_sexi_c([H|T]) :- is_list(T),!,unlooped_fbug(pp_sexi_c,pp_sex_l([H|T])).
+pp_sexi_c([H|T]) :- is_list(T),!,pp_sex_l([H|T]).
+%pp_sexi_c(V) :- print(V),!.
+
+pp_sexi_c(=(H,B)):- !, pp_sexi_hb(H,B),!.
+pp_sexi_c(V):- compound_name_list(V,F,Args),write_mobj(F,Args),!.
+% Compound terms.
+%pp_sex(Term) :- compound(Term), Term =.. [Functor|Args], write('('),format('(~w ',[Functor]), write_args_as_sexpression(Args), write(')').
+%pp_sex(Term) :- Term =.. ['=',H|Args], length(Args,L),L>2, write('(= '),  pp_sex(H), write('\n\t\t'), maplist(pp_sex(2),Args).
+pp_sexi_c(V):- ( \+ compound(V) ; is_list(V)),!, pp_sex(V).
+pp_sexi_c(listOf(S,_)) :- !,write_mobj(listOf(S)).
+pp_sexi_c(listOf(S)) :- !,format('(ListValue ~@)',[pp_sex(S)]).
+pp_sexi_c('!'(V)) :- write('!'),!,pp_sex(V).
+%pp_sex_c('exec'(V)) :- write('!'),!,pp_sex(V).
+pp_sexi_c('='(N,V)):- allow_concepts, !, format("~N;; ~w == ~n",[N]),!,pp_sex(V).
+%pp_sex_c(V):- writeq(V).
+
+pp_sexi_c(Term) :- compound_name_arity(Term,F,0),!,pp_sex_c([F]).
+pp_sexi_c(Term) :- Term =.. [Functor|Args], always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]), write_args_as_sexpression(Args), write(')'),!.
+pp_sexi_c(Term) :- allow_concepts, Term =.. [Functor|Args], format('(EvaluationLink (PredicateNode "~w") (ListLink ',[Functor]), write_args_as_sexpression(Args), write('))'),!.
+pp_sexi_c(Term) :-
+  Term =.. [Functor|Args],
+   always_dash_functor(Functor,DFunctor), format('(~w ',[DFunctor]),
+     write_args_as_sexpression(Args), write(')'),!.
+
+pp_sexi(2,Result):- write('\t\t'),pp_sex(Result).

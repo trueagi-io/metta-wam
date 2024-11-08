@@ -1,0 +1,46 @@
+show_mettalog_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), show_mettalog_src(F,A)).
+show_mettalog_src(F):-  atom(F), \+ \+ current_predicate(F/_),!, forall(current_predicate(F/A), show_mettalog_src(F,A)).
+show_mettalog_src(C):-  atom(C), \+ \+ (current_predicate(F/_),once(atom_contains(F,C))),!, forall((current_predicate(F/A),once(atom_contains(F,C))), show_mettalog_src(F,A)).
+show_mettalog_src(C):- show_cvts(C),!.
+
+% The 'show_space_src' rules compile the program and show space sources for each space predicate.
+show_space_src:- make,
+  forall(space_preds(AsPred),show_space_src(AsPred)).
+
+
+% Similar to the 'show_mettalog_src' rules, these rules handle different cases for 'show_space_src'
+% with different input parameters and perform various checks and actions based on the type and value of the input.
+show_space_src(F/A):- nonvar(F),!, forall(current_predicate(F/A), show_space_src(F,A)).
+show_space_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), show_space_src(F,A)).
+show_space_src(F):-  atom(F), \+ \+ current_predicate(F/_),!, forall(current_predicate(F/A), show_space_src(F,A)).
+show_space_src(C):-  atom(C), \+ \+ (current_predicate(F/_),once(atom_contains(F,C))),!, forall((current_predicate(F/A),once(atom_contains(F,C))), show_space_src(F,A)).
+show_space_src(C):- show_cvts(C),!.
+
+% 'show_cvts' rule processes a term, performing different actions based on the structure of the term.
+show_cvts(Term):-
+  once((is_list(Term), sexpr_s2p(Term,PF))), \+ is_list(PF),!,show_cvts(PF).
+
+% 'show_cvts' continues processing, performing conversions between predicates and functions,
+% and pretty-printing original terms, function forms, and Prolog forms.
+show_cvts(Term):- iz_conz(Term),!, ppc(orig,Term),Term = FunctForm,
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog),
+  preds_to_functs(Prolog,NFunctForm), ppc(functs,NFunctForm).
+show_cvts(Term):- ppc(orig,Term),
+  preds_to_functs(Term,FunctForm), ppc(functs,FunctForm),
+  functs_to_preds(FunctForm,Prolog), ppc(preds,Prolog).
+
+% 'show_mettalog_src' for specific predicate, prints metta clauses if they exist in the source file containing 'metta'.
+show_mettalog_src(F,A):- functor(Head,F,A),
+  ignore((predicate_property(Head,number_of_clauses(_)),
+    source_file(Head,File),atom_contains(File,metta),!,
+    nl,findall((Head:-Body),
+       clause(Head,Body), Clauses),
+    print_metta_clauses(Clauses))),nl.
+
+% 'print_metta_clauses' rule is handling the printing of metta clauses.
+% It checks the form of the input clauses and calls 'print_metta_clause' accordingly.
+print_metta_clauses([]):- !.
+print_metta_clauses([Head:-Body]):- !, print_metta_clause(Head,Body).
+print_metta_clauses(Clauses):- combine_clauses(Clauses,Head,Body),!,print_metta_clause(Head,Body).
+print_metta_clause(Head,Body):-
+  print_metta_clause0(Head,Body),

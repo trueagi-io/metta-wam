@@ -1,0 +1,74 @@
+  include(not_sub_var(RSGoals),SinglesC,KSingles),
+  length(KSingles,SL),length(VSingles,SL),my_maplist(=('$VAR'('__')),VSingles),
+  subst_2L(KSingles,VSingles,[RTermC,RSGoals],[SRTermC,SRSGoals]),
+  subst(SRTermC,{cbg('_')},cbg,SSRTermC),!.
+
+number_vars_calc_goals(Term,TermC,[4|SGoals]):-
+  term_variables(Term,Vars),
+  term_attvars(Term,Attvars),
+  copy_term(Term+Vars+Attvars,TermC+VarsC+AttvarsC,Goals),
+  notrace(catch(numbervars(TermC+Goals,0,_Ten1,[singletons(true)]),_,fail)),
+  append([AttvarsC,VarsC,AttvarsC,Vars],Sorted),
+  sort_goals(Goals,Sorted,SGoals),!.
+
+number_vars_calc_goals(Term,TermC,[5|SGoals]):-
+  term_variables(Term,Vars),
+  term_attvars(Term,Attvars),
+  copy_term(Term+Vars+Attvars,TermC+VarsC+AttvarsC,Goals),
+  numbervars(TermC+Goals,0,_Ten1,[singletons(false),attvar(skip)]),
+  append([AttvarsC,VarsC,Attvars,Vars],Sorted),
+  sort_goals(Goals,Sorted,SGoals),!.
+
+
+
+writeg(Term):- ignore( \+ notrace(catch(once(writeg0(Term);ppa(Term)),E,(pp(E),ppa(Term))))),!.
+
+writeg0(Term):- term_attvars(Term,Attvars),Attvars\==[],!,
+  must_det_ll(((number_vars_calc_goals(Term,TermC,Goals),
+  writeg5(TermC)),!,
+  if_t(Goals\==[],(nl_if_needed,
+    write(' goals='), call_w_pad_prev(3,az_ansi(print_tree_no_nl(Goals))))))),!.
+
+writeg0(Term):- \+ ground(Term),
+ \+ \+ must_det_ll((
+  numbervars(Term,0,_Ten1,[singletons(true),attvar(skip)]), writeg5(Term))).
+writeg0(Term):- writeg5(Term),!.
+
+writeg5(X):- is_ftVar(X),!,write_nbsp,write_nbsp,print(X),write_nbsp.
+writeg5(N=V):- is_simple_2x2(V),!,print_grid(N,V),writeln(' = '),call_w_pad_prev(2,writeg9(V)).
+writeg5(N=V):- is_gridoid(V),!,print_grid(N,V),writeln(' = '),call_w_pad_prev(2,writeg9(V)).
+writeg5(N=V):- nl_if_needed,nonvar(N), pp_no_nl(N),writeln(' = '), !, call_w_pad_prev(2,writeg5(V)).
+writeg5(_):- write_nbsp, fail.
+writeg5(V):- writeg9(V).
+
+writeg8(X):- is_ftVar(X),!,print(X).
+writeg8(X):- var(X),!,print(X).
+writeg8(X):- writeq(X).
+
+writeg9(V):- is_simple_2x2(V),!,print_simple_2x2(writeg8,V).
+writeg9(V):- is_list(V),nl_if_needed,write('['),!,my_maplist(writeg5,V),write(']').
+writeg9(_):- write_nbsp,write(' \t '),fail.
+writeg9(X):- is_ftVar(X),!,write_nbsp,write_nbsp,print(X).
+writeg9(V):- pp_no_nl(V).
+
+
+/*
+writeg5(V):- is_simple_2x2(V),!,print_simple_2x2(writeg8,V).
+writeg5(V):- is_gridoid(V),!,call_w_pad_prev(2,writeg9(V)).
+writeg5(V):- is_list(V),nl_if_needed,write('['),my_maplist(writeg5,V),write(']').
+*/
+arg1_near(Vars,Goal,Nth):- tc_arg(1,Goal,PreSort),nth1(Nth,Vars,E),E==PreSort,!.
+arg1_near(_VarsC,Goal,PreSort):- tc_arg(1,Goal,PreSort),!.
+arg1_near(_VarsC,Goal,Goal).
+
+sort_goals(Goals,VarsC,SGoals):- predsort(sort_on(arg1_near(VarsC)),Goals,SGoals).
+
+/*
+
+writeg0(Obj):- is_object(Obj),pp(Obj),!.
+writeg0(O):- writeg00(O).
+
+writeg00(Term):-
+  maybe_term_goals(Term,TermC,Goals),
+  writeg00(TermC), call_w_pad(2,writeg00(Goals)),!.
+writeg00(N=V):- nl_if_needed,nonvar(N), pp_no_nl(N),writeln(' = '), !, call_w_pad(2,writeg00(V)).

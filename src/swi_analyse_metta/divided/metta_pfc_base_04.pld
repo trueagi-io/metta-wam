@@ -1,0 +1,90 @@
+is_ain_pool_empty.
+
+show_ain_pool:- forall(thread_pool_property(ain_pool,PP),fmt(show_ain_pool(PP))).
+
+await_ain_pool:- is_ain_pool_empty->true;(repeat, sleep(0.005), is_ain_pool_empty).
+
+ain_in_thread(MAIN):- strip_module(MAIN,M,AIN), call_in_thread(M:pfcAdd(AIN)).
+
+call_in_thread(MG):- strip_module(MG,M,G), notrace((copy_term(M:G,GG,_),numbervars(GG,0,_,[attvar(skip),singletons(true)]),term_to_atom(GG,TN))),
+ call_in_thread(TN,M,G),
+  dmsg_pretty(call_in_thread(TN,M,G)).
+
+call_in_thread(TN,M,G):- thread_property(_,alias(TN)),!,dmsg_pretty(already_queued(M,G)).
+call_in_thread(TN,M,G):- must_ex(current_why(Why)), thread_create_in_pool(ain_pool,call_in_thread_code(M,G,Why,TN),_Id,[alias(TN)]).
+
+call_in_thread_code(M,G,Why,TN):-
+ with_only_current_why(Why,
+   catch(( M:G-> nop(dmsg_pretty(suceeded(exit,TN)));dmsg_pretty(failed(exit,TN))),E, dmsg_pretty(error(E-->TN)))).
+
+%:- call_in_thread(fbugio(call_in_thread)).
+% why_dmsg(Why,Msg):- with_current_why(Why,dmsg_pretty(Msg)).
+
+%   File   : pfc
+%   Author : Tim Finin, finin@umbc.edu
+%   Updated: 10/11/87, ...
+%   Purpose: consult system file for ensure
+
+pfcVersion(3.0).
+
+/*
+pfcFile('pfcsyntax').   % operator declarations.
+pfcFile('pfccore'). % core of Pfc.
+pfcFile('pfcsupport').  % support maintenance
+pfcFile('pfcdb').   % predicates to manipulate database.
+pfcFile('pfcdebug').    % debugging aids (e.g. tracing).
+pfcFile('pfcjust'). % predicates to manipulate justifications.
+pfcFile('pfcwhy').  % interactive exploration of justifications.
+
+pfcLoad :- pfcFile(F), ensure_loaded(F), fail.
+pfcLoad.
+*/
+
+%pfcFcompile :- pfcFile(F), compile(F), fail.
+%pfcFcompile.
+
+%:- pfcLoad.
+
+%   File   : pfccompile.pl
+%   Author : Tim Finin, finin@prc.unisys.com
+%   Updated: 10/11/87, ...
+%   Purpose: compile system file for Pfc
+/*
+:- compile(pfcsyntax).
+:- compile(pfccore).
+:- compile(pfcdb).
+:- compile(pfcjust).
+:- compile(pfcwhy).
+:- compile(pfcdebug).
+*/
+
+%   File   : pfcsyntax.pl
+%   Author : Tim Finin, finin@prc.unisys.com
+%   Purpose: syntactic sugar for Pfc - operator definitions and term expansions.
+
+:- op(500,fx,'~').
+:- op(1050,xfx,('==>')).
+:- op(1050,xfx,'<==>').
+:- op(1050,xfx,('<-')).
+:- op(1100,fx,('==>')).
+:- op(1150,xfx,('::::')).
+
+
+:- dynamic(pfctmp:knows_will_table_as/2).
+
+will_table_as(Stuff,As):- pfctmp:knows_will_table_as(Stuff,As),!.
+will_table_as(Stuff,As):- assert(pfctmp:knows_will_table_as(Stuff,As)),
+   must_ex(react_tabling(Stuff,As)),!,fail.
+
+react_tabling(Stuff,_):- dynamic(Stuff).
+
+:- dynamic(lmconf:is_treated_like_pfc_file/1).
+:- dynamic(lmconf:is_pfc_module/1).
+if_pfc_indicated :- source_location(F,_),(sub_string(F, _, _, _, '.pfc')->true;lmconf:is_treated_like_pfc_file(F)),!.
+if_pfc_indicated :- prolog_load_context(module, M),lmconf:is_pfc_module(M),!.
+
+skip_pfc_term_expansion(Var):- var(Var),!.
+skip_pfc_term_expansion(begin_of_file).
+skip_pfc_term_expansion(end_of_file).
+
+:- export(pfc_term_expansion/2).

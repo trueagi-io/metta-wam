@@ -1,0 +1,34 @@
+maybe_call_directive(_Stream,use_module(library(W))):- trans_mod:use_module(library(W)).
+maybe_call_directive(Stream,encoding(Enc)):-
+    set_stream(Stream,encoding(Enc)).
+
+% Checks if a term is a directive.
+is_directive((:- _)).
+
+push_term_ctx(X):- \+ compound(X),!,
+  (nb_current(term_ctx,Was)->true;Was=[]),
+  (Was =@= X -> true; (nb_setval(term_ctx,X),nl)).
+push_term_ctx((X:-_)):- !, push_term_ctx(X).
+push_term_ctx(X):- compound_name_arity(X,F,_A),push_term_ctx(F).
+% Print a Prolog directive in a specific format.
+print_directive((:- Directive)):-
+  push_term_ctx(exec), % pc
+  p2m([':-'],Directive,STerm), % p2m
+  write_pl_metta(exec(STerm)). %we
+
+write_pl_metta(STerm):-
+    \+ \+ write_pl_metta_0(STerm).
+  write_pl_metta_0(STerm):- numbervars(STerm,0,_,[singletons(true),attvar(skip)]),
+   write_src(STerm).
+
+
+:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_convert).
+:- ensure_loaded(metta_types).
+:- ensure_loaded(metta_space).
+:- ensure_loaded(metta_testing).
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_printer).
+:- ensure_loaded(metta_eval).
+
+

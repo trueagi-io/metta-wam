@@ -1,0 +1,87 @@
+  unless permission or license is granted (contact at business@logicmoo.org)
+*/
+
+
+:- meta_predicate(print_grid(+,+,+,+)).
+:- meta_predicate(print_grid(+,+,+)).
+
+
+%:- autoload(library(http/html_write),[html/3,print_html/1]).
+
+
+is_debugging(M):- \+ \+ debugging(M),!.
+is_debugging(_):- is_testing,!.
+%is_debugging(_):- menu_or_upper('B').
+
+debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).
+debug_m(M,_):- \+ is_debugging(M),!.
+%debug_m(_,List):- is_list(List),!,print_ss(List).
+debug_m(_,Term):- pp(Term).
+debug_c(M,_):- \+ is_debugging(M),!.
+debug_c(_,C):- call(C),!.
+debug_c(M,C):- wots_hs(S,C),debug_m(M,S),!.
+
+:- meta_predicate(wno(0)).
+wno(G):-
+ locally(b_setval(print_collapsed,10), G).
+
+:- meta_predicate(print_collapsed(0)).
+print_collapsed(Size,G):-
+ locally(b_setval(print_collapsed,Size), print_collapsed0(Size,G)).
+
+:- meta_predicate(print_collapsed0(0)).
+print_collapsed0(Size,G):- Size<10, !, call(G).
+% print_collapsed(Size,G):-  call(G).
+print_collapsed0(Size,G):- Size>=10, !, wots_hs(_S,G).
+print_collapsed0(_,G):- wots_vs(S,G),write(S).
+
+tersify(I,O):- tracing,!,I=O.
+%tersify(I,O):- term_variables(I,Vs), \+ ( member(V,Vs), attvar(V)),!,I=O.
+tersify(I,O):- tersify23(I,O),!.
+tersify(X,X):-!.
+
+tersify23(I,O):- quietly((tersify2(I,M),tersify3(M,O))),!.
+
+%srw_arc(I,O):- is_grid(I),!, wots_hs(O,(write('"'),print_grid(I),write('"'))).
+%srw_arc(I,O):- compound(I),!, wots_hs(O,(write(ppt(I)))).
+/*
+srw_arc(I,O):- is_grid(I),!, wots_hs(O,(write('"'),print_grid(I),write('"'))).
+*/
+srw_arc(I,O):- is_vm_map(I),!, O='..vvmm..'.
+srw_arc(I,O):- is_grid(I),!, O='..grid..'.
+/*
+srw_arc(List,O):- current_prolog_flag(dmsg_len,Three),
+  is_list(List),length(List,L),L>Three,
+   append([A,B,C],[F|_],List),F \='...'(_), !,
+  simplify_goal_printed([A,B,C,'....'(L>Three)],O).
+*/
+%srw_arc(gridFn(_),gridFn):-!.
+%srw_arc(I,O):- is_points_list(I), length(I,N),N>10,!,O='..lo_points..'(N),!.
+%srw_arc(I,O):- is_list(I), length(I,N),N>10,!,O='..lo_points..'(N),!.
+srw_arc(I,O):- tersify(I,O),!,I\==O,!.
+
+:- multifile(dumpst_hook:simple_rewrite/2).
+:- dynamic(dumpst_hook:simple_rewrite/2).
+
+dumpst_hook:simple_rewrite(I,O):- fail, notrace(catch(arc_simple_rewrite(I,O),_,fail)).
+
+arc_simple_rewrite(I,O):-
+  \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t),
+  current_predicate(bfly_startup/0),
+  current_predicate(is_group/1),
+  b_setval(arc_can_portray,nil),
+  locally(b_setval(arc_can_portray,nil),once((compound(I), lock_doing(srw_arc,I,srw_arc(I,O))))), I\==O, I\=@=O, !, \+ I=O,
+  b_setval(arc_can_portray,t).
+
+
+%:- set_prolog_flag(never_pp_hook, true).
+
+
+portray_terse:- true,!.
+
+:- discontiguous arc_portray/2.
+
+
+arc_portray(S,_):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+arc_portray(_,_):- \+ \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t), !, fail.
+arc_portray(Map,TF):- get_map_pairs(Map,Type,Pairs),!, arc_portray_pairs(Type,TF,Pairs).

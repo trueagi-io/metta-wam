@@ -1,0 +1,81 @@
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !,
+  eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
+eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !,
+ eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
+
+eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqual',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
+
+eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertNotEqual',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         ( \+ equal_enough(XX,YY)), RetVal).
+
+eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertEqualToResult',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         =(Y,YY)),
+         equal_enough_for_test(XX,YY), RetVal).
+
+loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
+    loonit_assert_source_tf(Src,Goal,Check,TF),
+    tf_to_empty(TF,['Error'(got(XX),expected(YY))],RetVal).
+
+tf_to_empty(TF,Else,RetVal):-
+  (TF=='True'->as_nop(RetVal);RetVal=Else).
+
+val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
+val_sort(Y,[Y]).
+
+loonit_assert_source_tf(_Src,Goal,Check,TF):- fail, \+ is_testing,!,
+    reset_eval_num,
+    tst_call_limited(Goal),
+    as_tf(Check,TF),!.
+
+loonit_assert_source_tf(Src,Goal,Check,TF):-
+    copy_term(Goal,OrigGoal),
+    reset_eval_num,
+   call_cleanup(loonit_asserts(Src, time_eval('\n; EVAL TEST\n;',Goal), Check),
+   (as_tf(notrace(Check),TF),!,
+  ignore((
+          once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
+     with_debug((eval_args),time_eval('Trace',OrigGoal)))))).
+
+sort_result(Res,Res):- \+ compound(Res),!.
+sort_result([And|Res1],Res):- is_and(And),!,sort_result(Res1,Res).
+sort_result([T,And|Res1],Res):- is_and(And),!,sort_result([T|Res1],Res).
+sort_result([H|T],[HH|TT]):- !, sort_result(H,HH),sort_result(T,TT).
+sort_result(Res,Res).
+
+
+unify_case(A,B):- A=@=B,!,A=B.
+unify_case(A,B):- A=B,!.
+
+unify_enough(L,L).
+unify_enough(L,C):- into_list_args(L,LL),into_list_args(C,CC),unify_lists(CC,LL).
+
+%unify_lists(C,L):- \+ compound(C),!,L=C.
+%unify_lists(L,C):- \+ compound(C),!,L=C.
+unify_lists(L,L):-!.
+unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
+
+is_blank(X):- var(X),!,fail.
+is_blank(E):- is_empty(E),!.
+is_blank([]).
+is_blank([X]):-!,is_blank(X).
+has_let_star(Y):- sub_var('let*',Y).
+
+sort_univ(L,S):- cl_list_to_set(L,E),sort(E,S).
+% !(pragma! unit-tests tollerant) ; tollerant or exact

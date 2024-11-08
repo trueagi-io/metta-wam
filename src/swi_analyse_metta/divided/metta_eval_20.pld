@@ -1,0 +1,75 @@
+     -> (Out = ['Error', UpdatedValue, 'BadType'])
+     ; (nb_setarg(1, State, UpdatedValue), Out = State) ).
+
+% Fetch all values from a state
+'get-state'(StateNameOrInstance, Values) :-
+    fetch_or_create_state(StateNameOrInstance, State),
+    arg(1, State, Values).
+
+'new-state'(Depth,Self,Init,'State'(Init, Type)):- check_type->get_type(Depth,Self,Init,Type);true.
+
+'new-state'(Init,'State'(Init, Type)):- check_type->get_type(10,'&self',Init,Type);true.
+
+fetch_or_create_state(Name):- fetch_or_create_state(Name,_).
+% Fetch an existing state or create a new one
+
+fetch_or_create_state(State, State) :- is_valid_nb_state(State),!.
+fetch_or_create_state(NameOrInstance, State) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered_state(NameOrInstance)
+        ->  nb_bound(NameOrInstance, State)
+        ;   init_state(NameOrInstance),
+            nb_bound(NameOrInstance, State))
+    ;   is_valid_nb_state(NameOrInstance)
+    ->  State = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_nb_state(State).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  GET-TYPE
+% =================================================================
+% =================================================================
+% =================================================================
+type_cast(Depth,Self,Val,Into,Casted):-
+    get_type(Depth,Self,Val,From),
+    (type_accepted_from(Into,From)
+     ->Casted=Val
+      ;Casted=['Error',Val,'BadType',Into]).
+
+type_accepted_from(Into,From):-Into=From,!.
+type_accepted_from(Into,From):-wdmsg(type_accepted_from(Into,From)).
+
+
+%use default self
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Self],Casted):-current_self(Self),!,
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],Casted).
+
+%use other space
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into,Other],Casted):-!,
+    into_space(Depth,Self,Other,Space),
+    eval_20(Eq,RetCasted,Depth,Space,['type-cast',Val,Into],Casted).
+
+eval_20(_Eq,_RetCasted,Depth,Self,['type-cast',Val,Into],Casted):-is_list(Val),!,
+    catch_metta_return(type_cast(Depth,Self,Val,Into,Casted),CastedM),
+    var(CastedM).
+
+eval_20(Eq,RetCasted,Depth,Self,['type-cast',Val,Into],CastedO):-!,
+    if_or_else(type_cast(Depth,Self,Val,Into,Casted),Casted=Val),
+    %term_singletons(Casted,[]),
+    %Casted\==[],Casted\==Val,Into,!,
+    do_expander(Eq,RetCasted,Casted,CastedO).
+
+
+eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
+    get_types(Depth,Self,Val,TypeO).
+
+% use default self
+eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
+    eval_20(Eq,RetType,Depth,Self,['get-type',Val],Type).
+
+% use other space
+eval_20(Eq,RetType,Depth,Self,['get-type',Val,Other],Type):- !,
+    into_space(Depth,Self,Other,Space),

@@ -1,0 +1,82 @@
+   arg(Arity,P2,PV2),
+   N is Arity-1,
+   merge_fp(P1,P2,N)},
+  (P1,{P2,PV1\==PV2} ==> ~P2).
+
+
+==> 'functional-predicate'('next-operation',1).
+==> 'functional-predicate'('previous-operation',1).
+
+:- dynamic('op-complete'/1).
+
+'previous-operation'(none).
+
+('next-operation'(Current),
+   {
+    if_t( retract('previous-operation'(Previous)),
+      (if_t(Previous==Current,
+             nop(wdmsg(continue(Previous)))),
+       if_t(Previous\=@=Current,
+        if_t( \+ 'op-complete'(Previous),
+           (nop(wdmsg(begun(op_complete(Previous)))),
+            pfcAdd('op-complete'(Previous)),
+            nop(wdmsg(ended(op_complete(Previous))))))))),
+    nop(wdmsg(op_next(Current))),
+    assert('previous-operation'(Current))}
+   ==>
+   'seen-operation'(Current)).
+
+
+% ==> 'next-operation'(next).
+
+
+((properties(KB,A,B),{member(E,B),nonvar(E)})==>property(KB,A,E)).
+property(_,Op,E) ==> (form_op(Op),form_prop(E)).
+
+((property(KB,F,PA),p_arity(PA,A)) ==> (predicate_arity(KB,F,A))).
+((property(KB,F,FA),f_arity(FA,A)) ==> (functional_arity(KB,F,A))).
+
+
+% (metta_compiled_predicate(KB,F,A)==>predicate_arity(KB,F,A)).
+
+
+
+(metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type(KB,H,T).
+(metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_defn(KB,II,T).
+(metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,H,[A1,A2|AL]).
+(metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_defn(KB,H,['wam-body'|AL]).
+
+metta_defn(KB,[F|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,F,Len).
+
+'op-complete'(op(+,'=',F)),
+  metta_defn(KB,[F|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,F,Len),{nop(dedupe_cl(/*'&self':*/F))}.
+
+(src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
+
+('op-complete'(op(+,':',F))
+ ==>
+ (( metta_type(KB,F,TypeList)/is_list(TypeList),
+  {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
+  metta_params_and_return_type(KB,F,Len,Params,Ret),{do_once(show_deds_w(F))})).
+
+metta_params_and_return_type(KB,F,Len,Params,Ret),
+  {is_absorbed_return_type(Params,Ret)}
+   ==>(function_arity(KB,F,Len),is_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len)).
+
+metta_params_and_return_type(KB,F,Len,Params,Ret),
+ { is_non_absorbed_return_type(Params,Ret),  Len1 is Len+1}
+  ==>(function_arity(KB,F,Len),is_non_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len1)).
+
+(need_corelib_types,op_decl(F,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
+   metta_params_and_return_type('&corelib',F,Len,Params,Ret).
+
+
+ensure_corelib_types:- pfcAdd(please_do_corelib_types).
+%(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
+(need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted(KB, Atom).
+:- dynamic(need_corelib_types/0).
+(please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
+'ensure-compiler!':- ensure_corelib_types.
+if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Result).

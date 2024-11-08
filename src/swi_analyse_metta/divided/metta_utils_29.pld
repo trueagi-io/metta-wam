@@ -1,0 +1,71 @@
+pp_hook_g1a(G):- fch(G),!.
+
+%pp_hook_g2(O):- current_predicate(colorize_oterms/2),colorize_oterms(O,C), notrace(catch(fch(C),_,fail)),! .
+
+fch(O):- wqs1(O).
+%fch(O):- pp_no_nl(O).
+%fch(O):- print(O).
+%fch(O):- p_p_t_no_nl(O).
+
+wotsq(O,Q):- wots_hs(Q,wqnl(O)).
+has_goals(G):- term_attvars(G,AV),AV\==[].
+has_goals(G):- term_variables(G,TV),term_singletons(G,SV),TV\==SV.
+
+maybe_term_goals(Term,TermC,Goals):-
+  term_attvars(Term,Attvars), Attvars\==[],!,
+  term_variables(Term,Vars),
+  include(not_in(Attvars),Vars,PlainVars),
+  copy_term((Attvars+PlainVars+Term),(AttvarsC+PlainVarsC+TermC),Goals),
+  numbervars(PlainVarsC,10,Ten1,[singletons(true),attvar(skip)]),
+  numbervars(AttvarsC+Goals,Ten1,_Ten,[attvar(bind),singletons(false)]).
+
+maybe_replace_vars([],SGoals,TermC,SGoals,TermC):-!.
+maybe_replace_vars([V|VarsC],SGoals,TermC,RSGoals,RTermC):-
+   my_partition(sub_var(V),SGoals,Withvar,WithoutVar),
+   Withvar=[OneGoal],
+   freeze(OneGoal,(OneGoal\==null,OneGoal \== @(null))),
+   findall(_,sub_var(V,TermC),LL),LL=[_],!,
+   subst([WithoutVar,TermC],V,{OneGoal},[SGoalsM,TermCM]),
+   maybe_replace_vars(VarsC,SGoalsM,TermCM,RSGoals,RTermC).
+maybe_replace_vars([_|VarsC],SGoals,TermC,RSGoals,RTermC):-
+  maybe_replace_vars(VarsC,SGoals,TermC,RSGoals,RTermC).
+
+
+src_sameish(Orig,Find):- copy_term(Orig,COrig),Find=Orig,Orig=@=COrig.
+
+number_vars_calc_goals(Term,SSRTermC,[1|SRSGoals]):-
+  term_singletons(Term,Singles),
+  term_attvars(Term,Vars),
+  copy_term(Term+Vars+Singles,TermC+VarsC+SinglesC,Goals),
+  notrace(catch(numbervars(TermC+Goals,0,_Ten1,[singletons(false),attvar(skip)]),_,fail)),
+  sort_goals(Goals,VarsC,SGoals),
+  maybe_replace_vars(VarsC,SGoals,TermC,RSGoals,RTermC),
+  include(not_sub_var(RSGoals),SinglesC,KSingles),
+  length(KSingles,SL),length(VSingles,SL),my_maplist(=('$VAR'('__')),VSingles),
+  subst_2L(KSingles,VSingles,[RTermC,RSGoals],[SRTermC,SRSGoals]),
+  subst_1L_p2(src_sameish,[
+    {dif('$VAR'('__'),RED)}=dif(RED),
+    {cbg('$VAR'('__'))}=cbg],
+     SRTermC,SSRTermC),!.
+
+number_vars_calc_goals(Term,SRTermC,[2|RSGoals]):-
+  term_attvars(Term,AVars),
+  copy_term(Term+AVars,TermC+VarsC,GoalsI),
+  term_attvars(GoalsI,GAttvars), copy_term(GoalsI+GAttvars,_+GAttvarsC,GoalsGoals),
+  append(GoalsI,GoalsGoals,Goals),
+  append([VarsC,GAttvarsC,AVars,GAttvars],SortVars),
+  numbervars(TermC+Goals,0,_Ten1,[singletons(false),attvar(bind)]),
+  sort_goals(Goals,SortVars,SGoals),
+  maybe_replace_vars(SortVars,SGoals,TermC,RSGoals,RTermC),
+  subst_1L_p2(src_sameish,[
+    {dif('$VAR'('___'),RED)}=dif(RED),
+    {cbg('$VAR'('___'))}=cbg],
+     RTermC,SRTermC),!.
+
+number_vars_calc_goals(Term,SSRTermC,[3|SRSGoals]):-
+  term_singletons(Term,Singles),
+  term_attvars(Term,Vars),
+  copy_term(Term+Vars+Singles,TermC+VarsC+SinglesC,Goals),
+  numbervars(TermC+Goals,0,_Ten1,[singletons(false),attvar(bind)]),
+  sort_goals(Goals,VarsC,SGoals),
+  maybe_replace_vars(VarsC,SGoals,TermC,RSGoals,RTermC),

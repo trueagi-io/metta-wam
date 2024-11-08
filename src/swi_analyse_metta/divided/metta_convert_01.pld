@@ -1,0 +1,65 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpeter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming functional/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ */
+
+
+:- encoding(iso_latin_1).
+:- flush_output.
+:- setenv('RUST_BACKTRACE',full).
+:- op(700,xfx,'=~').
+:- ensure_loaded(metta_interp).
+
+% ===============================
+%    TESTING
+% ===============================
+% Define 'fb', a rule that calls 'make' and writes information for each clause of 'fb0'.
+% 'make' compiles the program.
+% The 'forall' loop will write and call all goals of the 'fb0' clauses.
+
+
+fb:- make,
+   writeln(';; ==========================================='),
+   forall((clause(fb0,Goal),write(';; '),writeq(?- Goal),nl,call(Goal)),
+   writeln(';; ===========================================')).
+
+% The 'fb0' rule showing mettalog sources with specific definitions.
+fb0:- show_mettalog_src((two_pi(R):-(pi(A), +(A, A, B), R is B))).
+fb0:- show_mettalog_src(factorial_tail_basic).
+fb0:- show_mettalog_src(funct).
+
+print_metta_src :-  show_mettalog_src.
+% 'show_mettalog_src' rule compiles the program and shows mettalog sources for each source file containing 'metta'.
+show_mettalog_src:- make,
+  forall((source_file(AsPred,File),
+          symbol_contains(File,metta)),
+         show_mettalog_src(AsPred)).
+
+
+% Handling different cases for 'show_mettalog_src' with different input parameters.
+% These rules use nonvar, current_predicate, and other built-ins to perform various checks and actions
+% based on the type and value of the input to 'show_mettalog_src'.
+show_mettalog_src(F/A):- nonvar(F),!, forall(current_predicate(F/A), show_mettalog_src(F,A)).

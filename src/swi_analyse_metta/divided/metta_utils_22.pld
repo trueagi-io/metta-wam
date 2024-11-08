@@ -1,0 +1,78 @@
+  print_info(Val),
+  Val \= [_],
+  compare_objects(Val,Diffs),
+  color_print(cyan,call(arc_portray_pair(Ps,diffs(K),Diffs,TF))))).
+
+
+% arc_portray(G):- \+ \+ catch((wots_hs(S,( tracing->arc_portray(G,true);arc_portray(G,false))),write(S),ttyflush),_,fail).
+arc_portray(G):- \+ compound(G),fail.
+arc_portray(G):- is_vm(G), !, write('..VM..').
+arc_portray(G):- \+ nb_current(arc_portray,t),\+ nb_current(arc_portray,f),is_print_collapsed,!,
+  locally(nb_setval(arc_portray,t),arc_portray1(G)).
+arc_portray(G):- \+ nb_current(arc_portray,f),!, locally(nb_setval(arc_portray,t),arc_portray1(G)).
+arc_portray(G):- locally(nb_setval(arc_portray,f),arc_portray1(G)).
+
+arc_portray1(G):-
+ flag(arc_portray_current_depth,X,X), X < 3,
+ \+ \+
+  setup_call_cleanup(flag(arc_portray_current_depth,X,X+1),catch(((tracing->arc_portray(G,true);
+  arc_portray(G,false)),ttyflush),E,(fail,format(user_error,"~N~q~n",[E]),fail)),flag(arc_portray_current_depth,_,X)).
+
+
+%via_print_grid(G):- tracing,!,fail.
+via_print_grid(G):- is_points_list(G). %,!,fail,grid_size(G,H,V),number(H),number(V),H>1,V>1.
+via_print_grid(G):- is_grid(G).
+via_print_grid(G):- is_obj_props(G),!,fail.
+via_print_grid(G):- is_object(G).
+via_print_grid(G):- is_group(G).
+via_print_grid(G):- is_gridoid(G).
+
+
+
+terseA(_,[],[]):- !.
+terseA(_,L,'... attrs ...'(N)):- is_list(L),length(L,N),N>10,!.
+terseA(I,[A|L],[B|LL]):-terseA(I,A,B),terseA(I,L,LL),!.
+terseA(I,dif(A,B),B):-A==I,!.
+terseA(I,dif(B,A),B):-A==I,!.
+terseA(_,put_attr(_,B,A),A):- B==ci,!.
+terseA(_,put_attr(_,B,A),B=A):-!.
+terseA(_,A,A):-!.
+
+
+simple_enough(I):- plain_var(I).
+simple_enough(I):- atomic(I).
+simple_enough(I):- \+ compound(I),!.
+simple_enough(_*_):-!.
+simple_enough(_+_):-!.
+simple_enough(A):- functor(A,_,1),tc_arg(1,A,E),!,simple_enough(E).
+%simple_enough(I):- number(I).
+%simple_enough(I):- atom(I).
+
+tersify0(I,O):- simple_enough(I),!,I=O.
+tersify0(I,av(C,Others)):- attvar(I),copy_term(I,C,Attrs),terseA(C,Attrs,Others),!.
+tersify0(I,I):- var(I),!.
+
+
+%tersifyC(D):- is_vm_map(D),!.
+tersifyC(av(_,_)).
+tersifyC(objFn(_,_)).
+tersifyC(groupFn(_,_)).
+tersifyC(objFn(_)).
+tersifyC(groupFn(_)).
+
+tersify1(I,O):- simple_enough(I),!,I=O.
+tersify1(av(_,Blue), -(Blue)):-!.
+tersify1(I,O):- compound(I), tersifyC(I),!,I=O.
+tersify1(gridFn(I),gridFn(I)):-!. % tersifyG(I,O).
+%tersify1(gridFn(I),gridFn(O)):-tersifyG(I,O).
+tersify1(Nil,[]):- Nil == [],!.
+tersify1(I,gridFn(S)):- is_grid(I), into_gridnameA(I,O),!,sformat(S,'~w',[O]).
+tersify1(I,gridFn(O)):- is_grid(I),tersifyG(I,O),!.
+tersify1(I,groupFn(O,List)):- is_group(I), mapgroup(tersify1,I,List),mapgroup(obj_to_oid,I,OIDs),length(List,N), !,ignore((get_current_test(TestID),is_why_grouped(TestID,N,Why,OIDs),!,O=Why)).
+
+tersify1(I,Q):- is_object(I),object_ref_desc(I,Q),!.
+tersify1(I,O):- is_vm_map(I), get_kov(objs,I,_),!, O='$VAR'('VM').
+tersify1(I,O):- is_vm_map(I), get_kov(pairs,I,_),!, O='$VAR'('Training').
+
+
+tersifyG(I,O):- tersifyL(I,O),numbervars(O,1,_,[attvar(bind),singletons(false)]),!.

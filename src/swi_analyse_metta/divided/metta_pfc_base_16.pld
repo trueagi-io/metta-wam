@@ -1,0 +1,118 @@
+     is_simple_lhs((Lhs1;Lhs2)):- !,is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).
+     is_simple_lhs(ActN):- is_active_lhs(ActN),!,fail.
+     is_simple_lhs((Lhs1/Lhs2)):- !,fail, is_simple_lhs(Lhs1),is_simple_lhs(Lhs2).
+     is_simple_lhs(_).
+
+
+     is_active_lhs(ActN):- var(ActN),!,fail.
+     is_active_lhs(!).
+     is_active_lhs(cut_c).
+     is_active_lhs(actn(_Act)).
+     is_active_lhs('{}'(_Act)).
+     is_active_lhs((Lhs1/Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
+     is_active_lhs((Lhs1,Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
+     is_active_lhs((Lhs1;Lhs2)):- !,is_active_lhs(Lhs1);is_active_lhs(Lhs2).
+
+
+     add_lhs_cond(Lhs1/Cond,Lhs2,Lhs1/(Cond,Lhs2)):-!.
+     add_lhs_cond(Lhs1,Lhs2,Lhs1/Lhs2).
+
+
+
+% %
+% %  buildRhs(+Conjunction,-Rhs)
+% %
+
+buildRhs(X,[X]) :-
+  var(X),
+  !.
+
+buildRhs((A,B),[A2|Rest]) :-
+  !,
+  pfcCompileRhsTerm(A,A2),
+  buildRhs(B,Rest).
+
+buildRhs(X,[X2]) :-
+   pfcCompileRhsTerm(X,X2).
+
+pfcCompileRhsTerm((P/C),((P:-C))) :- !.
+
+pfcCompileRhsTerm(P,P).
+
+
+% %  pfc_unnegate(N,P) is true if N is a negated term and P is the term
+% %  with the negation operator stripped.
+
+pfc_unnegate(P,_):- var(P),!,fail.
+pfc_unnegate((~P),P):-  \+ tilded_negation.
+pfc_unnegate((-P),P).
+pfc_unnegate((\+(P)),P).
+
+pfcNegatedLiteral(P) :-
+  callable(P),
+  pfc_unnegate(P,Q),
+  pfcPositiveLiteral(Q).
+
+pfcLiteral(X) :- pfcNegatedLiteral(X).
+pfcLiteral(X) :- pfcPositiveLiteral(X).
+
+pfcPositiveLiteral(X) :-
+  callable(X),
+  functor(X,F,_),
+  \+ pfcConnective(F).
+
+pfcConnective(';').
+pfcConnective(',').
+pfcConnective('/').
+pfcConnective('|').
+pfcConnective(('==>')).
+pfcConnective(('<-')).
+pfcConnective('<==>').
+
+pfcConnective('-').
+pfcConnective('~'):- \+ tilded_negation.
+pfcConnective(( \+ )).
+
+is_implicitly_prolog(Callable):- \+ callable(Callable),!, fail.
+is_implicitly_prolog(_ is _).
+
+processRule(Lhs,Rhs,ParentRule) :-
+  copy_term(ParentRule,ParentRuleCopy),
+  buildRhs(Rhs,Rhs2),
+  current_why_U(USER), % @TODO REVIEW _U
+  pfcForEach(pfc_nf(Lhs,Lhs2),
+          buildRule(Lhs2,rhs(Rhs2),(ParentRuleCopy,USER))).
+
+buildRule(Lhs,Rhs,Support) :-
+  buildTrigger(Lhs,Rhs,Trigger),
+  fcEvalLHS(Trigger,Support).
+
+buildTrigger([],Consequent,Consequent).
+
+buildTrigger([Test|Triggers],Consequent,(Test *-> X)) :- is_implicitly_prolog(Test),
+  !,
+  buildTrigger(Triggers,Consequent,X).
+
+buildTrigger([V|Triggers],Consequent,'$pt$'(V,X)) :-
+  var(V),
+  !,
+  buildTrigger(Triggers,Consequent,X).
+
+
+buildTrigger([(T1/Test)|Triggers],Consequent,'$nt$'(T2,Test2,X)) :-
+  pfc_unnegate(T1,T2),
+  !,
+  buildNtTest(T2,Test,Test2),
+  buildTrigger(Triggers,Consequent,X).
+
+buildTrigger([(T1)|Triggers],Consequent,'$nt$'(T2,Test,X)) :-
+  pfc_unnegate(T1,T2),
+  !,
+  buildNtTest(T2,true,Test),
+  buildTrigger(Triggers,Consequent,X).
+
+buildTrigger([{Test}|Triggers],Consequent,(Test *-> X)) :-
+  !,
+  buildTrigger(Triggers,Consequent,X).
+
+buildTrigger([T/Test|Triggers],Consequent,'$pt$'(T,X)) :-

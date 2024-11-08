@@ -1,0 +1,84 @@
+on_end(_, _).
+
+on_begin('chado', _, _) :- !.
+on_begin('feature', _, _Parser) :- !.
+%on_begin(Tag, _Attr, _Parser):- push_tag(Tag),fail.
+on_begin(Tag,Attr,Parser):- read_element(Parser, Content, Reset),!,
+    (store_feature(Tag,Attr,Content)->true;(set_sgml_parser(Parser,position(Reset)),fail)).
+on_begin(Tag,Attr,Parser):- read_element(Parser, Content, Reset),!,
+    (try_begin(Tag,Attr,Content)->true;(set_sgml_parser(Parser,position(Reset)),fail)).
+
+on_begin(Any, _, Parser) :- read_element(Parser,Content,_),nl,print(Any=Content),nl.
+on_begin(Tag, Attr, Parser) :-
+        sgml_parse(Parser,
+                   [ document(Content),
+                     parse(content)
+                   ]),
+        FD = feature_data(Tag, Attr, Content),
+        print(FD),nl,
+        assertz(FD).
+
+
+current_tag(Tag):- once(clause(current_tag_stack(Was),true,_Ref);Was=[]),append(_New,[Tag],Was),!.
+current_tag(none).
+parent_tag(Tag):- once(clause(current_tag_stack(Was),true,_Ref);Was=[]),append(_New,[Tag,_],Was),!.
+parent_tag(none).
+
+pop_tag(Tag):-
+   once(clause(current_tag_stack(Was),true,Ref);Was=[]),append(New,[Tag],Was),
+   it_t(nonvar(Ref),erase(Ref)), assert(current_tag_stack(New)),!.
+push_tag(Tag):-
+  once(retract(current_tag_stack(Was));Was=[]),append(Was,[Tag],New),assert(current_tag_stack(New)).
+finish_tag(_Tag).
+
+peek_element(Parser, Content):-
+ call_cleanup(
+     read_element(Parser, Content, Pos),
+     set_sgml_parser(Parser,position(Pos))).
+
+read_element(Parser, Content, Pos):-
+
+    get_sgml_parser(Parser,source(S)),
+    stream_property(S,position(Pos)),
+    sgml_parse(Parser,
+                      [ document(Content),
+                        parse(content)
+                      ]),!.
+
+
+    try_begin(Tag,Attr, element(T,A,L)):-!,
+        append(Attr,A,AttrA), try_begin(Tag=T,AttrA,L).
+
+
+    try_begin(Tag,Attr,List):- is_list(List),
+        absorb_type_ids(Tag,Attr,List),!.
+
+
+     try_begin(Tag,Attr,V):- process_feature_data(Tag, Attr, V).
+
+    %try_begin(Tag,Attr, element(T,A,L)):-
+     %  %absorb_type_ids(Tag,Attr, element(T,A,L)),
+      % maplist(try_begin(T,A),L).
+
+
+        absorb_type_ids(Tag,Attr,Elements):-
+            select(element(type_id,[],C),Elements, Rest),
+            get_content([cv,name],C,TypeName),!,
+            must_det_ll((get_content([cvterm,name],C,Name),
+            maplist(get_element_value_each,Rest,Values),
+            maplist(process_feature_data(ntv(Tag,TypeName,Name),Attr),Values))),!.
+
+
+
+        absorb_type_ids(_Tag,Attr,Elements):-
+            select(element(type_id,[],C),Elements, Rest),
+            must_det_ll((get_content([cvterm,name],C,Name),
+            maplist(get_element_value_each,Rest,Values),
+            maplist(process_feature_data(nv(Name),Attr),Values))),!.
+
+store_feature(Tag,Attr,Content):- cvt_element(element(Tag,Attr,Content),Val),
+    assert(feature_data(Tag, Attr, Val)).
+
+skip_over(cvterm).
+skip_over(cv).
+skip_over(pub).

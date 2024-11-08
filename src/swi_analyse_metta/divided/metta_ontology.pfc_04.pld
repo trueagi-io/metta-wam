@@ -1,0 +1,67 @@
+p_arity('SenaryPredicate', 6).
+p_arity('SeptenaryPredicate', 7).
+p_arity('OctaryPredicate', 8).
+p_arity('NonaryPredicate', 9).
+p_arity('DenaryPredicate', 10).
+
+f_arity('NullaryFunction', 0).   % No return value, essentially a procedure.
+f_arity('UnaryFunction', 1).     % Returns a single value, and so on.
+f_arity('BinaryFunction', 2).
+f_arity('TernaryFunction', 3).
+f_arity('QuaternaryFunction', 4).
+f_arity('QuinaryFunction', 5).
+f_arity('SenaryFunction', 6).
+f_arity('SeptenaryFunction', 7).
+f_arity('OctaryFunction', 8).
+f_arity('NonaryFunction', 9).
+
+
+% "Nondeterministic" - Can produce more than one result for the same inputs.
+form_prop('Nondeterministic').
+% "Deterministic" - Always produces the same output for the same input.
+form_prop('Deterministic').
+% "IdiomaticTranspilation" - Converts code to a more idiomatic form in another language.
+form_prop('DirectTranspilation').
+% "FunCompiled" - Functions are compiled to machine code for performance.
+form_prop('Compiled').
+% "FunInterpreted" - Functions are executed by an interpreter, without compilation.
+form_prop('Interpreted').
+
+% "Boolean" - Maps success/failure in Prolog to True/False.
+form_prop('BooleanFunction').
+
+% "EvalNoArgs" - dont evaluate or type check args
+form_prop('EvalNoArgs').
+% "CoerceArgsToTypes" - Arguments are automatically coerced to specified types.
+form_prop('CoerceArgsToTypes', 'List').
+ % check EvalNoArgs/CoerceArgsToTypes then return the whole value unevaluated
+form_prop('TypeConstructor').
+% this is the default for MeTTa in rust
+form_prop('OnFailReturnSelf').
+% except for flow control instuctructions functions
+form_prop('OnFailBacktrack').
+
+
+% "FixedArityFunction" - Functions or predicates with a fixed number of arguments.
+form_prop('FixedArityFunction').
+% "ReturnNthArg" - Functions return the Nth argument passed to them.
+form_prop('ReturnNthArg', 'Integer').
+% "FunctionArity" - The number of arguments a function takes (2 here).
+form_prop('FunctionArity', 'Integer').
+% "PredicateArity" - The number of arguments a predicate has after being converted to a function
+form_prop('PredicateArity', 'Integer').
+% "VariableArity" - Functions or predicates with a variable number of arguments.
+form_prop('ArityMinMax', 'Integer', 'Integer'). % Min Max
+
+
+%(: Z Nat)
+%(: S (-> Nat Nat))
+%(: S TypeConstructor)
+
+% --- Control Flow and Conditional Execution ---
+properties('&corelib','if', [flow_control, qhelp("Conditional execution."), conditional_execution]).
+properties('&corelib','case', [flow_control, qhelp("Case selection."), conditional_execution]).
+properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")]).
+properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
+properties('&corelib','function', [function_definition, qhelp("Function block.")]).
+properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).

@@ -1,0 +1,63 @@
+writeg00(O):- compound(O),compound_name_arguments(O,F,[A]),!,call_w_pad(2,((writeq(F),write('('),writeg3(A),write(')')))).
+writeg00(S):- term_contains_ansi(S), !, write_keeping_ansi_mb(S).
+writeg00([H|T]):- compound(H),H=(_=_), my_maplist(writeg0,[H|T]).
+writeg00([H|T]):- is_list(T),call_w_pad(2,((nl,write('['),writeg2(H),my_maplist(writeg0,T),write(']'),nl))).
+%writeg0(Term):- \+ ground(Term),!, \+ \+ (numbervars(Term,99799,_,[singletons(true)]),
+%   subst(Term,'$VAR'('_'),'$VAR'('_____'),TermO), writeg0(TermO)).
+%writeg0(V):- \+ is_list(V),!,writeq(V),nl_now.
+writeg00(V):- \+ is_list(V),!,pp(V).
+writeg00(X):- call_w_pad(2,pp(X)).
+
+writeg1(N=V):- is_gridoid(V),!,print_grid(N,V),call_w_pad(2,(my_maplist(writeg1,V))).
+writeg1(X):- nl_if_needed,writeg2(X),!,write_nbsp,!.
+writeg2(S):- term_contains_ansi(S), !, write_keeping_ansi_mb(S).
+writeg2(X):- is_ftVar(X),!,print(X).
+writeg2(X):- write_term(X,[quoted(true),quote_non_ascii(true),portrayed(false),nl(false),numbervars(true)]),!.
+%writeg2(X):- write_term(X,[quoted(true),quote_non_ascii(true),portrayed(false),nl(false),numbervars(false)]),!.
+%writeg1(X):- nl_if_needed,writeg(X).
+writeg2(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+writeg2(X):- writeq(X),!.
+writeg3(X):- is_list(X),X\==[],X=[_,_|_],!,writeg(X).
+writeg3(X):- writeg2(X).
+*/
+
+% Nov 9th, 1989
+/*
+pp_hook_g1(T):-
+ nb_current('$portraying',Was)
+   ->  ((member(E,Was), T==E) -> ptv2(T) ; locally(b_setval('$portraying',[T|Was]),ptv0(T)))
+   ; locally(b_setval('$portraying',[T]),ptv0(T)).
+*/
+
+%pp_hook_g(G):- compound(G),ppt(G),!.
+%pp_hook_g(G):- ppt(G),!.
+
+
+strip_vspace(S,Stripped):- string_concat(' ',SS,S),!,strip_vspace(SS,Stripped).
+strip_vspace(S,Stripped):- string_concat(SS,' ',S),!,strip_vspace(SS,Stripped).
+strip_vspace(S,Stripped):- string_concat('\n',SS,S),!,strip_vspace(SS,Stripped).
+strip_vspace(S,Stripped):- string_concat(SS,'\n',S),!,strip_vspace(SS,Stripped).
+strip_vspace(S,Stripped):- string_concat('\t',SS,S),!,strip_vspace(SS,Stripped).
+strip_vspace(S,Stripped):- string_concat(SS,'\t',S),!,strip_vspace(SS,Stripped).
+
+strip_vspace(S,Stripped):- replace_in_string([" \n"="\n","(   "="(  ","(\n"="( "],S,S2),S2\==S,!,strip_vspace(S2,Stripped).
+%strip_vspace(S,Stripped):- split_string(S, "", "\t\r\n", [Stripped]).
+strip_vspace(S,S).
+
+
+print_nl(P):- nl_if_needed, wots_hs(SS,pp_no_nl(P)), maybe_color(SS,P),nl_if_needed.
+
+color_write(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+color_write(P):- wots_hs(SS,write(P)), maybe_color(SS,P).
+
+write_keeping_ansi_mb(P):- is_maybe_bold(P,write_keeping_ansi(P)).
+
+is_maybe_bold(P):- sformat(S,'~w',[P]),atom_contains(S,'stOF').
+
+is_maybe_bold(P,G):- is_maybe_bold(P),!, underline_print(bold_print(G)).
+is_maybe_bold(_P,G):- call(G).
+
+pp_msg_color(P,C):- compound(P),pc_msg_color(P,C),!.
+pp_msg_color(P,C):- must_det_ll(mesg_color(P,C)).
+pc_msg_color(iz(P),C):- pp_msg_color(P,C).
+pc_msg_color(link(P,_,_),C):- pp_msg_color(P,C).
