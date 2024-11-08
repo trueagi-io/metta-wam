@@ -6,7 +6,7 @@
 
 
 ; !(intersection (superpose (a b c d )) (superpose ( c d e f )))
-!(assertEqualToResults (intersect (superpose (a b c d )) (superpose ( c d e f ))) (c d))
+!(assertEqualToResult (intersect (superpose (a b c d )) (superpose ( c d e f ))) (c d))
 
 ; !(union (superpose (a b c d )) (superpose ( c d e f )))
-!(assertEqualToResults (union (superpose (a b c d )) (superpose ( c d e f ))) (a b c d e f))
+!(assertEqualToResult (union (superpose (a b c d )) (superpose ( c d e f ))) (a b c d e f))

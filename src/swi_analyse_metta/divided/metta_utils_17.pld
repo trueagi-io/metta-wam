@@ -1,0 +1,75 @@
+
+p1_call((P1;Q1),E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).
+p1_call((P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E),p1_call(Q1,E)).
+p1_call(or(P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E);p1_call(Q1,E)).
+p1_call(and(P1,Q1),E):- must_be(callable,P1),!, (p1_call(P1,E),p1_call(Q1,E)).
+p1_call(not(not(P1)),E):- !, \+ \+ p1_call(P1,E).
+p1_call(not(P1),E):- !, not(p1_call(P1,E)).
+p1_call(once(P1),E):- !, once(p1_call(P1,E)).
+p1_call(ignore(P1),E):- !, ignore(p1_call(P1,E)).
+p1_call(chk(P1),E):- !, \+ \+ (p1_call(P1,E)).
+p1_call( \+ (P1),E):- !, \+ p1_call(P1,E).
+p1_call(P1,E):- !, call(P1,E).
+
+chk(X,E):- \+ \+ call(X,E).
+
+p2_call_p2(P2a,P2b,A,B):- p2_call(P2a,A,M),p2_call(P2b,M,B).
+
+p2_call(P2,A,B):- P2==[],!,A=B.
+p2_call(p1_call(P1),E,O):- !, p1_call(P1,E), E=O.
+p2_call([P2],Grid,GridN):- !, p2_call(P2, Grid,GridN).
+p2_call([P2|P2L],Grid,GridN):- !, p2_call(P2, Grid,GridM),p2_call(P2L,GridM,GridN).
+p2_call(ignore(P2),A,B):- p2_call(P2,A,B)*->true;A=B.
+p2_call(type(Type,P2),A,B):- into_type(Type,A,AA),p2_call(P2,AA,B).
+p2_call(or(P2,Q2),A,B):- nop(must_be(callable,P2)),!, (p2_call(P2,A,B);p2_call(Q2,A,B)).
+p2_call(and(P2,Q2),A,B):- nop(must_be(callable,P2)),!, (p2_call(P2,A,AB),p2_call(Q2,AB,B)).
+p2_call(P2,A,B):- must_be(callable,P2), call(P2,A,B).
+
+
+p1_or(P1A,P1B,X):- p1_call(P1A,X)->true;p1_call(P1B,X).
+p1_and(P1A,P1B,X):- p1_call(P1A,X),p1_call(P1B,X).
+p1_not(P1,E):- \+ p1_call(P1,E).
+p1_ignore(P1,E):- ignore(p1_call(P1,E)).
+p1_arg(N,P1,E):- tc_arg(N,E,Arg),p1_call(P1,Arg).
+p1_subterm(P1,E):- sub_term(Arg,E),p1_call(P1,Arg).
+
+:- meta_predicate my_partition(-, ?, ?, ?).
+my_partition(_,[],[],[]):-!.
+my_partition(P1,[H|L],[H|I],E):- \+ \+ p1_call(P1,H),!,
+  my_partition(P1,L,I,E).
+my_partition(P1,[H|L],I,[H|E]):-
+   my_partition(P1,L,I,E),!.
+my_partition(P1,H,I,HE):- arcST,ibreak,
+  my_partition(P1,[H],I,HE).
+
+
+mapgroup(P2,G1,L2):- into_list(G1,L1),!, with_my_group(L1,maplist(P2,L1,L2)).
+mapgroup(P1,G1):- into_list(G1,L1), !, with_my_group(L1,maplist(P1,L1)).
+
+selected_group(Grp):- nb_current('$outer_group',Grp),!.
+selected_group([]).
+
+sub_cmpd(_, LF) :- \+ compound(LF), !, fail.
+sub_cmpd(X, X).
+sub_cmpd(X, Term) :-
+    (   is_list(Term)
+    ->  member(E, Term),
+        sub_cmpd(X, E)
+    ;   tc_arg(_, Term, Arg),
+        sub_cmpd(X, Arg)
+    ).
+
+
+
+%with_my_group([O|Grp],Goal):- compound(O),O=obj(_),!, locally(nb_setval('$outer_group',[O|Grp]),Goal).
+with_my_group(_,Goal):- call(Goal).
+
+into_mlist(L,L).
+my_maplist(P4,G1,L2,L3,L4):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P4,L1,L2,L3,L4)).
+my_maplist(P3,G1,L2,L3):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P3,L1,L2,L3)).
+my_maplist(P2,G1,L2):- into_mlist(G1,L1),!, with_my_group(L1,maplist(P2,L1,L2)).
+my_maplist(P1,G1):- into_mlist(G1,L1), !, with_my_group(L1,maplist(P1,L1)).
+
+
+my_include(P1,L,I):- include(p1_call(P1),L,I).
+%my_include(P1,[H|L],O):- (p2_call(p1_call(P1),H,HH)*->(my_include(P1,L,I),O=[HH|I]);my_include(P1,L,O)).

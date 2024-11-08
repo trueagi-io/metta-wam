@@ -1,0 +1,80 @@
+
+do_expander('=',_,X,X):-!.
+do_expander(':',_,X,Y):- !, get_type(X,Y)*->X=Y.
+
+get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
+
+
+%! eval_true(+X) is semidet.
+% Evaluates the given term X and succeeds if X is not a constraint (i.e. \+ iz_conz(X)) and is callable, and calling X succeeds.
+%
+% If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
+eval_true(X):- \+ iz_conz(X), callable(X), call(X).
+eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
+
+eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
+eval(Eq,RetType,Depth,Self,X,Y):-
+  catch_metta_return(eval_args(Eq,RetType,Depth,Self,X,Y),Y).
+
+%:- set_prolog_flag(gc,false).
+/*
+eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
+   locally(set_prolog_flag(gc,true),
+      rtrace_on_existence_error(
+     eval(Eq,RetType,Depth,Self,X,Y))).
+*/
+
+
+%! eval_args(+X,-Y) is semidet.
+eval_args(X,Y):- current_self(Self), eval_args(500,Self,X,Y).
+%eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
+eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
+
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
+eval_args(Eq,RetType,Depth,Self,X,Y):-
+    notrace(nonvar(Y)), var(RetType),
+    get_type(Depth,Self,Y,WasType),
+    can_assign(WasType,RetType),
+    nonvar(RetType),!,
+    eval_args(Eq,RetType,Depth,Self,X,Y).
+eval_args(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)),!,
+   eval_args(Eq,RetType,Depth,Self,X,XX),evals_to(XX,Y).
+
+
+eval_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], number(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
+
+/*
+eval_args(Eq,RetType,Depth,Self,[F|X],Y):-
+  (F=='superpose' ; ( option_value(no_repeats,false))),
+  notrace((D1 is Depth-1)),!,
+  eval_args(Eq,RetType,D1,Self,[F|X],Y).
+*/
+
+eval_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) ,!,
+   call(call,Eq,'=',RetType,Depth,Self,X,Y).
+
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
+eval_args(Eq,RetType,Depth,Self,X,Y):-
+  eval_00(Eq,RetType,Depth,Self,X,Y).
+%eval_ret(Eq,RetType,1000,Self,X,Y):- !,
+%  catch_metta_return(eval_ret(Eq,RetType,99,Self,X,Y),Y).
+
+eval_ret(Eq,RetType,Depth,Self,X,Y):-
+    eval_00(Eq,RetType,Depth,Self,X,Y), is_returned(Y).
+
+catch_metta_return(G,Y):-
+ catch(G,metta_return(Y),ignore(retract(thrown_metta_return(Y)))).
+
+allow_repeats_eval_(_):- !.
+allow_repeats_eval_(_):- option_value(no_repeats,false),!.
+allow_repeats_eval_(X):- \+ is_list(X),!,fail.
+allow_repeats_eval_([F|_]):- atom(F),allow_repeats_eval_f(F).
+allow_repeats_eval_f('superpose').
+allow_repeats_eval_f('collapse').
+
+
+:- nodebug(metta(overflow)).
+eval_00(_Eq,_RetType,_Depth,_Slf,X,Y):- self_eval(X),!,X=Y.
+eval_00(Eq,RetType,Depth,Self,X,YO):-
+   eval_01(Eq,RetType,Depth,Self,X,YO).

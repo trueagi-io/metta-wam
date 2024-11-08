@@ -1,0 +1,67 @@
+%eval_20(Eq,RetType,_Dpth,Self,[X|T],Y):- T==[],  atom(X),
+%   \+ is_user_defined_head_f(Self,X),
+%   do_expander(Eq,RetType,X,YY),!,Y=[YY].
+
+eval_20(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('=')) ,!,
+   call(Eq,'=',RetType,Depth,Self,X,Y).
+
+eval_20(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_args(Eq,RetType,Depth,Self,[F,VV|VI],VO).
+
+eval_20(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
+  ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
+  eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
+% DMILES @ TODO make sure this isnt an implicit curry
+eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
+  maplist(eval_ret(Eq,_ArgRetType,Depth,Self),[V|VI],VOO),VO=VOO.
+
+
+eval_20(Eq,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
+ eval_args(Eq,RetType,Depth,Self,VI,VM),
+  ( VM\==VI -> eval_args(Eq,RetType,Depth,Self,[V|VM],VVO) ;
+    (eval_args(Eq,RetType,Depth,Self,V,VV), (V\==VV -> eval_args(Eq,RetType,Depth,Self,[VV|VI],VVO) ; VVO = [V|VI]))).
+
+eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- \+ is_list(X),!,do_expander(Eq,RetType,X,Y).
+
+eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eval_args(Eq,_ArgRetType,Depth,Self),VI,VO).
+
+eval_20(_,_,_,_,['echo',Value],Value):- !.
+eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  LET*
+% =================================================================
+% =================================================================
+% =================================================================
+
+    %eval_20(Eq,RetType,Depth2,Self,[Qw,X,Y],YO):- Qw == ('=='),!,
+    %  eval_args(X,XX),eval_args(Y,YY), !, as_tf(XX==YY,YO).
+
+
+    eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
+        expand_let_star(Lets,Body,NewLet),!,
+            eval_20(Eq,RetType,Depth,Self,NewLet,RetVal).
+
+
+
+expand_let_star(Lets,Body,Body):- Lets==[],!.
+expand_let_star([H|LetRest],Body,['let',V,E,NewBody]):-
+    is_list(H), H = [V,E], !,
+    expand_let_star(LetRest,Body,NewBody).
+
+eval_20(Eq,RetType,Depth,Self,X,RetVal):-
+    once(expand_eval(X,XX)),X\==XX,!,
+        %fbug(expand_eval(X,XX)),
+        eval_20(Eq,RetType,Depth,Self,XX,RetVal).
+
+expand_eval(X,Y):- \+ is_list(X),!, X=Y.
+expand_eval([H|A],[H|AA]):- \+ ground(H),!,maplist(expand_eval,A,AA).
+expand_eval(['let*',Lets,Body],NewBody):- expand_let_star(Lets,Body,NewBody),!.
+expand_eval([H|A],[H|AA]):- maplist(expand_eval,A,AA).
+
+% =================================================================
+% =================================================================
+% =================================================================

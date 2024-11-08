@@ -1,0 +1,426 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<style> 
+.tag_searched { display: inline-block; font-size: 18pt; font-weight: bold; font-style: italic } 
+.tag_rs { display: inline-block; font-size: 18pt; margin-left: 7px; } 
+.leftpar_rs { color: #C64F00 ; font-weight: bold } 
+.rightpar_rs { color: #C64F00 ; font-weight: bold } 
+.tag_py { display: inline-block ; font-size: 18pt; margin-left: 7px;} 
+.leftpar_py { color: #008600 ; font-weight: bold } 
+.rightpar_py { color: #008600 ; font-weight: bold } 
+.tag_pl { display: inline-block ; font-size: 18pt; margin-left: 7px;} 
+.leftpar_pl { color: #C0C0C0 ;  } 
+.rightpar_pl { color: #C0C0C0 ;  } 
+.tag_metta { display: inline-block ; font-size: 18pt; margin-left: 7px; } 
+.leftpar_metta { color: #E2E2E2 ;  } 
+.rightpar_metta { color: #E2E2E2 ;  } 
+.big_tag { display: inline-block ; font-size: 12pt; font-style: italic ; background-color: #737373; padding: 6px; border-radius: 4px; border: 0px solid #000000; } 
+.enlarged { display: inline-block ; font-size: 14pt; font-style: italic ; color: #E7E7E7;   } 
+.tag_arrow { display: inline-block ; font-size: 14pt; font-style: italic ; color: #FF4040;   } 
+.tag_operator { display: inline-block ; font-size: 16pt;  color: #FFFFFF;   } 
+.metta_clause { background-color: #434343; padding: 8px; border-radius: 9px; font-size: 10pt; color: #ADADAD; margin: 8px; } 
+.tag_parenthesis0 { display: inline-block ;color: #000000 ; font-size: 20pt; font-weight: bold  } 
+.tag_parenthesis1 { display: inline-block ;color: #FFFF40 ; font-size: 14pt; } 
+.tag_parenthesis2 { display: inline-block ;color: #A9FFFE ; font-size: 14pt; } 
+.tag_parenthesis3 { display: inline-block ;color: #13FF13 ; font-size: 14pt; } 
+.tag_parenthesis4 { display: inline-block ;color: #FFC0FF ; font-size: 14pt; } 
+.tag_parenthesis5 { display: inline-block ;color: #80FFFF ; font-size: 14pt; } 
+.tag_parenthesis6 { display: inline-block ;color:  #ECECEC; font-size: 14pt; } 
+
+</style> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+ Time 1727698126.357399 </H2> 
+hyperon_source_dir <b>../../../hyperon-experimental/lib/src/ </b> <br>
+prolog_source_dir <b>../canary/ </b> <br>
+metta_std_lib_dir <b>../canary/ </b> <br>
+search_metta_files_dir <b>../../tests/ </b> <br>
+search_metta_files_else_where_dir <b>../../tests/extended_compat/metta-examples/ </b> <br>
+examples_source_dir <b>../../../metta-examples-main/ </b> <br>
+python_source_dir <b>../../../hyperon-experimental/python/ </b> <br>
+metta_python_source_dir <b>../../../hyperon-experimental/python/ </b> <br>
+<br> &nbsp; <br> <table border=1 cellspacing=0 style="border: 1px solid black; min-width:600px; max-width:900px; margin: auto"><tr><th style="text-align:left"> </th><th style="text-align:left">function</th><th style="text-align:left">Rust</th><th style="text-align:left">Prolog</th><th style="text-align:left">Occurs in metta-files</th><th style="text-align:left">Has metta-files</th><th style="text-align:left">Has @doc</th><th style="text-align:left">@doc TYPE decl</th><th style="text-align:left">Num of metta-test</th><th style="text-align:left">Has metta-testf</th></tr></table>1 ../../../hyperon-experimental/python/tests/test_run_metta.py :22<pre>        self.assertEqualMettaRunnerResults(metta.run(program),
+            [metta.parse_all('red  green  blue'), metta.parse_all('5')])</pre> <br>2 ../../../hyperon-experimental/python/tests/test_run_metta.py :34<pre>        self.assertEqual('[[B]]', repr(result))</pre> <br>3 ../../../hyperon-experimental/python/tests/test_run_metta.py :50<pre>        self.assertEqual('[[(Cons a1 (Cons a2 (Cons b1 (Cons b2 Nil))))]]', repr(result))</pre> <br>4 ../../../hyperon-experimental/python/tests/test_run_metta.py :60<pre>        self.assertEqual('[[5]]', repr(result))</pre> <br>5 ../../../hyperon-experimental/python/tests/test_run_metta.py :69<pre>        self.assertEqual('[[1]]', repr(result))</pre> <br>6 ../../../hyperon-experimental/python/tests/test_pln_tv.py :12<pre>        metta.run('''
+                (= (min $a $b) (if (< $a $b) $a $b))
+                (= (s-tv (stv $s $c)) $s)
+                (= (c-tv (stv $s $c)) $c)
+                (= (stv (And $a $b))
+                   (stv (min (s-tv (stv $a)) (s-tv (stv $b)))
+                        (min (c-tv (stv $a)) (c-tv (stv $b)))))
+                (= (stv (P A)) (stv 0.5 0.8))
+                (= (stv (P B)) (stv 0.3 0.9))
+        ''')</pre> <br>7 ../../../hyperon-experimental/python/tests/test_pln_tv.py :23<pre>        metta.run('''
+                (: A Concept)
+                (: B Concept)
+                (: P Predicate)
+        ''')</pre> <br>8 ../../../hyperon-experimental/python/tests/test_pln_tv.py :28<pre>        self.assertEqualMettaRunnerResults(
+            metta.run('!(stv (And (P A) (P B)))'),
+            [metta.parse_all('(stv 0.3 0.8)')])</pre> <br>9 ../../../hyperon-experimental/python/tests/test_pln_tv.py :31<pre>        metta.run('''
+                (= (pln $expr) ($expr (stv $expr)))
+        ''')</pre> <br>10 ../../../hyperon-experimental/python/tests/test_pln_tv.py :38<pre>        self.assertEqualMettaRunnerResults(
+            metta.run('!(pln (And (P A) (P $x)))'),
+            [metta.parse_all('''
+                ((And (P A) (P A)) (stv 0.5 0.8))
+                ((And (P A) (P B)) (stv 0.3 0.8))
+            ''')])</pre> <br>11 ../../../hyperon-experimental/python/tests/test_environment.py :12<pre>        self.assertEqual(Environment.config_dir(), "/tmp/hyperon-test")</pre> <br>12 ../../../hyperon-experimental/python/tests/test_custom_space.py :76<pre>        self.assertEqual(kb.atom_count(), 2)</pre> <br>13 ../../../hyperon-experimental/python/tests/test_custom_space.py :77<pre>        self.assertEqual(kb.get_payload().test_attrib, "Test Space Payload Attrib")</pre> <br>14 ../../../hyperon-experimental/python/tests/test_custom_space.py :121<pre>        self.assertEqual(result_atom, space_atom)</pre> <br>15 ../../../hyperon-experimental/python/tests/test_custom_space.py :138<pre>        self.assertEqual([[S("B")]], result)</pre> <br>16 ../../../hyperon-experimental/python/tests/test_custom_space.py :150<pre>        self.assertEqual(metta.space().get_payload().test_attrib, "Test Space Payload Attrib")</pre> <br>17 ../../../hyperon-experimental/python/tests/test_custom_space.py :151<pre>        self.assertEqualMettaRunnerResults(metta.run("!(match &self (= key $val) $val)"),
+            [[S("val")]]
+        )</pre> <br>18 ../../../hyperon-experimental/python/tests/test_grounded_type.py :10<pre>        self.assertEqual(
+            metta.parse_single("+").get_grounded_type(),
+            metta.parse_single("*").get_grounded_type())</pre> <br>19 ../../../hyperon-experimental/python/tests/test_grounded_type.py :13<pre>        self.assertEqual(
+            metta.run("!(+ (* 1 4) 2)")[0][0].get_grounded_type(),
+            metta.parse_single("0").get_grounded_type())</pre> <br>20 ../../../hyperon-experimental/python/tests/test_grounded_type.py :16<pre>        self.assertEqual(
+            metta.run("!(or True False)")[0][0].get_grounded_type(),
+            metta.parse_single("False").get_grounded_type())</pre> <br>21 ../../../hyperon-experimental/python/tests/test_grounded_type.py :19<pre>        self.assertEqual(
+            metta.run("!(> (* 2 2) 1)")[0][0].get_grounded_type(),
+            metta.run("!(or True True)")[0][0].get_grounded_type())</pre> <br>22 ../../../hyperon-experimental/python/tests/test_grounded_type.py :24<pre>        self.assertEqual(
+            metta.run("!(untop)")[0][0],
+            metta.parse_single("()"))</pre> <br>23 ../../../hyperon-experimental/python/tests/test_grounded_type.py :28<pre>            metta.run("!(> 1 1)")[0][0].get_grounded_type(),</pre> <br>24 ../../../hyperon-experimental/python/tests/test_grounded_type.py :29<pre>            metta.run("!(+ 1 1)")[0][0].get_grounded_type())
+
+    def test_higher_func(self):
+        metta = MeTTa(env_builder=Environment.test_env())
+        metta.register_atom(</pre> <br>25 ../../../hyperon-experimental/python/tests/test_grounded_type.py :44<pre>        self.assertEqual(metta.run("!((curry_num + 1) 2)"),
+                         metta.run("! 3"))</pre> <br>26 ../../../hyperon-experimental/python/tests/test_grounded_type.py :52<pre>        v1 = metta.run("!(id_num (+ 2 2))")[0]</pre> <br>27 ../../../hyperon-experimental/python/tests/test_grounded_type.py :53<pre>        v2 = metta.run("! 4")[0]</pre> <br>28 ../../../hyperon-experimental/python/tests/test_grounded_type.py :54<pre>        v3 = metta.run("!(as_int (+ 2 2))")[0]</pre> <br>29 ../../../hyperon-experimental/python/tests/test_grounded_type.py :55<pre>        self.assertEqual(v1, v2)</pre> <br>30 ../../../hyperon-experimental/python/tests/test_grounded_type.py :56<pre>        self.assertEqual(v1[0].get_grounded_type(), v2[0].get_grounded_type())</pre> <br>31 ../../../hyperon-experimental/python/tests/test_grounded_type.py :59<pre>        self.assertEqual(metta.run("!(id_num untyp)"), [metta.parse_all("(id_num untyp)")])</pre> <br>32 ../../../hyperon-experimental/python/tests/test_grounded_type.py :61<pre>        metta.run("(: myAtom myType)")</pre> <br>33 ../../../hyperon-experimental/python/tests/test_grounded_type.py :62<pre>        self.assertEqual(metta.run('''
+            !(id_num myAtom)
+            !(id_num False)
+            '''),
+            [[E(S('Error'), S('myAtom'), S('BadType'))]])</pre> <br>34 ../../../hyperon-experimental/python/tests/test_grounded_type.py :72<pre>        self.assertEqual(metta.run('''
+            !(id_atom 1)
+            !(id_atom myAtom)
+            !(id_atom untyp)
+            ''', flat=True),
+            metta.parse_all('''
+            1
+            myAtom
+            untyp
+            '''))</pre> <br>35 ../../../hyperon-experimental/python/tests/test_grounded_type.py :83<pre>        # self.assertEqual(metta.run("!(id_atom (+ 1 1))"), [metta.parse_all("(+ 1 1)")])</pre> <br>36 ../../../hyperon-experimental/python/tests/test_grounded_type.py :89<pre>        self.assertEqual(metta.run('''
+            !(id_poly_w 1)
+            !(id_poly_w myAtom)
+            !(id_poly_w untyp)
+            !(id_poly_w (+ 1 1))
+            !(+ 1 (id_poly_w 2))
+            ''', flat=True),
+            metta.parse_all('''
+             1
+             myAtom
+             untyp
+             2
+             3
+            ''')
+        )</pre> <br>37 ../../../hyperon-experimental/python/tests/test_grounded_type.py :111<pre>        self.assertEqual(metta.run('''
+            !(id_undef 1)
+            !(id_undef False)
+            !(id_undef (+ 1 1))
+            ''', flat=True),
+            metta.parse_all("1 False 2"))</pre> <br>38 ../../../hyperon-experimental/python/tests/test_grounded_type.py :118<pre>        self.assertEqual(metta.run('''
+            !(id_undef myAtom)
+            !(id_undef untyp)
+            ''', flat=True),
+            metta.parse_all('''
+             (id_undef myAtom)
+             (id_undef untyp)
+            ''')
+        )</pre> <br>39 ../../../hyperon-experimental/python/tests/test_metta.py :11<pre>        self.assertEqual(atom, E(S('A'), S('B')))</pre> <br>40 ../../../hyperon-experimental/python/tests/test_metta.py :15<pre>        self.assertEqual(atom, E(S('C'), S('B')))</pre> <br>41 ../../../hyperon-experimental/python/tests/test_metta.py :19<pre>        self.assertEqual(atom, E(S('F'), S('B')))</pre> <br>42 ../../../hyperon-experimental/python/tests/test_metta.py :35<pre>        self.assertEqual([[S('T')]], result)</pre> <br>43 ../../../hyperon-experimental/python/tests/test_metta.py :51<pre>        self.assertEqual([S('T')], result)</pre> <br>44 ../../../hyperon-experimental/python/tests/test_metta.py :66<pre>        self.assertEqual(repr(results), "[[10]]")</pre> <br>45 ../../../hyperon-experimental/python/tests/test_metta.py :75<pre>        self.assertEqual([[E(S('Error'), ValueAtom('String'), S('BadType'))]], result)</pre> <br>46 ../../../hyperon-experimental/python/tests/test_metta.py :86<pre>            self.assertEqual(e.args[0], 'Unexpected end of expression')</pre> <br>47 ../../../hyperon-experimental/python/tests/test_metta.py :99<pre>        self.assertEqual([[]], result)</pre> <br>48 ../../../hyperon-experimental/python/tests/test_stdlib.py :11<pre>        self.assertEqualMettaRunnerResults(metta.run("!(repr (my atom))"),
+                                           [[ValueAtom("(my atom)")]])</pre> <br>49 ../../../hyperon-experimental/python/tests/test_stdlib.py :15<pre>        self.assertEqualMettaRunnerResults(metta.run("!(parse \"(my atom)\")"),
+                                           [[E(S("my"), S("atom"))]])</pre> <br>50 ../../../hyperon-experimental/python/tests/test_stdlib.py :19<pre>        #self.assertEqualMettaRunnerResults(metta.run('!(parse "$X")'),
+        #                                  [[(V("X"))]])</pre> <br>51 ../../../hyperon-experimental/python/tests/test_stdlib.py :22<pre>        self.assertEqualMettaRunnerResults(metta.run('!(parse "\\"A\\"")'),
+                                           [[(ValueAtom("A"))]])</pre> <br>52 ../../../hyperon-experimental/python/tests/test_stdlib.py :25<pre>        #self.assertEqualMettaRunnerResults(metta.run('!(parse "(func (Cons $x (Cons $xs $xss))) ")'),
+        #                                   [[E(S("func"), E(S("Cons"), V("x"), E(S("Cons"), V("xs"), V("xss"))))]])</pre> <br>53 ../../../hyperon-experimental/python/tests/test_stdlib.py :28<pre>        self.assertEqualMettaRunnerResults(metta.run('!(parse "(A 2 \'S\')")'),
+                                   [[E(S("A"), ValueAtom(2), ValueAtom(Char("S")))]])</pre> <br>54 ../../../hyperon-experimental/python/tests/test_stdlib.py :32<pre>        self.assertEqualMettaRunnerResults(metta.run('!(stringToChars "ABC")'),
+                                           [[E(ValueAtom(Char("A")), ValueAtom(Char("B")), ValueAtom(Char("C")))]])</pre> <br>55 ../../../hyperon-experimental/python/tests/test_stdlib.py :36<pre>        self.assertEqualMettaRunnerResults(metta.run("!(charsToString ('A' 'B' 'C'))"),
+                                           [[ValueAtom("ABC")]])</pre> <br>56 ../../../hyperon-experimental/python/tests/test_stdlib.py :44<pre>        metta.run('''
+                  ! (bind! &pow (py-atom math.pow (-> Number Number Number)))
+                  ! (bind! &math (py-atom math))
+        ''')</pre> <br>57 ../../../hyperon-experimental/python/tests/test_stdlib.py :48<pre>        self.assertEqual(metta.run('! (&pow 2 3)'),
+                         metta.run('! ((py-dot &math pow) 2 3)'))</pre> <br>58 ../../../hyperon-experimental/python/tests/test_stdlib.py :50<pre>        self.assertEqual([[ValueAtom(3)]],
+            metta.run('! ((py-dot &math floor) (py-dot &math pi))'))</pre> <br>59 ../../../hyperon-experimental/python/tests/test_stdlib.py :55<pre>        self.assertEqual([[ValueAtom('f')]],
+                         metta.run('! ((py-dot (py-atom "{5: \'f\'}") get) 5)'))</pre> <br>60 ../../../hyperon-experimental/python/tests/test_stdlib.py :58<pre>        self.assertEqual([[ValueAtom('5')]],
+                         metta.run('! ((py-atom str) 5)'))</pre> <br>61 ../../../hyperon-experimental/python/tests/test_stdlib.py :61<pre>        self.assertEqual([[ValueAtom("/usr")]],
+            metta.run('''
+                ! ((py-dot (py-atom os) path.commonpath)
+                   (py-atom "['/usr/lib', '/usr/local/lib']"))
+        '''))</pre> <br>62 ../../../hyperon-experimental/python/tests/test_stdlib.py :70<pre>        self.assertEqualMettaRunnerResults(metta.run("!(+ 1 2)"), [[ValueAtom(3)]])</pre> <br>63 ../../../hyperon-experimental/python/tests/test_stdlib.py :71<pre>        self.assertEqualMettaRunnerResults(metta.run("!(+ 5.0 -2.0)"), [[ValueAtom(3.0)]])</pre> <br>64 ../../../hyperon-experimental/python/tests/test_stdlib.py :72<pre>        self.assertEqualMettaRunnerResults(metta.run("!(+ 1.0e3 2.0e3)"), [[ValueAtom(3e3)]])</pre> <br>65 ../../../hyperon-experimental/python/tests/test_stdlib.py :73<pre>        self.assertEqualMettaRunnerResults(metta.run("!(+ 5e-3 -2e-3)"), [[ValueAtom(3e-3)]])</pre> <br>66 ../../../hyperon-experimental/python/tests/test_stdlib.py :77<pre>        metta.run('''(= (intent regex:"^Hello[[\.|!]]?$") (Intent Hello))
+                    (= (intent regex:"Good~morning.*[[\\.|!]]?") (Intent Hello))
+                    (= (intent $x) (empty))''')</pre> <br>67 ../../../hyperon-experimental/python/tests/test_stdlib.py :80<pre>        self.assertEqual(metta.run('!(intent "hello")', True), [E(S("Intent"), S("Hello"))])</pre> <br>68 ../../../hyperon-experimental/python/tests/test_stdlib.py :82<pre>        self.assertEqual(metta.run('!(intent "Good morning my friend!")', True),
+                                           [E(S("Intent"), S("Hello"))])</pre> <br>69 ../../../hyperon-experimental/python/tests/test_stdlib.py :85<pre>        self.assertEqual(metta.run('!(intent "Hi")', True), [])</pre> <br>70 ../../../hyperon-experimental/python/tests/test_stdlib.py :89<pre>        self.assertEqual(metta.run('!(py-list ())'), [[ValueAtom( [] )]])</pre> <br>71 ../../../hyperon-experimental/python/tests/test_stdlib.py :90<pre>        self.assertEqual(metta.run('!(py-tuple ())'), [[ValueAtom( () )]])</pre> <br>72 ../../../hyperon-experimental/python/tests/test_stdlib.py :91<pre>        self.assertEqual(metta.run('!(py-dict ())'), [[ValueAtom( {} )]])</pre> <br>73 ../../../hyperon-experimental/python/tests/test_stdlib.py :92<pre>        self.assertEqual(metta.run('!(py-tuple (1 (2 (3 "3")) (py-atom list)))'), [[ValueAtom((1,(2,(3, "3")), list))]])</pre> <br>74 ../../../hyperon-experimental/python/tests/test_stdlib.py :93<pre>        self.assertEqual(metta.run('!(py-list (1 2 (4.5 3)))'), [[ValueAtom( [1,2,[4.5,3]] )]])</pre> <br>75 ../../../hyperon-experimental/python/tests/test_stdlib.py :94<pre>        self.assertEqual(metta.run('!(py-list (1 2 (py-tuple (3 4))))'), [[ValueAtom( [1,2, (3,4)] )]])</pre> <br>76 ../../../hyperon-experimental/python/tests/test_stdlib.py :96<pre>        self.assertEqual(metta.run('!(py-dict ((a "b") ("b" "c")))'), [[ValueAtom( {"a":"b", "b":"c"} )]])</pre> <br>77 ../../../hyperon-experimental/python/tests/test_stdlib.py :98<pre>        self.assertEqual(str(metta.run('!(py-list (a b c))')[0][0].get_object().content[2]), "c")</pre> <br>78 ../../../hyperon-experimental/python/tests/test_stdlib.py :101<pre>        self.assertEqual(metta.run('!(py-chain (1 2 3 4))'), [[ValueAtom( 7 )]])</pre> <br>79 ../../../hyperon-experimental/python/tests/test_stdlib.py :104<pre>        self.assertRaises(Exception, metta.run('!(py-dict (("a" "b" "c") ("b" "c")))'))</pre> <br>80 ../../../hyperon-experimental/python/tests/test_stdlib.py :107<pre>        self.assertRaises(Exception, metta.run('!(py-dict (("a") ("b" "c")))'))</pre> <br>81 ../../../hyperon-experimental/python/tests/test_stdlib.py :110<pre>        self.assertRaises(Exception, metta.run('!(py-dict ("a" "b") ("b" "c"))'))</pre> <br>82 ../../../hyperon-experimental/python/tests/test_stdlib.py :113<pre>        self.assertRaises(Exception, metta.run('!(py-list 1 2)'))</pre> <br>83 ../../../hyperon-experimental/python/tests/test_stdlib.py :116<pre>        self.assertRaises(Exception, metta.run('!(py-list 1)'))</pre> <br>84 ../../../hyperon-experimental/python/tests/test_minecraft.py :42<pre>        metta.run('''
+            (= (wood) (spruce-wood))
+            (= (spruce-wood) (mine spruce-tree hand))
+
+            (= (four-planks) (craft four-planks inventory (wood)))
+            (= (pack $n planks) (if (> $n 0) (allof (four-planks) (pack (- $n 4) planks)) nop))
+
+            (= (crafting-table) (craft crafting-table inventory  (pack 4 planks)))
+
+            (= (stick) (craft stick inventory (pack 2 planks)))
+            (= (pack $n sticks) (if (> $n 0) (allof (stick) (pack (- $n 1) sticks)) nop))
+
+            (= (wooden-pickaxe) (craft wooden-pickaxe
+                           (crafting-table) (allof (pack 3 planks) (pack 2 sticks))))
+
+            (= (cobblestone) (mine cobble-ore (wooden-pickaxe)))
+            (= (pack $n cobblestones) (if (> $n 0) (allof (cobblestone) (pack (- $n 1) cobblestones)) nop))
+
+            (= (stone-pickaxe) (craft stone-pickaxe (crafting-table)
+                           (allof (pack 3 cobblestones) (pack 2 sticks))))
+        ''')</pre> <br>85 ../../../hyperon-experimental/python/tests/test_minecraft.py :65<pre>        metta.run('!(wooden-pickaxe)')</pre> <br>86 ../../../hyperon-experimental/python/tests/test_minecraft.py :77<pre>        metta.run('''
+            (= (can-be-mined diamond) True)
+            (= (can-be-made diamond) False)
+            (= (diamond mined-using iron-pickaxe) True)
+            (= (diamond mined-from diamond-ore) True)
+
+            (= (can-be-made iron-pickaxe) True)
+            (= (can-be-mined iron-pickaxe) False)
+            (= (iron-pickaxe made-from
+                (, stick stick iron-ingot iron-ingot iron-ingot)) True)
+            (= (iron-pickaxe made-at crafting-table) True)
+
+            (= (can-be-made crafting-table) True)
+            (= (can-be-mined crafting-table) False)
+            (= (crafting-table made-from (pack 4 plank)) True)
+            (= (crafting-table made-at inventory) True)
+
+            (= (can-be-made inventory) False)
+            (= (can-be-mined inventory) False)
+
+            (= (make $x) (if (and ($x made-from $comp) ($x made-at $tool))
+                             (, (get $tool) (get $comp) (do-make $x $tool $comp)) (empty)))
+
+            (= (mine $x) (if (and ($x mined-using $tool) ($x mined-from $source))
+                             (, (get $tool) (find $source) (do-mine $x $source $tool)) (empty)))
+</pre> <br>87 ../../../hyperon-experimental/python/tests/test_minecraft.py :107<pre>        metta.run('!(get diamond)')</pre> <br>88 ../../../hyperon-experimental/python/tests/test_examples.py :21<pre>        self.assertEqual(result, [Atoms.UNIT])</pre> <br>89 ../../../hyperon-experimental/python/tests/test_examples.py :24<pre>        self.assertEqual(repr(result), '[((py-dot &obj foo))]')</pre> <br>90 ../../../hyperon-experimental/python/tests/test_examples.py :31<pre>        self.assertEqualMettaRunnerResults(
+            metta.run('''
+             ! (&f 2 4 6)
+             ! (&f 0)
+             ! (&f (Kwargs (y 4)))
+             ! (&f 2 (Kwargs (z 1)))
+             ! (&f 0 (Kwargs (z 1) (y 1)))
+            '''),
+            [[ValueAtom(12)],
+             [ValueAtom(6)],
+             [ValueAtom(9)],
+             [ValueAtom(5)],
+             [ValueAtom(2)]]
+            )</pre> <br>91 ../../../hyperon-experimental/python/tests/test_examples.py :49<pre>        metta.run(
+        '''
+            (= (remove-st $var)
+               (match &self (state $var $y)
+                  (remove-atom &self (state $var $y))))
+            (= (change-st $var $value)
+               (superpose ((remove-st $var)
+                  (add-atom &self (state $var $value)))))
+            (= (get-st $var)
+               (match &self (state $var $value) $value))
+        ''')</pre> <br>92 ../../../hyperon-experimental/python/tests/test_examples.py :60<pre>        metta.run('!(change-st (name id-001) Fritz)')</pre> <br>93 ../../../hyperon-experimental/python/tests/test_examples.py :61<pre>        self.assertEqualMettaRunnerResults(metta.run('!(get-st (name id-001))'),
+                         [[S('Fritz')]])</pre> <br>94 ../../../hyperon-experimental/python/tests/test_examples.py :63<pre>        metta.run('!(change-st (name id-001) Sam)')</pre> <br>95 ../../../hyperon-experimental/python/tests/test_examples.py :64<pre>        self.assertEqualMettaRunnerResults(metta.run('!(get-st (name id-001))'),
+                         [[S('Sam')]])</pre> <br>96 ../../../hyperon-experimental/python/tests/test_examples.py :77<pre>        self.assertEqual(metta.run('! pglob')[0][0].get_object().value.get(), 10)</pre> <br>97 ../../../hyperon-experimental/python/tests/test_examples.py :82<pre>        metta.run('!((py-dot (Setter pglob 5) act))')</pre> <br>98 ../../../hyperon-experimental/python/tests/test_examples.py :83<pre>        self.assertEqual(pglob.get(), 5)</pre> <br>99 ../../../hyperon-experimental/python/tests/test_examples.py :84<pre>        self.assertEqual(metta.run('! pglob')[0][0].get_object().value.get(), 5)</pre> <br>100 ../../../hyperon-experimental/python/tests/test_examples.py :87<pre>        metta.run('!((py-dot (Setter ploc 5) let))')</pre> <br>101 ../../../hyperon-experimental/python/tests/test_examples.py :88<pre>        self.assertEqual(ploc, 10)</pre> <br>102 ../../../hyperon-experimental/python/tests/test_examples.py :89<pre>        self.assertEqual(metta.run('! ploc')[0][0].get_object().value, 10)</pre> <br>103 ../../../hyperon-experimental/python/tests/test_examples.py :97<pre>        self.assertEqual(t.get_children()[1].get_children()[1].get_object().value, 5)</pre> <br>104 ../../../hyperon-experimental/python/tests/test_examples.py :100<pre>        self.assertEqual(metta.run('! ploc')[0][0].get_object().value, 10)</pre> <br>105 ../../../hyperon-experimental/python/tests/test_examples.py :106<pre>        metta.run('!((py-dot (Setter ploca 5) let))')</pre> <br>106 ../../../hyperon-experimental/python/tests/test_examples.py :107<pre>        self.assertEqual(metta.run('! ploca')[0][0].get_object().value, 10)</pre> <br>107 ../../../hyperon-experimental/python/tests/test_examples.py :108<pre>        self.assertEqual(ploca.get_object().value, 10)</pre> <br>108 ../../../hyperon-experimental/python/tests/test_examples.py :110<pre>        metta.run('!((py-dot (SetAtom ploca 5) latom))')</pre> <br>109 ../../../hyperon-experimental/python/tests/test_examples.py :111<pre>        self.assertEqual(metta.run('! ploca')[0][0].get_object().value, 5)</pre> <br>110 ../../../hyperon-experimental/python/tests/test_examples.py :112<pre>        self.assertEqual(ploca.get_object().value, 5)</pre> <br>111 ../../../hyperon-experimental/python/tests/test_examples.py :117<pre>        metta.run('''
+            (= (croaks Fritz) True)
+            (= (chirps Tweety) True)
+            (= (yellow Tweety) True)
+            (= (eats_flies Tweety) True)
+            (= (eats_flies Fritz) True)
+        ''')</pre> <br>112 ../../../hyperon-experimental/python/tests/test_examples.py :125<pre>        fritz_frog = metta.run('!(if (and (croaks $x) (eats_flies $x)) (= (frog $x) True) nop)')[0]</pre> <br>113 ../../../hyperon-experimental/python/tests/test_examples.py :126<pre>        self.assertEqual(metta.parse_all('(= (frog Fritz) True)'), fritz_frog)</pre> <br>114 ../../../hyperon-experimental/python/tests/test_examples.py :129<pre>        self.assertEqualMettaRunnerResults([metta.parse_all('(= (green Fritz) True)')],
+                metta.run('!(if (frog $x) (= (green $x) True) nop)'))</pre> <br>115 ../../../hyperon-experimental/python/tests/test_examples.py :135<pre>        metta.run('''
+           (= (: (apply\' $f $x) $r) (and (: $f (=> $a $r)) (: $x $a)))
+
+           (= (: reverse (=> String String)) True)
+           (= (: "Hello" String) True)
+        ''')</pre> <br>116 ../../../hyperon-experimental/python/tests/test_examples.py :142<pre>        output = metta.run('!(if (: (apply\' reverse "Hello") $t) $t Wrong)')</pre> <br>117 ../../../hyperon-experimental/python/tests/test_examples.py :143<pre>        self.assertEqualMettaRunnerResults(output, [[S('String')]])</pre> <br>118 ../../../hyperon-experimental/python/tests/test_examples.py :148<pre>        metta.run('''
+           (= (eq $x $x) True)
+           (= (plus Z $y) $y)
+           (= (plus (S $k) $y) (S (plus $k $y)))
+        ''')</pre> <br>119 ../../../hyperon-experimental/python/tests/test_examples.py :154<pre>        self.assertEqualMettaRunnerResults(metta.run('''
+            !(eq (+ 2 2) 4)
+            !(eq (+ 2 3) 4)
+            !(eq (plus Z $n) $n)
+            '''),
+            [[ValueAtom(True)],
+             metta.parse_all('(eq 5 4)'),
+             [ValueAtom(True)]
+            ]
+        )</pre> <br>120 ../../../hyperon-experimental/python/tests/test_examples.py :164<pre>        output = metta.run('!(eq (plus (S Z) $n) $n)')</pre> <br>121 ../../../hyperon-experimental/python/tests/test_examples.py :189<pre>        self.assertEqualMettaRunnerResults(metta1.run('!(inverse B)'), [[S('A')]])</pre> <br>122 ../../../hyperon-experimental/python/tests/test_examples.py :190<pre>        self.assertEqualMettaRunnerResults(metta2.run('!(find-in &space1 B)'), [[S('A')]])</pre> <br>123 ../../../hyperon-experimental/python/tests/test_examples.py :191<pre>        self.assertEqualMettaRunnerResults(metta2.run('!(find-in &self B)'), [[S('C')]])</pre> <br>124 ../../../hyperon-experimental/python/tests/test_examples.py :194<pre>        self.assertEqualMettaRunnerResults(metta2.run('!(borrow &space1 (inverse B))'), [[S('A')]])</pre> <br>125 ../../../hyperon-experimental/python/tests/test_examples.py :198<pre>        self.assertEqualMettaRunnerResults(metta2.run('!(borrow &space1 (how-it-works?))'), [[S('success')]])</pre> <br>126 ../../../hyperon-experimental/python/tests/test_examples.py :199<pre>        self.assertEqualMettaRunnerResults(metta1.run('!(how-it-works?)'), [[S('failure')]])</pre> <br>127 ../../../hyperon-experimental/python/tests/test_examples.py :203<pre>        metta.run('''
+            (= (:? $c)
+               (match &self (:= $c $t) $t))
+            (= (:? ($c $a))
+               (let $at (:? $a)
+                    (match &self (:= ($c $at) $t) $t)))
+            (= (:? ($c $a $b))
+               (let* (($at (:? $a))
+                      ($bt (:? $b)))
+                     (match &self (:= ($c $at $bt) $t) $t)))
+
+            (= (:check $c $t)
+               (match &self (:= $c $t) T))
+            (= (:check ($c $a) $t)
+               (let $at (:? $a)
+                    (match &self (:= ($c $at) $t) T)))
+            (= (:check ($c $a $b) $t)
+               (let* (($at (:? $a))
+                      ($bt (:? $b)))
+                     (match &self (:= ($c $at $bt) $t) T)))
+
+            (:= (= $t $t) Prop)
+
+            (:= Entity Prop)
+            (:= (Human Entity) Prop)
+            (:= Socrates Entity)</pre> <br>128 ../../../hyperon-experimental/python/tests/test_examples.py :244<pre>        self.assertEqualMettaRunnerResults(metta.run('''
+            !(:? (HumansAreMortal SocratesIsHuman))
+            !(:check (HumansAreMortal SocratesIsHuman) (Mortal Socrates))
+            !(:? (= SocratesIsMortal (HumansAreMortal SocratesIsHuman)))
+            !(:check (= (Mortal Plato) (Mortal Socrates)) Prop)
+            !(:check (= (Human Socrates) (Mortal Socrates)) Prop)
+            !(:? (GreenAndCroaksIsFrog SamIsGreen SamCroaks))
+            '''),
+            [[E(S('Mortal'), S('Socrates'))],
+             [S('T')],
+             [S('Prop')],
+             [S('T')],
+             [S('T')], # they are both of Prop type and can be equated
+             [E(S('Frog'), S('Sam'))]
+            ]
+        )</pre> <br>129 ../../../hyperon-experimental/python/tests/test_examples.py :261<pre>        self.assertEqualMettaRunnerResults(metta.run('''
+            !(:check (= SocratesIsHuman SocratesIsMortal) Prop)
+            !(:? (SocratesIsHuman (Human Socrates)))
+            !(:? (Human Time))
+            '''),
+            [[], [], []]
+        )</pre> <br>130 ../../../hyperon-experimental/python/tests/test_examples.py :272<pre>        # self.assertEqualMettaRunnerResults(metta.run("!(:? (HumansAreMortal (Human Time)))"),
+        #                                  [[]])</pre> <br>131 ../../../hyperon-experimental/python/tests/test_examples.py :279<pre>        metta.run('''
+            (= (:? $c)
+               (match &self (:: $c $t) $t))
+            (= (:? ($c $a))
+               (let $at (:? $a)
+                    (match &self (:: $c (-> $at $t)) $t)))
+            (= (:? ($c $a $b))
+               (let* (($at (:? $a))
+                      ($bt (:? $b)))
+                     (match &self (:: $c (-> $at $bt $t)) $t)))
+
+            (:: = (-> $t $t Type))
+
+            (:: Entity Type)
+            (:: Human (-> Entity Type))
+            (:: Socrates Entity)
+            (:: Plato Entity)
+            (:: Mortal (-> Entity Type))
+            (:: HumansAreMortal (-> (Human $t) (Mortal $t)))
+            (:: SocratesIsHuman (Human Socrates))
+            (:: SocratesIsMortal (Mortal Socrates))
+        ''')</pre> <br>132 ../../../hyperon-experimental/python/tests/test_examples.py :304<pre>        self.assertEqualMettaRunnerResults(metta.run('''
+            !(:? (Human Plato))
+            !(:? (Human Time))
+            !(:? (HumansAreMortal SocratesIsHuman))
+            !(:? (= SocratesIsMortal (HumansAreMortal SocratesIsHuman)))
+            !(:? (= Human Entity))
+            !(:? (= (Human Socrates) Plato))
+            !(:? (= SocratesIsHuman SocratesIsMortal))
+            !(:? (= (Human Socrates) (Human Plato)))
+            !(:? (= Human Mortal))
+            !(:? (= HumansAreMortal Mortal))
+            '''),
+            [[S('Type')],
+             [],
+             [E(S('Mortal'), S('Socrates'))],
+             [S('Type')],
+             [],
+             [],
+             [],
+             [S('Type')],
+             [S('Type')],
+             []
+            ]
+        )</pre> <br>133 ../../../hyperon-experimental/python/tests/test_examples.py :330<pre>        self.assertEqualMettaRunnerResults(metta.run("!(:? (HumansAreMortal (Human Socrates)))"), [[]])</pre> <br>134 ../../../hyperon-experimental/python/tests/test_examples.py :336<pre>        metta.run('''
+            (= (perform (visit $x)) (perform (lunch-order $x)))
+            (= (perform (visit $x)) (perform (health-check $x)))
+
+            (impl (is-achieved (visit $x))
+                (And (is-achieved (lunch-order $x)) (is-achieved (health-check $x))))
+
+            (= (achieve $goal)
+                (match &self (impl (is-achieved $goal)
+                                (And (is-achieved $subgoal1) (is-achieved $subgoal2)))
+                    (do $subgoal1 $subgoal2)))
+
+            (= (achieve (health-check Kim)) True)
+            (= (achieve (lunch-order Kim)) False)
+        ''')</pre> <br>135 ../../../hyperon-experimental/python/tests/test_examples.py :351<pre>        self.assertEqualMettaRunnerResults(metta.run('''
+            !(perform (visit Kim))
+            !(achieve (visit Kim))
+            '''),
+            [metta.parse_all('(perform (lunch-order Kim)) (perform (health-check Kim))'),
+             metta.parse_all('(do (lunch-order Kim) (health-check Kim))')]
+        )</pre> <br>136 ../../../hyperon-experimental/python/tests/test_examples.py :358<pre>        metta.run('''
+            (= (do $goal1 $goal2) (achieve $goal1))
+            (= (do $goal1 $goal2) (achieve $goal2))
+        ''')</pre> <br>137 ../../../hyperon-experimental/python/tests/test_examples.py :362<pre>        self.assertEqualMettaRunnerResults(metta.run('!(achieve (visit Kim))'),
+            [metta.parse_all('False True')])</pre> <br>138 ../../../hyperon-experimental/python/tests/test_examples.py :367<pre>        self.assertEqual(repr(metta.run("!('A')")), "[[('A')]]")</pre> <br>139 ../../../hyperon-experimental/python/tests/test_examples.py :368<pre>        self.assertEqual(repr(metta.run('!("A")')), '[[("A")]]')</pre> <br>140 ../../../hyperon-experimental/python/tests/test_examples.py :369<pre>        self.assertEqualMettaRunnerResults(metta.run("!(get-type 'A')"), [[S('Char')]])</pre> <br>141 ../../../hyperon-experimental/python/tests/test_examples.py :370<pre>        self.assertEqualMettaRunnerResults(metta.run('!(get-type "A")'), [[S('String')]])</pre> <br>142 ../../../hyperon-experimental/python/tests/test_common.py :53<pre>    def assertEqualMettaRunnerResults(self, left, right):</pre> <br>143 ../../../hyperon-experimental/python/tests/test_common.py :58<pre>        self.assertEqual(len(actual), len(expected),
+                "Actual and expected contains different number of atoms:" +
+                f"\n{actual}\n{expected}")</pre> <br>144 ../../../hyperon-experimental/python/tests/test_minelogy.py :113<pre>        self.assertEqual(repr(output),
+            '[(do-mine ((: stone type) (: stone variant)))]')</pre> <br>145 ../../../hyperon-experimental/python/tests/test_atom.py :8<pre>        self.assertEqual(S("a"), S("a"))</pre> <br>146 ../../../hyperon-experimental/python/tests/test_atom.py :12<pre>        self.assertEqual(str(S("a")), "a")</pre> <br>147 ../../../hyperon-experimental/python/tests/test_atom.py :15<pre>        self.assertEqual(S("a").get_metatype(), AtomKind.SYMBOL)</pre> <br>148 ../../../hyperon-experimental/python/tests/test_atom.py :18<pre>        self.assertEqual(S("a").get_name(), "a")</pre> <br>149 ../../../hyperon-experimental/python/tests/test_atom.py :21<pre>        self.assertEqual(S("Ð·Ð´ÑÐ°Ð²ÑÑÐ²ÑÐ¹ÑÐµ").get_name(), "Ð·Ð´ÑÐ°Ð²ÑÑÐ²ÑÐ¹ÑÐµ")</pre> <br>150 ../../../hyperon-experimental/python/tests/test_atom.py :24<pre>        self.assertEqual(V("x"), V("x"))</pre> <br>151 ../../../hyperon-experimental/python/tests/test_atom.py :28<pre>        self.assertEqual(str(V("x")), "$x")</pre> <br>152 ../../../hyperon-experimental/python/tests/test_atom.py :31<pre>        self.assertEqual(V("x").get_metatype(), AtomKind.VARIABLE)</pre> <br>153 ../../../hyperon-experimental/python/tests/test_atom.py :34<pre>        self.assertEqual(V("x").get_name(), "x")</pre> <br>154 ../../../hyperon-experimental/python/tests/test_atom.py :37<pre>        self.assertEqual(ValueAtom(1.0), ValueAtom(1.0))</pre> <br>155 ../../../hyperon-experimental/python/tests/test_atom.py :41<pre>        self.assertEqual(str(ValueAtom(1.0)), "1.0")</pre> <br>156 ../../../hyperon-experimental/python/tests/test_atom.py :42<pre>        self.assertEqual(str(ValueAtom("1.0")), '"1.0"')</pre> <br>157 ../../../hyperon-experimental/python/tests/test_atom.py :45<pre>        self.assertEqual(ValueAtom(1.0).get_metatype(), AtomKind.GROUNDED)</pre> <br>158 ../../../hyperon-experimental/python/tests/test_atom.py :49<pre>        self.assertEqual(atom.get_grounded_type(), S("Float"))</pre> <br>159 ../../../hyperon-experimental/python/tests/test_atom.py :54<pre>        self.assertEqual("Method copy should be implemented by grounded object",
+                        str(context.exception))</pre> <br>160 ../../../hyperon-experimental/python/tests/test_atom.py :58<pre>        # self.assertEqual(ValueAtom(1.0).get_object().execute(VecAtom(),
+            # VecAtom()), "1.0 is not executable")</pre> <br>161 ../../../hyperon-experimental/python/tests/test_atom.py :63<pre>        self.assertEqual(res, [ValueAtom(2.0)])</pre> <br>162 ../../../hyperon-experimental/python/tests/test_atom.py :66<pre>        self.assertEqual(E(S("+"), S("1"), S("2")),
+                E(S("+"), S("1"), S("2")))</pre> <br>163 ../../../hyperon-experimental/python/tests/test_atom.py :70<pre>        self.assertEqual(E(x2Atom, ValueAtom(1.0)),
+                E(x2Atom, ValueAtom(1.0)))</pre> <br>164 ../../../hyperon-experimental/python/tests/test_atom.py :74<pre>        self.assertEqual(str(E(x2Atom, ValueAtom(1.0))), "(*2 1.0)")</pre> <br>165 ../../../hyperon-experimental/python/tests/test_atom.py :77<pre>        self.assertEqual(E(x2Atom, ValueAtom(1.0)).get_metatype(), AtomKind.EXPR)</pre> <br>166 ../../../hyperon-experimental/python/tests/test_atom.py :80<pre>        self.assertEqual(E(x2Atom, ValueAtom(1.0)).get_children(),
+                [x2Atom, ValueAtom(1.0)])</pre> <br>167 ../../../hyperon-experimental/python/tests/test_atom.py :89<pre>        self.assertEqual(kb_a.get_atoms(), kb_b.get_atoms())</pre> <br>168 ../../../hyperon-experimental/python/tests/test_atom.py :90<pre>        self.assertEqual(kb_a, kb_c)</pre> <br>169 ../../../hyperon-experimental/python/tests/test_atom.py :96<pre>        self.assertEqual(interpret(space, x2), [ValueAtom(2)])</pre> <br>170 ../../../hyperon-experimental/python/tests/test_atom.py :105<pre>        self.assertEqual(interpret(space, E(Atoms.METTA, expr, AtomType.UNDEFINED, G(space))),
+                [E(S('Error'), expr, S('Grounded operation which is defined using unwrap=False should return atom instead of Python type'))])</pre> <br>171 ../../../hyperon-experimental/python/tests/test_atom.py :118<pre>        self.assertEqual(interpret(space, printExpr), [E()])</pre> <br>172 ../../../hyperon-experimental/python/tests/test_atom.py :124<pre>        self.assertEqual(interpret(space, expr),
+                [E(noReduceAtom, ValueAtom(1))])</pre> <br>173 ../../../hyperon-experimental/python/tests/test_atom.py :132<pre>        self.assertEqual(AtomKind.SYMBOL.name, str(result[0]['atom_type']))</pre> <br>174 ../../../hyperon-experimental/python/tests/test_atom.py :134<pre>        self.assertEqual(AtomKind.EXPR.name, str(result[0]['atom_type']))</pre> <br>175 ../../../hyperon-experimental/python/tests/test_atom.py :137<pre>        self.assertEqual(AtomKind.GROUNDED.name, str(result[0]['atom_type']))</pre> <br>176 ../../../hyperon-experimental/python/tests/test_atom.py :139<pre>        self.assertEqual(S("MatchableAtom").get_name(), str(result[0]['Z']))</pre> <br>177 ../../../hyperon-experimental/python/tests/test_extend.py :16<pre>        self.assertEqual(
+            metta.run('''
+              !(import! &self extension)
+              !(get-by-key &my-dict "A")
+              !(get-by-key &my-dict 6)
+            '''),
+            [[E()],
+             [ValueAtom(5)],
+             [ValueAtom('B')]])</pre> <br>178 ../../../hyperon-experimental/python/tests/test_extend.py :25<pre>        self.assertEqual(
+              metta.run('! &runner')[0][0].get_object().value, metta)</pre> <br>179 ../../../hyperon-experimental/python/tests/test_extend.py :35<pre>        self.assertEqual(
+            metta.run('''
+              !(import! &self ext_dir)
+              !(get-by-key &my-dict "A")
+              !(get-by-key &my-dict 6)
+            '''),
+            [[E()],
+             [ValueAtom(5)],
+             [ValueAtom('B')]])</pre> <br>180 ../../../hyperon-experimental/python/tests/test_extend.py :44<pre>        self.assertEqual(
+              metta.run('! &runner')[0][0].get_object().value, metta)</pre> <br>181 ../../../hyperon-experimental/python/tests/test_extend.py :55<pre>    #     self.assertEqual(
+    #         metta.run('''
+    #           !(import! &self ext_sub)
+    #           !(get-by-key &my-dict "A")
+    #           !(get-by-key &my-dict 6)
+    #         '''),
+    #         [[E()],
+    #          [ValueAtom(5)],
+    #          [ValueAtom('B')]])</pre> <br>182 ../../../hyperon-experimental/python/tests/test_extend.py :64<pre>    #     self.assertEqual(
+    #           metta.run('! &runner')[0][0].get_object().value, metta)</pre> <br>183 ../../../hyperon-experimental/python/tests/test_extend.py :72<pre>        self.assertEqual(
+            metta.run('''
+              !(import! &self ext_recursive:level-2:ext_nested)
+              !(get-by-key &my-dict "A")
+              !(get-by-key &my-dict 6)
+            '''),
+            [[E()],
+             [ValueAtom(5)],
+             [ValueAtom('B')]])</pre> <br>184 ../../../hyperon-experimental/python/tests/test_extend.py :81<pre>        self.assertEqual(
+              metta.run('! &runner')[0][0].get_object().value, metta)</pre> <br>185 ../../../hyperon-experimental/python/tests/test_extend.py :93<pre>        self.assertEqual(g_object, None)</pre> <br>186 ../../../hyperon-experimental/python/tests/test_extend.py :95<pre>        metta.run('''
+          !(import! &self extension)
+          !(set-global! 42)
+        ''')</pre> <br>187 ../../../hyperon-experimental/python/tests/test_extend.py :100<pre>        self.assertEqual(
+          metta.run('!(get-global)'),
+          metta.run('! 42'))</pre> <br>188 ../../../hyperon-experimental/python/tests/test_extend.py :106<pre>        self.assertEqual(g_object, 42)</pre> <br>189 ../../../hyperon-experimental/python/tests/test_extend.py :115<pre>        result = metta.run("!(import! &self error_pyext)")</pre> <br>190 ../../../hyperon-experimental/python/tests/test_extend.py :116<pre>        self.assertEqual(S('Error'), result[0][0].get_children()[0])</pre> <br>191 ../../../hyperon-experimental/python/tests/test_modules.py :24<pre>        self.assertEqual(result[0].get_object().content, 3.14159)</pre> <br>192 ../../../hyperon-experimental/python/tests/test_modules.py :28<pre>        result = metta.run("""
+            (three isprime)
+            !(match &self ($x isprime) $x)
+            !(include test_include)
+            !(match &self ($x isprime) $x)
+        """)</pre> <br>193 ../../../hyperon-experimental/python/tests/test_modules.py :37<pre>        result = metta.run("!(match &self ($x notprime) $x)")</pre> <br>194 ../../../hyperon-experimental/python/tests/test_modules.py :38<pre>        self.assertEqual(result[0], [S("six")])</pre> <br>195 ../../../hyperon-experimental/python/tests/test_grounding_space.py :54<pre>        self.assertEqual([[S("B")]], result)</pre> <br>196 ../../../hyperon-experimental/python/tests/test_load.py :15<pre>        metta.run(f'''
+            !(bind! &space (new-space))
+            !(load-ascii &space {test_file})
+        ''')</pre> <br>197 ../../../hyperon-experimental/python/tests/test_load.py :19<pre>        content = metta.run("!(match &space $x $x)")[0]</pre> <br>198 ../../../hyperon-experimental/python/tests/test_atom_type.py :29<pre>        self.assertEqual(get_atom_types(space, E(S("foo"), S("a"))), [S("B")])</pre> <br>199 ../../../hyperon-experimental/python/tests/test_atom_type.py :30<pre>        self.assertEqual(get_atom_types(space, E(S("foo"), S("b"))),
+                [])</pre> <br>200 ../../../hyperon-experimental/python/tests/test_atom_type.py :32<pre>        self.assertEqual(get_atom_types(space, S("foo")), [E(S("->"), S("A"), S("B"))])</pre> <br>201 ../../../hyperon-experimental/python/tests/test_bindings.py :26<pre>        #self.assertEqual(hp.bindings_to_str(bindings), "{  }")</pre> <br>202 ../../../hyperon-experimental/python/tests/test_bindings.py :33<pre>        self.assertEqual(bindings_as_str, "{ $x = y, $a = b }")</pre> <br>203 ../../../hyperon-experimental/python/tests/test_bindings.py :41<pre>            self.assertEqual(self.emptyBindings, cloned_empty)</pre> <br>204 ../../../hyperon-experimental/python/tests/test_bindings.py :45<pre>                self.assertEqual(self.bindings, cloned)</pre> <br>205 ../../../hyperon-experimental/python/tests/test_bindings.py :46<pre>                self.assertEqual(cloned, cloned_explicitly)</pre> <br>206 ../../../hyperon-experimental/python/tests/test_bindings.py :49<pre>        self.assertEqual(self.bindings, self.bindings)</pre> <br>207 ../../../hyperon-experimental/python/tests/test_bindings.py :50<pre>        self.assertEqual(self.emptyBindings, self.emptyBindings)</pre> <br>208 ../../../hyperon-experimental/python/tests/test_bindings.py :55<pre>        self.assertEqual(BindingsSet(self.emptyBindings), merged_empty)</pre> <br>209 ../../../hyperon-experimental/python/tests/test_bindings.py :59<pre>        self.assertEqual(merged_with_empty_rl, merged_with_empty_lr)</pre> <br>210 ../../../hyperon-experimental/python/tests/test_bindings.py :60<pre>        self.assertEqual(merged_with_empty_rl, BindingsSet(self.bindings))</pre> <br>211 ../../../hyperon-experimental/python/tests/test_bindings.py :63<pre>        self.assertEqual(merged_self, BindingsSet(self.bindings))</pre> <br>212 ../../../hyperon-experimental/python/tests/test_bindings.py :76<pre>        self.assertEqual(atom_expected, atom_resolved)</pre> <br>213 ../../../hyperon-experimental/python/tests/test_bindings.py :88<pre>            self.assertEqual(expected_name, x[0])</pre> <br>214 ../../../hyperon-experimental/python/tests/test_bindings.py :89<pre>            self.assertEqual(expected_atom, x[1])</pre> <br>215 ../../../hyperon-experimental/python/tests/test_bindings.py :110<pre>        self.assertEqual(set, no_longer_empty_set);</pre> <br>216 ../../../hyperon-experimental/python/tests/test_bindings.py :115<pre>        self.assertEqual(set, set_2)</pre> <br>217 ../../../hyperon-experimental/python/tests/test_bindings.py :118<pre>        self.assertEqual(set, cloned_set)</pre> <br>218 ../../../hyperon-experimental/python/tests/test_bindings.py :128<pre>        self.assertEqual(1, bindings_counter)</pre> <br>219 ../../../hyperon-experimental/python/tests/test_bindings.py :142<pre>        self.assertEqual(len(set_bindings_list), 1)</pre> <br>220 ../../../hyperon-experimental/python/tests/test_bindings.py :152<pre>        self.assertEqual(new_set, expected_bindings_set)</pre> <br>221 ../../../hyperon-experimental/python/tests/test_sexparser.py :26<pre>        self.assertEqual(leaf_node_types, expected_node_types)</pre> <br>222 ../../../hyperon-experimental/python/tests/test_sexparser.py :35<pre>            self.assertEqual(e.args[0], 'Unclosed String Literal')</pre> <br>223 ../../../hyperon-experimental/python/tests/test_sexparser.py :42<pre>            self.assertEqual(e.args[0], 'Unexpected end of expression')</pre> <br>224 ../../../hyperon-experimental/python/hyperon/metta.py :35<pre>        for result in metta.run(program):</pre> <br>225 ../../../hyperon-experimental/python/integration/test_torch.py :54<pre>            losses += [metta.run('''
+                ! (do-step-loss (loss-fn (classify &inputs) (get-labels &inputs)))
+            ''')[0][0].get_object().value]</pre> <br>226 ../../../hyperon-experimental/python/sandbox/resolve/resolve.py :26<pre>        runner = metta.run('! ' + runner_name)[0][0].get_object()</pre> <br>227 ../../../hyperon-experimental/python/sandbox/repl/metta_repl.py :81<pre>        runner = metta.run('! ' + runner_name)[0][0].get_object()</pre> <br> 

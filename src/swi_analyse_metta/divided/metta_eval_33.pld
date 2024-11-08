@@ -1,0 +1,68 @@
+   if_or_else(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted),
+      if_or_else(with_debug(eval_args,adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted),
+             if_or_else(More=Adjusted,
+                if_or_else((trace, throw(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted)))))))).
+
+
+
+eval_adjust_args2(Eq,_RetType,ResIn,ResOut,Depth,Self,[AE|More],[AE|Adjusted]):-
+   maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
+   ResIn = ResOut.
+
+
+must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):- \+ is_debugging(eval_args),!, eval_args(Eq,RetType,Depth,Self,More,Adjusted).
+must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):-
+   (eval_args(Eq,RetType,Depth,Self,More,Adjusted)*->true;
+      (with_debug(eval_args,eval_args(Eq,RetType,Depth,Self,More,Adjusted))*-> true;
+         (
+           %nl,writeq(eval_args(Eq,RetType,Depth,Self,More,Adjusted)),writeln('.'),
+             (More=Adjusted -> true ;
+                (trace, throw(must_eval_args(Eq,RetType,Depth,Self,More,Adjusted))))))).
+
+
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):- !,
+  subst_args_here(Eq,RetType,Depth,Self,PredDecl,Res).
+
+
+eval_maybe_subst(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
+  is_rust_operation([H|PredDecl]),!, % run
+  must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
+  nop(write_src(res(Res))))).
+
+eval_maybe_subst(_Eq,_RetType,_Dpth,_Slf,Res,Res):- nb_current(eval_maybe_subst,false),!.
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
+  locally(nb_setval(eval_maybe_subst,false),
+   finish_eval(Eq,RetType,Depth,Self,PredDecl,Res)).
+
+:- nb_setval(eval_maybe_subst,true).
+/*
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
+   if_or_else((finish_eval(Eq,RetType,Depth,Self,PredDecl,Res),
+       PredDec\=@=Res),
+       subst_args(Eq,RetType,Depth,Self,PredDecl,Res)).
+*/
+
+/*
+eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
+  Do_more_defs = do_more_defs(true),
+  clause(eval_80(Eq,RetType,Depth,Self,PredDecl,Res),Body),
+  Do_more_defs == do_more_defs(true),
+  call_ndet(Body,DET),
+  nb_setarg(1,Do_more_defs,false),
+ (DET==true -> ! ; true).
+*/
+% =================================================================
+% =================================================================
+% =================================================================
+% inherited by system
+% =================================================================
+% =================================================================
+% =================================================================
+is_system_pred(S):- atom(S),atom_concat(_,'!',S).
+is_system_pred(S):- atom(S),atom_concat(_,'-fn',S).
+is_system_pred(S):- atom(S),atom_concat(_,'-p',S).
+%is_system_pred(S):- atom(S),upcase_symbol(S,U),downcase_symbol(S,U).
+
+% eval_80/6: Evaluates a Python function call within MeTTa.
+% Parameters:
+% - Eq: denotes get-type, match, or interpret call.

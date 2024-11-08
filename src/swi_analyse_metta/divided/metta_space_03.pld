@@ -1,0 +1,67 @@
+    dout(space,['type-method',Type,Method]),
+    call(Method,SpaceNameOrInstance,Atom).
+% Remove Atom
+'remove-atom'(Environment, AtomDeclaration, Result):- eval_args(['remove-atom', Environment, AtomDeclaration], Result).
+
+% Add an atom to the space
+'replace-atom'(SpaceNameOrInstance, Atom, New) :-
+    dout(space,['replace-atom',SpaceNameOrInstance, Atom, New]),
+    space_type_method(Type,replace_atom,Method), call(Type,SpaceNameOrInstance),!,
+    dout(space,['type-method',Type,Method]),
+    call(Method,SpaceNameOrInstance,Atom, New).
+% Replace Atom
+'atom-replace'(Environment, OldAtom, NewAtom, Result):- eval_args(['atom-replace', Environment, OldAtom, NewAtom], Result).
+
+% Count atoms in a space
+'atom-count'(SpaceNameOrInstance, Count) :-
+    dout(space,['atom-count',SpaceNameOrInstance]),
+    space_type_method(Type,atom_count,Method), call(Type,SpaceNameOrInstance),!,
+    call(Method,SpaceNameOrInstance,Count),
+    dout(space,['type-method-result',Type,Method,Count]).
+% Count Atoms
+'atom-count'(Environment, Count):- eval_args(['atom-count', Environment], Count).
+
+% Fetch all atoms from a space
+'get-atoms'(SpaceNameOrInstance, AtomsL) :-
+    dout(space,['get-atoms',SpaceNameOrInstance]),
+    space_type_method(Type,get_atoms,Method), call(Type,SpaceNameOrInstance),!,
+    call(Method,SpaceNameOrInstance, AtomsL),
+    %dout(space,['type-method-result',Type,Method,Count]).
+    %length(AtomsL,Count),
+    true.
+% Get Atoms
+'get-atoms'(Environment, Atoms):- eval_args(['get-atoms', Environment], Atoms).
+
+% Iterate all atoms from a space
+'atoms_iter'(SpaceNameOrInstance, Iter) :-
+    dout(space,['atoms_iter',SpaceNameOrInstance]),
+    space_type_method(Type,atoms_iter,Method), call(Type,SpaceNameOrInstance),!,
+    call(Method,SpaceNameOrInstance, Iter),
+    dout(space,['type-method-result',Type,Method,Iter]).
+
+% Match all atoms from a space
+'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
+    space_type_method(Type,atoms_match,Method), call(Type,SpaceNameOrInstance),!,
+    call(Method,SpaceNameOrInstance, Atoms, Template, Else),
+    dout(space,['type-method-result',Type,Method,Atoms, Template, Else]).
+
+
+% Query all atoms from a space
+'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
+    space_type_method(Type,query,Method), call(Type,SpaceNameOrInstance),!,
+    call(Method,SpaceNameOrInstance, QueryAtom, Result),
+    dout(space,['type-method-result',Type,Method,Result]).
+
+
+subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
+    dout(space,[subst_pattern_template,SpaceNameOrInstance, Pattern, Template]),
+    'atoms_match'(SpaceNameOrInstance, Pattern, Template, []).
+
+/*
+space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOrInstance),!,
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    call_metta(Space,Query,Vars).
+*/ :- dynamic(was_asserted_space/1).
+
+was_asserted_space('&self').
+was_asserted_space('&stdlib').

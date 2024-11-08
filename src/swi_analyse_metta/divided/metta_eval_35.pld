@@ -1,0 +1,96 @@
+   account_needs(NP1,Needs,Args,More).
+
+:- nodebug(metta(call)).
+allow_host_functions.
+
+s2ps(S,P):- S=='Nil',!,P=[].
+s2ps(S,P):- \+ is_list(S),!,P=S.
+s2ps([F|S],P):- atom(F),maplist(s2ps,S,SS),join_s2ps(F,SS,P),!.
+s2ps(S,S):-!.
+join_s2ps('Cons',[H,T],[H|T]):-!.
+join_s2ps(F,Args,P):-atom(F),P=..[F|Args].
+
+eval_call(S,TF):-
+  s2ps(S,P), !,
+  fbug(eval_call(P,'$VAR'('TF'))),as_tf(P,TF).
+
+eval_call_fn(S,R):-
+  s2ps(S,P), !,
+  fbug(eval_call_fn(P,'$VAR'('R'))),as_tf(call(P,R),TF),TF\=='False'.
+
+% function inherited from system
+eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
+  is_system_pred(AE),
+  length([AE|More],Len),
+  is_syspred(AE,Len,Pred),
+  \+ (symbol(AE), symbol_concat(_,'-p',AE)), % thus maybe -fn or !
+  %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
+  %adjust_args(Depth,Self,AE,More,Adjusted),!,
+  %Len1 is Len+1,
+  %current_predicate(Pred/Len1),
+  maplist(as_prolog,More,Adjusted),
+  append(Adjusted,[Res],Args),!,
+  if_trace(host;prolog,print_tree(apply(Pred,Args))),
+  efbug(show_call,catch_warn(apply(Pred,Args))),
+  check_returnval(Eq,RetType,Res).
+
+% user defined function
+%eval_20(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
+ %  fake_notrace(is_user_defined_head(Self,H)),!,
+ %  eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
+
+/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-
+    eval_defn(Eq,RetType,Depth,Self,PredDecl,Res).
+
+eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
+    subst_args_h(Eq,RetType,Depth,Self,PredDecl,Res).
+*/
+
+
+
+:- if( \+  current_predicate( check_returnval / 3 )).
+check_returnval(_,_RetType,_TF).
+:- endif.
+
+:- if( \+  current_predicate( adjust_args / 5 )).
+adjust_args(_Depth,_Self,_V,VI,VI).
+:- endif.
+
+
+last_element(T,E):- \+ compound(T),!,E=T.
+last_element(T,E):- is_list(T),last(T,L),last_element(L,E),!.
+last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
+
+
+
+
+catch_warn(G):- (catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
+catch_nowarn(G):- (catch_err(G,error(_,_),fail)).
+
+
+% less Macro-ey Functions
+
+%Metta
+as_nop([]).
+%mettalog
+%as_nop('Empty').
+
+as_nop(G,NoResult):-  G\=[_|_], rtrace_on_failure(G),!,
+  as_nop(NoResult).
+as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
+as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
+%eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
+%eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
+
+is_assignment(V):- \+ atom(V),!, fail.
+is_assignment('is'). is_assignment('is!').
+%is_assignment('=').
+%is_assignment('==').
+%is_assignment('=:=').  is_assignment(':=').
+
+eval_selfless(_Eq,_RetType,_Depth,_Self,E,R):-  eval_selfless_0(E,R).
+eval_selfless(E,R):-  eval_selfless_0(E,R).
+
+eval_selfless_0([F|_],_):- var(F),!,fail.
+eval_selfless_0([F,X,XY],TF):- is_assignment(F),  fake_notrace(args_to_mathlib([X,XY],Lib)),!,eval_selfless3(Lib,['=',X,XY],TF).
+eval_selfless_0([F|XY],TF):- eval_selfless_1([F|XY],TF),!.

@@ -1,0 +1,63 @@
+  show_cvts(Head:-Body).
+
+% 'print_metta_clause0' rule prints metta clauses based on the body.
+% It transforms the body to a list, if needed, and prints it in a sequential form.
+print_metta_clause0(Head,Body):- Body == true,!, pp_metta([=,Head,'True']).
+print_metta_clause0(Head,Body):- Body == false,!, pp_metta([=,Head,'False']).
+print_metta_clause0(Head,Body):- conjuncts_to_list(Body,List), into_sequential([':-'],List,SP), pp_metta([=,Head,SP]).
+
+
+
+% =========================================
+%  STERM -> PTERM
+% =========================================
+
+iz_exact_symbol(N,_):- \+ atom(N),!,fail.
+iz_exact_symbol(N,P):- nonvar(P),!,iz_exact_symbol(N,PP),zalwayz(P=PP).
+iz_exact_symbol(':-',':-').
+iz_exact_symbol('?-','?-').
+iz_exact_symbol('??',_).
+
+%:- baseKB:ensure_loaded(logicmoo('plarkc/logicmoo_i_cyc_rewriting')).
+
+maybe_varz(S,Name,'$VAR'(Name)):- S=='?',atom(Name),!.
+
+%% sexpr_s2p(Fn,?VAR, ?V) is det.
+%
+% S-expression Sterm Converted To Pterm.
+%
+sexpr_s2p(HB,P):- fail, compound(HB), HB=~ (H=B), compile_for_assert(H,B,Cl),
+   clause_to_code(Cl,P),!.
+sexpr_s2p(S,P):- sexpr_s2p(progn,1,S,P).
+
+
+clause_to_code(P,P):- is_ftVar(P),!.
+%clause_to_code(P:-True,P):- True == true,!.
+clause_to_code((H:-B),P):- B==true, !, combine_code(B,H,P).
+clause_to_code(P,P).
+
+sexpr_s2p(_Fn,_Nth,VAR,VAR):-is_ftVar(VAR),!.
+sexpr_s2p(_Fn,_Nth,S,P):- iz_exact_symbol(S,P),!.
+sexpr_s2p(_Fn,_Nth,'#'(S),P):- iz_exact_symbol(S,P),!.
+sexpr_s2p(_Fn,_Nth,VAR,'$VAR'(Name)):- atom(VAR),svar(VAR,Name),!.
+sexpr_s2p(Fn,Nth,S,P):- S==[], iz_fun_argz(Fn,Nth),!,P=S.
+
+%sexpr_s2p(Fn,Nth,S,P):- expects_type(Fn,Nth,Type),will_become_type(Type,S,P),!.
+
+sexpr_s2p(_Fn,_Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred), sexpr_s2p_arglist(F,1,SList,PList), !, P=..[Pred|PList].
+:- style_check(-singleton).
+
+sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- iz_fun_argz(Fn,Nth),!,sexpr_s2p(S,P), sexpr_s2p(Fn,Nth,SList,PList).
+sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- ( \+ atom(S) ; \+ is_list(SList)), !,sexpr_s2p(list(Fn),Nth,S,P), sexpr_s2p(list(Fn),Nth,SList,PList).
+sexpr_s2p(_Fn,_Nth,[S,STERM0],PTERM):- iz_quoter(S),sexpr_s2p_pre_list(S,0,STERM0,STERM), !,PTERM=..[S,STERM],!.
+sexpr_s2p(_Fn,_Nth,[S|SList],P):- atom(S), SList == [], compound_name_arity(P,S,0).
+% sexpr_s2p(Fn,Nth,List,PTERM):- append(Left,[S,Name|TERM],List),maybe_varz(S,Name,Var),!,append(Left,[Var|TERM],NewList), sexpr_s2p(Fn,Nth,NewList,PTERM).
+% sexpr_s2p(Fn,Nth,[S|TERM],dot_holds(PTERM)):- \+ (is_list(TERM)),sexpr_s2p_arglist(Fn,Nth,[S|TERM],PTERM),!.
+%sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- \+ atom(S),sexpr_s2p_arglist(Fn,Nth,[S|TERM],PTERM),!.
+/*
+sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
+   call_if_defined(common_logic_snark:iz_quantifier(S)),
+   zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),
+   PTERM =~ [S,Vars|PLIST])),!.
+*/
+% sexpr_s2p(progn,_,[S|TERM],PTERM):- S==AND,!,zalwayz((maplist(sexpr_s2p,TERM,PLIST),list_to_conjuncts(',',PLIST,PTERM))).

@@ -1,0 +1,85 @@
+disable_arc_expansion:-
+ forall(arc_term_expansions(Rule),forall(retract(Rule),true)),
+ set_prolog_flag(arc_term_expansion, false).
+
+:- multifile(goal_expansion/4).
+:- dynamic(goal_expansion/4).
+
+goal_expansion(G,I,GG,O):- nonvar(I),source_location(_,_),
+    compound(G),
+     (remove_must_det(MD)->remove_mds(MD,G,GG);(md_like(MD),maybe_expand_md(MD,G,GG))),I=O.
+
+
+
+
+
+
+
+
+
+
+
+/*
+:- export(plain_var/1).
+plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
+
+my_assertion(G):- call(G),!.
+my_assertion(G):- fbug(my_assertion(G)),writeq(goal(G)),nl,!,break.
+must_be_free(AllNew):- plain_var(AllNew),!.
+must_be_free(AllNew):- arcST,fbug(must_be_free(AllNew)),break,fail.
+must_be_nonvar(AllNew):- nonvar_or_ci(AllNew),!.
+must_be_nonvar(AllNew):- arcST,fbug(must_be_nonvar(AllNew)),break,fail.
+
+my_len(X,Y):- var(X),!,length(X,Y).
+my_len(X,Y):- is_list(X),!,length(X,Y).
+my_len(X,Y):- functor([_|_],F,A),functor(X,F,A),!,length(X,Y).
+my_len(X,Y):- arcST,!,ibreak.
+*/
+is_map(G):- is_vm_map(G),!.
+%arc_webui:- false.
+sort_safe(I,O):- catch(sort(I,O),_,I=O).
+my_append(A,B):- append(A,B).
+my_append(A,B,C):- append(A,B,C).
+with_tty_false(Goal):- with_set_stream(current_output,tty(false),Goal).
+with_tty_true(Goal):- with_set_stream(current_output,tty(true),Goal).
+
+% Count occurrences of G and store the result in N
+count_of(G,N):- findall_vset(G,G,S),length(S,N).
+findall_vset(T,G,S):- findall(T,G,L),variant_list_to_set(L,S).
+flatten_objects(Objs,ObjsO):- flatten([Objs],ObjsO),!.
+
+
+var_e(E,S):- E==S,!.
+var_e(E,S):- (nonvar(E);attvar(E)),!,E=@=S.
+
+variant_list_to_set([E|List],Out):- select(S,List,Rest),var_e(E,S),!, variant_list_to_set([E|Rest],Out).
+variant_list_to_set([E|List],[E|Out]):- !, variant_list_to_set(List,Out).
+variant_list_to_set(H,H).
+
+nb_subst(Obj,New,Old):-
+  get_setarg_p1(nb_setarg,Found,Obj,P1),Found=@=Old,
+  p1_call(P1,New),!,nb_subst(Obj,New,Old).
+nb_subst(_Obj,_New,_Old).
+
+system:any_arc_files(Some):- is_list(Some),!, Some\==[],maplist(any_arc_files,Some).
+system:any_arc_files(Some):- atom_contains(Some,'arc').
+
+:- thread_local(in_memo_cached/5).
+:- multifile(prolog:make_hook/2).
+:- dynamic(prolog:make_hook/2).
+prolog:make_hook(before, Some):- any_arc_files(Some), forall(muarc:clear_all_caches,true).
+
+:- multifile(muarc:clear_all_caches/0).
+:- dynamic(muarc:clear_all_caches/0).
+muarc:clear_all_caches:-  \+ luser_getval(extreme_caching,true), retractall(in_memo_cached(_,_,_,_,_)), fail.
+%arc_memoized(G):- !, call(G).
+
+arc_memoized(G):- compound(G),ground(G),functor(G,F,1),functor(C,F,1),!,arc_memoized(C),G=C,!.
+arc_memoized(G):-
+  copy_term(G,C,GT),
+  (Key = (C+GT)),
+  (in_memo_cached(Key,C,track,started,Info)->throw(already_memoizing(in_memo_cached(Key,C,track,started,Info))) ; true),
+  numbervars(Key,0,_,[attvar(bind),singletons(true)]),!,
+  setup_call_cleanup((asserta(in_memo_cached(Key,C,track,started,_),Started)),
+  catch(
+  (in_memo_cached(Key,C,GT,Found,AttGoals)*->(G=Found,maplist(call,AttGoals))

@@ -1,0 +1,68 @@
+    eval_call(NewS,_).
+
+max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  CONS/DECONS
+% =================================================================
+% =================================================================
+% =================================================================
+
+must_unify(A,A):-!.
+must_unify(A,B):- fail, throw('Error-last-form'(must_unify(A,B))). % @TODO
+
+% OLD
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
+eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
+% NEW
+eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
+eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
+
+
+eval_20(Eq,RetType,Depth,Self,['get-doc'|Args],Res):- !,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-get-doc'|Args],Res)).
+eval_20(Eq,RetType,Depth,Self,['help!'|Args],Res):-!,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-help!'|Args],Res)).
+
+with_all_spaces(Goal):-
+ locally(nb_setval(with_all_spaces,t),Goal).
+using_all_spaces:- nb_current(with_all_spaces,t).
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  if/If
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then,Else],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
+   (is_True(TF)
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+
+eval_20(Eq,RetType,Depth,Self,['if-equal',X,Y,Then,Else],Res):- !,
+
+   ( \+ \+ (eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),is_True(TF))
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+
+eval_20(Eq,RetType,Depth,Self,['if',Cond,Then,Else],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,Cond,TF),
+   (is_True(TF)
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+eval_20(Eq,RetType,Depth,Self,['If',Cond,Then,Else],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,Cond,TF),
+   (is_True(TF)
+     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
+     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+
+eval_20(Eq,RetType,Depth,Self,['If',Cond,Then],Res):- !,
+   eval_args(Eq,'Bool',Depth,Self,Cond,TF),

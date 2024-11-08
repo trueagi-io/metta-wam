@@ -26,9 +26,8 @@
 % James added
 :- use_module(library(prolog_xref), [xref_defined/3, xref_source/2]).
 
-:- discontiguous(lsp_hooks:handle_msg_hook/3).
-:- dynamic(lsp_hooks:handle_msg_hook/3).
-:- multifile(lsp_hooks:handle_msg_hook/3).
+:- include(lsp_metta_include).
+
 
 
 :- discontiguous(handle_completions/3).

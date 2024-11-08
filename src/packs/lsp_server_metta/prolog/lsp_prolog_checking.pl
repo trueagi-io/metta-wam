@@ -15,7 +15,7 @@ Module for checking Prolog source files for errors and warnings.
 :- use_module(library(debug), [debug/3]).
 :- use_module(library(lists), [member/2]).
 :- use_module(library(prolog_xref), [xref_clean/1, xref_source/1]).
-:- use_module(lsp_metta_utils, [clause_variable_positions/3]).
+:- use_module(lsp_prolog_utils, [clause_variable_positions/3]).
 
 :- dynamic message_hook/3.
 :- multifile message_hook/3.

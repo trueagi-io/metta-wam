@@ -1,0 +1,75 @@
+curried_arity([[F|T1]|T2],F,A):- nonvar(F),!,len_or_unbound(T1,A1),
+  (var(A1)->A=A1;(len_or_unbound(T2,A2),(var(A2)->A=A2;A is A1+A2))).
+curried_arity([F|T],F,A):-len_or_unbound(T,A).
+
+%curried_arity(_,_,_).
+
+
+len_or_unbound(T,A):- is_list(T),!,length(T,A).
+len_or_unbound(T,A):- integer(A),!,length(T,A).
+len_or_unbound(_,_).
+
+
+:-if(true).
+:- nodebug(metta('defn')).
+
+eval_maybe_defn(Eq,RetType,Depth,Self,X,Res):-
+   \+  \+ (curried_arity(X,F,A),
+           is_metta_type_constructor(Self,F,AA),
+           ( \+ AA\=A ),!,
+           if_trace(e,color_g_mesg('#772000',
+                 indentq2(Depth,defs_none_cached((F/A/AA)=X))))),!,
+   \+ fail_on_constructor,
+   eval_constructor(Eq,RetType,Depth,Self,X,Res).
+eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
+      trace_eval(eval_defn_choose_candidates(Eq,RetType),'defn',Depth,Self,X,Y).
+
+eval_constructor(Eq,RetType,Depth,Self,X,Res):-
+   eval_maybe_subst(Eq,RetType,Depth,Self,X,Res).
+
+
+eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
+    findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),!,
+    eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L).
+eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
+    eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,[]),!.
+
+multiple_typesigs(TypesSet):- is_list(TypesSet),
+   length(TypesSet,Len),Len>1,maplist(is_list,TypesSet),!.
+
+
+eval_defn_bodies(Eq,RetType,Depth,Self,X,Res,[]):- !,
+   \+ \+ ignore((curried_arity(X,F,A),assert(is_metta_type_constructor(Self,F,A)))),!,
+   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_none(X)))),!,
+   \+ fail_on_constructor,
+   eval_constructor(Eq,RetType,Depth,Self,X,Res).
+
+eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L):-
+  if_trace(e,maplist(print_templates(Depth,'   '),XXB0L)),!,
+  if_or_else((member(XX->B0,XXB0L), copy_term(XX->B0,USED),
+    eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED)),
+    eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
+
+
+eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED):-
+  X=XX, Y=B0, X\=@=B0,
+  if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(USED)))),
+  light_eval(Eq,RetType,Depth,Self,B0,Y),!.
+eval_defn_failure(_Eq,_RetType,Depth,_Self,X,Res):-
+  if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
+  !, \+ fail_missed_defn, X=Res.
+
+
+:-else.
+eval_maybe_defn(Eq,RetType,Depth,Self,X,Y):- can_be_ok(eval_maybe_defn,X),!,
+      trace_eval(eval_defn_choose_candidates(Eq,RetType),'defn',Depth,Self,X,Y).
+
+eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
+    findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
+    XXB0L\=[],!,
+        Depth2 is Depth-1,
+    if_trace((defn;metta_defn),
+        maplist(print_templates(Depth,'   '),XXB0L)),!,
+    member(XX->B0,XXB0L), X=XX, Y=B0, X\=@=B0,
+    %(X==B0 -> trace; eval_args(Eq,RetType,Depth,Self,B0,Y)).
+     light_eval(Depth2,Self,B0,Y).

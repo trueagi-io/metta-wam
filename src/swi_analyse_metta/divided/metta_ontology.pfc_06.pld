@@ -1,0 +1,37 @@
+properties('&corelib','predicate-arity', [function_definition, qhelp("Defines the arity of predicates/functions."), arity]).
+properties('&corelib','call-fn!', [dynamic_call, qhelp("Calls a function dynamically."), function]).
+properties('&corelib','pyr!', [integration, qhelp("Call python."), python]).
+properties('&corelib','call-string!', [evaluation, qhelp("Evaluates a string of Prolog code."), prolog_code]).
+
+% --- Miscellaneous and Newly Included Properties ---
+properties('&corelib','match', [pattern_matching, qhelp("Matches patterns within structures or data.")]).
+properties('&corelib','get-atoms', [data_retrieval, qhelp("Retrieves atoms from a structure.")]).
+properties('&corelib','new-space', [memory_allocation, qhelp("Allocates new space or memory region.")]).
+properties('&corelib','remove-atom', [manipulation, qhelp("Removes an atom from a structure.")]).
+properties('&corelib','add-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
+properties('&corelib',',', [logical_operation, qhelp("Conjunction; and."), conjunction]).
+properties('&corelib',';', [logical_operation, qhelp("Disjunction; or."), disjunction]).
+properties('&corelib','replace-atom', [manipulation, qhelp("Replaces an atom within a structure.")]).
+properties('&corelib','transfer!', [memory_management, qhelp("Transfers space content to another space.")]).
+
+% --- Symbolic Arithmetic and Type Conversion ---
+properties('&corelib','S', [arithmetic, qhelp("Successor in Peano arithmetic."), peano_arithmetic]).
+properties('&corelib','Z', [arithmetic, qhelp("Zero in Peano arithmetic."), peano_arithmetic]).
+properties('&corelib','fromNumber', [type_conversion, qhelp("Converts from a numeric type to another type.")]).
+properties('&corelib','coerce', [type_conversion, qhelp("Forces argument types for compatibility."), compatibility]).
+
+% --- Arithmetic Operations ---
+properties('&corelib','+', [arithmetic, qhelp("Addition."), addition]).
+properties('&corelib','-', [arithmetic, qhelp("Subtraction."), subtraction]).
+properties('&corelib','*', [arithmetic, qhelp("Multiplication."), multiplication]).
+properties('&corelib','mod', [arithmetic, qhelp("Modulus operation."), modulus]).
+properties('&corelib','<', [comparison, qhelp("Less than."), less_than]).
+properties('&corelib','>=', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
+properties('&corelib','=>', [comparison, qhelp("Greater than or equal to."), greater_than_or_equal]).
+properties('&corelib','<=', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
+properties('&corelib','=<', [comparison, qhelp("Less than or equal to."), less_than_or_equal]).
+properties('&corelib','>', [comparison, qhelp("Greater than."), greater_than]).
+
+% --- Logic Comparison and Evaluation Control ---
+properties('&corelib','=', [logic, qhelp("Equality/unification operator."), equality]).
+properties('&corelib','\\=', [logic, qhelp("Inequality test."), inequality]).

@@ -1,0 +1,92 @@
+%  fcEvalLHS(Body,(presently(Trigger),'$pt$'(presently(TriggerCopy),Body))),
+%  fail.
+
+trigger_trigger1(Trigger,Body) :-
+  copy_term(Trigger,TriggerCopy),
+  pfc_call(Trigger),
+  with_current_why(Trigger,fcEvalLHS(Body,(Trigger,'$pt$'(TriggerCopy,Body)))),
+  fail.
+
+
+% %  pfc_call(F) is nondet.
+%
+% pfc_call(F) is true iff F is a fact available for forward chaining.
+% Note that this has the side effect of catching unsupported facts and
+% assigning them support from God.
+%
+
+%pfc_call(F) :- var(F), !, pfc_call(F).
+pfc_call(P) :- var(P), !, pfcFact(P).
+pfc_call(P) :- \+ callable(P), throw(pfc_call(P)).
+pfc_call((!)) :-!,cut_c.
+pfc_call(true):-!.
+pfc_call((A->B;C)) :-!, pfc_call(A)->pfc_call(B);pfc_call(C).
+pfc_call((A*->B;C)) :-!, pfc_call(A)*->pfc_call(B);pfc_call(C).
+pfc_call((A->B)) :-!, pfc_call(A)->pfc_call(B).
+pfc_call((A*->B)) :-!, pfc_call(A)*->pfc_call(B).
+pfc_call((A,B)) :-!, pfc_call(A),pfc_call(B).
+pfc_call((A;B)) :-!, pfc_call(A);pfc_call(B).
+pfc_call(\+ (A)) :-!, \+ pfc_call(A).
+pfc_call((A is B)) :-!, A is B.
+pfc_call(clause(A,B)) :-!, clause(A,B).
+pfc_call(clause(A,B,Ref)) :-!, clause(A,B,Ref).
+% we really need to check for system predicates as well.
+% this is probably not advisable due to extreme inefficiency.
+pfc_call(P) :-
+  % trigger(?) any bc rules.
+  '$bt$'(P,Trigger),
+  pfcGetSupport('$bt$'(P,Trigger),S),
+  % @TODO REVIEW _U
+  fcEvalLHS(Trigger,S),
+  fail.
+%pfc_call(P) :- var(P), !, pfcFact(P).
+pfc_call(P) :- predicate_property(P,imported_from(system)), !, call(P).
+pfc_call(P) :- predicate_property(P,built_in), !, call(P).
+pfc_call(P) :- \+ predicate_property(P,_), functor(P,F,A), dynamic(F/A), !, call(P).
+pfc_call(P) :- \+ predicate_property(P,number_of_clauses(_)), !, call(P).
+pfc_call(P) :-
+  setup_call_cleanup(
+    nb_current('$pfc_current_choice',Was),
+    (prolog_current_choice(CP), push_current_choice(CP), clause(P,Condition), pfc_call(Condition)),
+    nb_setval('$pfc_current_choice',Was)).
+
+/*
+pfc_call(P) :-
+  clause(P,true)*-> true ; (clause(P,Condition), Condition\==true,
+     pfc_call(Condition)).
+*/
+
+% an action is undoable if there exists a method for undoing it.
+undoable(A) :- fcUndoMethod(A,_).
+
+pfc_cache_bc(P) :-
+  % trigger(?) any bc rules.
+  forall('$bt$'(P,Trigger),
+  forall(pfcGetSupport('$bt$'(P,Trigger),S),
+  % @TODO REVIEW _U
+  fcEvalLHS(Trigger,S))).
+
+
+% % 
+% %
+% %  defining fc rules
+% %
+
+% %  pfc_nf(+In,-Out) maps the LHR of a pfc rule In to one normal form
+% %  Out.  It also does certain optimizations.  Backtracking into this
+% %  predicate will produce additional clauses.
+
+
+pfc_nf(LHS,List) :-
+  pfc_nf1(LHS,List2),
+  pfc_nf_negations(List2,List).
+
+
+% %  pfc_nf1(+In,-Out) maps the LHR of a pfc rule In to one normal form
+% %  Out.  Backtracking into this predicate will produce additional clauses.
+
+% handle a variable.
+
+pfc_nf1(P,[P]) :- var(P), !.
+
+% these next two rules are here for upward compatibility and will go

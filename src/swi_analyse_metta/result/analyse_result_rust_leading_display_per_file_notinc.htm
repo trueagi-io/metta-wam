@@ -1,0 +1,285 @@
+
+<html> <head> 
+
+<script> 
+function open_div(xid){ document.getElementById(xid).style.display = 'block'; }
+function close_div(xid){ document.getElementById(xid).style.display = 'none'; }
+
+</script> 
+
+</head> 
+
+<body style="font-family: arial; font-size: 12pt; background-color: #E5E5E5"> 
+ <H2> 
+not_include_metta_files </H2> 
+ <H2> 
+display_per_file </H2> 
+ <H2> 
+rust_leading </H2> 
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> catalog_mods.rs</i></b> <b> &nbsp &nbsp &nbsp builtin_mods</b> &nbsp &nbsp &nbsp runner
+../../../hyperon-experimental/lib/src/metta/runner/builtin_mods
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/builtin_mods/catalog_mods.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('runnerbuiltin_modscatalog_mods.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('runnerbuiltin_modscatalog_mods.rs')" style="cursor:pointer">  Close </a>
+
+<div id="runnerbuiltin_modscatalog_mods.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">         tref.register_token(regex(r"<b>catalog-clear!</b>"), move |_| { catalog_clear_op.clone() }); catalog-clear!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>catalog-update!</b>"), move |_| { catalog_update_op.clone() }); catalog-update!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>catalog-list!</b>"), move |_| { catalog_list_op.clone() }); catalog-list!   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib_minimal.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib_minimal.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib_minimal.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib_minimal.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib_minimal.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">     tref.register_token(regex(r"<b>print-alternatives!</b>"), move |_| { print_alternatives_op.clone() }); print-alternatives!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">     tref.register_token(regex(r"<b>if-equal</b>"), move |_| { is_equivalent.clone() }); if-equal   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> stdlib.rs</i></b> <b> &nbsp &nbsp &nbsp runner</b> &nbsp &nbsp &nbsp metta
+../../../hyperon-experimental/lib/src/metta/runner
+<a onclick="prompt('copy path','../../../hyperon-experimental/lib/src/metta/runner/stdlib.rs');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('mettarunnerstdlib.rs')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('mettarunnerstdlib.rs')" style="cursor:pointer">  Close </a>
+
+<div id="mettarunnerstdlib.rs" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D89800">         tref.register_token(regex(r"<b>flip</b>"), move |_| { flip_op.clone() }); flip   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>True|False</b>"), True|False   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_fallible_token(regex(r"<b>[\-\+]?\d+(\.\d+)?[eE][\-\+]?\d+</b>"), [\-\+]?\d+(\.\d+)?[eE][\-\+]?\d+   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_fallible_token(regex(r"<b>[\-\+]?\d+\.\d+</b>"), [\-\+]?\d+\.\d+   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_fallible_token(regex(r"<b>[\-\+]?\d+</b>"), [\-\+]?\d+   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>&self</b>"), move |_| { self_atom.clone() }); &self   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>pragma!</b>"), move |_| { pragma_op.clone() }); pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>include</b>"), move |_| { include_op.clone() }); include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>import!</b>"), move |_| { import_op.clone() }); import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-type-space</b>"), move |_| { get_type_space_op.clone() }); get-type-space   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-type</b>"), move |_| { get_type_op.clone() }); get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>subtraction</b>"), move |_| { subtraction_op.clone() }); subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>intersection</b>"), move |_| { intersection_op.clone() }); intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>union</b>"), move |_| { union_op.clone() }); union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>unique</b>"), move |_| { unique_op.clone() }); unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>collapse</b>"), move |_| { collapse_op.clone() }); collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>case</b>"), move |_| { case_op.clone() }); case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>capture</b>"), move |_| { capture_op.clone() }); capture   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>sealed</b>"), move |_| { sealed_op.clone() }); sealed   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>print-mods!</b>"), move |_| { print_mods_op.clone() }); print-mods!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>mod-space!</b>"), move |_| { mod_space_op.clone() }); mod-space!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-metatype</b>"), move |_| { get_meta_type_op.clone() }); get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-state</b>"), move |_| { get_state_op.clone() }); get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>change-state!</b>"), move |_| { change_state_op.clone() }); change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>new-state</b>"), move |_| { new_state_op.clone() }); new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>let\*</b>"), move |_| { let_var_op.clone() }); let\*   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>trace!</b>"), move |_| { trace_op.clone() }); trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>format-args</b>"), move |_| { format_args_op.clone() }); format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>println!</b>"), move |_| { println_op.clone() }); println!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>cons-atom</b>"), move |_| { cons_atom_op.clone() }); cons-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>cdr-atom</b>"), move |_| { cdr_atom_op.clone() }); cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>car-atom</b>"), move |_| { car_atom_op.clone() }); car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>get-atoms</b>"), move |_| { get_atoms_op.clone() }); get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>remove-atom</b>"), move |_| { remove_atom_op.clone() }); remove-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>add-atom</b>"), move |_| { add_atom_op.clone() }); add-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>new-space</b>"), move |_| { new_space_op.clone() }); new-space   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>bind!</b>"), move |_| { bind_op.clone() }); bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>match</b>"), move |_| { match_op.clone() }); match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>git-module!</b>"), move |_| { git_module_op.clone() }); git-module!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D89800">         tref.register_token(regex(r"<b>register-module!</b>"), move |_| { register_module_op.clone() }); register-module!   <br> 
+ <br> &nbsp <br>
+ </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_eval.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_eval.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_eval.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_eval.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_eval.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>trace!</b>',A,B],C):- !, % writeln(trace(A)), trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,_RetType,Depth,Self,['<b>case</b>',A,[[Void,_]]],Res):- case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>case</b>',A,[]],NoResult):- !, case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>case</b>',A,CL|T],Res):- !, case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>collapse</b>',List],Res):-!, collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>if-equal</b>',X,Y,Then,Else],Res):- !, if-equal   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>car-atom</b>',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Dpth,_Slf,['<b>cdr-atom</b>',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>change-state!</b>',StateExpr, UpdatedValue], Ret):- !, change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>new-state</b>',UpdatedValue],StateMonad):- !, new-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-state</b>',StateExpr],Value):- !, get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Self],Type):- current_self(Self), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val,Other],Type):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,Depth,Self,['<b>get-type</b>',Val],Type):- is_list(Val), !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>get-type</b>',Val],TypeO):- !, get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(_Eq,_RetType,_Depth,_Self,['<b>get-metatype</b>',Val],TypeO):- !, get-metatype   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>format-args</b>',Format,Args],Result):- format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>format-args</b>',_Fmt,Args],_Result) :- format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>register-module!</b>',Dir],RetVal):- !, register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>register-module!</b>',Name,Dir],RetVal):- !, register-module!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Depth,Self,['<b>include</b>',File],RetVal):- !, include   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>import!</b>',Other,File],RetVal):- !, import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,_Depth,_Slf,['<b>bind!</b>',Other,['new-space']],RetVal):- atom(Other),!, bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>bind!</b>',Other,Expr],RetVal):- !, bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>pragma!</b>',Other,Expr],RetVal):- !, pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>unique</b>',Eval],RetVal):- !, unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>subtraction</b>',Eval1,Eval2],RetVal):- !, subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>intersection</b>',Eval1,Eval2],RetVal):- !, intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> eval_20(Eq,RetType,Depth,Self,['<b>union</b>',Eval1,Eval2],RetVal):- !, union   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_interp.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_interp.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_interp.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_interp.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_interp.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> '<b>car-atom</b>'(List, Head):- eval_H(['car-atom', List], Head). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>cdr-atom</b>'(List, Tail):- eval_H(['cdr-atom', List], Tail). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>collapse</b>'(List, CollapsedList):- eval_H(['collapse', List], CollapsedList). collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>import!</b>'(Environment, Filename, Namespace):- eval_H(['import!', Environment, Filename], Namespace). import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>pragma!</b>'(Environment, Expression, EvalValue):- eval_H(['pragma!', Environment, Expression], EvalValue). pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>bind!</b>'(Environment, Variable, Value):- eval_H(['bind!', Environment, Variable], Value). bind!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>get-type</b>'(Value, Type):- eval_H(['get-type', Value], Type). get-type   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>format-args</b>'(Format, Args, Result) :- eval_H(['format-args', Format, Args], Result). format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> '<b>flip</b>'(Bool) :- eval_H(['flip'], Bool). % see `flip` in metta_eval.pl as `eval_20/6` flip   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> metta_ontology.pfc.pl</i></b> <b> &nbsp &nbsp &nbsp canary</b> &nbsp &nbsp &nbsp ..
+../canary
+<a onclick="prompt('copy path','../canary/metta_ontology.pfc.pl');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('..canarymetta_ontology.pfc.pl')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('..canarymetta_ontology.pfc.pl')" style="cursor:pointer">  Close </a>
+
+<div id="..canarymetta_ontology.pfc.pl" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #D3D4FF"> properties('&corelib','<b>case</b>', [flow_control, qhelp("Case selection."), conditional_execution]). case   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>collapse</b>', [data_structures, qhelp("Collapses a structure."), manipulation]). collapse   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>pragma!</b>', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]). pragma!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>import!</b>', [module_import, qhelp("Imports an external module or file.")]). import!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>match</b>', [pattern_matching, qhelp("Matches patterns within structures or data.")]). match   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>get-atoms</b>', [data_retrieval, qhelp("Retrieves atoms from a structure.")]). get-atoms   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>new-space</b>', [memory_allocation, qhelp("Allocates new space or memory region.")]). new-space   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>remove-atom</b>', [manipulation, qhelp("Removes an atom from a structure.")]). remove-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>add-atom</b>', [manipulation, qhelp("Replaces an atom within a structure.")]). add-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>trace!</b>', [debugging, qhelp("Prints some debug information."), information_printing]). trace!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>println!</b>', [output, qhelp("Prints text with newline to output."), text_printing]). println!   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>change-state!</b>', [state_management, qhelp("Changes the state of a system component."), system_integration]). change-state!   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>get-state</b>', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]). get-state   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>car-atom</b>', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]). car-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>cdr-atom</b>', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]). cdr-atom   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>unique</b>', [nondet_sets, qhelp("Makes nondet results unique."), no_repeats_var]). unique   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>subtraction</b>', [nondet_sets, qhelp("It subtracts elements generated by Call2 from those generated by Call1."), lazy_subtraction]). subtraction   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>intersection</b>', [nondet_sets, qhelp("It gives the intersection duplicates are not removed ."), lazy_intersection]). intersection   <br> 
+ <br> &nbsp <br>
+ </div> <div style="color: #D3D4FF"> properties('&corelib','<b>union</b>', [nondet_sets, qhelp("It gives the union of 2 list ."), lazy_union ]). union   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>format-args</b>', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]). format-args   <br> 
+  &nbsp  &nbsp  </div> <div style="color: #D3D4FF"> properties('&corelib','<b>flip</b>', [random, qhelp("Return a random boolean."), random_boolean]). flip   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+
+<br> &nbsp <br> 
+
+<br> &nbsp <br> 
+
+
+
+*** <i><b> test_examples.py</i></b> <b> &nbsp &nbsp &nbsp tests</b> &nbsp &nbsp &nbsp python
+../../../hyperon-experimental/python/tests
+<a onclick="prompt('copy path','../../../hyperon-experimental/python/tests/test_examples.py');" style="cursor: pointer"> Fullpath  </a> 
+
+<br> <a onclick="open_div('pythonteststest_examples.py')"  style="cursor:pointer">  Open </a>
+
+ <a onclick="close_div('pythonteststest_examples.py')" style="cursor:pointer">  Close </a>
+
+<div id="pythonteststest_examples.py" style="border: 1px solid black; border-radius : 9px; padding: 5px; margin-left: 40px; max-width: 90% ; background-color: #676767; color: #E7E7E7 " >  
+ <div style="color: #A7E3A7">         self.assertEqualMettaRunnerResults(metta.run('!(<b>get-type</b> "A")'), [[S('String')]]) get-type   <br> 
+  &nbsp  &nbsp  </div>
+  </div>
+ Tags not found - uncovered <br>
+<b>  git-module!</b> <br> 
+<b>  cons-atom</b> <br> 
+<b>  let\*</b> <br> 
+<b>  mod-space!</b> <br> 
+<b>  print-mods!</b> <br> 
+<b>  sealed</b> <br> 
+<b>  capture</b> <br> 
+<b>  get-type-space</b> <br> 
+<b>  &self</b> <br> 
+<b>  [\-\+]?\d+</b> <br> 
+<b>  [\-\+]?\d+\.\d+</b> <br> 
+<b>  [\-\+]?\d+(\.\d+)?[eE][\-\+]?\d+</b> <br> 
+<b>  True|False</b> <br> 
+<b>  print-alternatives!</b> <br> 
+<b>  catalog-list!</b> <br> 
+<b>  catalog-update!</b> <br> 
+<b>  catalog-clear!</b> <br> 

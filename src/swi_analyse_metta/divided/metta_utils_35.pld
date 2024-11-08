@@ -1,0 +1,65 @@
+wqs1(cc(C,N)):- N\==0,attvar(C), get_attrs(C,PC), !, wqs(ccc(PC,N)).
+wqs1(cc(C,N)):- N\==0,var(C), sformat(PC,"~p",[C]), !, wqs(ccc(PC,N)).
+wqs1(cc(C,N)):- \+ arg_string(C), wots_hs(S,color_print(C,C)), wqs(cc(S,N)).
+wqs1(color_print(C,X)):- is_color(C), !, write_nbsp, color_print(C,X).
+wqs1(color_print(C,X)):- \+ plain_var(C), !, write_nbsp, color_print(C,X).
+wqs1(X):- into_f_arg1(X,_,Arg),is_gridoid(Arg),area_or_len(Arg,Area),Area<5,writeq(X),!.
+% wqs1(C):- callable(C), is_wqs(C),wots_vs(S,catch(C,_,fail)),write((S)).
+wqs1(X):- is_gridoid_arg1(X), print_gridoid_arg1(X).
+
+into_f_arg1(X,F,Arg):- compound(X), compound_name_arguments(X,F,[Arg]), compound(Arg).
+
+is_gridoid_arg1(X):- into_f_arg1(X,_F,Arg),is_gridoid(Arg).
+print_gridoid_arg1(X):- into_f_arg1(X,F,Arg),print_gridoid_arg1(F,Arg).
+
+print_gridoid_arg1(F,Arg):- \+ wants_html,!, wots_vs(VS,wqs(Arg)), writeq(F),write('(`'),!, print_with_pad(write(VS)),write('`)').
+print_gridoid_arg1(F,Arg):- wots_vs(VS,wqs(Arg)),
+ with_tag_style(span,"display: inline; white-space: nowrap",(writeq(F),write('({'),!,write(VS),write('})'))).
+
+
+nl_needed(N):- line_position(current_output,L1),L1>=N.
+
+nl_now :- wants_html,!,nl_if_needed_ansi.
+nl_now :- nl.
+
+ansi_in_pre:- current_predicate(in_pre/0),in_pre.
+nl_if_needed :- ansi_main,!, format('~N').
+nl_if_needed :- ansi_in_pre,ignore((nl_needed(11),write('<br/>'))),!.
+nl_if_needed :- wants_html,!,ignore((nl_needed(11),write('<br/>\n'))).
+nl_if_needed :- format('~N').
+nl_if_needed_ansi :- \+ ansi_main, wants_html,!.
+nl_if_needed_ansi :- nl_if_needed.
+
+write_nbsp:- ansi_main,!,write(' ').
+write_nbsp:- wants_html,!,write('&nbsp;').
+write_nbsp:- write(' ').
+
+is_breaker(P):- compound(P),functor(P,_,A), A>=3.
+
+last_f(H,F):- \+ compound(H),data_type(H,F).
+last_f(H,F/A):- compound(H),!,functor(H,F,A).
+
+need_nl(_,_):- line_position(current_output,L1),L1<40,!.
+need_nl(_,_):- line_position(current_output,L1),L1>160,!,nl_if_needed.
+need_nl(H0,[H1,H2|_]):- H1\=cc(_,_), last_f(H0,F0),last_f(H1,F1),last_f(H2,F2), F0\==F1, F1==F2,!,format('~N  ').
+%need_nl(H0,[H1|_]):- last_f(H0,F0),last_f(H1,F1), F0==F1, !, write_nbsp.
+need_nl(_,_).
+/*
+need_nl(_Last,[H|_]):- last_f(H,F),
+ once(nb_current(last_h,cc(LF,C));(LF=F,C=0)),
+   (LF==F-> (write_nbsp, plus(C,1,CC), nb_setval(last_h,cc(F,CC))) ; ((C>2 -> nl_now ; write_nbsp), nb_setval(last_h,cc(F,0)))).
+
+need_nl(_,_):- wants_html,!,write_nbsp.
+%need_nl(_,_):- !,write_nbsp.
+need_nl(H,[P|_]):- \+ is_breaker(H),is_breaker(P),line_position(user_output,L1),L1>80,nl_now,bformatc1('\t\t').
+need_nl(_,_):- line_position(user_output,L1),L1>160,nl_now,bformatc1('\t\t').
+need_nl(_,_).
+*/
+
+dash_chars:- wants_html,!,section_break.
+dash_chars:- dash_chars(40),!.
+
+dash_chars(_):- wants_html,!,section_break.
+dash_chars(H):- integer(H), dash_border(H).
+dash_chars(S):- nl_if_needed,dash_chars(60,S),nl_if_needed_ansi.
+dash_chars(_,_):- wants_html,!,section_break.

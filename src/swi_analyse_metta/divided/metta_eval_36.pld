@@ -1,0 +1,67 @@
+eval_selfless_0(E,R):- eval_selfless_2(E,R).
+
+allow_clp:- false_flag.
+
+eval_selfless_1([F|XY],TF):- allow_clp, \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
+eval_selfless_1(['>',X,Y],TF):-!,as_tf(X>Y,TF).
+eval_selfless_1(['<',X,Y],TF):-!,as_tf(X<Y,TF).
+eval_selfless_1(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
+eval_selfless_1(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
+
+eval_selfless_2([F|_],_):- var(F),!,fail.
+eval_selfless_2(['%',X,Y],TF):-!,eval_selfless_2(['mod',X,Y],TF).
+eval_selfless_2(LIS,Y):-  fake_notrace(( ground(LIS),
+   LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
+   LIS\=[_], s2ps(LIS,IS))), fake_notrace(catch((Y is IS),_,fail)),!.
+
+
+eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,
+   compare_selfless0(Lib,Next,TF).
+
+:- use_module(library(clpfd)).
+:- clpq:use_module(library(clpq)).
+:- clpr:use_module(library(clpr)).
+
+compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
+%compare_selfless0(clpfd,['=',X,Y],TF):-!,as_tf(X#=Y,TF).
+compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
+%compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
+%compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
+compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
+%compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
+compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
+compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
+compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
+compare_selfless0(Lib,['<',X,Y],TF):-!,as_tf(Lib:{X<Y},TF).
+compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
+compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
+compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
+
+args_to_mathlib(XY,Lib):- sub_term(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
+args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
+args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
+args_to_mathlib(_,clpfd).
+
+
+get_attrlib(XX,clpfd):- sub_var(clpfd,XX),!.
+get_attrlib(XX,clpq):- sub_var(clpq,XX),!.
+get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  USER DEFINED FUNCTIONS
+% =================================================================
+% =================================================================
+% =================================================================
+
+call_ndet(Goal,DET):- call(Goal),deterministic(DET),(DET==true->!;true).
+
+
+
+:- dynamic(is_metta_type_constructor/3).
+
+curried_arity(X,_,_):- var(X),!,fail.
+curried_arity([F|T],F,A):-var(F),!,fail,len_or_unbound(T,A).

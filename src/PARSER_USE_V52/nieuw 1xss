@@ -1,0 +1,20 @@
+
+par_atom_list(equal,[metta_sub(
+par_atom_list(simple_deduction_strength_formula,
+  [variabel("$As"),variabel("$Bs"),variabel("$Cs"),variabel("$ABs"),variabel("$BCs")])),metta_sub(
+par_atom_list(conditional,[metta_sub(
+par_atom_list(conjuction,[metta_sub(
+par_atom_list(conditional_probability_consistency,[variabel("$As"),variabel("$Bs"),variabel("$ABs")])),
+    metta_sub(
+par_atom_list(conditional_probability_consistency,
+  [variabel("$Bs"),variabel("$Cs"),variabel("$BCs")]))])),metta_sub(
+par_atom_list(conditional,[metta_sub(
+par_atom_list(smallerthan,[number(0.99),variabel("$Bs")])),variabel("$Cs"),metta_sub(
+par_atom_list(plus,[metta_sub(
+par_atom_list(multiplication,[variabel("$ABs"),variabel("$BCs")])),metta_sub(
+par_atom_list(division,[metta_sub(
+par_atom_list(multiplication,[metta_sub(
+par_atom_list(minus,[number(1),variabel("$ABs")])),metta_sub(
+par_atom_list(minus,[variabel("$Cs"),metta_sub(
+par_atom_list(multiplication,[variabel("$Bs"),variabel("$BCs")]))]))])),metta_sub(
+par_atom_list(minus,[number(1),variabel("$Bs")]))]))]))])),number(0)]))])

@@ -1,0 +1,72 @@
+pp(Term):- \+ nb_current(arc_can_portray,_),!,locally(nb_setval(arc_can_portray,t),print(Term)).
+pp(Term):- az_ansi(pp_no_nl(Term)),!,nl_if_needed_ansi.
+
+/*
+ptcol(P):- wants_html,!,ptcol_html(P).
+ptcol(call(P)):- callable(P),!,call(P).
+ptcol(P):- pp(P).
+*/
+
+%ptcol_html(P):- ptcol_html_0(P).
+ptcol_html(P):- ptcol_html_scrollable_0(P).
+ptcol_html_scrollable(P):- with_tag_ats(div,scrollable,ptcol_html_scrollable_0(P)).
+
+
+ptcol_html_0(P):- with_tag(pre,ptcol_html_wo_pre(P)).
+ptcol_html_wo_pre(call(P)):- callable(P),!, in_pp_html(call(P)).
+ptcol_html_wo_pre(P):- in_pp_html(print_tree_no_nl(P)).
+ptcol_html_scrollable_0(P):- ptcol_html_wo_pre(P).
+
+
+pp_wcg(G):- wants_html,!,ptcol_html_scrollable(G).
+pp_wcg(G):- pp_safe(call((locally(nb_setval(arc_can_portray,t),print(G))))),!.
+
+wqln(Term):- ppnl(Term).
+wqnl(G):- pp_safe(call((locally(nb_setval(arc_can_portray,nil),print(G))))),!.
+
+pp_safe(_):- nb_current(pp_hide,t),!.
+pp_safe(call(W)):- !, nl_if_needed,nl_now,call(W),nl_now.
+pp_safe(W):- nl_if_needed,nl_now,writeq(W),nl_now.
+pp_safe(C,W):- color_print(C,call(pp_safe(W))).
+
+
+%p_p_t_no_nl(Term):- is_toplevel_printing(Term), !, print_tree_no_nl(Term).
+
+p_p_t_no_nl(P):- \+ ansi_main, wants_html,!,ptcol_html(P).
+p_p_t_no_nl(Term):- az_ansi(print_tree_no_nl(Term)).
+
+ppt_no_nl(P):- \+ ansi_main, wants_html,!,ptcol_html(P).
+ppt_no_nl(P):- tersify(P,Q),!,pp_no_nl(Q).
+
+is_toplevel_printing(_):- \+ is_string_output, line_position(current_output,N),  N<2, fail.
+
+pp_no_nl(P):- var(P),!,pp(var_pt(P)),nop((dumpST,ibreak)).
+pp_no_nl(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+pp_no_nl(P):- atom(P),atom_contains(P,'~'),!,format(P).
+pp_no_nl(G):- is_vm_map(G), !, write_map(G,'pp').
+%pp_no_nl(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+pp_no_nl(P):- \+ \+ (( pt_guess_pretty(P,GP),ptw(GP))).
+%pp(P):-!,writeq(P).
+%ptw(P):- quietlyd(p_p_t_nl(P)),!.
+%ptw(_):- nl_if_needed,fail.
+ptw(P):- var(P),!,ptw(var_ptw(P)),nop((dumpST,ibreak)).
+ptw(G):- is_vm_map(G), !, write_map(G,'ptw').
+ptw(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+ptw(P):- p_p_t_no_nl(P),!.
+
+%ptw(P):- quietlyd(write_term(P,[blobs(portray),quoted(true),quote_non_ascii(false), portray_goal(print_ansi_tree),portray(true)])),!.
+print_ansi_tree(S,_):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+print_ansi_tree(P,_):- catch(arc_portray(P),_,(never_let_arc_portray_again,fail)),!.
+print_ansi_tree(P,_OL):- catch(p_p_t_no_nl(P),_,(never_let_arc_portray_again,fail)),!.
+
+%p_p_t_nl(T):- az_ansi(print_tree_nl(T)).
+%p_p_t(T):- az_ansi(print_tree(T)).
+
+pt_guess_pretty(P,O):- \+ nb_current(in_pt_guess_pretty,t), locally(nb_setval(in_pt_guess_pretty,t),pt_guess_pretty_1(P,O)).
+pt_guess_pretty(O,O).
+
+upcase_atom_var_l(IntL,NameL):- upcase_atom_var(IntL,NameL).
+upcase_atom_var_l(IntL,NameL):- is_list(IntL),!,my_maplist(upcase_atom_var_l,IntL,NameL).
+
+pt_guess_pretty_1(P,O):- copy_term(P,O,_),
+  ignore((sub_term(Body,O), compound(Body), Body=was_once(InSet,InVars),upcase_atom_var_l(InSet,InVars))),

@@ -1,5 +1,36 @@
 ; Einstein Riddle Example
 
+(love John Mary)
+
+!(match &self (love $John $Mary) (love $John $Mary))
+
+!(hates John Mary)
+
+(= (progn $head ())  (match &self $head $head) 666)
+(= (progn $head ($hr $rr)) (match &self $head (progn $hr $rr)))
+
+(= (progn2 $l)
+   (let* (($head (car-atom $l)) 
+		  ($rest (cdr-atom $l)))
+    (if (== $rest ()) 
+        $head
+        (match &self $head (progn2 $rest)))))
+
+(= (progn3 $l)
+   (let* (($head (car-atom $l)) 
+		  ($rest (cdr-atom $l)))
+    (if (== $rest ()) 
+        (match &self $head $head)
+        (match &self $head (progn3 $rest)))))
+
+(= (child joe) mary)
+
+(child joe mary)
+
+!(progn3 ((love John $m)  
+		  (love $j Mary) 
+          (3424 $j $m )))
+
 (= (nth1 N (Cons $H $T))
   (if (== $N 1) $H
 	 (nth1 (- $N 1) $T)))
@@ -57,6 +88,47 @@
   (if (== (mod $Length 2) 0)
 	(nth1 (div $Length 2) $Neighborhood))))
 
+(= (AND $Code1 $Code2)
+  (let* (($_ $Code1)
+	     ($_ $Code2)) )
+
+
+  (let* (($_ (nationality english $EnglishmansHouse)) 
+		 ($_ (color red $EnglishmansHouse)  )))
+	   
+($code1)
+
+(: and3 (-> Atom Atom Atom Atom))
+
+(= (and3 $code1 $code2 $code3)
+ (match &self $code1 
+	   (match &self $code2
+			 (match &self $code3 T))))
+
+
+(= (do-match $ls) 
+   (match &self $head (do-match  $rest))
+
+(= (progn $l)
+   (let* (($head (car-atom $l)) 
+		  ($rest (cdr-atom $l)))
+    (match &self $head (progn $rest))))
+	
+(child Jon Mary)
+(child Mary James)
+(progn (((child $a $b )(child $b $c)))
+
+
+(match &self 
+    ( (love John $x) (love $y Mary) (love $x $y))   (love $x $y))
+
+
+(= (progn $head ()) (match &self $head $head))
+(= (progn $head $rest) (match &self $head (progn $rest)))
+
+(progn ((love John $x)  
+		((love $y Mary) 
+	   ((love $x $y) ()))))
 ;
 ; Construct the neighboorhood using the constraints given
 (= 
@@ -64,10 +136,11 @@
 
   ((= $Neighborhood (new-neighborhood 5))
 
+(and3 
   ;; 1. The Englishman lives in the red house.
-  (nationality english $EnglishmansHouse) 
+  (and3 (nationality english $EnglishmansHouse) 
   (color red $EnglishmansHouse) 
-  (partOf $EnglishmansHouse $Neighborhood) 
+  (partOf $EnglishmansHouse $Neighborhood) )
 
   ;; 2. The Swede keeps dogs as pets.
   (nationality swede $SwedesHouse) 
@@ -76,16 +149,18 @@
   (nationality dane $DanesHouse) 
 
   ;; 3. The Dane drinks tea.
-  (beverage tea $DanesHouse) 
+  (and3  (beverage tea $DanesHouse) 
   (partOf $DanesHouse $Neighborhood) 
 
   ;; 5. The green house is on the left of the white house.
-  (color green $GreenHouse) 
-  (color white $WhiteHouse) 
+  (color green $GreenHouse)) 
+
+  (and3  (color white $WhiteHouse) 
+  (left-of $GreenHouse $WhiteHouse $Neighborhood) 
 
   ;; 6. The green house's owner drinks coffee.
-  (left-of $GreenHouse $WhiteHouse $Neighborhood) 
-  (beverage coffee $GreenHouse) 
+ 
+  (beverage coffee $GreenHouse) ))
 
   ;; 7. The person who smokes Pall Mall rears birds.
   (cigarette pallmall $PallMallHouse) 

@@ -1,0 +1,111 @@
+triggerSupports(_,U,[]):- axiomatic_supporter(U),!.
+triggerSupports(FactIn,Trigger,OUT):-
+  pfcGetSupport(Trigger,(Fact,AnotherTrigger))*->
+  (triggerSupports(Fact,AnotherTrigger,MoreFacts),OUT=[Fact|MoreFacts]);
+  triggerSupports1(FactIn,Trigger,OUT).
+
+triggerSupports1(_,X,[X]):- may_cheat.
+may_cheat:- true_flag.
+
+
+
+% % 
+% %
+% %  pfcFwd(X) forward chains from a fact or a list of facts X.
+% %
+pfcFwd(Fact) :- control_arg_types(Fact,Fixed),!,pfcFwd(Fixed).
+pfcFwd(Fact):- locally(set_prolog_flag(occurs_check,true), pfcFwd0(Fact)).
+pfcFwd0(Fact) :- is_list(List)->my_maplist(pfcFwd0,List);pfcFwd1(Fact).
+
+% fc1(+P) forward chains for a single fact.
+
+
+pfcFwd1(Fact) :-
+  (fc_rule_check(Fact)*->true;true),
+  copy_term(Fact,F),
+  % check positive triggers
+  ignore(fcpt(Fact,F)),
+  % check negative triggers
+  ignore(fcnt(Fact,F)).
+
+
+% %
+% %  fc_rule_check(P) does some special, built in forward chaining if P is
+% %  a rule.
+% %
+
+fc_rule_check((Name::::P==>Q)) :-
+  !,
+  processRule(P,Q,(Name::::P==>Q)).
+fc_rule_check((Name::::P<==>Q)) :-
+  !,
+  processRule(P,Q,((Name::::P<==>Q))),
+  processRule(Q,P,((Name::::P<==>Q))).
+
+
+
+fc_rule_check((P==>Q)) :-
+  !,
+  processRule(P,Q,(P==>Q)).
+fc_rule_check((P<==>Q)) :-
+  !,
+  processRule(P,Q,(P<==>Q)),
+  processRule(Q,P,(P<==>Q)).
+
+fc_rule_check(('<-'(P,Q))) :-
+  !,
+  pfcDefineBcRule(P,Q,('<-'(P,Q))).
+
+fc_rule_check(_).
+
+
+fcpt(Fact,F) :-
+  pfcGetTriggerQuick('$pt$'(F,Body)),
+  pfcTraceMsg('\n Found positive trigger(+):\n    ~p~n       body: ~p~n',
+        [F,Body]),
+  pfcGetSupport('$pt$'(F,Body),Support), %fbugio(pfcGetSupport('$pt$'(F,Body),Support)),
+  with_current_why(Support,with_current_why(Fact,fcEvalLHS(Body,(Fact,'$pt$'(F,Body))))),
+  fail.
+
+%fcpt(Fact,F) :-
+%  pfcGetTriggerQuick('$pt$'(presently(F),Body)),
+%  fcEvalLHS(Body,(presently(Fact),'$pt$'(presently(F),Body))),
+%  fail.
+
+fcpt(_,_).
+
+fcnt(_Fact,F) :-
+  pfc_spft(X,_,'$nt$'(F,Condition,Body)),
+  pfcCallSystem(Condition),
+  pfcRem_S(X,(_,'$nt$'(F,Condition,Body))),
+  fail.
+fcnt(_,_).
+
+
+% %  pfcRem_S(P,S) removes support S from P and checks to see if P is still supported.
+% %  If it is not, then the fact is retreactred from the database and any support
+% %  relationships it participated in removed.
+pfcRem_S(P,S) :-
+  % pfcDebug(pfcPrintf("removing support ~p from ~p",[S,P])),
+  pfcTraceMsg('    Removing support: ~p from ~p~n',[S,P]),
+  pfcRemOneSupport(P,S)
+     -> removeIfUnsupported(P)
+      ; pfcWarn("pfcRem_S/2 Could not find support ~p to remove from fact ~p",
+                [S,P]).
+
+
+
+% %  pfcDefineBcRule(+Head,+Body,+ParentRule)
+%
+% defines a backward
+% chaining rule and adds the corresponding '$bt$' triggers to the database.
+%
+
+pfcDefineBcRule(Head,_Body,ParentRule) :-
+  (\+ pfcLiteral(Head)),
+  pfcWarn("Malformed backward chaining rule.  ~p not atomic literal.",[Head]),
+  pfcError("caused by rule: ~p",[ParentRule]),
+  !,
+  fail.
+
+pfcDefineBcRule(Head,Body,ParentRule) :-

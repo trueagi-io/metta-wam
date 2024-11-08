@@ -1,0 +1,86 @@
+/*****************************************************************************
+
+		Copyright (c) Singularity
+
+ Project:  PARSE_USE
+ FileName: VPITools.DOM
+ Purpose: Domain definitions for VPITOOLS.PRO
+ Written by: R. van Vessum
+ Comments:
+******************************************************************************/
+
+ifdef use_tabdlg
+  ifndef use_dlgpack
+    constants
+       use_dlgpack =1
+  enddef
+enddef
+ifdef use_dlgpack
+  include "dialog\\dialog.dom"
+enddef
+ifdef use_message
+  ifndef use_editor
+    constants
+       use_editor =1
+  enddef
+enddef
+ifdef use_editor
+  include "edit.dom"
+enddef
+ifdef use_tbar
+  include "toolbar\\toolbar.dom"
+enddef
+ifdef use_tree
+  include "tree\\vpitree.dom"
+enddef
+ifdef use_tabdlg
+  include "tabdlg\\tabdlg.dom"
+enddef
+ifdef use_dlgdir
+  ifndef use_ownerdraw
+    constants
+       use_ownerdraw =1
+  enddef
+enddef
+ifdef use_ownerdraw
+  include "owndraw\\owndraw.dom"
+enddef
+ifdef use_grid
+  include "grid\\grid.dom"
+enddef
+ifdef use_date
+  include "date\\date.dom"
+enddef
+ifdef use_treebrowser
+  include "treebrws\\treebrws.dom"
+  global domains
+    browselist_useritemkey = integer % User specified
+enddef
+ifdef use_listproperty
+  include "property\\property.dom"
+enddef
+ifdef use_palette
+  include "palette\\palette.dom"
+enddef
+ifdef use_doc
+  include "docstr.dom"
+  include "rtf.dom"
+enddef
+ifdef use_sql
+  include "sqlbind.dom"
+enddef
+ifdef use_odbc
+  include "odbc.dom"
+enddef
+ifdef use_socket
+  ifndef use_runtime
+    constants
+      use_runtime = 1
+  enddef
+enddef
+ifdef use_runtime
+  include "pdcrunt.dom"
+enddef
+ifdef use_socket
+  include "include\\pdcsock.dom"
+enddef

@@ -1,0 +1,34 @@
+
+        type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):-
+           must_det_ll((ignore(get_operator_typedef1(Self,H,ParamTypes,RetType)),
+           maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+           into_arg_code(CodeForArgs,FullCodeForArgs),
+           Y = [H|NewArgs])).
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):-!,must_det_ll((X=Y)).
+
+        eager_for_type(_RType,'Atom'):- !, fail.
+        eager_for_type(_RType,'Type'):- !, fail.
+        eager_for_type(RType,RetType):- RType==RetType,!.
+        eager_for_type(RType,'Expression'):- !, RType=='Expression'.
+        eager_for_type('Atom','Expression'):- !, fail.
+        eager_for_type('Symbol','Expression'):- !, fail.
+        eager_for_type(RType,Var):- var(Var),!,RType=Var.
+        eager_for_type(_RType,_):-!.
+        %eager_for_type(_RType,'Any'):- !.
+        %eager_for_type(_RType,'Number').
+        %eager_for_type(_RType,'Nat').
+
+
+        eval_evals(_Eq,_Depth,_Self,_RetType,X,Y):-self_eval(X),!,Y=X.
+        eval_evals(_Eq,_Depth,_Self,_RetType,X,Y):- \+ is_list(X),!,Y=X.
+        eval_evals(Eq,Depth,Self,RetType,[Eval,X],Y):- Eval == 'eval_args',!,
+          eval_evals(Eq,Depth,Self,RetType,X,XX),
+          eval_args(Eq,RetType,Depth,Self,XX,Y).
+        eval_evals(Eq,Depth,Self,RetType,[Eval,SomeType,X],Y):- Eval == 'eval_args-for',!,
+          eval_evals(Eq,Depth,Self,RetType,X,XX),
+          eval_args(Eq,SomeType,Depth,Self,XX,Y).
+        eval_evals(Eq,Depth,Self,RetType,[H|Args],Y):-
+           ignore(get_operator_typedef1(Self,H,ParamTypes,RetType)),
+           maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
+           XX = [H|NewArgs],Y=XX.
+        eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.

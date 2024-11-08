@@ -1,0 +1,65 @@
+% - RetType: Expected return type of the MeTTa function.
+% - Depth: Recursion depth or complexity control.
+% - Self: Context or environment for the evaluation.
+% - [MyFun|More]: List with MeTTa function and additional arguments.
+% - RetVal: Variable to store the result of the Python function call.
+eval_maybe_python(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
+    % MyFun as a registered Python function with its module and function name.
+    metta_atom(Self, ['registered-python-function', PyModule, PyFun, MyFun]),!,
+    % Tries to fetch the type definition for MyFun, ignoring failures.
+    %adjust_args_9(Eq,RetType,MVal,RetVal,Depth,Self,MyFun,More,Adjusted),
+    More=Adjusted,MVal=RetVal,
+    % Constructs a compound term for the Python function call with adjusted arguments.
+    compound_name_arguments(Call, PyFun, Adjusted),
+    % Optionally prints a debug tree of the Python call if tracing is enabled.
+    if_trace(host;python, print_tree(py_call(PyModule:Call, RetVal))),
+    % Executes the Python function call and captures the result in MVal which propagates to RetVal.
+    py_call(PyModule:Call, MVal),
+    % Checks the return value against the expected type and criteria.
+    check_returnval(Eq, RetType, RetVal).
+
+
+%eval_80(_Eq,_RetType,_Dpth,_Slf,LESS,Res):- fake_notrace((once((eval_selfless(LESS,Res),fake_notrace(LESS\==Res))))),!.
+
+% predicate inherited by system
+eval_maybe_host_predicate(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
+  once((is_system_pred(AE),
+  length(More,Len),
+  is_syspred(AE,Len,Pred))),
+  \+ (atom(AE),   atom_concat(_,'-fn',AE)),
+  %current_predicate(Pred/Len),
+  %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
+  %adjust_args(Depth,Self,AE,More,Adjusted),
+  maplist(as_prolog, More , Adjusted),
+  if_trace(host;prolog,print_tree(apply(Pred,Adjusted))),
+  catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
+  check_returnval(Eq,RetType,TF).
+
+show_ndet(G):- call(G).
+%show_ndet(G):- call_ndet(G,DET),(DET==true -> ! ; fbug(show_ndet(G))).
+
+:- if( \+  current_predicate( adjust_args / 2 )).
+
+   :- discontiguous eval_80/6.
+
+is_user_defined_goal(Self,Head):-
+  is_user_defined_head(Self,Head).
+
+:- endif.
+
+adjust_args_mp(_Eq,_RetType,Res,Res,_Depth,_Self,_Pred,_Len,_AE,Args,Adjusted):- Args==[],!,Adjusted=Args.
+adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,Pred,Len,AE,Args,Adjusted):-
+
+   functor(P,Pred,Len),
+   predicate_property(P,meta_predicate(Needs)),
+   account_needs(1,Needs,Args,More),!,
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,More,Adjusted).
+adjust_args_mp(Eq,RetType,Res,NewRes,Depth,Self,_Pred,_Len,AE,Args,Adjusted):-
+   adjust_args(Eq,RetType,Res,NewRes,Depth,Self,AE,Args,Adjusted).
+
+acct(0,A,call(eval_args(A,_))).
+acct(':',A,call(eval_args(A,_))).
+acct(_,A,A).
+account_needs(_,_,[],[]).
+account_needs(N,Needs,[A|Args],[M|More]):- arg(N,Needs,What),!,
+   acct(What,A,M),plus(1,N,NP1),

@@ -1,6 +1,7 @@
 %:- module(lsp_metta_outline, [
 %                        xref_document_symbols/2,
 %                        xref_metta_source/1]).
+    :- include(lsp_metta_include).
 
 :- dynamic(gave_document_symbols/2).
 :- retractall(gave_document_symbols(_, _)). % when we reload this file
@@ -11,10 +12,11 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
 %xref_submit_and_wait(Path),
     findall(
          Symbol,
-         ( xref_document_symbol(Path, Outline, KindNumber, StartEnd),
+         ( xref_document_symbol(Path, Outline, KindNumber, StartEnd, Detail),
            once(into_json_range(StartEnd, Location)),
            Symbol = _{name: Outline,
                       kind: KindNumber,
+                      detail: Detail,
                       location:
                       _{uri: Doc,
                         range: Location }}
@@ -22,22 +24,24 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
          Symbols),
     retractall(gave_document_symbols(Doc, _)),
     asserta(gave_document_symbols(Doc, Symbols)).
-xref_document_symbol(Doc,  Outline, KindNumber, StartEnd):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, StartEnd).
-xref_document_symbol(Path, Path, 1, range(line_char(0,0), line_char(1000000,0))).
+
+xref_document_symbol(Doc,  Outline, KindNumber, StartEnd, Detail):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, StartEnd, Detail).
+xref_document_symbol(Path, Path, 1, range(line_char(0,0), line_char(1000000,0)),Path).
 %xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_d4(Path, Outline, KindNumber, StartEnd), fail.
-xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_fb(Path, Outline, KindNumber, StartEnd).
+xref_document_symbol(Path, Outline, KindNumber, StartEnd, Detail):- xref_document_symbol_fb(Path, Outline, KindNumber, StartEnd, Detail).
 %xref_document_symbol(Path, Outline, KindNumber, StartEnd):- xref_document_symbol_examples(Path, Outline, KindNumber, StartEnd).
 
+
 % for Iconagraphy
-xref_document_symbol_examples(_Path, "By Type...", 1, 1000:0, 10000:0).
-xref_document_symbol_examples(_Path, Outline, KindNumber, Start:1, End:0):-
+xref_document_symbol_examples(_Path, "By Type...", 1, 1000:0, 10000:0,"Types").
+xref_document_symbol_examples(_Path, Outline, KindNumber, Start:1, End:0,KindName):-
   lsp_xref_kind(KindNumber, KindName), KindNumber>1,
   Start is KindNumber*10+1000,End is Start+9,
   nonvar(KindName),
   atom_concat('Example ',KindName,KindExample), toPropercase(KindExample,Outline).
 
 % Roy's `d/4`s
-xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd):-
+xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd, PrettyString):-
    doc_path(Doc,Path),lsp_metta_changes:doc_text_d4(Path,D4s),
    nth1(Nth,D4s,D4), nonvar(D4),
    d4_document_symbol(Nth,D4, PrettyString, KindNumber, StartEnd).
@@ -45,7 +49,7 @@ xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd):-
 d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succl(Nth,End), outline_name(Str,S).
 
 % Douglas' file_buffer
-xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range):-
+xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range, InfoString):-
    doc_path(Doc,Path),
    metta_file_buffer(N,_Ord, Info, What, VL, Path, Range),
    (N > 0 -> interesting_sub_item(N, What) ; true),
@@ -54,6 +58,7 @@ xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range):-
    must_succeed1((maybe_name_vars(VL),
       outline_name(Outline, PrettyString),
       type_kind(TypeName,KindName),
+      sformat(InfoString,'~q',[Info]),
       lsp_xref_kind(KindNumber, KindName))).
 
 

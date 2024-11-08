@@ -1,0 +1,94 @@
+:- system:import(pfc_term_expansion/2).
+pfc_term_expansion(I,O):- skip_pfc_term_expansion(I),!, I=O.
+pfc_term_expansion((:- table Stuff as Type), [:- pfcAdd(tabled_as(Stuff,Type)),(:- table Stuff as Type)]):- nonvar(Stuff), !, if_pfc_indicated, \+ will_table_as(Stuff, Type).
+pfc_term_expansion((:- table Stuff ), [:- pfcAdd(tabled_as(Stuff,incremental)),(:- table Stuff as incremental)]):- if_pfc_indicated, \+ will_table_as(Stuff,incremental).
+pfc_term_expansion((:- _),_):- !, fail.
+pfc_term_expansion((P==>Q),(:- pfcAdd((P==>Q)))).
+%term_expansion((P==>Q),(:- pfcAdd(('<-'(Q,P))))).  % speed-up attempt
+pfc_term_expansion(('<-'(P,Q)),(:- pfcAdd(('<-'(P,Q))))).
+pfc_term_expansion((P<==>Q),(:- pfcAdd((P<==>Q)))).
+pfc_term_expansion((RuleName :::: Rule),(:- pfcAdd((RuleName :::: Rule)))).
+pfc_term_expansion((==>P),(:- pfcAdd(P))).
+pfc_term_expansion(I,I):- I == end_of_file,!.
+pfc_term_expansion( P ,(:- pfcAdd(P))):- if_pfc_indicated.
+
+%use_pfc_term_expansion:- current_prolog_flag(pfc_term_expansion,false),!,fail.
+% maybe switch to prolog_load_context(file,...)?
+%use_pfc_term_expansion:- source_location(File,_), atom_concat(_,'.pfc.pl',File).
+
+term_subst(P,O):- term_subst(clause,P,O),!.
+
+term_subst(_, P,O):- \+ compound(P),!,O=P.
+
+term_subst(tilded_negation,P,O):- !, term_subst(
+  [(not)-(~),
+   (=>)-(==>),
+   (<=>)-(<==>),
+   (<=)-(<-)],P,O).
+
+term_subst(Subst,P,O):-
+ compound_name_arguments(P,F,Args),
+ my_maplist(term_subst(Subst),Args,ArgsL),
+ termf_subst(Subst,F,F2),
+ compound_name_arguments(O,F2,ArgsL).
+
+termf_subst(Subst,F,F2):-member(F-F2,Subst)->true;F=F2.
+
+
+%   File   : pfccore.pl
+%   Author : Tim Finin, finin@prc.unisys.com
+%   Updated: 10/11/87, ...
+%            4/2/91 by R. McEntire: added calls to valid_dbref as a
+%                                   workaround for the Quintus 3.1
+%                                   bug in the recorded database.
+%   Purpose: core Pfc predicates.
+
+:- use_module(library(lists)).
+
+
+%==>(_).
+
+% ==>(G):- arc_assert(G).
+
+%:- multifile ('<-')/2.
+%:- dynamic ('<-')/2.
+%:- discontiguous(('<-')/2).
+%'<-'(_,_).
+
+%:- multifile ('==>')/2.
+%:- dynamic ('==>')/2.
+%:- discontiguous(('==>')/2).
+%'==>'(_,_).
+
+%:- multifile ('==>')/2.
+%:- dynamic ('::::')/2.
+%:- dynamic '<==>'/2.
+:- dynamic '$pt$'/2.
+:- dynamic '$nt$'/3.
+:- dynamic '$bt$'/2.
+:- dynamic fcUndoMethod/2.
+:- dynamic fcAction/2.
+:- dynamic fcTmsMode/1.
+:- dynamic pfcQueue/1.
+:- dynamic pfcCurrentDb/1.
+:- dynamic pfcHaltSignal/1.
+:- dynamic pfcDebugging/0.
+:- dynamic pfcSelect/1.
+:- dynamic pfcSearch/1.
+
+:- thread_local(t_l:pfcSearchTL/1).
+
+:- dynamic '$spft$'/3.
+
+% % % initialization of global assertons
+
+pfcSetVal(Stuff):-
+   duplicate_term(Stuff,DStuff),
+   functor(DStuff,_,N),
+   setarg(N,DStuff,_),
+   retractall(DStuff),
+   assert(Stuff).
+
+% %  pfcDefault/1 initialized a global assertion.
+% %   pfcDefault(P,Q) - if there is any fact unifying with P, then do
+% %   nothing, else assert Q.

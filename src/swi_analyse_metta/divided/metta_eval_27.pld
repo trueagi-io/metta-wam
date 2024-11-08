@@ -1,0 +1,92 @@
+% =================================================================
+% =================================================================
+%  METTLOG COMPILER PREDEFS
+% =================================================================
+% =================================================================
+% =================================================================
+
+
+eval_20(_Eq,_RetType,_Dpth,_Slf,['predicate-arity',F],A):- !,
+   eval_for('Symbol',F,FF),
+   predicate_arity(FF,A).
+eval_20(_Eq,_RetType,_Dpth,_Slf,['function-arity',F],A):- !,
+   eval_for('Symbol',F,FF),
+   function_arity(FF,A).
+
+
+
+eval_20(_Eq,_RetType,_Depth,_Self,['compile-space!'],Res):- !,
+    as_nop('compile-space!'(_), Res).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['compile-space!',Space],Res):- !,
+    as_nop('compile-space!'(Space), Res).
+
+'compile-space!'(X,TF):-
+   as_tf('compile-space!'(X), TF).
+
+'compile-space!'(KB):-
+    load_ontology,
+    %((ignore(pfcRemove(do_compile_space(X))),
+   % pfcWatch,
+    pfcAdd_Now(do_compile_space(KB)),
+    forall(function_arity(KB,F,_Len),'compile!'(F)),
+    % pfcNoWatch,
+    true,!.
+
+
+eval_20(_Eq,_RetType,_Depth,_Self,['compile!'],Res):- !,
+    as_nop('compile!'(_), Res).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['compile!',Space],Res):- !,
+    as_nop('compile!'(Space), Res).
+
+'compile!'(X,TF):-
+   as_tf('compile!'(X), TF).
+
+'compile!'(X):- X=='S',!.
+'compile!'(X):-
+    load_ontology,
+    current_self(KB),
+    %((ignore(pfcRemove(do_compile(KB,X,_))),
+   % pfcWatch,
+    pfcAdd_Now(do_compile(KB,X,_)),
+    if_t( \+ current_predicate(X/_),
+       forall(metta_defn(KB,[X | Args] ,BodyFn),
+       compile_metta_defn(KB,X,Len,Args,BodyFn,_Clause))),
+    if_t( \+ current_predicate(X/_),
+       (ignore(nortrace),forall(metta_defn(KB,[X | Args] ,BodyFn),
+       (trace,compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
+    % pfcNoWatch,
+    true,!,
+     notrace(catch((wdmsg(?-listing(X)),listing(X)),E,
+    (!,write_src(E),fail))),!.
+
+
+empty('Empty').
+','(A,B,(AA,BB)):- eval_args(A,AA),eval_args(B,BB).
+':'(A,B,[':',A,B]).
+'<'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
+'>'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
+minus(A,B,C):- plus(B,C,A).
+
+
+eval_20(Eq,RetType,Depth,Self,[AE|More],Res):-
+    metta_compiled_predicate(Self,AE,Len),
+    len_or_unbound(More,Len), Pred = AE,
+    current_predicate(AE/Arity),
+    maplist(as_prolog, More , Adjusted),!,
+    eval_201(Eq,RetType,Depth,Self,Pred,Adjusted,Arity,Len,Res),
+    nonvar(Res),
+    check_returnval(Eq,RetType,Res).
+
+
+eval_201(_Eq,_RetType,_Depth,_Self,Pred,AdjustedM1,Arity,Len,Res):- Arity > Len,!,
+    append(AdjustedM1,[Res],Adjusted),
+    Call =.. [Pred|Adjusted],
+    %indentq2(2,call_pl_rv(Call)),
+    catch_warn(efbug(show_call,rtrace_on_error(Call))).
+
+eval_201(_Eq,_RetType,_Depth,_Self,Pred,Adjusted,_Arity,_Len,Res):-
+    Call =.. [Pred|Adjusted],
+    %indentq2(2,call_pl_tf(Call)),
+    catch_warn(efbug(show_call,eval_call(rtrace_on_error(Call),Res))).

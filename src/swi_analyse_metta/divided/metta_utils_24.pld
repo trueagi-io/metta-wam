@@ -1,0 +1,46 @@
+is_writer_goal_l(pp). is_writer_goal_l(write).  is_writer_goal_l(dash_).
+
+
+maybe_color(SS,_):- term_contains_ansi(SS),!, write_nbsp, write(SS).
+maybe_color(SS,P):- term_contains_ansi(P),!, write_nbsp, write(SS).
+maybe_color(SS,P):- pp_msg_color(P,C), ansicall(C,is_maybe_bold(P,write(SS))),!.
+
+write_atom(S):- \+ atom(S),!,wqs(S).
+write_atom(S):- atom_contains(S,'~'),!,notrace(catch(format(S,[]),_,maybe_write_atom_link(S))).
+write_atom(S):- maybe_write_atom_link(S),!.
+write_atom(S):- into_title_str(S,TS),write(TS),!.
+
+:- meta_predicate(into_title_str(+,-)).
+into_title_str(Term,Str):- string(Term),!,Str=Term.
+into_title_str(Term,Str):- plain_var(Term),sformat(Str,'~p',[Term]),!.
+into_title_str(Term,Str):- var(Term),tersify0(Term,Terse), sformat(Str,'~p',[Terse]),!.
+into_title_str(Term,Str):- term_is_ansi(Term), wots(Str,write_keeping_ansi_mb(Term)),!.
+into_title_str(Term,Str):- (is_codelist(Term);is_charlist(Term)),catch(sformat(Str,'~s',[Term]),_,sformat(Str,'~p',[Term])),!.
+into_title_str(Term,Str):- is_list(Term),my_maplist(into_title_str,Term,O3),atomics_to_string(O3," ",Str),!.
+into_title_str([H|T],Str):- into_title_str(H,A),into_title_str(T,B),atomics_to_string([A,B]," ",Str),!.
+into_title_str(Term,Str):- \+ callable(Term),sformat(Str,'~p',[Term]),!.
+into_title_str(format(Fmt,Args),Str):- sformat(Str,Fmt,Args),!.
+into_title_str(Term,""):- empty_wqs_c(Term),!.
+into_title_str(out,"Output").
+into_title_str(in,"Input").
+into_title_str(i,"IN").
+into_title_str(o,"OUT").
+into_title_str(Term,Str):- atom(Term),is_valid_linkid(Term,Kind,_),Term\=@=Kind,into_title_str(Kind,KS),sformat(Str,'~w (~w)',[Term,KS]),!.
+into_title_str(Term,Str):- atom(Term), atom_contains(Term,'_'), \+ atom_contains(Term,' '),  to_case_breaks(Term,T),
+ include(\=(xti(_,punct)),T,O),my_maplist(tc_arg(1),O,O1),my_maplist(toProperCamelAtom,O1,O2),
+  atomics_to_string(O2," ",Str),!.
+into_title_str(Term,Str):- has_short_id(Term,Kind,ID),Term\=@=Kind,into_title_str(Kind,KS),sformat(Str,'~w (~w)',[ID,KS]),!.
+
+into_title_str(T-U,Str):- into_title_str([some(T),"..to..",some(U)],Str).
+into_title_str(T*U,Str):- into_title_str([some(T),"(",some(U),")"],Str).
+into_title_str(T+U,Str):- into_title_str(T,S1), number(U), N is U+1, sformat(Str,'~w #~w',[S1,N]).
+into_title_str(T+U,Str):- var(U), into_title_str(T,S1), sformat(Str,'~w(s)',[S1]).
+into_title_str(title(Term),Str):- !, into_title_str(Term,Str),!.
+into_title_str(some(Var),"Some"):- var(Var),!.
+into_title_str(some(Var),Str):- !, into_title_str(Var,Str).
+into_title_str(User:Term,Str):- User == user, !, into_title_str(Term,Str).
+into_title_str(trn,"Training Pair").
+into_title_str(tst,"EVALUATION TEST").
+%into_title_str(Term,Str):- tersify23(Term,Terse),Term\=@=Terse,!,into_title_str(Terse,Str).
+into_title_str(Term,Str):- callable_arity(Term,0),is_writer_goal(Term),catch(notrace(wots(Str,call_e_dmsg(Term))),_,fail),!.
+into_title_str(Term,Str):- catch(sformat(Str,'~p',[Term]),_,term_string(Term,Str)),nonvar(Str),atom_length(Str,E50),E50<180,!.

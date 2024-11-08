@@ -21,6 +21,8 @@ source and stuff.
 @author Douglas Miles
 
 */
+    :- include(lsp_metta_include).
+
 
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
@@ -299,9 +301,10 @@ lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
    in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvars(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
    lsp_separator().
 
-some_arities(Term,_,Term,term). % Bare Term
+%
 some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
 some_arities(Term,N,Try,RN):- symbol(Term), between(0,5,N), some_arities(Term,N,Try,RN).
+some_arities(Term,_,Term,term). % Bare Term
 
 lsp_hooks:term_info(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
@@ -321,7 +324,7 @@ get_code_at_range_type(toplevel_form).
 %get_code_at_range_type(exact).
 %get_code_at_range_type(symbol).
 
-debug_positions.
+debug_positions :- debugging(lsp(position)).
 /*
 <details>
 <summary>Q1: What is the best X in the World? </summary>

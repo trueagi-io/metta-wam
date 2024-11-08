@@ -1,0 +1,52 @@
+
+% The predicate allow_concepts/0 checks whether the use of concepts is allowed.
+% It does this by checking the value of the concepts option and ensuring it is not false.
+allow_concepts :- !, fail,
+    % Check if the option `concepts` is not set to false
+    option_else(concepts, TF, 'False'),
+    \+ TF == 'False'.
+
+% The predicate with_concepts/2 enables or disables the use of concepts during the execution of a given goal.
+% The first argument is a Boolean indicating whether to enable (true) or disable (false) concepts.
+% The second argument is the Goal to be executed with the given concepts setting.
+with_concepts(TF, Goal) :-
+    % Set the value of the `concepts` option to TF and then execute the Goal
+    with_option(concepts, TF, Goal).
+
+% Rules for determining when a symbol needs to be quoted in metta.
+dont_quote(Atom):- symbol_length(Atom,1), !, char_type(Atom,punct).
+dont_quote(Atom):- symbol(Atom),upcase_atom(Atom,Atom),downcase_atom(Atom,Atom).
+
+should_quote(Atom) :- \+ symbol(Atom), \+ string(Atom),!,fail.
+should_quote(Atom) :-
+   \+ dont_quote(Atom),
+   % symbol(Atom),  % Ensure that the input is an symbol
+    symbol_chars(Atom, Chars),
+    once(should_quote_chars(Chars);should_quote_symbol_chars(Atom,Chars)).
+
+contains_unescaped_quote(['"']):- !, fail. % End with a quote
+contains_unescaped_quote(['"'|_]) :- !.
+contains_unescaped_quote(['\\', '"'|T]) :- !, contains_unescaped_quote(T).
+contains_unescaped_quote([_|T]) :- contains_unescaped_quote(T).
+
+% Check if the list of characters should be quoted based on various conditions
+should_quote_chars([]).
+should_quote_chars(['"'|Chars]):- !, contains_unescaped_quote(Chars).
+should_quote_chars(Chars) :-
+      member('"', Chars);         % Contains quote not captured with above clause
+      member(' ', Chars);         % Contains space
+      member('''', Chars);        % Contains single quote
+    %  member('/', Chars);         % Contains slash
+      member(',', Chars);         % Contains comma
+      (fail,member('|', Chars)).         % Contains pipe
+%should_quote_symbol_chars(Atom,_) :- symbol_number(Atom,_),!.
+should_quote_symbol_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ symbol_number(Atom,_).
+
+% Example usage:
+% ?- should_quote('123abc').
+% true.
+% ?- should_quote('123.456').
+% false.
+
+
+:- ensure_loaded(metta_interp).

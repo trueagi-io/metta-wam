@@ -1,0 +1,88 @@
+    arg(1, Space, Atoms),
+    length(Atoms, Count).
+
+% Remove an atom from a space
+remove_nb_atom(SpaceNameOrInstance, Atom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    select(Atom, Atoms, UpdatedAtoms),
+    nb_setarg(1, Space, UpdatedAtoms).
+
+% Fetch all atoms from a space
+get_nb_atoms(SpaceNameOrInstance, Atoms) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms).
+
+% Replace an atom in the space
+replace_nb_atom(SpaceNameOrInstance, OldAtom, NewAtom) :-
+    fetch_or_create_space(SpaceNameOrInstance, Space),
+    arg(1, Space, Atoms),
+    ( (select(Found, Atoms, TempAtoms),OldAtom=@=Found)
+    ->  NewAtoms = [NewAtom | TempAtoms],
+        nb_setarg(1, Space, NewAtoms)
+    ;   false
+    ).
+
+
+
+% Function to confirm if a term represents a space
+is_valid_nb_space(Space):- compound(Space),functor(Space,'Space',_).
+
+% Find the original name of a given space
+space_original_name(Space, Name) :-
+    is_registered_space_name(Name),
+    nb_current(Name, Space).
+
+% Register and initialize a new space
+init_space(Name) :-
+    Space = 'Space'([]),
+    asserta(is_registered_space_name(Name)),
+    nb_setval(Name, Space).
+
+fetch_or_create_space(Name):- fetch_or_create_space(Name,_).
+% Fetch an existing space or create a new one
+fetch_or_create_space(NameOrInstance, Space) :-
+    (   atom(NameOrInstance)
+    ->  (is_registered_space_name(NameOrInstance)
+        ->  nb_current(NameOrInstance, Space)
+        ;   init_space(NameOrInstance),
+            nb_current(NameOrInstance, Space))
+    ;   is_valid_nb_space(NameOrInstance)
+    ->  Space = NameOrInstance
+    ;   writeln('Error: Invalid input.')
+    ),
+    is_valid_nb_space(Space).
+
+
+% Match Pattern in Space and produce Template
+'match'(Space, Pattern, Template) :-
+    'get-atoms'(Space, Atoms),
+    'match-pattern'(Atoms, Pattern, Template).
+
+% Simple pattern match
+'match-pattern'([], _, []).
+'match-pattern'([H |_T], H, H) :- !.
+'match-pattern'([_H| T], Pattern, Template) :- 'match-pattern'(T, Pattern, Template).
+
+%is_python_space(X):- python_object(X).
+
+ensure_space(X,Y):- catch(ensure_space_py(X,Y),_,fail),!.
+ensure_space(_N,_V):- fail.
+
+% ===============================
+% Clause Database interface
+% ===============================
+%dout(space,Call):- skip(Call).
+if_metta_debug(Goal):- getenv('VSPACE_VERBOSE','2'),!,ignore(call(Goal)).
+if_metta_debug(_):-!.
+if_metta_debug(Goal):- !,ignore(call(Goal)).
+dout(_,_):-!.
+dout(W,Term):- notrace(if_metta_debug((format('~N; ~w ~@~n',[W,write_src(Term)])))).
+
+:- multifile(space_type_method/3).
+:- dynamic(space_type_method/3).
+space_type_method(is_asserted_space,new_space,init_space).
+space_type_method(is_asserted_space,clear_space,clear_nb_atoms).
+space_type_method(is_asserted_space,add_atom,metta_assertdb_add).
+space_type_method(is_asserted_space,remove_atom,metta_assertdb_rem).
+space_type_method(is_asserted_space,replace_atom,metta_assertdb_replace).

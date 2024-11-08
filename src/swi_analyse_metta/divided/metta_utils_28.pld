@@ -1,0 +1,57 @@
+/*
+pretty_grid(O):-
+  catch(
+  (wots_hs(S,print_grid(O)),strip_vspace(S,SS),
+   ptc(orange,(format('"  ~w  "',[SS])))),
+  _,(never_let_arc_portray_again,fail)).
+*/
+pp_hook_g1(O):-  plain_var(O), !, fail.
+
+pp_hook_g1(O):-  attvar(O), !, is_colorish(O), data_type(O,DT), writeq('...'(DT)),!.
+pp_hook_g1(S):-  term_is_ansi(S), !, write_nbsp, write_keeping_ansi_mb(S).
+%pp_hook_g1(S):-  term_contains_ansi(S), !, fail, write_nbsp, write_keeping_ansi_mb(S).
+pp_hook_g1(rhs(O)):- write_nbsp,nl,bold_print(print(r_h_s(O))),!.
+
+pp_hook_g1(iz(O)):- compound(O), O = info(_),underline_print(print(izz(O))),!.
+pp_hook_g1(O):-  is_grid(O), /* \+ (sub_term(E,O),compound(E),E='$VAR'(_)), */ pretty_grid(O).
+
+
+pp_hook_g1(O):- is_object(O), into_solid_grid(O,G), wots(SS,pretty_grid(G)),write(og(SS)),!.
+
+pp_hook_g1(shape_rep(grav,O)):- is_points_list(O), as_grid_string(O,S), wotsq(O,Q), print(shape_rep(grav,S,Q)),!.
+pp_hook_g1(vals(O)):- !, writeq(vals(O)),!.
+%pp_hook_g1(l2r(O)):- into_solid_grid_strings(l2r(O),Str),Str\=@=l2r(O),print_term_no_nl(Str),!.
+pp_hook_g1(localpoints(O)):- is_points_list(O), as_grid_string(O,S), wotsq(O,Q), print(localpoints(S,Q)),!.
+pp_hook_g1(C):- compound(C), compound_name_arguments(C,F,[O]),is_points_list(O), length(O,N),N>2, as_grid_string(O,S), compound_name_arguments(CO,F,[S]), print(CO),!.
+
+pp_hook_g1(O):-  is_points_list(O),as_grid_string(O,S),write(S),!.
+pp_hook_g1(O):-  is_real_color(O), color_print(O,call(writeq(O))),!.
+pp_hook_g1(O):-  is_colorish(O), data_type(O,DT), writeq('...'(DT)),!.
+
+pp_hook_g1(_):-  \+ in_pp(ansi),!, fail.
+
+
+pp_hook_g1(Grp):- current_predicate(pp_ilp/1),is_rule_mapping(Grp),pp_ilp(Grp),!.
+
+pp_hook_g1(O):- atom(O), atom_contains(O,'o_'), pp_parent([LF|_]), \+ (LF==lf;LF==objFn),
+  resolve_reference(O,Var), O\==Var, \+ plain_var(Var),!,
+  write_nbsp, writeq(O), write(' /* '), show_indiv(Var), write(' */ ').
+
+pp_hook_g1(O):-  is_object(O),pp_no_nl(O), !.
+pp_hook_g1(O):-  is_group(O),pp_no_nl(O), !.
+
+%pp_hook_g1(change_obj(N,O1,O2,Sames,Diffs)):-  showdiff_objects5(N,O1,O2,Sames,Diffs),!.
+
+pp_hook_g1(O):-  is_vm_map(O),data_type(O,DT), writeq('..map.'(DT)),!.
+pp_hook_g1(O):-  is_gridoid(O),show_indiv(O), !.
+%pp_hook_g1(O):-  O = change_obj( O1, O2, _Same, _Diff),  with_tagged('h5',w_section(object,[O1, O2],pp(O))).
+%pp_hook_g1(O):-  O = change_obj( O1, O2, _Same, _Diff), w_section(showdiff_objects(O1,O2)),!.
+%pp_hook_g1(O):-  O = change_obj( O1, O2, _Same, _Diff),  w_section(object,[O1, O2],with_tagged('h5',pp(O))).
+%pp_hook_g1(O):-  O = diff(A -> B), (is_gridoid(A);is_gridoid(B)),!, p_c_o('diff', [A, '-->', B]),!.
+pp_hook_g1(O):-  O = showdiff( O1, O2), !, showdiff(O1, O2).
+%pp_hook_g1(O):- compound(O),wqs1(O), !.
+pp_hook_g1(O):- \+ compound(O),fail.
+pp_hook_g1(G):- '@'(pp_hook_g1a(G),user).
+
+pp_hook_g1a(G):- \+ current_prolog_flag(debug,true),
+  current_predicate(pp_hook_g2/1), lock_doing(in_pp_hook_g3,any,pp_hook_g2(G)),!.
