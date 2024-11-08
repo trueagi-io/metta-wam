@@ -660,6 +660,10 @@ handle_msg(Method, Msg, _) :-
 handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
 
+% Our request listener hooks monitor these on their own
+handle_msg(Method, Msg, false) :- \+ string(Method), _{id: Id} :< Msg, \+ number(Id),!.
+
+
 % messages (with a response)
 handle_msg("initialize", Msg,
            _{id: Id, result: _{capabilities: ServerCapabilities} }) :-
