@@ -68,26 +68,15 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- multifile lsp_hooks:handle_msg_hook/3.
-:- dynamic lsp_hooks:handle_msg_hook/3.
-:- discontiguous lsp_hooks:handle_msg_hook/3.
-
-:- multifile lsp_hooks:exec_code_action/3.
-:- dynamic lsp_hooks:exec_code_action/3.
-:- discontiguous lsp_hooks:exec_code_action/3.
-
-:- multifile lsp_hooks:compute_code_action/3.
-:- dynamic lsp_hooks:compute_code_action/3.
-:- discontiguous lsp_hooks:compute_code_action/3.
-
-
-:- discontiguous handle_code_action_msg/3.
+:- include(lsp_metta_include).
 
 
 % can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
-   handle_code_action_msg(Method, Msg, Result), !.
+    clause(handle_code_action_msg(Method, Msg, Result),Body),!,must_det_ll(Body).
 
+
+:- discontiguous(handle_code_action_msg/3).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Learning Experiment: `codeAction` and `Refactor`
@@ -112,22 +101,8 @@ must_succeed1(G):- call(G)->true;(wdmsg(failed_succeed(G)),throw(failed_succeed(
 handle_code_action_msg("textDocument/codeAction", Msg, _{id: Id, result: Actions}) :-
     _{id: Id, params: Params} :< Msg,
    _{textDocument: _{uri: Uri}, range: Range, context: _Context} :< Params,
-    findall(Action, lsp_hooks:compute_code_action(Uri, Range ,Action), Actions), !.
+    findall(Action, safe_clause_call(lsp_hooks:compute_code_action(Uri, Range ,Action)), Actions), !.
 
-
-% Run All Tests Action
-lsp_hooks:compute_code_action(Uri, _Range, FirstAction) :-
-    get_filepart(Uri, FilePart),
-    sformat(AllTestsTitle, "Run All Tests in File: '~w'", [FilePart]),
-    FirstAction = _{
-        title: AllTestsTitle,
-        kind: "refactor.runAllTests",
-        command: _{
-            title: AllTestsTitle,
-            command: "run_all_tests",
-            arguments: [Uri]
-        }
-    }.
 
 % get_filepart(+Uri, -FilePart)
 % Extracts the part of the URI after the last '/'.
@@ -156,7 +131,7 @@ lsp_hooks:compute_code_action(Uri, Range, RefactorAction) :-
 % GPT Rewrite Block action
 lsp_hooks:compute_code_action(Uri, Range, RewriteAction) :-
     debugging(lsp(todo)), /* Condition for GPT Rewrite */
-    get_src_code_at_range(block, Uri, Range, Code),
+    get_src_code_at_range(block, Code, Range, Uri),
     trim_to_length(Code, 300, Block),
     sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w' (TODO)", [Block]),
     RewriteAction = _{
@@ -210,7 +185,7 @@ lsp_hooks:compute_code_action(Uri, Range, MettaFileAction) :-
         command: _{
             title: RunLoadTitle,
             command: "load_metta",
-            arguments: [Uri, Range, Expression]
+            arguments: [Expression, Range, Uri]
         }
     }.
 
@@ -228,82 +203,38 @@ lsp_hooks:compute_code_action(Uri, Range, EvalMettaAction) :-
         command: _{
             title: EvalTitle,
             command: "eval_metta",
-            arguments: [Uri, Range, Expression]
+            arguments: [Expression, Range, Uri]
         }
     }.
 
 
 
-
-% Example function to create and send diagnostics for a file
-report_diagnostics(Uri, Range, Message) :-
-    sformat(SMessage, '~w', [Message]),
-    into_json_range(Range, JRange),
-    Diagnostics = [
-        _{
-            range: JRange,
-            % Severity of the diagnostic (1 = Error, 2 = Warning, 3 = Information, 4 = Hint).
-            severity: 3,
-            message: SMessage
-        }
-    ],
-    Msg = _{
-        method: "textDocument/publishDiagnostics",
-        params: _{
-            uri: Uri,
-            diagnostics: Diagnostics
-        }
-    },
-    send_client_message(Msg).
-
-
-% Send a feedback message to VSCode via LSP
-send_feedback_message(Message, MessageType) :-
-    sformat(SMessage, '~w', [Message]),
-    Msg = _{
-        method: "window/showMessage",
-        params: _{
-            type: MessageType,  % 1 = Info, 2 = Warning, 3 = Error
-            message: SMessage
-        }
-    },
-    send_client_message(Msg).
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Lens Handlers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_code_action_msg(Method,Msg,Response),!.
 
 % Handle the 'textDocument/codeLens' Request
 handle_code_action_msg("textDocument/codeLens", Msg, _{id: Id, result: CodeLenses}) :-
     _{id: Id, params: Params} :< Msg,
     _{textDocument: _{uri: Uri}} :< Params,
     compute_code_lenses(Uri, CodeLenses).
-% Example fallback for "textDocument/codeLens" request
-handle_code_action_msg("textDocument/codeLens", Msg, _{id: Msg.id, result: []}) :- !.  % No code lenses if none are found
 
 % Generate a list of code lenses for a document
 compute_code_lenses(Uri, CodeLenses) :-
     doc_path(Uri, Path),
-    findall(CodeLens,
-        (
-            compute_each_lens(Uri, Path, CodeLens)
-        ),
-        CodeLenses).
+    findall(CodeLens, safe_clause_call(lsp_hooks:compute_code_lens(Uri, Path, CodeLens)), CodeLenses).
 
-% Compute Code Lenses for the given document
-compute_each_lens(Uri, _, CodeLens) :-
-   CodeLens =
-        _{range: _{start: _{line: 0, character: 0}, end: _{line: 1, character: 20}},
-          command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}}.
+safe_clause_call(Head):- clause(Head,Body), catch(Body,_,true).
 
-compute_each_lens(Uri, Path, CodeLens):-
+lsp_hooks:compute_code_lens(Uri, Path, CodeLens):- compute_code_lens_for_buffer(Uri, Path, CodeLens).
+
+
+compute_code_lens_for_buffer(Uri, Path, CodeLens):-
     Lvl = 0,
     metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
     compute_each_buffer_lens(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, CodeLens).
 
-compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens):-
+compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens):- !,
     \+ is_list(What), !,
     What = exec(_), !,
     into_json_range(BRange, Range),
@@ -312,7 +243,7 @@ compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLen
     wots(Src,write_src(What)),
     CodeLens = _{
         range: Range,
-        command: _{title: Title, command: "eval_metta", arguments: [Uri, Range, Src]}
+        command: _{title: Title, command: "load_metta", arguments: [Src, Range, Uri]}
     }.
 
 compute_each_buffer_lens(Uri, Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens):-  Lvl = 0,
@@ -322,7 +253,7 @@ compute_each_buffer_lens(Uri, Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens
     wots(Src,write_src(What)),
     CodeLens = _{
         range: Range,
-        command: _{title: Title, command: "load_metta", arguments: [Uri, Range, Src]}
+        command: _{title: Title, command: "load_metta", arguments: [Src, Range, Uri]}
     }, !.
 
 % unused currently since Lvl = 0 always
@@ -360,6 +291,8 @@ resolve_code_lens(CodeLens, ResolvedCodeLens) :-
 resolve_code_lens(CodeLens, ResolvedCodeLens) :-
     % Here, we could add more specific details or dynamically update the Code Lens if needed
     ResolvedCodeLens = CodeLens.
+
+
 
 % Helper predicate to find all locations where the symbol is referenced.
 symbol_reference_locations(Symbol, Locations) :-
@@ -407,16 +340,65 @@ format_reference_entry(Location, Formatted) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the workspace/executeCommand Request
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-handle_code_action_msg("workspace/executeCommand", Msg, _{id: Id, result: Result}) :-
-    _{id: Id, params: Params} :< Msg,
-    _{command: Command, arguments: Arguments} :< Params,
-    % Execute Command Implementation
-    lsp_hooks:exec_code_action(Command, Arguments, ExecutionResult), !,
-    into_message_result(ExecutionResult, Result).
+handle_code_action_msg("workspace/executeCommand", Msg, _{id: Id, result: null}) :- _{id: Id} :< Msg,
+  ignore(handle_execute_command(Msg, _)).
 
-into_message_result(ExecutionResult, Result):- is_dict(ExecutionResult), !, Result = ExecutionResult.
-into_message_result(ExecutionResult, Result):-
-    Result = _{message: ExecutionResult}.
+handle_execute_command(Msg, Response):-
+    % Extract parameters from the message
+    _{id: Id, params: Params} :< Msg,
+    _{command: Command, arguments: Arguments} :< Params,  % Look up the clause for lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult)
+    HeadPattern = lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult),
+    (   clause(HeadPattern, Body)
+    ->  (
+            % We found a matching command
+            (   arguments_match(ExpectedArguments, Arguments)
+            ->  (   % Proceed to execute the command
+                    catch(
+                        call(Body),
+                        Error,
+                        % Handle errors that occur during execution
+                        (   format(string(ErrorMessage), "Error ~w ~q:~q", [Error, Command, Arguments]),
+                            send_feedback_message(ErrorMessage, warning),
+                            Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
+                        )
+                    )
+                    ->  % Execution succeeded without throwing an error
+                        (   send_feedback_message(ExecutionResult, info),
+                            Response = _{id: Id, result: ExecutionResult}
+                        )
+                    ; ( % Execution failed without an exception, but Body failed
+                        format(string(ErrorMessage), "Failed ~q:~q", [Command, Arguments]),
+                        send_feedback_message(ErrorMessage, warning),
+                        Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}})
+                )
+            ; ( % Argument mismatch
+                format(string(ErrorMessage),
+                    "Argument mismatch ~q:~q Expected ~w",
+                    [Command, Arguments, ExpectedArguments]),
+                send_feedback_message(ErrorMessage, warning),
+                Response = _{id: Id, error: _{code: -32602, message: ErrorMessage}})
+            )
+        )
+    ; ( % Command not recognized
+        format(string(ErrorMessage), "Command not recognized: ~q: ~q", [Command, Arguments]),
+        send_feedback_message(ErrorMessage, warning),
+        Response = _{id: Id, error: _{code: -32601, message: ErrorMessage}})).
+
+% Helper predicate to check if provided arguments match the expected pattern
+arguments_match(ExpectedArguments, ProvidedArguments) :-
+    % Attempt to unify ExpectedArguments with ProvidedArguments
+    % This checks if the structure and number of arguments are compatible
+    ExpectedArguments = ProvidedArguments.
+
+
+already_message_result(ExecutionResult):- is_dict(ExecutionResult), !.
+already_message_result(ExecutionResult):- ExecutionResult == false,!.
+already_message_result(ExecutionResult):- ExecutionResult == [],!.
+already_message_result([H|ExecutionResult]):- is_list(ExecutionResult),!,already_message_result(H).
+
+%into_message_result(_ExecutionResult, null):- !.
+into_message_result(ExecutionResult, Result):- already_message_result(ExecutionResult), !, Result = ExecutionResult.
+into_message_result(ExecutionResult, Result):- sformat(Str,'~w',[ExecutionResult]), Result = _{message: Str}.
 
 
 lsp_hooks:exec_code_action("refactor_rename", [Uri, Range, NewName], ExecutionResult) :-
@@ -433,7 +415,7 @@ lsp_hooks:exec_code_action("refactor_rename", [Uri, Range, NewName], ExecutionRe
 
 % GPT-based refactor rewrite command
 lsp_hooks:exec_code_action("refactor_gpt_rewrite", [Uri, Range], ExecutionResult) :-
-    get_src_code_at_range(block, Uri, Range, Code),
+    get_src_code_at_range(block, Code, Range, Uri),
     gpt_rewrite_code(Code, ExecutionResult).
 
 % GPT-based comment suggestion command
@@ -443,25 +425,20 @@ lsp_hooks:exec_code_action("source_gpt_comment", [Uri], ExecutionResult) :-
     gpt_comment_code(Text, ExecutionResult).
 
 % Evaluate Metta code
-lsp_hooks:exec_code_action("eval_metta", [Uri, Range, Code], ExecutionResult) :-
-    %get_code_at_range(expression, Uri, Range, Code),
+lsp_hooks:exec_code_action("eval_metta", [Code, Range, Uri], ExecutionResult) :-
+    %get_code_at_range(expression, Code, Range, Uri),
     load_metta_code(exec, Uri, Code, ExecutionResult),
     report_diagnostics(Uri, Range, ExecutionResult).
 
-% Evaluate Metta code
-lsp_hooks:exec_code_action("load_metta", [Uri, Range, Code], ExecutionResult) :-
-    %get_code_at_range(expression, Uri, Range, Code),
+
+% Load Metta code
+lsp_hooks:exec_code_action("load_metta", [Code, Range, Uri], ExecutionResult) :-
+    %get_code_at_range(expression, Code, Range, Uri),
     load_metta_code(+, Uri, Code, ExecutionResult),
     report_diagnostics(Uri, Range, ExecutionResult).
 
-% Run all tests and report results
-lsp_hooks:exec_code_action("run_all_tests", [Uri], ExecutionResult) :-
-    run_all_tests(Uri, ResultList),
-    format_tests_summary(ResultList, ExecutionResult).
-
-
 % Fallback for unrecognized commands
-lsp_hooks:exec_code_action(_, _, "Command not recognized.").
+%lsp_hooks:exec_code_action(_, _, "Command not recognized.").
 
 
 
@@ -507,62 +484,75 @@ call_openai_for_gpt_task(Code, Task, Result) :-
     ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Execute the Code
-load_metta(For, Uri, Code, Result):-
-  wots(_Str, load_run_metta_now(For, Uri, Code, Result)).
-
-load_run_metta_now(For, Uri, Code, Result) :-
-    % For safety, catch any errors during execution
-    catch_with_backtrace((
-        % Replace with actual code execution logic
-        % For demonstration, we'll just unify Result with Code
-        % In practice, you might use metta:eval_string/2 or similar
-        maybe_parse_sexpr_metta1(Code, Parsed),
-        load_metta_code(For, Uri, Parsed, CodeResult),
-        sformat(Result,"; ~@",[write_src_wi(CodeResult)])
-    ), Error, (
-        sformat(Result,"~w ; Error: ~q",[Code,Error])
-    )).
-% Evaluate Metta Code (Dummy Implementation)
-load_run_metta_now(_For,_Uri, Code, Result) :-
-    sformat(Result, "Evaluating Metta code: '~w'", [Code]).
-
-
-
-
-
-
-maybe_parse_sexpr_metta1(Code, Parsed):- string(Code),!, parse_sexpr_metta1(Code, Parsed).
+maybe_parse_sexpr_metta1(Code, Parsed):- string(Code), catch(parse_sexpr_metta1(Code, Parsed),_,fail),!.
 maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 
-load_metta_code(For, Uri, Code, Out):-
-    doc_path(Uri, Path),
-    current_self(Self),
-    maybe_parse_sexpr_metta1(Code, Parsed), !,
-    % Execute the form and generate the output using do_metta/5.
-    wdmsg(do_metta(file(lsp(Path)), For, Self, Parsed, Out)),
-   with_answer_output(do_metta(file(lsp(Path)), For, Self, Parsed, _Out),Out).
+load_metta_code(For, Uri, Code, Result) :- once(maybe_parse_sexpr_metta1(Code, Parsed)), Code\=@=Parsed,!, load_metta_code(For, Uri, Parsed, Result).
+load_metta_code(For, Uri, Code, Result) :- maybe_doc_path(Uri, Path), !, load_metta_code(For, Path, Code, Result).
+% Load/Execute the form and generate the output using do_metta/5.
+load_metta_code(For, Path, Code, Result) :-
+    catch_with_backtrace(( % For safety, catch any errors during execution
+        ignore(current_self(Self)),
+        wots(Out,ignore(do_metta(file(lsp(Path)), For, Self, Code, _LastAnswer))),
+        sformat(Result,"; ~w",[Out])
+    ), Error, (
+        sformat(Result,"~w ; Error: ~q",[Code,Error])
+    )),!.
+% Evaluate Metta Code (Dummy Implementation)
+load_metta_code(For,Uri, Code, Result) :-
+    sformat(Result, "Failed ~q", [load_metta_code(For,Uri, Code, Result)]).
 
-% Run all tests (Dummy Test Results)
-run_all_tests(_, [pass("Test 1"), fail("Test 2"), error("Test 3", "Some error")]).
 
-% Format the test summary
-format_tests_summary(ResultList, Summary) :-
-    length(ResultList, Total),
-    include(pass_test, ResultList, Passes),
-    include(fail_test, ResultList, Fails),
-    include(error_test, ResultList, Errors),
-    length(Passes, PassCount),
-    length(Fails, FailCount),
-    length(Errors, ErrorCount),
-    format(string(Summary),
-        "Total: ~d\nPassed: ~d\nFailed: ~d\nErrors: ~d",
+
+
+
+
+
+lsp_hooks:compute_code_lens(Uri, _, CodeLens) :-
+     atom_concat(_,'.metta',Uri),
+     CodeLens =
+          _{range: _{start: _{line: 0, character: 0}, end: _{line: 0, character: 1}},
+            command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}}.
+
+% Run All Tests Action
+lsp_hooks:compute_code_action(Uri, _Range, FirstAction) :-
+    get_filepart(Uri, FilePart),
+    sformat(AllTestsTitle, "Run All Tests in File: '~w'", [FilePart]),
+    FirstAction = _{
+        title: AllTestsTitle,
+        kind: "refactor.runAllTests",
+        command: _{
+            title: AllTestsTitle,
+            command: "run_all_tests",
+            arguments: [Uri]
+        }
+    }.
+
+% Run all tests and report results
+lsp_hooks:exec_code_action("run_all_tests", [Uri], Summary) :- !, run_all_tests(Uri,Summary).
+
+run_all_tests(Uri, Summary):- doc_path(Uri, Path), Lvl = 0, !,
+    findall(Diagnostic,
+      (metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
+        test_metta_file_buffer(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, Diagnostic)),
+    Diagnostics),
+    publish_diagnostics(Uri, Diagnostics, _Version, _Options),
+    maplist(=,[Total, PassCount, FailCount, ErrorCount], [6, 3, 2, 1]),
+    % Format the test summary
+    sformat(Summary, "Total: ~d\nPassed: ~d\nFailed: ~d\nErrors: ~d",
         [Total, PassCount, FailCount, ErrorCount]).
 
-% Helpers for test results
-pass_test(pass(_)).
-fail_test(fail(_)).
-error_test(error(_, _)).
+test_metta_file_buffer(_Uri, _Lvl, _Ord, _Kind, What, VL, Path, BRange, Diagnostic):-
+    into_json_range(BRange, Range), maybe_name_vars(VL), current_self(Self),
+    once(with_answer_output(do_metta(file(Path), +, Self, What, _Out), ExecutionResult)),
+    wots(Src,write_src(What)),
+    % ExecutionResult
+    Diagnostic = _{ range: Range,
+        severity: 3, % Severity of the diagnostic (1 = Error, 2 = Warning, 3 = Information, 4 = Hint).
+        code: Src,
+        source: "MeTTa LSP",
+        message: ExecutionResult }.
+
 
 
 % Execute Command Implementation

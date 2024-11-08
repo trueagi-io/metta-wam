@@ -50,6 +50,9 @@ token_modifiers([declaration,
 :- use_module(library(lists), [append/3, member/2, selectchk/4]).
 :- use_module(library(sgml), [load_html/3]).
 
+    :- include(lsp_metta_include).
+
+
 get_document_symbols(Path, S) :-
     lsp_metta_changes:doc_text_d4(Path,SplitText),
     get_document_symbol_aux(SplitText,0,S).

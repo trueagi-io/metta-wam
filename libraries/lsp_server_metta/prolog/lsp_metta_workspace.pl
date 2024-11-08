@@ -48,6 +48,8 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+    :- include(lsp_metta_include).
+
 %:- module(lsp_metta_workspace, [
 %                        xref_metta_source/1]).
 

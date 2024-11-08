@@ -10,6 +10,8 @@ not_mod_lsp_metta_utils
         split_document_get_section_only/4
 ]).
 
+:- include(lsp_metta_include).
+
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 
 % /** <module> LSP Utils

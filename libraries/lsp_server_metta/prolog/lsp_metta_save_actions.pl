@@ -53,10 +53,13 @@
 % - The module integrates with the LSP `willSaveWaitUntil` request, ensuring that the
 %   date comment is updated or added just before the file is saved.
 %
-% Author: Douglas Miles   
+% Author: Douglas Miles
 % Date: 10-21-2024
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:- include(lsp_metta_include).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the 'textDocument/willSaveWaitUntil' Request and Execute All Save Actions
@@ -109,6 +112,8 @@ update_or_add_date_comment(Uri, CurrentEdits, NewEdits) :-
             newText: NewDateComment
         } | CurrentEdits]
     ).
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Another Save Action: Log the Save Event
