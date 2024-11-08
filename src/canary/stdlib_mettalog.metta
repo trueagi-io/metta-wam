@@ -1815,3 +1815,21 @@
     (@param "Expression")))
   (@return "Result of Expression"))
 (: with-output-to! (-> Stream Expression Atom))
+
+;; Public MeTTaLog
+(@doc load-file!
+  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-file! (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
+(@doc load-ascii
+  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-ascii (-> hyperon::space::DynSpace String Expression))

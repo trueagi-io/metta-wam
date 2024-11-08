@@ -6,7 +6,7 @@
 !(assertEqualToResult (let $s (open! (filename) write)
                            (call-cleanup! (with-output-to! $s (foo $x)) (close! $s)))
                       ("(bar 1)" "(bar 2)"))
-!(assertEqualToResult (let $f (filename) (include $f)) (()))
+!(assertEqualToResult (let $f (filename) (load-file! &self $f)) (()))
 !(assertEqualToResult (match &self (bar $x) $x) (1 2))
 
 ;; cleanup
@@ -22,7 +22,7 @@
 !(assertEqualToResult (let $s (open! (filename) append) 
                            (call-cleanup! (with-output-to! $s (foo $x)) (close! $s))) 
                       ("(bar 3)" "(bar 4)"))
-!(assertEqualToResult (let $f (filename) (include $f)) (()))
+!(assertEqualToResult (let $f (filename) (load-file! &self $f)) (()))
 !(assertEqualToResult (match &self (bar $x) $x) (1 2 3 4))
 
 ;; cleanup
@@ -40,7 +40,7 @@
 !(assertEqualToResult (let $s (open! (filename) update) 
                            (call-cleanup! (with-output-to! $s (foo $x)) (close! $s))) 
                       ("(bar 5)" "(bar 6)"))
-!(assertEqualToResult (let $f (filename) (include $f)) (()))
+!(assertEqualToResult (let $f (filename) (load-file! &self $f)) (()))
 !(assertEqualToResult (match &self (bar $x) $x) (3 4 5 6))
 
 ;; cleanup
@@ -58,5 +58,5 @@
 !(assertEqualToResult (let $s (open! (filename) write)
                            (call-cleanup! (with-output-to! $s (foo $x)) (close! $s)))
                       ("(bar 1)" "(bar 2)"))
-!(assertEqualToResult (let $f (filename) (include $f)) (()))
+!(assertEqualToResult (let $f (filename) (load-file! &self $f)) (()))
 !(assertEqualToResult (match &self (bar $x) $x) (1 2))
