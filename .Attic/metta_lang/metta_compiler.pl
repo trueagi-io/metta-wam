@@ -1581,8 +1581,29 @@ strip_m(BB,BB).
 
 :- dynamic(needs_tabled/2).
 
+replace_u_assign(A,A,[]) :- var(A),!.
+replace_u_assign(u_assign(A,[F|Args0]),R,Used) :- var(A),!,
+   maplist(replace_u_assign,Args0,Args1,Used0),
+   transpile_prefix(Prefix),
+   atom_concat(Prefix,F,Fp),
+   length(Args0,LArgs),
+   LArgs1 is LArgs+1,
+   append(Args1,[A],Args2),
+   R=..[Fp|Args2],
+   ord_union(Used0,Used1),
+   ord_add_element(Used1,F/LArgs1,Used).
+replace_u_assign(u_assign([F|Args],B),R,Used) :- var(B),!,
+   replace_u_assign(u_assign(B,[F|Args]),R,Used).
+replace_u_assign(A,B,Used) :-
+   compound(A),
+   A=..A0,!,
+   maplist(replace_u_assign,A0,B0,Used0),
+   B=..B0,
+   ord_union(Used0,Used).
+replace_u_assign(A,A,[]).
 
-add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
+add_assertion(Space,List):- is_list(List),!,
+   maplist(add_assertion(Space),List).
 add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
 add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
@@ -1594,9 +1615,17 @@ add_assertion1(Space,ACC) :-
          transpile_prefix(Prefix),
          atom_concat(Prefix,ACCf,ACCfp),
          ACCH2=..[ACCfp|ACCa],
-         %ACC2=(ACCH2 :- ACCB)
-         ACC2=(ACCH2 :- (write('################################################################# '),writeln(ACCf),ACCB))
-      ; ACC2=ACC),
+         replace_u_assign(ACCB,ACCBr,PredicatesUsed),
+         length(ACCa,L),
+         PredicatesDefined=[ACCf/L],
+         %ACC2=(ACCH2 :- ACCBr)
+         ACC2=(ACCH2 :- (write('################################################################# '),writeln(ACCf),ACCBr))
+      ;
+         ACC2=ACC,
+         PredicatesUsed=[],
+         PredicatesDefined=[]),
+     ord_subtract(PredicatesUsed,PredicatesDefined,PredicatesCheck),
+     format("~w",[PredicatesCheck]),
      copy_term(ACC2,AC,_),
      expand_to_hb(AC,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
@@ -1619,8 +1648,23 @@ add_assertion1(Space,ACC) :-
         nl)),
     %wdmsg(list_to_set(F/A,N)),
     abolish(/*'&self':*/F/A),
-    create_and_consult_temp_file(Space,F/A, Set))).
+    create_and_consult_temp_file(Space,F/A, Set),
+    maplist(check_supporting_predicates(Space),PredicatesCheck)
+    )).
 
+check_supporting_predicates(_,F/A) :- % already exists
+   transpile_prefix(Prefix),
+   atom_concat(Prefix,F,Fp),
+   current_predicate(Fp/A),!.
+check_supporting_predicates(Space,F/A) :- % create a stub
+   transpile_prefix(Prefix),
+   atom_concat(Prefix,F,Fp),
+   findall(Atom0, (between(1, A, I0) ,Atom0='$VAR'(I0)), AtomList0),
+   H=..[Fp|AtomList0],
+   Am1 is A-1,
+   findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
+   B=..[u_assign,[F|AtomList1],'$VAR'(A)],
+   create_and_consult_temp_file(Space,Fp/A,[H:-B]).
 
 cl_list_to_set([A|List],Set):-
   member(B,List),same_clause(A,B),!,
