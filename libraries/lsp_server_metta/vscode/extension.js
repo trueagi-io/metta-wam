@@ -21,7 +21,7 @@ function activate(context) {
   };
 
   let clientOptions = {
-    documentSelector: [{scheme: "file", language: "metta"}],
+    documentSelector: [{scheme: "file", language: "metta"},{scheme: "file", language: "prolog"}],
   };
 
   let client = new lsp.LanguageClient(

@@ -33,6 +33,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- include(lsp_server_hooks).
 :- include(lsp_metta_include).
 
+:- set_prolog_flag(gc,false).
 
 :- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
@@ -40,7 +41,6 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 %:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 
 :- ensure_loaded(lsp_metta_completion).
-:- ensure_loaded(lsp_metta_requests).
 
 :- use_module(lsp_prolog_colours, [
                             file_colours/2,
@@ -870,7 +870,9 @@ handle_msg("textDocument/didClose", Msg, false) :-
 handle_msg("initialized", Msg, false) :- !,
     debug_lsp(main, "initialized ~w", [Msg]).
 
-handle_msg("$/setTrace", _Msg, false).
+handle_msg("$/setTrace", _Msg, false):-
+   fetch_workspace_configuration.
+
 
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-
