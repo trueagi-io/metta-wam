@@ -269,7 +269,7 @@ test_feedback_message :-
 
 % Sample predicate for 'report_diagnostics/3'
 sample_report_diagnostics :-
-    Uri = "file:///path/to/file.pl",
+    sample_uri(Uri),
     Range = _{
         start: _{line: 5, character: 0},
         end: _{line: 5, character: 10}
@@ -310,12 +310,13 @@ test_work_done_progress :-
 % Sample predicate for 'apply_workspace_edit/3'
 sample_ws_edit :-
     Label = "Sample Edit",
+    sample_uri(Uri),
     Edit = _{
-        uri: "file:///path/to/file.pl",
+        uri: Uri,
         changes:
                [
                 _{
-                    uri: "file:///path/to/file.pl",
+                    uri: Uri,
                     range: _{
                         start: _{line: 0, character: 0},
                         end: _{line: 0, character: 0}
@@ -330,7 +331,7 @@ sample_ws_edit :-
 % Sample predicate for 'fetch_workspace_configuration/2'
 fetch_workspace_configuration :-
     ConfigurationItems = [
-        _{section: "mettaLPS"}
+        _{section: "metta-lsp"}
     ],
     fetch_workspace_configuration(ConfigurationItems, Configurations),
     format('Configurations: ~w', [Configurations]).
@@ -341,20 +342,27 @@ sample_get_workspace_folders :-
     format('Workspace folders: ~w', [Folders]),
     send_feedback_message("Retrieved workspace folders.", info).
 
+
+sample_uri("file:///home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/flip_test.metta").
+
 % Sample predicate for 'show_document/4'
 sample_show_document :-
-    Uri = "file:///path/to/another_file.pl",
+    sample_uri(Uri),
     TakeFocus = true,
     Selection = _{
         start: _{line: 10, character: 0},
         end: _{line: 10, character: 10}
     },
     show_document(Uri, TakeFocus, Selection, Success),
-    ( Success ->
+    ( is_lsp_success(Success) ->
         send_feedback_message("Document shown successfully.", info)
     ;
         send_feedback_message("Failed to show document.", error)
     ).
+
+is_lsp_success(Success):-
+  \+ ((first_dict_key(success,Success,Value), Value==false)).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Command Handler for 'system_call_zero_args'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -362,11 +370,10 @@ sample_show_document :-
 % Command execution logic
 lsp_hooks:exec_code_action("system_call_zero_args", [_Uri, PredicateName], null) :-
     atom_string(PredicateAtom, PredicateName),
-    (   catch(call(PredicateAtom), Error, (
-            format('Error executing predicate ~w: ~w', [PredicateAtom, Error]),
+    (   catch(call(PredicateAtom), Error,
+          ( format('Error executing predicate ~w: ~w', [PredicateAtom, Error]),
             send_feedback_message('Error executing predicate', error),
-            fail
-        ))
+            fail))
     ->  true
     ;   send_feedback_message('Predicate execution failed', error)
     ),
@@ -632,7 +639,7 @@ show_document(Uri, TakeFocus, Selection, Success) :-
     },
     send_client_message(Msg),
     receive_response(MsgId, Response),
-    Success = Response.get(success).
+    ((first_dict_key(success,Response,Success), Success\==none)->true;Success=true).
 
 %% refresh_code_lens is det.
 %
