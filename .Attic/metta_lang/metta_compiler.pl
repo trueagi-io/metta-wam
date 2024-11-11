@@ -1585,7 +1585,7 @@ strip_m(BB,BB).
 :- dynamic(needs_tabled/2).
 
 replace_u_assign(A,A,[]) :- var(A),!.
-replace_u_assign(u_assign(A,[F|Args0]),R,Used) :- var(A),!,
+replace_u_assign(u_assign(A,[F|Args0]),R,Used) :- var(A),atom(F),!,
    maplist(replace_u_assign,Args0,Args1,Used0),
    transpile_prefix(Prefix),
    atom_concat(Prefix,F,Fp),
@@ -1595,8 +1595,11 @@ replace_u_assign(u_assign(A,[F|Args0]),R,Used) :- var(A),!,
    R=..[Fp|Args2],
    ord_union(Used0,Used1),
    ord_add_element(Used1,F/LArgs1,Used).
-replace_u_assign(u_assign([F|Args],B),R,Used) :- var(B),!,
-   replace_u_assign(u_assign(B,[F|Args]),R,Used).
+replace_u_assign(u_assign(A,B),R,Used) :- var(A),!,
+   R=(A=B),
+   Used=[].
+replace_u_assign(u_assign(A,B),R,Used) :- var(B),\+ var(A),!,
+   replace_u_assign(u_assign(B,A),R,Used).
 replace_u_assign(A,B,Used) :-
    compound(A),
    A=..A0,!,
@@ -1612,13 +1615,16 @@ add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
 
 add_assertion1(Space,ACC) :-
- must_det_ll((
+   %leash(-all),trace,
+   must_det_ll((
      % add the prefix
       (ACC = (ACCH :- ACCB),ACCH=..[ACCf|ACCa] ->
          transpile_prefix(Prefix),
          atom_concat(Prefix,ACCf,ACCfp),
          ACCH2=..[ACCfp|ACCa],
+         format("0:~w\n",[ACCB]),
          replace_u_assign(ACCB,ACCBr,PredicatesUsed),
+         format("1:~w\n",[ACCBr]),
          length(ACCa,L),
          PredicatesDefined=[ACCf/L],
          %ACC2=(ACCH2 :- ACCBr)
