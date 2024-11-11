@@ -250,8 +250,7 @@
 			<F
 				N="tests/*.*"
 				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-				L="1"/>
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 		</Folder>
 		<Folder Name="/usr">
 			<Folder Name="local">
@@ -271,13 +270,11 @@
 				</Folder>
 			</Folder>
 		</Folder>
-		<Folder Name="wiki">
-			<F
-				N="wiki/*.*"
-				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-				L="1"/>
-		</Folder>
+		<F
+			N="*.*"
+			Recurse="1"
+			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+			L="1"/>
 		<F
 			N="*.*"
 			Recurse="1"
