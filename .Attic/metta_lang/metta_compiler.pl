@@ -90,6 +90,9 @@
 % =======================================
 %:- set_option_value(encoding,utf8).
 
+:- initialization(mutex_create(transpiler_mutex_lock)).
+:- at_halt(mutex_destroy(transpiler_mutex_lock)).
+
 %transpile_prefix('').
 transpile_prefix('mc__').
 
@@ -1629,42 +1632,42 @@ add_assertion1(Space,ACC) :-
      copy_term(ACC2,AC,_),
      expand_to_hb(AC,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    %format("H:~w F:~w A:~w HH:~w\n", [H,F,A,HH]),
-    %format("AC:~w\n", [AC]),
-    % assert(AC),
-    % Get the current clauses of my_predicate/1
-    findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
-    copy_term(Prev,CPrev,_),
-    % Create a temporary file and add the new assertion along with existing clauses
-    append(CPrev,[AC],NewList),
-    cl_list_to_set(NewList,Set),
-    length(Set,N),
-    if_t(N=2,
-        (Set=[X,Y],
-          numbervars(X),
-          numbervars(Y),
-        nl,display(X),
-        nl,display(Y),
-        nl)),
-    %wdmsg(list_to_set(F/A,N)),
-    abolish(/*'&self':*/F/A),
-    create_and_consult_temp_file(Space,F/A, Set),
+    with_mutex(transpiler_mutex_lock,(
+      %format("H:~w F:~w A:~w HH:~w\n", [H,F,A,HH]),
+      %format("AC:~w\n", [AC]),
+      % assert(AC),
+      % Get the current clauses of my_predicate/1
+      findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
+      copy_term(Prev,CPrev,_),
+      % Create a temporary file and add the new assertion along with existing clauses
+      append(CPrev,[AC],NewList),
+      cl_list_to_set(NewList,Set),
+      length(Set,N),
+      if_t(N=2,
+         (Set=[X,Y],
+            numbervars(X),
+            numbervars(Y),
+         nl,display(X),
+         nl,display(Y),
+         nl)),
+      %wdmsg(list_to_set(F/A,N)),
+      abolish(/*'&self':*/F/A),
+      create_and_consult_temp_file(Space,F/A, Set)
+    )),
     maplist(check_supporting_predicates(Space),PredicatesCheck)
-    )).
+)).
 
-check_supporting_predicates(_,F/A) :- % already exists
+check_supporting_predicates(Space,F/A) :- % already exists
    transpile_prefix(Prefix),
    atom_concat(Prefix,F,Fp),
-   current_predicate(Fp/A),!.
-check_supporting_predicates(Space,F/A) :- % create a stub
-   transpile_prefix(Prefix),
-   atom_concat(Prefix,F,Fp),
-   findall(Atom0, (between(1, A, I0) ,Atom0='$VAR'(I0)), AtomList0),
-   H=..[Fp|AtomList0],
-   Am1 is A-1,
-   findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
-   B=..[u_assign,[F|AtomList1],'$VAR'(A)],
-   create_and_consult_temp_file(Space,Fp/A,[H:-B]).
+   with_mutex(transpiler_mutex_lock,
+      (current_predicate(Fp/A) -> true ;
+         findall(Atom0, (between(1, A, I0) ,Atom0='$VAR'(I0)), AtomList0),
+         H=..[Fp|AtomList0],
+         Am1 is A-1,
+         findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
+         B=..[u_assign,[F|AtomList1],'$VAR'(A)],
+         create_and_consult_temp_file(Space,Fp/A,[H:-B]))).
 
 cl_list_to_set([A|List],Set):-
   member(B,List),same_clause(A,B),!,
