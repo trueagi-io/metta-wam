@@ -52,180 +52,582 @@
  */
 
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: handles loading, parsing, and processing MeTTa files, including functions 
+% for reading s-expressions, managing file buffers, and converting between different data representations.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Ensure that the `metta_interp` library is loaded,
 % That loads all the predicates called from this file
 :- ensure_loaded(metta_interp).
 
-
-when_tracing(Goal):- tracing,!,notrace(Goal),!.
+%!  when_tracing(+Goal) is det.
+%
+%   Executes the given Goal if tracing is currently enabled.
+%
+%   This predicate checks if tracing is enabled. If tracing is active, it
+%   temporarily disables tracing to execute the Goal, ensuring that the Goal
+%   runs without generating trace output. If tracing is not active, the predicate
+%   simply succeeds without executing the Goal.
+%
+%   @arg Goal The Prolog goal to be executed conditionally based on the tracing status.
+%
+%   @example
+%     % Assume tracing is active and we want to run a goal without trace output.
+%     ?- trace, when_tracing(writeln('This runs without trace output')).
+%     % Trace is turned off temporarily, executes the goal, then restores tracing.
+%
+when_tracing(Goal) :-
+    % Check if tracing is active
+    tracing,      
+    % Cut to prevent further execution if tracing is not active   
+    !,                
+    % Temporarily disable tracing, run the Goal without tracing output
+    notrace(Goal),    
+    % Cut to avoid backtracking into the next clause
+    !.                
+% If tracing is not active, do nothing and succeed without executing Goal.
 when_tracing(_).
 
+% The 'multifile' predicate allows other files to add clauses
 :- multifile(user:asserted_metta_pred/2).
+%  The 'dynamic' predicate allows the predicate to be added, removed, or modified during execution
 :- dynamic(user:asserted_metta_pred/2).
 
+%!  exists_virtually(+Library) is det.
+%
+%   Declares the virtual existence of a specified library.
+%
+%   @arg Library The name of the library that is considered to exist virtually.
+%
 exists_virtually(corelib).
 exists_virtually(stdlib).
 
-path_chars(A,C):- symbol_chars(A,C).
+%!  path_chars(+A, -C) is det.
+%
+%   Maps the symbolic characters of `A` to `C`.
+%
+%   This predicate relates a symbolic representation in `A` to its character form
+%   in `C`. It delegates this functionality to `symbol_chars/2`, which should
+%   perform the actual conversion.
+%
+%   @arg A The symbolic representation to be converted.
+%   @arg C The resulting list of characters.
+%
+path_chars(A, C) :- symbol_chars(A, C).
 
-with_wild_path(Fnicate, Dir):-
-  working_directory(PWD,PWD),
-  wwp(Fnicate, Dir).
+%!  with_wild_path(+Fnicate, +Dir) is det.
+%
+%   Sets up a wild card path environment in the given directory `Dir`.
+%
+%   This predicate sets up the current directory with wild card processing by
+%   referring to `Fnicate` and the directory `Dir`. It retrieves the current
+%   working directory `PWD` and then invokes `wwp/2` with `Fnicate` and `Dir` as
+%   arguments. `wwp/2` is assumed to handle the wild card path processing.
+%
+%   @arg Fnicate A function or object associated with wild path setup.
+%   @arg Dir     The directory where the wild path setup is to be applied.
+%
+%   @example
+%     % Apply wild path setup for a specific directory.
+%     ?- with_wild_path(my_fnicate, '/home/user/docs').
+%
+with_wild_path(Fnicate, Dir) :-
+    % Retrieve the current working directory.
+    working_directory(PWD, PWD),  
+    % Apply the wild path setup.
+    wwp(Fnicate, Dir).            
 
-inner_compound(Inner,'.',Inner):- \+ compound(Inner),!.
-inner_compound(Cmpd,Outter,Inner):-
-    compound_name_arguments(Cmpd,F,[X|Args]),
-    compound_name_arguments(Outter,F,[Midder|Args]),
-    inner_compound(X,Midder,Inner).
+%!  inner_compound(+Compound, -Outer, -Inner) is det.
+%
+%   Traverses the innermost compound term, producing `Inner` as the deepest nested term.
+%
+%   This predicate recursively navigates the structure of a compound term `Compound`
+%   until reaching an atomic term. It constructs `Outer` by maintaining the
+%   structure around `Inner`. If `Inner` is not compound, it is returned directly.
+%
+%   @arg Compound The compound term to traverse.
+%   @arg Outer    The structure containing `Inner`.
+%   @arg Inner    The innermost atomic or non-compound term.
+%
+%   @example
+%     % Decompose nested compound structures.
+%     ?- inner_compound(f(g(h, i)), Outer, Inner).
+%     Outer = f(g(Midder)),
+%     Inner = h.
+%
+inner_compound(Inner, '.', Inner) :- 
+    % If Inner is not compound, return it as Inner.
+    \+ compound(Inner), !.  
+inner_compound(Cmpd, Outter, Inner) :-
+    % Decompose Cmpd into functor F and arguments [X|Args]
+    compound_name_arguments(Cmpd, F, [X|Args]),
+    % Recompose Outer with the functor F and [Midder|Args] as arguments
+    compound_name_arguments(Outter, F, [Midder|Args]),
+    % Recursively find the innermost term.
+    inner_compound(X, Midder, Inner).
 
-afn(A,B):- quietly(absolute_file_name(A,B)).
-afn(A,B,C):- quietly(absolute_file_name(A,B,C)).
+%!  afn(+A, -B) is det.
+%
+%   Resolves the absolute file name for `A`, yielding `B` as the resolved path.
+%
+%   This predicate quietly resolves the absolute file name of `A`, unifying the
+%   result with `B`.
+%
+%   @arg A The file name or path to resolve.
+%   @arg B The resolved absolute path.
+%
+%   @example
+%     % Resolve the absolute path of a relative file name.
+%     ?- afn('file.txt', AbsPath).
+%     AbsPath = '/home/user/file.txt'.
+%
+afn(A, B) :- quietly(absolute_file_name(A, B)).
 
-% Process a file or directory path with a given predicate.
-wwp(Fnicate, Dir) :- extreme_debug(fbug(wwp(Fnicate, Dir))),fail.
-wwp(_Fnicate, []) :- !.
-wwp(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
-wwp(Fnicate, Virtual) :- var(Virtual),!,throw(var_wwp(Fnicate, Virtual)).
-wwp(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), wwp(Fnicate, Chars))).
+%!  afn(+A, -B, +Options) is det.
+%
+%   Resolves the absolute file name for `A` with specific options, unifying with `B`.
+%
+%   This variant of `afn/2` allows additional options for file name resolution,
+%   which are passed to `absolute_file_name/3`.
+%
+%   @arg A       The file name or path to resolve.
+%   @arg B       The resolved absolute path.
+%   @arg Options The options list for customizing the resolution.
+%
+%   @example
+%     % Resolve a file path with specific options.
+%     ?- afn('file.txt', AbsPath, [access(read)]).
+%     AbsPath = '/home/user/file.txt'.
+%
+afn(A, B, C) :- quietly(absolute_file_name(A, B, C)).
 
-% catches charlist and codelist filenames
-wwp(Fnicate, Chars) :- is_list(Chars), catch(name(File,Chars),_,fail), Chars\==File,!, wwp(Fnicate, File).
+%!  wwp(+Fnicate, +Path) is det.
+%
+%   Processes a file or directory path with a given predicate `Fnicate`.
+%
+%   The `wwp/2` predicate is a versatile file and directory handler that operates
+%   on paths of various types, including files, directories, symbolic paths, and
+%   compound terms. It allows processing of virtual paths, lists of paths, and
+%   compound structures. The predicate applies the function `Fnicate` on each
+%   processed file or directory found.
+%
+%   @arg Fnicate The predicate to apply to each processed path or file.
+%   @arg Path    The file, directory, symbolic path, or compound structure to process.
+%
+%   @example
+%     % Apply a function to each file in a directory or file list.
+%     ?- wwp(my_process_fnicate, '/path/to/directory').
+%
+wwp(Fnicate,Dir):-
+    extreme_debug(fbug(wwp(Fnicate,Dir))),
+    fail.
+wwp(_Fnicate, []) :- 
+    % If the path is an empty list, succeed without further processing.
+    !.
+wwp(_Fnicate, Virtual) :- 
+    % If the path exists virtually, succeed immediately.
+    exists_virtually(Virtual), !.
+wwp(Fnicate, Virtual) :- 
+    % If the path is unbound, throw an error to handle uninitialized input.
+    var(Virtual), !, throw(var_wwp(Fnicate, Virtual)).
+wwp(Fnicate, Dir) :- 
+    % If running on Scryer Prolog and the path is a symbol, convert it to a character list
+    % and reapply wwp on the resulting list.
+    is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir, Chars), wwp(Fnicate, Chars))).
+wwp(Fnicate, Chars) :- 
+    % If the path is a character list or code list, convert it to a file name and reapply wwp.
+    is_list(Chars), catch(name(File, Chars), _, fail), Chars \== File, !, wwp(Fnicate, File).
+wwp(Fnicate, File) :- 
+    % If the path is a list of files, apply wwp to each element in the list.
+    is_list(File), !, must_det_ll((maplist(wwp(Fnicate), File))).
+wwp(Fnicate, Cmpd) :- 
+    % If the path is a compound term, find the innermost term and process it within the outer structure.
+    compound(Cmpd), inner_compound(Cmpd, Outter, Inner), !,
+    % Find absolute path of the outer compound and apply wwp with Inner inside that directory.
+    afn(Outter, Dir, [solutions(all), access(read), file_errors(fail)]),
+    with_cwd(Dir, wwp(Fnicate, Inner)), !.
+wwp(Fnicate, Chars) :- 
+    % If running on SWI-Prolog, convert character list to an atom and process it.
+    \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom, Chars), wwp(Fnicate, Atom))).
+wwp(Fnicate, File) :- 
+    % If the path exists as a file, directly apply Fnicate to it.
+    exists_file(File), !, must_det_ll((call(Fnicate, File))).
+wwp(Fnicate, ColonS) :- 
+    % Handle symbolic paths containing ':' separators, treating them as modular paths.
+    fail, symbolic(ColonS), symbol_contains(ColonS, ':'), !,
+    % Split the symbolic path into top-level directory and the remaining path.
+    symbolic_list_concat([Top|Rest], ':', ColonS),
+    symbolic_list_concat(Rest, ':', FileNext),
+    % Log if tracing and attempt to find the directory.
+    when_tracing(listing(is_metta_module_path)),
+    find_top_dirs(Top, Dir),
+    (
+        % If FileNext is empty, apply wwp only on Dir, otherwise process within the directory.
+        (fail, symbol_length(FileNext, 0))
+        -> wwp(Fnicate, Dir)
+        ; (exists_directory(Dir)
+            -> with_cwd(Dir, wwp(Fnicate, FileNext))
+            ; fail)
+    ), 
+    !.
+wwp(Fnicate, ColonS) :- 
+    % If path contains ':' separator, split it for directory processing.
+    symbolic(ColonS), symbol_contains(ColonS, ':'), !,
+    symbolic_list_concat([Top|Rest], ':', ColonS),
+    symbolic_list_concat(Rest, ':', FileNext), !,
+    when_tracing(listing(is_metta_module_path)),
+    must_det_ll((call((
+        quietly(find_top_dirs(Top, Dir)),
+        % If Dir exists, process the remaining path within Dir.
+        exists_directory(Dir),
+        with_cwd(Dir, wwp(Fnicate, FileNext)))))), !.
+wwp(Fnicate, File) :- 
+    % If the path contains '*', expand it to match multiple files.
+    symbol_contains(File, '*'),
+    expand_file_name(File, List),
+    maplist(wwp(Fnicate), List), !.
+wwp(Fnicate, Dir) :- 
+    % If Dir is a directory, check for `__init__.py` file and process if it exists.
+    exists_directory(Dir),
+    quietly(afn_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)])),
+    wwp(Fnicate, PyFile).
+wwp(Fnicate, File) :- 
+    % If File doesn’t exist as file or directory, search for it with predefined extensions.
+    \+ exists_directory(File), \+ exists_file(File),
+    extension_search_order(Ext),
+    symbolic_list_concat([File|Ext], MeTTafile),
+    exists_file(MeTTafile),
+    call(Fnicate, MeTTafile).
+wwp(Fnicate, File) :- 
+    % For files containing '..', search with alternative extensions and process if found.
+    \+ exists_directory(File), \+ exists_file(File), symbol_contains(File, '..'),
+    extension_search_order(Ext),
+    symbolic_list_concat([File|Ext], MeTTafile0),
+    afn_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
+    exists_file(MeTTafile),
+    call(Fnicate, MeTTafile).
+wwp(Fnicate, File) :- 
+    % If File is a directory, process all files matching '*.*sv' in that directory.
+    exists_directory(File),
+    directory_file_path(File, '*.*sv', Wildcard),
+    expand_file_name(Wildcard, List), !,
+    maplist(Fnicate, List).
+wwp(Fnicate, Dir) :- 
+    % If Dir is a directory, retrieve all files within and apply Fnicate to each.
+    exists_directory(Dir), !,
+    must_det_ll((directory_files(Dir, Files),
+                 maplist(directory_file_path(Dir, Files), Paths),
+                 maplist(path_chars, Paths, CharPaths),
+                 maplist(wwp(Fnicate), CharPaths))), !.
+wwp(Fnicate, File) :- 
+    % Fallback case: directly apply Fnicate on the file.
+    must_det_ll((call(Fnicate, File))).
 
-wwp(Fnicate, File) :- is_list(File), !,
-   must_det_ll((maplist(wwp(Fnicate), File))).
-
-wwp(Fnicate, Cmpd):- compound(Cmpd),
-  inner_compound(Cmpd,Outter,Inner),!,
-  afn(Outter, Dir,[solutions(all), access(read), file_errors(fail)]),
-  with_cwd(Dir,wwp(Fnicate, Inner)),!.
-
-% this is what captures string in SWI-Prolog
-wwp(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), wwp(Fnicate, Atom))).
-
-wwp(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
-
-wwp(Fnicate, ColonS) :- fail, symbolic(ColonS), symbol_contains(ColonS, ':'),!,
-  symbolic_list_concat([Top|Rest],':',ColonS),
-  symbolic_list_concat(Rest,':',FileNext),
-  when_tracing(listing(is_metta_module_path)),
-  find_top_dirs(Top,Dir),
-  ((fail,symbol_length(FileNext,0))
-   -> wwp(Fnicate, Dir)
-   ; (exists_directory(Dir)
-       -> with_cwd(Dir,wwp(Fnicate, FileNext))
-       ; fail)),!.
-
-wwp(Fnicate, ColonS) :- symbolic(ColonS), symbol_contains(ColonS, ':'),!,
-  symbolic_list_concat([Top|Rest],':',ColonS),
-  symbolic_list_concat(Rest,':',FileNext),!,
-  when_tracing(listing(is_metta_module_path)),
-  must_det_ll((call((
-  quietly(find_top_dirs(Top,Dir)),
-  exists_directory(Dir),
-  with_cwd(Dir,wwp(Fnicate, FileNext)))))),!.
-
-wwp(Fnicate, File) :-
-  symbol_contains(File, '*'),
-  expand_file_name(File, List),
-  maplist(wwp(Fnicate), List),!.
-
-wwp(Fnicate, Dir) :-  exists_directory(Dir),
-  quietly(afn_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)])),
-  wwp(Fnicate, PyFile).
-
-
-wwp(Fnicate, File) :-
-  \+ exists_directory(File), \+ exists_file(File), %\+ symbol_contains(File,'.'),
-  extension_search_order(Ext),
-  symbolic_list_concat([File|Ext],MeTTafile),
-  exists_file(MeTTafile),
-  call(Fnicate, MeTTafile).
-
-wwp(Fnicate, File) :-
-  \+ exists_directory(File), \+ exists_file(File), symbol_contains(File,'..'),
-  extension_search_order(Ext),
-  symbolic_list_concat([File|Ext],MeTTafile0),
-  afn_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
-  exists_file(MeTTafile),
-  call(Fnicate, MeTTafile).
-
-wwp(Fnicate, File) :-
-  exists_directory(File),
-  directory_file_path(File, '*.*sv', Wildcard),
-  expand_file_name(Wildcard, List), !,
-  maplist(Fnicate, List).
-
-wwp(Fnicate, Dir) :-  exists_directory(Dir), !,
-  must_det_ll((directory_files(Dir, Files),
-  maplist(directory_file_path(Dir,Files),Paths),
-  maplist(path_chars,Paths,CharPaths),
-  maplist(wwp(Fnicate), CharPaths))), !.
-
-wwp(Fnicate, File) :- must_det_ll((call(Fnicate, File))).
-
+%!  extension_search_order(-ExtensionList) is det.
+%
+%   Defines the order in which file extensions are searched.
+%
+%   Specifies the order of file extensions to use when searching for files.
+%
+%   @arg ExtensionList A list of file extensions in the preferred search order.
+%
+%   @example
+%     % Retrieve the preferred search order for extensions.
+%     ?- extension_search_order(Order).
+%     Order = ['.metta'] ;
+%     Order = ['.py'] ;
+%     Order = [''].
+%
 extension_search_order(['.metta']).
 extension_search_order(['.py']).
 extension_search_order(['']).
 
-:- if( \+ current_predicate(load_metta_file/2)).
-load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
-load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
+:- if(\+ current_predicate(load_metta_file/2)).
+
+%!  load_metta_file(+Self, +Filemask) is det.
+%
+%   Loads a `.metta` file or other supported files based on the file mask.
+%
+%   Attempts to load the specified `Filemask`. If the `Filemask` has a `.metta` 
+%   extension, `load_metta/2` is used. Otherwise, `load_flybase/1` is called.
+%
+%   @arg Self The calling module or context.
+%   @arg Filemask The file name or pattern to load.
+%
+%   @example
+%     % Load a file with .metta extension.
+%     ?- load_metta_file(module, 'example.metta').
+%
+load_metta_file(Self, Filemask) :- 
+    symbol_concat(_, '.metta', Filemask), !, 
+    % Load the file if it has a .metta extension
+    load_metta(Self, Filemask).
+load_metta_file(_Slf, Filemask) :- 
+    % Otherwise, use the flybase loader for the file mask
+    load_flybase(Filemask).
+
 :- endif.
 
-afn_from(RelFilename,Filename):-
-  afn_from(RelFilename,Filename,[]).
+%!  afn_from(+RelFilename, -Filename) is det.
+%
+%   Resolves the absolute filename from a relative filename.
+%
+%   Finds the absolute path for `RelFilename`, applying defaults as needed.
+%
+%   @arg RelFilename The relative filename to resolve.
+%   @arg Filename The resulting absolute filename.
+%
+%   @example
+%     % Resolve absolute path of a relative file name.
+%     ?- afn_from('docs/example.txt', Path).
+%
+afn_from(RelFilename, Filename) :-
+    afn_from(RelFilename, Filename, []).
 
-afn_from(RelFilename,Filename,Opts):-
-   select(relative_to(RelFrom),Opts,NewOpts),
-   afn_from(RelFrom,RelFromNew,NewOpts),
-   quietly(afn(RelFilename,Filename,[relative_to(RelFromNew)|NewOpts])).
-afn_from(RelFilename,Filename,Opts):-
-   is_metta_module_path(ModPath),
-   quietly(afn(RelFilename,Filename,[relative_to(ModPath)|Opts])).
+%!  afn_from(+RelFilename, -Filename, +Opts) is det.
+%
+%   Resolves an absolute filename from a relative filename with options.
+%
+%   Supports an option `relative_to/1` to specify a base directory.
+%
+%   @arg RelFilename The relative filename to resolve.
+%   @arg Filename The resulting absolute filename.
+%   @arg Opts A list of options for the resolution process.
+%
+%   @example
+%     % Resolve relative to a specified directory.
+%     ?- afn_from('docs/example.txt', Path, [relative_to('/home/user')]).
+%
+afn_from(RelFilename, Filename, Opts) :-
+    select(relative_to(RelFrom), Opts, NewOpts),
+    afn_from(RelFrom, RelFromNew, NewOpts),
+    % Resolve Filename relative to RelFromNew directory
+    quietly(afn(RelFilename, Filename, [relative_to(RelFromNew) | NewOpts])).
+afn_from(RelFilename, Filename, Opts) :-
+    is_metta_module_path(ModPath),
+    % Attempt to resolve Filename with ModPath as reference
+    quietly(afn(RelFilename, Filename, [relative_to(ModPath) | Opts])).
 
-register_module(Dir):- current_self(Space), register_module(Space,Dir).
+%!  register_module(+Dir) is det.
+%
+%   Registers the current module within a directory.
+%
+%   Registers `Dir` with the current module space.
+%
+%   @arg Dir The directory to register.
+%
+%   @example
+%     % Register a module in a specific directory.
+%     ?- register_module('/path/to/module').
+%
+register_module(Dir) :- 
+    current_self(Space), 
+    % Register the module under the current Space
+    register_module(Space, Dir).
 
-register_module(Space,Path):-
-    register_module(Space,'%top%',Path),
-    file_directory_name(Path,Dir),
+%!  register_module(+Space, +Path) is det.
+%
+%   Registers a module in the specified path.
+%
+%   Registers `Space` in `Path`, calculating `Dir` and `ModuleName` from the path.
+%
+%   @arg Space The module space to register.
+%   @arg Path The directory or file path of the module.
+%
+%   @example
+%     % Register a specific module space and path.
+%     ?- register_module(space, '/path/to/module').
+%
+register_module(Space, Path) :-
+    % Register the top-level path within the Space
+    register_module(Space, '%top%', Path),
+    file_directory_name(Path, Dir),
     file_base_name(Path, ModuleName),
-    register_module(Space,ModuleName,Dir).
+    % Register the specific ModuleName in the derived Dir
+    register_module(Space, ModuleName, Dir).
 
-register_module(Space,ModuleName,Dir):-
-    space_name(Space,SpaceName),
-    absolute_dir(Dir,AbsDir),
-    asserta(is_metta_module_path(SpaceName,ModuleName,AbsDir)).
+%!  register_module(+Space, +ModuleName, +Dir) is det.
+%
+%   Registers a module by name within a space and directory.
+%
+%   Registers `ModuleName` under `Space` in the specified `Dir`.
+%
+%   @arg Space The module space.
+%   @arg ModuleName The name of the module to register.
+%   @arg Dir The directory of the module.
+%
+%   @example
+%     % Register a module by name in a directory.
+%     ?- register_module(space, 'mod_name', '/path/to/module').
+%
+register_module(Space, ModuleName, Dir) :-
+    space_name(Space, SpaceName),
+    % Find the absolute path of Dir before asserting
+    absolute_dir(Dir, AbsDir),
+    asserta(is_metta_module_path(SpaceName, ModuleName, AbsDir)).
 
+%!  find_top_dirs(+Top, -Dir) is det.
+%
+%   Finds the top-level directory for a given identifier.
+%
+%   @arg Top The top-level identifier.
+%   @arg Dir The directory corresponding to the identifier.
+%
+%   @example
+%     % Find the directory for a top-level identifier.
+%     ?- find_top_dirs('top_id', Dir).
+%
+find_top_dirs(Top, Dir) :- 
+    current_self(Self),
+    space_name(Self, SpaceName), 
+    % Use the space name to locate the directory
+    find_top_dirs(SpaceName, Top, Dir).
 
-find_top_dirs(Top,Dir):- current_self(Self),space_name(Self,SpaceName), find_top_dirs(SpaceName,Top,Dir).
+%!  find_top_dirs(+SpaceName, +Top, -Dir) is det.
+%
+%   Finds or asserts the directory associated with `Top` within a `SpaceName`.
+%
+%   @arg SpaceName The name of the space.
+%   @arg Top The top-level identifier.
+%   @arg Dir The corresponding directory.
+%
+%   @example
+%     % Find or assert directory in a specific space.
+%     ?- find_top_dirs('space', 'top_id', Dir).
+%
+find_top_dirs(SpaceName, Top, Abs) :- 
+    % Try to locate the absolute path for Top in SpaceName
+    is_metta_module_path(SpaceName, Top, Abs).
+find_top_dirs(SpaceName,Top,Dir):- 
+     % Search within the top level of SpaceName's root
+    is_metta_module_path(SpaceName,'%top%',Root),absolute_dir(Top,Root,Dir).
+find_top_dirs(SpaceName,Top,Dir):- 
+    % If not found, derive the parent directory
+    working_directory(PWD,PWD),
+    parent_dir_of(PWD,Top,Dir), assert(is_metta_module_path(SpaceName,Top,Dir)).
 
-find_top_dirs(SpaceName,Top,Abs):- is_metta_module_path(SpaceName,Top,Abs).
-find_top_dirs(SpaceName,Top,Dir):- is_metta_module_path(SpaceName,'%top%',Root),absolute_dir(Top,Root,Dir).
-find_top_dirs(SpaceName,Top,Dir):- working_directory(PWD,PWD),
-   parent_dir_of(PWD,Top,Dir), assert(is_metta_module_path(SpaceName,Top,Dir)).
+%!  parent_dir_of(+PWD, +Top, -Dir) is det.
+%
+%   Finds the parent directory matching `Top`.
+%
+%   @arg PWD The current working directory.
+%   @arg Top The top-level directory identifier.
+%   @arg Dir The matching parent directory.
+%
+%   @example
+%     % Find the parent directory containing the identifier `Top`.
+%     ?- parent_dir_of('/current/dir', 'top', Dir).
+%
+parent_dir_of(PWD, Top, Dir) :- 
+    directory_file_path(Parent, TTop, PWD),
+    % Check if the current top matches
+    (TTop == Top -> Dir = PWD ; parent_dir_of(Parent, Top, Dir)).
 
-parent_dir_of(PWD,Top,Dir):- directory_file_path(Parent,TTop,PWD),
-   (TTop==Top->Dir=PWD;parent_dir_of(Parent,Top,Dir)).
+%!  space_name(+Space, -SpaceName) is det.
+%
+%   Retrieves the name associated with a space.
+%
+%   Resolves `SpaceName` from `Space` using symbolic representations or existing names.
+%
+%   @arg Space The initial space identifier.
+%   @arg SpaceName The resolved name for the space.
+%
+%   @example
+%     % Find the name of a space.
+%     ?- space_name('space_identifier', Name).
+%
+space_name(Space, SpaceName) :- 
+    symbol(Space), !, 
+    % If Space is symbolic, use it directly as SpaceName
+    SpaceName = Space, !.
+space_name(Space, SpaceName) :- 
+    % Check if an existing space name matches
+    is_space_name(SpaceName), same_space(SpaceName, Space), !.
+space_name(Space, SpaceName) :- 
+    % Retrieve or create a space-symbol if needed
+    'get-atoms'(Space, ['space-symbol', SpaceName]), !.
 
+%!  same_space(+Space1, +Space2) is nondet.
+%
+%   Checks if `Space1` and `Space2` represent the same space.
+%
+%   Uses symbolic equality or evaluation to determine if the spaces match.
+%
+%   @arg Space1 The first space to compare.
+%   @arg Space2 The second space to compare.
+%
+%   @example
+%     % Check if two spaces are the same.
+%     ?- same_space('space1', 'space2').
+%
+same_space(Space1, Space2) :- 
+    % Direct equality check for spaces
+    Space1 = Space2.
+same_space(SpaceName1, Space2) :- 
+    % Evaluate symbolic name and compare
+    symbol(SpaceName1), 
+    eval(SpaceName1, Space1), 
+    !, 
+    same_space(Space2, Space1).
 
-space_name(Space,SpaceName):- symbol(Space),!,SpaceName = Space,!.
-space_name(Space,SpaceName):- is_space_name(SpaceName), same_space(SpaceName,Space),!.
-space_name(Space,SpaceName):- 'get-atoms'(Space,['space-symbol',SpaceName]),!.
+%!  absolute_dir(+Dir, -AbsDir) is det.
+%
+%   Resolves the absolute path of a directory.
+%
+%   Converts `Dir` to an absolute directory path.
+%
+%   @arg Dir The directory to resolve.
+%   @arg AbsDir The absolute path of the directory.
+%
+%   @example
+%     % Resolve the absolute path of a directory.
+%     ?- absolute_dir('my_dir', AbsPath).
+%
+absolute_dir(Dir, AbsDir) :- 
+    % Generate the absolute path with access and error options
+    afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
 
-same_space(Space1,Space2):- Space1=Space2.
-same_space(SpaceName1,Space2):- symbol(SpaceName1),eval(SpaceName1,Space1),!,same_space(Space2,Space1).
-
-absolute_dir(Dir,AbsDir):- afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
-absolute_dir(Dir,From,AbsDir):- afn(Dir, AbsDir, [relative_to(From),access(read), file_errors(fail), file_type(directory)]),!.
+%!  absolute_dir(+Dir, +From, -AbsDir) is det.
+%
+%   Resolves the absolute path of a directory relative to a base directory.
+%
+%   Finds `AbsDir` from `Dir` with reference to `From`.
+%
+%   @arg Dir The target directory to resolve.
+%   @arg From The base directory.
+%   @arg AbsDir The resulting absolute directory path.
+%
+%   @example
+%     % Find absolute path of `Dir` relative to a base directory `From`.
+%     ?- absolute_dir('my_dir', '/base/dir', AbsPath).
+%
+absolute_dir(Dir, From, AbsDir) :- 
+    % Specify From as the base for the absolute path resolution
+    afn(Dir, AbsDir, [relative_to(From), access(read), file_errors(fail), file_type(directory)]), !.
 
 :- dynamic(is_metta_module_path/3).
 :- dynamic(is_metta_module_path/1).
+
+%!  is_metta_module_path(-Path) is det.
+%
+%   Represents paths associated with Metta modules.
+%
+%   Declares a fact to indicate a path is part of a Metta module.
+%
+%   @arg Path The module path.
+%
+%   @example
+%     % Assert or check if a path is a metta module path.
+%     ?- is_metta_module_path(Path).
+%
 is_metta_module_path('.').
 
-
-
-
-%!  when_circular(+Key, :Goal, +Item, :DoThis) is semidet.
+%!  when_circular(+Key, :Goal, +Item, :DoThis) is nondet.
 %
 %   Executes a goal while preventing circular dependencies by tracking processed items.
 %   If the current item (e.g., a file or goal) is already in the list of currently processed
@@ -263,14 +665,37 @@ when_circular(Key, Goal, Item, DoThis) :-
 %   Executes a goal while avoiding circular dependencies. If a circular dependency
 %   is detected, an error is thrown.
 %
+%   This predicate provides a safety check when executing a goal, ensuring that if
+%   the goal leads to a circular dependency, the specified error will be thrown instead
+%   of entering an infinite loop or recursion.
+%
 %   @arg Goal  The goal to execute if no circular dependencies are detected.
 %   @arg Error The error term to throw in case of circular dependency.
+%
+%   @example
+%     % Attempt to execute a goal that might have circular dependencies.
+%     ?- without_circular_error(my_goal, circular_dependency_detected).
+%     % If `my_goal` involves a circular dependency, an error will be raised.
 %
 without_circular_error(Goal, Error) :-
     % Use when_circular/4 to check for circular dependencies and throw an error when detected.
     when_circular('$circular_goals', Goal, Goal, throw(error(Error, _))).
 
-% Predicate to load a Metta file.
+%!  load_metta(+Filename) is det.
+%
+%   Loads a MeTTa file with the specified filename in the current context.
+%
+%   This predicate loads a MeTTa file specified by the Filename parameter into the
+%   current context, here represented by `&self`. It is assumed that the loaded file
+%   contains constructs or expressions in the MeTTa language, which this program
+%   interprets or transpiles into Prolog.
+%
+%   @arg Filename The name of the MeTTa file to load, specified as an atom or string.
+%
+%   @example
+%     % Load a MeTTa language file named "example.metta".
+%     ?- load_metta('example.metta').
+%
 load_metta(Filename):-
     % Call load_metta with the context `&self` and the provided Filename.
     load_metta('&self', Filename).
@@ -296,24 +721,39 @@ load_metta(Self, Filename):-
     without_circular_error(load_metta1(Self, Filename),
         missing_exception(load_metta(Self, Filename))).
 
-% Helper predicate for actually loading the Metta file.
+%!  load_metta1(+Self, +Filename) is det.
+%
+%   Helper predicate that performs the actual MeTTa file loading process.
+%
+%   This predicate checks if the `Filename` is a valid symbol and if the file exists.
+%   If either condition fails, it attempts to handle the `Filename` as a wildcard path,
+%   which could match multiple files. Once a valid file is identified, it loads the file
+%   in the specified context and tracks its loading status.
+%
+%   @arg Self The module or context performing the load.
+%   @arg Filename The name or path of the file to load, potentially including wildcards.
+%
+%   @example
+%     % Attempt to load a file named "example.metta".
+%     ?- load_metta1('&self', 'example.metta').
+%
 load_metta1(Self, Filename):-
-    % Check if the Filename is not a valid symbol or the file does not exist.
+    % Check if the Filename is not a valid symbol or does not exist as a file.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
-    % Use with_wild_path to handle wildcard paths and load the file if it matches.
+    % Use with_wild_path to handle wildcard paths and load the file if matched.
     with_wild_path(load_metta(Self), Filename), !,
-    % Call loonit_report (likely for logging or reporting purposes).
+    % Call loonit_report for logging or tracking purposes.
     loonit_report.
 load_metta1(Self, RelFilename):-
-    % Ensure that the relative filename is a path and exists as a valid file.
-    must_det_ll((symbol(RelFilename), % @TODO or a string?
+    % Ensure that RelFilename is valid and exists as a file.
+    must_det_ll((symbol(RelFilename),  % @TODO: Check if it can also be a string.
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute filename.
     afn_from(RelFilename, Filename),
-    % Set a local flag for garbage collection and track the file loading process.
+    % Use a local flag for garbage collection and track file loading.
     locally(set_prolog_flag(gc, true),
     track_load_into_file(Filename,
-        % Include the file into the current module.
+        % Include the file in the current context/module.
         include_metta(Self, RelFilename))))).
 
 %!  import_metta(+Self, +Filename) is det.
@@ -335,7 +775,22 @@ import_metta(Self, Filename):-
     % Use when_circular/4 to handle circular dependencies during imports.
     when_circular('$circular_goals', About, About, complain_if_missing(Filename, About)).
 
-% Predicate to complain if a file is missing or circular dependency is found.
+%!  complain_if_missing(+Filename, +About) is det.
+%
+%   Reports an error if a specified file is either missing or involved in a circular dependency.
+%
+%   This predicate checks if the `Filename` exists. If it does not, it writes an error message
+%   indicating that the file is missing. If the file exists but a circular dependency is detected,
+%   it writes a circular dependency error message.
+%
+%   @arg Filename The name of the file being checked for existence and circular dependency.
+%   @arg About    A term describing the context or operation related to the file (e.g., which
+%                 part of the program or module requires this file).
+%
+%   @example
+%     % Attempt to load a file and report if it is missing or circular.
+%     ?- complain_if_missing('example.metta', load_metta).
+%
 complain_if_missing(Filename, About):-
     % If the file does not exist, print a missing exception message.
     \+ exists_file(Filename), !, write_src_nl(missing_exception(About)).
@@ -343,17 +798,33 @@ complain_if_missing(_, About):-
     % If a circular dependency is found, print a circular exception message.
     write_src_nl(circular_exception(About)).
 
-% Helper predicate for actually importing the Metta file.
+%!  import_metta1(+Self, +Module) is det.
+%
+%   Imports a MeTTa file or module into the current Prolog context.
+%   This predicate performs the actual import process for a MeTTa file or module, extending
+%   the current Prolog environment with MeTTa constructs or, in some cases, Python modules.
+%
+%   @arg Self   The identifier for the current Prolog context or module performing the import.
+%   @arg Module The name of the MeTTa file or Python module to import, either as a file path
+%               or a module name.
+%
+%   @example
+%     % Import a MeTTa file named "example.metta" within the `&self` context.
+%     ?- import_metta1('&self', 'example.metta').
+%
+%     % Import a Python module named "example_py_module" into the Prolog environment.
+%     ?- import_metta1('&self', 'example_py_module').
+%
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
     current_predicate(py_is_module/1), py_is_module(Module),!,
     must_det_ll(self_extend_py(Self, Module)),!.
 import_metta1(Self, Filename):-
-    % If the Filename is not a valid symbol or the file does not exist, use wildcards for import.
+    % If Filename is not a valid symbol or file does not exist, use wildcards for import.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
     must_det_ll(with_wild_path(import_metta(Self), Filename)),!.
 import_metta1(Self, RelFilename):-
-    % Ensure that the relative filename is a symbol and the file exists.
+    % Ensure that RelFilename is a symbol and exists as a file.
     must_det_ll((
     symbol(RelFilename),
     exists_file(RelFilename),
@@ -361,11 +832,11 @@ import_metta1(Self, RelFilename):-
     absolute_file_name(RelFilename, Filename),
     % Extract the directory path from the filename.
     directory_file_path(Directory, _, Filename),
-    % Register the file in the Prolog knowledge base as being part of the Metta context.
+    % Register the file in Prolog as being part of the MeTTa context.
     pfcAdd_Now(metta_file(Self, Filename, Directory)),
-    % Suspend Prolog answers during the inclusion of the Metta file.
+    % Suspend Prolog answers during the inclusion of the MeTTa file.
     locally(nb_setval(suspend_answers, true),
-    % Include the file and load its content into the directory.
+    % Include the file and load its content into the specified directory.
     include_metta_directory_file(Self, Directory, Filename)))).
 
 % Ensure Metta persistency and parsing functionalities are loaded.
@@ -390,42 +861,82 @@ include_metta(Self, Filename):-
     without_circular_error(include_metta1(Self, Filename),
         missing_exception(include_metta(Self, Filename))).
 
-% Helper predicate for actually including the Metta file.
+%!  include_metta1(+Self, +Filename) is det.
+%
+%   Helper predicate that performs the actual inclusion of a MeTTa file.
+%
+%   This predicate checks if `Filename` is a valid symbol and if the file exists.
+%   If not, it handles the filename as a wildcard path for potential matching files.
+%   Once validated, it converts `RelFilename` to an absolute path, generates a
+%   temporary file if needed, extracts the directory path, and registers the file
+%   in the Prolog knowledge base as part of the current context.
+%
+%   @arg Self The module or context in which the file is being included.
+%   @arg Filename The name or path of the file to include.
+%
+%   @example
+%     % Include a valid file "example.metta" into the current knowledge base context.
+%     ?- include_metta1('&self', 'example.metta').
+%
 include_metta1(Self, Filename):-
-    % If the filename is not a valid symbol or the file does not exist, handle wildcards for includes.
+    % If Filename is not a valid symbol or file does not exist, handle wildcards for includes.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
     must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
 include_metta1(Self, RelFilename):-
-    % Ensure that the relative filename is a valid symbol and exists.
+    % Ensure RelFilename is a valid symbol and exists as a file.
     must_det_ll((
     symbol(RelFilename),
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute path.
     afn_from(RelFilename, Filename),
-    % Generate a temporary file (if necessary) based on the absolute filename.
+    % Generate a temporary file if necessary, based on the absolute filename.
     gen_tmp_file(false, Filename),
     % Extract the directory path from the filename.
     directory_file_path(Directory, _, Filename),
-    % Register the file in the Prolog knowledge base as being loaded into the current module.
+    % Register the file in Prolog knowledge base as part of the MeTTa context.
     pfcAdd_Now(metta_file(Self, Filename, Directory)),
-    % Register the file as being loaded into the knowledge base.
+    % Mark the file as loaded into the current knowledge base.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
-    % Include the file's directory content into the current module.
+    % Include the file's directory content into the current module context.
     include_metta_directory_file(Self, Directory, Filename))),
-    % Mark the file as loaded into the knowledge base and optionally list its status.
+    % Register the file status in the knowledge base and optionally list it.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     nop(listing(user:loaded_into_kb/2)).
 
-
-
-% count_lines_up_to(TwoK,Filename, Count).
-count_lines_up_to(TwoK,Filename, Count) :-
-  open(Filename, read, Stream,[encoding(utf8)]),
-  count_lines_in_stream(TwoK,Stream, 0, Count),
+%!  count_lines_up_to(+TwoK, +Filename, -Count) is det.
+%
+%   Counts lines in a file up to a specified limit.
+%   This predicate opens the specified file `Filename`, counts lines up to the
+%   specified limit `TwoK`, and then closes the file. If the file has fewer than
+%   `TwoK` lines, the total line count is returned.
+%
+%   @arg TwoK     The maximum number of lines to count.
+%   @arg Filename The name of the file whose lines are being counted.
+%   @arg Count    The resulting line count, which will be either the total number of
+%                 lines in the file or `TwoK`, whichever is smaller.
+%
+%   @example
+%     % Count up to 2000 lines in "example.txt".
+%     ?- count_lines_up_to(2000, 'example.txt', Count).
+%
+count_lines_up_to(TwoK, Filename, Count) :-
+  open(Filename, read, Stream, [encoding(utf8)]),
+  count_lines_in_stream(TwoK, Stream, 0, Count),
   close(Stream).
 
-% count_lines_in_stream(Stream, CurrentCount, FinalCount).
-count_lines_in_stream(TwoK,Stream, CurrentCount, FinalCount) :-
+%!  count_lines_in_stream(+TwoK, +Stream, +CurrentCount, -FinalCount) is det.
+%
+%   Counts lines from an open stream up to a specified limit.
+%   This helper predicate recursively reads lines from `Stream` and increments the
+%   count until it reaches `TwoK` or the end of the file. `FinalCount` is unified
+%   with the line count reached.
+%
+%   @arg TwoK          The maximum number of lines to count.
+%   @arg Stream        The open file stream to read from.
+%   @arg CurrentCount  The current line count, used for recursion.
+%   @arg FinalCount    The resulting line count, limited by `TwoK` or end of file.
+%
+count_lines_in_stream(TwoK, Stream, CurrentCount, FinalCount) :-
   ( CurrentCount >= TwoK
   -> FinalCount = TwoK
   ;  read_line_to_codes(Stream, Codes),
@@ -436,8 +947,22 @@ count_lines_in_stream(TwoK,Stream, CurrentCount, FinalCount) :-
     )
   ).
 
-
-include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
+%!  include_metta_directory_file_prebuilt(+Self, +Directory, +Filename) is nondet.
+%
+%   Loads a prebuilt `.qlf` or `.datalog` file if it is available and up-to-date.
+%
+%   This predicate checks if there is an existing precompiled `.qlf` or `.datalog` file
+%   associated with a `.metta` file (`Filename`). If the `.qlf` or `.datalog` file exists
+%   and is more recent than the `.metta` file, it is loaded to avoid recompiling. The `.qlf`
+%   and `.datalog` files must be newer than the `.metta` file and meet additional conditions
+%   before they are loaded.
+%
+%   @arg Self      The context or module into which the file is being loaded.
+%   @arg Directory The directory containing the file.
+%   @arg Filename  The name of the original `.metta` file.
+%
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+    % Attempt to load a prebuilt `.qlf` file if it is newer than the `.metta` file.
     symbol_concat(_, '.metta', Filename),
     symbol_concat(Filename, '.qlf', QlfFile),
     exists_file(QlfFile),
@@ -445,67 +970,121 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     time_file(QlfFile, QLFTime),
     \+ always_rebuild_temp,
     QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
-    pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     ensure_loaded(QlfFile),!.
-
-
-include_metta_directory_file_prebuilt(Self,_Directory, Filename):- just_load_datalog,
-  symbol_concat(_,'.metta',Filename),
-  symbol_concat(Filename,'.datalog',DatalogFile),
-  exists_file(DatalogFile),
-  time_file(Filename, MettaTime),
-  time_file(DatalogFile, DatalogTime),
-  DatalogTime > MettaTime, \+ always_rebuild_temp, !, % Ensure Datalog file is newer than the METTA file
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+    % Attempt to load a `.datalog` file if it is newer, large enough, and `just_load_datalog` is true.
+    just_load_datalog,
+    symbol_concat(_, '.metta', Filename),
+    symbol_concat(Filename, '.datalog', DatalogFile),
+    exists_file(DatalogFile),
+    time_file(Filename, MettaTime),
+    time_file(DatalogFile, DatalogTime),
+    DatalogTime > MettaTime,
+    \+ always_rebuild_temp, !,
+    size_file(Filename, MettaSize),
+    size_file(DatalogFile, DatalogSize),
+    % Ensure the Datalog file is at least 25% the size of the METTA file.
+    DatalogSize >= 0.25 * MettaSize,
+    % always rebuild
+    delete_file(DatalogFile), fail,
+    !, % Cut to prevent backtracking
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    ensure_loaded(DatalogFile), !.
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+    % Convert a `.datalog` file to `.qlf` if the size requirement is met and load it.
+    symbol_concat(_, '.metta', Filename),
+    symbol_concat(Filename, '.datalog', DatalogFile),
+    exists_file(DatalogFile),!,
     size_file(Filename, MettaSize),
     size_file(DatalogFile, DatalogSize),
     % Ensure the size of the Datalog file is at least 25% of the METTA file
     DatalogSize >= 0.25 * MettaSize,
- % always rebuild
-  delete_file(DatalogFile),fail,
+    % always rebuild
+    delete_file(DatalogFile), fail,
     !, % Cut to prevent backtracking
-  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-  ensure_loaded(DatalogFile),!.
+    convert_datalog_to_loadable(DatalogFile, QlfFile),!,
+    exists_file(QlfFile),!,
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    ensure_loaded(QlfFile), !.
 
-include_metta_directory_file_prebuilt(Self,_Directory, Filename):-
-  symbol_concat(_,'.metta',Filename),
-  symbol_concat(Filename,'.datalog',DatalogFile),
-  exists_file(DatalogFile),!,
-    size_file(Filename, MettaSize),
-    size_file(DatalogFile, DatalogSize),
-    % Ensure the size of the Datalog file is at least 25% of the METTA file
-    DatalogSize >= 0.25 * MettaSize,
-% always rebuild
-  delete_file(DatalogFile),fail,
-    !, % Cut to prevent backtracking
-  convert_datalog_to_loadable(DatalogFile,QlfFile),!,
-  exists_file(QlfFile),!,
-  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-  ensure_loaded(QlfFile),!.
-
-
-
-include_metta_directory_file(Self,Directory, Filename):-
-  include_metta_directory_file_prebuilt(Self,Directory, Filename),!.
+%!  include_metta_directory_file(+Self, +Directory, +Filename) is det.
+%
+%   Includes a MeTTa file into the current context, handling large files and prebuilt options.
+%
+%   This predicate attempts to include a `.metta` file by first checking if a prebuilt version
+%   (either `.qlf` or `.datalog`) exists and is up-to-date. If a prebuilt version is unavailable,
+%   it assesses the file’s size and uses an alternative loading method if the file is large.
+%
+%   @arg Self      The context or module in which the file is being included.
+%   @arg Directory The directory containing the file.
+%   @arg Filename  The name of the `.metta` file to include.
+%
+%   @example
+%     % Include a file named "example.metta" from a specific directory.
+%     ?- include_metta_directory_file('&self', '/path/to/directory', 'example.metta').
+%
 include_metta_directory_file(Self, Directory, Filename):-
-  count_lines_up_to(2000,Filename, Count), Count > 1980, % \+ use_fast_buffer,
-  include_large_metta_directory_file(Self, Directory, Filename), !.
-include_metta_directory_file(Self,Directory,Filename):-
-  with_cwd(Directory,must_det_ll(setup_call_cleanup(open(Filename,read,In, [encoding(utf8)]),
-    must_det_ll( load_metta_file_stream(Filename,Self,In)),
-    close(In)))).
-
+    % Attempt to include the file via a prebuilt version if it exists.
+    include_metta_directory_file_prebuilt(Self, Directory, Filename), !.
+include_metta_directory_file(Self, Directory, Filename):-
+    % If file has more than 1980 lines, use optimized loading for large files.
+    count_lines_up_to(2000, Filename, Count),
+    Count > 1980, % \+ use_fast_buffer,
+    include_large_metta_directory_file(Self, Directory, Filename), !.
+include_metta_directory_file(Self, Directory, Filename):-
+    % Default inclusion by reading from the file stream in the specified directory.
+    with_cwd(Directory, must_det_ll(setup_call_cleanup(
+        open(Filename, read, In, [encoding(utf8)]),
+        must_det_ll(load_metta_file_stream(Filename, Self, In)),
+        close(In)))).
 
 % include_large_metta_directory_file(Self, Directory, Filename):- \+ use_fast_buffer, !, locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self,Directory, Filename)).
-include_large_metta_directory_file(Self,_Directory, Filename):-
-  once(convert_metta_to_loadable(Filename,QlfFile)),
-  exists_file(QlfFile),!,
-  pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-  ensure_loaded(QlfFile).
 
+%!  include_large_metta_directory_file(+Self, +Directory, +Filename) is nondet.
+%
+%   Handles the inclusion of large `.metta` files by converting to a loadable format.
+%
+%   This predicate manages large `.metta` files by converting them to a `.qlf` format (a Prolog
+%   quick-load file format) if possible, then loading the resulting file. This approach is more
+%   efficient for large files by reducing processing overhead.
+%
+%   @arg Self      The context or module in which the file is being included.
+%   @arg Directory The directory containing the file.
+%   @arg Filename  The name of the `.metta` file being converted and included.
+%
+%   @example
+%     % Handle a large file named "example_large.metta" by converting to `.qlf` and loading.
+%     ?- include_large_metta_directory_file('&self', '/path/to/directory', 'example_large.metta').
+%
+include_large_metta_directory_file(Self, _Directory, Filename):-
+    % \+ use_fast_buffer, !, locally(nb_setval(may_use_fast_buffer,t), include_metta_directory_file(Self, Directory, Filename)).
+    once(convert_metta_to_loadable(Filename, QlfFile)),
+    exists_file(QlfFile), !,
+    % Register and load the `.qlf` file.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    ensure_loaded(QlfFile).
 
-convert_metta_to_datalog(Filename,DatalogFile):-
+%!  convert_metta_to_datalog(+Filename, -DatalogFile) is det.
+%
+%   Converts a `.metta` file to a `.datalog` file.
+%
+%   This predicate reads a `.metta` file specified by `Filename`, converts its contents
+%   to Datalog format, and writes the output to a `.datalog` file (`DatalogFile`). After
+%   conversion, it verifies that the generated `.datalog` file is at least 50% of the size
+%   of the original `.metta` file. If this size condition is not met, the `.datalog` file
+%   is deleted and the conversion fails.
+%
+%   @arg Filename     The name of the `.metta` file to be converted.
+%   @arg DatalogFile  The name of the resulting `.datalog` file.
+%
+%   @example
+%     % Convert a `.metta` file named "example.metta" to "example.metta.datalog".
+%     ?- convert_metta_to_datalog('example.metta', DatalogFile).
+%
+convert_metta_to_datalog(Filename, DatalogFile):- 
     % Generate the Datalog file name
-  ignore(symbol_concat(Filename,'.datalog',DatalogFile)),
+    ignore(symbol_concat(Filename, '.datalog', DatalogFile)),
     % Open the METTA file for reading
     setup_call_cleanup(
         open(Filename, read, Input, [encoding(utf8)]),
@@ -513,7 +1092,7 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         setup_call_cleanup(
            open(DatalogFile, write, Output, [encoding(utf8)]),
             % Perform the conversion
-             must_det_ll(translate_metta_file_to_datalog_io(Filename,Input,Output)),
+             must_det_ll(translate_metta_file_to_datalog_io(Filename, Input, Output)),
             % Cleanup: Close the Datalog file
            close(Output)
         ),
@@ -521,51 +1100,133 @@ convert_metta_to_datalog(Filename,DatalogFile):-
         close(Input)
     ),
     % Ensure the generated Datalog file is at least 50% the size of the METTA file
-   must_det_ll((
-   (size_file(Filename, MettaSize),
-    size_file(DatalogFile, DatalogSize)),
-    (
-        DatalogSize >= 0.5 * MettaSize
-    ->  true  % If the size condition is met, succeed
-    ;   delete_file(DatalogFile), fail  % If not, delete the Datalog file and fail
-    ))),
+    must_det_ll((
+       (size_file(Filename, MettaSize),
+        size_file(DatalogFile, DatalogSize)),
+        (
+            DatalogSize >= 0.5 * MettaSize
+        ->  true  % If the size condition is met, succeed
+        ;   delete_file(DatalogFile), fail  % If not, delete the Datalog file and fail
+        )
+    )),
     !.  % Prevent backtracking
 
-% atom_subst(+Source, +Replacements, -Result)
-% Replacements is a list of Search-Replace pairs.
+%!  atom_subst(+Source, +Replacements, -Result) is det.
+%
+%   Substitutes multiple search-replace pairs within an atom.
+%
+%   This predicate replaces occurrences of terms in `Source` based on a list of
+%   search-replace pairs specified by `Replacements`. Each pair is applied in
+%   sequence to generate the final `Result`.
+%
+%   @arg Source       The original atom in which substitutions will be applied.
+%   @arg Replacements A list of `Search-Replace` pairs, each defining a substitution.
+%   @arg Result       The atom resulting from all substitutions.
+%
+%   @example
+%     % Substitute "apple" with "orange" and "pear" with "peach" in "apple and pear".
+%     ?- atom_subst('apple and pear', ['apple'-'orange', 'pear'-'peach'], Result).
+%     Result = 'orange and peach'.
+%
 atom_subst(Source, Replacements, Result) :-
+    % Apply each replacement in the list to Source
     foldl(replace_in_symbol, Replacements, Source, Result).
 
-% replace_in_symbol(+Search-Replace, +CurrentSource, -NewSource)
-% Helper predicate to apply a single search-replace operation.
+%!  replace_in_symbol(+SearchReplace, +CurrentSource, -NewSource) is det.
+%
+%   Applies a single search-replace operation to an atom.
+%
+%   This helper predicate replaces all occurrences of `Search` with `Replace` in
+%   `CurrentSource`, producing `NewSource`.
+%
+%   @arg SearchReplace  A pair of atoms, where `Search` is the term to replace and `Replace`
+%                       is the term to substitute in its place.
+%   @arg CurrentSource  The atom in which the replacement is applied.
+%   @arg NewSource      The atom resulting from the replacement operation.
+%
+%   @example
+%     % Replace "apple" with "orange" in "apple pie".
+%     ?- replace_in_symbol('apple'-'orange', 'apple pie', NewSource).
+%     NewSource = 'orange pie'.
+%
 replace_in_symbol(Search-Replace, CurrentSource, NewSource) :-
     symbolic_list_concat(Split, Search, CurrentSource),
     symbolic_list_concat(Split, Replace, NewSource).
 
-
-% filename_to_mangled_pred(+Filename, -MangleP)
+%!  filename_to_mangled_pred(+Filename, -MangleP) is det.
+%
+%   Generates a mangled predicate name from a filename.
+%
+%   This predicate creates a unique, mangled predicate name (`MangleP`) based on the given
+%   `Filename`, current timestamp, and a series of replacements to ensure it conforms to a
+%   specific format. Unwanted characters such as slashes, dots, and hyphens are replaced
+%   with underscores. The result is trimmed to the last 24 characters.
+%
+%   @arg Filename The original filename used to generate the mangled predicate name.
+%   @arg MangleP  The resulting mangled predicate name.
+%
+%   @example
+%     % Generate a mangled predicate name from "example.metta".
+%     ?- filename_to_mangled_pred('example.metta', MangleP).
+%     MangleP = 'data_example_metta_<timestamp>'.
+%
 filename_to_mangled_pred(Filename, MangleP) :-
+    % Get the current time as a unique component.
     get_time(Time),
+    % Concatenate 'data', Filename, and Time to form the initial mangled name.
     symbolic_list_concat(['data', Filename, Time], '_', GS),
+    % Define replacements to sanitize and format the predicate name.
     Replacements = [ '.metta_'- '_',
                      '_1710'-'_',
                      '/'- '_',
-                 '/'- '_', '.'- '_', '-'- '_', '__'- '_'],
+                     '/'- '_', '.'- '_', '-'- '_', '__'- '_'],
+    % Apply the replacements to the generated name.
     atom_subst(GS, Replacements, IntermediateResult),
+    % Trim the result to the last 24 characters for compactness.
     trim_to_last_nchars(24, IntermediateResult, MangleP).
 
-
-% trim_to_last_32(+Atom, -TrimmedAtom)
-% Trims the given Atom to its last 32 characters, producing TrimmedAtom.
+%!  trim_to_last_nchars(+Len, +Atom, -TrimmedAtom) is det.
+%
+%   Trims an atom to its last `Len` characters.
+%
+%   This predicate shortens the given `Atom` to the specified `Len` number of characters,
+%   producing `TrimmedAtom`. If `Atom` is shorter than or equal to `Len`, it is returned
+%   unaltered.
+%
+%   @arg Len         The maximum number of characters for the resulting atom.
+%   @arg Atom        The original atom to be trimmed.
+%   @arg TrimmedAtom The resulting atom, trimmed to the specified length if necessary.
+%
+%   @example
+%     % Trim "very_long_predicate_name" to its last 10 characters.
+%     ?- trim_to_last_nchars(10, 'very_long_predicate_name', TrimmedAtom).
+%     TrimmedAtom = 'ate_name'.
+%
 trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
     atom_length(Atom, Length),
     (   Length =< Len
-    ->  TrimmedAtom = Atom  % Atom is shorter than or exactly 32 characters, no trimming needed
+    ->  TrimmedAtom = Atom  
     ;   Before is Length - 32,
         sub_atom(Atom, Before, 32, _, TrimmedAtom)
     ).
 
-
+%!  translate_metta_file_to_datalog_io(+Filename, +Input, +Output) is det.
+%
+%   Translates a `.metta` file to Datalog format, outputting to a specified file.
+%
+%   This predicate reads the contents of a `.metta` file from `Input` and translates it
+%   to Datalog format, writing the result to `Output`. It makes the resulting predicates
+%   dynamic/multifile and tracks translation progress, reporting it periodically. If the
+%   Datalog conversion is complete, it displays the total number of translated forms.
+%
+%   @arg Filename The name of the `.metta` file being translated.
+%   @arg Input    The input stream for reading the `.metta` file.
+%   @arg Output   The output stream for writing the Datalog format.
+%
+%   @example
+%     % Translate a `.metta` file to Datalog format.
+%     ?- translate_metta_file_to_datalog_io('example.metta', Input, Output).
+%
 translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
   must_det_ll((
   %write header
@@ -623,118 +1284,370 @@ translate_metta_file_to_datalog_io(Filename,Input,Output):- may_use_datalog,
       flag(translated_forms,X,X+1),
       write_metta_datalog_term(Output,Term,MangleP2,Lineno))))),fail)))))),
   flush_output(Output),
-  % teell the user we are done
+  % tell the user we are done
   flag(translated_forms,TF,TF),
   format(user_error,'~N; Done translating ~w forms: ~q.',
                            [TF,asserted_metta_pred(MangleP2,Filename)]))).
 
-% write comments
-write_metta_datalog_term(Output,'$COMMENT'(Term,_,_),_MangleP2,_Lineno):-
-  format(Output,"/* ~w */~n",[Term]).
-% write executed terms
-write_metta_datalog_term(Output,exec(Term),MangleP2,Lineno):-
-  format(Output,":-eval_Line(~q,~q,~q).~n",[Term,MangleP2,Lineno]).
-% write asserted terms
-write_metta_datalog_term(Output,STerm,MangleP2,Lineno):-
-  s2t_iz(MangleP2,P,STerm,Term),
-  relistify(Term,TermL),
-  Data =..[P,Lineno|TermL],
-  format(Output,"~q.~n",[Data]).
+%!  write_metta_datalog_term(+Output, +Term, +MangleP2, +Lineno) is det.
+%
+%   Writes a translated MeTTa term to Datalog format in the specified output stream.
+%
+%   This predicate formats and writes a given term (`Term`) to `Output`, adapting its
+%   structure based on its type (e.g., comments, executable terms, or asserted terms).
+%   Each case is handled separately to ensure correct syntax for Datalog.
+%
+%   @arg Output   The output stream to which the term is written.
+%   @arg Term     The term to be written in Datalog format.
+%   @arg MangleP2 The predicate name or identifier associated with this translation.
+%   @arg Lineno   The line number of the term in the source file.
+%
+%   @example
+%     % Write a term "exec(some_action)" to Datalog format.
+%     ?- write_metta_datalog_term(Output, exec(some_action), my_pred, 42).
+%
+%   @see relistify/2
+%
+write_metta_datalog_term(Output, '$COMMENT'(Term, _, _), _MangleP2, _Lineno) :-
+    % Write comments in Datalog format
+    format(Output, "/* ~w */~n", [Term]).
+write_metta_datalog_term(Output, exec(Term), MangleP2, Lineno) :-
+    % Write executed terms in Datalog format
+    format(Output, ":-eval_Line(~q,~q,~q).~n", [Term, MangleP2, Lineno]).
+write_metta_datalog_term(Output, STerm, MangleP2, Lineno) :-
+    % Write asserted terms in Datalog format
+    s2t_iz(MangleP2, P, STerm, Term),
+    relistify(Term, TermL),
+    Data =.. [P, Lineno | TermL],
+    format(Output, "~q.~n", [Data]).
 
-relistify(Term,TermL):- is_list(Term),!,TermL=Term.
-relistify([H|T],TermL):- flatten([H|T],TermL),!.
-relistify(Term,[Term]).
+%!  relistify(+Term, -TermL) is det.
+%
+%   Ensures a term is in list form.
+%
+%   This helper predicate converts a term into list form (`TermL`). If `Term` is
+%   already a list, it is returned unaltered. If `Term` is a compound term, it
+%   is flattened into a list.
+%
+%   @arg Term  The term to be converted to list form.
+%   @arg TermL The resulting list-form of the term.
+%
+relistify(Term, TermL) :- is_list(Term), !, TermL = Term.
+relistify([H|T], TermL) :- flatten([H|T], TermL), !.
+relistify(Term, [Term]).
 
-eval_Line(A,_B,_C):-
-  test_alarm,
-  format('~N'), nl, % write_src(eval_Line(A,B,C)),nl,
-  eval(A,R),nl,wdmsg(R).
+%!  eval_Line(+A, +B, +C) is det.
+%
+%   Evaluates a term `A` within the Datalog context, displaying results.
+%
+%   This predicate evaluates `A` and optionally outputs the result (`R`),
+%   useful for debugging or tracking evaluation results.
+%
+%   @arg A The term to evaluate.
+%   @arg B Unused parameter for possible extensions.
+%   @arg C Unused parameter for possible extensions.
+%
+eval_Line(A, _B, _C) :-
+    test_alarm,
+    format('~N'), nl, % write_src(eval_Line(A,B,C)),nl,
+    eval(A, R), nl, wdmsg(R).
 
-translate_metta_datalog(Input,Output):- translate_metta_datalog('',Input,Output),!.
+%!  translate_metta_datalog(+Input, +Output) is det.
+%
+%   Translates MeTTa terms from input to Datalog format in the output stream.
+%
+%   This predicate reads characters from `Input` and translates them to a format
+%   compatible with Datalog, writing the results to `Output`. Special handling is
+%   provided for parentheses, quotes, whitespace, and comments.
+%
+%   @arg Input  The input stream containing MeTTa terms.
+%   @arg Output The output stream for writing Datalog-translated terms.
+%
+translate_metta_datalog(Input, Output) :- 
+    translate_metta_datalog('', Input, Output), !.
+translate_metta_datalog(_, Input, _) :- 
+    at_end_of_stream(Input), !.
+translate_metta_datalog(Ch, Input, Output) :- 
+    peek_char(Input, Char),
+    translate_metta_datalog(Ch, Input, Output, Char).
+translate_metta_datalog(_, Input, Output, ')') :- 
+    % Handle closing parentheses
+    !, get_char(Input, _),writeq(Output, ']'),translate_metta_datalog(',', Input, Output).
+translate_metta_datalog(Ch, Input, Output, '(') :- 
+    % Handle opening parentheses
+    !, get_char(Input, _),write(Output, Ch),writeq(Output, '['),translate_metta_datalog('', Input, Output).
+translate_metta_datalog(Ch, Input, Output, Space) :-
+    % Skip whitespace
+    char_type(Space, space), !,get_char(Input, Char),write(Output, Char),translate_metta_datalog(Ch, Input, Output).
+translate_metta_datalog(Ch, Input, Output, ';') :- 
+    % Handle comments
+    !, read_line_to_string(Input, Comment),format(Output, '/* ~w */', [Comment]),translate_metta_datalog(Ch, Input, Output).
+translate_metta_datalog(Ch, Input, Output, '"') :- 
+    % Handle quoted terms
+    !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
+translate_metta_datalog(Ch, Input, Output, '`') :- 
+    % Handle backquoted terms
+    !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
+translate_metta_datalog(Ch, Input, Output, '\'') :- 
+    % Handle single-quoted terms
+    !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
+translate_metta_datalog(Ch, Input, Output, '$') :- 
+    % Handle dollar-prefixed terms
+    !, read_chars_until([type(space), ')'], Input, Codes),name(Term, Codes),write(Output, Ch),writeq(Output, Term),
+    translate_metta_datalog(',', Input, Output).
+translate_metta_datalog(Ch, Input, Output, Peek) :- 
+    % Handle general characters
+    !, read_chars_until([type(space), ')'], Peek, Input, Codes),name(Term, Codes),write(Output, Ch),
+    writeq(Output, Term),translate_metta_datalog(',', Input, Output).
 
-translate_metta_datalog(_,Input,_):- at_end_of_stream(Input),!.
-translate_metta_datalog(Ch,Input,Output):- peek_char(Input,Char),
-  translate_metta_datalog(Ch,Input,Output,Char).
+%!  read_chars_until(+StopsBefore, +Input, -Codes) is det.
+%
+%   Reads characters from an input stream until encountering a specified stopping
+%   character or character type.
+%
+%   This predicate reads characters from `Input`, collecting them into `Codes`, until it
+%   encounters a character that matches any element in `StopsBefore`. `StopsBefore` may
+%   contain specific characters or types (e.g., spaces, punctuation).
+%
+%   This function is useful for parsing input streams up to a specific point, based on
+%   defined character types or individual characters.
+%
+%   @arg StopsBefore A list of characters or character types (e.g., `type(space)`) 
+%                    that indicate where to stop reading.
+%   @arg Input       The input stream from which characters are read.
+%   @arg Codes       The list of character codes read up to the stop character.
+%
+%   @example
+%     % Read characters until encountering a space or period.
+%     ?- read_chars_until([type(space), '.'], Input, Codes).
+%
+read_chars_until(_StopsBefore, Input, []) :-
+    % Stop reading if the end of stream is reached.
+    at_end_of_stream(Input), !.
+read_chars_until(StopsBefore, Input, Codes) :-
+    % Peek at the next character to determine if it matches any stop criteria.
+    peek_char(Input, Char),
+    % Delegate to the next clause based on the character peeked.
+    read_chars_until(StopsBefore, Char, Input, Codes).
 
-translate_metta_datalog(_,Input,Output,')'):- !, get_char(Input,_),
-  writeq(Output,']'),translate_metta_datalog(',',Input,Output).
-translate_metta_datalog(Ch,Input,Output,'('):- !,get_char(Input,_),
-  write(Output,Ch),writeq(Output,'['),translate_metta_datalog('',Input,Output).
-translate_metta_datalog(Ch,Input,Output,Space):-char_type(Space,space),!,
-  get_char(Input,Char),  write(Output,Char),translate_metta_datalog(Ch,Input,Output).
-translate_metta_datalog(Ch,Input,Output,';'):-!,read_line_to_string(Input, Comment),
-  format(Output, '/* ~w */',[Comment]),translate_metta_datalog(Ch,Input,Output).
-translate_metta_datalog(Ch,Input,Output,'"'):-!,read_term(Input,Term,[]),
-  write(Output,Ch),writeq(Output,Term),translate_metta_datalog(',',Input,Output).
-translate_metta_datalog(Ch,Input,Output,'`'):-!,read_term(Input,Term,[]),
-  write(Output,Ch),writeq(Output,Term),translate_metta_datalog(',',Input,Output).
-translate_metta_datalog(Ch,Input,Output,'\''):-!,read_term(Input,Term,[]),
-  write(Output,Ch),writeq(Output,Term),translate_metta_datalog(',',Input,Output).
-translate_metta_datalog(Ch,Input,Output,'$'):-!,
-  read_chars_until([type(space),')'],Input,Codes),name(Term,Codes),
-  write(Output,Ch),writeq(Output,Term),translate_metta_datalog(',',Input,Output).
-translate_metta_datalog(Ch,Input,Output,Peek):-!,
-  read_chars_until([type(space),')'],Peek,Input,Codes),name(Term,Codes),
-  write(Output,Ch),writeq(Output,Term),translate_metta_datalog(',',Input,Output).
+%!  stops_before(+StopsBefore, +Char) is nondet.
+%
+%   Checks if a character matches any condition in a list of stop criteria.
+%
+%   This predicate succeeds if `Char` matches any element in `StopsBefore`. Each element
+%   in `StopsBefore` can be a specific character or a type of character (e.g., `type(space)`).
+%   This is useful for determining if a character should halt reading in a stream.
+%
+%   @arg StopsBefore A list of stopping conditions, either character types or specific characters.
+%   @arg Char        The character to check against the stop conditions.
+%
+%   @example
+%     % Check if a character is a space or equals the stop character `;`.
+%     ?- stops_before([type(space), ';'], ' ').
+%
+stops_before([type(Type) | StopsBefore], Char) :- 
+    % Check if the character type matches
+    char_type(Char, Type); stops_before(StopsBefore, Char).
+stops_before([Ch | StopsBefore], Char) :-  
+    % Check if the character itself is a stop character
+    Ch == Char; stops_before(StopsBefore, Char).
 
-read_chars_until(_StopsBefore,Input,[]):- at_end_of_stream(Input),!.
-read_chars_until(StopsBefore,Input,Codes):- peek_char(Input,Char),
-      read_chars_until(StopsBefore, Char, Input, Codes).
-
-stops_before([type(Type)|StopsBefore],Char):- char_type(Char,Type); stops_before(StopsBefore,Char).
-stops_before([Ch|StopsBefore],Char):-  Ch==Char; stops_before(StopsBefore,Char).
-
-read_chars_until(StopsBefore,Char,_, []):- stops_before(StopsBefore,Char),!.
-read_chars_until(StopsBefore, '\\', Input, [Code|Codes]):- get_char(Input,Code),
+%!  read_chars_until(+StopsBefore, +Char, +Input, -Codes) is det.
+%
+%   Reads characters from an input stream until a stop condition is met.
+%
+%   This predicate reads characters from the `Input` stream, collecting them in `Codes`,
+%   until it encounters a character `Char` that matches any condition in `StopsBefore`.
+%   If an escape character `\` is encountered, the next character is read and added to
+%   `Codes` before continuing to read.
+%
+%   @arg StopsBefore A list of stop conditions for characters or character types.
+%   @arg Char        The current character being checked against the stop conditions.
+%   @arg Input       The input stream to read from.
+%   @arg Codes       The list of character codes read up to the stopping character.
+%
+%   @example
+%     % Read characters from input until a space or period is encountered.
+%     ?- read_chars_until([type(space), '.'], Char, Input, Codes).
+%
+read_chars_until(StopsBefore, Char, _, []) :-
+    % Stop reading if the current character matches a stop condition.
+    stops_before(StopsBefore, Char), !.
+read_chars_until(StopsBefore, '\\', Input, [Code | Codes]) :- 
+    % Handle escape characters by reading the escaped character.
+    get_char(Input, Code),
     read_chars_until(StopsBefore, Input, Codes).
-read_chars_until(StopsBefore, Char, Input, [Char|Codes]):- get_char(Input,_),
-  read_chars_until(StopsBefore, Input, Codes).
+read_chars_until(StopsBefore, Char, Input, [Char | Codes]) :- 
+    % Read character and continue until stop condition is met.
+    get_char(Input, _),
+    read_chars_until(StopsBefore, Input, Codes).
 
-just_load_datalog:-!, true.
-may_use_datalog:-!, true.
+%!  just_load_datalog is det.
+%
+%   Placeholder predicate indicating that Datalog loading is enabled.
+%
+%   This predicate always succeeds with `true`, indicating that Datalog loading is allowed.
+just_load_datalog :- !, true.
 
-convert_datalog_to_loadable(DatalogFile,DatalogFile):-just_load_datalog,!.
-convert_datalog_to_loadable(DatalogFile,QlfFile):-
-  sformat(S,'swipl -g "qcompile(~q)" -t halt',[DatalogFile]),
-  shell(S,_),
-  file_name_extension(Base, _, DatalogFile),
-  file_name_extension(Base,'qlf',QlfFile).
+%!  may_use_datalog is det.
+%
+%   Placeholder predicate indicating that Datalog usage is allowed.
+%
+%   This predicate always succeeds with `true`, indicating that Datalog usage is permitted.
+may_use_datalog :- !, true.
 
-convert_metta_to_loadable(_Filename,_QlfFile):- use_fast_buffer,!, fail.
-convert_metta_to_loadable(_Filename,_QlfFile):- \+ may_use_datalog, !.
+%!  convert_datalog_to_loadable(+DatalogFile, -QlfFile) is det.
+%
+%   Converts a Datalog file to a loadable `.qlf` file format, if required.
+%
+%   If `just_load_datalog` is enabled, no conversion is done, and `QlfFile` is identical
+%   to `DatalogFile`. Otherwise, a shell command is used to compile the Datalog file to `.qlf`.
+%   This can improve performance during loading by creating a quick-load format.
+%
+%   @arg DatalogFile The source Datalog file.
+%   @arg QlfFile     The resulting loadable `.qlf` file, or identical to `DatalogFile` if 
+%                    conversion is skipped.
+%
+%   @example
+%     % Convert "example.datalog" to "example.qlf" for quick-loading.
+%     ?- convert_datalog_to_loadable('example.datalog', QlfFile).
+%
+convert_datalog_to_loadable(DatalogFile, DatalogFile) :- 
+    % Skip conversion if only Datalog loading is allowed
+    just_load_datalog, !.
+convert_datalog_to_loadable(DatalogFile, QlfFile) :-
+    % Perform `.qlf` conversion using a shell command.
+    sformat(S, 'swipl -g "qcompile(~q)" -t halt', [DatalogFile]),
+    shell(S, _),
+    file_name_extension(Base, _, DatalogFile),
+    % Update the file extension to `.qlf`
+    file_name_extension(Base, 'qlf', QlfFile).
 
-convert_metta_to_loadable(Filename,QlfFile):-
-  must_det_ll((
-  convert_metta_to_datalog(Filename,DatalogFile),
-  convert_datalog_to_loadable(DatalogFile,QlfFile))),!.
+%!  convert_metta_to_loadable(+Filename, -QlfFile) is det.
+%
+%   Converts a `.metta` file to a loadable format if Datalog usage is allowed.
+%
+%   This predicate converts a `.metta` file to `.qlf` format if `may_use_datalog` is true.
+%   If conditions are met, the file is first converted to Datalog and then to `.qlf`. This
+%   two-step process optimizes loading by creating a quick-load format.
+%
+%   @arg Filename The original `.metta` file to convert.
+%   @arg QlfFile  The resulting `.qlf` file, if conversion succeeds.
+%
+%   @example
+%     % Convert "example.metta" to a `.qlf` format.
+%     ?- convert_metta_to_loadable('example.metta', QlfFile).
+%
+convert_metta_to_loadable(_Filename, _QlfFile) :-
+    % Use fast buffer, so skip Datalog conversion
+    use_fast_buffer, !, fail.
+convert_metta_to_loadable(_Filename, _QlfFile) :-
+    % Datalog usage not allowed, skip conversion
+    \+ may_use_datalog, !.
+convert_metta_to_loadable(Filename, QlfFile) :-
+    % Convert to Datalog, then to `.qlf` if permitted
+    must_det_ll((
+        convert_metta_to_datalog(Filename, DatalogFile),
+        convert_datalog_to_loadable(DatalogFile, QlfFile)
+    )), !.
+convert_metta_to_loadable(Filename, _) :-
+    % Alternative conversion using a shell script
+    metta_dir(Dir),
+    sformat(S, '~w/cheap_convert.sh --verbose=1 ~w', [Dir, Filename]),
+    shell(S, Ret), !, Ret == 0.
 
-convert_metta_to_loadable(Filename,_):-
-  metta_dir(Dir),
-  sformat(S,'~w/cheap_convert.sh --verbose=1 ~w',[Dir,Filename]),
-  shell(S,Ret),!,Ret==0.
+%!  accept_line(+Self, +I) is det.
+%
+%   Processes a line from input, normalizing it and evaluating if appropriate.
+%
+%   This predicate takes a line `I`, normalizes whitespace, and either interprets it as
+%   a command or forwards it for further processing. This function is typically used
+%   for reading and processing single lines from an input source.
+%
+%   @arg Self The context or module in which the line is accepted.
+%   @arg I    The line content to process.
+%
+accept_line(_Self, end_of_file) :- !.
+accept_line(Self, I) :- 
+    % Normalize whitespace in the input line
+    normalize_space(string(Str), I), 
+    !, accept_line2(Self, Str),!.
 
-accept_line(_Self,end_of_file):-!.
-accept_line(Self,I):- normalize_space(string(Str),I),!,accept_line2(Self,Str),!.
+%!  accept_line2(+Self, +S) is det.
+%
+%   Processes a normalized line as a command or assertion.
+%
+%   This helper predicate determines whether `S` is a comment or a statement, and handles
+%   it accordingly by either printing or asserting it to the knowledge base. This function
+%   assists `accept_line/2` in handling lines that may be commands or statements.
+%
+%   @arg Self The context or module in which the line is processed.
+%   @arg S    The normalized line content to process.
+%
+%   @example
+%     % Accept a line formatted as a Prolog assertion.
+%     ?- accept_line2('&self', "(assert fact)").
+%
+accept_line2(_Self, S) :- 
+    % Process comments that start with a semicolon
+    string_concat(";", _, S), 
+    !, writeln(S).
+accept_line2(Self, S) :- 
+    % Process statements enclosed in parentheses
+    string_concat('(', RS, S),
+    string_concat(M, ')', RS), 
+    !,
+    % Split the statement by spaces to extract the function and arguments
+    symbolic_list_concat([F | LL], ' ', M),
+    % Construct a Prolog term from the function and arguments
+    PL =.. [F, Self | LL],
+    % Assert the term to the knowledge base
+    pfcAdd_Now(PL), 
+    !, 
+    % Update assertion counter and log progress periodically
+    flag(next_assert, X, X + 1),
+    if_t((0 is X mod 10_000_000), (writeln(X = PL), statistics)).
+accept_line2(Self, S) :- 
+    % Fallback case for unexpected content
+    fbug(accept_line2(Self, S)), !.
 
-accept_line2(_Self,S):- string_concat(";",_,S),!,writeln(S).
-accept_line2(Self,S):- string_concat('(',RS,S),string_concat(M,')',RS),!,
-  symbolic_list_concat([F|LL],' ',M),PL =..[F,Self|LL],pfcAdd_Now(PL),!,flag(next_assert,X,X+1),
-  if_t((0 is X mod 10_000_000),(writeln(X=PL),statistics)).
-accept_line2(Self,S):- fbug(accept_line2(Self,S)),!.
-
-
-load_metta_file_stream(Filename,Self,In):-
-  if_t((atomic(Filename),exists_file(Filename)), size_file(Filename, Size)),
-  if_t(var(Size),is_file_stream_and_size(In, Size)),
-  %once((is_file_stream_and_size(In, Size),Size>102400) -> P2 = read_sform2 ;
-  P2 = read_metta2, %)
-  with_option(loading_file,Filename,
-  %current_exec_file(Filename),
-  must_det_ll((must_det_ll((
-      set_exec_num(Filename,1),
-      load_answer_file(Filename),
-      set_exec_num(Filename,0))),
-  load_metta_file_stream_fast(Size,P2,Filename,Self,In)))).
+%!  load_metta_file_stream(+Filename, +Self, +In) is det.
+%
+%   Loads a MeTTa file from an input stream and processes its contents.
+%
+%   This predicate reads a `.metta` file from `In` (the input stream) and determines
+%   the appropriate method (`P2`) to read its contents based on file size. If the file
+%   size is large, the predicate adjusts the reading process to optimize performance.
+%   It then processes the file using `load_metta_file_stream_fast/5`.
+%
+%   @arg Filename The name of the `.metta` file being loaded, used for file context.
+%   @arg Self     The context or module in which the file content is processed.
+%   @arg In       The input stream from which the file content is read.
+%
+%   @example
+%     % Load and process a `.metta` file stream in the context of `&self`.
+%     ?- load_metta_file_stream('example.metta', '&self', In).
+%
+load_metta_file_stream(Filename, Self, In) :-
+    % Check if the filename is atomic and exists, then get file size.
+    if_t((atomic(Filename), exists_file(Filename)), size_file(Filename, Size)),
+    % If the size is still unbound, determine it from the stream.
+    if_t(var(Size), is_file_stream_and_size(In, Size)),
+    % Choose reading method based on file size:
+    % once((is_file_stream_and_size(In, Size), Size > 102400) -> P2 = read_sform2;
+    P2 = read_metta2,  % Default reading method.
+    % Load file with specific options and execution settings.
+    with_option(loading_file, Filename,
+        % current_exec_file(Filename),  % Optionally set current execution file.
+        must_det_ll((
+            % Set initial execution number, load answer file, and reset execution.
+            must_det_ll((
+                set_exec_num(Filename, 1),
+                load_answer_file(Filename),
+                set_exec_num(Filename, 0)
+            )),
+            % Process the file using optimized loading.
+            load_metta_file_stream_fast(Size, P2, Filename, Self, In)))).
 
 % use_fast_buffer makes tmp .buffer files that get around long load times
 use_fast_buffer:- nb_current(may_use_fast_buffer,t).
@@ -745,117 +1658,380 @@ use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 :- dynamic(metta_file_buffer/7).
 :- multifile(metta_file_buffer/7).
 
-prefer_temp(Filename,BufferFile):- \+ exists_file(Filename),!, exists_file(BufferFile).
-prefer_temp(Filename,BufferFile):-
+%!  prefer_temp(+Filename, +BufferFile) is nondet.
+%
+%   Determines if a temporary buffer file should be preferred over the original file.
+%
+%   This predicate checks if `BufferFile` exists and is newer and sufficiently large
+%   compared to `Filename`. If the original `Filename` does not exist, it defaults to
+%   using `BufferFile`. This check ensures that a buffer file is not used if it might be
+%   outdated or truncated.
+%
+%   @arg Filename   The name of the original `.metta` file.
+%   @arg BufferFile The name of the buffer file.
+%
+%   @example
+%     % Check if a buffer file should be preferred over "example.metta".
+%     ?- prefer_temp('example.metta', 'example.metta.buffer~').
+%
+prefer_temp(Filename, BufferFile) :-
+    \+ exists_file(Filename), !, exists_file(BufferFile).
+prefer_temp(Filename, BufferFile) :-
+    % Get modification times for both files
     time_file(Filename, FileTime),
     time_file(BufferFile, BufferFileTime),
     BufferFileTime > FileTime,
+    % Check file sizes
     size_file(Filename, MettaSize),
     size_file(BufferFile, BufferSize),
-    % not truncated ?
+    % Ensure buffer file is not truncated
     BufferSize >= 0.25 * MettaSize.
 
-
+%!  load_metta_file_stream_fast(+Size, +P2, +Filename, +Self, +In) is det.
+%
+%   Loads a MeTTa file quickly using a buffer if available.
+%
+%   This predicate attempts to load a `.metta` file directly from a buffer file if the
+%   buffer exists and is preferred over the original file. If `BufferFile` is valid and
+%   newer than `Filename`, it uses `load_metta_buffer/2` to load the file contents.
+%
+%   Additionally, alternative methods for loading `.metta` content are provided as
+%   commented-out options for handling specific scenarios.
+%
+%   @arg Size     The size of the `.metta` file.
+%   @arg P2       The reading method to use (not currently modified in this code).
+%   @arg Filename The name of the `.metta` file to be loaded.
+%   @arg Self     The context or module in which the file is processed.
+%   @arg In       The input stream for reading file content.
+%
+%   @example
+%     % Load a `.metta` file using a buffer if possible.
+%     ?- load_metta_file_stream_fast(10000, read_metta2, 'example.metta', '&self', In).
+%
 load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
+    % Generate buffer file name and check existence
     atomic(Filename), symbol_concat(Filename, '.buffer~', BufferFile),
     exists_file(BufferFile),
-    (   prefer_temp(Filename,BufferFile)
-    ->  (use_fast_buffer, fbugio(using(BufferFile)),ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
-    ;   (fbugio(deleting(BufferFile)),delete_file(BufferFile), fail)
+    (   % Prefer the buffer file if it is newer and large enough
+        prefer_temp(Filename, BufferFile)
+    ->  (use_fast_buffer, fbugio(using(BufferFile)),
+         ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
+    ;   % Delete outdated buffer file
+        (fbugio(deleting(BufferFile)), delete_file(BufferFile), fail)
+    ).
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, S) :- 
+    fail,
+    % Alternative loading method for HTML files with symbol concatenation (disabled)
+    symbolic_list_concat([_, _, _ | _], '.', Filename),
+    \+ option_value(html, true),
+    atomic(S), is_stream(S), stream_property(S, input), !,
+    % Read and process each line until end of file
+    repeat,
+    read_line_to_string(S, I),
+    accept_line(Self, I),
+    I == end_of_file, !.
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, In) :-
+    % Create a buffer file if `use_fast_buffer` is enabled and load the buffer
+    make_metta_file_buffer(use_fast_buffer, Filename, In),
+    load_metta_buffer(Self, Filename).
+
+%!  make_metta_file_buffer(+TFMakeFile, +FileName, +InStream) is det.
+%
+%   Creates a buffer file for a MeTTa file if `TFMakeFile` is true.
+%
+%   This predicate generates a buffer file (`BufferFile`) with a `.buffer~` extension
+%   based on `FileName`. It processes each expression from `InStream` using 
+%   `maybe_write_bf/3`, which writes expressions to the buffer file if `TFMakeFile` 
+%   is true.
+%
+%   @arg TFMakeFile  A flag indicating whether to create a buffer file.
+%   @arg FileName    The base file name for the `.metta` file.
+%   @arg InStream    The input stream for reading file content.
+%
+%   @example
+%     % Create a buffer file for "example.metta" if the flag is true.
+%     ?- make_metta_file_buffer(true, 'example.metta', InStream).
+%
+make_metta_file_buffer(TFMakeFile, FileName, InStream) :-
+    % Generate buffer file name with `.buffer~` extension.
+    symbol_concat(FileName, '.buffer~', BufferFile),
+    % Process expressions from the input stream with optional buffering.
+    process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
+
+%!  maybe_write_bf(+TFMakeFile, +BufferFile, +Item) is det.
+%
+%   Conditionally writes an item to the buffer file if `TFMakeFile` is true.
+%
+%   This predicate checks `TFMakeFile` and, if true, writes `Item` to `BufferFile`
+%   using `write_bf/2`.
+%
+%   @arg TFMakeFile  A flag indicating whether to write to the buffer.
+%   @arg BufferFile  The buffer file where the item might be written.
+%   @arg Item        The item to potentially write to the buffer.
+%
+maybe_write_bf(TFMakeFile, BufferFile, Item) :-
+    % Write to the buffer file if `TFMakeFile` is true.
+    if_t(TFMakeFile, write_bf(BufferFile, Item)).
+
+%!  pos_line_char(+Position, -LineChar) is det.
+%
+%   Extracts line and column information from a stream position.
+%
+%   Given a `Position` in a stream, this predicate provides the corresponding line
+%   and column data as `line_char(LineM1, Col)`, where `LineM1` is zero-based.
+%
+%   @arg Position  The stream position containing line and column information.
+%   @arg LineChar  The result structure with line and column information.
+%
+%   @example
+%     % Extract line and column from a stream position.
+%     ?- pos_line_char(Position, LineChar).
+%
+pos_line_char(Position, line_char(LineM1, Col)) :-
+    % Extract the line number.
+    stream_position_data(line_count, Position, Line),
+    LineM1 is Line - 1,
+    % Extract the column number.
+    stream_position_data(line_position, Position, Col).
+
+%!  always_rebuild_temp is det.
+%
+%   Placeholder predicate indicating that temporary files should always be rebuilt.
+%
+%   This predicate is always true, signaling that any temporary files should be rebuilt.
+always_rebuild_temp :- true.
+
+%!  write_bf(+BufferFile, +BufferTerm) is det.
+%
+%   Appends a term to the buffer file.
+%
+%   This predicate opens `BufferFile` in append mode, writes `BufferTerm` to it in a 
+%   Prolog-readable format, and closes the file afterward. It ensures safe file handling 
+%   through `setup_call_cleanup/3`.
+%
+%   @arg BufferFile  The file to which `BufferTerm` is appended.
+%   @arg BufferTerm  The term to write to the buffer file.
+%
+%   @example
+%     % Write a term to the buffer file.
+%     ?- write_bf('example.metta.buffer~', some_term).
+%
+write_bf(BufferFile, BufferTerm) :-
+    setup_call_cleanup(
+        open(BufferFile, append, Out),
+        format(Out, '~q.~n', [BufferTerm]),
+        close(Out)
     ).
 
-load_metta_file_stream_fast(_Size,_P2,Filename,Self,S):- fail,
- symbolic_list_concat([_,_,_|_],'.',Filename),
-  \+ option_value(html,true),
-  atomic(S),is_stream(S),stream_property(S,input),!,
-  repeat,
-  read_line_to_string(S,I),
-  accept_line(Self,I),
-  I==end_of_file,!.
+%!  my_line_count(+In, -Pos) is det.
+%
+%   Retrieves the current position in the stream or performs an action if repositioning is supported.
+%
+%   This predicate provides a method for checking the current stream position in `In`.
+%   It can perform an action to determine the position if the stream supports repositioning.
+%
+%   @arg In   The input stream.
+%   @arg Pos  The position in the stream or a specific action indicator.
+%
+%   @example
+%     % Get the current position or perform specific checks.
+%     ?- my_line_count(In, Pos).
+%
+my_line_count(In, seek($, 0, current, CC)) :-
+    % Check if the stream allows repositioning and get the current position.
+    stream_property(In, reposition(true)),
+    seek(In, 0, current, CC), fail.
+my_line_count(In, /*position*/(Pos)) :-
+    % Obtain the current position property.
+    stream_property(In, position(Pos)).
 
-load_metta_file_stream_fast(_Size,_P2,Filename,Self,In):-
-  make_metta_file_buffer(use_fast_buffer,Filename,In),
-  load_metta_buffer(Self,Filename).
+%!  metta_file_buffer(+Flag, +Expr, +NamedVarsList, +Filename, +LineCount) is det.
+%
+%   Legacy predicate for compatibility with older code.
+%
+%   This predicate is retained for compatibility with code that uses `metta_file_buffer/5`.
+%   It forwards calls to `metta_file_buffer/6` with default parameters.
+%
+%   @arg Flag           A flag for controlling the buffer behavior.
+%   @arg Expr           The expression to be processed.
+%   @arg NamedVarsList  A list of named variables.
+%   @arg Filename       The name of the file being processed.
+%   @arg LineCount      The current line count in the file.
+%
+%   @example
+%     % Use legacy compatibility with a buffer processing function.
+%     ?- metta_file_buffer(+, Expr, NamedVarsList, 'example.metta', 42).
+%
+metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount) :-
+    metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount).
 
+%!  load_metta_buffer(+Self, +Filename) is det.
+%
+%   Loads a `.metta` file into the knowledge base from a buffer.
+%
+%   This predicate processes buffered expressions from a `.metta` file, adding each
+%   expression to the knowledge base. It sets an execution number for tracking, loads
+%   answer files, and processes expressions through `do_metta/5`. Any unhandled expressions
+%   trigger a warning.
+%
+%   @arg Self     The context or module in which the file is loaded.
+%   @arg Filename The name of the `.metta` file being loaded from the buffer.
+%
+%   @example
+%     % Load the buffered contents of "example.metta" into the knowledge base.
+%     ?- load_metta_buffer('&self', 'example.metta').
+%
+load_metta_buffer(Self, Filename) :-
+    % Set execution number, load answer file, and reset execution.
+    set_exec_num(Filename, 1),
+    load_answer_file(Filename),
+    set_exec_num(Filename, 0),
+    Mode = '+',
+    % Register the file as loaded in the knowledge base.
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    % Process each buffered expression.
+    forall(
+        metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
+        (maybe_name_vars(NamedVarsList),
+         must_det_ll((((do_metta(file(Filename), Mode, Self, Expr, _O)))
+              -> true
+              ;  (trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
 
+%!  read_metta(+In, -Expr) is det.
+%
+%   Reads a MeTTa expression from an input source.
+%
+%   This predicate reads expressions from `In`, choosing different parsing methods
+%   based on the input type and stream properties. If the current input stream differs
+%   from `In`, it uses `read_sform/2` to read the expression. Unused clauses are retained
+%   for backward compatibility.
+%
+%   @arg In   The input source from which to read the expression.
+%   @arg Expr The resulting expression parsed from the input.
+%
+%   @example
+%     % Read an expression from the input stream.
+%     ?- read_metta(In, Expr).
+%
+read_metta(_, O) :- 
+    % Remove clause if it exists for a previous read.
+    clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
+read_metta(I, O) :- 
+    % If input is a string, normalize and parse it as a MeTTa expression.
+    string(I), normalize_space(string(M), I), !, parse_sexpr_metta1(M, O), !.
+read_metta(In, Expr) :- 
+    % If `In` is the current input stream, read with `repl_read/1`.
+    current_input(In0), In == In0, !, repl_read(Expr).
+read_metta(In, Expr) :- 
+    % Fallback to reading from a stream.
+    read_metta1(In, Expr).
 
+%!  read_metta1(+S, -Expr) is det.
+%
+%   Reads a MeTTa expression using an appropriate parsing method.
+%
+%   This predicate reads from `S`, choosing a parsing method based on file size and
+%   stream type. For larger files, `read_sform1/3` is used to optimize reading.
+%
+%   @arg S     The input source or stream for reading the expression.
+%   @arg Expr  The resulting expression parsed from the input.
+%
+%   @example
+%     % Read a MeTTa expression from a file stream.
+%     ?- read_metta1(S, Expr).
+%
+read_metta1(S, F1) :- 
+    % Use new parsing method if `use_new_parse_sexpr_metta_IO` is enabled.
+    use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
+read_metta1(In, Expr) :- 
+    % Use `read_sform1/3` for large files.
+    is_file_stream_and_size(In, Size), Size > 10240, !, read_sform1([], In, Expr).
+read_metta1(In, Expr) :- 
+    % Default to `read_metta2` for other cases.
+    read_metta2(In, Expr).
 
-make_metta_file_buffer(TFMakeFile,FileName,InStream):-
-  symbol_concat(FileName, '.buffer~', BufferFile),
-  process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile,BufferFile)).
+%!  read_metta2(+S, -Expr) is det.
+%
+%   Reads a MeTTa expression from an input stream using the `read_metta2` parsing method.
+%
+%   This predicate reads from stream `S` and returns the parsed `Expr` using various
+%   parsing techniques. It selects appropriate parsing functions based on stream properties
+%   and specific characters encountered. This function provides a flexible parser for MeTTa
+%   expressions with support for whitespace handling, comments, and execution expressions.
+%
+%   @arg S    The input stream from which to read.
+%   @arg Expr The resulting expression parsed from the input stream.
+%
+%   @example
+%     % Read a MeTTa expression from an input stream.
+%     ?- read_metta2(InStream, Expr).
+%
+read_metta2(_, O) :- 
+    % Erase any existing reader info for expression `O`.
+    clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
+read_metta2(S, F1) :- 
+    % Use the new parsing method if enabled.
+    use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
+read_metta2(In, Expr) :- 
+    % Peek at the next character and continue parsing based on character type.
+    peek_char(In, Char), read_metta2(In, Char, Expr).
 
-maybe_write_bf(TFMakeFile,BufferFile, Item):-
-   if_t(TFMakeFile,write_bf(BufferFile, Item)).
+%!  read_metta2(+In, +Char, -Expr) is det.
+%
+%   Reads a MeTTa expression from `In` based on the initial character `Char`.
+%
+%   This predicate reads from `In`, processing each character based on its type or value.
+%   It supports handling of whitespace, execution expressions (prefixed with `!`), comments
+%   (prefixed with `;`), and other character-specific parsing scenarios. It attempts to
+%   parse a MeTTa expression or recognize Prolog-style expressions.
+%
+%   @arg In   The input stream from which to read.
+%   @arg Char The character to evaluate and guide the parsing process.
+%   @arg Expr The resulting parsed expression.
+%
+%   @example
+%     % Parse an expression beginning with '!' for execution.
+%     ?- read_metta2(In, '!', Expr).
+%
+read_metta2(S, _, F1) :- 
+    % Use the new parsing method if configured.
+    use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
+read_metta2(In, Char, Expr) :- 
+    % Skip whitespace characters and continue reading.
+    char_type(Char, space), get_char(In, Char), not_compatio(put(Char)), !, read_metta2(In, Expr).
+% read_metta2(In, '"', Expr) :- read_sform2(In, Expr), !.
+% read_metta2(In, '\'', Expr) :- read_sform2(In, Expr), !.
+read_metta2(In, '!', Expr) :- 
+    % Handle execution expressions prefixed with `!`.
+    get_char(In, _), !, read_metta2(In, Read1), !, Expr = exec(Read1).
+read_metta2(In, ';', Expr) :- 
+    % Handle comments prefixed with `;`.
+    get_char(In, _), !, (maybe_read_pl(In, Expr) -> true;
+    (read_line_to_string(In, Str), Expr = '$COMMENT'(Str, 0, 0))).
+% write_comment(Str),!, read_metta2(In, Expr)), !.
+% read_metta2(In, _, Expr) :- maybe_read_pl(In, Expr), !.
+read_metta2(In, _, Read1) :- 
+    % Parse a standard MeTTa expression.
+    parse_sexpr_metta(In, Expr), !, must_det_ll(Expr = Read1).
 
-
-pos_line_char(Position,line_char(LineM1,Col)):-
-     stream_position_data(line_count, Position, Line),  % Extract the line number.
-     LineM1 is Line-1,
-     stream_position_data(line_position, Position, Col).  % Extract the column number.
-
-
-
-always_rebuild_temp:- true.
-
-write_bf(BufferFile,BufferTerm):-
-  setup_call_cleanup(open(BufferFile,append,Out),
-       format(Out,'~q.~n',[BufferTerm]),
-       close(Out)).
-
-
-my_line_count(In, seek($,0,current,CC)):-
-   stream_property(In,reposition(true)),
-   seek(In,0,current,CC),fail.
-my_line_count(In,/*position*/(Pos)):-
-   stream_property(In,position(Pos)).
-
-% For old code still using metta_file_buffer/5
-metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount):-
-  metta_file_buffer(0,_Ord,_Kind, Expr, NamedVarsList,Filename, LineCount).
-
-
-load_metta_buffer(Self,Filename):-
-   set_exec_num(Filename,1),
-   load_answer_file(Filename),
-   set_exec_num(Filename,0),
-   Mode = '+',
-   pfcAdd_Now(user:loaded_into_kb(Self,Filename)),
-   forall(metta_file_buffer(0,_Ord,_Kind,Expr,NamedVarsList,Filename,_LineCount),
-       (maybe_name_vars(NamedVarsList),
-        must_det_ll((((do_metta(file(Filename),Mode,Self,Expr,_O)))
-             ->true
-              ; (trace,pp_m(unknown_do_metta(file(Filename),Mode,Self,Expr))))))).
-
-
-
-%read_metta(In,Expr):- current_input(CI), \+ is_same_streams(CI,In), !, read_sform(In,Expr).
-read_metta(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
-read_metta(I,O):- string(I),normalize_space(string(M),I),!,parse_sexpr_metta1(M,O),!.
-read_metta(In,Expr):- current_input(In0),In==In0,!, repl_read(Expr).
-read_metta(In,Expr):- read_metta1(In,Expr).
-
-read_metta1(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
-read_metta1(In,Expr):- is_file_stream_and_size(In, Size) , Size>10240,!,read_sform1([],In,Expr).
-read_metta1(In,Expr):- read_metta2(In,Expr).
-
-read_metta2(_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
-read_metta2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
-read_metta2(In,Expr):- peek_char(In,Char), read_metta2(In,Char,Expr).
-
-read_metta2(S,_,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
-
-read_metta2(In,Char,Expr):- char_type(Char,space),get_char(In,Char),not_compatio(put(Char)),!,read_metta2(In,Expr).
-%read_metta2(In,'"',Expr):- read_sform2(In,Expr),!.
-%read_metta2(In,'\'',Expr):- read_sform2(In,Expr),!.
-read_metta2(In,'!',Expr):- get_char(In,_), !, read_metta2(In,Read1),!,Expr=exec(Read1).
-read_metta2(In,';',Expr):- get_char(In,_), !, (maybe_read_pl(In,Expr)-> true ;
-  (read_line_to_string(In,Str),Expr='$COMMENT'(Str,0,0))).
-% write_comment(Str),!,read_metta2(In,Expr))),!.
-% read_metta2(In,_,Expr):-  maybe_read_pl(In,Expr),!.
-read_metta2(In,_,Read1):- parse_sexpr_metta(In,Expr),!,must_det_ll(Expr=Read1).
-
-
-% Predicate to check if a stream is a file stream and get its size.
+%!  is_file_stream_and_size(+Stream, -Size) is nondet.
+%
+%   Checks if the given stream is a file stream and retrieves its file size.
+%
+%   This predicate verifies whether the provided Stream is associated with an actual
+%   file. If so, it attempts to retrieve the file's size. It is particularly useful for
+%   identifying file-based streams and obtaining metadata about the file without
+%   directly manipulating it.
+%
+%   @arg Stream The stream to check; it should be an open Prolog stream.
+%   @arg Size   Unifies with the size of the file in bytes if the stream is a file stream.
+%
+%   @example
+%     % Check if a stream is a file stream and get its size.
+%     ?- open('example.txt', read, Stream),
+%        is_file_stream_and_size(Stream, Size).
+%     Size = 1024.
+%
 is_file_stream_and_size(Stream, Size) :-
     % Check if the stream is associated with a file.
     stream_property(Stream, file_name(FileName)),
@@ -863,20 +2039,62 @@ is_file_stream_and_size(Stream, Size) :-
     exists_file(FileName),
     size_file(FileName, Size).
 
+%!  maybe_read_pl(+In, -Expr) is nondet.
+%
+%   Attempts to read a Prolog term from the input stream if specific conditions are met.
+%
+%   This predicate peeks at the next line of input from the stream `In` to determine if it contains
+%   a valid Prolog term. If the line is non-empty and includes both a period ('.') and ':-', it assumes
+%   the presence of a potential Prolog term and reads it, unifying the result with `Expr`.
+%
+%   @arg In   The input stream to read from.
+%   @arg Expr The resulting Prolog term expression, wrapped in `call/1` if successfully read.
+%
+%   @example
+%     % Attempt to read a Prolog term from a stream.
+%     ?- open('example.pl', read, In),
+%        maybe_read_pl(In, Expr).
+%     Expr = call((:- initialization(main))).
+%
+maybe_read_pl(In, Expr) :-
+    % Peek at the next line from the input stream.
+    peek_line(In, Line1),
+    % Check if the line is non-empty and contains '.' and ':-' (indicating potential Prolog term).
+    Line1 \== '', atom_contains(Line1, '.'), atom_contains(Line1, ':-'),
+    % Attempt to read the term if the line matches the conditions.
+    notrace(((catch_err((read_term_from_atom(Line1, Term, []), Term \== end_of_file, Expr = call(Term)), _, fail), !,
+    read_term(In, Term, [])))).
 
-maybe_read_pl(In,Expr):-
-  peek_line(In,Line1), Line1\=='', atom_contains(Line1, '.'),atom_contains(Line1, ':-'),
-  notrace(((catch_err((read_term_from_atom(Line1, Term, []), Term\==end_of_file, Expr=call(Term)),_, fail),!,
-  read_term(In, Term, [])))).
-
-
-% Define the peek_line predicate.
-% It uses a temporary string buffer to peek at the current line.
+%!  peek_line(-Line) is det.
+%
+%   Peeks at the current input line without advancing the stream.
+%
+%   This predicate reads the next line from the current input stream without moving the
+%   stream position forward, allowing subsequent reads to access the same line again.
+%
+%   @arg Line The string content of the current input line.
+%
 peek_line(Line) :-
+    % Use the current input stream for peeking the line.
     current_input(Stream),
     peek_line(Stream, Line).
 
-% Helper predicate to peek the line from a specific stream.
+%!  peek_line(+Stream, -Line) is det.
+%
+%   Peeks at the next line from the specified stream without moving its position.
+%
+%   This predicate saves the current position of the stream, reads the next line as a
+%   string, and then restores the stream position, effectively "peeking" at the line.
+%
+%   @arg Stream The stream to read from.
+%   @arg Line   The content of the line as a string, without advancing the stream position.
+%
+%   @example
+%     % Peek at the next line of a stream.
+%     ?- open('example.txt', read, Stream),
+%        peek_line(Stream, Line).
+%     Line = "This is the next line in the file.".
+%
 peek_line(Stream, Line) :-
     % Remember the current stream position.
     stream_property(Stream, position(Pos)),
@@ -885,405 +2103,1314 @@ peek_line(Stream, Line) :-
     % Set the stream back to the remembered position.
     set_stream_position(Stream, Pos).
 
-
-
+%!  maybe_read_sform_line(+Stream, +P2, -Form) is nondet.
+%
+%   Reads a line from the stream, checking if it matches a specific form.
+%
+%   This predicate attempts to read a line from `Stream` and applies the predicate `P2` to it.
+%   If `P2` succeeds on the line, `Form` is unified with the result. If `P2` fails, the stream
+%   position is reset to its original state, allowing other predicates to process the line.
+%
+%   @arg Stream The input stream to read from.
+%   @arg P2     A predicate that is applied to the line read from the stream.
+%   @arg Form   The result, unified if `P2` succeeds, otherwise fails.
+%
 maybe_read_sform_line(Stream, P2, Form) :- fail,
-    % Check if the stream is repositionable
-    % Get the current position in the stream
+    % Get the current position in the stream.
     stream_property(Stream, position(Pos)),
-    % Read a line from the stream
+    % Read a line from the stream.
     read_line_to_string(Stream, Line),
+    % Delegate further processing to maybe_read_sform_line_pos/5.
     maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form).
 
-
-maybe_read_sform_line_pos(Stream, Line, _Pos, P2, Form):- normalize_space(string(M),Line),M="",!,
-  maybe_read_sform_line(Stream, P2, Form).
-
-maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form):-
-    % Call P2 with the line. If P2 fails, reset the stream position
-    (    call(P2,Line,Form)
-    ->  true  % If P2 succeeds, do nothing more
-    ;   set_stream_position(Stream, Pos), fail  % If P2 fails, reset position and fail
+%!  maybe_read_sform_line_pos(+Stream, +Line, +Pos, +P2, -Form) is nondet.
+%
+%   Processes a line from a stream and attempts to match it to a form using `P2`.
+%
+%   This predicate normalizes the line and skips empty lines by recursively calling
+%   `maybe_read_sform_line/3`. If the line is non-empty, it attempts to apply `P2`.
+%   If `P2` succeeds, `Form` is unified; otherwise, the stream position is reset.
+%
+%   @arg Stream The input stream from which the line is read.
+%   @arg Line   The current line being processed.
+%   @arg Pos    The initial position in the stream before reading the line.
+%   @arg P2     Predicate to test against the line.
+%   @arg Form   The form if `P2` succeeds; fails if `P2` does not match.
+%
+maybe_read_sform_line_pos(Stream, Line, _Pos, P2, Form) :-
+    % Normalize the line and check if it is empty.
+    normalize_space(string(M), Line), M = "", !,
+    % If empty, recursively call to read the next line.
+    maybe_read_sform_line(Stream, P2, Form).
+maybe_read_sform_line_pos(Stream, Line, Pos, P2, Form) :-
+    % Call P2 with the line; if it fails, reset the stream position.
+    (call(P2, Line, Form)
+    -> true   % P2 succeeded; unify Form and finish
+    ;  set_stream_position(Stream, Pos), fail  % Reset position if P2 failed
     ).
 
+%!  read_sform(+Str, -F) is det.
+%
+%   Reads an S-expression form from a string or stream.
+%
+%   This predicate reads an S-expression form `F` from the input, which can be a
+%   string `Str` or a stream `S`. If `Str` is a string, it is converted to a stream.
+%   The function supports both new and legacy parsing methods, switching based on
+%   internal checks.
+%
+%   @arg Str The input, either a string or a stream, containing the S-expression.
+%   @arg F   The parsed S-expression form.
+%
+%   @example
+%     % Parse an S-expression from a string.
+%     ?- read_sform("(+ 1 2)", Form).
+%     Form = (+ 1 2).
+%
+read_sform(Str, F) :-
+    % If Str is a string, open it as a stream.
+    string(Str),open_string(Str, S), !,read_sform(S, F).
+read_sform(S, F1) :-
+    % Use the new parser if enabled.
+    use_new_parse_sexpr_metta_IO(S), !,new_parse_sexpr_metta_IO(S, F1).
+read_sform(S, F) :-
+    % Fallback to legacy parsing method if new parser is not enabled.
+    read_sform1([], S, F1),
+    % Check if parsing returned a special marker '!' for continuation.
+    (F1 \== '!' -> F = F1; (read_sform1([], S, F2), F = exec(F2))).
 
-
-%read_line_to_sexpr(Stream,UnTyped),
-read_sform(Str,F):- string(Str),open_string(Str,S),!,read_sform(S,F).
-read_sform(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
-read_sform(S,F):-
-  read_sform1([],S,F1),
-  ( F1\=='!' -> F=F1 ;
-    (read_sform1([],S,F2), F = exec(F2))).
-
+%!  read_sform2(+S, -F1) is det.
+%
+%   Reads an S-expression form `F1` from a stream `S` using various parsing strategies.
+%
+%   This predicate provides multiple methods for parsing S-expressions from the given stream.
+%   If a new parsing method is enabled (checked by `use_new_parse_sexpr_metta_IO/1`), it will use
+%   `new_parse_sexpr_metta_IO/2`. Otherwise, it falls back to `read_sform1/3` to handle the parsing.
+%
+%   @arg S   The input stream containing the S-expression to parse.
+%   @arg F1  The resulting parsed S-expression form.
+%
+%   @example
+%     % Parse an S-expression from a stream using the most appropriate method.
+%     ?- open('s_expression.txt', read, Stream),
+%        read_sform2(Stream, Form).
+%     Form = '(+ 1 2)'.
+%
 
 %read_sform2(S,F1):- !, read_metta2(S,F1).
-read_sform2(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
-read_sform2(S,F1):- read_sform1([],S,F1).
+read_sform2(S, F1) :-
+    % Use the new parser if enabled.
+    use_new_parse_sexpr_metta_IO(S), !,new_parse_sexpr_metta_IO(S, F1).
+read_sform2(S, F1) :-
+    % Fallback to the legacy parser if the new parser is not enabled.
+    read_sform1([], S, F1).
 
-read_sform1(_,_,O):- clause(t_l:s_reader_info(O),_,Ref),erase(Ref).
-read_sform1( AltEnd,Str,F):- string(Str),open_string(Str,S),!,read_sform1( AltEnd,S,F).
-read_sform1(_AltEnd,S,F):- at_end_of_stream(S),!,F=end_of_file.
-read_sform1( AltEnd,S,M):- get_char(S,C),read_sform3(s, AltEnd,C,S,F),
-      untyped_to_metta(F,M).
-%read_sform1( AltEnd,S,F):- profile(parse_sexpr_metta(S,F)).
+%!  read_sform1(+AltEnd, +Str, -F) is det.
+%
+%   Reads an S-expression form `F` from a string or stream `Str`, handling
+%   end-of-file and whitespace cases.
+%
+%   This predicate attempts to parse S-expression forms from `Str`. If `Str` is a
+%   string, it opens it as a stream and then processes it. When encountering the
+%   end of the stream, it returns `end_of_file`. If whitespace or special characters
+%   are found, they are handled accordingly.
+%
+%   @arg AltEnd Alternate end signal (for internal use).
+%   @arg Str    The input string or stream containing the S-expression.
+%   @arg F      The parsed form or `end_of_file` if at the end of the stream.
+%
+read_sform1(_, _, O) :- 
+    % Erase temporary reader information if it exists.
+    clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
+read_sform1(AltEnd, Str, F) :-
+    % Open the string as a stream if `Str` is a string.
+    string(Str), open_string(Str, S), !, read_sform1(AltEnd, S, F).
+read_sform1(_AltEnd, S, F) :-
+    % Check if at end of stream.
+    at_end_of_stream(S), !, F = end_of_file.
+read_sform1(AltEnd, S, M) :-
+    % Process the next character in the stream.
+    get_char(S, C),read_sform3(s, AltEnd, C, S, F),
+    % Convert the parsed form to a Metta expression.
+    untyped_to_metta(F, M).
 
-read_sform3(_AoS,_AltEnd,C,_,F):- C == end_of_file,!,F=end_of_file.
-read_sform3(       s, AltEnd,C,S,F):- char_type(C,space),!,read_sform1( AltEnd,S,F).
-%read_sform3(AoS,_AltEnd,';',S,'$COMMENT'(F,0,0)):- !, read_line_to_string(S,F).
-read_sform3(       s, AltEnd,';',S,F):- read_line_to_string(S,_),!,read_sform1( AltEnd,S,F).
-read_sform3(       s, AltEnd,'!',S,exec(F)):- !,read_sform1( AltEnd,S,F).
+% read_sform1(AltEnd, S, F) :- profile(parse_sexpr_metta(S, F)).
 
-read_sform3(s,_AltEnd,_,S,F1):- maybe_read_sform_line(S, parse_sexpr_metta1, F1),!.
+%!  read_sform3(+AoS, +AltEnd, +C, +S, -F) is det.
+%
+%   Reads an S-expression starting from a specific character, handling different cases.
+%
+%   This predicate reads an S-expression by examining the initial character `C` and
+%   directing to the appropriate parser based on the character's type. It handles
+%   end-of-file, spaces, comments, quoted text, symbols, and numbers.
+%
+%   @arg AoS    Current read state (e.g., `s` for start).
+%   @arg AltEnd Alternate end signal (for internal use).
+%   @arg C      The current character to process.
+%   @arg S      The input stream.
+%   @arg F      The resulting form parsed.
+%
+read_sform3(_AoS, _AltEnd, C, _, F) :- 
+    % Handle end-of-file character.
+    C == end_of_file, !, F = end_of_file.
+read_sform3(s, AltEnd, C, S, F) :- 
+    % Skip spaces and continue reading.
+    char_type(C, space), !, read_sform1(AltEnd, S, F).
+% read_sform3(AoS, _AltEnd, ';', S, '$COMMENT'(F, 0, 0)) :- 
+%    % Read entire line as a comment (currently commented out).
+%    !, read_line_to_string(S, F).
+read_sform3(s, AltEnd, ';', S, F) :- 
+    % Skip comments and read the next line.
+    read_line_to_string(S, _), !, read_sform1(AltEnd, S, F).
+read_sform3(s, AltEnd, '!', S, exec(F)) :- 
+    % Handle '!' as a special execution marker.
+    !, read_sform1(AltEnd, S, F).
+read_sform3(s, _AltEnd, _, S, F1) :- 
+    % Attempt to read a line matching a specific form.
+    maybe_read_sform_line(S, parse_sexpr_metta1, F1), !.
+read_sform3(_AoS, _AltEnd, '"', S, Text) :- 
+    % Read a quoted string until the next double quote.
+    !, must_det_ll(atom_until(S, [], '"', Text)).
+read_sform3(_AoS, _AltEnd, '`', S, Text) :- 
+    % Read a quoted string until the next backtick.
+    !, atom_until(S, [], '`', Text).
+read_sform3(_AoS, _AltEnd, '\'', S, Text) :- 
+    fail, !, atom_until(S, [], '\'', Text).
+read_sform3(_AoS, _AltEnd, ',', _, ',') :- 
+    fail, !.
+read_sform3(s, AltEnd, C, S, F) :- 
+    % Delegate further processing to `read_sform4/4`.
+    read_sform4(AltEnd, C, S, F), !.
+read_sform3(_AoS, AltEnd, P, S, Sym) :- 
+    % Peek at the next character and interpret symbols or numbers.
+    peek_char(S, Peek), !, 
+    read_symbol_or_number(AltEnd, Peek, S, [P], Expr), into_symbol_or_number(Expr, Sym).
 
-read_sform3(_AoS,_AltEnd,'"',S,Text):- !,must_det_ll(atom_until(S,[],'"',Text)).
-read_sform3(_AoS,_AltEnd,'`',S,Text):- !,atom_until(S,[],'`',Text).
-read_sform3(_AoS,_AltEnd,'\'',S,Text):- fail, !,atom_until(S,[],'\'',Text).
-read_sform3(_AoS,_AltEnd,',',_,','):- fail, !.
-read_sform3(     s , AltEnd,C,S,F):- read_sform4( AltEnd,C,S,F),!.
-read_sform3(_AoS, AltEnd,P,S,Sym):- peek_char(S,Peek),!,read_symbol_or_number( AltEnd,Peek,S,[P],Expr),into_symbol_or_number(Expr,Sym).
+%!  into_symbol_or_number(+Expr, -Sym) is det.
+%
+%   Converts an atom to a number if possible; otherwise, returns it as-is.
+%
+%   This predicate attempts to interpret `Expr` as a number. If successful, `Sym`
+%   is unified with the number; otherwise, `Sym` is left as `Expr`.
+%
+%   @arg Expr The expression to interpret.
+%   @arg Sym  The resulting symbol or number.
+%
+into_symbol_or_number(Expr, Sym) :- 
+    atom_number(Expr, Sym), !.
+into_symbol_or_number(Sym, Sym).
 
-into_symbol_or_number(Expr,Sym):- atom_number(Expr,Sym),!.
-into_symbol_or_number(Sym,Sym).
+%!  read_sform4(+AltEnd, +B, +S, -Out) is det.
+%
+%   Processes a form using further character inspection and parsing lists.
+%
+%   This predicate reads further into the form by inspecting characters and building
+%   up lists from nested expressions.
+%
+%   @arg AltEnd Alternate end signal (for internal use).
+%   @arg B      The starting character for this read sequence.
+%   @arg S      The input stream.
+%   @arg Out    The parsed output form.
+%
+read_sform4(_AltEnd, B, S, Out) :-  read_sform5(s, B, S, List, E), c_list(E, List, Out).
 
-read_sform4(_AltEnd,B,S,Out):-  read_sform5(s,B,S,List,E), c_list(E,List,Out).
+%!  c_list(+EndChar, +List, -Result) is det.
+%
+%   Constructs a result list based on the specified end character.
+%
+%   This predicate constructs a final list structure based on the type of closing
+%   character (`EndChar`). Different end characters correspond to different types of
+%   list representations, allowing for flexibility in handling various bracketed forms.
+%
+%   @arg EndChar The closing character that indicates the end of the list structure.
+%   @arg List    The list of items accumulated before the end character.
+%   @arg Result  The resulting list structure, adapted based on `EndChar`.
+%
 c_list(')',List,List).  c_list('}',List,['{...}',List]). c_list(']',List,['[...]',List]).
 
+%!  read_sform5(+AoS, +OpenChar, +S, -List, -CloseChar) is det.
+%
+%   Reads a list structure from the stream `S` based on the opening character.
+%
+%   This predicate initiates the collection of elements into a list until the corresponding
+%   closing character is encountered. Different types of brackets (`(`, `{`, `[`) are
+%   handled, allowing for flexible parsing of list-like structures in S-expressions.
+%
+%   @arg AoS       Current read state (internal use).
+%   @arg OpenChar  The opening character that starts the list structure.
+%   @arg S         The input stream from which to read.
+%   @arg List      The resulting list of elements read from the stream.
+%   @arg CloseChar The expected closing character matching `OpenChar`.
+%
+%   @example
+%     % Parse elements within parentheses as a list.
+%     ?- open_string("(1 2 3)", S), read_sform5(s, '(', S, List, ')').
+%     List = [1, 2, 3].
+%
+read_sform5(AoS, '(', S, List, ')') :- 
+              % Collect elements into List until encountering ')'.
+              !, collect_list_until(AoS, S, ')', List), !.
+read_sform5(AoS, '{', S, List, '}') :- 
+              % Collect elements into List until encountering '}'.
+              !, collect_list_until(AoS, S, '}', List), !.
+read_sform5(AoS, '[', S, List, ']') :- 
+              % Collect elements into List until encountering ']'.
+              !, collect_list_until(AoS, S, ']', List), !.
 
-read_sform5(AoS,'(',S,List,')'):- !,collect_list_until(AoS,S,')',List),!.
-read_sform5(AoS,'{',S,List,'}'):- !,collect_list_until(AoS,S,'}',List),!.
-read_sform5(AoS,'[',S,List,']'):- !,collect_list_until(AoS,S,']',List),!.
+%!  read_symbol_or_number(+AltEnd, +Peek, +S, +SoFar, -Expr) is det.
+%
+%   Reads a symbol or number from the stream `S`, building up from `SoFar` until a stopping
+%   character is reached. Handles escape sequences, spaces, and specific delimiters.
+%
+%   @arg AltEnd A list of alternate end characters that signify the end of the symbol.
+%   @arg Peek   The current character to examine.
+%   @arg S      The input stream.
+%   @arg SoFar  The accumulated characters for the symbol so far.
+%   @arg Expr   The resulting symbol or number expression.
+%
+read_symbol_or_number(AltEnd, Peek, S, SoFar, Expr):- 
+              % Handle escaped characters ('\\').
+              SoFar \== [], Peek == '\\', !,
+              get_char(S, _), get_char(S, C), append(SoFar, [C], NSoFar),
+              peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
+read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):- 
+              % Stop if at end of file, converting `SoFar` to `Expr`.
+              Peek == end_of_file, !,
+              must_det_ll((symbolic_list_concat(SoFar, Expr))).
+read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):- 
+              % Stop if Peek is whitespace, converting `SoFar` to `Expr`.
+              char_type(Peek, space), !,
+              must_det_ll((symbolic_list_concat(SoFar, Expr))).
+read_symbol_or_number(AltEnd, Peek, _S, SoFar, Expr):- 
+              % Stop if Peek is an alternate end character, process `SoFar`.
+              member(Peek, AltEnd), !,
+              must_det_ll((do_symbolic_list_concat(Peek, SoFar, Expr))).
+read_symbol_or_number(AltEnd, B, S, SoFar, Expr):- 
+              % Parse nested structures if applicable, flattening the result.
+              fail, read_sform5(AltEnd, B, S, List, E),
+              flatten([List, E], F), append(SoFar, F, NSoFar), !,
+              peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
+read_symbol_or_number(AltEnd, _Peek, S, SoFar, Expr):- 
+              % Continue reading and appending characters.
+              get_char(S, C), append(SoFar, [C], NSoFar),
+              peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
 
+%!  atom_until(+S, +SoFar, +End, -Text) is det.
+%
+%   Reads characters from stream `S` until encountering the character `End`,
+%   accumulating them in `SoFar` and converting the result to `Text`.
+%
+%   @arg S      The input stream to read from.
+%   @arg SoFar  The accumulated characters so far.
+%   @arg End    The character at which to stop reading.
+%   @arg Text   The resulting text up to `End`.
+%
+%   @example
+%     % Read characters until encountering a double-quote.
+%     ?- open_string("example text\"", S), atom_until(S, [], '"', Text).
+%     Text = "example text".
+%
+atom_until(S, SoFar, End, Text):- 
+              % Initialize reading until End by reading the next character.
+              get_char(S, C), atom_until(S, SoFar, C, End, Text).
+atom_until(_, SoFar, C, End, Expr):- 
+              % Stop if C matches End and process SoFar as Expr.
+              C == End, !, must_det_ll((do_symbolic_list_concat(End, SoFar, Expr))).
+atom_until(S, SoFar, '\\', End, Expr):- 
+              % Handle escaped character and continue reading.
+              get_char(S, C), !, atom_until2(S, SoFar, C, End, Expr).
+atom_until(S, SoFar, C, End, Expr):- 
+              % Continue reading characters.
+              atom_until2(S, SoFar, C, End, Expr).
 
-read_symbol_or_number( AltEnd,Peek,S,SoFar,Expr):- SoFar\==[], Peek=='\\', !,
-    get_char(S,_),get_char(S,C),append(SoFar,[C],NSoFar),
-    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
+%!  atom_until2(+S, +SoFar, +C, +End, -Expr) is det.
+%
+%   Appends the current character `C` to `SoFar`, reads the next character,
+%   and continues accumulating characters until reaching the `End` character.
+%
+%   @arg S      The input stream to read from.
+%   @arg SoFar  The accumulated characters so far.
+%   @arg C      The current character to append to `SoFar`.
+%   @arg End    The character at which to stop reading.
+%   @arg Expr   The resulting expression up to `End`.
+%
+%   @example
+%     % Accumulate characters until reaching a delimiter.
+%     ?- open_string("example text\"", S), atom_until2(S, [], 'e', '"', Text).
+%     Text = "example text".
+%
+atom_until2(S, SoFar, C, End, Expr):- 
+              % Append character C to SoFar and continue.
+              append(SoFar, [C], NSoFar), get_char(S, NC),
+              atom_until(S, NSoFar, NC, End, Expr).
 
-read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- Peek==end_of_file,!,
-    must_det_ll(( symbolic_list_concat(SoFar,Expr))).
+%!  do_symbolic_list_concat(+End, +SoFar, -Expr) is det.
+%
+%   Concatenates `SoFar` into `Expr`, using either symbolic or string representation.
+%
+%   @arg End   The delimiter used in concatenation.
+%   @arg SoFar The accumulated list of characters to concatenate.
+%   @arg Expr  The resulting concatenated expression.
+%
+do_symbolic_list_concat('"', SoFar, Expr):- 
+              % Convert SoFar to string if required.
+              \+ string_to_syms, !, atomics_to_string(SoFar, Expr), !.
+do_symbolic_list_concat(_End, SoFar, Expr):- symbolic_list_concat(SoFar, Expr).
 
+%!  collect_list_until(+AoS, +S, +End, -List) is det.
+%
+%   Collects elements into `List` from stream `S` until reaching `End`.
+%
+%   @arg AoS  Current read state (for internal use).
+%   @arg S    The input stream to read from.
+%   @arg End  The character at which to stop collecting.
+%   @arg List The resulting list of elements read from `S`.
+%
+%   @example
+%     % Collect elements until encountering the end parenthesis.
+%     ?- open_string("(1 2 3)", S), collect_list_until(s, S, ')', List).
+%     List = [1, 2, 3].
+%
+collect_list_until(AoS, S, End, List):- 
+              % Start collecting with the next character.
+              get_char(S, C), cont_list(AoS, C, End, S, List).
 
+%!  cont_list(+AoS, +C, +End, +S, -List) is det.
+%
+%   Continues collecting list elements from stream `S` based on character `C`.
+%
+%   @arg AoS  Current read state (for internal use).
+%   @arg C    The current character to examine.
+%   @arg End  The character at which to stop collecting.
+%   @arg S    The input stream to read from.
+%   @arg List The resulting list of elements read from `S`.
+%
+cont_list(_AoS, End, _End1, _, []):- 
+              % Stop if at end of file.
+              End == end_of_file, !.
+cont_list(_AoS, End, End1, _, []):- 
+              % Stop if End matches End1.
+              End == End1, !.
+cont_list(AoS, C, End, S, [F|List]):- 
+              % Read S-expression and continue collecting.
+              read_sform3(AoS, [End], C, S, F), !, collect_list_until(AoS, S, End, List).
 
-
-read_symbol_or_number(_AltEnd,Peek,_S,SoFar,Expr):- char_type(Peek,space),!,
-    must_det_ll(( symbolic_list_concat(SoFar,Expr))).
-
-read_symbol_or_number( AltEnd,Peek,_S,SoFar,Expr):- member(Peek,AltEnd),!,
-    must_det_ll(( do_symbolic_list_concat(Peek,SoFar,Expr))).
-read_symbol_or_number(AltEnd,B,S,SoFar,Expr):- fail,read_sform5(AltEnd,B,S,List,E),
-  flatten([List,E],F), append(SoFar,F,NSoFar),!,
-   peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-read_symbol_or_number( AltEnd,_Peek,S,SoFar,Expr):- get_char(S,C),append(SoFar,[C],NSoFar),
-    peek_char(S,NPeek), read_symbol_or_number(AltEnd,NPeek,S,NSoFar,Expr).
-
-atom_until(S,SoFar,End,Text):- get_char(S,C),atom_until(S,SoFar,C,End,Text).
-atom_until(_,SoFar,C,End,Expr):- C ==End,!,must_det_ll((do_symbolic_list_concat(End,SoFar,Expr))).
-atom_until(S,SoFar,'\\',End,Expr):-get_char(S,C),!,atom_until2(S,SoFar,C,End,Expr).
-atom_until(S,SoFar,C,End,Expr):- atom_until2(S,SoFar,C,End,Expr).
-atom_until2(S,SoFar,C,End,Expr):- append(SoFar,[C],NSoFar),get_char(S,NC),
-    atom_until(S,NSoFar,NC,End,Expr).
-
-do_symbolic_list_concat('"',SoFar,Expr):- \+ string_to_syms,!, atomics_to_string(SoFar,Expr),!.
-do_symbolic_list_concat(_End,SoFar,Expr):- symbolic_list_concat(SoFar,Expr).
-
-collect_list_until(AoS,S,End,List):- get_char(S,C), cont_list(AoS,C,End,S,List).
-
-cont_list(_AoS,End,_End1,_,[]):- End==end_of_file, !.
-cont_list(_AoS,End,End1,_,[]):- End==End1, !.
-cont_list( AoS,C,End,S,[F|List]):- read_sform3(AoS,[End],C,S,F),!,collect_list_until(AoS,S,End,List).
-
-
+%!  use_new_parse_sexpr_metta_IO(+S) is nondet.
+%
+%   Determines if new parsing should be used based on `S`.
+%
+%   @arg S The input, checked to see if it is not a string.
+%
 use_new_parse_sexpr_metta_IO(S):- \+ string(S).
 
-new_parse_sexpr_metta_IO1(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
-new_parse_sexpr_metta_IO1(S,F1):- peek_char(S,Char),char_type(Char,space),!, get_char(S,Char), parse_sexpr_metta_IO(S,F1).
-new_parse_sexpr_metta_IO1(S,_F1):- S = InStream,
-   once((
-    read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.
-    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
-    read_position(S, EndLine, EndCol, _E_CharPos_Item, _EndPosition),
-    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, range(line_char(Line, Col), line_char(EndLine, EndCol)))))),
-    fail.
-new_parse_sexpr_metta_IO1(_S,F1):- retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta,M,F1).
+%!  new_parse_sexpr_metta_IO1(+S, -F1) is det.
+%
+%   Reads an S-expression or comment from the stream `S` and processes it.
+%
+%   This predicate reads from the input stream `S`, handling end-of-stream and whitespace
+%   characters. For non-whitespace characters, it retrieves position details and reads an
+%   S-expression or comment. It then asserts the item into the database with position
+%   information, which can later be retracted for processing as a `metta_file_comment`.
+%
+%   @arg S   The input stream to read from.
+%   @arg F1  The resulting S-expression or end-of-file marker.
+%
+new_parse_sexpr_metta_IO1(S, F1):- 
+              % Stop if at end of stream.
+              at_end_of_stream(S), !, F1 = end_of_file.
+new_parse_sexpr_metta_IO1(S, F1):- 
+              % Skip whitespace characters and continue parsing.
+              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
+new_parse_sexpr_metta_IO1(S, _F1):- 
+              % Read and assert position and item details for non-whitespace characters.
+              S = InStream,
+              once((read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.
+                    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
+                    read_position(S, EndLine, EndCol, _E_CharPos_Item, _EndPosition),
+                    assertz(metta_file_comment(Line, Col, CharPos_Item, Item, range(line_char(Line, Col), line_char(EndLine, EndCol)))))),
+              fail.
+new_parse_sexpr_metta_IO1(_S, F1):- 
+              % Retract a `metta_file_comment` item and convert it to a metta expression.
+              retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta, M, F1).
 
-new_parse_sexpr_metta_IO(S,F1):- new_parse_sexpr_metta_IO1(S,F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S,F1))).
+%!  new_parse_sexpr_metta_IO(+S, -F1) is det.
+%
+%   Wrapper for `new_parse_sexpr_metta_IO1/2` that reads and parses an S-expression.
+%
+%   This predicate calls `new_parse_sexpr_metta_IO1/2` to process an S-expression or
+%   comment, while optionally logging the output for debugging purposes.
+%
+%   @arg S   The input stream to read from.
+%   @arg F1  The resulting parsed form.
+%
+new_parse_sexpr_metta_IO(S, F1):- new_parse_sexpr_metta_IO1(S, F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S, F1))).
 
-in2_stream(N1,S1):- integer(N1),!,stream_property(S1,file_no(N1)),!.
-in2_stream(N1,S1):- atom(N1),stream_property(S1,alias(N1)),!.
-in2_stream(N1,S1):- is_stream(N1),S1=N1,!.
-in2_stream(N1,S1):- atom(N1),stream_property(S1,file_name(N1)),!.
-is_same_streams(N1,N2):- in2_stream(N1,S1),in2_stream(N2,S2),!,S1==S2.
+%!  in2_stream(+N1, -S1) is nondet.
+%
+%   Converts an integer, atom, or stream reference `N1` to a valid stream `S1`.
+%
+%   This predicate accepts multiple forms of stream references (`N1`), such as an integer
+%   file descriptor, an alias atom, or a stream identifier, and attempts to unify `S1`
+%   with the corresponding open stream.
+%
+%   @arg N1  The input representing the stream (integer, atom, or stream).
+%   @arg S1  The resulting Prolog stream if `N1` matches an open stream.
+%
+in2_stream(N1, S1):- integer(N1), !, stream_property(S1, file_no(N1)), !.
+in2_stream(N1, S1):- atom(N1), stream_property(S1, alias(N1)), !.
+in2_stream(N1, S1):- is_stream(N1), S1 = N1, !.
+in2_stream(N1, S1):- atom(N1), stream_property(S1, file_name(N1)), !.
 
+%!  is_same_streams(+N1, +N2) is nondet.
+%
+%   Checks if two references `N1` and `N2` refer to the same stream.
+%
+%   This predicate uses `in2_stream/2` to convert both `N1` and `N2` to streams and then
+%   checks if they refer to the same stream.
+%
+%   @arg N1  The first stream reference (integer, atom, or stream).
+%   @arg N2  The second stream reference (integer, atom, or stream).
+%
+is_same_streams(N1, N2):- in2_stream(N1, S1), in2_stream(N2, S2), !, S1 == S2.
 
+%!  parse_sexpr_metta(+I, -O) is det.
+%
+%   Parses an S-expression in the Metta format from input `I` to output `O`.
+%
+%   This predicate handles both atomic and non-atomic inputs. If `I` is not a stream,
+%   it converts it to a string for processing. Otherwise, it reads from the stream
+%   and processes the data into a Metta-compatible S-expression.
+%
+%   @arg I  The input expression, either atomic or stream-based.
+%   @arg O  The parsed Metta S-expression output.
+%
+parse_sexpr_metta(I, O):- 
+              % Convert non-stream, non-atomic inputs to string format.
+              (\+ atomic(I) ; \+ is_stream(I)), !, text_to_string(I, S), !, parse_sexpr_metta1(S, O), !.
+parse_sexpr_metta(S, F1):- 
+              % Attempt to read and parse a Metta S-expression line.
+              fail, % line_count(S, LineNumber),
+              maybe_read_sform_line(S, parse_sexpr_metta1, F1), !.
+parse_sexpr_metta(S, F1):- 
+              % Parse the input using Metta I/O logic.
+              parse_sexpr_metta_IO(S, F1), !.
 
-parse_sexpr_metta(I,O):- (\+ atomic(I) ; \+ is_stream(I)),!,text_to_string(I,S),!,parse_sexpr_metta1(S,O),!.
-parse_sexpr_metta(S,F1):- fail, %line_count(S, LineNumber),
-                          maybe_read_sform_line(S, parse_sexpr_metta1, F1),!.
-parse_sexpr_metta(S,F1):- parse_sexpr_metta_IO(S,F1),!.
+%!  parse_sexpr_metta_IO(+S, -F1) is det.
+%
+%   Reads and parses S-expressions from a stream `S` to produce output `F1`.
+%
+%   This predicate handles end-of-stream, whitespace, and new parsing methods,
+%   processing each line to transform it into a Metta-compatible format.
+%
+%   @arg S   The input stream from which to read.
+%   @arg F1  The resulting parsed Metta S-expression output.
+%
+parse_sexpr_metta_IO(S, F1):- 
+              % Handle end of stream.
+              at_end_of_stream(S), !, F1 = end_of_file.
+parse_sexpr_metta_IO(S, F1):- 
+              % Skip whitespace characters and continue parsing.
+              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
+parse_sexpr_metta_IO(S, F1):- 
+              % Use new parsing method if available.
+              use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
+parse_sexpr_metta_IO(S, F1):- 
+              %line_count(S, LineNumber),
+              % Get the character position within the current line
+              %line_position(S, LinePos),
+              nop((character_count(S, Offset), move_cursor_to_first_column,
+                  write(user_error, 'File Offset: '), write(user_error, Offset))),
+              parse_sexpr_untyped(S, M), !,
+              nop((write(user_error, '.'), !, move_cursor_to_first_column)),
+              trly(untyped_to_metta, M, F1),
+              nop(writeqln(user_error, F1)), !.
 
-parse_sexpr_metta_IO(S,F1):- at_end_of_stream(S),!,F1=end_of_file.
-parse_sexpr_metta_IO(S,F1):- peek_char(S,Char),char_type(Char,space),!,
-  get_char(S,Char), parse_sexpr_metta_IO(S,F1).
-parse_sexpr_metta_IO(S,F1):- use_new_parse_sexpr_metta_IO(S),!,new_parse_sexpr_metta_IO(S,F1).
+%!  move_cursor_to_first_column is det.
+%
+%   Moves the cursor to the first column in the user error output stream.
+%
+move_cursor_to_first_column:- write(user_error, '\033[1G').
 
-parse_sexpr_metta_IO(S,F1):-
-    %line_count(S, LineNumber),
-    % Get the character position within the current line
-    %line_position(S, LinePos),
-    nop((character_count(S, Offset),move_cursor_to_first_column,
-      write(user_error,'File Offset: '),write(user_error,Offset))),
-    parse_sexpr_untyped(S, M),!,
-    nop((write(user_error,'.'),!,move_cursor_to_first_column)),
-    trly(untyped_to_metta,M,F1),
-    nop(writeqln(user_error,F1)),!.
+%!  move_cursor_to_first_column_out is det.
+%
+%   Moves the cursor to the first column in the user output stream.
+%
+move_cursor_to_first_column_out:- write(user_output, '\033[1G').
 
-move_cursor_to_first_column:- write(user_error,'\033[1G').
-move_cursor_to_first_column_out:- write(user_output,'\033[1G').
+%!  parse_sexpr_metta1(+I, -O) is det.
+%
+%   Parses a normalized S-expression string `I` and converts it into a Metta-compatible form `O`.
+%
+%   This predicate performs normalization, then parses the string and applies Metta formatting.
+%
+%   @arg I  The input string to parse.
+%   @arg O  The resulting Metta S-expression.
+%
+parse_sexpr_metta1(I, O):- 
+              normalize_space(string(M), I), !, parse_sexpr_metta2(M, U), !,
+              trly(untyped_to_metta, U, O).
 
-parse_sexpr_metta1(I,O):- normalize_space(string(M),I),!,parse_sexpr_metta2(M,U),!,
-  trly(untyped_to_metta,U,O).
-parse_sexpr_metta2(M,exec(O)):- string_concat('!',I,M),!,parse_sexpr_metta2(I,O).
-parse_sexpr_metta2(M,(O)):- string_concat('+',I,M),!,parse_sexpr_metta2(I,O).
-parse_sexpr_metta2(I,U):- parse_sexpr_untyped(I,U),!,writeqln(user_error,U).
+%!  parse_sexpr_metta2(+M, -O) is det.
+%
+%   Parses specific Metta expressions based on prefixes (`!` and `+`), and defaults to general parsing.
+%
+%   @arg M  The input string to parse.
+%   @arg O  The resulting parsed Metta expression.
+%
+parse_sexpr_metta2(M, exec(O)):- 
+              % Handle '!' prefixed expressions.
+              string_concat('!', I, M), !, parse_sexpr_metta2(I, O).
+parse_sexpr_metta2(M, (O)):- 
+              % Handle '+' prefixed expressions.
+              string_concat('+', I, M), !, parse_sexpr_metta2(I, O).
+parse_sexpr_metta2(I, U):- 
+              % General parsing for untyped S-expressions.
+              parse_sexpr_untyped(I, U), !, writeqln(user_error, U).
 
+%!  test_parse_sexpr_metta1 is det.
+%
+%   A test predicate to evaluate `parse_sexpr_metta1/2` with a complex Metta expression.
+%
+%   This predicate tests the parsing function with a nested S-expression, printing the
+%   result in quoted form. It uses `ignore/1` to handle potential errors and `break/0`
+%   to allow debugging if needed.
+%
 test_parse_sexpr_metta1:-
   ignore((parse_sexpr_metta1(
 "(: synonyms-gene-ENSG00000085491 (synonyms (gene ENSG00000085491) (ATP-Mg/P\\(i\\)_co-transporter_1 calcium-binding_mitochondrial_carrier_protein_SCaMC-1 HGNC:20662 mitochondrial_ATP-Mg/Pi_carrier_protein_1 small_calcium-binding_mitochondrial_carrier_protein_1 mitochondrial_Ca\\(2+\\)-dependent_solute_carrier_protein_1 mitochondrial_adenyl_nucleotide_antiporter_SLC25A24 solute_carrier_family_25_member_24 calcium-binding_transporter APC1 short_calcium-binding_mitochondrial_carrier_1 solute_carrier_family_25_\\(mitochondrial_carrier;_phosphate_carrier\\),_member_24 SCAMC1 SLC25A24 short_calcium-binding_mitochondrial_carrier_protein_1 SCAMC-1)))",O),
   writeq(parse_sexpr_metta1(O)))),break.
 
-writeqln(W,Q):- nop(format(W,'; ~q~n',[Q])).
+%!  writeqln(+W, +Q) is det.
+%
+%   Writes the quoted term `Q` to the stream `W`, followed by a newline.
+%
+%   This predicate formats the term `Q` in quoted form and appends a newline.
+%   It is a no-operation (`nop`) if formatting is disabled.
+%
+%   @arg W  The output stream to write to.
+%   @arg Q  The term to format and write.
+%
+writeqln(W, Q):- nop(format(W, '; ~q~n', [Q])).
 
-write_comment(_):- is_compatio,!.
-write_comment(_):- silent_loading,!.
-write_comment(Cmt):- connlf,format(';;~w~n',[Cmt]).
-do_metta_cmt(_,'$COMMENT'(Cmt,_,_)):- write_comment(Cmt),!.
-do_metta_cmt(_,'$STRING'(Cmt)):- write_comment(Cmt),!.
-do_metta_cmt(Self,[Cmt]):- !, do_metta_cmt(Self, Cmt),!.
+%!  write_comment(+Cmt) is det.
+%
+%   Writes a comment `Cmt` to the output if conditions allow.
+%
+%   This predicate writes comments depending on compatibility and silent loading settings.
+%   It uses `connlf/0` to prepare the connection for output and formats the comment.
+%
+%   @arg Cmt The comment to write, if permitted by conditions.
+%
+write_comment(_):- is_compatio, !.
+write_comment(_):- silent_loading, !.
+write_comment(Cmt):- connlf, format(';;~w~n', [Cmt]).
 
-metta_atom_in_file(Self,Term):-  metta_atom_in_file(Self,Term,_,_).
-metta_atom_in_file(Self,STerm,Filename,Lineno):-
-    user:loaded_into_kb(Self,Filename),
-    once(user:asserted_metta_pred(Mangle,Filename)),
-    %s2t_iz(Mangle,P,CTerm,Term),
-    %CTerm=Term,Mangle=P,
-    current_predicate(Mangle/Arity),
+%!  do_metta_cmt(+Self, +Cmt) is det.
+%
+%   Processes and writes comments based on their format type.
+%
+%   This predicate handles different types of comments (`$COMMENT`, `$STRING`, or list format),
+%   invoking `write_comment/1` to output the comment appropriately.
+%
+%   @arg Self The current context or reference for processing.
+%   @arg Cmt  The comment term, which could be a structured comment or list.
+%
+do_metta_cmt(_, '$COMMENT'(Cmt, _, _)):- 
+              % Handle `$COMMENT` term and write the comment.
+              write_comment(Cmt), !.
+do_metta_cmt(_, '$STRING'(Cmt)):- 
+              % Handle `$STRING` term and write the comment.
+              write_comment(Cmt), !.
+do_metta_cmt(Self, [Cmt]):- 
+              % Handle list format and recursively process as a comment.
+              !, do_metta_cmt(Self, Cmt), !.
 
-    notrace((length(STerm,Arity),
-    term_variables(STerm,SVs),
-    copy_term(STerm+SVs,CTerm+CVs),
-    Data =..[Mangle,Lineno|CTerm])),
-    %write_src_woi(Data),
-    current_predicate(_,Data),
-    call(Data),
-    maplist(mapvar,CVs,SVs).
+%!  metta_atom_in_file(+Self, +Term) is det.
+%
+%   Checks if a given `Term` is associated with `Self` within a file, with file
+%   and line number details omitted.
+%
+%   @arg Self  The context or source associated with the term.
+%   @arg Term  The term to verify within the file context.
+%
+metta_atom_in_file(Self, Term):- 
+              metta_atom_in_file(Self, Term, _, _).
 
-%mapvar(CV,SV):- var(CV),!,SV=CV.
-mapvar(CV,SV):- t2s(CV,CCV),!,SV=CCV.
+%!  metta_atom_in_file(+Self, +STerm, -Filename, -Lineno) is det.
+%
+%   Finds and verifies an S-expression term `STerm` in a specific file associated
+%   with `Self`, extracting the filename and line number.
+%
+%   This predicate checks if a term was loaded into a file and locates its predicate
+%   structure, confirming its presence by calling it with the associated data.
+%
+%   @arg Self     The context or source in which to search for the term.
+%   @arg STerm    The S-expression term to find in the file.
+%   @arg Filename The name of the file where the term is located.
+%   @arg Lineno   The line number where the term is found.
+%
+metta_atom_in_file(Self, STerm, Filename, Lineno):- 
+              % Confirm the file was loaded into the knowledge base.
+              user:loaded_into_kb(Self, Filename),
+              once(user:asserted_metta_pred(Mangle, Filename)),
+              % s2t_iz(Mangle, P, CTerm, Term),
+              % CTerm = Term, Mangle = P,
+              current_predicate(Mangle/Arity),
+              notrace((length(STerm, Arity),
+                       term_variables(STerm, SVs),
+                       copy_term(STerm+SVs, CTerm+CVs),
+                       Data =.. [Mangle, Lineno | CTerm])),
+              % write_src_woi(Data),
+              current_predicate(_, Data),
+              call(Data),
+              maplist(mapvar, CVs, SVs).
 
-%constrain_sterm(STerm):- var(STerm),!,between(1,5,Len),length(STerm,Len).
-%constrain_sterm(STerm):- is_list(STerm),!.
-constrain_sterm(NV):- nonvar(NV),!.
-constrain_sterm([_,_,_]).
-constrain_sterm([_,_,_,_]).
-constrain_sterm([_,_,_,_,_]).
-constrain_sterm([_,_]).
 
-s2t_iz(Mangle,Iz,[Colon,Name,Info],[Name|InfoL]):- Colon == ':',
-   is_list(Info), mangle_iz(Mangle,Iz),
-   maplist(s2t,Info,InfoL).
-s2t_iz(Mangle,Mangle,Info,InfoL):- s2tl(Info,InfoL).
+%!  mapvar(+CV, -SV) is det.
+%
+%   Maps a variable or term `CV` to `SV`, converting `CV` to a simpler form if needed.
+%
+%   This predicate applies `t2s/2` to transform `CV` to `CCV` if `CV` is not a variable,
+%   then unifies `SV` with the resulting term.
+%
+%   @arg CV  The term or variable to map.
+%   @arg SV  The simplified or mapped term.
+%
 
-mangle_iz(Mangle,Iz):- symbol_concat(Mangle,'_iz',Iz).
+%mapvar(CV, SV):- var(CV), !, SV = CV.
+mapvar(CV, SV):- t2s(CV, CCV), !, SV = CCV.
 
-produce_iz(Mangle):-
-  mangle_iz(Mangle,Iz),
-  forall(between(1,5,Len),
-    once((length(Args,Len),
-    produce_iz_hb([Mangle,Lineno,[:,Name,[Pred|Args]]],[Iz,Lineno,Name,Pred|Args])))).
+%!  constrain_sterm(+NV) is nondet.
+%
+%   Constrains `NV` to be a non-variable or a specific list structure.
+%
+%   This predicate enforces constraints on `NV`, succeeding if `NV` is non-variable,
+%   or if it matches certain list patterns. Used to ensure `NV` meets expected structural forms.
+%
+%   @arg NV  The term to constrain.
+%
+%   @example
+%     % Example usage of `constrain_sterm` with a list.
+%     ?- constrain_sterm([1, 2, 3]).
+%     true.
+%
 
-produce_iz_hb(HList,BList):-
-   H=..HList,B=..BList,  HB=(H:-B),
-   numbervars(HB,0,_),
-   writeq(HB),writeln('.').
+%constrain_sterm(STerm):- var(STerm), !, between(1, 5, Len), length(STerm, Len).
+%constrain_sterm(STerm):- is_list(STerm), !.
+constrain_sterm(NV):- nonvar(NV), !.
+constrain_sterm([_, _, _]).
+constrain_sterm([_, _, _, _]).
+constrain_sterm([_, _, _, _, _]).
+constrain_sterm([_, _]).
 
-t2s(SList,List):- \+ compound(SList),!,SList=List.
-t2s([H|SList],[HH|List]):- !, t2s(H,HH),!,t2s(SList,List).
-t2s(X,XX):- compound(X),compound_name_arguments(X,t,Args),!,
-    maplist(t2s,Args,XX).
-t2s(X,X):-!.
+%!  s2t_iz(+Mangle, -Iz, +Input, -Output) is det.
+%
+%   Converts a structured term `[Name | InfoL]` to a form `[Name | InfoL]`, using
+%   the `Mangle` name and specific mappings for `Iz` (mangled form).
+%
+%   @arg Mangle The base name for mangling.
+%   @arg Iz     The mangled name based on `Mangle`.
+%   @arg Input  The input list to convert.
+%   @arg Output The resulting converted list.
+%
+%   @example
+%     % Convert a structured term with mangling.
+%     ?- s2t_iz(my_mangle, Iz, [:, term, [a, b, c]], Result).
+%     Iz = my_mangle_iz,
+%     Result = [term, a, b, c].
+%
+s2t_iz(Mangle, Iz, [Colon, Name, Info], [Name | InfoL]):- 
+              % Convert `Info` to `InfoL` and set `Iz` as the mangled form of `Mangle`.
+              Colon == ':', is_list(Info), mangle_iz(Mangle, Iz),
+              maplist(s2t, Info, InfoL).
+s2t_iz(Mangle, Mangle, Info, InfoL):- 
+              % Direct conversion without mangling when `Mangle` remains unchanged.
+              s2tl(Info, InfoL).
 
-s2tl(SList,List):- \+ compound(SList),!,SList=List.
-s2tl([H|SList],[HH|List]):- !, s2t(H,HH),!,s2tl(SList,List).
-s2tl(List,List).
-%s2tl(SList,List):- is_list(SList), maplist(s2t,SList,List),!.
+%!  mangle_iz(+Mangle, -Iz) is det.
+%
+%   Produces a mangled name by appending `_iz` to `Mangle`.
+%
+%   @arg Mangle The base name to mangle.
+%   @arg Iz     The resulting mangled name.
+%
+mangle_iz(Mangle, Iz):- 
+              % Concatenate `_iz` suffix to form the mangled name.
+              symbol_concat(Mangle, '_iz', Iz).
 
-s2t(SList,List):- \+ compound(SList), !, SList=List.
-s2t([A|SList],Term):- A == '->',!, s2tl(SList,List),   Term =.. [A,List].
-s2t([A|SList],Term):- A == 'Cons',!,s2tl(SList,List), Term =.. [A|List].
-s2t([A|SList],Term):- A == '=',!, s2tl(SList,List),   Term =.. [A|List].
-s2t(List,Term):- is_list(List),!,maplist(s2t,List,TermList),
-  compound_name_arguments(Term,t,TermList),!.
-s2t(STerm,Term):- s2tl(STerm,Term),!.
+%!  produce_iz(+Mangle) is det.
+%
+%   Generates clauses with the mangled name `Iz` for varying argument lengths.
+%
+%   @arg Mangle The base name for producing clauses.
+%
+produce_iz(Mangle):- 
+              % Iterate over lengths 1 to 5, generating clauses for each.
+              mangle_iz(Mangle, Iz),
+              forall(between(1, 5, Len),
+                     once((length(Args, Len),
+                           produce_iz_hb([Mangle, Lineno, [:, Name, [Pred | Args]]], 
+                                         [Iz, Lineno, Name, Pred | Args])))).
 
+%!  produce_iz_hb(+HList, +BList) is det.
+%
+%   Creates a clause with head `HList` and body `BList`, printing the clause.
+%
+%   @arg HList The list representing the clause head.
+%   @arg BList The list representing the clause body.
+%
+produce_iz_hb(HList, BList):- 
+              % Unify `H` and `B` with `HList` and `BList`, then output the clause.
+              H =.. HList, B =.. BList, HB = (H :- B),
+              numbervars(HB, 0, _),
+              writeq(HB), writeln('.').
+
+%!  t2s(+SList, -List) is det.
+%
+%   Converts a structured term `SList` to a simplified term `List`.
+%
+%   @arg SList The structured term to convert.
+%   @arg List  The simplified result.
+%
+%   @example
+%     % Convert a compound term to a simpler structure.
+%     ?- t2s([a, b, [c]], Result).
+%     Result = [a, b, c].
+%
+t2s(SList, List):- 
+              % Return if `SList` is not compound.
+              \+ compound(SList), !, SList = List.
+t2s([H | SList], [HH | List]):- 
+              % Recursively transform each element in `SList`.
+              !, t2s(H, HH), !, t2s(SList, List).
+t2s(X, XX):- 
+              % Convert compound terms to arguments with functor `t`.
+              compound(X), compound_name_arguments(X, t, Args), !,
+              maplist(t2s, Args, XX).
+t2s(X, X):- !.
+
+%!  s2tl(+SList, -List) is det.
+%
+%   Simplifies a structured list `SList` by recursively transforming its elements.
+%
+%   @arg SList The input structured list.
+%   @arg List  The resulting transformed list.
+%
+s2tl(SList, List):- 
+              % Directly assign if `SList` is non-compound.
+              \+ compound(SList), !, SList = List.
+s2tl([H | SList], [HH | List]):- 
+              % Recursively apply `s2t` transformation on list items.
+              !, s2t(H, HH), !, s2tl(SList, List).
+s2tl(List, List).
+% s2tl(SList, List):- is_list(SList), maplist(s2t, SList, List), !.
+
+%!  s2t(+SList, -Term) is det.
+%
+%   Converts a structured term `SList` into a simplified term `Term`, handling
+%   specific operators and structures.
+%
+%   @arg SList The structured term to convert.
+%   @arg Term  The simplified resulting term.
+%
+%   @example
+%     % Convert a term with special operators.
+%     ?- s2t([->, a, b], Result).
+%     Result = (->, [a, b]).
+%
+s2t(SList, List):- 
+              % Directly assign if `SList` is non-compound.
+              \+ compound(SList), !, SList = List.
+s2t([A | SList], Term):- 
+              % Handle '->' as a special operator term.
+              A == '->', !, s2tl(SList, List), Term =.. [A, List].
+s2t([A | SList], Term):- 
+              % Handle 'Cons' as a special operator term.
+              A == 'Cons', !, s2tl(SList, List), Term =.. [A | List].
+s2t([A | SList], Term):- 
+              % Handle '=' as a special operator term.
+              A == '=', !, s2tl(SList, List), Term =.. [A | List].
+s2t(List, Term):- 
+              % Recursively transform list items to `t` compound.
+              is_list(List), !, maplist(s2t, List, TermList),
+              compound_name_arguments(Term, t, TermList), !.
+s2t(STerm, Term):- 
+              % Default transformation using `s2tl`.
+              s2tl(STerm, Term), !.
+
+%!  mlog_sym(@Sym) is nondet.
+%
+%   Defines a Metta logic symbol.
+%
+%   @arg Sym The symbol to define in Metta logic.
+%
 mlog_sym('@').
 
-%untyped_to_metta(I,exec(O)):- compound(I),I=exec(M),!,untyped_to_metta(M,O).
-untyped_to_metta(I,O):-
- must_det_ll((
-  trly(mfix_vars1,I,M),
-  trly(cons_to_c,M,OM),
-  trly(cons_to_l,OM,O))).
+%!  untyped_to_metta(+I, -O) is det.
+%
+%   Converts an untyped term `I` to a Metta-compatible form `O`, handling special
+%   constructs such as `exec/1`.
+%
+%   This predicate processes the input term `I`, applying transformations through
+%   helper predicates like `mfix_vars1/2`, `cons_to_c/2`, and `cons_to_l/2` to 
+%   ensure compatibility with Metta's expected format.
+%
+%   @arg I  The input untyped term to convert.
+%   @arg O  The resulting Metta-compatible form.
+%
+%   @example
+%     % Convert an untyped exec term to Metta format.
+%     ?- untyped_to_metta(exec(foo), Result).
+%     Result = exec(foo).
+%
 
+%untyped_to_metta(I, exec(O)):- compound(I), I = exec(M), !, untyped_to_metta(M, O).
+untyped_to_metta(I, O):- 
+              must_det_ll((trly(mfix_vars1, I, M),
+                           trly(cons_to_c, M, OM),
+                           trly(cons_to_l, OM, O))).
 
-trly(P2,A,B):- once(call(P2,A,M)),A\=@=M,!,trly(P2,M,B).
-trly(_,A,A).
+%!  trly(+P2, +A, -B) is det.
+%
+%   Applies predicate `P2` iteratively to `A`, resulting in `B` once convergence is reached.
+%
+%   This predicate repeatedly applies `P2` to `A` until the result no longer changes,
+%   allowing recursive transformations to reach a stable form.
+%
+%   @arg P2  The predicate to apply iteratively.
+%   @arg A   The initial term to transform.
+%   @arg B   The resulting transformed term.
+%
+trly(P2, A, B):- 
+              % Apply P2 and continue if A and M differ.
+              once(call(P2, A, M)), A \=@= M, !, trly(P2, M, B).
+trly(_, A, A).
 
-mfix_vars1(I,O):- var(I),!,I=O.
-mfix_vars1('$_','$VAR'('_')).
-mfix_vars1('$','$VAR'('__')).
-mfix_vars1(I,'$VAR'(O)):- atom(I),symbol_concat('$',N,I),symbol_concat('_',N,O).
+%!  mfix_vars1(+I, -O) is det.
+%
+%   Transforms various terms in `I` into normalized or Metta-compatible forms in `O`.
+%
+%   This predicate applies specific mappings for variable-like symbols, booleans, 
+%   strings, bracketed expressions, and lists to ensure compatibility with Metta logic.
+%
+%   @arg I  The input term to transform.
+%   @arg O  The resulting transformed term.
+%
+%   @example
+%     % Transform a string representation of true to Metta format.
+%     ?- mfix_vars1(true, Result).
+%     Result = 'True'.
+%
+mfix_vars1(I, O):- 
+              % If `I` is a variable, unify `I` with `O`.
+              var(I), !, I = O.
+mfix_vars1('$_', '$VAR'('_')).
+mfix_vars1('$', '$VAR'('__')).
+mfix_vars1(I, '$VAR'(O)):- 
+              % Handle atoms prefixed with `$`, converting to `'$VAR'` notation.
+              atom(I), symbol_concat('$', N, I), symbol_concat('_', N, O).
 %mfix_vars1('$t','$VAR'('T')):-!.
 %mfix_vars1('$T','$VAR'('T')):-!.
 %mfix_vars1(I,O):- I=='T',!,O='True'.
 %mfix_vars1(I,O):- I=='F',!,O='False'.
 %mfix_vars1(I,O):- is_i_nil(I),!,O=[].
-mfix_vars1(I,O):- I=='true',!,O='True'.
-mfix_vars1(I,O):- I=='false',!,O='False'.
-mfix_vars1('$STRING'(I),O):- I=O,!.
-mfix_vars1('$STRING'(I),O):- \+ string_to_syms, mfix_vars1(I,OO),text_to_string(OO,O),!.
+mfix_vars1(I, O):- 
+              % Convert 'true' and 'false' to capitalized forms.
+              I == 'true', !, O = 'True'.
+mfix_vars1(I, O):- I == 'false', !, O = 'False'.
+mfix_vars1('$STRING'(I), O):- 
+              % Handle `$STRING` term, convert directly if `I = O`.
+              I = O, !.
+mfix_vars1('$STRING'(I), O):- 
+              % Convert `$STRING` to a string if symbols are disabled.
+              \+ string_to_syms, mfix_vars1(I, OO), text_to_string(OO, O), !.
 %mfix_vars1('$STRING'(I),O):- \+ string_to_syms, text_to_string(I,O),!.
-mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),atom_chars(O,M),!.
+mfix_vars1('$STRING'(I), O):- 
+              % Convert `$STRING` to list if symbols are enabled.
+              !, mfix_vars1(I, M), atom_chars(O, M), !.
 %mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
-mfix_vars1([H|T],O):-   H=='[', is_list(T), last(T,L),L==']',append(List,[L],T), !, O = ['[...]',List].
-mfix_vars1([H|T],O):-   H=='{', is_list(T), last(T,L),L=='}',append(List,[L],T), !, O = ['{...}',List].
-mfix_vars1([H|T],O):-   is_list(T), last(T,L),L=='}',append(List,[L],T),
-   append(Left,['{'|R],List),append([H|Left],[['{}',R]],NewList),mfix_vars1(NewList,O).
-mfix_vars1('$OBJ'(claz_bracket_vector,List),O):- is_list(List),!, O = ['[...]',List].
-mfix_vars1(I,O):-  I = ['[', X, ']'], nonvar(X), !, O = ['[...]',X].
-mfix_vars1(I,O):-  I = ['{', X, '}'], nonvar(X), !, O = ['{...}',X].
-mfix_vars1('$OBJ'(claz_bracket_vector,List),Res):- is_list(List),!, append(['['|List],[']'],Res),!.
-mfix_vars1(I,O):- I==[Quote, S], Quote==quote,S==s,!, O=is.
-mfix_vars1([K,H|T],Cmpd):- fail,
-  atom(K),mlog_sym(K),is_list(T),
-  mfix_vars1([H|T],[HH|TT]),atom(HH),is_list(TT),!,
-  compound_name_arguments(Cmpd,HH,TT).
+mfix_vars1([H | T], O):- 
+              % Handle list format with square brackets.
+              H == '[', is_list(T), last(T, L), L == ']', append(List, [L], T), !, O = ['[...]', List].
+mfix_vars1([H | T], O):- 
+              % Handle list format with curly braces.
+              H == '{', is_list(T), last(T, L), L == '}', append(List, [L], T), !, O = ['{...}', List].
+mfix_vars1([H | T], O):- 
+              % Handle nested lists with curly braces.
+              is_list(T), last(T, L), L == '}', append(List, [L], T),
+              append(Left, ['{' | R], List), append([H | Left], [['{}', R]], NewList), mfix_vars1(NewList, O).
+mfix_vars1('$OBJ'(claz_bracket_vector, List), O):- 
+              % Convert `claz_bracket_vector` objects to list form.
+              is_list(List), !, O = ['[...]', List].
+mfix_vars1(I, O):- 
+              % Transform square bracket terms.
+              I = ['[', X, ']'], nonvar(X), !, O = ['[...]', X].
+mfix_vars1(I, O):- 
+              % Transform curly bracket terms.
+              I = ['{', X, '}'], nonvar(X), !, O = ['{...}', X].
+mfix_vars1('$OBJ'(claz_bracket_vector, List), Res):- 
+              % Append brackets to `claz_bracket_vector`.
+              is_list(List), !, append(['[' | List], [']'], Res), !.
+mfix_vars1(I, O):- 
+              % Special handling for quoted terms.
+              I == [Quote, S], Quote == quote, S == s, !, O = is.
+mfix_vars1([K, H | T], Cmpd):- 
+              % Attempt to form a compound term (currently fails).
+              fail, atom(K), mlog_sym(K), is_list(T),
+              mfix_vars1([H | T], [HH | TT]), atom(HH), is_list(TT), !,
+              compound_name_arguments(Cmpd, HH, TT).
 %mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
-mfix_vars1(List,ListO):- is_list(List),!,maplist(mfix_vars1,List,ListO).
-mfix_vars1(I,O):- string(I),string_to_syms,!,atom_string(O,I).
+mfix_vars1(List, ListO):- 
+              % Recursively apply transformation to lists.
+              is_list(List), !, maplist(mfix_vars1, List, ListO).
+mfix_vars1(I, O):- 
+              % Convert strings to atoms if symbol representation is enabled.
+              string(I), string_to_syms, !, atom_string(O, I).
+mfix_vars1(I, O):- 
+              % Recursively transform compound terms.
+              compound(I), !, compound_name_arguments(I, F, II), F \== '$VAR', maplist(mfix_vars1, II, OO), !, compound_name_arguments(O, F, OO).
+mfix_vars1(I, O):- 
+              % Return `I` if it's neither a variable nor symbol.
+              \+ symbol(I), !, I = O.
+mfix_vars1(I, I).
 
-mfix_vars1(I,O):- compound(I),!,compound_name_arguments(I,F,II),F\=='$VAR',maplist(mfix_vars1,II,OO),!,compound_name_arguments(O,F,OO).
-mfix_vars1(I,O):- \+ symbol(I),!,I=O.
-mfix_vars1(I,I).
+%!  string_to_syms is nondet.
+%
+%   Indicates whether strings should be converted to symbols.
+%
+%   This predicate currently fails by default, disabling symbol conversion for strings.
+%
+string_to_syms :- fail.
 
-string_to_syms:- fail.
+%!  no_cons_reduce is det.
+%
+%   Defines a flag or predicate placeholder indicating no reduction for cons terms.
+%
+%   This predicate is typically used as a control flag for terms that should avoid
+%   reduction when handled in certain contexts.
+%
 no_cons_reduce.
-svar_fixvarname_dont_capitalize(O,O):-!.
-svar_fixvarname_dont_capitalize(M,O):- svar_fixvarname(M,O),!.
 
+%!  svar_fixvarname_dont_capitalize(+M, -O) is det.
+%
+%   Fixes variable names, avoiding capitalization adjustments.
+%
+%   This predicate serves as an override for `svar_fixvarname/2`, ensuring that
+%   `O` is assigned directly from `M` without capitalization changes.
+%
+%   @arg M  The input term or variable name to fix.
+%   @arg O  The resulting fixed variable name.
+%
+svar_fixvarname_dont_capitalize(O, O) :- !.
+svar_fixvarname_dont_capitalize(M, O):- 
+              % Use `svar_fixvarname/2` if direct assignment fails.
+              svar_fixvarname(M, O), !.
+
+
+%!  dvar_name(+N, -O) is det.
+%
+%   Converts a variable name `N` into a standardized format `O`, handling underscores,
+%   integers, and capitalization.
+%
+%   This predicate performs various transformations on `N` to produce `O`, which is suitable
+%   for Metta logic compatibility. Handles integers, symbols with underscores, and capitalization.
+%
+%   @arg N  The input variable name to transform.
+%   @arg O  The resulting standardized variable name.
+%
 
 %dvar_name(t,'T'):- !.
-dvar_name(N,O):- symbol_concat('_',_,N),!,O=N.
-dvar_name(N,O):- integer(N),symbol_concat('_',N,O).
-dvar_name(N,O):- atom(N),atom_number(N,Num),dvar_name(Num,O),!.
-dvar_name(N,O):- \+ symbol(N),!,format(atom(A),'~w',[N]),dvar_name(A,O).
-dvar_name(N,O):- !, format(atom(A),'_~w',[N]),dvar_name(A,O).
-%dvar_name(  '',''):-!. % $
+dvar_name(N, O):- 
+              % If `N` starts with an underscore, retain `O = N`.
+              symbol_concat('_', _, N), !, O = N.
+dvar_name(N, O):- 
+              % Handle integer `N` by appending an underscore prefix.
+              integer(N), symbol_concat('_', N, O).
+dvar_name(N, O):- 
+              % If `N` is an atom representing a number, convert it.
+              atom(N), atom_number(N, Num), dvar_name(Num, O), !.
+dvar_name(N, O):- 
+              % Convert non-symbol `N` to a formatted string.
+              \+ symbol(N), !, format(atom(A), '~w', [N]), dvar_name(A, O).
+dvar_name(N, O):- 
+              % Default conversion by prefixing underscore.
+              !, format(atom(A), '_~w', [N]), dvar_name(A, O).
+%dvar_name('',''):-!. % $
 %dvar_name('_','__'):-!. % $_
-dvar_name(N,O):- symbol_concat('_',_,N),!,symbol_concat('_',N,O).
-dvar_name(N,O):- svar_fixvarname_dont_capitalize(N,O),!.
-dvar_name(N,O):- must_det_ll((atom_chars(N,Lst),maplist(c2vn,Lst,NList),symbolic_list_concat(NList,S),svar_fixvarname_dont_capitalize(S,O))),!.
-c2vn(A,A):- char_type(A,prolog_identifier_continue),!.
-c2vn(A,A):- char_type(A,prolog_var_start),!.
-c2vn(A,AA):- char_code(A,C),symbolic_list_concat(['_C',C,'_'],AA).
+dvar_name(N, O):- 
+              % Retain names starting with underscores.
+              symbol_concat('_', _, N), !, symbol_concat('_', N, O).
+dvar_name(N, O):- 
+              % Apply capitalization rules if applicable.
+              svar_fixvarname_dont_capitalize(N, O), !.
+dvar_name(N, O):- 
+              % Convert to variable name format by mapping characters.
+              must_det_ll((atom_chars(N, Lst), maplist(c2vn, Lst, NList), symbolic_list_concat(NList, S), svar_fixvarname_dont_capitalize(S, O))), !.
 
-cons_to_l(I,I):- no_cons_reduce,!.
-cons_to_l(I,O):- var(I),!,O=I.
-cons_to_l(I,O):- is_i_nil(I),!,O=[].
-cons_to_l(I,O):- I=='nil',!,O=[].
-cons_to_l(C,O):- \+ compound(C),!,O=C.
-cons_to_l([Cons,H,T|List],[HH|TT]):- List==[], atom(Cons),is_cons_f(Cons), t_is_ttable(T), cons_to_l(H,HH),!,cons_to_l(T,TT).
-cons_to_l(List,ListO):- is_list(List),!,maplist(cons_to_l,List,ListO).
-cons_to_l(I,I).
+%!  c2vn(+A, -AA) is det.
+%
+%   Maps a character `A` to a valid Prolog variable name format in `AA`.
+%
+%   @arg A   The character to convert.
+%   @arg AA  The resulting character or symbol in Prolog variable format.
+%
+c2vn(A, A):- 
+              % Retain identifier characters and starting characters for variables.
+              char_type(A, prolog_identifier_continue), !.
+c2vn(A, A):- char_type(A, prolog_var_start), !.
+c2vn(A, AA):- 
+              % Convert non-identifier characters to a prefixed numeric format.
+              char_code(A, C), symbolic_list_concat(['_C', C, '_'], AA).
 
-cons_to_c(I,I):- no_cons_reduce,!.
-cons_to_c(I,O):- var(I),!,O=I.
-cons_to_c(I,O):- is_i_nil(I),!,O=[].
-cons_to_c(I,O):- I=='nil',!,O=[].
-cons_to_c(C,O):- \+ compound(C),!,O=C.
-cons_to_c([Cons,H,T|List],[HH|TT]):- List==[], atom(Cons),is_cons_f(Cons), t_is_ttable(T), cons_to_c(H,HH),!,cons_to_c(T,TT).
-cons_to_c(I,O):- \+ is_list(I), compound_name_arguments(I,F,II),maplist(cons_to_c,II,OO),!,compound_name_arguments(O,F,OO).
-cons_to_c(I,I).
+%!  cons_to_l(+I, -O) is det.
+%
+%   Converts terms containing cons cells to a list format, respecting `no_cons_reduce/0`.
+%
+%   @arg I  The input term to convert.
+%   @arg O  The resulting list or transformed term.
+%
+cons_to_l(I, I):- 
+              % Skip transformation if `no_cons_reduce/0` is set.
+              no_cons_reduce, !.
+cons_to_l(I, O):- 
+              % Retain variables without modification.
+              var(I), !, O = I.
+cons_to_l(I, O):- 
+              % Convert `nil` or empty lists.
+              is_i_nil(I), !, O = [].
+cons_to_l(I, O):- I == 'nil', !, O = [].
+cons_to_l(C, O):- 
+              % Retain non-compound terms.
+              \+ compound(C), !, O = C.
+cons_to_l([Cons, H, T | List], [HH | TT]):- 
+              % Handle `Cons` cells by recursively transforming `H` and `T`.
+              List == [], atom(Cons), is_cons_f(Cons), t_is_ttable(T), cons_to_l(H, HH), !, cons_to_l(T, TT).
+cons_to_l(List, ListO):- 
+              % Apply transformation recursively to list elements.
+              is_list(List), !, maplist(cons_to_l, List, ListO).
+cons_to_l(I, I).
 
+%!  cons_to_c(+I, -O) is det.
+%
+%   Converts terms containing cons cells to a compound format, respecting `no_cons_reduce/0`.
+%
+%   @arg I  The input term to convert.
+%   @arg O  The resulting compound or transformed term.
+%
+cons_to_c(I, I):- 
+              % Skip transformation if `no_cons_reduce/0` is set.
+              no_cons_reduce, !.
+cons_to_c(I, O):- 
+              % Retain variables without modification.
+              var(I), !, O = I.
+cons_to_c(I, O):- 
+              % Convert `nil` or empty lists.
+              is_i_nil(I), !, O = [].
+cons_to_c(I, O):- I == 'nil', !, O = [].
+cons_to_c(C, O):- 
+              % Retain non-compound terms.
+              \+ compound(C), !, O = C.
+cons_to_c([Cons, H, T | List], [HH | TT]):- 
+              % Handle `Cons` cells by recursively transforming `H` and `T`.
+              List == [], atom(Cons), is_cons_f(Cons), t_is_ttable(T), cons_to_c(H, HH), !, cons_to_c(T, TT).
+cons_to_c(I, O):- 
+              % Recursively transform compound terms.
+              \+ is_list(I), compound_name_arguments(I, F, II), maplist(cons_to_c, II, OO), !, compound_name_arguments(O, F, OO).
+cons_to_c(I, I).
 
-
-t_is_ttable(T):- var(T),!.
-t_is_ttable(T):- is_i_nil(T),!.
-t_is_ttable(T):- is_ftVar(T),!.
-t_is_ttable([F|Args]):- F=='Cons',!,is_list(Args).
-t_is_ttable([_|Args]):- !, \+ is_list(Args).
+%!  t_is_ttable(+T) is nondet.
+%
+%   Checks if `T` is a valid table or list structure for use in Metta terms.
+%
+%   This predicate ensures that `T` follows specific formats like `Cons` lists or other
+%   structures that conform to Metta's table handling rules.
+%
+%   @arg T  The term to check.
+%
+t_is_ttable(T):- 
+              % Accept if `T` is a variable.
+              var(T), !.
+t_is_ttable(T):- 
+              % Accept if `T` represents an empty list or nil.
+              is_i_nil(T), !.
+t_is_ttable(T):- 
+              % Accept if `T` is a functionally treated variable.
+              is_ftVar(T), !.
+t_is_ttable([F | Args]):- 
+              % Accept if `F` is 'Cons' with a list of arguments.
+              F == 'Cons', !, is_list(Args).
+t_is_ttable([_ | Args]):- 
+              % Accept if `Args` is not a list.
+              !, \+ is_list(Args).
 t_is_ttable(_).
 
-is_cons_f(Cons):- is_cf_nil(Cons,_).
-is_cf_nil('Cons','NNNil').
-%is_cf_nil('::','nil').
+%!  is_cons_f(+Cons) is nondet.
+%
+%   Determines if `Cons` represents a valid cons term.
+%
+%   @arg Cons  The term to check.
+%
+is_cons_f(Cons):- is_cf_nil(Cons, _).
 
-is_i_nil(I):-
-  is_cf_nil('Cons',Nil), I == Nil.
+%!  is_cf_nil(+Cons, -Nil) is nondet.
+%
+%   Matches `Cons` terms with their nil representations.
+%
+%   @arg Cons The cons-like term.
+%   @arg Nil  The nil term associated with `Cons`.
+%
+is_cf_nil('Cons', 'NNNil').
+%is_cf_nil('::', 'nil').
 
-subst_vars(TermWDV, NewTerm):-
-   subst_vars(TermWDV, NewTerm, NamedVarsList),
-   maybe_set_var_names(NamedVarsList).
+%!  is_i_nil(+I) is nondet.
+%
+%   Checks if `I` represents an empty or nil structure in Metta.
+%
+%   @arg I  The term to check for nil.
+%
+is_i_nil(I):- is_cf_nil('Cons', Nil), I == Nil.
 
-subst_vars(TermWDV, NewTerm, NamedVarsList) :-
-    subst_vars(TermWDV, NewTerm, [], NamedVarsList).
+%!  subst_vars(+TermWDV, -NewTerm) is det.
+%
+%   Substitutes variables in `TermWDV` to produce `NewTerm`, setting variable names as needed.
+%
+%   This predicate invokes `subst_vars/3` with an accumulator and named variables list,
+%   then optionally sets the variable names.
+%
+%   @arg TermWDV  The term with potential variables.
+%   @arg NewTerm  The term with variables substituted.
+%
+subst_vars(TermWDV, NewTerm):- 
+              subst_vars(TermWDV, NewTerm, NamedVarsList),
+              maybe_set_var_names(NamedVarsList).
 
-subst_vars(Term, Term, NamedVarsList, NamedVarsList) :- var(Term), !.
+%!  subst_vars(+TermWDV, -NewTerm, -NamedVarsList) is det.
+%
+%   Substitutes variables in `TermWDV` and collects them in `NamedVarsList`.
+%
+%   @arg TermWDV       The term with variables.
+%   @arg NewTerm       The term with substituted variables.
+%   @arg NamedVarsList The list of named variables.
+%
+subst_vars(TermWDV, NewTerm, NamedVarsList) :- 
+              subst_vars(TermWDV, NewTerm, [], NamedVarsList).
+
+%!  subst_vars(+Term, -Term, +Acc, -NamedVarsList) is det.
+%
+%   Recursively substitutes variables in lists and compound terms, using an accumulator.
+%
+%   @arg Term           The term to process for substitution.
+%   @arg Term           The resulting term with substitutions.
+%   @arg Acc            Accumulator for variable tracking.
+%   @arg NamedVarsList  List of named variables after substitution.
+%
+subst_vars(Term, Term, NamedVarsList, NamedVarsList) :- 
+              % Base case: return variable terms directly.
+              var(Term), !.
 subst_vars([], [], NamedVarsList, NamedVarsList):- !.
-subst_vars([TermWDV|RestWDV], [Term|Rest], Acc, NamedVarsList) :- !,
-    subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
-    subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
+subst_vars([TermWDV | RestWDV], [Term | Rest], Acc, NamedVarsList) :- !,
+              subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
+              subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
 subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
-subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- nonvar(VName), svar_fixvarname_dont_capitalize(VName,Name), !,
-    (memberchk(Name=Var, Acc) -> NamedVarsList = Acc ; ( !, Var = _, NamedVarsList = [Name=Var|Acc])).
-subst_vars(Term, Var, Acc, NamedVarsList) :- atom(Term),symbol_concat('$',DName,Term),
-   dvar_name(DName,Name),!,subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
+subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- 
+              % Substitute variables with `VName`, applying fixes if necessary.
+              nonvar(VName), svar_fixvarname_dont_capitalize(VName, Name), !,
+              (memberchk(Name = Var, Acc) -> NamedVarsList = Acc ; (!, Var = _, NamedVarsList = [Name = Var | Acc])).
+subst_vars(Term, Var, Acc, NamedVarsList) :- 
+              % Substitute variables with names starting with `$`.
+              atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name), !,
+              subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
 
-subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :-
-    compound(TermWDV), !,
-    compound_name_arguments(TermWDV, Functor, ArgsWDV),
-    subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
-    compound_name_arguments(NewTerm, Functor, Args).
+subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :- 
+              % Recursively handle compound terms.
+              compound(TermWDV), !,
+              compound_name_arguments(TermWDV, Functor, ArgsWDV),
+              subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
+              compound_name_arguments(NewTerm, Functor, Args).
 subst_vars(Term, Term, NamedVarsList, NamedVarsList).
 
 
+%!  connlf is det.
+%
+%   Outputs a line feed unless silent loading or compatibility settings prevent it.
+%
+%   This predicate checks if silent loading is enabled and calls `not_compat_io/1`
+%   to output a newline if permitted.
+%
 connlf:- check_silent_loading, not_compat_io((format('~N'))).
-connl:- check_silent_loading,not_compat_io((nl)).
+
+%!  connl is det.
+%
+%   Outputs a newline unless silent loading or compatibility settings prevent it.
+%
+connl:- check_silent_loading, not_compat_io((nl)).
+
+%!  check_silent_loading is det.
+%
+%   Checks if silent loading is enabled. This predicate can trigger debugging behavior 
+%   when uncommented.
+%
+
 % check_silent_loading:- silent_loading,!,trace,break.
 check_silent_loading.
-silent_loading:- option_value('load','silent'), !.
-silent_loading:- is_converting,!.
-silent_loading:- option_value('html','True'), !,fail.
-silent_loading:- option_value('trace-on-load','False'), !.
 
+%!  silent_loading is nondet.
+%
+%   Succeeds if the current loading mode is silent, based on options and environment.
+%
+%   This predicate checks various conditions, such as conversion mode or trace settings,
+%   to determine if silent loading is enabled.
+%
+silent_loading:- option_value('load', 'silent'), !.
+silent_loading:- is_converting, !.
+silent_loading:- option_value('html', 'True'), !, fail.
+silent_loading:- option_value('trace-on-load', 'False'), !.
 
+%!  uncompound(+OBO, -Src) is det.
+%
+%   Recursively converts compound terms in `OBO` to a flattened source list `Src`.
+%
+%   This predicate simplifies compound terms by extracting their name and arguments
+%   and converting them into a list form.
+%
+%   @arg OBO The original compound term or variable.
+%   @arg Src The resulting list or source term.
+%
+uncompound(OBO, Src):- 
+              % Handle non-compound terms.
+              \+ compound(OBO), !, Src = OBO.
+uncompound('$VAR'(OBO), '$VAR'(OBO)):- !.
+uncompound(IsList, Src):- 
+              % Recursively process list elements.
+              is_list(IsList), !, maplist(uncompound, IsList, Src).
+uncompound([Is | NotList], [SrcH | SrcT]):- 
+              % Convert head and tail of lists.
+              !, uncompound(Is, SrcH), uncompound(NotList, SrcT).
+uncompound(Compound, Src):- 
+              % Convert compound terms to list format.
+              compound_name_arguments(Compound, Name, Args), maplist(uncompound, [Name | Args], Src).
 
-
-uncompound(OBO,Src):- \+ compound(OBO),!, Src = OBO.
-uncompound('$VAR'(OBO),'$VAR'(OBO)):-!.
-uncompound(IsList,Src):- is_list(IsList),!,maplist(uncompound,IsList,Src).
-uncompound([Is|NotList],[SrcH|SrcT]):-!, uncompound(Is,SrcH),uncompound(NotList,SrcT).
-uncompound(Compound,Src):- compound_name_arguments(Compound,Name,Args),maplist(uncompound,[Name|Args],Src).
-
-assert_to_metta(_):- reached_file_max,!.
+%!  assert_to_metta(+OBO) is det.
+%
+%   Asserts a term `OBO` into the Metta knowledge base, processing it into a datum structure.
+%
+%   This predicate handles term processing to meet Metta's requirements, including
+%   creating a datum structure, declaring the predicate, and performing the assertion.
+%
+%   @arg OBO The term to assert in the Metta knowledge base.
+%
+assert_to_metta(_):- 
+    % Exit if file limit is reached.
+     reached_file_max,!.
+assert_to_metta(OBO):- 
+    % Process `OBO` into a datum and assert.
+              must_det_ll((OBO =.. [Fn | DataLL],
+                           maplist(better_arg, DataLL, DataL),
+                           into_datum(Fn, DataL, Data),
+                           functor(Data, Fn, A), decl_fb_pred(Fn, A),
+                           real_assert(Data), !,
+                           incr_file_count(_))).
 assert_to_metta(OBO):-
-    must_det_ll((OBO=..[Fn|DataLL],
-    maplist(better_arg,DataLL,DataL),
-    into_datum(Fn, DataL, Data),
-    functor(Data,Fn,A),decl_fb_pred(Fn,A),
-    real_assert(Data),!,
-   incr_file_count(_))).
-
-assert_to_metta(OBO):-
+ % Alternative processing method for assertions with additional validation
  ignore(( A>=2,A<700,
   OBO=..[Fn|Cols],
  must_det_ll((
@@ -1302,8 +3429,19 @@ assert_to_metta(OBO):-
        is_stream(OutputStream),
        should_show_data(X1),X1<1000,must_det_ll((display(OutputStream,Data),writeln(OutputStream,'.'))))))))))))),!.
 
+%!  assert_MeTTa(+OBO) is det.
+%
+%   Asserts a term `OBO` into the Metta knowledge base, using `assert_to_metta/1`.
+%
+%   This predicate directly calls `assert_to_metta/1` to process and assert the term. 
+%   Additional behavior (e.g., heartbeat) is currently commented out but can be re-enabled 
+%   if needed.
+%
+%   @arg OBO  The term to assert in the Metta knowledge base.
+%
 assert_MeTTa(OBO):- !, assert_to_metta(OBO).
 %assert_MeTTa(OBO):- !, assert_to_metta(OBO),!,heartbeat.
+
 /*
 assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
    decl_fb_pred(F,A),
@@ -1313,35 +3451,54 @@ assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
    assert(Data),!.
 */
 
-
 %:- dynamic((metta_type/3,metta_defn/3,get_metta_atom/2)).
-
 
 :- dynamic(progress_bar_position/1).
 
-% Initialize the progress bar and remember its starting position
+%!  init_progress_bar(+Width) is det.
+%
+%   Initializes a progress bar with a specified `Width` and records its starting position.
+%
+%   This predicate sets up a visual progress bar in the output stream with a width of
+%   empty spaces to be filled as the process progresses. The position is saved to allow
+%   for efficient updating.
+%
+%   @arg Width  The width of the progress bar in characters.
+%
 init_progress_bar(Width) :-
     current_output(Stream),
     stream_property(Stream, position(Pos)),
+    % Record the starting position of the progress bar.
     asserta(progress_bar_position(Pos)),
     write('['),
     forall(between(1, Width, _), write(' ')),
     write(']'),
     flush_output.
 
-% Check if the progress bar needs to be redrawn and update it accordingly
+%!  update_progress_bar(+Current, +Total, +Width) is det.
+%
+%   Updates the progress bar based on the `Current` progress out of `Total` with
+%   a specified `Width`.
+%
+%   This predicate checks if the progress bar’s position has changed and redraws it if necessary.
+%   It then calculates the filled and remaining sections and displays the progress visually.
+%
+%   @arg Current The current progress value.
+%   @arg Total   The total value representing completion.
+%   @arg Width   The width of the progress bar in characters.
+%
 update_progress_bar(Current, Total, Width) :-
     current_output(Stream),
-    % Get the current position
+    % Get the current position.
     stream_property(Stream, position(CurrentPos)),
-    % Get the remembered position
+    % Get the remembered starting position.
     progress_bar_position(SavedPos),
-    % Compare positions; if they differ, redraw the entire progress bar
+    % If positions differ, redraw the entire progress bar.
     (   SavedPos \= CurrentPos
     ->  redraw_progress_bar(Width)
     ;   true
     ),
-    % Update the progress bar
+    % Calculate filled portion based on progress percentage.
     Percentage is Current / Total,
     Filled is round(Percentage * Width),
     write('\r['),
@@ -1351,10 +3508,17 @@ update_progress_bar(Current, Total, Width) :-
     write(']'),
     flush_output.
 
-% Redraw the progress bar if the position has changed
-redraw_progress_bar(Width) :-
-    nl,
-    init_progress_bar(Width).
+%!  redraw_progress_bar(+Width) is det.
+%
+%   Redraws the progress bar if its position has changed, reinitializing it.
+%
+%   This predicate clears the current line by adding a newline and reinitializes
+%   the progress bar at the new position with the specified `Width`.
+%
+%   @arg Width The width of the progress bar in characters.
+%
+redraw_progress_bar(Width) :- nl,init_progress_bar(Width).
+
 
 % Adjusted example predicate for 1 million steps
 progress_bar_example :-
@@ -1371,39 +3535,107 @@ progress_bar_example.
 :- dynamic(using_corelib_file/0).
 :- dynamic(really_using_corelib_file/0).
 
+%!  use_corelib_file is det.
+%
+%   Ensures the core library file is loaded and interpreted if not already in use.
+%
+%   This predicate checks if the core library is in use and, if not, attempts to load it by
+%   calling `really_use_corelib_file/0`. It uses a dynamic flag `using_corelib_file` to track
+%   whether the core library has been loaded.
+%
+use_corelib_file :- using_corelib_file, !.
+use_corelib_file :- 
+              % Mark core library as in use and attempt to load it.
+              asserta(using_corelib_file), fail.
+use_corelib_file :- really_use_corelib_file, !.
+use_corelib_file :- !.
+%use_corelib_file :- really_use_corelib_file, !.
 
-use_corelib_file:- using_corelib_file,!.
-use_corelib_file:- asserta(using_corelib_file), fail.
-use_corelib_file:- really_use_corelib_file, !.
-use_corelib_file:- !.
-%use_corelib_file:- really_use_corelib_file,!.
-really_use_corelib_file:- load_corelib_file, generate_interpreter_stubs.
+%!  really_use_corelib_file is det.
+%
+%   Loads the core library file and generates interpreter stubs as needed.
+%
+%   This predicate loads the core library using `load_corelib_file/0` and generates
+%   stubs for interpreting core library symbols via `generate_interpreter_stubs/0`.
+%
+really_use_corelib_file :- load_corelib_file, generate_interpreter_stubs.
 
+% Dynamic predicate to track if interpreter stubs have been generated.
 :- dynamic(did_generate_interpreter_stubs/0).
-generate_interpreter_stubs:- did_generate_interpreter_stubs,!.
-generate_interpreter_stubs:-
-   asserta(did_generate_interpreter_stubs),
-   forall(metta_type('&corelib',Symb,Def),
-        gen_interp_stubs('&corelib',Symb,Def)).
 
+%!  generate_interpreter_stubs is det.
+%
+%   Generates interpreter stubs for core library symbols if they have not been created yet.
+%
+%   This predicate checks if stubs have already been generated, and if not, it iterates over
+%   symbols defined in the core library to create interpreter stubs for each.
+%
+generate_interpreter_stubs :- 
+              % Avoid generating stubs multiple times.
+              did_generate_interpreter_stubs, !.
+generate_interpreter_stubs :- 
+              % Generate stubs for each core library symbol.
+              asserta(did_generate_interpreter_stubs),
+              forall(metta_type('&corelib', Symb, Def),
+                     gen_interp_stubs('&corelib', Symb, Def)).
+
+% Dynamic and multifile declaration for metta_atom_asserted_deduced/2.
 :- dynamic(metta_atom_asserted_deduced/2).
 :- multifile(metta_atom_asserted_deduced/2).
-metta_atom_asserted_deduced('&corelib', Term):- fail,
-  %\+ did_generate_interpreter_stubs,
-   metta_atom_corelib_types(Term),
-   wdmsg(metta_atom_corelib_types(Term)).
 
-load_corelib_file:- really_using_corelib_file,!.
-%load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'corelib.metta'),!.
-load_corelib_file:- is_metta_src_dir(Dir), really_use_corelib_file(Dir,'stdlib_mettalog.metta'),!,metta_atom('&corelib', [:, 'Any', 'Type']).
+%!  metta_atom_asserted_deduced(+Source, +Term) is nondet.
+%
+%   Determines if a `Term` is part of the core library, logging the term if so.
+%
+%   This predicate checks if the `Term` originates from the `&corelib` source and
+%   meets the core library type requirements.
+%
+%   @arg Source  The source of the term, expected to be `&corelib`.
+%   @arg Term    The term to verify.
+%
+metta_atom_asserted_deduced('&corelib', Term) :- fail,
+              % Log terms matching core library types.
+              %\+ did_generate_interpreter_stubs,
+              metta_atom_corelib_types(Term),
+              wdmsg(metta_atom_corelib_types(Term)).
+
+%!  load_corelib_file is det.
+%
+%   Loads the core library file if it hasn't already been loaded.
+%
+%   This predicate first checks if the core library is already in use (`really_using_corelib_file`).
+%   If not, it attempts to load the file from the Metta source directory. Currently, it defaults to
+%   `stdlib_mettalog.metta`, with `corelib.metta` as a commented alternative.
+%
+%   @example
+%     % Load the core library if it's not already loaded.
+%     ?- load_corelib_file.
+%
+load_corelib_file :- really_using_corelib_file, !.
+%load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
+load_corelib_file :- 
+              % Load the standard Metta logic file from the source directory.
+              is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'), !,
+              metta_atom('&corelib', [:, 'Any', 'Type']).
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
-really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_to(Dir)]),
- exists_file(Filename),
- debug(lsp(main),"~q",[start_really_use_corelib_file(Dir,File)]),
- locally(nb_setval(may_use_fast_buffer,t),
-   locally(nb_setval(suspend_answers,true),
-     with_output_to(string(_),include_metta_directory_file('&corelib',Dir,Filename)))),
-    asserta(really_using_corelib_file),
-  debug(lsp(main),"~q",[end_really_use_corelib_file(Dir,File)]).
 
-
+%!  really_use_corelib_file(+Dir, +File) is det.
+%
+%   Loads a specified core library `File` from a directory `Dir` and initializes it.
+%
+%   This predicate constructs the absolute path of `File` relative to `Dir` and, if the file exists,
+%   includes it in the Metta knowledge base. It sets up specific environment flags (e.g., fast buffer)
+%   and then asserts that the core library is in use.
+%
+%   @arg Dir   The directory containing the core library file.
+%   @arg File  The core library file to load.
+%
+really_use_corelib_file(Dir, File) :- 
+              absolute_file_name(File, Filename, [relative_to(Dir)]),
+              exists_file(Filename),
+              debug(lsp(main), "~q", [start_really_use_corelib_file(Dir, File)]),
+              locally(nb_setval(may_use_fast_buffer, t),
+                      locally(nb_setval(suspend_answers, true),
+                              with_output_to(string(_), include_metta_directory_file('&corelib', Dir, Filename)))),
+              asserta(really_using_corelib_file),
+              debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]).
