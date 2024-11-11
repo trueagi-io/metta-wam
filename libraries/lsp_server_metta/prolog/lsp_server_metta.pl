@@ -1,4 +1,4 @@
-﻿:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3 ]).
+﻿:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3, debug_lsp/2, first_dict_key/3 ]).
 /** <module> LSP Server
 
 The main entry point for the Language Server implementation with dynamic handling based on max threads.
@@ -17,7 +17,8 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
    debug(lsp(high)),
    debug(lsp(xref)),
    debug(lsp(todo)),
-   debug(lsp(position)),!.
+   %debug(lsp(position)),
+   !.
 
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
@@ -29,26 +30,18 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- use_module(library(utf8), [utf8_codes//1]).
 :- use_module(library(yall)).
 
+:- include(lsp_server_hooks).
+:- include(lsp_metta_include).
 
-
-
-:- discontiguous(lsp_hooks:handle_msg_hook/3).
-
-:- multifile(lsp_hooks:handle_msg_hook/3).
-:-   dynamic(lsp_hooks:handle_msg_hook/3).
-:- multifile(user:predicate_help_hook/5).
-:-   dynamic(user:predicate_help_hook/5).
-:- multifile(lsp_hooks:hover_hook/5).
-:-   dynamic(lsp_hooks:hover_hook/5).
-:- multifile(lsp_hooks:code_action/3).
-:-   dynamic(lsp_hooks:code_action/3).
-
+:- set_prolog_flag(gc,false).
 
 :- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
 :- use_module(lsp_json_parser, [lsp_metta_request//1]).
 %:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
+
 :- ensure_loaded(lsp_metta_completion).
+
 :- use_module(lsp_prolog_colours, [
                             file_colours/2,
                             file_range_colours/4,
@@ -64,16 +57,16 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 
 % will change to module in a few days (easier to test externally from `user`)
 :- user:ensure_loaded(lsp_metta_code_actions).
-%:- user:ensure_loaded(lsp_metta_save_actions).
+:- user:ensure_loaded(lsp_metta_save_actions).
 :- user:ensure_loaded(lsp_metta_hover).
 :- user:ensure_loaded(lsp_metta_workspace).
 :- user:ensure_loaded(lsp_metta_references).
 :- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
 :- dynamic(user:full_text/2).
 :- user:ensure_loaded(lsp_prolog_changes).
-%:- user:ensure_loaded(lsp_prolog_checking).
-%:- user:ensure_loaded(lsp_prolog_colours).
-%:- user:ensure_loaded(lsp_prolog_utils).
+:- user:ensure_loaded(lsp_prolog_checking).
+:- user:ensure_loaded(lsp_prolog_colours).
+:- user:ensure_loaded(lsp_prolog_utils).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 
@@ -90,7 +83,7 @@ main :-
     set_prolog_flag(report_error, true),
     set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
-    nodebug(lsp(_)), % Everything
+   nodebug(lsp(_)), % Everything
     %prolog_ide(debug_monitor),
     %debug(lsp(low)),
     debug(lsp(main)),
@@ -98,7 +91,7 @@ main :-
     debug(lsp(threads)),
     debug(lsp(high)),
     debug(lsp(todo)),
-    debug(lsp(position)),
+    %debug(lsp(position)),
     debug(lsp(xref)),
     load_mettalog_xref,
     start(Args).
@@ -110,6 +103,9 @@ start([stdio]) :- !,
     stdio_server.
 start(Args) :-
     debug_lsp(main, "Unknown args ~w", [Args]).
+
+:- dynamic(lsp_hooks:is_lsp_output_stream/1).
+:- volatile(lsp_hooks:is_lsp_output_stream/1).
 
 % stdio server initialization
 stdio_server :-
@@ -124,10 +120,17 @@ stdio_server :-
     current_output(Out),
     set_stream(Out, encoding(utf8)),
     %stdio_handler_io(In, Out). %(might use this one later)
-    stdio_handler(A-A, In, Out).
+    asserta(lsp_hooks:is_lsp_output_stream(Out)),
+    stream_property(StdErr,file_no(2)),
+    set_system_IO(In,Out,StdErr), % ensure we are talking over stdin/stdout
+    set_prolog_IO(In,StdErr,StdErr), % redirect **accidental** writes to stdout to stderr instead
+    stdio_handler(In, Out).
 
-% [TODO] add multithreading? Guess that will also need a message queue
-% to write to stdout
+stdio_handler(In, Out):-
+  repeat,
+   catch(stdio_handler(A-A, In, Out),_,fail),
+   fail.
+
 stdio_handler(Extra-ExtraTail, In, Out) :-
     wait_for_input([In], _, infinite),
     fill_buffer(In),
@@ -188,7 +191,7 @@ handle_parsed_request(Out, Req) :-
     ((lsp_worker_threads(0) ; immediate_method(Method)) ->
         (handle_request(JobId, JobInfo, Out, Req))
     ;( post_job('$lsp_worker_pool', lsp_task(Out, JobId, JobInfo, Req)),
-       debug_lsp(threads, "Posted job for ~w", [JobInfo]))).
+       debug_lsp(threads, "Posted job for ~w", [JobInfo]))),!.
 
 % Post a job by storing it in the database and posting the job ID to the queue
 post_job(QueueId, Task) :-
@@ -206,7 +209,7 @@ post_job(QueueId, Task) :-
         start_lsp_worker_threads,
         thread_send_message(QueueId, JobId),
         nop(debug_lsp(threads, "Posted job with ID ~w", [JobId]))
-    )).
+    )),!.
 
 % New dynamic predicate to store job data in the database
 :- dynamic job_data/2.
@@ -220,6 +223,9 @@ do_work(QueueId) :-
 
 do_work_stuff(QueueId) :-
     thread_self(ThreadId),
+    stream_property(StdIn,file_no(0)), % locate the REAL stdin
+    stream_property(StdErr,file_no(2)), % locate the REAL stderr
+    set_prolog_IO(StdIn,StdErr,StdErr), % redirect accidental writes to stdout to stderr instead
     repeat,
     once(do_work_stuff_tid(QueueId, ThreadId)),
     fail.
@@ -281,7 +287,7 @@ lsp_worker_threads(MaxThreads) :-
     assert(lsp_worker_threads_max(MaxThreads)),
     !.
 % The following commented-out lines are configuration options for the worker threads:
-% lsp_worker_threads(0). % no threads, thus "$/cancelRequest" cannot be implemented as requests are processed synchronously
+%lsp_worker_threads(0). % no threads, thus "$/cancelRequest" cannot be implemented as requests are processed synchronously
 % lsp_worker_threads(1). % 1 thread, enabling "$/cancelRequest" since requests are handled one at a time asynchronously
 % lsp_worker_threads(3). % 3 threads, allows some parallel processing and handling of "$/cancelRequest"
 lsp_worker_threads(10). % 10 threads is the current setting, allowing high concurrency but could be overkill for some cases
@@ -357,27 +363,51 @@ catch_with_backtrace(Goal):-
         )
      ).
 
+lsp_output_stream(OutStream):- nb_current('$lsp_output_stream', OutStream),!.
+lsp_output_stream(OutStream):- lsp_hooks:is_lsp_output_stream(OutStream).
 
 send_client_message(Msg) :-
-  ignore((nb_current('$message_out', OutStream),
-    send_message(OutStream,Msg))).
+  debug_lsp(requests,"~q",[send_client_message(Msg)]),
+  ignore((lsp_output_stream(OutStream),
+    send_message(OutStream,Msg))),!.
 
 % Send LSP message to client
-send_message(Stream, Msg) :-
+send_message(Stream, Msg):-
+  (var(Stream)->lsp_output_stream(Stream);true),
+   catch(send_message_unsafe(Stream, Msg),_,true),!.
+
+send_message_unsafe(Stream, Msg) :-
   catch_with_backtrace((
     put_dict(jsonrpc, Msg, "2.0", VersionedMsg),
     atom_json_dict(JsonCodes, VersionedMsg, [as(codes), width(0)]),
     phrase(utf8_codes(JsonCodes), UTF8Codes),
     length(UTF8Codes, ContentLength),
     with_mutex('$lsp_response_mutex',
-         (format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
+         (%text_to_string(JsonCodes,JsonString),sformat(S, "\n\nContent-Length: ~w\r\n\r\n-->~q<--\n\n", [ContentLength, JsonString]),
+          %flush_output(user_error), format(user_error, '~N~w',[S]), nl(user_error),nl(user_error),flush_output(user_error),
+          format(Stream, "Content-Length: ~w\r\n\r\n~s", [ContentLength, JsonCodes]),
           flush_output(Stream))))).
 
+    trim_to_slength(InputString, MaxLength, S) :-
+        string_length(InputString, Length),
+        (
+          Length =< MaxLength ->
+          S = InputString  % If the string is shorter than or equal to MaxLength, return it as is.
+        ;
+         ( sub_string(InputString, 0, MaxLength, _, TrimmedString),  % Otherwise, trim it to MaxLength.
+          sformat(S,'~w...~w...',[TrimmedString,Length]))
+        ),! .
+
+
+debug_lsp(Topic,Arg):- debug_lsp(Topic,'~q',[Arg]).
 debug_lsp(Topic,Format,Args):-
  ignore((% debugging(Topic),
-   \+ \+ ((maplist(hide_gvars,Args),
-           % flush_output(user_error), format(user_error, '~N~w ',[Topic]),format(user_error, Format, Args), nl(user_error),nl(user_error),flush_output(user_error),
-           debug(lsp(Topic),Format,Args))))).
+   \+ \+ ((hide_gvars(Args),
+           flush_output(user_error), format(user_error, '~N~w: ',[Topic]),
+           sformat(S, Format, Args), trim_to_slength(S,300,SS),
+           format(user_error, '~w~n',[SS]),
+           nl(user_error),nl(user_error),flush_output(user_error),
+           nop((debug(lsp(Topic),Format,Args))))))), !.
 
 hide_gvars(Arg):- numbervars(Arg,696,_,[attvar(skip),singletons(true)]).
 
@@ -425,15 +455,17 @@ time_diff_string(_, _, "", "").  % If no Description, return empty string
 
 % Handle the job and log all time durations
 handle_request(JobId, JobInfo, OutStream, Req) :-
-    nb_setval('$message_out', OutStream),
+    nb_setval('$lsp_output_stream', OutStream),
     % Retrieve post time
     (retract(post_time(JobId, PostTime)) -> true ; get_time(PostTime)),
-    Method = Req.body.method,
+    first_dict_key(body, Req, Body),
+    first_dict_key(method, Body, Method),
     request_id(Req, Id),
     catch(
         ( get_time(StartTime),
           time_diff_string(PostTime, StartTime, "Waited", DurationPostToStart),
-          debug_lsp(high, "Request ~w started after ~w~n~n~q~n~n", [JobInfo, DurationPostToStart, Req]),
+          debug_lsp(high, "Request ~w started after ~w", [JobInfo, DurationPostToStart]),
+          debug_lsp(high, "..~q.", [Req]),
 
           % Process the request
           catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
@@ -607,7 +639,8 @@ handle_msg( _, _, _) :- notrace(catch(make,_,true)),fail.
 % Save the last Msg.body Object for each method  (must fail to allow further processing)
 :- dynamic(user:last_request/2).
 handle_msg( Method, MsgBody, _) :-
-    once(( retractall(user:last_request(Method,_)),
+    once((
+      (string(Method)-> retractall(user:last_request(Method,_)) ; true),
       asserta(user:last_request(Method, MsgBody)))),
       fail.
 
@@ -626,6 +659,10 @@ handle_msg(Method, Msg, _) :-
 
 handle_msg(Method, Msg, Response):-
    lsp_hooks:handle_msg_hook(Method, Msg, Response),!.
+
+% Our request listener hooks monitor these on their own
+handle_msg(Method, Msg, false) :- \+ string(Method), _{id: Id} :< Msg, \+ number(Id),!.
+
 
 % messages (with a response)
 handle_msg("initialize", Msg,
@@ -833,7 +870,9 @@ handle_msg("textDocument/didClose", Msg, false) :-
 handle_msg("initialized", Msg, false) :- !,
     debug_lsp(main, "initialized ~w", [Msg]).
 
-handle_msg("$/setTrace", _Msg, false).
+handle_msg("$/setTrace", _Msg, false):-
+   fetch_workspace_configuration.
+
 
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-
@@ -865,6 +904,33 @@ collect_workspace_symbols(Query, Symbols) :-
         ),
         Symbols).
 
+
+/*
+    workspace_symbol(Query,Symbol) :-
+      try_profile_symbol(URI, Query, Range, Name, _Detail, Kind),
+      Symbol = symbol{
+        name: Name,
+        kind: Kind,
+        location: _{
+          uri: URI,
+          range: Range
+          }
+        }.
+
+    document_symbols(URI, SymbolInfos) :-
+      findall(SymbolInfo, document_symbol(URI, SymbolInfo), SymbolInfos).
+
+    document_symbol(URI, Symbol) :-
+      try_profile_symbol(URI, '', Range, Name, Detail, Kind, Detail),
+      Symbol = symbol{
+        name: Name,
+        detail: Detail,
+        kind: Kind,
+        range: Range,
+        selectionRange: Range
+        }.
+*/
+
 % Predicate to check if a symbol matches the query
 symbol_matches_query(Symbol, Query) :-
     ( Query == "" -> true  % If query is empty, include all symbols
@@ -880,7 +946,7 @@ get_symbol_name(Symbol, Name) :-
     ).
 
 % wildcard
-handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented"}}) :-
+handle_msg(_, Msg, _{id: Id, error: _{code: -32603, message: "Unimplemented handle_msg"}}) :-
     _{id: Id} :< Msg, !,
     debug_lsp(todo, "unknown message ~w", [Msg]).
 handle_msg(_, Msg, false) :-

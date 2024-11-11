@@ -201,7 +201,43 @@
 		<Folder Name="src">
 			<Folder Name="packs">
 				<Folder Name="lsp_server_metta">
+					<Folder Name="prolog">
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_checking.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_code_actions.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_colours.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_completion.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_formater.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_hover.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_include.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_outline.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_parser.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_references.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_save_actions.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_split.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_utils.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_workspace.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_metta_xref.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_prolog_changes.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_prolog_checking.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_prolog_colours.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_prolog_utils.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_server_hooks.pl"/>
+						<F N="src/packs/lsp_server_metta/prolog/lsp_server_metta.pl"/>
+					</Folder>
+					<Folder Name="vscode">
+						<Folder Name="syntaxes">
+							<F N="src/packs/lsp_server_metta/vscode/syntaxes/mettalanguage.json"/>
+						</Folder>
+						<F N="src/packs/lsp_server_metta/vscode/extension.js"/>
+						<F N="src/packs/lsp_server_metta/vscode/metta.config.json"/>
+						<F N="src/packs/lsp_server_metta/vscode/package - Copy.json"/>
+						<F N="src/packs/lsp_server_metta/vscode/package-lock.json"/>
+						<F N="src/packs/lsp_server_metta/vscode/package.json"/>
+						<F N="src/packs/lsp_server_metta/vscode/README.md"/>
+					</Folder>
 					<F N="src/packs/lsp_server_metta/lsp-metta.el"/>
+					<F N="src/packs/lsp_server_metta/pack.pl"/>
+					<F N="src/packs/lsp_server_metta/README.md"/>
 				</Folder>
 			</Folder>
 			<F
@@ -214,8 +250,7 @@
 			<F
 				N="tests/*.*"
 				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-				L="1"/>
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 		</Folder>
 		<Folder Name="/usr">
 			<Folder Name="local">
@@ -235,13 +270,11 @@
 				</Folder>
 			</Folder>
 		</Folder>
-		<Folder Name="wiki">
-			<F
-				N="wiki/*.*"
-				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
-				L="1"/>
-		</Folder>
+		<F
+			N="*.*"
+			Recurse="1"
+			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+			L="1"/>
 		<F
 			N="*.*"
 			Recurse="1"
