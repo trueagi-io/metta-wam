@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.0.4",
+  "version": "0.1.1",
   "categories": [
     "Other"
   ],
@@ -37,38 +37,133 @@
         ],
         "configuration": "./metta.config.json",
         "extensions": [
+          ".pl",
+          ".plt",
+          ".meld",
+          ".kif",
+          ".krf",
           ".metta"
         ]
       }
     ],
-    "grammars": [{
-      "language": "metta",
-      "scopeName": "source.metta",
-      "path": "./syntaxes/mettalanguage.json"
-    }],
-		"configuration": {
-			"type": "object",
-			"title": "MeTTa LSP configuration",
-			"properties": {
-				"metta-lsp.maxNumberOfProblems": {
-					"scope": "resource",
-					"type": "number",
-					"default": 1000,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"metta-lsp.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Controls the level of tracing for communications between VS Code and the language server. Setting this to 'verbose' enables detailed hover diagnostics and includes features that are still under development."
-				}
-			}
-	   }		
+    "configuration": {
+      "type": "object",
+      "title": "MeTTa LSP Configuration",
+      "properties": {
+        "metta-lsp.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 1000,
+          "description": "Configures the maximum number of diagnostic issues the language server will report. Useful for managing performance in larger projects."
+        },
+        "metta-lsp.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Controls the verbosity of server communication logs, aiding in debugging and development."
+        },
+        "metta-lsp.features": {
+          "scope": "window",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "codeRefactoring",
+              "codeCommenting",
+              "codeAndErrorExplanation",
+              "systemCodeIndexing",
+              "userCodeIndexing",
+              "foreignCodeIndexing",
+              "codeExecution",
+              "testRunning"
+            ]},
+          "default": [
+            "codeExecution",
+            "systemCodeIndexing",
+            "codeCommenting",
+            "testRunning"
+          ],
+          "description": "Enables selection of specific server features, optimizing functionality based on user needs."
+        },
+        "metta-lsp.debug.showIncompleteFeatures": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "Toggles the visibility of in-development features, allowing users to test or preview new functionalities."
+        },
+        "metta-lsp.options": {
+          "scope": "window",
+          "type": "array",
+          "items": {
+          "type": "string",
+          "enum": [
+            "show_thread_monitor",
+            "show_debug_window",
+            "debug_main",
+            "debug_errors",
+            "debug_threads",
+            "debug_high",
+            "debug_low",
+            "debug_position",
+            "debug_todo",
+            "debug_xref"
+          ]},
+          "default": [
+            "debug_main",
+            "debug_errors",
+            "debug_threads",
+            "debug_high",
+            "debug_todo",
+            "debug_xref"
+          ],
+          "description": "Selects specific debugging features to enable, providing detailed insights into the server's internal operations."
+        },
+        "metta-lsp.xtras.chatgpt.enabled": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Enables integration with ChatGPT for enhanced code assistance, leveraging AI to augment coding capabilities."
+        },
+        "metta-lsp.xtras.chatgpt.apiKey": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Specifies the API key required for ChatGPT functionality, ensuring secure and authorized access to AI models."
+        },
+        "metta-lsp.xtras.chatgpt.model": {
+          "scope": "window",
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "Allows selection of the ChatGPT model version for tailored code assistance, with an option for manual entry to support various OpenAI models."
+        },
+        "metta-lsp.xtras.chatgpt.maxTokens": {
+          "scope": "window",
+          "type": "number",
+          "default": 500,
+          "description": "Defines the limit on token count per ChatGPT interaction, optimizing response length and detail."
+        },
+        "metta-lsp.xtras.chatgpt.temperature": {
+          "scope": "window",
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Adjusts the variability of ChatGPT responses, controlling the balance between creativity and consistency."
+        }
+      }
+    },
+    "grammars": [
+      {
+        "language": "metta",
+        "scopeName": "source.metta",
+        "path": "./syntaxes/mettalanguage.json"
+      }
+    ]
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
