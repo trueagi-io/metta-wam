@@ -1,0 +1,71 @@
+wqs0(X):- attvar(X), !, wqs(attvar(X)).
+wqs0(nl_now):- !, nl_now. wqs0(X):- X=='', !. wqs0(X):- X==[], !.
+wqs0(X):- is_grid(X), !, print_grid(X).
+wqs0(G):- compound(G), G = call(C),callable(C),!,call(C).
+wqs0([T]):- !, wqs(T).
+wqs0([H|T]):- string(H), !, write(H), write_nbsp, wqs(T).
+wqs0([H|T]):- compound(H),skip(_)=H, !,wqs(T).
+wqs0([H|T]):- wqs(H), need_nl(H,T), wqs(T), !.
+wqs0(X):- is_object(X), tersify1(X,Q), X\==Q,!, wqs(Q).
+wqs0(X):- is_object(X), show_shape(X),!.
+wqs0(X):- string(X), atom_contains(X,'~'), catch((sformat(S,X,[]),color_write(S)),_,fail),!.
+wqs0(X):- string(X), !, color_write(X).
+%wqs([H1,H2|T]):- string(H1),string(H2),!, write(H1),write_nbsp, wqs([H2|T]).
+%wqs([H1|T]):- string(H1),!, write(H1), wqs(T).
+%wqs([H|T]):- compound(H),!, writeq(H), wqs(T).
+
+wqs0(call(C)):- !, call(C).
+wqs0(X):- \+ compound(X),!, write_nbsp, write(X).
+wqs0(C):- compound(C),wqs1(C),!.
+wqs0(C):- wqs2(C).
+%wqs(S):- term_contains_ansi(S), !, write_nbsp, write_keeping_ansi_mb(S).
+
+wqs2(S):- term_contains_ansi(S), !, write_nbsp, write_keeping_ansi_mb(S).
+%wqs2(P):- wants_html,!,pp(P).
+
+:- thread_local(t_l:wqs_fb/1).
+wqs2(X):- t_l:wqs_fb(P1),call(P1,X),!.
+%wqs2(X):- with_wqs_fb(writeq,X).
+wqs2(X):- with_wqs_fb(writeq,print(X)),!.
+%wqs2(X):- with_wqs_fb(writeq,((write_nbsp,write_term(X,[quoted(true)])))).
+
+with_wqs_fb(FB,Goal):-
+  locally(t_l:wqs_fb(FB),Goal).
+
+
+as_arg_str(C,S):- wots_vs(S,print(C)).
+
+arg_string(S):- string(S),!.
+arg_string(S):- term_contains_ansi(S),!.
+
+wqs1(C):- \+ compound(C),!,wqs0(C).
+wqs1(S):- term_is_ansi(S), !, write_keeping_ansi_mb(S).
+
+wqs1(format(C,N)):- catch((sformat(S,C,N),color_write(S)),_,fail),!.
+wqs1(writef(C,N)):- !, writef(C,N).
+wqs1(q(C)):-  \+ arg_string(C),wots_hs(S,writeq(C)),color_write(S),!.
+wqs1(g(C)):-  \+ arg_string(C),wots_vs(S,bold_print(wqs1(C))),print(g(S)),!.
+wqs1(print_ss(C)):-  \+ arg_string(C), wots_vs(S,print_ss(C)),wqs1(print_ss(S)),!.
+wqs1(b(C)):-  \+ arg_string(C), wots_vs(S,bold_print(wqs1(C))),color_write(S).
+wqs1(T):- \+ is_list(T), term_contains_ansi(T),!,write_keeping_ansi_mb(T).
+wqs1(norm(C)):- writeq(norm(C)),!.
+wqs1(grid_rep(norm,C)):- writeq(grid_rep(norm,C)),!.
+wqs1(grid(C)):- writeq(grid(C)),!.
+wqs1(rhs(RHS)):- nl_now,wqnl(rhs(RHS)),nl_now.
+%wqs1(grid_ops(norm,C)):- writeq(norm(C)),!.
+%norm_grid
+
+wqs1(pp(P)):-  wots_vs(S,pp_no_nl(P)),write((S)).
+wqs1(ppt(P)):- wots_vs(S,ppt_no_nl(P)),write((S)).
+wqs1(wqs(P)):- wots_vs(S,wqs(P)),write((S)).
+wqs1(wqs(C,P)):- wots_vs(S,wqs(P)),color_print(C,S).
+
+wqs1(vals(C)):- writeq(vals(C)),!.
+%wqs1(colors_cc(C)):- \+ arg_string(C), as_arg_str(C,S),wqs(colorsz(S)).
+wqs1(io(C)):-  \+ arg_string(C),wots_vs(S,bold_print(wqs(C))),write(io(S)).
+
+wqs1(uc(C,W)):- !, write_nbsp, color_print(C,call(underline_print(format("\t~@",[wqs(W)])))).
+wqs1(cc(C,N)):- is_color(C),!,color_print(C,call(writeq(cc(C,N)))).
+wqs1(write_nav_cmd(C,N)):- !, write_nav_cmd(C,N).
+
+wqs1(-(C,N)):- is_color(C),!,color_print(C,call(writeq(C))), write('-'), wqs(N).

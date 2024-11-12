@@ -1,0 +1,75 @@
+    is_list(List), % Converts a list of conjunctions into a sequential representation in MeTTa
+    into_sequential(OC,List, SP), !.
+into_sequential([progn|_],Nothing,'True'):- Nothing ==[],!.
+into_sequential(_OC,Nothing,'Nil'):- Nothing ==[],!.
+% If theres only one element
+into_sequential(_,[SP],O):- prolog_to_metta(SP,O).
+% Otherwise, construct sequential representation using AND.
+into_sequential([progn|_],List, SPList) :-
+        maplist(prolog_to_metta, List, SPList),!.
+into_sequential(_CA,List, [AND|SPList]) :-
+           is_compiled_and(AND), maplist(prolog_to_metta, List, SPList),!.
+
+
+
+
+list_direct_subdirectories(Directory, DirectSubdirectories) :-
+    directory_files(Directory, Entries),
+    findall(Path,
+            (member(Entry, Entries),
+             \+ member(Entry, ['.', '..']), % Exclude '.' and '..'
+             symbolic_list_concat([Directory, '/', Entry], Path),
+             is_directory(Path)),
+            DirectSubdirectories).
+
+% List all subdirectories of a given directory recursively
+list_all_subdirectories(Directory, AllSubdirectories) :-
+    list_direct_subdirectories(Directory, DirectSubdirectories),
+    findall(Sub,
+            (member(SubDir, DirectSubdirectories),
+             list_all_subdirectories(SubDir, Subs),
+             member(Sub, Subs)),
+            NestedSubdirectories),
+    append(DirectSubdirectories, NestedSubdirectories, AllSubdirectories).
+
+% Processes a list of filenames, applying 'convert_to_metta' to each.
+
+with_file_lists(Rel,P1,FileSpec):- FileSpec=='.pl',!.
+with_file_lists(Rel,P1,FileSpec):- is_list(FileSpec),!,
+       ignore(maplist(with_file_lists(Rel,P1),FileSpec)).
+
+
+with_file_lists(Rel,P1,Filename):- atomic(Filename), exists_file(Filename),!,
+   ignore(call(P1,Filename)).
+
+with_file_lists(Rel,P1,Filename):-
+    absolute_file_name(Rel, Dir, [access(read), file_errors(fail), file_type(directory)]),
+    Rel \=@=  Dir,!,
+    with_file_lists(Dir,P1,Filename).
+with_file_lists(Rel,P1,Filename):- \+ exists_directory(Rel), !,
+    with_file_lists('.',P1,Filename).
+
+
+with_file_lists(Rel,P1, File) :-
+  compound(File),
+  absolute_file_name(File, Dir, [access(read), relative_to(Rel), file_errors(fail),
+                     extensions(['pl', 'prolog', 'pfc'])]),
+  '\\=@='(Dir, File), !,
+  with_file_lists(Rel,P1, Dir).
+
+with_file_lists(Rel,P1, File) :-
+  compound(File),
+  absolute_file_name(File, Dir, [access(read), file_errors(fail),relative_to(Rel), file_type(directory)]),
+  '\\=@='(Dir, File), !,
+  with_file_lists(Rel,P1, Dir).
+
+/*
+with_file_lists(Rel,P1, File) :-
+      compound(File),
+      absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(directory)]),
+      '\\=@='(Dir, File), !,
+      with_file_lists(Rel,P1, Dir).
+with_file_lists(Rel,P1, File) :-
+      compound(File), !,
+      absolute_file_name(File, Dir, [access(read), file_errors(fail), file_type(['csv', 'tsv', ''])]),
+      '\\=@='(Dir, File), !,

@@ -1,0 +1,65 @@
+
+
+% goal_expansion(must_det_l(G),I,must_det_ll(G),O):- nonvar(I),source_location(_,_), nonvar(G),I=O.
+
+%goal_expansion(G,I,GG,O):- nonvar(I),source_location(_,_), compound(G), remove_mds(MD,G,GG),I=O.
+
+%:- system:ensure_loaded(library(pfc_lib)).
+%:- expects_dialect(pfc).
+/*
+goal_expansion(Goal,Out):- compound(Goal), tc_arg(N1,Goal,E),
+   compound(E), E = set(Obj,Member), setarg(N1,Goal,Var),
+   expand_goal((Goal,b_set_dict(Member,Obj,Var)),Out).
+*/
+get_setarg_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_setarg_p2(P3,E,Cmpd,SA).
+get_setarg_p2(P3,E,Cmpd,SA):- arg(N1,Cmpd,E), SA=call(P3,N1,Cmpd).
+get_setarg_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_setarg_p1(P3,E,Arg,SA).
+
+my_b_set_dict(Member,Obj,Var):- set_omemberh(b,Member,Obj,Var).
+%nb_set_dict(Member,Obj,Var),
+set_omemberh(_,Member,Obj,Var):- !, arc_setval(Obj,Member,Var).
+%nb_link_dict(Member,Obj,Var),
+%set_omemberh(nb,Member,Obj,Var):- !, nb_set_dict(Member,Obj,Var).
+%set_omemberh(link,Member,Obj,Var):- !, nb_link_dict(Member,Obj,Var).
+%set_omemberh(How,Member,Obj,Var):- call(call,How,Member,Obj,Var),!.
+
+set_omember(Member,Obj,Var):-  set_omember(b,Member,Obj,Var).
+
+set_omember(How,Member,Obj,Var):-
+  must_be_nonvar(Member), must_be_nonvar(Obj),  must_be_nonvar(How),  !,
+  set_omemberh(How,Member,Obj,Var),!.
+
+
+
+get_kov(K,O,V):- dictoo:is_dot_hook(user,O,K,V),!,o_m_v(O,K,V).
+get_kov(K,O,V):- ((get_kov1(K,O,V)*->true;(get_kov1(props,O,VV),get_kov1(K,VV,V)))).
+
+get_kov1(K,O,V):- (is_hooked_obj(O),o_m_v(O,K,V))*->true;get_kov2(K,O,V).
+% (get_kov(Prop,VM,Value) -> true ; (get_kov(props,VM,Hashmap),nonvar(Hashmap),must_not_error(nb_get_value(Hashmap,Prop,ValueOOV)),get_oov_value(ValueOOV,Value))).
+get_kov2(K,O,V):- is_dict(O),!,get_dict(K,O,OOV),get_oov_value(OOV,V).
+get_kov2(K,O,V):- nonvar(K),is_rbtree(O),!,rb_lookup(K,V,O).
+get_kov2(K,O,V):- is_rbtree(O),!,rb_in(K,V,OOV),get_oov_value(OOV,V).
+%get_kov(K,O,V):- is_rbtree(O),!,nb_rb_get_node(K,O,Node),nb_rb_node_value(Node,V).
+
+get_oov_value(ValueOOV,Value):- compound(ValueOOV),ValueOOV=oov(Value),!.
+get_oov_value(Value,Value).
+
+
+term_expansion_setter(I,O):- maybe_expand_md(must_det_ll,I,O),I\=@=O,!.
+term_expansion_setter(I,O):- maybe_expand_md(must_det_ll,I,M),I\=@=M,!,term_expansion_setter(M,O).
+term_expansion_setter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
+  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
+
+term_expansion_setter((Head:-Body),Out):-
+   get_setarg_p1(setarg,I,Head,P1), is_setter_syntax(I,Obj,Member,Var,How),
+   call(P1,Var),
+   BodyCode = (Body, set_omember(How,Member,Obj,Var)),
+   % goal_expansion_setter(BodyCode,Goal),
+   expand_term((Head:- BodyCode),Out),!.
+
+%term_expansion_setter((Head:-Body),(Head:-GBody)):- goal_expansion_setter(Body,GBody),!.
+
+:- export(term_expansion_setter/2).
+:- system:import(term_expansion_setter/2).
+
+%goal_expansion(Goal,'.'(Training, Objs, Obj)):- Goal = ('.'(Training, Objs, A), Obj = V),  var(Obj).

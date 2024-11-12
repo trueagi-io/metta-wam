@@ -1,0 +1,103 @@
+   findall_ne(E,
+    catch_metta_return(eval_args(Eq,RetType,Depth,Self,Funcall,E),E),L).
+
+%bagof_eval(Eq,RetType,Depth,Self,X,L):- bagof_eval(Eq,RetType,_RT,Depth,Self,X,L).
+%bagof_eval(Eq,RetType,Depth,Self,X,S):- bagof(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
+bagof_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,L=[X].
+bagof_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
+bagof_eval(Eq,RetType,Depth,Self,Funcall,L):-
+   bagof_ne(E,
+    catch_metta_return(eval_args(Eq,RetType,Depth,Self,Funcall,E),E),L).
+
+setof_eval(Depth,Self,Funcall,L):- setof_eval('=',_RT,Depth,Self,Funcall,L).
+setof_eval(Eq,RetType,Depth,Self,Funcall,S):- findall_eval(Eq,RetType,Depth,Self,Funcall,L),
+   sort(L,S).
+
+bagof_ne(E,Call,L):-
+   bagof(E,(rtrace_on_error(Call), is_returned(E)),L).
+
+findall_ne(E,Call,L):-
+   findall(E,(rtrace_on_error(Call), is_returned(E)),L).
+
+eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
+  ((eval_args(Eq,RetType,Depth,Self,Funcall,E))
+    *-> is_returned(E);(fail,E=Funcall)).
+
+is_returned(E):- notrace( \+ is_empty(E)).
+is_empty(E):- notrace(( nonvar(E), sub_var('Empty',E))),!.
+
+
+:- ensure_loaded(metta_subst).
+
+solve_quadratic(A, B, I, J, K) :-
+    %X in -1000..1000,  % Define a domain for X
+     (X + A) * (X + B) #= I*X*X + J*X + K.  % Define the quadratic equation
+    %label([X]).  % Find solutions for X
+
+
+as_type(B,_Type,B):- var(B),!.
+as_type(B,_Type,B):- \+ compound(B),!.
+
+as_type([OP|B],Type,Res):- var(Type),
+   len_or_unbound(B,Len),
+   get_operator_typedef(_Self,OP,Len,_ParamTypes,RetType),
+   Type=RetType,
+   eval_for(RetType,[OP|B],Res).
+
+as_type(B,RetType,Res):- is_pro_eval_kind(RetType),
+   eval_for(RetType,B,Res).
+
+as_type(B,_Type,B).
+
+same_types(A,C,_Type,A1,C1):-
+  A1=A,C1=C,!.
+same_types(A,C,Type,A1,C1):-
+  freeze(A,guess_type(A,Type)),
+  freeze(C,guess_type(C,Type)),
+  A1=A,C1=C.
+
+guess_type(A,Type):-
+   current_self(Self),
+   get_type(20,Self,A,Was),
+   can_assign(Was,Type).
+
+eval_for(RetType,X,Y):-
+  current_self(Self),
+  eval_args('=',RetType,20,Self,X,Y).
+
+%if_debugging(G):- ignore(call(G)).
+if_debugging(_).
+bcc:- trace,
+  bc_fn([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
+     ['S',['S',['S',['S','Z']]]],
+     OUT),
+    write_src(prf=Prf), write_src(OUT).
+
+
+bci:- trace,
+  bc_impl([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
+     ['S',['S',['S',['S','Z']]]],
+     OUT),
+    write_src(prf=Prf), write_src(OUT).
+
+
+
+bcm:- % trace,
+  bc_impl([:,Prf,[member,_A,_B,_C]],
+     ['S',['S',['S','Z']]],
+     OUT),
+    write_src(prf=Prf), write_src(OUT).
+
+
+bc_fn(A,B,C):- %trace,
+  same_types(A,C,_,A1,C1),
+  as_type(B,'Nat',B1),
+  bc_impl(A1,B1,C1).
+
+bc_impl([:, _prf, _ccln], _, [:, _prf, _ccln]) :-
+    if_debugging(println_impl(['bc-base', [:, _prf, _ccln]])),
+    metta_atom('&kb', [:, _prf, _ccln]),
+    if_debugging(println_impl(['bc-base-ground', [:, _prf, _ccln]])),
+    true.
+
+bc_impl([:, [_prfabs, _prfarg], _ccln], ['S', _k], [:, [_prfabs, _prfarg], _ccln]) :-

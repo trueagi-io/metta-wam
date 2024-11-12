@@ -1,0 +1,81 @@
+:- encoding(iso_latin_1).
+:- flush_output.
+:- setenv('RUST_BACKTRACE',full).
+
+% ===============================
+%       PRINTERS
+% ===============================
+% 'ppc' and 'ppc1' rules pretty-print original terms and convert them to metta if different,
+% printing the converted forms as well.
+ppc(Msg,Term):- ppc1(Msg,Term), p2m(Term,MeTTa),!, (MeTTa\==Term -> ppc1(p2m(Msg),MeTTa) ; true).
+
+ppc1(Msg,Term):- \+ \+ ( ppct(Msg,Term) ),!.
+
+ppc1(Msg,Term):- \+ \+ ( ignore(guess_pretty(Term)),
+   writeln('---------------------'),
+   write(p(Msg)),write(':'),nl,
+   portray_clause(Term),
+   writeln('---------------------'),
+   \+ \+ (print_tree(?-show_cvts(Term))),nl,
+    writeln('---------------------'),
+     write(s(Msg)),write(':'),nl,
+     write_src(Term),nl).
+
+ppct(Msg,Term):- is_list(Term),!,
+  writeln('---------------------'),
+  numbervars(Term,666,_,[attvar(bind)]),
+  write((Msg)),write(':'),nl,
+  write_src(Term),nl.
+ppct(Msg,Term):- Term=(_ :- _),!,
+  writeln('---------------------'),
+  write((Msg)),write(':'),nl,
+  portray_clause(Term),nl.
+ppct(Msg,Term):- Term=(_=_),!,
+  writeln('---------------------'),
+  write((Msg)),write(':'),nl,
+  numbervars(Term,444,_,[attvar(bind)]),
+  write_src(Term),nl.
+ppct(Msg,Term):- Term=(_ :- _),!,
+  writeln('---------------------'),
+  write((Msg)),write(':'),nl,
+  numbervars(Term,222,_,[attvar(bind)]),
+  print_tree(Term),nl.
+
+% 'pp_metta' rule is responsible for pretty-printing metta terms.
+pp_metta(P):- pretty_numbervars(P,PP),with_option(concepts=false,pp_fb(PP)).
+
+string_height(Pt1,H1):- split_string(Pt1,"\r\n", "\s\t\n\n", L),length(L,H1).
+
+:- dynamic(just_printed/1).
+% 'print_pl_source' rule is responsible for printing the source of a Prolog term.
+
+
+print_pl_source(P):- run_pl_source(print_pl_source0(P)).
+
+run_pl_source(G):- catch(G,E,(fail,write_src_uo(G=E),rtrace(G))).
+print_pl_source0(_):- notrace(is_compatio),!.
+print_pl_source0(_):- notrace(silent_loading),!.
+print_pl_source0(P):- notrace((just_printed(PP), PP=@=P)),!.
+    print_pl_source0((A:-B)):-!, portray_clause((A:-B)).
+    print_pl_source0((:-B)):-!, portray_clause((:-B)).
+print_pl_source0(P):- format('~N'), print_tree(P),format('~N'),!.
+print_pl_source0(P):-
+    Actions = [print_tree, portray_clause, pp_fb1_e], % List of actions to apply
+    findall(H-Pt,
+      (member(Action, Actions),
+       must_det_ll((
+          run_pl_source(with_output_to(string(Pt), call(Action, P))),
+            catch(string_height(Pt, H),_,H=0)))), HeightsAndOutputs),
+    sort(HeightsAndOutputs, Lst), last(Lst, _-Pt), writeln(Pt),
+    retractall(just_printed(_)),
+    assert(just_printed(P)),
+    !.
+
+
+pp_fb1_a(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1_e(P)), format("~N "),flush_output.
+
+pp_fb1_e(P):- pp_fb2(print_tree,P).
+pp_fb1_e(P):- pp_fb2(pp_ilp,P).
+pp_fb1_e(P):- pp_fb2(pp_as,P).
+pp_fb1_e(P):- pp_fb2(portray_clause,P).
+pp_fb1_e(P):- pp_fb2(print,P).

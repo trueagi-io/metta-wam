@@ -1,0 +1,56 @@
+eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):-
+   fail,
+   Depth>1,
+   fake_notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
+   eval_args(Eq,RetType,Depth,Self,SSub,Repl),
+   fake_notrace((SSub\=Repl, subst(PredDecl,SSub,Repl,Temp))),
+   eval_args(Eq,RetType,Depth,Self,[F|Temp],Res).
+*/
+% =================================================================
+% =================================================================
+% =================================================================
+%  PLUS/MINUS
+% =================================================================
+% =================================================================
+% =================================================================
+eval_40(Eq,RetType,Depth,Self,LESS,Res):-
+   ((((eval_selfless(Eq,RetType,Depth,Self,LESS,Res),fake_notrace(LESS\==Res))))),!.
+
+eval_40(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),
+   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),
+   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),
+   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
+    rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
+    rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
+
+eval_70(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+  must_det_ll((py_atom(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
+  must_det_ll((py_atom_type(Arg,Type,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
+  must_det_ll((py_dot([Arg1,Arg2],Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
+  must_det_ll((py_list(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
+    must_det_ll((py_tuple(Arg,Res))).
+eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+    must_det_ll((py_eval(Arg,Res))).
+
+eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
+   (is_list(LL)->length(LL,Res);Res=1),
+   check_returnval(Eq,RetType,Res).
+
+
+/*
+eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+   eval_selfless_2(X,XX),X\=@=XX,!,
+   eval_40(Eq,RetType,Depth,Self,[P,A,XX|More],YY).

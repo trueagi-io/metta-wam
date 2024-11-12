@@ -1,0 +1,118 @@
+  copy_term(ParentRule,ParentRuleCopy),
+  buildRhs(Head,Rhs),
+  current_why_U(USER), % @TODO REVIEW _U
+  pfcForEach(pfc_nf(Body,Lhs),
+          (buildTrigger(Lhs,rhs(Rhs),Trigger),
+           pfcAdd('$bt$'(Head,Trigger),(ParentRuleCopy,USER)))).
+get_bc_clause(Head,(HeadC:- BodyC)):- get_bc_clause(Head,HeadC,BodyC).
+
+get_bc_clause(HeadIn, ~HeadC, Body):- compound(HeadIn), HeadIn = ~Head,!,
+     Body = ( awc,
+            ( nonvar(HeadC)-> (HeadC = Head,!) ; (HeadC = Head)),
+              pfc_bc_and_with_pfc(~Head)).
+get_bc_clause(Head, Head, Body):-  % % :- is_ftNonvar(Head).
+     Body = ( awc, !, pfc_bc_and_with_pfc(Head)).
+
+:- thread_initialization(nb_setval('$pfc_current_choice',[])).
+
+push_current_choice:- current_prolog_flag(pfc_support_cut,false),!.
+push_current_choice:- prolog_current_choice(CP),push_current_choice(CP),!.
+push_current_choice(CP):- nb_current('$pfc_current_choice',Was)->b_setval('$pfc_current_choice',[CP|Was]);b_setval('$pfc_current_choice',[CP]).
+
+cut_c:- current_prolog_flag(pfc_support_cut,false),!.
+cut_c:- must_ex(nb_current('$pfc_current_choice',[CP|_WAS])),prolog_cut_to(CP).
+
+
+% % 
+% %
+% %  eval something on the LHS of a rule.
+% %
+
+
+fcEvalLHS((Test->Body),Support) :-
+  !,
+  pfcDoAll(pfcCallSystem(Test) -> (fcEvalLHS(Body,Support))),
+  !.
+
+fcEvalLHS((Test*->Body),Support) :-
+  !,
+  pfcDoAll(pfcCallSystem(Test) *-> (fcEvalLHS(Body,Support))).
+
+fcEvalLHS(rhs(X),Support) :-
+  !,
+  pfcDoAll(pfc_eval_rhs(X,Support)),
+  !.
+
+fcEvalLHS(X,Support) :-
+  pfcType(X,trigger(_Pos)),
+  !,
+  pfcAddTrigger(X,Support),
+  !.
+
+%fcEvalLHS(snip(X),Support) :-
+%  snip(Support),
+%  fcEvalLHS(X,Support).
+
+fcEvalLHS(X,_) :-
+  pfcWarn("Unrecognized item found in trigger body, namely ~p.",[X]).
+
+
+% %
+% %  eval something on the RHS of a rule.
+% %
+
+pfc_eval_rhs([],_) :- !.
+pfc_eval_rhs([Head|Tail],Support) :-
+  pfc_eval_rhs1(Head,Support),
+  pfc_eval_rhs(Tail,Support).
+
+
+pfc_eval_rhs1(Fact,S) :- control_arg_types(Fact,Fixed),!,pfc_eval_rhs1(Fixed,S).
+
+pfc_eval_rhs1({Action},Support) :-
+ % evaluable Prolog code.
+ !,
+ fcEvalAction(Action,Support).
+
+pfc_eval_rhs1(P,_Support) :-
+ % predicate to remove.
+ pfcNegatedLiteral(P),
+ !,
+ pfcWithdraw(P).
+
+pfc_eval_rhs1([X|Xrest],Support) :-
+ % embedded sublist.
+ !,
+ pfc_eval_rhs([X|Xrest],Support).
+
+pfc_eval_rhs1(Assertion,Support) :-
+ % an assertion to be added.
+  once_writeq_nl(pfcRHS(Assertion)),
+ (must_ex(pfcPost1(Assertion,Support))*->true ;
+   pfcWarn("Malformed rhs of a rule: ~p",[Assertion])).
+
+
+% %
+% %  evaluate an action found on the rhs of a rule.
+% %
+
+fcEvalAction(Action,Support) :-
+  pfcCallSystem(Action),
+  (undoable(Action)
+     -> pfcAddActionTrace(Action,Support)
+      ; true).
+
+
+% %
+% %
+% %
+
+trigger_trigger(Trigger,Body,_Support) :-
+ trigger_trigger1(Trigger,Body).
+trigger_trigger(_,_,_).
+
+
+%trigger_trigger1(presently(Trigger),Body) :-
+%  !,
+%  copy_term(Trigger,TriggerCopy),
+%  pfc_call(Trigger),

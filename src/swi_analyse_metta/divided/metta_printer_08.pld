@@ -1,0 +1,8 @@
+:- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_convert).
+:- ensure_loaded(metta_types).
+:- ensure_loaded(metta_space).
+:- ensure_loaded(metta_testing).
+:- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_printer).
+:- ensure_loaded(metta_eval).

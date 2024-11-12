@@ -1,0 +1,69 @@
+skip_over_s(featureprop).
+skip_over_s(featureprop_pub).
+skip_over_s(E):-
+member(E,[dbxref_id,
+dbxref,
+db_id,
+library_id,
+library,
+library_feature]).
+
+skip_over_s(X):- skip_over(X).
+
+cvt_element(List,Val):- is_list(List),!,maplist(cvt_element,List,Val).
+cvt_element(element(Tag,[],[element(CVTerm,[],L)]), TagVal):- skip_over_s(CVTerm), !,
+    cvt_element(element(Tag,[],L),TagVal).
+cvt_element(element(CVTerm,[],[Atomic]),Val):-skip_over_s(CVTerm),!,cvt_element(Atomic,Val).
+cvt_element(element(CVTerm,[],Atomic),Val):-skip_over(CVTerm),!,cvt_element(Atomic,Val).
+cvt_element(element(Tag,[],[element(T,A,L)]),Tag=Val):- !, cvt_element(element(T,A,L),Val).
+cvt_element(element(Tag,[],[Atomic]),Tag=Atomic):-!.
+cvt_element(element(Tag,[],List),Tag=Val):- !, cvt_element(List,Val).
+cvt_element(Val,Val).
+
+
+get_content([],R,R):-!.
+get_content([S|Tags],L,R):- is_list(L),member(E,L),get_content([S|Tags],E,R),!.
+get_content([S|Tags],element(S,_,L),R):- get_content(Tags,L,R),!.
+get_content(   STags,element(_,_,L),R):- member(C,L),get_content(STags,C,R),!.
+
+get_element_value_each(element(R,[],List),Out):-
+    \+ \+ member(element(_,_,_),List),
+   try_begin(R,[],List),
+   get_element_value(element(R,[],List),Out).
+get_element_value_each(R,Out):- get_element_value(R,Out),!.
+
+get_element_value([L],R):-!,get_element_value(L,R).
+get_element_value(element(T,[],[L]),T=R):-  get_element_value(L,R),!.
+get_element_value(element(T,[],L),T=R):- is_list(L),!,maplist(get_element_value,L,R).
+get_element_value(L,V):- is_list(L),!,maplist(get_element_value,L,V).
+get_element_value(L,v(L)).
+
+finish_feature_data:-
+  forall(feature_data(Tag, Attr, Content),
+    once(process_feature_data(Tag, Attr, Content))),
+ writeln('====================================').
+
+
+sub_prop(name).
+sub_prop(value).
+
+%process_feature_data(_,_,_).
+/*
+process_feature_data(featureprop, Attr, element(T,A,B)):-!,
+  process_feature_data(T, A, B).
+
+
+
+%process_feature_data(Tag, Attr, Content):- is_list(Content),!,
+%  maplist(process_feature_data(_, Attr), Content).
+process_feature_data(Tag, Attr, element(T,A,B)):- !,
+   process_feature_data(T, Attr, B).
+*//*
+process_feature_data(Tag, Attr, element(cvterm,A,B)):- !, % sub_prop(T),
+   append(Attr,A,AttrA),
+   process_feature_data(Tag, AttrA, B).
+process_feature_data(Tag, Attr, Content):- is_list(Content),
+  member(element(_,_,_),Content),
+  maplist(process_feature_data(Tag, Attr), Content).*/
+process_feature_data(T, A, B):- print(tab(T,A,B)),nl,sleep(0.1).
+

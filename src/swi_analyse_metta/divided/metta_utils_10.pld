@@ -1,0 +1,67 @@
+goal_expansion_setter(G,GO):- remove_must_det(MD), !,remove_mds(MD,G,GG),goal_expansion_setter(GG,GO).
+%goal_expansion_setter(GG,GO):- remove_must_det(MD), sub_term(G,GG),compound(G),G = must_det_ll(GGGG),subst001(GG,G,GGGG,GGG),!,goal_expansion_setter(GGG,GO).
+%goal_expansion_setter((G1,G2),(O1,O2)):- !, expand_goal(G1,O1), expand_goal(G2,O2),!.
+goal_expansion_setter(set_omember(A,B,C,D),set_omember(A,B,C,D)):-!.
+goal_expansion_setter(set_omember(A,B,C),set_omember(b,A,B,C)):-!.
+goal_expansion_setter(Goal,get_kov(Func,Self,Value)):- compound(Goal),
+  compound_name_arguments(Goal,'.',[ Self, Func, Value]),var(Value).
+goal_expansion_setter(I,O):- md_like(MD),maybe_expand_md(MD,I,M),I\=@=M,!,goal_expansion_setter(M,O).
+
+
+goal_expansion_setter(Goal,Out):-
+   predicate_property(Goal,meta_predicate(_)),!,fail,
+   tc_arg(N1,Goal,P), goal_expansion_setter(P,MOut),
+   setarg(N1,Goal,MOut), !, expand_goal(Goal, Out).
+
+goal_expansion_setter(Goal,Out):-
+   tc_arg(N1,Goal,P),  is_setter_syntax(P,Obj,Member,Var,How),
+   setarg(N1,Goal,Var), !, expand_goal((Goal,set_omember(How,Member,Obj,Var)), Out).
+
+goal_expansion_setter(Goal,Out):-
+   get_setarg_p1(setarg,I,Goal,P1), compound(I), compound_name_arguments(I,'.',[ Self, Func, Value]),
+   call(P1,get_kov(Func,Self,Value)),!,
+   expand_goal(Goal,Out).
+
+goal_expansion_setter(Goal,Out):-
+   get_setarg_p1(setarg,I,Goal,P1), is_setter_syntax(I,Obj,Member,Var,How),
+   call(P1,Var),!,
+   expand_goal((Goal,set_omember(How,Member,Obj,Var)),Out).
+
+:- export(goal_expansion_setter/2).
+:- system:import(goal_expansion_setter/2).
+
+
+/*
+system:term_expansion((Head:-Goal),I,(Head:-Out),O):- nonvar(I),  compound(Goal),
+ goal_expansion_setter(Goal,Out),Goal\=@=Out,I=O,!,
+ nop((print(goal_expansion_getter(Goal-->Out)),nl)).
+*/
+arc_term_expansion1((system:term_expansion((Head:-Body),I,Out,O):-
+   nonvar(I),  compound(Head),
+     term_expansion_setter((Head:-Body),Out),(Head:-Body)=In,In\==Out,I=O,!,
+     nop((print(term_expansion_setter(In-->Out)),nl)))).
+
+
+%system:goal_expansion(Goal,I,Out,O):- compound(Goal),goal_expansion_getter(Goal,Out),Goal\==Out,I=O,!,
+%  ((print(goal_expansion_getter(Goal-->Out)),nl)).
+
+%user:goal_expansion(Goal,I,Out,O):- compound(Goal),goal_expansion_getter(Goal,Out),Goal\==Out,I=O,!,
+%  ((print(goal_expansion_getter(Goal-->Out)),nl)).
+
+arc_term_expansion1((goal_expansion(Goal,I,Out,O):-
+   goal_expansion_setter(Goal,Out),Goal\==Out,I=O,!,
+  nop((print(goal_expansion_setter(Goal-->Out)),nl)))).
+
+:- export(arc_term_expansions/1).
+arc_term_expansions(H:- (current_prolog_flag(arc_term_expansion, true), B)):-
+  arc_term_expansion1(H:-B).
+
+:- export(enable_arc_expansion/0).
+enable_arc_expansion:-
+ forall(arc_term_expansions(Rule),
+   (strip_module(Rule,M,Rule0),
+     nop(u_dmsg(asserta_if_new(Rule,M,Rule0))),
+     asserta_if_new(Rule))),
+ set_prolog_flag(arc_term_expansion, true).
+
+:- export(disable_arc_expansion/0).

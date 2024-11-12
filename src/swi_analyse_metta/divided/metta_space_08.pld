@@ -1,0 +1,85 @@
+tterm(A,A).
+
+is_tokenizer(into_list).
+is_tokenizer(to_case_break_atoms).
+is_tokenizer(atom_to_stem_list).
+is_tokenizer(tokenize_atom).
+%is_tokenizer(double_metaphone).
+
+
+
+is_an_arg_type(S,T):- flybase_identifier(S,T),!.
+has_type(S,Type):- sub_atom(S,0,4,Aft,FB),flybase_identifier(FB,Type),!,Aft>0.
+
+
+call_sexpr(S):- once_writeq_nl(call_sexpr(S)).
+%call_sexpr(Space,Expr,Result):-
+
+:- dynamic(fb_pred/2).
+
+full_atom_count(SL):- flag(total_loaded_atoms,SL,SL),SL>1,!.
+full_atom_count(SL):- findall(NC,(fb_pred(F,A),metta_stats(F,A,NC)),Each), sumlist(Each,SL).
+
+heartbeat :-
+    % Get the current time and the last printed time
+    get_time(CurrentTime),
+    % Check if the global variable is set
+    (   nb_current(last_printed_time, _)
+    ->  true
+    ;   nb_setval(last_printed_time, CurrentTime)
+    ),
+
+    nb_getval(last_printed_time, LastPrintedTime),
+
+    % Calculate the difference
+    Diff is CurrentTime - LastPrintedTime,
+
+    % If the difference is greater than or equal to 60 seconds (1 minute)
+    (   Diff >= 60
+    ->  % Print the heartbeat message and update the last printed time
+        metta_stats
+    ;   % Otherwise, do nothing
+        true
+    ).
+
+metta_stats:- gc_now,
+   writeln('\n\n\n\n\n\n;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   writeln(';~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'),
+   full_atom_count(SL),
+   format("~N~n; Total\t\tAtoms (Atomspace size): ~`.t ~D~108|~n",[SL]),
+   get_time(CurrentTime), nb_setval(last_printed_time, CurrentTime),
+   post_statistic(memory,Mem),
+   post_statistic(atom_space,AS),
+   post_statistic(cputime,TotalSeconds),
+   post_statistic(atoms,Concepts),
+   flag(assert_new,CTs,CTs),
+   post_statistic(stack,StackMem),
+
+
+   PM is Mem + StackMem,
+   RM is Mem-AS,
+   PA is RM//(SL+1),
+   APS is 60*floor(SL/(TotalSeconds+1)),
+   ACS is AS//(Concepts+1),
+
+   pl_stats('SymbolAtoms',Concepts),
+   pl_stats('Random samples',CTs),
+   skip((pl_stats('Bytes Per Atom (Average)',PA), pl_stats('Bytes Per ConceptNode (Average)',ACS))),
+   skip((pl_stats('Relational Memory',RM), pl_stats('ConceptNode Memory',AS))),
+   %pl_stats('Queryspace Memory',StackMem),
+   %CPU is CPUTime-57600,
+   format_time(TotalSeconds, Formatted),
+   skip((pl_stats('Atoms per minute',APS))),
+   pl_stats('Total Memory Used',PM),
+   pl_stats('Runtime (days:hh:mm:ss)',Formatted),
+   nl,nl,!.
+metta_stats(F):- for_all(fb_pred(F,A),metta_stats(F,A)).
+metta_stats(F,A):- metta_stats(F,A,NC), pl_stats(F/A,NC).
+metta_stats(F,A,NC):- functor(P,F,A),predicate_property(P,number_of_clauses(NC)).
+pl_stats(Stat):- statistics(Stat,Value),pl_stats(Stat,Value).
+pl_stats(Stat,[Value|_]):- nonvar(Value),!, pl_stats(Stat,Value).
+pl_stats(Stat,Value):- format("~N;\t\t~@: ~`.t ~@~100|",[format_value(Stat),format_value(Value)]),!.
+
+
+% AsPred to print the formatted result.
+format_value(Value) :- float(Value),!,format("~2f",[Value]),!.

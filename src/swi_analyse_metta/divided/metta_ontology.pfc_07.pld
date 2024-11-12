@@ -1,0 +1,34 @@
+properties('&corelib','==', [logic, qhelp("Equality test."), equality_test]).
+properties('&corelib','or', [logic, qhelp("Logical OR."), logical_or]).
+properties('&corelib','xor', [logic, qhelp("Logical XOR."), logical_xor])
+properties('&corelib','and', [logic, qhelp("Logical AND."), logical_and]).
+properties('&corelib','not', [logic, qhelp("Logical NOT."), logical_not]).
+properties('&corelib','quote', [evaluation_control, qhelp("Prevents evaluation, treating input as literal.")]).
+properties('&corelib','unquote', [evaluation_control, qhelp("Retrieves value of a quote."), retrieval]).
+
+% --- Debugging, Output, and Assertions ---
+properties('&corelib','repl!', [debugging, qhelp("Interactive read-eval-print loop."), interactive]).
+properties('&corelib','time!', [execution_timing, qhelp("Execution timing.")]).
+properties('&corelib','trace!', [debugging, qhelp("Prints some debug information."), information_printing]).
+properties('&corelib','no-rtrace!', [debugging, qhelp("Disables tracing for debugging."), trace_control]).
+properties('&corelib','rtrace!', [debugging, qhelp("Enables tracing for debugging."), trace_control]).
+properties('&corelib','println!', [output, qhelp("Prints text with newline to output."), text_printing]).
+properties('&corelib','with-output-to!', [output, qhelp("Redirects output to a specified target."), redirection]).
+properties('&corelib','print', [output, qhelp("Prints text to output."), text_printing]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts a condition is true."), assertion]).
+properties('&corelib','assertFalse', [testing, qhelp("Asserts a condition is false."), assertion]).
+properties('&corelib','assertEqual', [testing, qhelp("Asserts two values are equal."), assertion]).
+properties('&corelib','assertNotEqual', [testing, qhelp("Asserts two values are not equal."), assertion]).
+properties('&corelib','assertEqualToResult', [testing, qhelp("Asserts equality to a result."), assertion]).
+
+% --- System Integration and State Management ---
+properties('&corelib','change-state!', [state_management, qhelp("Changes the state of a system component."), system_integration]).
+properties('&corelib','set-state', [state_management, qhelp("Sets the state of a component or system.")]).
+properties('&corelib','get-state', [state_management, qhelp("Gets the state of a component or system."), data_retrieval]).
+
+% --- List Operations ---
+properties('&corelib','car-atom', [list_operations, qhelp("Retrieves the head of a list."), head_retrieval]).
+properties('&corelib','cdr-atom', [list_operations, qhelp("Retrieves the tail of a list."), tail_retrieval]).
+properties('&corelib','range', [list_operations, qhelp("Generates a range of numbers."), range_generation]).
+properties('&corelib','make_list', [list_operations, qhelp("Creates a list with specified elements."), creation]).
+properties('&corelib','Cons', [list_operations, qhelp("Constructs a list."), construction]).

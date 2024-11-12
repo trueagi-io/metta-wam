@@ -1,0 +1,65 @@
+    % Generate the new filename with .metta extension.
+    file_name_extension(Base, _OldExt, Filename),
+    file_name_extension(Base, metta, NewFilename),
+    file_base_name(Base,Module),
+    % Setup step: open both the input and output files.
+    %format('~N~n~w~n', [convert_to_metta(Filename,NewFilename)]), % Prints the action being performed.
+    convert_to_metta_file(Module,OutputIn,Filename,NewFilename).
+
+write_src_cmt(G):- ignore((with_output_to(string(S),write_src(G)),in_cmt(write(S)))).
+
+convert_to_metta_file(Module,OutputIn,Filename,NewFilename):-
+
+    copy_term(OutputIn,Output),
+
+    if_t(var(OutputIn),
+       user_io(write_src_cmt(convert_to_metta_file(Module,OutputIn,Filename,NewFilename)))),
+    %Output = user_output,
+    setup_call_cleanup(
+        open(Filename, read, Input, [encoding(iso_latin_1)]),
+        % Call step: perform the translation and write to the output file.
+        setup_call_cleanup(
+            (if_t(var(Output),open(NewFilename, write, Output, [encoding(utf8)]))),
+            with_output_to(Output,
+         (write_src_cmt(convert_to_metta_file(Module,OutputIn,Filename,NewFilename)),
+                 translate_to_metta(Module,Input))),
+            % Cleanup step for the output file: close the output stream.
+            close(Output)
+        ),
+        % Cleanup step for the input file: close the input stream.
+        close(Input)
+    ).
+
+into_namings(N=V):- ignore(V='$VAR'(N)).
+
+% Recursively translates content, stopping at the end of the file.
+translate_to_metta(Module,Input):-
+    at_end_of_stream(Input),  % Checks for the end of the file.
+    !, nl.
+
+% Processes whitespace characters, maintaining their presence in the output.
+translate_to_metta(Module,Input):-
+    peek_char(Input, Char),  % Peeks at the next character without consuming it.
+    is_reprint_char(Char), !,
+    get_char(Input, _),  % Consumes the character.
+    put_char(Char),  % Prints the character.
+    translate_to_metta(Module,Input).
+
+% Converts Prolog comments to Metta-style comments, then continues processing.
+    translate_to_metta(Module,Input):-
+        peek_char(Input, Char),
+        Char == '%', % Checks for Prolog comment start.
+        get_char(Input, _), put_char(';'),
+        read_line_to_string(Input, Cmt),  % Reads the comment line.
+        print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
+        translate_to_metta(Module,Input).  % Continues with the next line.
+
+    translate_to_metta(Module,Input):-
+        peek_char(Input, Char),
+        Char == '#', % Checks for Prolog comment start.
+        get_char(Input, _), put_char(';'),
+        read_line_to_string(Input, Cmt),  % Reads the comment line.
+        print_metta_comments(Cmt),nl, % Converts and prints the comment in Metta style.
+        translate_to_metta(Module,Input).  % Continues with the next line.
+
+% Reads a clause along with its metadata, then continues translation.

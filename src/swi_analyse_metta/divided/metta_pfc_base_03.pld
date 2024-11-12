@@ -1,0 +1,103 @@
+'$exported_op'(_,_,_):- fail.
+*/
+
+:- multifile '$pldoc'/4.
+:- dynamic '$pldoc'/4.
+:- discontiguous '$pldoc'/4.
+'$pldoc'(_,_,_,_):- fail.
+
+:- multifile '$autoload'/3.
+:- discontiguous '$autoload'/3.
+:- dynamic '$autoload'/3.
+'$autoload'(_,_,_):- fail.
+
+:- system:use_module(library(make)).
+%:- set_prolog_flag(retry_undefined, kb_shared).
+%:- set_prolog_flag(pfc_ready, true).
+:- set_prolog_flag(expect_pfc_file,unknown).
+:- endif.
+
+:- ifprolog:import(date:day_of_the_week/2).
+:- ifprolog:import(date:day_of_the_year/2).
+
+
+tilded_negation.
+
+bagof_or_nil(T,G,L):- bagof(T,G,L)*->true;L=[].
+setof_or_nil(T,G,L):- setof(T,G,L)*->true;L=[].
+
+call_u(G):- pfcCallSystem(G).
+clause_u(H,B):- clause(H,B).
+
+mpred_ain(P):- arc_assert(P).
+arc_assert(P:-True):- True==true,!,arc_assert(P).
+arc_assert(P):-  % fbugio(arc_assert(P)),
+  must_ex(current_why_UU(UU)),nop(fbugio(pfcAdd(P, UU))),!,
+(P, UU),asserta_if_new(P).
+
+pfc_retract(P):- fbugio(pfc_retract(P)),pfcRetract(P).
+pfc_retractall(P):- fbugio(pfc_retractall(P)),pfcRetractAll(P).
+
+:- dynamic((~)/1).
+~(_):- fail.
+
+add(X):- pfcAdd(X).
+
+
+mpred_test(call_u(X)):- nonvar(X),!,pfcCallSystem(X),pfcWhy(X).
+mpred_test(\+ call_u(X)):- nonvar(X),!, (call_u(X)-> (fbugio(warn(failed(mpred_test(\+ call_u(X))))),mpred_test_why(X)); mpred_test_why(~(X))).
+mpred_test(X):- (mpred_test_why(X) *-> true ; mpred_test_why(~(X))).
+
+:- thread_local t_l:shown_child/1.
+:- thread_local t_l:shown_dep/2.
+
+pfc_info(X):- mpred_info(X).
+mpred_info(X):-
+ retractall(t_l:shown_child(_)),
+ retractall(t_l:shown_dep(_,_)),
+ ignore((
+  forall(mpred_test_why(X),true),
+  forall(mpred_child_info(X),true))).
+
+mpred_child_info(P):-
+  retractall(t_l:shown_child(_)),
+  show_child_info(P),!,
+  printLine.
+
+show_child_info(P):-
+  pfcChildren(P,L),
+  show_child_info(P,L),!.
+
+show_child_info(P,_):- t_l:shown_child(Q),P=@=Q,!.
+show_child_info(P,_):- asserta(t_l:shown_child(P)),fail.
+show_child_info(_,[]):-!.
+show_child_info(P,L):- list_to_set(L,S),
+  format("~N~nChildren for ",[]),
+  ansi_format([fg(green)],'~@',[pp(P)]),
+  format(" :~n",[]),
+  forall((member(D,S), \+ t_l:shown_dep(P,D)),(asserta(t_l:shown_dep(P,D)),ansi_format([fg(yellow)],'~N ~@. ~n',[pp(D)]))),
+  my_maplist(show_child_info,S).
+
+mpred_why(X):- mpred_test_why(X).
+
+mpred_test_why(X):-
+  pfcCallSystem(X)*->pfcTF1(X);(pfcTF1(X),!,fail).
+
+mpred_literal(X):- pfcLiteral(X).
+mpred_positive_literal(X):- pfcPositiveLiteral(X).
+pfcAtom(X):- pfcLiteral(X).
+rem(X):- pfcWithdraw(X).
+rem2(X):- pfcRemove(X).
+remove(X):- pfcBlast(X).
+
+% :- mpred_ain_in_thread.
+% :- current_thread_pool(ain_pool)->true;thread_pool_create(ain_pool,20,[]).
+:- multifile thread_pool:create_pool/1.
+:- dynamic thread_pool:create_pool/1.
+thread_pool:create_pool(ain_pool) :-
+    thread_pool_create(ain_pool, 50, [detached(true)] ).
+
+:- use_module(library(http/thread_httpd)).
+:- use_module(library(thread_pool)).
+
+is_ain_pool_empty:- thread_pool_property(ain_pool,running(N)),!,N==0.

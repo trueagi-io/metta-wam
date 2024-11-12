@@ -1,0 +1,63 @@
+is_tollerant:- \+ option_value('unit-tests','exact').
+
+equal_enough_for_test(X,Y):- X==Y,!.
+equal_enough_for_test(X,Y):- X=@=Y,!.
+equal_enough_for_test(X,Y):- is_list(X),is_list(Y),sort(X,X0),sort(Y,Y0),
+       Y0=[YY],X0=[XX],!,equal_enough_for_test(XX,YY).
+equal_enough_for_test(X,Y):- is_list(X),is_list(Y),X=[ErrorX|_],Y=[ErrorY|_],ErrorX=='Error',
+      ErrorY == ErrorX,!.
+equal_enough_for_test(X,Y):- is_blank(X),!,is_blank(Y).
+equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_blank(X).
+equal_enough_for_test(X,Y):- is_list(X),is_list(Y),
+   Y=[YY],X=[XX],!,equal_enough_for_test(XX,YY).
+   %length(XX,XL),length(YY,YL),
+
+%equal_enough_for_test(X,Y):-!,fail.
+
+equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
+  equal_enough_for_test2(XX,YY),!.
+equal_enough_for_test2(X,Y):- equal_enough(X,Y).
+
+equal_enough(R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(RR,VV),!.
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
+equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
+equal_enouf(X,Y):- is_blank(X),!,is_blank(Y).
+equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
+equal_enouf(R,V):- R=@=V, R=V, !.
+equal_enouf(_,V):- V=@='...',!.
+
+equal_enouf(L,C):- is_tollerant, is_list(L),is_list(C),
+     maybe_remove_nils(C,CC),equal_enouf(L,CC).
+
+equal_enouf(L,C):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
+equal_enouf(C,L):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
+%equal_enouf(R,V):- (var(R),var(V)),!, R=V.
+equal_enouf(R,V):- (var(R);var(V)),!, R==V.
+equal_enouf(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
+equal_enouf(R,V):- atom(R),!,atom(V), has_unicode(R),has_unicode(V).
+equal_enouf(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
+equal_enouf(L,C):- into_list_args(L,LL),into_list_args(C,CC),!,equal_enouf_l(CC,LL).
+
+equal_enouf_l([S1,V1|_],[S2,V2|_]):- S1 == 'State',S2 == 'State',!, equal_enouf(V1,V2).
+equal_enouf_l(C,L):- \+ compound(C),!,L=@=C.
+equal_enouf_l(L,C):- \+ compound(C),!,L=@=C.
+equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
+
+maybe_remove_nils(I,O):- always_remove_nils(I,O),!,I\=@=O.
+always_remove_nils(I,O):- \+ compound(I),!,I=O.
+always_remove_nils([H|T], TT):- H==[],!, always_remove_nils(T,TT).
+always_remove_nils([H|T], TT):- H=='Empty',!, always_remove_nils(T,TT).
+always_remove_nils([H|T],[H|TT]):- always_remove_nils(T,TT).
+
+has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
+
+set_last_error(_).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  SCOPING
+% =================================================================
+% =================================================================
+% =================================================================

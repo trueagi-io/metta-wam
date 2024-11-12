@@ -1,0 +1,80 @@
+     check_returnval(Eq,RetType,RetVal).
+
+
+nd_ignore(Goal):- call(Goal)*->true;true.
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  AND/OR
+% =================================================================
+% =================================================================
+% =================================================================
+
+is_True(T):- atomic(T), T\=='False', T\==0.
+
+is_and(S):- \+ atom(S),!,fail.
+%is_and(',').
+is_and(S):- is_and(S,_).
+
+is_and(S,_):- \+ atom(S),!,fail.
+%is_and('and','True').
+is_and('and2','True').
+%is_and('#COMMA','True'). %is_and(',','True').  % is_and('And').
+
+is_comma(C):- var(C),!,fail.
+is_comma(',').
+is_comma('{}').
+
+bool_xor(A,B) :- (A == 'True'; B == 'True'), \+ (A == B).
+
+eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
+    as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X),
+             eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
+
+
+eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
+  as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X);
+           eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
+
+eval_20(Eq,RetType,Depth,Self,['xor',X,Y],TF):- !,
+  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,X)),  XTF),  % evaluate X
+  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,Y)),  YTF),  % evaluate Y
+  as_tf(  (bool_xor(XTF,YTF))              ,   TF).
+
+
+eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
+   as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
+
+
+% ================================================
+% === function / return of minimal metta
+eval_20(Eq,RetType,Depth,Self,['function',X],Res):- !, gensym(return_,RetF),
+  RetUnit=..[RetF,Res],
+  catch(locally(nb_setval('$rettag',RetF),
+           eval_args(Eq,RetType,Depth,Self,X, Res)),
+        return(RetUnitR),RetUnitR=RetUnit).
+eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
+  nb_current('$rettag',RetF),RetUnit=..[RetF,Val],
+  eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(RetUnit)).
+% ================================================
+
+% ================================================
+% === catch / throw of mettalog
+eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],Res):- !,
+  catch(eval_args(Eq,RetType,Depth,Self,X, Res),
+         EX,eval_args(Eq,RetType,Depth,Self,Handler, Res)).
+eval_20(Eq,_TRetType,Depth,Self,['throw',X],_):- !,
+  eval_args(Eq,_RetType,Depth,Self,X, Val), throw(Val).
+% ================================================
+
+eval_20(Eq,RetType,Depth,Self,['number-of',X],N):- !,
+   findall_eval(Eq,RetType,Depth,Self,X,ResL),
+   length(ResL,N), ignore(RetType='Number').
+
+eval_20(Eq,RetType,Depth,Self,['number-of',X,N],TF):- !,
+   findall_eval(Eq,RetType,Depth,Self,X,ResL),
+   length(ResL,N), true_type(Eq,RetType,TF).
+
+eval_20(Eq,RetType,Depth,Self,['findall!',Template,X],ResL):- !,

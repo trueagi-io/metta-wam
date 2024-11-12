@@ -6,7 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update
 RUN apt install -y python3 python3-pip libpython3-dev git
 RUN apt install -y sudo git curl gcc cmake
-RUN apt install -y python3-venv time wget vim bc
+RUN apt install -y python3-venv time wget vim bc dos2unix
 
 # Create user
 ENV USER=user
@@ -33,9 +33,9 @@ COPY ./ ./
 # get rid of copied venv that is probably using a whole different python anyways
 RUN rm -rf ./venv/  
 COPY ./INSTALL.sh ./INSTALL.sh
-RUN apt install dos2unix
+
 SHELL ["/bin/bash", "-c"]
-RUN source ./INSTALL.sh --easy
+RUN source ./INSTALL.sh --easy --allow-system-modifications
 
 
 #RUN swipl -l src/main/metta_interp.pl -g qcompile_mettalog

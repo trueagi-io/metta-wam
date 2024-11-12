@@ -1,0 +1,64 @@
+   List\=@=UList)
+    *->  eval_20(Eq,RetType,Depth,Self,['superpose',UList],Res)
+       ; ((member(E,List),eval_args(Eq,RetType,Depth,Self,E,Res))*->true;make_nop(RetType,[],Res)))),
+  \+ Res = 'Empty'.
+
+%[sequential,[1,2,3]]
+eval_20(Eq,RetType,Depth,Self,['sequential',List],Res):- !,
+  (((fail,is_user_defined_head(Eq,Self,List) ,eval_args(Eq,RetType,Depth,Self,List,UList), List\=@=UList)
+    *->  eval_20(Eq,RetType,Depth,Self,['sequential',UList],Res)
+       ; ((member(E,List),eval_ne(Eq,RetType,Depth,Self,E,Res))*->true;make_nop(RetType,[],Res)))).
+
+
+get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
+get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
+get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
+eval20_failed(Eq,RetType,Depth,Self, Term, Res):-
+  notrace(( get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
+   compound(ST), ST = [F,List],F=='superpose',nonvar(List), %maplist(atomic,List),
+   call(P1,Var))), !,
+   %max_counting(F,20),
+   member(Var,List),
+   eval_args(Eq,RetType,Depth,Self, Term, Res).
+
+
+sub_sterm(Sub,Sub).
+sub_sterm(Sub,Term):- sub_sterm1(Sub,Term).
+sub_sterm1(_  ,List):- \+ compound(List),!,fail.
+sub_sterm1(Sub,List):- is_list(List),!,member(SL,List),sub_sterm(Sub,SL).
+sub_sterm1(_  ,[_|_]):-!,fail.
+sub_sterm1(Sub,Term):- arg(_,Term,SL),sub_sterm(Sub,SL).
+eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
+   notrace(( get_sa_p1(setarg,ST,Term,P1),
+   compound(ST), ST = [F,List],F=='collapse',nonvar(List), %maplist(atomic,List),
+   call(P1,Var))), !, findall_eval(Eq,RetType,Depth,Self,List,Var),
+   eval_args(Eq,RetType,Depth,Self, Term, Res).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  NOP/EQUALITU/DO
+% =================================================================
+% =================================================================
+% ================================================================
+eval_20(_Eq,RetType,_Depth,_Self,['nop'],                 NoResult ):- !,
+   make_nop(RetType,[], NoResult).
+eval_20(_Eq,RetType,_Depth,_Self,['empty'],                Empty ):- !,
+   make_empty(RetType, Empty).
+eval_20(_Eq,RetType,Depth,Self,['nop',Expr], NoResult ):- !,
+   make_nop(RetType,[], NoResult),
+  ignore(eval_args('=',_RetType2,Depth,Self,Expr,_)).
+
+
+eval_20(Eq,RetType,Depth,Self,['do',Expr], NoResult):- !,
+  forall(eval_args(Eq,_RetType2,Depth,Self,Expr,_),true),
+  %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
+  make_empty(RetType,[],NoResult).
+
+eval_20(_Eq,_RetType1,_Depth,_Self,['call!',S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!',S], R):- !, eval_call_fn(S,R).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth,S], R):-
+    length(Left,Nth),
+    append(Left,Right,S),
+    append(Left,[R|Right],NewS),!,

@@ -1,0 +1,78 @@
+translate_to_metta(Module,Input):-
+  read_clause_with_info(Input),!,
+  translate_to_metta(Module,Input).
+
+% Helper predicates and processing functions follow...
+
+% Determines if a character should be reprinted (spaces and period).
+is_reprint_char(Char):- char_type(Char, space).
+is_reprint_char(Char):- Char == '.'.
+
+% Translates Prolog comments to Metta comments, applying string replacements.
+translate_comment(Cmt,Str):- replace_in_string(["%"=";",
+                                                 "prolog"="MeTTa",
+                                                 "PROLOG"="MeTTa",
+                                                 "Prolog"="MeTTa"],Cmt,Str).
+
+% Reads a clause while capturing various pieces of metadata.
+
+read_clause_with_info(Stream) :- at_end_of_stream(Stream),!.
+read_clause_with_info(Stream):- catch(read_clause_with_info_0(Stream),E,
+  ((user_io(write_src_cmt(E)),write_src_cmt(E)))).
+
+read_clause_with_info_0(Stream) :-
+    Options = [ variable_names(Bindings),
+                    term_position(Pos),
+                    subterm_positions(RawLayout),
+                    syntax_errors(error),
+                    comments(Comments),
+                    module(trans_mod)],
+    read_term(Stream, Term, Options),
+    (   (fail,Term == end_of_file)
+    ->  true
+    ;   b_setval('$term_position', Pos),
+        b_setval('$variable_names', Bindings),
+        display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments)).
+
+% Displays term information and processes comments.
+display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments):-
+   maplist(into_namings,Bindings),
+   ignore(process_term(Stream,Term)),
+   print_metta_comments(Comments),!.
+
+print_metta_comments(Comments):- print_metta_comment(Comments).
+print_metta_comment([]):-!.
+print_metta_comment(_TP-Cmt):-!, print_metta_comment(Cmt).
+print_metta_comment([Cmt|Cs]):- !, print_metta_comment(Cmt),!, print_metta_comment(Cs).
+print_metta_comment(Cmt):- translate_comment(Cmt,String), print_cmt_lines(String).
+
+print_cmt_lines(String):-
+    normalize_space(string(TaxM),String),
+    atomics_to_string(List,'\n',TaxM),!,
+    maplist(print_cmt_line,List).
+print_cmt_line(Str):- format('~N; ~w',[Str]).
+
+
+echo_as_commnents_until_eof(Stream):-
+    repeat,
+    (at_end_of_stream(Stream)-> !;
+     (read_line_to_string(Stream,Cmt),
+       ignore((print_metta_comments(Cmt))),
+        fail)).
+
+
+
+% Processes each term based on its type (directive or other).
+process_term(Stream,end_of_file):- !, echo_as_commnents_until_eof(Stream).
+process_term(Stream,Term):-
+    is_directive(Term),
+    ignore(maybe_call_directive(Stream,Term)),
+    !, ignore(print_directive(Term)).
+process_term(_,Term):-
+  expand_to_hb(Term,H,B),
+  p2m((H:-B),STerm),
+  push_term_ctx(Term),
+  write_pl_metta(STerm).
+
+maybe_call_directive(Stream,(:- X)):- !, maybe_call_directive(Stream,X).
+maybe_call_directive(_Stream,op(X,F,Y)):- trans_mod:op(X,F,Y).

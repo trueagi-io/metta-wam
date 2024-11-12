@@ -1,0 +1,72 @@
+   findall(Template,eval_args(Eq,RetType,Depth,Self,X,_),ResL).
+
+
+
+eval_20(Eq,RetType,Depth,Self,['limit!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['limit',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['limit',NE,E],R):-  !,
+   eval_args('=','Number',Depth,Self,NE,N),
+   limit(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['offset!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['offset',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['offset',NE,E],R):-  !,
+   eval_args('=','Number',Depth,Self,NE,N),
+   offset(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+eval_20(Eq,RetType,Depth,Self,['max-time!',N,E],R):- !, eval_20(Eq,RetType,Depth,Self,['max-time',N,E],R).
+eval_20(Eq,RetType,Depth,Self,['max-time',NE,E],R):-  !,
+   eval_args('=','Number',Depth,Self,NE,N),
+   cwtl(N,eval_ne(Eq,RetType,Depth,Self,E,R)).
+
+
+eval_20(Eq,RetType,Depth,Self,['call-cleanup!',NE,E],R):-  !,
+   call_cleanup(eval_args(Eq,RetType,Depth,Self,NE,R),
+                eval_args(Eq,_U_,Depth,Self,E,_)).
+
+eval_20(Eq,RetType,Depth,Self,['setup-call-cleanup!',S,NE,E],R):-  !,
+   setup_call_cleanup(
+         eval_args(Eq,_,Depth,Self,S,_),
+         eval_args(Eq,RetType,Depth,Self,NE,R),
+         eval_args(Eq,_,Depth,Self,E,_)).
+
+eval_20(Eq,RetType,Depth,Self,['with-output-to!',S,NE],R):-  !,
+   eval_args(Eq,'Sink',Depth,Self,S,OUT),
+   with_output_to_stream(OUT,
+      eval_args(Eq,RetType,Depth,Self,NE,R)).
+
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  DATA FUNCTOR
+% =================================================================
+% =================================================================
+% =================================================================
+eval20_failked(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-
+    nonvar(V),is_metta_data_functor(V),is_list(VI),!,
+    maplist(eval_args(Eq,RetType,Depth,Self),VI,VO).
+
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  EVAL FAILED
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_failed(Depth,Self,T,TT):-
+   eval_failed('=',_RetType,Depth,Self,T,TT).
+
+finish_eval(Depth,Self,T,TT):-
+   finish_eval('=',_RetType,Depth,Self,T,TT).
+
+eval_failed(Eq,RetType,Depth,Self,T,TT):-
+  finish_eval(Eq,RetType,Depth,Self,T,TT).
+
+%finish_eval(Eq,RetType,_,_,X,X):-!.
+
+finish_eval(_Eq,_RetType,_Dpth,_Slf,T,TT):- var(T),!,TT=T.
+finish_eval(_Eq,_RetType,_Dpth,_Slf,[],[]):-!.
+finish_eval(Eq,RetType,Depth,Self,[F|LESS],Res):-
+     once(eval_selfless(Eq,RetType,Depth,Self,[F|LESS],Res)),fake_notrace([F|LESS]\==Res),!.

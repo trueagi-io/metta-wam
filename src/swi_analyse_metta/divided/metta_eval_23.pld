@@ -1,0 +1,59 @@
+%  IMPORT/BIND
+% =================================================================
+% =================================================================
+% =================================================================
+nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
+eval_20(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
+eval_20(Eq,RetType,Depth,Self,['register-module!',Dir],RetVal):- !,
+     eval_20(Eq,'Directory',Depth,Self,Dir,Folder),
+     register_module(Self,Folder),!,
+     %Folder = RetVal,
+     ignore(make_nop(RetType,Self,RetVal)).
+eval_20(Eq,RetType,Depth,Self,['register-module!',Name,Dir],RetVal):- !,
+     eval_20(Eq,'Symbol',Depth,Self,Name,ModuleName),
+     eval_20(Eq,'Directory',Depth,Self,Dir,Folder),
+     register_module(Self,ModuleName,Folder),!,
+     %Folder = RetVal,
+     ignore(make_nop(RetType,Self,RetVal)).
+
+
+eval_20(Eq,RetType,Depth,Self,['include!',Other,File],RetVal):- !,
+     into_space(Depth,Self,Other,Space), include_metta(Space,File),!,
+     make_nr(Eq,RetType,RetVal).
+% from metta in Rust
+eval_20(Eq,RetType,_Depth,Self,['include',File],RetVal):- !,
+     include_metta(Self,File),!,
+     make_nr(Eq,RetType,RetVal).
+eval_20(Eq,RetType,Depth,Self,['load-ascii',Other,File],RetVal):- !,
+     into_space(Depth,Self,Other,Space), include_metta(Space,File),!,
+     make_nr(Eq,RetType,RetVal).
+eval_20(Eq,RetType,Depth,Self,['import!',Other,File],RetVal):- !,
+     into_space(Depth,Self,Other,Space), import_metta(Space,File),!,
+     make_nr(Eq,RetType,RetVal).
+eval_20(Eq,RetType,Depth,Self,['load-file!',Other,File],RetVal):- !,
+     into_space(Depth,Self,Other,Space), load_metta(Space,File),!,
+     make_nr(Eq,RetType,RetVal).
+
+make_nr(_Eq,_RetType,RetVal):- as_nop(RetVal).
+
+
+
+
+eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,
+  assert(was_asserted_space(Other)),
+  make_nop(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
+eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
+   must_det_ll((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
+    nb_bind(Name,Value),  make_nop(RetType,Value,RetVal))),
+   check_returnval(Eq,RetType,RetVal).
+eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
+   must_det_ll((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
+   set_option_value_interp(Name,Value))),  make_nop(RetType,Value,RetVal),
+    check_returnval(Eq,RetType,RetVal))).
+eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
+   make_nop(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
+
+
+eval_20(Eq,RetType,Depth,Self,['save-space!',Other,File],RetVal):- !,
+     (( into_space(Depth,Self,Other,Space), 'save-space!'(Space,File),!,make_nop(RetType,RetVal))),

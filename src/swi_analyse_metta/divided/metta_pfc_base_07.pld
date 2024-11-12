@@ -1,0 +1,117 @@
+pfcUnique(Type, P) :- pfcUnique(Type,P,true).
+
+%pfcUnique(post,Head,Tail):- !, \+ is_clause_asserted(Head,Tail).
+pfcUnique(_,Head,Tail):- \+ is_asserted_exact(Head,Tail),!.
+/*
+pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
+pfcUnique(_,H,B):- \+ (
+    clause(H, B, Ref),
+    clause(HH, BB, Ref),
+    strip_m(HH, HHH),
+    HHH=@=H,
+    strip_m(BB, BBB),
+    BBB=@=B).
+*/
+
+
+% %  pfcEnqueue(P,Q) is det.
+%
+% Enqueu according to settings
+%
+pfcSetSearch(Mode):- pfcSetVal(pfcSearch(Mode)).
+
+pfcGetSearch(Mode):- (t_l:pfcSearchTL(ModeT)->true;pfcSearch(ModeT))->Mode=ModeT.
+
+pfcEnqueue(P,S) :- pfcGetSearch(Mode),!,
+   pfcEnqueue(Mode,P,S).
+pfcEnqueue(P,S) :- pfcWarn("No pfcSearch mode"),
+   pfcEnqueue(direct,P,S).
+
+pfcEnqueue(Mode,P,S):-
+    Mode=direct  -> pfcFwd(P) ;
+    Mode=thread  -> pfcThreadFwd(P,S) ;
+    Mode=depth   -> pfcAsserta(pfcQueue(P),S) ;
+    Mode=breadth -> pfcAssert(pfcQueue(P),S) ;
+    true         -> pfcWarn("Unrecognized pfcSearch mode: ~p", Mode),pfcEnqueue(direct,P,S).
+
+
+
+% %  pfcRemoveOldVersion(+Rule) is det.
+%
+% if there is a rule of the form Identifier ::: Rule then delete it.
+
+pfcRemoveOldVersion((Identifier::::Body)) :-
+  % this should never happen.
+  (var(Identifier)
+  ->
+  pfcWarn("variable used as an  rule name in ~p :::: ~p",
+          [Identifier,Body]);
+  pfcRemoveOldVersion0(Identifier::::Body)).
+
+
+pfcRemoveOldVersion0((Identifier::::Body)) :-
+  nonvar(Identifier),
+  clause((Identifier::::OldBody),_),
+  \+(Body=OldBody),
+  pfcWithdraw((Identifier::::OldBody)),
+  !.
+pfcRemoveOldVersion0(_).
+
+
+% %  with_fc_mode(+Mode,:Goal) is semidet.
+%
+% Temporariliy changes to forward chaining propagation mode while running the Goal
+%
+with_fc_mode(Mode,Goal):- locally(t_l:pfcSearchTL(Mode),Goal).
+
+
+pfcThreadFwd(S,P):-
+      with_only_current_why(S,
+       % maybe keep `thread` mode?
+        call_in_thread(with_fc_mode(thread, (pfcFwd(P))))).
+
+% in_fc_call(Goal):- with_fc_mode( thread, Goal).
+%in_fc_call(Goal):- with_fc_mode( direct, Goal).
+% in_fc_call(Goal):- !, pfcCallSystem(Goal).
+
+
+
+
+% 
+
+% pfcRun compute the deductive closure of the current database.
+% How this is done depends on the searching mode:
+%    direct -  fc has already done the job.
+%    depth or breadth - use the pfcQueue mechanism.
+
+pfcRun :-
+  (\+ pfcGetSearch(direct)),
+  pfcStep,
+  pfcRun.
+pfcRun.
+
+
+% pfcStep removes one entry from the pfcQueue and reasons from it.
+
+
+pfcStep :-
+  % if pfcHaltSignal(Msg) is true, reset it and fail, thereby stopping inferencing.
+  pfcRetract(pfcHaltSignal(Msg)),
+  pfcTraceMsg(removing(pfcHaltSignal(Msg))),
+  !,
+  fail.
+
+pfcStep :-
+  % draw immediate conclusions from the next fact to be considered.
+  % fails iff the queue is empty.
+  get_next_fact(P),
+  pfcdo(pfcFwd(P)),
+  !.
+
+get_next_fact(P) :-
+  %identifies the nect fact to fc from and removes it from the queue.
+  select_next_fact(P),
+  remove_selection(P).
+
+remove_selection(P) :-
+  pfcRetract(pfcQueue(P)),

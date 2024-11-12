@@ -33,6 +33,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- include(lsp_server_hooks).
 :- include(lsp_metta_include).
 
+:- set_prolog_flag(gc,false).
 
 :- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
@@ -40,7 +41,6 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 %:- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 
 :- ensure_loaded(lsp_metta_completion).
-:- ensure_loaded(lsp_metta_requests).
 
 :- use_module(lsp_prolog_colours, [
                             file_colours/2,
@@ -86,6 +86,8 @@ main :-
    nodebug(lsp(_)), % Everything
     %prolog_ide(debug_monitor),
     %debug(lsp(low)),
+    debug(lsp(thread_monitor)),
+    debug(lsp(debug_window)),
     debug(lsp(main)),
     debug(lsp(errors)),
     debug(lsp(threads)),
@@ -633,6 +635,7 @@ server_capabilities(
 :- discontiguous(handle_msg/3).
 
 
+
 % recompile/update code for the lsp server
 handle_msg( _, _, _) :- notrace(catch(make,_,true)),fail.
 
@@ -671,7 +674,8 @@ handle_msg("initialize", Msg,
     ( Params.rootUri \== null
     -> xref_metta_source(Params.rootUri)
     ; true ),
-    assert(user:client_capabilities(Params)),
+    first_dict_key( capabilities, Params, ClientCapabilities),
+    save_json(client_capabilities,ClientCapabilities),
     server_capabilities(ServerCapabilities).
 
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
@@ -868,9 +872,12 @@ handle_msg("textDocument/didClose", Msg, false) :-
     retractall(in_editor(Path)).
 
 handle_msg("initialized", Msg, false) :- !,
-    debug_lsp(main, "initialized ~w", [Msg]).
+    debug_lsp(main, "initialized ~w", [Msg]),
+    fetch_workspace_configuration.
 
-handle_msg("$/setTrace", _Msg, false).
+handle_msg("$/setTrace", _Msg, false):-
+   fetch_workspace_configuration.
+
 
 % Handle the $/cancelRequest Notification
 handle_msg("$/cancelRequest", Msg, false) :-

@@ -1,0 +1,109 @@
+  pfcRemoveSupportsQuietly(pfcQueue(P)),
+  !.
+remove_selection(P) :-
+  brake(pfcPrintf("pfc:get_next_fact - selected fact not on Queue: ~p",
+               [P])).
+
+
+% select_next_fact(P) identifies the next fact to reason from.
+% It tries the user defined predicate first and, failing that,
+%  the default mechanism.
+
+select_next_fact(P) :-
+  pfcSelect(P),
+  !.
+select_next_fact(P) :-
+  defaultpfcSelect(P),
+  !.
+
+% the default selection predicate takes the item at the froint of the queue.
+defaultpfcSelect(P) :- pfcCallSystem(pfcQueue(P)),!.
+
+% pfcHalt stops the forward chaining.
+pfcHalt :-  pfcHalt("unknown_reason",[]).
+
+pfcHalt(Format) :- pfcHalt(Format,[]).
+
+pfcHalt(Format,Args) :-
+  format(string(Msg),Format,Args),
+  (pfcHaltSignal(Msg) ->
+       pfcWarn("pfcHalt finds pfcHaltSignal(~w) already set",[Msg])
+     ; assert(pfcHaltSignal(Msg))).
+
+
+% % 
+% %
+% %  predicates for manipulating triggers
+% %
+
+pfcAddTrigger('$pt$'(Trigger,Body),Support) :-
+  !,
+  pfcTraceMsg('      Adding positive trigger(+) ~p~n',
+        ['$pt$'(Trigger,Body)]),
+  pfcAssert('$pt$'(Trigger,Body),Support),
+  copy_term('$pt$'(Trigger,Body),Tcopy),
+  pfc_call(Trigger),
+  with_current_why(Trigger,fcEvalLHS(Body,(Trigger,Tcopy))),
+  fail.
+
+
+pfcAddTrigger('$nt$'(Trigger,Test,Body),Support) :-
+  !,
+  pfcTraceMsg('      Adding negative trigger(-): ~p~n       test: ~p~n       body: ~p~n',
+        [Trigger,Test,Body]),
+  copy_term(Trigger,TriggerCopy),
+  pfcAssert('$nt$'(TriggerCopy,Test,Body),Support),
+  \+ pfc_call(Test),
+  with_current_why(\+ pfc_call(Test), fcEvalLHS(Body,((\+Trigger),'$nt$'(TriggerCopy,Test,Body)))).
+
+pfcAddTrigger('$bt$'(Trigger,Body),Support) :-
+  !,
+  pfcAssert('$bt$'(Trigger,Body),Support),
+  pfcBtPtCombine(Trigger,Body,Support).
+
+pfcAddTrigger(X,_Support) :-
+  pfcWarn("Unrecognized trigger(?) to pfcAddtrigger: ~p",[X]).
+
+
+pfcBtPtCombine(Head,Body,Support) :-
+  % %  a backward trigger(?) ('$bt$') was just added with head and Body and support Support
+  % %  find any '$pt$'(s) with unifying heads and add the instantied '$bt$' body.
+  pfcGetTriggerQuick('$pt$'(Head,_PtBody)),
+  fcEvalLHS(Body,Support),
+  fail.
+pfcBtPtCombine(_,_,_) :- !.
+
+pfcGetTriggerQuick(Trigger) :-  clause(Trigger,true)*->true;pfc_call(Trigger).
+pfcCallSystem(Trigger) :-  pfc_call(Trigger).
+
+% % 
+% %
+% %  predicates for manipulating action traces.
+% %
+
+pfcAddActionTrace(Action,Support) :-
+  % adds an action trace and it''s support.
+  pfcAddSupport(pfcAction(Action),Support).
+
+pfcRemActionTrace(pfcAction(A)) :-
+  fcUndoMethod(A,UndoMethod),
+  pfcCallSystem(UndoMethod),
+  !.
+
+
+% % 
+% %  predicates to remove pfc facts, triggers, action traces, and queue items
+% %  from the database.
+% %
+
+pfcRetract(X) :-
+  % %  retract an arbitrary thing.
+  pfcType(X,Type),
+  pfcRetractType(Type,X),
+  !.
+
+pfcRetractType(fact(_),X) :-
+  % %  db
+  pfcAddDbToHead(X,X2)-> retract(X2) ; retract(X).
+
+pfcRetractType(rule(_),X) :-

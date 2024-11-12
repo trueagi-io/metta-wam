@@ -1,0 +1,113 @@
+  !,
+  buildTest(Test,Test2),
+  buildTrigger([{Test2}|Triggers],Consequent,X).
+
+
+%buildTrigger([snip|Triggers],Consequent,snip(X)) :-
+%  !,
+%  buildTrigger(Triggers,Consequent,X).
+
+buildTrigger([T|Triggers],Consequent,'$pt$'(T,X)) :-
+  !,
+  buildTrigger(Triggers,Consequent,X).
+
+% %
+% %  buildNtTest(+,+,-).
+% %
+% %  builds the test used in a negative trigger(-) ('$nt$'/3).  This test is a
+% %  conjunction of the check than no matching facts are in the db and any
+% %  additional test specified in the rule attached to this ~ term.
+% %
+     %  tilded_negation.
+buildNtTest(T,Testin,Testout) :-
+  buildTest(Testin,Testmid),
+  pfcConjoin((pfc_call(T)),Testmid,Testout).
+
+
+% this just strips away any currly brackets.
+
+buildTest({Test},Test) :- !.
+buildTest(Test,Test).
+
+% % 
+
+
+% %  pfcType(+VALUE1, ?Type) is semidet.
+%
+% PFC Database Type.
+%
+%  simple typeing for Pfc objects
+%
+
+
+pfcType(Var,Type):- var(Var),!, Type=fact(_FT).
+pfcType(_:X,Type):- !, pfcType(X,Type).
+pfcType(~_,Type):- !, Type=fact(_FT).
+pfcType(('==>'(_,_)),Type):- !, Type=rule(fwd).
+pfcType( '==>'(X),Type):- !, pfcType(X,Type), pfcWarn(pfcType( '==>'(X), Type)).
+pfcType(('<==>'(_,_)),Type):- !, Type=rule(<==>).
+pfcType(('<-'(_,_)),Type):- !, Type=rule(bwc).
+pfcType((':-'(_,_)),Type):- !, Type=rule(cwc).
+pfcType('$pt$'(_,_,_),Type):- !, Type=trigger(+).
+pfcType('$pt$'(_,_),Type):- !, Type=trigger(+).
+pfcType('$nt$'(_,_,_),Type):- !,  Type=trigger(-).
+pfcType('$bt$'(_,_),Type):- !,  Type=trigger(?).
+pfcType(pfcAction(_),Type):- !, Type=action.
+pfcType((('::::'(_,X))),Type):- !, pfcType(X,Type).
+pfcType(_,fact(_FT)):-
+  %  if it''s not one of the above, it must_ex be a fact!
+  !.
+
+pfcAssert(P,Support) :-
+  (pfc_clause(P) ; assert(P)),
+  !,
+  pfcAddSupport(P,Support).
+
+pfcAsserta(P,Support) :-
+  (pfc_clause(P) ; asserta(P)),
+  !,
+  pfcAddSupport(P,Support).
+
+pfcAssertz(P,Support) :-
+  (pfc_clause(P) ; assertz(P)),
+  !,
+  pfcAddSupport(P,Support).
+
+pfc_clause((Head :- Body)) :-
+  !,
+  copy_term(Head,Head_copy),
+  copy_term(Body,Body_copy),
+  clause(Head,Body),
+  variant(Head,Head_copy),
+  variant(Body,Body_copy).
+
+pfc_clause(Head) :-
+  % find a unit clause identical to Head by finding one which unifies,
+  % and then checking to see if it is identical
+  copy_term(Head,Head_copy),
+  clause(Head_copy,true),
+  variant(Head,Head_copy).
+
+pfcForEach(Binder,Body) :- Binder,pfcdo(Body),fail.
+pfcForEach(_,_).
+
+% pfcdo(X) executes X once and always succeeds.
+pfcdo(X) :- X,!.
+pfcdo(_).
+
+
+% %  pfcUnion(L1,L2,L3) - true if set L3 is the result of appending sets
+% %  L1 and L2 where sets are represented as simple lists.
+
+pfcUnion([],L,L).
+pfcUnion([Head|Tail],L,Tail2) :-
+  memberchk(Head,L),
+  !,
+  pfcUnion(Tail,L,Tail2).
+pfcUnion([Head|Tail],L,[Head|Tail2]) :-
+  pfcUnion(Tail,L,Tail2).
+
+
+% %  pfcConjoin(+Conjunct1,+Conjunct2,?Conjunction).
+% %  arg3 is a simplified expression representing the conjunction of
+% %  args 1 and 2.

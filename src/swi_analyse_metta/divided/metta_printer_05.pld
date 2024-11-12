@@ -1,0 +1,71 @@
+
+
+current_column(Column) :- current_output(Stream), line_position(Stream, Column),!.
+current_column(Column) :- stream_property(current_output, position(Position)), stream_position_data(column, Position, Column).
+min_indent(Sz):- current_column(Col),Col>Sz,nl,indent_len(Sz).
+min_indent(Sz):- current_column(Col),Need is Sz-Col,indent_len(Need),!.
+min_indent(Sz):- nl, indent_len(Sz).
+indent_len(Need):- forall(between(1,Need,_),write(' ')).
+
+w_proper_indent(N,G):-
+  flag(w_in_p,X,X), %(X==0->nl;true),
+  XX is (X*2)+N,setup_call_cleanup(min_indent(XX),G,true).
+w_in_p(G):- setup_call_cleanup(flag(w_in_p,X,X+1),G,flag(w_in_p,_,X)).
+
+
+always_dash_functor(A,B):- once(dash_functor(A,B)),A\=@=B,!.
+always_dash_functor(A,A).
+
+
+dash_functor(A,C):- \+ symbol(A),!,C=A.
+% dash_functor(A,C):- p2m(A,B),A\==B,!,always_dash_functor(B,C).
+dash_functor(ASymbolProc,O):- fail, symbol_contains(ASymbolProc,'_'),
+    symbol_contains(ASymbolProc,'atom'),
+    current_predicate(system:ASymbolProc/_),
+    symbolic_list_concat(LS,'atom',ASymbolProc),
+    symbolic_list_concat(LS,'symbol',SymbolProc),
+    always_dash_functor(SymbolProc,O),!.
+dash_functor(ASymbolProc,O):- symbol_concat('$',LS,ASymbolProc),!,
+    symbol_concat('%',LS,SymbolProc),
+    always_dash_functor(SymbolProc,O).
+
+dash_functor(Functor,DFunctor):- fail,
+   symbolic_list_concat(L,'_',Functor), L\=[_],
+   symbolic_list_concat(L,'-',DFunctor).
+
+% Print arguments of a compound term.
+write_args_as_sexpression([]).
+write_args_as_sexpression([H|T]) :- write(' '), pp_sex(H), write_args_as_sexpression(T).
+
+% Print the rest of the list.
+print_list_as_sexpression([]).
+print_list_as_sexpression([H]):- pp_sex(H).
+%print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
+print_list_as_sexpression([H|T]):- pp_sex(H), write(' '), print_list_as_sexpression(T).
+
+
+
+% The predicate with_indents/2 modifies the src_indents option value during the execution of a goal.
+% The first argument is the desired value for src_indents,
+% and the second argument is the Goal to be executed with the given src_indents setting.
+with_indents(TF, Goal) :-
+    % Set the value of the `src_indents` option to TF and then execute the Goal
+    as_tf(TF,Value),
+    with_option(src_indents, Value, Goal).
+
+no_src_indents:- option_else(src_indents,TF,true),!,TF=='False'.
+
+no_quoting_symbols:- option_else(no_quoting_symbols,TF,true),!,TF=='True'.
+
+with_no_quoting_symbols(TF, Goal) :-
+    % Set the value of the `no_src_indents` option to TF and then execute the Goal
+    with_option(no_quoting_symbols, TF, Goal).
+
+% The predicate allow_concepts/0 checks whether the use of concepts is allowed.
+% It does this by checking the value of the concepts option and ensuring it is not false.
+allow_concepts :- !, fail,
+    % Check if the option `concepts` is not set to false
+    option_else(concepts, TF, 'False'),
+    \+ TF == 'False'.
+
+% The predicate with_concepts/2 enables or disables the use of concepts during the execution of a given goal.

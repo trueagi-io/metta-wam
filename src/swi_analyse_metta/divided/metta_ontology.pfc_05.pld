@@ -1,0 +1,38 @@
+properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
+
+% --- Error Handling and Advanced Control Flow ---
+properties('&corelib','catch', [error_handling, qhelp("Catches exceptions."), exception_handling]).
+properties('&corelib','throw', [error_handling, qhelp("Throws exceptions."), exception_handling]).
+
+% --- Data Structures and Manipulation ---
+properties('&corelib','collapse', [data_structures, qhelp("Collapses a structure."), manipulation]).
+properties('&corelib','sequential', [data_structures, qhelp("Sequentially applies operations."), sequential_operations]).
+properties('&corelib','superpose', [data_structures, qhelp("Superposes data structures."), manipulation]).
+
+properties('&corelib','repr', [data_structures, qhelp("Represent an expression as string."), repr ]).
+properties('&corelib','parse', [data_structures, qhelp("Parse a string to an expression."), parse ]).
+
+
+% --- Iteration and Loop Control ---
+properties('&corelib','dedup!', [iteration_control, qhelp("Removes duplicate elements from iteration."), manipulation]).
+properties('&corelib','nth!', [iteration_control, qhelp("Allows only the Nth iteration."), manipulation]).
+properties('&corelib','limit!', [iteration_control, qhelp("Limits the number of iterations.")]).
+properties('&corelib','time-limit!', [iteration_control, qhelp("Sets a time limit for operations."), time_management]).
+properties('&corelib','offset!', [iteration_control, qhelp("Adjusts the starting point of iteration.")]).
+properties('&corelib','number-of', [iteration_control, qhelp("Returns iteration count.")]).
+properties('&corelib','nop', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
+properties('&corelib','do', [iteration_control, qhelp("Suppresses iteration result."), suppression]).
+
+% --- Compiler Directives and Optimization ---
+properties('&corelib','pragma!', [compiler_directive, qhelp("Compiler directive for optimizations/settings."), optimization]).
+properties('&corelib','include!', [code_inclusion, qhelp("Includes code from another file or context.")]).
+properties('&corelib','load-ascii', [file_handling, qhelp("Loads ASCII file content.")]).
+properties('&corelib','extend-py!', [integration, qhelp("Extends integration with Python."), python]).
+properties('&corelib','registered-python-function', [integration, qhelp("Interacts with Python functions."), python]).
+properties('&corelib','import!', [module_import, qhelp("Imports an external module or file.")]).
+
+% --- Evaluation and Dynamic Calls ---
+properties('&corelib','eval', [evaluation, qhelp("Evaluates an expression.")]).
+properties('&corelib','eval-for', [evaluation, qhelp("Evaluates assuming a return type."), type_assumption]).
+properties('&corelib','call!', [dynamic_call, qhelp("Tries to dynamically guess if predicate or function.")]).
+properties('&corelib','call-p!', [dynamic_call, qhelp("Dynamically calls a predicate."), predicate]).

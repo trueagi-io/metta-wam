@@ -1,0 +1,81 @@
+eval_01(Eq,RetType,Depth,Self,X,YO):-
+    if_t((Depth<1, trace_on_overflow),
+      debug(metta(eval_args))),
+   notrace((Depth2 is Depth-1,    copy_term(X, XX))),
+    trace_eval(eval_20(Eq,RetType),e,Depth2,Self,X,M),
+   (self_eval(M)-> YO=M ;
+   (((M=@=XX)-> Y=M
+      ;eval_01(Eq,RetType,Depth2,Self,M,Y)),
+   eval_02(Eq,RetType,Depth2,Self,Y,YO))).
+
+eval_02(Eq,RetType,Depth2,Self,Y,YO):-
+  once(if_or_else((subst_args_here(Eq,RetType,Depth2,Self,Y,YO)),
+    if_or_else((fail,finish_eval(Eq,RetType,Depth2,Self,Y,YO)),
+        Y=YO))).
+
+
+% subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
+%   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
+
+% %  this needs to test itself for when it can be skipped
+% %  uncommented causes 7% failure but a 10x speedup
+% subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- Y=YO.
+% %  this next one at least causes no failures and 5x speedup
+subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
+subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
+  subst_args(Eq,RetType,Depth2,Self,Y,YO),
+  notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
+     (wdmsg(red,needed_subst_args(Y,YO)),bt,sleep(1.0)),
+  nop(wdmsg(unneeded_subst_args(Y))))).
+
+wont_need_subst([_,A|_]):- number(A),!,fail.
+wont_need_subst([F|_]):-atom(F), \+ need_subst_f(F).
+need_subst_f('==').
+% ['Mortal','Socrates'] -> 'T'
+need_subst_f('Mortal').
+need_subst_f('*'). need_subst_f('+').
+need_subst_f('-'). need_subst_f('/').
+need_subst_f('<'). need_subst_f('=<').
+
+if_t_else(If,Then,Else):- If -> Then ; Else.
+
+finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
+  finish_eval(Eq,RetType,Depth2,Self,Y,YO),
+  notrace(if_t(Y\=@=YO,wdmsg(finish_eval(Y,YO)))).
+
+:- nodebug(metta(e)).
+
+:- discontiguous eval_20/6.
+:- discontiguous eval_40/6.
+:- discontiguous eval_70/6.
+%:- discontiguous eval_30fz/5.
+%:- discontiguous eval_31/5.
+%:- discontiguous eval_maybe_defn/5.
+
+eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
+    atom(Name), !,
+      (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
+       Y = Name).
+
+
+eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- no_eval(X),!,do_expander(Eq,RetType,X,Y).
+
+args_not_evaled(X):- ( \+ is_list(X); maplist(no_eval,X)),!.
+no_eval(X):- self_eval(X),!.
+no_eval([SL|X]):- atomic(SL), !, is_sl(SL), args_not_evaled(X).
+no_eval([SL|X]):- ( \+ atom(SL), \+ is_list(SL)), !,
+          args_not_evaled(X).
+is_sl(N):- number(N).
+is_sl('ExtSet').
+is_sl('IntSet').
+%is_sl('___').
+
+% =================================================================
+% =================================================================
+% =================================================================
+%  VAR HEADS/ NON-LISTS
+% =================================================================
+% =================================================================
+% =================================================================
+
+eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
