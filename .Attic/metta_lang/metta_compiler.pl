@@ -125,12 +125,51 @@ into_list_args(u_assign(List, A),[H|T]):- append(List,[A],[H|T]),!.
 into_list_args(holds(A),AA):- !, into_list_args(A,AA),!.
 into_list_args(C,FArgs):- compound_name_arguments(C,F,Args),!,into_list_args([F|Args],FArgs).
 
-
-
 compound_name_list(AsPred,FP,PredArgs):- var(AsPred),!,AsPred=[FP|PredArgs].
 compound_name_list(AsPred,FP,PredArgs):- iz_conz(AsPred),!,AsPred=[FP|PredArgs].
 compound_name_list(AsPred,FP,PredArgs):- into_list_args(AsPred,[FP|PredArgs]),!.
 compound_name_list(AsPred,FP,PredArgs):- compound_non_cons(AsPred),!,compound_name_arguments(AsPred,FP,PredArgs).
+
+strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
+strip_m(BB,BB).
+
+% ?- compile_for_exec(RetResult, is(pi+pi), Converted).
+
+compile_for_exec(Res,I,O):-
+   format("~w ~w\n",[Res,I]),
+   trace,
+   %ignore(Res='$VAR'('RetResult')),
+   compile_for_exec0(Res,I,O),!.
+
+compile_for_exec0(Res,I,eval_args(I,Res)):- is_ftVar(I),!.
+compile_for_exec0(Res,(:- I),O):- !, compile_for_exec0(Res,I,O).
+
+compile_for_exec0(Res,I,BB):-
+   compile_for_assert([exec0], I, H:-BB),
+   arg(1,H,Res).
+
+compile_for_exec0(Res,I,BB):-
+   %ignore(Res='$VAR'('RetResult')),
+   compile_flow_control(exec(),Res,I,O),
+   head_preconds_into_body(exec(Res),O,_,BB).
+
+%compile_for_exec0(Res,I,O):- f2p(exec(),Res,I,O).
+
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*trace,*/
+   AsFunction = HeadIs,!,
+   must_det_ll((
+   Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
+   %funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
+   f2p(HeadIs,HResult,AsFunction,HHead),
+   (var(HResult) -> (Result = HResult, HHead = Head) ;
+      funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
+   NextBody = u_assign(AsBodyFn,Result),
+   optimize_head_and_body(Head,NextBody,HeadC,BodyC),
+   nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+
+
+end_of_file.
+
 % ===============================
 %       COMPILER / OPTIMIZER
 % Scryer Compiler vs PySWIP ASM Compiler
@@ -259,28 +298,6 @@ functs_to_preds0(I,OO):-
    head_preconds_into_body(H,B,HH,BB),!,
    OO = ':-'(HH,BB).
 
-% ?- compile_for_exec(RetResult, is(pi+pi), Converted).
-
-compile_for_exec(Res,I,O):-
-   %ignore(Res='$VAR'('RetResult')),
-   compile_for_exec0(Res,I,O),!.
-
-
-
-compile_for_exec0(Res,I,eval_args(I,Res)):- is_ftVar(I),!.
-compile_for_exec0(Res,(:- I),O):- !, compile_for_exec0(Res,I,O).
-
-compile_for_exec0(Res,I,BB):-
-   compile_for_assert([exec0], I, H:-BB),
-   arg(1,H,Res).
-
-compile_for_exec0(Res,I,BB):-
-   %ignore(Res='$VAR'('RetResult')),
-   compile_flow_control(exec(),Res,I,O),
-   head_preconds_into_body(exec(Res),O,_,BB).
-
-%compile_for_exec0(Res,I,O):- f2p(exec(),Res,I,O).
-
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 compile_head_for_assert(HeadIs, (Head:-Body)):-
@@ -382,28 +399,20 @@ as_functor_args(AsPred,F,A,ArgsL):-
    nonvar(F),length(ArgsL,A),AsPred = [F|ArgsL].
 */
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :-  (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,(AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_for_assert(Head, AsBodyFn, Converted) :-
+compile_for_assert(Head, AsBodyFn, Converted) :- fail,
    once(compile_head_variablization(Head, HeadC, CodeForHeadArgs)),
    \+(atomic(CodeForHeadArgs)), !,
    compile_for_assert(HeadC,
       (CodeForHeadArgs,AsBodyFn), Converted).
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- is_ftVar(AsBodyFn), /*trace,*/
-   AsFunction = HeadIs,!,
-   must_det_ll((
-   Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
-   %funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
-   f2p(HeadIs,HResult,AsFunction,HHead),
-   (var(HResult) -> (Result = HResult, HHead = Head) ;
-      funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
-   NextBody = u_assign(AsBodyFn,Result),
-   optimize_head_and_body(Head,NextBody,HeadC,BodyC),
-   nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+% PLACEHOLDER
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
+   format("~w ~w ~w\n",[HeadIs, AsBodyFn, Converted]),
+   trace,
    AsFunction = HeadIs,
    must_det_ll((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
@@ -421,7 +430,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_for_assert(HeadIs, AsBodyFn, Converted) :-
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,
    AsFunction = HeadIs, Converted = (HeadCC :- BodyCC),
    funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
    compile_head_args(Head,HeadC,CodeForHeadArgs),
@@ -1575,9 +1584,6 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
   clause(H2,B,Ref),clause(HH,BB,Ref),
   strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
-
-strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
-strip_m(BB,BB).
 
 %get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
 
