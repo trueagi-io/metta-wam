@@ -40,9 +40,9 @@
 
 ;
 ; Generates a neighborhood with a specified number of houses
-(= (new-neighborhood $N) 
- (let $Neighborhood 
-    (= $n (length $Neighborhood)) 
+(= (new-neighborhood $size) 
+ (let $_ 
+    (== $size (length $Neighborhood)) 
       $Neighborhood))
 ;
 ; Calculates the center position(s) in the neighborhood
