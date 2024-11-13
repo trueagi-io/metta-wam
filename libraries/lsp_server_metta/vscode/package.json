@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "categories": [
     "Other"
   ],
@@ -37,8 +37,6 @@
         ],
         "configuration": "./metta.config.json",
         "extensions": [
-          ".pl",
-          ".plt",
           ".meld",
           ".kif",
           ".krf",
