@@ -155,7 +155,8 @@ compile_for_exec0(Res,I,BB):-
 
 %compile_for_exec0(Res,I,O):- f2p(exec(),Res,I,O).
 
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*trace,*/
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- is_ftVar(AsBodyFn), /*trace,*/
+   trace,
    AsFunction = HeadIs,!,
    must_det_ll((
    Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
@@ -408,7 +409,17 @@ compile_for_assert(Head, AsBodyFn, Converted) :- fail,
    compile_for_assert(HeadC,
       (CodeForHeadArgs,AsBodyFn), Converted).
 
-% PLACEHOLDER
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*trace,*/
+   AsFunction = HeadIs,!,
+   must_det_ll((
+   Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
+   %funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
+   f2p(HeadIs,HResult,AsFunction,HHead),
+   (var(HResult) -> (Result = HResult, HHead = Head) ;
+      funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
+   NextBody = u_assign(AsBodyFn,Result),
+   optimize_head_and_body(Head,NextBody,HeadC,BodyC),
+   nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    format("~w ~w ~w\n",[HeadIs, AsBodyFn, Converted]),
