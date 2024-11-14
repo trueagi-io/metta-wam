@@ -119,7 +119,7 @@ iz_conz(B):- compound(B), B=[_|_].
 into_list_args(C,C):- \+ compound(C),!.
 into_list_args(A,AA):- is_ftVar(A),AA=A.
 into_list_args([H|T],[H|T]):- \+ is_list(T),!.
-into_list_args([H,List,A],HT):- H == u_assign,!,append(List,[A],HT),!.
+into_list_args([H,List,A],HT):- H == x_assign,!,append(List,[A],HT),!.
 into_list_args([H|T],[H|T]):- is_list(T),!.
 into_list_args(x_assign(List, A),[H|T]):- append(List,[A],[H|T]),!.
 into_list_args(holds(A),AA):- !, into_list_args(A,AA),!.
@@ -158,12 +158,15 @@ compile_for_exec0(Res,I,BB):- fail,
 compile_for_exec1(AsBodyFn, Converted) :-
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
    f2p([exec0],HResult,AsBodyFn,NextBody),
-   optimize_head_and_body(x_assign([exec0],HResult),NextBody,HeadC,NextBodyC).
+   optimize_head_and_body(x_assign([exec0],HResult),NextBody,HeadC,NextBodyB),
+   %trace,
+   replace_x_assign([],NextBodyB,NextBodyC).
 
 optimize_head_and_body(Head,Body,HeadNewest,BodyNewest):-
    label_body_singles(Head,Body),
    color_g_mesg('#404064',print_pl_source(( Head :- Body))),
    (merge_and_optimize_head_and_body(Head,Body,HeadNew,BodyNew),
+      % iterate to a fixed point
       (((Head,Body)=@=(HeadNew,BodyNew))
       ->  (HeadNew=HeadNewest,BodyNew=BodyNewest)
       ;  optimize_head_and_body(HeadNew,BodyNew,HeadNewest,BodyNewest))).
@@ -204,15 +207,15 @@ optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optim
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
-optimize_body( HB,x_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
+optimize_body( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
 optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 
-optimize_u_assign_1(_,Var,_,_):- is_ftVar(Var),!,fail.
-optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_x_assign(HB,Compound,R,Code).
-optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_x_assign(HB,[H|T],R,Code).
-optimize_u_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_x_assign(HB,MeTTa,R,Code).
-%optimize_u_assign_1(_,[Pred| ArgsL], R, x_assign([Pred| ArgsL],R)).
+optimize_x_assign_1(_,Var,_,_):- is_ftVar(Var),!,fail.
+optimize_x_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_x_assign(HB,Compound,R,Code).
+optimize_x_assign_1(HB,[H|T],R,Code):- !, optimize_x_assign(HB,[H|T],R,Code).
+optimize_x_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_x_assign(HB,MeTTa,R,Code).
+%optimize_x_assign_1(_,[Pred| ArgsL], R, x_assign([Pred| ArgsL],R)).
 
 optimize_x_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
 optimize_x_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
@@ -266,6 +269,115 @@ numeric_or_var(N):- \+ compound(N),!,fail.
 numeric_or_var('$VAR'(_)).
 
 get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
+
+replace_x_assign(_,A,A) :- var(A),!.
+replace_x_assign(DontStub,x_assign(A,[F|Args0]),R) :- var(A),atom(F),!,
+   maplist(replace_x_assign(DontStub),Args0,Args1),
+   transpile_prefix(Prefix),
+   atom_concat(Prefix,F,Fp),
+   length(Args0,LArgs),
+   LArgs1 is LArgs+1,
+   append(Args1,[A],Args2),
+   R=..[Fp|Args2],
+   ((current_predicate(Fp/LArgs1);member(Fp/LArgs1,DontStub)) ->
+      true
+   ; check_supporting_predicates('&self',F/LArgs1)).
+replace_x_assign(_,x_assign(A,B),R) :- var(A),!,R=(A=B).
+replace_x_assign(DontStub,x_assign(A,B),R) :- var(B),\+ var(A),!,
+   replace_x_assign(DontStub,x_assign(B,A),R).
+replace_x_assign(DontStub,A,B) :-
+   compound(A),
+   A=..A0,!,
+   maplist(replace_x_assign(DontStub),A0,B0),
+   B=..B0.
+replace_x_assign(_,A,A).
+
+check_supporting_predicates(Space,F/A) :- % already exists
+   %trace,
+   transpile_prefix(Prefix),
+   atom_concat(Prefix,F,Fp),
+   with_mutex(transpiler_mutex_lock,
+      (current_predicate(Fp/A) -> true ;
+         findall(Atom0, (between(1, A, I0) ,Atom0='$VAR'(I0)), AtomList0),
+         H=..[Fp|AtomList0],
+         Am1 is A-1,
+         findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
+         B=..[u_assign,[F|AtomList1],'$VAR'(A)],
+         create_and_consult_temp_file(Space,Fp/A,[H:-B]))).
+
+% Predicate to create a temporary file and write the tabled predicate
+create_and_consult_temp_file(Space,F/A, PredClauses) :-
+  must_det_ll((
+    % Generate a unique temporary memory buffer
+    tmp_file_stream(text, TempFileName, TempFileStream),
+    % Write the tabled predicate to the temporary file
+    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
+    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
+    %if_t( \+ option_value('tabling',false),
+    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
+    maplist(write_clause(TempFileStream), PredClauses),
+    % Close the temporary file
+    close(TempFileStream),
+    % Consult the temporary file
+    % abolish(F/A),
+    /*'&self':*/
+    consult(TempFileName),
+
+    listing(F/A),
+    % Delete the temporary file after consulting
+    %delete_file(TempFileName),
+    asserta(metta_compiled_predicate(Space,F,A)),
+    current_predicate(F/A),
+    listing(metta_compiled_predicate/3),
+    true)).
+
+%metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
+
+% Helper predicate to write a clause to the file
+write_clause(Stream, Clause) :-
+    subst_vars(Clause,Can),
+    write_canonical(Stream, Can),
+    write(Stream, '.'),
+    nl(Stream).
+
+u_assign(FList,R):- is_list(FList),!,eval_args(FList,R).
+u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
+u_assign(FList,R):- FList=@=R,!,FList=R.
+u_assign(FList,R):- number(FList), var(R),!,R=FList.
+u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
+u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
+u_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
+u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
+u_assign(FList,RR):- (compound_non_cons(FList),u_assign_c(FList,RR))*->true;FList=~RR.
+u_assign(FList,RR):-
+  u_assign_list1(FList,RR)*->true;u_assign_list2(FList,RR).
+
+u_assign_list1([F|List],R):- eval_args([F|List],R), nonvar(R), R\=@=[F|List].
+u_assign_list2([F|List],R):- atom(F),append(List,[R],ListR),
+  catch(quietly(apply(F,ListR)),error(existence_error(procedure,F/_),_),
+     catch(quietly(as_tf(apply(F,List),R)),error(existence_error(procedure,F/_),_),
+        quietly(catch(eval_args([F|List],R),_, R=[F|List])))).
+
+%u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(_Eq,V),!,maplist(eval_args,VI,VO).
+
+u_assign_c((F:-List),R):- !, R = (F:-List).
+
+/*
+u_assign_c(Cmp,RR):-
+  functor(Cmp,F,_),
+  current_predicate(F,_),
+  debug(todo,'u_assign_c INTERP: ~q',[Cmp]),!,
+  call(Cmp,RR).*/
+u_assign_c(FList,RR):-
+  functor(FList,F,_), % (F == 'car-atom' -> trace ; true),
+  (catch(quietlY(call(FList,R)),error(existence_error(procedure,F/_),_),
+     catch(quietlY(as_tf(FList,R)),error(existence_error(procedure,F/_),_),
+      ((p2m(FList,[F0|List0]),catch(eval_args([F0|List0],R),_, R=~[F0|List0])))))),!,
+         R=RR.
+u_assign_c(FList,RR):- as_tf(FList,RR),!.
+u_assign_c(FList,R):- compound(FList), !, FList=~R.
+
+quietlY(G):- call(G).
 
 :- discontiguous f2p/4.
 
@@ -1188,45 +1300,6 @@ trace_break:- trace,break.
 :- set_prolog_flag(gc,false).
 :- endif.
 
-x_assign(FList,R):- is_list(FList),!,eval_args(FList,R).
-x_assign(FList,R):- var(FList),nonvar(R), !, x_assign(R,FList).
-x_assign(FList,R):- FList=@=R,!,FList=R.
-x_assign(FList,R):- number(FList), var(R),!,R=FList.
-x_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
-x_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,x_assign(FList,R)).
-x_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
-x_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
-x_assign(FList,RR):- (compound_non_cons(FList),u_assign_c(FList,RR))*->true;FList=~RR.
-x_assign(FList,RR):-
-  u_assign_list1(FList,RR)*->true;u_assign_list2(FList,RR).
-
-u_assign_list1([F|List],R):- eval_args([F|List],R), nonvar(R), R\=@=[F|List].
-u_assign_list2([F|List],R):- atom(F),append(List,[R],ListR),
-  catch(quietly(apply(F,ListR)),error(existence_error(procedure,F/_),_),
-     catch(quietly(as_tf(apply(F,List),R)),error(existence_error(procedure,F/_),_),
-        quietly(catch(eval_args([F|List],R),_, R=[F|List])))).
-
-%x_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(_Eq,V),!,maplist(eval_args,VI,VO).
-
-u_assign_c((F:-List),R):- !, R = (F:-List).
-
-/*
-u_assign_c(Cmp,RR):-
-  functor(Cmp,F,_),
-  current_predicate(F,_),
-  debug(todo,'u_assign_c INTERP: ~q',[Cmp]),!,
-  call(Cmp,RR).*/
-u_assign_c(FList,RR):-
-  functor(FList,F,_), % (F == 'car-atom' -> trace ; true),
-  (catch(quietlY(call(FList,R)),error(existence_error(procedure,F/_),_),
-     catch(quietlY(as_tf(FList,R)),error(existence_error(procedure,F/_),_),
-      ((p2m(FList,[F0|List0]),catch(eval_args([F0|List0],R),_, R=~[F0|List0])))))),!,
-         R=RR.
-u_assign_c(FList,RR):- as_tf(FList,RR),!.
-u_assign_c(FList,R):- compound(FList), !, FList=~R.
-
-quietlY(G):- call(G).
-
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).
 call_fr(G,Result,_):- Result=G.
 
@@ -1407,7 +1480,7 @@ preds_to_functs0((AsPred, Convert), Converted) :-
     \+ not_function(AsPred),
     pred_to_funct(AsPred, AsFunction, Result),
     sub_var(Result, Convert), !,
-    % The function equivalent of AsPred replaces Result in Convert
+    % The function equivalent of AsPred _xs Result in Convert
     subst(Convert, Result, AsFunction, Converting),
     preds_to_functs0(Converting, Converted).
 
@@ -1598,30 +1671,6 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
 
 :- dynamic(needs_tabled/2).
 
-replace_x_assign(A,A,[]) :- var(A),!.
-replace_x_assign(x_assign(A,[F|Args0]),R,Used) :- var(A),atom(F),!,
-   maplist(replace_u_assign,Args0,Args1,Used0),
-   transpile_prefix(Prefix),
-   atom_concat(Prefix,F,Fp),
-   length(Args0,LArgs),
-   LArgs1 is LArgs+1,
-   append(Args1,[A],Args2),
-   R=..[Fp|Args2],
-   ord_union(Used0,Used1),
-   ord_add_element(Used1,F/LArgs1,Used).
-replace_x_assign(x_assign(A,B),R,Used) :- var(A),!,
-   R=(A=B),
-   Used=[].
-replace_x_assign(x_assign(A,B),R,Used) :- var(B),\+ var(A),!,
-   replace_x_assign(x_assign(B,A),R,Used).
-replace_x_assign(A,B,Used) :-
-   compound(A),
-   A=..A0,!,
-   maplist(replace_u_assign,A0,B0,Used0),
-   B=..B0,
-   ord_union(Used0,Used).
-replace_x_assign(A,A,[]).
-
 add_assertion(Space,List):- is_list(List),!,
    maplist(add_assertion(Space),List).
 add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
@@ -1677,18 +1726,6 @@ add_assertion1(Space,ACC) :-
     maplist(check_supporting_predicates(Space),PredicatesCheck)
 )).
 
-check_supporting_predicates(Space,F/A) :- % already exists
-   transpile_prefix(Prefix),
-   atom_concat(Prefix,F,Fp),
-   with_mutex(transpiler_mutex_lock,
-      (current_predicate(Fp/A) -> true ;
-         findall(Atom0, (between(1, A, I0) ,Atom0='$VAR'(I0)), AtomList0),
-         H=..[Fp|AtomList0],
-         Am1 is A-1,
-         findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
-         B=..[u_assign,[F|AtomList1],'$VAR'(A)],
-         create_and_consult_temp_file(Space,Fp/A,[H:-B]))).
-
 cl_list_to_set([A|List],Set):-
   member(B,List),same_clause(A,B),!,
   cl_list_to_set(List,Set).
@@ -1704,41 +1741,6 @@ same_clause1(A,B):- A=@=B.
 same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
 
 %clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
-
-% Predicate to create a temporary file and write the tabled predicate
-create_and_consult_temp_file(Space,F/A, PredClauses) :-
-  must_det_ll((
-    % Generate a unique temporary memory buffer
-    tmp_file_stream(text, TempFileName, TempFileStream),
-    % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
-    %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
-    maplist(write_clause(TempFileStream), PredClauses),
-    % Close the temporary file
-    close(TempFileStream),
-    % Consult the temporary file
-    % abolish(F/A),
-    /*'&self':*/
-    consult(TempFileName),
-
-    listing(F/A),
-    % Delete the temporary file after consulting
-    %delete_file(TempFileName),
-    asserta(metta_compiled_predicate(Space,F,A)),
-    current_predicate(F/A),
-    listing(metta_compiled_predicate/3),
-    true)).
-
-%metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
-
-% Helper predicate to write a clause to the file
-write_clause(Stream, Clause) :-
-    subst_vars(Clause,Can),
-    write_canonical(Stream, Can),
-    write(Stream, '.'),
-    nl(Stream).
 
 same(X,Y):- X =~ Y.
 
