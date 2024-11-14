@@ -1371,6 +1371,15 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
+(@doc include!
+  (@desc "Works just like import!. So everything from input file will be included in the current atomspace and evaluated")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: include! (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
 (@doc bind!
   (@desc "Registers a new token which is replaced with an atom during the parsing of the rest of the program")
   (@params (
@@ -1741,6 +1750,7 @@
   (@return "True if the call succeeds, False otherwise."))
 (: call! (-> Atom Atom))
 
+;; Public MeTTaLog
 (@doc call-p!
   (@desc "See call!")
   (@params (
@@ -1788,3 +1798,47 @@
   (@params (
     (@param "Function")))
   (@return "Arity of Function."))
+
+;; Public MeTTaLog
+(@doc open!
+  (@desc "Opens Filename as a stream under Mode. Mode is one of read, write, append, or update. Mode append opens the file for writing, positioning the file pointer at the end. Mode update opens the file for writing, positioning the file pointer at the beginning of the file without truncating the file.")
+  (@params (
+    (@param "Filename")
+    (@param "Mode")))
+  (@return "Stream"))
+(: open! (-> String Atom Stream))
+
+;; Public MeTTaLog
+(@doc close!
+  (@desc "Closes Steam, returning True on success.")
+  (@params (
+    (@param "Stream")))
+  (@return "Boolean"))
+(: close! (-> Stream Boolean))
+
+;; Public MeTTaLog
+(@doc with-output-to!
+  (@desc "Evaluates expression with all outupt (e.g. from print) redirected to Stream. See also open! and close!.")
+  (@params (
+    (@param "Stream")
+    (@param "Expression")))
+  (@return "Result of Expression"))
+(: with-output-to! (-> Stream Expression Atom))
+
+;; Public MeTTaLog
+(@doc load-file!
+  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-file! (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
+(@doc load-ascii
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-ascii (-> hyperon::space::DynSpace String Expression))
