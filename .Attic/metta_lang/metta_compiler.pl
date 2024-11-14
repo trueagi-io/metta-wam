@@ -208,6 +208,64 @@ optimize_body( HB,x_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
 optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 
+optimize_u_assign_1(_,Var,_,_):- is_ftVar(Var),!,fail.
+optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_x_assign(HB,Compound,R,Code).
+optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_x_assign(HB,[H|T],R,Code).
+optimize_u_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_x_assign(HB,MeTTa,R,Code).
+%optimize_u_assign_1(_,[Pred| ArgsL], R, x_assign([Pred| ArgsL],R)).
+
+optimize_x_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
+optimize_x_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
+optimize_x_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
+optimize_x_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
+optimize_x_assign(_,[+, A, B], C, +(A , B, C)):- !.
+optimize_x_assign(_,[-, A, B], C, +(B , C, A)):- !.
+optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- number_wang(A,B,C), !.
+optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- number_wang(A,B,C), !.
+optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- !.
+optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- !.
+optimize_x_assign(_,[fib, B], C, fib(B, C)):- !.
+optimize_x_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
+optimize_x_assign(_,['pragma!',N,V],Empty,set_option_value_interp(N,V)):-
+   nonvar(N),ignore((fail,Empty='Empty')), !.
+optimize_x_assign((H:-_),Filter,A,filter_head_arg(A,Filter)):- fail, compound(H), arg(_,H,HV),
+  HV==A, is_list(Filter),!.
+optimize_x_assign(_,[+, A, B], C, '#='(C , A + B)):- number_wang(A,B,C), !.
+optimize_x_assign(_,[-, A, B], C, '#='(C , A - B)):- number_wang(A,B,C), !.
+optimize_x_assign(_,[match,KB,Query,Template], R, Code):-  match(KB,Query,Template,R) = Code.
+
+optimize_x_assign(HB,MeTTaEvalP, R, Code):- \+ is_ftVar(MeTTaEvalP),
+  compound_non_cons(MeTTaEvalP), p2s(MeTTaEvalP,MeTTa),
+  MeTTa\=@=MeTTaEvalP,!, optimize_body(HB, x_assign(MeTTa, R), Code).
+
+% optimize_x_assign(_,_,_,_):- !,fail.
+optimize_x_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), atom(Pred), ok_to_append(Pred),
+  append([Pred| ArgsL],[R], PrednArgs),Code=..PrednArgs,
+  (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
+
+number_wang(A,B,C):-
+  (numeric(C);numeric(A);numeric(B)),!,
+  maplist(numeric_or_var,[A,B,C]),
+  maplist(decl_numeric,[A,B,C]),!.
+
+data_term(Convert):- self_eval(Convert),!.
+
+into_equals(RetResultL,RetResult,Equals):- into_x_assign(RetResultL,RetResult,Equals).
+into_x_assign(RetResultL,RetResult,true):- is_ftVar(RetResultL), is_ftVar(RetResult), RetResult=RetResultL,!.
+into_x_assign(RetResultL,RetResult,Code):- var(RetResultL), Code = x_assign(RetResult,RetResultL).
+into_x_assign(RetResultL,RetResult,Code):- Code = x_assign(RetResultL,RetResult).
+
+numeric(N):- number(N),!.
+numeric(N):- get_attr(N,'Number','Number').
+numeric(N):- get_decl_type(N,DT),(DT=='Int',DT=='Number').
+decl_numeric(N):- numeric(N),!.
+decl_numeric(N):- ignore((var(N),put_attr(N,'Number','Number'))).
+numeric_or_var(N):- var(N),!.
+numeric_or_var(N):- numeric(N),!.
+numeric_or_var(N):- \+ compound(N),!,fail.
+numeric_or_var('$VAR'(_)).
+
+get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
 
 :- discontiguous f2p/4.
 
@@ -221,6 +279,10 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     % wdmsg(data_term(Convert)),
     %trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
+
+% The catch-all If no specific case is matched, consider Convert as already converted.
+f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):-!.
+f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
 
 end_of_file.
 
@@ -516,59 +578,7 @@ metta_predicate(match(space,matchable,template,eachvar)).
 ok_to_append('$VAR'):- !, fail.
 ok_to_append(_).
 
-number_wang(A,B,C):-
-  (numeric(C);numeric(A);numeric(B)),!,
-  maplist(numeric_or_var,[A,B,C]),
-  maplist(decl_numeric,[A,B,C]),!.
-
-optimize_u_assign_1(_,Var,_,_):- is_ftVar(Var),!,fail.
-optimize_u_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_x_assign(HB,Compound,R,Code).
-optimize_u_assign_1(HB,[H|T],R,Code):- !, optimize_x_assign(HB,[H|T],R,Code).
-optimize_u_assign_1(HB,Compound,R,Code):- p2s(Compound,MeTTa),   optimize_x_assign(HB,MeTTa,R,Code).
-%optimize_u_assign_1(_,[Pred| ArgsL], R, x_assign([Pred| ArgsL],R)).
-
-optimize_x_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
-optimize_x_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
-optimize_x_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[+, A, B], C, +(A , B, C)):- !.
-optimize_x_assign(_,[-, A, B], C, +(B , C, A)):- !.
-optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- number_wang(A,B,C), !.
-optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- !.
-optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- !.
-optimize_x_assign(_,[fib, B], C, fib(B, C)):- !.
-optimize_x_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
-optimize_x_assign(_,['pragma!',N,V],Empty,set_option_value_interp(N,V)):-
-   nonvar(N),ignore((fail,Empty='Empty')), !.
-optimize_x_assign((H:-_),Filter,A,filter_head_arg(A,Filter)):- fail, compound(H), arg(_,H,HV),
-  HV==A, is_list(Filter),!.
-optimize_x_assign(_,[+, A, B], C, '#='(C , A + B)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[-, A, B], C, '#='(C , A - B)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[match,KB,Query,Template], R, Code):-  match(KB,Query,Template,R) = Code.
-
-optimize_x_assign(HB,MeTTaEvalP, R, Code):- \+ is_ftVar(MeTTaEvalP),
-  compound_non_cons(MeTTaEvalP), p2s(MeTTaEvalP,MeTTa),
-  MeTTa\=@=MeTTaEvalP,!, optimize_body(HB, x_assign(MeTTa, R), Code).
-
-% optimize_x_assign(_,_,_,_):- !,fail.
-optimize_x_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), atom(Pred), ok_to_append(Pred),
-  append([Pred| ArgsL],[R], PrednArgs),Code=..PrednArgs,
-  (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
-
 p2s(P,S):- into_list_args(P,S).
-
-get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
-
-numeric(N):- number(N),!.
-numeric(N):- get_attr(N,'Number','Number').
-numeric(N):- get_decl_type(N,DT),(DT=='Int',DT=='Number').
-decl_numeric(N):- numeric(N),!.
-decl_numeric(N):- ignore((var(N),put_attr(N,'Number','Number'))).
-numeric_or_var(N):- var(N),!.
-numeric_or_var(N):- numeric(N),!.
-numeric_or_var(N):- \+ compound(N),!,fail.
-numeric_or_var('$VAR'(_)).
 
 non_compound(S):- \+ compound(S).
 
@@ -1088,10 +1098,6 @@ f2p(_HeadIs,RetResult, Convert, Converted) :- Convert =(H:-B),!,
 f2p(_HeadIs,_RetResult, N=V, Code) :- !, into_equals(N,V,Code).
 
 
-into_equals(RetResultL,RetResult,Equals):- into_x_assign(RetResultL,RetResult,Equals).
-into_x_assign(RetResultL,RetResult,true):- is_ftVar(RetResultL), is_ftVar(RetResult), RetResult=RetResultL,!.
-into_x_assign(RetResultL,RetResult,Code):- var(RetResultL), Code = x_assign(RetResult,RetResultL).
-into_x_assign(RetResultL,RetResult,Code):- Code = x_assign(RetResultL,RetResult).
 
 
 
@@ -1166,13 +1172,6 @@ convert_argument(Arg, ConvertedArg) :-
     (callable(Arg) -> ftp(_, _, Arg, ConvertedArg); ConvertedArg = Arg).
 */
 
-% The catch-all If no specific case is matched, consider Convert as already converted.
-f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):-!.
-f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
-
-
-
-data_term(Convert):- self_eval(Convert),!.
 
 
 de_eval(eval(X),X):- compound(X),!.
