@@ -104,7 +104,8 @@ start([stdio]) :- !,
     debug_lsp(main, "Starting stdio client", []),
     stdio_server.
 start(Args) :-
-    debug_lsp(main, "Unknown args ~w", [Args]).
+    debug_lsp(main, "Unknown args ~w", [Args]),
+    stdio_server.
 
 :- dynamic(lsp_hooks:is_lsp_output_stream/1).
 :- volatile(lsp_hooks:is_lsp_output_stream/1).
@@ -124,7 +125,7 @@ stdio_server :-
     %stdio_handler_io(In, Out). %(might use this one later)
     asserta(lsp_hooks:is_lsp_output_stream(Out)),
     stream_property(StdErr,file_no(2)),
-    set_system_IO(In,Out,StdErr), % ensure we are talking over stdin/stdout
+    set_system_IO(In, Out, StdErr), % ensure we are talking over stdin/stdout
     set_prolog_IO(In,StdErr,StdErr), % redirect **accidental** writes to stdout to stderr instead
     stdio_handler(In, Out).
 

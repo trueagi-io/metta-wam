@@ -1,17 +1,4 @@
-﻿nop_mod_lsp_metta_hover
-:- module(lsp_metta_hover,
-           [metta_called_at/4,
-            metta_defined_at/4,
-            defined_at/4,
-            matta_name_callable/2,
-            metta_relative_ref_location/4
-            %help_at_position/4,
-            %clause_in_file_at_position/3,
-            %clause_variable_positions/3,
-            %seek_to_line/2,
-            %linechar_offset/3
-           ]).
-/** <module> LSP Utils
+﻿/** <module> LSP Utils
 
 Module with a bunch of helper predicates for looking through prolog
 source and stuff.
@@ -21,7 +8,7 @@ source and stuff.
 @author Douglas Miles
 
 */
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
 
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
