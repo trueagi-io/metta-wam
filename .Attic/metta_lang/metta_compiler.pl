@@ -214,11 +214,13 @@ optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 f2p(_HeadIs,Convert, Convert, true) :-
      (is_ftVar(Convert);number(Convert)),!.% Check if Convert is a variable
 
-% If Convert is a variable, the corresponding predicate is just eval_args(Convert, RetResult)
-f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
-     is_ftVar(Convert),!,% Check if Convert is a variable
-     into_equals(RetResult,Convert,RetResultConverted).
-    % Converted = eval_args(Convert, RetResult).  % Set Converted to eval_args(Convert, RetResult)
+% If Convert is a number or an atom, it is considered as already converted.
+f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
+    once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
+    % For OVER-REACHING categorization of dataobjs %
+    % wdmsg(data_term(Convert)),
+    %trace_break,
+    !.  % Set RetResult to Convert as it is already in predicate form
 
 end_of_file.
 
@@ -1013,6 +1015,12 @@ f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
      is_ftVar(Convert),!,% Check if Convert is a variable
      into_equals(RetResult,Convert,RetResultConverted).
     % Converted = eval_args(Convert, RetResult).  % Set Converted to eval_args(Convert, RetResult)
+
+% If Convert is a variable, the corresponding predicate is just eval_args(Convert, RetResult)
+f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
+     is_ftVar(Convert),!,% Check if Convert is a variable
+     into_equals(RetResult,Convert,RetResultConverted).
+    % Converted = eval_args(Convert, RetResult).  % Set Converted to eval_args(Convert, RetResult)
 f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
      number(Convert),!,into_equals(RetResult,Convert,RetResultConverted).
 
@@ -1049,13 +1057,7 @@ f2p(HeadIs,RetResult,Convert, Converted) :-
         do_predicate_function_canonical(FP,F),
         compound_name_list(Converted,FP,[RetResult]))).
 
-% If Convert is a number or an atom, it is considered as already converted.
-f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
-    % For OVER-REACHING categorization of dataobjs %
-    % wdmsg(data_term(Convert)),
-    %trace_break,
-    !.  % Set RetResult to Convert as it is already in predicate form
+% PLACEHOLDER
 
 % If Convert is an "is" function, we convert it to the equivalent "is" predicate.
 f2p(HeadIs,RetResult,is(Convert),(Converted,is(RetResult,Result))):- !,
