@@ -162,6 +162,35 @@ compile_for_exec1(AsBodyFn, Converted) :-
    %trace,
    replace_x_assign([],NextBodyB,NextBodyC).
 
+% --------------------------------
+%    FUNCTS_TO_PREDS EXPLANATION
+% --------------------------------
+
+% functs_to_preds is a predicate that converts all Term functions to their equivalent predicates.
+% It takes three arguments - RetResult, which will hold the result of the function evaluation,
+% Convert, which is the function that needs to be converted, and Converted, which will hold the equivalent predicate.
+% Example:
+%
+%     ?- functs_to_preds(RetResult, is(pi+pi), Converted).
+%
+%     Converted =  (pi(_A),
+%                   +(_A, _A, _B),
+%                   _C is _B,
+%                   eval_args(_C, RetResult)).
+%
+functs_to_preds(I,OO):-
+   must_det_ll(functs_to_preds0(I,OO)),!.
+
+functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
+functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
+
+functs_to_preds0(I,OO):-
+   sexpr_s2p(I, M),
+   f2p(_,_,M,O),
+   expand_to_hb(O,H,B),
+   head_preconds_into_body(H,B,HH,BB),!,
+   OO = ':-'(HH,BB).
+
 optimize_head_and_body(Head,Body,HeadNewest,BodyNewest):-
    label_body_singles(Head,Body),
    color_g_mesg('#404064',print_pl_source(( Head :- Body))),
@@ -303,7 +332,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
          Am1 is A-1,
          findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
          B=..[u_assign,[F|AtomList1],'$VAR'(A)],
-         create_and_consult_temp_file(Space,Fp/A,[H:-B]))).
+         create_and_consult_temp_file(Space,Fp/A,[H:-(format("######### stub:~w\n",[F]),B)]))).
 
 % Predicate to create a temporary file and write the tabled predicate
 create_and_consult_temp_file(Space,F/A, PredClauses) :-
@@ -396,7 +425,211 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
 f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):-!.
 f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
 
+f2p(HeadIs,_RetResult,Convert,_Code):-
+   format("Error in f2p ~w ~w\n",[HeadIs,Convert]),
+   throw(0).
+
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
+   format("compile_for_assert: ~w ~w\n",[HeadIs, AsBodyFn]),
+   %trace,
+   AsFunction = HeadIs,
+   must_det_ll((
+   Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
+   /*funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),*/
+   f2p(HeadIs,HResult,AsFunction,HHead),
+   (var(HResult) -> (Result = HResult, HHead = Head) ;
+      funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
+   %verbose_unify(Converted),
+   f2p(HeadIs,Result,AsBodyFn,NextBody),
+   %RetResult = Converted,
+   %RetResult = _,
+   optimize_head_and_body(Head,NextBody,HeadC,NextBodyB),
+   replace_x_assign([],NextBodyB,NextBodyC),
+   %fbug([convert(Convert),head_preconds_into_body(HeadC:-NextBodyC)]),
+   %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
+   nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+
+unnumbervars_clause(Cl,ClU):-
+  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
+% ===============================
+%  Compile in memory buffer
+% ===============================
+is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
+  expand_to_hb(UAC,H,B),
+  H=..[Fh|Args],
+  transpile_prefix(Prefix),
+  atom_concat(Prefix,Fh,FPrefixed),
+  H2=..[FPrefixed|Args],
+  clause(H2,B,Ref),clause(HH,BB,Ref),
+  strip_m(HH,HHH),HHH=@=H2,
+  strip_m(BB,BBB),BBB=@=B,!.
+
+%get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
+
+
+% :- dynamic(needs_tabled/2).
+
+add_assertion(Space,List):- is_list(List),!,
+   maplist(add_assertion(Space),List).
+add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
+%add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
+
+add_assertion1(Space,ACC) :-
+   %leash(-all),trace,
+   must_det_ll((
+     % add the prefix
+      (ACC = (ACCH :- ACCB),ACCH=..[ACCf|ACCa] ->
+         transpile_prefix(Prefix),
+         atom_concat(Prefix,ACCf,ACCfp),
+         ACCH2=..[ACCfp|ACCa],
+         ACC2=(ACCH2 :- ACCB)
+      ;
+         ACC2=ACC),
+     copy_term(ACC2,AC,_),
+     expand_to_hb(AC,H,_),
+     as_functor_args(H,F,A), as_functor_args(HH,F,A),
+    with_mutex(transpiler_mutex_lock,(
+      % assert(AC),
+      % Get the current clauses of my_predicate/1
+      findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
+      copy_term(Prev,CPrev,_),
+      % Create a temporary file and add the new assertion along with existing clauses
+      append(CPrev,[AC],NewList),
+      cl_list_to_set(NewList,Set),
+      length(Set,N),
+      if_t(N=2,
+         (Set=[X,Y],
+            numbervars(X),
+            numbervars(Y),
+         nl,display(X),
+         nl,display(Y),
+         nl)),
+      %wdmsg(list_to_set(F/A,N)),
+      abolish(/*'&self':*/F/A),
+      create_and_consult_temp_file(Space,F/A, Set)
+    ))
+)).
+
+as_functor_args(AsPred,F,A):- as_functor_args(AsPred,F,A,_ArgsL),!.
+
+as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
+  (is_list(ArgsL);(integer(A),A>=0)),!,
+   length(ArgsL,A),
+   (symbol(F)->
+      AsPred =..[F|ArgsL]
+   ;
+      (AsPred = [F|ArgsL])).
+
+%as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
+as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
+  AsPred=..List,!, as_functor_args(List,F,A,ArgsL),!.
+%as_functor_args([Eq,R,Stuff],F,A,ArgsL):- (Eq == '='),
+%   into_list_args(Stuff,List),append(List,[R],AsPred),!,
+%   as_functor_args(AsPred,F,A,ArgsL).
+as_functor_args([F|ArgsL],F,A,ArgsL):-  length(ArgsL,A),!.
+
+cl_list_to_set([A|List],Set):-
+  member(B,List),same_clause(A,B),!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([New|List],[New|Set]):-!,
+  cl_list_to_set(List,Set).
+cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
+cl_list_to_set(List,Set):- list_to_set(List,Set).
+
+same_clause(A,B):- A==B,!.
+same_clause(A,B):- A=@=B,!.
+same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
+same_clause1(A,B):- A=@=B.
+same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
+
+%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
+
 end_of_file.
+
+compile_head_variablization(Head, NewHead, HeadCode) :-
+   must_det_ll((
+      as_functor_args(Head,Functor,A,Args),
+      % Find non-singleton variables in Args
+      fix_non_singletons(Args, NewArgs, Conditions),
+      list_to_conjunction(Conditions,HeadCode),
+      as_functor_args(NewHead,Functor,A,NewArgs))).
+
+fix_non_singletons(Args, NewArgs, [Code|Conditions]) :-
+   sub_term_loc(Var, Args, Loc1), is_ftVar(Var),
+   sub_term_loc_replaced(==(Var), _Var2, Args, Loc2, ReplVar2, NewArgsM),
+   Loc1 \=@= Loc2,
+   Code = same(ReplVar2,Var),
+fix_non_singletons(NewArgsM, NewArgs, Conditions).
+fix_non_singletons(Args, Args, []):-!.
+
+
+sub_term_loc(A,A,self).
+sub_term_loc(E,Args,e(N,nth1)+Loc):- is_list(Args),!, nth1(N,Args,ST),sub_term_loc(E,ST,Loc).
+sub_term_loc(E,Args,e(N,arg)+Loc):- compound(Args),arg(N,Args,ST),sub_term_loc(E,ST,Loc).
+
+sub_term_loc_replaced(P1,E,Args,LOC,Var,NewArgs):- is_list(Args), !, sub_term_loc_l(nth1,P1,E,Args,LOC,Var,NewArgs).
+sub_term_loc_replaced(P1,E,FArgs,LOC,Var,NewFArgs):- compound(FArgs), \+ is_ftVar(FArgs),!,
+   compound_name_arguments(FArgs, Name, Args),
+   sub_term_loc_l(arg,P1,E,Args,LOC,Var,NewArgs),
+   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.
+   sub_term_loc_replaced(P1,A,A,self,Var,Var):- call(P1,A).
+
+
+sub_term_loc_l(Nth,P1,E,Args,e(N,Nth)+Loc,Var,NewArgs):-
+   reverse(Args,RevArgs),
+   append(Left,[ST|Right],RevArgs),
+   sub_term_loc_replaced(P1,E,ST,Loc,Var,ReplaceST),
+   append(Left,[ReplaceST|Right],RevNewArgs),
+   reverse(RevNewArgs,NewArgs),
+   length([_|Right], N).
+
+% Convert a list of conditions into a conjunction
+list_to_conjunction([], true).
+list_to_conjunction([Cond], Cond).
+list_to_conjunction([H|T], (H, RestConj)) :-
+   list_to_conjunction(T, RestConj).
+
+/*
+as_functor_args(AsPred,F,A,ArgsL):-    nonvar(AsPred),!,into_list_args(AsPred,[F|ArgsL]),    length(ArgsL,A).
+as_functor_args(AsPred,F,A,ArgsL):-
+   nonvar(F),length(ArgsL,A),AsPred = [F|ArgsL].
+*/
+
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
+
+% If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
+compile_for_assert(Head, AsBodyFn, Converted) :-
+   once(compile_head_variablization(Head, HeadC, CodeForHeadArgs)),
+   \+(atomic(CodeForHeadArgs)), !,
+   compile_for_assert(HeadC,
+      (CodeForHeadArgs,AsBodyFn), Converted).
+
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- is_ftVar(AsBodyFn), /*trace,*/
+   AsFunction = HeadIs,!,
+   must_det_ll((
+   Converted = (HeadC :- BodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
+   %funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
+   f2p(HeadIs,HResult,AsFunction,HHead),
+   (var(HResult) -> (Result = HResult, HHead = Head) ;
+      funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
+   NextBody = x_assign(AsBodyFn,Result),
+   optimize_head_and_body(Head,NextBody,HeadC,BodyC),
+   nop(ignore(Result = '$VAR'('HeadRes'))))),!.
+
+% PLACEHOLDER
+
+
+% If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
+   AsFunction = HeadIs, Converted = (HeadCC :- BodyCC),
+   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
+   compile_head_args(Head,HeadC,CodeForHeadArgs),
+   f2p(HeadIs,Result,AsBodyFn,NextBody),
+   combine_code(CodeForHeadArgs,NextBody,BodyC),!,
+   optimize_head_and_body(HeadC,BodyC,HeadCC,BodyCC),!.
+
+
 
 % ===============================
 %       COMPILER / OPTIMIZER
@@ -497,35 +730,6 @@ functional_predicate_arg_maybe(F, AA, Nth):- functional_predicate_arg(F, AA, Nth
 functional_predicate_arg_maybe(F, AA, _):- A is AA - 1,functional_predicate_arg(F,A,_),!,fail.
 functional_predicate_arg_maybe(F, Nth, Nth):- asserta(decl_functional_predicate_arg(F, Nth, Nth)),!.
 
-% --------------------------------
-%    FUNCTS_TO_PREDS EXPLANATION
-% --------------------------------
-
-% functs_to_preds is a predicate that converts all Term functions to their equivalent predicates.
-% It takes three arguments - RetResult, which will hold the result of the function evaluation,
-% Convert, which is the function that needs to be converted, and Converted, which will hold the equivalent predicate.
-% Example:
-%
-%     ?- functs_to_preds(RetResult, is(pi+pi), Converted).
-%
-%     Converted =  (pi(_A),
-%                   +(_A, _A, _B),
-%                   _C is _B,
-%                   eval_args(_C, RetResult)).
-%
-functs_to_preds(I,OO):-
-   must_det_ll(functs_to_preds0(I,OO)),!.
-
-functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
-functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
-
-functs_to_preds0(I,OO):-
-   sexpr_s2p(I, M),
-   f2p(_,_,M,O),
-   expand_to_hb(O,H,B),
-   head_preconds_into_body(H,B,HH,BB),!,
-   OO = ':-'(HH,BB).
-
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
 compile_head_for_assert(HeadIs, (Head:-Body)):-
@@ -555,82 +759,18 @@ compile_head_args(Head, NewHead, HeadCode) :-
 
 
 
-compile_head_variablization(Head, NewHead, HeadCode) :-
-   must_det_ll((
-      as_functor_args(Head,Functor,A,Args),
-      % Find non-singleton variables in Args
-      fix_non_singletons(Args, NewArgs, Conditions),
-      list_to_conjunction(Conditions,HeadCode),
-      as_functor_args(NewHead,Functor,A,NewArgs))).
-
-fix_non_singletons(Args, NewArgs, [Code|Conditions]) :-
-   sub_term_loc(Var, Args, Loc1), is_ftVar(Var),
-   sub_term_loc_replaced(==(Var), _Var2, Args, Loc2, ReplVar2, NewArgsM),
-   Loc1 \=@= Loc2,
-   Code = same(ReplVar2,Var),
-fix_non_singletons(NewArgsM, NewArgs, Conditions).
-fix_non_singletons(Args, Args, []):-!.
 
 
-sub_term_loc(A,A,self).
-sub_term_loc(E,Args,e(N,nth1)+Loc):- is_list(Args),!, nth1(N,Args,ST),sub_term_loc(E,ST,Loc).
-sub_term_loc(E,Args,e(N,arg)+Loc):- compound(Args),arg(N,Args,ST),sub_term_loc(E,ST,Loc).
-
-sub_term_loc_replaced(P1,E,Args,LOC,Var,NewArgs):- is_list(Args), !, sub_term_loc_l(nth1,P1,E,Args,LOC,Var,NewArgs).
-sub_term_loc_replaced(P1,E,FArgs,LOC,Var,NewFArgs):- compound(FArgs), \+ is_ftVar(FArgs),!,
-   compound_name_arguments(FArgs, Name, Args),
-   sub_term_loc_l(arg,P1,E,Args,LOC,Var,NewArgs),
-   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.
-   sub_term_loc_replaced(P1,A,A,self,Var,Var):- call(P1,A).
-
-
-sub_term_loc_l(Nth,P1,E,Args,e(N,Nth)+Loc,Var,NewArgs):-
-   reverse(Args,RevArgs),
-   append(Left,[ST|Right],RevArgs),
-   sub_term_loc_replaced(P1,E,ST,Loc,Var,ReplaceST),
-   append(Left,[ReplaceST|Right],RevNewArgs),
-   reverse(RevNewArgs,NewArgs),
-   length([_|Right], N).
-
-
-% Convert a list of conditions into a conjunction
-list_to_conjunction([], true).
-list_to_conjunction([Cond], Cond).
-list_to_conjunction([H|T], (H, RestConj)) :-
-   list_to_conjunction(T, RestConj).
 
 
 :- op(700,xfx,'=~').
 
 
-as_functor_args(AsPred,F,A):- as_functor_args(AsPred,F,A,_ArgsL),!.
 
-as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
-  (is_list(ArgsL);(integer(A),A>=0)),!,
-   length(ArgsL,A),
-   (symbol(F)->
-      AsPred =..[F|ArgsL]
-   ;
-      (AsPred = [F|ArgsL])).
-
-%as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
-as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
-  AsPred=..List,!, as_functor_args(List,F,A,ArgsL),!.
-%as_functor_args([Eq,R,Stuff],F,A,ArgsL):- (Eq == '='),
-%   into_list_args(Stuff,List),append(List,[R],AsPred),!,
-%   as_functor_args(AsPred,F,A,ArgsL).
-as_functor_args([F|ArgsL],F,A,ArgsL):-  length(ArgsL,A),!.
-
-/*
-as_functor_args(AsPred,F,A,ArgsL):-    nonvar(AsPred),!,into_list_args(AsPred,[F|ArgsL]),    length(ArgsL,A).
-as_functor_args(AsPred,F,A,ArgsL):-
-   nonvar(F),length(ArgsL,A),AsPred = [F|ArgsL].
-*/
-
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,(AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
+compile_for_assert(HeadIs, AsBodyFn, Converted) :- (AsBodyFn =@= HeadIs ; AsBodyFn == []), !,/*trace,*/  compile_head_for_assert(HeadIs,Converted).
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_for_assert(Head, AsBodyFn, Converted) :- fail,
+compile_for_assert(Head, AsBodyFn, Converted) :-
    once(compile_head_variablization(Head, HeadC, CodeForHeadArgs)),
    \+(atomic(CodeForHeadArgs)), !,
    compile_for_assert(HeadC,
@@ -668,7 +808,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 % If Convert is of the form (AsFunction=AsBodyFn), we perform conversion to obtain the equivalent predicate.
-compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    AsFunction = HeadIs, Converted = (HeadCC :- BodyCC),
    funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head),
    compile_head_args(Head,HeadC,CodeForHeadArgs),
@@ -1650,97 +1790,6 @@ compile_for_assert_eq(_Eq,H,B,Result):-
   compile_for_assert(H,B,Result), !.
 
 :- dynamic(metta_compiled_predicate/3).
-
-unnumbervars_clause(Cl,ClU):-
-  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
-% ===============================
-%  Compile in memory buffer
-% ===============================
-is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
-  expand_to_hb(UAC,H,B),
-  H=..[Fh|Args],
-  transpile_prefix(Prefix),
-  atom_concat(Prefix,Fh,FPrefixed),
-  H2=..[FPrefixed|Args],
-  clause(H2,B,Ref),clause(HH,BB,Ref),
-  strip_m(HH,HHH),HHH=@=H2,
-  strip_m(BB,BBB),BBB=@=B,!.
-
-%get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
-
-
-:- dynamic(needs_tabled/2).
-
-add_assertion(Space,List):- is_list(List),!,
-   maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
-add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
-%add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
-
-add_assertion1(Space,ACC) :-
-   %leash(-all),trace,
-   must_det_ll((
-     % add the prefix
-      (ACC = (ACCH :- ACCB),ACCH=..[ACCf|ACCa] ->
-         transpile_prefix(Prefix),
-         atom_concat(Prefix,ACCf,ACCfp),
-         ACCH2=..[ACCfp|ACCa],
-         format("0:~w\n",[ACCB]),
-         replace_x_assign(ACCB,ACCBr,PredicatesUsed),
-         format("1:~w\n",[ACCBr]),
-         length(ACCa,L),
-         PredicatesDefined=[ACCf/L],
-         %ACC2=(ACCH2 :- ACCBr)
-         ACC2=(ACCH2 :- (write('################################################################# '),writeln(ACCf),ACCBr))
-      ;
-         ACC2=ACC,
-         PredicatesUsed=[],
-         PredicatesDefined=[]),
-     ord_subtract(PredicatesUsed,PredicatesDefined,PredicatesCheck),
-     format("~w",[PredicatesCheck]),
-     copy_term(ACC2,AC,_),
-     expand_to_hb(AC,H,_),
-     as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    with_mutex(transpiler_mutex_lock,(
-      %format("H:~w F:~w A:~w HH:~w\n", [H,F,A,HH]),
-      %format("AC:~w\n", [AC]),
-      % assert(AC),
-      % Get the current clauses of my_predicate/1
-      findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
-      copy_term(Prev,CPrev,_),
-      % Create a temporary file and add the new assertion along with existing clauses
-      append(CPrev,[AC],NewList),
-      cl_list_to_set(NewList,Set),
-      length(Set,N),
-      if_t(N=2,
-         (Set=[X,Y],
-            numbervars(X),
-            numbervars(Y),
-         nl,display(X),
-         nl,display(Y),
-         nl)),
-      %wdmsg(list_to_set(F/A,N)),
-      abolish(/*'&self':*/F/A),
-      create_and_consult_temp_file(Space,F/A, Set)
-    )),
-    maplist(check_supporting_predicates(Space),PredicatesCheck)
-)).
-
-cl_list_to_set([A|List],Set):-
-  member(B,List),same_clause(A,B),!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([New|List],[New|Set]):-!,
-  cl_list_to_set(List,Set).
-cl_list_to_set([A,B],[A]):- same_clause(A,B),!.
-cl_list_to_set(List,Set):- list_to_set(List,Set).
-
-same_clause(A,B):- A==B,!.
-same_clause(A,B):- A=@=B,!.
-same_clause(A,B):- unnumbervars_clause(A,AA),unnumbervars_clause(B,BB),same_clause1(AA,BB).
-same_clause1(A,B):- A=@=B.
-same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH,!.
-
-%clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
 
 same(X,Y):- X =~ Y.
 
