@@ -1859,3 +1859,29 @@
     (@param "Filename")))
   (@return "Expression"))
 (: save-space! (-> hyperon::space::DynSpace String Expression))
+
+;; MeTTaLog Debugging
+(@doc rtrace!
+  (@desc "Fully evaluates input Atom, providing a complete trace of the evaluation.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rtrace! (-> Atom Atom))
+
+;; Public MeTTaLog
+
+(@doc rust
+  (@desc "Interface with the rust / Hyperon MeTTa implementation. Enters Atom into rust atomspace. If Atom is evaluated (i.e. by being of the form !<atom>), returns the result of evaluation. See also rust!.")
+  (@params (
+    (@param "Atom to be entered into the space")))
+  (@return "Result of entering Atom into the space"))
+(: rust (-> Atom Atom))
+
+;; Public MeTTaLog
+
+(@doc rust!
+  (@desc "Like rust but evaluates the atom rather than entering into the space. (rust! <atom>) and (rust !<atom>) are identical.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rust! (-> Atom Atom))
