@@ -11,5 +11,5 @@
 ; just Tom and Bob are returned
 
 ; ! ((brother $x) is the brother of $x)
-; notready
+; ready works
 !(assertEqualToResult ( (brother $x) is the brother of $x )  (( Bob is the brother of Sam) (Tom is the brother of Mike )  ) ) 

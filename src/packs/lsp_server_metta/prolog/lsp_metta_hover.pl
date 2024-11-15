@@ -431,7 +431,7 @@ very_nested_src([_, _ | Src]):- is_list(Src),
 
 maybe_link_xref(What):-
   ignore(once((
-   metta_file_buffer(0, _Ord, _Kind, Atom, _, Path, Pos),
+   user:metta_file_buffer(0, _Ord, _Kind, Atom, _, Path, Pos),
    %symbolic(Path), \+ symbol_contains(Path, 'stdlib_mettalog'),
    once((alpha_unify(What, Atom); \+ (What \= Atom))),
    %next_clause(Ref, metta_file_buffer(0, _Ord, _Kind, _, _, Path, Pos)),

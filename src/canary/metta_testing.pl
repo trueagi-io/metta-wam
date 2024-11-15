@@ -6,8 +6,8 @@
 */
 %:- encoding(iso_latin_1).
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: provides a framework for executing, tracking, and logging Prolog 
+%*********************************************************************************************
+% PROGRAM FUNCTION: provides a framework for executing, tracking, and logging Prolog
 % unit tests with structured reporting and ANSI-formatted output for readability.
 %*********************************************************************************************
 
@@ -413,7 +413,7 @@ write_pass_fail([P, C, _], PASS_FAIL, G) :-
 %!  write_pass_fail(+TestName, +Source, +Category, +Status, +GoalArg1, +GoalArg2) is det.
 %
 %   Formats and appends test results to a shared log file, including metadata like
-%   source, category, status, and duration. It generates a detailed, linkable log entry 
+%   source, category, status, and duration. It generates a detailed, linkable log entry
 %   for each test, facilitating comprehensive result tracking and HTML output per test.
 %
 %   @arg TestName  The name of the test being logged.
@@ -490,7 +490,7 @@ output_directory(OUTPUT_DIR) :- getenv('OUTPUT_DIR', OUTPUT_DIR), !.
 %     Units = '/path/to/SHARED.UNITS'.
 shared_units(UNITS) :-
     % Needs not to be relative to CWD
-    getenv('SHARED_UNITS', UNITS), !.  
+    getenv('SHARED_UNITS', UNITS), !.
 shared_units(UNITS) :-
     output_directory(OUTPUT_DIR),  !,
     directory_file_path(OUTPUT_DIR, 'SHARED.UNITS', UNITS).
@@ -622,7 +622,7 @@ tst_cwdl(Goal, MaxDepth) :-
 %     % Handle a successful result without exceeding the limit:
 %     ?- cwdl_handle_result(success, 5).
 %     true.
-cwdl_handle_result(depth_limit_exceeded, MaxDepth) :- 
+cwdl_handle_result(depth_limit_exceeded, MaxDepth) :-
     % If depth limit is exceeded, throw an exception with max depth details.
     !,
     throw(over_test_resource_limit(depth_limit, MaxDepth, 1)).
@@ -672,7 +672,7 @@ tst_cwil(Goal, MaxInference) :-
 %     % Handle a result within inference limits:
 %     ?- cwil_handle_result(success, 5).
 %     true.
-cwil_handle_result(inference_limit_exceeded, MaxInference) :- 
+cwil_handle_result(inference_limit_exceeded, MaxInference) :-
     % If inference limit is exceeded, throw an exception with max inference details.
     !,
     throw(over_test_resource_limit(inference_limit, MaxInference, 1)).
@@ -713,18 +713,18 @@ tst_cwtl(Goal, TimeLimit) :-
 %     % Run the alarm test:
 %     ?- test_alarm.
 %     % Output depends on whether the time limit is exceeded.
-test_alarm :- 
+test_alarm :-
     !.
-test_alarm :- 
+test_alarm :-
     % Set time limit and attempt goal within 0.5 seconds.
     time(catch(
         % Run goal with time limit; fail if it exceeds limit.
-        (call_with_time_limit(0.5, 
-            (forall(between(1, 15, _), sleep(0.1)), 
-            wdmsg(failed_test_alarm)))),
+        (call_with_time_limit(0.5,
+            (forall(between(1, 15, _), sleep(0.1)),
+            write_src_uo(failed_test_alarm)))),
         % If limit is exceeded, catch exception and display "passed."
         time_limit_exceeded,
-        wdmsg(passed_test_alarm)
+        write_src_uo(passed_test_alarm)
     )).
 
 %!  loonit_divisor(-TestNumber) is det.
@@ -740,8 +740,8 @@ test_alarm :-
 %     Divisor = 1.
 loonit_divisor(TestNumber) :-
     % Get current test number or default to 1 if unset.
-    loonit_number(TN), 
-    (TN > 0 -> TestNumber = TN ; TestNumber = 1), 
+    loonit_number(TN),
+    (TN > 0 -> TestNumber = TN ; TestNumber = 1),
     !.
 
 %! compute_available_time(-ActualTimeout) is det.
@@ -796,7 +796,7 @@ compute_available_time(ActualTimeout) :-
 %    false.
 %
 tst_call_limited(Goal) :-
-    % notrace(wdmsg(tst_call_limited(Goal))),
+    % notrace(write_src_uo(tst_call_limited(Goal))),
     compute_available_time(ActualTimeout),
     catch(
         % Apply the time limit, depth limit, inference limit
@@ -817,12 +817,12 @@ tst_call_limited(Goal) :-
 %   @example
 %     % Run an assertion and handle pass/fail logging:
 %     ?- loonit_asserts1('source', true, writeln('Goal executed successfully')).
-loonit_asserts1(TestSrc, Pre, G) :- 
+loonit_asserts1(TestSrc, Pre, G) :-
     % Run precondition and record duration of Goal execution.
     _ = nop(Pre),
     record_call_duration((G)),
     % Log as passed if Goal succeeds.
-    give_pass_credit(TestSrc, Pre, G), 
+    give_pass_credit(TestSrc, Pre, G),
     !.
 /*
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
@@ -859,9 +859,9 @@ loonit_asserts1(TestSrc, Pre, G) :-
 %   @example
 %     % Generate a loonit report:
 %     ?- loonit_report.
-loonit_report :- 
+loonit_report :-
     % Skip if report already generated in this session.
-    gave_loonit_report, 
+    gave_loonit_report,
     !.
 loonit_report :-
     % Mark the report as generated.
@@ -888,7 +888,7 @@ loonit_report :-
 %   @example
 %     % Display the report with specified counts:
 %     ?- loonit_report(5, 2).
-loonit_report(0, 0) :- 
+loonit_report(0, 0) :-
     !. % Skip report if no successes or failures.
 loonit_report(Successes, Failures) :-
     % Display report header in bold.
@@ -897,8 +897,8 @@ loonit_report(Successes, Failures) :-
     % Display success count in green.
     ansi_format([fg(green)], 'Successes: ~w~n', [Successes]),
     % Display failure count in red if any; otherwise, green.
-    ((integer(Failures), Failures > 0) 
-     -> ansi_format([fg(red)], 'Failures: ~w~n', [Failures]) 
+    ((integer(Failures), Failures > 0)
+     -> ansi_format([fg(red)], 'Failures: ~w~n', [Failures])
      ; ansi_format([fg(green)], 'Failures: ~w~n', [Failures])).
 
 %!  loon_metta(+File) is det.
@@ -921,7 +921,7 @@ loon_metta(File) :-
     loonit_report,
     % Restore previous success and failure counts.
     flag(loonit_success, _, WasSuccesses),
-    flag(loonit_failure, _, WasFailures), 
+    flag(loonit_failure, _, WasFailures),
     !.
 
 % dynamic means that the predicate can be modified at runtime.
@@ -944,7 +944,7 @@ set_exec_num(SFileName, Val) :-
     % Convert to absolute file path.
     absolute_file_name(SFileName, FileName),
     % If an entry exists for FileName, retract it; otherwise, do nothing.
-    (   retract(file_exec_num(FileName, _)) 
+    (   retract(file_exec_num(FileName, _))
     ->  true
     ;   true
     ),
@@ -966,7 +966,7 @@ get_exec_num(Val) :-
     % Get the absolute path of the current file.
     current_exec_file_abs(FileName),
     % Retrieve the execution number for FileName, stopping after one result.
-    file_exec_num(FileName, Val), 
+    file_exec_num(FileName, Val),
     !.
 
 %!  get_exec_num(+FileName, -Val) is det.
@@ -999,7 +999,7 @@ get_exec_num(FileName, Val) :-
 current_exec_file_abs(FileName) :-
     % Obtain the file name of the current execution file and convert it to absolute path.
     current_exec_file(SFileName),
-    absolute_file_name(SFileName, FileName), 
+    absolute_file_name(SFileName, FileName),
     !.
 
 %!  get_expected_result(-Ans) is det.
@@ -1018,7 +1018,7 @@ get_expected_result(Ans) :-
         current_exec_file_abs(FileName),
         file_exec_num(FileName, Nth),
         file_answers(FileName, Nth, Ans)
-    )), 
+    )),
     !.
 
 %!  got_exec_result(+Val) is det.
@@ -1094,7 +1094,7 @@ write_pass_fail_result(TestName, exec, Exec, PASS_FAIL, Ans, Val) :-
 %   @example
 %     % Get the current file in execution:
 %     ?- current_exec_file(FileName).
-current_exec_file(FileName) :- 
+current_exec_file(FileName) :-
     nb_current(loading_file, FileName).
 
 %!  inc_exec_num(+FileName) is det.
@@ -1109,8 +1109,8 @@ current_exec_file(FileName) :-
 %     ?- inc_exec_num('test_file.pl').
 inc_exec_num :-
     % Get the absolute path of the current execution file.
-    current_exec_file_abs(FileName), 
-    !, 
+    current_exec_file_abs(FileName),
+    !,
     inc_exec_num(FileName).
 inc_exec_num(FileName) :-
     % If an entry exists, increment its value; otherwise, set it to 1.
@@ -1135,11 +1135,11 @@ inc_exec_num(FileName) :-
 load_answer_file(File) :-
     % Resolve to an absolute file path if necessary.
     (   \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
-    absolute_file_name(File, AbsFile), File\=@=AbsFile, 
-    load_answer_file_now(AbsFile), 
+    absolute_file_name(File, AbsFile), File\=@=AbsFile,
+    load_answer_file_now(AbsFile),
     !.
-load_answer_file(File) :- 
-    load_answer_file_now(File), 
+load_answer_file(File) :-
+    load_answer_file_now(File),
     !.
 
 %!  load_answer_file_now(+File) is det.
@@ -1176,9 +1176,9 @@ load_answer_file_now(File) :-
 %     ?- load_answer_file('answers_file.ans', 'stored_as').
 load_answer_file(AnsFile, StoredAs) :-
     % If answers are already loaded or file is absent, skip loading.
-    (   file_answers(StoredAs, _, _) 
+    (   file_answers(StoredAs, _, _)
     ->  true
-    ;   (   \+ exists_file(AnsFile) 
+    ;   (   \+ exists_file(AnsFile)
         ->  true
         ;   % Open file and load answers from stream.
             (setup_call_cleanup(
@@ -1189,7 +1189,7 @@ load_answer_file(AnsFile, StoredAs) :-
         )
     ),
     % Initialize execution number after loading.
-    set_exec_num(StoredAs, 1), 
+    set_exec_num(StoredAs, 1),
     !.
 
 % This allows Prolog to print debug information related to the metta(answers) topic
@@ -1210,7 +1210,7 @@ load_answer_file(AnsFile, StoredAs) :-
 %     ?- open('answers.txt', read, Stream), load_answer_stream(1, 'stored_as', Stream).
 load_answer_stream(_Nth, StoredAs, Stream) :-
     % Stop if end of the stream is reached, optionally listing loaded answers.
-    at_end_of_stream(Stream), 
+    at_end_of_stream(Stream),
     !,
     if_trace((answers), prolog_only(listing(file_answers(StoredAs, _, _)))).
 load_answer_stream(Nth, StoredAs, Stream) :-
@@ -1256,7 +1256,7 @@ load_answer_stream(Nth, StoredAs, String, Stream) :- % string_concat("[", _, Str
     % Skip if the answer contains a comma.
     skip(must_det_ll(\+ sub_var(',', Metta))),
     % Increment index and continue processing next line.
-    Nth2 is Nth + 1, 
+    Nth2 is Nth + 1,
     load_answer_stream(Nth2, StoredAs, Stream).
 load_answer_stream(Nth, StoredAs, _, Stream) :-
     % Fall back to reading the next line if no answer is processed.
@@ -1318,10 +1318,10 @@ parse_answer_string(String, Metta) :- string_concat("[", Mid, String), string_co
 %       Result = parsed_term.
 %
 
-parse_answer_inner(Inner0, Metta) :-     
+parse_answer_inner(Inner0, Metta) :-
     must_det_ll((
         % Replace specific character patterns in Inner0 to create Inner.
-        replace_in_string([', '=' , '], Inner0, Inner),           
+        replace_in_string([', '=' , '], Inner0, Inner),
         % Parse modified string Inner into Metta.
         parse_answer_str(Inner, Metta),
         % Skip processing if Metta meets the specified condition.
@@ -1396,13 +1396,13 @@ remove_m_commas([H | T], [H | TT]) :- !, remove_m_commas(T, TT).
 %
 change_extension(OriginalFileName, NewExtension, NewBaseName) :-
     % Split the original file name to extract the base without its extension.
-    file_name_extension(BaseWithoutExt, _, OriginalFileName),    
+    file_name_extension(BaseWithoutExt, _, OriginalFileName),
     % Create a new file name by appending the new extension to the base.
     file_name_extension(BaseWithoutExt, NewExtension, NewBaseName), !.
 
 %!  ensure_extension(+OriginalFileName, +Extension, -NewFileName) is det.
 %
-%   Ensures that `OriginalFileName` has the specified `Extension`. If it already has the extension, 
+%   Ensures that `OriginalFileName` has the specified `Extension`. If it already has the extension,
 %   `NewFileName` is identical to `OriginalFileName`. Otherwise, the `Extension` is appended.
 %
 %   @arg OriginalFileName The original file path, potentially with or without the desired extension.
@@ -1450,11 +1450,11 @@ remove_specific_extension(OriginalFileName, Extension, FileNameWithoutExtension)
 
 %!  quick_test is det.
 %
-%   Runs a quick test by executing each test case in `quick_test/1` and loading it 
+%   Runs a quick test by executing each test case in `quick_test/1` and loading it
 %   into the system via `load_metta_stream/2`. Each test case is opened as a string
 %   stream and processed with a predefined entity identifier `&self`.
 %
-%   This predicate is intended for streamlined testing by iterating over all 
+%   This predicate is intended for streamlined testing by iterating over all
 %   available quick test cases.
 %
 %   @example
@@ -1791,9 +1791,9 @@ test_my_kb2:-
 
 % This code loads a collection of `.metta` files across various directories and contexts, adding each to the read history.
 % Each file path is specified via `mf/1`, and `add_history1(load_metta(H))` loads the file while logging it for quick
-% access and debugging. 
+% access and debugging.
 % Comment `end_of_file` out once to get these files in your readline history
-end_of_file. % 
+end_of_file. %
 mf('./1-VSpaceTest.metta').
 mf('./2-VSpaceTest.metta').
 mf('./3-Learn-Rules.metta').

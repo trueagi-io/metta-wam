@@ -26,7 +26,7 @@
  * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
  */
 
-%********************************************************************************************* 
+%*********************************************************************************************
 % PROGRAM FUNCTION: Translate Prolog code to MeTTa code
 %*********************************************************************************************
 
@@ -40,7 +40,7 @@
 % This operator could be used for a specialized equality or pattern-matching operation in the program.
 :- op(700,xfx,'=~').
 
-% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in 
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in
 % the correct order independent of which file is loaded first the needed predicates and ops are defined.
 :- ensure_loaded(metta_interp).
 
@@ -52,7 +52,7 @@
 %
 %   This predicate is used for testing purposes. It first compiles the program by calling 'make'.
 %   After that, it writes information for each clause of 'fb0', a test case rule, and executes the goals.
-%   
+%
 %   The 'make' predicate is commonly used in Prolog for recompiling any modified predicates.
 %   The 'forall' loop iterates over all clauses of 'fb0', writing and calling the goals in the clauses.
 %
@@ -63,7 +63,7 @@
 %   ;; ?- factorial_tail_basic.
 %   ;; ?- funct.
 %   ;; ===========================================
-fb :- 
+fb :-
     make,  % Recompiles the program.
     writeln(';; ==========================================='),
     forall(
@@ -89,7 +89,7 @@ fb0 :- show_mettalog_src(funct).
 %!  print_metta_src is det.
 %   Displays mettalog sources for files or predicates that contain 'metta'.
 %   This predicate calls 'show_mettalog_src/0' to display all mettalog sources in the program.
-%   The 'show_mettalog_src' rule compiles the program and shows the mettalog sources for each 
+%   The 'show_mettalog_src' rule compiles the program and shows the mettalog sources for each
 %   source file that contains 'metta' in its name or content.
 %
 %   This is useful for listing all relevant mettalog definitions after ensuring that the program is up-to-date.
@@ -100,18 +100,18 @@ print_metta_src :- show_mettalog_src.
 
 %!  show_mettalog_src is det.
 %
-%   Compiles the Prolog program and displays the mettalog sources for each source file 
+%   Compiles the Prolog program and displays the mettalog sources for each source file
 %   containing 'metta' in its file name.
 %
-%   This predicate uses `make/0` to recompile the program, then iterates through all 
-%   the source files, checking if the file name contains 'metta'. If so, it calls 
+%   This predicate uses `make/0` to recompile the program, then iterates through all
+%   the source files, checking if the file name contains 'metta'. If so, it calls
 %   `show_mettalog_src/1` with the corresponding predicate.
 %
 %   @example Compile and show mettalog sources:
 %     ?- show_mettalog_src.
 %     % This will compile the current Prolog program and print mettalog source details.
 %
-show_mettalog_src:- 
+show_mettalog_src:-
     % Recompile the program with make/0 to ensure all source changes are applied.
     make,
     % For all source files whose file names contain 'metta', display the mettalog source.
@@ -129,18 +129,18 @@ show_mettalog_src:-
 %!  show_mettalog_src(+Spec) is det.
 %
 %   Displays the mettalog source for predicates that match the specification `Spec`.
-%   This predicate handles various types of input to identify the predicates whose 
+%   This predicate handles various types of input to identify the predicates whose
 %   source should be displayed:
 %
-%   - If `Spec` is in the form `F/A` (functor and arity), it directly shows the mettalog 
+%   - If `Spec` is in the form `F/A` (functor and arity), it directly shows the mettalog
 %     source for all predicates with functor `F` and arity `A`.
-%   - If `Spec` is a predicate term, it extracts the functor and arity and shows 
+%   - If `Spec` is a predicate term, it extracts the functor and arity and shows
 %     the source for predicates matching the functor and arity of the term.
-%   - If `Spec` is just the functor `F`, it shows the source for all predicates with 
+%   - If `Spec` is just the functor `F`, it shows the source for all predicates with
 %     that functor, regardless of arity.
-%   - If `Spec` is an atom `C` and matches part of a predicate functor, it shows the 
+%   - If `Spec` is an atom `C` and matches part of a predicate functor, it shows the
 %     source for all predicates whose functor contains the atom `C`.
-%   - If none of the above match, it uses `show_cvts/1` as a fallback to display 
+%   - If none of the above match, it uses `show_cvts/1` as a fallback to display
 %     the mettalog source.
 %
 %   @arg Spec The specification of the predicate(s) whose mettalog source is to be shown.
@@ -157,7 +157,7 @@ show_mettalog_src:-
 %
 show_mettalog_src(F/A):- nonvar(F), !,
     forall(current_predicate(F/A), show_mettalog_src(F,A)).
-show_mettalog_src(AsPred):- functor(AsPred, F, A),\+ \+ current_predicate(F/A),!,forall(current_predicate(F/A), 
+show_mettalog_src(AsPred):- functor(AsPred, F, A),\+ \+ current_predicate(F/A),!,forall(current_predicate(F/A),
     show_mettalog_src(F,A)).
 show_mettalog_src(F):- atom(F),\+ \+ current_predicate(F/_),!,forall(current_predicate(F/A), show_mettalog_src(F,A)).
 show_mettalog_src(C):- atom(C),\+ \+ (current_predicate(F/_), once(atom_contains(F,C))),!,
@@ -177,7 +177,7 @@ show_mettalog_src(C):- show_cvts(C), !.
 %   ?- show_space_src.
 %   % This will compile the program and display the source code for all space-related predicates.
 %
-show_space_src :- 
+show_space_src :-
     % Recompile the program with make/0 to ensure all source changes are applied.
     make,
     % For all space predicates, display the source code.
@@ -213,10 +213,10 @@ show_space_src :-
 %     ?- show_space_src('space').
 %
 show_space_src(F/A):- nonvar(F),!, forall(current_predicate(F/A), show_space_src(F,A)).
-show_space_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A), 
+show_space_src(AsPred):- functor(AsPred,F,A), \+ \+ current_predicate(F/A), !, forall(current_predicate(F/A),
     show_space_src(F,A)).
 show_space_src(F):-  atom(F), \+ \+ current_predicate(F/_),!, forall(current_predicate(F/A), show_space_src(F,A)).
-show_space_src(C):-  atom(C), \+ \+ (current_predicate(F/_),once(atom_contains(F,C))),!, 
+show_space_src(C):-  atom(C), \+ \+ (current_predicate(F/_),once(atom_contains(F,C))),!,
     forall((current_predicate(F/A),once(atom_contains(F,C))), show_space_src(F,A)).
 show_space_src(C):- show_cvts(C),!.
 
@@ -224,7 +224,7 @@ show_space_src(C):- show_cvts(C),!.
 
 %!  show_cvts(+Term) is det.
 %
-%   Processes the given `Term`, converting lists in S-expression form to Prolog terms using `sexpr_s2p/2`. 
+%   Processes the given `Term`, converting lists in S-expression form to Prolog terms using `sexpr_s2p/2`.
 %   If the result is not a list, recursively processes the converted term.
 %
 %   @arg Term The input term to process, which can be a list or any Prolog term.
@@ -244,8 +244,8 @@ show_cvts(Term):- ppc(orig,Term),
 
 %!  show_mettalog_src(+F, +A) is det.
 %
-%   Displays the mettalog clauses for a specific predicate with functor `F` and arity `A` if they exist in 
-%   a source file that contains 'metta' in its name. 
+%   Displays the mettalog clauses for a specific predicate with functor `F` and arity `A` if they exist in
+%   a source file that contains 'metta' in its name.
 %
 %   - It first checks if the predicate has clauses.
 %   - Then, it checks if the source file for the predicate contains 'metta' in its name.
@@ -257,7 +257,7 @@ show_cvts(Term):- ppc(orig,Term),
 %   @example Show the mettalog source for a predicate:
 %     ?- show_mettalog_src(my_predicate, 2).
 %
-show_mettalog_src(F, A) :- 
+show_mettalog_src(F, A) :-
     functor(Head, F, A),
     ignore((
         % Check if the predicate has clauses and its source file contains 'metta'.
@@ -271,7 +271,7 @@ show_mettalog_src(F, A) :-
 
 %!  print_metta_clauses(+Clauses) is det.
 %
-%   Handles the printing of metta clauses. It checks the form of the input clauses and delegates 
+%   Handles the printing of metta clauses. It checks the form of the input clauses and delegates
 %   to `print_metta_clause/2` for each clause.
 %
 %   - If the input is an empty list, it does nothing.
@@ -281,9 +281,9 @@ show_mettalog_src(F, A) :-
 %   @arg Clauses The list of clauses to be printed.
 %
 print_metta_clauses([]) :- !.
-print_metta_clauses([Head :- Body]) :- !, 
+print_metta_clauses([Head :- Body]) :- !,
     print_metta_clause(Head, Body).
-print_metta_clauses(Clauses) :- 
+print_metta_clauses(Clauses) :-
     combine_clauses(Clauses, Head, Body), !,
     print_metta_clause(Head, Body).
 
@@ -376,7 +376,7 @@ maybe_varz(S, Name, '$VAR'(Name)) :- S == '?',atom(Name), !.
 %
 %   Converts an S-expression (`Sterm`) into a Prolog term (`Pterm`).
 %
-%   - If `Sterm` is a compound term in the form `H=B`, it attempts to compile the term using `compile_for_assert/3`, 
+%   - If `Sterm` is a compound term in the form `H=B`, it attempts to compile the term using `compile_for_assert/3`,
 %     and then converts the compiled clause into a Prolog term.
 %   - Otherwise, it delegates the conversion to `sexpr_s2p/4`, starting with the default function `progn` and position `1`.
 %
@@ -412,7 +412,7 @@ clause_to_code(P,P).
 
 %!  sexpr_s2p(+Fn, +Nth, +Sterm, -Pterm) is det.
 %
-%   Converts an S-expression (`Sterm`) into a Prolog term (`Pterm`), handling various cases like free variables, 
+%   Converts an S-expression (`Sterm`) into a Prolog term (`Pterm`), handling various cases like free variables,
 %   exact symbols, and atom-to-variable mappings.
 %
 %   @arg Fn   The function name associated with the S-expression (used in specific cases).
@@ -435,25 +435,25 @@ sexpr_s2p(Fn, Nth, S, P) :- S == [],iz_fun_argz(Fn, Nth), !, P = S.
 
 % - If `Sterm` is a list, it checks if `F` is a system predicate with the appropriate arity.
 % - It then recursively converts the arguments (`SList`) and constructs the Prolog term using `P =.. [Pred|PList]`.
-sexpr_s2p(_Fn,_Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred), 
+sexpr_s2p(_Fn,_Nth,[F|SList],P):- is_list(SList), length(SList,Len),is_syspred(F,Len,Pred),
     sexpr_s2p_arglist(F,1,SList,PList), !, P=..[Pred|PList].
 
 % Disable singleton variable warnings.
 %
-% The directive `:- style_check(-singleton)` is used to turn off warnings 
-% related to singleton variables in Prolog. Singleton variables are those 
-% that appear only once in a clause, which can sometimes indicate a typo or 
+% The directive `:- style_check(-singleton)` is used to turn off warnings
+% related to singleton variables in Prolog. Singleton variables are those
+% that appear only once in a clause, which can sometimes indicate a typo or
 % an unused variable.
 %
 % This is useful when singleton variables are intentional and no warning is needed.
 %
 :- style_check(-singleton).
 
-% If the function and argument position allow, convert the first element of the list (`S`) 
+% If the function and argument position allow, convert the first element of the list (`S`)
 % and the remaining list (`SList`) recursively.
 sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- iz_fun_argz(Fn,Nth),!,sexpr_s2p(S,P), sexpr_s2p(Fn,Nth,SList,PList).
 % If the first element is not an atom or `SList` is not a list, recursively convert both `S` and `SList` with `list(Fn)` context.
-sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- ( \+ atom(S) ; \+ is_list(SList)), !,sexpr_s2p(list(Fn),Nth,S,P), 
+sexpr_s2p(Fn,Nth,[S|SList],[P|PList]):- ( \+ atom(S) ; \+ is_list(SList)), !,sexpr_s2p(list(Fn),Nth,S,P),
     sexpr_s2p(list(Fn),Nth,SList,PList).
 % If the first element `S` is a known quoter, convert the subsequent list (`STERM0`) and combine it into a Prolog term.
 sexpr_s2p(_Fn,_Nth,[S,STERM0],PTERM):- iz_quoter(S),sexpr_s2p_pre_list(S,0,STERM0,STERM), !,PTERM=..[S,STERM],!.
@@ -478,7 +478,7 @@ sexpr_s2p(Fn,Nth,[S,Vars|TERM],PTERM):- nonvar(S),
 %sexpr_s2p(Fn,Nth,[S|TERM],PTERM):- iz_relation_sexpr(S),zalwayz((sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),PTERM =~ [S|PLIST])),!.
 %sexpr_s2p(Fn,Nth,STERM,PTERM):- STERM =~ [S|TERM],sexpr_s2p_arglist(Fn,Nth,TERM,PLIST),z_univ(Fn,Nth,PTERM,[S|PLIST]),!.
 
-% Convert the list `[S|STERM0]` by processing the rest of the list with `sexpr_s2p_pre_list/4` 
+% Convert the list `[S|STERM0]` by processing the rest of the list with `sexpr_s2p_pre_list/4`
 % and then converting the arguments (`STERM`) into a Prolog term list (`PLIST`).
 sexpr_s2p(Fn,Nth,[S|STERM0],PTERM):-
   sexpr_s2p_pre_list(Fn,Nth,STERM0,STERM),
@@ -558,7 +558,7 @@ iz_quoter('#BQ') :-
 iz_quoter('#COMMA') :-
     % '#COMMA' is a quoter if the system is in Common Lisp mode.
     iz_common_lisp.
-iz_quoter('quote'). 
+iz_quoter('quote').
     % 'quote' is always considered a quoter.
 iz_quoter(superpose).
     % 'superpose' is always considered a quoter.
@@ -589,7 +589,7 @@ iz_fun_argz(F, 1) :-
 
 %!  z_functor(+F) is nondet.
 %
-%   Checks if F is a valid functor by ensuring it is an atom and does not start 
+%   Checks if F is a valid functor by ensuring it is an atom and does not start
 %   with specific characters ('?' or '$').
 %
 %   @arg F The functor to check.
@@ -606,7 +606,7 @@ z_functor(F) :-
 
 %!  z_univ(+Fn, +Nth, ?P, ?S) is det.
 %
-%   Unifies the term `P` with a compound term based on `F` and `ARGS`, or directly with `S`. 
+%   Unifies the term `P` with a compound term based on `F` and `ARGS`, or directly with `S`.
 %   Handles different cases depending on `Nth`.
 %
 %   @arg Fn   Functor (not directly used).
@@ -620,23 +620,23 @@ z_functor(F) :-
 %
 % z_univ(_Fn, 1, S, S) :- !.
 %
-z_univ(_Fn, _, P, [F|ARGS]) :- 
+z_univ(_Fn, _, P, [F|ARGS]) :-
     % Unify P with a compound term of functor F and its arguments.
     z_functor(F), is_list(ARGS), length(ARGS, A), l_arity_l(F, A),compound_name_arguments(P, F, ARGS), !.
-z_univ(_Fn, 0, P, [F|ARGS]) :- 
+z_univ(_Fn, 0, P, [F|ARGS]) :-
     % Similar to previous, but Nth is 0.
     z_functor(F), is_list(ARGS), compound_name_arguments(P, F, ARGS), !.
-z_univ(_Fn, _Nth, P, [F|ARGS]) :- 
+z_univ(_Fn, _Nth, P, [F|ARGS]) :-
   % General case for any Nth, unifies P with a compound term.
   z_functor(F), is_list(ARGS), compound_name_arguments(P, F, ARGS), !.
-z_univ(_Fn, _Nth, P, S) :- 
+z_univ(_Fn, _Nth, P, S) :-
   % Fallback: unify P with S directly.
   P = S.
 
 %!  l_arity_l(+F, +A) is det.
 %
-%   Checks or assigns the arity `A` of the functor `F`. The predicate determines 
-%   the arity of specific functors or uses rules to infer the arity if possible. 
+%   Checks or assigns the arity `A` of the functor `F`. The predicate determines
+%   the arity of specific functors or uses rules to infer the arity if possible.
 %   Default arity is 1 if no specific case is matched.
 %
 %   @arg F    The functor whose arity is being checked or assigned.
@@ -645,26 +645,26 @@ z_univ(_Fn, _Nth, P, S) :-
 %   @example
 %   ?- l_arity_l(function, A).
 %   A = 1.
-l_arity_l(F, A) :- 
+l_arity_l(F, A) :-
     % Check if the arity of functor F matches A by calling arity/2 predicate.
     clause_b(arity(F, A)).
-l_arity_l(function, 1). 
+l_arity_l(function, 1).
     % Functor 'function' always has arity 1.
-l_arity_l(quote, 1). 
+l_arity_l(quote, 1).
     % Functor 'quote' always has arity 1.
-l_arity_l('#BQ', 1) :- 
+l_arity_l('#BQ', 1) :-
     % Functor '#BQ' has arity 1 in Common Lisp context.
     iz_common_lisp.
-l_arity_l(F, A) :- 
+l_arity_l(F, A) :-
     % If F/A is a current predicate, arity is accepted as valid.
     current_predicate(F/A).
-l_arity_l(_, 1). 
+l_arity_l(_, 1).
     % Default case: assume arity of 1.
 
 %!  sexpr_s2p_arglist(+Fn, +Nth, ?SExpr, ?PExpr) is det.
 %
 %   Converts a list of S-expressions (`SExpr`) into Prolog expressions (`PExpr`).
-%   Handles different cases depending on the structure of `SExpr` and whether it is 
+%   Handles different cases depending on the structure of `SExpr` and whether it is
 %   a variable or a list. The conversion uses `sexpr_s2p/4` to handle individual elements.
 %
 %   @arg Fn   Functor used for conversion (not directly used in all clauses).
@@ -675,18 +675,18 @@ l_arity_l(_, 1).
 %   @example
 %   ?- sexpr_s2p_arglist(_, 1, [a, b, c], PList).
 %   PList = [a, b, c].
-sexpr_s2p_arglist(_Fn, _, VAR, VAR) :- 
+sexpr_s2p_arglist(_Fn, _, VAR, VAR) :-
     % Base case: if `VAR` is a free term variable, leave it unchanged.
     is_ftVar(VAR), !.
-sexpr_s2p_arglist(Fn, Nth, [S|SList], [P|PList]) :- 
+sexpr_s2p_arglist(Fn, Nth, [S|SList], [P|PList]) :-
     % Recursively process list: convert head `S` to `P`, then process the tail.
     sexpr_s2p(Fn, Nth, S, P),
     (Nth > 0 -> Nth2 is Nth + 1 ; Nth2 = 0),  % Increment Nth if positive, else set to 0.
     sexpr_s2p_arglist(Fn, Nth2, SList, PList), !.
-sexpr_s2p_arglist(Fn, Nth, S, P) :- 
+sexpr_s2p_arglist(Fn, Nth, S, P) :-
     % Convert a single S-expression `S` into a Prolog expression `P`.
     sexpr_s2p(Fn, Nth, S, P), !.
-sexpr_s2p_arglist(_Fn, _Nth, VAR, VAR). 
+sexpr_s2p_arglist(_Fn, _Nth, VAR, VAR).
     % Fallback: if `VAR` is neither a list nor an S-expression, leave it unchanged.
 
 %!  sexpr_s2p_pre_list(+Fn, +Nth, ?STerm, ?PTerm) is det.
@@ -703,15 +703,15 @@ sexpr_s2p_arglist(_Fn, _Nth, VAR, VAR).
 %   @example
 %   ?- sexpr_s2p_pre_list(_, _, [a, [b, c], d], PTerm).
 %   PTerm = [a, [b, c], d].
-sexpr_s2p_pre_list(_Fn, _, STERM, STERM) :- 
+sexpr_s2p_pre_list(_Fn, _, STERM, STERM) :-
     % If `STERM` is not compound, return it unchanged.
     \+ compound(STERM), !.
-sexpr_s2p_pre_list(_Fn, _, STERM, STERM) :- 
+sexpr_s2p_pre_list(_Fn, _, STERM, STERM) :-
     % If `STERM` is not a list, return it unchanged.
     \+ is_list(STERM), !.
-% sexpr_s2p_pre_list(Fn, _, [S|STERM], [S|STERM]) :- STERM == [], !.  
+% sexpr_s2p_pre_list(Fn, _, [S|STERM], [S|STERM]) :- STERM == [], !.
 % (Commented-out clause for empty lists, may have been used for list termination.)
-sexpr_s2p_pre_list(Fn, Nth, [S0|STERM0], [S|STERM]) :- 
+sexpr_s2p_pre_list(Fn, Nth, [S0|STERM0], [S|STERM]) :-
     % Recursively process the list: if `S0` is a list, convert it using `sexpr_s2p/4`; otherwise, recurse.
     (is_list(S0) -> sexpr_s2p(Fn, Nth, S0, S) ; sexpr_s2p_pre_list(Fn, Nth, S0, S)),
     % Process the tail of the list recursively.
@@ -730,8 +730,8 @@ sexpr_s2p_pre_list(_Fn, _, STERM, STERM).  % Fallback: return `STERM` unchanged.
 
 %!  p2m(+I) is det.
 %
-%   A utility predicate to translate Prolog predicates (`I`) into MeTTa constructs. 
-%   It retrieves all clauses for the given predicate, processes them, and writes 
+%   A utility predicate to translate Prolog predicates (`I`) into MeTTa constructs.
+%   It retrieves all clauses for the given predicate, processes them, and writes
 %   the translated result in MeTTa syntax.
 %
 %
@@ -758,7 +758,7 @@ p2m(I):-forall(
 %   @example
 %   ?- p2m(my_predicate, Output).
 %   Output will contain the MeTTa translation of `my_predicate`.
-p2m(I, O) :- 
+p2m(I, O) :-
     % Initiate translation of `I` to `O` with the starting context `[progn]`.
     p2m([progn], I, O).
 
@@ -774,19 +774,19 @@ p2m(I, O) :-
 %   @example
 %   ?- p2m(_, my_predicate, Output).
 %   Output will contain the MeTTa translation of `my_predicate`.
-p2m(_OC, NC, NC) :- 
+p2m(_OC, NC, NC) :-
     % If NC is a variable, do not translate.
     var(NC), !.
-p2m(_OC, NC, NC) :- 
+p2m(_OC, NC, NC) :-
     % If NC is a free term variable, do not translate.
     is_ftVar(NC), !.
-p2m(OC, [H|T], '::'(L)) :- 
+p2m(OC, [H|T], '::'(L)) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa.
     is_list([H|T]), maplist(p2m(OC), [H|T], L).
-p2m(OC, [H|T], 'Cons'(OH, OT)) :- 
+p2m(OC, [H|T], 'Cons'(OH, OT)) :-
     % Translate a list to MeTTa 'Cons' structure.
     p2m(OC, H, OH), p2m(OC, T, OT).
-p2m(_OC, A, A) :- 
+p2m(_OC, A, A) :-
     % Conversion for any atomic term.
     string(A), !.
 p2m(_OC, [], 'Nil').         % Empty list is translated to 'Nil'.
@@ -795,7 +795,7 @@ p2m(_OC, !, ['set-det']).    % Translate the cut operation.
 p2m(_OC,!, '!').             % Translate the cut operation directly.
 p2m(_OC, false, 'False').    % Translate Prolog's false to MeTTa's False.
 p2m(_OC, true, 'True').      % Translate Prolog's true to MeTTa's True.
-p2m([progn|_], Atom, [O]) :- 
+p2m([progn|_], Atom, [O]) :-
     % Translate atoms using hyphenated format.
     atom(Atom), !, p2m([arg], Atom, O), !.
 p2m(_OC, (';'), 'xor').      % Translate ';' (or) to 'xor'.
@@ -804,66 +804,66 @@ p2m(_OC, '=..', 'atom_2_list').   % Translate '=..' (univ operator) to 'atom_2_l
 p2m([progn|_], (fail), [empty]).  % Translate Prolog's fail to MeTTa's empty (False).
 p2m(_OC, 'atom', 'is-symbol').    % Translate 'atom' predicate to 'is-symbol'.
 p2m(_OC, 'atomic', 'symbolic').   % Translate 'atomic' to 'symbolic'.
-p2m(OC, ASymbolProc, O) :- 
+p2m(OC, ASymbolProc, O) :-
     % Translate atoms with '$' or '%' concatenation into hyphenated format.
     atom(ASymbolProc),symbolic_list_concat(LS,'$',ASymbolProc),LS\==[],LS\=[_],!,
     symbolic_list_concat(LS,'%',SymbolProc),into_hyphens(SymbolProc,O).
 p2m(OC,ASymbolProc,O):- atom(ASymbolProc),into_hyphens(ASymbolProc,O).
-p2m(_, A, H) :- 
+p2m(_, A, H) :-
     % Translate any atomic symbol into hyphenated format.
     atom(A), into_hyphens(A, H), !.
 p2m(_OC,A, A):- atomic(A).
-p2m(_OC, NC, NC) :- 
+p2m(_OC, NC, NC) :-
     % If NC is not a compound term, return it unchanged.
     \+ compound(NC), !.
-p2m(_OC, NC, [F]) :- 
+p2m(_OC, NC, [F]) :-
     % If NC is a functor with arity 0, convert it to a list.
     compound_name_arity(NC, F, 0), !.
-p2m(OC, M:I, O) :- 
+p2m(OC, M:I, O) :-
     % Skip module qualifier if it is 'user'.
     M == user, !, p2m(OC, I, O),!.
-p2m(_OC, M:I, 'scoped'(N, O)) :- 
+p2m(_OC, M:I, 'scoped'(N, O)) :-
     % Translate a module-scoped term.
     p2m(OC, M, N), p2m(I, O).
-p2m(OC, NC, OO) :- 
+p2m(OC, NC, OO) :-
     % If NC is a list, map each element of the list from Prolog to MeTTa
     is_list(NC),!,
     maplist(p2m(OC), NC, OO).
     p2m([progn|_], (!,fail), [empty]).  % Translate Prolog?s fail to MeTTa?s False.
 % p2m(_OC,fail, 'False').  % Translate Prolog?s fail to MeTTa?s False.
 % p2m(_OC,prolog, meTTa).  % Translate the atom prolog to meTTa.
-p2m([progn|_],A, [H]):- 
+p2m([progn|_],A, [H]):-
     atom(A),into_hyphens(A,H),!.
-p2m(_OC, (\+ A), O) :- 
+p2m(_OC, (\+ A), O) :-
     % Translate negation as failure (\+ A).
     !, p2m(_OC, naf(A), O).
-p2m(OC, (G, E), O) :- 
+p2m(OC, (G, E), O) :-
     % Translate conjunctions (G, E).
     conjuncts_to_list((G, E), List), !, into_sequential(OC, List, O), !.
-p2m(_OC,(Head:-Body),O):- 
+p2m(_OC,(Head:-Body),O):-
     Body == true,!, O = (=(Head,'True')).
-p2m(_OC,(Head:-Body),O):- 
+p2m(_OC,(Head:-Body),O):-
     Body == fail,!, O = (=(Head,[empty])).
 p2m(OC,(Head:-Body),O):-
     p2m(Head,H),conjuncts_to_list(Body,List),maplist(p2m([progn|OC]),List,SP),!,
     O =  ['=',H|SP].
-p2m(OC, (:- Body), O) :- 
+p2m(OC, (:- Body), O) :-
     % Translate directives (:- Body).
     !, conjuncts_to_list(Body, List), into_sequential([progn|OC], List, SP), !, O = exec(SP).
-p2m(OC, (? - Body), O) :- 
+p2m(OC, (? - Body), O) :-
     % Translate queries (? - Body).
     !, conjuncts_to_list(Body, List), into_sequential([progn|OC], List, SP), !, O = exec('?-'(SP)).
-p2m(OC, (A->B;C), O) :- 
+p2m(OC, (A->B;C), O) :-
     % Translate if-then-else (A -> B ; C).
     !, p2m(OC, det_if_then_else(A, B, C), O).
-p2m(OC, (A;B), O) :- 
+p2m(OC, (A;B), O) :-
     % Translate disjunction (A ; B).
     !, p2m(OC, or(A, B), O).
-p2m(OC,(A*->B;C),O):- 
+p2m(OC,(A*->B;C),O):-
     !, p2m(OC,if(A,B,C),O).
-p2m(OC,(A->B),O):- 
+p2m(OC,(A->B),O):-
     !, p2m(OC,det_if_then(A,B),O).
-p2m(OC,(A*->B),O):- 
+p2m(OC,(A*->B),O):-
     !, p2m(OC,if(A,B),O).
 % Translate common Prolog database operations and metta constructs to MeTTa equivalents.
 % This includes adding atoms, retrieving types and atoms, and handling assertions and retractions.
@@ -880,8 +880,8 @@ p2m(_OC,retractall(X),'remove-all-atoms'('&self',X)).
 % The catch-all case for the other compound terms.
 %p2m(_OC,I,O):- I=..[F|II],maplist(p2m,[F|II],OO),O=..OO.
 
-% Catch-all clause for compound terms. This rule breaks down a compound term `I` into its functor `F` 
-% and arguments `II`, recursively applies `p2m` on each argument, and then reconstructs the term 
+% Catch-all clause for compound terms. This rule breaks down a compound term `I` into its functor `F`
+% and arguments `II`, recursively applies `p2m` on each argument, and then reconstructs the term
 % in MeTTa format, converting the functor `F` into a hyphenated form.
 p2m(OC,I, O):-
     compound(I),
@@ -924,8 +924,8 @@ prolog_to_metta(V, D) :-
 %!  into_sequential(+Context, +Body, -MeTTaRepresentation) is det.
 %
 %   Transforms a Prolog term that represents a conjunction of terms into a sequential
-%   representation in MeTTa syntax. The predicate handles cases where the body is a 
-%   conjunction, converting it into a MeTTa-friendly list, or if it is a single term, 
+%   representation in MeTTa syntax. The predicate handles cases where the body is a
+%   conjunction, converting it into a MeTTa-friendly list, or if it is a single term,
 %   directly translating it using `prolog_to_metta/2`.
 %
 %   @arg Context  The context for the MeTTa transformation (e.g., [progn] to signify sequential execution).
@@ -988,7 +988,7 @@ list_direct_subdirectories(Directory, DirectSubdirectories) :-
 %!  list_all_subdirectories(+Directory, -AllSubdirectories) is det.
 %
 %   Recursively lists all subdirectories of a given directory. This predicate
-%   traverses the directory structure and accumulates both direct and nested 
+%   traverses the directory structure and accumulates both direct and nested
 %   subdirectories, returning them as a flat list.
 %
 %   @arg Directory The directory whose subdirectories (including nested ones) are to be listed.
@@ -1013,7 +1013,7 @@ list_all_subdirectories(Directory, AllSubdirectories) :-
 %!  with_file_lists(+Rel, +P1, +FileSpec) is det.
 %
 %   Processes a list of filenames or directories, applying the predicate P1 to each.
-%   It supports various file types, directories, and wildcard patterns, handling 
+%   It supports various file types, directories, and wildcard patterns, handling
 %   both recursive directory traversals and file lists.
 %
 %   @arg Rel The base directory relative to which paths are resolved.
@@ -1023,28 +1023,28 @@ list_all_subdirectories(Directory, AllSubdirectories) :-
 %   @example Apply a predicate to all Prolog files in a directory:
 %       ?- with_file_lists('.', process_file, '*.pl').
 %
-with_file_lists(Rel, P1, FileSpec) :- 
+with_file_lists(Rel, P1, FileSpec) :-
     % If FileSpec is '.pl', stop processing.
     FileSpec == '.pl', !.
-with_file_lists(Rel, P1, FileSpec) :- 
+with_file_lists(Rel, P1, FileSpec) :-
     % If FileSpec is a list, recursively process each item.
     is_list(FileSpec), !, ignore(maplist(with_file_lists(Rel, P1), FileSpec)).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % If Filename is an existing file, apply P1 to it.
     atomic(Filename), exists_file(Filename), !, ignore(call(P1, Filename)).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % Process Filename relative to an absolute directory.
     absolute_file_name(Rel, Dir, [access(read), file_errors(fail), file_type(directory)]),
     Rel \=@= Dir, !, with_file_lists(Dir, P1, Filename).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % If Rel is not a valid directory, use the current directory.
     \+ exists_directory(Rel), !, with_file_lists('.', P1, Filename).
-with_file_lists(Rel, P1, File) :- 
+with_file_lists(Rel, P1, File) :-
     % Resolve a compound File with file extensions and apply P1.
     compound(File),
     absolute_file_name(File, Dir, [access(read), relative_to(Rel), file_errors(fail), extensions(['pl', 'prolog', 'pfc'])]),
     '\\=@='(Dir, File), !, with_file_lists(Rel, P1, Dir).
-with_file_lists(Rel, P1, File) :- 
+with_file_lists(Rel, P1, File) :-
     % Handle compound File for directory resolution.
     compound(File),
     absolute_file_name(File, Dir, [access(read), file_errors(fail), relative_to(Rel), file_type(directory)]),
@@ -1070,13 +1070,13 @@ with_file_lists(Rel,P1, File) :-
       expand_file_name(Wildcard, List), !,
       maplist(Fnicate, List).
 */
-with_file_lists(Rel, P1, Wildcard) :- 
+with_file_lists(Rel, P1, Wildcard) :-
     % Expand wildcard patterns and process files accordingly.
     atom(Wildcard),
     \+ exists_file(Wildcard),
     once(atom_contains(Wildcard, '*'); atom_contains(Wildcard, '?'); atom_contains(Wildcard, '|')),
     expand_file_name(Wildcard, Files), Files \== [], !, ignore(maplist(with_file_lists(Rel, P1), Files)).
-with_file_lists(Rel, P1, Wildcard) :- 
+with_file_lists(Rel, P1, Wildcard) :-
     % Handle wildcard with absolute file resolution and expansion.
     atom(Wildcard),once(atom_contains(Wildcard, '*'); atom_contains(Wildcard, '?'); atom_contains(Wildcard, '|')),
     \+ exists_file(Wildcard),
@@ -1095,35 +1095,35 @@ with_file_lists(Rel,P1,Local):- (Local=='**';Local=='**.pl'),
     exists_directory(AbsDirectory))),
     findall(File,directory_source_files(AbsDirectory, File, [recursive(true),if(true)]),Files),!,
     ignore(maplist(with_file_lists(Rel,P1),Files)).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % Handle '**' pattern with subdirectory traversal.
     symbolic_list_concat(['**', S | More], '/', Filename),symbolic_list_concat([S | More], '/', Rest),
-    list_all_subdirectories(Rel, AllSubdirectories), !,forall(member(SubDir, AllSubdirectories), 
+    list_all_subdirectories(Rel, AllSubdirectories), !,forall(member(SubDir, AllSubdirectories),
     with_file_lists(SubDir, P1, Rest)).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % Handle wildcards with directory expansion and traversal.
     symbolic_list_concat([WildDir, S | More], '/', Filename),symbolic_list_concat([Rel, WildDir, ''], '/', WildMaskDir),
     expand_file_name(WildMaskDir, AllSubdirectories),symbolic_list_concat([S | More], '/', Rest), !,
     forall(member(SubDir, AllSubdirectories), with_file_lists(SubDir, P1, Rest)).
-with_file_lists(Rel, P1, FileSpec) :- 
+with_file_lists(Rel, P1, FileSpec) :-
     % Process atomic FileSpec as a file.
     atomic(FileSpec),absolute_file_name(FileSpec, AbsFile, [relative_to(Rel), access(read), file_errors(fail)]),
     exists_file(AbsFile), !, ignore(call(P1, AbsFile)).
-with_file_lists(Rel, P1, Directory) :- 
+with_file_lists(Rel, P1, Directory) :-
     % Process atomic Directory and recursively apply P1 to files within it.
     atomic(Directory),
     absolute_file_name(Directory, AbsDirectory, [relative_to(Rel), access(read), file_errors(fail), file_type(directory)]),
     exists_directory(AbsDirectory), !,
     findall(File, directory_source_files(AbsDirectory, File, [recursive(true), if(true)]), Files), !,
     ignore(maplist(with_file_lists(Rel, P1), Files)).
-with_file_lists(Rel, P1, Wildcard) :- 
+with_file_lists(Rel, P1, Wildcard) :-
     % Process wildcard patterns as files.
     atom(Wildcard),
     absolute_file_name(Wildcard, AbsWildcard, [relative_to(Rel)]),
     \+ exists_file(AbsWildcard),
     expand_file_name(AbsWildcard, Files), Files \== [], !,
     ignore(maplist(with_file_lists(Rel, P1), Files)).
-with_file_lists(Rel, P1, Filename) :- 
+with_file_lists(Rel, P1, Filename) :-
     % Log processing of Filename.
     write_src(with_file_lists(Rel, P1, Filename)), nl.
 
@@ -1146,7 +1146,7 @@ with_file_lists(Rel, P1, Filename) :-
 %
 %   Provides the default pattern mask used to match Prolog files for processing.
 %   The first clause defines a specific set of file path patterns to be used, and the
-%   second clause falls back to a simpler recursive wildcard pattern if the first clause 
+%   second clause falls back to a simpler recursive wildcard pattern if the first clause
 %   does not apply.
 %
 %   @arg Mask A list of file patterns (wildcards) used to match Prolog files.
@@ -1155,7 +1155,7 @@ with_file_lists(Rel, P1, Filename) :-
 %       ?- default_pl_mask(Mask).
 %       Mask = ['*/*.pl', '*/*/*.pl', ..., '*.pl'].
 %
-default_pl_mask(Mask) :- 
+default_pl_mask(Mask) :-
     % Provide a specific set of file patterns for Prolog files.
     Mask = [
         % 'src/main/metta_*.pl',
@@ -1168,22 +1168,22 @@ default_pl_mask(Mask) :-
         '*/*/*/*/*/*.pl',
         '*.pl'
     ], !.
-default_pl_mask(Mask) :- 
+default_pl_mask(Mask) :-
     % Fallback to a recursive wildcard pattern for matching Prolog files.
     Mask = ['**/*.pl'].
 
 %!  convert_to_metta_console is det.
 %
-%   Initiates the conversion process for Prolog files to MeTTa representation 
-%   using a default file mask. This predicate retrieves the default file mask 
-%   using `default_pl_mask/1` and applies the conversion process. The process 
+%   Initiates the conversion process for Prolog files to MeTTa representation
+%   using a default file mask. This predicate retrieves the default file mask
+%   using `default_pl_mask/1` and applies the conversion process. The process
 %   runs quietly, ignoring errors, and prints a message upon completion.
 %
 %   @example Convert files to MeTTa using the default mask:
 %       ?- convert_to_metta_console.
 %       ;; convert_to_metta_console.
 %
-convert_to_metta_console :- 
+convert_to_metta_console :-
     % Retrieve the default Prolog file mask.
     default_pl_mask(Mask),
     % Ignore errors during the conversion process and apply the conversion.
@@ -1193,9 +1193,9 @@ convert_to_metta_console :-
 
 %!  convert_to_metta_file is det.
 %
-%   Initiates the conversion process for Prolog files to MeTTa representation 
-%   using a default file mask. This predicate retrieves the default file mask 
-%   using `default_pl_mask/1` and applies the conversion process. It ensures 
+%   Initiates the conversion process for Prolog files to MeTTa representation
+%   using a default file mask. This predicate retrieves the default file mask
+%   using `default_pl_mask/1` and applies the conversion process. It ensures
 %   that the conversion proceeds without halting on errors using `ignore/1`.
 %   A message is printed upon successful completion of the process.
 %
@@ -1203,7 +1203,7 @@ convert_to_metta_console :-
 %       ?- convert_to_metta_file.
 %       ;; convert_to_metta_file.
 %
-convert_to_metta_file :- 
+convert_to_metta_file :-
     % Retrieve the default Prolog file mask.
     default_pl_mask(Mask),
     % Ignore any errors during the file conversion process.
@@ -1214,7 +1214,7 @@ convert_to_metta_file :-
 %!  convert_to_metta is det.
 %
 %   Converts Prolog files to MeTTa representation using the default file mask.
-%   This predicate retrieves the default file mask using `default_pl_mask/1` and 
+%   This predicate retrieves the default file mask using `default_pl_mask/1` and
 %   applies the conversion process, ensuring that any errors during the conversion
 %   are ignored. After the conversion is completed, a message is printed to indicate
 %   successful completion.
@@ -1223,7 +1223,7 @@ convert_to_metta_file :-
 %       ?- convert_to_metta.
 %       ;; convert_to_metta.
 %
-convert_to_metta :- 
+convert_to_metta :-
     % Retrieve the default Prolog file mask.
     default_pl_mask(Mask),
     % Apply the conversion process, ignoring errors.
@@ -1242,17 +1242,17 @@ convert_to_metta :-
 %       ?- ctm.
 %       ;; convert_to_metta.
 %
-ctm :- 
+ctm :-
     % Invoke the convert_to_metta/0 predicate.
     convert_to_metta.
 
 %!  convert_to_metta_console(+FileSpec) is det.
 %
-%   Processes a list of filenames specified by `FileSpec`, applying the 
-%   `convert_to_metta_now/2` predicate to each file and directing the output 
+%   Processes a list of filenames specified by `FileSpec`, applying the
+%   `convert_to_metta_now/2` predicate to each file and directing the output
 %   to the console (`user_output`).
 %
-%   @arg FileSpec The file specification, which can be a filename, directory, 
+%   @arg FileSpec The file specification, which can be a filename, directory,
 %        or wildcard pattern to match multiple files.
 %
 %   @example Convert files specified by a file pattern to MeTTa and output to console:
@@ -1264,11 +1264,11 @@ convert_to_metta_console(FileSpec) :-
 
 %!  convert_to_metta_file(+FileSpec) is det.
 %
-%   Processes a list of filenames specified by `FileSpec`, applying the 
+%   Processes a list of filenames specified by `FileSpec`, applying the
 %   `convert_to_metta_now/2` predicate to each file. This version handles file
 %   conversion without outputting results to the console.
 %
-%   @arg FileSpec The file specification, which can be a filename, directory, 
+%   @arg FileSpec The file specification, which can be a filename, directory,
 %        or wildcard pattern to match multiple files.
 %
 %   @example Convert files specified by a file pattern to MeTTa without console output:
@@ -1300,7 +1300,7 @@ convert_to_metta(FileSpec) :-
 %!  convert_to_metta_now(+OutputIn, +Filename) is det.
 %
 %   Processes a given filename by calling `convert_to_metta_now_out/2` within the context
-%   of user I/O. This predicate is responsible for managing the conversion of a file 
+%   of user I/O. This predicate is responsible for managing the conversion of a file
 %   to its MeTTa equivalent, preparing the output, and ensuring proper I/O handling.
 %
 %   @arg OutputIn  The output stream or destination for the converted content.
@@ -1400,7 +1400,7 @@ into_namings(N=V) :-
 %!  translate_to_metta(+Module, +Input) is det.
 %
 %   Recursively translates the content of the input stream to MeTTa format.
-%   This predicate handles different types of content such as whitespace characters, 
+%   This predicate handles different types of content such as whitespace characters,
 %   Prolog comments (both `%` and `#` styles), and clauses, ensuring proper conversion
 %   to MeTTa syntax. The process continues until the end of the file.
 %
@@ -1452,9 +1452,9 @@ translate_to_metta(Module, Input) :-
 %       ?- is_reprint_char(' ').
 %       true.
 %
-is_reprint_char(Char) :- 
+is_reprint_char(Char) :-
     char_type(Char, space).
-is_reprint_char(Char) :- 
+is_reprint_char(Char) :-
     Char == '.'.
 
 %!  translate_comment(+Cmt, -Str) is det.
@@ -1469,7 +1469,7 @@ is_reprint_char(Char) :-
 %       ?- translate_comment("% This is a Prolog comment", Str).
 %       Str = "; This is a MeTTa comment".
 %
-translate_comment(Cmt, Str) :- 
+translate_comment(Cmt, Str) :-
     replace_in_string(["%" = ";",
                        "prolog" = "MeTTa",
                        "PROLOG" = "MeTTa",
@@ -1477,7 +1477,7 @@ translate_comment(Cmt, Str) :-
 
 %!  read_clause_with_info(+Stream) is det.
 %
-%   Reads a Prolog clause from the provided stream while capturing metadata such as 
+%   Reads a Prolog clause from the provided stream while capturing metadata such as
 %   variable bindings, term positions, subterm positions, and comments. This is useful
 %   for further analysis or debugging purposes.
 %
@@ -1488,12 +1488,12 @@ translate_comment(Cmt, Str) :-
 %          read_clause_with_info(Stream),
 %          close(Stream).
 %
-read_clause_with_info(Stream) :- 
+read_clause_with_info(Stream) :-
     % Stop if at the end of the stream.
     at_end_of_stream(Stream), !.
-read_clause_with_info(Stream) :- 
+read_clause_with_info(Stream) :-
     % Handle errors while reading a clause.
-    catch(read_clause_with_info_0(Stream), E, 
+    catch(read_clause_with_info_0(Stream), E,
           ((user_io(write_src_cmt(E)), write_src_cmt(E)))).
 read_clause_with_info_0(Stream) :-
     % Set options for reading the clause with metadata.
@@ -1550,14 +1550,14 @@ display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments) :-
 %   @example Print a list of comments:
 %       ?- print_metta_comments(["This is a comment.", "Another comment."]).
 %
-print_metta_comments(Comments) :- 
+print_metta_comments(Comments) :-
     % Print each comment in the provided list.
     print_metta_comment(Comments).
 
 %!  print_metta_comment(+Comments) is det.
 %
-%   Recursively processes and prints comments in MeTTa format. Handles cases where 
-%   comments are provided in different formats (lists or pairs) and ensures that 
+%   Recursively processes and prints comments in MeTTa format. Handles cases where
+%   comments are provided in different formats (lists or pairs) and ensures that
 %   all comments are translated and printed correctly.
 %
 %   @arg Comments The comment or list of comments to be processed and printed.
@@ -1568,24 +1568,24 @@ print_metta_comments(Comments) :-
 %   @example Print a list of comments:
 %       ?- print_metta_comment(["Comment 1", "Comment 2"]).
 %
-print_metta_comment([]) :- 
+print_metta_comment([]) :-
     % Base case: stop when there are no more comments.
     !.
-print_metta_comment(_TP-Cmt) :- 
+print_metta_comment(_TP-Cmt) :-
     % If the comment is a pair (_TP-Cmt), process the comment part.
     !, print_metta_comment(Cmt).
-print_metta_comment([Cmt|Cs]) :- 
+print_metta_comment([Cmt|Cs]) :-
     % Recursively process a list of comments.
     !, print_metta_comment(Cmt), !, print_metta_comment(Cs).
-print_metta_comment(Cmt) :- 
+print_metta_comment(Cmt) :-
     % Translate and print a single comment.
     translate_comment(Cmt, String), print_cmt_lines(String).
 
 %!  print_cmt_lines(+String) is det.
 %
 %   Normalize the input string, split it by newline, and print each line as a comment.
-%   This predicate processes a multi-line string, normalizing the spacing and splitting 
-%   it by newline characters. It then calls `print_cmt_line/1` to print each individual 
+%   This predicate processes a multi-line string, normalizing the spacing and splitting
+%   it by newline characters. It then calls `print_cmt_line/1` to print each individual
 %   line as a comment.
 %
 %   @arg String The input string to be processed and printed as comments.
@@ -1600,11 +1600,11 @@ print_cmt_lines(String):-
 %!  print_cmt_line(+Str) is det.
 %
 %   Print a single string as a comment.
-%   This predicate takes a single string and prints it in a specific format 
+%   This predicate takes a single string and prints it in a specific format
 %   intended for comments.
 %
 %   @arg Str The string to be printed as a comment.
-print_cmt_line(Str):- 
+print_cmt_line(Str):-
     % Print the string prefixed with a semicolon (comment notation).
     format('~N; ~w',[Str]).
 
@@ -1626,18 +1626,18 @@ echo_as_commnents_until_eof(Stream):-
 %!  process_term(+Stream, +Term) is det.
 %
 %   Process a term, either handling it as a directive or converting it into a clause.
-%   If the term is an end-of-file marker, it calls `echo_as_commnents_until_eof/1` 
-%   to print comments from the stream. For directives, it attempts to execute and print 
+%   If the term is an end-of-file marker, it calls `echo_as_commnents_until_eof/1`
+%   to print comments from the stream. For directives, it attempts to execute and print
 %   them, and for other terms, it expands them into head-body form and writes them.
 %
 %   @arg Stream The input stream being processed.
 %   @arg Term The term to process (either a directive or a Prolog clause).
-process_term(Stream,end_of_file):- 
+process_term(Stream,end_of_file):-
     !, echo_as_commnents_until_eof(Stream).  % Handle end of file.
 process_term(Stream,Term):-
     % Check if the term is a directive and process it accordingly.
     is_directive(Term),
-    ignore(maybe_call_directive(Stream,Term)), 
+    ignore(maybe_call_directive(Stream,Term)),
     !, ignore(print_directive(Term)).
 process_term(_,Term):-
     % Expand a term into head-body form and push the context for term tracking.
@@ -1654,13 +1654,13 @@ process_term(_,Term):-
 %
 %   @arg Stream The input stream associated with the directive.
 %   @arg Directive The directive to be processed.
-maybe_call_directive(Stream,(:- X)):- 
+maybe_call_directive(Stream,(:- X)):-
     !, maybe_call_directive(Stream,X).  % Recursive handling for nested directives.
-maybe_call_directive(_Stream,op(X,F,Y)):- 
+maybe_call_directive(_Stream,op(X,F,Y)):-
     trans_mod:op(X,F,Y).  % Handle operator declarations.
-maybe_call_directive(_Stream,use_module(library(W))):- 
+maybe_call_directive(_Stream,use_module(library(W))):-
     trans_mod:use_module(library(W)).  % Handle module imports.
-maybe_call_directive(Stream,encoding(Enc)):- 
+maybe_call_directive(Stream,encoding(Enc)):-
     % Set the encoding of the stream.
     set_stream(Stream,encoding(Enc)).
 
@@ -1679,20 +1679,20 @@ is_directive((:- _)).
 %   ensuring that terms are pushed into the correct context.
 %
 %   @arg Term The term to push into the context.
-push_term_ctx(X):- 
+push_term_ctx(X):-
     \+ compound(X), !,
     (nb_current(term_ctx,Was) -> true ; Was = []),
     (Was =@= X -> true ; (nb_setval(term_ctx,X),nl)).
-push_term_ctx((X:-_)):- 
+push_term_ctx((X:-_)):-
     !, push_term_ctx(X).
-push_term_ctx(X):- 
+push_term_ctx(X):-
     compound_name_arity(X,F,_A),
     push_term_ctx(F).
 
 %!  print_directive(+Directive) is det.
 %
 %   Print a Prolog directive in a specific format.
-%   This predicate converts a directive into a metta-compatible format and 
+%   This predicate converts a directive into a metta-compatible format and
 %   prints it as an executable statement.
 %
 %   @arg Directive The directive to be printed.
@@ -1710,9 +1710,9 @@ print_directive((:- Directive)):-
 %   This predicate ensures that the term is properly instantiated before printing it.
 %
 %   @arg STerm The metta-compatible term to be written.
-write_pl_metta(STerm):- 
+write_pl_metta(STerm):-
     \+ \+ write_pl_metta_0(STerm).
-write_pl_metta_0(STerm):- 
+write_pl_metta_0(STerm):-
     % Instantiate variables and write the source.
     numbervars(STerm,0,_,[singletons(true),attvar(skip)]),
     write_src(STerm).
