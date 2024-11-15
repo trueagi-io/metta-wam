@@ -52,8 +52,8 @@
  */
 
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: handles loading, parsing, and processing MeTTa files, including functions 
+%*********************************************************************************************
+% PROGRAM FUNCTION: handles loading, parsing, and processing MeTTa files, including functions
 % for reading s-expressions, managing file buffers, and converting between different data representations.
 %*********************************************************************************************
 
@@ -83,13 +83,13 @@
 %
 when_tracing(Goal) :-
     % Check if tracing is active
-    tracing,      
-    % Cut to prevent further execution if tracing is not active   
-    !,                
+    tracing,
+    % Cut to prevent further execution if tracing is not active
+    !,
     % Temporarily disable tracing, run the Goal without tracing output
-    notrace(Goal),    
+    notrace(Goal),
     % Cut to avoid backtracking into the next clause
-    !.                
+    !.
 % If tracing is not active, do nothing and succeed without executing Goal.
 when_tracing(_).
 
@@ -138,9 +138,9 @@ path_chars(A, C) :- symbol_chars(A, C).
 %
 with_wild_path(Fnicate, Dir) :-
     % Retrieve the current working directory.
-    working_directory(PWD, PWD),  
+    working_directory(PWD, PWD),
     % Apply the wild path setup.
-    wwp(Fnicate, Dir).            
+    wwp(Fnicate, Dir).
 
 %!  inner_compound(+Compound, -Outer, -Inner) is det.
 %
@@ -160,9 +160,9 @@ with_wild_path(Fnicate, Dir) :-
 %     Outer = f(g(Midder)),
 %     Inner = h.
 %
-inner_compound(Inner, '.', Inner) :- 
+inner_compound(Inner, '.', Inner) :-
     % If Inner is not compound, return it as Inner.
-    \+ compound(Inner), !.  
+    \+ compound(Inner), !.
 inner_compound(Cmpd, Outter, Inner) :-
     % Decompose Cmpd into functor F and arguments [X|Args]
     compound_name_arguments(Cmpd, F, [X|Args]),
@@ -226,38 +226,38 @@ afn(A, B, C) :- quietly(absolute_file_name(A, B, C)).
 wwp(Fnicate,Dir):-
     extreme_debug(fbug(wwp(Fnicate,Dir))),
     fail.
-wwp(_Fnicate, []) :- 
+wwp(_Fnicate, []) :-
     % If the path is an empty list, succeed without further processing.
     !.
-wwp(_Fnicate, Virtual) :- 
+wwp(_Fnicate, Virtual) :-
     % If the path exists virtually, succeed immediately.
     exists_virtually(Virtual), !.
-wwp(Fnicate, Virtual) :- 
+wwp(Fnicate, Virtual) :-
     % If the path is unbound, throw an error to handle uninitialized input.
     var(Virtual), !, throw(var_wwp(Fnicate, Virtual)).
-wwp(Fnicate, Dir) :- 
+wwp(Fnicate, Dir) :-
     % If running on Scryer Prolog and the path is a symbol, convert it to a character list
     % and reapply wwp on the resulting list.
     is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir, Chars), wwp(Fnicate, Chars))).
-wwp(Fnicate, Chars) :- 
+wwp(Fnicate, Chars) :-
     % If the path is a character list or code list, convert it to a file name and reapply wwp.
     is_list(Chars), catch(name(File, Chars), _, fail), Chars \== File, !, wwp(Fnicate, File).
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % If the path is a list of files, apply wwp to each element in the list.
     is_list(File), !, must_det_ll((maplist(wwp(Fnicate), File))).
-wwp(Fnicate, Cmpd) :- 
+wwp(Fnicate, Cmpd) :-
     % If the path is a compound term, find the innermost term and process it within the outer structure.
     compound(Cmpd), inner_compound(Cmpd, Outter, Inner), !,
     % Find absolute path of the outer compound and apply wwp with Inner inside that directory.
     afn(Outter, Dir, [solutions(all), access(read), file_errors(fail)]),
     with_cwd(Dir, wwp(Fnicate, Inner)), !.
-wwp(Fnicate, Chars) :- 
+wwp(Fnicate, Chars) :-
     % If running on SWI-Prolog, convert character list to an atom and process it.
     \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom, Chars), wwp(Fnicate, Atom))).
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % If the path exists as a file, directly apply Fnicate to it.
     exists_file(File), !, must_det_ll((call(Fnicate, File))).
-wwp(Fnicate, ColonS) :- 
+wwp(Fnicate, ColonS) :-
     % Handle symbolic paths containing ':' separators, treating them as modular paths.
     fail, symbolic(ColonS), symbol_contains(ColonS, ':'), !,
     % Split the symbolic path into top-level directory and the remaining path.
@@ -273,9 +273,9 @@ wwp(Fnicate, ColonS) :-
         ; (exists_directory(Dir)
             -> with_cwd(Dir, wwp(Fnicate, FileNext))
             ; fail)
-    ), 
+    ),
     !.
-wwp(Fnicate, ColonS) :- 
+wwp(Fnicate, ColonS) :-
     % If path contains ':' separator, split it for directory processing.
     symbolic(ColonS), symbol_contains(ColonS, ':'), !,
     symbolic_list_concat([Top|Rest], ':', ColonS),
@@ -286,24 +286,24 @@ wwp(Fnicate, ColonS) :-
         % If Dir exists, process the remaining path within Dir.
         exists_directory(Dir),
         with_cwd(Dir, wwp(Fnicate, FileNext)))))), !.
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % If the path contains '*', expand it to match multiple files.
     symbol_contains(File, '*'),
     expand_file_name(File, List),
     maplist(wwp(Fnicate), List), !.
-wwp(Fnicate, Dir) :- 
+wwp(Fnicate, Dir) :-
     % If Dir is a directory, check for `__init__.py` file and process if it exists.
     exists_directory(Dir),
     quietly(afn_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)])),
     wwp(Fnicate, PyFile).
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % If File doesn’t exist as file or directory, search for it with predefined extensions.
     \+ exists_directory(File), \+ exists_file(File),
     extension_search_order(Ext),
     symbolic_list_concat([File|Ext], MeTTafile),
     exists_file(MeTTafile),
     call(Fnicate, MeTTafile).
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % For files containing '..', search with alternative extensions and process if found.
     \+ exists_directory(File), \+ exists_file(File), symbol_contains(File, '..'),
     extension_search_order(Ext),
@@ -311,20 +311,20 @@ wwp(Fnicate, File) :-
     afn_from(MeTTafile0, MeTTafile, [access(read), file_errors(fail)]),
     exists_file(MeTTafile),
     call(Fnicate, MeTTafile).
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % If File is a directory, process all files matching '*.*sv' in that directory.
     exists_directory(File),
     directory_file_path(File, '*.*sv', Wildcard),
     expand_file_name(Wildcard, List), !,
     maplist(Fnicate, List).
-wwp(Fnicate, Dir) :- 
+wwp(Fnicate, Dir) :-
     % If Dir is a directory, retrieve all files within and apply Fnicate to each.
     exists_directory(Dir), !,
     must_det_ll((directory_files(Dir, Files),
                  maplist(directory_file_path(Dir, Files), Paths),
                  maplist(path_chars, Paths, CharPaths),
                  maplist(wwp(Fnicate), CharPaths))), !.
-wwp(Fnicate, File) :- 
+wwp(Fnicate, File) :-
     % Fallback case: directly apply Fnicate on the file.
     must_det_ll((call(Fnicate, File))).
 
@@ -353,7 +353,7 @@ extension_search_order(['']).
 %
 %   Loads a `.metta` file or other supported files based on the file mask.
 %
-%   Attempts to load the specified `Filemask`. If the `Filemask` has a `.metta` 
+%   Attempts to load the specified `Filemask`. If the `Filemask` has a `.metta`
 %   extension, `load_metta/2` is used. Otherwise, `load_flybase/1` is called.
 %
 %   @arg Self The calling module or context.
@@ -363,11 +363,11 @@ extension_search_order(['']).
 %     % Load a file with .metta extension.
 %     ?- load_metta_file(module, 'example.metta').
 %
-load_metta_file(Self, Filemask) :- 
-    symbol_concat(_, '.metta', Filemask), !, 
+load_metta_file(Self, Filemask) :-
+    symbol_concat(_, '.metta', Filemask), !,
     % Load the file if it has a .metta extension
     load_metta(Self, Filemask).
-load_metta_file(_Slf, Filemask) :- 
+load_metta_file(_Slf, Filemask) :-
     % Otherwise, use the flybase loader for the file mask
     load_flybase(Filemask).
 
@@ -425,8 +425,8 @@ afn_from(RelFilename, Filename, Opts) :-
 %     % Register a module in a specific directory.
 %     ?- register_module('/path/to/module').
 %
-register_module(Dir) :- 
-    current_self(Space), 
+register_module(Dir) :-
+    current_self(Space),
     % Register the module under the current Space
     register_module(Space, Dir).
 
@@ -482,9 +482,9 @@ register_module(Space, ModuleName, Dir) :-
 %     % Find the directory for a top-level identifier.
 %     ?- find_top_dirs('top_id', Dir).
 %
-find_top_dirs(Top, Dir) :- 
+find_top_dirs(Top, Dir) :-
     current_self(Self),
-    space_name(Self, SpaceName), 
+    space_name(Self, SpaceName),
     % Use the space name to locate the directory
     find_top_dirs(SpaceName, Top, Dir).
 
@@ -500,13 +500,13 @@ find_top_dirs(Top, Dir) :-
 %     % Find or assert directory in a specific space.
 %     ?- find_top_dirs('space', 'top_id', Dir).
 %
-find_top_dirs(SpaceName, Top, Abs) :- 
+find_top_dirs(SpaceName, Top, Abs) :-
     % Try to locate the absolute path for Top in SpaceName
     is_metta_module_path(SpaceName, Top, Abs).
-find_top_dirs(SpaceName,Top,Dir):- 
+find_top_dirs(SpaceName,Top,Dir):-
      % Search within the top level of SpaceName's root
     is_metta_module_path(SpaceName,'%top%',Root),absolute_dir(Top,Root,Dir).
-find_top_dirs(SpaceName,Top,Dir):- 
+find_top_dirs(SpaceName,Top,Dir):-
     % If not found, derive the parent directory
     working_directory(PWD,PWD),
     parent_dir_of(PWD,Top,Dir), assert(is_metta_module_path(SpaceName,Top,Dir)).
@@ -523,7 +523,7 @@ find_top_dirs(SpaceName,Top,Dir):-
 %     % Find the parent directory containing the identifier `Top`.
 %     ?- parent_dir_of('/current/dir', 'top', Dir).
 %
-parent_dir_of(PWD, Top, Dir) :- 
+parent_dir_of(PWD, Top, Dir) :-
     directory_file_path(Parent, TTop, PWD),
     % Check if the current top matches
     (TTop == Top -> Dir = PWD ; parent_dir_of(Parent, Top, Dir)).
@@ -541,14 +541,14 @@ parent_dir_of(PWD, Top, Dir) :-
 %     % Find the name of a space.
 %     ?- space_name('space_identifier', Name).
 %
-space_name(Space, SpaceName) :- 
-    symbol(Space), !, 
+space_name(Space, SpaceName) :-
+    symbol(Space), !,
     % If Space is symbolic, use it directly as SpaceName
     SpaceName = Space, !.
-space_name(Space, SpaceName) :- 
+space_name(Space, SpaceName) :-
     % Check if an existing space name matches
     is_space_name(SpaceName), same_space(SpaceName, Space), !.
-space_name(Space, SpaceName) :- 
+space_name(Space, SpaceName) :-
     % Retrieve or create a space-symbol if needed
     'get-atoms'(Space, ['space-symbol', SpaceName]), !.
 
@@ -565,14 +565,14 @@ space_name(Space, SpaceName) :-
 %     % Check if two spaces are the same.
 %     ?- same_space('space1', 'space2').
 %
-same_space(Space1, Space2) :- 
+same_space(Space1, Space2) :-
     % Direct equality check for spaces
     Space1 = Space2.
-same_space(SpaceName1, Space2) :- 
+same_space(SpaceName1, Space2) :-
     % Evaluate symbolic name and compare
-    symbol(SpaceName1), 
-    eval(SpaceName1, Space1), 
-    !, 
+    symbol(SpaceName1),
+    eval(SpaceName1, Space1),
+    !,
     same_space(Space2, Space1).
 
 %!  absolute_dir(+Dir, -AbsDir) is det.
@@ -588,7 +588,7 @@ same_space(SpaceName1, Space2) :-
 %     % Resolve the absolute path of a directory.
 %     ?- absolute_dir('my_dir', AbsPath).
 %
-absolute_dir(Dir, AbsDir) :- 
+absolute_dir(Dir, AbsDir) :-
     % Generate the absolute path with access and error options
     afn(Dir, AbsDir, [access(read), file_errors(fail), file_type(directory)]).
 
@@ -606,7 +606,7 @@ absolute_dir(Dir, AbsDir) :-
 %     % Find absolute path of `Dir` relative to a base directory `From`.
 %     ?- absolute_dir('my_dir', '/base/dir', AbsPath).
 %
-absolute_dir(Dir, From, AbsDir) :- 
+absolute_dir(Dir, From, AbsDir) :-
     % Specify From as the base for the absolute path resolution
     afn(Dir, AbsDir, [relative_to(From), access(read), file_errors(fail), file_type(directory)]), !.
 
@@ -961,7 +961,7 @@ count_lines_in_stream(TwoK, Stream, CurrentCount, FinalCount) :-
 %   @arg Directory The directory containing the file.
 %   @arg Filename  The name of the original `.metta` file.
 %
-include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     % Attempt to load a prebuilt `.qlf` file if it is newer than the `.metta` file.
     symbol_concat(_, '.metta', Filename),
     symbol_concat(Filename, '.qlf', QlfFile),
@@ -972,7 +972,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     QLFTime > MettaTime,!, % Ensure QLF file is newer than the METTA file
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     ensure_loaded(QlfFile),!.
-include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     % Attempt to load a `.datalog` file if it is newer, large enough, and `just_load_datalog` is true.
     just_load_datalog,
     symbol_concat(_, '.metta', Filename),
@@ -991,7 +991,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     !, % Cut to prevent backtracking
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     ensure_loaded(DatalogFile), !.
-include_metta_directory_file_prebuilt(Self, _Directory, Filename):- 
+include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
     % Convert a `.datalog` file to `.qlf` if the size requirement is met and load it.
     symbol_concat(_, '.metta', Filename),
     symbol_concat(Filename, '.datalog', DatalogFile),
@@ -1082,7 +1082,7 @@ include_large_metta_directory_file(Self, _Directory, Filename):-
 %     % Convert a `.metta` file named "example.metta" to "example.metta.datalog".
 %     ?- convert_metta_to_datalog('example.metta', DatalogFile).
 %
-convert_metta_to_datalog(Filename, DatalogFile):- 
+convert_metta_to_datalog(Filename, DatalogFile):-
     % Generate the Datalog file name
     ignore(symbol_concat(Filename, '.datalog', DatalogFile)),
     % Open the METTA file for reading
@@ -1205,7 +1205,7 @@ filename_to_mangled_pred(Filename, MangleP) :-
 trim_to_last_nchars(Len, Atom, TrimmedAtom) :-
     atom_length(Atom, Length),
     (   Length =< Len
-    ->  TrimmedAtom = Atom  
+    ->  TrimmedAtom = Atom
     ;   Before is Length - 32,
         sub_atom(Atom, Before, 32, _, TrimmedAtom)
     ).
@@ -1350,7 +1350,7 @@ relistify(Term, [Term]).
 eval_Line(A, _B, _C) :-
     test_alarm,
     format('~N'), nl, % write_src(eval_Line(A,B,C)),nl,
-    eval(A, R), nl, wdmsg(R).
+    eval(A, R), nl, write_src_uo(R).
 
 %!  translate_metta_datalog(+Input, +Output) is det.
 %
@@ -1363,39 +1363,39 @@ eval_Line(A, _B, _C) :-
 %   @arg Input  The input stream containing MeTTa terms.
 %   @arg Output The output stream for writing Datalog-translated terms.
 %
-translate_metta_datalog(Input, Output) :- 
+translate_metta_datalog(Input, Output) :-
     translate_metta_datalog('', Input, Output), !.
-translate_metta_datalog(_, Input, _) :- 
+translate_metta_datalog(_, Input, _) :-
     at_end_of_stream(Input), !.
-translate_metta_datalog(Ch, Input, Output) :- 
+translate_metta_datalog(Ch, Input, Output) :-
     peek_char(Input, Char),
     translate_metta_datalog(Ch, Input, Output, Char).
-translate_metta_datalog(_, Input, Output, ')') :- 
+translate_metta_datalog(_, Input, Output, ')') :-
     % Handle closing parentheses
     !, get_char(Input, _),writeq(Output, ']'),translate_metta_datalog(',', Input, Output).
-translate_metta_datalog(Ch, Input, Output, '(') :- 
+translate_metta_datalog(Ch, Input, Output, '(') :-
     % Handle opening parentheses
     !, get_char(Input, _),write(Output, Ch),writeq(Output, '['),translate_metta_datalog('', Input, Output).
 translate_metta_datalog(Ch, Input, Output, Space) :-
     % Skip whitespace
     char_type(Space, space), !,get_char(Input, Char),write(Output, Char),translate_metta_datalog(Ch, Input, Output).
-translate_metta_datalog(Ch, Input, Output, ';') :- 
+translate_metta_datalog(Ch, Input, Output, ';') :-
     % Handle comments
     !, read_line_to_string(Input, Comment),format(Output, '/* ~w */', [Comment]),translate_metta_datalog(Ch, Input, Output).
-translate_metta_datalog(Ch, Input, Output, '"') :- 
+translate_metta_datalog(Ch, Input, Output, '"') :-
     % Handle quoted terms
     !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
-translate_metta_datalog(Ch, Input, Output, '`') :- 
+translate_metta_datalog(Ch, Input, Output, '`') :-
     % Handle backquoted terms
     !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
-translate_metta_datalog(Ch, Input, Output, '\'') :- 
+translate_metta_datalog(Ch, Input, Output, '\'') :-
     % Handle single-quoted terms
     !, read_term(Input, Term, []),write(Output, Ch),writeq(Output, Term),translate_metta_datalog(',', Input, Output).
-translate_metta_datalog(Ch, Input, Output, '$') :- 
+translate_metta_datalog(Ch, Input, Output, '$') :-
     % Handle dollar-prefixed terms
     !, read_chars_until([type(space), ')'], Input, Codes),name(Term, Codes),write(Output, Ch),writeq(Output, Term),
     translate_metta_datalog(',', Input, Output).
-translate_metta_datalog(Ch, Input, Output, Peek) :- 
+translate_metta_datalog(Ch, Input, Output, Peek) :-
     % Handle general characters
     !, read_chars_until([type(space), ')'], Peek, Input, Codes),name(Term, Codes),write(Output, Ch),
     writeq(Output, Term),translate_metta_datalog(',', Input, Output).
@@ -1412,7 +1412,7 @@ translate_metta_datalog(Ch, Input, Output, Peek) :-
 %   This function is useful for parsing input streams up to a specific point, based on
 %   defined character types or individual characters.
 %
-%   @arg StopsBefore A list of characters or character types (e.g., `type(space)`) 
+%   @arg StopsBefore A list of characters or character types (e.g., `type(space)`)
 %                    that indicate where to stop reading.
 %   @arg Input       The input stream from which characters are read.
 %   @arg Codes       The list of character codes read up to the stop character.
@@ -1445,10 +1445,10 @@ read_chars_until(StopsBefore, Input, Codes) :-
 %     % Check if a character is a space or equals the stop character `;`.
 %     ?- stops_before([type(space), ';'], ' ').
 %
-stops_before([type(Type) | StopsBefore], Char) :- 
+stops_before([type(Type) | StopsBefore], Char) :-
     % Check if the character type matches
     char_type(Char, Type); stops_before(StopsBefore, Char).
-stops_before([Ch | StopsBefore], Char) :-  
+stops_before([Ch | StopsBefore], Char) :-
     % Check if the character itself is a stop character
     Ch == Char; stops_before(StopsBefore, Char).
 
@@ -1473,11 +1473,11 @@ stops_before([Ch | StopsBefore], Char) :-
 read_chars_until(StopsBefore, Char, _, []) :-
     % Stop reading if the current character matches a stop condition.
     stops_before(StopsBefore, Char), !.
-read_chars_until(StopsBefore, '\\', Input, [Code | Codes]) :- 
+read_chars_until(StopsBefore, '\\', Input, [Code | Codes]) :-
     % Handle escape characters by reading the escaped character.
     get_char(Input, Code),
     read_chars_until(StopsBefore, Input, Codes).
-read_chars_until(StopsBefore, Char, Input, [Char | Codes]) :- 
+read_chars_until(StopsBefore, Char, Input, [Char | Codes]) :-
     % Read character and continue until stop condition is met.
     get_char(Input, _),
     read_chars_until(StopsBefore, Input, Codes).
@@ -1505,14 +1505,14 @@ may_use_datalog :- !, true.
 %   This can improve performance during loading by creating a quick-load format.
 %
 %   @arg DatalogFile The source Datalog file.
-%   @arg QlfFile     The resulting loadable `.qlf` file, or identical to `DatalogFile` if 
+%   @arg QlfFile     The resulting loadable `.qlf` file, or identical to `DatalogFile` if
 %                    conversion is skipped.
 %
 %   @example
 %     % Convert "example.datalog" to "example.qlf" for quick-loading.
 %     ?- convert_datalog_to_loadable('example.datalog', QlfFile).
 %
-convert_datalog_to_loadable(DatalogFile, DatalogFile) :- 
+convert_datalog_to_loadable(DatalogFile, DatalogFile) :-
     % Skip conversion if only Datalog loading is allowed
     just_load_datalog, !.
 convert_datalog_to_loadable(DatalogFile, QlfFile) :-
@@ -1568,9 +1568,9 @@ convert_metta_to_loadable(Filename, _) :-
 %   @arg I    The line content to process.
 %
 accept_line(_Self, end_of_file) :- !.
-accept_line(Self, I) :- 
+accept_line(Self, I) :-
     % Normalize whitespace in the input line
-    normalize_space(string(Str), I), 
+    normalize_space(string(Str), I),
     !, accept_line2(Self, Str),!.
 
 %!  accept_line2(+Self, +S) is det.
@@ -1588,26 +1588,26 @@ accept_line(Self, I) :-
 %     % Accept a line formatted as a Prolog assertion.
 %     ?- accept_line2('&self', "(assert fact)").
 %
-accept_line2(_Self, S) :- 
+accept_line2(_Self, S) :-
     % Process comments that start with a semicolon
-    string_concat(";", _, S), 
+    string_concat(";", _, S),
     !, writeln(S).
-accept_line2(Self, S) :- 
+accept_line2(Self, S) :-
     % Process statements enclosed in parentheses
     string_concat('(', RS, S),
-    string_concat(M, ')', RS), 
+    string_concat(M, ')', RS),
     !,
     % Split the statement by spaces to extract the function and arguments
     symbolic_list_concat([F | LL], ' ', M),
     % Construct a Prolog term from the function and arguments
     PL =.. [F, Self | LL],
     % Assert the term to the knowledge base
-    pfcAdd_Now(PL), 
-    !, 
+    pfcAdd_Now(PL),
+    !,
     % Update assertion counter and log progress periodically
     flag(next_assert, X, X + 1),
     if_t((0 is X mod 10_000_000), (writeln(X = PL), statistics)).
-accept_line2(Self, S) :- 
+accept_line2(Self, S) :-
     % Fallback case for unexpected content
     fbug(accept_line2(Self, S)), !.
 
@@ -1655,8 +1655,8 @@ use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 %:- nb_setval(may_use_fast_buffer,t).
 %:- use_fast_buffer.
 
-:- dynamic(metta_file_buffer/7).
-:- multifile(metta_file_buffer/7).
+:- dynamic(user:metta_file_buffer/7).
+:- multifile(user:metta_file_buffer/7).
 
 %!  prefer_temp(+Filename, +BufferFile) is nondet.
 %
@@ -1719,7 +1719,7 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     ;   % Delete outdated buffer file
         (fbugio(deleting(BufferFile)), delete_file(BufferFile), fail)
     ).
-load_metta_file_stream_fast(_Size, _P2, Filename, Self, S) :- 
+load_metta_file_stream_fast(_Size, _P2, Filename, Self, S) :-
     fail,
     % Alternative loading method for HTML files with symbol concatenation (disabled)
     symbolic_list_concat([_, _, _ | _], '.', Filename),
@@ -1740,8 +1740,8 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, In) :-
 %   Creates a buffer file for a MeTTa file if `TFMakeFile` is true.
 %
 %   This predicate generates a buffer file (`BufferFile`) with a `.buffer~` extension
-%   based on `FileName`. It processes each expression from `InStream` using 
-%   `maybe_write_bf/3`, which writes expressions to the buffer file if `TFMakeFile` 
+%   based on `FileName`. It processes each expression from `InStream` using
+%   `maybe_write_bf/3`, which writes expressions to the buffer file if `TFMakeFile`
 %   is true.
 %
 %   @arg TFMakeFile  A flag indicating whether to create a buffer file.
@@ -1805,8 +1805,8 @@ always_rebuild_temp :- true.
 %
 %   Appends a term to the buffer file.
 %
-%   This predicate opens `BufferFile` in append mode, writes `BufferTerm` to it in a 
-%   Prolog-readable format, and closes the file afterward. It ensures safe file handling 
+%   This predicate opens `BufferFile` in append mode, writes `BufferTerm` to it in a
+%   Prolog-readable format, and closes the file afterward. It ensures safe file handling
 %   through `setup_call_cleanup/3`.
 %
 %   @arg BufferFile  The file to which `BufferTerm` is appended.
@@ -1863,7 +1863,7 @@ my_line_count(In, /*position*/(Pos)) :-
 %     ?- metta_file_buffer(+, Expr, NamedVarsList, 'example.metta', 42).
 %
 metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount) :-
-    metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount).
+    user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount).
 
 %!  load_metta_buffer(+Self, +Filename) is det.
 %
@@ -1891,7 +1891,7 @@ load_metta_buffer(Self, Filename) :-
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
     forall(
-        metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
+        user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
         (maybe_name_vars(NamedVarsList),
          must_det_ll((((do_metta(file(Filename), Mode, Self, Expr, _O)))
               -> true
@@ -1913,16 +1913,16 @@ load_metta_buffer(Self, Filename) :-
 %     % Read an expression from the input stream.
 %     ?- read_metta(In, Expr).
 %
-read_metta(_, O) :- 
+read_metta(_, O) :-
     % Remove clause if it exists for a previous read.
     clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
-read_metta(I, O) :- 
+read_metta(I, O) :-
     % If input is a string, normalize and parse it as a MeTTa expression.
     string(I), normalize_space(string(M), I), !, parse_sexpr_metta1(M, O), !.
-read_metta(In, Expr) :- 
+read_metta(In, Expr) :-
     % If `In` is the current input stream, read with `repl_read/1`.
     current_input(In0), In == In0, !, repl_read(Expr).
-read_metta(In, Expr) :- 
+read_metta(In, Expr) :-
     % Fallback to reading from a stream.
     read_metta1(In, Expr).
 
@@ -1940,13 +1940,13 @@ read_metta(In, Expr) :-
 %     % Read a MeTTa expression from a file stream.
 %     ?- read_metta1(S, Expr).
 %
-read_metta1(S, F1) :- 
+read_metta1(S, F1) :-
     % Use new parsing method if `use_new_parse_sexpr_metta_IO` is enabled.
     use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
-read_metta1(In, Expr) :- 
+read_metta1(In, Expr) :-
     % Use `read_sform1/3` for large files.
     is_file_stream_and_size(In, Size), Size > 10240, !, read_sform1([], In, Expr).
-read_metta1(In, Expr) :- 
+read_metta1(In, Expr) :-
     % Default to `read_metta2` for other cases.
     read_metta2(In, Expr).
 
@@ -1966,13 +1966,13 @@ read_metta1(In, Expr) :-
 %     % Read a MeTTa expression from an input stream.
 %     ?- read_metta2(InStream, Expr).
 %
-read_metta2(_, O) :- 
+read_metta2(_, O) :-
     % Erase any existing reader info for expression `O`.
     clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
-read_metta2(S, F1) :- 
+read_metta2(S, F1) :-
     % Use the new parsing method if enabled.
     use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
-read_metta2(In, Expr) :- 
+read_metta2(In, Expr) :-
     % Peek at the next character and continue parsing based on character type.
     peek_char(In, Char), read_metta2(In, Char, Expr).
 
@@ -1993,24 +1993,24 @@ read_metta2(In, Expr) :-
 %     % Parse an expression beginning with '!' for execution.
 %     ?- read_metta2(In, '!', Expr).
 %
-read_metta2(S, _, F1) :- 
+read_metta2(S, _, F1) :-
     % Use the new parsing method if configured.
     use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
-read_metta2(In, Char, Expr) :- 
+read_metta2(In, Char, Expr) :-
     % Skip whitespace characters and continue reading.
     char_type(Char, space), get_char(In, Char), not_compatio(put(Char)), !, read_metta2(In, Expr).
 % read_metta2(In, '"', Expr) :- read_sform2(In, Expr), !.
 % read_metta2(In, '\'', Expr) :- read_sform2(In, Expr), !.
-read_metta2(In, '!', Expr) :- 
+read_metta2(In, '!', Expr) :-
     % Handle execution expressions prefixed with `!`.
     get_char(In, _), !, read_metta2(In, Read1), !, Expr = exec(Read1).
-read_metta2(In, ';', Expr) :- 
+read_metta2(In, ';', Expr) :-
     % Handle comments prefixed with `;`.
     get_char(In, _), !, (maybe_read_pl(In, Expr) -> true;
     (read_line_to_string(In, Str), Expr = '$COMMENT'(Str, 0, 0))).
 % write_comment(Str),!, read_metta2(In, Expr)), !.
 % read_metta2(In, _, Expr) :- maybe_read_pl(In, Expr), !.
-read_metta2(In, _, Read1) :- 
+read_metta2(In, _, Read1) :-
     % Parse a standard MeTTa expression.
     parse_sexpr_metta(In, Expr), !, must_det_ll(Expr = Read1).
 
@@ -2218,7 +2218,7 @@ read_sform2(S, F1) :-
 %   @arg Str    The input string or stream containing the S-expression.
 %   @arg F      The parsed form or `end_of_file` if at the end of the stream.
 %
-read_sform1(_, _, O) :- 
+read_sform1(_, _, O) :-
     % Erase temporary reader information if it exists.
     clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
 read_sform1(AltEnd, Str, F) :-
@@ -2249,40 +2249,40 @@ read_sform1(AltEnd, S, M) :-
 %   @arg S      The input stream.
 %   @arg F      The resulting form parsed.
 %
-read_sform3(_AoS, _AltEnd, C, _, F) :- 
+read_sform3(_AoS, _AltEnd, C, _, F) :-
     % Handle end-of-file character.
     C == end_of_file, !, F = end_of_file.
-read_sform3(s, AltEnd, C, S, F) :- 
+read_sform3(s, AltEnd, C, S, F) :-
     % Skip spaces and continue reading.
     char_type(C, space), !, read_sform1(AltEnd, S, F).
-% read_sform3(AoS, _AltEnd, ';', S, '$COMMENT'(F, 0, 0)) :- 
+% read_sform3(AoS, _AltEnd, ';', S, '$COMMENT'(F, 0, 0)) :-
 %    % Read entire line as a comment (currently commented out).
 %    !, read_line_to_string(S, F).
-read_sform3(s, AltEnd, ';', S, F) :- 
+read_sform3(s, AltEnd, ';', S, F) :-
     % Skip comments and read the next line.
     read_line_to_string(S, _), !, read_sform1(AltEnd, S, F).
-read_sform3(s, AltEnd, '!', S, exec(F)) :- 
+read_sform3(s, AltEnd, '!', S, exec(F)) :-
     % Handle '!' as a special execution marker.
     !, read_sform1(AltEnd, S, F).
-read_sform3(s, _AltEnd, _, S, F1) :- 
+read_sform3(s, _AltEnd, _, S, F1) :-
     % Attempt to read a line matching a specific form.
     maybe_read_sform_line(S, parse_sexpr_metta1, F1), !.
-read_sform3(_AoS, _AltEnd, '"', S, Text) :- 
+read_sform3(_AoS, _AltEnd, '"', S, Text) :-
     % Read a quoted string until the next double quote.
     !, must_det_ll(atom_until(S, [], '"', Text)).
-read_sform3(_AoS, _AltEnd, '`', S, Text) :- 
+read_sform3(_AoS, _AltEnd, '`', S, Text) :-
     % Read a quoted string until the next backtick.
     !, atom_until(S, [], '`', Text).
-read_sform3(_AoS, _AltEnd, '\'', S, Text) :- 
+read_sform3(_AoS, _AltEnd, '\'', S, Text) :-
     fail, !, atom_until(S, [], '\'', Text).
-read_sform3(_AoS, _AltEnd, ',', _, ',') :- 
+read_sform3(_AoS, _AltEnd, ',', _, ',') :-
     fail, !.
-read_sform3(s, AltEnd, C, S, F) :- 
+read_sform3(s, AltEnd, C, S, F) :-
     % Delegate further processing to `read_sform4/4`.
     read_sform4(AltEnd, C, S, F), !.
-read_sform3(_AoS, AltEnd, P, S, Sym) :- 
+read_sform3(_AoS, AltEnd, P, S, Sym) :-
     % Peek at the next character and interpret symbols or numbers.
-    peek_char(S, Peek), !, 
+    peek_char(S, Peek), !,
     read_symbol_or_number(AltEnd, Peek, S, [P], Expr), into_symbol_or_number(Expr, Sym).
 
 %!  into_symbol_or_number(+Expr, -Sym) is det.
@@ -2295,7 +2295,7 @@ read_sform3(_AoS, AltEnd, P, S, Sym) :-
 %   @arg Expr The expression to interpret.
 %   @arg Sym  The resulting symbol or number.
 %
-into_symbol_or_number(Expr, Sym) :- 
+into_symbol_or_number(Expr, Sym) :-
     atom_number(Expr, Sym), !.
 into_symbol_or_number(Sym, Sym).
 
@@ -2346,13 +2346,13 @@ c_list(')',List,List).  c_list('}',List,['{...}',List]). c_list(']',List,['[...]
 %     ?- open_string("(1 2 3)", S), read_sform5(s, '(', S, List, ')').
 %     List = [1, 2, 3].
 %
-read_sform5(AoS, '(', S, List, ')') :- 
+read_sform5(AoS, '(', S, List, ')') :-
               % Collect elements into List until encountering ')'.
               !, collect_list_until(AoS, S, ')', List), !.
-read_sform5(AoS, '{', S, List, '}') :- 
+read_sform5(AoS, '{', S, List, '}') :-
               % Collect elements into List until encountering '}'.
               !, collect_list_until(AoS, S, '}', List), !.
-read_sform5(AoS, '[', S, List, ']') :- 
+read_sform5(AoS, '[', S, List, ']') :-
               % Collect elements into List until encountering ']'.
               !, collect_list_until(AoS, S, ']', List), !.
 
@@ -2367,29 +2367,29 @@ read_sform5(AoS, '[', S, List, ']') :-
 %   @arg SoFar  The accumulated characters for the symbol so far.
 %   @arg Expr   The resulting symbol or number expression.
 %
-read_symbol_or_number(AltEnd, Peek, S, SoFar, Expr):- 
+read_symbol_or_number(AltEnd, Peek, S, SoFar, Expr):-
               % Handle escaped characters ('\\').
               SoFar \== [], Peek == '\\', !,
               get_char(S, _), get_char(S, C), append(SoFar, [C], NSoFar),
               peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
-read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):- 
+read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):-
               % Stop if at end of file, converting `SoFar` to `Expr`.
               Peek == end_of_file, !,
               must_det_ll((symbolic_list_concat(SoFar, Expr))).
-read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):- 
+read_symbol_or_number(_AltEnd, Peek, _S, SoFar, Expr):-
               % Stop if Peek is whitespace, converting `SoFar` to `Expr`.
               char_type(Peek, space), !,
               must_det_ll((symbolic_list_concat(SoFar, Expr))).
-read_symbol_or_number(AltEnd, Peek, _S, SoFar, Expr):- 
+read_symbol_or_number(AltEnd, Peek, _S, SoFar, Expr):-
               % Stop if Peek is an alternate end character, process `SoFar`.
               member(Peek, AltEnd), !,
               must_det_ll((do_symbolic_list_concat(Peek, SoFar, Expr))).
-read_symbol_or_number(AltEnd, B, S, SoFar, Expr):- 
+read_symbol_or_number(AltEnd, B, S, SoFar, Expr):-
               % Parse nested structures if applicable, flattening the result.
               fail, read_sform5(AltEnd, B, S, List, E),
               flatten([List, E], F), append(SoFar, F, NSoFar), !,
               peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
-read_symbol_or_number(AltEnd, _Peek, S, SoFar, Expr):- 
+read_symbol_or_number(AltEnd, _Peek, S, SoFar, Expr):-
               % Continue reading and appending characters.
               get_char(S, C), append(SoFar, [C], NSoFar),
               peek_char(S, NPeek), read_symbol_or_number(AltEnd, NPeek, S, NSoFar, Expr).
@@ -2409,16 +2409,16 @@ read_symbol_or_number(AltEnd, _Peek, S, SoFar, Expr):-
 %     ?- open_string("example text\"", S), atom_until(S, [], '"', Text).
 %     Text = "example text".
 %
-atom_until(S, SoFar, End, Text):- 
+atom_until(S, SoFar, End, Text):-
               % Initialize reading until End by reading the next character.
               get_char(S, C), atom_until(S, SoFar, C, End, Text).
-atom_until(_, SoFar, C, End, Expr):- 
+atom_until(_, SoFar, C, End, Expr):-
               % Stop if C matches End and process SoFar as Expr.
               C == End, !, must_det_ll((do_symbolic_list_concat(End, SoFar, Expr))).
-atom_until(S, SoFar, '\\', End, Expr):- 
+atom_until(S, SoFar, '\\', End, Expr):-
               % Handle escaped character and continue reading.
               get_char(S, C), !, atom_until2(S, SoFar, C, End, Expr).
-atom_until(S, SoFar, C, End, Expr):- 
+atom_until(S, SoFar, C, End, Expr):-
               % Continue reading characters.
               atom_until2(S, SoFar, C, End, Expr).
 
@@ -2438,7 +2438,7 @@ atom_until(S, SoFar, C, End, Expr):-
 %     ?- open_string("example text\"", S), atom_until2(S, [], 'e', '"', Text).
 %     Text = "example text".
 %
-atom_until2(S, SoFar, C, End, Expr):- 
+atom_until2(S, SoFar, C, End, Expr):-
               % Append character C to SoFar and continue.
               append(SoFar, [C], NSoFar), get_char(S, NC),
               atom_until(S, NSoFar, NC, End, Expr).
@@ -2451,7 +2451,7 @@ atom_until2(S, SoFar, C, End, Expr):-
 %   @arg SoFar The accumulated list of characters to concatenate.
 %   @arg Expr  The resulting concatenated expression.
 %
-do_symbolic_list_concat('"', SoFar, Expr):- 
+do_symbolic_list_concat('"', SoFar, Expr):-
               % Convert SoFar to string if required.
               \+ string_to_syms, !, atomics_to_string(SoFar, Expr), !.
 do_symbolic_list_concat(_End, SoFar, Expr):- symbolic_list_concat(SoFar, Expr).
@@ -2470,7 +2470,7 @@ do_symbolic_list_concat(_End, SoFar, Expr):- symbolic_list_concat(SoFar, Expr).
 %     ?- open_string("(1 2 3)", S), collect_list_until(s, S, ')', List).
 %     List = [1, 2, 3].
 %
-collect_list_until(AoS, S, End, List):- 
+collect_list_until(AoS, S, End, List):-
               % Start collecting with the next character.
               get_char(S, C), cont_list(AoS, C, End, S, List).
 
@@ -2484,13 +2484,13 @@ collect_list_until(AoS, S, End, List):-
 %   @arg S    The input stream to read from.
 %   @arg List The resulting list of elements read from `S`.
 %
-cont_list(_AoS, End, _End1, _, []):- 
+cont_list(_AoS, End, _End1, _, []):-
               % Stop if at end of file.
               End == end_of_file, !.
-cont_list(_AoS, End, End1, _, []):- 
+cont_list(_AoS, End, End1, _, []):-
               % Stop if End matches End1.
               End == End1, !.
-cont_list(AoS, C, End, S, [F|List]):- 
+cont_list(AoS, C, End, S, [F|List]):-
               % Read S-expression and continue collecting.
               read_sform3(AoS, [End], C, S, F), !, collect_list_until(AoS, S, End, List).
 
@@ -2514,13 +2514,13 @@ use_new_parse_sexpr_metta_IO(S):- \+ string(S).
 %   @arg S   The input stream to read from.
 %   @arg F1  The resulting S-expression or end-of-file marker.
 %
-new_parse_sexpr_metta_IO1(S, F1):- 
+new_parse_sexpr_metta_IO1(S, F1):-
               % Stop if at end of stream.
               at_end_of_stream(S), !, F1 = end_of_file.
-new_parse_sexpr_metta_IO1(S, F1):- 
+new_parse_sexpr_metta_IO1(S, F1):-
               % Skip whitespace characters and continue parsing.
               peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
-new_parse_sexpr_metta_IO1(S, _F1):- 
+new_parse_sexpr_metta_IO1(S, _F1):-
               % Read and assert position and item details for non-whitespace characters.
               S = InStream,
               once((read_position(S, Line, Col, CharPos_Item, _Position),  % Retrieve line, column, and character position.
@@ -2528,7 +2528,7 @@ new_parse_sexpr_metta_IO1(S, _F1):-
                     read_position(S, EndLine, EndCol, _E_CharPos_Item, _EndPosition),
                     assertz(metta_file_comment(Line, Col, CharPos_Item, Item, range(line_char(Line, Col), line_char(EndLine, EndCol)))))),
               fail.
-new_parse_sexpr_metta_IO1(_S, F1):- 
+new_parse_sexpr_metta_IO1(_S, F1):-
               % Retract a `metta_file_comment` item and convert it to a metta expression.
               retract(metta_file_comment(_Line, _Col, _CharPos, M, _Pos)), trly(untyped_to_metta, M, F1).
 
@@ -2583,14 +2583,14 @@ is_same_streams(N1, N2):- in2_stream(N1, S1), in2_stream(N2, S2), !, S1 == S2.
 %   @arg I  The input expression, either atomic or stream-based.
 %   @arg O  The parsed Metta S-expression output.
 %
-parse_sexpr_metta(I, O):- 
+parse_sexpr_metta(I, O):-
               % Convert non-stream, non-atomic inputs to string format.
               (\+ atomic(I) ; \+ is_stream(I)), !, text_to_string(I, S), !, parse_sexpr_metta1(S, O), !.
-parse_sexpr_metta(S, F1):- 
+parse_sexpr_metta(S, F1):-
               % Attempt to read and parse a Metta S-expression line.
               fail, % line_count(S, LineNumber),
               maybe_read_sform_line(S, parse_sexpr_metta1, F1), !.
-parse_sexpr_metta(S, F1):- 
+parse_sexpr_metta(S, F1):-
               % Parse the input using Metta I/O logic.
               parse_sexpr_metta_IO(S, F1), !.
 
@@ -2604,16 +2604,16 @@ parse_sexpr_metta(S, F1):-
 %   @arg S   The input stream from which to read.
 %   @arg F1  The resulting parsed Metta S-expression output.
 %
-parse_sexpr_metta_IO(S, F1):- 
+parse_sexpr_metta_IO(S, F1):-
               % Handle end of stream.
               at_end_of_stream(S), !, F1 = end_of_file.
-parse_sexpr_metta_IO(S, F1):- 
+parse_sexpr_metta_IO(S, F1):-
               % Skip whitespace characters and continue parsing.
               peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
-parse_sexpr_metta_IO(S, F1):- 
+parse_sexpr_metta_IO(S, F1):-
               % Use new parsing method if available.
               use_new_parse_sexpr_metta_IO(S), !, new_parse_sexpr_metta_IO(S, F1).
-parse_sexpr_metta_IO(S, F1):- 
+parse_sexpr_metta_IO(S, F1):-
               %line_count(S, LineNumber),
               % Get the character position within the current line
               %line_position(S, LinePos),
@@ -2645,7 +2645,7 @@ move_cursor_to_first_column_out:- write(user_output, '\033[1G').
 %   @arg I  The input string to parse.
 %   @arg O  The resulting Metta S-expression.
 %
-parse_sexpr_metta1(I, O):- 
+parse_sexpr_metta1(I, O):-
               normalize_space(string(M), I), !, parse_sexpr_metta2(M, U), !,
               trly(untyped_to_metta, U, O).
 
@@ -2656,13 +2656,13 @@ parse_sexpr_metta1(I, O):-
 %   @arg M  The input string to parse.
 %   @arg O  The resulting parsed Metta expression.
 %
-parse_sexpr_metta2(M, exec(O)):- 
+parse_sexpr_metta2(M, exec(O)):-
               % Handle '!' prefixed expressions.
               string_concat('!', I, M), !, parse_sexpr_metta2(I, O).
-parse_sexpr_metta2(M, (O)):- 
+parse_sexpr_metta2(M, (O)):-
               % Handle '+' prefixed expressions.
               string_concat('+', I, M), !, parse_sexpr_metta2(I, O).
-parse_sexpr_metta2(I, U):- 
+parse_sexpr_metta2(I, U):-
               % General parsing for untyped S-expressions.
               parse_sexpr_untyped(I, U), !, writeqln(user_error, U).
 
@@ -2714,13 +2714,13 @@ write_comment(Cmt):- connlf, format(';;~w~n', [Cmt]).
 %   @arg Self The current context or reference for processing.
 %   @arg Cmt  The comment term, which could be a structured comment or list.
 %
-do_metta_cmt(_, '$COMMENT'(Cmt, _, _)):- 
+do_metta_cmt(_, '$COMMENT'(Cmt, _, _)):-
               % Handle `$COMMENT` term and write the comment.
               write_comment(Cmt), !.
-do_metta_cmt(_, '$STRING'(Cmt)):- 
+do_metta_cmt(_, '$STRING'(Cmt)):-
               % Handle `$STRING` term and write the comment.
               write_comment(Cmt), !.
-do_metta_cmt(Self, [Cmt]):- 
+do_metta_cmt(Self, [Cmt]):-
               % Handle list format and recursively process as a comment.
               !, do_metta_cmt(Self, Cmt), !.
 
@@ -2732,7 +2732,7 @@ do_metta_cmt(Self, [Cmt]):-
 %   @arg Self  The context or source associated with the term.
 %   @arg Term  The term to verify within the file context.
 %
-metta_atom_in_file(Self, Term):- 
+metta_atom_in_file(Self, Term):-
               metta_atom_in_file(Self, Term, _, _).
 
 %!  metta_atom_in_file(+Self, +STerm, -Filename, -Lineno) is det.
@@ -2748,7 +2748,7 @@ metta_atom_in_file(Self, Term):-
 %   @arg Filename The name of the file where the term is located.
 %   @arg Lineno   The line number where the term is found.
 %
-metta_atom_in_file(Self, STerm, Filename, Lineno):- 
+metta_atom_in_file(Self, STerm, Filename, Lineno):-
               % Confirm the file was loaded into the knowledge base.
               user:loaded_into_kb(Self, Filename),
               once(user:asserted_metta_pred(Mangle, Filename)),
@@ -2818,11 +2818,11 @@ constrain_sterm([_, _]).
 %     Iz = my_mangle_iz,
 %     Result = [term, a, b, c].
 %
-s2t_iz(Mangle, Iz, [Colon, Name, Info], [Name | InfoL]):- 
+s2t_iz(Mangle, Iz, [Colon, Name, Info], [Name | InfoL]):-
               % Convert `Info` to `InfoL` and set `Iz` as the mangled form of `Mangle`.
               Colon == ':', is_list(Info), mangle_iz(Mangle, Iz),
               maplist(s2t, Info, InfoL).
-s2t_iz(Mangle, Mangle, Info, InfoL):- 
+s2t_iz(Mangle, Mangle, Info, InfoL):-
               % Direct conversion without mangling when `Mangle` remains unchanged.
               s2tl(Info, InfoL).
 
@@ -2833,7 +2833,7 @@ s2t_iz(Mangle, Mangle, Info, InfoL):-
 %   @arg Mangle The base name to mangle.
 %   @arg Iz     The resulting mangled name.
 %
-mangle_iz(Mangle, Iz):- 
+mangle_iz(Mangle, Iz):-
               % Concatenate `_iz` suffix to form the mangled name.
               symbol_concat(Mangle, '_iz', Iz).
 
@@ -2843,12 +2843,12 @@ mangle_iz(Mangle, Iz):-
 %
 %   @arg Mangle The base name for producing clauses.
 %
-produce_iz(Mangle):- 
+produce_iz(Mangle):-
               % Iterate over lengths 1 to 5, generating clauses for each.
               mangle_iz(Mangle, Iz),
               forall(between(1, 5, Len),
                      once((length(Args, Len),
-                           produce_iz_hb([Mangle, Lineno, [:, Name, [Pred | Args]]], 
+                           produce_iz_hb([Mangle, Lineno, [:, Name, [Pred | Args]]],
                                          [Iz, Lineno, Name, Pred | Args])))).
 
 %!  produce_iz_hb(+HList, +BList) is det.
@@ -2858,7 +2858,7 @@ produce_iz(Mangle):-
 %   @arg HList The list representing the clause head.
 %   @arg BList The list representing the clause body.
 %
-produce_iz_hb(HList, BList):- 
+produce_iz_hb(HList, BList):-
               % Unify `H` and `B` with `HList` and `BList`, then output the clause.
               H =.. HList, B =.. BList, HB = (H :- B),
               numbervars(HB, 0, _),
@@ -2876,13 +2876,13 @@ produce_iz_hb(HList, BList):-
 %     ?- t2s([a, b, [c]], Result).
 %     Result = [a, b, c].
 %
-t2s(SList, List):- 
+t2s(SList, List):-
               % Return if `SList` is not compound.
               \+ compound(SList), !, SList = List.
-t2s([H | SList], [HH | List]):- 
+t2s([H | SList], [HH | List]):-
               % Recursively transform each element in `SList`.
               !, t2s(H, HH), !, t2s(SList, List).
-t2s(X, XX):- 
+t2s(X, XX):-
               % Convert compound terms to arguments with functor `t`.
               compound(X), compound_name_arguments(X, t, Args), !,
               maplist(t2s, Args, XX).
@@ -2895,10 +2895,10 @@ t2s(X, X):- !.
 %   @arg SList The input structured list.
 %   @arg List  The resulting transformed list.
 %
-s2tl(SList, List):- 
+s2tl(SList, List):-
               % Directly assign if `SList` is non-compound.
               \+ compound(SList), !, SList = List.
-s2tl([H | SList], [HH | List]):- 
+s2tl([H | SList], [HH | List]):-
               % Recursively apply `s2t` transformation on list items.
               !, s2t(H, HH), !, s2tl(SList, List).
 s2tl(List, List).
@@ -2917,23 +2917,23 @@ s2tl(List, List).
 %     ?- s2t([->, a, b], Result).
 %     Result = (->, [a, b]).
 %
-s2t(SList, List):- 
+s2t(SList, List):-
               % Directly assign if `SList` is non-compound.
               \+ compound(SList), !, SList = List.
-s2t([A | SList], Term):- 
+s2t([A | SList], Term):-
               % Handle '->' as a special operator term.
               A == '->', !, s2tl(SList, List), Term =.. [A, List].
-s2t([A | SList], Term):- 
+s2t([A | SList], Term):-
               % Handle 'Cons' as a special operator term.
               A == 'Cons', !, s2tl(SList, List), Term =.. [A | List].
-s2t([A | SList], Term):- 
+s2t([A | SList], Term):-
               % Handle '=' as a special operator term.
               A == '=', !, s2tl(SList, List), Term =.. [A | List].
-s2t(List, Term):- 
+s2t(List, Term):-
               % Recursively transform list items to `t` compound.
               is_list(List), !, maplist(s2t, List, TermList),
               compound_name_arguments(Term, t, TermList), !.
-s2t(STerm, Term):- 
+s2t(STerm, Term):-
               % Default transformation using `s2tl`.
               s2tl(STerm, Term), !.
 
@@ -2951,7 +2951,7 @@ mlog_sym('@').
 %   constructs such as `exec/1`.
 %
 %   This predicate processes the input term `I`, applying transformations through
-%   helper predicates like `mfix_vars1/2`, `cons_to_c/2`, and `cons_to_l/2` to 
+%   helper predicates like `mfix_vars1/2`, `cons_to_c/2`, and `cons_to_l/2` to
 %   ensure compatibility with Metta's expected format.
 %
 %   @arg I  The input untyped term to convert.
@@ -2964,7 +2964,7 @@ mlog_sym('@').
 %
 
 %untyped_to_metta(I, exec(O)):- compound(I), I = exec(M), !, untyped_to_metta(M, O).
-untyped_to_metta(I, O):- 
+untyped_to_metta(I, O):-
               must_det_ll((trly(mfix_vars1, I, M),
                            trly(cons_to_c, M, OM),
                            trly(cons_to_l, OM, O))).
@@ -2980,7 +2980,7 @@ untyped_to_metta(I, O):-
 %   @arg A   The initial term to transform.
 %   @arg B   The resulting transformed term.
 %
-trly(P2, A, B):- 
+trly(P2, A, B):-
               % Apply P2 and continue if A and M differ.
               once(call(P2, A, M)), A \=@= M, !, trly(P2, M, B).
 trly(_, A, A).
@@ -2989,7 +2989,7 @@ trly(_, A, A).
 %
 %   Transforms various terms in `I` into normalized or Metta-compatible forms in `O`.
 %
-%   This predicate applies specific mappings for variable-like symbols, booleans, 
+%   This predicate applies specific mappings for variable-like symbols, booleans,
 %   strings, bracketed expressions, and lists to ensure compatibility with Metta logic.
 %
 %   @arg I  The input term to transform.
@@ -3000,12 +3000,12 @@ trly(_, A, A).
 %     ?- mfix_vars1(true, Result).
 %     Result = 'True'.
 %
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % If `I` is a variable, unify `I` with `O`.
               var(I), !, I = O.
 mfix_vars1('$_', '$VAR'('_')).
 mfix_vars1('$', '$VAR'('__')).
-mfix_vars1(I, '$VAR'(O)):- 
+mfix_vars1(I, '$VAR'(O)):-
               % Handle atoms prefixed with `$`, converting to `'$VAR'` notation.
               atom(I), symbol_concat('$', N, I), symbol_concat('_', N, O).
 %mfix_vars1('$t','$VAR'('T')):-!.
@@ -3013,62 +3013,62 @@ mfix_vars1(I, '$VAR'(O)):-
 %mfix_vars1(I,O):- I=='T',!,O='True'.
 %mfix_vars1(I,O):- I=='F',!,O='False'.
 %mfix_vars1(I,O):- is_i_nil(I),!,O=[].
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Convert 'true' and 'false' to capitalized forms.
               I == 'true', !, O = 'True'.
 mfix_vars1(I, O):- I == 'false', !, O = 'False'.
-mfix_vars1('$STRING'(I), O):- 
+mfix_vars1('$STRING'(I), O):-
               % Handle `$STRING` term, convert directly if `I = O`.
               I = O, !.
-mfix_vars1('$STRING'(I), O):- 
+mfix_vars1('$STRING'(I), O):-
               % Convert `$STRING` to a string if symbols are disabled.
               \+ string_to_syms, mfix_vars1(I, OO), text_to_string(OO, O), !.
 %mfix_vars1('$STRING'(I),O):- \+ string_to_syms, text_to_string(I,O),!.
-mfix_vars1('$STRING'(I), O):- 
+mfix_vars1('$STRING'(I), O):-
               % Convert `$STRING` to list if symbols are enabled.
               !, mfix_vars1(I, M), atom_chars(O, M), !.
 %mfix_vars1('$STRING'(I),O):- !, mfix_vars1(I,M),name(O,M),!.
-mfix_vars1([H | T], O):- 
+mfix_vars1([H | T], O):-
               % Handle list format with square brackets.
               H == '[', is_list(T), last(T, L), L == ']', append(List, [L], T), !, O = ['[...]', List].
-mfix_vars1([H | T], O):- 
+mfix_vars1([H | T], O):-
               % Handle list format with curly braces.
               H == '{', is_list(T), last(T, L), L == '}', append(List, [L], T), !, O = ['{...}', List].
-mfix_vars1([H | T], O):- 
+mfix_vars1([H | T], O):-
               % Handle nested lists with curly braces.
               is_list(T), last(T, L), L == '}', append(List, [L], T),
               append(Left, ['{' | R], List), append([H | Left], [['{}', R]], NewList), mfix_vars1(NewList, O).
-mfix_vars1('$OBJ'(claz_bracket_vector, List), O):- 
+mfix_vars1('$OBJ'(claz_bracket_vector, List), O):-
               % Convert `claz_bracket_vector` objects to list form.
               is_list(List), !, O = ['[...]', List].
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Transform square bracket terms.
               I = ['[', X, ']'], nonvar(X), !, O = ['[...]', X].
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Transform curly bracket terms.
               I = ['{', X, '}'], nonvar(X), !, O = ['{...}', X].
-mfix_vars1('$OBJ'(claz_bracket_vector, List), Res):- 
+mfix_vars1('$OBJ'(claz_bracket_vector, List), Res):-
               % Append brackets to `claz_bracket_vector`.
               is_list(List), !, append(['[' | List], [']'], Res), !.
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Special handling for quoted terms.
               I == [Quote, S], Quote == quote, S == s, !, O = is.
-mfix_vars1([K, H | T], Cmpd):- 
+mfix_vars1([K, H | T], Cmpd):-
               % Attempt to form a compound term (currently fails).
               fail, atom(K), mlog_sym(K), is_list(T),
               mfix_vars1([H | T], [HH | TT]), atom(HH), is_list(TT), !,
               compound_name_arguments(Cmpd, HH, TT).
 %mfix_vars1([H|T],[HH|TT]):- !, mfix_vars1(H,HH),mfix_vars1(T,TT).
-mfix_vars1(List, ListO):- 
+mfix_vars1(List, ListO):-
               % Recursively apply transformation to lists.
               is_list(List), !, maplist(mfix_vars1, List, ListO).
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Convert strings to atoms if symbol representation is enabled.
               string(I), string_to_syms, !, atom_string(O, I).
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Recursively transform compound terms.
               compound(I), !, compound_name_arguments(I, F, II), F \== '$VAR', maplist(mfix_vars1, II, OO), !, compound_name_arguments(O, F, OO).
-mfix_vars1(I, O):- 
+mfix_vars1(I, O):-
               % Return `I` if it's neither a variable nor symbol.
               \+ symbol(I), !, I = O.
 mfix_vars1(I, I).
@@ -3101,7 +3101,7 @@ no_cons_reduce.
 %   @arg O  The resulting fixed variable name.
 %
 svar_fixvarname_dont_capitalize(O, O) :- !.
-svar_fixvarname_dont_capitalize(M, O):- 
+svar_fixvarname_dont_capitalize(M, O):-
               % Use `svar_fixvarname/2` if direct assignment fails.
               svar_fixvarname(M, O), !.
 
@@ -3119,30 +3119,30 @@ svar_fixvarname_dont_capitalize(M, O):-
 %
 
 %dvar_name(t,'T'):- !.
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % If `N` starts with an underscore, retain `O = N`.
               symbol_concat('_', _, N), !, O = N.
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Handle integer `N` by appending an underscore prefix.
               integer(N), symbol_concat('_', N, O).
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % If `N` is an atom representing a number, convert it.
               atom(N), atom_number(N, Num), dvar_name(Num, O), !.
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Convert non-symbol `N` to a formatted string.
               \+ symbol(N), !, format(atom(A), '~w', [N]), dvar_name(A, O).
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Default conversion by prefixing underscore.
               !, format(atom(A), '_~w', [N]), dvar_name(A, O).
 %dvar_name('',''):-!. % $
 %dvar_name('_','__'):-!. % $_
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Retain names starting with underscores.
               symbol_concat('_', _, N), !, symbol_concat('_', N, O).
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Apply capitalization rules if applicable.
               svar_fixvarname_dont_capitalize(N, O), !.
-dvar_name(N, O):- 
+dvar_name(N, O):-
               % Convert to variable name format by mapping characters.
               must_det_ll((atom_chars(N, Lst), maplist(c2vn, Lst, NList), symbolic_list_concat(NList, S), svar_fixvarname_dont_capitalize(S, O))), !.
 
@@ -3153,11 +3153,11 @@ dvar_name(N, O):-
 %   @arg A   The character to convert.
 %   @arg AA  The resulting character or symbol in Prolog variable format.
 %
-c2vn(A, A):- 
+c2vn(A, A):-
               % Retain identifier characters and starting characters for variables.
               char_type(A, prolog_identifier_continue), !.
 c2vn(A, A):- char_type(A, prolog_var_start), !.
-c2vn(A, AA):- 
+c2vn(A, AA):-
               % Convert non-identifier characters to a prefixed numeric format.
               char_code(A, C), symbolic_list_concat(['_C', C, '_'], AA).
 
@@ -3168,23 +3168,23 @@ c2vn(A, AA):-
 %   @arg I  The input term to convert.
 %   @arg O  The resulting list or transformed term.
 %
-cons_to_l(I, I):- 
+cons_to_l(I, I):-
               % Skip transformation if `no_cons_reduce/0` is set.
               no_cons_reduce, !.
-cons_to_l(I, O):- 
+cons_to_l(I, O):-
               % Retain variables without modification.
               var(I), !, O = I.
-cons_to_l(I, O):- 
+cons_to_l(I, O):-
               % Convert `nil` or empty lists.
               is_i_nil(I), !, O = [].
 cons_to_l(I, O):- I == 'nil', !, O = [].
-cons_to_l(C, O):- 
+cons_to_l(C, O):-
               % Retain non-compound terms.
               \+ compound(C), !, O = C.
-cons_to_l([Cons, H, T | List], [HH | TT]):- 
+cons_to_l([Cons, H, T | List], [HH | TT]):-
               % Handle `Cons` cells by recursively transforming `H` and `T`.
               List == [], atom(Cons), is_cons_f(Cons), t_is_ttable(T), cons_to_l(H, HH), !, cons_to_l(T, TT).
-cons_to_l(List, ListO):- 
+cons_to_l(List, ListO):-
               % Apply transformation recursively to list elements.
               is_list(List), !, maplist(cons_to_l, List, ListO).
 cons_to_l(I, I).
@@ -3196,23 +3196,23 @@ cons_to_l(I, I).
 %   @arg I  The input term to convert.
 %   @arg O  The resulting compound or transformed term.
 %
-cons_to_c(I, I):- 
+cons_to_c(I, I):-
               % Skip transformation if `no_cons_reduce/0` is set.
               no_cons_reduce, !.
-cons_to_c(I, O):- 
+cons_to_c(I, O):-
               % Retain variables without modification.
               var(I), !, O = I.
-cons_to_c(I, O):- 
+cons_to_c(I, O):-
               % Convert `nil` or empty lists.
               is_i_nil(I), !, O = [].
 cons_to_c(I, O):- I == 'nil', !, O = [].
-cons_to_c(C, O):- 
+cons_to_c(C, O):-
               % Retain non-compound terms.
               \+ compound(C), !, O = C.
-cons_to_c([Cons, H, T | List], [HH | TT]):- 
+cons_to_c([Cons, H, T | List], [HH | TT]):-
               % Handle `Cons` cells by recursively transforming `H` and `T`.
               List == [], atom(Cons), is_cons_f(Cons), t_is_ttable(T), cons_to_c(H, HH), !, cons_to_c(T, TT).
-cons_to_c(I, O):- 
+cons_to_c(I, O):-
               % Recursively transform compound terms.
               \+ is_list(I), compound_name_arguments(I, F, II), maplist(cons_to_c, II, OO), !, compound_name_arguments(O, F, OO).
 cons_to_c(I, I).
@@ -3226,19 +3226,19 @@ cons_to_c(I, I).
 %
 %   @arg T  The term to check.
 %
-t_is_ttable(T):- 
+t_is_ttable(T):-
               % Accept if `T` is a variable.
               var(T), !.
-t_is_ttable(T):- 
+t_is_ttable(T):-
               % Accept if `T` represents an empty list or nil.
               is_i_nil(T), !.
-t_is_ttable(T):- 
+t_is_ttable(T):-
               % Accept if `T` is a functionally treated variable.
               is_ftVar(T), !.
-t_is_ttable([F | Args]):- 
+t_is_ttable([F | Args]):-
               % Accept if `F` is 'Cons' with a list of arguments.
               F == 'Cons', !, is_list(Args).
-t_is_ttable([_ | Args]):- 
+t_is_ttable([_ | Args]):-
               % Accept if `Args` is not a list.
               !, \+ is_list(Args).
 t_is_ttable(_).
@@ -3279,7 +3279,7 @@ is_i_nil(I):- is_cf_nil('Cons', Nil), I == Nil.
 %   @arg TermWDV  The term with potential variables.
 %   @arg NewTerm  The term with variables substituted.
 %
-subst_vars(TermWDV, NewTerm):- 
+subst_vars(TermWDV, NewTerm):-
               subst_vars(TermWDV, NewTerm, NamedVarsList),
               maybe_set_var_names(NamedVarsList).
 
@@ -3291,7 +3291,7 @@ subst_vars(TermWDV, NewTerm):-
 %   @arg NewTerm       The term with substituted variables.
 %   @arg NamedVarsList The list of named variables.
 %
-subst_vars(TermWDV, NewTerm, NamedVarsList) :- 
+subst_vars(TermWDV, NewTerm, NamedVarsList) :-
               subst_vars(TermWDV, NewTerm, [], NamedVarsList).
 
 %!  subst_vars(+Term, -Term, +Acc, -NamedVarsList) is det.
@@ -3303,7 +3303,7 @@ subst_vars(TermWDV, NewTerm, NamedVarsList) :-
 %   @arg Acc            Accumulator for variable tracking.
 %   @arg NamedVarsList  List of named variables after substitution.
 %
-subst_vars(Term, Term, NamedVarsList, NamedVarsList) :- 
+subst_vars(Term, Term, NamedVarsList, NamedVarsList) :-
               % Base case: return variable terms directly.
               var(Term), !.
 subst_vars([], [], NamedVarsList, NamedVarsList):- !.
@@ -3311,16 +3311,16 @@ subst_vars([TermWDV | RestWDV], [Term | Rest], Acc, NamedVarsList) :- !,
               subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
               subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
 subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
-subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- 
+subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :-
               % Substitute variables with `VName`, applying fixes if necessary.
               nonvar(VName), svar_fixvarname_dont_capitalize(VName, Name), !,
               (memberchk(Name = Var, Acc) -> NamedVarsList = Acc ; (!, Var = _, NamedVarsList = [Name = Var | Acc])).
-subst_vars(Term, Var, Acc, NamedVarsList) :- 
+subst_vars(Term, Var, Acc, NamedVarsList) :-
               % Substitute variables with names starting with `$`.
               atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name), !,
               subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
 
-subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :- 
+subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :-
               % Recursively handle compound terms.
               compound(TermWDV), !,
               compound_name_arguments(TermWDV, Functor, ArgsWDV),
@@ -3346,7 +3346,7 @@ connl:- check_silent_loading, not_compat_io((nl)).
 
 %!  check_silent_loading is det.
 %
-%   Checks if silent loading is enabled. This predicate can trigger debugging behavior 
+%   Checks if silent loading is enabled. This predicate can trigger debugging behavior
 %   when uncommented.
 %
 
@@ -3375,17 +3375,17 @@ silent_loading:- option_value('trace-on-load', 'False'), !.
 %   @arg OBO The original compound term or variable.
 %   @arg Src The resulting list or source term.
 %
-uncompound(OBO, Src):- 
+uncompound(OBO, Src):-
               % Handle non-compound terms.
               \+ compound(OBO), !, Src = OBO.
 uncompound('$VAR'(OBO), '$VAR'(OBO)):- !.
-uncompound(IsList, Src):- 
+uncompound(IsList, Src):-
               % Recursively process list elements.
               is_list(IsList), !, maplist(uncompound, IsList, Src).
-uncompound([Is | NotList], [SrcH | SrcT]):- 
+uncompound([Is | NotList], [SrcH | SrcT]):-
               % Convert head and tail of lists.
               !, uncompound(Is, SrcH), uncompound(NotList, SrcT).
-uncompound(Compound, Src):- 
+uncompound(Compound, Src):-
               % Convert compound terms to list format.
               compound_name_arguments(Compound, Name, Args), maplist(uncompound, [Name | Args], Src).
 
@@ -3398,10 +3398,10 @@ uncompound(Compound, Src):-
 %
 %   @arg OBO The term to assert in the Metta knowledge base.
 %
-assert_to_metta(_):- 
+assert_to_metta(_):-
     % Exit if file limit is reached.
      reached_file_max,!.
-assert_to_metta(OBO):- 
+assert_to_metta(OBO):-
     % Process `OBO` into a datum and assert.
               must_det_ll((OBO =.. [Fn | DataLL],
                            maplist(better_arg, DataLL, DataL),
@@ -3433,8 +3433,8 @@ assert_to_metta(OBO):-
 %
 %   Asserts a term `OBO` into the Metta knowledge base, using `assert_to_metta/1`.
 %
-%   This predicate directly calls `assert_to_metta/1` to process and assert the term. 
-%   Additional behavior (e.g., heartbeat) is currently commented out but can be re-enabled 
+%   This predicate directly calls `assert_to_metta/1` to process and assert the term.
+%   Additional behavior (e.g., heartbeat) is currently commented out but can be re-enabled
 %   if needed.
 %
 %   @arg OBO  The term to assert in the Metta knowledge base.
@@ -3544,7 +3544,7 @@ progress_bar_example.
 %   whether the core library has been loaded.
 %
 use_corelib_file :- using_corelib_file, !.
-use_corelib_file :- 
+use_corelib_file :-
               % Mark core library as in use and attempt to load it.
               asserta(using_corelib_file), fail.
 use_corelib_file :- really_use_corelib_file, !.
@@ -3570,10 +3570,10 @@ really_use_corelib_file :- load_corelib_file, generate_interpreter_stubs.
 %   This predicate checks if stubs have already been generated, and if not, it iterates over
 %   symbols defined in the core library to create interpreter stubs for each.
 %
-generate_interpreter_stubs :- 
+generate_interpreter_stubs :-
               % Avoid generating stubs multiple times.
               did_generate_interpreter_stubs, !.
-generate_interpreter_stubs :- 
+generate_interpreter_stubs :-
               % Generate stubs for each core library symbol.
               asserta(did_generate_interpreter_stubs),
               forall(metta_type('&corelib', Symb, Def),
@@ -3597,7 +3597,7 @@ metta_atom_asserted_deduced('&corelib', Term) :- fail,
               % Log terms matching core library types.
               %\+ did_generate_interpreter_stubs,
               metta_atom_corelib_types(Term),
-              wdmsg(metta_atom_corelib_types(Term)).
+              write_src_uo(metta_atom_corelib_types(Term)).
 
 %!  load_corelib_file is det.
 %
@@ -3613,7 +3613,7 @@ metta_atom_asserted_deduced('&corelib', Term) :- fail,
 %
 load_corelib_file :- really_using_corelib_file, !.
 %load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
-load_corelib_file :- 
+load_corelib_file :-
               % Load the standard Metta logic file from the source directory.
               is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'), !,
               metta_atom('&corelib', [:, 'Any', 'Type']).
@@ -3630,7 +3630,7 @@ load_corelib_file :-
 %   @arg Dir   The directory containing the core library file.
 %   @arg File  The core library file to load.
 %
-really_use_corelib_file(Dir, File) :- 
+really_use_corelib_file(Dir, File) :-
               absolute_file_name(File, Filename, [relative_to(Dir)]),
               exists_file(Filename),
               debug(lsp(main), "~q", [start_really_use_corelib_file(Dir, File)]),

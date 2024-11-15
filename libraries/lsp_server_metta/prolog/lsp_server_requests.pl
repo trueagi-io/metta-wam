@@ -13,8 +13,11 @@ Assumptions:
 :- module(lsp_server_requests, [
     save_json/2,
     save_json_value/3,
+    into_message_string/2,
     % Simplified predicates
     send_feedback_message/2,
+    resolve_diagnostic_enum/2,
+    resolve_enum/3,
     report_diagnostics/3,
     % Sample predicates
     test_show_message_request/0,
@@ -74,12 +77,16 @@ message_type_value(error, 1).
 message_type_value(warning, 2).
 message_type_value(info, 3).
 message_type_value(log, 4).
+message_type_value(N,V):- diagnostic_severity_value(N, V).
 
 % DiagnosticSeverity enum
 diagnostic_severity_value(error, 1).
 diagnostic_severity_value(warning, 2).
+diagnostic_severity_value(warn, 2).
 diagnostic_severity_value(information, 3).
+diagnostic_severity_value(info, 3).
 diagnostic_severity_value(hint, 4).
+diagnostic_severity_value(log, 4).
 
 /** resolve_enum(+EnumName, +InputValue, -ProtocolValue) is det.
 
@@ -186,14 +193,14 @@ into_message_string(Message, SMessage):- sformat(SMessage,'~q',[Message]),!.
 % @end_example
 %
 report_diagnostics(Uri, Range, Message) :-
-    into_message_string(Message, SMessage),
+    must_succeed1((into_message_string(Message, SMessage),
     Diagnostic = _{
         range: Range,
         severity: info,
         message: SMessage,
         source: "metta-lsp"
     },
-    publish_diagnostics(Uri, [Diagnostic], _Version, _Options).
+    publish_diagnostics(Uri, [Diagnostic], _Version, _Options))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Lens Handlers
@@ -203,7 +210,7 @@ report_diagnostics(Uri, Range, Message) :-
 lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
     % Check if the URI ends with '.lsp_test'
     %sub_atom(Uri, _, 9, 0, '.lsp_test'),
-    once((metta_file_buffer(_Lvl, _Ord, _Kind, end_of_file, _VL, Path, BRange),
+    once((user:metta_file_buffer(_Lvl, _Ord, _Kind, end_of_file, _VL, Path, BRange),
     BRange = range(line_char(SL,_),line_char(_,_)))),
     %succ(SL0,SL),
     sample_code_lens(Uri, SL, CodeLens).
@@ -843,8 +850,9 @@ cancel_work_done_progress(Token) :-
 %
 publish_diagnostics(Uri, Diagnostics, Version, Options) :-
     % Resolve enum values in diagnostics
+  ((
     flatten([Diagnostics],DiagnosticsL),
-    maplist(resolve_diagnostic_enum, DiagnosticsL, ResolvedDiagnostics),
+    must_succeed1(maplist(resolve_diagnostic_enum, DiagnosticsL, ResolvedDiagnostics)),
     % Build the params dictionary
     ParamsBase = _{
         uri: Uri,
@@ -860,14 +868,14 @@ publish_diagnostics(Uri, Diagnostics, Version, Options) :-
         method: "textDocument/publishDiagnostics",
         params: Params
     },
-    send_client_message(Msg).
+    send_client_message(Msg))).
 
 % Helper predicate to resolve enums in diagnostics
 resolve_diagnostic_enum(Diagnostic, ResolvedDiagnostic) :-
     % Resolve severity enum if present
     ( get_dict(severity, Diagnostic, SeverityInput) ->
-        resolve_enum(diagnostic_severity_value, SeverityInput, SeverityValue),
-        ResolvedDiagnostic = Diagnostic.put(severity, SeverityValue)
+      ( must_succeed1(resolve_enum(diagnostic_severity_value, SeverityInput, SeverityValue)),
+        ResolvedDiagnostic = Diagnostic.put(severity, SeverityValue))
     ;
         ResolvedDiagnostic = Diagnostic
     ).
