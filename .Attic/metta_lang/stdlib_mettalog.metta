@@ -1836,9 +1836,26 @@
 
 ;; Public MeTTa
 (@doc load-ascii
-  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file.")
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file. Works like include!.")
   (@params (
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
 (: load-ascii (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
+(@doc transfer!
+  (@desc "Loads the contents of Filename into &self, as include. Returns () if successful, throws an exception otherwise.")
+  (@params (
+    (@param "Filename")))
+  (@return "Expression"))
+(: transfer! (-> String Expression))
+
+;; Public MeTTa
+(@doc save-space!
+  (@desc "Writes the contents of Space into Filename, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: save-space! (-> hyperon::space::DynSpace String Expression))
