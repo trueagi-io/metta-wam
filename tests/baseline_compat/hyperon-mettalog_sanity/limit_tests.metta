@@ -11,17 +11,21 @@
                (get-state &var))))
 
 !(assertEqualToResult (limit! 2 (sequential ((increment) (increment) (increment)))) (1 2))
-!(assertEqualToResult (get-state! &var) (2))
+
+!(get-state &var)
+
+!(assertEqualToResult (get-state &var) (2))
 
 ;; cleanup
 
 !(change-state! &var 0)
-!(assertEqualToResult (get-state! &var) (0))
+
+!(assertEqualToResult (get-state &var) (0))
 
 ;; multiple limits (almost certainly a mistake in practice)
 
 !(assertEqualToResult (limit! (sequential (1 2 3)) (sequential ((increment) (increment) (increment)))) (1 2 3 4 5 6))
-!(assertEqualToResult (get-state! &var) (6))
+!(assertEqualToResult (get-state &var) (6))
 
 ;; limit preventing infinite recursion
 
