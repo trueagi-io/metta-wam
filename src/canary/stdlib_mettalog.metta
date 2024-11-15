@@ -1353,7 +1353,7 @@
 
 ;; Public MeTTa
 (@doc import!
-  (@desc "Imports module using its relative path (second argument) and binds it to the token (first argument) which will represent imported atomspace. If first argument is &self then everything will be imported to current atomspace")
+  (@desc "Imports module using its relative path (second argument) and binds it to the token (first argument) which will represent imported atomspace. If first argument is &self then everything will be imported to current atomspace. The source is imported only the first time import! is called. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes Python.")
   (@params (
     (@param "Symbol, which is turned into the token for accessing the imported module")
     (@param "Module name")))
@@ -1363,7 +1363,7 @@
 
 ;; Public MeTTa
 (@doc include
-  (@desc "Works just like import! but with &self as a first argument. So everything from input file will be included in the current atomspace and evaluated")
+  (@desc "Works just like include! but with &self as a first argument. So everything from input file will be included in the current atomspace and evaluated")
   (@params (
     (@param "Name of metta script to import")))
   (@return "Unit atom"))
@@ -1372,7 +1372,7 @@
 
 ;; Public MeTTa
 (@doc include!
-  (@desc "Works just like import!. So everything from input file will be included in the current atomspace and evaluated")
+  (@desc "Everything from input file will be included in the current atomspace and evaluated, as if it were being evaluated at the REPL. Unlike import!, the source is evaluated every time include! is called.")
   (@params (
     (@param "Space")
     (@param "Filename")))
@@ -1827,7 +1827,7 @@
 
 ;; Public MeTTaLog
 (@doc load-file!
-  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes MeTTa. Like import! but favors MeTTa over Python when the file type is ambiguous.")
   (@params (
     (@param "Space")
     (@param "Filename")))
