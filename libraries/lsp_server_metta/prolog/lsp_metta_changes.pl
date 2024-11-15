@@ -17,6 +17,8 @@
 :- use_module(library(readutil), [read_file_to_codes/3]).
 :- user:ensure_loaded(lsp_metta_utils).
 
+:- use_module(library(clpfd)).
+
 :- dynamic doc_text_d4/2.
 
 %! handle_doc_changes_d4(+File:atom, +Changes:list) is det.

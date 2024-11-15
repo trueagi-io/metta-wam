@@ -58,7 +58,7 @@
 
 */
 
-%********************************************************************************************* 
+%*********************************************************************************************
 % PROGRAM FUNCTION:  Implements forward chaining, tracks changes, and provides proofs of safety.
 %*********************************************************************************************
 
@@ -76,31 +76,31 @@
 %
 %   Adds support for a given proposition by asserting the support fact.
 %
-%   This predicate is used to record the support for a proposition 'P'. It takes 
-%   a pair consisting of a 'Fact' and a 'Trigger', and asserts that this support 
+%   This predicate is used to record the support for a proposition 'P'. It takes
+%   a pair consisting of a 'Fact' and a 'Trigger', and asserts that this support
 %   exists by storing it in the form of a special fact.
 %
 %   @arg P       The proposition being supported.
-%   @arg Support A pair '(Fact, Trigger)' representing the support for 'P'. The 
-%                'Fact' is the actual support fact, and the 'Trigger' is the condition 
+%   @arg Support A pair '(Fact, Trigger)' representing the support for 'P'. The
+%                'Fact' is the actual support fact, and the 'Trigger' is the condition
 %                or event that supports the proposition.
 %
 %   @example
 %     % Add support for a fact 'some_fact' with the trigger 'some_trigger'.
 %     ?- pfcAddSupport(some_fact, (some_support, some_trigger)).
-%     
-%     % This will assert that the fact 'some_fact' is supported by 'some_support' and 
+%
+%     % This will assert that the fact 'some_fact' is supported by 'some_support' and
 %     % 'some_trigger'.
 %
-pfcAddSupport(P, (Fact, Trigger)) :- 
+pfcAddSupport(P, (Fact, Trigger)) :-
     % Assert the support fact using the '$spft$' predicate.
     assert('$spft$'(P, Fact, Trigger)).
 
 %!  pfcGetSupport(+P, -Support) is semidet.
 %
 %   Retrieves the support information for a given proof P.
-%   The support is provided in the form of a tuple '(Fact, Trigger)', 
-%   where 'Fact' is a fact involved in the proof, and 'Trigger' is 
+%   The support is provided in the form of a tuple '(Fact, Trigger)',
+%   where 'Fact' is a fact involved in the proof, and 'Trigger' is
 %   an event or condition that triggered the proof.
 %
 %   @arg P       The proof for which the support information is being retrieved.
@@ -120,7 +120,7 @@ pfcGetSupport(P, (Fact, Trigger)) :-
 %!  pfc_spft(+P, -Fact, -Trigger) is semidet.
 %
 %   Retrieves the fact and trigger that support the given proof P.
-%   This predicate internally calls the system predicate '$spft$' to get the 
+%   This predicate internally calls the system predicate '$spft$' to get the
 %   fact ('F') and trigger ('T') associated with the proof.
 %
 %   @arg P    The proof for which the fact and trigger are being retrieved.
@@ -167,12 +167,12 @@ pfcRemOneSupport(P, (Fact, Trigger)) :-
 %!  pfcRemOneSupportOrQuietlyFail(+P, +Support) is det.
 %
 %   Removes one support fact or fails quietly if the support fact cannot be retracted.
-%   This predicate ensures that the arguments are callable and attempts to retract 
-%   the support fact represented as '$spft$'(P, Fact, Trigger). It will silently fail 
+%   This predicate ensures that the arguments are callable and attempts to retract
+%   the support fact represented as '$spft$'(P, Fact, Trigger). It will silently fail
 %   if the retract operation does not succeed, ensuring that no exceptions are thrown.
 %
 %   @arg P       The primary fact or rule that was supported.
-%   @arg Support A tuple of the form (Fact, Trigger) representing the fact and trigger 
+%   @arg Support A tuple of the form (Fact, Trigger) representing the fact and trigger
 %                that provided support for the primary fact P.
 %
 %   @example Remove a specific support for a fact:
@@ -210,7 +210,7 @@ pfc_collect_supports([]).
 %   the predicate 'P', fact 'F', and trigger 'T' into a triple '(P,F,T)'.
 %   It relies on the 'pfc_spft/3' predicate to obtain the individual components.
 %
-%   @arg Triple A tuple '(P, F, T)' where 'P' is the predicate, 'F' is the fact, 
+%   @arg Triple A tuple '(P, F, T)' where 'P' is the predicate, 'F' is the fact,
 %               and 'T' is the trigger in the PFC system.
 %
 %   @example Querying for a specific support triple:
@@ -230,7 +230,7 @@ pfc_support_relation((P, F, T)) :-
 %
 %   The predicate first adds the support for the fact using 'pfcAddSupport/2', associating
 %   the fact 'P' with the pair '(S1, S2)'. It then attempts to classify the fact 'P' by calling
-%   'pfcAddType1/1', though failure to classify does not cause the operation to fail due to the 
+%   'pfcAddType1/1', though failure to classify does not cause the operation to fail due to the
 %   use of the disjunction with 'true'. A cut ('!') is placed to prevent unnecessary backtracking.
 %
 %   @arg PSupportTuple A tuple '(P, S1, S2)' where 'P' is the fact to support and 'S1', 'S2' are
@@ -306,8 +306,8 @@ pfc_trigger_key(X, X).
 %
 %   Push a new Value onto the named non-backtrackable variable.
 %
-%   If a value is already associated with the given Name, the new Value is added 
-%   to the front of the list. If no value is currently associated with Name, a new 
+%   If a value is already associated with the given Name, the new Value is added
+%   to the front of the list. If no value is currently associated with Name, a new
 %   list containing Value is created and stored under Name.
 %
 %   @arg Name  The name of the non-backtrackable variable.
@@ -332,7 +332,7 @@ nb_pushval(Name, Value) :-
 %
 %   Peek at the top value of the list associated with the non-backtrackable variable.
 %
-%   This predicate retrieves the first value from the list stored in the non-backtrackable 
+%   This predicate retrieves the first value from the list stored in the non-backtrackable
 %   variable without modifying the list.
 %
 %   @arg Name  The name of the non-backtrackable variable.
@@ -351,7 +351,7 @@ nb_peekval(Name, Value) :-
 %
 %   Check if a Value is present in the list stored in the non-backtrackable variable.
 %
-%   This predicate succeeds if the specified Value is present in the list associated with 
+%   This predicate succeeds if the specified Value is present in the list associated with
 %   the non-backtrackable variable.
 %
 %   @arg Name  The name of the non-backtrackable variable.
@@ -370,7 +370,7 @@ nb_hasval(Name, Value) :-
 %
 %   Pop the top value from the list stored in the non-backtrackable variable.
 %
-%   This predicate removes the first value from the list associated with the non-backtrackable 
+%   This predicate removes the first value from the list associated with the non-backtrackable
 %   variable and unifies it with Value.
 %
 %   @arg Name  The name of the non-backtrackable variable.
@@ -389,9 +389,9 @@ nb_popval(Name, Value) :-
 %!  reset_shown_justs is det.
 %
 %   Resets the tracking of shown justifications in the system.
-%   This predicate removes all existing entries from the 't_l:shown_why/1' predicate, 
+%   This predicate removes all existing entries from the 't_l:shown_why/1' predicate,
 %   effectively clearing any stored justifications.
-%   Additionally, it performs a no-operation call to 'color_line/2' with 
+%   Additionally, it performs a no-operation call to 'color_line/2' with
 %   red color and line number 1, which may be for diagnostic or logging purposes.
 %
 %   @example
@@ -417,7 +417,7 @@ reset_shown_justs :-
 %       ?- clear_proofs.
 %       true.
 %
-clear_proofs :- 
+clear_proofs :-
     % Retract all facts from the 't_l:whybuffer/2' predicate, clearing the proof data.
     retractall(t_l:whybuffer(_P, _Js)),
     % Optionally log or provide visual feedback by calling 'color_line/2'.
@@ -428,7 +428,7 @@ clear_proofs :-
 %   Matches a specific pattern by ensuring that 'A' is unchanged after a lookup operation.
 %
 %   This predicate first creates a copy of 'A' (as 'AA') to ensure the original term is preserved.
-%   Then, it calls 'lookup_spft/3' with the arguments 'A', 'B', and 'C'. After the lookup, it checks 
+%   Then, it calls 'lookup_spft/3' with the arguments 'A', 'B', and 'C'. After the lookup, it checks
 %   whether the original term 'A' is still structurally identical to its copy 'AA' using '=@=/2'.
 %
 %   This can be useful for ensuring that the lookup operation does not modify the input term 'A'.
@@ -454,11 +454,11 @@ lookup_spft_match(A, B, C) :-
 %   Performs a deeper lookup operation by ensuring the head term 'H' is unchanged after the lookup.
 %
 %   This predicate creates a copy of the term 'H' (as 'HH') to ensure the original term is preserved.
-%   It then performs a lookup using 'lookup_spft/3' with the pattern '(H :- _B)', where 'H' is matched 
-%   with the head of a clause, and the body is ignored. After the lookup, the predicate checks if the 
+%   It then performs a lookup using 'lookup_spft/3' with the pattern '(H :- _B)', where 'H' is matched
+%   with the head of a clause, and the body is ignored. After the lookup, the predicate checks if the
 %   original term 'H' is still structurally identical to its copy 'HH' using '=@=/2'.
 %
-%   This is particularly useful for cases where the lookup involves clauses, and you want to ensure that 
+%   This is particularly useful for cases where the lookup involves clauses, and you want to ensure that
 %   the head of the clause remains unchanged during the operation.
 %
 %   @arg H The head term to be matched and checked for preservation.
@@ -482,7 +482,7 @@ lookup_spft_match_deeper(H, Fact, Trigger) :-
 %   Performs a lookup operation, preferring a match where 'A' remains unchanged, but falling back to a regular lookup if needed.
 %
 %   If 'A' is instantiated (nonvar), the predicate first tries to find a match using 'lookup_spft_match/3', which ensures 'A' is preserved.
-%   If this fails, it falls back to a standard lookup with 'lookup_spft/3'. 
+%   If this fails, it falls back to a standard lookup with 'lookup_spft/3'.
 %   The 'no_repeats/1' predicate is used to ensure that duplicate results are removed.
 %
 %   If 'A' is uninstantiated (var), the predicate directly performs a standard lookup using 'lookup_spft/3'.
@@ -514,7 +514,7 @@ lookup_spft_match_first(A, B, C) :-
 %   Determines if a term is classified as PFC information.
 %
 %   This predicate checks various patterns to determine whether the given term should be
-%   considered as PFC (Prolog Forward Chaining) information. It handles specific forms 
+%   considered as PFC (Prolog Forward Chaining) information. It handles specific forms
 %   such as pairs, facts with certain functors, and specific patterns. The predicate
 %   succeeds if the term matches one of these patterns, indicating that it is PFC information.
 %
@@ -530,7 +530,7 @@ lookup_spft_match_first(A, B, C) :-
 %
 pfc_is_info((CWC, Info)) :-
     % If 'CWC' is an atom and recognized as PFC info, or recurse on the second part ('Info').
-    (atom(CWC), is_a_info(CWC)) ; 
+    (atom(CWC), is_a_info(CWC)) ;
     pfc_is_info(Info).
 pfc_is_info(pfc_bc_only(C)) :-
     % Check if 'C' is a non-variable term.
@@ -545,11 +545,11 @@ pfc_is_info(inherit_above(_, _)).
 %
 %   Determines if the given control word ('CWC') is classified as PFC information.
 %
-%   This predicate checks if the given control word ('CWC') is either explicitly identified as "fail" 
-%   or if it follows the 'is_pfc_chained/1' rule. The predicate succeeds if either of these conditions 
+%   This predicate checks if the given control word ('CWC') is either explicitly identified as "fail"
+%   or if it follows the 'is_pfc_chained/1' rule. The predicate succeeds if either of these conditions
 %   is met, classifying the control word as PFC information.
 %
-%   @arg CWC The control word to be checked. It can either be the atom 'fail' or some term that satisfies 
+%   @arg CWC The control word to be checked. It can either be the atom 'fail' or some term that satisfies
 %        the 'is_pfc_chained/1' rule.
 %
 %   @example Check if a control word is PFC information:
@@ -568,8 +568,8 @@ is_a_info(CWC) :-
 %
 %   Determines if the given control word ('CWC') is part of a predefined set of PFC-chained control words.
 %
-%   This predicate checks if the control word ('CWC') belongs to a predefined set of control words 
-%   that are considered to be "PFC-chained". These control words include 'cwc', 'awc', 'zwc', 'fwc', 
+%   This predicate checks if the control word ('CWC') belongs to a predefined set of control words
+%   that are considered to be "PFC-chained". These control words include 'cwc', 'awc', 'zwc', 'fwc',
 %   'bwc', and 'wac'. The predicate succeeds if 'CWC' matches one of these control words.
 %
 %   @arg CWC The control word to be checked. It must match one of the predefined values.
@@ -588,12 +588,12 @@ is_pfc_chained(fwc).
 is_pfc_chained(bwc).
 is_pfc_chained(wac).
 
-% The following line uses forall/2 to process all operations that meet the 
+% The following line uses forall/2 to process all operations that meet the
 % condition 'is_pfc_chained/1' and asserts them into the Prolog database using
 % 'assert_if_new/1'.
-% 
-% - 'is_pfc_chained(Op)' is the condition being checked. 
-% - 'assert_if_new(Op)'' ensures that the operation 'Op' is added to the database 
+%
+% - 'is_pfc_chained(Op)' is the condition being checked.
+% - 'assert_if_new(Op)'' ensures that the operation 'Op' is added to the database
 %   only if it hasn't already been asserted.
 %
 % In essence, this line ensures that for every operation that is PFC chained,
@@ -635,15 +635,15 @@ reserved_body(B) :- reserved_body_helper(B).
 
 %!  reserved_body_helper(+B) is semidet.
 %
-%   This helper predicate checks whether a given term 'B' is a reserved body, based on 
-%   additional conditions. It succeeds if 'B' is a compound term that meets specific 
+%   This helper predicate checks whether a given term 'B' is a reserved body, based on
+%   additional conditions. It succeeds if 'B' is a compound term that meets specific
 %   criteria, otherwise it fails.
 %
 %   @arg B The term to check.
 %
 %   The predicate works as follows:
 %   - If 'B' is not a compound term, it fails ('\+ compound(B), !, fail.').
-%   - If 'B' is a tuple of the form '(ZAWC, _)' where 'ZAWC' is an atom and 
+%   - If 'B' is a tuple of the form '(ZAWC, _)' where 'ZAWC' is an atom and
 %     satisfies 'is_pfc_chained/1', it succeeds.
 %
 %   @example
@@ -678,7 +678,7 @@ reserved_body_helper((ZAWC, _)) :-
 %   The predicate works by checking multiple properties of 'H':
 %   - It tries to determine the module 'M' where 'H' is imported from or defined.
 %   - It tries to extract the line number 'L' of the predicate definition.
-%   - It attempts to find the file 'F' where the predicate 'H' is defined, including handling 
+%   - It attempts to find the file 'F' where the predicate 'H' is defined, including handling
 %     cases where 'H' is a foreign predicate.
 %
 call_only_based_mfl(H, mfl4(_VarNameZ, M, F, L)) :-
@@ -687,12 +687,12 @@ call_only_based_mfl(H, mfl4(_VarNameZ, M, F, L)) :-
     % Attempt to retrieve the line number 'L' of the predicate 'H'.
     ignore(predicate_property(H, line_count(L))),
     % Try to determine the file 'F' where the predicate 'H' is defined. Handle foreign predicates.
-    ignore(source_file(M:H, F); predicate_property(H, file(F)); 
+    ignore(source_file(M:H, F); predicate_property(H, file(F));
            (predicate_property(H, foreign), F = foreign)).
 
 %!  uses_call_only(+H) is semidet.
 %
-%   Determines if the given predicate 'H' can be classified as "call-only," meaning it is 
+%   Determines if the given predicate 'H' can be classified as "call-only," meaning it is
 %   either a foreign predicate or a compiled predicate (not interpreted).
 %
 %   @arg H The predicate to check.
@@ -722,13 +722,13 @@ uses_call_only(H) :-
 %
 %   @arg H   The head of the clause or predicate.
 %   @arg B   The body of the clause.
-%   @arg Ref A reference to the clause that matched, or an indication that the predicate 
+%   @arg Ref A reference to the clause that matched, or an indication that the predicate
 %            is call-only.
 %
 %   The predicate works as follows:
 %   - If 'H' is a call-only predicate, it succeeds immediately, returning 'uses_call_only(H)' as 'Ref'.
 %   - If the clause is already asserted, it succeeds and returns the reference to that clause.
-%   - Otherwise, it checks for clause matching using 'clause/3' and compares the head with '=@=/2'. 
+%   - Otherwise, it checks for clause matching using 'clause/3' and compares the head with '=@=/2'.
 %     It ensures the body 'B' is not a reserved body by using 'reserved_body_helper/1'.
 %
 clause_match(H, _B, uses_call_only(H)) :-
@@ -756,7 +756,7 @@ clause_match(H, B, Ref) :-
 %   The predicate works as follows:
 %   - It tries to look up the MFL using 'lookup_spft_match/3'.
 %   - If the clause 'C' is wrapped, it unwraps it and recursively finds the MFL for the unwrapped version.
-%   - If none of the above succeed, it attempts to expand 'C' into a head 'H' and body 'B' and then 
+%   - If none of the above succeed, it attempts to expand 'C' into a head 'H' and body 'B' and then
 %     find their MFL using 'find_hb_mfl/4'.
 %
 find_mfl(C, MFL) :-
@@ -1114,7 +1114,7 @@ assumption(P) :-
 
 %!  assumptions(+X, -As) is det.
 %
-%   True if 'As' is the set of assumptions that underlie the fact 'X'. 
+%   True if 'As' is the set of assumptions that underlie the fact 'X'.
 %   If 'X' is an assumption, 'As' contains only 'X'. If 'X' is an axiom, there are no assumptions.
 %   Otherwise, it recursively collects assumptions from the justifications of 'X'.
 %
@@ -1241,7 +1241,7 @@ matches_why_UU(UU):- matches_why_U(U1),matches_why_U(U2), freeze(UU,UU=(U1,U2)).
 %!   current_why_U(-U) is det.
 %
 %   Retrieves the current user reason 'U' using 'get_why_uu/1'. This represents
-%   a reason why a fact is true, expressed as a user context. 
+%   a reason why a fact is true, expressed as a user context.
 %   In this implementation, 'get_why_uu/1' provides the user context.
 %
 %   @arg U The current user reason.
@@ -1295,9 +1295,9 @@ matches_why_UU(UU) :-
 %
 matterialize_support_term(S, Sup) :-
     % Check if the term 'S' has any attached variables (constraints).
-    term_attvars(S, Atts),Atts \== [] -> 
+    term_attvars(S, Atts),Atts \== [] ->
     % If attached variables exist, copy 'S' and gather the associated goals.
-    copy_term(S, _, Goals), Sup = S + Goals, !.    
+    copy_term(S, _, Goals), Sup = S + Goals, !.
 %
 %   The following predicate is a fallback when the term 'SS' has no attached variables, ensuring
 %   that the original term is returned without modification. Note: variation of above predicate.
@@ -1411,11 +1411,11 @@ is_action_body(P):- has_body_atom(wac,P).
 has_body_atom(WAC,P):- call(
    WAC==P -> true ; (is_ftCompound(P), get_assertion_head_arg(1,P,E), has_body_atom(WAC,E))),!.
 
-/* 
+/*
 % Commented-out alternative implementation for has_body_atom.
 % This may have been a previous or incomplete approach for handling more complex cases.
 
-% has_body_atom(WAC,P,Rest):- call(WAC==P -> Rest = true ; 
+% has_body_atom(WAC,P,Rest):- call(WAC==P -> Rest = true ;
 %   (is_ftCompound(P), functor(P,F,A), is_atom_body_pfa(WAC,P,F,A,Rest))).
 % is_atom_body_pfa(WAC,P,F,2,Rest):- get_assertion_head_arg(1,P,E), E==WAC, get_assertion_head_arg(2,P,Rest), !.
 % is_atom_body_pfa(WAC,P,F,2,Rest):- get_assertion_head_arg(2,P,E), E==WAC, get_assertion_head_arg(1,P,Rest), !.
@@ -1470,14 +1470,14 @@ update_single_valued_arg(M, M:Pred, N):- !, update_single_valued_arg(M, Pred, N)
 update_single_valued_arg(_, M:Pred, N):- !, update_single_valued_arg(M, Pred, N).
 update_single_valued_arg(world, P, N):-  !, current_prolog_flag(pfc_shared_module, BaseKB),
     update_single_valued_arg(BaseKB, P, N).
-update_single_valued_arg(M, P, N):- ibreak,\+ clause_b(mtHybrid(M)),trace,clause_b(mtHybrid(M2)),!, 
+update_single_valued_arg(M, P, N):- ibreak,\+ clause_b(mtHybrid(M)),trace,clause_b(mtHybrid(M2)),!,
     update_single_valued_arg(M2, P, N).
-update_single_valued_arg(M, P, N):- get_assertion_head_arg(N, P, UPDATE),is_relative(UPDATE),!,dtrace, 
+update_single_valued_arg(M, P, N):- get_assertion_head_arg(N, P, UPDATE),is_relative(UPDATE),!,dtrace,
     ibreak,replace_arg(P, N, OLD, Q),
-    must_det_l((clause_u(Q), update_value(OLD, UPDATE, NEW), \+ is_relative(NEW), replace_arg(Q, N, NEW, R))),
+    must_det_ll((clause_u(Q), update_value(OLD, UPDATE, NEW), \+ is_relative(NEW), replace_arg(Q, N, NEW, R))),
     !, update_single_valued_arg(M, R, N).
-update_single_valued_arg(M, P, N):- 
-    call_u((must_det_l((
+update_single_valued_arg(M, P, N):-
+    call_u((must_det_ll((
         call_u(mtHybrid(M)),
         mpred_type_args \= M,
         mpred_kb_ops \= M,
@@ -1485,7 +1485,7 @@ update_single_valued_arg(M, P, N):-
         replace_arg(P, N, Q_SLOT, Q),
         var(Q_SLOT),
         same_functors(P, Q),
-        must_det_l((
+        must_det_ll((
             assertz(M:P),
             doall((
                 lookup_u(M:Q, E),
@@ -1597,7 +1597,7 @@ map_first_arg(CM,Pred,H,S):- CM:apply(Pred,[H|S]).
 %   @arg GC The original predicate structure.
 %   @arg GO The generated predicate.
 %
-pfcVerifyMissing(GC, GO, ((GO, {D==C});\+ GO) ):-  
+pfcVerifyMissing(GC, GO, ((GO, {D==C});\+ GO) ):-
     GC=..[F,A|Args], append(Left,[D],Args), append(Left,[C],NewArgs), GO=..[F,A|NewArgs], !.
 
 %example mpred_freeLastArg(mpred_isa(I,C),~(mpred_isa(I,C))):-is_ftNonvar(C),!.
@@ -1613,7 +1613,7 @@ pfcVerifyMissing(GC, GO, ((GO, {D==C});\+ GO) ):-
 %   @arg G The predicate whose last argument is to be freed.
 %   @arg GG The resulting predicate after removing the last argument.
 %
-mpred_freeLastArg(G,GG):- 
+mpred_freeLastArg(G,GG):-
     G=..[F,A|Args], append(Left,[_],Args), append(Left,[_],NewArgs), GG=..[F,A|NewArgs], !.
 mpred_freeLastArg(_G, false).
 

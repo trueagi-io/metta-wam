@@ -1385,18 +1385,18 @@ md_failed(P1, G):- main_debug, /*notrace*/(write_src_uo(md_failed(P1, G))), !, t
 
 % Write the output of G to the stream with file descriptor 1 (standard output).
 write_src_uo(G):-
- stream_property(S, file_no(1)),
+/* current_output(S),
  with_output_to(S,
   (format('~N~n~n', []),
    write_src(G),
-   format('~N~n~n'))), !,
+   format('~N~n~n'))), !,*/
 % stack_dump,
 % Write the output of G to the stream with file descriptor 2 (standard error).
  stream_property(S2, file_no(2)),
  with_output_to(S2,
-  (format('~N~n~n', []),
+  (format('~N~n', []),
    write_src(G),
-   format('~N~n~n'))), !.
+   format('~N~n'))), !.
 
 % Declare rrtrace/1 as a meta-predicate that takes a goal.
 :- meta_predicate(rrtrace(0)).
@@ -1446,8 +1446,8 @@ stack_dump:- ignore(catch(bt, _, true)).
 :- set_prolog_flag(mettalog_error,unset).
 %:- set_prolog_flag(mettalog_error,break).
 %:- set_prolog_flag(mettalog_error,keep_going).
-on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,wdmsg(on_mettalog_error(break,Why)),break.
-on_mettalog_error(Why):- wdmsg(on_mettalog_error(Why)).
+on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,write_src_uo(on_mettalog_error(break,Why)),break.
+on_mettalog_error(Why):- write_src_uo(on_mettalog_error(Why)).
 
 % super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`
 super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(failed(G)))).
@@ -1462,7 +1462,7 @@ ugtrace(_Why, G):- tracing, !, notrace, rtrace(G), trace.
 % If testing is enabled, handle the failure and abort.
 ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
 % Otherwise, log the reason, trace the goal G, and abort.
-ugtrace(Why, G):- wdmsg(Why), ggtrace(G), throw('$aborted').
+ugtrace(Why, G):- fbugio(Why), ggtrace(G), throw('$aborted').
 % ugtrace(Why,G):- ggtrace(G).
 
 %!  give_up(+Why, +N) is det.
