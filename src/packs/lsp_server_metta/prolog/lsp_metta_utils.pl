@@ -118,7 +118,7 @@ text_at_position_blurred(Pos, Text, Tolerance) :-
     range_blurred_contains(Start, End, Pos, Tolerance),
     !.
 
-text_info(metta_file_buffer(N, Ord, Kind, Code, Vs, Path, Range), Range):- metta_file_buffer(N, Ord, Kind, Code, Vs, Path, Range).
+text_info(metta_file_buffer(N, Ord, Kind, Code, Vs, Path, Range), Range):- user:metta_file_buffer(N, Ord, Kind, Code, Vs, Path, Range).
 
 
 % Check if a range is completely before another range with tolerance
@@ -226,7 +226,7 @@ get_code_at_range(text, Uri, Range, Target):- !, get_code_at_range(symbol, Uri, 
 
 get_code_at_range(symbol, Path, Range, Code):-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     \+ is_list(Code),!,maybe_name_vars(Vs), !.
@@ -234,14 +234,14 @@ get_code_at_range(symbol, Path, Range, Code):-
 
 get_code_at_range(symbol_arity, Path, Range, Code):-
     get_code_at_range(symbol, Path, Range, Symbol),
-    metta_file_buffer(_, _Ord, _Kind, [Head|Rest], _Vs, Path, _BRange),  Head == Symbol,
+    user:metta_file_buffer(_, _Ord, _Kind, [Head|Rest], _Vs, Path, _BRange),  Head == Symbol,
     Head == Symbol, is_list(Rest), length(Rest,Len),Code = Symbol/Len,!.
 get_code_at_range(symbol_arity, Path, Range, Symbol/0):-
     get_code_at_range(symbol, Path, Range, Symbol), !.
 
 get_code_at_range(nonsymbol, Path, Range, Code):-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(0, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(0, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     is_list(Code),
@@ -262,7 +262,7 @@ get_code_at_range(toplevel_form, Path, Range, Code) :-
     %Target \== '',
     %path_doc(Path, Uri),  % Extract the file path from the URI.
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(0, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(0, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
@@ -274,7 +274,7 @@ get_code_at_range(toplevel_form, Uri, Range, Target):- !, get_code_at_range(expr
 get_code_at_range(term, Path, Range, Code) :-
     %path_doc(Path, Uri),  % Extract the file path from the URI.
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(_, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(_, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     maybe_name_vars(Vs), !.
@@ -287,7 +287,7 @@ get_code_at_range(expression, Path, Range, Code) :-
     %Target \== '',
     %path_doc(Path, Uri),  % Extract the file path from the URI.
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(N, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(N, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
@@ -296,7 +296,7 @@ get_code_at_range(expression, Path, Range, Code) :-
 
 get_code_at_range(expression, Path, Range, Code) :-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    metta_file_buffer(_, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    user:metta_file_buffer(_, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
