@@ -1,4 +1,4 @@
-﻿:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3, debug_lsp/2, first_dict_key/3,  catch_with_backtrace/1, job_info/0, debug_ide/0 ]).
+:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3, debug_lsp/2, first_dict_key/3,  catch_with_backtrace/1, job_info/0, debug_ide/0 ]).
 /** <module> LSP Server
 
 The main entry point for the Language Server implementation with dynamic handling based on max threads.
@@ -581,7 +581,7 @@ server_capabilities(
 
         5. willSaveWaitUntil: true
            - Enables `willSaveWaitUntil` requests, which allow the server to make edits on the document before it is saved.
-           - This can be useful for pre-save formatting or other modifications to ensure the document is in a desired state before it’s saved.
+           - This can be useful for pre-save formatting or other modifications to ensure the document is in a desired state before it's saved.
 
         Summary:
         - This configuration reduces data by using incremental changes (`change: 2`) and disabling full text on save (`includeText: false`).
