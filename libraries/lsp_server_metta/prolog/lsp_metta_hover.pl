@@ -415,11 +415,11 @@ write_src_xref(Src):-
 
 write_src_xref(Term, Type, Path, Loc):-
    catch_skip((write_src_xref(Term),
-   ignore(write_file_link(Type, Path, Loc)))).
+   in_markdown(ignore(write_file_link(Type, Path, Loc))))).
 
 write_src_xref(Term, Path, Loc):-
    catch_skip((write_src_xref(Term),
-   ignore(write_file_link(Path, Loc)))).
+   in_markdown(ignore(write_file_link(Path, Loc))))).
 
 catch_skip(G):- ignore(catch(G, _, true)).
 
@@ -448,14 +448,18 @@ next_clause(Ref, NextTerm) :-
 
 %   ~n```~n*~w*~n```lisp~n
 write_file_link(Type, Path, Position):-
-  must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
-  in_markdown(format('[~w:~w](file://~w#L~w) _(~w)_', [Path, Line1, Path, Line1, Type])).
-write_file_link(Path, Position):-
-  must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
-  in_markdown(format('[~w:~w](file://~w#L~w)', [Path, Line1, Path, Line1])).
+  write_file_link(Path, Position), format(' _(~w)_', [Type]).
 
+write_file_link(Path, Position):- is_in_emacs, !,
+    must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
+    format('[~w:~w](file://~w)', [Path, Line1, Path]).
+write_file_link(Path, Position):-
+    must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
+    format('[~w:~w](file://~w#L~w)', [Path, Line1, Path, Line1]).
 
 position_line(Position, Line2):-
    into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
+% Emacs does return a Client Configuration List
+is_in_emacs :- \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
