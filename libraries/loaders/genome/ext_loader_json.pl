@@ -1,23 +1,114 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+%********************************************************************************************* 
+% PROGRAM FUNCTION: processes JSON data from FlyBase, particularly focusing on genetic information 
+% like transposons and genes, by extracting and transforming it into a structured format using 
+% Prolog predicates that handle nested JSON objects and arrays while maintaining relationships 
+% between different genetic elements.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ```prolog
 
+% use_module() is equivalent to ensure_loaded/1, except that it raises an error if Files are not module files.
 :- use_module(library(logicmoo_utils)).
 
-
-% facts for creating predcatres
+%!  extracted_predicate(+Entity, +Attributes) is det.
+%
+%   Defines both facts and rules used to specify the structure of data for different entities
+%   such as transposons, genes, exons, sequences, alleles, and metadata.
+%   The second argument, `Attributes`, lists the relevant attributes or
+%   relationships associated with the given `Entity`. In some cases, a rule 
+%   dynamically generates attributes based on the context.
+%
+%   @arg Entity The name of the entity being defined. This represents a specific
+%        type of biological or informational object (e.g., `transposon`, `gene`).
+%   @arg Attributes A list of attributes or relationships associated with the
+%        entity. This may include IDs, symbols, sequences, metadata, or
+%        related entities.
+%
+%   Defined Entities (facts):
+%   - `transposon`: Attributes include primary ID, symbol, sequence, URL, taxon ID, and SO term ID.
+%   - `transposon_publications`: Links transposons with publication IDs.
+%   - `transposon_synonyms`: Lists synonyms for transposons.
+%   - `transposon_cross_references`: References external data sources for transposons.
+%   - `gene`: Attributes include primary ID, gene ID, symbol, URL, locus tag, and name.
+%   - `exon_locations`: Genome assembly and exon location details such as chromosome, strand, start/end positions.
+%   - `relatedSequences`: Sequence relationships for a primary ID.
+%   - `gene_synonyms`: Synonyms for gene IDs.
+%   - `metadata`: General information about the dataset, including provider, schema version, and production date.
+%   - `allele_image`: Detailed information about allele-associated images.
+%   - `allele_image2` and `allele_image3`: Variations on allele image details.
+%
+%   Dynamic attribute generation for `gene` and `allele`: Based on specific attribute types (e.g., name, synonyms).
+%
+%   Note: The dynamic predicates generate specific attributes for entities
+%   using constructs like `atom_concat` and `member` to define relationships.
+%
+%   @example
+%   % Query dynamically generated attributes:
+%   ?- extracted_predicate(N, [gene_geneId, N]).
+%   
 extracted_predicate(transposon, [primaryId, symbol, sequence, url, taxonId, soTermId]).
 extracted_predicate(transposon_publications, [primaryId, publications]).
 extracted_predicate(transposon_synonyms, [primaryId, symbolSynonyms]).
 extracted_predicate(transposon_cross_references, [primaryId, crossReferenceIds]).
-
-extracted_predicate(gene, [primaryId,
-  gene_geneId, gene_symbol, gene_url, gene_locusTag, gene_name]).
-
-
-extracted_predicate(N,[gene_geneId,N]):-
-  member(M,[symbol, url, locusTag, name, synonyms]), atom_concat('gene_',M,N).
-
-
+extracted_predicate(gene, [primaryId,gene_geneId, gene_symbol, gene_url, gene_locusTag, gene_name]).
+extracted_predicate(N,[gene_geneId,N]):- member(M,[symbol, url, locusTag, name, synonyms]), atom_concat('gene_',M,N).
 extracted_predicate(exon_locations,
  [primaryId,
    genomeLocations_assembly,
@@ -25,15 +116,12 @@ extracted_predicate(exon_locations,
    exons_INSDC_accession, exons_chromosome, exons_strand,
    exons_startPosition,
    exons_endPosition]).
-
 extracted_predicate(relatedSequences,[primaryId,relatedSequences_sequenceId,
    relatedSequences_relationship]).
-
 extracted_predicate(gene_synonyms, [gene_geneId, gene_synonyms]).
 %extracted_predicate(exon, [primaryId, geneId, 'INSDC_accession', chromosome, strand, startPosition, endPosition]).
 extracted_predicate(metadata, [dataProvider, schemaVersion, release, genomicCoordinateSystem, dateProduced]).
 %extracted_predicate(exon_locations, [ assembly, chromosome, strand, startPosition, endPosition]).
-
 extracted_predicate(N,[fbid,M]):-
   member(M,[transposons, common_terms, major_stages, major_tissues, name,
            pubs, rex_gene, stocks, expression_desc_text, images]), atom_concat('allele_',M,N).
@@ -48,185 +136,628 @@ extracted_predicate(allele_image3,
             images_publicationId,
             images_pubFigure, images_permission]).
 
-wdmsg_json(G):- nop(fbug(G)).
-note_doing(P):- wdmsg_json(P),!,call(user:P).
-assert_JSON(P):- note_doing(assert_OBO(P)).
+%!  wdmsg_json(+Message) is det.
+%
+%   Logs a debug message in JSON format.
+%
+%   This predicate is used to display a debug message encapsulated in a JSON 
+%   structure. It calls `nop/1` with `fbug/1` to handle the debug information.
+%
+%   @arg Message The message or data to be logged in JSON format.
+%
+%   @example:
+%   % Log a message for debugging:
+%   ?- wdmsg_json("Processing data").
+%   % Output will depend on the implementation of `nop/1` and `fbug/1`.
+wdmsg_json(G) :- nop(fbug(G)).
+
+%!  note_doing(+Action) is det.
+%
+%   Logs and executes a user-defined action.
+%
+%   This predicate logs the action using `wdmsg_json/1` and then attempts to
+%   execute it by calling `user:Action`. It ensures that the action is noted 
+%   before execution.
+%
+%   @arg Action The action to be logged and executed. It should be a callable
+%        term that represents a user-defined goal.
+%
+%   @example:
+%   % Log and execute an action:
+%   ?- note_doing(my_custom_action).
+%   % Output depends on the implementation of `wdmsg_json/1` and the execution
+%   % result of `my_custom_action/0`.
+note_doing(P) :- wdmsg_json(P), !, call(user:P).
+
+%!  assert_JSON(+Fact) is det.
+%
+%   Asserts a fact after logging its creation.
+%
+%   This predicate logs the action of asserting the fact using `note_doing/1`
+%   and then asserts it by calling `assert_OBO/1`. It ensures the operation is
+%   traceable in debug logs.
+%
+%   @arg Fact The fact to be asserted. It should be a Prolog term that represents
+%        the fact to be added to the database.
+%
+%   @example:
+%   % Log and assert a fact:
+%   ?- assert_JSON(my_fact(attribute, value)).
+%   % Output depends on the implementation of `note_doing/1` and `assert_OBO/1`.
+assert_JSON(P) :- note_doing(assert_OBO(P)).
 
 :- ensure_loaded(flybase_main).
 :- ensure_loaded(ext_loader_obo).
 
 %:- listing(assert_OBO/1).
 
+% dynamic enables adding, removing, or modifying clauses for a predicate while the program is running
 :- dynamic json_kv/2.
 
-% Base case: an empty curly structure.
-mapcurly_or_list(_, {}):-!.
-mapcurly_or_list(_, []):-!.
-mapcurly_or_list(Pred, [H|T])  :- !, call(Pred, H),   mapcurly_or_list(Pred, T).
-mapcurly_or_list(Pred, {H,T}):- !, call(Pred, H),   mapcurly_or_list(Pred, T).
-mapcurly_or_list(Pred, {H})  :- !, call(Pred, H).
+%!  mapcurly_or_list(+Pred, +Structure) is det.
+%
+%   Recursively applies a predicate to elements of a list or curly-braced structure.
+%
+%   This predicate handles lists (`[H|T]`) and Prolog curly-braced structures 
+%   (`{H}`, `{H, T}`). It applies the given predicate `Pred` to each element
+%   within the structure. The base cases handle empty structures (`{}` and `[]`).
+%
+%   @arg Pred The predicate to apply to each element of the structure. 
+%        `Pred` should be callable and accept a single argument.
+%   @arg Structure A list, a curly-braced structure, or an empty structure.
+%
+%   @example
+%     % Apply a predicate to a list:
+%     ?- mapcurly_or_list(writeln, [1, 2, 3]).
+%     1
+%     2
+%     3
+mapcurly_or_list(_, {}) :- 
+    % Base case: empty curly structure, succeed without action.
+    !.
+mapcurly_or_list(_, []) :- 
+    % Base case: empty list, succeed without action.
+    !.
+mapcurly_or_list(Pred, [H|T]) :- 
+    % Apply the predicate to the head of the list, then recurse on the tail.
+    !,call(Pred, H), 
+    mapcurly_or_list(Pred, T).
+mapcurly_or_list(Pred, {H, T}) :- 
+    % Apply the predicate to the first element of the curly structure, 
+    % then recurse on the rest of the structure.
+    !,call(Pred, H), 
+    mapcurly_or_list(Pred, T).
+mapcurly_or_list(Pred, {H}) :- 
+    % Apply the predicate to the single element in the curly structure.
+    !,call(Pred, H).
 
+%!  simple_first(-Result, +Term1, +Term2) is det.
+%
+%   Compares two terms with special handling for `json(_)` terms.
+%
+%   This predicate determines the order of two terms. If one term is `json(_)`
+%   and the other is not, it prioritizes the non-`json(_)` term. Otherwise,
+%   it falls back to Prolog's built-in `compare/3` for standard term comparison.
+%
+%   @arg Result The comparison result: '<', '>', or '='.
+%   @arg Term1 The first term to compare.
+%   @arg Term2 The second term to compare.
+%
+%   @example
+%     % Compare terms with one being a `json(_)`:
+%     ?- simple_first('<', A, json(B)).
+simple_first(R, _=AA, _=BB) :- 
+    % Decompose key-value pairs and compare their values.
+    !, simple_first(R, AA, BB).
+simple_first('<', AA, BB) :- 
+    % Prioritize non-json terms over json terms.
+    BB = json(_), AA \= json(_), !.
+simple_first('>', AA, BB) :- 
+    % Prioritize json terms over non-json terms.
+    AA = json(_), BB \= json(_), !.
+simple_first(R, AA, BB) :- 
+    % Use standard comparison for terms without special rules.
+    !, compare(R, AA, BB).
 
-simple_first(R,_=AA,_=BB):-!, simple_first(R,AA,BB).
-simple_first('<',AA,BB):- BB=json(_),AA\=json(_),!.
-simple_first('>',AA,BB):- AA=json(_),BB\=json(_),!.
-simple_first(R,AA,BB):-!, compare(R,AA,BB).
-
-
-prefix_key([O|_],Kee,Key):- atom(O), !,
-  prefix_key(O,Kee,Key).
-prefix_key(O,Kee,Key) :- atom(O),
-  O\==Kee, O\==data,symbolic_list_concat([O,'_',Kee],Key),!.
-prefix_key(_,Key,Key).
-
-
-
+%!  prefix_key(+Prefix, +KeyIn, -KeyOut) is det.
+%
+%   Generates a prefixed key if a prefix is valid and not equal to certain reserved terms.
+%
+%   This predicate checks if the prefix is an atom and not equal to reserved
+%   terms like `Kee` or `data`. If valid, it concatenates the prefix and the
+%   key using an underscore. Otherwise, it returns the original key.
+%
+%   @arg Prefix The prefix, which can be a list or atom.
+%   @arg KeyIn The original key.
+%   @arg KeyOut The resulting prefixed key, or the original key if no prefix is used.
+%
+%   @example
+%     % Add a prefix to a key:
+%     ?- prefix_key('my_prefix', 'key', Result).
+%     Result = 'my_prefix_key'.
+prefix_key([O|_], Kee, Key) :- 
+    % Handle a list prefix by using its first element.
+    atom(O), 
+    !, prefix_key(O, Kee, Key).
+prefix_key(O, Kee, Key) :-
+    % Concatenate prefix and key if the prefix is valid and not reserved.
+    atom(O),
+    O \== Kee,
+    O \== data, 
+    symbolic_list_concat([O, '_', Kee], Key), 
+    !.
+prefix_key(_, Key, Key). % If no valid prefix is found, return the original key.
+    
 :- use_module(library(http/json)).
 
-load_flybase_json(_Fn,File):-
-  process_json_file(File).
+%!  load_flybase_json(+Function, +File) is det.
+%
+%   Loads and processes a FlyBase JSON file.
+%
+%   This predicate processes a FlyBase JSON file by invoking the appropriate 
+%   procedures to handle the file, potentially converting it and managing the 
+%   resulting data.
+%
+%   @arg Function The function to associate with the file processing (currently unused).
+%   @arg File The path to the JSON file to be processed.
+%
+load_flybase_json(_Fn, File) :-
+    process_json_file(File).
 
-process_json_file(File):- atom_concat(File,'.metta_x',MXFile),process_json_file(File,MXFile).
-process_json_file(_File,MXFile):- fail, exists_file(MXFile),!,process_metta_x_file(MXFile).
-process_json_file(File, MXFile):- fail, exists_file(File),!,
-          setup_call_cleanup(
-             open(MXFile,write,Strm,[]),
-             setup_call_cleanup(
-                    set_stream(Strm,alias(metta_x_output)),
-                    with_option(make_metta_x,'True',process_json_file_direct(File)),
-                    set_stream(current_output,alias(metta_x_output))),
-             close(Strm)),
-       remove_duplicates(MXFile),
-       process_metta_x_file(MXFile).
-process_json_file(File, _):- process_json_file_direct(File),!.
-process_json_file(File, MXFile):-
+%!  process_json_file(+File) is det.
+%
+%   Processes a JSON file by creating a corresponding `.metta_x` file or
+%   handling the JSON directly if conversion fails.
+%
+%   @arg File The path to the JSON file to be processed.
+%
+process_json_file(File) :-
+    % Generate a .metta_x filename based on the input file and process it.
+    atom_concat(File, '.metta_x', MXFile),
+    process_json_file(File, MXFile).
+process_json_file(_File, MXFile) :-
+    % Attempt to process the .metta_x file if it exists.
+    fail, exists_file(MXFile), !,
+    process_metta_x_file(MXFile).
+process_json_file(File, MXFile) :-
+    % Convert the file to .metta_x format and process it.
+    fail, exists_file(File), !,
+    setup_call_cleanup(
+        open(MXFile, write, Strm, []),
+        setup_call_cleanup(
+            set_stream(Strm, alias(metta_x_output)),
+            with_option(make_metta_x, 'True', process_json_file_direct(File)),
+            set_stream(current_output, alias(metta_x_output))),
+        close(Strm)),
+    remove_duplicates(MXFile),
+    process_metta_x_file(MXFile).
+process_json_file(File, _) :-
+    % Process the file directly if other methods fail.
+    process_json_file_direct(File), !.
+process_json_file(File, MXFile) :-
+    % Throw an error if all attempts fail.
     throw(process_json_file(File, MXFile)).
 
-
-process_json_file_direct(File):-
+%!  process_json_file_direct(+File) is det.
+%
+%   Directly processes a JSON file by reading it and passing the data to `process_json/2`.
+%
+%   @arg File The path to the JSON file to be processed.
+%
+process_json_file_direct(File) :-
     setup_call_cleanup(
-               open(File, read, Stream,[encoding(utf8)]),
-               json_read(Stream, JSONDict),
-               close(Stream)),
-    process_json([],JSONDict).
+        open(File, read, Stream, [encoding(utf8)]),
+        json_read(Stream, JSONDict),
+        close(Stream)),
+    process_json([], JSONDict).
 
-process_json(JsonString):- process_json([],JsonString),!.
+%!  process_json(+Parent, +JSONData) is det.
+%
+%   Processes JSON data recursively, handling structures like objects, lists,
+%   and key-value pairs.
+%
+%   @arg Parent A list of parent keys leading to the current JSON data.
+%   @arg JSONData The JSON data to process (can be an atomic value, a list, or an object).
+%
+process_json(JsonString) :-
+    % Entry point for JSON data processing.
+    process_json([], JsonString), !.
+process_json(O, JsonString) :-
+    % Parse a JSON string and process its contents.
+    atomic(JsonString), !,
+    atom_json_term(JsonString, Json, []),
+    process_json(O, Json).
+process_json(O, json(Values)) :-
+    % Process a JSON object represented as `json/1`.
+    !, process_json(O, Values).
+process_json(O, K=json(Values)) :-
+    % Handle key-value pairs where the value is a JSON object.
+    !, process_json([K|O], Values).
+process_json(O, Values) :-
+    % Handle lists by processing each element.
+    is_list(Values), !,
+    maplist(with_json1(O), Values).
+process_json(O, Values) :-
+    % Handle other values.
+    with_json1(O, Values), !.
+
+%!  with_json1(+Parent, +Data) is det.
+%
+%   Processes a single JSON entry based on its structure or content.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Data The JSON entry to process.
+%
+with_json1(O, K=Values) :-
+    % Special case for driver entries.
+    K == driver, !,
+    with_json1(O, Values).
+with_json1(O, K=Values) :-
+    % Handle key-value pairs recursively.
+    !, with_json1([K|O], Values).
+with_json1(O, Values) :-
+    % Handle lists of JSON data.
+    is_list(Values), !,
+    maplist(with_json1(O), Values).
+with_json1(O, json([driver=json(Values0)])) :-
+    % Special case for nested driver entries.
+    !, with_json2(O, Values0), !.
+with_json1(O, json(Values0)) :-
+    % Handle JSON objects stored as lists.
+    is_list(Values0), !,
+    with_json2(O, Values0), !.
+with_json1(O, Val) :-
+    % Log errors for unhandled cases.
+    fbug(error(O=Val)), !.
+
+%!  with_json2(+Parent, +Values) is det.
+%
+%   Processes a list of JSON key-value pairs while tracking seen arguments.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Values The JSON key-value pairs to process.
+%
+with_json2([metaData], _Values0) :- 
+    % Skip processing for metaData entries.
+    !.
+with_json2(O, Values) :-
+    % Process values and log arguments that have been seen.
+    retractall(seen_arg(_, _)),
+    with_json3(O, Values),
+    ignore((
+        seen_arg(_, _),
+        fbug(Values),
+        listing(seen_arg/2))).
+
+%!  with_json3(+Parent, +Values) is det.
+%
+%   Prepares the environment and processes JSON values recursively.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Values The JSON values to process.
+%
+with_json3(O, Values0) :-
+    retractall(json_kv(_, _)),
+    with_json4(O, Values0),
+    retractall(json_kv(_, _)), !.
+
+%!  with_json4(+Parent, +Values) is det.
+%
+%   Processes sorted JSON values, ensuring consistent order and processing.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Values The JSON values to process.
+%
+with_json4(O, [json(Values)]) :-
+    % Handle single JSON objects wrapped in a list.
+    !, with_json4(O, Values).
+with_json4(O, json(Values)) :-
+    % Handle a JSON object.
+    !, with_json4(O, Values).
+with_json4(O, Values0) :-
+    % Sort values and process each entry.
+    predsort(simple_first, Values0, Values),
+    wdmsg_json(O==Values),
+    ignore(maplist(with_entry(O, assert), Values)).
 
 
+%!  with_entry(+Parent, +Action, +Data) is det.
+%
+%   Processes a JSON entry by invoking the appropriate handling based on its structure.
+%
+%   If the entry is a key-value pair, it delegates to `with_kv/4` for further processing.
+%   If the entry does not match a known pattern, an error is logged.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Action The action to be performed, typically `assert`.
+%   @arg Data The JSON entry to process, which can be a key-value pair or another structure.
+%
+%   @example
+%     % Process a key-value entry:
+%     ?- with_entry([], assert, key=value).
+with_entry(O, AR, Key=Value) :- 
+    % Handle key-value pairs by delegating to `with_kv/4`.
+    !, with_kv([Key|O], AR, Key, Value).
+%with_entry(O, assert, JSON) :- 
+%    % Uncomment this line to enable processing JSON objects directly.
+%    !, process_json(O, JSON).
+with_entry(O, AR, JSON) :- 
+    % Log an error for unhandled entries.
+    fbug(error_with_entry(O, AR, JSON)).
 
-
-process_json(O,JsonString) :- atomic(JsonString), !,
-    atom_json_term(JsonString, Json, []), process_json(O,Json).
-process_json(O,json(Values)) :- !, process_json(O,Values).
-process_json(O,K=json(Values)) :- !, process_json([K|O],Values).
-process_json(O,Values) :- is_list(Values),!,maplist(with_json1(O),Values).
-process_json(O,Values) :- with_json1(O,Values),!.
-
-with_json1(O,K=Values) :- K==driver,!, with_json1(O,Values).
-with_json1(O,K=Values) :-!, with_json1([K|O],Values).
-with_json1(O,Values) :- is_list(Values),!,maplist(with_json1(O),Values).
-
-with_json1(O,json([driver=json(Values0)])) :- !,with_json2(O,Values0),!.
-with_json1(O,json(Values0)) :- is_list(Values0),!,with_json2(O,Values0),!.
-with_json1(O,Val):- fbug(error(O=Val)),!.
-
-with_json2([metaData],_Values0):-!.
-with_json2(O,Values):-
-  retractall(seen_arg(_,_)),
-  with_json3(O,Values),
-  ignore((seen_arg(_,_),
-  fbug(Values),
-  listing(seen_arg/2))).
-
-with_json3(O,Values0):-
-   retractall(json_kv(_,_)),
-   with_json4(O,Values0),
-   retractall(json_kv(_,_)),!.
-
-with_json4(O,[json(Values)]):- !, with_json4(O,Values).
-with_json4(O,json(Values)):- !, with_json4(O,Values).
-with_json4(O,Values0):-
-   predsort(simple_first,Values0,Values),
-   wdmsg_json(O==Values),
-   ignore(maplist(with_entry(O,assert),Values)).
-
-
-with_entry(O,AR, Key=Value):-!, with_kv([Key|O],AR,Key,Value).
-%with_entry(O,assert,JSON) :- !, process_json(O,JSON).
-with_entry(O,AR,JSON):- fbug(error_with_entry(O,AR,JSON)).
-
+%!  uses_id_subprops(+Key) is nondet.
+%
+%   Determines if the given key is a subproperty related to identifiers.
+%
+%   @arg Key The key to check.
+%
+%   @example:
+%     % Check if `images` is a subproperty:
+%     ?- uses_id_subprops(images).
+%     true.
 uses_id_subprops(images).
-key_can_nv(M):-
-member(M,[major_stages, major_tissues, name, rex_gene, insertions,transposons,
- %expression_desc_text, images,
-           pubs,  stocks]).
 
-is_field(Field):- extracted_predicate(_,List), \+ \+ member(Field,List),!.
+%!  key_can_nv(+Key) is nondet.
+%
+%   Checks if a key is allowed for key-value processing based on a predefined list.
+%
+%   @arg Key The key to check.
+%
+%   @example:
+%     % Verify if a key is allowed:
+%     ?- key_can_nv(name).
+%     true.
+key_can_nv(M) :-
+    member(M, [major_stages, major_tissues, name, rex_gene, insertions, transposons,
+               % Uncomment the line below if expression descriptions and images are valid keys.
+               % expression_desc_text, images,
+               pubs, stocks]).
 
-with_kv_maybe_more(_O,_AR,_Key,json([])):-!.
-with_kv_maybe_more(O,AR,Key,Do):- with_kv(O,AR,Key,Do),!.
+%!  is_field(+Field) is nondet.
+%
+%   Determines if a given field is part of an extracted predicate's attributes.
+%
+%   @arg Field The field to check.
+%
+%   @example:
+%     % Check if `symbol` is a valid field:
+%     ?- is_field(symbol).
+%     true.
+is_field(Field) :-
+    extracted_predicate(_, List), 
+    % Check if the field is present in the attribute list of any predicate.
+    \+ \+ member(Field, List), !.
+
+%!  with_kv_maybe_more(+Parent, +Action, +Key, +Value) is det.
+%
+%   Processes a key-value pair, optionally handling empty JSON objects.
+%
+%   This predicate delegates processing to `with_kv/4` for standard key-value pairs.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Action The action to be performed, typically `assert`.
+%   @arg Key The key in the key-value pair.
+%   @arg Value The value in the key-value pair.
+%
+%   @example
+%     % Process a key-value pair:
+%     ?- with_kv_maybe_more([], assert, key, value).
+with_kv_maybe_more(_O, _AR, _Key, json([])) :- 
+    % Skip processing for empty JSON objects.
+    !.
+with_kv_maybe_more(O, AR, Key, Do) :- 
+    % Delegate processing to `with_kv/4`.
+    with_kv(O, AR, Key, Do), !.
 
 
-assert_id_about(O,Key,ID,NVAboutID):-
-  with_json4([Key|O],[Key=ID|NVAboutID]).
+
+%!  assert_id_about(+Parent, +Key, +ID, +NVAboutID) is det.
+%
+%   Asserts information about an ID based on its key and associated data.
+%
+%   This predicate processes a JSON structure where the key is associated with
+%   an ID, and additional data (`NVAboutID`) is provided. It delegates to 
+%   `with_json4/2` for further processing.
+%
+%   @arg Parent A list of parent keys leading to the current context.
+%   @arg Key The key associated with the ID.
+%   @arg ID The identifier to be processed.
+%   @arg NVAboutID A list of additional key-value pairs associated with the ID.
+%
+%   @example
+%     % Assert information about an ID:
+%     ?- assert_id_about([], key, id_value, [key1=value1, key2=value2]).
+assert_id_about(O, Key, ID, NVAboutID) :-
+    % Pass the key, ID, and associated data to `with_json4/2` for processing.
+    with_json4([Key|O], [Key=ID|NVAboutID]).
 
   %images= json( [ 'FBal0040476_1.jpg'= json( [ imageDescription='GAL4[Bx-MS1096].jpg',
 
-with_kv(O,AR,Key,json([ID=json(NVAboutID)|More])):- uses_id_subprops(Key),
-   %wdmsg_json(cr1(Key)=ID),
-   atom(ID),!,
-   decl_type(ID,Key),
-   with_kv(O,AR,Key,ID),
-   assert_id_about(O,Key,ID,NVAboutID),
-   with_kv_maybe_more(O,AR,Key,json(More)).
-
-with_kv(O,AR,Key,json([ID=Value|More])):- key_can_nv(Key),
-   atom(Value),
-  % prefix_key(O,ID,Field), \+ is_field(Field),!,
-   %prefix_key(O,Value,VField), \+ is_field(VField),!,
-   decl_type(ID,Key),
-   with_kv(O,AR,Key,ID),
-   %atom_concat(Key,'_name',Pred),
-   %Pred = object_name,
-   assert_JSON([name,ID,Value]),
-   with_kv_maybe_more(O,AR,Key,json(More)).
-
-with_kv(O,AR,OK,Key=Values):- !, with_kv([OK|O],AR,Key,Values).
-with_kv(O,AR,Key,json(Values)):- !, with_kv(O,AR,Key,Values).
-with_kv(O,AR,Key,Value):- is_list(Value),Value\==[],!,
-  maplist(with_kv(O,AR,Key),Value).
-with_kv(O,AR,Kee,Value):-
-    prefix_key(O,Kee,Key),
-    retractall(json_kv(Key,_)),
-    KV = json_kv(Key,Value),
-    decl_seen(Value,Key),
-    Do =.. [AR,KV],
+%!  with_kv(+Parent, +Action, +Key, +Value) is det.
+%
+%   Processes key-value pairs in a JSON structure, handling nested structures
+%   and specific patterns like `json/1` objects or lists of values.
+%
+%   This predicate processes keys and their associated values, supporting cases
+%   where the value is a nested JSON structure, a list, or a single value. It
+%   also handles special cases where subproperties or key-value constraints are used.
+%
+%   @arg Parent A list of parent keys leading to the current JSON entry.
+%   @arg Action The action to perform, such as `assert`.
+%   @arg Key The key in the key-value pair.
+%   @arg Value The value associated with the key, which can be a JSON object, list, or atomic value.
+%
+%   @example:
+%     % Process a key-value pair with a JSON object:
+%     ?- with_kv([], assert, key, json([id=json([subkey=subvalue])])).
+%
+with_kv(O, AR, Key, json([ID=json(NVAboutID)|More])) :- 
+    % Handle cases where the value is a JSON object with a nested ID.
+    uses_id_subprops(Key),
+    % Log the key and ID (commented out).
+    % wdmsg_json(cr1(Key)=ID),
+    atom(ID), !,
+    % Declare the type of the ID based on the key.
+    decl_type(ID, Key),
+    % Process the ID as a regular key-value pair.
+    with_kv(O, AR, Key, ID),
+    % Assert additional information about the ID and its attributes.
+    assert_id_about(O, Key, ID, NVAboutID),
+    % Handle any remaining entries in the JSON object.
+    with_kv_maybe_more(O, AR, Key, json(More)).
+with_kv(O, AR, Key, json([ID=Value|More])) :- 
+    % Handle cases where the value is an atomic value and the key allows key-value processing.
+    key_can_nv(Key),
+    atom(Value),
+    % Prefix the key and value fields, ensuring they do not overlap with existing fields (commented out).
+    % prefix_key(O,ID,Field), \+ is_field(Field),!,
+    % prefix_key(O,Value,VField), \+ is_field(VField),!,
+    % Declare the type of the ID based on the key.
+    decl_type(ID, Key),
+    % Process the ID as a regular key-value pair.
+    with_kv(O, AR, Key, ID),
+    % Assert a JSON representation of the name and value.
+    % atom_concat(Key,'_name',Pred),
+    % Pred = object_name,
+    assert_JSON([name, ID, Value]),
+    % Handle any remaining entries in the JSON object.
+    with_kv_maybe_more(O, AR, Key, json(More)).
+with_kv(O, AR, OK, Key=Values) :- 
+    % Handle nested key-value pairs by appending the parent key to the hierarchy.
+    !, with_kv([OK|O], AR, Key, Values).
+with_kv(O, AR, Key, json(Values)) :- 
+    % Handle a JSON object by delegating to the value processor.
+    !, with_kv(O, AR, Key, Values).
+with_kv(O, AR, Key, Value) :- 
+    % Handle lists of values by mapping the key-value processor over the list.
+    is_list(Value), Value \== [], !,
+    maplist(with_kv(O, AR, Key), Value).
+with_kv(O, AR, Kee, Value) :- 
+    % Handle individual key-value pairs, applying the action and tracking the key.
+    prefix_key(O, Kee, Key),
+    % Remove any previous knowledge of the key.
+    retractall(json_kv(Key, _)),
+    % Create a key-value pair for processing.
+    KV = json_kv(Key, Value),
+    % Declare the key as seen.
+    decl_seen(Value, Key),
+    % Prepare the action for execution.
+    Do =.. [AR, KV],
+    % Execute the action.
     call(Do),
-    ignore((AR==assert,
-    %wdmsg_json(cr(Key)=Value),
+    % Check readiness if the action is `assert`.
+    ignore((AR == assert,
+    % Log the key and value (commented out).
+    % wdmsg_json(cr(Key)=Value),
     check_ready(Key))).
 
-check_ready(Key):-
-    forall((extracted_predicate(P,List),memberchk(Key,List)),
-      (length(List,Len),
-       ignore((findall(Arg,(member(K,List),json_kv(K,Arg)),ArgList),
-       length(ArgList,Len),
-       Fact = [P|ArgList],
-       assert_JSON(Fact),
-       maplist(decl_type,ArgList,List))))).
+%!  check_ready(+Key) is det.
+%
+%   Validates whether a key is ready for processing by checking its presence
+%   in extracted predicates and ensuring all associated arguments are available.
+%
+%   This predicate iterates over all extracted predicates that include the given
+%   key in their attribute list. For each predicate, it collects arguments, verifies
+%   the argument count matches the expected length, asserts the resulting fact,
+%   and declares types for the arguments.
+%
+%   @arg Key The key to check for readiness and process.
+%
+%   @example:
+%     % Check readiness for a key and process associated predicates:
+%     ?- check_ready(symbol).
+check_ready(Key) :-
+    % Iterate over extracted predicates where Key is in the attribute list.
+    forall((extracted_predicate(P, List), memberchk(Key, List)),
+        (
+            % Get the expected number of arguments.
+            length(List, Len),
+            % Collect arguments for all keys in the predicate.
+            ignore((
+                findall(Arg, (member(K, List), json_kv(K, Arg)), ArgList),
+                % Ensure the number of collected arguments matches the expected length.
+                length(ArgList, Len),
+                % Form the fact as a list with the predicate name as the head.
+                Fact = [P | ArgList],
+                % Assert the fact in JSON format.
+                assert_JSON(Fact),
+                % Declare the types for the arguments.
+                maplist(decl_type, ArgList, List)
+            ))
+        )
+    ).
 % Rows 937,381,148
+
+% Dynamic predicates for tracking argument types and seen arguments.
 :- dynamic(arg_typed/2).
 :- dynamic(seen_arg/2).
 
-decl_type(Arg,Type):- retractall(seen_arg(Arg,_)),arg_typed(Arg,Type),wdmsg_json(arg_typed(Arg,Type)),!.
-decl_type(Arg,Type):- assert(arg_typed(Arg,Type)),!,assert_JSON([Type,Arg]).
-decl_seen(Arg,_):- seen_arg(Arg,_),!.
-decl_seen(Arg,_):- arg_typed(Arg,_),!.
-decl_seen(Arg,Type):- assert(seen_arg(Arg,Type)),!.
+%!  decl_type(+Argument, +Type) is det.
+%
+%   Declares the type of an argument by asserting it as `arg_typed/2`. If the
+%   type already exists, it is updated. This predicate also logs the typing
+%   information and asserts the argument in JSON format.
+%
+%   @arg Argument The argument whose type is being declared.
+%   @arg Type The type to associate with the argument.
+%
+%   @example:
+%     % Declare the type of an argument:
+%     ?- decl_type(my_arg, my_type).
+decl_type(Arg, Type) :-
+    % Remove any existing "seen" record for the argument.
+    retractall(seen_arg(Arg, _)),
+    % Check if the argument type already exists and log it.
+    arg_typed(Arg, Type), 
+    wdmsg_json(arg_typed(Arg, Type)), 
+    !.
+decl_type(Arg, Type) :-
+    % Assert the new argument type.
+    assert(arg_typed(Arg, Type)),
+    !,
+    % Assert the argument in JSON format.
+    assert_JSON([Type, Arg]).
 
+%!  decl_seen(+Argument, +Type) is det.
+%
+%   Marks an argument as "seen" if it has not already been seen or typed. This
+%   prevents redundant declarations for the same argument.
+%
+%   @arg Argument The argument to mark as seen.
+%   @arg Type The type of the argument being marked.
+%
+%   @example:
+%     % Mark an argument as seen:
+%     ?- decl_seen(my_arg, my_type).
+decl_seen(Arg, _) :-
+    % Check if the argument has already been seen.
+    seen_arg(Arg, _), 
+    !.
+decl_seen(Arg, _) :-
+    % Check if the argument type already exists.
+    arg_typed(Arg, _), 
+    !.
+decl_seen(Arg, Type) :-
+    % Mark the argument as seen with the given type.
+    assert(seen_arg(Arg, Type)), 
+    !.
 
-
-
+%!  err is det.
+%
+%   Runs test cases for processing JSON data with FlyBase metadata and structured content.
+%
+%   This predicate includes various examples of FlyBase JSON structures to validate 
+%   the processing pipeline. It tests the handling of metadata, gene data, transcripts, 
+%   drivers, and associated information like publications, sequences, and genome locations.
+%
+%   The test cases ensure that:
+%   - Metadata is parsed correctly.
+%   - Nested structures, such as genome locations and exons, are processed accurately.
+%   - Key-value pairs within the JSON data are handled appropriately.
+%
+%   @example:
+%     % Run the test cases for JSON processing:
+%     ?- err.
 err
 :- process_json(json([metaData= json( [ dataProvider='FlyBase',
                     publications=['PMID:35266522'], schemaVersion='0.4.0',release=fb_2023_04,
@@ -629,13 +1160,35 @@ err
   ]
 }').
 
+%!  json1 is det.
+%
+%   Processes the FlyBase ncRNA genes JSON file.
+%
+%   This predicate handles the JSON file containing ncRNA gene data from FlyBase.
+%   It processes the data to extract relevant information such as gene identifiers,
+%   symbols, and associated metadata.
+%
+%   @example:
+%     % Process the ncRNA genes JSON file:
+%     ?- json1.
+%   % 51,290,751 inferences, 8.285 CPU in 8.289 seconds (100% CPU, 6190948 Lips)
+json1 :-
+    process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/ncRNA_genes_fb_2023_04.json').
 
-json1:- process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/ncRNA_genes_fb_2023_04.json').
-% 51,290,751 inferences, 8.285 CPU in 8.289 seconds (100% CPU, 6190948 Lips)
-
-json2:- process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json').
-% 27,108,104 inferences, 4.454 CPU in 4.456 seconds (100% CPU, 6085908 Lips)
-
+%!  json2 is det.
+%
+%   Processes the FlyBase GAL4 insertions JSON file.
+%
+%   This predicate handles the JSON file containing GAL4 insertion data from FlyBase.
+%   It processes the data to extract relevant information such as insertion identifiers,
+%   driver names, and associated metadata.
+%
+%   @example:
+%     % Process the GAL4 insertions JSON file:
+%     ?- json2.
+%   % 27,108,104 inferences, 4.454 CPU in 4.456 seconds (100% CPU, 6085908 Lips)
+json2 :-
+    process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json').
 
 
 
