@@ -250,20 +250,20 @@ optimize_x_assign(_,[Var|_],_,_):- is_ftVar(Var),!,fail.
 optimize_x_assign(_,[Empty], _, (!,fail)):-  Empty == empty,!.
 optimize_x_assign(_,[+, A, B], C, plus(A , B, C)):- number_wang(A,B,C), !.
 optimize_x_assign(_,[-, A, B], C, plus(B , C, A)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[+, A, B], C, +(A , B, C)):- !.
-optimize_x_assign(_,[-, A, B], C, +(B , C, A)):- !.
+%optimize_x_assign(_,[+, A, B], C, +(A , B, C)):- !.
+%optimize_x_assign(_,[-, A, B], C, +(B , C, A)):- !.
 optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- number_wang(A,B,C), !.
 optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- !.
-optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- !.
-optimize_x_assign(_,[fib, B], C, fib(B, C)):- !.
-optimize_x_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
+%optimize_x_assign(_,[*, A, B], C, *(A , B, C)):- !.
+%optimize_x_assign(_,['/', A, B], C, *(B , C, A)):- !.
+%optimize_x_assign(_,[fib, B], C, fib(B, C)):- !.
+%optimize_x_assign(_,[fib1, A,B,C,D], R, fib1(A, B, C, D, R)):- !.
 optimize_x_assign(_,['pragma!',N,V],Empty,set_option_value_interp(N,V)):-
    nonvar(N),ignore((fail,Empty='Empty')), !.
 optimize_x_assign((H:-_),Filter,A,filter_head_arg(A,Filter)):- fail, compound(H), arg(_,H,HV),
   HV==A, is_list(Filter),!.
-optimize_x_assign(_,[+, A, B], C, '#='(C , A + B)):- number_wang(A,B,C), !.
-optimize_x_assign(_,[-, A, B], C, '#='(C , A - B)):- number_wang(A,B,C), !.
+%optimize_x_assign(_,[+, A, B], C, '#='(C , A + B)):- number_wang(A,B,C), !.
+%optimize_x_assign(_,[-, A, B], C, '#='(C , A - B)):- number_wang(A,B,C), !.
 optimize_x_assign(_,[match,KB,Query,Template], R, Code):-  match(KB,Query,Template,R) = Code.
 
 optimize_x_assign(HB,MeTTaEvalP, R, Code):- \+ is_ftVar(MeTTaEvalP),
@@ -422,7 +422,7 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     !.  % Set RetResult to Convert as it is already in predicate form
 
 % The catch-all If no specific case is matched, consider Convert as already converted.
-f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):-!.
+f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):- !.
 f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
 
 f2p(HeadIs,_RetResult,Convert,_Code):-
