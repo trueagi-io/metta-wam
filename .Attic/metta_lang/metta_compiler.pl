@@ -72,6 +72,7 @@
 %:- ensure_loaded(metta_reader).
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
+:- ensure_loaded(metta_compiler_stdlib).
 
 % ==============================
 % MeTTa to Prolog transpilation (which uses the Host SWI-Prolog compiler)
@@ -283,6 +284,7 @@ number_wang(A,B,C):-
 data_term(Convert):- self_eval(Convert),!.
 
 into_equals(RetResultL,RetResult,Equals):- into_x_assign(RetResultL,RetResult,Equals).
+
 into_x_assign(RetResultL,RetResult,true):- is_ftVar(RetResultL), is_ftVar(RetResult), RetResult=RetResultL,!.
 into_x_assign(RetResultL,RetResult,Code):- var(RetResultL), Code = x_assign(RetResult,RetResultL).
 into_x_assign(RetResultL,RetResult,Code):- Code = x_assign(RetResultL,RetResult).
@@ -290,8 +292,10 @@ into_x_assign(RetResultL,RetResult,Code):- Code = x_assign(RetResultL,RetResult)
 numeric(N):- number(N),!.
 numeric(N):- get_attr(N,'Number','Number').
 numeric(N):- get_decl_type(N,DT),(DT=='Int',DT=='Number').
+
 decl_numeric(N):- numeric(N),!.
 decl_numeric(N):- ignore((var(N),put_attr(N,'Number','Number'))).
+
 numeric_or_var(N):- var(N),!.
 numeric_or_var(N):- numeric(N),!.
 numeric_or_var(N):- \+ compound(N),!,fail.
