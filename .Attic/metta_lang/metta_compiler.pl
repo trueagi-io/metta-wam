@@ -422,6 +422,10 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     %trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
 
+f2p(HeadIs,RetResult,Convert, Converted):-
+    compound(Convert), \+ compound_name_arity(Convert,_,0),
+    compile_flow_control(HeadIs,RetResult,Convert, Converted),!.
+
 f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
    Convert=[Fn|Args],
    atom(Fn),!,
@@ -1332,9 +1336,7 @@ f2p(_HeadIs,RetResult,Convert, Converted) :- % HeadIs\=@=Convert,
 f2p(HeadIs,RetResult,EvalConvert,Converted):- EvalConvert =~ eval_args(Convert),  !,
   must_det_ll((f2p(HeadIs,RetResult,Convert, Converted))).
 
-f2p(HeadIs,RetResult,Convert, Converted):-
-    compound(Convert), \+ compound_name_arity(Convert,_,0),
-    compile_flow_control(HeadIs,RetResult,Convert, Converted),!.
+% placeholder
 
 f2p(HeadIs,RetResult,Convert, Converted):-
     compound(Convert), Convert = x_assign(C, Var), compound_non_cons(C),into_list_args(C,CC),!,
