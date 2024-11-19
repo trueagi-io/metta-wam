@@ -248,6 +248,47 @@
 ;; Implemented from Interpreters
 ; AKA? (: decons (-> Atom Atom))
 
+
+(@doc min-atom
+  (@desc "Returns atom with min value in the expression (first argument). Only numbers allowed")
+  (@params (
+    (@param "Expression which contains atoms of Number type")))
+  (@return "Min value in the expression. Error if expression contains non-numeric value or is empty"))
+
+(@doc max-atom
+  (@desc "Returns atom with max value in the expression (first argument). Only numbers allowed")
+  (@params (
+    (@param "Expression which contains atoms of Number type")))
+  (@return "Max value in the expression. Error if expression contains non-numeric value or is empty"))
+
+(@doc size-atom
+  (@desc "Returns size of an expression (first argument)")
+  (@params (
+    (@param "Expression")))
+  (@return "Size of an expression"))
+
+(@doc index-atom
+  (@desc "Returns atom from an expression (first argument) using index (second argument) or error if index is out of bounds")
+  (@params (
+    (@param "Expression")
+    (@param "Index")))
+  (@return "Atom from an expression in the place defined by index. Error if index is out of bounds"))
+
+(@doc random-int
+  (@desc "Returns random int number from range defined by two numbers (first and second argument)")
+  (@params (
+    (@param "Range start")
+    (@param "Range end")))
+  (@return "Random int number from defined range"))
+
+(@doc random-float
+  (@desc "Returns random float number from range defined by two numbers (first and second argument)")
+  (@params (
+    (@param "Range start")
+    (@param "Range end")))
+  (@return "Random float number from defined range"))
+
+
 ;; Public MinimalMeTTa
 (@doc collapse-bind
   (@desc "Evaluates the Atom (first argument) and returns an expression which contains all alternative evaluations in a form (Atom Bindings). Bindings are represented in a form of a grounded atom { <var> <- <binding>, ... }. See also the complement superpose-bind. Note that, like chain, collapse-bind only evaluates Minimal Metta expressions. Evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
@@ -1636,6 +1677,33 @@
   (@params ())
   (@return "Random boolean value"))
 ;; Implemented from Interpreters
+
+(@doc unique-atom
+  (@desc "Function takes tuple and returns only unique entities. E.g. (unique-atom (a b c d d)) -> (a b c d)")
+  (@params (
+    (@param "List of values")))
+  (@return "Unique values from input set"))
+
+(@doc union-atom
+  (@desc "Function takes two tuples and returns their union. E.g. (union-atom (a b b c) (b c c d)) -> (a b b c b c c d)")
+  (@params (
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Union of sets"))
+
+(@doc intersection-atom
+  (@desc "Function takes two tuples and returns their intersection. E.g. (intersection-atom (a b c c) (b c c c d)) -> (b c c)")
+  (@params (
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Intersection of sets"))
+
+(@doc subtraction-atom
+  (@desc "Function takes two tuples and returns their subtraction. E.g. !(subtraction-atom (a b b c) (b c c d)) -> (a b)")
+  (@params (
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Subtraction of sets"))
 
 ;; Public MeTTa
 (@doc git-module!
