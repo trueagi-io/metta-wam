@@ -60,3 +60,20 @@
                       ("(bar 1)" "(bar 2)"))
 !(assertEqualToResult (let $f (filename) (load-file! &self $f)) (()))
 !(assertEqualToResult (match &self (bar $x) $x) (1 2))
+
+;; test save-space!
+
+!(bind! &gen-space (new-space))
+!(bind! &load-space (new-space))
+
+!(add-atom &gen-space (likes John Jane))
+!(add-atom &gen-space (= (foo $x) (+ $x 1)))
+
+!(assertEqualToResult (match &gen-space (likes $x $y) ($x $y)) ((John Jane)))
+!(assertEqualToResult (metta (foo 1) Number &new-space) (2))
+
+!(assertEqualToResult (save-space! &gen-space "save-space-test.tmp") (()))
+!(assertEqualToResult (load-file! &load-space "save-space-test.tmp") (()))
+
+!(assertEqualToResult (match &load-space (likes $x $y) ($x $y)) ((John Jane)))
+!(assertEqualToResult (metta (foo 1) Number &load-space) (2))
