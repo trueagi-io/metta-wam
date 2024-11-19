@@ -50,6 +50,57 @@
 (: NotReducible MeTTaResult)
 (: Empty MeTTaResult)
 (: MeTTaResult Type)
+(:> ValueAtom Atom)
+(: ForeignObject Type)
+(:> ValueAtom Grounded)
+(:> ForeignObject ValueAtom)
+(:> PyObject ForeignObject)
+
+;; Public MeTTa
+(@doc py-list
+  (@desc "Converts a MeTTa Expression into a Python list and returns it as a PyObject.")
+  (@params (
+    (@param (@desc "A MeTTa List that will be converted into a Python list"))
+  ))
+  (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
+)
+(: py-list (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc py-chain
+  (@desc "Chains together a list of Python objects contained in a MeTTa Expression, applying the Python vertical bar | OR operation jointly to all elements.")
+  (@params (
+    (@param (@desc "A MeTTa list of atoms, each embedding a Python object.")) 
+  ))
+  (@return (@desc "A MeTTa atom which embeds the result of applying the Python OR | operator to all elements of the list."))
+)
+(: py-chain (-> Expression PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTaLog
+(@doc py-eval
+  (@desc "Evaluates a Python expression from a string and returns the result as a PyObject.")
+  (@params (
+    (@param (@desc "A string representing a Python expression that will be evaluated"))
+  ))
+  (@return (@desc "The result of evaluating the Python expression as a PyObject"))
+)
+(: py-eval (-> String PyObject))
+;; Implemented from Interpreters
+
+;; Public MeTTaLog
+(@doc py-exec!
+  (@desc "Executes some Python sourcecode from a string !(py-exec! \"import torch\") -> True.  !(py-exec! \"import torche\") -> False. ")
+  (@params (
+    (@param (@type String) (@desc "A string representing a Python sourcecode that will be executed"))
+  ))
+  (@return (@desc "The True|False results of executing the Python expression"))
+)
+(: py-exec! (-> String Bool))
+;; Implemented from Interpreters
+
+
 
 ; Public MeTTa
 (@doc = 
@@ -141,11 +192,24 @@
 (: chain (-> Atom Variable Atom Atom))
 ;; Implemented from Interpreters
 
+;; Public MeTTa
+(@doc unify
+  (@desc "Like Match but allows any sort of container for the first argument. (Match only allows MeTTa spaces.)")
+  (@params (
+	(@param "The collection or space to match")
+	(@param "Second atom to unify with")
+	(@param "Result if two atoms unified successfully")
+	(@param "Result otherwise")))
+  (@return "Third argument when found or forth one otherwise"))
+(: unify (-> Atom Atom Atom Atom Atom))
+;; Implemented from Interpreters
+
+
 ;; Helper MinimalMeTTa
 (@doc if-unify
-  (@desc "Matches two first arguments and returns third argument if they are matched and forth argument otherwise")
+  (@desc "Matches two first terms and returns third argument if they are matched and forth argument otherwise")
   (@params (
-	(@param "First atom to unify with")
+	(@param "First term to unify with")
 	(@param "Second atom to unify with")
 	(@param "Result if two atoms unified successfully")
 	(@param "Result otherwise")))
@@ -307,7 +371,6 @@
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result which corresponds to the pattern which is matched with the passed atom first"))
 
-;; Dumb MeTTaLog? will we implement it?
 (: switch (-> Atom Atom Atom))
 (= (switch $atom $list) (case (eval $atom) $list))
 
@@ -600,17 +663,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Standard library written in MeTTa ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Public MinimalMeTTa?
-(@doc if-equal
-  (@desc "Checks if first two arguments are equal and evaluates third argument if equal, fourth argument - otherwise")
-  (@params (
-    (@param "First argument")
-    (@param "Second argument")
-    (@param "Atom to be evaluated if arguments are equal")
-    (@param "Atom to be evaluated if arguments are not equal")))
-  (@return "Evaluated third or fourth argument"))
-;; Implemented from Interpreters
   
 ; TODO: Type is used here, but there is no definition for the -> type
 ; constructor for instance, thus in practice it matches because -> has
@@ -652,22 +704,6 @@
 ; and infinite cycle in inference
 
 
-;; Public MeTTa
-(@doc xor
-  (@desc "Exclusive disjunction of two arguments")
-  (@params (
-    (@param "First argument")
-    (@param "Second argument")))
-  (@return "Return values are the same as logical disjunction, but when both arguments are True xor will return False"))
-;; Implemented from Interpreters
-(: xor (-> Bool Bool Bool))
-
-;; Public MeTTa
-(@doc flip
-  (@desc "Produces random boolean value")
-  (@params ())
-  (@return "Random boolean value"))
-;; Implemented from Interpreters
 
 ;; Public MeTTa
 (@doc or
@@ -816,6 +852,14 @@
 ; arguments  and returns unit
 ;; Public MeTTa
 (@doc nop
+  (@desc "Outputs unit atom")
+  (@params ())
+  (@return "Unit atom"))
+(: nop (-> EmptyType))
+(ALT= (nop) ())
+  
+;; Public MeTTa
+(@doc nop
   (@desc "Outputs unit atom for any input")
   (@params (
     (@param "Anything")))
@@ -823,10 +867,9 @@
 (: nop (-> Atom (->)))
 ;; Implemented from Interpreters
 (ALT= (nop $x) ())
-(: nop (-> EmptyType))
-(ALT= (nop) ())
 
 ;; Public MeTTa
+; TODO: can be replaced by Empty atom and removed, kept for compatibility
 (@doc empty
   (@desc "Cuts evaluation of the non-deterministic branch and removes it from the result")
   (@params ())
@@ -840,6 +883,45 @@
 ;(= (empty-rust1) (let a b never-happens))
 ; TODO: MINIMAL added for compatibility, remove after migration
 ;(= (empty-minimal) Empty)
+
+;; Public MeTTa
+(@doc unique
+  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
+  (@params (
+    (@param "Non-deterministic set of values")))
+  (@return "Unique non-deterministic values from input set"))
+(: unique (-> Atom Atom))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc union
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
+  (@params (
+    (@param "Non-deterministic set of values")
+    (@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Union of sets"))
+(: union (-> Atom Atom Atom))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc intersection
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
+  (@params (
+    (@param "Non-deterministic set of values")
+    (@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Intersection of sets"))
+(: intersection (-> Atom Atom Atom))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc subtraction
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
+  (@params (
+    (@param "Non-deterministic set of values")
+    (@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Subtraction of sets"))
+(: subtraction (-> Atom Atom Atom))
+;; Implemented from Interpreters
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
@@ -1116,6 +1198,48 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
+(@doc get-type
+  (@desc "Returns type notation of input atom")
+  (@params (
+    (@param "Atom to get type for")))
+  (@return "Type notation or %Undefined% if there is no type for input Atom"))
+(: get-type (-> Atom Atom))
+(: get-type (-> Atom Atom Atom))
+;; Implemented from Interpreters
+
+;; Public MeTTa
+(@doc get-type-space
+  (@desc "Returns type notation of input Atom (second argument) relative to a specified atomspace (first argument)")
+  (@params (
+    (@param "Atomspace where type notation for input atom will be searched")
+    (@param "Atom to get type for")))
+  (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
+;; Implemented from Interpreters?
+(: get-type-space (-> Atom Atom Atom))
+(= (get-type-space $space $atom)
+	(get-type $atom $space))
+
+;; Public MeTTa
+(@doc get-metatype
+  (@desc "Returns metatype of the input atom")
+  (@params (
+    (@param "Atom to get metatype for")))
+  (@return "Metatype of input atom"))
+(: get-metatype (-> Atom Atom))
+;; Implemented from Interpreters  
+
+;; Public MinimalMeTTa?
+(@doc if-equal
+  (@desc "Checks if first two arguments are equal and evaluates third argument if equal, fourth argument - otherwise")
+  (@params (
+    (@param "First argument")
+    (@param "Second argument")
+    (@param "Atom to be evaluated if arguments are equal")
+    (@param "Atom to be evaluated if arguments are not equal")))
+  (@return "Evaluated third or fourth argument"))
+;; Implemented from Interpreters
+
+;; Public MeTTa
 (@doc new-space
   (@desc "Creates new Atomspace which could be used further in the program as a separate from &self Atomspace")
   (@params ())
@@ -1172,48 +1296,6 @@
 (: get-state (-> (StateMonad $tgso) $tgso))
 ;; Implemented from Interpreters
 
-;; Public MeTTa
-(@doc get-type
-  (@desc "Returns type notation of input atom")
-  (@params (
-    (@param "Atom to get type for")))
-  (@return "Type notation or %Undefined% if there is no type for input Atom"))
-(: get-type (-> Atom Atom))
-(: get-type (-> Atom Atom Atom))
-;; Implemented from Interpreters
-
-;; Public MeTTa
-(@doc get-type-space
-  (@desc "Returns type notation of input Atom (second argument) relative to a specified atomspace (first argument)")
-  (@params (
-    (@param "Atomspace where type notation for input atom will be searched")
-    (@param "Atom to get type for")))
-  (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
-;; Implemented from Interpreters?
-(: get-type-space (-> Atom Atom Atom))
-(= (get-type-space $space $atom)
-	(get-type $atom $space))
-
-;; Public MeTTa
-(@doc get-metatype
-  (@desc "Returns metatype of the input atom")
-  (@params (
-    (@param "Atom to get metatype for")))
-  (@return "Metatype of input atom"))
-(: get-metatype (-> Atom Atom))
-;; Implemented from Interpreters  
-
-;; Public MeTTa
-(@doc unify
-  (@desc "Like Match but allows any sort of container for the first argument. (Match only allows MeTTa spaces.)")
-  (@params (
-	(@param "The collection or space to match")
-	(@param "Second atom to unify with")
-	(@param "Result if two atoms unified successfully")
-	(@param "Result otherwise")))
-  (@return "Third argument when found or forth one otherwise"))
-(: unify (-> Atom Atom Atom Atom Atom))
-;; Implemented from Interpreters
 
 ;; Public MeTTa
 (@doc match
@@ -1281,6 +1363,16 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
+(@doc superpose
+  (@desc "Turns a tuple (first argument) into a nondeterministic result")
+  (@params (
+    (@param "Tuple to be converted")))
+  (@return "Argument converted to nondeterministic result"))
+(: superpose (-> Expression %Undefined%))
+;; Implemented from Interpreters
+
+
+;; Public MeTTa
 (@doc collapse
   (@desc "Converts a nondeterministic result into a tuple")
   (@params (
@@ -1289,15 +1381,6 @@
 (: collapse (-> Atom Atom))
 ;; Implemented from Interpreters
   
-;; Public MeTTa
-(@doc capture
-  (@desc "Wraps an atom and capture the current space")
-  (@params (
-    (@param "Function name which space need to be captured")))
-  (@return "Function"))
-(: capture (-> Atom Atom))
-;; Implemented from Interpreters
-
 ;; Public MeTTa
 (@doc case
   (@desc "Subsequently tests multiple pattern-matching conditions (second argument) for the given value (first argument)")
@@ -1309,13 +1392,14 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
-(@doc superpose
-  (@desc "Turns a tuple (first argument) into a nondeterministic result")
+(@doc capture
+  (@desc "Wraps an atom and capture the current space")
   (@params (
-    (@param "Tuple to be converted")))
-  (@return "Argument converted to nondeterministic result"))
-(: superpose (-> Expression %Undefined%))
+    (@param "Function name which space need to be captured")))
+  (@return "Function"))
+(: capture (-> Atom Atom))
 ;; Implemented from Interpreters
+
 
 ;; Public MeTTa
 (@doc hyperpose
@@ -1428,58 +1512,7 @@
 (: sealed (-> Expression Atom Atom))
 ;; Implemented from Interpreters
 
-(:> ValueAtom Atom)
-(: ForeignObject Type)
-(:> ValueAtom Grounded)
-(:> ForeignObject ValueAtom)
-(:> PyObject ForeignObject)
 
-;; Public MeTTa
-(@doc py-list
-  (@desc "Converts a MeTTa Expression into a Python list and returns it as a PyObject.")
-  (@params (
-    (@param (@desc "A MeTTa List that will be converted into a Python list"))
-  ))
-  (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
-)
-(: py-list (-> Expression PyObject))
-;; Implemented from Interpreters
-
-;; Public MeTTa
-(@doc py-chain
-  (@desc "Chains together a list of Python objects contained in a MeTTa Expression, applying the Python vertical bar | OR operation jointly to all elements.")
-  (@params (
-    (@param (@desc "A MeTTa list of atoms, each embedding a Python object.")) 
-  ))
-  (@return (@desc "A MeTTa atom which embeds the result of applying the Python OR | operator to all elements of the list."))
-)
-(: py-chain (-> Expression PyObject))
-;; Implemented from Interpreters
-
-;; Public MeTTaLog
-(@doc py-eval
-  (@desc "Evaluates a Python expression from a string and returns the result as a PyObject.")
-  (@params (
-    (@param (@desc "A string representing a Python expression that will be evaluated"))
-  ))
-  (@return (@desc "The result of evaluating the Python expression as a PyObject"))
-)
-(: py-eval (-> String PyObject))
-;; Implemented from Interpreters
-
-;; Public MeTTaLog
-(@doc py-exec!
-  (@desc "Executes some Python sourcecode from a string !(py-exec! \"import torch\") -> True.  !(py-exec! \"import torche\") -> False. ")
-  (@params (
-    (@param (@type String) (@desc "A string representing a Python sourcecode that will be executed"))
-  ))
-  (@return (@desc "The True|False results of executing the Python expression"))
-)
-(: py-exec! (-> String Bool))
-;; Implemented from Interpreters
-
-; TODO: Segmentation fault (core dumped) when calling !(help &self)
-; TODO: help! not working for &self (segmentation fault)
 (@doc &self
   (@desc "Returns reference to the current atomspace")
   (@params ())
@@ -1588,42 +1621,20 @@
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
-(@doc unique
-  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
+(@doc xor
+  (@desc "Exclusive disjunction of two arguments")
   (@params (
-    (@param "Non-deterministic set of values")))
-  (@return "Unique non-deterministic values from input set"))
-(: unique (-> Atom Atom))
+    (@param "First argument")
+    (@param "Second argument")))
+  (@return "Return values are the same as logical disjunction, but when both arguments are True xor will return False"))
 ;; Implemented from Interpreters
+(: xor (-> Bool Bool Bool))
 
 ;; Public MeTTa
-(@doc union
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Union of sets"))
-(: union (-> Atom Atom Atom))
-;; Implemented from Interpreters
-
-;; Public MeTTa
-(@doc intersection
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Intersection of sets"))
-(: intersection (-> Atom Atom Atom))
-;; Implemented from Interpreters
-
-;; Public MeTTa
-(@doc subtraction
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Subtraction of sets"))
-(: subtraction (-> Atom Atom Atom))
+(@doc flip
+  (@desc "Produces random boolean value")
+  (@params ())
+  (@return "Random boolean value"))
 ;; Implemented from Interpreters
 
 ;; Public MeTTa
