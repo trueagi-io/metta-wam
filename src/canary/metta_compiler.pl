@@ -168,7 +168,7 @@ pi(PI):- PI is pi.
 'car-atom'(List, Head):- eval_H(['car-atom', List], Head).
 
 
-% Mapping any current predicate F/A to a function, if it is not tricky
+% Mapping any current predicate F/A to a function, if it's not tricky
 functional_predicate_arg(F, A, L):- decl_functional_predicate_arg(F, A, L).
 functional_predicate_arg(F, A, L):- (atom(F)->true;trace), predicate_arity(F,A),
   \+ functional_predicate_arg_tricky(F,A,_), L=A,
@@ -248,6 +248,7 @@ functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
    sexpr_s2p(I, M),
+   /*trace,*/
    f2p(_,_,M,O),
    expand_to_hb(O,H,B),
    head_preconds_into_body(H,B,HH,BB),!,
@@ -258,7 +259,6 @@ functs_to_preds0(I,OO):-
 compile_for_exec(Res,I,O):-
    %ignore(Res='$VAR'('RetResult')),
    compile_for_exec0(Res,I,O),!.
-
 
 
 compile_for_exec0(Res,I,eval_args(I,Res)):- is_ftVar(I),!.
@@ -441,9 +441,6 @@ merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
    assertable_head(AHead,Head),
    must_optimize_body(Head,Body,BodyNew).
 
-assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
-   append(List,[R],NewArgs), atom(F), Head=..[F|NewArgs],!.
-assertable_head(Head,Head).
 
 label_body_singles(Head,Body):-
    term_singletons(Body+Head,BodyS),
@@ -462,6 +459,30 @@ metta_predicate(with_space(space,matchable)).
 metta_predicate(limit(number,matchable)).
 metta_predicate(findall(template,matchable,listvar)).
 metta_predicate(match(space,matchable,template,eachvar)).
+
+
+head_preconds_into_body(Head,Body,Head,Body):- \+ compound(Head),!.
+head_preconds_into_body((PreHead,True),Converted,Head,Body):- True==true,!,
+  head_preconds_into_body(PreHead,Converted,Head,Body).
+head_preconds_into_body((True,PreHead),Converted,Head,Body):- True==true,!,
+  head_preconds_into_body(PreHead,Converted,Head,Body).
+head_preconds_into_body(PreHead,(True,Converted),Head,Body):- True==true,!,
+  head_preconds_into_body(PreHead,Converted,Head,Body).
+head_preconds_into_body(PreHead,(Converted,True),Head,Body):- True==true,!,
+  head_preconds_into_body(PreHead,Converted,Head,Body).
+head_preconds_into_body((AsPredO,Pre),Converted,Head,Body):-
+  head_preconds_into_body(Pre,(AsPredO,Converted),Head,Body).
+
+head_preconds_into_body(AHead,Body,Head,BodyNew):-
+    assertable_head(AHead,Head),
+    optimize_body(Head,Body,BodyNew).
+
+
+assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
+   append(List,[R],NewArgs), atom(F),!, Head=..[F|NewArgs].
+assertable_head(Head,Head).
+
+
 
 optimize_body(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
 %optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, must_optimize_body(HB,VT,VTT).
@@ -482,6 +503,19 @@ optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 optimize_body( HB,u_assign(A,B),R):- optimize_u_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,u_assign(A,B),u_assign(AA,B)):- p2s(A,AA),!.
 optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
+
+/*
+optimize_body(_Head,Body,BodyNew):- var(Body),!,Body=BodyNew.
+optimize_body(Head,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1,B2),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B2,B1),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1:-B2),(BN1:-BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1;B2),(BN1;BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(_Head,Body,BodyNew):- Body=BodyNew.
+*/
+
 
 ok_to_append('$VAR'):- !, fail.
 ok_to_append(_).
