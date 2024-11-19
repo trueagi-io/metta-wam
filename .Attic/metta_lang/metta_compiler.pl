@@ -138,7 +138,6 @@ strip_m(BB,BB).
 
 compile_for_exec(Res,I,O):-
    %format("~w ~w\n",[Res,I]),
-   %trace,
    %ignore(Res='$VAR'('RetResult')),
    compile_for_exec0(Res,I,O),!.
 
@@ -160,7 +159,6 @@ compile_for_exec1(AsBodyFn, Converted) :-
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
    f2p([exec0],HResult,AsBodyFn,NextBody),
    optimize_head_and_body(x_assign([exec0],HResult),NextBody,HeadC,NextBodyB),
-   %trace,
    replace_x_assign([],NextBodyB,NextBodyC).
 
 % --------------------------------
@@ -235,7 +233,7 @@ optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_bo
 optimize_body( HB,(B1*->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
+% TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
 optimize_body( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
 %optimize_body(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
@@ -326,7 +324,6 @@ replace_x_assign(DontStub,A,B) :-
 replace_x_assign(_,A,A).
 
 check_supporting_predicates(Space,F/A) :- % already exists
-   %trace,
    transpile_prefix(Prefix),
    atom_concat(Prefix,F,Fp),
    with_mutex(transpiler_mutex_lock,
@@ -336,7 +333,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
          Am1 is A-1,
          findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
          B=..[u_assign,[F|AtomList1],'$VAR'(A)],
-         create_and_consult_temp_file(Space,Fp/A,[H:-(format("######### stub:~w\n",[F]),B)]))).
+         create_and_consult_temp_file(Space,Fp/A,[H:-(format("######### warning: using stub for:~w\n",[F]),B)]))).
 
 % Predicate to create a temporary file and write the tabled predicate
 create_and_consult_temp_file(Space,F/A, PredClauses) :-
@@ -378,7 +375,7 @@ u_assign(FList,R):- var(FList),nonvar(R), !, u_assign(R,FList).
 u_assign(FList,R):- FList=@=R,!,FList=R.
 u_assign(FList,R):- number(FList), var(R),!,R=FList.
 u_assign(FList,R):- self_eval(FList), var(R),!,R=FList.
-u_assign(FList,R):- var(FList),!,/*trace,*/freeze(FList,u_assign(FList,R)).
+u_assign(FList,R):- var(FList),!,freeze(FList,u_assign(FList,R)).
 u_assign(FList,R):- \+ compound(FList), var(R),!,R=FList.
 u_assign([F|List],R):- F == ':-',!, trace_break,as_tf(clause(F,List),R).
 u_assign(FList,RR):- (compound_non_cons(FList),u_assign_c(FList,RR))*->true;FList=~RR.
@@ -425,6 +422,40 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     %trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
 
+f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
+   Convert=[Fn|Args],
+   atom(Fn),!,
+   length(Args,Largs),
+   get_operator_typedef(_,Fn,Largs,Types,_RetType),
+   maplist(is_arg_eval,Types,EvalArgs),
+   %,
+   maplist(do_arg_eval(HeadIs),Args,EvalArgs,NewArgs,NewCodes),
+   append(NewCodes,CombinedNewCode),
+   into_x_assign([Fn|NewArgs],RetResult,Code),
+   append(CombinedNewCode,[Code],CombinedNewCode1),
+   combine_code_list(CombinedNewCode1,Converted).
+
+combine_code_list(A,R) :- !,
+   combine_code_list_aux(A,R0),
+   (R0=[] -> R=true
+   ; R0=[R1] -> R=R1
+   ; R0=[H|T],
+      combine_code_list(T,T0),
+      R=..[',',H,T0]).
+
+combine_code_list_aux([],[]).
+combine_code_list_aux([true|T],R) :- !,combine_code_list_aux(T,R).
+combine_code_list_aux([H|T],R) :- H=..[','|H0],!,append(H0,T,T0),combine_code_list_aux(T0,R).
+combine_code_list_aux([H|T],[H|R]) :- combine_code_list_aux(T,R).
+
+% temporary placeholder
+is_arg_eval('Number',yes) :- !.
+is_arg_eval('Any',yes) :- !.
+is_arg_eval(_,no).
+
+do_arg_eval(_,Arg,no,Arg,[]).
+do_arg_eval(HeadIs,Arg,yes,NewArg,[Code]) :- f2p(HeadIs,NewArg,Arg,Code).
+
 % The catch-all If no specific case is matched, consider Convert as already converted.
 f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):- !.
 f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
@@ -435,7 +466,6 @@ f2p(HeadIs,_RetResult,Convert,_Code):-
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    format("compile_for_assert: ~w ~w\n",[HeadIs, AsBodyFn]),
-   %trace,
    AsFunction = HeadIs,
    must_det_ll((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
@@ -480,7 +510,6 @@ add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
 
 add_assertion1(Space,ACC) :-
-   %leash(-all),trace,
    must_det_ll((
      % add the prefix
       (ACC = (ACCH :- ACCB),ACCH=..[ACCf|ACCa] ->
