@@ -1478,7 +1478,7 @@
 
 ;; Public MeTTa
 (@doc import!
-  (@desc "Imports module using its relative path (second argument) and binds it to the token (first argument) which will represent imported atomspace. If first argument is &self then everything will be imported to current atomspace")
+  (@desc "Imports module using its relative path (second argument) and binds it to the token (first argument) which will represent imported atomspace. If first argument is &self then everything will be imported to current atomspace. The source is imported only the first time import! is called. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes Python.")
   (@params (
     (@param "Symbol, which is turned into the token for accessing the imported module")
     (@param "Module name")))
@@ -1488,7 +1488,7 @@
 
 ;; Public MeTTa
 (@doc include
-  (@desc "Works just like import! but with &self as a first argument. So everything from input file will be included in the current atomspace and evaluated")
+  (@desc "Works just like include! but with &self as a first argument. So everything from input file will be included in the current atomspace and evaluated")
   (@params (
     (@param "Name of metta script to import")))
   (@return "Unit atom"))
@@ -1497,7 +1497,7 @@
 
 ;; Public MeTTa
 (@doc include!
-  (@desc "Works just like import!. So everything from input file will be included in the current atomspace and evaluated")
+  (@desc "Everything from input file will be included in the current atomspace and evaluated, as if it were being evaluated at the REPL. Unlike import!, the source is evaluated every time include! is called.")
   (@params (
     (@param "Space")
     (@param "Filename")))
@@ -1906,7 +1906,7 @@
 
 ;; Public MeTTaLog
 (@doc load-file!
-  (@desc "Loads the contents of Filename into Space, returning () if successful.")
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes MeTTa. Like import! but favors MeTTa over Python when the file type is ambiguous.")
   (@params (
     (@param "Space")
     (@param "Filename")))
@@ -1915,9 +1915,52 @@
 
 ;; Public MeTTa
 (@doc load-ascii
-  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file.")
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file. Works like include!.")
   (@params (
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
 (: load-ascii (-> hyperon::space::DynSpace String Expression))
+
+;; Public MeTTa
+(@doc transfer!
+  (@desc "Loads the contents of Filename into &self, as include. Returns () if successful, throws an exception otherwise.")
+  (@params (
+    (@param "Filename")))
+  (@return "Expression"))
+(: transfer! (-> String Expression))
+
+;; Public MeTTa
+(@doc save-space!
+  (@desc "Writes the contents of Space into Filename, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: save-space! (-> hyperon::space::DynSpace String Expression))
+
+;; MeTTaLog Debugging
+(@doc rtrace!
+  (@desc "Fully evaluates input Atom, providing a complete trace of the evaluation.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rtrace! (-> Atom Atom))
+
+;; Public MeTTaLog
+
+(@doc rust
+  (@desc "Interface with the rust / Hyperon MeTTa implementation. Enters Atom into rust atomspace. If Atom is evaluated (i.e. by being of the form !<atom>), returns the result of evaluation. See also rust!.")
+  (@params (
+    (@param "Atom to be entered into the space")))
+  (@return "Result of entering Atom into the space"))
+(: rust (-> Atom Atom))
+
+;; Public MeTTaLog
+
+(@doc rust!
+  (@desc "Like rust but evaluates the atom rather than entering into the space. (rust! <atom>) and (rust !<atom>) are identical.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rust! (-> Atom Atom))
