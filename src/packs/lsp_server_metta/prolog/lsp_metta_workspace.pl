@@ -415,14 +415,18 @@ xref_source_now_maybe(Path):-
 xref_source_expired(Path):- var(Path),!.
 xref_source_expired(Doc):- maybe_doc_path(Doc,Path),!,xref_source_expired(Path).
 xref_source_expired(Path):-
-   doc_path(Doc,Path),
+   file_doc(Path,Doc),
+   xref_interrupt_worker(Path),
    retractall(user:made_metta_file_buffer(Doc)),
    retractall(lsp_cache:gave_document_symbols(Doc,_)),
    retractall(user:made_metta_file_buffer(Path)),
    retractall(lsp_cache:gave_document_symbols(Path,_)),
    %metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)
-   retractall(user:metta_file_buffer(_Lvl,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)),
-   xref_interrupt_worker(Path).
+   symbol_concat(Path, '.buffer~', BufferFile),
+   if_t(exists_file(BufferFile),delete_file(BufferFile)),
+   retractall(user:metta_file_buffer(_Lvl,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)),!.
+
+
 
 
 
