@@ -463,3 +463,48 @@ position_line(Position, Line2):-
 % Emacs does return a Client Configuration List
 is_in_emacs :- \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
+
+end_of_file.
+
+
+
+
+
+
+% Main predicate
+f2r(Res, Expr, Terms) :-
+    f2rh(Expr, Res, Terms),
+    numbervars((Res,Terms), 0, _).
+
+
+% Helper predicate to process expressions
+f2rh(Expr, ResVar, TermsList) :-
+    (   var(Expr) ->                       % Handle variables
+        TermsList = [eval_in(Expr, ResVar)]
+    ;   \+ ( Expr=[_|_] ) ->               % Handle non-conses
+        (ResVar = Expr, TermsList = [])
+    ;   cant_be_function(Expr) ->          % Handle non-evaluatable lists
+        TermsList = [make_list(Expr, ResVar)]
+    ;   Expr = [Function | Args],         % Handle function expressions
+        maplist(f2rh, Args, ArgResults, TermsLists),
+        append(TermsLists, TermsListArgs),
+        append(ArgResults, [ResVar], TermArgs),
+        Term =.. [call, Function | TermArgs],
+        append(TermsListArgs, [Term], TermsList)
+    ).
+
+cant_be_function(S):- \+ is_list(S), !. % improper list
+cant_be_function([S|_]):- \+ atom(S), \+ var(S).
+
+prefix_pred(MC,Term, MCT) :- is_list(Term), !, maplist(mangle_predicate,Term, MCT).
+prefix_pred(MC,Term, MCT) :- \+ compound(Term), !.
+prefix_pred(MC,Term, MCT) :- Term =.. [call, F | Args],  atom(F),  atom_concat(MC, F, MF), MCT =.. [MF | Args].
+prefix_pred(MC,Term, MCT) :- Term =.. [F | Args], atom_concat(MC, F, MF), MCT =.. [MF | Args].
+
+
+?- f2r(Res, [add, [mul, 2, 3], 4], Terms), prefix_pred('mc__',Terms,TermsMC).
+
+?- f2r(Res, [max, [min, X, Y], Z], Terms), prefix_pred('mc__',Terms,TermsMC).
+
+?- f2r(Res, [length, [1, 2, 3]], Terms), prefix_pred('mc__',Terms,TermsMC).
+
