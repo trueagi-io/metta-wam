@@ -469,6 +469,8 @@ f2p(HeadIs,_RetResult,Convert,_Code):-
    format("Error in f2p ~w ~w\n",[HeadIs,Convert]),
    throw(0).
 
+:- discontiguous(compile_flow_control/4).
+
 compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
   Convert = ['if',Cond,Then,Else],!,
   Test = is_True(CondResult),
@@ -480,6 +482,13 @@ compile_test_then_else(RetResult,If,Then,Else,Converted):-
   f2p(HeadIs,ElseResult,Else,ElseCode),
   Converted=(If*->(ThenCode,ThenResult=RetResult);
                   (ElseCode,ElseResult=RetResult)).
+
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :- % dif_functors(HeadIs,Convert),
+  Convert =~ ['let',Var,Value1,Body],!,
+    f2p(HeadIs,ResValue1,Value1,CodeForValue1),
+    f2p(HeadIs,RetResult,Body,BodyCode),
+  into_equals(Var,ResValue1,VarResValue1),
+  list_to_conjuncts([CodeForValue1,VarResValue1,BodyCode],Converted).
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    format("compile_for_assert: ~w ~w\n",[HeadIs, AsBodyFn]),
@@ -939,7 +948,6 @@ code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 %code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 
 
-:- discontiguous(compile_flow_control/4).
 
 
 compile_flow_control(_HeadIs,RetResult,Convert, x_assign(Convert,RetResult)) :-   is_ftVar(Convert), var(RetResult),!.
@@ -1180,13 +1188,6 @@ compile_flow_control(HeadIs,RetResult,Convert, Converted) :- % dif_functors(Head
     f2p(HeadIs,ResValue1,Value1,CodeForValue1),
     f2p(HeadIs,ResValue2,Value2,CodeForValue2),
   compile_test_then_else(RetResult,(CodeForValue1,CodeForValue2,Test),Then,Else,Converted).
-
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :- % dif_functors(HeadIs,Convert),
-  Convert =~ ['let',Var,Value1,Body],!,
-    f2p(HeadIs,ResValue1,Value1,CodeForValue1),
-    f2p(HeadIs,RetResult,Body,BodyCode),
-  into_equals(Var,ResValue1,VarResValue1),
-  list_to_conjuncts([CodeForValue1,VarResValue1,BodyCode],Converted).
 
 compile_flow_control(HeadIs,RetResult,Convert, Converted) :- %dif_functors(HeadIs,Convert),
   Convert =~ ['let*',Bindings,Body],!,
