@@ -1090,7 +1090,10 @@ read_list(EndChar,  Stream, List):-
   flag('$file_src_ordinal',Ordinal,Ordinal+1),
   succ(LvL,LvLNext),
   nb_setval('$file_src_depth', LvLNext),
-  read_list_cont(EndChar,  Stream, List),
+  read_position(Stream, Line, Col, CharPos, _),
+  catch(read_list_cont(EndChar,  Stream, List),
+        stream_error(_Where,Why),
+        throw(stream_error(Line:Col:CharPos,Why))),
   nb_setval('$file_src_depth', LvL).
 
 read_list_cont(EndChar,  Stream, List) :-
