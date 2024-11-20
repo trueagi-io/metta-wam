@@ -310,7 +310,7 @@ replace_x_assign(DontStub,x_assign(A,[F|Args0]),R) :- var(A),atom(F),!,
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
-   ((current_predicate(Fp/LArgs1);member(Fp/LArgs1,DontStub)) ->
+   ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
       true
    ; check_supporting_predicates('&self',F/LArgs1)).
 replace_x_assign(_,x_assign(A,B),R) :- var(A),!,R=(A=B).
@@ -423,8 +423,9 @@ f2p(_HeadIs,RetResult, Convert, RetResult = Convert) :- % HeadIs\=@=Convert,
     !.  % Set RetResult to Convert as it is already in predicate form
 
 f2p(HeadIs,RetResult,Convert, Converted):-
-    compound(Convert), \+ compound_name_arity(Convert,_,0),
-    compile_flow_control(HeadIs,RetResult,Convert, Converted),!.
+   Convert=[Fn|_],
+   atom(Fn),
+   compile_flow_control(HeadIs,RetResult,Convert, Converted),!.
 
 f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
    Convert=[Fn|Args],
@@ -468,8 +469,23 @@ f2p(HeadIs,_RetResult,Convert,_Code):-
    format("Error in f2p ~w ~w\n",[HeadIs,Convert]),
    throw(0).
 
+compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
+  Convert = ['if',Cond,Then,Else],!,
+  Test = is_True(CondResult),
+  f2p(HeadIs,CondResult,Cond,CondCode),
+  compile_test_then_else(RetResult,(CondCode,Test),Then,Else,Converted).
+
+compile_test_then_else(RetResult,If,Then,Else,Converted):-
+  f2p(HeadIs,ThenResult,Then,ThenCode),
+  f2p(HeadIs,ElseResult,Else,ElseCode),
+  Converted=(If*->(ThenCode,ThenResult=RetResult);
+                  (ElseCode,ElseResult=RetResult)).
+
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    format("compile_for_assert: ~w ~w\n",[HeadIs, AsBodyFn]),
+   HeadIs=[FnName|Args],
+   length(Args,LenArgs),
+   LenArgsPlus1 is LenArgs+1,
    AsFunction = HeadIs,
    must_det_ll((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
@@ -482,7 +498,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    %RetResult = Converted,
    %RetResult = _,
    optimize_head_and_body(Head,NextBody,HeadC,NextBodyB),
-   replace_x_assign([],NextBodyB,NextBodyC),
+   replace_x_assign([FnName/LenArgsPlus1],NextBodyB,NextBodyC),
    %fbug([convert(Convert),head_preconds_into_body(HeadC:-NextBodyC)]),
    %if_t(((Head:-NextBody)\=@=(HeadC:-NextBodyC)),fbug(was(Head:-NextBody))),
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
@@ -583,6 +599,16 @@ same_clause1(A,B):- expand_to_hb(A,AH,AB),expand_to_hb(B,BH,BB),AB=@=BB, AH=@=BH
 %clause('is-closed'(X),OO1,Ref),clause('is-closed'(X),OO2,Ref2),Ref2\==Ref, OO1=@=OO2.
 
 end_of_file.
+
+
+
+
+
+
+
+
+
+
 
 compile_head_variablization(Head, NewHead, HeadCode) :-
    must_det_ll((
@@ -912,11 +938,6 @@ code_callable(Term,_CTerm):- var(Term),!,fail.
 code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 %code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 
-compile_test_then_else(RetResult,If,Then,Else,Converted):-
-  f2p(HeadIs,ThenResult,Then,ThenCode),
-  f2p(HeadIs,ElseResult,Else,ElseCode),
-  Converted=(If*->(ThenCode,ThenResult=RetResult);
-                  (ElseCode,ElseResult=RetResult)).
 
 :- discontiguous(compile_flow_control/4).
 
