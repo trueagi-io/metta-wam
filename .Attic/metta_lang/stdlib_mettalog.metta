@@ -1676,6 +1676,15 @@
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 (: assertEqual (-> Atom Atom Atom))
 
+(iz assertNotEqual MeTTaLog)
+(@doc assertNotEqual
+  (@desc "Compares (sets of) results of evaluation of two expressions")
+  (@params (
+    (@param "First expression")
+    (@param "Second expression")))
+  (@return "Unit atom if both expressions after evaluation are not equal, error - otherwise"))
+(: assertNotEqual (-> Atom Atom Atom))
+
 
 (iz assertEqualToResult MeTTa)
 (@doc assertEqualToResult
@@ -1685,6 +1694,16 @@
     (@param "Second expression (it won't be evaluated)")))
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 (: assertEqualToResult (-> Atom Atom Atom))
+
+
+(iz assertNotEqualToResult MeTTaLog)
+(@doc assertEqualToResult
+  (@desc "Same as assertNotEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
+  (@params (
+    (@param "First expression (it will be evaluated)")
+    (@param "Second expression (it won't be evaluated)")))
+  (@return "Unit atom if both expressions after evaluation are not equal, error - otherwise"))
+(: assertNotEqualToResult (-> Atom Atom Atom))
 
 
 (iz superpose MeTTa)
