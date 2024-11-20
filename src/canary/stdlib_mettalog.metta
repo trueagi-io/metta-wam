@@ -1985,6 +1985,9 @@
   (@params (
     (@param "List of values")))
   (@return "Unique values from input set"))
+(= (unique-atom $L1)
+  (collapse (unique (superpose $L1)))
+(: unique-atom (-> Expression Expression))
 
 (@doc union-atom
   (@desc "Function takes two tuples and returns their union. E.g. (union-atom (a b b c) (b c c d)) -> (a b b c b c c d)")
@@ -1992,6 +1995,9 @@
     (@param "List of values")
     (@param "List of values")))
   (@return "Union of sets"))
+(= (union-atom $L1 $L2)
+  (collapse (union (superpose $L1) (superpose $L2)))
+(: union-atom (-> Expression Expression Expression))
 
 (@doc intersection-atom
   (@desc "Function takes two tuples and returns their intersection. E.g. (intersection-atom (a b c c) (b c c c d)) -> (b c c)")
@@ -1999,6 +2005,9 @@
     (@param "List of values")
     (@param "List of values")))
   (@return "Intersection of sets"))
+(= (intersection-atom $L1 $L2)
+  (collapse (intersection (superpose $L1) (superpose $L2)))
+(: intersection-atom (-> Expression Expression Expression))
 
 (@doc subtraction-atom
   (@desc "Function takes two tuples and returns their subtraction. E.g. !(subtraction-atom (a b b c) (b c c d)) -> (a b)")
@@ -2006,6 +2015,9 @@
     (@param "List of values")
     (@param "List of values")))
   (@return "Subtraction of sets"))
+(= (subtraction-atom $L1 $L2)
+  (collapse (subtraction (superpose $L1) (superpose $L2)))
+(: subtraction-atom (-> Expression Expression Expression))
 
 (iz git-module! MeTTa)
 (@doc git-module!
