@@ -78,21 +78,22 @@
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
 (: get-type (-> Atom Type))
-(: PredicateArity (-> Symbol Number))
+(: predicate-arity (-> Symbol Number))
 (: If (-> Bool Atom Atom Atom))
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)
 (= (If False $then) (let $n 0 (let $n 1 $n)))
 (= (If $cond $then $else) (if $cond $then $else))
-;; Predicate Arity Function
 
-(iz PredicateArity MeTTa)
-(@doc PredicateArity
+
+;; Predicate Arity Function
+(iz predicate-arity MeTTa)
+(@doc predicate-arity
   (@desc "Returns the arity of the given predicate.")
   (@params (
     (@param "Predicate symbol")))
   (@return "Arity of the predicate"))
-(: PredicateArity (-> Symbol Number))
+(: predicate-arity (-> Symbol Number))
 
 ;; If Function
 
@@ -106,16 +107,15 @@
   (@return "Either the second or third argument depending on the condition"))
 (: If (-> Bool Atom Atom Atom))
 (: If (-> Bool Atom Atom))
-
 (= (If True $then) $then)
 (= (If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
 (= (If $cond $then $else) (if $cond $then $else))
 
 ;; Arity Assignments
 
-(PredicateArity PredicateArity 2)
-(PredicateArity : 2)
-(= (: $F P1) (PredicateArity $F 1))
+(predicate-arity predicate-arity 2)
+(predicate-arity : 2)
+(= (: $F P1) (predicate-arity $F 1))
 
 ;; Source Predicate and Function Types
 
@@ -1986,7 +1986,7 @@
     (@param "List of values")))
   (@return "Unique values from input set"))
 (= (unique-atom $L1)
-  (collapse (unique (superpose $L1)))
+  (collapse (unique (superpose $L1))))
 (: unique-atom (-> Expression Expression))
 
 (@doc union-atom
@@ -1996,7 +1996,7 @@
     (@param "List of values")))
   (@return "Union of sets"))
 (= (union-atom $L1 $L2)
-  (collapse (union (superpose $L1) (superpose $L2)))
+  (collapse (union (superpose $L1) (superpose $L2))))
 (: union-atom (-> Expression Expression Expression))
 
 (@doc intersection-atom
@@ -2006,7 +2006,7 @@
     (@param "List of values")))
   (@return "Intersection of sets"))
 (= (intersection-atom $L1 $L2)
-  (collapse (intersection (superpose $L1) (superpose $L2)))
+  (collapse (intersection (superpose $L1) (superpose $L2))))
 (: intersection-atom (-> Expression Expression Expression))
 
 (@doc subtraction-atom
@@ -2016,7 +2016,7 @@
     (@param "List of values")))
   (@return "Subtraction of sets"))
 (= (subtraction-atom $L1 $L2)
-  (collapse (subtraction (superpose $L1) (superpose $L2)))
+  (collapse (subtraction (superpose $L1) (superpose $L2))))
 (: subtraction-atom (-> Expression Expression Expression))
 
 (iz git-module! MeTTa)
@@ -2242,7 +2242,7 @@
   (@params (
     (@param "Filename")))
   (@return "Expression"))
-(: transfer! (-> String Expression))
+(: transfer! (-> String (->)))
 
 (iz save-space! MeTTa)
 (@doc save-space!
@@ -2253,7 +2253,7 @@
   (@return "Expression"))
 (: save-space! (-> hyperon::space::DynSpace String Expression))
 
-;; MeTTaLog Debugging
+(iz rtrace! MeTTaLog)
 (@doc rtrace!
   (@desc "Fully evaluates input Atom, providing a complete trace of the evaluation.")
   (@params (
