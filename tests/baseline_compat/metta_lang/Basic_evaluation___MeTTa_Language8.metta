@@ -10,4 +10,8 @@
 
 ; ready works
 ; notready not ready 
-;!(assertEqualToResult ( (check (B A A)) )  ( B A A )  ) 
+!(assertEqualToResult  (check (B A A)) ((check (B A A))))
+
+
+
+

@@ -1060,3 +1060,82 @@ stored_json_value(client_capabilities, [parser, markdown, general], "marked").
 true.
 
 
+emacs
+
+
+1 ?- listing(stored_json_value).
+:- dynamic stored_json_value/3.
+:- module_transparent stored_json_value/3.
+
+stored_json_value(client_capabilities, [workspaceFolders, workspace], true).
+stored_json_value(client_capabilities, [resourceOperations, workspaceEdit, workspace], ["create", "rename", "delete"]).
+stored_json_value(client_capabilities, [documentChanges, workspaceEdit, workspace], true).
+stored_json_value(client_capabilities, [valueSet, symbolKind, symbol, workspace], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]).
+stored_json_value(client_capabilities, [willRename, fileOperations, workspace], true).
+stored_json_value(client_capabilities, [willDelete, fileOperations, workspace], false).
+stored_json_value(client_capabilities, [willCreate, fileOperations, workspace], false).
+stored_json_value(client_capabilities, [didRename, fileOperations, workspace], true).
+stored_json_value(client_capabilities, [didDelete, fileOperations, workspace], false).
+stored_json_value(client_capabilities, [didCreate, fileOperations, workspace], false).
+stored_json_value(client_capabilities, [dynamicRegistration, executeCommand, workspace], false).
+stored_json_value(client_capabilities, [dynamicRegistration, didChangeWatchedFiles, workspace], true).
+stored_json_value(client_capabilities, [configuration, workspace], true).
+stored_json_value(client_capabilities, [refreshSupport, codeLens, workspace], true).
+stored_json_value(client_capabilities, [applyEdit, workspace], true).
+stored_json_value(client_capabilities, [workDoneProgress, window], true).
+stored_json_value(client_capabilities, [support, showDocument, window], true).
+stored_json_value(client_capabilities, [dynamicRegistration, typeHierarchy, textDocument], true).
+stored_json_value(client_capabilities, [linkSupport, typeDefinition, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, typeDefinition, textDocument], true).
+stored_json_value(client_capabilities, [willSaveWaitUntil, synchronization, textDocument], true).
+stored_json_value(client_capabilities, [willSave, synchronization, textDocument], true).
+stored_json_value(client_capabilities, [didSave, synchronization, textDocument], true).
+stored_json_value(client_capabilities, [labelOffsetSupport, parameterInformation, signatureInformation, signatureHelp, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, signatureHelp, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, selectionRange, textDocument], true).
+stored_json_value(client_capabilities, [prepareSupport, rename, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, rename, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, references, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, rangeFormatting, textDocument], true).
+stored_json_value(client_capabilities, [versionSupport, publishDiagnostics, textDocument], true).
+stored_json_value(client_capabilities, [valueSet, tagSupport, publishDiagnostics, textDocument], [1, 2]).
+stored_json_value(client_capabilities, [relatedInformation, publishDiagnostics, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, onTypeFormatting, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, linkedEditingRange, textDocument], true).
+stored_json_value(client_capabilities, [linkSupport, implementation, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, implementation, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, hover, textDocument], true).
+stored_json_value(client_capabilities, [contentFormat, hover, textDocument], ["markdown", "plaintext"]).
+stored_json_value(client_capabilities, [dynamicRegistration, formatting, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, foldingRange, textDocument], true).
+stored_json_value(client_capabilities, [valueSet, symbolKind, documentSymbol, textDocument], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]).
+stored_json_value(client_capabilities, [hierarchicalDocumentSymbolSupport, documentSymbol, textDocument], true).
+stored_json_value(client_capabilities, [tooltipSupport, documentLink, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, documentLink, textDocument], true).
+stored_json_value(client_capabilities, [relatedDocumentSupport, diagnostic, textDocument], false).
+stored_json_value(client_capabilities, [dynamicRegistration, diagnostic, textDocument], false).
+stored_json_value(client_capabilities, [linkSupport, definition, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, definition, textDocument], true).
+stored_json_value(client_capabilities, [linkSupport, declaration, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, declaration, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, completion, textDocument], true).
+stored_json_value(client_capabilities, [contextSupport, completion, textDocument], true).
+stored_json_value(client_capabilities, [snippetSupport, completionItem, completion, textDocument], false).
+stored_json_value(client_capabilities, [properties, resolveSupport, completionItem, completion, textDocument], ["documentation", "detail", "additionalTextEdits", "command"]).
+stored_json_value(client_capabilities, [resolveAdditionalTextEditsSupport, completionItem, completion, textDocument], true).
+stored_json_value(client_capabilities, [valueSet, insertTextModeSupport, completionItem, completion, textDocument], [1, 2]).
+stored_json_value(client_capabilities, [insertReplaceSupport, completionItem, completion, textDocument], true).
+stored_json_value(client_capabilities, [documentationFormat, completionItem, completion, textDocument], ["markdown", "plaintext"]).
+stored_json_value(client_capabilities, [deprecatedSupport, completionItem, completion, textDocument], true).
+stored_json_value(client_capabilities, [properties, resolveSupport, codeAction, textDocument], ["edit", "command"]).
+stored_json_value(client_capabilities, [isPreferredSupport, codeAction, textDocument], true).
+stored_json_value(client_capabilities, [dynamicRegistration, codeAction, textDocument], true).
+stored_json_value(client_capabilities, [dataSupport, codeAction, textDocument], true).
+stored_json_value(client_capabilities, [valueSet, codeActionKind, codeActionLiteralSupport, codeAction, textDocument], ["", "quickfix", "refactor", "refactor.extract", "refactor.inline", "refactor.rewrite", "source", "source.organizeImports"]).
+stored_json_value(client_capabilities, [dynamicRegistration, callHierarchy, textDocument], false).
+stored_json_value(client_capabilities, [positionEncodings, general], ["utf-32", "utf-16"]).
+
+true.
+
+2 ?-
+
