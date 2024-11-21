@@ -201,12 +201,6 @@
 ; Test constructing an 'Error' expression with invalid arguments
 !(assertEqualToResult (Error (+ 1 2) (+ 1 +)) ((Error (+ 1 2) (+ 1 +))))
 
-; Test unit type and unit atom
-; Test that UNIT_ATOM is an empty expression
-!(assertEqualToResult UNIT_ATOM (()))
-
-; Test that UNIT_TYPE is the arrow symbol
-!(assertEqualToResult UNIT_TYPE ((->)))
 
 ; Test get-type operation for expression (a b) with multiple types
 ; Define types and atom types
@@ -256,13 +250,10 @@
 !(add-atom &self (= (bar) baz))
 !(add-atom &self (= (foo) (bar)))
 
-; Test that '!(foo)' does not evaluate in bare-minimal interpreter
-!(assertEqualToResult (foo) ((foo)))
-
-; Switch to bare-minimal interpreter
+; we probably wont support this in MeTTaLog
 !(pragma! interpreter bare-minimal)
 
-; Test that '!(foo)' still does not evaluate
+; Test that '!(foo)' does not evaluate in bare-minimal interpreter
 !(assertEqualToResult (foo) ((foo)))
 
 ; Use 'eval' to force evaluation

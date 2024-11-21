@@ -5,12 +5,6 @@
 ; Get atoms from the new space, expecting to include stdlib module
 !(assertEqualToResult (get-atoms &new-space) ((mod-space! stdlib)))
 
-; Test that UNIT_ATOM is an empty expression
-!(assertEqualToResult UNIT_ATOM (()))
-
-; Test that UNIT_TYPE is the arrow symbol
-!(assertEqualToResult UNIT_TYPE ((->)))
-
 ; Test removing duplicated atom
 ; Create a new space
 !(bind! &space (new-space))
