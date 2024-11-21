@@ -415,7 +415,12 @@ eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
 % simple version of Minimal MeTTa's `metta` function
 eval_20(Eq,_Maybe_TODO_RetType,Depth,Self,['metta',Eval,RetType,Other],Result):-!,
     into_space(Depth,Self,Other,Space),
-    eval_args(Eq,RetType,Depth,Space,Eval,Result).
+    eval_args(Eq,RetType,Depth,Space,Eval,Result),
+    filter_type(Result,RetType).
+
+filter_type(Result,RetType):-
+  get_type(Result, ResultType),
+  type_conform(ResultType, RetType),!.
 
 
 /* Function takes list of atoms (first argument), variable (second argument) and filter predicate (third argument) and returns list with items which passed filter.
