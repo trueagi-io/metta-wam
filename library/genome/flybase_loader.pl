@@ -1,3 +1,66 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+%********************************************************************************************* 
+% PROGRAM FUNCTION: converts FlyBase biological data from various file formats (TSV, JSON, OBO, etc.) 
+% into Prolog facts and MeTTa/datalog representations while handling data type conversions and 
+% maintaining statistics about loaded content.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 /* mined
 ; Total         Atoms (Atomspace size): .................................................. 56,354,849
 ;               ConceptNodes: ............................................................. 9,472,616
@@ -24,18 +87,98 @@
 
 */
 
-recount_total_loaded_symbols:- flag(total_loaded_symbols,_,0),full_atom_count(Was),flag(total_loaded_symbols,_,Was).
+%!  recount_total_loaded_symbols is det.
+%
+%   Resets and updates the counter for the total number of loaded symbols
+%   in the system. This predicate uses a flag-based mechanism to manage the count.
+%
+%   The `total_loaded_symbols` flag is first reset to `0`. The current count of
+%   fully loaded atoms is retrieved using `full_atom_count/1`, and this value is
+%   stored back in the `total_loaded_symbols` flag.
+%
+%   @details
+%   This predicate ensures that the system maintains an accurate record of the
+%   loaded symbols by fetching the current state from `full_atom_count/1`.
+%
+%   @example
+%     % Recount and update the total number of loaded symbols:
+%     ?- recount_total_loaded_symbols.
+%     
+%     % Check the updated count of total loaded symbols:
+%     ?- flag(total_loaded_symbols, Current, Current).
+%     Current = <updated_count>.
+%
+recount_total_loaded_symbols :-
+    % Reset the `total_loaded_symbols` flag to zero.
+    flag(total_loaded_symbols, _, 0),
+    % Retrieve the current count of fully loaded atoms.
+    full_atom_count(Was),
+    % Update the `total_loaded_symbols` flag with the retrieved count.
+    flag(total_loaded_symbols, _, Was).
 
-% Convert flybase data from CSV to Prolog format.
-load_flybase:- is_scryer,!,load_flybase_files.
-load_flybase:-
-  with_option(mettafiles,false,
-     (make,recount_total_loaded_symbols,!,load_flybase_files,!,cleanup_arities,!,fb_stats)).
-load_flybase_dirs:-
-  load_flybase('./data/ftp.flybase.net/releases/current/das_precomputed/*'),
-  load_flybase('./precomputed_files/*'),
-  load_flybase('./data/ftp.flybase.net/releases/current/./*sv'),!.
+%!  load_flybase is det.
+%
+%   Loads FlyBase data and converts it from CSV to Prolog format.
+%
+%   Depending on the Prolog environment (e.g., Scryer Prolog), the predicate
+%   invokes the appropriate sequence of operations to load the data and prepare it
+%   for use. This includes recounting total loaded symbols, cleaning up arities, 
+%   and generating statistics on the FlyBase data.
+%
+%   @details
+%   - If the system is identified as Scryer Prolog (using `is_scryer/0`), 
+%     only the `load_flybase_files/0` operation is performed.
+%   - In other environments, it processes FlyBase data by enabling the 
+%     `mettafiles` option, recompiling necessary components (`make`), recounting 
+%     symbols, loading files, cleaning up arities, and finally gathering statistics.
+%
+%   @example
+%     % Load FlyBase data:
+%     ?- load_flybase.
+%
+%     % Check if data has been properly loaded and processed.
+%
+load_flybase :-
+    % Check if the system is Scryer Prolog.
+    is_scryer, !,
+    % Load FlyBase files directly in Scryer.
+    load_flybase_files.
+load_flybase :-
+    % Enable `mettafiles` option as false and perform FlyBase data processing.
+    with_option(mettafiles, false,
+        ( make,
+          recount_total_loaded_symbols,
+          !,
+          load_flybase_files,
+          !,
+          cleanup_arities,
+          !,
+          fb_stats)).
 
+%!  load_flybase_dirs is det.
+%
+%   Loads FlyBase data from specific directories.
+%
+%   This predicate specifies multiple directories where FlyBase data may be located
+%   and loads the data from these paths. It uses wildcards to match multiple files.
+%
+%   @details
+%   The directories include:
+%   - Current release DAS precomputed files (`./data/ftp.flybase.net/releases/current/das_precomputed/*`).
+%   - Other precomputed files (`./precomputed_files/*`).
+%   - Specific files containing "sv" in their paths (`./data/ftp.flybase.net/releases/current/./*sv`).
+%
+%   @example
+%     % Load FlyBase data from specified directories:
+%     ?- load_flybase_dirs.
+%
+load_flybase_dirs :-
+    % Load FlyBase data from current DAS precomputed directory.
+    load_flybase('./data/ftp.flybase.net/releases/current/das_precomputed/*'),
+    % Load FlyBase data from precomputed files directory.
+    load_flybase('./precomputed_files/*'),
+    % Load FlyBase data from directories containing "sv".
+    load_flybase('./data/ftp.flybase.net/releases/current/./*sv'), !.
 
 file_search_path(fb_current,'/wam/data/FB_current/').
 /*
@@ -54,8 +197,36 @@ find . -type f -exec wc -l {} \; | awk -F'/' '{
 
 
 */
+
+% Informs the system that the clauses of column_names/2 might not be together in the source file. 
 :- discontiguous column_names/2.
 
+%!  load_data_fb_data is det.
+%
+%   Loads FlyBase data from multiple specified sources and formats.
+%
+%   This predicate sequentially invokes the `load_data/2` predicate for various
+%   FlyBase data files. These files are categorized by type (e.g., `chado-xml`,
+%   `dmel_r6.56`, `precomputed_files`) and format (e.g., `.dtd`, `.xml`, `.tsv`, 
+%   `.fasta`, `.obo`, `.json`). Each `load_data/2` invocation is parameterized 
+%   with a numeric identifier and the file path, indicating the estimated size
+%   or order of loading.
+%
+%   @details
+%   - The predicate is comprehensive, covering a wide range of data, including
+%     annotations, ontologies, genetic interactions, gene expression data, and
+%     more.
+%   - It uses a uniform structure for loading, ensuring consistent handling of
+%     all file types and sources.
+%   - The final `!` ensures the loading process concludes deterministically.
+%
+%   @example
+%     % Load all FlyBase data:
+%     ?- load_data_fb_data.
+%     
+%     % Verify that the data has been loaded successfully and is accessible
+%     % in the Prolog environment.
+%
 load_data_fb_data:-
    load_data(              64, fb_current('./chado-xml/chado_FBim.dtd')),
    load_data(              76, fb_current('./chado-xml/chado_FBst.dtd')),
@@ -208,152 +379,586 @@ load_data_fb_data:-
 
 %:- ensure_loaded(obo_loader).
 %
-create_flybase_qlf:-
-   shell('swipl -g "qcompile(whole_flybase)').
 
-create_flybase_pl(_FtpDir):- create_flybase_pl.
+%!  create_flybase_qlf is det.
+%
+%   Creates a compiled FlyBase file in QLF format using SWI-Prolog.
+%
+%   This predicate invokes the `swipl` shell command with the goal of 
+%   compiling the `whole_flybase` file into QLF format. This allows for
+%   efficient loading and querying in SWI-Prolog.
+%
+%   @example
+%     % Compile FlyBase into QLF format:
+%     ?- create_flybase_qlf.
+%
+create_flybase_qlf :-
+    shell('swipl -g "qcompile(whole_flybase)').
 
-create_flybase_pl:-
-   all_data_once,
-  % all_metta_once,
-   load_flybase_full,
-   all_data_done.
-  % all_metta_done,
-   %shell('mv whole_metta.pl whole_flybase.pl').
+%!  create_flybase_pl(+FtpDir) is det.
+%
+%   Creates a FlyBase Prolog database file.
+%
+%   If the argument `FtpDir` is provided, it is ignored, and the base predicate 
+%   `create_flybase_pl/0` is invoked. This is a placeholder to maintain API 
+%   consistency but does not currently use the argument.
+%
+%   @arg FtpDir The directory containing FlyBase data (currently unused).
+%
+%   @example
+%     % Create a FlyBase Prolog database:
+%     ?- create_flybase_pl(_FtpDir).
+%
+create_flybase_pl(_FtpDir) :-
+    create_flybase_pl.
 
-create_flybase_pl_tiny:-
-   all_data_once,
-  % all_metta_once,
-   load_flybase_tiny,
-   all_data_done,
-  % all_metta_done,
-   shell('mv whole_metta.pl tiny_flybase.pl').
+%!  create_flybase_pl is det.
+%
+%   Processes and saves FlyBase data into a Prolog database file.
+%
+%   This predicate executes the full sequence of FlyBase data processing,
+%   including:
+%   - Preparing the environment with `all_data_once/0`.
+%   - Loading the full FlyBase dataset with `load_flybase_full/0`.
+%   - Completing the process with `all_data_done/0`.
+%
+%   This workflow ensures that the entire FlyBase dataset is processed and saved.
+%
+%   @example
+%     % Process and save FlyBase data into a Prolog file:
+%     ?- create_flybase_pl.
+%
+create_flybase_pl :-
+    all_data_once,
+    % all_metta_once,  % Uncomment if metta processing is required.
+    load_flybase_full,
+    all_data_done.
+    % all_metta_done,  % Uncomment if metta processing is required.
+    % shell('mv whole_metta.pl whole_flybase.pl'). % Uncomment if renaming is needed.
 
-save_to_pl:- tell('flybase_metta.pl'),
-   forall(fb_pred(F,A),listing(F/A)),told.
+%!  create_flybase_pl_tiny is det.
+%
+%   Processes and saves a reduced FlyBase dataset into a Prolog database file.
+%
+%   This predicate executes a similar workflow to `create_flybase_pl/0`, but it
+%   processes a smaller, reduced FlyBase dataset using `load_flybase_tiny/0`. The
+%   output is saved as `tiny_flybase.pl`.
+%
+%   @example
+%     % Process and save a tiny FlyBase dataset into a Prolog file:
+%     ?- create_flybase_pl_tiny.
+%
+create_flybase_pl_tiny :-
+    all_data_once,
+    % all_metta_once,  % Uncomment if metta processing is required.
+    load_flybase_tiny,
+    all_data_done,
+    % all_metta_done,  % Uncomment if metta processing is required.
+    shell('mv whole_metta.pl tiny_flybase.pl').
 
+%!  save_to_pl is det.
+%
+%   Saves the FlyBase data to a Prolog file.
+%
+%   This predicate writes all FlyBase predicates and their definitions to a file
+%   named `flybase_metta.pl`. It iterates over all predicates matching `fb_pred(F, A)`
+%   and uses `listing/1` to output their definitions.
+%
+%   @example
+%     % Save FlyBase data to a Prolog file:
+%     ?- save_to_pl.
+%
+save_to_pl :-
+    % Open the file for writing.
+    tell('flybase_metta.pl'),
+    % List all predicates matching `fb_pred(F, A)` and write them to the file.
+    forall(fb_pred(F, A), listing(F/A)),
+    % Close the file.
+    told.
 
-real_assert(OBO):- is_converting, \+ is_loading_file(_File), !, throw(real_assert(OBO)).
-real_assert(OBO):-
-   ignore(real_assert1(OBO)),
-   real_assert2(OBO).
+%!  real_assert(+OBO) is det.
+%
+%   Asserts or processes the given object (`OBO`) in the appropriate context.
+%
+%   This predicate handles assertion in different scenarios:
+%   - If the system is in conversion mode (`is_converting/0`) and not currently
+%     loading a file, it throws an exception to avoid direct assertion.
+%   - Otherwise, it attempts to process the object through `real_assert1/1` 
+%     and `real_assert2/1` for handling output or internal storage.
+%
+%   @arg OBO The object to be asserted or processed.
+%
+%   @example
+%     % Assert or process an object:
+%     ?- real_assert(my_object).
+%
+real_assert(OBO) :-
+    % If in conversion mode but not loading a file, throw an exception.
+    is_converting,\+ is_loading_file(_File), !,throw(real_assert(OBO)).
+real_assert(OBO) :-
+    % Process the object using `real_assert1/1` and `real_assert2/1`.
+    ignore(real_assert1(OBO)),real_assert2(OBO).
 
-%real_assert(OBO):- is_converting,!,print_src(OBO).
-real_assert1(OBO):- all_metta_to(Out),!,with_output_to(Out,print_src(OBO)).
-real_assert2(OBO):- all_data_to(Out),!,write_canonical(Out,OBO),!,writeln(Out,'.').
-real_assert2(OBO):- is_converting,!,throw(real_assert2(OBO)).
-%real_assert2(OBO):- call(OBO),!.
-real_assert2(OBO):- pfcAdd_Now(OBO).
+% commented code for debugging or alternate behaviors:
+% real_assert(OBO):- is_converting, !, print_src(OBO).
 
-print_src(OBO):- format('~N'), uncompound(OBO,Src),!, write_srcH(Src).
-write_srcH([F|Args]):- write('( '),write_src(F),maplist(write_srcE,Args),writeln(' )').
-write_srcE(Arg):- write(' '),write_src(Arg).
+%!  real_assert1(+OBO) is det.
+%
+%   Writes the source representation of the object (`OBO`) to the `all_metta_to/1` stream.
+%
+%   @arg OBO The object whose source is to be written.
+%
+real_assert1(OBO) :- all_metta_to(Out),!,with_output_to(Out, print_src(OBO)).
 
+%!  real_assert2(+OBO) is det.
+%
+%   Handles the secondary assertion of the object (`OBO`) for various contexts.
+%   - Writes the canonical representation to the `all_data_to/1` stream.
+%   - Throws an exception if in conversion mode and unhandled.
+%   - Invokes `pfcAdd_Now/1` to add the object.
+%
+%   @arg OBO The object to process.
+%
+real_assert2(OBO) :-
+    % Write the canonical representation to the `all_data_to/1` stream.
+    all_data_to(Out),!,write_canonical(Out, OBO),!,writeln(Out, '.').
+real_assert2(OBO) :-
+    % Throw an exception if in conversion mode and unhandled.
+    is_converting,!,throw(real_assert2(OBO)).
+% commented code for alternative behaviors:
+% real_assert2(OBO):- call(OBO),!.
+real_assert2(OBO) :-
+    % Add the object using `pfcAdd_Now/1`.
+    pfcAdd_Now(OBO).
 
+%!  print_src(+OBO) is det.
+%
+%   Prints the source representation of the given object (`OBO`).
+%   - Decomposes the object into its compound representation and prints each part.
+%
+%   @arg OBO The object to be printed in its source form.
+%
+print_src(OBO) :- format('~N'),uncompound(OBO, Src),!,write_srcH(Src).
 
-is_loading_file(File):- nb_current(loading_file,File),File\==[],!.
-is_loading_file(File):- nb_current(saving_file,File),File\==[].
+%!  write_srcH(+Src) is det.
+%
+%   Writes the compound representation of the source (`Src`) in a structured format.
+%
+%   @arg Src The source to be written.
+%
+write_srcH([F | Args]) :- write('( '),write_src(F),maplist(write_srcE, Args),writeln(' )').
 
+%!  write_srcE(+Arg) is det.
+%
+%   Writes a single argument (`Arg`) in the source representation.
+%
+%   @arg Arg The argument to be written.
+%
+write_srcE(Arg) :-
+    write(' '),
+    write_src(Arg).
 
+%!  is_loading_file(-File) is semidet.
+%
+%   Checks if a file is currently being loaded or saved.
+%
+%   @arg File The name of the file currently being processed.
+%
+is_loading_file(File) :- nb_current(loading_file, File),File \== [],!.
+is_loading_file(File) :- nb_current(saving_file, File),File \== [].
 
-all_data_once:- is_loading_file(_File),!.
-all_data_once:- nb_setval(saving_file,'whole_metta'),
-  all_data_to(Out),
-  writeln(Out,':- encoding(utf8).'),
-  writeln(Out,':- style_check(-discontiguous).'),
-  flush_output(Out),!,
-  all_data_preds.
-all_data_preds:-
- all_data_to(Out), with_output_to(Out,all_data_preds0),!.
+%!  all_data_once is det.
+%
+%   Initializes and prepares the environment for data operations if not already loading a file.
+%   - Opens the `whole_metta` file for saving.
+%   - Sets up the output streams with UTF-8 encoding and disables discontiguous style checks.
+%   - Lists all data predicates using `all_data_preds/0`.
+%
+all_data_once :-
+    % If already loading a file, do nothing.
+    is_loading_file(_File),
+    !.
+all_data_once :-
+    % Set the saving file as `whole_metta`.
+    nb_setval(saving_file, 'whole_metta'),
+    % Prepare the output stream and write initial configurations.
+    all_data_to(Out),
+    writeln(Out, ':- encoding(utf8).'),
+    writeln(Out, ':- style_check(-discontiguous).'),
+    flush_output(Out),
+    !,
+    all_data_preds.
+
+%!  all_data_preds is det.
+%
+%   Lists all data-related predicates to the current output stream.
+%
+all_data_preds :- all_data_to(Out),with_output_to(Out, all_data_preds0),!.
 all_data_preds.
-all_data_preds0:-
- listing_c(table_n_type/3),
-  listing_c(load_state/2),
-  listing_c(is_loaded_from_file_count/2),
-  listing_c(fb_pred/2),
-  listing_c(fb_arg_type/1),
-  listing_c(fb_arg_table_n/3),
-  listing_c(fb_arg/1),
-  listing_c(done_reading/1),!.
+
+%!  all_data_preds0 is det.
+%
+%   Outputs specific predicate listings for data management and tracking.
+%
+all_data_preds0 :-
+    listing_c(table_n_type/3),
+    listing_c(load_state/2),
+    listing_c(is_loaded_from_file_count/2),
+    listing_c(fb_pred/2),
+    listing_c(fb_arg_type/1),
+    listing_c(fb_arg_table_n/3),
+    listing_c(fb_arg/1),
+    listing_c(done_reading/1),
+    !.
+
+% declare that is_all_data_to/2 may change during execution 
 :- dynamic(is_all_data_to/2).
 
+%!  all_data_to(-Out) is det.
+%
+%   Determines or prepares the output stream (`Out`) for writing data.
+%
+%   This predicate ensures that data is directed to the appropriate output stream, 
+%   depending on the current state of the program. It handles cases such as switching 
+%   between files, closing previous streams, and creating new ones. The stream is 
+%   managed based on the association between the `is_all_data_to/2` and `is_loading_file/1` 
+%   predicates, which track the current output state.
+%
+%   @arg Out The output stream to be used. It can be an existing stream or a new 
+%            stream created based on the current file being loaded.
+all_data_to(Out) :-
+    % Case 1: Use an existing output stream if the current loading file matches the file
+    % associated with the output stream.
+    once((is_all_data_to(File1, Out1), is_loading_file(File2))),
+    File1 == File2, !,
+    Out = Out1.
+all_data_to(Out) :-
+    % Case 2: Switch to a new output file if the loading file has changed.
+    is_all_data_to(File1, Out1),
+    is_loading_file(File2), !,
+    % Close the old output stream.
+    close(Out1),
+    % Construct the new temporary file name and open it for writing.
+    atom_concat(File2, '.metta.datalog.tmp', File2Data),
+    open(File2Data, write, Out2, [alias(all_data), encoding(utf8), lock(write)]),
+    % Update the `is_all_data_to/2` fact to reflect the new file and stream.
+    retract(is_all_data_to(File1, Out1)),
+    assert(is_all_data_to(File2, Out2)),
+    % Log the switch between files for debugging purposes.
+    fbug(all_data_to_switch(File1, File2)), !,
+    Out = Out2.
+all_data_to(Out) :-
+    % Case 3: Reuse an existing output stream if one is available.
+    is_all_data_to(_File1, Out), !.
+all_data_to(Out) :-
+    % Case 4: Create a new output stream if no current stream exists and the system
+    % is in a converting state.
+    is_converting,
+    is_loading_file(File2), !,
+    % Construct the new temporary file name and open it for writing.
+    atom_concat(File2, '.metta.datalog.tmp', File2Data),
+    open(File2Data, write, Out2),
+    % Store the new output stream for future reference.
+    assert(is_all_data_to(File2, Out2)),
+    % Log the creation of the new stream for debugging purposes.
+    fbug(all_data_to(File2)), !,
+    Out = Out2.
 
-all_data_to(Out):- once((is_all_data_to(File1,Out1),is_loading_file(File2))),File1==File2,!, Out = Out1.
-all_data_to(Out):- is_all_data_to(File1,Out1),is_loading_file(File2),!,
-   close(Out1), atom_concat(File2,'.metta.datalog.tmp',File2Data),
-   open(File2Data,write,Out2,[alias(all_data),encoding(utf8),lock(write)]),
-   retract(is_all_data_to(File1,Out1)),assert(is_all_data_to(File2,Out2)),
-   fbug(all_data_to_switch(File1,File2)),!,
-   Out = Out2.
-all_data_to(Out):- is_all_data_to(_File1,Out),!.
-all_data_to(Out):-  is_converting, is_loading_file(File2),!, atom_concat(File2,'.metta.datalog.tmp',File2Data),
-   open(File2Data,write,Out2), assert(is_all_data_to(File2,Out2)),
-   fbug(all_data_to(File2)),!,
-   Out = Out2.
+%!  all_data_done is det.
+%
+%   Finalizes all pending data operations by completing output stream management,
+%   deleting temporary states, and ensuring clean termination of the process.
+%
+%   This predicate handles the final steps in data processing by:
+%   - Running all predicates required to finalize the output data (`all_data_preds/0`).
+%   - Deleting the temporary state associated with `saving_file` using `nb_delete/1`.
+%   - Completing any remaining tasks in the "Metta" workflow with `all_metta_done/0`.
+%   - Closing and cleaning up all active output streams that are tracked by 
+%     `is_all_data_to/2`.
+%
+%   This ensures that all resources are properly closed, leaving no dangling streams
+%   or incomplete states.
+all_data_done :-
+    % Execute all predicates required to finalize the output data.
+    all_data_preds,
+    % Delete the non-backtrackable state associated with 'saving_file'.
+    nb_delete(saving_file),
+    % Finalize any additional tasks related to the "Metta" workflow.
+    all_metta_done,
+    % Close all output streams tracked by `is_all_data_to/2`.
+    forall(
+        retract(is_all_data_to(_, Out)),
+        % Use catch_ignore/1 to suppress any exceptions that might occur during close/1.
+        catch_ignore(close(Out))
+    ).
 
-all_data_done:-
-  all_data_preds,
-  nb_delete(saving_file),
-  all_metta_done,
-  forall(retract(is_all_data_to(_,Out)), catch_ignore(close(Out))).
-
+% This group of directives ensures that the `all_data_done/0` predicate is executed 
+% when the system halts, but only if the condition `is_converting/0` holds true.
+%
 :- if(is_converting).
 :- at_halt(all_data_done).
 :- endif.
 
-listing_c(F/A):-
-   format('~N~q.~n',[:-multifile(F/A)]),
-   format('~q.~n',[:-dynamic(F/A)]),
-   functor(P,F,A),
-   catch(forall(P,format('~q.~n',[P])),E, fbug(caused(F/A,E))).
+%!  listing_c(+Input) is det.
+%
+%   Outputs a Prolog listing for a predicate specified by its functor and arity.
+%
+%   This predicate generates a listing of all clauses for the predicate specified 
+%   by its functor and arity (`Input`) in a format suitable for reloading or debugging. 
+%   It also handles multifile and dynamic declarations and logs any errors that 
+%   occur during the listing process.
+%
+%   @arg Input The predicate specification in the form of `Functor/Arity`. `Functor` 
+%              is the predicate's name, and `Arity` is the number of arguments.
+%
+%   Behavior:
+%   - Outputs the `:- multifile/1` declaration for the predicate to indicate that 
+%     it may be spread across multiple files.
+%   - Outputs the `:- dynamic/1` declaration to indicate that the predicate can 
+%     be modified at runtime.
+%   - Lists all the clauses of the predicate by iterating through its solutions 
+%     and formatting them as Prolog terms.
+%   - If an error occurs during clause listing, it logs the issue with `fbug/1`.
 
+listing_c(F/A) :-
+    % Print the `:- multifile/1` declaration for the predicate.
+    format('~N~q.~n', [:- multifile(F/A)]),
+    % Print the `:- dynamic/1` declaration for the predicate.
+    format('~q.~n', [:- dynamic(F/A)]),
+    % Create a functor P with the specified functor (F) and arity (A).
+    functor(P, F, A),
+    % Attempt to list all clauses of the predicate P. If an error occurs,
+    % log it using `fbug/1`.
+    catch(
+        % Iterate through all clauses of P and format them for output.
+        forall(P, format('~q.~n', [P])),
+        % Capture any exception that occurs during listing.
+        E,
+        % Log the error using `fbug/1`, specifying the problematic predicate.
+        fbug(caused(F/A, E))
+    ).
 
+% 'dynamic' is used to indicate the predicate may be modified at runtime.
 :- dynamic(is_all_metta_to/2).
-all_metta_to(Out):- once((is_all_metta_to(File1,Out1),is_loading_file(File2))),File1==File2,!, Out = Out1.
-all_metta_to(Out):- is_all_metta_to(File1,Out1),is_loading_file(File2),!,
-   close(Out1), atom_concat(File2,'.metta.tmp',File2Data),
-   open(File2Data,write,Out2,[alias(all_metta),encoding(utf8),lock(write)]),
-   retract(is_all_metta_to(File1,Out1)),assert(is_all_metta_to(File2,Out2)),
-   fbug(all_metta_to_switch(File1,File2)),!,
-   Out = Out2.
-all_metta_to(Out):- is_all_metta_to(_File1,Out),!.
-all_metta_to(Out):- is_loading_file(File2),!, atom_concat(File2,'.metta.tmp',File2Data),
-   open(File2Data,write,Out2), assert(is_all_metta_to(File2,Out2)),
-   fbug(all_metta_to(File2)),!,
-   Out = Out2.
 
+%!  all_metta_to(-Out) is det.
+%
+%   Handles the output stream management for processing metta data files.
+%   Ensures the correct output stream (`Out`) is used or switched as necessary
+%   based on the current loading file.
+%
+%   This predicate manages temporary `.metta.tmp` files for output, ensuring they
+%   are properly closed and reopened when switching between files. It also handles
+%   asserting and retracting dynamic facts to keep track of active streams.
+%
+%   @arg Out The output stream that will be used for metta data.
+%
+%   @example
+%   % Use the output stream associated with the current file being processed:
+%   ?- all_metta_to(Out).
+%   Out = <stream_reference>.
+%
+all_metta_to(Out) :-
+    %   If the currently loaded file (`File2`) matches the file associated with the tracked 
+    %   metta output stream (`File1`), reuse the existing output stream (`Out1`) by unifying it 
+    %   with `Out`. This avoids opening a new stream unnecessarily.
+    once((is_all_metta_to(File1, Out1),is_loading_file(File2))),File1 == File2, !,Out = Out1.
+all_metta_to(Out) :-
+    is_all_metta_to(File1, Out1),
+    is_loading_file(File2), !,
+    close(Out1),  % Close the previous stream.
+    atom_concat(File2, '.metta.tmp', File2Data),
+    open(File2Data, write, Out2, [alias(all_metta), encoding(utf8), lock(write)]),
+    % Update dynamic facts to track the new stream.
+    retract(is_all_metta_to(File1, Out1)),
+    assert(is_all_metta_to(File2, Out2)),
+    % Log the switch for debugging purposes.
+    fbug(all_metta_to_switch(File1, File2)), !,
+    Out = Out2.
+all_metta_to(Out) :- is_all_metta_to(_File1, Out), !.
+all_metta_to(Out) :-
+    is_loading_file(File2), !,
+    atom_concat(File2, '.metta.tmp', File2Data),
+    open(File2Data, write, Out2),
+    % Track the newly created stream.
+    assert(is_all_metta_to(File2, Out2)),
+    % Log the new stream for debugging purposes.
+    fbug(all_metta_to(File2)), !,
+    Out = Out2.
+
+%!  all_metta_done is det.
+%
+%   Closes all open output streams associated with metta processing and cleans up
+%   related dynamic facts.
+%
+%   This predicate ensures that any output stream being tracked via the `is_all_metta_to/2`
+%   dynamic fact is safely closed. The `catch_ignore/1` wrapper is used to handle any
+%   exceptions that might occur during the `close/1` operation without interrupting the process.
+%
+%   This is typically called as part of a cleanup routine to release resources.
 all_metta_done:-
+    %   Iterates over all tracked metta output streams (`is_all_metta_to/2` facts), 
+    %   retracts each fact, and safely closes the associated output stream (`Out`).
+    %   The `catch_ignore/1` is used to handle any exceptions during the `close/1` operation 
+    %   to ensure the process continues uninterrupted, even if an error occurs.
     forall(retract(is_all_metta_to(_,Out)), catch_ignore(close(Out))).
 
+%!  loaded_from_file_count(-Count) is det.
+%
+%   Retrieves the current count of files loaded.
+%   The `flag/3` predicate is used to read the value of the `loaded_from_file_count` flag
+%   without modifying it.
+%
+%   @arg Count The current count of files loaded.
+%
+%   @example
+%   % Get the current count of loaded files:
+%   ?- loaded_from_file_count(Count).
+%   Count = 42.
+loaded_from_file_count(X) :- 
+    flag(loaded_from_file_count, X, X).
 
+%!  incr_file_count(-NewCount) is det.
+%
+%   Increments the count of files loaded and updates the count of total loaded symbols
+%   and atoms. This ensures all relevant counters are updated simultaneously.
+%
+%   The `flag/3` predicate is used to atomically increment the counters:
+%   - `loaded_from_file_count`: Number of files loaded.
+%   - `total_loaded_symbols`: Total number of loaded symbols.
+%   - `total_loaded_atoms`: Total number of loaded atoms.
+%
+%   @arg NewCount The updated count of files loaded.
+%
+%   @example
+%   % Increment the file count and retrieve the new count:
+%   ?- incr_file_count(NewCount).
+%   NewCount = 43.
+incr_file_count(X) :- 
+    flag(loaded_from_file_count, X, X + 1),
+    flag(total_loaded_symbols, TA, TA + 1),
+    flag(total_loaded_atoms, TA, TA + 1).
 
+%!  should_cache is semidet.
+%
+%   Determines if caching should occur based on the current count of loaded files.
+%   This predicate fails unless the loaded file count is less than or equal to the
+%   maximum disk cache size (`max_disk_cache`).
+%
+%   The maximum cache size defaults to 1000 if not explicitly provided.
+%
+%   @example
+%   % Check if caching should happen:
+%   ?- should_cache.
+%   false.  % Always fails because of the initial `fail/0`.
+should_cache :- 
+    % Ensure this predicate always fails.
+    fail,  
+    % Retrieve the current count of loaded files.
+    loaded_from_file_count(X),
+    % Check the maximum allowed disk cache size.
+    option_else(max_disk_cache, Num, 1000),
+    X =< Num.
 
+%!  reached_file_max is semidet.
+%
+%   Determines if the maximum allowed file count (`max_per_file`) has been reached.
+%   This predicate fails unless `loaded_from_file_count` exceeds the value specified
+%   in the `max_per_file` option, provided it is neither infinite (`inf`) nor zero.
+%
+%   @example
+%   % Check if the maximum file count is reached:
+%   ?- reached_file_max.
+%   false.
+reached_file_max :- 
+    % Retrieve the maximum allowed file count.
+    option_value(max_per_file, Y), 
+    % Ensure it is finite and non-zero.
+    Y \== inf, Y \== 0, 
+    % Compare the current file count.
+    loaded_from_file_count(X), 
+    X >= Y.
 
-loaded_from_file_count(X):- flag(loaded_from_file_count,X,X).
-incr_file_count(X):- flag(loaded_from_file_count,X,X+1),  flag(total_loaded_symbols,TA,TA+1), flag(total_loaded_atoms,TA,TA+1).
+%!  should_fix_args is semidet.
+%
+%   Determines if arguments should be fixed based on the current sampling condition.
+%   This predicate always fails unless explicitly altered.
+%
+%   @example
+%   % Check if arguments need fixing:
+%   ?- should_fix_args.
+%   false.
+should_fix_args :- 
+    % Ensure the predicate fails.
+    fail,  
+    % Check if sampling should not occur.
+    \+ should_sample.
 
-should_cache:- fail, loaded_from_file_count(X), option_else(max_disk_cache,Num,1000), X=<Num.
-reached_file_max:- option_value(max_per_file,Y),Y\==inf,Y\==0,loaded_from_file_count(X),X>=Y.
-should_fix_args :- fail, \+ should_sample.
-should_sample :- !, fail.
-should_sample :- should_show_data(_),!.
-should_sample :-
-  once(option_value(samples_per_million,Fifty);Fifty=50), loaded_from_file_count(X), Y is X mod 1_000_000,!, Y >= 0, Y =< Fifty,!.
-should_show_data(X):- loaded_from_file_count(X),!,
-  once((X=<13,X>=10); (X>0,(0 is X rem 1_000_000))),
-  format(user_error,'~N',[]),
-  format(user_output,'~N',[]),!,
-  heartbeat.
-should_show_data(X):- nb_current(loading_file,F),F\==[],symbol_concat(_,'.obo',F),
-  loaded_from_file_count(X),Y is X mod 100_000, Y=<15,Y>=10.
+%!  should_sample is semidet.
+%
+%   Determines if sampling should be performed based on various conditions.
+%   The predicate can succeed if specific options or conditions for sampling are met.
+%
+%   @example
+%   % Check if sampling is allowed:
+%   ?- should_sample.
+%   false.  % Due to the first cut-fail combination.
+should_sample :- 
+    !,  
+    % Ensure the predicate fails.
+    fail.
+should_sample :- 
+    % Check if data should be displayed.
+    should_show_data(_), 
+    !.
+should_sample :- 
+    % Retrieve the sampling rate or use a default.
+    once(option_value(samples_per_million, Fifty); Fifty = 50), 
+    % Retrieve the current count of loaded files.
+    loaded_from_file_count(X), 
+    % Calculate the remainder and check conditions.
+    Y is X mod 1_000_000, !, Y >= 0, Y =< Fifty, !.
 
+%!  should_show_data(+X) is semidet.
+%
+%   Determines if data should be displayed based on the current loaded file count (`X`).
+%   The predicate succeeds if specific conditions on `X` are met, such as being within
+%   a certain range or divisible by a specified value.
+%
+%   @arg X The count of loaded files.
+%
+%   @example
+%   % Check if data should be displayed for a given count:
+%   ?- should_show_data(12).
+%   true.
+should_show_data(X) :- 
+    % Retrieve the current file count.
+    loaded_from_file_count(X), 
+    % Ensure this clause succeeds.
+    !,
+    % Check if the file count falls within the desired range.
+    once((X =< 13, X >= 10); (X > 0, (0 is X rem 1_000_000))),
+    % Log an empty line to the error stream.
+    format(user_error, '~N', []),
+    % Log an empty line to the output stream.
+    format(user_output, '~N', []),
+    % Ensure this clause succeeds.
+    !,heartbeat.
+should_show_data(X) :- 
+    % Retrieve the current loading file.
+    nb_current(loading_file, F),
+    % Ensure the loading file is not empty.
+    F \== [], 
+    % Check if the file has an `.obo` extension.
+    symbol_concat(_, '.obo', F),
+    % Retrieve the current file count.
+    loaded_from_file_count(X), 
+    % Calculate the remainder for modulo operation.
+    Y is X mod 100_000, 
+    % Check if the remainder falls within the desired range.
+    Y =< 15, Y >= 10.
 
 %:- current_prolog_flag(libswipl,_)->use_module(library(logicmoo_utils)); true.
-
-
-
-
-
 
 /*
 
@@ -372,12 +977,46 @@ declare -a StringArray=(\
 "fbrf_pmid_pmcid_doi*.tsv.gz")
 */
 
-load_flybase_files:-
-   ftp_data(Dir),
-    with_cwd(Dir,load_flybase_files_ftp).
+%!  load_flybase_files is det.
+%
+%   Loads FlyBase files from a specified FTP directory.
+%
+%   This predicate retrieves the directory path using `ftp_data/1` and then
+%   changes the working directory to this path using `with_cwd/2` to load the files
+%   through `load_flybase_files_ftp/0`.
+%
+%   @example
+%   % Load FlyBase files:
+%   ?- load_flybase_files.
+%   true.
+load_flybase_files :-
+    % Retrieve the FTP directory path.
+    ftp_data(Dir),
+    % Change the working directory and load the files.
+    with_cwd(Dir, load_flybase_files_ftp).
 
-
-
+%!  load_flybase_das_11 is det.
+%
+%   Loads and processes the 11 main data sources (DAS) from FlyBase, including 
+%   JSON and TSV files, which contain various types of biological and genomic data.
+%
+%   This predicate handles data related to ncRNA genes, expanded gene mappings, 
+%   physical interactions, sequence ontology annotations, gene maps, genetic 
+%   and phenotypic interactions, disease models, and human orthologs.
+%
+%   It supports both newer (`genotype_phenotype_data*.tsv`) and older 
+%   (`allele_phenotypic_data*.tsv`) file formats for phenotypic data.
+%
+%   After loading the data, it outputs formatted checkpoints and calls `fb_stats/0`
+%   to generate FlyBase statistics.
+%
+%   @example
+%   % Load all FlyBase DAS files and generate statistics:
+%   ?- load_flybase_das_11.
+%   =================================================================================================
+%   =====================================Das Checkpoint==============================================
+%   =================================================================================================
+%   true.
 load_flybase_das_11:-
   % DAS''s 11 tsv and 1 json file
   load_flybase('./precomputed_files/*/ncRNA_genes_fb_*.json'),
@@ -405,6 +1044,27 @@ load_flybase_das_11:-
   format("~n=================================================================================================~n"),
   !.
 
+%!  load_flybase_files_ftp is det.
+%
+%   Loads FlyBase files from an FTP directory, processing a comprehensive set of data files.
+%
+%   This predicate uses `maplist/2` to iterate through a list of file-loading operations,
+%   including precomputed files for collaborators, alleles, clones, genes, references, and more.
+%   The predicate also calls `load_flybase_das_11/0` for the main DAS data and performs 
+%   additional operations to ensure all required files are loaded.
+%
+%   Special options are applied to certain file-loading operations, such as 
+%   filtering or format changes. After loading the data, formatted checkpoints are 
+%   output, and `fb_stats/0` is called to generate FlyBase statistics.
+%
+%   @example
+%   % Load all FlyBase files from the FTP directory:
+%   ?- load_flybase_files_ftp.
+%   =================================================================================================
+%   ==========================Should be 18 minute Checkpoint=========================================
+%   =================================================================================================
+%   true.
+%
 load_flybase_files_ftp:-
  maplist(must_det_ll,[
   load_flybase('./precomputed_files/collaborators/pmid_fbgn_uniprot*.tsv'),
@@ -460,21 +1120,61 @@ load_flybase_files_ftp:-
   load_fbase_after_17]),
   !.
 
- gene_sequences:-
+ %!  gene_sequences is det.
+%
+%   Loads Drosophila melanogaster gene sequence data, including GFF, FASTA, and GTF files.
+%   This predicate handles loading of the annotation and sequence data from version 6.55.
+%
+%   @example
+%   % Load gene sequence data:
+%   ?- gene_sequences.
+%   true.
+gene_sequences :-
     load_flybase('./dmel_r6.55/gff/dmel-all-r6.55.gff'),
     load_flybase('./dmel_r6.55/fasta/*.fasta'),
-    load_flybase('./dmel_r6.55/gtf/*.gft'),!.
+    load_flybase('./dmel_r6.55/gtf/*.gft'),
+    !.
 
+%!  load_fbase_after_17 is det.
+%
+%   Loads additional FlyBase data that is processed after the initial DAS and other main files.
+%   This includes transposon sequences, ncRNA gene data, and ontology files.
+%
+%   Some parts of this predicate are commented out for future use or as placeholders.
+%
+%   @example
+%   % Load additional FlyBase data:
+%   ?- load_fbase_after_17.
+%   true.
+load_fbase_after_17 :-
+    % load_flybase('./precomputed_files/genes/scRNA-Seq_gene_expression*.tsv'),
+    must_det_ll(load_flybase('./precomputed_files/transposons/transposon_sequence_set.gff*')),
+    load_flybase('./precomputed_files/transposons/transposon_sequence_set.fa'),
+    load_flybase('./precomputed_files/*/ncRNA_genes_fb_*.json'),
+    load_obo_files,
+    % load_flybase_chado,
+    !.
 
-load_fbase_after_17:-
-  %load_flybase('./precomputed_files/genes/scRNA-Seq_gene_expression*.tsv'),
-  must_det_ll(load_flybase('./precomputed_files/transposons/transposon_sequence_set.gff*')),
-  load_flybase('./precomputed_files/transposons/transposon_sequence_set.fa'),
-  load_flybase('./precomputed_files/*/ncRNA_genes_fb_*.json'),
-  load_obo_files,
- %% load_flybase_chado,
-  !.
-
+%!  load_flybase_obo_files is det.
+%
+%   Loads FlyBase ontology files in OBO format, including various biological and 
+%   controlled vocabularies. This predicate also loads SCM files and additional 
+%   precomputed ontology files.
+%
+%   The ontology files include:
+%   - Disease Ontology (doid.obo)
+%   - Fly anatomy and development vocabularies
+%   - FlyBase-controlled and stock vocabularies
+%   - Gene group ontologies
+%   - Gene Ontology (go-basic.obo)
+%   - Image, PSI-MI, and CHEBI slices
+%   - Sequence Ontology (so-simple.obo)
+%
+%   @example
+%   % Load all ontology files:
+%   ?- load_flybase_obo_files.
+%   true.
+%
 load_flybase_obo_files:-
  load_flybase('./data/*/*/*.scm'),
   load_flybase('./precomputed_files/ontologies/doid.obo'),
@@ -491,8 +1191,6 @@ load_flybase_obo_files:-
   load_flybase('./precomputed_files/ontologies/chebi_fb_*.obo'),
   !.
 
-
-
 /*
 :- ensure_loaded('./reqs/obo_core/prolog/obo_core/goslim.pl').
 :- ensure_loaded('./reqs/obo_metadata/prolog/obo_metadata.pl').
@@ -507,8 +1205,8 @@ load_flybase_obo_files:-
 
 937_381_148
 */
-:- ensure_loaded(ext_loader_tsv).
 
+:- ensure_loaded(ext_loader_tsv).
 
 /*
 (load_fb_obo "data/ontologies/so.obo")
@@ -559,6 +1257,27 @@ synonym('SO:0000797',"natural transposable element",'EXACT',[]).
 
 */
 
+%!  load_obo_files is det.
+%
+%   Loads a variety of ontology files in OBO format, including standard ontologies, 
+%   subsets, and legacy cross-product files. The predicate also computes and logs 
+%   statistics for loaded files, such as memory usage, runtime, and atom space.
+%
+%   This predicate supports the following types of OBO files:
+%   - Sequence Ontology (SO) files and their subsets
+%   - Legacy cross-products and their derivatives
+%   - Precomputed ontology files from various FlyBase sources
+%   - CHEBI, GO, PSI-MI, and other domain-specific ontologies
+%
+%   The predicate includes commented-out legacy or alternative loading paths for 
+%   flexibility and future reference. It outputs the loaded file statistics for
+%   further analysis and logs detailed runtime metrics.
+%
+%   @example
+%   % Load all ontology files and print statistics:
+%   ?- load_obo_files.
+%   true.
+%
 load_obo_files:-
   %load_obo('./reqs/obonet/tests/data/?*.obo'),
 
@@ -631,11 +1350,20 @@ load_obo_files:-
 %loaded_from_file(       21, './precomputed_files/ontologies/slice.chebi.obo').
   !.
 
-
-
-
-
-
+%!  load_flybase_chado is det.
+%
+%   Loads data from FlyBase Chado exports, which consist of 359 tables containing 
+%   over 937 million rows. The data is loaded from TSV files located in the 
+%   `./data/tsv_exports/public/` directory.
+%
+%   This predicate uses options to ensure proper handling of headers and limits 
+%   the maximum number of rows per file to 100,000 for efficient processing.
+%
+%   @example
+%   % Load FlyBase Chado data:
+%   ?- load_flybase_chado.
+%   true.
+%
 load_flybase_chado:-  % 359 tables with 937,381,148 rows
 
   with_option([row_1_is_header=true,max_per_file=100_000],load_flybase('./data/tsv_exports/public/*.tsv')).
