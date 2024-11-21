@@ -350,13 +350,13 @@ eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 % =================================================================
 % =================================================================
 
-    %eval_20(Eq,RetType,Depth2,Self,[Qw,X,Y],YO):- Qw == ('=='),!,
-    %  eval_args(X,XX),eval_args(Y,YY), !, as_tf(XX==YY,YO).
+%eval_20(Eq,RetType,Depth2,Self,[Qw,X,Y],YO):- Qw == ('=='),!,
+%  eval_args(X,XX),eval_args(Y,YY), !, as_tf(XX==YY,YO).
 
 
-    eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
-        expand_let_star(Lets,Body,NewLet),!,
-            eval_20(Eq,RetType,Depth,Self,NewLet,RetVal).
+eval_20(Eq,RetType,Depth,Self,['let*',Lets,Body],RetVal):-
+    expand_let_star(Lets,Body,NewLet),!,
+        eval_20(Eq,RetType,Depth,Self,NewLet,RetVal).
 
 
 
@@ -400,6 +400,17 @@ eval_20(Eq,RetType,Depth,Self,['chain',Atom,Var|Y],Res):-  !,  eval_args(Eq,_Ret
 %eval_20(Eq,RetType,Depth,Self,['chain-body',X],Res):- !,eval_args(Eq,RetType,Depth,Self,X,Res).
 %eval_20(Eq,RetType,Depth,Self,['chain-body',X|Y],Res):-  !, eval_args(Eq,RetType,Depth,Self,X,_), eval_args(Eq,RetType,Depth,Self,['chain-body'|Y],Res).
 
+% simple version of Minimal MeTTa's `evalc` function
+eval_20(Eq,RetType,Depth,Self,['evalc',Eval,Other],Result):-!,
+    into_space(Depth,Self,Other,Space),
+    eval_args_once(Eq,RetType,Depth,Space,Eval,Result).
+
+
+% @TODO needs to only reduce one steps
+eval_args_once(Eq,RetType,Depth,Space,Eval,Result):-
+   eval_20(Eq,RetType,Depth,Space,Eval,Result)*->true;(Eval=Result).
+
+
 eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
 
@@ -412,7 +423,7 @@ eval_20(Eq,RetType,Depth,Self,['eval-for',_Why,Type,X],Res):- !,
     ignore(Type=RetType),
     eval_args(Eq,Type,Depth,Self,X, Res).
 
-% simple version of Minimal MeTTa's `metta` function
+% simple version of Minimal MeTTa's `metta` function (we dont call evalc/2 as it will be corrected to only reduce once)
 eval_20(Eq,_Maybe_TODO_RetType,Depth,Self,['metta',Eval,RetType,Other],Result):-!,
     into_space(Depth,Self,Other,Space),
     eval_args(Eq,RetType,Depth,Space,Eval,Result),
