@@ -33,3 +33,10 @@
 !(add-atom &new-space (= (foo $x) (+ $x 1)))
 ; Test that (foo 1) now evaluates to both 2 and 3 in &new-space
 !(assertEqualToResult (metta (foo 1) Number &new-space) (2 3))
+
+; Remove the self context from &new-space
+!(remove-atom &new-space &self)
+; Test that after removal, (foo 1) evaluates _ONLY_ to 2 in &new-space
+!(assertEqualToResult (metta (foo 1) Number &new-space) (2))
+; Test that matching 'likes' now returns only (John Jane)
+!(assertEqualToResult (metta (match &self (likes $x $y) ($x $y)) Atom &new-space) ((John Jane)))
