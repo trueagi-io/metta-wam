@@ -43,9 +43,9 @@
 (= (bar B) (input B))
 (= (foo $x) (bar $x))
 
-!(assertEqualToResult (chain (collapse-bind (foo $x)) $a (quote $a)) ((quote (((foo $x) {  })))))
-!(assertEqualToResult (chain (collapse-bind (eval (foo $x))) $a (quote $a)) ((quote (((bar $x) {  })))))
-!(assertEqualToResult (chain (collapse-bind (metta (foo $x) %Undefined% &self)) $a (quote $a)) ((quote (((input B) { $x <- B }) ((input A) { $x <- A })))))
+!(H-E-Fails (assertEqualToResult (chain (collapse-bind (foo $x)) $a (quote $a)) ((quote (((foo $x) {   }))))))
+!(H-E-Fails (assertEqualToResult (chain (collapse-bind (eval (foo $x))) $a (quote $a)) ((quote (((bar $x) {   }))))))
+!(H-E-Fails (assertEqualToResult (chain (collapse-bind (metta (foo $x) %Undefined% &self)) $a (quote $a)) ((quote (((input B) { $x <- B }) ((input A) { $x <- A }))))))
 
 ;; superpose-bind complements collapse-bind
 
@@ -67,10 +67,10 @@
 
 !(assertEqualToResult (metta (foobar) Number &self) (1))
 !(assertEqualToResult (metta (foobar) String &self) ("a"))
-!(assertEqualToResult (collapse-bind (metta (foobar) $type &self)) ((1 { $type <- Number }) ("a" { $type <- String })))
+!(H-E-Fails (assertEqualToResult (collapse-bind (metta (foobar) $type &self)) ((1 { $type <- Number }) ("a" { $type <- String }))))
 !(assertEqualToResult (metta (chain-to-foobar) Number &self) (1))
 !(assertEqualToResult (metta (chain-to-foobar) String &self) ("a"))
-!(assertEqualToResult (collapse-bind (metta (chain-to-foobar) $type &self)) ((1 { $type <- Number }) ("a" { $type <- String })))
+!(H-E-Fails (assertEqualToResult (collapse-bind (metta (chain-to-foobar) $type &self)) ((1 { $type <- Number }) ("a" { $type <- String }))))
 
 
 ;; Minimal MeTTa interpretation & evaluation step

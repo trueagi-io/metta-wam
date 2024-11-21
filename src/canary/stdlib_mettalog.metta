@@ -271,6 +271,15 @@
 (: eval (-> Atom Atom))
 (iz eval Builtin)
 
+(iz eval MinimalMeTTa)
+(@doc evalc
+  (@desc "Evaluates input atom, makes one step of the evaluation")
+  (@params (
+    (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")
+    (@param "Space to evaluate atom in its context")))
+  (@return "Result of evaluation"))
+(: evalc (-> Atom Grounded Atom))
+
 (iz chain MinimalMeTTa)
 (@doc chain
   (@desc "Evaluates first argument Atom, binds it to the Variable (second argument) and then evaluates third argument Template with Variable substituted in. When evaluation of the first Atom brings more than a single result, chain returns one instance of the Template expression for each result. The first argument Atom is only evaluated if it is part of the Minimal MeTTa specification; evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
