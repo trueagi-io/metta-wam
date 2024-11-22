@@ -72,7 +72,7 @@
 %:- ensure_loaded(metta_reader).
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
-:- ensure_loaded(metta_compiler_stdlib).
+:- ensure_loaded(metta_compiler_lib).
 
 % ==============================
 % MeTTa to Prolog transpilation (which uses the Host SWI-Prolog compiler)
