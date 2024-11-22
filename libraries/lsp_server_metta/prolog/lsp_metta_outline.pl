@@ -1,11 +1,11 @@
 %:- module(lsp_metta_outline, [
 %                        xref_document_symbols/2,
 %                        xref_metta_source/1]).
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
-:- dynamic(gave_document_symbols/2).
-:- retractall(gave_document_symbols(_, _)). % when we reload this file
-xref_document_symbols(Doc, Symbols):- debugging(optimize(no_cache)),gave_document_symbols(Doc, Symbols),Symbols\==[],!.
+:- dynamic(lsp_cache:gave_document_symbols/2).
+:- retractall(lsp_cache:gave_document_symbols(_, _)). % when we reload this file
+xref_document_symbols(Doc, Symbols):- debugging(optimize(no_cache)),lsp_cache:gave_document_symbols(Doc, Symbols),Symbols\==[],!.
 xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
     xref_metta_source(Doc),
     maybe_doc_path(Doc,Path),!,
@@ -22,8 +22,8 @@ xref_document_symbols(Doc, Symbols):- %   sample_outline_test(SS),
                         range: Location }}
          ),
          Symbols),
-    retractall(gave_document_symbols(Doc, _)),
-    asserta(gave_document_symbols(Doc, Symbols)).
+    retractall(lsp_cache:gave_document_symbols(Doc, _)),
+    asserta(lsp_cache:gave_document_symbols(Doc, Symbols)).
 
 xref_document_symbol(Doc,  Outline, KindNumber, StartEnd, Detail):- maybe_doc_path(Doc,Path),!,xref_document_symbol(Path, Outline, KindNumber, StartEnd, Detail).
 xref_document_symbol(Path, Path, 1, range(line_char(0,0), line_char(1000000,0)),Path).
@@ -51,7 +51,7 @@ d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succl(Nth,End), out
 % Douglas' file_buffer
 xref_document_symbol_fb(Doc, PrettyString, KindNumber, Range, InfoString):-
    doc_path(Doc,Path),
-   metta_file_buffer(N,_Ord, Info, What, VL, Path, Range),
+   user:metta_file_buffer(N,_Ord, Info, What, VL, Path, Range),
    (N > 0 -> interesting_sub_item(N, What) ; true),
    ((Info = index(TypeName,_Type)) -> true;(Info=TypeName,Outline=What)),
 

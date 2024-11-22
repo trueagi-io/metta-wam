@@ -541,7 +541,7 @@ format_value_list([H|T], Formatted) :-
 
 
 
-%fbugio(TF,P):-!, ignore(( TF,!,wdmsg(fbug(P)))).
+%fbugio(TF,P):-!, ignore(( TF,!,write_src_uo(fbug(P)))).
 %fbugio(_,_):- is_compatio,!.
 fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
 fbugio(IO):-fbugio(true,IO).
@@ -1417,11 +1417,11 @@ should_inherit_from_corelib(_):- using_all_spaces,!.
 should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
 should_inherit_from_corelib([H|_]):- H == '@doc', !.
 should_inherit_from_corelib([H,A|T]):- fail,
-  H == '=',wdmsg(try([H,A|T])),!,is_list(A),
+  H == '=',write_src_uo(try([H,A|T])),!,is_list(A),
   A=[F|_],nonvar(F), F \==':',
   \+ metta_atom_asserted('&self',[:,F|_]),
   % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
-  wdmsg([H,A|T]).
+  write_src_uo([H,A|T]).
 
 /*
 should_inherit_op_from_corelib('=').
@@ -2186,7 +2186,7 @@ nts1:- !.
 
 nts0:-  redefine_system_predicate(system:notrace/0),
   abolish(system:notrace/0),
-  asserta((system:notrace:- wdmsg(notrace))).
+  asserta((system:notrace:- write_src_uo(notrace))).
 %:- nts0.
 
 override_portray:-
@@ -2229,7 +2229,7 @@ fix_message_hook:-
 :- initialization(use_corelib_file).
 
 immediate_ignore:- ignore(((
-   %wdmsg(init_prog),
+   %write_src_uo(init_prog),
    use_corelib_file,
    (is_testing -> UNIT_TEST=true; UNIT_TEST=false),
    set_is_unit_test(UNIT_TEST),

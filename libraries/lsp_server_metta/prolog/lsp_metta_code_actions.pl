@@ -73,7 +73,7 @@
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
     clause(handle_code_action_msg(Method, Msg, Result), Body), !,
-    must_det_ll(Body).
+    call(Body).
 
 :- discontiguous(handle_code_action_msg/3).
 :- discontiguous(lsp_hooks:compute_code_action/3).
@@ -90,10 +90,10 @@ lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
 % These helpers are used across different handlers.
 safe_clause_call(Head):- clause(Head,Body), catch(Body,_,true).
 
-must_succeed(G):- call(G)*->true;(wdmsg(failed_succeed(G)),fail).
+must_succeed(G):- call(G)*->true;fail.
 
 must_succeed1((A,B)):- !, must_succeed1(A),must_succeed1(B),!.
-must_succeed1(G):- call(G)->true;(wdmsg(failed_succeed(G)),throw(failed_succeed(G)),fail).
+must_succeed1(G):- call(G)->true;(throw(failed_succeed(G)),fail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request
@@ -243,18 +243,16 @@ lsp_hooks:compute_code_action(Uri, Range, MettaFileAction) :-
 
 % lsp_hooks:exec_code_action/3 for Load Metta Code
 lsp_hooks:exec_code_action("load_metta", [Code, Range, Uri], ExecutionResult) :-
-    load_metta_code(+, Uri, Code, ExecutionResult),
-    report_diagnostics(Uri, Range, ExecutionResult).
+    must_succeed1(load_metta_code(+, Uri, Code, ExecutionResult)), !,
+    must_succeed1(report_diagnostics(Uri, Range, ExecutionResult)).
 
 % Load/Evaluate Metta Code
 load_metta_code(For, Uri, Code, Result) :-
     once(maybe_parse_sexpr_metta1(Code, Parsed)),
-    Code \=@= Parsed,
-    !,
+    Code \=@= Parsed, !,
     load_metta_code(For, Uri, Parsed, Result).
 load_metta_code(For, Uri, Code, Result) :-
-    maybe_doc_path(Uri, Path),
-    !,
+    maybe_doc_path(Uri, Path), !,
     load_metta_code(For, Path, Code, Result).
 % Load/Execute the form and generate the output using do_metta/5.
 load_metta_code(For, Path, Code, Result) :-
@@ -324,39 +322,65 @@ lsp_hooks:compute_code_action(Uri, _Range, FirstAction) :-
 % lsp_hooks:exec_code_action/3 for Run All Tests
 lsp_hooks:exec_code_action("run_all_tests", [Uri], Summary) :- !, run_all_tests(Uri, Summary).
 
+
 % Run All Tests Implementation
 run_all_tests(Uri, Summary) :-
+    xref_reload_source(Uri),
     doc_path(Uri, Path),
+    loonit_reset,
     Lvl = 0,
     !,
-    findall(Diagnostic,
-        (   metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
-            test_metta_file_buffer(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, Diagnostic)
-        ),
-        Diagnostics
-    ),
+    locally(nb_setval(loading_file, Path),
+      findall(Diagnostic,
+        (   user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
+            test_metta_file_buffer_diag(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, Diagnostic)),
+        Diagnostics)),
     publish_diagnostics(Uri, Diagnostics, _Version, _Options),
-    maplist(=, [Total, PassCount, FailCount, ErrorCount], [6, 3, 2, 1]),  % Placeholder counts
+    get_last_test_summary(Summary).
+
+get_last_test_summary(Summary):-
+    flag(loonit_failure, FailCount, FailCount),
+    flag(loonit_success, PassCount, PassCount),
+    flag(loonit_error, ErrorCount, ErrorCount),
+    Total is PassCount+FailCount+ErrorCount,
     % Format the test summary
     sformat(Summary, "Total: ~d\nPassed: ~d\nFailed: ~d\nErrors: ~d",
         [Total, PassCount, FailCount, ErrorCount]).
 
-% Test Metta File Buffer
-test_metta_file_buffer(_Uri, _Lvl, _Ord, _Kind, What, VL, Path, BRange, Diagnostic) :-
-    into_json_range(BRange, Range),
-    maybe_name_vars(VL),
-    current_self(Self),
-    once(with_answer_output(do_metta(file(Path), +, Self, What, _Out), ExecutionResult)),
-    wots(Src, write_src(What)),
+test_metta_file_buffer_diag(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, Diagnostic) :-
+    into_json_range(BRange, Range), !,
+    test_metta_file_buffer(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, Message, Info),
     Diagnostic = _{
         range: Range,
-        severity: 3,  % Information severity
-        code: Src,
-        source: "MeTTa LSP",
-        message: ExecutionResult
-    }.
+        severity: Info,  % Information severity
+        % code: Src,
+        source: "metta-lsp",
+        message: Message}.
 
-% The publish_diagnostics/4 predicate would be defined elsewhere.
+% Test Metta File Buffer
+test_metta_file_buffer(_Uri,_Lvl,_Ord,_Kind, What, _VL,_Path,_BRange, Cmt,     hint) :- What = '$COMMENT'(Cmt,_,_),!.
+test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, Info):-
+    maybe_name_vars(VL),
+    current_self(Self),
+    wots(Src, write_src(What)),
+    wots(Str, with_answer_output(do_metta(file(Path), +, Self, What, Out), ExecutionResult)),
+    ignore(Str=''),
+    sformat(Message,'~w ~w ~w ~w', [Str, ExecutionResult, Src, last(Kind)=Out]),
+    info_type(Message,Info), !.
+test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, error):-
+    maybe_name_vars(VL),
+    wots(Src, write_src(What)),!,
+    sformat(Message,'Src: ', [Src]).
+
+
+string_contains1(Atom1, SubAtom) :- sub_string(Atom1, _Before, _, _After, SubAtom).
+
+info_type(SExecutionResult,info):- string_contains1(SExecutionResult,'loonit_success'),!.
+info_type(SExecutionResult,warning):- string_contains1(SExecutionResult,'loonit_'),!.
+info_type(SExecutionResult,error):- string_contains1(SExecutionResult,'exeception'),!.
+info_type(_SExecutionResult,hint).
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Lens Implementations
@@ -377,7 +401,7 @@ lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
 
 compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
     Lvl = 0,
-    metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
+    user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
     compute_each_buffer_lens(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, CodeLens).
 
 compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens) :-
@@ -387,11 +411,15 @@ compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLen
     into_json_range(BRange, Range),
     maybe_name_vars(VL),
     wots(Title, (write("Run "), nop(write_src(Kind)))),
-    wots(Src, write_src(What)),
-    CodeLens = _{
+    wots(Src, write_src(What)), !,
+    (CodeLens = _{
         range: Range,
         command: _{title: Title, command: "load_metta", arguments: [Src, Range, Uri]}
-    }.
+    };
+    CodeLens = _{
+        range: Range,
+        command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}
+    }).
 
 compute_each_buffer_lens(Uri, Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens) :- fail,
     Lvl = 0,
@@ -451,7 +479,54 @@ symbol_reference_locations(Symbol, Locations) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle Execute Command
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Handle Execute Command
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Implement handle_execute_command/2
+handle_execute_command(Msg, Response) :-
+    % Extract parameters from the message
+    _{id: Id, params: Params} :< Msg,
+    _{command: Command, arguments: Arguments} :< Params,
+    % Look up the clause for lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult)
+    HeadPattern = lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult),
+    (   clause(HeadPattern, Body) ->
+        (   arguments_match(ExpectedArguments, Arguments) ->
+            % Proceed to execute the command within catch block
+            catch(
+                ( call(Body)
+                ->  (   % Execution succeeded without throwing an error or failing
+                        send_feedback_message(ExecutionResult, info),
+                        Response = _{id: Id, result: ExecutionResult}
+                    )
+                ;   (   % Execution failed (Body failed without exception)
+                        format(string(ErrorMessage), "Failed ~q:~q ~q", [Command, ExpectedArguments, Body]),
+                        send_feedback_message(ErrorMessage, warning),
+                        Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
+                    )
+                ),
+                Error,
+                % Handle errors that occur during execution
+                (   format(string(ErrorMessage), "Error ~w ~q:~q", [Error, Command, Arguments]),
+                    send_feedback_message(ErrorMessage, warning),
+                    Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
+                )
+            )
+        ;   % Argument mismatch
+            (   format(string(ErrorMessage),
+                    "Argument mismatch ~q:~q Expected ~w",
+                    [Command, Arguments, ExpectedArguments]),
+                send_feedback_message(ErrorMessage, warning),
+                Response = _{id: Id, error: _{code: -32602, message: ErrorMessage}}
+            )
+        )
+    ;   % Command not recognized
+        (   format(string(ErrorMessage), "Command not recognized: ~q: ~q", [Command, Arguments]),
+            send_feedback_message(ErrorMessage, warning),
+            Response = _{id: Id, error: _{code: -32601, message: ErrorMessage}}
+        )
+    ).
+
+/*
 % Implement handle_execute_command/2
 handle_execute_command(Msg, Response) :-
     % Extract parameters from the message
@@ -498,6 +573,7 @@ handle_execute_command(Msg, Response) :-
             Response = _{id: Id, error: _{code: -32601, message: ErrorMessage}}
         )
     ).
+*/
 
 % Helper predicate to check if provided arguments match the expected pattern
 arguments_match(ExpectedArguments, ProvidedArguments) :-
@@ -621,7 +697,7 @@ format_reference_entry(Location, Formatted) :-
 % Helper to find symbol reference locations
 symbol_reference_uri(Symbol, Location) :-
     % Retrieve symbol's information including file path and range
-    metta_file_buffer(_Lvl, _Ord, _Kind, Symbol, _VL, Path, Range),
+    user:metta_file_buffer(_Lvl, _Ord, _Kind, Symbol, _VL, Path, Range),
     path_doc(Path, Uri),               % Convert file path to URI
     into_json_range(Range, JRange),     % Convert range to JSON-compatible range format
     Location = _{

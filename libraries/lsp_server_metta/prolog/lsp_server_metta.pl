@@ -1,4 +1,4 @@
-﻿:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3, debug_lsp/2, first_dict_key/3 ]).
+:- module(lsp_server_metta, [main/0, send_client_message/1, debug_lsp/3, debug_lsp/2, first_dict_key/3,  catch_with_backtrace/1, job_info/0, debug_ide/0 ]).
 /** <module> LSP Server
 
 The main entry point for the Language Server implementation with dynamic handling based on max threads.
@@ -76,6 +76,10 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- dynamic(lsp_hooks:handle_msg_hook/3).
 :- discontiguous(lsp_hooks:handle_msg_hook/3).
 
+debug_ide:-
+   prolog_ide(debug_monitor),
+   prolog_ide(thread_monitor),!.
+
 
 % Main entry point
 main :-
@@ -86,6 +90,8 @@ main :-
    nodebug(lsp(_)), % Everything
     %prolog_ide(debug_monitor),
     %debug(lsp(low)),
+    %debug(lsp(thread_monitor)),
+    %debug(lsp(debug_window)),
     debug(lsp(main)),
     debug(lsp(errors)),
     debug(lsp(threads)),
@@ -102,7 +108,8 @@ start([stdio]) :- !,
     debug_lsp(main, "Starting stdio client", []),
     stdio_server.
 start(Args) :-
-    debug_lsp(main, "Unknown args ~w", [Args]).
+    debug_lsp(main, "Unknown args ~w", [Args]),
+    stdio_server.
 
 :- dynamic(lsp_hooks:is_lsp_output_stream/1).
 :- volatile(lsp_hooks:is_lsp_output_stream/1).
@@ -122,7 +129,8 @@ stdio_server :-
     %stdio_handler_io(In, Out). %(might use this one later)
     asserta(lsp_hooks:is_lsp_output_stream(Out)),
     stream_property(StdErr,file_no(2)),
-    set_system_IO(In,Out,StdErr), % ensure we are talking over stdin/stdout
+    %open('/dev/null',read,NullIn,[]),
+    %set_system_IO(In,Out,StdErr), % ensure we are talking over stdin/stderr
     set_prolog_IO(In,StdErr,StdErr), % redirect **accidental** writes to stdout to stderr instead
     stdio_handler(In, Out).
 
@@ -185,8 +193,8 @@ handle_parsed_request(Out, Req) :-
     atomic_list_concat([MethodAS,FileUriAS,''],'_',Stem),
     (number(RequestId) -> JobId = RequestId ; gensym(Stem, JobId)),
     get_time(Time), asserta(post_time(JobId, Time)),
-    (number(RequestId)-> ( assert(id_info(RequestId,JobInfo))) ; true),
     sformat(JobInfo, "JID: ~w ~q=~q", [JobId, Method, FileUri]),
+    (number(RequestId)-> ( assert(id_info(RequestId,JobInfo))) ; true),
     % Handle the request based on threading mode or immediacy
     ((lsp_worker_threads(0) ; immediate_method(Method)) ->
         (handle_request(JobId, JobInfo, Out, Req))
@@ -210,6 +218,13 @@ post_job(QueueId, Task) :-
         thread_send_message(QueueId, JobId),
         nop(debug_lsp(threads, "Posted job with ID ~w", [JobId]))
     )),!.
+
+
+job_info:-
+  listing(id_info/2),
+  listing(job_data/2),
+  listing(id_was_canceled),
+  listing(task_thread/2).
 
 % New dynamic predicate to store job data in the database
 :- dynamic job_data/2.
@@ -566,7 +581,7 @@ server_capabilities(
 
         5. willSaveWaitUntil: true
            - Enables `willSaveWaitUntil` requests, which allow the server to make edits on the document before it is saved.
-           - This can be useful for pre-save formatting or other modifications to ensure the document is in a desired state before it’s saved.
+           - This can be useful for pre-save formatting or other modifications to ensure the document is in a desired state before it's saved.
 
         Summary:
         - This configuration reduces data by using incremental changes (`change: 2`) and disabling full text on save (`includeText: false`).
@@ -633,6 +648,7 @@ server_capabilities(
 :- discontiguous(handle_msg/3).
 
 
+
 % recompile/update code for the lsp server
 handle_msg( _, _, _) :- notrace(catch(make,_,true)),fail.
 
@@ -671,7 +687,8 @@ handle_msg("initialize", Msg,
     ( Params.rootUri \== null
     -> xref_metta_source(Params.rootUri)
     ; true ),
-    assert(user:client_capabilities(Params)),
+    first_dict_key( capabilities, Params, ClientCapabilities),
+    save_json(client_capabilities,ClientCapabilities),
     server_capabilities(ServerCapabilities).
 
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
@@ -868,7 +885,8 @@ handle_msg("textDocument/didClose", Msg, false) :-
     retractall(in_editor(Path)).
 
 handle_msg("initialized", Msg, false) :- !,
-    debug_lsp(main, "initialized ~w", [Msg]).
+    debug_lsp(main, "initialized ~w", [Msg]),
+    fetch_workspace_configuration.
 
 handle_msg("$/setTrace", _Msg, false):-
    fetch_workspace_configuration.
@@ -882,7 +900,7 @@ handle_msg("$/cancelRequest", Msg, false) :-
 % Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
     debug_lsp(main, "Received exit, shutting down", []),
-    halt.
+    halt(7).
 
 
 % Handle the 'workspace/symbol' Request

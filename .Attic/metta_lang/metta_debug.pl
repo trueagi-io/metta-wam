@@ -52,12 +52,12 @@
  */
 
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: Provides predicates useful for debugging, such as tracing logical derivations 
+%*********************************************************************************************
+% PROGRAM FUNCTION: Provides predicates useful for debugging, such as tracing logical derivations
 % and interactively exploring justifications for derived facts.
 %*********************************************************************************************
 
-% When the the `metta_interp` library is loaded, it makes sure the rest of the files are loaded in 
+% When the the `metta_interp` library is loaded, it makes sure the rest of the files are loaded in
 % the correct order independent of which file is loaded first and the needed predicates and ops are defined.
 :- ensure_loaded(metta_interp).
 
@@ -133,11 +133,11 @@ debugging_metta(G) :- notrace((is_debugging((eval)) -> ignore(G); true)).
 %
 %   This predicate calculates a depth value to use based on the input depth `InDepth`.
 %   The depth to use is computed by taking the absolute value of `InDepth` and performing
-%   a modulo 50 operation. If the modulo operation fails or `InDepth` is invalid, it defaults 
+%   a modulo 50 operation. If the modulo operation fails or `InDepth` is invalid, it defaults
 %   to a depth of 5.
 %
 %   @arg InDepth The input depth, which can be any integer.
-%   @arg UseThis The actual depth to use, calculated as `InDepth mod 50`. If no valid 
+%   @arg UseThis The actual depth to use, calculated as `InDepth mod 50`. If no valid
 %        result is computed, it defaults to 5.
 %
 %   @example
@@ -161,7 +161,7 @@ depth_to_use(_InDepth, 5). % Default to depth 5 if other cases fail.
 %
 %   This predicate performs a goal `Goal` with output indentation determined by the given `Depth`.
 %   The actual indentation is computed using `depth_to_use/2`, which ensures the depth is adjusted
-%   by a modulo operation. It then executes the `Goal` and manages indentation before and after 
+%   by a modulo operation. It then executes the `Goal` and manages indentation before and after
 %   the execution.
 %
 %   @arg Depth The depth value used to calculate the amount of indentation.
@@ -183,7 +183,7 @@ w_indent(Depth, Goal) :-
 %   Helper predicate to create indentation based on depth.
 %
 %   This predicate generates indentation by writing spaces for the specified depth `UseThis`.
-%   It writes two spaces for each unit of depth, followed by a delimiter (`;;`). Any errors 
+%   It writes two spaces for each unit of depth, followed by a delimiter (`;;`). Any errors
 %   during the indentation process are safely caught and ignored.
 %
 %   @arg UseThis The number of indentation units (each unit results in two spaces).
@@ -195,7 +195,7 @@ w_indent(Depth, Goal) :-
 %
 i_this(UseThis) :-
     ignore(catch(forall(between(1, UseThis, _), write('  ')), _, true)), % Write indentation spaces.
-    write(';;'). % End with a delimiter 
+    write(';;'). % End with a delimiter
 
 %!  indentq2(+Depth, +Term) is det.
 %
@@ -237,7 +237,7 @@ indentq2(_Depth, Term) :-
 %   ?- print_padded(5, 10, 'Result').
 %   '          |   |   |    Result'
 %
-print_padded(_DR, _EX, _AR) :- 
+print_padded(_DR, _EX, _AR) :-
     is_fast_mode, !. % Skip printing in fast mode.
 print_padded(EX, DR, AR) :-
     integer(EX), integer(DR), EX > 0, DR > 0,
@@ -258,8 +258,8 @@ print_padded(EX, DR, AR) :-
 %
 %   Print a message with depth-based indentation and a specified prefix.
 %
-%   This predicate prints a message `Message` with indentation determined by `Depth`. 
-%   It includes a prefix `Prefix4` and adjusts the indentation and format based on 
+%   This predicate prints a message `Message` with indentation determined by `Depth`.
+%   It includes a prefix `Prefix4` and adjusts the indentation and format based on
 %   internal flags and modulo operations. If `is_fast_mode/0` is active, the printing is skipped.
 %
 %   @arg Depth   The depth used to calculate indentation.
@@ -275,7 +275,7 @@ print_padded(EX, DR, AR) :-
 %   ?- is_fast_mode, indentq_d(10, 'INFO:', 'Processing started').
 %   % No output is produced.
 %
-indentq_d(_DR, _EX, _AR) :- 
+indentq_d(_DR, _EX, _AR) :-
     is_fast_mode, !. % Skip printing in fast mode.
 indentq_d(Depth, Prefix4, Message) :-
     flag(eval_num, EX0, EX0), % Get the current evaluation number.
@@ -287,9 +287,9 @@ indentq_d(Depth, Prefix4, Message) :-
 %
 %   Print a term with depth-based and EX-based indentation.
 %
-%   This predicate prints a `Term` with indentation based on the values of `DR` (depth) 
-%   and `EX` (a component used for formatting). The `AR` component is included in the 
-%   formatting as well. Special cases are handled for return values, list elements, and 
+%   This predicate prints a `Term` with indentation based on the values of `DR` (depth)
+%   and `EX` (a component used for formatting). The `AR` component is included in the
+%   formatting as well. Special cases are handled for return values, list elements, and
 %   structured terms. If `is_fast_mode/0` is enabled, the predicate skips printing.
 %
 %   @arg DR   The depth used to determine the indentation.
@@ -306,7 +306,7 @@ indentq_d(Depth, Prefix4, Message) :-
 %   ?- is_fast_mode, indentq(10, 5, 'INFO:', 'processing').
 %   % No output is produced.
 %
-indentq(_DR, _EX, _AR, _Term) :- 
+indentq(_DR, _EX, _AR, _Term) :-
     is_fast_mode, !. % Skip printing in fast mode.
 indentq(DR, EX, AR, retval(Term)) :-
     nonvar(Term), !,
@@ -324,10 +324,10 @@ indentq(DR, EX, AR, Term) :-
 %
 %   Print a term with depth-based indentation, including start and end strings.
 %
-%   This predicate prints a `Term` with indentation based on the depth `DR` and formatting components 
-%   `EX` and `AR`. The `S` argument provides a start string to print before the term, and `E` provides 
-%   an end string to print after the term. The predicate formats the term, converts any newlines to 
-%   spaces, and then prints the formatted string. The output is managed within a `setup_call_cleanup/3` 
+%   This predicate prints a `Term` with indentation based on the depth `DR` and formatting components
+%   `EX` and `AR`. The `S` argument provides a start string to print before the term, and `E` provides
+%   an end string to print after the term. The predicate formats the term, converts any newlines to
+%   spaces, and then prints the formatted string. The output is managed within a `setup_call_cleanup/3`
 %   block to ensure clean execution.
 %
 %   @arg DR   The depth used to determine the indentation.
@@ -357,8 +357,8 @@ indentq(DR, EX, AR, S, Term, E) :-
 %
 %   Convert newlines in a string to spaces.
 %
-%   This predicate takes an input string `Str` that may contain newlines and converts 
-%   all newlines to spaces. It first splits the string at newline characters (`\n`), 
+%   This predicate takes an input string `Str` that may contain newlines and converts
+%   all newlines to spaces. It first splits the string at newline characters (`\n`),
 %   and then joins the resulting parts with spaces, producing the output string `SStr`.
 %
 %   @arg Str  The input string that contains newlines.
@@ -377,10 +377,10 @@ newlines_to_spaces(Str, SStr) :-
 %
 %   Print a term with padding and depth-based indentation.
 %
-%   This predicate prints a `Term` with depth-based indentation determined by `DR` and 
-%   includes padding and formatting based on `EX` and `AR`. The `S` argument specifies 
-%   a start string to print before the term, and `E` specifies an end string to print 
-%   after the term. The term is printed using `write_src/1`, and the indentation is 
+%   This predicate prints a `Term` with depth-based indentation determined by `DR` and
+%   includes padding and formatting based on `EX` and `AR`. The `S` argument specifies
+%   a start string to print before the term, and `E` specifies an end string to print
+%   after the term. The term is printed using `write_src/1`, and the indentation is
 %   controlled by `with_indents/2`.
 %
 %   @arg DR   The depth used to determine the indentation.
@@ -407,7 +407,7 @@ indentq0(DR, EX, AR, S, Term, E) :-
 %
 %   Reset evaluation-related flags.
 %
-%   This predicate resets the `eval_num` and `trace_output_len` flags to zero. These flags are 
+%   This predicate resets the `eval_num` and `trace_output_len` flags to zero. These flags are
 %   typically used for tracking evaluation state and trace output length during program execution.
 %
 %   @example
@@ -422,7 +422,7 @@ reset_eval_num :-
 %
 %   Reset only the `eval_num` flag.
 %
-%   This predicate resets the `eval_num` flag to zero, which is used for tracking evaluation state. 
+%   This predicate resets the `eval_num` flag to zero, which is used for tracking evaluation state.
 %   It does not affect any other flags, such as `trace_output_len`.
 %
 %   @example
@@ -436,8 +436,8 @@ reset_only_eval_num :-
 %
 %   Check if the system is in fast mode.
 %
-%   This predicate succeeds if the system is in "fast mode", a state where certain operations, 
-%   such as debugging, are bypassed. It currently fails by default but can be modified to 
+%   This predicate succeeds if the system is in "fast mode", a state where certain operations,
+%   such as debugging, are bypassed. It currently fails by default but can be modified to
 %   enable fast mode checks based on specific conditions.
 %
 %   @example
@@ -460,7 +460,7 @@ is_fast_mode :- fail, \+ is_debugging(eval), !.
 %   % Execute a goal without tracing:
 %   ?- ignore_trace_once(my_goal).
 %
-ignore_trace_once(Goal) :- 
+ignore_trace_once(Goal) :-
     ignore(notrace(catch(ignore(Goal), _, fail))), !.
 
 %!  as_trace(:Goal) is nondet.
@@ -482,8 +482,8 @@ as_trace(Goal) :- ignore_trace_once(\+ with_no_screen_wrap(color_g_mesg('#2f2f2f
 %
 %   Execute a goal without screen wrapping.
 %
-%   This predicate runs the given `Goal` while ensuring that screen wrapping is disabled. 
-%   If the first clause succeeds, it simply calls the `Goal`. Otherwise, it disables screen 
+%   This predicate runs the given `Goal` while ensuring that screen wrapping is disabled.
+%   If the first clause succeeds, it simply calls the `Goal`. Otherwise, it disables screen
 %   wrapping by setting the terminal columns using `with_no_wrap/2`.
 %
 %   @arg Goal The goal to execute without screen wrapping.
@@ -499,7 +499,7 @@ with_no_screen_wrap(Goal) :- with_no_wrap(6000, Goal).
 %
 %   Execute a goal with a specific number of columns, without wrapping.
 %
-%   This predicate sets the terminal to use a specific number of columns (`Cols`) 
+%   This predicate sets the terminal to use a specific number of columns (`Cols`)
 %   and disables line wrapping for the duration of the execution of the `Goal`.
 %   After the `Goal` completes, the original terminal settings are restored.
 %
@@ -522,8 +522,8 @@ with_no_wrap(Cols, Goal) :-
 %
 %   Begin no-wrap mode by setting terminal size.
 %
-%   This predicate saves the current terminal size (columns and rows), then sets 
-%   the terminal to use the specified number of columns (`Cols`). It also disables 
+%   This predicate saves the current terminal size (columns and rows), then sets
+%   the terminal to use the specified number of columns (`Cols`). It also disables
 %   line wrapping in the terminal.
 %
 %   @arg Cols The desired number of columns for the terminal.
@@ -543,7 +543,7 @@ begin_no_wrap(Cols, OriginalCols, OriginalRows) :-
 %
 %   End no-wrap mode by restoring terminal size.
 %
-%   This predicate restores the terminal size to its original number of columns 
+%   This predicate restores the terminal size to its original number of columns
 %   (`OriginalCols`) and rows (`OriginalRows`), and re-enables line wrapping.
 %
 %   @arg OriginalCols The original number of columns before no-wrap mode.
@@ -589,8 +589,8 @@ get_current_terminal_settings(_, _).
 %
 %   Set the terminal size (conceptual, may not work in all terminals).
 %
-%   This predicate conceptually sets the terminal size to the specified number of 
-%   columns (`Cols`) and rows (`Rows`). It uses an escape sequence to attempt resizing 
+%   This predicate conceptually sets the terminal size to the specified number of
+%   columns (`Cols`) and rows (`Rows`). It uses an escape sequence to attempt resizing
 %   the terminal. However, the resizing may not work in all environments or terminals.
 %
 %   @arg Cols The number of columns to set for the terminal.
@@ -631,14 +631,14 @@ with_debug(Flag, Goal) :-
 %!  is_nodebug is nondet.
 %
 %   Checks if the 'nodebug' option is set to true.
-%   This predicate succeeds if the option `nodebug` is set to true, 
+%   This predicate succeeds if the option `nodebug` is set to true,
 %   otherwise it fails.
 %
 %   @example
 %     ?- is_nodebug.
 %     true.
 %
-is_nodebug :- 
+is_nodebug :-
     % Check if the option 'nodebug' is set to true.
     option_value(nodebug, true).
 
@@ -650,9 +650,9 @@ is_nodebug :-
 %
 %   @arg Goal The goal to execute. It can be any Prolog predicate.
 %
-%   If 'nodebug' is set to true, it immediately calls the goal without any 
-%   additional changes to options. Otherwise, it wraps the Goal execution 
-%   inside several `with_option/3` predicates that modify various debugging 
+%   If 'nodebug' is set to true, it immediately calls the goal without any
+%   additional changes to options. Otherwise, it wraps the Goal execution
+%   inside several `with_option/3` predicates that modify various debugging
 %   and evaluation options.
 %
 %   @examples
@@ -666,7 +666,7 @@ is_nodebug :-
 %     X = 2 ;
 %     X = 3.
 %
-with_no_debug(Goal) :-  is_nodebug, !, % If 'nodebug' is true, call the goal without any further option adjustments.    
+with_no_debug(Goal) :-  is_nodebug, !, % If 'nodebug' is true, call the goal without any further option adjustments.
     call(Goal).
 with_no_debug(Goal) :-
     % Otherwise, call the goal while modifying several debugging and execution options.
@@ -681,9 +681,9 @@ with_no_debug(Goal) :-
 %
 %   Convert a debugging flag to a variable name.
 %
-%   This predicate converts a given debugging `Flag` into a variable name, specifically 
-%   by prepending the string 'trace-on-' to the flag name. If the `Flag` is already 
-%   in the form of `metta(Flag)`, the inner flag is extracted and converted. If no 
+%   This predicate converts a given debugging `Flag` into a variable name, specifically
+%   by prepending the string 'trace-on-' to the flag name. If the `Flag` is already
+%   in the form of `metta(Flag)`, the inner flag is extracted and converted. If no
 %   conversion is needed, the `Flag` is unified directly with `Var`.
 %
 %   @arg Flag The debugging flag to convert.
@@ -706,9 +706,9 @@ flag_to_var(Flag,Var):-Flag=Var.
 %
 %   Set debugging on or off based on a flag.
 %
-%   This predicate enables or disables debugging based on the given `Flag` and the boolean 
-%   value `TF`. If `TF` is `'True'`, debugging is enabled; if `TF` is `'False'`, debugging 
-%   is disabled. It handles special cases where the `Flag` is in the form of `metta(Flag)`, 
+%   This predicate enables or disables debugging based on the given `Flag` and the boolean
+%   value `TF`. If `TF` is `'True'`, debugging is enabled; if `TF` is `'False'`, debugging
+%   is disabled. It handles special cases where the `Flag` is in the form of `metta(Flag)`,
 %   as well as direct boolean values.
 %
 %   @arg Flag The debugging flag to set.
@@ -729,8 +729,8 @@ set_debug(Flag, false) :- nodebug(metta(Flag)). %, flag_to_var(Flag, Var), set_f
 %
 %   Conditionally execute a goal if tracing is enabled for the given flag.
 %
-%   This predicate executes the provided `Goal` only if tracing is enabled for the given `Flag`. 
-%   It first checks if debugging (tracing) is enabled for the `Flag`, and if so, the `Goal` is executed. 
+%   This predicate executes the provided `Goal` only if tracing is enabled for the given `Flag`.
+%   It first checks if debugging (tracing) is enabled for the `Flag`, and if so, the `Goal` is executed.
 %   If an error occurs during execution, it is caught and reported using `fbug/1`.
 %
 %   @arg Flag The flag indicating if tracing is enabled.
@@ -746,8 +746,8 @@ if_trace(Flag, Goal) :- notrace(real_notrace((catch_err(ignore((is_debugging(Fla
 %
 %   Check if showing is enabled for a flag.
 %
-%   This predicate checks if "showing" is enabled for the given `Flag`. It succeeds if the 
-%   flag's value is set to `'show'` or if verbose mode is active. It fails if the flag is set 
+%   This predicate checks if "showing" is enabled for the given `Flag`. It succeeds if the
+%   flag's value is set to `'show'` or if verbose mode is active. It fails if the flag is set
 %   to `'silent'`. The flag's value is retrieved using `fast_option_value/2`.
 %
 %   @arg Flag The flag to check for the showing state.
@@ -766,8 +766,8 @@ is_showing(Flag) :- fast_option_value(Flag, 'show'), !.
 %
 %   Conditionally execute a goal if showing is enabled for the given flag.
 %
-%   This predicate executes the provided `Goal` if showing is enabled for the given `Flag`. 
-%   It checks whether "showing" is active for the `Flag` using `is_showing/1` and, if so, 
+%   This predicate executes the provided `Goal` if showing is enabled for the given `Flag`.
+%   It checks whether "showing" is active for the `Flag` using `is_showing/1` and, if so,
 %   runs the `Goal`. If an error occurs, it is caught and reported using `fbug/1`.
 %
 %   @arg Flag The flag indicating if showing is enabled.
@@ -783,7 +783,7 @@ if_show(Flag, Goal) :- real_notrace((catch_err(ignore((is_showing(Flag), Goal)),
 %
 %   Get the value of a fast option.
 %
-%   This predicate retrieves the value `V` of a fast option identified by `N`. 
+%   This predicate retrieves the value `V` of a fast option identified by `N`.
 %   It uses `current_prolog_flag/2` to obtain the value of the option.
 %
 %   @arg N The name of the option.
@@ -800,8 +800,8 @@ fast_option_value(N, V) :- atom(N), current_prolog_flag(N, V).
 %
 %   Check if verbose mode is enabled for a flag.
 %
-%   This predicate checks whether verbose mode is enabled for the given `Flag`. 
-%   It succeeds if the flag's value is `'verbose'` or if debugging is enabled for 
+%   This predicate checks whether verbose mode is enabled for the given `Flag`.
+%   It succeeds if the flag's value is `'verbose'` or if debugging is enabled for
 %   the flag. It fails if the flag's value is `'silent'`.
 %
 %   @arg Flag The flag to check for verbose mode.
@@ -820,8 +820,8 @@ is_verbose(Flag) :- is_debugging(Flag), !.
 %
 %   Conditionally execute a goal if verbose mode is enabled for the given flag.
 %
-%   This predicate executes the provided `Goal` if verbose mode is enabled for the given `Flag`. 
-%   It checks whether verbose mode is active using `is_verbose/1`. If an error occurs during the 
+%   This predicate executes the provided `Goal` if verbose mode is enabled for the given `Flag`.
+%   It checks whether verbose mode is active using `is_verbose/1`. If an error occurs during the
 %   execution of `Goal`, it is caught and reported using `fbug/1`.
 %
 %   @arg Flag The flag indicating if verbose mode is enabled.
@@ -850,8 +850,8 @@ maybe_efbug(_, G) :- call(G).
 %   Execute a goal while suppressing trace errors.
 %
 %   This predicate attempts to execute the given goal `G`, ignoring any trace or debugging-related errors.
-%   The first argument is ignored (`_`), as it is not used in the execution of the goal. The primary 
-%   purpose of this predicate is to provide a mechanism for running `G` while ensuring that errors related 
+%   The first argument is ignored (`_`), as it is not used in the execution of the goal. The primary
+%   purpose of this predicate is to provide a mechanism for running `G` while ensuring that errors related
 %   to tracing or debugging are suppressed.
 %
 %   @arg _ An ignored parameter.
@@ -869,8 +869,8 @@ efbug(_, G) :- call(G).
 %
 %   Always return true for debugging, used as a placeholder.
 %
-%   This predicate always succeeds, regardless of the input `Flag`. It is typically used as 
-%   a placeholder where debugging is always assumed to be enabled. The `Flag` is ignored 
+%   This predicate always succeeds, regardless of the input `Flag`. It is typically used as
+%   a placeholder where debugging is always assumed to be enabled. The `Flag` is ignored
 %   in the evaluation.
 %
 %   @arg _Flag An ignored parameter representing a debugging flag.
@@ -887,8 +887,8 @@ is_debugging_always(_Flag) :- !.
 %
 %   Check if debugging is enabled for a flag.
 %
-%   This predicate checks whether debugging is currently enabled for the given `Flag`. 
-%   It succeeds if debugging is active for the specified flag. The actual implementation 
+%   This predicate checks whether debugging is currently enabled for the given `Flag`.
+%   It succeeds if debugging is active for the specified flag. The actual implementation
 %   of this check will depend on how debugging is tracked within the system.
 %
 %   @arg Flag The flag to check for debugging status.
@@ -926,9 +926,9 @@ is_debugging(Flag) :- debugging(metta(Flag), TF), !, TF == true.
 %
 %   Perform trace evaluation of a goal, managing trace output and depth.
 %
-%   This predicate performs a trace evaluation on the given goal `P4`, managing depth and trace output 
-%   according to the trace length and trace depth options. It increments evaluation flags and handles 
-%   tracing based on the current depth and trace settings. The evaluation process outputs trace messages 
+%   This predicate performs a trace evaluation on the given goal `P4`, managing depth and trace output
+%   according to the trace length and trace depth options. It increments evaluation flags and handles
+%   tracing based on the current depth and trace settings. The evaluation process outputs trace messages
 %   for both entering and exiting the goal, while managing repeated evaluations and specific trace conditions.
 %
 %   @arg P4   The goal or predicate to evaluate.
@@ -1065,7 +1065,7 @@ pfc_listing_module :- nop(module(pfc_listing,
 %   - `<-` (xfx, precedence 1050): Represents a backward implication or reverse rule.
 %   - `::::` (xfx, precedence 1150): A specialized operator often used in Prolog for custom logic.
 %
-%   These operator declarations define how terms with these symbols are parsed and processed 
+%   These operator declarations define how terms with these symbols are parsed and processed
 %   by the Prolog interpreter.
 % Operator declarations
 :- op(500, fx, '~').                % Unary negation operator
@@ -1078,7 +1078,7 @@ pfc_listing_module :- nop(module(pfc_listing,
 % :- use_module(logicmoo(util/logicmoo_util_preddefs)).
 
 %   The `multifile/1` directive allows the specified predicates to have clauses spread across multiple files.
-%   This is particularly useful in modular Prolog programs where different components may define or extend the 
+%   This is particularly useful in modular Prolog programs where different components may define or extend the
 %   same predicates. The following predicates are declared as multifile in the `user` module:
 %
 :- multifile((
@@ -1096,8 +1096,8 @@ pfc_listing_module :- nop(module(pfc_listing,
 %
 %   Lists all clauses of the predicate `que/2`.
 %
-%   The `lqu/0` predicate uses the built-in `listing/1` predicate to display all clauses 
-%   currently defined for the predicate `que/2`. It helps in inspecting the facts or rules 
+%   The `lqu/0` predicate uses the built-in `listing/1` predicate to display all clauses
+%   currently defined for the predicate `que/2`. It helps in inspecting the facts or rules
 %   related to `que/2` that are loaded in the program.
 %
 %   @example
@@ -1127,8 +1127,8 @@ lqu :- listing(que/2).
 %
 %   Set a default value for a PFC (Prolog Forward Chaining) option.
 %
-%   This directive sets a default value for the specified PFC option if it has not been defined yet. 
-%   In this case, it ensures that the `pfcWarnings/1` option has a default value of `true`, 
+%   This directive sets a default value for the specified PFC option if it has not been defined yet.
+%   In this case, it ensures that the `pfcWarnings/1` option has a default value of `true`,
 %   which likely enables warnings during PFC operations.
 %
 %   - `pfcWarnings(_)`: The option related to enabling or disabling PFC warnings.
@@ -1147,7 +1147,7 @@ lqu :- listing(que/2).
 %
 %   Lists all clauses of the predicate `pfcQueue/1`.
 %
-%   This predicate lists all the clauses currently defined for `pfcQueue/1`, 
+%   This predicate lists all the clauses currently defined for `pfcQueue/1`,
 %   allowing inspection of the Pfc queue contents.
 %
 %   @example
@@ -1160,8 +1160,8 @@ pfcQueue :- listing(pfcQueue/1).
 %
 %   Prints the entire Pfc database, including facts, rules, triggers, and supports.
 %
-%   This predicate calls several sub-predicates to print all facts, rules, triggers, 
-%   and supports in the Pfc database. It provides a complete overview of the current 
+%   This predicate calls several sub-predicates to print all facts, rules, triggers,
+%   and supports in the Pfc database. It provides a complete overview of the current
 %   Pfc knowledge base.
 %
 %   @example
@@ -1178,7 +1178,7 @@ pfcPrintDB :-
 %
 %   Draws a line in the console output for formatting purposes.
 %
-%   This predicate prints a separator line to the console using ANSI formatting, 
+%   This predicate prints a separator line to the console using ANSI formatting,
 %   which can be used for visual separation of output sections.
 %
 %   @example
@@ -1191,7 +1191,7 @@ printLine :- ansi_format([underline], "~N=======================================
 %
 %   Prints all facts in the Pfc database.
 %
-%   This predicate prints all facts currently in the Pfc database by calling 
+%   This predicate prints all facts currently in the Pfc database by calling
 %   `pfcPrintFacts/2` with a wildcard pattern and a flag to show all facts.
 %
 %   @example
@@ -1204,7 +1204,7 @@ pfcPrintFacts :- pfcPrintFacts(_, true).
 %
 %   Prints all facts in the Pfc database that match a given pattern.
 %
-%   This predicate prints all facts that match the given `Pattern` in the Pfc database. 
+%   This predicate prints all facts that match the given `Pattern` in the Pfc database.
 %   The pattern can be used to filter facts for specific queries.
 %
 %   @arg Pattern The pattern to match facts against.
@@ -1219,9 +1219,9 @@ pfcPrintFacts(Pattern) :- pfcPrintFacts(Pattern, true).
 %
 %   Prints all facts in the Pfc database that match a given pattern and condition.
 %
-%   This predicate retrieves facts from the Pfc database that match the given `Pattern` 
-%   and satisfy the specified `Condition`. The facts are classified into user-added facts 
-%   and Pfc-added facts, and then printed accordingly. The predicate uses auxiliary 
+%   This predicate retrieves facts from the Pfc database that match the given `Pattern`
+%   and satisfy the specified `Condition`. The facts are classified into user-added facts
+%   and Pfc-added facts, and then printed accordingly. The predicate uses auxiliary
 %   predicates to classify and print the facts.
 %
 %   @arg Pattern   The pattern to match facts against.
@@ -1244,9 +1244,9 @@ pfcPrintFacts(P, C) :-
 
 %!  pfcPrintitems(+List) is det.
 %
-%   Prints a list of items. 
+%   Prints a list of items.
 %
-%   This predicate prints each item in the provided `List`. It uses `pretty_numbervars/2` 
+%   This predicate prints each item in the provided `List`. It uses `pretty_numbervars/2`
 %   to standardize variable names and `portray_clause_w_vars/1` to format and display the items.
 %   Note that this predicate modifies its arguments during execution, so care should be taken.
 %
@@ -1263,9 +1263,9 @@ pfcPrintitems([H|T]) :- \+ \+ ( pretty_numbervars(H, H1), format(" ", []), portr
 %
 %   Classifies a list of facts into user-added facts, Pfc-added facts, and rule facts.
 %
-%   This predicate takes a list of `Facts` and classifies them into three categories: 
-%   `UserFacts` (facts added by the user), `PfcFacts` (facts added by the Pfc system), 
-%   and `RuleFacts` (facts that are rules). The classification is based on the type of 
+%   This predicate takes a list of `Facts` and classifies them into three categories:
+%   `UserFacts` (facts added by the user), `PfcFacts` (facts added by the Pfc system),
+%   and `RuleFacts` (facts that are rules). The classification is based on the type of
 %   each fact and its associated support structure.
 %
 %   @arg Facts      The list of facts to classify.
@@ -1286,9 +1286,9 @@ pfcClassifyFacts([H|T], User, [H|Pfc], Rule) :- pfcClassifyFacts(T, User, Pfc, R
 %
 %   Prints all rules in the Pfc database.
 %
-%   This predicate prints all the rules currently defined in the Pfc database. It uses 
-%   `bagof_or_nil/3` to retrieve rules that match different formats (`==>`, `<==>`, and `<-`) 
-%   and then prints them using `pfcPrintitems/1`. Each set of rules is preceded and followed by 
+%   This predicate prints all the rules currently defined in the Pfc database. It uses
+%   `bagof_or_nil/3` to retrieve rules that match different formats (`==>`, `<==>`, and `<-`)
+%   and then prints them using `pfcPrintitems/1`. Each set of rules is preceded and followed by
 %   a separator line for formatting purposes.
 %
 %   @example
@@ -1310,8 +1310,8 @@ pfcPrintRules :-
 %
 %   Retrieves a trigger from the Pfc database.
 %
-%   This predicate retrieves a trigger from the Pfc database using `pfc_call/1`. The trigger 
-%   is nondeterministically returned, meaning multiple triggers can be retrieved through 
+%   This predicate retrieves a trigger from the Pfc database using `pfc_call/1`. The trigger
+%   is nondeterministically returned, meaning multiple triggers can be retrieved through
 %   backtracking. The retrieved `Trigger` can be any of the types used within the Pfc framework.
 %
 %   @arg Trigger The retrieved trigger from the Pfc database.
@@ -1326,9 +1326,9 @@ pfcGetTrigger(Trigger) :- pfc_call(Trigger).
 %
 %   Pretty prints all triggers in the Pfc database.
 %
-%   This predicate prints the positive, negative, and goal triggers in the Pfc database. 
-%   Each set of triggers is printed with a heading and followed by the respective triggers 
-%   using `print_db_items/2`. Triggers are categorized as positive (`'$pt$'/2`), negative 
+%   This predicate prints the positive, negative, and goal triggers in the Pfc database.
+%   Each set of triggers is printed with a heading and followed by the respective triggers
+%   using `print_db_items/2`. Triggers are categorized as positive (`'$pt$'/2`), negative
 %   (`'$nt$'/3`), and goal triggers (`'$bt$'/2`).
 %
 %   @example
@@ -1344,7 +1344,7 @@ pfcPrintTriggers :-
 %
 %   A shorthand predicate to pretty print all triggers in the Pfc database.
 %
-%   This predicate is an alias for `pfcPrintTriggers/0`. It provides a shorter way to invoke 
+%   This predicate is an alias for `pfcPrintTriggers/0`. It provides a shorter way to invoke
 %   the trigger printing functionality.
 %
 %   @example
@@ -1357,8 +1357,8 @@ pp_triggers :- pfcPrintTriggers.
 %
 %   Pretty prints all supports in the Pfc database.
 %
-%   This predicate prints all support relationships in the Pfc database. It retrieves the 
-%   support information using `pfcGetSupport/2` and then pretty-prints the results, filtering 
+%   This predicate prints all support relationships in the Pfc database. It retrieves the
+%   support information using `pfcGetSupport/2` and then pretty-prints the results, filtering
 %   out predicates based on the conditions defined in `pp_filtered/1`.
 %
 %   @example
@@ -1377,7 +1377,7 @@ pfcPrintSupports :-
 %
 %   Alias for `pfcPrintSupports/0`.
 %
-%   This predicate serves as a shorthand alias for `pfcPrintSupports/0`, which prints all 
+%   This predicate serves as a shorthand alias for `pfcPrintSupports/0`, which prints all
 %   support relationships in the Pfc database.
 %
 pp_supports :- pfcPrintSupports.
@@ -1386,8 +1386,8 @@ pp_supports :- pfcPrintSupports.
 %
 %   Checks if a predicate should be filtered out from pretty-printing.
 %
-%   This predicate determines whether a given `Predicate` should be filtered out from 
-%   pretty-printing during support or fact displays. It filters out certain system predicates, 
+%   This predicate determines whether a given `Predicate` should be filtered out from
+%   pretty-printing during support or fact displays. It filters out certain system predicates,
 %   such as those using `pfc_prop/2`.
 %
 %   @arg Predicate The predicate to check.
@@ -1401,7 +1401,7 @@ pp_filtered(F/_) :- F == pfc_prop.
 %
 %   Checks if a fact was asserted into the database via `pfcAdd/2`.
 %
-%   This predicate checks whether the given `Predicate` was asserted into the Pfc database 
+%   This predicate checks whether the given `Predicate` was asserted into the Pfc database
 %   using `pfcAdd/2`. It uses `pfcFact/2` with a default condition of `true`.
 %
 %   @arg Predicate The fact to check.
@@ -1412,8 +1412,8 @@ pfcFact(P) :- pfcFact(P, true).
 %
 %   Checks if a fact was asserted into the database via `pfcAdd/2` and a condition is satisfied.
 %
-%   This predicate checks whether the given `Predicate` was asserted into the Pfc database 
-%   and whether the provided `Condition` holds. The `Condition` can be any logical check 
+%   This predicate checks whether the given `Predicate` was asserted into the Pfc database
+%   and whether the provided `Condition` holds. The `Condition` can be any logical check
 %   on the predicate.
 %
 %   @arg Predicate The fact to check.
@@ -1432,7 +1432,7 @@ pfcFact(F, C) :-
 %
 %   Helper predicate for `pfcFact/2`.
 %
-%   This predicate is a helper for `pfcFact/2`. It checks whether the given `Predicate` 
+%   This predicate is a helper for `pfcFact/2`. It checks whether the given `Predicate`
 %   satisfies the `Condition` and whether it is a fact in the Pfc database.
 %
 %   @arg Predicate The fact to check.
@@ -1468,7 +1468,7 @@ pfcFacts(P, L) :- pfcFacts(P, true, L).
 %
 %   Returns a list of facts added to the Pfc database that match a given pattern and condition.
 %
-%   This predicate returns a list of facts in the Pfc database that match the specified `Pattern` 
+%   This predicate returns a list of facts in the Pfc database that match the specified `Pattern`
 %   and satisfy the `Condition`.
 %
 %   @arg Pattern The pattern to match facts against.
@@ -1481,7 +1481,7 @@ pfcFacts(P, C, L) :- setof_or_nil(P, pfcFact(P, C), L).
 %
 %   Calls a system predicate and breaks execution.
 %
-%   This predicate calls the specified `Predicate` using `pfcCallSystem/1` and then breaks execution 
+%   This predicate calls the specified `Predicate` using `pfcCallSystem/1` and then breaks execution
 %   by invoking `ibreak/0` (used for debugging).
 %
 %   @arg Predicate The predicate to call before breaking.
@@ -1510,21 +1510,21 @@ pfcTraceAdd(P) :-
 %
 %   Adds a trigger and its support to the Pfc trace for monitoring and debugging purposes.
 %   This predicate enables tracing of triggers in the Prolog Forward Chaining (Pfc) system
-%   based on the provided trigger and its support. Certain triggers, such as positive and 
+%   based on the provided trigger and its support. Certain triggers, such as positive and
 %   negative triggers, are excluded from tracing.
 %
-%   @arg Trigger The trigger to be traced. Certain internal triggers (`$pt$` and `$nt$`) 
+%   @arg Trigger The trigger to be traced. Certain internal triggers (`$pt$` and `$nt$`)
 %                are excluded from the trace.
-%   @arg Support The support of the trigger, typically providing additional context for 
+%   @arg Support The support of the trigger, typically providing additional context for
 %                the trace operation.
 %
 %   @example Tracing a custom trigger:
 %       ?- pfcTraceAdd(my_trigger, some_support).
 %
-pfcTraceAdd('$pt$'(_, _), _) :- 
+pfcTraceAdd('$pt$'(_, _), _) :-
     % Never trace positive triggers. These are skipped for tracing.
     !.
-pfcTraceAdd('$nt$'(_, _), _) :- 
+pfcTraceAdd('$nt$'(_, _), _) :-
     % Never trace negative triggers. These are skipped for tracing.
     !.
 pfcTraceAdd(P, S) :-
@@ -1536,10 +1536,10 @@ pfcTraceAdd(P, S) :-
 %!  pfcTraceAddPrint(+Predicate, +Support) is det.
 %
 %   Prints a predicate being added to the Pfc trace if tracing is enabled for the predicate.
-%   This predicate checks whether tracing is active for the provided predicate and, if so, 
+%   This predicate checks whether tracing is active for the provided predicate and, if so,
 %   prints the predicate and its support information in a formatted manner.
 %
-%   @arg Predicate The predicate to be printed. If the predicate is being traced, it is printed 
+%   @arg Predicate The predicate to be printed. If the predicate is being traced, it is printed
 %                  with relevant support information.
 %   @arg Support The support of the predicate, which can influence how the message is formatted.
 %
@@ -1564,11 +1564,11 @@ pfcTraceAddPrint(_, _). % Default case: Do nothing if tracing is not enabled or 
 
 %!  pfcTraceBreak(+Predicate, +Support) is det.
 %
-%   Breaks the execution if the predicate is spied in the Pfc trace. This is used to 
-%   halt the program for inspection when a particular predicate is being traced, allowing 
+%   Breaks the execution if the predicate is spied in the Pfc trace. This is used to
+%   halt the program for inspection when a particular predicate is being traced, allowing
 %   the user to debug or inspect the state at that point.
 %
-%   @arg Predicate The predicate to check for spying. If the predicate is spied, 
+%   @arg Predicate The predicate to check for spying. If the predicate is spied,
 %                  execution breaks.
 %   @arg Support The support of the predicate, though it is not used in this case.
 %
@@ -1597,10 +1597,10 @@ pfcTraceBreak(P, _S) :-
 %   @example Removing a trigger from the trace:
 %       ?- pfcTraceRem(my_trigger).
 %
-pfcTraceRem('$pt$'(_, _)) :- 
+pfcTraceRem('$pt$'(_, _)) :-
     % Never trace positive triggers. Simply succeed.
     !.
-pfcTraceRem('$nt$'(_, _)) :- 
+pfcTraceRem('$nt$'(_, _)) :-
     % Never trace negative triggers. Simply succeed.
     !.
 pfcTraceRem(P) :-
@@ -1625,10 +1625,10 @@ pfcTraceRem(P) :-
 %   @example Checking if a predicate is traced:
 %       ?- pfcIsTraced(my_predicate).
 %
-pfcIsTraced(P) :- 
+pfcIsTraced(P) :-
     % Check if the predicate is not being traced, and fail if so.
     pfcIsNotTraced(P),!, fail.
-pfcIsTraced(P) :- 
+pfcIsTraced(P) :-
     % Check if the first argument of the compound predicate is being traced.
     compound_eles(1, P, Arg),pfcTraced(Arg).
 
@@ -1641,7 +1641,7 @@ pfcIsTraced(P) :-
 %   @example Checking if a predicate is not traced:
 %       ?- pfcIsNotTraced(my_predicate).
 %
-pfcIsNotTraced(P) :- 
+pfcIsNotTraced(P) :-
     % Check if the first argument of the compound predicate is ignored.
     compound_eles(1, P, Arg), pfcIgnored(Arg).
 
@@ -1686,7 +1686,7 @@ compound_eles(Lvl, P, Arg) :-
 %   or the functor and arguments of a compound term.
 %
 %   @arg Compound The compound term or list to be decomposed.
-%   @arg Element The extracted element, either a member of the list or the functor/arguments 
+%   @arg Element The extracted element, either a member of the list or the functor/arguments
 %                of the compound term.
 %
 %   This predicate handles both lists and compound terms. For lists, it returns each member
@@ -1713,7 +1713,7 @@ compound_eles(P, E) :-
 
 %!  mpred_trace_exec is det.
 %
-%   Enables tracing and watching in the Prolog Forward Chaining (Pfc) system. 
+%   Enables tracing and watching in the Prolog Forward Chaining (Pfc) system.
 %   This predicate activates both the `pfcWatch` and `pfcTrace` functionalities,
 %   allowing for detailed observation of rule executions and predicate tracing.
 %
@@ -1725,30 +1725,30 @@ mpred_trace_exec :- pfcWatch,pfcTrace.
 %!  mpred_notrace_exec is det.
 %
 %   Disables tracing and watching in the Prolog Forward Chaining (Pfc) system.
-%   This predicate deactivates both `pfcTrace` and `pfcWatch` functionalities, 
+%   This predicate deactivates both `pfcTrace` and `pfcWatch` functionalities,
 %   stopping the detailed observation of rule executions and predicate tracing.
 %
 %   @example Disabling tracing and watching:
 %       ?- mpred_notrace_exec.
 %
-mpred_notrace_exec :- 
-    pfcNoTrace, 
+mpred_notrace_exec :-
+    pfcNoTrace,
     pfcNoWatch.
 
 %!  pfcTrace is det.
 %
-%   Enables global tracing in the Pfc system. This allows for tracking the execution of 
+%   Enables global tracing in the Pfc system. This allows for tracking the execution of
 %   rules and predicates without specifying a particular form.
 %
 %   @example Enabling global tracing:
 %       ?- pfcTrace.
 %
-pfcTrace :- 
+pfcTrace :-
     pfcTrace(_).
 
 %!  pfcTrace(+Form) is det.
 %
-%   Enables tracing for a specific form in the Pfc system. This allows for targeted 
+%   Enables tracing for a specific form in the Pfc system. This allows for targeted
 %   tracing, where only the specified form will be traced during execution.
 %
 %   @arg Form The form to trace.
@@ -1756,12 +1756,12 @@ pfcTrace :-
 %   @example Enabling tracing for a specific form:
 %       ?- pfcTrace(my_form).
 %
-pfcTrace(Form) :- 
+pfcTrace(Form) :-
     assert(pfcTraced(Form)).
 
 %!  pfcTrace(+Form, +Condition) is det.
 %
-%   Enables tracing for a specific form under a given condition in the Pfc system. 
+%   Enables tracing for a specific form under a given condition in the Pfc system.
 %   This allows for conditional tracing, where the form is only traced if the condition holds true.
 %
 %   @arg Form The form to trace.
@@ -1770,12 +1770,12 @@ pfcTrace(Form) :-
 %   @example Enabling conditional tracing for a form:
 %       ?- pfcTrace(my_form, my_condition).
 %
-pfcTrace(Form, Condition) :- 
+pfcTrace(Form, Condition) :-
     assert((pfcTraced(Form) :- Condition)).
 
 %!  pfcSpy(+Form) is det.
 %
-%   Adds a form to the Pfc spy list, allowing the form to be monitored during execution. 
+%   Adds a form to the Pfc spy list, allowing the form to be monitored during execution.
 %   By default, the form is spied with both the addition (`+`) and removal (`-`) modes.
 %
 %   @arg Form The form to spy on.
@@ -1783,12 +1783,12 @@ pfcTrace(Form, Condition) :-
 %   @example Spying on a form:
 %       ?- pfcSpy(my_form).
 %
-pfcSpy(Form) :- 
+pfcSpy(Form) :-
     pfcSpy(Form, [+,-], true).
 
 %!  pfcSpy(+Form, +Modes) is det.
 %
-%   Adds a form to the Pfc spy list with specific modes. The modes determine whether 
+%   Adds a form to the Pfc spy list with specific modes. The modes determine whether
 %   to spy on the form during addition (`+`), removal (`-`), or both.
 %
 %   @arg Form The form to spy on.
@@ -1797,13 +1797,13 @@ pfcSpy(Form) :-
 %   @example Spying on a form with specific modes:
 %       ?- pfcSpy(my_form, [+]).
 %
-pfcSpy(Form, Modes) :- 
+pfcSpy(Form, Modes) :-
     pfcSpy(Form, Modes, true).
 
 %!  pfcSpy(+Form, +Modes, +Condition) is det.
 %
-%   Adds a form to the Pfc spy list with specific modes and a condition. The form 
-%   will only be spied upon if the specified condition holds true, providing fine-grained 
+%   Adds a form to the Pfc spy list with specific modes and a condition. The form
+%   will only be spied upon if the specified condition holds true, providing fine-grained
 %   control over when to spy on the form.
 %
 %   @arg Form The form to spy on.
@@ -1825,7 +1825,7 @@ pfcSpy(Form, Mode, Condition) :-
 
 %!  pfcSpy1(+Form, +Mode, +Condition) is det.
 %
-%   Helper predicate for `pfcSpy/3`. It asserts that the form is spied with the 
+%   Helper predicate for `pfcSpy/3`. It asserts that the form is spied with the
 %   given mode and condition, adding the spy rule to the Pfc system.
 %
 %   @arg Form The form to spy on.
@@ -1843,7 +1843,7 @@ pfcSpy1(Form, Mode, Condition) :-
 %   @example Removing all spy points:
 %       ?- pfcNospy.
 %
-pfcNospy :- 
+pfcNospy :-
     pfcNospy(_,_,_).
 
 %!  pfcNospy(+Form) is det.
@@ -1856,7 +1856,7 @@ pfcNospy :-
 %   @example Removing a specific form from the spy list:
 %       ?- pfcNospy(my_form).
 %
-pfcNospy(Form) :- 
+pfcNospy(Form) :-
     pfcNospy(Form,_,_).
 
 %!  pfcNospy(+Form, +Mode, +Condition) is det.
@@ -1882,7 +1882,7 @@ pfcNospy(_,_,_).
 
 %!  pfcNoTrace is det.
 %
-%   Disables all tracing in the Pfc system. This stops any tracing that was 
+%   Disables all tracing in the Pfc system. This stops any tracing that was
 %   previously enabled for forms.
 %
 %   @example Disabling all tracing:
@@ -1920,7 +1920,7 @@ pfcUntrace(Form) :- retractall(pfcTraced(Form)).
 %   @example Tracing a simple message:
 %       ?- pfcTraceMsg('This is a trace message').
 %
-pfcTraceMsg(Msg) :- 
+pfcTraceMsg(Msg) :-
     pfcTraceMsg('~p', [Msg]).
 
 %!  pfcTraceMsg(+Message, +Arguments) is det.
@@ -1969,13 +1969,13 @@ pfcPrintf(Msg, Args) :- pfcPrintf(user_output, Msg, Args).
 %   @example Printing a message to user_output:
 %       ?- pfcPrintf(user_output, 'Message: ~p', [my_message]).
 %
-pfcPrintf(Where, Msg, Args) :- 
+pfcPrintf(Where, Msg, Args) :-
     % Ensure the output is formatted with a newline.
     format(Where, '~N', []),with_output_to(Where, color_g_mesg_ok(blue, format(Msg, Args))).
 
 %!  pfcWatch is det.
 %
-%   Enables execution tracing in the Pfc system. This will trace the execution 
+%   Enables execution tracing in the Pfc system. This will trace the execution
 %   of rules and predicates in the system.
 %
 %   @example Enabling execution tracing:
@@ -1986,7 +1986,7 @@ pfcWatch :- assert(pfcTraceExecution).
 
 %!  pfcNoWatch is det.
 %
-%   Disables execution tracing in the Pfc system. This stops tracing of rule 
+%   Disables execution tracing in the Pfc system. This stops tracing of rule
 %   and predicate execution.
 %
 %   @example Disabling execution tracing:
@@ -2029,7 +2029,7 @@ pfcError(Msg, Args) :- format("~N~nERROR/Pfc: ", []),format(Msg, Args).
 
 %!  pfcWarn is det.
 %
-%   Enables warning messages in the Pfc system. This predicate sets a flag that allows 
+%   Enables warning messages in the Pfc system. This predicate sets a flag that allows
 %   warning messages to be printed during execution.
 %
 %   @example Enabling warning messages:
@@ -2039,7 +2039,7 @@ pfcWarn :- retractall(pfcWarnings(_)),assert(pfcWarnings(true)).
 
 %!  nopfcWarn is det.
 %
-%   Disables warning messages in the Pfc system. This predicate sets a flag that prevents 
+%   Disables warning messages in the Pfc system. This predicate sets a flag that prevents
 %   warning messages from being printed during execution.
 %
 %   @example Disabling warning messages:
@@ -2100,7 +2100,7 @@ pfcNoWarnings :- retractall(pfcWarnings(_)).
 
 %!  pp_facts is nondet.
 %
-%   Pretty prints all facts in the Pfc database. This predicate outputs a formatted list 
+%   Pretty prints all facts in the Pfc database. This predicate outputs a formatted list
 %   of all facts currently stored in the Pfc database.
 %
 %   @example Pretty printing all facts:
@@ -2110,7 +2110,7 @@ pp_facts :- pp_facts(_, true).
 
 %!  pp_facts(+Pattern) is nondet.
 %
-%   Pretty prints facts in the Pfc database that match a given pattern. Only facts that 
+%   Pretty prints facts in the Pfc database that match a given pattern. Only facts that
 %   match the specified pattern are printed.
 %
 %   @arg Pattern The pattern to match facts against.
@@ -2158,7 +2158,7 @@ pp_facts(P, C) :-
 %   @example Pretty printing all deduced facts:
 %       ?- pp_deds.
 %
-pp_deds :- 
+pp_deds :-
     pp_deds(_, true).
 
 %!  pp_deds(+Pattern) is nondet.
@@ -2194,7 +2194,7 @@ pp_deds(P, C) :-
 
 %!  show_deds_w(+Pattern) is nondet.
 %
-%   Shows deduced facts in the Pfc database that match a given pattern. This predicate 
+%   Shows deduced facts in the Pfc database that match a given pattern. This predicate
 %   is a wrapper for `pp_deds/2`, focused on displaying deduced facts.
 %
 %   @arg Pattern The pattern to match deduced facts against.
@@ -2309,7 +2309,7 @@ pp_items(Type, [H|T]) :- ignore(pp_item(Type, H)), !, pp_items(Type, T).
 pp_items(Type, H) :- ignore(pp_item(Type, H)).
 
 % Declares `print_mode/1` as a thread-local predicate, meaning each thread can have its
-% own value for `print_mode/1`. This is useful in multithreaded environments where 
+% own value for `print_mode/1`. This is useful in multithreaded environments where
 % different threads may need different printing modes without affecting each other.
 :- thread_local t_l:print_mode/1.
 
@@ -2338,8 +2338,8 @@ pp_item(MM, H) :- \+ \+ (get_clause_vars_for_print(H, HH), fmt("~w ~p~N", [MM, H
 
 %!  get_clause_vars_for_print(+Clause, -ClauseWithVars) is det.
 %
-%   Prepares a clause for printing by handling variables. If the clause contains variables, 
-%   it generates a copy of the clause with variables properly numbered for readability. 
+%   Prepares a clause for printing by handling variables. If the clause contains variables,
+%   it generates a copy of the clause with variables properly numbered for readability.
 %   Ground clauses are returned unchanged.
 %
 %   @arg Clause The clause to prepare for printing.
@@ -2355,8 +2355,8 @@ get_clause_vars_for_print(HB, HB) :- numbervars(HB, 0, _, [singletons(true), att
 
 %!  pfc_classify_facts(+Facts, -UserFacts, -PfcFacts, -Rules) is det.
 %
-%   Classifies a list of facts into user-added facts, system (Pfc) deductions, and rules. 
-%   This is used to differentiate between facts added directly by the user, those inferred 
+%   Classifies a list of facts into user-added facts, system (Pfc) deductions, and rules.
+%   This is used to differentiate between facts added directly by the user, those inferred
 %   by the Pfc system, and rules.
 %
 %   @arg Facts The list of facts to classify.
@@ -2377,7 +2377,7 @@ pfc_classify_facts([H|T],User,[H|Pfc],Rule) :- pfc_classify_facts(T,User,Pfc,Rul
 
 %!  print_db_items(+T, +I) is nondet.
 %
-%   Prints database items with a given title or label. This predicate is used to format and 
+%   Prints database items with a given title or label. This predicate is used to format and
 %   display items from the database, surrounded by separator lines for clarity.
 %
 %   @arg T The title or label for the items being printed.
@@ -2398,8 +2398,8 @@ print_db_items(T, I):-
 
 %!  print_db_items(+I) is nondet.
 %
-%   Prints database items based on the provided predicate or item. This predicate checks if 
-%   the input is a valid functor/arity pair or a specific clause and prints matching database 
+%   Prints database items based on the provided predicate or item. This predicate checks if
+%   the input is a valid functor/arity pair or a specific clause and prints matching database
 %   entries accordingly.
 %
 %   @arg I The predicate or item to be printed.
@@ -2407,17 +2407,17 @@ print_db_items(T, I):-
 %   @example Printing all clauses for a predicate:
 %       ?- print_db_items(my_predicate/2).
 %
-print_db_items(F/A):- 
+print_db_items(F/A):-
     number(A),!, % Check if A is a number, ensuring F/A is a valid functor/arity pair.
     safe_functor(P,F,A),!, % Safely create a functor from F and A.
     print_db_items(P). % Print the functor.
-print_db_items(H):- 
+print_db_items(H):-
     bagof(H, clause(H,true), R1), % Collect all clauses matching H into a list R1.
     pp_items((':'), R1), % Pretty print the collected items.
     R1 \== [], !. % Succeed if the list is non-empty.
-print_db_items(H):- 
+print_db_items(H):-
     \+ current_predicate(_,H),!. % Succeed if H is not a current predicate.
-print_db_items(H):- 
+print_db_items(H):-
     catch(('$find_predicate'(H,_), call_u(listing(H))), _, true),!, % Try to list the predicate, catching any errors.
     nl, nl. % Print two newlines after listing.
 
@@ -2426,7 +2426,7 @@ print_db_items(H):-
 %!  pp_rules is nondet.
 %
 %   Pretty prints various types of rules and facts from the database. This predicate organizes
-%   and prints different rule types (forward, bidirectional, implication, etc.) along with 
+%   and prints different rule types (forward, bidirectional, implication, etc.) along with
 %   facts (positive and negative).
 %
 %   @example Pretty printing rules and facts:
@@ -2445,17 +2445,17 @@ pp_rules :-
 
 %!  draw_line is nondet.
 %
-%   Draws a line separator in the console output. This predicate is useful for 
-%   visually separating different sections of printed information. It only 
+%   Draws a line separator in the console output. This predicate is useful for
+%   visually separating different sections of printed information. It only
 %   operates in the main thread.
 %
 %   @example Drawing a line separator:
 %       ?- draw_line.
 %
-draw_line:- 
+draw_line:-
     \+ thread_self_main,!. % Do nothing if not in the main thread.
 draw_line:- printLine,!. % Attempt to use printLine to draw a line.
-draw_line:- 
+draw_line:-
     (t_l:print_mode(H)->true;H=unknown), % Get the current print mode or set to unknown.
     fmt("~N% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %~n",[]), % Draw the line using format.
     H=H.
@@ -2466,7 +2466,7 @@ draw_line:-
 
 %!  loop_check_just(:GoalG) is nondet.
 %
-%   Performs a loop check for a given goal in the context of justifications. 
+%   Performs a loop check for a given goal in the context of justifications.
 %   This is used to prevent infinite loops in recursive reasoning or backtracking.
 %
 %   @arg GoalG The goal to check for loops.
@@ -2474,14 +2474,14 @@ draw_line:-
 %   @example Checking a goal for loops:
 %       ?- loop_check_just(my_goal).
 %
-loop_check_just(G):- 
+loop_check_just(G):-
     loop_check(G, ignore(arg(1, G, []))). % Perform loop check, ignoring goals with an empty first argument.
 
 %=
 
 %!  show_pred_info(?PI) is nondet.
 %
-%   Shows information about a predicate. This includes displaying instances where the functor 
+%   Shows information about a predicate. This includes displaying instances where the functor
 %   is a certain type and additional information if the predicate is not imported from another module.
 %
 %   @arg PI The predicate indicator (F/A) for which information is to be shown.
@@ -2523,7 +2523,7 @@ show_pred_info_0(Head):-
 
 %!  print_db_items(?Title, ?Mask, ?What) is nondet.
 %
-%   Prints database items matching a given mask or pattern, along with a title. This predicate 
+%   Prints database items matching a given mask or pattern, along with a title. This predicate
 %   handles the organization and printing of matched database entries under the specified title.
 %
 %   @arg Title The title to be printed, describing the type of items being displayed.
@@ -2585,9 +2585,9 @@ pfc_contains_term(What, Inside) :- (\+ \+ once((subst(Inside, What, foundZadooks
 :- current_prolog_flag(pfc_shared_module, BaseKB),
    assert_if_new((BaseKB:hook_pfc_listing(What) :- on_x_debug(pfc_list_triggers(What)))).
 
-% Declares `pfc_list_triggers_disabled/0` as a thread-local predicate, meaning that 
-% each thread can have its own instance of this predicate. This is useful in 
-% multithreaded environments where enabling or disabling trigger listing can be 
+% Declares `pfc_list_triggers_disabled/0` as a thread-local predicate, meaning that
+% each thread can have its own instance of this predicate. This is useful in
+% multithreaded environments where enabling or disabling trigger listing can be
 % controlled independently for each thread.
 :- thread_local t_l:pfc_list_triggers_disabled/0.
 
@@ -2595,7 +2595,7 @@ pfc_contains_term(What, Inside) :- (\+ \+ once((subst(Inside, What, foundZadooks
 
 %!  pfc_list_triggers(+What) is nondet.
 %
-%   Lists triggers in the Pfc database that match a given condition. If the predicate 
+%   Lists triggers in the Pfc database that match a given condition. If the predicate
 %   `pfc_list_triggers_disabled/0` is set, listing is skipped for that thread.
 %
 %   @arg What The condition used to filter triggers.
@@ -2608,7 +2608,7 @@ pfc_list_triggers(What) :- loop_check(pfc_list_triggers_nlc(What)).
 
 %!  pfc_list_triggers_nlc(+What) is nondet.
 %
-%   Lists triggers in the Pfc database without performing a loop check. This is a helper 
+%   Lists triggers in the Pfc database without performing a loop check. This is a helper
 %   predicate for `pfc_list_triggers/1`.
 %
 %   @arg What The condition used to filter triggers.
@@ -2619,7 +2619,7 @@ pfc_list_triggers_nlc(What) :- loop_check(pfc_list_triggers_0(What), true).
 
 %!  pfc_list_triggers_0(+What) is nondet.
 %
-%   Primary helper for listing triggers in the Pfc database. It handles various patterns for 
+%   Primary helper for listing triggers in the Pfc database. It handles various patterns for
 %   listing triggers.
 %
 %   @arg What The condition used to filter triggers.
@@ -2630,7 +2630,7 @@ pfc_list_triggers_0(What) :- \+ \+ pfc_list_triggers_1(~(What)), \+ \+ pfc_list_
 
 %!  pfc_list_triggers_types(-TriggerType) is nondet.
 %
-%   Lists various trigger types in the Pfc database. This predicate is used to identify 
+%   Lists various trigger types in the Pfc database. This predicate is used to identify
 %   different types of triggers available in the system.
 %
 %   @arg TriggerType The trigger type to list.
@@ -2650,7 +2650,7 @@ pfc_list_triggers_types('Edits').
 
 %!  print_db_items_and_neg(+Title, +Fact, +What) is nondet.
 %
-%   Prints database items and their negations. It prints both the items and their negations 
+%   Prints database items and their negations. It prints both the items and their negations
 %   based on the specified condition.
 %
 %   @arg Title The title for the items being printed.
@@ -2665,8 +2665,8 @@ print_db_items_and_neg(Title, Fact, What) :- print_db_items(Title, ~(Fact), What
 
 %!  pfc_list_triggers_1(+What) is nondet.
 %
-%   Secondary helper for listing triggers in the Pfc database. This predicate handles a wide variety of 
-%   Pfc constructs such as facts, rules, instances, subclasses, and argument types, and organizes them 
+%   Secondary helper for listing triggers in the Pfc database. This predicate handles a wide variety of
+%   Pfc constructs such as facts, rules, instances, subclasses, and argument types, and organizes them
 %   for display based on the specified condition `What`.
 %
 %   @arg What The condition used to filter triggers.
@@ -2720,7 +2720,7 @@ pfc_list_triggers_1(What) :-
 
 %!  pinfo(+Functor_Arity) is nondet.
 %
-%   Shows information about a predicate for a given functor and arity. This includes listing 
+%   Shows information about a predicate for a given functor and arity. This includes listing
 %   the predicate definition and displaying its properties.
 %
 %   @arg Functor_Arity The functor and arity of the predicate (in the form F/A).
@@ -2734,7 +2734,7 @@ pinfo(F/A) :-
     findall(Prop, predicate_property(P, Prop), List), % Collect all properties of the predicate.
     wdmsg_pretty(pinfo(F/A) == List), % Display the properties in a formatted way.
     !.
-    
+
 %!  pp_DB is nondet.
 %
 %   Pretty prints all facts, rules, triggers, and supports in the default module.
@@ -2759,7 +2759,7 @@ pp_DB :- prolog_load_context(module, M), pp_DB(M).
 %   @example Executing a goal in a specific module:
 %       ?- with_exact_kb(my_module, my_goal).
 %
-with_exact_kb(M, G) :- 
+with_exact_kb(M, G) :-
     M:call(G).
 
 %!  pp_DB(+Module) is nondet.
@@ -2773,7 +2773,7 @@ with_exact_kb(M, G) :-
 %       ?- pp_DB(my_module).
 %
 pp_DB(M) :-
-    with_exact_kb(M, M:must_det_l((
+    with_exact_kb(M, M:must_det_ll((
         pp_db_facts,    % Pretty print facts.
         pp_db_rules,    % Pretty print rules.
         pp_db_triggers, % Pretty print triggers.
@@ -2847,7 +2847,7 @@ pp_db_facts(MM, Pattern) :- pp_db_facts(MM, Pattern, true).
 %   @arg Pattern The pattern to match facts against.
 %   @arg Condition The condition to filter facts.
 %
-pp_db_facts(MM, P, C) :- 
+pp_db_facts(MM, P, C) :-
   pfc_facts_in_kb(MM, P, C, L),
   pfc_classifyFacts(L, User, Pfc, _ZRule),
   length(User, UserSize), length(Pfc, PfcSize),
@@ -2947,7 +2947,7 @@ pp_db_rules(MM) :-
 
 %!  pp_db_triggers(+Module) is det.
 %
-%   Pretty prints all triggers in a specific module Pfc database. This includes positive, 
+%   Pretty prints all triggers in a specific module Pfc database. This includes positive,
 %   negative, and goal triggers.
 %
 %   @arg Module The module context.
@@ -2982,7 +2982,7 @@ list_to_set_variant(List, Unique) :-
 
 %!  list_unique_1(+List, +So_far, -Unique) is det.
 %
-%   Helper predicate for `list_to_set_variant/2`. Iteratively checks each item and builds 
+%   Helper predicate for `list_to_set_variant/2`. Iteratively checks each item and builds
 %   a list of unique items based on variant equality.
 %
 %   @arg List The input list.
@@ -3032,8 +3032,8 @@ has_cl(H) :- predicate_property(H, number_of_clauses(_)).
 
 %!  clause_or_call(+H, ?B) is nondet.
 %
-%   Determines whether a predicate can be called directly or needs to match a clause. 
-%   The predicate checks if there are more clauses than rules and chooses the appropriate 
+%   Determines whether a predicate can be called directly or needs to match a clause.
+%   The predicate checks if there are more clauses than rules and chooses the appropriate
 %   approach to execute or retrieve the clause.
 %
 %   @arg H The head of the predicate.
@@ -3043,9 +3043,9 @@ has_cl(H) :- predicate_property(H, number_of_clauses(_)).
 % PFC2.0 clause_or_call(isa(I,C),true):-!,call_u(isa_asserted(I,C)).
 % PFC2.0 clause_or_call(genls(I,C),true):-!,on_x_log_throw(call_u(genls(I,C))).
 clause_or_call(H, B) :- clause(src_edit(_Before, H), B).
-clause_or_call(H, B) :- 
-    predicate_property(H, number_of_clauses(C)), 
-    predicate_property(H, number_of_rules(R)), 
+clause_or_call(H, B) :-
+    predicate_property(H, number_of_clauses(C)),
+    predicate_property(H, number_of_rules(R)),
     ((R*2 < C) -> (clause(H, B) *-> ! ; fail) ; clause(H, B)).
 
 % PFC2.0 clause_or_call(H,true):- call_u(should_call_for_facts(H)),no_repeats(on_x_log_throw(H)).
@@ -3187,8 +3187,8 @@ get_first_real_user_reason(P, UU) :- nonvar(P), UU = (F, T),
 
 %!  get_first_user_reason(+Predicate, -UU) is nondet.
 %
-%   Retrieves the first user reason for a predicate. This predicate checks various sources 
-%   (such as lookup tables, asserted clauses, and source locations) to determine the first 
+%   Retrieves the first user reason for a predicate. This predicate checks various sources
+%   (such as lookup tables, asserted clauses, and source locations) to determine the first
 %   user reason associated with the given predicate.
 %
 %   @arg Predicate The predicate to check.
@@ -3246,7 +3246,7 @@ is_source_ref1(_).
 
 %!  defaultAssertMt(-Module) is det.
 %
-%   Retrieves the current module context during loading. This predicate 
+%   Retrieves the current module context during loading. This predicate
 %   provides the default module where assertions will be made.
 %
 %   @arg Module The module being loaded, retrieved from the current Prolog context.
@@ -3283,7 +3283,7 @@ pfc_pp_db_justification1(Prefix, [J|Js], N) :-
 
 %!  pfc_pp_db_justifications2(+Prefix, +Justification, +JustNo, +StepNo) is det.
 %
-%   Helper predicate for `pfc_pp_db_justification1/3`. This predicate prints individual 
+%   Helper predicate for `pfc_pp_db_justification1/3`. This predicate prints individual
 %   steps of a justification, handling sub-justifications as necessary.
 %
 %   @arg Prefix The prefix for printing.
@@ -3304,7 +3304,7 @@ pfc_pp_db_justifications2(Prefix, [C|Rest], JustNo, StepNo) :-
 
 %!  pfcWhy_sub_sub(+Predicate) is det.
 %
-%   Sub-function for `pfcWhy` to handle sub-subjustifications, printing nested justifications 
+%   Sub-function for `pfcWhy` to handle sub-subjustifications, printing nested justifications
 %   as needed.
 %
 %   @arg Predicate The predicate to check.
@@ -3327,10 +3327,10 @@ pfcWhy_sub_sub(P) :-
 % ***** predicates for browsing justifications *****
 
 % Import the lists library for list processing.
-:- use_module(library(lists)).  
+:- use_module(library(lists)).
 
 % Declare `t_l:whybuffer/2` as a dynamic predicate, allowing it to be modified during runtime.
-:- dynamic(t_l:whybuffer/2).  
+:- dynamic(t_l:whybuffer/2).
 
 %!  pfcWhy is nondet.
 %
@@ -3343,7 +3343,7 @@ pfcWhy :-
 
 %!  pfcTF(+Predicate) is nondet.
 %
-%   Prints the truth value of a predicate. It first checks if the predicate is true using 
+%   Prints the truth value of a predicate. It first checks if the predicate is true using
 %   `pfc_call/1`, and then prints its truth value using `pfcTF1/1`.
 %
 %   @arg Predicate The predicate to check.
@@ -3360,14 +3360,14 @@ pfcTF(P) :-
 %
 pfcTF1(P) :-
     ansi_format([underline], "~N=========================================", []),
-    (ignore(pfcWhy(P))), 
+    (ignore(pfcWhy(P))),
     ignore(pfcWhy(~P)),
     printLine.
 
 %!  pfcWhy(+N) is nondet.
 %!  pfcWhy(+Predicate) is nondet.
 %
-%   Interactively explores the Nth justification for a predicate or explores all justifications 
+%   Interactively explores the Nth justification for a predicate or explores all justifications
 %   for a predicate if no number is provided.
 %
 %   @arg N The justification number to explore.
@@ -3396,8 +3396,8 @@ pfcWhy2(P, N) :- justifications(P, Js),pfcShowJustification1(Js, N).
 
 %!  pfcWhyBrouse(+Predicate, +Justifications) is nondet.
 %
-%   Interactively explores justifications for a predicate. This predicate shows the 
-%   justifications for the given predicate and waits for the user to input a command 
+%   Interactively explores justifications for a predicate. This predicate shows the
+%   justifications for the given predicate and waits for the user to input a command
 %   to continue exploring or modify the exploration.
 %
 %   @arg Predicate The predicate to explore.
@@ -3433,24 +3433,24 @@ pfcWhyCommand(N, _P, Js) :- float(N), !,
 pfcWhyCommand(u, _, _) :- !. % Up a level.
 %!  pfcCommand(+Command, +Predicate, +Justifications) is nondet.
 %
-%   Handles commands during Pfc justification exploration. This predicate checks if a given 
+%   Handles commands during Pfc justification exploration. This predicate checks if a given
 %   command is implemented or recognized and provides appropriate feedback.
 %
 %   @arg Command The command to execute.
 %   @arg Predicate The predicate being explored (not used in these cases).
 %   @arg Justifications The justifications being explored (not used in these cases).
 %
-pfcCommand(N, _, _) :- 
+pfcCommand(N, _, _) :-
     integer(N), !,
     pfcPrintf("~p is a yet unimplemented command.", [N]),
     fail.
-pfcCommand(X, _, _) :- 
+pfcCommand(X, _, _) :-
     pfcPrintf("~p is an unrecognized command, enter h. for help.", [X]),
     fail.
 
 %!  pfcShowJustifications(+Predicate, +Justifications) is nondet.
 %
-%   Pretty prints the justifications for a given predicate. This predicate formats and 
+%   Pretty prints the justifications for a given predicate. This predicate formats and
 %   prints each justification associated with the predicate.
 %
 %   @arg Predicate The predicate to print justifications for.
@@ -3468,7 +3468,7 @@ pfcShowJustifications(P, Js) :-
 
 %!  pfcShowJustification1(+Justifications, +N) is nondet.
 %
-%   Pretty prints the Nth justification in a list of justifications. This predicate 
+%   Pretty prints the Nth justification in a list of justifications. This predicate
 %   recursively prints each justification, incrementing the justification number.
 %
 %   @arg Justifications The list of justifications to print.
@@ -3541,7 +3541,7 @@ pfcShowSingleJust(JustNo, StepNo, [P|T]) :- !,
 pfcShowSingleJust(JustNo, StepNo, '$pt$'(P, Body)) :- !,
   pfcShowSingleJust1(JustNo, StepNo, '$pt$'(P)),
   pfcShowSingleJust(JustNo, StepNo, Body).
-pfcShowSingleJust(JustNo, StepNo, C) :- 
+pfcShowSingleJust(JustNo, StepNo, C) :-
   pfcShowSingleJust1(JustNo, StepNo, C).
 
 %!  fmt_cl(+Clause) is det.
@@ -3568,7 +3568,7 @@ fmt_cl(P,_):- is_list(P),catch(p_p_t_no_nl(P),_,fail),!.
 %   @arg Clause The clause to unwrap.
 %   @arg UnwrappedClause The unwrapped version of the clause.
 %
-unwrap_litr(C, CCC+VS) :- 
+unwrap_litr(C, CCC+VS) :-
     copy_term(C, CC, VS),
     numbervars(CC+VS, 0, _),
     unwrap_litr0(CC, CCC), !.
@@ -3639,11 +3639,11 @@ maybe_more_c(MFL) :- is_mfl(MFL), !.
 maybe_more_c(_) :- t_l:shown_why(no_recurse).
 maybe_more_c(C) :- t_l:shown_why(more(C)), !.
 maybe_more_c(C) :- t_l:shown_why((C)), !.
-maybe_more_c(C) :- 
-    assert(t_l:shown_why(more(C))), 
+maybe_more_c(C) :-
+    assert(t_l:shown_why(more(C))),
     assert(t_l:shown_why((C))),
     locally(t_l:shown_why(no_recurse),
-        locally(t_l:shown_why((C)), 
+        locally(t_l:shown_why((C)),
             locally(t_l:shown_why(more(C)),
                 ignore(catch(pfcWhy2(C, 1.1), E, fbugio(E)))))),
     !.
@@ -3676,13 +3676,13 @@ short_filename(F, FN) :- F = FN, !.
 %
 %   @arg MFL The mfl (module/file/line) reference to display.
 %
-pfcShowSingleJust_MFL(MFL) :- 
-    MFL = mfl4(VarNameZ, _M, F, L), atom(F), short_filename(F, FN), !, 
+pfcShowSingleJust_MFL(MFL) :-
+    MFL = mfl4(VarNameZ, _M, F, L), atom(F), short_filename(F, FN), !,
     varnames_load_context(VarNameZ),
     ansi_format([hfg(black)], " % [~w:~w] ", [FN, L]).
-pfcShowSingleJust_MFL(MFL) :- 
+pfcShowSingleJust_MFL(MFL) :-
     MFL = mfl4(V, M, F, L), my_maplist(var, [V, M, F, L]), !.
-pfcShowSingleJust_MFL(MFL) :- 
+pfcShowSingleJust_MFL(MFL) :-
     ansi_format([hfg(black)], " % [~w] ", [MFL]), !.
 
 %!  pfcAsk(+Message, -Answer) is det.

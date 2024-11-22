@@ -344,9 +344,9 @@ repl4 :-
 %
 check_has_directive(V) :- var(V), !, fail.
 % Directive to switch to mettalog.
-check_has_directive('@log') :- switch_to_mettalog, !, wdmsg(switch_to_mettalog),notrace(throw(restart_reading)).
+check_has_directive('@log') :- switch_to_mettalog, !, write_src_uo(switch_to_mettalog),notrace(throw(restart_reading)).
 % Directive to switch to mettarust.
-check_has_directive('@rust') :- switch_to_mettarust, !, wdmsg(switch_to_mettarust), notrace(throw(restart_reading)).
+check_has_directive('@rust') :- switch_to_mettarust, !, write_src_uo(switch_to_mettarust), notrace(throw(restart_reading)).
 % Checks if the symbol contains a '.' (common for directives).
 check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).

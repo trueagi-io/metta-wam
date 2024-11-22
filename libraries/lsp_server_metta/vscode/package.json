@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.0.5",
+  "version": "0.1.2",
   "categories": [
     "Other"
   ],
@@ -37,8 +37,6 @@
         ],
         "configuration": "./metta.config.json",
         "extensions": [
-          ".pl",
-          ".plt",
           ".meld",
           ".kif",
           ".krf",
@@ -54,7 +52,7 @@
           "scope": "resource",
           "type": "number",
           "default": 1000,
-          "description": "Sets the maximum number of diagnostic issues that the language server can report. Increase for larger projects if needed."
+          "description": "Configures the maximum number of diagnostic issues the language server will report. Useful for managing performance in larger projects."
         },
         "metta-lsp.trace.server": {
           "scope": "window",
@@ -65,63 +63,9 @@
             "verbose"
           ],
           "default": "off",
-          "description": "Defines the level of detail for tracing communications between VS Code and the language server. 'verbose' provides the most comprehensive information, useful for debugging."
+          "description": "Controls the verbosity of server communication logs, aiding in debugging and development."
         },
-        "metta-lsp.debug.showIncompleteFeatures": {
-          "scope": "window",
-          "type": "boolean",
-          "default": false,
-          "description": "Enables the display of experimental or incomplete features in the language server when set to true. Useful for previewing upcoming functionality."
-        },
-        "metta-lsp.debug.showPositionDebug": {
-          "scope": "window",
-          "type": "boolean",
-          "default": false,
-          "description": "If enabled, displays debugging information for the current cursor position and document range in the editor, useful for debugging text positions."
-        },
-        "metta-lsp.debug.useLanguageModels": {
-          "scope": "window",
-          "type": "boolean",
-          "default": true,
-          "description": "Enables integration with language models for enhanced code suggestions and diagnostics when set to true. Disable if language model support is not required."
-        },
-        "metta-lsp.chatgpt.enabled": {
-          "scope": "window",
-          "type": "boolean",
-          "default": true,
-          "description": "Enables or disables ChatGPT integration globally within the MeTTa language server."
-        },
-        "metta-lsp.chatgpt.apiKey": {
-          "scope": "window",
-          "type": "string",
-          "default": "",
-          "description": "Your OpenAI API key for enabling ChatGPT integration. This key allows the language server to access GPT models for advanced code assistance features."
-        },
-        "metta-lsp.chatgpt.model": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "gpt-3.5-turbo",
-            "gpt-4"
-          ],
-          "default": "gpt-3.5-turbo",
-          "description": "Selects the OpenAI GPT model to use for code assistance features. 'gpt-4' may provide better results but can be more costly and may require special access."
-        },
-        "metta-lsp.chatgpt.maxTokens": {
-          "scope": "window",
-          "type": "number",
-          "default": 500,
-          "description": "Sets the maximum number of tokens for ChatGPT responses. Adjust to control the length of generated code or explanations."
-        },
-        "metta-lsp.chatgpt.temperature": {
-          "scope": "window",
-          "type": "number",
-          "default": 0.7,
-          "minimum": 0.0,
-          "maximum": 1.0,
-          "description": "Controls the randomness of ChatGPT responses. Lower values make outputs more deterministic; higher values increase creativity."
-        },
-        "metta-lsp.chatgpt.features": {
+        "metta-lsp.features": {
           "scope": "window",
           "type": "array",
           "items": {
@@ -129,25 +73,93 @@
             "enum": [
               "codeRefactoring",
               "codeCommenting",
-              "errorExplanation",
+              "codeAndErrorExplanation",
+              "systemCodeIndexing",
+              "userCodeIndexing",
+              "foreignCodeIndexing",
               "codeExecution",
               "testRunning"
-            ]
-          },
+            ]},
           "default": [
-            "codeRefactoring",
+            "codeExecution",
+            "systemCodeIndexing",
             "codeCommenting",
-            "errorExplanation"
+            "testRunning"
           ],
-          "description": "Selects which ChatGPT features are enabled. Choose from code refactoring, code commenting, error explanations, code execution, and test running."
+          "description": "Enables selection of specific server features, optimizing functionality based on user needs."
+        },
+        "metta-lsp.debug.showIncompleteFeatures": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "Toggles the visibility of in-development features, allowing users to test or preview new functionalities."
+        },
+        "metta-lsp.options": {
+          "scope": "window",
+          "type": "array",
+          "items": {
+          "type": "string",
+          "enum": [
+            "show_thread_monitor",
+            "show_debug_window",
+            "debug_main",
+            "debug_errors",
+            "debug_threads",
+            "debug_high",
+            "debug_low",
+            "debug_position",
+            "debug_todo",
+            "debug_xref"
+          ]},
+          "default": [
+            "debug_main",
+            "debug_errors",
+            "debug_threads",
+            "debug_high",
+            "debug_todo",
+            "debug_xref"
+          ],
+          "description": "Selects specific debugging features to enable, providing detailed insights into the server's internal operations."
+        },
+        "metta-lsp.xtras.chatgpt.enabled": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Enables integration with ChatGPT for enhanced code assistance, leveraging AI to augment coding capabilities."
+        },
+        "metta-lsp.xtras.chatgpt.apiKey": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Specifies the API key required for ChatGPT functionality, ensuring secure and authorized access to AI models."
+        },
+        "metta-lsp.xtras.chatgpt.model": {
+          "scope": "window",
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "Allows selection of the ChatGPT model version for tailored code assistance, with an option for manual entry to support various OpenAI models."
+        },
+        "metta-lsp.xtras.chatgpt.maxTokens": {
+          "scope": "window",
+          "type": "number",
+          "default": 500,
+          "description": "Defines the limit on token count per ChatGPT interaction, optimizing response length and detail."
+        },
+        "metta-lsp.xtras.chatgpt.temperature": {
+          "scope": "window",
+          "type": "number",
+          "default": 0.7,
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Adjusts the variability of ChatGPT responses, controlling the balance between creativity and consistency."
         }
       }
     },
     "grammars": [
       {
-      "language": "metta",
-      "scopeName": "source.metta",
-      "path": "./syntaxes/mettalanguage.json"
+        "language": "metta",
+        "scopeName": "source.metta",
+        "path": "./syntaxes/mettalanguage.json"
       }
     ]
   },

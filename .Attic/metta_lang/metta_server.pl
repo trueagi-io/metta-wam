@@ -1113,31 +1113,62 @@ handle_dbg_client(ClientSocket) :-
     close(InStream),
     close(OutStream).
 
-% Process commands from the client
 handle_dbg_client_commands(InStream, OutStream) :-
-   repeat,
-    flush_output(OutStream),
-    read_line_to_string(InStream, Command),
-    ( Command == "quit" ->
-       (format(OutStream, 'Goodbye!~n', []),
-        flush_output(OutStream))
-      ; Command == "ide." ->
-          (prolog_ide(debug_monitor),
-           prolog_ide(thread_monitor))
-      ; Command == end_of_file ->
-          true  % End connection on EOF
-    ; (catch(
-        ( term_string(Term, Command),
-          (catch(call(Term), Error, format(OutStream, 'Error: ~q~n', [Error]))*->true;true),
-          \+ \+ (numbervars(Term,0,_,[singletons(true),attvar(skip)]),format(OutStream, 'Result: ~q.~n', [Term])),
-          fail
-        ), 
-        Error, 
-        (format(OutStream, 'Invalid input: ~w~n', [Error]),make)
-       ),
-       flush_output(OutStream),
-       fail)
-    ).
+        OutStream = ErrStream,
+        thread_self(Id),
+        set_prolog_IO(InStream, OutStream, ErrStream),
+        set_output(OutStream), set_input(InStream),
+        set_stream(InStream, tty(true)),
+        set_prolog_flag(tty_control, false),
+        current_prolog_flag(encoding, Enc),
+        set_stream(InStream, encoding(Enc)),
+        set_stream(OutStream, encoding(Enc)),
+        set_stream(ErrStream, encoding(Enc)),
+        set_stream(InStream, newline(detect)),
+        set_stream(OutStream, newline(dos)),
+        set_stream(ErrStream, newline(dos)),
+
+    set_stream(user_input, encoding(Enc)),
+    set_stream(user_output, encoding(Enc)),
+    set_stream(user_error, encoding(Enc)),
+    set_stream(user_input, newline(detect)),
+    set_stream(user_output, newline(dos)),
+    set_stream(user_error, newline(dos)),
+
+        format(ErrStream,
+               'Welcome to the SWI-Prolog server on thread ~w~n~n',
+               [Id]), !,
+        % handle_dbg_client_commands_2(InStream, OutStream),
+        call_cleanup(prolog,
+                     ( close(InStream, [force(true)]),
+                       close(OutStream, [force(true)]))).
+
+
+    % Process commands from the client
+    handle_dbg_client_commands_2(InStream, OutStream) :-
+       repeat,
+        write(OutStream, '?- '), flush_output(OutStream),
+        read_line_to_string(InStream, Command),
+        ( Command == "quit" ->
+           (format(OutStream, 'Goodbye!~n', []),
+            flush_output(OutStream))
+          ; Command == "ide." ->
+              (prolog_ide(debug_monitor),
+               prolog_ide(thread_monitor))
+          ; Command == end_of_file ->
+              true  % End connection on EOF
+        ; (catch(
+            ( term_string(Term, Command),
+              (catch(call(Term), Error, format(OutStream, 'Error: ~q~n', [Error]))*->true;true),
+              \+ \+ (numbervars(Term,0,_,[singletons(true),attvar(skip)]),format(OutStream, 'Result: ~q.~n', [Term])),
+              fail
+            ),
+            Error,
+            (format(OutStream, 'Invalid input: ~w~n', [Error]),make)
+           ),
+           flush_output(OutStream),
+           fail)
+        ).
 
 % Start the server on port 44440
 start_dbg_telnet :-

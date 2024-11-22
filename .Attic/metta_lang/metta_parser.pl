@@ -702,9 +702,9 @@ process_expressions(FileName, InStream, OutStream) :-
    % Record the absolute file name, file name stem, and the original file name.
    call(WriteOutput,  afn_stem_filename(AFNStem, Stem, FileName)),
    % Declare multifile predicates for storing file-related facts.
-   call(WriteOutput, :- multifile(afn_stem_filename/3)),
-   call(WriteOutput, :- dynamic(metta_file_buffer/7)),
-   call(WriteOutput, :- multifile(metta_file_buffer/7)),
+   call(WriteOutput, :- multifile(user:afn_stem_filename/3)),
+   call(WriteOutput, :- dynamic(user:metta_file_buffer/7)),
+   call(WriteOutput, :- multifile(user:metta_file_buffer/7)),
 
     locally(nb_setval('$file_src_name', AFNStem),
      locally(nb_setval('$file_src_write_readably', WriteOutput),
@@ -839,8 +839,8 @@ push_item_range(Item, Range):-
      nb_current('$file_src_depth', Lvl), can_do_level(Lvl),
      subst_vars(Item, Term, [], NamedVarsList),
      flag('$file_src_ordinal',Ordinal,Ordinal),
-     Buffer = metta_file_buffer(Lvl,Ordinal,TypeNameCompound, Term,  NamedVarsList, Context,Range),
-     BufferC= metta_file_buffer(Lvl,Ordinal,TypeNameCompound,_TermC,_NamedVarsListC,Context,Range),
+     Buffer = user:metta_file_buffer(Lvl,Ordinal,TypeNameCompound, Term,  NamedVarsList, Context,Range),
+     BufferC= user:metta_file_buffer(Lvl,Ordinal,TypeNameCompound,_TermC,_NamedVarsListC,Context,Range),
      copy_term(Buffer,BufferC),
      ignore(xrefed_outline_type(Term,Outline,TypeName1)),
      ignore((Lvl==0,type_symbol_clause(TypeName2,_Symbol,Term), \+ member(TypeName2,[ref(_)]))),
@@ -878,7 +878,7 @@ type_symbol_clause(Type,Symbol,Clause):-
   clause_type_op_fun_rest_body(Type,Symbol,Clause,_Op,_Fun,_Rest,_Body).
 
 clause_type_op_fun_rest_body(Type,Symbol,Clause,Op,Fun,Rest,Body):-
-   ( ( \+ var(Clause)) -> true ; (metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),
+   ( ( \+ var(Clause)) -> true ; (user:metta_file_buffer(0,_Ord,_Kind, Clause, VL, _Filename, _LineCount),
            ignore(maybe_name_vars(VL)))),
    once(into_op_fun_rest_body(Clause,Op,Fun,Rest,Body)),
    type_op_head_rest_body(Type,Symbol,Op,Fun,Rest,Body).
@@ -1090,7 +1090,10 @@ read_list(EndChar,  Stream, List):-
   flag('$file_src_ordinal',Ordinal,Ordinal+1),
   succ(LvL,LvLNext),
   nb_setval('$file_src_depth', LvLNext),
-  read_list_cont(EndChar,  Stream, List),
+  read_position(Stream, Line, Col, CharPos, _),
+  catch(read_list_cont(EndChar,  Stream, List),
+        stream_error(_Where,Why),
+        throw(stream_error(Line:Col:CharPos,Why))),
   nb_setval('$file_src_depth', LvL).
 
 read_list_cont(EndChar,  Stream, List) :-

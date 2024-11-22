@@ -250,8 +250,8 @@ subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
   notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
-     (wdmsg(red,needed_subst_args(Y,YO)),bt,sleep(1.0)),
-  nop(wdmsg(unneeded_subst_args(Y))))).
+     (write_src_uo(needed_subst_args(Y,YO)),bt,sleep(1.0)),
+  nop(write_src_uo(unneeded_subst_args(Y))))).
 
 wont_need_subst([_,A|_]):- number(A),!,fail.
 wont_need_subst([F|_]):-atom(F), \+ need_subst_f(F).
@@ -266,7 +266,7 @@ if_t_else(If,Then,Else):- If -> Then ; Else.
 
 finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
   finish_eval(Eq,RetType,Depth2,Self,Y,YO),
-  notrace(if_t(Y\=@=YO,wdmsg(finish_eval(Y,YO)))).
+  notrace(if_t(Y\=@=YO,write_src_uo(finish_eval(Y,YO)))).
 
 :- nodebug(metta(e)).
 
@@ -1341,7 +1341,7 @@ type_cast(Depth,Self,Val,Into,Casted):-
       ;Casted=['Error',Val,'BadType',Into]).
 
 type_accepted_from(Into,From):-Into=From,!.
-type_accepted_from(Into,From):-wdmsg(type_accepted_from(Into,From)).
+type_accepted_from(Into,From):-write_src_uo(type_accepted_from(Into,From)).
 
 
 %use default self
@@ -1833,7 +1833,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['compile!',Space],Res):- !,
        (trace,compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
     % pfcNoWatch,
     true,!,
-     notrace(catch((wdmsg(?-listing(X)),listing(X)),E,
+     notrace(catch((write_src_uo(?-listing(X)),listing(X)),E,
     (!,write_src(E),fail))),!.
 
 
@@ -2142,8 +2142,6 @@ eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
     eq_unify(Eq,_SharedType, X, Y, Res).
 
-eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf(X=:=Y,TF),!.
-eq_unify(_Eq,_SharedType, X, Y, TF):- as_tf( '#='(X,Y),TF),!.
 eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
 
 

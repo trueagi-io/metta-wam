@@ -67,13 +67,13 @@
 metta_atom_xref(Atom):- metta_atom_xref(Atom, _Path, _Loc).
 
 metta_atom_xref(Atom, Path, Loc):-
-    metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc),  % Retrieve the atom from a Metta file buffer.
+    user:metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc),  % Retrieve the atom from a Metta file buffer.
     \+ clause(metta_atom_asserted(_, Atom), true),  % Ensure the atom has not been asserted already.
    ignore(maybe_name_vars(NamedVarsList)).  % Set variable names based on the named variables list.
 metta_atom_xref(Atom, Path, Loc):-
     clause(metta_atom_asserted(_, Atom), true),  % Check if the atom has been asserted in the knowledge base.
     copy_term(Atom,Copy),
-    ignore(metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc)),
+    ignore(user:metta_file_buffer(0,_Ord,_Kind, Atom, NamedVarsList, Path, Loc)),
     Atom =@= Copy,
     ignore(maybe_name_vars(NamedVarsList)).
 
@@ -220,8 +220,8 @@ xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the
 xref_source_path(Path) :- xref_enqueue_file(Path).
 
 has_xref_info(Path):- user:full_text(Path, OldText), user:next_text(Path, NextText), NextText\==OldText,!,fail.
-has_xref_info(Path):- metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
-has_xref_info(Path):- made_metta_file_buffer(Path),!.
+has_xref_info(Path):- user:metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
+has_xref_info(Path):- user:made_metta_file_buffer(Path),!.
 
 
 
@@ -283,11 +283,8 @@ enumerate_files_in_directory(_, []).  % Handle non-directory paths by returning 
 %
 %   Adds a file to the processing queue and ensures the worker thread is running.
 xref_enqueue_file(File) :- xref_file_queue(File),!.
-xref_enqueue_file(File) :- made_metta_file_buffer(File),!.
-xref_enqueue_file(Path):- disable_thread_system, !,
-      get_current_text(Path, NewText),  % Get the current content of the file.
-      compare_and_update_string(Path, NewText),  % Compare with the last stored content.
-      call(debug_buffer_info).  % Save the current state.
+xref_enqueue_file(File) :- user:made_metta_file_buffer(File),!.
+xref_enqueue_file(Path):- disable_thread_system, !, xref_source_now_maybe(Path).
 xref_enqueue_file(File) :-
     xref_ensure_worker_thread_running(),
     xref_update_file_state(File, submitted),
@@ -295,6 +292,7 @@ xref_enqueue_file(File) :-
         true  % File is already in the queue; do nothing
     ;   assertz(xref_file_queue(File))
     ).
+
 
 
 %!  check_time_elapsed(+Path) is semidet.
@@ -396,21 +394,39 @@ xref_handle_file(File) :-
           (debug(lsp(xref), "Processing of file ~w was interrupted, resuming...~n", [File]),
            xref_update_file_state(File, interrupted))).
 
+xref_reload_source(Uri):-
+   xref_source_expired(Uri),
+   xref_source_now(Uri),!.
+
+
+
+xref_source_now(Doc):- maybe_doc_path(Doc,Path),!,xref_source_now(Path).
 xref_source_now(Path) :-
     source_file_text(Path, NewText),
-    xref_metta_file_text('&xref',Path, NewText),
+    xref_metta_file_text('&xref', Path, NewText),
     call(debug_buffer_info).  % Save the current state
+
+xref_source_now_maybe(Doc):- maybe_doc_path(Doc,Path),!,xref_source_now_maybe(Path).
+xref_source_now_maybe(Path):-
+    get_current_text(Path, NewText),  % Get the current content of the file.
+    compare_and_update_string(Path, NewText),  % Compare with the last stored content.
+    call(debug_buffer_info).  % Save the current state.
 
 xref_source_expired(Path):- var(Path),!.
 xref_source_expired(Doc):- maybe_doc_path(Doc,Path),!,xref_source_expired(Path).
 xref_source_expired(Path):-
-   doc_path(Doc,Path),
-   retractall(made_metta_file_buffer(Doc)),
-   retractall(gave_document_symbols(Doc,_)),
-   retractall(made_metta_file_buffer(Path)),
-   retractall(gave_document_symbols(Path,_)),
-  %retractall(metta_file_buffer(0,_Ord,_Kind,Mode, _Term, _NamedVarsList, Path, _Pos)),
-   xref_interrupt_worker(Path).
+   file_doc(Path,Doc),
+   xref_interrupt_worker(Path),
+   retractall(user:made_metta_file_buffer(Doc)),
+   retractall(lsp_cache:gave_document_symbols(Doc,_)),
+   retractall(user:made_metta_file_buffer(Path)),
+   retractall(lsp_cache:gave_document_symbols(Path,_)),
+   %metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)
+   symbol_concat(Path, '.buffer~', BufferFile),
+   if_t(exists_file(BufferFile),delete_file(BufferFile)),
+   retractall(user:metta_file_buffer(_Lvl,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)),!.
+
+
 
 
 
@@ -420,7 +436,7 @@ xref_source_expired(Path):-
 %
 %   Saves the current state of the Metta file buffer to 'last_file.txt'.
 debug_buffer_info:-
-    ignore((debugging(server(xref)),
+    user:ignore((debugging(server(xref)),
             open('last_file.txt', write, Stream),
             with_output_to(Stream, listing(metta_file_buffer)),
             close(Stream))).
@@ -433,9 +449,11 @@ debug_buffer_info:-
 %   @arg Self The context (usually '&self') for the cross-reference.
 %   @arg Path The file path to cross-reference.
 %   @arg Text The content of the file as text.
-:- dynamic(made_metta_file_buffer/1).
-xref_metta_file_text(_Self, Path, _Text) :- made_metta_file_buffer(Path),!.
-xref_metta_file_text(_Self, Path, _Text) :- metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
+:- dynamic(user:made_metta_file_buffer/1).
+xref_metta_file_text(_Self, Path, _Text) :- user:metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos), !.
+
+
+xref_metta_file_text(_Self, Path, _Text) :- user:made_metta_file_buffer(Path),!.
 xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, % so we notice we are not using this clause
     % this one calls the compiler and makes sense to be the default for xref-ing
     % (var(Text); Text==""),!,
@@ -453,8 +471,8 @@ xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fai
 %   the correct working directory context. It handles both string content and file
 %   reading.
 xref_metta_file_text(_Self, Path, Text) :-
-    asserta(made_metta_file_buffer(Path)),!,
-    debug(lsp(xref), "made_metta_file_buffer ~w", [Path]),  % Log the file path being processed.
+    asserta(user:made_metta_file_buffer(Path)),!,
+    debug(lsp(xref), "user:made_metta_file_buffer ~w", [Path]),  % Log the file path being processed.
     must_det_ll((
         % Convert the file path to an absolute path
         absolute_file_name(Path, Filename),
