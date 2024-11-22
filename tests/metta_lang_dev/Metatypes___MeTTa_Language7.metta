@@ -14,7 +14,7 @@
 
 
 !(println "xx 40 ") 
- ; ready works notready 
+ ; ready works
 !(assertEqualToResult ( atom-eq (+ 1 2) (+ 1 2) ) ( True ) ) 
 
 

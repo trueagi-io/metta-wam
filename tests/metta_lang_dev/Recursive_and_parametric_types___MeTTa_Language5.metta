@@ -9,14 +9,14 @@
 ;!(apply not False) 
 ; True
 !(println "xx 83 ") 
- ; ready works notready 
+ ; ready works 
 !(assertEqualToResult ( apply not False ) ( True ) ) 
 
 
 ;!(get-type (apply not False)) 
 ; Bool
 !(println "xx 84 ") 
- ; ready works notready 
+ ; ready works 
 !(assertEqualToResult ( get-type (apply not False) ) ( Bool ) ) 
 
 
