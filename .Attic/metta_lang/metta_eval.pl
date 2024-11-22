@@ -328,7 +328,7 @@ eval_20(Eq,RetType,Depth,Self,[X|T],[Y]):- T==[], is_list(X),!,
 eval_20(Eq,RetType,Depth,Self,[X|Rest],YL):- is_list(Rest), is_list(X),!,
    eval_args(Eq,RetType,Depth,Self,X,Y),
    ((X\=@=Y,atom(Y)) -> eval_args(Eq,RetType,Depth,Self,[Y|Rest],YL)
-     ; ((maplist(eval_args(Eq,RetType,Depth,Self),Rest,YRest),YL=[Y|Rest]))).
+     ; ((maplist(eval_args(Eq,RetType,Depth,Self),Rest,YRest),YL=[Y|YRest]))).
 
 eval_20(Eq,RetType,Depth,Self,[V|VI],VVO):-  \+ is_list(VI),!,
  eval_args(Eq,RetType,Depth,Self,VI,VM),
@@ -945,7 +945,7 @@ cant_be_ok(_,[Let|_]):- Let==let.
 eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
   eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
 
-eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- fail, is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 % if there is only a void then always return nothing for each Case
 eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
