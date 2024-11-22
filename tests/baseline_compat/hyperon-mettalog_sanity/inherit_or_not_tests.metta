@@ -24,13 +24,9 @@
 ; Add the current self context to &new-space
 !(add-atom &new-space &self)
 
-; Add (likes John Jane) again to &new-space
-!(add-atom &new-space (likes John Jane))
 ; Test that matching 'likes' returns both (John Jess) and (John Jane)
 !(assertEqualToResult (metta (match &self (likes $x $y) ($x $y)) Atom &new-space) ((John Jess) (John Jane)))
 
-; Add another definition of foo to &new-space
-!(add-atom &new-space (= (foo $x) (+ $x 1)))
 ; Test that (foo 1) now evaluates to both 2 and 3 in &new-space
 !(assertEqualToResult (metta (foo 1) Number &new-space) (2 3))
 

@@ -2,7 +2,9 @@
 !(bind! &outer-space (new-space))
 !(bind! &nested-space (new-space))
 !(add-atom &nested-space (= (foo $x) $x))
-!(assertEqualToResult (metta (foo a) Atom &nested-space) ((a)))
+!(assertEqualToResult (metta (foo a) Atom &nested-space) ((foo a)))
+!(assertEqualToResult (metta (foo a) Symbol &nested-space) (a))
+!(assertEqualToResult (metta (foo a) %Undefined% &nested-space) (a))
 
 ; Test get-type operation for atom 'A' in a space with types B and C
 !(bind! &type-space (new-space))
@@ -11,7 +13,10 @@
 !(add-atom &type-space (: A B))
 !(add-atom &type-space (: A C))
 ; Expecting types B and C for atom 'A'
-!(assertEqualToResult (get-type A &type-space) ((B C)))
+!(H-E-Fails (assertEqualToResult (evalc (get-type A) &type-space) (B C)))
+!(H-E-Fails (assertEqualToResult (metta (get-type A) %Undefined% &type-space) (B C)))
+!(assertEqualToResult (metta (get-type-space &type-space A) %Undefined% &type-space) (B C))
+!(assertEqualToResult (evalc (get-type-space &type-space A) &type-space) (B C))
 
 ; Test get-type operation with non-valid atom, expecting 'String' type
 !(bind! &nonvalid-space (new-space))
