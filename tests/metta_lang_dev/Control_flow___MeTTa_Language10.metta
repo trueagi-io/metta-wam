@@ -1,8 +1,27 @@
 
 ; 20241014 r.v.v converted metta-lang.dev to metta 
-;  !(assertEqualToResult ( )  (  )  ) 
-! (print-if-frog Ben) ; empty(Sam is 34 years old)
-! (match &amp;self ($who is (+ 20 14) years old) $who) ; empty
-! (let $r (+ 20 14)
 
-;  !(assertEqualToResult ( )  (  )  ) 
+(= (is-frog Sam) True)
+(= (print-if-frog $x)
+   (let True (is-frog $x)
+     (println! ($x is frog!))))
+
+;! (print-if-frog Sam) 
+; ()
+
+
+!(println "xx 13 ") 
+; ready works  
+!(assertEqualToResult ( print-if-frog Sam ) ( () ) ) 
+
+
+
+;! (print-if-frog Ben) 
+; empty
+
+
+!(println "xx 14 ") 
+; ready works 
+!(assertEqualToResult ( print-if-frog Ben ) ( ) ) 
+
+

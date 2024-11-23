@@ -17,15 +17,17 @@
 (: a A)
 (: b B)
 
+; ready works
 !(assertEqualToResult (foo a)    ( (foo a) )  ) 
-; no error
+; ready works
 !(assertEqualToResult (get-type (foo b))   (  )  ) 
-; no result
+; ready works
 !(assertEqualToResult (b foo)   ( (b foo) )  ) 
 ; notice: no error
 ; notready
 !(assertEqualToResult (get-type (b foo))  ( (B (-> A B)) )  )  
 
-;(B (-> A B))
+; ready works
+
 !(assertEqualToResult (foo b)   ( (foo b) )  ) 
 ; type error
