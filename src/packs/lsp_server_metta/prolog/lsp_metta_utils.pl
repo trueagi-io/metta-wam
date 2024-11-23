@@ -195,7 +195,7 @@ get_code_at_range(Type, Uri, Range, Target):- maybe_doc_path(Uri, Path), !, get_
 % get_code_at_range(+TargetType, +Uri, +line_char(L, C), -Target)
 get_code_at_range(TargetType, Uri, line_char(L, C), Target) :-
     % Retrieve the last recorded range from the user data
-    user:last_range(_Method, Range),
+    lsp_state:last_range(_Method, Range),
     % Correct use of :< to directly access start and end members of the Range
     _{start: Start, end: End} :< Range,
     _{character: SC, line: SL} :< Start,
@@ -210,7 +210,7 @@ get_code_at_range(TargetType, Uri, line_char(L, C), Target) :-
     get_code_at_range(TargetType, Uri, Range, Target).
 
 get_code_at_range(TargetType, Uri, line_char(_,_), Target):- fail,
-   user:last_range(_Method,Range), !,
+   lsp_state:last_range(_Method,Range), !,
    get_code_at_range(TargetType, Uri, Range, Target).
 
 get_code_at_range(TargetType, Uri, Range, Target):- \+ ((is_dict(Range), _{start: _RStart, end: _REnd} :< Range)),

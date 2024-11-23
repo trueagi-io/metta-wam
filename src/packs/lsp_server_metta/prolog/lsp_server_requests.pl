@@ -44,7 +44,7 @@ Assumptions:
     refresh_semantic_tokens/0,
     send_log_message/2,
     send_telemetry_event/1,
-    report_progress/2,
+    report_progress/4,
     cancel_work_done_progress/1,
     publish_diagnostics/4,
     create_msg_id/1,
@@ -58,9 +58,9 @@ Assumptions:
 receive_response(MsgId, MsgBody):-
   debug_lsp(requests,begin_receive_response(MsgId)),
   repeat, sleep(0.1),
-   user:last_request(Method, MsgBody),
+   lsp_state:last_request(Method, MsgBody),
    get_dict(id,MsgBody,Id), Id==MsgId,!,
-   retract(user:last_request(Method, MsgBody)),!,
+   retract(lsp_state:last_request(Method, MsgBody)),!,
    debug_lsp(requests,received_response(MsgId, MsgBody)).
 
 
@@ -300,22 +300,18 @@ test_telemetry_event :-
     },
     send_telemetry_event(TelemetryData).
 
-% Sample predicate for 'create_work_done_progress/1' and 'report_progress/2'
+% Sample predicate for 'create_work_done_progress/1' and 'report_progress/4'
 test_work_done_progress :-
     Token = "sample_progress_token",
     create_work_done_progress(Token),
-    ProgressValue = _{
-        kind: "begin",
-        title: "Sample Progress",
-        percentage: 0,
-        cancellable: true
-    },
-    report_progress(Token, ProgressValue),
+    % Initial progress report
+    report_progress(Token, "begin", "Sample Progress", 0),
     % Simulate progress updates
     sleep(1),
-    report_progress(Token, _{kind: "report", message: "Halfway there...", percentage: 50}),
+    report_progress(Token, "report", "Halfway there...", 50),
     sleep(1),
-    report_progress(Token, _{kind: "end", message: "Completed", percentage: 100}).
+    report_progress(Token, "end", "Completed", 100).
+
 
 % Sample predicate for 'apply_workspace_edit/3'
 sample_ws_edit :-
@@ -336,15 +332,19 @@ sample_ws_edit :-
             ]
         },
     apply_workspace_edit(Label, Edit, Response),
-    format('Workspace edit response: ~w', [Response]).
+    lsp_debug(main, 'Workspace edit response: ~w', [Response]).
 
 % Sample predicate for 'fetch_workspace_configuration/2'
-fetch_workspace_configuration :-
+
+fetch_workspace_configuration:-
+   notrace(ignore(catch(fetch_workspace_configuration_unsafe,_,true))).
+
+fetch_workspace_configuration_unsafe :-
     ConfigurationItems = [
         _{section: "metta-lsp"}
     ],
     fetch_workspace_configuration(ConfigurationItems, Configurations),
-    format('Configurations: ~w', [Configurations]),
+    lsp_debug(main, 'Configurations: ~w', [Configurations]),
     first_dict_key( result, Configurations, ClientConfig),
     save_json(client_configuration,ClientConfig),
     resync_debug_values.
@@ -362,7 +362,7 @@ resync_debug_values(Str):- ignore((string(Str), atom_concat("debug_", Atom, Str)
 % Sample predicate for 'fetch_workspace_folders/1'
 fetch_workspace_folders :-
     fetch_workspace_folders(Folders),
-    format('Workspace folders: ~w', [Folders]),
+    lsp_debug(main, 'Workspace folders: ~w', [Folders]),
     send_feedback_message("Retrieved workspace folders.", info).
 
 
@@ -394,11 +394,10 @@ is_lsp_success(Success):-
 lsp_hooks:exec_code_action("system_call_zero_args", [_Uri, PredicateName], null) :-
     atom_string(PredicateAtom, PredicateName),
     (   catch(call(PredicateAtom), Error,
-          ( format('Error executing predicate ~w: ~w', [PredicateAtom, Error]),
-            send_feedback_message('Error executing predicate', error),
-            fail))
+          ( lsp_debug(errors, 'Error executing predicate ~w: ~q', [PredicateAtom, Error]),
+            send_feedback_message(format('Error executing predicate ~w: ~w', [PredicateAtom, Error]), error)))
     ->  true
-    ;   send_feedback_message('Predicate execution failed', error)
+    ;   send_feedback_message(format('Predicate execution failed: ~q',[PredicateAtom]), error)
     ),
     !.
 
@@ -770,31 +769,30 @@ send_telemetry_event(Data) :-
     },
     send_client_message(Msg).
 
-%% report_progress(+Token, +Value) is det.
+%% report_progress(+Token, +Kind, +Message, +Percent) is det.
 %
 % Reports progress for a long-running operation.
 %
 % @param Token The progress token used when creating the progress.
-% @param Value A dictionary containing the progress value to report.
+% @param Kind The kind of progress report.
+% @param Message A descriptive message about the current progress.
+% @param Percent An integer representing the completion percentage of the operation.
 %
 % @example
 %    % Report progress for a long-running operation.
 %    Token = "progress_token_123",
-%    ProgressValue = _{
-%        kind: "report",
-%        message: "Processing files...",
-%        percentage: 50
-%    },
-%    report_progress(Token, ProgressValue).
+%    Kind = "report",
+%    Message = "Processing files...",
+%    Percent = 50,
+%    report_progress(Token, Kind, Message, Percent).
 % @end_example
 %
-report_progress(Token, Value) :-
+report_progress(Token, Kind, Message, Percent) :-
     Msg = _{
-
         method: "$/progress",
         params: _{
             token: Token,
-            value: Value
+            value: _{kind: Kind, message: Message, percentage: Percent}
         }
     },
     send_client_message(Msg).
@@ -882,7 +880,7 @@ resolve_diagnostic_enum(Diagnostic, ResolvedDiagnostic) :-
 
 
 % Predicate to handle the entry point where JSON is the input dictionary.
-:- dynamic(user:stored_json_value/3).
+:- dynamic(lsp_state:stored_json_value/3).
 
 % Save JSON as stored_json_value facts with reversed keys.
 save_json(Pred, JSON) :-
@@ -902,8 +900,8 @@ save_json_value(Pred, Path, List) :-
     maplist(save_json_value(Pred, Path), List).
 save_json_value(Pred, Path, Value) :-
     reverse(Path, RevPath),
-    retractall(user:stored_json_value(Pred, RevPath, _)),
-    asserta(user:stored_json_value(Pred, RevPath, Value)).
+    retractall(lsp_state:stored_json_value(Pred, RevPath, _)),
+    asserta(lsp_state:stored_json_value(Pred, RevPath, Value)).
 
 end_of_file.
 
