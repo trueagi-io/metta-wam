@@ -1658,7 +1658,7 @@ use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 :- dynamic(user:metta_file_buffer/7).
 :- multifile(user:metta_file_buffer/7).
 
-%!  prefer_temp(+Filename, +BufferFile) is nondet.
+%!  use_cache_file(+Filename, +BufferFile) is nondet.
 %
 %   Determines if a temporary buffer file should be preferred over the original file.
 %
@@ -1672,11 +1672,11 @@ use_fast_buffer:- nb_current(may_use_fast_buffer,t).
 %
 %   @example
 %     % Check if a buffer file should be preferred over "example.metta".
-%     ?- prefer_temp('example.metta', 'example.metta.buffer~').
+%     ?- use_cache_file('example.metta', 'example.metta.buffer~').
 %
-prefer_temp(Filename, BufferFile) :-
+use_cache_file(Filename, BufferFile) :-
     \+ exists_file(Filename), !, exists_file(BufferFile).
-prefer_temp(Filename, BufferFile) :-
+use_cache_file(Filename, BufferFile) :-
     % Get modification times for both files
     time_file(Filename, FileTime),
     time_file(BufferFile, BufferFileTime),
@@ -1685,7 +1685,60 @@ prefer_temp(Filename, BufferFile) :-
     size_file(Filename, MettaSize),
     size_file(BufferFile, BufferSize),
     % Ensure buffer file is not truncated
-    BufferSize >= 0.25 * MettaSize.
+    BufferSize >= 0.25 * MettaSize,
+    \+ older_than_impl(BufferFileTime).
+
+% checks to see if the impl has been updated since a particular time
+older_than_impl(BufferFileTime):-
+    is_metta_src_dir(Directory),
+    newest_file_time(Directory, '{*.pl,*.metta}', NewestTime),
+    NewestTime>BufferFileTime.
+
+%% newest_file_time(+Directory, +Mask, -NewestTime) is det.
+%
+% Retrieves the modification time of the newest file in a specified directory
+% that matches a given file mask.
+%
+% @param Directory The directory to scan.
+% @param Mask The file mask for filtering files, e.g., '*.txt'.
+% @param NewestTime The Unix timestamp of the newest file found that matches the mask.
+%
+% @example
+%    % To find the newest .txt file modification time in the directory '/my/files':
+%    newest_file_time('/my/files', '*.txt', Time).
+%
+% @example
+%    % To find the newest .jpg file modification time in the directory 'C:\Pictures':
+%    newest_file_time('C:\\Pictures', '*.jpg', Time).
+%
+newest_file_time(Directory, Mask, NewestTime) :-
+    directory_files(Directory, Files),
+    include(wildcard_match(Mask), Files, FilteredFiles),
+    find_newest_file_time(Directory, FilteredFiles, 0, NewestTime).
+
+
+%% find_newest_file_time(+Directory, +Files, +CurrentNewest, -NewestTime) is det.
+%
+% Helper predicate to find the newest file time from a list of files.
+%
+% @param Directory The directory containing the files.
+% @param Files List of file names to check.
+% @param CurrentNewest The current newest time found.
+% @param NewestTime The updated newest time.
+
+find_newest_file_time(_, [], Newest, Newest).
+find_newest_file_time(Directory, [File | Rest], CurrentNewest, NewestTime) :-
+    directory_file_path(Directory, File, FilePath),
+    (   exists_file(FilePath)
+    ->  time_file(FilePath, Time),
+        (   Time > CurrentNewest
+        ->  UpdatedNewest = Time
+        ;   UpdatedNewest = CurrentNewest
+        )
+    ;   UpdatedNewest = CurrentNewest
+    ),
+    find_newest_file_time(Directory, Rest, UpdatedNewest, NewestTime).
+
 
 %!  load_metta_file_stream_fast(+Size, +P2, +Filename, +Self, +In) is det.
 %
@@ -1713,7 +1766,7 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     atomic(Filename), symbol_concat(Filename, '.buffer~', BufferFile),
     exists_file(BufferFile),
     (   % Prefer the buffer file if it is newer and large enough
-        prefer_temp(Filename, BufferFile)
+        use_cache_file(Filename, BufferFile)
     ->  (use_fast_buffer, fbugio(using(BufferFile)),
          ensure_loaded(BufferFile), !, load_metta_buffer(Self, Filename))
     ;   % Delete outdated buffer file
@@ -3616,7 +3669,8 @@ load_corelib_file :- really_using_corelib_file, !.
 load_corelib_file :-
               % Load the standard Metta logic file from the source directory.
               is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'), !,
-              metta_atom('&corelib', [:, 'Any', 'Type']).
+              assertion(metta_atom('&corelib', [':', 'Any', 'Type'])),
+              really_use_corelib_file(Dir, 'corelib.metta').
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 
 %!  really_use_corelib_file(+Dir, +File) is det.

@@ -142,7 +142,7 @@ find_at_doc_aux2(Term, [_|T]) :-
 % Douglas' initial impl of Hover
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_hook(Path, Loc, Term, Arity, S):-
-  make,   % Trigger the make command to compile the knowledge base. (For real-time editing)
+  ignore(notrace(catch(make,_,fail))),   % Trigger the make command to compile the knowledge base. (For real-time editing)
   xref_metta_source(Path),   % Possibly cross-reference the file.
   term_info_string(Path, Loc, Term, Arity, S). % Generate a term definition string.
 
@@ -329,7 +329,7 @@ debug_positions(_Path, Loc, Term, Arity) :-
    in_markdown((format("*Debug Positions*:\t\t<details><summary>(this and below is normally hidden)</summary>~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
 
 debug_positions(_Path, _Loc, _Term, _Arity) :-
-   user:last_range(Method,Range),
+   lsp_state:last_range(Method,Range),
    numbervars(Range,0,_,[singletons(true),attvars(skip)]),
    in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
 

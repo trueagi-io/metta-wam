@@ -443,10 +443,10 @@ compute_each_buffer_lens(_Uri, Lvl, _Ord, _Kind, Symbol, _VL, _Path, BRange, Cod
 
 
 % Handle "codeLens/resolve" Request
-handle_code_action_msg("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
+lsp_hooks:handle_msg_hook("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
     _{params: CodeLensParams, id: Id} :< Msg,
     resolve_code_lens(CodeLensParams, ResolvedCodeLens), !.
-handle_code_action_msg("codeLens/resolve", Msg, _{id: Msg.id, result: null}) :- !.  % Fallback if resolution fails
+lsp_hooks:handle_msg_hook("codeLens/resolve", Msg, _{id: Msg.id, result: null}) :- !.  % Fallback if resolution fails
 
 
 % Resolve Code Lens
@@ -526,54 +526,6 @@ handle_execute_command(Msg, Response) :-
         )
     ).
 
-/*
-% Implement handle_execute_command/2
-handle_execute_command(Msg, Response) :-
-    % Extract parameters from the message
-    _{id: Id, params: Params} :< Msg,
-    _{command: Command, arguments: Arguments} :< Params,
-    % Look up the clause for lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult)
-    HeadPattern = lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult),
-    (   clause(HeadPattern, Body)
-    ->  (
-            % We found a matching command
-            (   arguments_match(ExpectedArguments, Arguments)
-            ->  (   % Proceed to execute the command
-                    catch(
-                        call(Body),
-                        Error,
-                        % Handle errors that occur during execution
-                        (   format(string(ErrorMessage), "Error ~w ~q:~q", [Error, Command, Arguments]),
-                            send_feedback_message(ErrorMessage, warning),
-                            Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
-                        )
-                    )
-                ->  % Execution succeeded without throwing an error
-                    (   send_feedback_message(ExecutionResult, info),
-                        Response = _{id: Id, result: ExecutionResult}
-                    )
-                ;   (   % Execution failed without an exception, but Body failed
-                        format(string(ErrorMessage), "Failed ~q:~q", [Command, Arguments]),
-                        send_feedback_message(ErrorMessage, warning),
-                        Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
-                    )
-                )
-            ;   (   % Argument mismatch
-                    format(string(ErrorMessage),
-                        "Argument mismatch ~q:~q Expected ~w",
-                        [Command, Arguments, ExpectedArguments]),
-                    send_feedback_message(ErrorMessage, warning),
-                    Response = _{id: Id, error: _{code: -32602, message: ErrorMessage}}
-                )
-            )
-        )
-    ;   (   % Command not recognized
-            format(string(ErrorMessage), "Command not recognized: ~q: ~q", [Command, Arguments]),
-            send_feedback_message(ErrorMessage, warning),
-            Response = _{id: Id, error: _{code: -32601, message: ErrorMessage}}
-        )
-    ).
-*/
 
 % Helper predicate to check if provided arguments match the expected pattern
 arguments_match(ExpectedArguments, ProvidedArguments) :-

@@ -677,7 +677,9 @@ format_time_remaining(Seconds, FormattedTime) :-
 
 process_expressions(FileName,_InStream, _OutStream) :- atomic(FileName), fail,
     symbol_concat(FileName, '.buffer~', BufferFile),
-    exists_file(BufferFile),ensure_loaded(BufferFile), !.
+    exists_file(BufferFile),
+    use_cache_file(FileName, BufferFile),
+    ensure_loaded(BufferFile), !.
 
 process_expressions(FileName, InStream, OutStream) :-
     % Get total number of lines in the file
@@ -890,6 +892,7 @@ into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):-
 split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
 split_head(Head,Head,[]).
 
+type_op_head_rest_body(decl(import), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
 type_op_head_rest_body(decl(use), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
 type_op_head_rest_body(ref(a), Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
 
