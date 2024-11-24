@@ -2,7 +2,7 @@ name: CI Job to Generate JUnit Reports with Diff and Allure Reports
 
 on:
   schedule:
-    - cron: 17 0 * * * # nightly run; 17th minute to decrease odds of delayed or dropped job
+    - cron: '17 0 * * *' # nightly run; 17th minute to decrease odds of delayed or dropped job
   push:
     branches:
       - main
@@ -97,28 +97,24 @@ jobs:
           echo "TEST_CHANGED=true" >> $GITHUB_ENV
       continue-on-error: true
 
-    # Continue only if tests changed
+    # Run test report generation steps always
     - name: Run JUnit Report Generation Script
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         python3 scripts/into_junit.py /tmp/SHARED.UNITS ${{ env.TIMESTAMP }} 1 > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         cat junit.xml
         junit2html junit.xml ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         junit2html --report-matrix ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html junit.xml
 
     - name: Upload JUnit XML Report
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -126,7 +122,6 @@ jobs:
         path: junit.xml
 
     - name: Upload Standard HTML Report
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -134,7 +129,6 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Upload Matrix HTML Report
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -142,7 +136,6 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html
 
     - name: Upload Test Output Log Files
-      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -150,7 +143,7 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}
 
     - name: Display JUnit Test Results
-      if: (github.event_name == 'push') && (env.TEST_CHANGED == 'true')  # Only run this step on pushes to main if there are changes
+      if: github.event_name == 'push'  # Only run this step on pushes to main
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
@@ -159,22 +152,20 @@ jobs:
         fail-on-error: false
 
     - name: Provide Report Links
-      if: env.TEST_CHANGED == 'true'
       run: |
         echo "JUnit reports are available as artifacts."
 
     - name: Generate environment.properties
-      if: env.TEST_CHANGED == 'true'
       run: |
         python scripts/generate_allure_environment.py ${{ github.sha }} ${{ github.ref_name }} > environment.properties
 
     - name: Upload environment.properties
-      if: env.TEST_CHANGED == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: environment-${{ env.JOB_TYPE }}
         path: environment.properties
 
+    # Publishing steps are conditional based on TEST_CHANGED
     - name: Get Allure history
       if: env.TEST_CHANGED == 'true'
       uses: actions/checkout@v4
