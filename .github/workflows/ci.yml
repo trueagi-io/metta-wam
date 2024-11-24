@@ -24,6 +24,18 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for all branches and tags
+
+    - name: Setup Git User
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+
+    - name: Fetch test-results branch
+      run: |
+        git fetch origin test-results:test-results || echo "No existing test-results branch."
+        git branch
 
     - name: Make Install Script Executable
       run: chmod +x INSTALL.sh
@@ -67,25 +79,14 @@ jobs:
     - name: Parse Test Results
       run: |
         # Extract test IDs and their statuses into a sorted file
-        awk -F '|' '{print $2 "|" $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort > current_test_results.txt
-
-    - name: Upload Current Test Results for Comparison
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-${{ env.JOB_TYPE }}
-        path: current_test_results.txt
-
-    - name: Download Previous Test Results for Comparison
-      uses: actions/download-artifact@v4
-      with:
-        name: test-results-${{ env.JOB_TYPE }}
-        path: previous-results
+        awk -F '|' '{print $2 "|" $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort > current_test_results_${{ env.JOB_TYPE }}.txt
 
     - name: Compare Test Results
       id: compare_tests
       run: |
-        if [ -f "previous-results/current_test_results.txt" ]; then
-          if diff previous-results/current_test_results.txt current_test_results.txt > /dev/null; then
+        git checkout test-results || git checkout --orphan test-results
+        if [ -f "previous_test_results_${{ env.JOB_TYPE }}.txt" ]; then
+          if diff previous_test_results_${{ env.JOB_TYPE }}.txt current_test_results_${{ env.JOB_TYPE }}.txt > /dev/null; then
           echo "No changes in test results."
             echo "TEST_CHANGED=false" >> $GITHUB_ENV
         else
@@ -95,7 +96,14 @@ jobs:
         else
           echo "No previous test results found. Proceeding with report generation."
           echo "TEST_CHANGED=true" >> $GITHUB_ENV
-      continue-on-error: true
+
+    - name: Update Test Results in test-results Branch
+      if: always()
+      run: |
+        cp current_test_results_${{ env.JOB_TYPE }}.txt previous_test_results_${{ env.JOB_TYPE }}.txt
+        git add previous_test_results_${{ env.JOB_TYPE }}.txt
+        git commit -m "Update test results for ${{ env.JOB_TYPE }}"
+        git push origin test-results
 
     # Run test report generation steps always
     - name: Run JUnit Report Generation Script
@@ -118,28 +126,28 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-report-${{ env.JOB_TYPE }}
+        name: junit-report
         path: junit.xml
 
     - name: Upload Standard HTML Report
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-standard-html-report-${{ env.JOB_TYPE }}
+        name: junit-standard-html-report
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Upload Matrix HTML Report
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-matrix-html-report-${{ env.JOB_TYPE }}
+        name: junit-matrix-html-report
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html
 
     - name: Upload Test Output Log Files
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: test-output-logs-${{ env.JOB_TYPE }}
+        name: test-output-logs
         path: ${{ env.BASELINE_COMPAT_PATH }}
 
     - name: Display JUnit Test Results
@@ -162,7 +170,7 @@ jobs:
     - name: Upload environment.properties
       uses: actions/upload-artifact@v4
       with:
-        name: environment-${{ env.JOB_TYPE }}
+        name: environment
         path: environment.properties
 
     # Publishing steps are conditional based on TEST_CHANGED
@@ -177,14 +185,14 @@ jobs:
       if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: junit-report-${{ env.JOB_TYPE }}
+        name: junit-report
         path: build/allure-results
 
     - name: Include environment properties
       if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: environment-${{ env.JOB_TYPE }}
+        name: environment
         path: build/allure-results
 
     - name: Generate Allure Report
@@ -200,7 +208,7 @@ jobs:
         subfolder: ${{ env.SUBFOLDER }}
         keep_reports: 120
       env:
-        SUBFOLDER: ${{ env.JOB_TYPE }}
+        SUBFOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
 
     - name: Copy JUnit HTML Reports to GitHub Pages Directory
       if: env.TEST_CHANGED == 'true'
