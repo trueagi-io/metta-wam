@@ -167,6 +167,11 @@ eval_args(X,Y):- current_self(Self), eval_args(500,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
 
+%! eval_to(+X,+Y) is semidet.
+% checks if X evals to Y
+evals_to(XX,Y):- Y=@=XX,!.
+evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
+
 eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
 eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
 
@@ -183,12 +188,6 @@ eval_args(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)),!,
    eval_args(Eq,RetType,Depth,Self,X,XX),evals_to(XX,Y).
 
 eval_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], number(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
-
-%! eval_to(+X,+Y) is semidet.
-% checks if X evals to Y
-evals_to(XX,Y):- Y=@=XX,!.
-evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
-
 
 /*
 eval_args(Eq,RetType,Depth,Self,[F|X],Y):-
