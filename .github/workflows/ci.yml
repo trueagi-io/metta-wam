@@ -56,7 +56,7 @@ jobs:
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
         echo "BASELINE_COMPAT_PATH=$BASELINE_COMPAT_PATH" >> $GITHUB_ENV
         mkdir -p $BASELINE_COMPAT_PATH
-        if [ ${{ github.event_name }} == 'schedule' ]; then
+        if [ "${{ env.JOB_TYPE }}" == "nightly" ]; then
           ./scripts/run_nightly_tests.sh -t $TIMESTAMP
         else
           ./scripts/run_commit_tests.sh -t $TIMESTAMP
@@ -64,18 +64,16 @@ jobs:
       env:
         TERM: xterm-256color
 
-    - name: Extract Test Results
-      id: extract_results
+    - name: Parse Test Results
       run: |
-        pass_fail_counts=$(awk -F '|' '{print $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort | uniq -c)
-        echo "Test results: $pass_fail_counts"
-        echo "$pass_fail_counts" > test-results-${{ env.JOB_TYPE }}.txt
+        # Extract test IDs and their statuses into a sorted file
+        awk -F '|' '{print $2 "|" $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort > current_test_results.txt
 
     - name: Upload Current Test Results for Comparison
       uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ env.JOB_TYPE }}
-        path: test-results-${{ env.JOB_TYPE }}.txt
+        path: current_test_results.txt
 
     - name: Download Previous Test Results for Comparison
       uses: actions/download-artifact@v4
@@ -84,21 +82,22 @@ jobs:
         path: previous-results
 
     - name: Compare Test Results
+      id: compare_tests
       run: |
-        if diff previous-results/test-results-${{ env.JOB_TYPE }}.txt test-results-${{ env.JOB_TYPE }}.txt; then
+        if [ -f "previous-results/current_test_results.txt" ]; then
+          if diff previous-results/current_test_results.txt current_test_results.txt > /dev/null; then
           echo "No changes in test results."
-          echo "TEST_CHANGED='false'" >> $GITHUB_ENV
+            echo "TEST_CHANGED=false" >> $GITHUB_ENV
         else
           echo "Changes detected in test results."
-          echo "TEST_CHANGED='true'" >> $GITHUB_ENV
+            echo "TEST_CHANGED=true" >> $GITHUB_ENV
+          fi
+        else
+          echo "No previous test results found. Proceeding with report generation."
+          echo "TEST_CHANGED=true" >> $GITHUB_ENV
+      continue-on-error: true
 
-    - name: Conditional Steps Based on Test Comparison
-      if: env.TEST_CHANGED == 'true'
-      run: |
-        # Additional steps to process and upload results based on the comparison
-        echo "Processing and uploading new test results..."
-
-
+    # Continue only if tests changed
     - name: Run JUnit Report Generation Script
       if: env.TEST_CHANGED == 'true'
       continue-on-error: true
@@ -123,7 +122,7 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-report
+        name: junit-report-${{ env.JOB_TYPE }}
         path: junit.xml
 
     - name: Upload Standard HTML Report
@@ -131,7 +130,7 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-standard-html-report
+        name: junit-standard-html-report-${{ env.JOB_TYPE }}
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Upload Matrix HTML Report
@@ -139,7 +138,7 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: junit-matrix-html-report
+        name: junit-matrix-html-report-${{ env.JOB_TYPE }}
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html
 
     - name: Upload Test Output Log Files
@@ -147,7 +146,7 @@ jobs:
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
-        name: test-output-logs
+        name: test-output-logs-${{ env.JOB_TYPE }}
         path: ${{ env.BASELINE_COMPAT_PATH }}
 
     - name: Display JUnit Test Results
@@ -173,7 +172,7 @@ jobs:
       if: env.TEST_CHANGED == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: environment
+        name: environment-${{ env.JOB_TYPE }}
         path: environment.properties
 
     - name: Get Allure history
@@ -187,14 +186,14 @@ jobs:
       if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: junit-report
+        name: junit-report-${{ env.JOB_TYPE }}
         path: build/allure-results
 
     - name: Include environment properties
       if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: environment
+        name: environment-${{ env.JOB_TYPE }}
         path: build/allure-results
 
     - name: Generate Allure Report
@@ -210,7 +209,7 @@ jobs:
         subfolder: ${{ env.SUBFOLDER }}
         keep_reports: 120
       env:
-        SUBFOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
+        SUBFOLDER: ${{ env.JOB_TYPE }}
 
     - name: Copy JUnit HTML Reports to GitHub Pages Directory
       if: env.TEST_CHANGED == 'true'
