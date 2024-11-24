@@ -34,7 +34,7 @@ jobs:
 
     - name: Fetch test-results branch
       run: |
-        git fetch origin test-results:test-results || echo "No existing test-results branch."
+        git fetch origin test-results || echo "No existing test-results branch on remote."
         git branch
 
     - name: Make Install Script Executable
@@ -84,7 +84,33 @@ jobs:
     - name: Compare Test Results
       id: compare_tests
       run: |
-        git checkout test-results || git checkout --orphan test-results
+        # Check if 'test-results' branch exists on remote
+        if git ls-remote --heads origin test-results; then
+          echo "test-results branch exists on remote."
+          # Check if local 'test-results' branch exists
+          if git rev-parse --verify test-results; then
+            echo "Switching to existing local test-results branch."
+            git checkout test-results
+            git pull origin test-results
+          else
+            echo "Creating and switching to new local test-results branch from remote."
+            git checkout -b test-results origin/test-results
+          fi
+        else
+          echo "test-results branch does not exist on remote."
+          # Check if local 'test-results' branch exists
+          if git rev-parse --verify test-results; then
+            echo "Local test-results branch exists. Deleting it."
+            git branch -D test-results
+          fi
+          echo "Creating new orphan test-results branch."
+          git checkout --orphan test-results
+          git rm -rf .
+          git commit --allow-empty -m "Initialize test-results branch"
+          git push origin test-results
+        fi
+
+        # Now compare the test results
         if [ -f "previous_test_results_${{ env.JOB_TYPE }}.txt" ]; then
           if diff previous_test_results_${{ env.JOB_TYPE }}.txt current_test_results_${{ env.JOB_TYPE }}.txt > /dev/null; then
           echo "No changes in test results."
@@ -102,7 +128,7 @@ jobs:
       run: |
         cp current_test_results_${{ env.JOB_TYPE }}.txt previous_test_results_${{ env.JOB_TYPE }}.txt
         git add previous_test_results_${{ env.JOB_TYPE }}.txt
-        git commit -m "Update test results for ${{ env.JOB_TYPE }}"
+        git commit -m "Update test results for ${{ env.JOB_TYPE }}" || echo "No changes to commit."
         git push origin test-results
 
     # Run test report generation steps always
@@ -180,20 +206,6 @@ jobs:
       with:
         ref: test-results
         path: test-results
-
-    - name: Download JUnit XML Results
-      if: env.TEST_CHANGED == 'true'
-      uses: actions/download-artifact@v4
-      with:
-        name: junit-report
-        path: build/allure-results
-
-    - name: Include environment properties
-      if: env.TEST_CHANGED == 'true'
-      uses: actions/download-artifact@v4
-      with:
-        name: environment
-        path: build/allure-results
 
     - name: Generate Allure Report
       if: env.TEST_CHANGED == 'true'
