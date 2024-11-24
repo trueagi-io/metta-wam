@@ -81,8 +81,8 @@ self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, \+ nb_bound(X,_),!.
 
-nb_bound(Name,X):- atom(Name), atom_concat('&', _, Name),
-  nb_current(Name, X).
+nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
+  nb_current(Name, X), compound(X). % spaces and states are stored as compounds
 
 
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
@@ -133,10 +133,6 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 % Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
 :- nb_setval(self_space, '&self').
 
-%! eval_to(+X,+Y) is semidet.
-% checks if X evals to Y
-evals_to(XX,Y):- Y=@=XX,!.
-evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
 %current_self(Space):- nb_current(self_space,Space).
 
@@ -187,6 +183,11 @@ eval_args(Eq,RetType,Depth,Self,X,Y):- notrace(nonvar(Y)),!,
    eval_args(Eq,RetType,Depth,Self,X,XX),evals_to(XX,Y).
 
 eval_args(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], number(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
+
+%! eval_to(+X,+Y) is semidet.
+% checks if X evals to Y
+evals_to(XX,Y):- Y=@=XX,!.
+evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
 
 /*
@@ -727,7 +728,7 @@ equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
 equal_enough_for_test2(X,Y):- equal_enough(X,Y).
 
 equal_enough(R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(RR,VV),!.
-equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV.
+equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV. % has not altered the term
 equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
 equal_enouf(X,Y):- is_blank(X),!,is_blank(Y).
 equal_enouf(R,V):- py_is_py(R),py_is_py(V),py_pp_str(R,RR),py_pp_str(V,VV),!,RR=VV.
