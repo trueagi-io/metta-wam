@@ -198,7 +198,6 @@ jobs:
     - name: Generate Allure Report
       if: env.TEST_CHANGED == 'true'
       uses: simple-elf/allure-report-action@master
-      if: always()
       id: allure-report
       with:
         allure_results: build/allure-results
@@ -208,7 +207,7 @@ jobs:
         subfolder: ${{ env.SUBFOLDER }}
         keep_reports: 120
       env:
-        SUBFOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
+        SUBFOLDER: ${{ env.JOB_TYPE }}
 
     - name: Copy JUnit HTML Reports to GitHub Pages Directory
       if: env.TEST_CHANGED == 'true'
