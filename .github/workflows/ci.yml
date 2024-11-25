@@ -42,6 +42,10 @@ jobs:
           git add current_test_results.txt
           git commit -m "Initialize just-results branch"
           git remote add origin ${{ env.REPO_URL }}
+          # Configure Git to use the GITHUB_TOKEN
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global http.https://github.com/.extraheader "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
           git push origin just-results
         else
           echo "just-results branch exists. Cloning it."
@@ -123,10 +127,19 @@ jobs:
       run: |
         cp current_test_results.txt previous-results/
         cd previous-results
+
+        # Configure Git user information
         git config user.name "${{ github.actor }}"
         git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+#ConfigureGittousetheGITHUB_TOKENforauthentication
+gitconfig--globalhttp.https://github.com/.extraheader"Authorization:Bearer${{secrets.GITHUB_TOKEN}}"
+
+#Stageandcommitchanges
         git add current_test_results.txt
         git commit -m "Update test results"
+
+        # Push changes to the just-results branch
         git push origin just-results
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
