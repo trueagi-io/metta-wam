@@ -59,9 +59,7 @@ jobs:
         else
           echo "No previous test results found."
         fi
-
-    # The rest of your workflow steps remain largely the same
-
+        
     - name: Make Install Script Executable
       run: chmod +x INSTALL.sh
 
@@ -132,10 +130,10 @@ jobs:
         git config user.name "${{ github.actor }}"
         git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-#ConfigureGittousetheGITHUB_TOKENforauthentication
-gitconfig--globalhttp.https://github.com/.extraheader"Authorization:Bearer${{secrets.GITHUB_TOKEN}}"
+        # Configure Git to use the GITHUB_TOKEN for authentication
+        git config --global http.https://github.com/.extraheader "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
 
-#Stageandcommitchanges
+        # Stage and commit changes
         git add current_test_results.txt
         git commit -m "Update test results"
 
