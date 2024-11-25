@@ -2224,6 +2224,7 @@ fix_message_hook:-
 :- ensure_loaded(metta_corelib).
 %:- ensure_loaded(metta_help).
 :- initialization(use_corelib_file).
+:- initialization(use_metta_ontology).
 
 immediate_ignore:- ignore(((
    %write_src_uo(init_prog),
@@ -2239,14 +2240,17 @@ immediate_ignore:- ignore(((
    metta_final,
    true))).
 
-:- initialization(use_corelib_file).
+use_metta_ontology:- time(ensure_loaded(library('metta_ontology.pfc.pl'))).
+% use_metta_ontology:- load_pfc_file('metta_ontology.pl.pfc').
+%:- use_metta_ontology.
+%:- initialization(use_metta_ontology).
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
+
 :- set_prolog_flag(metta_interp,ready).
 %:- set_prolog_flag(gc,false).
 
 :- use_module(library(clpr)). % Import the CLP(R) library
-%:- ensure_loaded('metta_ontology.pfc.pl').
 %:- initialization(loon_main, main).
 :- initialization(loon(main), main).
 
@@ -2262,3 +2266,6 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
+
+
+

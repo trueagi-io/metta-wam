@@ -24,7 +24,7 @@
 %:- multifile(baseKB:agent_action_queue/3).
 %:- dynamic(baseKB:agent_action_queue/3).
 
-:- set_prolog_flag(gc,true).
+%:- set_prolog_flag(gc,true).
 
 :- thread_local(t_l:disable_px/0).
 :- retractall(t_l:disable_px).
@@ -90,6 +90,11 @@ merge_fp(T1,T2,N) :-
 
 :- set_prolog_flag(pfc_term_expansion,true).
 
+((metta_atom_asserted(KB,['==>',X,Y])/nonvar(KB)),
+  metta_atom_asserted(KB2,X)) ==>
+  metta_atom_asserted(KB2,Y).
+/*
+
 'functional-predicate'(Name,Arity) ==>
   {functor(P1,Name,Arity),
    functor(P2,Name,Arity),
@@ -106,6 +111,7 @@ merge_fp(T1,T2,N) :-
 :- dynamic('op-complete'/1).
 
 'previous-operation'(none).
+
 
 ('next-operation'(Current),
    {
@@ -135,8 +141,6 @@ property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 
 % (metta_compiled_predicate(KB,F,A)==>predicate_arity(KB,F,A)).
 
-
-
 (metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type(KB,H,T).
 (metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_defn(KB,II,T).
 (metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_defn(KB,H,[A1,A2|AL]).
@@ -147,7 +151,7 @@ metta_defn(KB,[F|Args],_)/length(Args,Len)
 
 'op-complete'(op(+,'=',F)),
   metta_defn(KB,[F|Args],_)/length(Args,Len)
-  ==>src_code_for(KB,F,Len),{nop(dedupe_cl(/*'&self':*/F))}.
+  ==>src_code_for(KB,F,Len),{nop(dedupe_cl(F))}.
 
 (src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
 
@@ -175,7 +179,7 @@ ensure_corelib_types:- pfcAdd(please_do_corelib_types).
 :- dynamic(need_corelib_types/0).
 (please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
 'ensure-compiler!':- ensure_corelib_types.
-if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Result).
+% if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Result).
 
 
 
@@ -202,7 +206,8 @@ really_compile_src(KB,F,Len,Args,BodyFn),
 %:- ensure_loaded('metta_ontology_level_1.pfc').
 
 
-
+:- endif.
+*/
 
 a==>b.
 b==>bb.
@@ -476,4 +481,5 @@ properties('&corelib','stringToChars', [string_operations, qhelp("Convert a stri
 properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
 properties('&corelib','format-args', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]).
 properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).
+
 
