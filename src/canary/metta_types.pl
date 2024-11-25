@@ -51,8 +51,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: Provides Prolog predicates and rules for type checking, evaluation, and manipulation 
+%*********************************************************************************************
+% PROGRAM FUNCTION: Provides Prolog predicates and rules for type checking, evaluation, and manipulation
 % of MeTTa expressions and data structures.
 %*********************************************************************************************
 
@@ -66,8 +66,8 @@
 
 %!  typed_list(+Cmpd, -Type, -List) is nondet.
 %
-%   Verifies that Cmpd is a compound term with functor Type and a list as its 
-%   first argument, while ensuring it is not a standard Prolog list. It uses 
+%   Verifies that Cmpd is a compound term with functor Type and a list as its
+%   first argument, while ensuring it is not a standard Prolog list. It uses
 %   `compound_name_arguments/3` to extract the functor and arguments.
 %
 %   @arg Cmpd The compound term to be checked.
@@ -91,8 +91,8 @@ typed_list(Cmpd, Type, List) :-
 
 %!  is_syspred(+H, +Len, -Pred) is nondet.
 %
-%   Checks if H with arity Len corresponds to a system predicate, unifying 
-%   the result with Pred. This predicate wraps `is_syspred0/3` using `notrace/1` 
+%   Checks if H with arity Len corresponds to a system predicate, unifying
+%   the result with Pred. This predicate wraps `is_syspred0/3` using `notrace/1`
 %   to suppress debugging during execution.
 %
 %   @arg H The head of the predicate being checked.
@@ -147,8 +147,8 @@ is_syspred0(H, Len, Pred) :-
 %!  is_metta_data_functor(+Eq, +Other, +H) is nondet.
 %
 %   Determines whether H is a valid "metta data functor" by checking several conditions.
-%   The first clause traces and checks for a clause of `is_data_functor/1`. 
-%   The second clause ensures H is not one of the excluded functors and performs 
+%   The first clause traces and checks for a clause of `is_data_functor/1`.
+%   The second clause ensures H is not one of the excluded functors and performs
 %   a series of negated checks to confirm it is not a built-in or operator.
 %
 %   @arg Eq    The equality predicate or term being evaluated.
@@ -176,7 +176,7 @@ is_metta_data_functor(Eq, Other, H) :-
 %!  mnotrace(:Goal) is nondet.
 %
 %   Executes the given Goal once if `mnotrace/1` is not already defined.
-%   This is used as a fallback to ensure the predicate exists, enabling 
+%   This is used as a fallback to ensure the predicate exists, enabling
 %   conditional tracing behavior.
 %
 %   @arg Goal The goal to be executed.
@@ -186,15 +186,15 @@ is_metta_data_functor(Eq, Other, H) :-
 %     Hello
 %
 :- if(\+ current_predicate(mnotrace/1)).
-mnotrace(G) :- 
+mnotrace(G) :-
     % Execute the goal exactly once.
     once(G).
 :- endif.
 
 %!  'Number':attr_unify_hook(+Attr, +NewValue) is nondet.
 %
-%   Ensures that the attribute associated with the atom 'Number' can only unify 
-%   with numeric values. This hook is invoked when an attribute needs to unify 
+%   Ensures that the attribute associated with the atom 'Number' can only unify
+%   with numeric values. This hook is invoked when an attribute needs to unify
 %   with a new value during constraint handling.
 %
 %   @arg Attr      The current attribute value (unused in this clause).
@@ -212,7 +212,7 @@ mnotrace(G) :-
 
 %!  is_decl_utype(+Type) is nondet.
 %
-%   Succeeds if Type is a declared "utype" (user-defined type). The predicate 
+%   Succeeds if Type is a declared "utype" (user-defined type). The predicate
 %   checks for predefined types such as 'Number', 'Symbol', 'String', etc.
 %
 %   @arg Type The type being checked.
@@ -248,15 +248,15 @@ is_decl_mtype('PyObject').
 %
 %   @arg Type The type to be checked, which can be a utype, mtype, or a compound type.
 %
-is_decl_type(Type) :- 
+is_decl_type(Type) :-
     % Check if Type is a declared utype.
     is_decl_utype(Type).
-is_decl_type(Type) :- 
+is_decl_type(Type) :-
     % Check if Type is a declared type from is_decl_type_l/1.
     is_decl_type_l(Type).
-is_decl_type([Type, SType]) :- 
+is_decl_type([Type, SType]) :-
     % Handle compound types by checking both main and secondary types.
-    is_decl_type_l(Type), 
+    is_decl_type_l(Type),
     is_decl_utype(SType).
 
 %!  is_decl_type_l(+Type) is nondet.
@@ -265,7 +265,7 @@ is_decl_type([Type, SType]) :-
 %
 %   @arg Type The type being checked.
 %
-is_decl_type_l('StateMonad'). 
+is_decl_type_l('StateMonad').
 is_decl_type_l('List').
 
 %!  last_type(+List, -Type) is nondet.
@@ -282,8 +282,8 @@ is_decl_type_l('List').
 %
 last_type(List, Type) :-
     % Ensure the input is a list and check the last element.
-    is_list(List), 
-    last(List, Type), 
+    is_list(List),
+    last(List, Type),
     is_type(Type).
 last_type(Type, Type) :-
     % Succeed directly if the provided value is a valid type.
@@ -291,7 +291,7 @@ last_type(Type, Type) :-
 
 %!  is_type(+Type) is nondet.
 %
-%   Succeeds if Type is a valid declared type. This predicate ensures that 
+%   Succeeds if Type is a valid declared type. This predicate ensures that
 %   non-types (as defined by `nontype/1`) are excluded.
 %
 %   @arg Type The type to be checked.
@@ -306,7 +306,7 @@ is_type(Type) :-
 
 %!  nontype(+Type) is nondet.
 %
-%   Succeeds if Type is not considered a valid type. This includes variables, 
+%   Succeeds if Type is not considered a valid type. This includes variables,
 %   numbers, and certain special symbols.
 %
 %   @arg Type The type to be validated as a non-type.
@@ -345,12 +345,12 @@ needs_eval(EvalMe) :-
 %
 args_violation(_Dpth, _Slf, Args, List) :-
     % Fail if either Args or List is not a non-empty list (conz structure).
-    (\+ iz_conz(Args); \+ iz_conz(List)), 
+    (\+ iz_conz(Args); \+ iz_conz(List)),
     !, fail.
 
 args_violation(Depth, Self, [A|Args], [L|List]) :-
     % Check for a violation in the head or recursively in the tail.
-    once(arg_violation(Depth, Self, A, L) ; 
+    once(arg_violation(Depth, Self, A, L) ;
          args_violation(Depth, Self, Args, List)).
 
 %!  arg_violation(+Depth, +Self, +Arg, +Expected) is nondet.
@@ -376,7 +376,7 @@ arg_violation(Depth, Self, A, L) :-
 %
 type_violation(T, L) :-
     % Fail if both are non-specific types.
-    \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), 
+    \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)),
     !, fail.
 type_violation(T, L) :-
     % Fail if the types are not equal.
@@ -488,8 +488,8 @@ is_state_type(State, Test) :-
 
 %!  is_dynaspace(+Space) is nondet.
 %
-%   Succeeds if the given Space is recognized as a dynamic space. 
-%   It checks if the space is either asserted, a named Python space, 
+%   Succeeds if the given Space is recognized as a dynamic space.
+%   It checks if the space is either asserted, a named Python space,
 %   or matches a specific typed list.
 %
 %   @arg Space The space to be evaluated.
@@ -501,7 +501,7 @@ is_state_type(State, Test) :-
 %     ?- was_asserted_space(my_space), is_dynaspace(my_space).
 %     true.
 %
-%   @note The commented-out clause checks for callable expressions, 
+%   @note The commented-out clause checks for callable expressions,
 %   which is left in place for future reference.
 %
 % is_dynaspace(Expr) :- \+ is_list(Expr), callable(Expr), is_space_type(Expr, _).
@@ -522,8 +522,8 @@ is_dynaspace(S) :-
 
 %!  is_PyObject(+Obj) is nondet.
 %
-%   Succeeds if the given Obj is recognized as a Python object. 
-%   It checks if the object is a Python object, a known Python constant, 
+%   Succeeds if the given Obj is recognized as a Python object.
+%   It checks if the object is a Python object, a known Python constant,
 %   or fails if the object is an unbound variable.
 %
 %   @arg Obj The object to be evaluated.
@@ -564,8 +564,8 @@ is_py_const('True').
 
 %!  get_type_each(+Depth, +Self, +Val, -Type) is nondet.
 %
-%   Determines the type of a given value, using multiple checks and recursion. 
-%   Handles special cases for Python objects, dynamic spaces, variables with attributes, 
+%   Determines the type of a given value, using multiple checks and recursion.
+%   Handles special cases for Python objects, dynamic spaces, variables with attributes,
 %   and state monads.
 %
 %   @arg Depth The current recursion depth.
@@ -619,8 +619,8 @@ get_type_each(Depth, Self, Val, Type) :-
 
 %!  get_type_cmpd_2nd_non_nil(+Depth, +Self, +Val, -Type, -How) is nondet.
 %
-%   Determines the type of a compound value, ensuring that if multiple types 
-%   are found, the type is not an empty list (`[]`). It invokes 
+%   Determines the type of a compound value, ensuring that if multiple types
+%   are found, the type is not an empty list (`[]`). It invokes
 %   `get_type_cmpd/5` and checks if the result is not the first occurrence.
 %
 %   @arg Depth The current recursion depth.
@@ -668,8 +668,8 @@ check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
 
 %!  typed_expression(+Depth, +Self, +Expr, -ArgTypes, -RType) is nondet.
 %
-%   Determines the argument types and return type for a given operator 
-%   expression. It extracts the operator and arguments from the expression 
+%   Determines the argument types and return type for a given operator
+%   expression. It extracts the operator and arguments from the expression
 %   and retrieves their types using `get_operator_typedef1/5`.
 %
 %   @arg Depth    The current recursion depth.
@@ -686,8 +686,8 @@ typed_expression(Depth, Self, [Op | Args], ArgTypes, RType) :-
 
 %!  badly_typed_expression(+Depth, +Self, +Expr) is nondet.
 %
-%   Succeeds if the expression is badly typed. It checks the operator 
-%   expression and verifies if the argument types are consistent with 
+%   Succeeds if the expression is badly typed. It checks the operator
+%   expression and verifies if the argument types are consistent with
 %   the expected types, including type assignment checks.
 %
 %   @arg Depth The current recursion depth.
@@ -775,7 +775,7 @@ get_type_nc(_Dpth, _Slf, Val, 'Rational') :-
 
 %!  specialize_number is nondet.
 %
-%   This predicate controls whether further specialization of numbers (e.g., 
+%   This predicate controls whether further specialization of numbers (e.g.,
 %   distinguishing between integers, floats, and rational numbers) is performed.
 %   It succeeds if the `false_flag` is not set, indicating that specialization is disabled.
 %
@@ -848,8 +848,8 @@ get_dict_type(Val, _, TypeO) :-
 
 %!  get_type_cmpd(+Depth, +Self, +Val, -Type, -How) is nondet.
 %
-%   Determines the type of a compound value (Val) based on its structure. 
-%   This predicate handles dictionaries, variables, characters, curried operators, 
+%   Determines the type of a compound value (Val) based on its structure.
+%   This predicate handles dictionaries, variables, characters, curried operators,
 %   and typed lists. The method used to determine the type is unified with How.
 %
 %   @arg Depth The current recursion depth.
@@ -926,19 +926,19 @@ get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
 %     ?- get_type_cmpd_eval(10, _, my_val, my_val, Type, eval_first).
 %     Type = ...  % Result based on the type of my_val.
 %
-get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, maplist(get_type)) :- 
+get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, maplist(get_type)) :-
     % Handle maplist-based type evaluation.
     !,
     EvalMe =@= Val,
     maplist(get_type(Depth2, Self), List, Type),
     % Ensure the expression is not badly typed.
     \+ badly_typed_expression(Depth, Self, Type).
-get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, eval_first) :- 
+get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, eval_first) :-
     % Handle first-evaluation strategy.
     !,
     \+ needs_eval(Val),
     get_type(Depth2, Self, Val, Type).
-get_type_cmpd_eval(Depth2, Self, _EvalMe, Val, Type, eval_first_reduced) :- 
+get_type_cmpd_eval(Depth2, Self, _EvalMe, Val, Type, eval_first_reduced) :-
     % Handle reduced first-evaluation strategy.
     !,
     get_type(Depth2, Self, Val, Type).
@@ -948,7 +948,7 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 
 %!  get_value_type(+Depth, +Self, +Val, -Type) is nondet.
 %
-%   Determines the type of a given value (Val). This predicate handles variables, 
+%   Determines the type of a given value (Val). This predicate handles variables,
 %   numbers, strings, and invokes additional type-checking logic if needed.
 %
 %   @arg Depth The current recursion depth.
@@ -1003,7 +1003,7 @@ get_value_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 
 %!  as_prolog(+I, -O) is det.
 %
-%   Converts a structured input (I) into a Prolog-friendly output (O). This predicate 
+%   Converts a structured input (I) into a Prolog-friendly output (O). This predicate
 %   handles various patterns, such as lists, `Cons` structures, `::` operators, and `@` symbols.
 %
 %   @arg I The input to be converted.
@@ -1019,7 +1019,7 @@ as_prolog(I, O) :-
 
 %!  as_prolog(+Depth, +Self, +I, -O) is det.
 %
-%   Converts a structured input (I) into a Prolog-friendly output (O). This predicate 
+%   Converts a structured input (I) into a Prolog-friendly output (O). This predicate
 %   handles various structures, such as lists, 'Cons', '::' operators, and '@' symbols.
 %
 %   @arg Depth The current recursion depth.
@@ -1040,32 +1040,32 @@ as_prolog(_Dpth, _Slf, I, O) :-
 as_prolog(Depth, Self, [Cons, H, T], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
-    !, 
+    !,
     as_prolog(Depth, Self, H, HH),
     as_prolog(Depth, Self, T, TT).
 as_prolog(Depth, Self, [List, H | T], O) :-
     % Handle '::' operator by mapping elements to Prolog terms.
     List=='::',
-    !, 
-    maplist(as_prolog(Depth, Self), [H | T], L), 
+    !,
+    maplist(as_prolog(Depth, Self), [H | T], L),
     !, O = L.
 as_prolog(Depth, Self, [At, H | T], O) :-
     % Handle '@' symbol by constructing compound terms.
     At=='@',
-    !, 
+    !,
     maplist(as_prolog(Depth, Self), [H | T], [HH | L]),
-    atom(H), !, 
+    atom(H), !,
     O =.. [HH | L].
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
-    is_list(I), !, 
+    is_list(I), !,
     maplist(as_prolog(Depth, Self), I, O).
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
 %
-%   Attempts to adjust argument types by converting the input (X) to a Prolog-friendly 
-%   format, ensuring the adjusted arguments conform to the expected types, and setting 
+%   Attempts to adjust argument types by converting the input (X) to a Prolog-friendly
+%   format, ensuring the adjusted arguments conform to the expected types, and setting
 %   the return type.
 %
 %   @arg Eq      The equation or relation being evaluated.
@@ -1112,7 +1112,7 @@ adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
 
 %!  adjust_args(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is det.
 %
-%   Adjusts arguments for an operation using the provided strategy. If the arguments 
+%   Adjusts arguments for an operation using the provided strategy. If the arguments
 %   conform to specific operator types, it applies transformations or falls back to alternatives.
 %
 %   @arg Else     The alternative strategy if the primary adjustment fails.
@@ -1128,7 +1128,7 @@ adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
 %
 adjust_args(Else, _Eq, _RetType, Res, Res, _Dpth, Self, F, X, Y) :-
     % If the input is empty, or if it uses a special operator, or if X is not a conz structure.
-    (X == [] ; is_special_op(Self, F) ; \+ iz_conz(X)), !, 
+    (X == [] ; is_special_op(Self, F) ; \+ iz_conz(X)), !,
     Y = X.
 adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     % Attempt primary adjustment, and fall back if necessary.
@@ -1139,7 +1139,7 @@ adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
 
 %!  adjust_argsA(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is nondet.
 %
-%   Primary strategy for adjusting arguments. It checks if the arguments conform 
+%   Primary strategy for adjusting arguments. It checks if the arguments conform
 %   to the operator’s type definition and transforms them accordingly.
 %
 %   @arg Else      The alternative strategy if this adjustment fails.
@@ -1178,7 +1178,7 @@ adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
 %
 adjust_argsB(Else, Eq, _RetType, Res, Res, Depth, Self, _, Args, Adjusted) :-
     % If Args is a list, evaluate each element.
-    is_list(Args), !, 
+    is_list(Args), !,
     maplist(eval_1_arg(Else, Eq, _, Depth, Self), Args, Adjusted).
 adjust_argsB(Else, _Eq, _RetType, Res, Res, Depth, Self, _, X, Y) :-
     % Fallback to the alternative strategy.
@@ -1217,8 +1217,8 @@ get_operator_typedef(Self, Op, ParamTypes, RetType) :-
 
 %!  reset_cache is det.
 %
-%   Clears the cached operator type definitions by retracting all facts 
-%   of `get_operator_typedef0/5`. This is used to reset the dynamic predicate 
+%   Clears the cached operator type definitions by retracting all facts
+%   of `get_operator_typedef0/5`. This is used to reset the dynamic predicate
 %   and ensure that new type definitions can be loaded or updated.
 %
 %   @example
@@ -1234,9 +1234,9 @@ reset_cache :-
 
 %!  get_operator_typedef(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
-%   Retrieves the operator type definition for a given operator (Op). It first checks 
-%   if the type definition exists in the cached predicate `get_operator_typedef0/5`. 
-%   If not found, it attempts to retrieve it using `get_operator_typedef1/5` or 
+%   Retrieves the operator type definition for a given operator (Op). It first checks
+%   if the type definition exists in the cached predicate `get_operator_typedef0/5`.
+%   If not found, it attempts to retrieve it using `get_operator_typedef1/5` or
 %   `get_operator_typedef2/5`.
 %
 %   @arg Self        The context or structure being evaluated.
@@ -1257,7 +1257,7 @@ get_operator_typedef(Self, Op, Len, ParamTypes, RetType) :-
 
 %!  get_operator_typedef1(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
-%   Retrieves the operator type definition based on the `'->'` type structure 
+%   Retrieves the operator type definition based on the `'->'` type structure
 %   and caches the result in `get_operator_typedef0/5`.
 %
 %   @arg Self        The context or structure being evaluated.
@@ -1279,8 +1279,8 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
 
 %!  get_operator_typedef2(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
-%   Retrieves the operator type definition by ensuring that all parameter types 
-%   are evaluation kinds and assigns a default return type `'AnyRet'`. The result 
+%   Retrieves the operator type definition by ensuring that all parameter types
+%   are evaluation kinds and assigns a default return type `'AnyRet'`. The result
 %   is cached in `get_operator_typedef0/5`.
 %
 %   @arg Self        The context or structure being evaluated.
@@ -1300,7 +1300,7 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
 
 %!  ignored_args_conform(+Depth, +Self, +Args, +List) is det.
 %
-%   Checks if the arguments (Args) conform to the expected types (List), but allows 
+%   Checks if the arguments (Args) conform to the expected types (List), but allows
 %   non-specific types and ignores certain conditions.
 %
 %   @arg Depth The current recursion depth.
@@ -1317,7 +1317,7 @@ ignored_args_conform(Depth, Self, A, L) :-
 
 %!  ignored_arg_conform(+Depth, +Self, +Arg, +Expected) is det.
 %
-%   Checks if a single argument (Arg) conforms to the expected type (Expected), 
+%   Checks if a single argument (Arg) conforms to the expected type (Expected),
 %   allowing for non-specific types.
 %
 %   @arg Depth    The current recursion depth.
@@ -1500,7 +1500,7 @@ metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.
 %
-%   Sets the type of a variable (Var) based on the given type (Type). 
+%   Sets the type of a variable (Var) based on the given type (Type).
 %   It ensures that the type is added to the list of known types if not already present.
 %
 %   @arg Depth The current recursion depth.
@@ -1575,7 +1575,7 @@ cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==
 
 %!  is_non_eval_kind(+Type) is nondet.
 %
-%   Checks if the given type (Type) does not require evaluation. A non-eval kind 
+%   Checks if the given type (Type) does not require evaluation. A non-eval kind
 %   includes specific non-variable types or the 'Atom' type.
 %
 %   @arg Type The type to check.
@@ -1703,7 +1703,7 @@ is_type_list('NarrowTypeFn'(Fmt1, Fmt2), List) :-
 %   @arg TypeFn The input type function.
 %   @arg List   The resulting list of types.
 %
-get_type_list('NarrowTypeFn'(Fmt1, Fmt2), List) :- 
+get_type_list('NarrowTypeFn'(Fmt1, Fmt2), List) :-
     !,
     % Recursively collect the types from both components.
     get_type_list(Fmt1, List1),
@@ -1825,7 +1825,7 @@ is_non_absorbed_return_type(Params, Var) :-
 
 %!  is_user_defined_head(+Other, +Head) is nondet.
 %
-%   Checks if the given head (H) is a user-defined head. This predicate uses `=` as the default 
+%   Checks if the given head (H) is a user-defined head. This predicate uses `=` as the default
 %   equality comparison.
 %
 %   @arg Other The context or structure being evaluated.
@@ -1856,12 +1856,12 @@ is_user_defined_head(Eq, Other, H) :-
 %
 is_user_defined_head0(Eq, Other, [H | _]) :-
     % If the head is in list form, check its first element.
-    !, nonvar(H), !, 
+    !, nonvar(H), !,
     is_user_defined_head_f(Eq, Other, H).
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
-    callable(H), !, 
-    functor(H, F, _), 
+    callable(H), !,
+    functor(H, F, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.
@@ -1930,7 +1930,7 @@ is_special_op(_Slf, F) :-
 %     get_operator_typedef(Self, Op, Params, _RetType),
 %     maplist(is_non_eval_kind, Params).
 %
-% is_special_op(_Self, Op) :- 
+% is_special_op(_Self, Op) :-
 %     % Check if the operator is a special built-in.
 %     is_special_builtin(Op).
 
@@ -1974,7 +1974,7 @@ get_operator_typedef(Self, Op, ParamTypes, RetType) :-
 
 %!  get_operator_typedef1(+Self, +Op, +ParamTypes, -RetType) is det.
 %
-%   Retrieves the first-level type definition of an operator (Op) with its parameter types 
+%   Retrieves the first-level type definition of an operator (Op) with its parameter types
 %   and return type.
 %
 %   @arg Self        The context or structure being evaluated.
@@ -1990,7 +1990,7 @@ get_operator_typedef1(Self, Op, ParamTypes, RetType) :-
 
 %!  get_operator_typedef(+Self, +Op, -Arity, +ParamTypes, -RetType) is det.
 %
-%   Retrieves the full type definition of an operator (Op) with its arity, parameter types, 
+%   Retrieves the full type definition of an operator (Op) with its arity, parameter types,
 %   and return type.
 %
 %   @arg Self        The context or structure being evaluated.
@@ -2007,8 +2007,8 @@ get_operator_typedef(Self, Op, _, ParamTypes, RetType) :-
 
 %!  is_special_builtin(+Builtin) is nondet.
 %
-%   Checks if the given Builtin is a recognized special built-in MeTTa predicate. 
-%   These built-ins represent various control structures and operations 
+%   Checks if the given Builtin is a recognized special built-in MeTTa predicate.
+%   These built-ins represent various control structures and operations
 %   that extend beyond standard Prolog predicates.
 %
 %   @arg Builtin The name of the special built-in predicate to be checked.
@@ -2043,7 +2043,7 @@ is_special_builtin('superpose').
 
 %!  is_metta_builtin(+Builtin) is nondet.
 %
-%   Succeeds if the given Builtin is recognized as a MeTTa built-in predicate or operator. 
+%   Succeeds if the given Builtin is recognized as a MeTTa built-in predicate or operator.
 %   This includes both special built-ins and common operators used in metta logic.
 %
 %   @arg Builtin The name of the metta built-in predicate or operator to be checked.
@@ -2075,8 +2075,8 @@ is_metta_builtin('pragma!').
 
 %!  is_comp_op(+Operator, +Arity) is nondet.
 %
-%   Checks if the given Operator is a valid comparison operator in Prolog with 
-%   the specified arity. These operators are used for comparing terms and 
+%   Checks if the given Operator is a valid comparison operator in Prolog with
+%   the specified arity. These operators are used for comparing terms and
 %   evaluating arithmetic expressions.
 %
 %   @arg Operator The comparison operator to be checked.
@@ -2216,6 +2216,7 @@ is_math_op('ulogb', 1, exists).     % Unbiased Exponent of a Floating-Point Valu
 is_math_op('xor', 2, exists).       % Exclusive OR
 is_math_op('zerop', 1, exists).     % Test for Zero
 
-%:- load_pfc_file('metta_ontology.pl.pfc').
+% :- load_pfc_file('metta_ontology.pl.pfc').
+
 
 
