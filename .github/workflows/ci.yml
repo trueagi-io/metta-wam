@@ -13,11 +13,11 @@ on:
       - main
 
 permissions:
-  contents: write  # Grant write permissions for contents
+  contents: write
   pages: write
   actions: write
-  checks: write    # Grant write permissions for checks, only effective on push
-  pull-requests: write  # Explicitly grant write permissions for pull requests
+  checks: write
+  pull-requests: write
 
 jobs:
   generate-reports:
@@ -31,6 +31,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Ensure just-results branch exists
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
         git ls-remote --heads ${{ env.REPO_URL }} just-results
         if [ $? -ne 0 ]; then
@@ -42,14 +45,15 @@ jobs:
           git add current_test_results.txt
           git commit -m "Initialize just-results branch"
           git remote add origin ${{ env.REPO_URL }}
-          # Configure Git to use the GITHUB_TOKEN
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git config --global http.https://github.com/.extraheader "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
+          # Configure Git user information
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          # Set the remote URL with authentication
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push origin just-results
         else
           echo "just-results branch exists. Cloning it."
-          git clone --single-branch --branch just-results --depth 1 ${{ env.REPO_URL }} previous-results
+          git clone --single-branch --branch just-results --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git previous-results
         fi
 
     - name: Copy Previous Test Results
@@ -119,9 +123,11 @@ jobs:
           echo "TEST_CHANGED=true" >> $GITHUB_ENV
         fi
 
-    # Save Current Test Results to just-results branch
     - name: Save Current Test Results to just-results branch
       if: env.TEST_CHANGED == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
         cp current_test_results.txt previous-results/
         cd previous-results
@@ -130,8 +136,8 @@ jobs:
         git config user.name "${{ github.actor }}"
         git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-        # Configure Git to use the GITHUB_TOKEN for authentication
-        git config --global http.https://github.com/.extraheader "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"
+        # Set the remote URL with authentication
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
         # Stage and commit changes
         git add current_test_results.txt
@@ -139,8 +145,6 @@ jobs:
 
         # Push changes to the just-results branch
         git push origin just-results
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Continue only if tests changed
     - name: Run JUnit Report Generation Script
@@ -195,7 +199,7 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}
 
     - name: Display JUnit Test Results
-      if: (github.event_name == 'push') && (env.TEST_CHANGED == 'true')  # Only run this step on pushes to main if there are changes
+      if: (github.event_name == 'push') && (env.TEST_CHANGED == 'true')
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
