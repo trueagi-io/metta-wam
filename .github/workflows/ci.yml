@@ -30,12 +30,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Checkout just-results branch
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ github.repository }}
-        ref: just-results
-        path: previous-results
+    - name: Ensure just-results branch exists
+      run: |
+        git clone https://github.com/${{ github.repository }} previous-results
+        cd previous-results
+        git fetch origin
+        if git show-ref --verify --quiet refs/remotes/origin/just-results; then
+          echo "just-results branch exists."
+          git checkout just-results
+        else
+          echo "just-results branch does not exist. Creating it."
+          git checkout --orphan just-results
+          git rm -rf .
+          touch current_test_results.txt
+          git add current_test_results.txt
+          git commit -m "Initialize just-results branch"
+          git push origin just-results
+        fi
+
+    - name: Copy Previous Test Results
+      run: |
+        if [ -f "previous-results/current_test_results.txt" ]; then
+          cp previous-results/current_test_results.txt previous_test_results.txt
+        else
+          echo "No previous test results found."
+        fi
+
+    # The rest of your workflow steps remain largely the same
 
     - name: Make Install Script Executable
       run: chmod +x INSTALL.sh
@@ -80,14 +101,6 @@ jobs:
       run: |
         # Extract test IDs and their statuses into a sorted file
         awk -F '|' '{print $2 "|" $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort > current_test_results.txt
-
-    - name: Copy Previous Test Results
-      run: |
-        if [ -f "previous-results/current_test_results.txt" ]; then
-          cp previous-results/current_test_results.txt previous_test_results.txt
-        else
-          echo "No previous test results found."
-        fi
 
     - name: Compare Test Results
       run: |
