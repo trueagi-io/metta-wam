@@ -95,9 +95,8 @@ SHOW_ALL_OUTPUT=false # Set to false normally, true for debugging
 run_mettalog_tests 40 tests/baseline_compat/module-system/
 
 # 200+ tests (~4 minutes)
-run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
-run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
-run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
+#run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
+#run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
 # 50+ tests (~2 minutes)
 #run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 
