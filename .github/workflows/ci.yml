@@ -200,7 +200,6 @@ jobs:
     - name: Generate Allure Report
       if: env.TEST_CHANGED == 'true'
       uses: simple-elf/allure-report-action@master
-      if: always()
       id: allure-report
       with:
         allure_results: build/allure-results
