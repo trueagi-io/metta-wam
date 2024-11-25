@@ -32,20 +32,20 @@ jobs:
 
     - name: Ensure just-results branch exists
       run: |
-        git clone https://github.com/${{ github.repository }} previous-results
-        cd previous-results
-        git fetch origin
-        if git show-ref --verify --quiet refs/remotes/origin/just-results; then
-          echo "just-results branch exists."
-          git checkout just-results
-        else
+        git ls-remote --heads ${{ env.REPO_URL }} just-results
+        if [ $? -ne 0 ]; then
           echo "just-results branch does not exist. Creating it."
-          git checkout --orphan just-results
-          git rm -rf .
+          git init previous-results
+          cd previous-results
+          git checkout -b just-results
           touch current_test_results.txt
           git add current_test_results.txt
           git commit -m "Initialize just-results branch"
+          git remote add origin ${{ env.REPO_URL }}
           git push origin just-results
+        else
+          echo "just-results branch exists. Cloning it."
+          git clone --single-branch --branch just-results --depth 1 ${{ env.REPO_URL }} previous-results
         fi
 
     - name: Copy Previous Test Results
