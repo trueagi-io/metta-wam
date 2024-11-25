@@ -359,8 +359,7 @@
     (@param "Expression containing atoms of Number type")))
   (@return "Minimum value in the expression. Error if expression contains non-numeric value or is empty."))
 (: min-atom (-> Expression Number))
-(= (min-atom $L) (call-fn min_list $L))
-(iz min-atom Builtin)
+(= (min-atom $L) (call-fn! min_list $L))
 
 (iz max-atom MeTTa)
 (@doc max-atom
@@ -369,8 +368,7 @@
     (@param "Expression containing atoms of Number type")))
   (@return "Maximum value in the expression. Error if expression contains non-numeric value or is empty."))
 (: max-atom (-> Expression Number))
-(= (min-atom $L) (call-fn max_list $L))
-(iz max-atom Builtin)
+(is-op-1 max-atom max_list)
 
 (iz size-atom MeTTa)
 (@doc size-atom
@@ -379,8 +377,7 @@
     (@param "Expression to measure the size of")))
   (@return "Size of the expression"))
 (: size-atom (-> Expression Integer))
-(= (size-atom $L) (call-fn length $L))
-(iz size-atom Builtin)
+(is-op-1 size-atom length)
 
 (iz index-atom MeTTa)
 (@doc index-atom
@@ -390,7 +387,7 @@
     (@param "Index")))
   (@return "Atom at the specified index in the expression. Error if index is out of bounds."))
 (: index-atom (-> Expression Number Atom))
-(= (index-atom $L $N) (call-fn nth0 $N $L))
+(= (index-atom $L $N) (call-fn! nth0 $N $L))
 (iz index-atom Builtin)
 
 (iz powi-math MeTTa)
@@ -402,16 +399,16 @@
   (@return "Result of base raised to the power"))
 (: powi-math (-> Number Number Number))
 ;(is-math-op-2 powi-math pow)
-(= (powi-math $B $P) (call-fn pow $B $P)))
+(= (powi-math $B $P) (call-fn! pow $B $P))
 
 (==> (is-math-op-1 $m $p) (is-op-1 $m $p))
 (==> (is-math-op-2 $m $p) (is-op-2 $m $p))
 (==> (is-math-pred $m $p) (is-pred $m $p))
 
-(==> (is-op-1 $m $p) (= ($m $a) (call-fn $p $a)))
-(==> (is-op-2 $m $p) (= ($m $a $b) (call-fn $p $a $b)))
-(==> (is-pred-1 $m $p) (= ($m $a) (call-p $p $a)))
-(==> (is-pred-2 $m $p) (= ($m $a $b) (call-p $p $a $b)))
+(==> (is-op-1 $m $p) (= ($m $a) (call-fn! $p $a)))
+(==> (is-op-2 $m $p) (= ($m $a $b) (call-fn! $p $a $b)))
+(==> (is-pred-1 $m $p) (= ($m $a) (call-p! $p $a)))
+(==> (is-pred-2 $m $p) (= ($m $a $b) (call-p! $p $a $b)))
 
 (iz powf-math MeTTa)
 (@doc powf-math

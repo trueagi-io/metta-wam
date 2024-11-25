@@ -1105,6 +1105,7 @@ eval_20(Eq,RetType,Depth,Self,['do',Expr], NoResult):- !,
   make_empty(RetType,[],NoResult).
 
 eval_20(_Eq,_RetType1,_Depth,_Self,['call!'|S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-p!'|S], TF):- !, eval_call(S,TF).
 eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!'|S], R):- !, eval_call_fn(S,R).
 eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth,S], R):-
     length(Left,Nth),
