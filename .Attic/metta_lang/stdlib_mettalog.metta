@@ -420,6 +420,7 @@
     (@param "Power. Could be afloat.")))
   (@return "Result of base raisedtothepower "))
 (is-math-op-2 powf-math pow)
+(is-math-op-2 pow-math pow)
 
 (iz sqrt-math MeTTa)
 (@doc sqrt-math
