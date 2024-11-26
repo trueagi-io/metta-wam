@@ -53,12 +53,12 @@
 !("============ Test insert ============")
 !(assertEqual (insert 1 Nil) (Cons 1 Nil))
 !(assertEqual (insert 2 (insert 1 Nil)) (Cons 1 (Cons 2 Nil)))
-!(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil)))
+!(assertEqual (insert 3 (insert 2 (insert 1 Nil))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 !(== (Cons 1 Nil) (Cons 1 Nil))
 
 ;; Test sort
 !("============ Test sort ============")
-!(assertEqual (sort (Cons 1 Nil)) (Cons 1 Nil)
+!(assertEqual (sort (Cons 1 Nil)) (Cons 1 Nil))
 !(assertEqual (sort (Cons 2 (Cons 1 Nil))) (Cons 1 (Cons 2 Nil)))
 !(assertEqual (sort (Cons 3 (Cons 1 (Cons 2 Nil)))) (Cons 1 (Cons 2 (Cons 3 Nil))))
 
