@@ -359,8 +359,7 @@
     (@param "Expression containing atoms of Number type")))
   (@return "Minimum value in the expression. Error if expression contains non-numeric value or is empty."))
 (: min-atom (-> Expression Number))
-(= (min-atom $L) (call-fn min_list $L))
-(iz min-atom Builtin)
+(= (min-atom $L) (call-fn! min_list $L))
 
 (iz max-atom MeTTa)
 (@doc max-atom
@@ -369,8 +368,7 @@
     (@param "Expression containing atoms of Number type")))
   (@return "Maximum value in the expression. Error if expression contains non-numeric value or is empty."))
 (: max-atom (-> Expression Number))
-(= (min-atom $L) (call-fn max_list $L))
-(iz max-atom Builtin)
+(is-op-1 max-atom max_list)
 
 (iz size-atom MeTTa)
 (@doc size-atom
@@ -379,8 +377,7 @@
     (@param "Expression to measure the size of")))
   (@return "Size of the expression"))
 (: size-atom (-> Expression Integer))
-(= (size-atom $L) (call-fn length $L))
-(iz size-atom Builtin)
+(is-op-1 size-atom length)
 
 (iz index-atom MeTTa)
 (@doc index-atom
@@ -390,7 +387,7 @@
     (@param "Index")))
   (@return "Atom at the specified index in the expression. Error if index is out of bounds."))
 (: index-atom (-> Expression Number Atom))
-(= (index-atom $L $N) (call-fn nth0 $N $L))
+(= (index-atom $L $N) (call-fn! nth0 $N $L))
 (iz index-atom Builtin)
 
 (iz powi-math MeTTa)
@@ -400,18 +397,20 @@
     (@param "Base. Could be a float.")
     (@param "Power. Must be an integer.")))
   (@return "Result of base raised to the power"))
-(: powi-math (-> Number Number Number))
 ;(is-math-op-2 powi-math pow)
-(= (powi-math $B $P) (call-fn pow $B $P)))
+(= (powi-math $B $P) (call-fn! pow $B $P))
 
 (==> (is-math-op-1 $m $p) (is-op-1 $m $p))
+(==> (is-math-op-1 $m $_) (: $m (-> Number Number)))
 (==> (is-math-op-2 $m $p) (is-op-2 $m $p))
+(==> (is-math-op-2 $m $_) (: $m (-> Number Number Number)))
 (==> (is-math-pred $m $p) (is-pred $m $p))
+(==> (is-math-pred $m $_) (: $m (-> Number Bool)))
 
-(==> (is-op-1 $m $p) (= ($m $a) (call-fn $p $a)))
-(==> (is-op-2 $m $p) (= ($m $a $b) (call-fn $p $a $b)))
-(==> (is-pred-1 $m $p) (= ($m $a) (call-p $p $a)))
-(==> (is-pred-2 $m $p) (= ($m $a $b) (call-p $p $a $b)))
+(==> (is-op-1 $m $p) (= ($m $a) (call-fn! $p $a)))
+(==> (is-op-2 $m $p) (= ($m $a $b) (call-fn! $p $a $b)))
+(==> (is-pred-1 $m $p) (= ($m $a) (call-p! $p $a)))
+(==> (is-pred-2 $m $p) (= ($m $a $b) (call-p! $p $a $b)))
 
 (iz powf-math MeTTa)
 (@doc powf-math
@@ -420,8 +419,8 @@
     (@param "Base. Could be afloat.")
     (@param "Power. Could be afloat.")))
   (@return "Result of base raisedtothepower "))
-(: powf-math (-> Number Number Number))
 (is-math-op-2 powf-math pow)
+(is-math-op-2 pow-math pow)
 
 (iz sqrt-math MeTTa)
 (@doc sqrt-math
@@ -429,7 +428,6 @@
   (@params (
     (@param "Input number")))
   (@return "Result of a square root function"))
-(: sqrt-math (-> Number Number))
 (is-math-op-1 sqrt-math sqrt)
 
 (iz abs-math MeTTa)
@@ -438,9 +436,7 @@
   (@params (
     (@param "Input number")))
   (@return "Absolute value"))
-(: abs-math (-> Number Number))
 (is-math-op-1 abs-math abs)
-
 
 (iz log-math MeTTa)
 (@doc log-math
@@ -449,8 +445,7 @@
     (@param "Base")
     (@param "Input number")))
   (@return "Result of log function"))
-(: log-math (-> Number Number Number))
-(is-math-op-1 log-math log)
+(is-math-op-2 log-math log2)
 
 (iz trunc-math MeTTa)
 (@doc trunc-math
@@ -458,7 +453,6 @@
   (@params (
     (@param "Float value")))
   (@return "Integer part of float"))
-(: trunc-math (-> Number Number))
 (is-math-op-1 trunc-math trunc)
 
 (iz ceil-math MeTTa)
@@ -467,7 +461,6 @@
   (@params (
     (@param "Float value")))
   (@return "Integer value greater than or equal to the input"))
-(: ceil-math (-> Number Number))
 (is-math-op-1 ceil-math ceil)
 
 (iz floor-math MeTTa)
@@ -476,7 +469,6 @@
   (@params (
     (@param "Float value")))
   (@return "Integer value less than or equal to the input"))
-(: floor-math (-> Number Number))
 (is-math-op-1 floor-math floor)
 
 (iz round-math MeTTa)
@@ -485,7 +477,6 @@
   (@params (
     (@param "Float value")))
   (@return "Nearest integer to the input"))
-(: round-math (-> Number Number))
 (is-math-op-1 round-math round)
 
 (iz sin-math MeTTa)
@@ -494,7 +485,6 @@
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the sine function"))
-(: sin-math (-> Number Number))
 (is-math-op-1 sin-math sin)
 
 (iz asin-math MeTTa)
@@ -503,7 +493,6 @@
   (@params (
     (@param "Float number")))
   (@return "Result of the arcsine function"))
-(: asin-math (-> Number Number))
 (is-math-op-1 asin-math asin)
 
 (iz cos-math MeTTa)
@@ -512,7 +501,6 @@
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the cosine function"))
-(: cos-math (-> Number Number))
 (is-math-op-1 cos-math cos)
 
 (iz acos-math MeTTa)
@@ -521,7 +509,6 @@
   (@params (
     (@param "Float number")))
   (@return "Result of the arccosine function"))
-(: acos-math (-> Number Number))
 (is-math-op-1 acos-math acos)
 
 (iz tan-math MeTTa)
@@ -530,7 +517,6 @@
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the tangent function"))
-(: tan-math (-> Number Number))
 (is-math-op-1 tan-math tan)
 
 (iz atan-math MeTTa)
@@ -539,7 +525,6 @@
   (@params (
     (@param "Float number")))
   (@return "Result of the tangent function"))
-(: atan-math (-> Number Number))  
 (is-math-op-1 atan-math atan)
 
 (iz isnan-math MeTTa)
@@ -547,8 +532,7 @@
   (@desc "Returns True if input value is NaN. False - otherwise")
   (@params (
     (@param "Number")))
-  (@return "True/False"))
-(: isnan-math (-> Number Bool))  
+  (@return "True/False")) 
 (is-math-pred isnan-math is_NaN)
 
 (iz isinf-math MeTTa)
@@ -557,7 +541,7 @@
   (@params (
     (@param "Number")))
   (@return "True/False"))
-(: isinf-math (-> Number Bool))
+; this is deduced: (: isinf-math (-> Number Bool))
 (is-math-pred isinf-math is_Inf)
 
 (iz random-int MeTTa)
