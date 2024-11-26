@@ -1,17 +1,4 @@
-﻿;; define some-value returning Number and String
-(= (some-value) 1)
-(= (some-value) "a")
-(= (some-value) 'a')
-(= (some-value) ())
-(= (some-value) (1 2 3))
-(= (some-value) (println! "did it"))
-(= (some-value) S)
-(= (some-value) Z)
-(= (some-value) (S Z))
-(= (some-value) (S (S Z)))
-(= (some-value) &self)
-
-
+﻿
 ;; Collection of functions operating on numbers
 
 ;; Define max
@@ -54,17 +41,16 @@
 (= (fromNat Z) 0)
 (= (fromNat (S $k)) (+ 1 (fromNat $k)))
 
-;; Define a generic less than operator, ⩻, for Nat.  < cannot be used
+;; Define a generic less than operator, lessThan, for Nat.  < cannot be used
 ;; because it is a built-in, its type is hardwired and cannot be
 ;; overloaded.
-(: ⩻ (-> Nat Nat Bool))
-(= (⩻ $_ Z) False)
-(= (⩻ Z (S $_)) True)
-(= (⩻ (S $x) (S $y)) (⩻ $x $y))
-
-;; Overload ⩻ for Number.
-(: ⩻ (-> Number Number Bool))
-(= (⩻ $x $y) (< $x $y))
+(: lessThan (-> Nat Nat Bool))
+(= (lessThan $_ Z) False)
+(= (lessThan Z (S $_)) True)
+(= (lessThan (S $x) (S $y)) (lessThan $x $y))
+;; Overload lessThan for Number.
+(: lessThan (-> Number Number Bool))
+(= (lessThan $x $y) (< $x $y))
 
 ;; Return the ceiling of a non negative number.  If the number is
 ;; negative it returns 1.
@@ -80,14 +66,6 @@
 (= (bool->number False) 0)
 (= (bool->number True) 1)
 
-;; Define a less than type.  Note that it is purposefully different
-;; than ⩻ as it is a type, not an operator.  Inhabitants of (⩻ x y)
-;; are proofs that x ⩻ y == True.  For now ⩻ is only axiomatized for
-;; Nat.
-(: ⩻ (-> $t $t Type))
-
-
-
 ;; Test elementary functions
 !(assertEqual (fromNumber 1) (S Z))
 !(assertEqual (fromNat (S (S Z))) 2)
@@ -95,5 +73,5 @@
 !(assertEqual (abs -10) 10)
 !(assertEqual (approxEq 10 10.0001 1e-3) True)
 !(assertEqual (approxEq 10 10.0001 1e-9) False)
-!(assertEqual (⩻ Z (S Z)) True)
+!(assertEqual (lessThan Z (S Z)) True)
 

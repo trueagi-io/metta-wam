@@ -173,7 +173,8 @@ make_test_name(FilePath0, Number, TestName) :-
     % Converts the base file name to uppercase.
     string_upper(Base, UpperBase),
     % Replaces underscores with hyphens in the base name.
-    string_replace(UpperBase, "_", "-", NoUnderscore),
+    string_replace(UpperBase, "_MW", "", NOMW),
+    string_replace(NOMW, "_", "-", NoUnderscore),
     % Replaces underscores with hyphens in the parent directory name.
     string_replace(UpperParentDirBase, "_", "-", NoUnderscoreParent),
     % Formats the test number as a zero-padded two-digit string.
