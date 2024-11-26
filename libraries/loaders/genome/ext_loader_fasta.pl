@@ -101,7 +101,7 @@ load_fb_fa(Fn, Filename):-
                 load_fb_fa_read(Id, In, _, 0),
                 close(In))))).
 
-%!  load_fb_fa_read(+Fn, +Stream, -FBTe, +At) is det.
+%!  load_fb_fa_read(+Fn, +In, -FBTe, +At) is det.
 %
 %   Reads the contents of a FASTA file stream and processes it line by line.
 %   Stops processing when the end of the stream is reached or a file size limit is hit.
@@ -118,7 +118,7 @@ load_fb_fa_read(Fn, In, FBTe, At) :-
     read_line_to_string(In, Str),
     load_fb_fa_read_str(Fn, In, FBTe, Str, At).
 
-%!  load_fb_fa_read_str(+Fn, +Stream, -FBTe, +Line, +From) is det.
+%!  load_fb_fa_read_str(+Fn, +In, -FBTe, +Str, +From) is det.
 %
 %   Processes a single line from the FASTA file.
 %   If the line contains a header (starts with '>'), it extracts the sequence identifier
