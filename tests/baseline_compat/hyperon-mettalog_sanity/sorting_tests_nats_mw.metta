@@ -1,5 +1,5 @@
 ﻿
-(import! &self sorting_tests)
+!(import! &self sorting_tests)
 
 !(pragma! coerce auto)
 
