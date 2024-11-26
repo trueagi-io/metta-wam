@@ -22,6 +22,9 @@ permissions:
 jobs:
   generate-reports:
     runs-on: ubuntu-latest
+
+    if: (github.repository == 'trueagi-io/metta-wam') || (github.event_name != 'schedule')
+
     env:
       JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
       REPO_URL: https://github.com/${{ github.repository }}
