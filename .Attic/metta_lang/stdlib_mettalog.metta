@@ -97,83 +97,91 @@
 (= (If $cond $then $else) (if $cond $then $else))
 
 (iz predicate-arity MeTTaLog)
-
 (@doc predicate-arity
   (@desc "Specifies the arity (number of arguments) for a given predicate, enabling it to be queriable in the system's match framework. 
           This is particularly useful for allowing built-in functions, such as `size-atom`, to function as predicates in declarative contexts 
           and run in reverse to compute inputs based on outputs.
 
           Example Usage:
-          - Enable the built-in function `size-atom` (takes an atom and returns its size) as a predicate with arity 2:
-            (add-atom &dyn-space (predicate-arity size-atom 2))
+          - Enable the built-in function `size-atom` as a predicate with arity 2:
+            !(add-atom &dyn-space (predicate-arity size-atom 2))
 
           - Use `size-atom` as a predicate in pattern matching:
-            (match &dyn-space '(size-atom (a b c) $size) 
+            !(match &dyn-space (size-atom (a b c) $size) 
                    (The abc tuple was len $size))
-            ; Result: $size = 3
+            ; Result: [(The abc tuple was len 3)]
 
           - Run `size-atom` in reverse to compute an atom with a desired size:
-            (match &dyn-space '(size-atom $new-atom 4) 
+            !(match &dyn-space (size-atom $new-atom 4) 
                    (The new atom is $new-atom))
-            ; Result: $new-atom = ($1 $2 $3 $4)
+            ; Result: [ (The new atom is ($1 $2 $3 $4))]
 
-          This reverse functionality is enabled because predicates describe relationships, allowing inference of inputs from outputs.")
+            ; This functionality is just part of how size-atom was designed to run 
+            ; bi-directionally allowing MeTTaLog to infer inputs from outputs.")
   )
   (@params (
     (@param "Predicate symbol" 
             (@desc "The name of the predicate whose arity is being defined."))
   ))
   (@return (@desc "The number of arguments required for the predicate.")))
-
 (: predicate-arity (-> Symbol Number))
 (predicate-arity predicate-arity 2)
 (function-arity predicate-arity 1)
 
 
-
+(iz function-arity MeTTaLog)
 (@doc function-arity
   (@desc "Defines the arity of a function, allowing predicates or built-in facts to also behave as callable functions. 
           This enables procedural-style execution where the last argument of the predicate becomes the function's return value. 
           The system internally resolves the function using a `match` query.
 
           Example Usage:
-          - Declare the `max` predicate with arity 2:
-            (predicate-arity max 2)
-
-          - Enable `max` as a callable function:
-            (add-atom &dyn-space (function-arity max 2))
 
           - Define rules for `max`:
-            (add-atom &dyn-space (max $X $Y $X) (<= $X $Y))
-            (add-atom &dyn-space (max $X $Y $Y) (> $X $Y))
+            !(add-atom &test-space (max $X $Y $X) (<= $X $Y))
+            !(add-atom &test-space (max $X $Y $Y) (> $X $Y))
+
+          - Enable `max` as a callable function:
+            !(add-atom &test-space (function-arity max 2))
+
+          - Declare the `max` predicate with arity 2:
+            !(add-atom &test-space (predicate-arity max 2))
 
           - Use `max` declaratively as a predicate:
-            (match &dyn-space (max 5 10 $max)
-                   (The maximum is $max))
-            ; Result: $max = 10
+            !(match &test-space (max 5 10 $max) $max)
+            ; Return: [10]
 
           - Use `max` procedurally as a function:
-            (max 5 10)
-            ; Result: 10
+            !(max 5 10)
+            ; Return: [10]
 
           - Reverse execution with `max`:
-            (max $a $b 10)
-            ; Possible results:
-            ; Exists $a =< 10, $b = 10
-            ; $a = 10, Exists $b =< 10
+            !(match &test-space (max $a $b 10) ($a $b))
+            ; Return:
+            ; [
+            ;   ((<exists> (<= 10 $)) 10),
+            ;   (10 (<exists> (<= 10 $)))
+            ; ]
+            ; This functionality uses mettalog's builtin finite domain equational solver
+
+          - Use `function-arity` itself to query the arity of `max`:
+            !(function-arity max)
+            ; Return: [2]
 
           This dual behavior bridges procedural and declarative paradigms by enabling predicates to act as functions. 
           Defining `function-arity` automatically resolves the function logic using the associated predicate.")
   )
   (@params (
     (@param "Function symbol" 
-            (@desc "The name of the function or predicate to enable as a callable function."))
-  ))
-  (@return (@desc "The number of arguments expected by the function.")))
+            (@desc "The name of the function or predicate to enable as a callable function.")))
+  )
+  (@return (@desc "The number of arguments expected by the function, returned as a list.")))
+)
 
 (: function-arity (-> Symbol Number))
-(predicate-arity function-arity 2)
+(predicate-arity function-arity 3)
 (function-arity function-arity 1)
+
 
 
 ;; If Function
