@@ -8,13 +8,24 @@
   (@desc "Type representing any atom."))
 (: Atom Type)
 
+(@doc LazyEvaluatable
+  (@desc "A type of Atom/Value that hyperon does not implicitly evaluate"))
+(: LazyEvaluatable Type)
+(:> Atom LazyEvaluatable)
+
 (@doc Bool
   (@desc "Boolean type of True or False."))
 (: Bool Type)
 
+(@doc LazyBool
+  (@desc "Boolean type of True or False."))
+(: LazyBool Type)
+(:> LazyBool LazyEvaluatable)
+
 (@doc Expression
   (@desc "Type representing an S-Expression, which is a combination of atoms."))
 (: Expression Type)
+(:> Expression LazyEvaluatable)
 
 (@doc Number
   (@desc "Numeric type, including integers and floating-point numbers."))
@@ -55,6 +66,7 @@
 (@doc Variable
   (@desc "Type representing a variable in the language."))
 (: Variable Type)
+
 ; (: if-decons (-> Atom Variable Variable Atom Atom Atom))  was a misnamed if-decons 
 (: if-empty (-> Atom Atom Atom Atom))
 (: if-non-empty-expression (-> Atom Atom Atom Atom))
@@ -183,7 +195,6 @@
   (@return (@desc "A Python list object that represents the given MeTTa Expression as a PyObject"))
 )
 (: py-list (-> Expression PyObject))
-(iz py-list Builtin)
 
 (iz py-chain MeTTa)
 (@doc py-chain
@@ -194,7 +205,6 @@
   (@return (@desc "A MeTTa atom which embeds the result of applying the Python OR | operator to all elements of the list."))
 )
 (: py-chain (-> Expression PyObject))
-(iz py-chain Builtin)
 
 (iz py-eval MeTTaLog)
 (@doc py-eval
@@ -205,7 +215,6 @@
   (@return (@desc "The result of evaluating the Python expression as a PyObject"))
 )
 (: py-eval (-> String PyObject))
-(iz py-eval Builtin)
 
 (iz py-exec! MeTTaLog)
 (@doc py-exec!
@@ -216,7 +225,6 @@
   (@return (@desc "The True|False results of executing the Python expression"))
 )
 (: py-exec! (-> String Bool))
-(iz py-exec! Builtin)
 
 (iz = MeTTa)
 (@doc = 
@@ -226,13 +234,11 @@
     (@param "Result of reduction or transformation of the first pattern")))
   (@return "Not reduced itself unless custom equalities over equalities are added") )
 (: = (-> $t $t Atom))
-(iz = Builtin)
 (: = (-> Atom Atom Atom))
 
 (iz ErrorType MeTTa)
 (@doc ErrorType (@desc "Type of the atom which contains error"))
 (: ErrorType Type)
-(iz ErrorType Builtin)
 
 (iz Error MeTTa)
 (@doc Error
@@ -242,7 +248,6 @@
     (@param "Error message, can be one of the reserved symbols: BadType, IncorrectNumberOfArguments")))
   (@return "Instance of the error atom"))
 (: Error (-> Atom Atom ErrorType))
-(iz Error Builtin)
 
 (iz return MinimalMeTTa)
 (@doc return
@@ -251,7 +256,6 @@
     (@param "Value to be returned")))
   (@return "Passed argument"))
 (: return (-> $t $t))
-(iz return Builtin)
 
 (iz function MinimalMeTTa)
 (@doc function
@@ -260,7 +264,6 @@
     (@param "Atom to be evaluated")))
   (@return "Result of atom's evaluation"))
 (: function (-> Atom Atom))
-(iz function Builtin)
 
 (iz eval MinimalMeTTa)
 (@doc eval
@@ -269,7 +272,6 @@
     (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")))
   (@return "Result of evaluation"))
 (: eval (-> Atom Atom))
-(iz eval Builtin)
 
 (iz eval MinimalMeTTa)
 (@doc evalc
@@ -289,7 +291,6 @@
     (@param "Template which will be evaluated at the end with Variable substituted")))
   (@return "Result of evaluating third input argument"))
 (: chain (-> Atom Variable Atom Atom))
-(iz chain Builtin)
 
 (iz unify MeTTa)
 (@doc unify
@@ -301,7 +302,6 @@
 	(@param "Result otherwise")))
   (@return "Third argument when found or fourth one otherwise"))
 (: unify (-> Atom Atom Atom Atom Atom))
-(iz unify Builtin)
 
 (iz if-unify MinimalMeTTaHelper)
 (@doc if-unify
@@ -313,7 +313,6 @@
 	(@param "Result otherwise")))
   (@return "Third argument when first two atoms are unifiable or fourth one otherwise"))
 (: if-unify (-> Atom Atom Atom Atom %Undefined%))
-(iz if-unify Builtin)
 
 (ALT= (if-unify $a $a $then $else) $then)
 (ALT= (if-unify $a $b $then $else)
@@ -338,7 +337,6 @@
     (@param "Tail of an expression")))
   (@return "New expression consisting of the two input arguments"))
 (: cons-atom (-> Atom Expression Expression))
-(iz cons-atom Builtin)
 ; AKA? (: cons (-> Atom Atom Atom))
 
 (iz decons-atom MinimalMeTTa)
@@ -348,7 +346,6 @@
     (@param "Expression to be Deconsed")))
   (@return "Deconsed expression"))
 (: decons-atom (-> Expression Expression))
-(iz decons-atom Builtin)
 ; AKA? (: decons (-> Atom Atom))
 
 
@@ -389,7 +386,6 @@
 (: index-atom (-> Expression Number Atom))
 (is-fn-21 index-atom nth0)
 ;; ==> (= (index-atom $L $N) (call-fn! nth0 $N $L))
-(iz index-atom Builtin)
 
 
 
@@ -579,7 +575,6 @@
   (@return "All alternative evaluations"))
 ;; collapse-bind because `collapse` doesnt guarantee shared bindings
 (: collapse-bind (-> Atom Expression))
-(iz collapse-bind Builtin)
 
 (iz superpose-bind MeTTa)
 (@doc superpose-bind
@@ -589,7 +584,6 @@
   (@return "Non-deterministic list of Atoms"))
 ;; superpose-bind because `superpose` doesnt guarentee shared bindings
 (: superpose-bind (-> Expression Atom))
-(iz superpose-bind Builtin)
 
 ; Helper Minimal Metta?
 (@doc metta
@@ -600,7 +594,6 @@
     (@param "Atomspace where intepretation should take place")))
   (@return "Result of interpretation"))
 (: metta (-> Atom Type Grounded Atom))
-(iz metta Builtin)
 
 (iz id MinimalMeTTa)
 (@doc id
@@ -1020,11 +1013,11 @@
     (@param "Result when condition is False")))
   (@return "Second or third argument") )
 (: if (-> Bool Atom Atom $t))
-(iz if Builtin)
 (ALT= (if True $then $else) $then)
 (ALT= (if False $then $else) $else)
 ;`$then`, `$else` should be of `Atom` type to avoid evaluation
 ; and infinite cycle in inference
+
 
 (iz or MeTTa)
 (@doc or
@@ -1033,8 +1026,7 @@
     (@param "First argument")
     (@param "Second argument")))
   (@return "True if any of input arguments is True, False - otherwise"))
-(: or (-> Bool Bool Bool))
-(iz or Builtin)
+(: or (-> Bool LazyBool Bool))
 (ALT= (or False False) False)
 (ALT= (or False True) True)
 (ALT= (or True False) True)
@@ -1047,8 +1039,7 @@
     (@param "First argument")
     (@param "Second argument")))
   (@return "Returns True if both arguments are True, False - otherwise"))
-(: and (-> Bool Bool Bool))
-(iz and Builtin)
+(: and (-> Bool LazyBool Bool))
 (ALT= (and False False) False)
 (ALT= (and False True) False)
 (ALT= (and True False) False)
@@ -1061,7 +1052,6 @@
     (@param "Argument")))
   (@return "Negates boolean input argument (False -> True, True -> False)"))
 (: not (-> Bool Bool))
-(iz not Builtin)
 (ALT= (not True) False)
 (ALT= (not False) True)
 
@@ -1074,7 +1064,6 @@
     (@param "Expression which will be reduced and in which variable (first argument) could be used")))
   (@return "Result of third argument's evaluation"))
 (: let (-> Atom %Undefined% Atom Atom))
-(iz let Builtin)
 (ALT= (let $pattern $atom $template)
   (if-unify $atom $pattern $template Empty))
 
@@ -1086,7 +1075,6 @@
     (@param "Expression which will be reduced and in which variable (first argument) could be used")))
   (@return "Result of second argument's evaluation"))
 (: let* (-> Expression Atom Atom))
-(iz let* Builtin)
 (ALT= (let* $pairs $template)
   (eval (if-decons $pairs ($pattern $atom) $tail
     (let $pattern $atom (let* $tail $template))
@@ -1098,7 +1086,6 @@
   (@params (
     (@param "Atom")))
   (@return "Quoted atom"))
-(iz add-reduct Builtin)
 
 (@doc add-reduct-rust1
   (@desc "Adds atom into the atomspace reducing it first")
@@ -1152,7 +1139,6 @@
   (@params (
     (@param "Expression")))
   (@return "First atom of an expression"))
-(iz car-atom Builtin)
 (: car-atom (-> Expression Atom))
 (ALT= (car-atom $atom)
   (eval (if-decons $atom $head $_
@@ -1166,7 +1152,6 @@
     (@param "Expression")))
   (@return "Tail of an expression"))
 (: cdr-atom (-> Expression Expression))
-(iz cdr-atom Builtin)
 (= (cdr-atom $atom)
   (eval (if-decons $atom $_ $tail
     $tail
@@ -1178,7 +1163,6 @@
   (@params (
     (@param "Atom")))
   (@return "Quoted atom"))
-(iz quote Builtin)
 (: quote (-> Atom Atom))
 (= (quote $atom) NotReducible)
 
@@ -1188,7 +1172,6 @@
   (@params (
     (@param "Quoted atom")))
   (@return "Unquoted atom"))
-(iz unquote Builtin)
 (: unquote (-> %Undefined% %Undefined%))
 (= (unquote (quote $atom)) $atom)
 
@@ -1200,7 +1183,6 @@
   (@params ())
   (@return "Unit atom"))
 (: nop (-> EmptyType))
-(iz nop Builtin)
 (ALT= (nop) ())
   
 (iz nop MeTTa)
@@ -1210,7 +1192,6 @@
     (@param "Anything")))
   (@return "Unit atom"))
 (: nop (-> Atom (->)))
-(iz nop Builtin)
 (ALT= (nop $x) ())
 
 (iz empty MeTTa)
@@ -1220,7 +1201,6 @@
   (@params ())
   (@return "Nothing"))
 (: empty (-> %Undefined%))
-(iz empty Builtin)
 (ALT= (empty) (let a b never-happens))
 ;For testing
 ;(= (empty) Empty)
@@ -1236,7 +1216,6 @@
     (@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set"))
 (: unique (-> Atom Atom))
-(iz unique Builtin)
 
 (iz union MeTTa)
 (@doc union
@@ -1246,7 +1225,6 @@
     (@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets"))
 (: union (-> Atom Atom Atom))
-(iz union Builtin)
 
 (iz intersection MeTTa)
 (@doc intersection
@@ -1256,7 +1234,6 @@
     (@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets"))
 (: intersection (-> Atom Atom Atom))
-(iz intersection Builtin)
 
 (iz subtraction MeTTa)
 (@doc subtraction
@@ -1266,7 +1243,6 @@
     (@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets"))
 (: subtraction (-> Atom Atom Atom))
-(iz subtraction Builtin)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
@@ -1645,9 +1621,10 @@
   (@desc "Searches for all declared atoms corresponding to the given pattern (second argument) and produces the output pattern (third argument)")
   (@params (
     (@param "A grounded atom referencing a Space")
-    (@param "Pattern atom to be matched")
-    (@param "Output pattern typically containing variables from the input pattern")))
-  (@return "If match was successful it outputs pattern (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Nothing - otherwise"))
+    (@param "Pattern atom to be searched")
+    (@param "Output template typically containing variables from the input pattern")))
+  (@return "If match was successful it outputs template (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Empty - otherwise"))
+
 (: match (-> Atom Atom Atom %Undefined%))
 
 ;(ALT= (match $space $pattern $template)
@@ -1731,7 +1708,6 @@
     (@param "Tuple to be converted")))
   (@return "Argument converted to nondeterministic result"))
 (: superpose (-> Expression %Undefined%))
-(iz superpose Builtin)
 
 (iz collapse MeTTa)
 (@doc collapse
@@ -1740,7 +1716,6 @@
     (@param "Atom which will be evaluated")))
   (@return "Tuple"))
 (: collapse (-> Atom Atom))
-(iz collapse Builtin)
   
 (iz case MeTTa)
 (@doc case
@@ -1750,7 +1725,6 @@
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result of evaluating Atom bound to met condition"))
 (: case (-> Atom Expression Atom))
-(iz case Builtin)
 
 (iz capture MeTTa)
 (@doc capture
@@ -1759,7 +1733,6 @@
     (@param "Function name which space needs to be captured")))
   (@return "Function"))
 (: capture (-> Atom Atom))
-(iz capture Builtin)
 
 (iz hyperpose MeTTa)
 (@doc hyperpose

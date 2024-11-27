@@ -177,13 +177,16 @@ def _priv_gnd_get_object(atom):
         return SpaceRef._from_cspace(hp.atom_get_space(atom.catom))
     elif typ == S('Bool') or typ == S('Number'):
         converter = ConvertingSerializer()
-        hp.atom_gnd_serialize(atom.catom, converter)
-        if converter.value is None:
-            raise RuntimeError(f"Could not convert atom {atom}")
+        try:
+            res = hp.atom_gnd_serialize(atom.catom, converter)
+        except Exception as e:
+            raise RuntimeError(f"Could not convert atom {atom} to Python value, exception caught: {e}")
+        if res != SerialResult.OK or converter.value is None:
+            raise RuntimeError(f"Could not convert atom {atom} to Python value")
         else:
             return ValueObject(converter.value)
     else:
-        raise TypeError(f"Cannot get_object of unsupported non-C {atom}")
+        raise TypeError(f"Cannot get Python object of unsupported non-C atom {atom}")
 
 
 def G(object, type=AtomType.UNDEFINED):
@@ -311,6 +314,35 @@ class MettaError(Exception):
        , but we don't want to output Python error stack."""
     pass
 
+def unwrap_args(atoms):
+    args = []
+    kwargs = {}
+    for a in atoms:
+        if isinstance(a, ExpressionAtom):
+            ch = a.get_children()
+            if len(ch) > 0 and repr(ch[0]) == "Kwargs":
+                for c in ch[1:]:
+                    try:
+                        kwarg = c.get_children()
+                        assert len(kwarg) == 2
+                    except:
+                        raise RuntimeError(f"Incorrect kwarg format {kwarg}")
+                    try:
+                        kwargs[get_string_value(kwarg[0])] = kwarg[1].get_object().content
+                    except:
+                        raise NoReduceError()
+                continue
+        if hasattr(a, 'get_object'):
+            args.append(a.get_object().content)
+        else:
+            # NOTE:
+            # Currently, applying grounded operations to pure atoms is not reduced.
+            # If we want, we can raise an exception, or form an error expression instead,
+            # so a MeTTa program can catch and analyze it.
+            # raise RuntimeError("Grounded operation " + self.name + " with unwrap=True expects only grounded arguments")
+            raise NoReduceError()
+    return args, kwargs
+
 class OperationObject(GroundedObject):
     """
     An OperationObject represents an operation as a grounded object, allowing for more
@@ -385,32 +417,7 @@ class OperationObject(GroundedObject):
         """
         # type-check?
         if self.unwrap:
-            args = []
-            kwargs = {}
-            for a in atoms:
-                if isinstance(a, ExpressionAtom):
-                    ch = a.get_children()
-                    if len(ch) > 0 and repr(ch[0]) == "Kwargs":
-                        for c in ch[1:]:
-                            try:
-                                kwarg = c.get_children()
-                                assert len(kwarg) == 2
-                            except:
-                                raise RuntimeError(f"Incorrect kwarg format {kwarg}")
-                            try:
-                                kwargs[get_string_value(kwarg[0])] = kwarg[1].get_object().content
-                            except:
-                                raise NoReduceError()
-                        continue
-                try:
-                    args.append(a.get_object().content)
-                except:
-                    # NOTE:
-                    # Currently, applying grounded operations to pure atoms is not reduced.
-                    # If we want, we can raise an exception, or form an error expression instead,
-                    # so a MeTTa program can catch and analyze it.
-                    # raise RuntimeError("Grounded operation " + self.name + " with unwrap=True expects only grounded arguments")
-                    raise NoReduceError()
+            args, kwargs = unwrap_args(atoms)
             try:
                 result = self.op(*args, **kwargs)
             except MettaError as e:
@@ -422,7 +429,9 @@ class OperationObject(GroundedObject):
             return [ValueAtom(result, res_typ)]
         else:
             result = self.op(*atoms)
-            if not isinstance(result, list):
+            try:
+                iter(result)
+            except TypeError:
                 raise RuntimeError("Grounded operation `" + self.name + "` should return list")
             return result
 
