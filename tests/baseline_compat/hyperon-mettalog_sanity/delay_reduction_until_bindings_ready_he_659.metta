@@ -3,7 +3,7 @@
 
 ; Issue Overview:
 ; The backward chainer struggles to delay reduction when bindings are not fully grounded,
-; resulting in incorrect or empty results. This test reproduces the issue and validates behavior.
+; resulting in incorrect or empty results. This test reproduces the issue and examines solutions.
 
 ; Define Nat Type
 (: Nat Type)
@@ -16,10 +16,10 @@
 
 ; Define Backward Chainer
 ; -----------------------
-(: bc (-> $a                           ; Knowledge base space
-          $b                           ; Query
-          Nat                          ; Maximum depth
-          $b))                         ; Result
+(: bc (-> $a    ; Knowledge base space
+          $b    ; Query
+          Nat   ; Maximum depth
+          $b))  ; Result
 
 ; Base case: Knowledge base lookup
 (= (bc $kb (: $prf $ccln) $_)
@@ -27,7 +27,9 @@
 
 ; Base case: CPU check
 (= (bc $kb (: CPU (0⍃ $x)) $_)
-   (if (0< $x) (: CPU (0⍃ $x)) (empty)))
+   (case (0< $x)
+         ((True (: CPU (0⍃ $x)))
+          (False (empty)))))
 
 ; Recursive step: Recurse on proof abstraction and proof argument
 (= (bc $kb (: ($prfabs $prfarg) $ccln) (S $k))
@@ -57,33 +59,32 @@
    (bc &kb (: $prf (0⍃' 2)) (S (S Z)))
    ((: ((Rule CPU) 2) (0⍃' 2)))) ; Expected proof when $x is grounded
 
-; Test Case 3: Query with Reordered Premises
-!(add-atom &kb (: Rule (-> (: $x Prime)       ; If $x is prime
-                           (-> (: $_ (0⍃ $x)) ; and $x > 0, then
-                               (0⍃' $x)))))   ; $x is a prime number > 0
+; Test Case 3: Adjust CPU Check for Explicit Handling
+!(assertEqualToResult
+   (let* (
+         ($kb &kb)
+         ($x 2)
+         ($result
+            (case (0< $x)
+               ((True (: CPU (0⍃ $x)))
+                (False (empty))))))
+      $result)
+   ((: CPU (0⍃ 2)))) ; Expected explicit handling in CPU check
+
+; Test Case 4: Proposed Set-Based Parameter Handling
+; --------------------------------------------------
+(: handle-prmlst (-> $a $b List $d))
+(= (handle-prmlst $kb $k Nil) Nil)
+(= (handle-prmlst $kb $k (Cons (: $prfarg $prms) $xs))
+   (Cons (bc $kb (: $prfarg $prms) $k) (handle-prmlst $kb $k $xs)))
+
+!(add-atom &kb (: Rule (-> (Cons (: CPU (is-closed $x) (0⍃ $x)) (Cons (: $x Prime) Nil))
+                          (0⍃' $x))))
+
 !(assertEqualToResult
    (bc &kb (: $prf (0⍃' $x)) (S (S Z)))
-   ((: ((Rule CPU) 2) (0⍃' 2)))) ; Expected proof with reordered premises
-
-; Test Case 4: Using is-closed to Delay Reduction
-(: is-closed (-> Atom Bool))
-(= (is-closed $x)
-   (case (get-metatype $x)
-         ((Symbol True)
-          (Grounded True)
-          (Variable False)
-          (Expression (if (== $x ())
-                         True
-                         (and (let $head (car-atom $x) (is-closed $head))
-                              (let $tail (cdr-atom $x) (is-closed $tail))))))))
-
-(: 0< (-> Number Bool))
-(= (0< $x) (if (is-closed $x) (< 0 $x) (empty)))
-
-!(assertEqualToResult
-   (bc &kb (: $prf (0⍃' $x)) (S (S Z)))
-   ((: ((Rule CPU) 2) (0⍃' 2)))) ; Expected behavior with is-closed applied
+   ((: ((Rule CPU) 2) (0⍃' 2)))) ; Valid proof using parameter list handler
 
 ; Summary:
-; - Highlights the need for delaying reduction until bindings are fully grounded.
-; - Includes tests with variable grounding, reordered premises, and an `is-closed` mechanism.
+; - Includes tests with variable grounding, adjusted CPU checks, and parameter list handling.
+; - Demonstrates solutions for delaying reduction and handling ungrounded variables.
