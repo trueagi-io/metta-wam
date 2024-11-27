@@ -617,8 +617,8 @@
 (= (atom-subst $atom $var $templ)
   (function (chain (eval (id $atom)) $var (return $templ))) )
 
-(iz if-decons MinimalMeTTaHelper)
-(@doc if-decons
+(iz if-decons-expr MinimalMeTTaHelper)
+(@doc if-decons-expr
   (@desc "Checks if first argument is non empty expression. If so gets tail and head from the first argument and returns forth argument using head and tail values. Returns fifth argument otherwise.")
   (@params (
     (@param "Expression to be deconstructed")
@@ -627,9 +627,12 @@
     (@param "Template to return if first argument is a non-empty expression")
     (@param "Default value to return otherwise")))
   (@return "Either template with head and tail replaced by values or default value"))
-(: if-decons (-> Expression Variable Variable Atom Atom Atom))
+(: if-decons-expr (-> Expression Variable Variable Atom Atom Atom))
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(ALT= (if-decons $atom $head $tail $then $else)
+(= (if-decons-expr $atom $head $tail $then $else)
+  (if-decons $atom $head $tail $then $else))
+(: if-decons (-> Expression Variable Variable Atom Atom Atom))
+(ALT= (if-decons-expr $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
     (return $else)
     (chain (decons-atom $atom) $list
@@ -733,7 +736,7 @@
   (function (chain (eval (get-metatype $type)) $meta
     (eval (switch ($type $meta) (
       (($type Expression)
-        (eval (if-decons $type $head $_tail
+        (eval (if-decons-expr $type $head $_tail
           (if-unify $head -> (return True) (return False))
           (return (Error (is-function $type) "is-function non-empty expression as an argument")) )))
       (($type $meta) (return False))
@@ -817,7 +820,7 @@
   (@return "Filtered list"))
 (: filter-atom (-> Expression Variable Atom Expression))
 (= (filter-atom $list $var $filter)
-  (function (eval (if-decons $list $head $tail
+  (function (eval (if-decons-expr $list $head $tail
     (chain (eval (filter-atom $tail $var $filter)) $tail-filtered
       (chain (eval (atom-subst $head $var $filter)) $filter-expr
         (chain $filter-expr $is-filtered
@@ -836,7 +839,7 @@
   (@return "Result of evaluating template for each atom in a list"))
 (: map-atom (-> Expression Variable Atom Expression))
 (= (map-atom $list $var $map)
-  (function (eval (if-decons $list $head $tail
+  (function (eval (if-decons-expr $list $head $tail
     (chain (eval (map-atom $tail $var $map)) $tail-mapped
       (chain (eval (atom-subst $head $var $map)) $map-expr
         (chain $map-expr $head-mapped
@@ -855,7 +858,7 @@
   (@return "Result of applying operation to the list of values"))
 (: foldl-atom (-> Expression Atom Variable Variable Atom Atom))
 (= (foldl-atom $list $init $a $b $op)
-  (function (eval (if-decons $list $head $tail
+  (function (eval (if-decons-expr $list $head $tail
     (chain (eval (atom-subst $init $a $op)) $op-init
       (chain (eval (atom-subst $head $b $op-init)) $op-head
         (chain $op-head $head-folded
@@ -1072,11 +1075,11 @@
   (@desc "Same as let, but first argument is a tuple containing tuples of variables and their bindings, e.g. (($v (+ 1 2)) ($v2 (* 5 6)))")
   (@params (
     (@param "Tuple of tuples with variables and their bindings")
-    (@param "Expression which will be reduced and in which variable (first argument) could be used")))
-  (@return "Result of second argument's evaluation"))
-(: let* (-> Expression Atom Atom))
+    (@param "Expression which will be evaluated if each pair can be unified")))
+  (@return "Second argument or Empty"))
+(: let* (-> Expression Atom %Undefined%))
 (ALT= (let* $pairs $template)
-  (eval (if-decons $pairs ($pattern $atom) $tail
+  (eval (if-decons-expr $pairs ($pattern $atom) $tail
     (let $pattern $atom (let* $tail $template))
     $template )))
 
@@ -1141,7 +1144,7 @@
   (@return "First atom of an expression"))
 (: car-atom (-> Expression Atom))
 (ALT= (car-atom $atom)
-  (eval (if-decons $atom $head $_
+  (eval (if-decons-expr $atom $head $_
     $head
     (Error (car-atom $atom) "car-atom expects a non-empty expression as an argument") )))
 
@@ -1153,7 +1156,7 @@
   (@return "Tail of an expression"))
 (: cdr-atom (-> Expression Expression))
 (= (cdr-atom $atom)
-  (eval (if-decons $atom $_ $tail
+  (eval (if-decons-expr $atom $_ $tail
     $tail
     (Error (cdr-atom $atom) "cdr-atom expects a non-empty expression as an argument") )))
 
@@ -2136,11 +2139,19 @@
 
 (iz call-p! MeTTaLog)
 (@doc call-p!
-  (@desc "See call!")
+  (@desc "Like call-fn! except it does not append the called term with a return arg.")
   (@params (
     (@param "Form")))
   (@return "True if the call succeeds, False otherwise."))
 (: call-p! (-> Atom Atom))
+
+(iz call-fn! MeTTaLog)
+(@doc call-fn!
+  (@desc "Trampolines to Prolog's call after appending the return argument.  Each arg are provided separately. e.g. !(call-fn! length (1 2 3)) will return 3.")
+  (@params (
+    (@param "Form")))
+  (@return "appends a return argument to a form and calls it"))
+(: call-fn! (-> Atom Atom))
 
 (iz call-string! MeTTaLog)
 (@doc call-string!
