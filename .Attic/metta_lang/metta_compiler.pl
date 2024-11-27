@@ -539,7 +539,9 @@ f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
 
 % temporary placeholder
 is_arg_eval('Number',yes) :- !.
+is_arg_eval('Bool',yes) :- !.
 is_arg_eval('Any',yes) :- !.
+is_arg_eval('Atom',yes) :- !.
 is_arg_eval(_,no).
 
 do_arg_eval(_,Arg,no,Arg,[]).
