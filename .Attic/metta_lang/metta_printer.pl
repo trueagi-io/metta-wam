@@ -1713,7 +1713,7 @@ print_module(M, _Indent):- write('&'), print_sexpr(M, 0),write(' :\n'),!.
 
 symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
-portray_compound_l_m_r("<","",">").
+portray_compound_l_m_r("{","","}").
 %portray_compound_l_m_r("(","@",")").
 
 % Print the rest of the elements in the list, ensuring spacing

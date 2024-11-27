@@ -51,9 +51,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: integrates Prolog with Python and Rust environments to execute, manage, and 
-% query logical operations across different spaces, handling Python exceptions, module loading, 
+%*********************************************************************************************
+% PROGRAM FUNCTION: integrates Prolog with Python and Rust environments to execute, manage, and
+% query logical operations across different spaces, handling Python exceptions, module loading,
 % and providing utilities for converting between Prolog terms and Python/Rust objects.
 %*********************************************************************************************
 
@@ -73,19 +73,19 @@
 % Set an empty list for Python argument values.
 :- set_prolog_flag(py_argv,[]).
 
-/* 
+/*
 Core in Rust:
-   The core logic of the MeTTa system is implemented in Rust for its performance 
+   The core logic of the MeTTa system is implemented in Rust for its performance
    and safety, making it robust and efficient.
 
 Python Extensions:
-   Python is integrated via FFI (Foreign Function Interface) to allow customization 
-   and interaction with Rust code. Python's flexibility and ecosystem provide easy 
+   Python is integrated via FFI (Foreign Function Interface) to allow customization
+   and interaction with Rust code. Python's flexibility and ecosystem provide easy
    extensibility to the system.
 
 Prolog Extensions with Python:
-   Just like Rust allows Python extensions, Prolog also supports the extension of 
-   functionality through Python (and Rust via Python). This allows Python and Rust 
+   Just like Rust allows Python extensions, Prolog also supports the extension of
+   functionality through Python (and Rust via Python). This allows Python and Rust
    developers to continue working with the system easily.
 */
 :- use_module(library(filesex)).
@@ -96,9 +96,9 @@ Prolog Extensions with Python:
 
 %!  janus_initialization is det.
 %
-%   Ensures that the Janus Prolog module is loaded. This predicate attempts to load 
-%   the Janus module from its known location. If the Janus module is already loaded, 
-%   it reloads it to ensure all changes are included. If it cannot find the Janus module 
+%   Ensures that the Janus Prolog module is loaded. This predicate attempts to load
+%   the Janus module from its known location. If the Janus module is already loaded,
+%   it reloads it to ensure all changes are included. If it cannot find the Janus module
 %   in the default location, it looks for it in a specific fallback path.
 %
 %   @example
@@ -110,7 +110,7 @@ Prolog Extensions with Python:
 %     ?- janus_initialization.
 %     false.
 %
-:- 
+:-
   (module_property(janus,file(File)) ->
       % If Janus module is already loaded,ensure it is reloaded from the same file.
       janus:ensure_loaded(File);
@@ -129,8 +129,8 @@ Prolog Extensions with Python:
 
 %!  is_rust_space(+GSpace) is semidet.
 %
-%   Checks if the given space is a Rust-based space by checking if it is marked as a 
-%   Python space. This allows Rust and Python spaces to be treated similarly in certain 
+%   Checks if the given space is a Rust-based space by checking if it is marked as a
+%   Python space. This allows Rust and Python spaces to be treated similarly in certain
 %   contexts.
 %
 %   @arg GSpace The space to be checked.
@@ -139,8 +139,8 @@ is_rust_space(GSpace):- is_python_space(GSpace).
 
 %!  is_not_prolog_space(+GSpace) is semidet.
 %
-%   Determines if the given space is not a Prolog-based space. This predicate succeeds 
-%   if the space is a Rust space or if it does not belong to the Prolog asserted or 
+%   Determines if the given space is not a Prolog-based space. This predicate succeeds
+%   if the space is a Rust space or if it does not belong to the Prolog asserted or
 %   non-backtrackable (nb) spaces.
 %
 %   @arg GSpace The space to be checked.
@@ -154,9 +154,9 @@ is_not_prolog_space(GSpace):-
 
 %!  with_safe_argv(:Goal) is det.
 %
-%   Executes the given Goal with an empty `argv` Prolog flag, ensuring that the `argv` 
-%   flag is restored to its original state after the Goal has been executed. This is 
-%   useful when interacting with Python from Prolog, as Python may expect specific 
+%   Executes the given Goal with an empty `argv` Prolog flag, ensuring that the `argv`
+%   flag is restored to its original state after the Goal has been executed. This is
+%   useful when interacting with Python from Prolog, as Python may expect specific
 %   arguments in `argv`.
 %
 %   @arg Goal The goal to be executed with an empty `argv`.
@@ -179,8 +179,8 @@ with_safe_argv(Goal):-
 
 %!  with_safe_argv(:G1, :G2) is det.
 %
-%   Executes the two given goals `G1` and `G2` with an empty `argv` flag, restoring 
-%   the original value of `argv` after their execution. This variant allows for executing 
+%   Executes the two given goals `G1` and `G2` with an empty `argv` flag, restoring
+%   the original value of `argv` after their execution. This variant allows for executing
 %   two goals sequentially.
 %
 %   @arg G1 The first goal to execute.
@@ -192,9 +192,9 @@ with_safe_argv(G1, G2):-
 
 %!  py_catch(:Goal) is det.
 %
-%   A custom exception handling mechanism for catching and handling exceptions 
-%   while calling Python from Prolog. If an exception occurs during the execution of 
-%   the Goal, the exception is logged using `pybug/1`, and the Python traceback is printed 
+%   A custom exception handling mechanism for catching and handling exceptions
+%   while calling Python from Prolog. If an exception occurs during the execution of
+%   the Goal, the exception is logged using `pybug/1`, and the Python traceback is printed
 %   with `py_dump/0`. The original goal is then retried with tracing enabled for debugging.
 %
 %   @arg Goal The goal whose execution is wrapped with exception handling.
@@ -212,12 +212,12 @@ py_catch(Goal):-
             Goal)).                     % Retry the goal with tracing enabled.
 
 % uncomment this and comment the above     when you need to trace
-%py_catch(Goal):- trace,catch(Goal,E,(pybug(E),py_dump)),!.    
+%py_catch(Goal):- trace,catch(Goal,E,(pybug(E),py_dump)),!.
 
 %!  py_dump is det.
 %
-%   Dumps the current Python traceback using the `traceback` module. This is typically 
-%   used when an exception occurs while interacting with Python from Prolog to provide 
+%   Dumps the current Python traceback using the `traceback` module. This is typically
+%   used when an exception occurs while interacting with Python from Prolog to provide
 %   insight into the cause of the exception.
 %
 py_dump:-
@@ -226,8 +226,8 @@ py_dump:-
 
 %!  py_call_c(:Goal) is det.
 %
-%   Calls the Python goal `G` while using the custom exception handling mechanism 
-%   `py_catch/1`. This is a safe way to invoke Python from Prolog, ensuring that 
+%   Calls the Python goal `G` while using the custom exception handling mechanism
+%   `py_catch/1`. This is a safe way to invoke Python from Prolog, ensuring that
 %   exceptions are properly caught and handled.
 %
 %   @arg Goal The Python goal to be executed.
@@ -236,8 +236,8 @@ py_call_c(G):- py_catch(py_call(G)).
 
 %!  py_call_c(:Goal, -Result) is det.
 %
-%   Calls the Python goal `G` and retrieves the result in `R`, with exception handling 
-%   provided by `py_catch/1`. This ensures that Python calls are safely executed and 
+%   Calls the Python goal `G` and retrieves the result in `R`, with exception handling
+%   provided by `py_catch/1`. This ensures that Python calls are safely executed and
 %   exceptions are properly managed.
 %
 %   @arg Goal The Python goal to be executed.
@@ -248,7 +248,7 @@ py_call_c(G, R):- py_catch(py_call(G, R)).
 %!  py_is_module(+M) is semidet.
 %
 %   Checks if the given `M` is a Python module. This is achieved by calling Python
-%   and checking the type of the object. This operation is performed within a safe 
+%   and checking the type of the object. This operation is performed within a safe
 %   `argv` context using `with_safe_argv/1`.
 %
 %   @arg M The object to check if it is a Python module.
@@ -257,7 +257,7 @@ py_is_module(M):- notrace((with_safe_argv(py_is_module_unsafe(M)))).
 
 %!  py_is_module_unsafe(+M) is semidet.
 %
-%   Checks if `M` is a Python module without wrapping it in `with_safe_argv/1`. It first 
+%   Checks if `M` is a Python module without wrapping it in `with_safe_argv/1`. It first
 %   checks if `M` is an object, then determines its type. If the type is `module`, it succeeds.
 %   If not, it tries to call `M` and checks the type of the returned object.
 %
@@ -268,8 +268,8 @@ py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
 
 %!  py_is_py(+V) is semidet.
 %
-%   Determines if the given `V` is a Python object. It handles various types of objects 
-%   such as tuples, lists, dictionaries, and atomic values. It also checks if the value 
+%   Determines if the given `V` is a Python object. It handles various types of objects
+%   such as tuples, lists, dictionaries, and atomic values. It also checks if the value
 %   has the `pyobj` attribute to determine if it is a Python object.
 %
 %   @arg V The variable or term to check if it is a Python object.
@@ -287,9 +287,9 @@ py_is_py(V):- py_is_list(V),!.
 
 %!  py_resolve(+V, -Py) is det.
 %
-%   Resolves a variable or term `V` to its Python equivalent `Py`. If `V` is a variable, 
-%   it retrieves its `pyobj` attribute. If it is not a compound term, it assumes `V` is 
-%   already a Python object. For lists, it attempts to resolve each element. Otherwise, 
+%   Resolves a variable or term `V` to its Python equivalent `Py`. If `V` is a variable,
+%   it retrieves its `pyobj` attribute. If it is not a compound term, it assumes `V` is
+%   already a Python object. For lists, it attempts to resolve each element. Otherwise,
 %   it treats `V` as its resolved form.
 %
 %   @arg V The variable or term to be resolved.
@@ -301,21 +301,21 @@ py_resolve(V, Py):- is_list(V),!,fail, maplist(py_resolve,V,Py).
 py_resolve(V, Py):- V=Py.
 %!  py_is_tuple(+X) is semidet.
 %
-%   Checks if the given term `X` is a Python tuple. The function resolves 
-%   the term `X` (typically some reference to a Python object) and checks 
-%   whether it is a tuple, but not a string (as strings can sometimes 
+%   Checks if the given term `X` is a Python tuple. The function resolves
+%   the term `X` (typically some reference to a Python object) and checks
+%   whether it is a tuple, but not a string (as strings can sometimes
 %   behave like sequences in Python).
 %
-%   The predicate `py_is_tuple/1` is semi-deterministic, meaning it 
+%   The predicate `py_is_tuple/1` is semi-deterministic, meaning it
 %   succeeds if `X` can be determined to be a tuple and fails otherwise.
-%   It is not fully deterministic because the input could resolve to 
+%   It is not fully deterministic because the input could resolve to
 %   something other than a tuple.
 %
 %   @arg X The term to check if it is a Python tuple.
 %
-py_is_tuple(X):- 
+py_is_tuple(X):-
     % Resolve the Prolog term `X` to a Python object `V`.
-    py_resolve(X, V),    
+    py_resolve(X, V),
     % Check if the resolved Python object `V` is a tuple.
     py_is_tuple_res(V).
 
@@ -328,24 +328,24 @@ py_is_tuple_res(V):-
     compound_name_arity(V, '-', _).
 
 % Continue checking if the term is atomic and an object but not a string.
-py_is_tuple_res(V):- 
+py_is_tuple_res(V):-
     % If `V` is atomic (i.e., a basic Prolog term, not a compound term).
-    atomic(V),    
+    atomic(V),
     % Check if `V` is a Python object.
-    py_is_object(V), !,  % Cut to prevent backtracking once object check succeeds.    
+    py_is_object(V), !,  % Cut to prevent backtracking once object check succeeds.
     % Ensure the type of `V` is not `str` (strings should not be considered tuples).
-    \+ py_type(V, str),    
+    \+ py_type(V, str),
     % Finally, check if `V` is of type `tuple`.
     py_type(V, tuple).
 
 % The commented out code below seems to have been an alternative tuple-checking strategy.
-% It uses `py_tuple/2` to extract or transform a tuple, ensuring that the tuple is identical 
+% It uses `py_tuple/2` to extract or transform a tuple, ensuring that the tuple is identical
 % to itself and that it is not a string.
 % py_is_tuple_res(V):- py_tuple(V,T), py_tuple(T,TT), T==TT, \+ py_type(V, str).
 
 %!  py_is_py_dict(+X) is semidet.
 %
-%   Checks if the given term `X` is a Python dictionary. This is done by determining 
+%   Checks if the given term `X` is a Python dictionary. This is done by determining
 %   if the resolved object is of type `dict`.
 %
 %   @arg X The term to check if it is a Python dictionary.
@@ -355,7 +355,7 @@ py_is_py_dict(X):- atomic(X),py_is_object(X),py_type(X,dict).
 
 %!  py_is_list(+X) is semidet.
 %
-%   Checks if the given term `X` is a Python list. This is determined by resolving 
+%   Checks if the given term `X` is a Python list. This is determined by resolving
 %   the term and verifying its type is `list`.
 %
 %   @arg X The term to check if it is a Python list.
@@ -365,20 +365,20 @@ py_is_list(X):- py_resolve(X,V),py_type(V,list).
 
 % Evaluations and Iterations
 %
-% This section contains logic for loading and checking if the built-in Python module 
-% has been loaded in the Prolog environment. It uses thread-local, volatile, and dynamic 
+% This section contains logic for loading and checking if the built-in Python module
+% has been loaded in the Prolog environment. It uses thread-local, volatile, and dynamic
 % predicates to manage the state of module loading.
-% Declare the predicate `did_load_builtin_module/0` as thread-local to ensure that 
-% its state is specific to each thread. It is also marked as volatile so that it is 
+% Declare the predicate `did_load_builtin_module/0` as thread-local to ensure that
+% its state is specific to each thread. It is also marked as volatile so that it is
 % not saved across restarts, and dynamic to allow modifications during runtime.
 :- volatile(did_load_builtin_module/0).
 :- dynamic(did_load_builtin_module/0).
 
 %!  load_builtin_module is det.
 %
-%   Ensures that the built-in Python module is loaded. If the module has already been 
-%   loaded (indicated by `did_load_builtin_module/0` being true), this predicate succeeds 
-%   without reloading. Otherwise, it loads the built-in Python module and asserts 
+%   Ensures that the built-in Python module is loaded. If the module has already been
+%   loaded (indicated by `did_load_builtin_module/0` being true), this predicate succeeds
+%   without reloading. Otherwise, it loads the built-in Python module and asserts
 %   that it has been loaded.
 %
 %   @example
@@ -386,10 +386,10 @@ py_is_list(X):- py_resolve(X,V),py_type(V,list).
 %     ?- load_builtin_module.
 %     true.
 %
-load_builtin_module:- 
+load_builtin_module:-
     % If the module is already loaded, do nothing.
     did_load_builtin_module, !.
-load_builtin_module:- 
+load_builtin_module:-
     % Mark the module as loaded and proceed to load the Python module.
     % Call py_module/2 to load the Python built-in module (complete the predicate as needed).
     with_safe_argv(py_module(builtin_module,
@@ -595,8 +595,8 @@ the_modules_and_globals = merge_modules_and_globals()
 
 %!  py_ppp(+V) is det.
 %
-%   Pretty prints the Python object `V` by using Prolog output redirection. 
-%   The object `V` is first printed with `py_pp/1`, and the output is processed 
+%   Pretty prints the Python object `V` by using Prolog output redirection.
+%   The object `V` is first printed with `py_pp/1`, and the output is processed
 %   using `pych_chars/2` to clean unwanted characters like newlines or special markers.
 %   Finally, the cleaned output is formatted and printed to the console.
 %
@@ -612,13 +612,13 @@ py_ppp(V):-
     flush_output, py_pp_str(V,String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
-    
+
 py_pp_str(V,String):-
    janus:opts_kws([], Kws),
     PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
     py_call(pprint:PFormat, String).
-  
-    
+
+
 %atom_codes(Codes,P),writeq(Codes),
 %py_ppp(V):- !, flush_output, py_mbi(print_nonl(V),_),!,flush_output.
 %py_ppp(V):- writeq(py(V)),!.
@@ -628,11 +628,11 @@ py_pp_str(V,String):-
 % Evaluations and Iterations
 %
 % This section contains logic for loading and checking if the Hyperon module has been
-% loaded in the Prolog environment. It uses thread-local, volatile, and dynamic 
+% loaded in the Prolog environment. It uses thread-local, volatile, and dynamic
 % predicates to manage the state of the module loading.
 
-% Declare the predicate `did_load_hyperon_module/0` as thread-local to ensure that 
-% its state might later be required in each separate thread. It is also marked as volatile so that it is 
+% Declare the predicate `did_load_hyperon_module/0` as thread-local to ensure that
+% its state might later be required in each separate thread. It is also marked as volatile so that it is
 % not saved across restarts, and dynamic to allow modifications during runtime.
 %:- thread_local(did_load_hyperon_module/0).
 :- volatile(did_load_hyperon_module/0).
@@ -640,9 +640,9 @@ py_pp_str(V,String):-
 
 %!  load_hyperon_module is det.
 %
-%   Ensures that the Hyperon Python module is loaded. If the module has already been 
-%   loaded (indicated by `did_load_hyperon_module/0` being true), this predicate succeeds 
-%   without reloading. Otherwise, it loads the Hyperon Python module and asserts 
+%   Ensures that the Hyperon Python module is loaded. If the module has already been
+%   loaded (indicated by `did_load_hyperon_module/0` being true), this predicate succeeds
+%   without reloading. Otherwise, it loads the Hyperon Python module and asserts
 %   that it has been loaded.
 %
 %   @example
@@ -650,10 +650,10 @@ py_pp_str(V,String):-
 %     ?- load_hyperon_module.
 %     true.
 %
-load_hyperon_module:- 
+load_hyperon_module:-
     % If the module is already loaded, do nothing.
     did_load_hyperon_module, !.
-load_hyperon_module:- 
+load_hyperon_module:-
     % Mark the module as loaded.
     assert(did_load_hyperon_module),
     % Load the Python Hyperon module using py_module/2 (complete the call as necessary).
@@ -723,7 +723,7 @@ def rust_unwrap(obj):
         return obj.value()
     if isinstance(obj,GroundedAtom):
         if obj.get_object_type()==AtomType.UNDEFINED:
-        	return obj.get_object()
+            return obj.get_object()
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
@@ -870,7 +870,7 @@ py_atomic(I,O):- I=O.
 
 %!  get_globals(-O) is det.
 %
-%   Retrieves the current global variables from the Python interpreter and unifies 
+%   Retrieves the current global variables from the Python interpreter and unifies
 %   them with the variable O.
 %
 %   @arg O The output which will unify with the global variables.
@@ -878,7 +878,7 @@ get_globals(O):- py_mbi(get_globals(),O).
 
 %!  get_locals(-O) is det.
 %
-%   Retrieves the current local variables from the Python interpreter and unifies 
+%   Retrieves the current local variables from the Python interpreter and unifies
 %   them with the variable O.
 %
 %   @arg O The output which will unify with the local variables.
@@ -886,7 +886,7 @@ get_locals(O):- py_mbi(get_locals(),O).
 
 %!  merge_modules_and_globals(-O) is det.
 %
-%   Merges Python modules and global variables into a single dictionary and unifies 
+%   Merges Python modules and global variables into a single dictionary and unifies
 %   it with the variable O.
 %
 %   @arg O The output which will unify with the merged modules and globals.
@@ -894,7 +894,7 @@ merge_modules_and_globals(O):- py_mbi(merge_modules_and_globals(), O).
 
 %!  py_eval(+I, -O) is det.
 %
-%   Evaluates the Python expression given by the input string I and unifies the result 
+%   Evaluates the Python expression given by the input string I and unifies the result
 %   with the output O.
 %
 %   @arg I The input string representing a Python expression.
@@ -903,7 +903,7 @@ py_eval(I, O):- py_obi(eval_string(I),O).
 
 %!  py_eval(+I) is det.
 %
-%   Evaluates the Python expression given by the input string I and outputs any errors 
+%   Evaluates the Python expression given by the input string I and outputs any errors
 %   or results using the predicate pybug/1.
 %
 %   @arg I The input string representing a Python expression.
@@ -911,7 +911,7 @@ py_eval(I):- py_eval(I, O),pybug(O).
 
 %!  py_exec(+I, -O) is det.
 %
-%   Executes the Python code given by the input string I and unifies the output O 
+%   Executes the Python code given by the input string I and unifies the output O
 %   with the result of the execution.
 %
 %   @arg I The input string representing Python code.
@@ -920,7 +920,7 @@ py_exec(I,O):- py_mbi(exec_string(I), O).
 
 %!  py_exec(+I) is det.
 %
-%   Executes the Python code given by the input string I and outputs any errors or 
+%   Executes the Python code given by the input string I and outputs any errors or
 %   results using the predicate pybug/1.
 %
 %   @arg I The input string representing Python code.
@@ -928,7 +928,7 @@ py_exec(I):- py_exec(I, O),pybug(O).
 
 %!  py_dot(+I, -O) is det.
 %
-%   Converts the string I to an atom and retrieves the corresponding Python object, 
+%   Converts the string I to an atom and retrieves the corresponding Python object,
 %   unifying it with O. If I is already an atom, the object is directly retrieved.
 %
 %   @arg I The input string or atom representing a Python object.
@@ -938,7 +938,7 @@ py_dot(I,O):- py_atom(I,O).
 
 %!  py_dot_from(+From, +I, -O) is det.
 %
-%   Recursively traverses and retrieves a Python object by following a path 
+%   Recursively traverses and retrieves a Python object by following a path
 %   represented by a list of names or a dot-separated string.
 %
 %   @arg From The initial Python object from which to start.
@@ -951,7 +951,7 @@ py_dot_from(From,I,O):- py_dot(From,I,O).
 
 %!  py_eval_object(+Var, -VO) is det.
 %
-%   Evaluates a Python object, recursively handling lists and checking if the object 
+%   Evaluates a Python object, recursively handling lists and checking if the object
 %   is a Python function to call it if necessary. Unifies the result with VO.
 %
 %   @arg Var The input variable to be evaluated.
@@ -968,12 +968,12 @@ py_eval_object(VO,VO).
 %   @arg O The input object to check.
 py_is_function(O):- \+ py_is_object(O),!,fail.
 py_is_function(O):- py_type(O,function),!.
-% we might need to include methods soon    
-%py_is_function(O):- py_type(O, method),!.    
-    
+% we might need to include methods soon
+%py_is_function(O):- py_type(O, method),!.
+
 %!  py_eval_from(+From, +I, -O) is det.
 %
-%   Evaluates a Python object from a starting point by traversing a given path 
+%   Evaluates a Python object from a starting point by traversing a given path
 %   and calling functions along the way.
 %
 %   @arg From The initial Python object from which to start.
@@ -996,7 +996,7 @@ py_fcall(From,I,O):- py_ocall(From:I,O).
 
 %!  ensure_space_py(+Space, -GSpace) is det.
 %
-%   Ensures that Space is a valid Python object, either by verifying it or 
+%   Ensures that Space is a valid Python object, either by verifying it or
 %   by defaulting to the primary Metta space if necessary.
 %
 %   @arg Space The space to check or unify.
@@ -1024,8 +1024,8 @@ ensure_rust_metta(MeTTa):-
 
 %!  ensure_rust_metta0(-MeTTa) is det.
 %
-%   Attempts to initialize a MeTTa instance from different Python sources. 
-%   Tries the `get_metta` method from MettaLearner, or falls back on other 
+%   Attempts to initialize a MeTTa instance from different Python sources.
+%   Tries the `get_metta` method from MettaLearner, or falls back on other
 %   MeTTa-related Python calls.
 %
 %   @arg MeTTa The MeTTa instance that will be initialized.
@@ -1046,8 +1046,8 @@ ensure_rust_metta:- ensure_rust_metta(_).
 
 %!  ensure_mettalog_py(-MettaLearner) is det.
 %
-%   Ensures that the MettaLearner instance is initialized. If it iss already stored 
-%   in the dynamic predicate `is_mettalog/1`, it succeeds immediately. Otherwise, 
+%   Ensures that the MettaLearner instance is initialized. If it iss already stored
+%   in the dynamic predicate `is_mettalog/1`, it succeeds immediately. Otherwise,
 %   it initializes the MettaLearner and stores it.
 %
 %   @arg MettaLearner The MettaLearner instance that will be ensured or initialized.
@@ -1069,7 +1069,7 @@ ensure_mettalog_py(MettaLearner):-
 
 %!  ensure_mettalog_py is det.
 %
-%   Initializes the MettaLearner instance by setting environment variables 
+%   Initializes the MettaLearner instance by setting environment variables
 %   and invoking the necessary Python modules.
 ensure_mettalog_py:-
    % once finished we also are required to have these as well
@@ -1099,7 +1099,7 @@ ensure_mettalog_py:-
 %     % Example of mapping methods for a non-Prolog space:
 %     ?- space_type_method(is_not_prolog_space, new_space, new_rust_space).
 %
-%     % This maps the `new_space` method for `is_not_prolog_space` to the 
+%     % This maps the `new_space` method for `is_not_prolog_space` to the
 %     % `new_rust_space` implementation.
 %
 space_type_method(is_not_prolog_space,new_space,new_rust_space).
@@ -1217,9 +1217,9 @@ atom_from_space(Space,Sym):-
 %   @arg Atoms The iterator of atoms.
 atoms_iter_from_space(Space,Atoms):-
     % Ensure the space is valid.
-    ensure_space(Space,GSpace),  
+    ensure_space(Space,GSpace),
     % Retrieve the iterator.
-    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),  
+    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
     % for debugging print the atoms
     %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
@@ -1228,13 +1228,13 @@ atoms_iter_from_space(Space,Atoms):-
 %!  metta_py_pp(+V) is det.
 %
 %   Pretty-prints a Python object or Prolog term. If the input is a Python object,
-%   it is first converted to a Prolog term and then printed. Otherwise, the term 
+%   it is first converted to a Prolog term and then printed. Otherwise, the term
 %   is directly printed.
 %
 %   @arg V The value (either Python or Prolog) to be printed.
 metta_py_pp(V):-
     py_is_enabled, once((py_is_object(V), py_to_pl(V, PL))),  % Convert Python object to Prolog term.
-    V\=@=PL,!, 
+    V\=@=PL,!,
     metta_py_pp(PL).                                          % Recursively print the Prolog term.
 metta_py_pp(V):-
     atomic(V),py_is_enabled,py_is_object(V),py_pp(V),!.       % Pretty-print atomic Python objects.
@@ -1283,9 +1283,9 @@ is_var_or_nil([]).                      % Succeed if the input is an empty list.
 % py_to_pl(VL,Par,_Cir,_,L,_):- pybug(py_to_pl(VL,Par,L)),fail.
 
 % If L is a variable,unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- var(L),!,E=L.      
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- var(L),!,E=L.
 % If L is an empty list, unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- L == [],!,E = L.   
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- L == [],!,E = L.
 % If O is a Python object, convert it to Prolog by calling `pyo_to_pl`.
 py_to_pl(VL,Par,Cir,CirO,O,E):- py_is_object(O),py_class(O,Cl),!, pyo_to_pl(VL,Par,[O = E | Cir],
     CirO,Cl,O,E).
@@ -1297,7 +1297,7 @@ py_to_pl(_VL,_Par,Cir,Cir,L,E):- member(N-NE,Cir),N==L,!,(E=L;NE=E),!.
 py_to_pl(_VL,_Par,Cir,Cir,LORV:B,LORV:B):- is_var_or_nil(LORV),!.
 py_to_pl(_VL,_Par,Cir,Cir,LORV:_B:_C,LORV):- is_var_or_nil(LORV),!.
 % If L is not callable, unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+callable(L),!,E=L.  
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+callable(L),!,E=L.
 % Convert annotated lists [H|T]:B:C.
 py_to_pl(VL,Par,Cir,CirO,[H|T]:B:C,[HH|TT]):- py_to_pl(VL,Par,Cir,CirM,H:B:C,HH),
     py_to_pl(VL,Par,CirM,CirO,T:B:C,TT),!.
@@ -1313,7 +1313,7 @@ py_to_pl(VL,Par,Cir,CirO,A:B,AA:BB):- !,py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(
 py_to_pl(VL,Par,Cir,CirO,A-B,AA-BB):- !,py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E = L.
 % If L is an atom, unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- atom(L),!,E=L. 
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- atom(L),!,E=L.
 % Convert lists.
 py_to_pl(VL,Par,Cir,CirO,[H|T],[HH|TT]):- !,py_to_pl(VL,Par,Cir,CirM,H,HH),
     py_to_pl(VL,Par,CirM,CirO,T,TT).
@@ -1321,7 +1321,7 @@ py_to_pl(VL,Par,Cir,CirO,[H|T],[HH|TT]):- !,py_to_pl(VL,Par,Cir,CirM,H,HH),
 py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pairs(L,F,NV),!,py_to_pl(VL,Par,Cir,CirO,NV,NVL),
     dict_pairs(E,F,NVL).
 % If L is not callable, unify E with L.
-py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E = L. 
+py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E = L.
 %next phase code
 %py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!,
 %    py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
@@ -1395,7 +1395,7 @@ real_VL_var(RL,VL,E):- nonvar(RL),!,rinto_varname(RL, R),!,real_VL_var0(R,VL,E).
 real_VL_var(RL,VL,E):- member(N=V,VL),V==E,!,RL=N.      % If the variable exists, return its name.
 real_VL_var(RL,VL,E):-
     % If the variable is compound, resolve it.
-    compound(E),E = '$VAR'(RL),ignore(real_VL_var0(RL,VL,E)),!.  
+    compound(E),E = '$VAR'(RL),ignore(real_VL_var0(RL,VL,E)),!.
 real_VL_var(RL,VL,E):- format(atom(RL),'~p',[E]),member(N=V,VL),N==RL,!,V=E.
 real_VL_var(RL,VL,E):- format(atom(RL),'~p',[E]),real_VL_var0(RL,VL,E).
 
@@ -1657,8 +1657,8 @@ py_values(O,K,V):- py_items(O,L),member(K:V,L).
 
 %!  meets_dir(+L, +M) is semidet.
 %
-%   Checks if a term `M` meets the structure defined in the list `L`. 
-%   If `M` is an atom, it checks for membership in `L`. If `M` is a list or compound, 
+%   Checks if a term `M` meets the structure defined in the list `L`.
+%   If `M` is an atom, it checks for membership in `L`. If `M` is a list or compound,
 %   it checks if each element of `M` matches an element in `L`.
 %
 %   @arg L The list of atoms or terms.
@@ -1693,7 +1693,7 @@ py_to_str(PyObj,Str):- with_output_to(string(Str),py_pp(PyObj,[nl(false)])).
 
 %!  tafs is det.
 %
-%   A test predicate that retrieves atoms from a space, converts between Python and Prolog representations, 
+%   A test predicate that retrieves atoms from a space, converts between Python and Prolog representations,
 %   and prints the results.
 tafs:-
     atoms_from_space(Space,_),
@@ -1927,7 +1927,7 @@ self_extend_py(Self,Module):- self_extend_py(Self,Module,_Base,_).
 %   @example Extend the environment with a Python module from a file:
 %       ?- self_extend_py(Self,'module_name','file_name',R).
 %
-self_extend_py(Self,Module,File,R):- 
+self_extend_py(Self,Module,File,R):-
     with_safe_argv((
         assert_new(is_pymod_in_space(Module,Self)),
         (nonvar(File) -> Use = File ; Use = Module),
@@ -1950,7 +1950,7 @@ self_extend_py(Self,Module,File,R):-
 %
 %   Loads a Python module file into the current environment by calling the mettalog
 %   interface through py_ocall/2. If the file is successfully loaded, the result is
-%   logged using pybug/1. This predicate also handles the case where the provided Use 
+%   logged using pybug/1. This predicate also handles the case where the provided Use
 %   is a directory by recursively trying to load an '_init_.py' file from the directory.
 %
 %   @arg Use The module name or file path to be loaded.
@@ -1965,8 +1965,8 @@ py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),
 
 %!  file_to_modname(+Filename, -ModName) is det.
 %
-%   Converts a given file path or filename into a Python module name by replacing 
-%   certain path components and extensions. This handles several common filename patterns 
+%   Converts a given file path or filename into a Python module name by replacing
+%   certain path components and extensions. This handles several common filename patterns
 %   like '../', './', '_init_.py', and '.py'.
 %
 %   @arg Filename The file path or name to be converted.
@@ -1985,8 +1985,8 @@ file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName
 
 %!  rust_metta_run(+S,-Run) is det.
 %
-%   Executes a metta command in the Rust environment by calling rust_metta_run1/2. 
-%   If the command S is a variable, the execution is delayed using freeze/2 until S is 
+%   Executes a metta command in the Rust environment by calling rust_metta_run1/2.
+%   If the command S is a variable, the execution is delayed using freeze/2 until S is
 %   instantiated.
 %
 %   @arg S   The metta command to be executed, as a string.
@@ -2014,7 +2014,7 @@ rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
 %
 rust_metta_run1(I,O):- load_hyperon_module,!,py_ocall(hyperon_module:rust_metta_run(I),M),!,
     rust_return(M,O).
-rust_metta_run1(R,Run):- 
+rust_metta_run1(R,Run):-
     with_safe_argv((((
         % ensure_rust_metta(MeTTa),
         py_call(mettalog:rust_metta_run(R),Run)
@@ -2032,7 +2032,7 @@ rust_metta_run1(R,Run):-
 %       ?- rust_return(M,O).
 %
 
-rust_return(M,O):- 
+rust_return(M,O):-
     (py_iter(M,R,[py_object(true)]),py_iter(R,R1,[py_object(true)]))*->rust_to_pl(R1,O);
     (fail,rust_to_pl(M,O)).
 %rust_return(M,O):- rust_to_pl(M,O).
@@ -2055,7 +2055,7 @@ delist1(R,R).  % Optionally, log a warning here if necessary.
 
 %!  rust_to_pl(+L, -P) is det.
 %
-%   Converts a Rust structure (or Python object) into a Prolog term. Handles various 
+%   Converts a Rust structure (or Python object) into a Prolog term. Handles various
 %   types of input such as lists, compounds, atoms, and Python objects.
 %   It recursively processes lists and compounds, ensuring that the Rust types
 %   are mapped to Prolog equivalents.
@@ -2079,7 +2079,7 @@ rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_scall(R:get_name(),N),!,as_var(N,
 rust_to_pl(R,N):- py_type(R,'OperationObject'),py_acall(R:name(),N),!,cache_op(N,R).
 rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,P = R.
 rust_to_pl(R,P):- py_type(R,'ValueObject'),py_ocall(R:'value'(),L),!,rust_to_pl(L,P).
-rust_to_pl(R,PT):- 
+rust_to_pl(R,PT):-
     py_type(R,'GroundedAtom'),
     py_ocall(R:get_grounded_type(),T),
     rust_to_pl(T,TT),
@@ -2096,8 +2096,8 @@ to_py_char(R,Py):- load_hyperon_module,!,py_ocall(hyperon_module:rust_to_py_char
 
 %!  as_var(+N,-Var) is det.
 %
-%   Converts a Rust variable name N into a Prolog variable format. If the name is '_', 
-%   it represents an anonymous variable. Otherwise, it converts the name into the 
+%   Converts a Rust variable name N into a Prolog variable format. If the name is '_',
+%   it represents an anonymous variable. Otherwise, it converts the name into the
 %   '$VAR'(S) format, where S is the string representation of the variable name.
 %
 %   @arg N   The variable name from Rust.
@@ -2112,7 +2112,7 @@ as_var(N,'$VAR'(S)):- sformat(S,'_~w',[N]),!.
 %!  rust_metta_run(+S) is det.
 %
 %   Executes a metta command S in the Rust environment and prints the result.
-%   After executing the command, it converts the Python object result into a Prolog 
+%   After executing the command, it converts the Python object result into a Prolog
 %   representation and prints it.
 %
 %   @arg S The metta command to be executed.
@@ -2138,7 +2138,7 @@ cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),fbug(cached_py_op(N,R)).
 
 %!  cache_type(+N,+R) is det.
 %
-%   Caches the type N with the corresponding Python object R. The cache is made 
+%   Caches the type N with the corresponding Python object R. The cache is made
 %   persistent using the cached_py_type/2 predicate.
 %
 %   @arg N The name of the type.
@@ -2148,7 +2148,7 @@ cache_type(N,R):- asserta_if_new(cached_py_type(N,R)),fbug(cached_py_type(N,R)).
 
 %!  print_py(+Py) is det.
 %
-%   Converts a Python object Py to a Prolog term and prints it. It uses py_to_pl/2 
+%   Converts a Python object Py to a Prolog term and prints it. It uses py_to_pl/2
 %   to handle the conversion before printing.
 %
 %   @arg Py The Python object to be converted and printed.
@@ -2245,13 +2245,13 @@ load_functions_ext(Def):- with_safe_argv(py_call(mettalog:load_functions_ext(),D
 
 %!  example_usage is det.
 %
-%   Demonstrates an example of using metta space to perform a query. It ensures that 
+%   Demonstrates an example of using metta space to perform a query. It ensures that
 %   the primary metta space is available, runs a query, and prints the result.
 %
 %   @example Perform an example query in metta space:
 %       ?- example_usage.
 %
-example_usage:- 
+example_usage:-
     with_safe_argv(ensure_primary_metta_space(GSpace)),
     %some_query(Query),
     Query = [],with_safe_argv(query_from_space(GSpace,Query,Result)),writeln(Result).
@@ -2283,18 +2283,18 @@ atom_count_from_space(Count):- atom_count_from_space(metta_self,Count).
 /*
 Rust: The core of MeTTa is implemented in Rust, which provides performance and safety features.
 
-Python Extensions: Python is used for extending the core functionalities. Python communicates with 
+Python Extensions: Python is used for extending the core functionalities. Python communicates with
 Rust via a Foreign Function Interface (FFI) or similar mechanisms.
 
-Prolog: The Prolog code is an additional layer that allows you to extend or customize parts of 
+Prolog: The Prolog code is an additional layer that allows you to extend or customize parts of
 MeTTa using Python and Rust. It maintains the system's extensibility.
 
-VSpace is a space with its backend in Prolog, it implies that you're using Prolog's logic 
-programming capabilities to manage and manipulate a particular domain, which in this context 
+VSpace is a space with its backend in Prolog, it implies that you're using Prolog's logic
+programming capabilities to manage and manipulate a particular domain, which in this context
 is referred to as a "space" (possibly akin to the GroundingSpace in Python, but implemented in Prolog).
 
-To integrate VSpace with the existing Python and Rust components, similar interfacing 
-techniques could be used. You could expose Prolog predicates as functions that can be 
+To integrate VSpace with the existing Python and Rust components, similar interfacing
+techniques could be used. You could expose Prolog predicates as functions that can be
 called from Python or Rust, and likewise, call Python or Rust functions from within Prolog.
 
 
@@ -2312,7 +2312,7 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 %   @example Ensure Python library directories are added:
 %       ?- want_py_lib_dir.
 %
-want_py_lib_dir:- 
+want_py_lib_dir:-
     with_safe_argv((
         forall(want_py_lib_dir(GParentDir),py_add_lib_dir(GParentDir)),
         sync_python_path
@@ -2328,7 +2328,7 @@ want_py_lib_dir:-
 %   @example Synchronize the Python path:
 %       ?- sync_python_path.
 %
-sync_python_path:- 
+sync_python_path:-
     working_directory(PWD,PWD),py_add_lib_dir(PWD),
     ignore((
         getenv('PYTHONPATH',CurrentPythonPath),
@@ -2377,16 +2377,16 @@ get_list_arity(_Args,-1).
 % Set various Prolog flags to control how debugging and answers are written to the output.
 
 % Set the debugger write options.
-% These options include displaying terms with quotes, using portray/1 to show terms, 
-% and limiting the output depth to 60. Additionally, attributes of variables are 
+% These options include displaying terms with quotes, using portray/1 to show terms,
+% and limiting the output depth to 60. Additionally, attributes of variables are
 % portrayed, and spacing is set to show the next argument on the same line.
 :- set_prolog_flag(debugger_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
     spacing(next_argument)
 ]).
 
 % Set the answer write options.
-% These options are similar to the debugger write options and control how answers 
-% are printed in the REPL. Answers are quoted, portrayed, limited to 60 levels of depth, 
+% These options are similar to the debugger write options and control how answers
+% are printed in the REPL. Answers are quoted, portrayed, limited to 60 levels of depth,
 % and attributes of variables are portrayed, with spacing between arguments.
 :- set_prolog_flag(answer_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
     spacing(next_argument)
@@ -2446,8 +2446,8 @@ get_list_arity(_Args,-1).
 %!  load_metta_python_proxy is det.
 %
 %   Ensures that the Metta Python proxy is loaded. This predicate first checks if
-%   the proxy has already been loaded (by asserting the fact `did_load_metta_python_proxy`). 
-%   If it has not been loaded, the predicate asserts this fact, retrieves the Python 
+%   the proxy has already been loaded (by asserting the fact `did_load_metta_python_proxy`).
+%   If it has not been loaded, the predicate asserts this fact, retrieves the Python
 %   proxy as a string,and initializes the Python module using the proxy.
 %
 %   This predicate is deterministic and succeeds if the proxy is loaded or was already loaded.
@@ -2464,7 +2464,7 @@ load_metta_python_proxy:-
     % Initialize the Python module with the proxy string.
     ignore(notrace(with_safe_argv(py_module(metta_python_proxy,String)))),
     % Assert that the proxy has now been loaded.
-    assert(did_load_metta_python_proxy),    
+    assert(did_load_metta_python_proxy),
     !.
 
 %!  maybe_load_metta_python_proxy is det.
@@ -2472,18 +2472,18 @@ load_metta_python_proxy:-
 %   This predicate ensures that the Python integration for Metta is loaded.
 %   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
 %   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python proxy using 
+%   If lazy loading fails, it proceeds to load the Metta Python proxy using
 %   `load_metta_python_proxy/0`.
 %
-maybe_load_metta_python_proxy :- 
+maybe_load_metta_python_proxy :-
     % Attempt lazy loading of the Python interface.
     lazy_load_python, !.
-maybe_load_metta_python_proxy :- 
+maybe_load_metta_python_proxy :-
     % If lazy loading fails, load the Metta Python proxy manually.
     load_metta_python_proxy.
 
-% The following directives ensure that `maybe_load_metta_python_proxy/0` is called 
-% during system initialization. The first initialization runs when the program 
+% The following directives ensure that `maybe_load_metta_python_proxy/0` is called
+% during system initialization. The first initialization runs when the program
 % starts, and the second runs when the system is restored from a saved state.
 :- initialization(maybe_load_metta_python_proxy).
 :- initialization(maybe_load_metta_python_proxy, restore).
@@ -2497,7 +2497,7 @@ maybe_load_metta_python_proxy :-
 %   @example Initialize mettalog Python integration:
 %       ?- on_restore1.
 %
-on_restore1:- 
+on_restore1:-
     ensure_mettalog_py.
 
 
