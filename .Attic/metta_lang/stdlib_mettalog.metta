@@ -18,7 +18,7 @@
 (: Bool Type)
 
 (@doc LazyBool
-  (@desc "Boolean type of True or False."))
+  (@desc "A LazyEvaluatable that when evaluated returns True or False."))
 (: LazyBool Type)
 (:> LazyBool LazyEvaluatable)
 
@@ -67,45 +67,114 @@
   (@desc "Type representing a variable in the language."))
 (: Variable Type)
 
-; (: if-decons (-> Atom Variable Variable Atom Atom Atom))  was a misnamed if-decons 
+(@doc :
+  (@desc "Type declarion operator"))
+(@doc <:
+  (@desc "Super Type declarion operator"))
+(: : %Undefined%) ; match hyperons weirdd return value of !(get-type :)
+
+(: get-type (-> Atom Type)) ; get all type declarations for Atom
+(: get-type0 (-> Atom Atom)) ; get-type now returns multiple return values.. this act like the old one that reutrns a sngle value
+(: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
+
 (: if-empty (-> Atom Atom Atom Atom))
 (: if-non-empty-expression (-> Atom Atom Atom Atom))
 (: if-not-reducible (-> Atom Atom Atom Atom))
-;(: apply (-> Atom Variable Atom Atom))
-;(: cons (-> Atom Atom Atom))
-;(: decons (-> Atom Atom))
-
 (: return (-> Atom ReturnType))
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
-(: get-type0 (-> Atom Atom))
-(: get-ftype (-> Atom Atom))
-(: : %Undefined%)
-(: function-arity (-> Symbol Number))
-(: predicate-arity (-> Symbol Number))
 (: pragma! (-> Atom Atom (->)))
 (: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
 (: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
-(: get-type (-> Atom Type))
-(: predicate-arity (-> Symbol Number))
+
 (: If (-> Bool Atom Atom Atom))
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)
 (= (If False $then) (let $n 0 (let $n 1 $n)))
 (= (If $cond $then $else) (if $cond $then $else))
 
+(iz predicate-arity MeTTaLog)
 
-;; Predicate Arity Function
-(iz predicate-arity MeTTa)
 (@doc predicate-arity
-  (@desc "Returns the arity of the given predicate.")
+  (@desc "Specifies the arity (number of arguments) for a given predicate, enabling it to be queriable in the system's match framework. 
+          This is particularly useful for allowing built-in functions, such as `size-atom`, to function as predicates in declarative contexts 
+          and run in reverse to compute inputs based on outputs.
+
+          Example Usage:
+          - Enable the built-in function `size-atom` (takes an atom and returns its size) as a predicate with arity 2:
+            (add-atom &dyn-space (predicate-arity size-atom 2))
+
+          - Use `size-atom` as a predicate in pattern matching:
+            (match &dyn-space '(size-atom (a b c) $size) 
+                   (The abc tuple was len $size))
+            ; Result: $size = 3
+
+          - Run `size-atom` in reverse to compute an atom with a desired size:
+            (match &dyn-space '(size-atom $new-atom 4) 
+                   (The new atom is $new-atom))
+            ; Result: $new-atom = ($1 $2 $3 $4)
+
+          This reverse functionality is enabled because predicates describe relationships, allowing inference of inputs from outputs.")
+  )
   (@params (
-    (@param "Predicate symbol")))
-  (@return "Arity of the predicate"))
+    (@param "Predicate symbol" 
+            (@desc "The name of the predicate whose arity is being defined."))
+  ))
+  (@return (@desc "The number of arguments required for the predicate.")))
+
 (: predicate-arity (-> Symbol Number))
+(predicate-arity predicate-arity 2)
+(function-arity predicate-arity 1)
+
+
+
+(@doc function-arity
+  (@desc "Defines the arity of a function, allowing predicates or built-in facts to also behave as callable functions. 
+          This enables procedural-style execution where the last argument of the predicate becomes the function's return value. 
+          The system internally resolves the function using a `match` query.
+
+          Example Usage:
+          - Declare the `max` predicate with arity 2:
+            (predicate-arity max 2)
+
+          - Enable `max` as a callable function:
+            (add-atom &dyn-space (function-arity max 2))
+
+          - Define rules for `max`:
+            (add-atom &dyn-space (max $X $Y $X) (<= $X $Y))
+            (add-atom &dyn-space (max $X $Y $Y) (> $X $Y))
+
+          - Use `max` declaratively as a predicate:
+            (match &dyn-space (max 5 10 $max)
+                   (The maximum is $max))
+            ; Result: $max = 10
+
+          - Use `max` procedurally as a function:
+            (max 5 10)
+            ; Result: 10
+
+          - Reverse execution with `max`:
+            (max $a $b 10)
+            ; Possible results:
+            ; Exists $a =< 10, $b = 10
+            ; $a = 10, Exists $b =< 10
+
+          This dual behavior bridges procedural and declarative paradigms by enabling predicates to act as functions. 
+          Defining `function-arity` automatically resolves the function logic using the associated predicate.")
+  )
+  (@params (
+    (@param "Function symbol" 
+            (@desc "The name of the function or predicate to enable as a callable function."))
+  ))
+  (@return (@desc "The number of arguments expected by the function.")))
+
+(: function-arity (-> Symbol Number))
+(predicate-arity function-arity 2)
+(function-arity function-arity 1)
+
 
 ;; If Function
 
