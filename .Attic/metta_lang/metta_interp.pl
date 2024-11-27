@@ -93,6 +93,8 @@
 % When an error occurs, this setting will automatically start the Prolog debugger, providing detailed information about the error.
 :- set_prolog_flag(debug_on_error, true).
 
+% !(set-prolog-flag debug-on-error True)
+
 % Load additional Prolog support functions from the 'swi_support' file.
 % This could include helper predicates or extensions for SWI-Prolog.
 :- ensure_loaded(swi_support).
@@ -100,6 +102,8 @@
 % Load the Prolog documentation library (pldoc).
 % This library provides tools for generating and interacting with Prolog documentation.
 :- ensure_loaded(library(pldoc)).
+
+
 
 /*
 % Set the encoding of the `current_input` stream to UTF-8.

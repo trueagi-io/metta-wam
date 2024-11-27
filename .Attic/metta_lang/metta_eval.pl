@@ -2121,20 +2121,19 @@ eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),!,
 
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
     rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
-eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
-    rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
     rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
+    rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
 
-eval_20(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !,
-  must_det_ll((py_list(Arg,Res))).
-eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
-  must_det_ll((py_dict(Arg,Res))).
+
+%eval_20(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !, must_det_ll((py_list(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !, must_det_ll((py_dict(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
   must_det_ll((py_tuple(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
   must_det_ll((py_chain(Arg,Res))).
-eval_40(_Eq,_RetType,_D7epth,_Self,['py-atom',Arg],Res):- !,
+eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
   must_det_ll((py_atom_type(Arg,Type,Res))).
@@ -2467,6 +2466,11 @@ eval_selfless_2(['%',X,Y],TF):-!,eval_selfless_2(['mod',X,Y],TF).
 eval_selfless_2(LIS,Y):-  fake_notrace(( ground(LIS),
    LIS=[F,_,_], atom(F), catch_warn(current_op(_,yfx,F)),
    LIS\=[_], s2ps(LIS,IS))), fake_notrace(catch((Y is IS),_,fail)),!.
+
+
+% 'State'(4,'Number')
+% ['State',4,'Number']
+% 'State'(8,'Number')
 
 
 eval_selfless3(Lib,FArgs,TF):- maplist(s2ps,FArgs,Next),!,
