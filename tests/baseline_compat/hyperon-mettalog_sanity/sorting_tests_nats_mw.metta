@@ -1,4 +1,4 @@
-﻿
+
 !(import! &self sorting_tests.metta)
 
 ;; Define a generic less than operator, lessThan, for Nat.  < cannot be used

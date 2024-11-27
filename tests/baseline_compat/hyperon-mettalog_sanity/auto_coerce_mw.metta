@@ -1,4 +1,4 @@
-﻿
+
 ;; Collection of functions operating on numbers
 
 ;; Define max
