@@ -11,7 +11,7 @@
 (: insert (-> $a (List $a) (List $a)))
 (= (insert $x Nil) (Cons $x Nil))
 (= (insert $x (Cons $head $tail))
-   (if (< $x $head)
+   (if (lessThan $x $head)
        (Cons $x (Cons $head $tail))
        (Cons $head (insert $x $tail))))
 
@@ -43,11 +43,13 @@
 (= (insert_uniq $x (Cons $head $tail))
    (if (== $x $head)
        (Cons $head $tail)
-       (if (< $x $head)
+       (if (lessThan $x $head)
            (Cons $x (Cons $head $tail))
            (Cons $head (insert_uniq $x $tail)))))
 
 
+(: lessThan (-> Number Number Bool))
+(= (lessThan $x $y) (< $x $y))
 
 ;; Test insert
 !("============ Test insert ============")

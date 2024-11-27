@@ -8,7 +8,7 @@
 metta_called_at(Path, Term, By, Location) :-
   matta_name_callable(Term, Callable),
   xref_metta_source(Path),
-  user:metta_file_buffer(0,_Ord,_Kind,_,CallerLine, _VL, Path, Location),
+  user:metta_file_buffer(0,_Ord,_Kind,CallerLine, _VL, Path, Location),
   metta_callee(CallerLine, Callable),
   metta_caller(CallerLine, By).
 

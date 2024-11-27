@@ -97,6 +97,14 @@ string_contains(String, Substring) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 use_vitalys_help :- true.
 
+lsp_hooks:hover_hook(Path, Loc, Term, Arity, S):-
+
+    wots(S,
+          (xref_call(eval(
+               %'&lsp-server',
+               ['on-hover', Path, Loc, Term, Arity], _)))).  % Evaluate the help command for the term.
+
+
 lsp_hooks:hover_hook(Path, _Loc, Term, Arity, S):- \+ use_vitalys_help,
   metta_predicate_help(Path, Term, Arity, S).
 
@@ -145,6 +153,9 @@ lsp_hooks:hover_hook(Path, Loc, Term, Arity, S):-
   ignore(notrace(catch(make,_,fail))),   % Trigger the make command to compile the knowledge base. (For real-time editing)
   xref_metta_source(Path),   % Possibly cross-reference the file.
   term_info_string(Path, Loc, Term, Arity, S). % Generate a term definition string.
+
+
+
 
 :- multifile(lsp_hooks:handle_msg_hook/3).
 :- dynamic(lsp_hooks:handle_msg_hook/3).
@@ -276,8 +287,9 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :-
 % Vitaly's initial impl of Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:term_info(_Path,_Loc, Target, _) :- use_vitalys_help,
-  lsp_separator(),
-  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+    lsp_separator(),
+    xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+
 
 
 lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
@@ -461,7 +473,7 @@ position_line(Position, Line2):-
    into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
 % Emacs does return a Client Configuration List
-is_in_emacs :- \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
+is_in_emacs :- fail, \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
 
 end_of_file.

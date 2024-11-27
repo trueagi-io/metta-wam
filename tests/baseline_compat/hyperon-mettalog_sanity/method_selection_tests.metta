@@ -1,45 +1,7 @@
-﻿
-;; Collection of functions operating on numbers
-
-;; Define max
-(: max (-> $a $a $a))
-(= (max $x $y) (if (> $x $y) $x $y))
-
-;; Define min
-(: min (-> $a $a $a))
-(= (min $x $y) (if (< $x $y) $x $y))
-
-;; Clamp a number to be within a certain range
-(: clamp (-> $a $a $a $a))
-(= (clamp $x $l $u) (max $l (min $u $x)))
-
-;; Define abs
-(: abs (-> $a $a))
-(= (abs $x) (if (< $x 0) (* -1 $x) $x))
-
-;; Define <=
-(: <= (-> $a $a Bool))
-(= (<= $x $y) (or (< $x $y) (== $x $y)))
-
-;; Define >=
-(: >= (-> $a $a Bool))
-(= (>= $x $y) (or (> $x $y) (== $x $y)))
-
-;; Define approximately equal
-(: approxEq (-> $a $a $a Bool))
-(= (approxEq $x $y $epsilon) (<= (abs (- $x $y)) $epsilon))
-
-;; Define Nat
+﻿;; Define Nat
 (: Nat Type)
 (: Z Nat)
 (: S (-> Nat Nat))
-
-;; Define cast functions between Nat and Number
-(: fromNumber (-> Number Nat))
-(= (fromNumber $n) (if (<= $n 0) Z (S (fromNumber (- $n 1)))))
-(: fromNat (-> Nat Number))
-(= (fromNat Z) 0)
-(= (fromNat (S $k)) (+ 1 (fromNat $k)))
 
 ;; Define a generic less than operator, lessThan, for Nat.  < cannot be used
 ;; because it is a built-in, its type is hardwired and cannot be
@@ -52,26 +14,36 @@
 (: lessThan (-> Number Number Bool))
 (= (lessThan $x $y) (< $x $y))
 
-;; Return the ceiling of a non negative number.  If the number is
-;; negative it returns 1.
-(: ceil (-> Number Number))
-(= (ceil $n) (fromNat (fromNumber $n)))
 
-;; Convert Number to Bool.  Anything above 0 converts to True.
-(: number->bool (-> Number Bool))
-(= (number->bool $x) (< 0 $x))
+!("============ Test lessThan ============")
 
-;; Convert Bool to Number.  False converts to 0, True converts to 1.
-(: bool->number (-> Bool Number))
-(= (bool->number False) 0)
-(= (bool->number True) 1)
+;; Tests for Nat
+!(assertEqualToResult (lessThan Z (S Z)) (True))         ;; 0 < 1 (Nat)
+!(assertEqualToResult (lessThan Z Z) (False))           ;; 0 < 0 (Nat)
+!(assertEqualToResult (lessThan (S Z) Z) (False))       ;; 1 < 0 (Nat)
+!(assertEqualToResult (lessThan (S Z) (S Z)) (False))   ;; 1 < 1 (Nat)
+!(assertEqualToResult (lessThan (S Z) (S (S Z))) (True)) ;; 1 < 2 (Nat)
+!(assertEqualToResult (lessThan (S (S Z)) (S (S Z))) (False)) ;; 2 < 2 (Nat)
+!(assertEqualToResult (lessThan (S (S Z)) (S Z)) (False)) ;; 2 < 1 (Nat)
+!(assertEqualToResult (lessThan (S Z) (S (S (S Z)))) (True)) ;; 1 < 3 (Nat)
 
-;; Test elementary functions
-!(assertEqual (fromNumber 1) (S Z))
-!(assertEqual (fromNat (S (S Z))) 2)
-!(assertEqual (ceil 2.4) 3)
-!(assertEqual (abs -10) 10)
-!(assertEqual (approxEq 10 10.0001 1e-3) True)
-!(assertEqual (approxEq 10 10.0001 1e-9) False)
-!(assertEqual (lessThan Z (S Z)) True)
+;; Tests for Number
+!(assertEqualToResult (lessThan 0 1) (True))            ;; 0 < 1 (Number)
+!(assertEqualToResult (lessThan 0 0) (False))           ;; 0 < 0 (Number)
+!(assertEqualToResult (lessThan 1 0) (False))           ;; 1 < 0 (Number)
+!(assertEqualToResult (lessThan 2 2) (False))           ;; 2 < 2 (Number)
+!(assertEqualToResult (lessThan 1 2) (True))            ;; 1 < 2 (Number)
+!(assertEqualToResult (lessThan 3 2) (False))           ;; 3 < 2 (Number)
+
+;; Mixed tests to ensure no type confusion
+!(assertEqualToResult (lessThan Z 0) ())           ;; Z < 0 (Nat and Number)
+!(assertEqualToResult (lessThan 0 Z) ())           ;; 0 < Z (Number and Nat)
+!(assertEqualToResult (lessThan Z 1) ())            ;; Z < 1 (Nat and Number)
+!(assertEqualToResult (lessThan 1 Z) ())           ;; 1 < Z (Number and Nat)
+!(assertEqualToResult (lessThan (S Z) 1) ())       ;; 1 (Nat) < 1 (Number)
+!(assertEqualToResult (lessThan 1 (S Z)) ())       ;; 1 (Number) < 1 (Nat)
+!(assertEqualToResult (lessThan (S (S Z)) 3) ())    ;; 2 (Nat) < 3 (Number)
+!(assertEqualToResult (lessThan 2 (S (S Z))) ())   ;; 2 (Number) < 2 (Nat)
+
+!("============ End Tests ============")
 
