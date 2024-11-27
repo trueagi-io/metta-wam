@@ -73,9 +73,6 @@
   (@desc "Super Type declarion operator"))
 (: : %Undefined%) ; match hyperons weirdd return value of !(get-type :)
 
-(: get-type (-> Atom Type)) ; get all type declarations for Atom
-(: get-type0 (-> Atom Atom)) ; get-type now returns multiple return values.. this act like the old one that reutrns a sngle value
-(: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
 
 (: if-empty (-> Atom Atom Atom Atom))
 (: if-non-empty-expression (-> Atom Atom Atom Atom))
@@ -83,13 +80,17 @@
 (: return (-> Atom ReturnType))
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
+
+(: get-type (-> Atom Type)) ; get all type declarations for Atom
+(: get-type0 (-> Atom Atom)) ; get-type now returns multiple return values.. this act like the old one that reutrns a sngle value
+(: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
+
 (: pragma! (-> Atom Atom (->)))
 (: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
 (: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
-
 (: If (-> Bool Atom Atom Atom))
 (: If (-> Bool Atom Atom))
 (= (If True $then) $then)
@@ -97,92 +98,71 @@
 (= (If $cond $then $else) (if $cond $then $else))
 
 (iz predicate-arity MeTTaLog)
+
 (@doc predicate-arity
-  (@desc "Specifies the arity (number of arguments) for a given predicate, enabling it to be queriable in the system's match framework. 
-          This is particularly useful for allowing built-in functions, such as `size-atom`, to function as predicates in declarative contexts 
-          and run in reverse to compute inputs based on outputs.
+  (@desc "Specifies the arity (number of arguments) for a given predicate, allowing it to be queriable in the system's match framework. This is particularly useful for enabling built-in functions, such as `size-atom`, to be used as predicates in declarative contexts and run in reverse to compute inputs based on outputs.
 
-          Example Usage:
-          - Enable the built-in function `size-atom` as a predicate with arity 2:
-            !(add-atom &dyn-space (predicate-arity size-atom 2))
+For example:
+  ; Enable the built-in function `size-atom` that takes an atom and returns the size
+    as a predicate with arity 2
+  (add-atom &dyn-space (predicate-arity size-atom 2))
 
-          - Use `size-atom` as a predicate in pattern matching:
-            !(match &dyn-space (size-atom (a b c) $size) 
-                   (The abc tuple was len $size))
-            ; Result: [(The abc tuple was len 3)]
+  ; Now `size-atom` can be used as a predicate in pattern matching
+  (match &dyn-space '(size-atom (a b c) $size) 
+         (The abc tuple was len $size))
+  ; This pattern will resolve `Size = 3` and execute the action.
 
-          - Run `size-atom` in reverse to compute an atom with a desired size:
-            !(match &dyn-space (size-atom $new-atom 4) 
-                   (The new atom is $new-atom))
-            ; Result: [ (The new atom is ($1 $2 $3 $4))]
+Additionally, by running `size-atom` in reverse, you can compute a new atom based on a desired size:
+  (match &dyn-space '(size-atom $new-atom 4) 
+         (The new atom is $new-atom))
+  ; This resolves `$new-atom` to a tuple of size 4, such as ($1 $2 $3 $4).
 
-            ; This functionality is just part of how size-atom was designed to run 
-            ; bi-directionally allowing MeTTaLog to infer inputs from outputs.")
-  )
+This reverse functionality is made possible because predicates can describe relationships, allowing you to infer inputs from outputs.")
   (@params (
-    (@param "Predicate symbol" 
-            (@desc "The name of the predicate whose arity is being defined."))
+    (@param "Predicate symbol" "The name of the predicate whose arity is being defined.")
   ))
-  (@return (@desc "The number of arguments required for the predicate.")))
+  (@return "The number of arguments required for the predicate."))
+    
 (: predicate-arity (-> Symbol Number))
 (predicate-arity predicate-arity 2)
 (function-arity predicate-arity 1)
 
 
-(iz function-arity MeTTaLog)
 (@doc function-arity
-  (@desc "Defines the arity of a function, allowing predicates or built-in facts to also behave as callable functions. 
-          This enables procedural-style execution where the last argument of the predicate becomes the function's return value. 
-          The system internally resolves the function using a `match` query.
+  (@desc "Defines the arity of a function, allowing predicates or built-in facts to also behave as callable functions. This enables procedural-style execution where the last argument of the predicate becomes the function's return value, and the system internally resolves the function using a `match` query. 
 
-          Example Usage:
+For example:
+  ; Declare the built-in predicate `max` with arity 2
+  (predicate-arity max 2)
 
-          - Define rules for `max`:
-            !(add-atom &test-space (max $X $Y $X) (<= $X $Y))
-            !(add-atom &test-space (max $X $Y $Y) (> $X $Y))
+  ; Enable `max` as a function
+  (add-atom &dyn-space (function-arity max 2))
 
-          - Enable `max` as a callable function:
-            !(add-atom &test-space (function-arity max 2))
+  ; Define the rules for `max`
+  (add-atom &dyn-space (max $X $Y $X) (<= $X $Y))
+  (add-atom &dyn-space (max $X $Y $Y) (> $X $Y))
 
-          - Declare the `max` predicate with arity 2:
-            !(add-atom &test-space (predicate-arity max 2))
+  ; Using `max` declaratively as a predicate
+  (match &dyn-space (max (5 10) $max)
+         (The maximum is $max))
+  ; This resolves `$max = 10`.
 
-          - Use `max` declaratively as a predicate:
-            !(match &test-space (max 5 10 $max) $max)
-            ; Return: [10]
+  ; Using `max` procedurally as a function
+  (max 5 10)
+  ; Returns: 10.
 
-          - Use `max` procedurally as a function:
-            !(max 5 10)
-            ; Return: [10]
+  ; Reverse execution with `max`
+  (max $pair 10)
+  ; Returns: a pair such as (8 10) or (10 5) where the maximum is 10.
 
-          - Reverse execution with `max`:
-            !(match &test-space (max $a $b 10) ($a $b))
-            ; Return:
-            ; [
-            ;   ((<exists> (<= 10 $)) 10),
-            ;   (10 (<exists> (<= 10 $)))
-            ; ]
-            ; This functionality uses mettalog's builtin finite domain equational solver
-
-          - Use `function-arity` itself to query the arity of `max`:
-            !(function-arity max)
-            ; Return: [2]
-
-          This dual behavior bridges procedural and declarative paradigms by enabling predicates to act as functions. 
-          Defining `function-arity` automatically resolves the function logic using the associated predicate.")
-  )
+  This dual behavior allows predicates to act as functions, bridging procedural and declarative paradigms. By defining `function-arity`, the function automatically resolves using the logic of the associated predicate.")
   (@params (
-    (@param "Function symbol" 
-            (@desc "The name of the function or predicate to enable as a callable function.")))
-  )
-  (@return (@desc "The number of arguments expected by the function, returned as a list.")))
-)
-
+    (@param "Function symbol" "The name of the function or predicate to enable as a callable function.")
+  ))
+  (@return "The number of arguments expected by the function."))
 (: function-arity (-> Symbol Number))
-(predicate-arity function-arity 3)
+(predicate-arity function-arity 2)
 (function-arity function-arity 1)
-
-
 
 ;; If Function
 
@@ -468,22 +448,22 @@
 
 
 
-(iz powi-math MeTTa)
-(@doc powi-math
+(iz powi MeTTa)
+(@doc powi
   (@desc "Takes base (first argument) and power (second argument) and returns the result of raising the base to the power.")
   (@params (
     (@param "Base. Could be a float.")
     (@param "Power. Must be an integer.")))
   (@return "Result of base raised to the power"))
-;(is-math-op-2 powi-math pow)
-(= (powi-math $B $P) (call-fn! pow $B $P))
+;(is-op-2 powi pow)
+(= (powi $B $P) (call-fn! pow $B $P))
 
-(==> (is-math-op-1 $m $p) (is-fn-1 $m $p))
-(==> (is-math-op-1 $m $_) (: $m (-> Number Number)))
-(==> (is-math-op-2 $m $p) (is-fn-2 $m $p))
-(==> (is-math-op-2 $m $_) (: $m (-> Number Number Number)))
-(==> (is-math-pred $m $p) (is-pred-1 $m $p))
-(==> (is-math-pred $m $_) (: $m (-> Number Bool)))
+(==> (is-op-1 $m $p) (is-fn-1 $m $p))
+(==> (is-op-1 $m $_) (: $m (-> Number Number)))
+(==> (is-op-2 $m $p) (is-fn-2 $m $p))
+(==> (is-op-2 $m $_) (: $m (-> Number Number Number)))
+(==> (is-pred $m $p) (is-pred-1 $m $p))
+(==> (is-pred $m $_) (: $m (-> Number Bool)))
 
 (==> (is-fn-1 $m $p) (= ($m $a) (call-fn! $p $a)))
 (==> (is-fn-r $m $p) (= ($m $a) (call-fn-r! $p $a)))
@@ -494,137 +474,137 @@
 
 (is-fn-1 py-list py_list)
 
-(iz powf-math MeTTa)
-(@doc powf-math
+(iz powf MeTTa)
+(@doc powf
   (@desc "Takes base (first argument) and power (second argument) and returns the result of raising the base to the power.")
   (@params (
     (@param "Base. Could be afloat.")
     (@param "Power. Could be afloat.")))
   (@return "Result of base raisedtothepower "))
-(is-math-op-2 powf-math pow)
-(is-math-op-2 pow-math pow)
+(is-op-2 powf pow)
+(is-op-2 pow pow)
 
-(iz sqrt-math MeTTa)
-(@doc sqrt-math
+(iz sqrt MeTTa)
+(@doc sqrt
   (@desc "Returns square root for input number (first argument) which should be >= 0")
   (@params (
     (@param "Input number")))
   (@return "Result of a square root function"))
-(is-math-op-1 sqrt-math sqrt)
+(is-op-1 sqrt sqrt)
 
-(iz abs-math MeTTa)
-(@doc abs-math
+(iz abs MeTTa)
+(@doc abs
   (@desc "Returns absolute value of input number (first argument)")
   (@params (
     (@param "Input number")))
   (@return "Absolute value"))
-(is-math-op-1 abs-math abs)
+(is-op-1 abs abs)
 
-(iz log-math MeTTa)
-(@doc log-math
+(iz log MeTTa)
+(@doc log
   (@desc "Returns result of a logarithm function given base (first argument) and input number (second argument)")
   (@params (
     (@param "Base")
     (@param "Input number")))
   (@return "Result of log function"))
-(is-math-op-2 log-math log2)
+(is-op-2 log log2)
 
-(iz trunc-math MeTTa)
-(@doc trunc-math
+(iz trunc MeTTa)
+(@doc trunc
   (@desc "Returns integer part of the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer part of float"))
-(is-math-op-1 trunc-math trunc)
+(is-op-1 trunc trunc)
 
-(iz ceil-math MeTTa)
-(@doc ceil-math
+(iz ceil MeTTa)
+(@doc ceil
   (@desc "Returns the smallest integer greater than or equal to the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer value greater than or equal to the input"))
-(is-math-op-1 ceil-math ceil)
+(is-op-1 ceil ceil)
 
-(iz floor-math MeTTa)
-(@doc floor-math
+(iz floor MeTTa)
+(@doc floor
   (@desc "Returns the smallest integer less than or equal to the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer value less than or equal to the input"))
-(is-math-op-1 floor-math floor)
+(is-op-1 floor floor)
 
-(iz round-math MeTTa)
-(@doc round-math
+(iz round MeTTa)
+(@doc round
   (@desc "Returns the nearest integer to the input float value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Nearest integer to the input"))
-(is-math-op-1 round-math round)
+(is-op-1 round round)
 
-(iz sin-math MeTTa)
-(@doc sin-math
+(iz sin MeTTa)
+(@doc sin
   (@desc "Returns result of the sine function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the sine function"))
-(is-math-op-1 sin-math sin)
+(is-op-1 sin sin)
 
-(iz asin-math MeTTa)
-(@doc asin-math
+(iz asin MeTTa)
+(@doc asin
   (@desc "Returns result of the arcsine function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the arcsine function"))
-(is-math-op-1 asin-math asin)
+(is-op-1 asin asin)
 
-(iz cos-math MeTTa)
-(@doc cos-math
+(iz cos MeTTa)
+(@doc cos
   (@desc "Returns result of the cosine function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the cosine function"))
-(is-math-op-1 cos-math cos)
+(is-op-1 cos cos)
 
-(iz acos-math MeTTa)
-(@doc acos-math
+(iz acos MeTTa)
+(@doc acos
   (@desc "Returns result of the arccosine function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the arccosine function"))
-(is-math-op-1 acos-math acos)
+(is-op-1 acos acos)
 
-(iz tan-math MeTTa)
-(@doc tan-math
+(iz tan MeTTa)
+(@doc tan
   (@desc "Returns result of the tangent function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the tangent function"))
-(is-math-op-1 tan-math tan)
+(is-op-1 tan tan)
 
-(iz atan-math MeTTa)
-(@doc atan-math
+(iz atan MeTTa)
+(@doc atan
   (@desc "Returns result of the arctangent function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the tangent function"))
-(is-math-op-1 atan-math atan)
+(is-op-1 atan atan)
 
-(iz isnan-math MeTTa)
-(@doc isnan-math
+(iz isnan MeTTa)
+(@doc isnan
   (@desc "Returns True if input value is NaN. False - otherwise")
   (@params (
     (@param "Number")))
   (@return "True/False")) 
-(is-math-pred isnan-math is_NaN)
+(is-pred isnan is_NaN)
 
-(iz isinf-math MeTTa)
-(@doc isinf-math
+(iz isinf MeTTa)
+(@doc isinf
   (@desc "Returns True if input value is positive or negative infinity. False - otherwise")
   (@params (
     (@param "Number")))
   (@return "True/False"))
-; this is deduced: (: isinf-math (-> Number Bool))
-(is-math-pred isinf-math is_Inf)
+; this is deduced: (: isinf (-> Number Bool))
+(is-pred isinf is_Inf)
 
 (iz random-int MeTTa)
 (@doc random-int
@@ -633,7 +613,7 @@
     (@param "Range start")
     (@param "Range end")))
   (@return "Random int number from defined range"))
-(is-math-op-2 random-int random)
+(is-op-2 random-int random)
 
 (iz random-float MeTTa)
 (@doc random-float
@@ -642,7 +622,7 @@
     (@param "Range start")
     (@param "Range end")))
   (@return "Random float number from defined range"))
-(is-math-op-2 random-int random)
+(is-op-2 random-int random)
 
 (iz collapse-bind MeTTa)
 (@doc collapse-bind
