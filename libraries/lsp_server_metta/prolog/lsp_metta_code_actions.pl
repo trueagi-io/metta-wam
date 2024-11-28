@@ -258,7 +258,7 @@ gpt_comment_code(Code, CommentedCode) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for Load Metta Code
 lsp_hooks:compute_code_action(Uri, Range, MettaFileAction) :-
-    get_src_code_at_range(toplevel_form, Uri, Range, Expression),
+    get_src_code_at_range(toplevel, Uri, Range, Expression),
     RunLoadTitle = "Run/Load Metta",
     sformat(RunLoadTitleExpression, "~w: ~w", [RunLoadTitle, Expression]),
     MettaFileAction = _{
@@ -310,7 +310,7 @@ maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for Evaluate Metta Expression
 lsp_hooks:compute_code_action(Uri, Range, EvalMettaAction) :-
-    once(get_src_code_at_range(toplevel_form, Uri, Range, TopExpression)),
+    once(get_src_code_at_range(toplevel, Uri, Range, TopExpression)),
     get_src_code_at_range(expression, Uri, Range, Expression),
     TopExpression \=@= Expression,
     EvalTitle = "Eval Expression",
@@ -526,8 +526,6 @@ symbol_reference_locations(Symbol, Locations) :-
 % The symbol_reference_uri/2 predicate is defined earlier.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Handle Execute Command
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle Execute Command
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Implement handle_execute_command/2

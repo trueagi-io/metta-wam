@@ -322,9 +322,9 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
 
 get_code_at_range_type(term).
 get_code_at_range_type(expression).
-get_code_at_range_type(toplevel_form).
-%get_code_at_range_type(block).
-%get_code_at_range_type(file).
+get_code_at_range_type(toplevel).
+get_code_at_range_type(block).
+get_code_at_range_type(file).
 %get_code_at_range_type(exact).
 %get_code_at_range_type(symbol).
 
