@@ -39,14 +39,14 @@
 ; Test: Prove unary functions over natural numbers with depth 2
 !(assertEqualToResult
    (bc (: $prf (-> (: $k Nat) Nat)) (S (S Z)))
-   ([]))
+   ())
 ; Explanation:
 ; The backward chainer should not crash and return an empty result when the depth is 2.
 
 ; Test: Prove unary functions over natural numbers with depth 5
 !(assertEqualToResult
    (bc (: $prf (-> (: $k Nat) Nat)) (S (S (S (S (S Z))))))
-   ([]))
+   ())
 ; Explanation:
 ; The backward chainer should not crash, even at a depth of 5. This test validates the fix.
 
