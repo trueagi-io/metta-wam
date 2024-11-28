@@ -141,15 +141,20 @@ lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
        once(get_code_at_range(ObjectType, Uri, Range, Object)))),
     catch_with_backtrace((lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction))).
 
-lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):- fail,
-    lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
+lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
+   lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
 
 lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)).
 lsp_call_metta_json(Eval,Ret):- catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
 
+pretend_json(Obj):- var(Obj), !.
+pretend_json(Obj):- is_dict(Obj), !.
+pretend_json([]). pretend_json(null).
 % Convert list of pairs to Prolog JSON object
-metta_to_json(Obj, Json) :- is_dict(Obj), !, Obj=Json.
+metta_to_json(Obj, Json) :- pretend_json(Obj), !, Obj=Json.
+metta_to_json(Value, SValue):- atom(Value),!,atom_string(Value, SValue).
 metta_to_json(Obj, Json) :- \+ is_list(Obj), !, Obj=Json.
+metta_to_json([quote, Obj], Json) :- !, metta_to_json(Obj, Json).
 metta_to_json(Dict, Json) :- maplist(pair_to_key_value, Dict, KeyValuePairs), dict_create(Json, _, KeyValuePairs), !.
 metta_to_json(List, Json) :- maplist(metta_to_json, List, Json),!.
 % Helper predicate to convert a pair [Key, Value] to Key-Value pair
@@ -439,7 +444,7 @@ lsp_hooks:compute_code_lens(Uri, _, CodeLens) :-
 lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
     compute_code_lens_for_buffer(Uri, Path, CodeLens).
 
-lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):- fail,
+lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):-
     lsp_call_metta_json(['compute-each-code-lens', Uri, Lvl, Ord, Kind, What, VL, Path, Range],CodeLens).
 
 compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
