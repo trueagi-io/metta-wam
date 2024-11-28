@@ -235,6 +235,7 @@
 						<F N="src/packs/lsp_server_metta/vscode/package.json"/>
 						<F N="src/packs/lsp_server_metta/vscode/README.md"/>
 					</Folder>
+					<F N="src/packs/lsp_server_metta/lsp-callbacks.metta"/>
 					<F N="src/packs/lsp_server_metta/lsp-metta.el"/>
 					<F N="src/packs/lsp_server_metta/pack.pl"/>
 					<F N="src/packs/lsp_server_metta/README.md"/>

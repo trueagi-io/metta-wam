@@ -990,3 +990,5 @@ check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
 check_errors_resp(_, false) :-
     debug_lsp(errors, "Failed checking errors", []).
 
+
+load_lsp_callbacks:- import_metta('&lsp-server', '../lsp-callbacks.metta').
