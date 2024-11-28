@@ -136,15 +136,16 @@ trim_to_length(InputString, MaxLength, TrimmedString) :-
     ).
 
 lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
-    get_code_at_range_type(ObjectType),
-    once(get_code_at_range(ObjectType, Uri, Range, Object)),
-    lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction).
+    catch_with_backtrace((
+       get_code_at_range_type(ObjectType),
+       once(get_code_at_range(ObjectType, Uri, Range, Object)))),
+    catch_with_backtrace((lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction))).
 
-lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
+lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):- fail,
     lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
 
-lsp_call_metta([F|Args],Ret):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], Ret)).
-lsp_call_metta_json([F|Args],Ret):- catch_with_backtrace(( lsp_call_metta([F|Args],MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
+lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)).
+lsp_call_metta_json(Eval,Ret):- catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
 
 % Convert list of pairs to Prolog JSON object
 metta_to_json(Obj, Json) :- is_dict(Obj), !, Obj=Json.
@@ -438,8 +439,8 @@ lsp_hooks:compute_code_lens(Uri, _, CodeLens) :-
 lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
     compute_code_lens_for_buffer(Uri, Path, CodeLens).
 
-lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):-
-      lsp_call_metta_json(['compute-each-code-lens', Uri, Lvl, Ord, Kind, What, VL, Path, Range],CodeLens).
+lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):- fail,
+    lsp_call_metta_json(['compute-each-code-lens', Uri, Lvl, Ord, Kind, What, VL, Path, Range],CodeLens).
 
 compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
     user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange), into_json_range(BRange, Range),
