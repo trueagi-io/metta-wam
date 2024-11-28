@@ -187,6 +187,7 @@ get_src_code_at_range(TargetType, Uri, Range, SrcCode):-
    with_output_to(string(SrcCode),write_src_wi(Code)).
 
 
+get_code_at_range(Type, Uri, _Range, Target):- Type==file,!, Target = Uri.
 
 % Extract code at the specified range for different types of targets (symbol, expression, block, exact).
 % For `symbol`, it looks for a clause/symbol in the file at the specified position.

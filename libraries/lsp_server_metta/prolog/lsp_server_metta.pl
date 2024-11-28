@@ -378,9 +378,10 @@ catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
         ( canceled_signal(Err) ->
             throw(Err)
-        ; ( debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+        ; ((with_output_to(user_errr,print_message(error, Err)),
+            debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
             throw(Err)
-          )
+         ))
         )
      ).
 
@@ -425,7 +426,7 @@ debug_lsp(Topic,Format,Args):-
  ignore((% debugging(Topic),
    \+ \+ ((hide_gvars(Args),
            flush_output(user_error), format(user_error, '~N~w: ',[Topic]),
-           sformat(S, Format, Args), trim_to_slength(S,300,SS),
+           sformat(S, Format, Args), S = SS, % trim_to_slength(S,3_000_000,SS),
            format(user_error, '~w~n',[SS]),
            nl(user_error),nl(user_error),flush_output(user_error),
            nop((debug(lsp(Topic),Format,Args))))))), !.

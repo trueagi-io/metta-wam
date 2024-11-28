@@ -135,6 +135,35 @@ trim_to_length(InputString, MaxLength, TrimmedString) :-
         sub_string(InputString, 0, MaxLength, _, TrimmedString)
     ).
 
+lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
+    get_code_at_range_type(ObjectType),
+    once(get_code_at_range(ObjectType, Uri, Range, Object)),
+    lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction).
+
+lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
+    lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
+
+lsp_call_metta([F|Args],Ret):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], Ret)).
+lsp_call_metta_json([F|Args],Ret):- catch_with_backtrace(( lsp_call_metta([F|Args],MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
+
+% Convert list of pairs to Prolog JSON object
+metta_to_json(Obj, Json) :- is_dict(Obj), !, Obj=Json.
+metta_to_json(Obj, Json) :- \+ is_list(Obj), !, Obj=Json.
+metta_to_json(Dict, Json) :- maplist(pair_to_key_value, Dict, KeyValuePairs), dict_create(Json, _, KeyValuePairs), !.
+metta_to_json(List, Json) :- maplist(metta_to_json, List, Json),!.
+% Helper predicate to convert a pair [Key, Value] to Key-Value pair
+pair_to_key_value([Key, Value], Key-JsonValue):- atomic(Key), metta_to_json(Value, JsonValue),!.
+
+% Convert Prolog JSON object to metta list of pairs
+json_to_metta(Json, Metta) :- is_dict(Json), dict_pairs(Json, _, Pairs), maplist(key_value_to_pair, Pairs, Metta), !.
+% Convert JSON lists to metta lists
+json_to_metta(JsonList, MettaList) :- is_list(JsonList), maplist(json_to_metta, JsonList, MettaList),!.
+% Base case: Atomic values are directly returned
+json_to_metta(Value, Value).
+% Helper predicate to convert a Key-Value pair to [Key, Value]
+key_value_to_pair(Key-JsonValue, [Key, Value]) :- atomic(Key), json_to_metta(JsonValue, Value), !.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Action: GPT Rewrite Block
@@ -367,7 +396,7 @@ test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, I
     ignore(Str=''),
     sformat(Message,'~w ~w ~w ~w', [Str, ExecutionResult, Src, last(Kind)=Out]),
     info_type(Message,Info), !.
-test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, error):-
+test_metta_file_buffer(_Uri,_Lvl,_Ord, _Kind, What,  VL, _Path,_BRange, Message, error):-
     maybe_name_vars(VL),
     wots(Src, write_src(What)),!,
     sformat(Message,'Src: ', [Src]).
@@ -394,15 +423,33 @@ lsp_hooks:compute_code_lens(Uri, _, CodeLens) :-
         range: _{start: _{line: 0, character: 0}, end: _{line: 0, character: 1}},
         command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}
     }.
+/*
+ $CodeLens =
+ ((range
+    ((start (line 0) (character 0))
+     (end (line 0) (character 1))))
+  (command
+    ((title "Run Unit Tests")
+     (command "run_all_tests")
+     (arguments ($Uri)))))
+*/
 
 % Compute Code Lens for Buffer
 lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
     compute_code_lens_for_buffer(Uri, Path, CodeLens).
 
+lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):-
+      lsp_call_metta_json(['compute-each-code-lens', Uri, Lvl, Ord, Kind, What, VL, Path, Range],CodeLens).
+
+compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
+    user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange), into_json_range(BRange, Range),
+    lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens).
+
 compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
     Lvl = 0,
     user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
     compute_each_buffer_lens(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, CodeLens).
+
 
 compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens) :-
     \+ is_list(What),
