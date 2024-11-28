@@ -257,7 +257,7 @@
     (writeln .)
     (listing (/ $F $A))
     (told))
-; ; functor(P,F,A),forall(P,(writeq(P),writeln('.'))),
+; ; functor(P,F,A),forall(P,(writeq(P),writeln('.'))),
 
 
 
@@ -354,7 +354,7 @@
       (save-extents $F $A) $Props)
     (debugln (:: (extent-props (/ $F $A)) $Props))
     (set-det))
-; ; avoid division by zero; ; adds 20 seconds and is not yet used
+; ; avoid division by zero; ; adds 20 seconds and is not yet used
 
 
   (= (save-extents $_ $_ (= $_ x))  
@@ -458,7 +458,7 @@
       (nb-setval current-scene $SceneName) 
       (nop (format '~N:- ~q.~n' (:: (begin-scene $SceneName)))) 
       (set-det)))
-; ;listing(tmp:in_scene/1),
+; ;listing(tmp:in_scene/1),
 
 
   (= (delist-lists (:: $X) $Y)  
@@ -941,7 +941,7 @@
     (set-det)
     (nl)
     (nl))
-; ;listing(tmp:in_scene/1),
+; ;listing(tmp:in_scene/1),
   (= (finish-scene)  
     (dmsg finish-scene)
     (set-det))
@@ -1239,7 +1239,7 @@
     (inc-flag corpus-convos)
     (set-flag speech-act 1)
     (set-det))
-; ;C = 100_000_000_000, Buffer is floor(XX/C)*C + 01111111111,  ; ;ignore(add_conversation_converting(Buffer)), !,
+; ;C = 100_000_000_000, Buffer is floor(XX/C)*C + 01111111111,  ; ;ignore(add_conversation_converting(Buffer)), !,
 ;
 ; add_converting_str(XX,Str):- 1 is XX mod 2, !, add_converting_said(said,"Al",XX,Str),!. 
 ;
@@ -1248,7 +1248,7 @@
 
   (= (add-converting-str $XX $Str)  
     (must-det-l (, (string $Str) (assert-converting-v $XX string $Str) (tokenize-atom $Str $Toks) (set-det) (pretok $Toks $PreToks0) (add-punct $PreToks0 $PreToks) (text-to-tree $PreToks $Tree) (assert-converting $XX text-to-tree $Tree) (unphrasify $Tree $List) (assert-converting $XX unphrasify $List) (tree-to-toks $List $PostToks) (set-det) (assert-converting $XX tree-to-toks $PostToks) (add-converting-toks $XX $PostToks))))
-; ;writeq(sample_tree(Tree)),writeln('.'),
+; ;writeq(sample_tree(Tree)),writeln('.'),
 
  
 

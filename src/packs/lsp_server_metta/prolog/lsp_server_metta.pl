@@ -991,4 +991,23 @@ check_errors_resp(_, false) :-
     debug_lsp(errors, "Failed checking errors", []).
 
 
-load_lsp_callbacks:- import_metta('&lsp-server', '../lsp-callbacks.metta').
+
+:- dynamic lsp_server_callback_file_path/1.
+:- dynamic restored_lsp_server_callbacks/0.
+
+
+% Assert the dynamically determined path for the lsp-callbacks.metta file during loading
+:- prolog_load_context(file, CurrentFile),
+   file_directory_name(CurrentFile, Dir),
+   atomic_list_concat([Dir, '../lsp-callbacks.metta'], '/', RelativePath),
+   absolute_file_name(RelativePath, AbsolutePath),
+   assertz(lsp_server_callback_file_path(AbsolutePath)).
+
+% Restore the LSP server by retrieving the dynamically stored path
+restore_lsp_server_callbacks :- restored_lsp_server_callbacks,!.
+restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
+    lsp_server_callback_file_path(MettaPath),
+    import_metta('&lsp-server', MettaPath).
+
+:- initialization(restore_lsp_server_callbacks).
+:- before_boot(restore_lsp_server_callbacks).

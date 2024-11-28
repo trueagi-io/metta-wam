@@ -34,9 +34,9 @@ bad2rnn
 
 bad3rnn
 
-bad1rrn
-bad2rrn
-bad3rrn
+bad1rrn
+bad2rrn
+bad3rrn
 bad1nnr
 
 bad2nnr
@@ -49,5 +49,5 @@ bad1nnr
 bad1rnr
 bad2rnr
 bad3rnr
-bad1rrrbad2rrrbad3rrr
+bad1rrrbad2rrrbad3rrr
 now some tabs:one tab	twotab		threetab			end
