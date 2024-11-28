@@ -98,7 +98,9 @@ lsp_hooks:hover_string(Path, Loc, Term, Arity, S):-
        lsp_call_metta(['hook-hover-string', Path, Loc, Term, Arity], Out), string(Out),  S = Out, !. % wots(S, write_src(Out)).
 
 lsp_hooks:hover_print(Path, Loc, Term, Arity):-
-       lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Out), write_src(Out).
+       lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
+       nop((Res\= ['hook-hover-print' |_ ])).
+       % write_src(Out).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
