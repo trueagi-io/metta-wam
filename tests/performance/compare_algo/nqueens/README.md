@@ -1,4 +1,4 @@
-## **Key Dataset: MeTTaLog vs. MeTTaRust**
+# Key Dataset: MeTTaLog vs. MeTTaRust
 
 The following table compares the execution times for **MeTTaLog** and **MeTTaRust** for N-Queens sizes 4 through 7. This data highlights the significant disparity between the two implementations.
 
@@ -15,11 +15,11 @@ The following table compares the execution times for **MeTTaLog** and **MeTTaRus
 
 ---
 
-## **Proportionality of MeTTaLog and Plain Prolog**
+## Proportionality of MeTTaLog and Plain Prolog
 
 MeTTaLog and Plain Prolog exhibit proportional scaling. Both implementations handle recursion and symbolic reasoning efficiently due to their declarative natures. However, Plain Prolog is significantly faster because of its optimized runtime environment and more mature backtracking mechanisms.
 
-### **Longer Timing Table**
+### Longer Timing Table
 
 | **N-Queens Size** | **MeTTaLog (min)** | **MeTTaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **Python (min)** | **C/C++ (min)** |
 |--------------------|--------------------|---------------------|-------------------------|--------------------------|------------------|-----------------|
@@ -43,63 +43,71 @@ MeTTaLog and Plain Prolog exhibit proportional scaling. Both implementations han
 
 ---
 
-MeTTa, with its declarative and symbolic reasoning capabilities, presents unique challenges when translating to other languages. This document explores why **Prolog** emerges as the most practical target for MeTTa logic, compared to procedural languages like **C**, functional languages like **Scheme** or **Common Lisp**, and modern object-oriented languages like **Python** or **Java**.
+## Enhancing MeTTa: Integrating Prolog and CLP(FD) Features
 
-Additionally, while **C/C++** is a fine ultimate target for performance-critical applications, this document argues that **Prolog** should serve as an intermediary stopgap. Translating MeTTa to Prolog first ensures that we preserve the **"superpowers"** of Prolog—such as native backtracking, symbolic logic, and constraints—before generating highly optimized C/C++ implementations.
+To maximize MeTTa’s flexibility and performance, it’s crucial to allow programmers to leverage **Plain Prolog** and **Constraint Logic Programming over Finite Domains (CLP(FD))** within the MeTTa language itself. By embedding constructs and distinctions that map to either approach, MeTTa can serve as a robust framework for both general symbolic reasoning and optimized constraint-solving.
+
+### Enabling Both Prolog and CLP(FD) in MeTTa
+
+#### Programmer Flexibility
+- **Objective:** Allow developers to express logic in MeTTa that can be translated to either Plain Prolog or CLP(FD) based on performance and problem-specific needs.
+- **Implementation:** Introduce language constructs that explicitly specify whether a rule or query uses general symbolic reasoning or constraint-based logic.
+
+Example:
+```metta
+(rule (n_queens_clp N Solution)
+      @constraints
+      (and (domain Solution 1..N)
+           (all_different Solution)
+           (safe_clp Solution)))
+```
+
+This translates to:
+```prolog
+n_queens_clp(N, Solution) :-
+    length(Solution, N),
+    domain(Solution, 1, N),
+    all_different(Solution),
+    safe_clp(Solution),
+    labeling([], Solution).
+```
+
+### Differences Between Plain Prolog and CLP(FD)
+
+| **Feature**              | **Plain Prolog**                 | **CLP(FD)**                          |
+|---------------------------|-----------------------------------|---------------------------------------|
+| **Backtracking**          | Generic, explores all solutions  | Constraint-driven, prunes search space |
+| **Arithmetic Constraints**| Requires explicit predicates     | Built-in support (e.g., `X #= Y + Z`) |
+| **Domain Definition**     | Not supported                   | Native (`domain(X, 1..N)`)            |
+| **Constraint Propagation**| No                              | Yes                                   |
+| **Optimization**          | Manual                          | Built-in (`labeling([minimize(X)])`)  |
+
+### Implementation Strategy for MeTTa
+
+#### Unified Language Design
+Introduce syntax or annotations to distinguish between Plain Prolog and CLP(FD) translations:
+- Default: Translate to Plain Prolog.
+- Explicit: Use annotations for constraints or optimization.
+
+For example:
+```metta
+(rule (n_queens_clp N Solution)
+      @constraints
+      (and (domain Solution 1..N)
+           (all_different Solution)
+           (safe_clp Solution)))
+```
+
+#### Seamless Translation to Prolog
+- Plain Prolog: Use standard logical constructs and backtracking.
+- CLP(FD): Map MeTTa’s constraints directly to CLP(FD) predicates.
 
 ---
 
+### Conclusion
 
-### **1. Control Flow**
-- MeTTa employs implicit control flow through **pattern matching** and **recursive reasoning**, which procedural and functional languages struggle to replicate directly.
-- Languages like **C**, **Java**, and **Python** require explicit constructs (`if`, `while`, `for`) to model recursion and backtracking.
+By integrating the differences between Plain Prolog and CLP(FD) into MeTTa’s language design:
+- Programmers can write flexible, efficient logic that leverages the strengths of both paradigms.
+- The MeTTa compiler ensures smooth translation, preserving logic for Prolog and optimizing constraints for CLP(FD).
+- This dual-approach empowers MeTTa as a high-level, declarative language capable of addressing a broad spectrum of computational problems effectively.
 
-### **2. Symbolic Logic**
-- MeTTa operates on **symbolic lists and atoms** as first-class citizens.
-- Procedural and object-oriented languages treat symbols and lists as secondary constructs, requiring heavy manual implementation.
-
-### **3. Backtracking**
-- Backtracking is a cornerstone of MeTTa logic.
-- **Prolog** naturally supports backtracking, making it a near-perfect match.
-- **C**, **Python**, and other general-purpose languages require manual stack management and state tracking to replicate this behavior.
-
-### **4. Constraint Handling**
-- MeTTa inherently supports constraints through symbolic matching and logical rules.
-- **Prolog with CLP(FD)** excels here, leveraging built-in constraint-solving capabilities.
-- **C/C++** requires custom implementations of constraint solvers, and **Python** relies on external libraries such as `z3` or `pyDatalog`.
-
-### **5. Tail Call Optimization (TCO)**
-- MeTTa relies on recursion extensively, making TCO critical for performance and scalability.
-- Many procedural and object-oriented languages (e.g., **C**, **Python**) do not guarantee TCO, making deep recursion problematic.
-- **Prolog** and some functional languages (e.g., **Scheme**) provide TCO natively.
-
----
-
-## **Why Prolog Is the Ideal Intermediate Target**
-
-| **Feature**             | **MeTTa**                  | **Prolog**               | **Common Lisp/Scheme**        | **Python**                 | **C/C++**                   |
-|--------------------------|----------------------------|---------------------------|--------------------------------|----------------------------|-----------------------------|
-| **Control Flow**         | Implicit, logic-driven    | Implicit, backtracking    | Explicit (`if`, `cond`)        | Explicit (`if`, `while`)   | Explicit (`if`, `switch`)  |
-| **Symbolic Logic**       | Native                   | Native                   | Secondary (via macros/lists)  | Libraries (manual logic)   | Manual implementation       |
-| **Backtracking**         | Native                   | Native                   | Manual (via stack management) | Libraries (manual logic)   | Manual recursion/state      |
-| **Constraint Handling**  | Symbolic Matching        | Native (with CLP(FD))    | Manual                       | Libraries (e.g., `z3`)     | Custom algorithms           |
-| **TCO**                  | Essential                | Native                   | Native (some dialects only)   | Not available             | Compiler-dependent          |
-| **Ease of Translation**  | N/A                      | High                     | Moderate                     | Moderate                  | Low                         |
-
----
-
-## **Conclusion**
-
-While **C/C++** is an excellent ultimate target for performance-critical applications, translating MeTTa directly to C/C++ risks losing key capabilities such as:
-- **Native backtracking.**
-- **Symbolic reasoning.**
-- **Constraint-solving mechanisms.**
-
-By translating MeTTa to **Prolog** first, we can:
-1. Preserve its declarative logic and symbolic reasoning capabilities.
-2. Leverage Prolog’s native backtracking and constraint-handling as a reference for generating C/C++ implementations.
-3. Ensure correctness and maintain logical abstractions before focusing on performance optimizations.
-
-This two-step process provides a balance between leveraging **Prolog’s logical power** and achieving
-
- **C/C++’s execution speed**, ensuring no logical capabilities are lost while optimizing for scalability and efficiency.
