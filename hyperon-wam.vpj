@@ -67,8 +67,6 @@
 			Name="Other Files"
 			Filters=""></Folder>
 	</CustomFolders>
-	<List Name="RTE">
-	</List>
 	<Files AutoFolders="DirectoryView">
 		<Folder Name="t:/">
 			<Folder Name="root">
@@ -281,4 +279,6 @@
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
 	</Files>
+	<List Name="RTE">
+	</List>
 </Project>

@@ -238,6 +238,7 @@ eval_00(_Eq,_RetType,_Depth,_Slf,X,Y):- self_eval(X),!,X=Y.
 eval_00(Eq,RetType,Depth,Self,X,YO):-
    eval_01(Eq,RetType,Depth,Self,X,YO).
 eval_01(Eq,RetType,Depth,Self,X,YO):-
+    X\==[empty], % speed up n-queens x60
     if_t((Depth<1, trace_on_overflow),
       debug(metta(eval_args))),
    notrace((Depth2 is Depth-1,    copy_term(X, XX))),
@@ -247,7 +248,7 @@ eval_01(Eq,RetType,Depth,Self,X,YO):-
       ;eval_01(Eq,RetType,Depth2,Self,M,Y)),
    eval_02(Eq,RetType,Depth2,Self,Y,YO))).
 
-eval_02(Eq,RetType,Depth2,Self,Y,YO):-
+eval_02(Eq,RetType,Depth2,Self,Y,YO):-  Y\==[empty], % speed up n-queens x60
   once(if_or_else((subst_args_here(Eq,RetType,Depth2,Self,Y,YO)),
     if_or_else((fail,finish_eval(Eq,RetType,Depth2,Self,Y,YO)),
         Y=YO))).
@@ -290,6 +291,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
 %:- discontiguous eval_maybe_defn/5.
+
 
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
@@ -942,7 +944,7 @@ eval_args_true(Eq,RetType,Depth,Self,X):-
 
 
 metta_atom_iter_ref(Other,H,Ref):-clause(metta_atom_asserted(Other,H),true,Ref).
-can_be_ok(A,B):- cant_be_ok(A,B),!,fbug(cant_be_ok(A,B)),trace.
+%can_be_ok(A,B):- cant_be_ok(A,B),!,fbug(cant_be_ok(A,B)),trace.
 can_be_ok(_,_).
 
 cant_be_ok(_,[Let|_]):- Let==let.
@@ -1249,6 +1251,8 @@ typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_argumen
 
 eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
 eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['car-atom-or-fail',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom-or-fail',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
 
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- no_cons_reduce, !,
   eval_args(Eq,RetType,Depth,Self,A,AA), eval_args(Eq,RetType,Depth,Self,B,BB).
@@ -2172,11 +2176,13 @@ eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
-eval_40(Eq,RetType,_Dpth,_Slf,[EQ,X,Y],Res):- EQ=='==', !,
+eval_40(Eq,RetType,Depth,Self,[EQ,X,Y],Res):- EQ=='==', !,
     suggest_type(RetType,'Bool'),
-    eq_unify(Eq,_SharedType, X, Y, Res).
+    eq_unify(Eq,_SharedType,Depth,Self, X, Y, Res).
 
-eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
+
+eq_unify(Eq,RetType,Depth,Self,X,Y, TF):- as_tf(eval_until_unify(Eq,RetType,Depth,Self,X,Y), TF).
+% eq_unify( Eq,  SharedType, X, Y, TF):- as_tf(eval_until_unify(Eq,SharedType, X, Y), TF).
 
 
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,

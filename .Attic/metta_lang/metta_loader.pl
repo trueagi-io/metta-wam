@@ -226,6 +226,7 @@ afn(A, B, C) :- quietly(absolute_file_name(A, B, C)).
 wwp(Fnicate,Dir):-
     extreme_debug(fbug(wwp(Fnicate,Dir))),
     fail.
+wwp(Fnicate, File) :- atom(File),atom_concat('file://',Path,File),!, wwp(Fnicate, Path).
 wwp(_Fnicate, []) :-
     % If the path is an empty list, succeed without further processing.
     !.
