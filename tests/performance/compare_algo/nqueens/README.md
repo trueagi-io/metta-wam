@@ -163,39 +163,39 @@ For MeTTa to achieve broader adoption, improving its runtime efficiency (e.g., l
 
 # N-Queens Implementation Comparison
 
-This document provides a comprehensive analysis of various implementations of the N-Queens problem, focusing on **MettaLog**, **MettaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C**. The findings include performance benchmarks, predicted scaling behaviors, and detailed observations on how each implementation handles recursive, logic-heavy tasks.
+This document provides a comprehensive analysis of various implementations of the N-Queens problem, focusing on **MeTTaLog**, **MeTTaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C**. The findings include performance benchmarks, predicted scaling behaviors, and detailed observations on how each implementation handles recursive, logic-heavy tasks.
 
 ---
 
-## 1. Key Dataset: **MettaLog vs. MettaRust**
+## 1. Key Dataset: **MeTTaLog vs. MeTTaRust**
 
-The following table represents directly collected execution times for **MettaLog** and **MettaRust** for N-Queens sizes 4 through 7. This data highlights the significant disparity between the two implementations.
+The following table represents directly collected execution times for **MeTTaLog** and **MeTTaRust** for N-Queens sizes 4 through 7. This data highlights the significant disparity between the two implementations.
 
 | **N-Queens Size** | **MeTTaLog Time**  | **MeTTaRust Time**     | **Leaner?**         | **Difference (Factor)**  |
 |--------------------|--------------------|------------------------|---------------------|---------------------------|
-| **4**             | 0m5.565s          | 0m8.076s               | ✅ **MeTTaLog**     | ~1.45x slower in Rust     |
-| **5**             | 0m5.953s          | 0m32.852s              | ✅ **MeTTaLog**     | ~5.52x slower in Rust     |
-| **6**             | 0m7.043s          | 2m14.622s              | ✅ **MeTTaLog**     | ~19.12x slower in Rust    |
-| **7**             | 0m11.805s         | 11m26.192s             | ✅ **MeTTaLog**     | ~58.33x slower in Rust    |
+| **4**             | 0m5.565s          | 0m8.076s               | ✅ **MeTTaLog**     | ~1.45x slower in MeTTaRust     |
+| **5**             | 0m5.953s          | 0m32.852s              | ✅ **MeTTaLog**     | ~5.52x slower in MeTTaRust     |
+| **6**             | 0m7.043s          | 2m14.622s              | ✅ **MeTTaLog**     | ~19.12x slower in MeTTaRust    |
+| **7**             | 0m11.805s         | 11m26.192s             | ✅ **MeTTaLog**     | ~58.33x slower in MeTTaRust    |
 
 ### Observations:
 1. **Efficiency**:
-   - **MettaLog** consistently outperforms **MettaRust**, with execution times growing linearly compared to Rust's exponential scaling.
-   - The gap widens as problem size increases, with **Rust being up to ~58x slower** for N=7.
+   - **MeTTaLog** consistently outperforms **MeTTaRust**, with execution times growing linearly compared to MeTTaRust's exponential scaling.
+   - The gap widens as problem size increases, with **MeTTaRust** being up to ~58x slower** for N=7.
 
-2. **Implications for MettaRust**:
-   - The stark disparity indicates significant inefficiencies in **MettaRust**’s recursion handling and lack of runtime optimizations like TCO (Tail Call Optimization).
-   - While **Rust** is generally optimized for performance, its current implementation of the N-Queens logic is impractical for larger inputs.
+2. **Implications for MeTTaRust**:
+   - The stark disparity indicates significant inefficiencies in **MeTTaRust**’s recursion handling and lack of runtime optimizations like TCO (Tail Call Optimization).
+   - While **MeTTaRust** is generally optimized for performance, its current implementation of the N-Queens logic is impractical for larger inputs.
 
 ---
 
 ## 2. Broader Performance Comparison
 
-This section compares all five implementations: **MettaLog**, **MettaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C**.
+This section compares all five implementations: **MeTTaLog**, **MeTTaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C**.
 
 ### **Performance Table**
 
-| **N-Queens Size** | **MettaLog (min)** | **MettaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
+| **N-Queens Size** | **MeTTaLog (min)** | **MeTTaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
 |--------------------|--------------------|---------------------|-------------------------|--------------------------|-----------------|
 | **4**             | 0.093             | 0.135               | 0.003                  | 0.000                   | 0.000           |
 | **5**             | 0.099             | 0.547               | 0.003                  | 0.000                   | 0.000           |
@@ -220,30 +220,30 @@ This section compares all five implementations: **MettaLog**, **MettaRust**, **P
    - Prolog CLP(FD) is the next best performer for small to medium problem sizes but struggles beyond N=14.
 
 2. **Scaling Behavior**:
-   - **MettaLog** scales linearly, aligning algorithmically with **Plain Prolog**, albeit much slower due to its inefficient interpreter.
-   - **MettaRust**, however, scales exponentially, making it impractical for larger inputs.
+   - **MeTTaLog** scales linearly, aligning algorithmically with **Plain Prolog**, albeit much slower due to its inefficient interpreter.
+   - **MeTTaRust**, however, scales exponentially, making it impractical for larger inputs.
 
 3. **Symbolic Logic Handling**:
    - **Plain Prolog** provides a good balance between speed and the ability to handle symbolic logic, making it highly effective for recursive tasks.
-   - **MettaLog** is slower but retains effectiveness for symbolic logic tasks, making it a suitable candidate for improvement.
+   - **MeTTaLog** is slower but retains effectiveness for symbolic logic tasks, making it a suitable candidate for improvement.
 
 4. **Constraint Logic Programming (CLP(FD))**:
    - Prolog CLP(FD) leverages constraints for performance but encounters memory constraints as problem size increases.
-   - For constraint-heavy tasks, CLP(FD) is highly efficient and should be considered for MettaLog enhancements.
+   - For constraint-heavy tasks, CLP(FD) is highly efficient and should be considered for MeTTaLog enhancements.
 
 5. **Practical Limitations**:
-   - Both **Prolog CLP(FD)** and **MettaRust** face practical limitations with larger N due to memory and computational overhead.
+   - Both **Prolog CLP(FD)** and **MeTTaRust** face practical limitations with larger N due to memory and computational overhead.
    - **C** remains capable of handling significantly larger N with ease due to its direct memory and computation optimizations.
 
 ---
 
 ## 4. Refined Predictions
 
-Given the observed proportional relationships, we refine our predictions for **MettaLog**, **Plain Prolog**, and **MettaRust**.
+Given the observed proportional relationships, we refine our predictions for **MeTTaLog**, **Plain Prolog**, and **MeTTaRust**.
 
 ### **Predicted Times for N=8, 9, and 10**
 
-| **N-Queens Size** | **MettaLog Predicted Time** | **MettaRust Predicted Time** | **Plain Prolog Predicted Time** |
+| **N-Queens Size** | **MeTTaLog Predicted Time** | **MeTTaRust Predicted Time** | **Plain Prolog Predicted Time** |
 |--------------------|-----------------------------|------------------------------|----------------------------------|
 | **8**             | ~0.308 min (~18.5s)        | ~38 min                      | ~0.015 min (~36s)               |
 | **9**             | ~0.423 min (~25.4s)        | ~133 min (~2h13m)            | ~0.050 min (~50s)               |
@@ -254,33 +254,33 @@ Given the observed proportional relationships, we refine our predictions for **M
 ## 5. Recommendations:
 
 1. **Leverage Prolog Optimizations**:
-   - **MettaLog** should aim to incorporate Prolog optimizations, particularly CLP(FD) features, for improved efficiency in constraint-heavy tasks.
+   - **MeTTaLog** should aim to incorporate Prolog optimizations, particularly CLP(FD) features, for improved efficiency in constraint-heavy tasks.
 
-2. **Improve MettaRust**:
+2. **Improve MeTTaRust**:
    - Focus on memory optimizations and introduce TCO (or similar strategies) to handle deep recursion more effectively.
 
 3. **Explore Mixed Approaches**:
    - Combine the best of **C** (low-level optimizations) and **Prolog** (symbolic reasoning and constraints) for hybrid implementations.
 
-Here is the summary and a table of the differences between **MettaLog**, **MettaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C** implementations of the N-Queens problem. 
+Here is the summary and a table of the differences between **MeTTaLog**, **MeTTaRust**, **Plain Prolog**, **Prolog CLP(FD)**, and **C** implementations of the N-Queens problem. 
 
 ### N-Queens Implementation Comparison
 
 #### **Summary:**
 
-1. **MettaLog**:
+1. **MeTTaLog**:
    - Exhibits linear growth in execution time for increasing N.
    - Remains efficient compared to other implementations, especially for larger N.
    - Ideal for symbolic and recursive problem-solving tasks.
    
-2. **MettaRust**:
+2. **MeTTaRust**:
    - Suffers from exponential growth in execution time for increasing N.
    - Becomes impractical for larger problem sizes due to lack of optimizations like TCO (Tail Call Optimization).
-   - Consistently slower than MettaLog, with a performance gap increasing as N grows.
+   - Consistently slower than MeTTaLog, with a performance gap increasing as N grows.
 
 3. **Plain Prolog**:
    - Very efficient due to Prolog's inherent optimization for logic programming.
-   - Exhibits performance scaling similar to MettaLog, albeit ~30x faster
+   - Exhibits performance scaling similar to MeTTaLog, albeit ~30x faster
 
 4. **Prolog CLP(FD)**:
    - Excellent performance for small to medium N, leveraging constraint logic programming.
@@ -296,7 +296,7 @@ Here is the summary and a table of the differences between **MettaLog**, **Metta
 
 ### **N-Queens Performance Table**
 
-| **N-Queens Size** | **MettaLog (min)** | **MettaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
+| **N-Queens Size** | **MeTTaLog (min)** | **MeTTaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
 |--------------------|--------------------|---------------------|-------------------------|--------------------------|-----------------|
 | **4**             | 0.093             | 0.135               | 0.003                  | 0.000                   | 0.000           |
 | **5**             | 0.099             | 0.547               | 0.003                  | 0.000                   | 0.000           |
@@ -320,34 +320,34 @@ Here is the summary and a table of the differences between **MettaLog**, **Metta
    - Prolog CLP(FD) is the next best performer for small to medium problem sizes but struggles beyond N=14.
 
 2. **Scaling**:
-   - MettaLog scales well, maintaining linear growth, making it ideal for symbolic logic and recursive problems.
-   - MettaRust suffers from exponential growth, likely due to inefficient handling of recursion.
+   - MeTTaLog scales well, maintaining linear growth, making it ideal for symbolic logic and recursive problems.
+   - MeTTaRust suffers from exponential growth, likely due to inefficient handling of recursion.
 
 3. **Symbolic Logic**:
    - Plain Prolog provides a good balance between speed and the ability to handle symbolic logic.
-   - MettaLog is slower but still effective for these types of problems.
+   - MeTTaLog is slower but still effective for these types of problems.
 
 4. **Large N Limitations**:
-   - Prolog CLP(FD) and MettaRust hit practical limitations with larger N due to memory and computational overhead.
+   - Prolog CLP(FD) and MeTTaRust hit practical limitations with larger N due to memory and computational overhead.
    - C handles larger N with relative ease.
 
 ---
 
 ```
 
-; mettalog  0m5.565s
+; MeTTaLog  0m5.565s
 ; mettarust 0m8.076s
 ;!(assertEqualToResult (nqueens 4) ((3 1 4 2) (2 4 1 3)))
 
-; mettalog  0m5.953s
+; MeTTaLog  0m5.953s
 ; mettarust 0m32.852s
 ; !(assertEqualToResult (nqueens 5) ((4 2 5 3 1) (3 5 2 4 1) (5 3 1 4 2) (4 1 3 5 2) (5 2 4 1 3) (1 4 2 5 3) (2 5 3 1 4) (1 3 5 2 4) (3 1 4 2 5) (2 4 1 3 5)))
 
-; mettalog  0m7.043s
+; MeTTaLog  0m7.043s
 ; mettarust 2m14.622s
 ;!(assertEqualToResult (nqueens 6) ((5 3 1 6 4 2)  (4 1 5 2 6 3)  (3 6 2 5 1 4)  (2 4 6 1 3 5)))
 
-; mettalog   0m11.805s
+; MeTTaLog   0m11.805s
 ; mettarust 11m26.192s
 ; !(assertEqualToResult (nqueens 7) ((6 4 2 7 5 3 1)  (5 2 6 3 7 4 1)  (4 7 3 6 2 5 1)  (3 5 7 2 4 6 1)  (6 3 5 7 1 4 2)  (7 5 3 1 6 4 2)  (6 3 7 4 1 5 2)  (6 4 7 1 3 5 2)  (6 3 1 4 7 5 2)  (5 1 4 7 3 6 2)  (4 6 1 3 5 7 2)  (4 7 5 2 6 1 3)  (5 7 2 4 6 1 3)  (1 6 4 2 7 5 3)  (7 4 1 5 2 6 3)  (5 1 6 4 2 7 3)  (6 2 5 1 4 7 3)  (5 7 2 6 3 1 4)  (7 3 6 2 5 1 4)  (6 1 3 5 7 2 4)  (2 7 5 3 1 6 4)  (1 5 2 6 3 7 4)  (3 1 6 2 5 7 4)  (2 6 3 7 4 1 5)  (3 7 2 4 6 1 5)  (1 4 7 3 6 2 5)  (7 2 4 6 1 3 5)  (3 1 6 4 2 7 5)  (4 1 3 6 2 7 5)  (4 2 7 5 3 1 6)  (3 7 4 1 5 2 6)  (2 5 7 4 1 3 6)  (2 4 1 7 5 3 6)  (2 5 1 4 7 3 6)  (1 3 5 7 2 4 6)  (2 5 3 1 7 4 6)  (5 3 1 6 4 2 7)  (4 1 5 2 6 3 7)  (3 6 2 5 1 4 7)  (2 4 6 1 3 5 7)))
 
@@ -356,22 +356,22 @@ Here is the summary and a table of the differences between **MettaLog**, **Metta
 
 ; | N-Queens Size | MeTTaLog Time  | MeTTaRust Time     | Leaner?             | Difference (Factor)  |
 ; |---------------|----------------|--------------------|---------------------|-----------------------|
-; | 4             | 0m5.565s       | 0m8.076s           | ✅ MeTTaLog         | ~1.45x slower in Rust |
-; | 5             | 0m5.953s       | 0m32.852s          | ✅ MeTTaLog         | ~5.52x slower in Rust |
-; | 6             | 0m7.043s       | 2m14.622s          | ✅ MeTTaLog         | ~19.12x slower in Rust|
-; | 7             | 0m11.805s      | 11m26.192s         | ✅ MeTTaLog         | ~58.33x slower in Rust|
+; | 4             | 0m5.565s       | 0m8.076s           | ✅ MeTTaLog         | ~1.45x slower in MeTTaRust |
+; | 5             | 0m5.953s       | 0m32.852s          | ✅ MeTTaLog         | ~5.52x slower in MeTTaRust |
+; | 6             | 0m7.043s       | 2m14.622s          | ✅ MeTTaLog         | ~19.12x slower in MeTTaRust|
+; | 7             | 0m11.805s      | 11m26.192s         | ✅ MeTTaLog         | ~58.33x slower in MeTTaRust|
 
 ; Analysis:
 ; 1. Leaner Runtime:
 ;    - MeTTaLog is consistently leaner than MeTTaRust across all problem sizes.
-;    - The performance gap widens as the problem size increases, with Rust being up to ~58 times slower for nqueens(7).
+;    - The performance gap widens as the problem size increases, with MeTTaRust being up to ~58 times slower for nqueens(7).
 
 ; 2. Scaling Disparity:
-;    - Both implementations exhibit worse performance as the problem size grows, but Rust’s implementation scales poorly, possibly due to lack of TCO or inefficiencies in recursive handling.
+;    - Both implementations exhibit worse performance as the problem size grows, but MeTTaRust’s implementation scales poorly, possibly due to lack of TCO or inefficiencies in recursive handling.
 
 ; 3. Critical Observation:
 ;    - For smaller inputs like nqueens(4), the difference is minor (~1.45x).
-;    - For larger inputs (nqueens(7)), the performance difference balloons, highlighting inefficiencies in Rust’s handling of deep recursion or search space pruning.
+;    - For larger inputs (nqueens(7)), the performance difference balloons, highlighting inefficiencies in MeTTaRust’s handling of deep recursion or search space pruning.
 
 ; Conclusion:
 ; The results strongly suggest that MeTTaLog is significantly more optimized for recursive logic-heavy tasks like nqueens, particularly for larger input sizes. 
@@ -424,7 +424,7 @@ Here is the summary and a table of the differences between **MettaLog**, **Metta
 
 ### N-Queens Performance Table
 
-| **N-Queens Size** | **MettaLog (min)** | **MettaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
+| **N-Queens Size** | **MeTTaLog (min)** | **MeTTaRust (min)** | **Plain Prolog (min)** | **Prolog CLP(FD) (min)** | **C (min)**     |
 |--------------------|--------------------|---------------------|-------------------------|--------------------------|-----------------|
 | **4**             | 0.093             | 0.135               | 0.003                  | 0.000                   | 0.000           |
 | **5**             | 0.099             | 0.547               | 0.003                  | 0.000                   | 0.000           |
@@ -448,14 +448,14 @@ Here is the summary and a table of the differences between **MettaLog**, **Metta
    - Prolog CLP(FD) is the next best performer for small to medium problem sizes but struggles beyond N=14.
 
 2. **Scaling**:
-   - MettaLog scales well, maintaining linear growth, making it ideal for symbolic logic and recursive problems.
-   - MettaRust suffers from exponential growth, likely due to inefficient handling of recursion.
+   - MeTTaLog scales well, maintaining linear growth, making it ideal for symbolic logic and recursive problems.
+   - MeTTaRust suffers from exponential growth, likely due to inefficient handling of recursion.
 
 3. **Symbolic Logic**:
    - Plain Prolog provides a good balance between speed and the ability to handle symbolic logic.
-   - MettaLog is slower but still effective for these types of problems.
+   - MeTTaLog is slower but still effective for these types of problems.
 
 4. **Large N Limitations**:
-   - Prolog CLP(FD) and MettaRust hit practical limitations with larger N due to memory and computational overhead.
+   - Prolog CLP(FD) and MeTTaRust hit practical limitations with larger N due to memory and computational overhead.
    - C handles larger N with relative ease.
 
