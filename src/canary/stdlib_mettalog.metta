@@ -1752,7 +1752,7 @@ For example:
 
 
 (iz assertNotEqualToResult MeTTaLog)
-(@doc assertEqualToResult
+(@doc assertNotEqualToResult
   (@desc "Same as assertNotEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
   (@params (
     (@param "First expression (it will be evaluated)")

@@ -36,5 +36,13 @@ no_attack(Q, [Q1|Qs], Dist) :-
     Dist1 is Dist + 1,
     no_attack(Q, Qs, Dist1).
 
-:- forall(between(4,10,N), time(nqueens(N,_))).
+% Start the benchmark
+benchmark(N) :-
+    statistics(walltime, [_ | [_]]),
+    nqueens(N, Solution),
+    statistics(walltime, [_ | [Elapsed]]),
+    length(Solution, Length),
+    format("N=~w: ~w solutions found in ~w ms~n", [N, Length, Elapsed]).
+
+:- forall(between(4,15,N), time(benchmark(N))).
 
