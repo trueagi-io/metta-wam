@@ -7,6 +7,9 @@
 ;; However, the file is loaded via `!(import! &lsp-server lsp-callbacks)` so it doesn't matter. 
 ;; We still use !(add-atom &lsp-server ..) in case
 
+
+!(pragma! interpreter bare-minimal)
+
 ;; Hook for displaying hover information.
 ;; Displays details when hovering over a term in the editor.
 ;; Parameters:
@@ -17,7 +20,7 @@
 !(add-atom &lsp-server
     (= (hook-hover-string $path $_loc $term $arity)
        ;; Format and display hover information.
-       (format-args "hovering over '{}', arity: {}, in file: {}" ($term $arity $path))))
+       (format-args "hovering over str '{}', arity: {}, in file: {}" ($term $arity $path))))
 
 ;; Hook for logging hover information for debugging purposes.
 ;; Logs details of the hovered term for further analysis.

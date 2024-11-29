@@ -1009,5 +1009,5 @@ restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
     lsp_server_callback_file_path(MettaPath),
     import_metta('&lsp-server', MettaPath).
 
-:- initialization(restore_lsp_server_callbacks).
-:- before_boot(restore_lsp_server_callbacks).
+%:- initialization(restore_lsp_server_callbacks).
+:- after_boot(restore_lsp_server_callbacks).

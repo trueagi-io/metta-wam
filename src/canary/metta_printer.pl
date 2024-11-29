@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
  * Description: This file is part of the source code for a transpiler designed to convert
  *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
@@ -51,8 +51,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: provides predicates for pretty-printing and formatting MeTTa  
+%*********************************************************************************************
+% PROGRAM FUNCTION: provides predicates for pretty-printing and formatting MeTTa
 % expressions and other terms, with various options for controlling output style, indentation, etc.
 %*********************************************************************************************
 
@@ -251,9 +251,9 @@ print_pl_source(P) :-
 run_pl_source(G) :-
     % Fail silently on error.
     catch(G, E, (
-        fail,  
+        fail,
         % Log the error with the goal.
-        write_src_uo(G = E),  
+        write_src_uo(G = E),
         % Retry the goal with tracing enabled.
         rtrace(G)
     )).
@@ -288,8 +288,8 @@ print_pl_source0((:- B)) :-
     !,portray_clause((:- B)).
 print_pl_source0(P) :-
     % Default printing using `print_tree/1`.
-    format('~N'), 
-    print_tree(P), 
+    format('~N'),
+    print_tree(P),
     format('~N'), !.
 print_pl_source0(P) :-
     % Try different display actions and choose the output with the least height.
@@ -336,7 +336,7 @@ pp_fb1_a(P) :-
     % Begin with a newline for cleaner output.
     format("~N "),
     % Apply variable numbering to P.
-    \+ \+ (numbervars_w_singles(P), 
+    \+ \+ (numbervars_w_singles(P),
     % Pretty-print P using `pp_fb1_e/1`.
     pp_fb1_e(P)),
     % End with a newline and flush output.
@@ -348,7 +348,7 @@ pp_fb1_a(P) :-
 %
 %   This predicate attempts various printing functions on `P` to find the most
 %   suitable representation. It calls each function through `pp_fb2/2`, ensuring that
-%   only available predicates are invoked. The sequence includes tree and clause 
+%   only available predicates are invoked. The sequence includes tree and clause
 %   representations, as well as debugging and formatting helpers.
 %
 %   @arg P The Prolog term to be printed.
@@ -731,7 +731,12 @@ write_src_wi(V) :-
 %
 write_src(V) :-
     % Guess variables in V and pretty-print using `pp_sex/1`.
-    \+ \+ notrace((guess_metta_vars(V), pp_sex(V))), !.
+    \+ \+ notrace((src_vars(V, I), pp_sex(I))), !.
+
+print_compounds_special:- true.
+src_vars(V,I):- %ignore(guess_metta_vars(V)),
+              ignore(guess_varnames(V,I)),
+              ignore(numbervars(V,10000,_,[singleton(true),attvar(skip)])).
 
 %!  write_src_woi(+Term) is det.
 %
@@ -760,7 +765,6 @@ write_src_woi(Term) :-
 write_src_woi_nl(X) :-
     % Guess variables in X, add newlines, and write without indentation.
     \+ \+ notrace((
-        guess_metta_vars(X),
         format('~N'), write_src_woi(X), format('~N')
     )).
 
@@ -798,7 +802,7 @@ pp_sexi(V) :-
 pp_sexi(V) :-
     % If `V` is a dictionary, print it directly.
     is_dict(V), !, print(V).
-pp_sexi((USER:Body)) :-
+pp_sexi((USER:Body)) :- fail,
     % If `V` is in the format `user:Body`, process `Body` directly.
     USER == user, !, pp_sex(Body).
 pp_sexi(V) :-
@@ -896,33 +900,6 @@ write_mobj(F, Args) :-
     fail, mlog_sym(K), !, pp_sex_c([K, F | Args]).
 %write_mobj(F,Args):- pp_sex_c([F|Args]).
 
-%!  print_items_list(+X) is det.
-%
-%   Prints a list of items `X` in an S-expression format if `X` is a list;
-%   otherwise, it prints `X` using the default source format.
-%
-%   This predicate checks if `X` is a list. If so, it calls `print_list_as_sexpression/1`
-%   to display it in S-expression style. If `X` is not a list, it falls back to
-%   printing `X` with `write_src/1`.
-%
-%   @arg X The term or list to be printed.
-%
-%   @example
-%     % Print a list as an S-expression.
-%     ?- print_items_list([a, b, c]).
-%     (a b c)
-%
-%     % Print a non-list item.
-%     ?- print_items_list(atom).
-%     atom
-%
-print_items_list(X) :-
-    % If `X` is a list, print it as an S-expression.
-    is_list(X), !, print_list_as_sexpression(X).
-print_items_list(X) :-
-    % If `X` is not a list, print it with `write_src/1`.
-    write_src(X).
-
 %!  pp_sex_l(+V) is det.
 %
 %   Primary predicate for pretty-printing a list `V` in S-expression format.
@@ -951,48 +928,56 @@ pp_sexi_l(V) :-
     % If `V` is marked for final output, handle it and terminate.
     is_final_write(V), !.
 %pp_sexi_l([F|V]):- integer(F), is_codelist([F|V]),!,format("|~s|",[[F|V]]).
+
+
 pp_sexi_l([F | V]) :-
     % If `F` is a symbol and `V` is a list, format using `write_mobj/2`.
     symbol(F), is_list(V), write_mobj(F, V), !.
-pp_sexi_l([H | T]) :-
-    % If `T` is an empty list, print `H` in parentheses.
-    T == [], !, write('('), pp_sex_nc(H), write(')').
-pp_sexi_l([H, H2]) :-
+pp_sexi_l([H | T]) :- T == [], !,  % If `T` is an empty list, print `H` in parentheses.
+    portray_compound_type(list,L,_M,R),
+    write(L), pp_sex_nc(H), write(R).
+pp_sexi_l([H, H2| T]) :- T ==[], !,
     % If `V` has two elements, print `H` followed by `H2` in S-expression format.
-    write('('), pp_sex_nc(H), write(' '),
-    with_indents(false, print_list_as_sexpression([H2])),
-    write(')'), !.
-pp_sexi_l([H | T]) :-
-    % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
-    write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')'), !.
+    portray_compound_type(list,L,M,R),
+    write(L), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(M,[H2])),
+    write(R), !.
 pp_sexi_l([H, S]) :-
     % If `H` is `'[...]'`, print `S` enclosed in square brackets.
-    H == '[...]', write('['), print_items_list(S), write(' ]').
+    H == '[...]', write('['), write_args_as_sexpression(S), write(' ]').
 pp_sexi_l([H, S]) :-
     % If `H` is `'{...}'`, print `S` enclosed in curly braces.
-    H == '{...}', write('{'), print_items_list(S), write(' }').
+    H == '{...}', write('{'), write_args_as_sexpression(S), write(' }').
 %pp_sex_l(X):- \+ compound(X),!,write_src(X).
-%pp_sex_l('$VAR'(S))):- 
+%pp_sex_l('$VAR'(S))):-
 pp_sexi_l([=, H, B]) :-
     % For lists in the format `[=, H, B]`, format using `pp_sexi_hb/2`.
     pp_sexi_hb(H, B), !.
-pp_sexi_l([H | T]) :-
+
+pp_sexi_l([H | T]):- pp_sexi_lc([H | T]).
+
+pp_sexi_lc([H | T]) :-
+    % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
+    portray_compound_type(list,L,M,R),
+    write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M, T), write(R), !.
+pp_sexi_lc([H | T]) :-
     % If `H` is a control structure and indents are enabled, apply proper indentation.
     \+ no_src_indents, symbol(H), member(H, ['If', 'cond', 'let', 'let*']), !,
     with_indents(true, w_proper_indent(2, w_in_p(pp_sex([H | T])))).
-pp_sexi_l([H | T]) :-
+
+pp_sexi_lc([H | T]) :-
     % If `T` has 2 or fewer elements, format as S-expression or apply indentation based on length.
     is_list(T), length(T, Args), Args =< 2, fail,
-    wots(SS, ((with_indents(false, (write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')')))))),
+    portray_compound_type(list,L,M,R),
+    wots(SS, ((with_indents(false, (write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M,T), write(R)))))),
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
 /*
 
 pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
-   with_indents(false,(write('('), pp_sex_nc(H), write(' '), print_list_as_sexpression(T), write(')'))).
+   with_indents(false,(write('('), pp_sex_nc(H), write(' '), write_args_as_sexpression(T), write(')'))).
 
 %pp_sex([H,B,C|T]) :- T==[],!,
-%  with_indents(false,(write('('), pp_sex(H), print_list_as_sexpression([B,C]), write(')'))).
+%  with_indents(false,(write('('), pp_sex(H), write_args_as_sexpression([B,C]), write(')'))).
 */
 
 %!  pp_sexi_hb(+H, +B) is det.
@@ -1063,21 +1048,24 @@ pp_sex_c(V) :-
 pp_sexi_c(V) :-
     % If `V` is marked for final output, handle it and terminate.
     is_final_write(V), !.
-pp_sexi_c((USER:Body)) :-
+pp_sexi_c((USER:Body)) :- fail,
     % If `V` is in the format `user:Body`, process `Body` directly.
     USER == user, !, pp_sex(Body).
 pp_sexi_c(exec([H | T])) :-
     % For `exec([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
     is_list(T), !, write('!'), pp_sex_l([H | T]).
-pp_sexi_c(!([H | T])) :-
+pp_sexi_c('!'([H | T])) :-
     % For `!([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
     is_list(T), !, write('!'), pp_sex_l([H | T]).
 %pp_sexi_c([H|T]) :- is_list(T),!,unlooped_fbug(pp_sexi_c,pp_sex_l([H|T])).
 pp_sexi_c([H | T]) :-
     % If `V` is a list starting with `H`, print it as an S-expression list.
     is_list(T), !, pp_sex_l([H | T]).
+pp_sexi_c([H | T]) :-
+    % If `V` is a list starting with `H`, print it as an S-expression list.
+    \+ is_list(T), !, pp_sex_l([H | T]).
 %pp_sexi_c(V) :- print(V),!.
-pp_sexi_c(=(H, B)) :-
+pp_sexi_c(=(H, B)) :- fail,
     % If `V` is an equality structure `H = B`, print with `pp_sexi_hb/2`.
     !, pp_sexi_hb(H, B), !.
 pp_sexi_c(V) :-
@@ -1106,6 +1094,18 @@ pp_sexi_c('='(N, V)) :-
 pp_sexi_c(Term) :-
     % For `Term` with zero arity, format as a single symbol.
     compound_name_arity(Term, F, 0), !, pp_sex_c([F]).
+
+
+pp_sexi_c(V) :- print_compounds_special,
+    compound(V), V\=[_|_], V\=exec(_),
+    % If `V` is an empty string, print quoted empty string.
+    !, compound_name_arguments(V,Functor,Args),
+    always_dash_functor(Functor, DFunctor),
+    (symbol_glyph(Functor) -> ExtraSpace = ' ' ; ExtraSpace = ''),
+    portray_compound_type(cmpd,L,M,R),
+    write(L), write(ExtraSpace), write_args_as_sexpression(M, [DFunctor|Args]), write(ExtraSpace), write(R), !.
+    %maybe_indent_in(Lvl),write('{'), write_args_as_sexpression([F|Args]), write('}'),maybe_indent_out(Lvl).
+
 pp_sexi_c(Term) :-
     % For general compound terms, convert functor to dashed format and print as S-expression.
     Term =.. [Functor | Args],
@@ -1301,26 +1301,7 @@ dash_functor(Functor, DFunctor) :-
     symbolic_list_concat(L, '_', Functor), L \= [_],
     symbolic_list_concat(L, '-', DFunctor).
 
-%!  write_args_as_sexpression(+Args) is det.
-%
-%   Prints the arguments of a compound term `Args` in S-expression format.
-%
-%   This predicate iterates through each element in the list `Args`, writing
-%   each argument separated by a space in S-expression format.
-%
-%   @arg Args The list of arguments to be printed as an S-expression.
-%
-%   @example
-%     % Print arguments of a compound term as an S-expression.
-%     ?- write_args_as_sexpression([arg1, arg2, arg3]).
-%      arg1 arg2 arg3
-%
-write_args_as_sexpression([]).
-write_args_as_sexpression([H | T]) :-
-    % Write each argument with a preceding space, then recursively process the rest.
-    write(' '), pp_sex(H), write_args_as_sexpression(T).
-
-%!  print_list_as_sexpression(+List) is det.
+%!  write_args_as_sexpression(+List) is det.
 %
 %   Prints each element of `List` in S-expression format.
 %
@@ -1332,17 +1313,39 @@ write_args_as_sexpression([H | T]) :-
 %
 %   @example
 %     % Print a list as an S-expression.
-%     ?- print_list_as_sexpression([a, b, c]).
+%     ?- write_args_as_sexpression([a, b, c]).
 %     a b c
 %
-print_list_as_sexpression([]).
-print_list_as_sexpression([H]) :-
-    % Print a single-element list directly.
-    pp_sex(H).
-%print_list_as_sexpression([H]):- w_proper_indent(pp_sex(H)),!.
-print_list_as_sexpression([H | T]) :-
-    % For multi-element lists, print each element separated by a space.
-    pp_sex(H), write(' '), print_list_as_sexpression(T).
+%!  write_args_as_sexpression(+X) is det.
+%
+%   Prints a list of items `X` in an S-expression format if `X` is a list;
+%   otherwise, it prints `X` using the default source format.
+%
+%   This predicate checks if `X` is a list. If so, it calls `write_args_as_sexpression/1`
+%   to display it in S-expression style. If `X` is not a list, it falls back to
+%   printing `X` with `write_src/1`.
+%
+%   @arg X The term or list to be printed.
+%
+%   @example
+%     % Print a list as an S-expression.
+%     ?- write_args_as_sexpression([a, b, c]).
+%     (a b c)
+%
+%     % Print a non-list item.
+%     ?- write_args_as_sexpression(atom).
+%     atom
+%
+write_args_as_sexpression(Args):- write_args_as_sexpression('|',Args).
+
+write_args_as_sexpression(_,Nil):- Nil == [], !.
+%write_args_as_sexpression(H):- w_proper_indent(pp_sex(H)),!.
+write_args_as_sexpression(M,Var):- \+ compound(Var),!, write(M),write(' '),pp_sex(Var).
+% Print a single-element list directly.
+write_args_as_sexpression(_,[H|T]):- T==[], !, pp_sex(H).
+% For multi-element lists, print each element separated by a space.
+write_args_as_sexpression(M,[H|T]):- pp_sex(H), write(' '), write_args_as_sexpression(M,T).
+
 
 %!  with_indents(+TF, :Goal) is det.
 %
@@ -1509,16 +1512,16 @@ should_quote(Atom) :-
 %     % Check if a list of characters contains an unescaped double-quote.
 %     ?- contains_unescaped_quote(['a', '\\', '"', 'b']).
 %
-contains_unescaped_quote(['"']) :- 
+contains_unescaped_quote(['"']) :-
     % Ignore single ending quote.
-    !, fail. 
-contains_unescaped_quote(['"' | _]) :- 
+    !, fail.
+contains_unescaped_quote(['"' | _]) :-
     % Unescaped quote found at the start.
     !.
-contains_unescaped_quote(['\\', '"' | T]) :- 
+contains_unescaped_quote(['\\', '"' | T]) :-
     % Skip escaped quote and continue checking.
     !, contains_unescaped_quote(T).
-contains_unescaped_quote([_ | T]) :- 
+contains_unescaped_quote([_ | T]) :-
     % Continue checking the rest of the list.
     contains_unescaped_quote(T).
 
@@ -1573,8 +1576,8 @@ should_quote_symbol_chars(Atom, [Digit | _]) :-
 % ?- should_quote('123.456').
 % false.
 
-% ensure_loaded is a built-in Prolog directive that loads a source file if it hasn't been loaded already. 
-% Its main purpose is to prevent multiple loadings of the same file, which helps avoid duplicate definitions 
+% ensure_loaded is a built-in Prolog directive that loads a source file if it hasn't been loaded already.
+% Its main purpose is to prevent multiple loadings of the same file, which helps avoid duplicate definitions
 % and wasted resources.
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_compiler).
@@ -1585,3 +1588,163 @@ should_quote_symbol_chars(Atom, [Digit | _]) :-
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_printer).
 :- ensure_loaded(metta_eval).
+
+
+
+
+% Check if a term is a cons cell (not necessarily a proper list)
+is_lcons(X) :- compound(X), X = [_|_].
+
+% Determine if a list is complex based on nesting depth
+is_complex_list(N, _) :- N > 1, !.  % Consider complex if nesting exceeds 2
+is_complex_list(C, [H|T]) :-
+    is_list(H), !, succ(C, CL), is_complex_list(CL, H);
+    is_list(T), is_complex_list(C, T).
+is_complex_list(_, _) :- !, fail.
+
+simple_print_expr:- true.
+
+% Predicate to print expressions in Lisp-like format
+print_sexpr(Expr) :- simple_print_expr,!, pp_sex(Expr), !.
+print_sexpr(Expr) :-
+    print_sexpr(Expr, 0),  % Start with zero indentation
+    nop(nl).  % Ensure a newline after the complete expression for cleaner output
+
+% Base case for empty lists
+print_sexpr(T, Indent) :- compound(Indent), catch(Is is Indent,_,fail), !, print_sexpr(T, Is).
+print_sexpr(T, Indent) :- T == [], !, print_indent(Indent), write('()').
+print_sexpr(exec([H | T]), Indent) :-
+        % For `exec([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
+        is_list(T), !, write('!'), print_sexpr([H | T], Indent).
+
+print_sexpr(Expr, _) :- simple_print_expr,!, pp_sex(Expr), !.
+print_sexpr(Expr, Indent) :- \+ compound(Expr), !,
+    print_indent(Indent),
+    pp_sex(Expr).
+
+% If Expr is not a cons cell (Print a single element)
+print_sexpr(Expr, Indent) :- is_ftVar(Expr), !,
+    print_indent(Indent),
+    pp_sex(Expr).
+
+% Handling for cons lists
+print_sexpr(Expr, Indent) :- is_lcons(Expr), Expr = [H|T],
+    (Indent > 0 -> nl, print_indent(Indent); true),
+    print_indent(Indent), write('('),
+    NextIndent is Indent + 1,
+    print_sexpr(H, 0),
+    print_rest_elements(T, NextIndent),
+    write(')'),
+    (Indent == 0 -> nl; true).
+% If Expr is non cons compound
+print_sexpr(Expr, Indent) :- compound(Expr),
+    once(conjuncts_to_list(Expr,List)), [Expr]\=@=List, is_list(List),
+    List = [H|T],
+    (Indent > 0 -> nl, print_indent(Indent); true),
+    print_indent(Indent), write('{, '),
+    NextIndent is Indent + 1,
+    print_sexpr(H, 0),
+    print_rest_elements(T, NextIndent),
+    write('}'),
+    (Indent == 0 -> nl; true).
+
+print_sexpr((IF->THEN;ELSE), Indent):- !,
+    print_sexpr(if_t_then_else(IF,THEN,ELSE), Indent).
+print_sexpr((IF*->THEN;ELSE), Indent):- !,
+  print_sexpr(if_then_or_else(IF,THEN,ELSE), Indent).
+print_sexpr((IF->THEN), Indent):- !,
+  print_sexpr(if_t_then(IF,THEN), Indent).
+print_sexpr((IF*->THEN), Indent):- !,
+  print_sexpr(if_then(IF,THEN), Indent).
+print_sexpr((THEN;ELSE), Indent):- !,
+    print_sexpr('or'(THEN,ELSE), Indent).
+print_sexpr((Expr :- Body), Indent):- Body==true, !,
+  print_sexpr((Expr), Indent).
+print_sexpr((M:Expr :- Body), Indent):- atom(M), \+ number(Expr), print_module(M,Indent),!, print_sexpr((Expr :- Body), Indent).
+print_sexpr(M:Expr, Indent):- atom(M), \+ number(Expr), print_module(M,Indent),!,print_sexpr(Expr, Indent).
+print_sexpr(M:Expr, Indent):- atom(M), number(Expr), print_sexpr(M, Indent),write(':'),!,write(Expr).
+
+print_sexpr((Expr :- Body), Indent):-
+  print_sexpr((Expr), Indent),
+  write(' '),
+  print_sexpr((':-'), Indent+2),
+  print_sexpr((Body), Indent+2).
+
+% If Expr is non cons compound
+print_sexpr(Expr, Indent) :- compound(Expr),
+    compound_name_arguments(Expr,H,T),
+    (Indent > 0 -> nl, print_indent(Indent); true),
+    print_indent(Indent),
+    portray_compound_type(cmpd,L,M,R),
+    write(L),
+    (symbol_glyph(H)->write(" ");true),
+    NextIndent is Indent + 1,
+    print_sexpr(H, 0),
+    write(M),
+    print_rest_elements(T, NextIndent),
+    (symbol_glyph(H)->write(" ");true),
+    write(R),
+    (Indent == 0 -> nl; true).
+% If Expr is not a cons cell (Print a single element)
+print_sexpr(Expr, Indent) :-
+    print_indent(Indent),
+    pp_sex(Expr).
+
+print_module(M, _Indent):- M == user,!,nl.
+print_module(M, _Indent):- write('&'), print_sexpr(M, 0),write(' :\n'),!.
+
+
+
+symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
+
+portray_compound_type(list,'(','@',')').
+portray_compound_type(cmpd,"#(","|",")").
+%portray_compound_type(cmpd,"{","|","}").
+%portray_compound_type(cmpd,"(","@",")").
+
+% Print the rest of the elements in the list, ensuring spacing
+print_rest_elements(T, _) :- T==[], !.
+print_rest_elements(T, Indent) :- \+ is_lcons(T), !, write(' | '), print_sexpr(T, Indent).
+print_rest_elements([H|T], Indent) :-
+    write(' '),  % Space before each element after the first
+    print_sexpr(H, Indent),
+    (is_lcons(H) -> NextIndent is Indent + 0 ; NextIndent is Indent + 0),
+    print_rest_elements(T, NextIndent).
+
+% Helper predicate to print indentation spaces
+
+print_indent(NewIndent):- current_column(C), C < 4,  !, print_indent_now(NewIndent).
+print_indent(NewIndent):- current_column(C), C > 90,  nl, !, min_indent(NewIndent+2).
+print_indent(_).
+% Helper predicate to print indentation spaces
+%print_indent(N) :- !, min_indent(N).
+print_indent_now(Indent) :-
+    Indent > 0, write(' '),
+    NewIndent is Indent - 1, !,
+    print_indent_now(NewIndent).
+print_indent_now(_).
+
+% Example usage
+/*
+:- write_src(['parent', ['john', 'mary'], ['likes', 'ice-cream']]).
+:- write_src(['level1', ['level2', ['level3a', 'level3b'], 'level2b'], 'level1b']).
+:- write_src(['mix', 'of', ['atoms', 'and', ['sub', 'lists']], 'with', 'more', 'atoms']).
+:- write_src(['improper', ['list', 'without'] | 'ending properly']).
+
+:- write_src(((
+        print_sexpr(Lvl, Expr, Indent) :-
+            is_lcons(Expr), Expr = [H|T],
+            succ(Lvl, Lvl2),
+            min_indent(Indent), write("("),
+            NextIndent is Indent + 4,
+            print_sexpr(Lvl2, H, NextIndent),
+            print_rest_elements(Lvl2, T, 0),
+            write("("),
+            (Indent == 0 -> nl; true)))).
+%:- halt.
+*/
+
+:- abolish(xlisting_console:portray_hbr/3).
+xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src(H).
+xlisting_console:portray_hbr(H, B, _R):- print_tree(H:-B).
+
