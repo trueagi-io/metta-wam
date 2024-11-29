@@ -1,57 +1,3 @@
-Here’s the updated markdown, including explanations of **Plain Prolog and MeTTaLog's proportional scaling**, separate tables for **MeTTaLog vs. MeTTaRust** and the **longer timing table**, and all requested content integrated:
-
----
-
-# Practicality of Translating MeTTa to Other Languages
-
-## **Introduction**
-
-MeTTa, with its declarative and symbolic reasoning capabilities, presents unique challenges when translating to other languages. This document explores why **Prolog** emerges as the most practical target for MeTTa logic, compared to procedural languages like **C**, functional languages like **Scheme** or **Common Lisp**, and modern object-oriented languages like **Python** or **Java**.
-
-Additionally, while **C/C++** is a fine ultimate target for performance-critical applications, this document argues that **Prolog** should serve as an intermediary stopgap. Translating MeTTa to Prolog first ensures that we preserve the **"superpowers"** of Prolog—such as native backtracking, symbolic logic, and constraints—before generating highly optimized C/C++ implementations.
-
----
-
-## **Core Challenges in Translating MeTTa**
-
-### **1. Control Flow**
-- MeTTa employs implicit control flow through **pattern matching** and **recursive reasoning**, which procedural and functional languages struggle to replicate directly.
-- Languages like **C**, **Java**, and **Python** require explicit constructs (`if`, `while`, `for`) to model recursion and backtracking.
-
-### **2. Symbolic Logic**
-- MeTTa operates on **symbolic lists and atoms** as first-class citizens.
-- Procedural and object-oriented languages treat symbols and lists as secondary constructs, requiring heavy manual implementation.
-
-### **3. Backtracking**
-- Backtracking is a cornerstone of MeTTa logic.
-- **Prolog** naturally supports backtracking, making it a near-perfect match.
-- **C**, **Python**, and other general-purpose languages require manual stack management and state tracking to replicate this behavior.
-
-### **4. Constraint Handling**
-- MeTTa inherently supports constraints through symbolic matching and logical rules.
-- **Prolog with CLP(FD)** excels here, leveraging built-in constraint-solving capabilities.
-- **C/C++** requires custom implementations of constraint solvers, and **Python** relies on external libraries such as `z3` or `pyDatalog`.
-
-### **5. Tail Call Optimization (TCO)**
-- MeTTa relies on recursion extensively, making TCO critical for performance and scalability.
-- Many procedural and object-oriented languages (e.g., **C**, **Python**) do not guarantee TCO, making deep recursion problematic.
-- **Prolog** and some functional languages (e.g., **Scheme**) provide TCO natively.
-
----
-
-## **Why Prolog Is the Ideal Intermediate Target**
-
-| **Feature**             | **MeTTa**                  | **Prolog**               | **Common Lisp/Scheme**        | **Python**                 | **C/C++**                   |
-|--------------------------|----------------------------|---------------------------|--------------------------------|----------------------------|-----------------------------|
-| **Control Flow**         | Implicit, logic-driven    | Implicit, backtracking    | Explicit (`if`, `cond`)        | Explicit (`if`, `while`)   | Explicit (`if`, `switch`)  |
-| **Symbolic Logic**       | Native                   | Native                   | Secondary (via macros/lists)  | Libraries (manual logic)   | Manual implementation       |
-| **Backtracking**         | Native                   | Native                   | Manual (via stack management) | Libraries (manual logic)   | Manual recursion/state      |
-| **Constraint Handling**  | Symbolic Matching        | Native (with CLP(FD))    | Manual                       | Libraries (e.g., `z3`)     | Custom algorithms           |
-| **TCO**                  | Essential                | Native                   | Native (some dialects only)   | Not available             | Compiler-dependent          |
-| **Ease of Translation**  | N/A                      | High                     | Moderate                     | Moderate                  | Low                         |
-
----
-
 ## **Key Dataset: MeTTaLog vs. MeTTaRust**
 
 The following table compares the execution times for **MeTTaLog** and **MeTTaRust** for N-Queens sizes 4 through 7. This data highlights the significant disparity between the two implementations.
@@ -94,6 +40,51 @@ MeTTaLog and Plain Prolog exhibit proportional scaling. Both implementations han
 1. **Plain Prolog scales proportionally with MeTTaLog** but is consistently faster by approximately 30x.
 2. **Prolog CLP(FD)** exhibits better performance than Plain Prolog for smaller sizes due to built-in constraint-solving but slows for larger sizes due to memory overhead.
 3. **C/C++** remains the fastest for all tested sizes.
+
+---
+
+MeTTa, with its declarative and symbolic reasoning capabilities, presents unique challenges when translating to other languages. This document explores why **Prolog** emerges as the most practical target for MeTTa logic, compared to procedural languages like **C**, functional languages like **Scheme** or **Common Lisp**, and modern object-oriented languages like **Python** or **Java**.
+
+Additionally, while **C/C++** is a fine ultimate target for performance-critical applications, this document argues that **Prolog** should serve as an intermediary stopgap. Translating MeTTa to Prolog first ensures that we preserve the **"superpowers"** of Prolog—such as native backtracking, symbolic logic, and constraints—before generating highly optimized C/C++ implementations.
+
+---
+
+
+### **1. Control Flow**
+- MeTTa employs implicit control flow through **pattern matching** and **recursive reasoning**, which procedural and functional languages struggle to replicate directly.
+- Languages like **C**, **Java**, and **Python** require explicit constructs (`if`, `while`, `for`) to model recursion and backtracking.
+
+### **2. Symbolic Logic**
+- MeTTa operates on **symbolic lists and atoms** as first-class citizens.
+- Procedural and object-oriented languages treat symbols and lists as secondary constructs, requiring heavy manual implementation.
+
+### **3. Backtracking**
+- Backtracking is a cornerstone of MeTTa logic.
+- **Prolog** naturally supports backtracking, making it a near-perfect match.
+- **C**, **Python**, and other general-purpose languages require manual stack management and state tracking to replicate this behavior.
+
+### **4. Constraint Handling**
+- MeTTa inherently supports constraints through symbolic matching and logical rules.
+- **Prolog with CLP(FD)** excels here, leveraging built-in constraint-solving capabilities.
+- **C/C++** requires custom implementations of constraint solvers, and **Python** relies on external libraries such as `z3` or `pyDatalog`.
+
+### **5. Tail Call Optimization (TCO)**
+- MeTTa relies on recursion extensively, making TCO critical for performance and scalability.
+- Many procedural and object-oriented languages (e.g., **C**, **Python**) do not guarantee TCO, making deep recursion problematic.
+- **Prolog** and some functional languages (e.g., **Scheme**) provide TCO natively.
+
+---
+
+## **Why Prolog Is the Ideal Intermediate Target**
+
+| **Feature**             | **MeTTa**                  | **Prolog**               | **Common Lisp/Scheme**        | **Python**                 | **C/C++**                   |
+|--------------------------|----------------------------|---------------------------|--------------------------------|----------------------------|-----------------------------|
+| **Control Flow**         | Implicit, logic-driven    | Implicit, backtracking    | Explicit (`if`, `cond`)        | Explicit (`if`, `while`)   | Explicit (`if`, `switch`)  |
+| **Symbolic Logic**       | Native                   | Native                   | Secondary (via macros/lists)  | Libraries (manual logic)   | Manual implementation       |
+| **Backtracking**         | Native                   | Native                   | Manual (via stack management) | Libraries (manual logic)   | Manual recursion/state      |
+| **Constraint Handling**  | Symbolic Matching        | Native (with CLP(FD))    | Manual                       | Libraries (e.g., `z3`)     | Custom algorithms           |
+| **TCO**                  | Essential                | Native                   | Native (some dialects only)   | Not available             | Compiler-dependent          |
+| **Ease of Translation**  | N/A                      | High                     | Moderate                     | Moderate                  | Low                         |
 
 ---
 
