@@ -1,19 +1,15 @@
+% This file initializes and configures the runtime environment for MeTTaLog .. it is for non RELP user such as
+% From the LSP server and transpiled MeTTa files.
+% It sets the required directories, attaches necessary packages, configures Prolog flags for mettalog and
+% arguments, and ensures that essential libraries are loaded. The environment is prepared for execution
+% without starting the REPL, and includes detailed runtime logging and session tracking functionalities.
 
-% File that is loaded from LSP server and transpiled MeTTa files so all the options such as not starting the REPL and things happen
+% Configure arguments specific to SWI-Prolog (this is so the LSP Server when it uses this library doesn't trick MeTTa into processing its args)
+:- set_prolog_flag(argv, []),
+   set_prolog_flag(os_argv, [swipl]).
 
-% Predicate to log the files that are currently open for reading excluding this file
-print_reading_file(Message) :-
-    prolog_load_context(file, CurrentFile),
-    stream_property(Stream,file_name(File)),
-    \+ at_end_of_stream(Stream),
-    File \= CurrentFile,!,
-    format('~N%File: ~w ~w~n',[File, Message]).
-print_reading_file(Message):-
-    prolog_load_context(file, File),
-    format('~N%File: ~w ~w~n',[File, Message]).
-
-% Set the directory context for loading packages; if prolog_load_context fails, use '.' as default
-:- (prolog_load_context(directory, Value); Value='.'),
+% Set the directory context for loading packages; use the default directory if context retrieval fails
+:- (prolog_load_context(directory, Value); Value = '.'),
    absolute_file_name('../packs/', Dir, [relative_to(Value)]),
    atom_concat(Dir, 'predicate_streams', PS),
    atom_concat(Dir, 'logicmoo_utils', LU),
@@ -21,67 +17,91 @@ print_reading_file(Message):-
    pack_attach(PS, [duplicate(replace), search(first)]),
    pack_attach(LU, [duplicate(replace), search(first)]).
 
-% Set Prolog flags for mettalog runtime and argument configuration
+% Set Prolog flags for mettalog runtime and arguments configuration
 :- set_prolog_flag(mettalog_rt, true),
    set_prolog_flag(mettalog_rt_args, []),
    set_prolog_flag(metta_argv, []).
 
-% Set Prolog flags for argument vector and OS argument vector, focused on SWI-Prolog
-:- set_prolog_flag(argv, []),
-   set_prolog_flag(os_argv, [swipl]).
+% Ensure essential libraries are loaded and initialize the main application
+% Uncomment the next line if 'metta_compiler_lib' needs to be loaded as well
+% :- user:ensure_loaded(metta_compiler_lib),!,
 
-% Ensure certain libraries are loaded and start the main application
-% Uncomment the next line if 'metta_compiler_lib' needs to be loaded separately
-% :- user:ensure_loaded(metta_compiler_lib).
 :- user:ensure_loaded(metta_interp),!,
-   % calls metta interp bootstrap
+   % Start interpreter code
    user:loon.
 
-% Flush any pending output to the terminal or log file
-flush_answer_output :- write_answer_output, ttyflush.
+% Flush any pending output to ensure smooth runtime interactions
+flush_metta_output :-
+    with_output_to(user_error, (write_answer_output, ttyflush)).
 
-% Write out answers in a hyperon-experimental format
+% Write out answers in hyperon-experimental format to user_error
 metta_runtime_write_answers(List) :-
-   write('['), write_answers_aux(List), write(']'), nl.
+    with_output_to(user_error, (write('['), write_answers_aux(List), write(']'))).
 
-% Helper to write answers or finish if the list is empty
-write_answers_aux(List) :- List == [], !.
-write_answers_aux([H|List]) :- List == [], !, write_src_woi(H).
-write_answers_aux([H|List]) :- write_src_woi(H), write(', '), write_answers_aux(List).
+% Helper predicate to manage answer formatting to user_error
+write_answers_aux([]) :- !.
+write_answers_aux([H|T]) :-
+    with_output_to(user_error, (write_src_woi(H), (T == [] -> true ; write(', '), write_answers_aux(T)))).
 
-% Record starting time
-record_start_time(WallStart, CPUStart) :-
-    statistics(walltime, [WallStart|_]),
+% Dynamically describe the current file or an actively reading file, providing context for runtime sessions
+file_desc(Message) :-
+    prolog_load_context(file, CurrentFile),
+    (   stream_property(Stream, mode(read)),
+        stream_property(Stream, file_name(File)),
+        \+ at_end_of_stream(Stream),
+        File \= CurrentFile,
+        !,
+        sformat(Message, 'File(~w)', [File])
+    ;   sformat(Message, 'File(~w)', [CurrentFile])
+    ).
+
+:- dynamic(runtime_session/4).
+
+% Begin a runtime session with detailed time recording, output to user_error
+begin_metta_runtime :-
+    file_desc(Description),
+    current_times(WallStart, CPUStart),
+    asserta(runtime_session(start, WallStart, CPUStart, Description)),
+    with_output_to(user_error, format('~w started.~n', [Description])).
+
+% End a runtime session, calculate and print elapsed times, output to user_error
+end_metta_runtime :-
+    file_desc(Description),
+    (   retract(runtime_session(start, WallStart, CPUStart, Description))
+    ->  calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
+        print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description)
+    ;   with_output_to(user_error, format('Error: No runtime session start information found for "~w".~n', [Description]))
+    ).
+
+% Wall and CPU time
+current_times(WallStart, CPUStart) :-
+    get_time(WallStart),
     statistics(cputime, CPUStart).
 
-% Calculate elapsed time and print it with a descriptive message
-print_elapsed_time(WallStart, CPUStart, Description) :-
-    statistics(walltime, [WallEnd|_]),
-    statistics(cputime, CPUEnd),
-    WallTime is WallEnd - WallStart,
-    CPUTime is CPUEnd - CPUStart,
-    format('Elapsed time for ~w - Wall time: ~w ms, CPU time: ~w seconds~n', [Description, WallTime, CPUTime]).
+% Calculate elapsed times
+calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime) :-
+    current_times(WallEnd, CPUEnd),
+    WallElapsedTime is WallEnd - WallStart,
+    CPUElapsedTime is CPUEnd - CPUStart.
 
-% Execute a Prolog query and handle output, performance logging, and time measurements
+% Print the elapsed wall and CPU time with a description, output to user_error
+print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
+    with_output_to(user_error,
+        format('             % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
+               [WallElapsedTime, CPUElapsedTime, Description])).
+
+% Execute a Prolog query and handle output, performance logging, and time measurements to user_error
 do_metta_runtime(Var, Call) :-
     functor(Call, Func, _),
     atom_concat('Testing ', Func, Description),
-    record_start_time(WallStart, CPUStart),
+    current_times(WallStart, CPUStart),
+    % Execute the query and collect results
     with_output_to(user_error, findall(Var, Call, List)),
+    % Record stop time
+    calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
+    % Show results
     with_output_to(user_error, metta_runtime_write_answers(List)),
-    print_elapsed_time(WallStart, CPUStart, Description),
-    flush_answer_output.
-
-% Start of a runtime session for logging and debugging with time recording
-begin_metta_runtime :-
-    Description = 'Starting test session',
-    flush_answer_output,
-    record_start_time(_, _),
-    print_elapsed_time(_, _, Description).
-
-% End of a runtime session; used to output timing and debugging information
-end_metta_runtime :-
-    Description = 'Ending test session',
-    print_elapsed_time(_, _, Description),
-    flush_answer_output.
+    % Print elapsed time
+    print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description),
+    flush_metta_output.
 
