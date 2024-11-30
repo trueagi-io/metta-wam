@@ -26,7 +26,7 @@ write_answers_aux([H|List]):- List == [], !, write_src_woi(H).
 write_answers_aux([H|List]):- write_src_woi(H), write(', '), write_answers_aux(List).
 
 
-do_file_top(Var,Call):-
+do_metta_runtime(Var,Call):-
   with_output_to(user_error, findall(Var,Call,List)),
   with_output_to(user_error, metta_runtime_write_answers(List)),
   write_answer_output.
