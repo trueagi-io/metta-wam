@@ -97,9 +97,9 @@
 ; TODO: This test has different behavior in old_interpreter and minimal interpreter.
 ; In first case it returns (Error ln BadType). In second case it returns
 ; (Error (+ ln 2) BadType). Uncomment when old_interpreter feature is removed
-;!(assertEqualToResult
-;  (== 4 (+ ln 2))
-;  ((Error (+ ln 2) BadType)))
+!(assertEqualToResult
+  (== 4 (+ ln 2))
+  ((Error (+ ln 2) BadType)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

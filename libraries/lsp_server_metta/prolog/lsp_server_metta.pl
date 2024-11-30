@@ -62,7 +62,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- user:ensure_loaded(lsp_metta_workspace).
 :- user:ensure_loaded(lsp_metta_references).
 :- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
-:- dynamic(user:full_text/2).
+:- dynamic(lsp_state:full_text/2).
 :- user:ensure_loaded(lsp_prolog_changes).
 :- user:ensure_loaded(lsp_prolog_checking).
 :- user:ensure_loaded(lsp_prolog_colours).
@@ -192,9 +192,9 @@ handle_parsed_request(Out, Req) :-
     after_slash(FileUri,FileUriAS),
     atomic_list_concat([MethodAS,FileUriAS,''],'_',Stem),
     (number(RequestId) -> JobId = RequestId ; gensym(Stem, JobId)),
-    get_time(Time), asserta(post_time(JobId, Time)),
+    get_time(Time), asserta(lsp_ti:post_time(JobId, Time)),
     sformat(JobInfo, "JID: ~w ~q=~q", [JobId, Method, FileUri]),
-    (number(RequestId)-> ( assert(id_info(RequestId,JobInfo))) ; true),
+    (number(RequestId)-> ( assert(lsp_ti:id_info(RequestId,JobInfo))) ; true),
     % Handle the request based on threading mode or immediacy
     ((lsp_worker_threads(0) ; immediate_method(Method)) ->
         (handle_request(JobId, JobInfo, Out, Req))
@@ -210,7 +210,7 @@ post_job(QueueId, Task) :-
     ),
 
     % Store the job in the database with the chosen JobId
-    assertz(job_data(JobId, Task)),
+    assertz(lsp_ti:job_data(JobId, Task)),
 
     % Post only the JobId to the message queue
     with_mutex('$lsp_request_mutex', (
@@ -221,14 +221,14 @@ post_job(QueueId, Task) :-
 
 
 job_info:-
-  listing(id_info/2),
-  listing(job_data/2),
-  listing(id_was_canceled),
-  listing(task_thread/2).
+  listing(lsp_ti:id_info/2),
+  listing(lsp_ti:job_data/2),
+  listing(lsp_ti:id_was_canceled),
+  listing(lsp_ti:task_thread/2).
 
 % New dynamic predicate to store job data in the database
-:- dynamic job_data/2.
-:- dynamic id_info/2.
+:- dynamic lsp_ti:job_data/2.
+:- dynamic lsp_ti:id_info/2.
 
 % Worker loop
 do_work(QueueId) :-
@@ -246,27 +246,28 @@ do_work_stuff(QueueId) :-
     fail.
 
 do_work_stuff_tid(QueueId, ThreadId) :-
+    canceled_signal(Signal),
     repeat,
     % Retrieve the job ID from the queue
     thread_get_message(QueueId, JobId),
 
     % Fetch the actual job data from the database
-    (   retract(job_data(JobId, Task))
+    (   retract(lsp_ti:job_data(JobId, Task))
     -> (Task = lsp_task(Out, _, JobInfo, Req),
         request_id(Req, RequestId),
         (JobId==RequestId -> JR = JobId  ; JR = (JobId/RequestId)),
         % Register this thread handling RequestId
         with_mutex('$lsp_request_mutex', (
-            (id_was_canceled(RequestId) ->
+            (lsp_ti:id_was_canceled(RequestId) ->
                (debug_lsp(threads, "Request ~w was canceled before it got started! ~w", [JR, JobInfo]),
-                ignore(retract(job_data(RequestId,_))),
-                ignore(id_was_canceled(RequestId))),
-                ignore(retract(id_info(RequestId,_))),
+                ignore(retract(lsp_ti:job_data(RequestId,_))),
+                ignore(lsp_ti:id_was_canceled(RequestId))),
+                ignore(retract(lsp_ti:id_info(RequestId,_))),
                 debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
                 send_cancellation_response(Out, RequestId),
-                throw(canceled),
+                throw(Signal),
                 true)
-            ; assertz(task_thread(RequestId, ThreadId))
+            ; assertz(lsp_ti:task_thread(RequestId, ThreadId))
         ))),
 
         debug_lsp(threads, "Worker ~w processing task with JobId ~w: ~w", [ThreadId, JR, JobInfo]),
@@ -274,15 +275,15 @@ do_work_stuff_tid(QueueId, ThreadId) :-
         % Process the request and handle cancellation
         catch(
             handle_request(JobId, JobInfo, Out, Req),
-            canceled,
+            Signal,
             ( debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
               send_cancellation_response(Out, RequestId)
             )
         ),
 
-        % Clean up task_thread
+        % Clean up lsp_ti:task_thread
         with_mutex('$lsp_request_mutex', (
-            ignore(retract(task_thread(RequestId, ThreadId))),
+            ignore(retract(lsp_ti:task_thread(RequestId, ThreadId))),
             true))
     ;   debug_lsp(threads, "Job ID ~w not found in the database", [JobId])
     ).
@@ -307,13 +308,13 @@ lsp_worker_threads(MaxThreads) :-
 % lsp_worker_threads(3). % 3 threads, allows some parallel processing and handling of "$/cancelRequest"
 lsp_worker_threads(10). % 10 threads is the current setting, allowing high concurrency but could be overkill for some cases
 
-:- dynamic(started_lsp_worker_threads/0).
+:- dynamic(lsp_ti:started_lsp_worker_threads/0).
 
 % Start worker threads or run synchronously based on max threads.
 start_lsp_worker_threads :-
-    started_lsp_worker_threads, !.
+    lsp_ti:started_lsp_worker_threads, !.
 start_lsp_worker_threads :-
-    assert(started_lsp_worker_threads),
+    assert(lsp_ti:started_lsp_worker_threads),
     lsp_worker_threads(MaxThreads),
     (MaxThreads > 0 ->
         create_workers('$lsp_worker_pool', MaxThreads)
@@ -328,8 +329,8 @@ create_workers(QueueId, N) :-
     debug_lsp(threads, "~q", [create_workers(QueueId, N)]).
 
 % Dynamic predicates for task management and cancellation
-:- dynamic task_thread/2.
-:- dynamic id_was_canceled/1.
+:- dynamic lsp_ti:task_thread/2.
+:- dynamic lsp_ti:id_was_canceled/1.
 
 % Create a mutex for synchronization
 :- if(\+ prolog_load_context(reloading, true)).
@@ -337,19 +338,24 @@ create_workers(QueueId, N) :-
     :- mutex_create('$lsp_response_mutex').
 :- endif.
 
+
+canceled_signal('$aborted').
+
+
 % Cancel a specific task by ID
 cancel_taskid(CancelId) :-
     debug_lsp(threads, "Cancel request received for ID ~w", [CancelId]),
     with_mutex('$lsp_request_mutex', (
-        ignore(retract(job_data(CancelId, _))),
-        (task_thread(CancelId, ThreadId) ->
-           (debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
-            catch(thread_signal(ThreadId, throw(canceled)), _, true),  % in case the thread is gone
-            ignore(retract(task_thread(CancelId, ThreadId))),
-            ignore(retract(id_info(CancelId, _))),
-            ignore(retract(task_thread(CancelId, ThreadId))))  % in case it didnt clean up after itself
+        ignore(retract(lsp_ti:job_data(CancelId, _))),
+        (lsp_ti:task_thread(CancelId, ThreadId) ->
+           (canceled_signal(Signal),
+            debug_lsp(threads, "Attempting to cancel thread ~w", [ThreadId]),
+            catch(thread_signal(ThreadId, throw(Signal)), _, true),  % in case the thread is gone
+            ignore(retract(lsp_ti:task_thread(CancelId, ThreadId))),
+            ignore(retract(lsp_ti:id_info(CancelId, _))),
+            ignore(retract(lsp_ti:task_thread(CancelId, ThreadId))))  % in case it didnt clean up after itself
         ; (debug_lsp(threads, "No running thread found for request ID ~w", [CancelId]),
-           assertz(id_was_canceled(CancelId)))
+           assertz(lsp_ti:id_was_canceled(CancelId)))
         )
     )).
 
@@ -370,11 +376,12 @@ send_cancellation_response(OutStream, RequestId) :-
 % Backtrace error handler
 catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
-        ( Err == canceled ->
-            throw(canceled)
-        ; ( debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+        ( canceled_signal(Err) ->
             throw(Err)
-          )
+        ; ((with_output_to(user_errr,print_message(error, Err)),
+            debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+            throw(Err)
+         ))
         )
      ).
 
@@ -419,7 +426,7 @@ debug_lsp(Topic,Format,Args):-
  ignore((% debugging(Topic),
    \+ \+ ((hide_gvars(Args),
            flush_output(user_error), format(user_error, '~N~w: ',[Topic]),
-           sformat(S, Format, Args), trim_to_slength(S,300,SS),
+           sformat(S, Format, Args), S = SS, % trim_to_slength(S,3_000_000,SS),
            format(user_error, '~w~n',[SS]),
            nl(user_error),nl(user_error),flush_output(user_error),
            nop((debug(lsp(Topic),Format,Args))))))), !.
@@ -441,7 +448,7 @@ each_key(Key,Try):- arg(_,Key,Maybe),each_key(Maybe,Try).
 
 % Handle individual requests
 % Predicate to store the posting time of each job by JobId
-:- dynamic post_time/2.
+:- dynamic lsp_ti:post_time/2.
 
 % Helper to calculate and format time difference with appropriate units
 % If Description is provided, it prepends it to the formatted time. If not applicable, returns an empty string.
@@ -472,7 +479,7 @@ time_diff_string(_, _, "", "").  % If no Description, return empty string
 handle_request(JobId, JobInfo, OutStream, Req) :-
     nb_setval('$lsp_output_stream', OutStream),
     % Retrieve post time
-    (retract(post_time(JobId, PostTime)) -> true ; get_time(PostTime)),
+    (retract(lsp_ti:post_time(JobId, PostTime)) -> true ; get_time(PostTime)),
     first_dict_key(body, Req, Body),
     first_dict_key(method, Body, Method),
     request_id(Req, Id),
@@ -510,13 +517,13 @@ handle_request(JobId, JobInfo, OutStream, Req) :-
                ))
         ),
         Err,
-        ( Err == canceled ->
+        ( canceled_signal(Err) ->
             ( get_time(CancelTime),
               time_diff_string(StartTime, CancelTime, "Processed", DurationStartToEnd),
               time_diff_string(PostTime, CancelTime, "Total", DurationPostToEnd),
               debug_lsp(high, "Request id ~w canceled after -- ~q, ~q, ~q",
                         [JobInfo, DurationPostToEnd, DurationPostToStart, DurationStartToEnd]),
-              throw(canceled)
+              throw(Err)
             )
         ; ( get_time(ErrorTime),
             time_diff_string(StartTime, ErrorTime, "Processed", DurationStartToEnd),
@@ -641,9 +648,7 @@ server_capabilities(
     % token_modifiers(TokenModifiers).  % Token modifiers configuration placeholder for future semantic token support
 
 
-:- dynamic(user:client_capabilities/1).
-
-:- dynamic in_editor/1.
+:- dynamic lsp_state:in_editor/1.
 
 :- discontiguous(handle_msg/3).
 
@@ -653,23 +658,24 @@ server_capabilities(
 handle_msg( _, _, _) :- notrace(catch(make,_,true)),fail.
 
 % Save the last Msg.body Object for each method  (must fail to allow further processing)
-:- dynamic(user:last_request/2).
+:- dynamic(lsp_state:last_request/2).
 handle_msg( Method, MsgBody, _) :-
     once((
-      (string(Method)-> retractall(user:last_request(Method,_)) ; true),
-      asserta(user:last_request(Method, MsgBody)))),
+      (string(Method)-> retractall(lsp_state:last_request(Method,_)) ; true),
+      asserta(lsp_state:last_request(Method, MsgBody)))),
       fail.
 
 %  Saves last infos that might be realivant to context (must fail to allow further processing)
-:- dynamic(user:last_range/2).
+:- dynamic(lsp_state:last_range/2).
+
 handle_msg(Method, Msg, _) :-
    %Method \== "textDocument/hover",
    Method \== "textDocument/semanticTokens/range",
    % Method =="textDocument/codeAction" % is the most authoratative
     once((  _{params: Params} :< Msg,
       _{ range: Range } :< Params,
-      retractall(user:last_range(Method,_)),
-      asserta(user:last_range(Method,Range)))),
+      retractall(lsp_state:last_range(Method,_)),
+      asserta(lsp_state:last_range(Method,Range)))),
       fail.
 
 
@@ -747,7 +753,7 @@ message_id_target(Msg, Id, Doc, HintPath, Loc, Name/Arity):-
 % textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
 handle_msg("textDocument/definition", Msg, _{id: Id, result: Location}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-     defined_at(definition,HintPath, Target, Location),!.
+     type_defined_at(definition,HintPath, Target, Location),!.
 handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
 
 
@@ -758,7 +764,7 @@ handle_msg("textDocument/definition", Msg, _{id: Msg.id, result: null}) :- !.
 % textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
 handle_msg("textDocument/references", Msg, _{id: Id, result: Locations}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-     findall(Location,defined_at(references, HintPath, Target, Location),Locations), !.
+     findall(Location,type_defined_at(references, HintPath, Target, Location),Locations), !.
 handle_msg("textDocument/references", Msg, _{id: Msg.id, result: []}) :- !.
 
 % CALL: method:textDocument/implementation
@@ -767,7 +773,7 @@ handle_msg("textDocument/references", Msg, _{id: Msg.id, result: []}) :- !.
 % textDocument/implementation: returns a list of specific locations where the symbol is implemented. Additionally, it includes the locations returned by both textDocument/definition and textDocument/declaration, showing the full picture of where the symbol is implemented and its type associations.
 handle_msg("textDocument/implementation", Msg, _{id: Id, result: Locations}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-   findall(Location,defined_at(implementation, HintPath, Target, Location),Locations), !.
+   findall(Location,type_defined_at(implementation, HintPath, Target, Location),Locations), !.
 handle_msg("textDocument/implementation", Msg, _{id: Msg.id, result: []}) :- !.
 
 % CALL: method:textDocument/declaration
@@ -775,14 +781,14 @@ handle_msg("textDocument/implementation", Msg, _{id: Msg.id, result: []}) :- !.
 % textDocument/declaration: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
 handle_msg("textDocument/declaration", Msg, _{id: Id, result: Location}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-     defined_at(declaration, HintPath, Target, Location),!.
+     type_defined_at(declaration, HintPath, Target, Location),!.
 handle_msg("textDocument/declaration", Msg, _{id: Msg.id, result: null}) :- !.
 
 
 % textDocument/typeDefinition: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
 handle_msg("textDocument/typeDefinition", Msg, _{id: Id, result: Location}) :-
      message_id_target(Msg, Id, _, HintPath, _, Target),
-     defined_at(typeDefinition, HintPath, Target, Location),!.
+     type_defined_at(typeDefinition, HintPath, Target, Location),!.
 handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !.
 
 % CALL: method:textDocument/completion
@@ -855,7 +861,7 @@ handle_msg("textDocument/didOpen", Msg, Resp) :-
     debug_lsp(low,"~w",[SplitText]),
     retractall(lsp_metta_changes:doc_text_d4(Path, _)),
     assertz(lsp_metta_changes:doc_text_d4(Path, SplitText)),*/
-    ( in_editor(Path) -> true ; assertz(in_editor(Path)) ),
+    ( lsp_state:in_editor(Path) -> true ; assertz(lsp_state:in_editor(Path)) ),
     %source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
     xref_maybe(Path, FullText), % Check if changed and enqueue the reindexing
     check_errors_resp(FileUri, Resp), !.
@@ -882,7 +888,7 @@ handle_msg("textDocument/didClose", Msg, false) :-
     _{params: _{textDocument: TextDoc}} :< Msg,
     _{uri: FileUri} :< TextDoc,
     doc_path(FileUri, Path),
-    retractall(in_editor(Path)).
+    retractall(lsp_state:in_editor(Path)).
 
 handle_msg("initialized", Msg, false) :- !,
     debug_lsp(main, "initialized ~w", [Msg]),
@@ -913,7 +919,7 @@ handle_msg("workspace/symbol", Msg, _{id: Id, result: Symbols}) :-
 collect_workspace_symbols(Query, Symbols) :-
     findall(Symbol,
         (
-            in_editor(Path),
+            lsp_state:in_editor(Path),
             % Convert file path to URI
             path_doc(Path, DocUri),
             xref_document_symbols(DocUri, DocSymbols),
@@ -984,3 +990,24 @@ check_errors_resp(FileUri, _{method: "textDocument/publishDiagnostics",
 check_errors_resp(_, false) :-
     debug_lsp(errors, "Failed checking errors", []).
 
+
+
+:- dynamic lsp_server_callback_file_path/1.
+:- dynamic restored_lsp_server_callbacks/0.
+
+
+% Assert the dynamically determined path for the lsp-callbacks.metta file during loading
+:- prolog_load_context(file, CurrentFile),
+   file_directory_name(CurrentFile, Dir),
+   atomic_list_concat([Dir, '../lsp-callbacks.metta'], '/', RelativePath),
+   absolute_file_name(RelativePath, AbsolutePath),
+   assertz(lsp_server_callback_file_path(AbsolutePath)).
+
+% Restore the LSP server by retrieving the dynamically stored path
+restore_lsp_server_callbacks :- restored_lsp_server_callbacks,!.
+restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
+    lsp_server_callback_file_path(MettaPath),
+    import_metta('&lsp-server', MettaPath).
+
+%:- initialization(restore_lsp_server_callbacks).
+:- after_boot(restore_lsp_server_callbacks).

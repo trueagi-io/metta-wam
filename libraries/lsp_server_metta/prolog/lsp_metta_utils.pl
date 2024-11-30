@@ -187,6 +187,7 @@ get_src_code_at_range(TargetType, Uri, Range, SrcCode):-
    with_output_to(string(SrcCode),write_src_wi(Code)).
 
 
+get_code_at_range(Type, Uri, _Range, Target):- Type==file,!, Target = Uri.
 
 % Extract code at the specified range for different types of targets (symbol, expression, block, exact).
 % For `symbol`, it looks for a clause/symbol in the file at the specified position.
@@ -195,7 +196,7 @@ get_code_at_range(Type, Uri, Range, Target):- maybe_doc_path(Uri, Path), !, get_
 % get_code_at_range(+TargetType, +Uri, +line_char(L, C), -Target)
 get_code_at_range(TargetType, Uri, line_char(L, C), Target) :-
     % Retrieve the last recorded range from the user data
-    user:last_range(_Method, Range),
+    lsp_state:last_range(_Method, Range),
     % Correct use of :< to directly access start and end members of the Range
     _{start: Start, end: End} :< Range,
     _{character: SC, line: SL} :< Start,
@@ -210,7 +211,7 @@ get_code_at_range(TargetType, Uri, line_char(L, C), Target) :-
     get_code_at_range(TargetType, Uri, Range, Target).
 
 get_code_at_range(TargetType, Uri, line_char(_,_), Target):- fail,
-   user:last_range(_Method,Range), !,
+   lsp_state:last_range(_Method,Range), !,
    get_code_at_range(TargetType, Uri, Range, Target).
 
 get_code_at_range(TargetType, Uri, Range, Target):- \+ ((is_dict(Range), _{start: _RStart, end: _REnd} :< Range)),
@@ -257,7 +258,7 @@ get_code_at_range(symbol, Path, Range, Target):- fail, !,
         clause_with_arity_in_file_at_position(Target, _Arity, Path, Start)  % Get the clause at the specified position.
     )).
 
-get_code_at_range(toplevel_form, Path, Range, Code) :-
+get_code_at_range(toplevel, Path, Range, Code) :-
     %get_code_at_range(symbol, Path, Range, Target),  % First, get the symbol at the range.
     %Target \== '',
     %path_doc(Path, Uri),  % Extract the file path from the URI.
@@ -268,7 +269,7 @@ get_code_at_range(toplevel_form, Path, Range, Code) :-
     %\+ completely_after_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     maybe_name_vars(Vs), !.
     % brange_to_dict(BRange,CodeRange), get_code_at_range(exact, Uri, BRange, Code).  % Refine the code extraction with exact range.
-get_code_at_range(toplevel_form, Uri, Range, Target):- !, get_code_at_range(expression, Uri, Range, Target).
+get_code_at_range(toplevel, Uri, Range, Target):- !, get_code_at_range(expression, Uri, Range, Target).
 
 % For `term`, it first resolves the symbol and then looks for the code within the buffer at the range.
 get_code_at_range(term, Path, Range, Code) :-
@@ -309,7 +310,7 @@ get_code_at_range(expression, Uri, Range, Code):- get_code_at_range(exact, Uri, 
 
 % For `block`, it acts similarly to expression but with larger code blocks.
 get_code_at_range(block, Uri, Range, Code):-
-    get_code_at_range(toplevel_form, Uri, Range, Code),!.
+    get_code_at_range(toplevel, Uri, Range, Code),!.
 
 
 % Extracts the exact range of code specified by the Range (LSP-style start and end).

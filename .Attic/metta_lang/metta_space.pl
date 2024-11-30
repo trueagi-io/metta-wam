@@ -65,6 +65,10 @@
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_compiler).
 
+:- discontiguous(user:metta_file_buffer/7).
+:-     multifile(user:metta_file_buffer/7).
+:-       dynamic(user:metta_file_buffer/7).
+
 %:- ensure_loaded(metta_compiler).
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).

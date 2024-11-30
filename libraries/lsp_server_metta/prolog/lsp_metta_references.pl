@@ -2,13 +2,13 @@
 %  Find the callers and locations of the goal =Term=, starting from
 %  the file =Path=. =Location= will be bound to all the callers and
 %  locations that the =Term= is called from like =Caller-Location=.
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
 % textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
 metta_called_at(Path, Term, By, Location) :-
   matta_name_callable(Term, Callable),
   xref_metta_source(Path),
-  user:metta_file_buffer(0,_Ord,_Kind,_,CallerLine, _VL, Path, Location),
+  user:metta_file_buffer(0,_Ord,_Kind,CallerLine, _VL, Path, Location),
   metta_callee(CallerLine, Callable),
   metta_caller(CallerLine, By).
 
@@ -36,16 +36,24 @@ type_expand(implementation,RefType):- member(RefType, [decl(_),decl(use)]).
 % textDocument/declaration: returns the specific location of the symbol's type declaration, which can include its function definition, symbol definition, etc. Since only one location can be returned, the system chooses the most relevant type declaration for the symbol.
 % textDocument/implementation: returns a list of specific locations where the symbol is implemented. Additionally, it includes the locations returned by both textDocument/definition and textDocument/declaration, showing the full picture of where the symbol is implemented and its type associations.
 % textDocument/definition: returns the specific location in the document or file where the symbol is defined or documented. It points to the exact spot where the symbol is introduced in the code.
-defined_at(Type, HintPath, NameArity, Location):- metta_defined_at(Type, HintPath, NameArity, Location).
+type_defined_at(Type, HintPath, NameArity, Location):-  metta_defined_at(Type, HintPath, NameArity, Location).
+type_defined_at(_Type, HintPath, NameArity, Location):- prolog_file_or_var(HintPath), prolog_defined_at(HintPath, NameArity, Location).
+
+prolog_file_or_var(HintPath):- var(HintPath),!.
+prolog_file_or_var(HintPath):- atomic(HintPath), file_name_extension(_,Ext,HintPath), Ext == pl. % TODO we might use transpiled outputs like .datalog
+
+% Arity 4
 metta_defined_at(Type, HintPath, NameArity, Location):- metta_defined_at(Type, HintPath, NameArity, _, Location).
 
+% Arity 5
 %metta_defined_at(RefType, HintPath, Target, Term, Location):- Target=Name/Arity, nonvar(Name),!,metta_defined_at(RefType, HintPath, Name, Term, Location).
 %metta_defined_at(RefType, HintPath, Target, Term, Location):- nonvar(HintPath),!, xref_metta_source(HintPath), metta_defined_at(RefType, HintPath, Target, Term, Location).
 metta_defined_at(RefType, HintPath, NameArity, Term, Location):-
   xref_metta_source(HintPath),
   matta_name_callable(NameArity, Target),
   each_type_at_sorted(Target, Sort),!,
-  member(each_type_at(Target,Term, Path, Ref, Type),Sort),
+  assertion(var(Path)), % remember Path is a free variable on purpose (HintPath is a hint about where the predicate was found by the user.. not where it was defined or referenced)
+  member(each_type_at(Target,Term, Path, Ref, Type), Sort),
   once(type_expand(RefType,Type)),
   path_doc(Path, Doc),
   once(metta_relative_ref_location(Doc, Term, Ref, Location)).

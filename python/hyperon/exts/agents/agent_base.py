@@ -4,7 +4,45 @@ from hyperon.ext import register_atoms
 '''
 This is very preliminary and incomplete PoC version.
 However, it is put to exts, because metta-motto depends on it.
+Reagrding threading:
+- Generic threading for metta can be introduced with
+  parallel and sequential composition, for-comprehension, etc.
+  Agents could be built on top of this functionality. However,
+  this piece of code was driven by metta-motto demands.
+- Two main cases for agents are:
+  -- Immediate call with inputs to get outputs
+  -- Asynchronous events and responses
+  Supporting both cases in one implementation is more convenient,
+  because both of them can be needed simultaneously in certain
+  domains (e.g. metta-motto)
+- Implementation can be quite different.
+  -- Agents could be started explicitly
+  -- They could inherint from StreamMethod
+  -- Other methods could be called directly without StreamMethod wrapper
+  All these nuances are to be fleshed out
 '''
+
+import threading
+from queue import Queue
+class StreamMethod(threading.Thread):
+    def __init__(self, method, args):
+        super().__init__() #daemon=True
+        self._result = Queue()
+        self.method = method
+        self.args = args
+
+    def run(self):
+        for r in self.method(*self.args):
+            self._result.put(r)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._result.empty() and not self.is_alive():
+            raise StopIteration
+        return self._result.get()
+
 
 class AgentObject:
 
@@ -58,6 +96,9 @@ class AgentObject:
         return repr(val)
 
     def __init__(self, path=None, atoms={}, include_paths=None, code=None):
+        if path is None and code is None:
+            # purely Python agent
+            return
         # The first argument is either path or code when called from MeTTa
         if isinstance(path, ExpressionAtom):# and path != E():
             code = path
@@ -106,17 +147,65 @@ class AgentObject:
             )
         return self._metta.evaluate_atom(atom)
 
+    def is_daemon(self):
+        return hasattr(self, 'daemon') and self.daemon is True
+
     def __metta_call__(self, *args):
+        call = True
         method = self.__call__
         if len(args) > 0 and isinstance(args[0], SymbolAtom):
             n = args[0].get_name()
             if n[0] == '.' and hasattr(self, n[1:]):
                 method = getattr(self, n[1:])
                 args = args[1:]
+                call = False
         if self._unwrap:
-            return OperationObject(f"{method}", method).execute(*args)
-        return method(*args)
+            method = OperationObject(f"{method}", method).execute
+        st = StreamMethod(method, args)
+        st.start()
+        # We don't return the stream here; otherwise it will be consumed immediately.
+        # If the agent itself would be StreamMethod, its results could be accessbile.
+        # Here, they are lost (TODO?).
+        if call and self.is_daemon():
+            return [E()]
+        return st
 
+class BaseListeningAgent(AgentObject):
+    def __init__(self, path=None, atoms={}, include_paths=None, code=None):
+        super().__init__(path, atoms, include_paths, code)
+        self.messages = Queue()
+        self.running = False
+        self._output = []
+        self.lock = threading.RLock()
+
+    def start(self,  *args):
+        if not args:
+            args = ()
+        self.running = True
+        st = StreamMethod(self.messages_processor, args)
+        st.start()
+
+    def message_processor(self, message, *args):
+        return []
+
+    def messages_processor(self, *args):
+        while self.running:
+            if not self.messages.empty():
+                m = self.messages.get()
+                with self.lock:
+                    self._output = self.message_processor(m, *args)
+        return []
+
+    def stop(self):
+        self.running = False
+        return []
+
+    def input(self, msg):
+        self.messages.put(msg)
+        return []
+
+    def get_output(self):
+        return self._output
 
 @register_atoms(pass_metta=True)
 def agent_atoms(metta):

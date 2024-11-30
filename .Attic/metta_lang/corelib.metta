@@ -1,1 +1,1 @@
-!(include stdlib_mettalog.metta)
+!(import! stdlib_mettalog.metta)

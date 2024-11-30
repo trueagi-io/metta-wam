@@ -135,6 +135,41 @@ trim_to_length(InputString, MaxLength, TrimmedString) :-
         sub_string(InputString, 0, MaxLength, _, TrimmedString)
     ).
 
+lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
+    catch_with_backtrace((
+       get_code_at_range_type(ObjectType),
+       once(get_code_at_range(ObjectType, Uri, Range, Object)))),
+    catch_with_backtrace((lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction))).
+
+lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
+   lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
+
+lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)).
+lsp_call_metta_json(Eval,Ret):- catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
+
+pretend_json(Obj):- var(Obj), !.
+pretend_json(Obj):- is_dict(Obj), !.
+pretend_json([]). pretend_json(null).
+% Convert list of pairs to Prolog JSON object
+metta_to_json(Obj, Json) :- pretend_json(Obj), !, Obj=Json.
+metta_to_json(Value, SValue):- atom(Value),!,atom_string(Value, SValue).
+metta_to_json(Obj, Json) :- \+ is_list(Obj), !, Obj=Json.
+metta_to_json([quote, Obj], Json) :- !, metta_to_json(Obj, Json).
+metta_to_json(Dict, Json) :- maplist(pair_to_key_value, Dict, KeyValuePairs), dict_create(Json, _, KeyValuePairs), !.
+metta_to_json(List, Json) :- maplist(metta_to_json, List, Json),!.
+% Helper predicate to convert a pair [Key, Value] to Key-Value pair
+pair_to_key_value([Key, Value], Key-JsonValue):- atomic(Key), metta_to_json(Value, JsonValue),!.
+
+% Convert Prolog JSON object to metta list of pairs
+json_to_metta(Json, Metta) :- is_dict(Json), dict_pairs(Json, _, Pairs), maplist(key_value_to_pair, Pairs, Metta), !.
+% Convert JSON lists to metta lists
+json_to_metta(JsonList, MettaList) :- is_list(JsonList), maplist(json_to_metta, JsonList, MettaList),!.
+% Base case: Atomic values are directly returned
+json_to_metta(Value, Value).
+% Helper predicate to convert a Key-Value pair to [Key, Value]
+key_value_to_pair(Key-JsonValue, [Key, Value]) :- atomic(Key), json_to_metta(JsonValue, Value), !.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Action: GPT Rewrite Block
@@ -228,7 +263,7 @@ gpt_comment_code(Code, CommentedCode) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for Load Metta Code
 lsp_hooks:compute_code_action(Uri, Range, MettaFileAction) :-
-    get_src_code_at_range(toplevel_form, Uri, Range, Expression),
+    get_src_code_at_range(toplevel, Uri, Range, Expression),
     RunLoadTitle = "Run/Load Metta",
     sformat(RunLoadTitleExpression, "~w: ~w", [RunLoadTitle, Expression]),
     MettaFileAction = _{
@@ -280,7 +315,7 @@ maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for Evaluate Metta Expression
 lsp_hooks:compute_code_action(Uri, Range, EvalMettaAction) :-
-    once(get_src_code_at_range(toplevel_form, Uri, Range, TopExpression)),
+    once(get_src_code_at_range(toplevel, Uri, Range, TopExpression)),
     get_src_code_at_range(expression, Uri, Range, Expression),
     TopExpression \=@= Expression,
     EvalTitle = "Eval Expression",
@@ -367,7 +402,7 @@ test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, I
     ignore(Str=''),
     sformat(Message,'~w ~w ~w ~w', [Str, ExecutionResult, Src, last(Kind)=Out]),
     info_type(Message,Info), !.
-test_metta_file_buffer(_Uri,_Lvl,_Ord, Kind, What,  VL, Path,_BRange, Message, error):-
+test_metta_file_buffer(_Uri,_Lvl,_Ord, _Kind, What,  VL, _Path,_BRange, Message, error):-
     maybe_name_vars(VL),
     wots(Src, write_src(What)),!,
     sformat(Message,'Src: ', [Src]).
@@ -394,15 +429,33 @@ lsp_hooks:compute_code_lens(Uri, _, CodeLens) :-
         range: _{start: _{line: 0, character: 0}, end: _{line: 0, character: 1}},
         command: _{title: "Run Unit Tests", command: "run_all_tests", arguments: [Uri]}
     }.
+/*
+ $CodeLens =
+ ((range
+    ((start (line 0) (character 0))
+     (end (line 0) (character 1))))
+  (command
+    ((title "Run Unit Tests")
+     (command "run_all_tests")
+     (arguments ($Uri)))))
+*/
 
 % Compute Code Lens for Buffer
 lsp_hooks:compute_code_lens(Uri, Path, CodeLens) :-
     compute_code_lens_for_buffer(Uri, Path, CodeLens).
 
+lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens):-
+    lsp_call_metta_json(['compute-each-code-lens', Uri, Lvl, Ord, Kind, What, VL, Path, Range],CodeLens).
+
+compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
+    user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange), into_json_range(BRange, Range),
+    lsp_hooks:compute_each_code_lens(Uri, Lvl, Ord, Kind, What, VL, Path, Range, CodeLens).
+
 compute_code_lens_for_buffer(Uri, Path, CodeLens) :-
     Lvl = 0,
     user:metta_file_buffer(Lvl, Ord, Kind, What, VL, Path, BRange),
     compute_each_buffer_lens(Uri, Lvl, Ord, Kind, What, VL, Path, BRange, CodeLens).
+
 
 compute_each_buffer_lens(Uri, _Lvl, _Ord, Kind, What, VL, _Path, BRange, CodeLens) :-
     \+ is_list(What),
@@ -443,10 +496,10 @@ compute_each_buffer_lens(_Uri, Lvl, _Ord, _Kind, Symbol, _VL, _Path, BRange, Cod
 
 
 % Handle "codeLens/resolve" Request
-handle_code_action_msg("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
+lsp_hooks:handle_msg_hook("codeLens/resolve", Msg, _{id: Id, result: ResolvedCodeLens}) :-
     _{params: CodeLensParams, id: Id} :< Msg,
     resolve_code_lens(CodeLensParams, ResolvedCodeLens), !.
-handle_code_action_msg("codeLens/resolve", Msg, _{id: Msg.id, result: null}) :- !.  % Fallback if resolution fails
+lsp_hooks:handle_msg_hook("codeLens/resolve", Msg, _{id: Msg.id, result: null}) :- !.  % Fallback if resolution fails
 
 
 % Resolve Code Lens
@@ -478,8 +531,6 @@ symbol_reference_locations(Symbol, Locations) :-
 % The symbol_reference_uri/2 predicate is defined earlier.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Handle Execute Command
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle Execute Command
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Implement handle_execute_command/2
@@ -526,54 +577,6 @@ handle_execute_command(Msg, Response) :-
         )
     ).
 
-/*
-% Implement handle_execute_command/2
-handle_execute_command(Msg, Response) :-
-    % Extract parameters from the message
-    _{id: Id, params: Params} :< Msg,
-    _{command: Command, arguments: Arguments} :< Params,
-    % Look up the clause for lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult)
-    HeadPattern = lsp_hooks:exec_code_action(Command, ExpectedArguments, ExecutionResult),
-    (   clause(HeadPattern, Body)
-    ->  (
-            % We found a matching command
-            (   arguments_match(ExpectedArguments, Arguments)
-            ->  (   % Proceed to execute the command
-                    catch(
-                        call(Body),
-                        Error,
-                        % Handle errors that occur during execution
-                        (   format(string(ErrorMessage), "Error ~w ~q:~q", [Error, Command, Arguments]),
-                            send_feedback_message(ErrorMessage, warning),
-                            Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
-                        )
-                    )
-                ->  % Execution succeeded without throwing an error
-                    (   send_feedback_message(ExecutionResult, info),
-                        Response = _{id: Id, result: ExecutionResult}
-                    )
-                ;   (   % Execution failed without an exception, but Body failed
-                        format(string(ErrorMessage), "Failed ~q:~q", [Command, Arguments]),
-                        send_feedback_message(ErrorMessage, warning),
-                        Response = _{id: Id, error: _{code: -32603, message: ErrorMessage}}
-                    )
-                )
-            ;   (   % Argument mismatch
-                    format(string(ErrorMessage),
-                        "Argument mismatch ~q:~q Expected ~w",
-                        [Command, Arguments, ExpectedArguments]),
-                    send_feedback_message(ErrorMessage, warning),
-                    Response = _{id: Id, error: _{code: -32602, message: ErrorMessage}}
-                )
-            )
-        )
-    ;   (   % Command not recognized
-            format(string(ErrorMessage), "Command not recognized: ~q: ~q", [Command, Arguments]),
-            send_feedback_message(ErrorMessage, warning),
-            Response = _{id: Id, error: _{code: -32601, message: ErrorMessage}}
-        )
-    ).
-*/
 
 % Helper predicate to check if provided arguments match the expected pattern
 arguments_match(ExpectedArguments, ProvidedArguments) :-

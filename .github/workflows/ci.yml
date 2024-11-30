@@ -1,3 +1,5 @@
+# .github/workflows/ci.yml
+
 name: CI Job to Generate JUnit Reports with Diff and Allure Reports
 
 on:
@@ -11,9 +13,11 @@ on:
       - main
 
 permissions:
-  contents: write  # Grant write permissions for contents
-  checks: write    # Grant write permissions for checks, only effective on push
-  pull-requests: write  # Explicitly grant write permissions for pull requests
+  contents: write
+  pages: write
+  actions: write
+  checks: write
+  pull-requests: write
 
 jobs:
   generate-reports:
@@ -21,10 +25,48 @@ jobs:
 
     if: (github.repository == 'trueagi-io/metta-wam') || (github.event_name != 'schedule')
 
+    env:
+      JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
+      REPO_URL: https://github.com/${{ github.repository }}
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Ensure just-results branch exists
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        git ls-remote --heads ${{ env.REPO_URL }} just-results
+        if [ $? -ne 0 ]; then
+          echo "just-results branch does not exist. Creating it."
+          git init previous-results
+          cd previous-results
+          git checkout -b just-results
+          touch current_test_results.txt
+          git add current_test_results.txt
+          git commit -m "Initialize just-results branch"
+          git remote add origin ${{ env.REPO_URL }}
+          # Configure Git user information
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          # Set the remote URL with authentication
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git push origin just-results
+        else
+          echo "just-results branch exists. Cloning it."
+          git clone --single-branch --branch just-results --depth 1 https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git previous-results
+        fi
+
+    - name: Copy Previous Test Results
+      run: |
+        if [ -f "previous-results/current_test_results.txt" ]; then
+          cp previous-results/current_test_results.txt previous_test_results.txt
+        else
+          echo "No previous test results found."
+        fi
+        
     - name: Make Install Script Executable
       run: chmod +x INSTALL.sh
 
@@ -56,7 +98,7 @@ jobs:
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
         echo "BASELINE_COMPAT_PATH=$BASELINE_COMPAT_PATH" >> $GITHUB_ENV
         mkdir -p $BASELINE_COMPAT_PATH
-        if [ ${{ github.event_name }} == 'schedule' ]; then
+        if [ "${{ env.JOB_TYPE }}" == "nightly" ]; then
           ./scripts/run_nightly_tests.sh -t $TIMESTAMP
         else
           ./scripts/run_commit_tests.sh -t $TIMESTAMP
@@ -64,23 +106,72 @@ jobs:
       env:
         TERM: xterm-256color
 
+    - name: Parse Test Results
+      run: |
+        # Extract test IDs and their statuses into a sorted file
+        awk -F '|' '{print $2 "|" $3}' /tmp/SHARED.UNITS | grep -E 'PASS|FAIL' | sort > current_test_results.txt
+
+    - name: Compare Test Results
+      run: |
+        if [ -f "previous_test_results.txt" ]; then
+          if diff previous_test_results.txt current_test_results.txt > /dev/null; then
+            echo "No changes in test results."
+            echo "TEST_CHANGED=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in test results."
+            echo "TEST_CHANGED=true" >> $GITHUB_ENV
+          fi
+        else
+          echo "No previous test results to compare."
+          echo "TEST_CHANGED=true" >> $GITHUB_ENV
+        fi
+
+    - name: Save Current Test Results to just-results branch
+      if: env.TEST_CHANGED == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        cp current_test_results.txt previous-results/
+        cd previous-results
+
+        # Configure Git user information
+        git config user.name "${{ github.actor }}"
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+        # Set the remote URL with authentication
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+
+        git pull
+        # Stage and commit changes
+        git add current_test_results.txt
+        git commit -m "Update test results"
+
+        # Push changes to the just-results branch
+        git push origin just-results
+
+    # Continue only if tests changed
     - name: Run JUnit Report Generation Script
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         python3 scripts/into_junit.py /tmp/SHARED.UNITS ${{ env.TIMESTAMP }} 1 > junit.xml
 
     - name: Convert JUnit XML to Standard HTML Report
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         cat junit.xml
         junit2html junit.xml ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Convert JUnit XML to Matrix HTML Report
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       run: |
         junit2html --report-matrix ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html junit.xml
 
     - name: Upload JUnit XML Report
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -88,6 +179,7 @@ jobs:
         path: junit.xml
 
     - name: Upload Standard HTML Report
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -95,6 +187,7 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html
 
     - name: Upload Matrix HTML Report
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -102,6 +195,7 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html
 
     - name: Upload Test Output Log Files
+      if: env.TEST_CHANGED == 'true'
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -109,7 +203,7 @@ jobs:
         path: ${{ env.BASELINE_COMPAT_PATH }}
 
     - name: Display JUnit Test Results
-      if: github.event_name == 'push'  # Only run this step on pushes to main
+      if: (github.event_name == 'push') && (env.TEST_CHANGED == 'true')
       uses: dorny/test-reporter@v1
       with:
         name: 'JUnit Results'
@@ -118,40 +212,46 @@ jobs:
         fail-on-error: false
 
     - name: Provide Report Links
+      if: env.TEST_CHANGED == 'true'
       run: |
         echo "JUnit reports are available as artifacts."
 
     - name: Generate environment.properties
+      if: env.TEST_CHANGED == 'true'
       run: |
         python scripts/generate_allure_environment.py ${{ github.sha }} ${{ github.ref_name }} > environment.properties
 
     - name: Upload environment.properties
+      if: env.TEST_CHANGED == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: environment
         path: environment.properties
 
     - name: Get Allure history
+      if: env.TEST_CHANGED == 'true'
       uses: actions/checkout@v4
       with:
         ref: test-results
         path: test-results
 
     - name: Download JUnit XML Results
+      if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
         name: junit-report
         path: build/allure-results
 
     - name: Include environment properties
+      if: env.TEST_CHANGED == 'true'
       uses: actions/download-artifact@v4
       with:
         name: environment
         path: build/allure-results
 
     - name: Generate Allure Report
+      if: env.TEST_CHANGED == 'true'
       uses: simple-elf/allure-report-action@master
-      if: always()
       id: allure-report
       with:
         allure_results: build/allure-results
@@ -161,9 +261,10 @@ jobs:
         subfolder: ${{ env.SUBFOLDER }}
         keep_reports: 120
       env:
-        SUBFOLDER: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
+        SUBFOLDER: ${{ env.JOB_TYPE }}
 
     - name: Copy JUnit HTML Reports to GitHub Pages Directory
+      if: env.TEST_CHANGED == 'true'
       run: |
         sudo chmod 777 . -R
         ls -lA allure-history 
@@ -171,13 +272,14 @@ jobs:
         cp -f ${{ env.BASELINE_COMPAT_PATH }}/* reports/tests_output/baseline-compat/
         cp -rf reports/* allure-history/reports/        
         
-
     - name: Copy Help Docs to GitHub Pages Directory
+      if: env.TEST_CHANGED == 'true'
       run: |
         mkdir -p allure-history/help-docs/
         cp -r ./docs/* allure-history/help-docs/
 
     - name: Generate Root Index for GitHub Pages
+      if: env.TEST_CHANGED == 'true'
       run: |
         echo "<html>" > allure-history/index.html
         echo "<head><title>Project Reports and Documentation</title></head>" >> allure-history/index.html
@@ -194,7 +296,7 @@ jobs:
         echo "</html>" >> allure-history/index.html
         
     - name: Deploy Allure reports, JUnit HTML reports, and help docs to GitHub Pages
-      if: always()
+      if: env.TEST_CHANGED == 'true'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

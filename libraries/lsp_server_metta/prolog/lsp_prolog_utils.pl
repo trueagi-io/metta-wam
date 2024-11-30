@@ -1,5 +1,5 @@
-:- module(lsp_prolog_utils, [called_at/4,
-                      defined_at/3,
+:- module(lsp_prolog_utils, [prolog_called_at/4,
+                      prolog_defined_at/3,
                       name_callable/2,
                       relative_ref_location/4,
                       help_at_position/4,
@@ -27,13 +27,13 @@ source and stuff.
 :- use_module(library(sgml), [load_html/3]).
 
 :- if(current_predicate(xref_called/5)).
-%! called_at(+Path:atom, +Clause:term, -By:term, -Location:term) is nondet.
+%! prolog_called_at(+Path:atom, +Clause:term, -By:term, -Location:term) is nondet.
 %  Find the callers and locations of the goal =Clause=, starting from
 %  the file =Path=. =Location= will be bound to all the callers and
 %  locations that the =Clause= is called from like =Caller-Location=.
 %
 %  @see find_subclause/4
-called_at(Path, Clause, By, Location) :-
+prolog_called_at(Path, Clause, By, Location) :-
     name_callable(Clause, Callable),
     xref_source(Path),
     xref_called(Path, Callable, By, _, CallerLine),
@@ -44,7 +44,7 @@ called_at(Path, Clause, By, Location) :-
           Location \= position(_, 0) ),
         close(Stream)
     ).
-called_at(Path, Name/Arity, By, Location) :-
+prolog_called_at(Path, Name/Arity, By, Location) :-
     DcgArity is Arity + 2,
     name_callable(Name/DcgArity, Callable),
     xref_source(Path),
@@ -57,18 +57,18 @@ called_at(Path, Name/Arity, By, Location) :-
         close(Stream)
     ).
 :- else.
-called_at(Path, Callable, By, Ref) :-
+prolog_called_at(Path, Callable, By, Ref) :-
     xref_called(Path, Callable, By),
     xref_defined(Path, By, Ref).
 :- endif.
 
-defined_at(Path, Name/Arity, Location) :-
+prolog_defined_at(Path, Name/Arity, Location) :-
     name_callable(Name/Arity, Callable),
     xref_source(Path),
     xref_defined(Path, Callable, Ref),
     path_doc(Path, Doc),
     relative_ref_location(Doc, Callable, Ref, Location).
-defined_at(Path, Name/Arity, Location) :-
+prolog_defined_at(Path, Name/Arity, Location) :-
     % maybe it's a DCG?
     DcgArity is Arity + 2,
     name_callable(Name/DcgArity, Callable),
@@ -119,7 +119,7 @@ name_callable(Name/Arity, Callable) :-
 
 %! relative_ref_location(+Path:atom, +Goal:term, +Position:position(int, int), -Location:dict) is semidet.
 %  Given =Goal= found in =Path= and position =Position= (from
-%  called_at/3), =Location= is a dictionary suitable for sending as an
+%  prolog_called_at/3), =Location= is a dictionary suitable for sending as an
 %  LSP response indicating the position in a file of =Goal=.
 relative_ref_location(Here, _, position(Line0, Char1),
                       _{uri: Here, range: _{start: _{line: Line0, character: Char1},

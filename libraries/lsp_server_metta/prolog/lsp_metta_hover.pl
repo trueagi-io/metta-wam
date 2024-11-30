@@ -23,7 +23,7 @@ hover_at_position(Path, Line0, Char0, S) :-
   clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
   % TODO - add this in when I can import eval_args
   %debug(lsp(low), "Term=~w", [Term]),
-  findall(S, lsp_hooks:hover_hook(Path, Loc, Term, Arity, S), SS),
+  findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS),
   combine_hover(Term, SS, S).
 
 combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
@@ -35,6 +35,7 @@ combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
   atomics_to_string(Strings, S1),
   string_replace_each(S1,
  ["```lisp\n\n"="```lisp\n",
+  "\\r\\n"="\r\n",
   "```\n\n"="```\n",
   "\n\n```"="\n```",
   %"```lisp\n```\n```lisp\n```\n"="```lisp\n```\n",
@@ -92,12 +93,22 @@ trim_trailing(Str, Str).  % Base case: no trailing newline, return unchanged
 string_contains(String, Substring) :-
   sub_string(String, _, _, _, Substring).
 
+
+lsp_hooks:hover_string(Path, Loc, Term, Arity, S):-
+       lsp_call_metta(['hook-hover-string', Path, Loc, Term, Arity], Out), string(Out),  S = Out, !. % wots(S, write_src(Out)).
+
+lsp_hooks:hover_print(Path, Loc, Term, Arity):-
+       lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
+       nop((Res\= ['hook-hover-print' |_ ])).
+       % write_src(Out).
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Roy's initial impl of Hover
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 use_vitalys_help :- true.
 
-lsp_hooks:hover_hook(Path, _Loc, Term, Arity, S):- \+ use_vitalys_help,
+lsp_hooks:hover_string(Path, _Loc, Term, Arity, S):- \+ use_vitalys_help,
   metta_predicate_help(Path, Term, Arity, S).
 
 metta_predicate_help(_, Var, _, S) :- var(Var), !, format(string(S), "Var: ~w", [Var]).
@@ -141,10 +152,13 @@ find_at_doc_aux2(Term, [_|T]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Douglas' initial impl of Hover
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:hover_hook(Path, Loc, Term, Arity, S):-
-  make,   % Trigger the make command to compile the knowledge base. (For real-time editing)
+lsp_hooks:hover_string(Path, Loc, Term, Arity, S):-
+  ignore(notrace(catch(make,_,fail))),   % Trigger the make command to compile the knowledge base. (For real-time editing)
   xref_metta_source(Path),   % Possibly cross-reference the file.
   term_info_string(Path, Loc, Term, Arity, S). % Generate a term definition string.
+
+
+
 
 :- multifile(lsp_hooks:handle_msg_hook/3).
 :- dynamic(lsp_hooks:handle_msg_hook/3).
@@ -216,13 +230,13 @@ term_info_string(Path, Loc, Term, Arity, Str):-
   term_info_string_resolved(Path, Loc, Term, Arity, Str).
 
 show_term_info(Term):-
-   forall(lsp_hooks:term_info(_Path, _Loc, Term, _Arity), true).
+   forall(lsp_hooks:hover_print(_Path, _Loc, Term, _Arity), true).
 
 term_info_string_resolved(_Path,_Loc, Term, _Arity, _Str):- var(Term),!.
 term_info_string_resolved( Path, Loc, resolved(Term), Arity, Str):- !,
   term_info_string_resolved(Path, Loc, Term, Arity, Str).
 term_info_string_resolved(Path, Loc, Term, Arity, Str):-
-  wots(S0, lsp_hooks:term_info(Path, Loc, Term, Arity)),  % Generate a string output for the term's arity help.
+  wots(S0, lsp_hooks:hover_print(Path, Loc, Term, Arity)),  % Generate a string output for the term's arity help.
   string(S0),  % Ensure that the output is a valid string.
   trim_white_lines(S0, S),
   S \= "",  % Ensure that the string is not empty.
@@ -241,16 +255,16 @@ show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
 show_checked(Name, Value, Caption) :- format("[~w](file://toggleValue_~w.metta) ~w ", [Value, Name, Caption]).
 
-:- multifile(lsp_hooks:term_info/4).
-:- discontiguous(lsp_hooks:term_info/4).
+:- multifile(lsp_hooks:hover_print/4).
+:- discontiguous(lsp_hooks:hover_print/4).
 
-%!  lsp_hooks:term_info(+Path, +Loc, +Target, +Arity) is det.
+%!  lsp_hooks:hover_print(+Path, +Loc, +Target, +Arity) is det.
 %
 %   Helper predicate to display information about each instance of a term's arity.
 %
 %   @arg Target The term (predicate) for which help is displayed.
 %   @arg Arity The arity to check for.
-lsp_hooks:term_info(_Path,_Loc, Target, _) :- fail, % (for debugging) commenting out fail will let the hover show the cross-ref index
+lsp_hooks:hover_print(_Path,_Loc, Target, _) :- fail, % (for debugging) commenting out fail will let the hover show the cross-ref index
   each_type_at_sorted(Target, Sort),
   forall(member(RefType, [definition, declaration, typeDefinition, implementation, references]),
   (banner_for(RefType, Target),
@@ -264,7 +278,7 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :- fail, % (for debugging) commenting
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Douglas' initial impl of Hover Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:term_info(_Path,_Loc, Target, _) :-
+lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
   in_markdown((
   show_checked("show_docs", "(-)", "Show Docs "),
   show_checked("show_refs", "(+)", "Show Refs "),
@@ -275,12 +289,13 @@ lsp_hooks:term_info(_Path,_Loc, Target, _) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Vitaly's initial impl of Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:term_info(_Path,_Loc, Target, _) :- use_vitalys_help,
-  lsp_separator(),
-  xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
+    lsp_separator(),
+    xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
 
 
-lsp_hooks:term_info(_Path,_Loc, Term, Arity):-
+
+lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
   lsp_separator(),
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
@@ -293,21 +308,23 @@ some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args]
 some_arities(Term,N,Try,RN):- symbol(Term), between(0,5,N), some_arities(Term,N,Try,RN).
 some_arities(Term,_,Term,term). % Bare Term
 
-lsp_hooks:term_info(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
+lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
   ArityDoc \== [],  % Ensure the documentation is not empty.
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
   format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator() .  % Output a message if there's an arity mismatch.
 
 
-lsp_hooks:term_info(_Path,_Loc, Target, _) :-
+lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
   lsp_separator(),
   each_type_at_sorted(Target, Term, AtPath, AtLoc, Type),
   write_src_xref(Term, Type, AtPath, AtLoc).  % Write the source cross-reference for the atom.
 
 get_code_at_range_type(term).
 get_code_at_range_type(expression).
-get_code_at_range_type(toplevel_form).
+get_code_at_range_type(toplevel).
+get_code_at_range_type(block).
+get_code_at_range_type(file).
 %get_code_at_range_type(exact).
 %get_code_at_range_type(symbol).
 
@@ -318,7 +335,7 @@ debug_positions :- debugging(lsp(position)).
 A1: whY
 </details>
 */
-lsp_hooks:term_info(Path, Loc, Term, Arity):- debug_positions,
+lsp_hooks:hover_print(Path, Loc, Term, Arity):- debug_positions,
   lsp_separator(),
   setup_call_cleanup(
      lsp_separator(),
@@ -329,7 +346,7 @@ debug_positions(_Path, Loc, Term, Arity) :-
    in_markdown((format("*Debug Positions*:\t\t<details><summary>(this and below is normally hidden)</summary>~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
 
 debug_positions(_Path, _Loc, _Term, _Arity) :-
-   user:last_range(Method,Range),
+   lsp_state:last_range(Method,Range),
    numbervars(Range,0,_,[singletons(true),attvars(skip)]),
    in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
 
@@ -461,7 +478,7 @@ position_line(Position, Line2):-
    into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
 % Emacs does return a Client Configuration List
-is_in_emacs :- \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
+is_in_emacs :- fail, \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
 
 end_of_file.

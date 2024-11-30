@@ -516,7 +516,7 @@ count_lines_in_file(FileName, LineCount) :-
     number_string(LineCount, LineStr).  % Convert the string to an integer
 
 
-%! report_progress(+FileName:atom, +InStream:stream, +TotalLines:int, +StartTime:float) is det.
+%! report_file_progress(+FileName:atom, +InStream:stream, +TotalLines:int, +StartTime:float) is det.
 %
 % Reports the progress of file processing by calculating the percentage of lines processed every 30 seconds.
 % It also estimates the time remaining until completion based on the current processing speed.
@@ -525,7 +525,7 @@ count_lines_in_file(FileName, LineCount) :-
 % @arg InStream The input stream being processed.
 % @arg TotalLines The total number of lines in the file.
 % @arg StartTime The time when the process started.
-report_progress(FileName, InStream, TotalLines, StartTime) :-
+report_file_progress(FileName, InStream, TotalLines, StartTime) :-
     sleep(10),  % Initial delay before progress reporting starts
     TimeBetweenReports = 15,
     repeat,
@@ -677,7 +677,9 @@ format_time_remaining(Seconds, FormattedTime) :-
 
 process_expressions(FileName,_InStream, _OutStream) :- atomic(FileName), fail,
     symbol_concat(FileName, '.buffer~', BufferFile),
-    exists_file(BufferFile),ensure_loaded(BufferFile), !.
+    exists_file(BufferFile),
+    use_cache_file(FileName, BufferFile),
+    ensure_loaded(BufferFile), !.
 
 process_expressions(FileName, InStream, OutStream) :-
     % Get total number of lines in the file
@@ -690,7 +692,7 @@ process_expressions(FileName, InStream, OutStream) :-
 
     % Start a thread to report progress every 30 seconds
     get_time(StartTime),  % Record the start time
-    thread_create(report_progress(FileName, InStream, TotalLines, StartTime), _, [detached(true)]),
+    thread_create(report_file_progress(FileName, InStream, TotalLines, StartTime), _, [detached(true)]),
 
     ignore(stream_property(InStream, file_name(Stem))),  % Get the file name of the stream.
     ignore(Stem = FileName),  % Assign the input file name if no stream file name.
@@ -890,6 +892,7 @@ into_op_fun_rest_body(Clause,Op,Fun,Rest,Body):-
 split_head([Fun|Rest],Fun,Rest):- is_list(Rest),!.
 split_head(Head,Head,[]).
 
+type_op_head_rest_body(decl(import), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
 type_op_head_rest_body(decl(use), Symbol, Op,_Head,_Rest, Body):- op_type(import,Op),    sub_symbol(Symbol,Body).
 type_op_head_rest_body(ref(a), Symbol, Op, Head,_Rest,_Body):- op_type(import,Op), !, sub_symbol(Symbol,Head).
 
