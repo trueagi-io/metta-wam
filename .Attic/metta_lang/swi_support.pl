@@ -51,8 +51,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: provides debugging utilities, environment management, and option handling 
+%*********************************************************************************************
+% PROGRAM FUNCTION: provides debugging utilities, environment management, and option handling
 % specifically tailored for SWI-Prolog.
 %*********************************************************************************************
 
@@ -92,20 +92,20 @@
 %     ?- fbug(test(foo, bar)).
 %     /* test :- test(foo, bar). */
 %
-fbug(_) :- 
+fbug(_) :-
     % if compatibility mode is enabled.
     is_compatio, !.
-fbug(P) :- 
+fbug(P) :-
     % Write output to `user_error` if `write_src/1` exists.
-    format("~N"), current_predicate(write_src/1), 
+    format("~N"), current_predicate(write_src/1),
     with_output_to(user_error, in_cmt(write_src(P))), !.
-fbug(N = V) :- 
+fbug(N = V) :-
     % Debug a named-value pair.
     nonvar(N), !, fbdebug1(N :- V).
-fbug(V) :- 
+fbug(V) :-
     % Debug a compound term by extracting the functor.
     compound(V), functor(V, F, _A), !, fbdebug1(F :- V).
-fbug(V) :- 
+fbug(V) :-
     % Default case for arbitrary terms.
     fbdebug1(debug :- V).
 
@@ -121,7 +121,7 @@ fbdebug1(Message) :-
     flush_output(user_output),
     flush_output(user_error),
     % Attempt to print the message, falling back to formatted output on failure.
-    catch(portray_clause(user_error, Message, []), _, 
+    catch(portray_clause(user_error, Message, []), _,
           catch_ignore(format(user_error, "~n/* ~q. */~n", [Message]))),
     %format(user_error, "~n/* ~p. */~n", [Message]),  % Preserved commented-out code.
     flush_output(user_error).
@@ -133,10 +133,10 @@ fbdebug1(Message) :-
 %
 %   @arg Goal The goal to be executed, provided the environment is SWI-Prolog.
 %
-swi_only(_) :- 
+swi_only(_) :-
     % Fail if running on Scryer-Prolog.
     is_scryer, !, fail.
-swi_only(G) :- 
+swi_only(G) :-
     % Execute the goal in SWI-Prolog.
     call(G).
 
@@ -144,7 +144,7 @@ swi_only(G) :-
 %
 %   Succeeds if the current Prolog environment is Scryer-Prolog.
 %
-is_scryer :- 
+is_scryer :-
     % Check if the 'libswipl' flag is not set, indicating Scryer-Prolog.
     \+ current_prolog_flag(libswipl, _).
 
@@ -161,10 +161,10 @@ is_scryer :-
 %   If the directory is `'.'`, it uses the current working directory.
 %   If the directory is a variable, it binds to the current directory.
 %   If the directory does not exist, it throws an exception.
-%   Uses `setup_call_cleanup/3` to ensure the working directory is 
+%   Uses `setup_call_cleanup/3` to ensure the working directory is
 %   restored after the Goal completes.
 %
-%   @arg Directory The directory in which to execute the goal. If `'.'`, 
+%   @arg Directory The directory in which to execute the goal. If `'.'`,
 %        the current directory is used.
 %   @arg Goal The goal to execute within the directory context.
 %   @example
@@ -172,23 +172,23 @@ is_scryer :-
 %     ?- with_cwd('/tmp', writeln('Hello from /tmp')).
 %     Hello from /tmp
 %
-with_cwd(Dir, Goal) :- 
+with_cwd(Dir, Goal) :-
     % Execute the goal in the current directory if Dir is '.'.
     Dir == '.',!,setup_call_cleanup(working_directory(X, X), Goal, working_directory(_, X)).
-with_cwd(Dir, Goal) :- 
+with_cwd(Dir, Goal) :-
     % Bind Dir to the current directory if it is a variable.
     var(Dir),X = Dir,!,setup_call_cleanup(working_directory(X, X), Goal, working_directory(_, X)).
-with_cwd(Dir, Goal) :- 
+with_cwd(Dir, Goal) :-
     % Throw an exception if the directory does not exist.
     \+ exists_directory(Dir),!,throw(with_cwd(Dir, Goal)), !.
-with_cwd(Dir, Goal) :- 
+with_cwd(Dir, Goal) :-
     % Execute the goal in the given directory, restoring the original afterward.
     setup_call_cleanup(working_directory(X, Dir), Goal, working_directory(_, X)).
 
 %!  with_option(+Options, :Goal) is det.
 %
-%   Executes the given Goal with specified temporary options. Options can be 
-%   provided as a list, `Name=Value` pairs, or compound terms. After the goal 
+%   Executes the given Goal with specified temporary options. Options can be
+%   provided as a list, `Name=Value` pairs, or compound terms. After the goal
 %   completes, the original options are restored.
 %
 %   @arg Options A list of options or a single option to apply temporarily.
@@ -199,22 +199,22 @@ with_cwd(Dir, Goal) :-
 %     ?- with_option(samples_per_million=100, writeln('Option applied')).
 %     Option applied
 %
-with_option([], G) :- 
+with_option([], G) :-
     % Call the goal when no options are provided.
     !, call(G).
-with_option([H|T], G) :- 
+with_option([H|T], G) :-
     % Apply multiple options recursively.
     !, with_option(H, with_option(T, G)).
-with_option(N = V, G) :- 
+with_option(N = V, G) :-
     % Apply a name-value option.
     !, with_option(N, V, G).
-with_option(NV, G) :- 
+with_option(NV, G) :-
     % Decompose a compound option and apply it.
     compound(NV), NV =.. [N, V],!, with_option(N, V, G).
-with_option(N, G) :- 
+with_option(N, G) :-
     % Apply an option with a default value of `true`.
     with_option(N, true, G).
-with_option(N, V, G) :- 
+with_option(N, V, G) :-
     % Set the option value temporarily and restore it after the goal completes.
     (was_option_value(N, W) -> true ; W = []),
     setup_call_cleanup(set_option_value(N, V), G, set_option_value(N, W)).
@@ -231,20 +231,20 @@ with_option(N, V, G) :-
 %     ?- was_option_value(max_per_file, Value).
 %     Value = inf.
 %
-was_option_value(N, V) :- 
+was_option_value(N, V) :-
     % Check if the option is set as a Prolog flag.
     current_prolog_flag(N, VV), !, V = VV.
-was_option_value(N, V) :- 
+was_option_value(N, V) :-
     % Check if the option is available in the load context.
     prolog_load_context(N, VV), !, V = VV.
-was_option_value(N, V) :- 
+was_option_value(N, V) :-
     % Check if the option is stored as a non-backtrackable variable.
     nb_current(N, VV), VV \== [], !, V = VV.
 
 %!  option_else(+Name, -Value, +Else) is det.
 %
-%   Retrieves the value of an option if it exists; otherwise, assigns the 
-%   fallback value `Else`. This predicate ensures that a meaningful default 
+%   Retrieves the value of an option if it exists; otherwise, assigns the
+%   fallback value `Else`. This predicate ensures that a meaningful default
 %   value is used if the option is not available.
 %
 %   @arg Name The name of the option to retrieve.
@@ -259,14 +259,14 @@ was_option_value(N, V) :-
 %     ?- option_else(non_existent_option, Value, 'default').
 %     Value = 'default'.
 %
-option_else(N, V, Else) :- 
+option_else(N, V, Else) :-
     % Retrieve the value or assign the fallback using `option_else0/3`.
     notrace((option_else0(N, VV, Else), p2mE(VV, V))).
 
 %!  option_else0(+Name, -Value, +Else) is det.
 %
-%   Helper predicate for `option_else/3`. It attempts to retrieve the value 
-%   of the specified option using `was_option_value/2`. If the option is not 
+%   Helper predicate for `option_else/3`. It attempts to retrieve the value
+%   of the specified option using `was_option_value/2`. If the option is not
 %   available, it unifies the value with the given fallback.
 %
 %   @arg Name The name of the option to retrieve.
@@ -277,10 +277,10 @@ option_else(N, V, Else) :-
 %     ?- option_else0(non_existent, Value, 'fallback').
 %     Value = 'fallback'.
 %
-option_else0(N, V, _Else) :- 
+option_else0(N, V, _Else) :-
     % Get the option value if available.
     was_option_value(N, VV), !, VV = V.
-option_else0(_N, V, Else) :- 
+option_else0(_N, V, Else) :-
     % Use the fallback value if the option is unavailable.
     !, V = Else.
 
@@ -296,16 +296,16 @@ option_else0(_N, V, Else) :-
 %     ?- option_value(samples_per_million, Value).
 %     Value = inf.
 %
-option_value(N, V) :- 
+option_value(N, V) :-
     % Retrieve the option value if V is unbound.
     var(V), !,was_option_value(N, VV),once((p2mE(VV, V2), p2mE(V, V1))), V1 = V2.
-option_value(N, V) :- 
+option_value(N, V) :-
     % Handle boolean value `true`.
     V == true, option_value0(N, 'True'), !.
-option_value(N, V) :- 
+option_value(N, V) :-
     % Handle boolean value `false`.
     V == false, option_value0(N, 'False'), !.
-option_value(N, V) :- 
+option_value(N, V) :-
     % Retrieve the option value without tracing.
     notrace(option_value0(N, V)).
 
@@ -320,15 +320,15 @@ option_value(N, V) :-
 %     ?- option_value0(max_disk_cache, Value).
 %     Value = inf.
 %
-option_value0(N, V) :- 
+option_value0(N, V) :-
     % Retrieve and convert the option value.
     was_option_value(N, VV),once((p2mE(VV, V2), p2mE(V, V1))), V1 = V2.
-option_value0(_N, []). 
-    
+option_value0(_N, []).
+
 %!  p2mE(+Input, -Output) is det.
 %
 %   Converts boolean and other values into specific internal representations.
-%   This predicate ensures that `true` and `false` are mapped to string values 
+%   This predicate ensures that `true` and `false` are mapped to string values
 %   `'True'` and `'False'`, respectively, and leaves other values unchanged.
 %
 %   @arg Input The input value to convert.
@@ -338,7 +338,7 @@ option_value0(_N, []).
 %     ?- p2mE(true, Result).
 %     Result = 'True'.
 %
-p2mE(NA, NA) :- 
+p2mE(NA, NA) :-
     % If the input is not an atom, leave it unchanged.
     \+ atom(NA), !.
 p2mE(false, 'False').  % Convert false to 'False'.
@@ -347,7 +347,7 @@ p2mE(E, E).            % Leave other values unchanged.
 
 %!  set_option_value(+Name, +Value) is det.
 %
-%   Sets an option value using non-backtrackable storage and Prolog flags. 
+%   Sets an option value using non-backtrackable storage and Prolog flags.
 %   Handles internal conversions and ensures the flag is created or updated.
 %
 %   @arg Name The name of the option to set.
@@ -356,19 +356,19 @@ p2mE(E, E).            % Leave other values unchanged.
 %     % Set the value of the option 'my_option' to true.
 %     ?- set_option_value(my_option, true).
 %
-set_option_value(N, V) :- 
+set_option_value(N, V) :-
     % Call the internal predicate to set the option value.
     set_option_value0(N, V).
 
 %!  set_option_value0(+Name, +Value) is det.
 %
-%   Internal helper for setting option values. Converts the value if needed, 
-%   stores it in non-backtrackable storage, creates a Prolog flag, and updates 
+%   Internal helper for setting option values. Converts the value if needed,
+%   stores it in non-backtrackable storage, creates a Prolog flag, and updates
 %   the flag’s value, handling any errors that occur.
 %
 %   @arg Name The name of the option to set.
 %   @arg Value The value to set for the option.
-set_option_value0(N, V) :- 
+set_option_value0(N, V) :-
     % Convert the input value if necessary.
     p2mE(V, VV), !,
     % Store the value in non-backtrackable storage, handling errors.
@@ -389,14 +389,14 @@ set_option_value0(N, V) :-
 %     % Load the Kaggle ARC module (if the directory exists):
 %     ?- kaggle_arc.
 %
-kaggle_arc :- 
+kaggle_arc :-
     % Succeed if the Kaggle ARC directory does not exist.
     \+ exists_directory('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/'), !.
-%kaggle_arc :- !.  
-kaggle_arc :- 
+%kaggle_arc :- !.
+kaggle_arc :-
     % Load the Kaggle ARC module with specific options.
-    with_option(argv, ['--libonly'], 
-        with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/', 
+    with_option(argv, ['--libonly'],
+        with_cwd('/opt/logicmoo_workspace/packs_sys/logicmoo_agi/prolog/kaggle_arc/',
             ensure_loaded(kaggle_arc))).
 
 %:- ensure_loaded((read_obo2)).
@@ -461,6 +461,8 @@ downcase_symbol(A, B) :- downcase_atom(A, B).
 %     true.
 %
 non_empty_symbol(A) :- non_empty_atom(A).
+
+non_empty_atom(A):- \+ atom_codes(A,[]).
 
 %!  string_to_symbol(+String, -Symbol) is det.
 %
@@ -727,7 +729,7 @@ upcase_symbol(A, B) :- upcase_atom(A, B).
 % Asserts the directory of the FlyBase FTP data release if it exists.
 :- prolog_load_context(directory, File),
    ignore((
-     absolute_file_name('../../data/ftp.flybase.org/releases/current/', Dir, 
+     absolute_file_name('../../data/ftp.flybase.org/releases/current/', Dir,
                         [relative_to(File), file_type(directory), file_errors(fail)]),
      asserta(ftp_data(Dir))
    )).
@@ -753,9 +755,9 @@ metta_python :- ensure_loaded(library(metta_python)).
 
 %!  must_det_ll(:Goal) is det.
 %
-%   Executes the given Goal deterministically within the `user` module. 
-%   If the Goal fails or is a variable, it throws an exception. This 
-%   ensures the Goal behaves as expected and prevents nondeterminism 
+%   Executes the given Goal deterministically within the `user` module.
+%   If the Goal fails or is a variable, it throws an exception. This
+%   ensures the Goal behaves as expected and prevents nondeterminism
 %   from leaking into the rest of the program.
 %
 %   @arg Goal The goal to execute deterministically.
@@ -769,10 +771,10 @@ must_det_ll(Goal) :- must_det_ll(user, Goal).
 
 %!  must_det_ll(+Module, :Goal) is det.
 %
-%   Executes the given Goal deterministically within the specified Module. 
-%   Handles complex logical constructs such as conjunctions, disjunctions, 
-%   and conditionals. If the Goal fails or is a variable, it throws an 
-%   exception. The predicate ensures deterministic behavior by throwing 
+%   Executes the given Goal deterministically within the specified Module.
+%   Handles complex logical constructs such as conjunctions, disjunctions,
+%   and conditionals. If the Goal fails or is a variable, it throws an
+%   exception. The predicate ensures deterministic behavior by throwing
 %   exceptions when the Goal fails.
 %
 %   @arg Module The module within which the Goal is executed.
@@ -782,37 +784,37 @@ must_det_ll(Goal) :- must_det_ll(user, Goal).
 %     ?- must_det_ll(user, writeln('Hello from user module')).
 %     Hello from user module
 %
-must_det_ll(_M, Goal) :- 
+must_det_ll(_M, Goal) :-
     % Throw an error if Goal is a variable.
     var(Goal), !, throw(var_must_det_ll(Goal)), !.
-must_det_ll(M, Goal) :- 
+must_det_ll(M, Goal) :-
     % Strip the module from Goal if M is a variable.
     var(M), !, strip_module(Goal, M, NewGoal), !, must_det_ll(M, NewGoal).
-must_det_ll(M, (GoalA, GoalB)) :- 
+must_det_ll(M, (GoalA, GoalB)) :-
     % Execute conjunction (GoalA, GoalB) deterministically.
     !, must_det_ll(M, GoalA), must_det_ll(M, GoalB).
-must_det_ll(M, (GoalA -> GoalB ; GoalC)) :- 
+must_det_ll(M, (GoalA -> GoalB ; GoalC)) :-
     % Execute conditional (GoalA -> GoalB ; GoalC).
     !, (call_ll(M, GoalA) -> must_det_ll(M, GoalB) ; must_det_ll(M, GoalC)).
-must_det_ll(M, (GoalA *-> GoalB ; GoalC)) :- 
+must_det_ll(M, (GoalA *-> GoalB ; GoalC)) :-
     % Execute soft cut (*->) with alternative GoalC.
     !, (call_ll(M, GoalA) *-> must_det_ll(M, GoalB) ; must_det_ll(M, GoalC)).
-must_det_ll(M, (GoalA -> GoalB)) :- 
+must_det_ll(M, (GoalA -> GoalB)) :-
     % Execute conditional (GoalA -> GoalB).
     !, (call_ll(M, GoalA) -> must_det_ll(M, GoalB)).
-must_det_ll(_, M:Goal) :- 
+must_det_ll(_, M:Goal) :-
     % If the goal has a module prefix, handle it.
     !, must_det_ll(M, Goal).
-must_det_ll(M, Goal) :- 
+must_det_ll(M, Goal) :-
     % Call the goal, and if it fails, throw an exception.
     M:call(Goal) -> true ; throw(failed(Goal)).
 
 %!  call_ll(+Module, :Goal) is det.
 %
-%   Safely executes the given Goal within the specified Module. 
-%   If the Goal is a variable, it throws an exception. If the Module 
-%   is a variable, it strips the module from the Goal and re-executes 
-%   the call. This ensures proper handling of goals with or without 
+%   Safely executes the given Goal within the specified Module.
+%   If the Goal is a variable, it throws an exception. If the Module
+%   is a variable, it strips the module from the Goal and re-executes
+%   the call. This ensures proper handling of goals with or without
 %   module prefixes.
 %
 %   @arg Module The module within which the Goal is executed.
@@ -822,13 +824,13 @@ must_det_ll(M, Goal) :-
 %     ?- call_ll(user, writeln('Hello from user module')).
 %     Hello from user module
 %
-call_ll(_M, Goal) :- 
+call_ll(_M, Goal) :-
     % Throws an error if Goal is a variable.
     var(Goal), !, throw(var_call_ll(Goal)), !.
-call_ll(M, Goal) :- 
+call_ll(M, Goal) :-
     % Strips the module from Goal if M is a variable and re-executes.
     var(M), !, strip_module(Goal, M, NewGoal), !, call_ll(M, NewGoal).
-call_ll(M, Goal) :- 
+call_ll(M, Goal) :-
     % Calls the Goal within the specified Module.
     M:call(Goal).
 
