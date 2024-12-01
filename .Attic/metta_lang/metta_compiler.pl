@@ -140,7 +140,7 @@ strip_m(BB,BB).
 % ?- compile_for_exec(RetResult, is(pi+pi), Converted).
 
 compile_for_exec(Res,I,O):-
-   %ignore(Res='$VAR'('RetResult')),
+   %ignore(Res='$VAR'('RetResult')),`
    compile_for_exec0(Res,I,O),!.
 
 compile_for_exec0(Res,I,eval_args(I,Res)):- is_ftVar(I),!.
@@ -180,9 +180,24 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
       ast_to_prolog_aux([FnName/LenArgsPlus1],[assign,HResult,[call(FnName)|Args]],HeadC),
-      format("~w",[NextBody]),
-      ast_to_prolog([FnName/LenArgsPlus1],NextBody,NextBodyC)
+
+      output_language( ast, ((
+       \+ \+ ((   no_conflict_numbervars(HeadC + NextBody),
+                  %write_src_wi([=,HeadC,NextBody]),
+                  print_tree_nl([=,HeadC,NextBody]),
+                  true))))),
+
+
+      ast_to_prolog([FnName/LenArgsPlus1],NextBody,NextBodyC),
+      output_language(prolog, (print_pl_source(Converted))),
+      true
    )).
+
+
+no_conflict_numbervars(Term):-
+    findall(N,(sub_term(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
+    max_list([-1|NL],Max),Start is Max + 1,!,
+    numbervars(Term,Start,_,[attvar(skip),singletons(true)]).
 
 %compile_for_assert(HeadIs, AsBodyFn, Converted) :-
 %   format("compile_for_assert: ~w ~w\n",[HeadIs, AsBodyFn]),
@@ -426,7 +441,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
          findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
          B=..[u_assign,[F|AtomList1],'$VAR'(A)],
          (enable_interpreter_calls -> G=true;G=fail),
-         create_and_consult_temp_file(Space,Fp/A,[H:-(format("######### warning: using stub for:~w\n",[F]),G,B)]))).
+         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~w\n",[F]),G,B)]))).
 
 % Predicate to create a temporary file and write the tabled predicate
 create_and_consult_temp_file(Space,F/A, PredClauses) :-
@@ -434,6 +449,10 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % Generate a unique temporary memory buffer
     tmp_file_stream(text, TempFileName, TempFileStream),
     % Write the tabled predicate to the temporary file
+    format(TempFileStream, ':- multifile((~q)/~w).~n', [metta_compiled_predicate, 3]),
+    format(TempFileStream, ':- dynamic((~q)/~w).~n', [metta_compiled_predicate, 3]),
+    format(TempFileStream, '~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
+
     format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
     format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
     %if_t( \+ option_value('tabling',false),
@@ -444,15 +463,25 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % Consult the temporary file
     % abolish(F/A),
     /*'&self':*/
+    % sformat(CAT,'cat ~w',[TempFileName]), shell(CAT),
     consult(TempFileName),
 
-    listing(F/A),
+    % listing(F/A),
     % Delete the temporary file after consulting
     %delete_file(TempFileName),
-    asserta(metta_compiled_predicate(Space,F,A)),
     current_predicate(F/A),
-    listing(metta_compiled_predicate/3),
+    %listing(metta_compiled_predicate/3),
     true)).
+
+
+write_to_streams(StreamList, Format, Args) :-
+    % Write to each stream in the list
+    forall(member(Stream, StreamList),
+           format(Stream, Format, Args)),
+    % Write to stdout
+    format(user_output, Format, Args),
+    flush_output(user_output). % Ensure output is displayed immediately
+
 
 %metta_compiled_predicate(_,F,A):- metta_compiled_predicate(F,A).
 
@@ -522,6 +551,15 @@ f2p(HeadIs,RetResult,Convert, Converted):-
    Convert=[Fn|_],
    atom(Fn),
    compile_flow_control(HeadIs,RetResult,Convert, Converted),!.
+
+f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
+   Convert=[Fn|_], \+ atom(Fn),
+    Args = Convert,
+    maplist(f2p(HeadIs),NewArgs, Args, NewCodes),
+    append(NewCodes,CombinedNewCode),
+    Code=[assign,RetResult,list(NewArgs)],
+    append(CombinedNewCode,[Code],Converted).
+
 
 f2p(HeadIs,RetResult, Convert, Converted) :- HeadIs\=@=Convert,
    Convert=[Fn|Args],

@@ -2194,12 +2194,12 @@ pfcHalt(Format, Args) :-
 
 %!  pfcAddTrigger(+Trigger, +Support) is det.
 %
-%   Adds a trigger (positive, negative, or bidirectional) to the system,
+%   Adds a trigger (positive, negative, or backward) to the system,
 %   asserting it with the provided support and evaluating it if applicable.
 %   Unrecognized triggers result in a warning message.
 %
 %   @arg Trigger  The trigger to be added, which can be a positive (`$pt$`),
-%                 negative (`$nt$`), or bidirectional (`$bt$`) trigger.
+%                 negative (`$nt$`), or backward (`$bt$`) trigger.
 %   @arg Support  The support context for asserting the trigger.
 %
 %   @example
@@ -2225,7 +2225,7 @@ pfcAddTrigger('$nt$'(Trigger, Test, Body), Support) :-
    \+ pfc_call(Test),
    with_current_why(\+ pfc_call(Test), fcEvalLHS(Body, ((\+Trigger), '$nt$'(TriggerCopy, Test, Body)))).
 pfcAddTrigger('$bt$'(Trigger, Body), Support) :-
-   % Add a bidirectional trigger.
+   % Add a backward trigger.
    !,
    pfcAssert('$bt$'(Trigger, Body), Support),
    pfcBtPtCombine(Trigger, Body, Support).
@@ -2235,16 +2235,16 @@ pfcAddTrigger(X, _Support) :-
 
 %!  pfcBtPtCombine(+Head, +Body, +Support) is det.
 %
-%   Combines a bidirectional trigger (`$bt$`) with any positive triggers
+%   Combines a backward trigger (`$bt$`) with any positive triggers
 %   (`$pt$`) that have unifying heads. For each unifying positive trigger,
-%   the instantiated body of the bidirectional trigger is evaluated.
+%   the instantiated body of the backward trigger is evaluated.
 %
-%   @arg Head     The head of the bidirectional trigger.
-%   @arg Body     The body of the bidirectional trigger.
+%   @arg Head     The head of the backward trigger.
+%   @arg Body     The body of the backward trigger.
 %   @arg Support  The support context for the combination.
 %
 %   @example
-%     % Combine a bidirectional trigger with matching positive triggers.
+%     % Combine a backward trigger with matching positive triggers.
 %     ?- pfcBtPtCombine(my_head, my_body, support_context).
 %
 pfcBtPtCombine(Head, Body, Support) :-
@@ -3135,7 +3135,7 @@ pfcFwd1(Fact) :-
 %!  fc_rule_check(+P) is nondet.
 %
 %   Performs special built-in forward chaining if the input `P` is a rule.
-%   It processes both unidirectional (`==>`) and bidirectional (`<==>`) rules.
+%   It processes unidirectional (`==>`), bidirectional (`<==>`) and backward (`<-`) rules.
 %
 %   @arg P  The rule to process.
 %

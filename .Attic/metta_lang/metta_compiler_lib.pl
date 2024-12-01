@@ -44,3 +44,6 @@ mc__or(_,_,'True').
 
 mc__assertEqualToResult(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
 
+
+
+mc__empty(_):-!,fail.

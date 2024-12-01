@@ -652,7 +652,9 @@ with_output_to_s(Out,G):- current_output(COut),
   redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
                      set_prolog_IO(user_input,COut,user_error)).
 
- not_compatio(G):- if_t(once(is_mettalog;is_testing),user_err(G)).
+not_compatio(G):- nb_current(in_not_compatio, true),!,call(G).
+not_compatio(G):- if_t(once(is_mettalog;is_testing; (\+ is_compatio )),
+  user_err( locally(nb_setval(in_not_compatio, true), G))).
 
  extra_answer_padding(_).
 
@@ -1287,7 +1289,7 @@ assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),L
 assert_preds(Self,Load,Preds):-
   expand_to_hb(Preds,H,_B),
   functor(H,F,A), %trace,
-  if_t((show_transpiler),
+  if_t((false,show_transpiler),
     color_g_mesg_ok('#005288',(
    ignore((
       % \+ predicate_property(H,defined),
@@ -1527,10 +1529,11 @@ metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,O
 metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
 metta_anew(Load,Src,OBO):-
     not_compat_io((
-    if_show(load,color_g_mesg('#ffa500', ((format('~N '), write_src(Src))))),
+    output_language( metta, (if_show(load, color_g_mesg('#ffa500', ((format('~N '), write_src(Src))))))),
     % format('~N'),
-    if_verbose(load,color_g_mesg('#0f0f0f',(write('  ; Action: '),writeq(Load=OBO),nl))))),
-   metta_anew1(Load,OBO),not_compat_io((format('~N'))).
+    output_language( Load, (if_verbose(load,color_g_mesg('#4f4f0f', (( (write('; Action: '),writeq(Load=OBO),nl))))))),
+    true)),
+        metta_anew1(Load,OBO),not_compat_io((format('~N'))).
 
 subst_vars_not_last(A,B):-
   functor(A,_F,N),arg(N,A,E),
@@ -1574,7 +1577,7 @@ write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
   format('~N'),
-  ignore((notrace((color_g_mesg('#0D6328',writeln(S)))))).
+  output_language(metta,ignore((notrace((color_g_mesg('#0D6328',writeln(S))))))).
 
 %!(let* (( ($a $b) (collapse (get-atoms &self)))) ((bind! &stdlib $a) (bind! &corelib $b)))
 
@@ -1777,7 +1780,7 @@ do_metta(From,exec,Self,TermV,Out):- !,
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
    %format("########################X0 ~w ~w ~w\n",[Self,TermV,FOut]),
- (catch(((not_compatio(write_exec(TermV)),
+ (catch(((output_language(metta,write_exec(TermV)),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
    %format("########################X1 ~w ~w ~w ~w\n",[Term,X,NamedVarsList,Output]),
    user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
@@ -1811,7 +1814,10 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
   copy_term_g(NamedVarsList,Was),
   term_variables(Term,Vars),
-  notrace((color_g_mesg('#114411',print_pl_source(answer(Res):-ExecGoal)))),
+
+
+  Call = do_metta_runtime(Res, ExecGoal),
+  output_language(prolog, notrace((color_g_mesg('#114411', print_pl_source(:- Call  ))))),
   %nl,writeq(Term),nl,
   ((\+ \+
   ((
@@ -1846,6 +1852,8 @@ eval_S(Self,Form):- nonvar(Form),
   current_self(SelfS),SelfS==Self,!,
   do_metta(true,exec,Self,Form,_Out).
 eval_H(Term,X):- catch_metta_return(eval_args(Term,X),X).
+
+eval_H(StackMax,Self,Term,X):- fast_option_value(compile, save),!.
 eval_H(StackMax,Self,Term,X):-  catch_metta_return(eval_args('=',_,StackMax,Self,Term,X),X).
 /*
 eval_H(StackMax,Self,Term,X).
@@ -2231,6 +2239,9 @@ fix_message_hook:-
 :- ensure_loaded(metta_python).
 :- ensure_loaded(metta_corelib).
 %:- ensure_loaded(metta_help).
+
+:- enter_comment.
+
 :- initialization(use_corelib_file).
 :- initialization(use_metta_ontology).
 
@@ -2255,7 +2266,86 @@ use_metta_ontology:- time(ensure_loaded(library('metta_ontology.pfc.pl'))).
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
 
+% Flush any pending output to ensure smooth runtime interactions
+flush_metta_output :-
+    with_output_to(user_error, (write_answer_output, ttyflush)).
+
+% Write out answers in hyperon-experimental format to user_error
+metta_runtime_write_answers(List) :-
+    with_output_to(user_error, (write('['), write_answers_aux(List), write(']'))).
+
+% Helper predicate to manage answer formatting to user_error
+write_answers_aux([]) :- !.
+write_answers_aux([H|T]) :-
+    with_output_to(user_error, (write_src_woi(H), (T == [] -> true ; write(', '), write_answers_aux(T)))).
+
+% Dynamically describe the current file or an actively reading file, providing context for runtime sessions
+file_desc(Message) :-
+    prolog_load_context(file, CurrentFile),
+    (   stream_property(Stream, mode(read)),
+        stream_property(Stream, file_name(File)),
+        \+ at_end_of_stream(Stream),
+        File \= CurrentFile,
+        !,
+        sformat(Message, 'File(~w)', [File])
+    ;   sformat(Message, 'File(~w)', [CurrentFile])
+    ).
+
+:- dynamic(runtime_session/4).
+
+% Begin a runtime session with detailed time recording, output to user_error
+begin_metta_runtime :-
+    file_desc(Description),
+    current_times(WallStart, CPUStart),
+    asserta(runtime_session(start, WallStart, CPUStart, Description)),
+    with_output_to(user_error, format('~w started.~n', [Description])).
+
+% End a runtime session, calculate and print elapsed times, output to user_error
+end_metta_runtime :-
+    file_desc(Description),
+    (   retract(runtime_session(start, WallStart, CPUStart, Description))
+    ->  calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
+        print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description)
+    ;   with_output_to(user_error, format('Error: No runtime session start information found for "~w".~n', [Description]))
+    ).
+
+% Wall and CPU time
+current_times(WallStart, CPUStart) :-
+    get_time(WallStart),
+    statistics(cputime, CPUStart).
+
+% Calculate elapsed times
+calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime) :-
+    current_times(WallEnd, CPUEnd),
+    WallElapsedTime is WallEnd - WallStart,
+    CPUElapsedTime is CPUEnd - CPUStart.
+
+% Print the elapsed wall and CPU time with a description, output to user_error
+print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
+    with_output_to(user_error,
+        format('             % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
+               [WallElapsedTime, CPUElapsedTime, Description])).
+
+% Execute a Prolog query and handle output, performance logging, and time measurements to user_error
+do_metta_runtime(_Var,_Call) :- fast_option_value(compile, save),!.
+do_metta_runtime( Var, Call) :-
+    functor(Call, Func, _),
+    atom_concat('Testing ', Func, Description),
+    current_times(WallStart, CPUStart),
+    % Execute the query and collect results
+    with_output_to(user_error, findall(Var, Call, List)),
+    % Record stop time
+    calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
+    % Show results
+    with_output_to(user_error, metta_runtime_write_answers(List)),
+    % Print elapsed time
+    print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description),
+    flush_metta_output.
+
+
+
 :- set_prolog_flag(metta_interp,ready).
+%:- ensure_loaded(metta_runtime).
 %:- set_prolog_flag(gc,false).
 
 :- use_module(library(clpr)). % Import the CLP(R) library

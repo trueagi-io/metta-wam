@@ -762,6 +762,69 @@ is_showing(Flag) :- fast_option_value(Flag, 'silent'), !, fail.
 is_showing(Flag) :- is_verbose(Flag), !.
 is_showing(Flag) :- fast_option_value(Flag, 'show'), !.
 
+
+log_file_type(X):- nonvar(X),!,log_file_type(Is),!,Is=X.
+log_file_type(metta):- fast_option_value(compile, full),!.
+log_file_type(prolog):- fast_option_value(compile, save),!.
+log_file_type(markdown):- fast_option_value(format, markdown),!.
+log_file_type(metta):- fast_option_value(compile, false),!.
+log_file_type(prolog).
+
+
+into_blocktype(InfoType,Goal):-  !,
+    enter_markdown(InfoType),!,
+    Goal.
+    %setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+
+into_blocktype(InfoType,Goal):- log_file_type(markdown), !,
+    setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+
+into_blocktype(InfoType,Goal):- log_file_type(prolog), !,
+  setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+
+into_blocktype(InfoType,Goal):- log_file_type(prolog), !,
+  setup_call_cleanup(format('~N/*~n```~w~n*/~n',[InfoType]),Goal, format('~N/*~n```~n*/~n',[])).
+
+output_language( InfoType, Goal ) :- log_file_type(Lang), !, % (Lang==prolog; Lang==metta),!,
+  ((InfoType == Lang -> (must_det_ll((enter_markdown(Lang),leave_comment)),call(Goal)) ; (must_det_ll(enter_comment),into_blocktype(InfoType,Goal)))).
+
+output_language( InfoType, Goal ) :- log_file_type(markdown), !, into_blocktype(InfoType,Goal).
+output_language( comment, Goal ) :- log_file_type(markdown), !, call(Goal).
+output_language( comment, Goal ) :- log_file_type(prolog), !, format('~N:- q.~n', [output_language( comment, Goal)]).
+output_language( comment, Goal ) :- log_file_type(metta), !, in_cmt(Goal).
+
+
+:- dynamic(inside_comment/0).
+leave_comment:- inside_comment,!, format('~N*/~n~n'),retract(inside_comment).
+leave_comment.
+enter_comment:- inside_comment,!.
+enter_comment:- format('~N~n/*~n'),assert(inside_comment).
+:- enter_comment.
+
+:- at_halt(leave_markdown(_)).
+:- at_halt(leave_comment).
+
+
+:- dynamic(inside_markdown/1).
+leave_markdown(_):-  \+ inside_markdown(_),!.
+leave_markdown(Lang):- inside_markdown(Lang),!, format('~N```~n'),retract(inside_markdown(Lang)).
+leave_markdown(_):-  !. % inside_markdown(Other),!,leave_markdown(Other).
+leave_markdown(_Lang):- !. %format('~N```~n'),!.
+enter_markdown(Lang):- inside_markdown(Lang),!.
+enter_markdown(Lang):- inside_markdown(Other),!,leave_markdown(Other),!,enter_markdown(Lang).
+enter_markdown(Lang):- log_file_type(Us),Us=Lang,inside_comment,!,format('~N```~w~n',[Lang]),asserta(inside_markdown(Lang)),leave_comment.
+enter_markdown(Lang):- format('~N```~w~n',[Lang]),asserta(inside_markdown(Lang)).
+
+
+pick_quote(String, '"'):- \+ string_contains(String,'"'),!.
+pick_quote(String, '\''):- \+ string_contains(String,'\''),!.
+pick_quote(String, '`'):- \+ string_contains(String,'`'),!.
+
+banner_writeln(Msg):-
+  writeln('/*===='),
+  writeln(Msg),
+  writeln('====*/'),!.
+
 %!  if_show(+Flag, :Goal) is nondet.
 %
 %   Conditionally execute a goal if showing is enabled for the given flag.

@@ -195,12 +195,17 @@ kif_ok:- fail.
 svar_fixvarname(SVAR, UP) :-
     % If the name is already bound, throw an error.
     nonvar(UP), !, trace_or_throw(nonvar_svar_fixvarname(SVAR, UP)).
+%
 svar_fixvarname(SVAR, UP) :-
     % Fix the name if it follows certain conventions.
     svar_fixname(SVAR, UP), !.
 svar_fixvarname(SVAR, UP) :-
     % If fixing fails, throw an error.
     fail, trace_or_throw(svar_fixname(SVAR, UP)).
+svar_fixvarname(SVAR, UP):- integer(SVAR),!,sformat(SUP,'~w',['$VAR'(SVAR)]), svar_fixvarname(SUP, UP).
+svar_fixvarname(SVAR, UP):- integer(SVAR),UP=SVAR,!.
+svar_fixvarname(SVAR, UP):- svar(SVAR,UP),!.
+svar_fixvarname(SVAR, UP):- n_to_vn(UP,SVAR),!.
 
 %!  svar_fixname(?Var, ?NameO) is det.
 %
@@ -274,6 +279,9 @@ svar_fixname(I,O):-
 fix_varcase(Word, Word) :-
     % If the word starts with '_', leave it unchanged.
     atom_concat_or_rtrace('_', _, Word), !.
+
+fix_varcase(Word, WordC) :- string(Word),atom_string(Atom,Word),!,fix_varcase(Atom, WordC).
+fix_varcase(Word, WordC) :- atom(Word),downcase_atom(Word, UC),Word=UC,atom_concat('_',UC,WordC),!.
 fix_varcase(Word, WordC) :-
     % Convert the first letter to uppercase.
     !, atom_codes(Word, [F | R]), to_upper(F, U), atom_codes(WordC, [U | R]).
@@ -818,15 +826,19 @@ can_do_level(_).
 maybe_name_vars(List):- \+ is_list(List), !.
 maybe_name_vars([]):-!.
 maybe_name_vars([N=Var|List]):-
-    ignore((n_to_vn(N,NN),Var = '$VAR'(NN))),
+    must_det_ll((n_to_vn(N,NN), ignore((Var = '$VAR'(NN))))),
     maybe_name_vars(List).
-n_to_vn(N,NN):- var(N),!,sformat(NN,'~p',[N]).
-n_to_vn(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
-n_to_vn(N,NN):- \+ atom(N),!,sformat(NN,'~p',[N]).
-n_to_vn('_','_'):-!.
-n_to_vn(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
-n_to_vn(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'~w',[N1]).
-n_to_vn(N,NN):-!,sformat(NN,'~w',[N]).
+
+n_to_vn(N,NN):- n_to_vn0(N,NNS),name(NN,NNS).
+n_to_vn0(N,NN):- var(N),!,sformat(NN,'~p',[N]).
+n_to_vn0(N,NN):- integer(N),sformat(NN,'~p',['$VAR'(N)]).
+n_to_vn0(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
+n_to_vn0(N,NN):- string(N),!,atom_string(A,N),!,n_to_vn0(A,NN).
+n_to_vn0(N,NN):- \+ atom(N),!,sformat(NN,'_~p',[N]).
+n_to_vn0('_','_'):-!.
+n_to_vn0(N,NN):-atom_concat('$',N1,N),!,sformat(NN,'~w',[N1]).
+n_to_vn0(N,NN):-atom_concat('_',N1,N),!,sformat(NN,'_~w',[N1]).
+n_to_vn0(N,NN):-!,sformat(NN,'_~w',[N]).
 
 better_typename(TypeName1,TypeName2,array):- var(TypeName1),var(TypeName2),!.
 better_typename(TypeName1,TypeName2,TypeName1):- var(TypeName2),!.
@@ -1198,6 +1210,10 @@ classify_and_convert_charseq(Chars, Symbolic) :-
        ; Symbolic = Symbol).        % Otherwise, keep the symbol as is.
 
 
+
+%    ast_to_prolog_aux(_,A,O) :- compound(A), A='$VAR'(String),svar_fixvarname(String,UP),O='$VAR'(UP),!.
+%    ast_to_prolog_aux(DontStub,[assign,A,E],OO):-  compound(A), A='$VAR'(String),svar_fixvarname(String,UP),String\=UP,O='$VAR'(UP),!,ast_to_prolog_aux(DontStub,[assign,O,E],OO).
+
 %! classify_and_convert_charseq_(+Chars:list, -Symbolic:term) is det.
 %
 % Helper predicate that attempts to classify the character sequence.
@@ -1207,9 +1223,11 @@ classify_and_convert_charseq(Chars, Symbolic) :-
 % @param Symbolic The resultant Prolog term or symbol.
 
 % Case 1: If the character sequence starts with '$', treat it as a variable.
-classify_and_convert_charseq_(['$'| RestChars], '$VAR'(Symbolic)) :-
+classify_and_convert_charseq_(['$'| RestChars], '$VAR'(SymbolicVar)) :-
     !,
-    atom_chars(Symbolic, ['_'|RestChars]).  % Convert the rest of the characters into a variable name.
+    atom_chars(Symbolic, RestChars),  % Convert the rest of the characters into a variable name.
+    svar_fixvarname(Symbolic,SymbolicVar).
+
 % Case 2: Attempt to interpret the characters as a Prolog term using `read_from_chars/2`.
 % This handles more complex syntaxes like numbers, dates, etc.
 classify_and_convert_charseq_(Chars, Symbolic) :-
