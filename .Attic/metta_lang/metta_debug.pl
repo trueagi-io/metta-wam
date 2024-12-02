@@ -771,32 +771,31 @@ log_file_type(metta):- fast_option_value(compile, false),!.
 log_file_type(prolog).
 
 
-into_blocktype(InfoType,Goal):-  !,
-    enter_markdown(InfoType),!,
-    Goal.
-    %setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+into_blocktype(InfoType,Goal):- enter_markdown(InfoType),!,call(Goal).
 
-into_blocktype(InfoType,Goal):- log_file_type(markdown), !,
-    setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
 
-into_blocktype(InfoType,Goal):- log_file_type(prolog), !,
-  setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
-
-into_blocktype(InfoType,Goal):- log_file_type(prolog), !,
-  setup_call_cleanup(format('~N/*~n```~w~n*/~n',[InfoType]),Goal, format('~N/*~n```~n*/~n',[])).
+%into_blocktype(InfoType,Goal):- log_file_type(markdown), !, setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+%into_blocktype(InfoType,Goal):- log_file_type(prolog), !, setup_call_cleanup(format('~N```~w~n',[InfoType]),Goal, format('~N```~n',[])).
+%into_blocktype(InfoType,Goal):- log_file_type(prolog), !, setup_call_cleanup(format('~N/*~n```~w~n*/~n',[InfoType]),Goal, format('~N/*~n```~n*/~n',[])).
 
 output_language( InfoType, Goal ) :- log_file_type(Lang), !, % (Lang==prolog; Lang==metta),!,
   ((InfoType == Lang -> (must_det_ll((enter_markdown(Lang),leave_comment)),call(Goal)) ; (must_det_ll(enter_comment),into_blocktype(InfoType,Goal)))).
 
-output_language( InfoType, Goal ) :- log_file_type(markdown), !, into_blocktype(InfoType,Goal).
-output_language( comment, Goal ) :- log_file_type(markdown), !, call(Goal).
-output_language( comment, Goal ) :- log_file_type(prolog), !, format('~N:- q.~n', [output_language( comment, Goal)]).
-output_language( comment, Goal ) :- log_file_type(metta), !, in_cmt(Goal).
+%output_language( InfoType, Goal ) :- log_file_type(markdown), !, into_blocktype(InfoType,Goal).
+%output_language( comment, Goal ) :- log_file_type(markdown), !, call(Goal).
+%output_language( comment, Goal ) :- log_file_type(prolog), !, format('~N:- q.~n', [output_language( comment, Goal)]).
+%output_language( comment, Goal ) :- log_file_type(metta), !, in_cmt(Goal).
+
+:- dynamic(enabled_save_markdown/0).
+
 
 
 :- dynamic(inside_comment/0).
+leave_comment:- \+ enabled_save_markdown, !.
 leave_comment:- inside_comment,!, format('~N*/~n~n'),retract(inside_comment).
 leave_comment.
+
+enter_comment:- \+ enabled_save_markdown, !.
 enter_comment:- inside_comment,!.
 enter_comment:- format('~N~n/*~n'),assert(inside_comment).
 :- enter_comment.
@@ -806,10 +805,13 @@ enter_comment:- format('~N~n/*~n'),assert(inside_comment).
 
 
 :- dynamic(inside_markdown/1).
+leave_markdown(_):- \+ enabled_save_markdown, !.
 leave_markdown(_):-  \+ inside_markdown(_),!.
 leave_markdown(Lang):- inside_markdown(Lang),!, format('~N```~n'),retract(inside_markdown(Lang)).
-leave_markdown(_):-  !. % inside_markdown(Other),!,leave_markdown(Other).
+%leave_markdown(_):-  inside_markdown(Other),!,leave_markdown(Other).
 leave_markdown(_Lang):- !. %format('~N```~n'),!.
+
+enter_markdown(_):- \+ enabled_save_markdown, !.
 enter_markdown(Lang):- inside_markdown(Lang),!.
 enter_markdown(Lang):- inside_markdown(Other),!,leave_markdown(Other),!,enter_markdown(Lang).
 enter_markdown(Lang):- log_file_type(Us),Us=Lang,inside_comment,!,format('~N```~w~n',[Lang]),asserta(inside_markdown(Lang)),leave_comment.

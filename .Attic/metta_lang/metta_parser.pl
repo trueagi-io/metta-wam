@@ -357,6 +357,8 @@ io_to_err(Goal):-
 %
 %   @arg Fmt  The format string used by ansi_format/3.
 %   @arg Args The arguments to be used in the format string.
+:- dynamic(enabled_log_progress/0).
+log_progress(_Fmt, _Args):- \+ enabled_log_progress, !.
 log_progress(Fmt, Args):-
     ttyflush,
     io_to_err(ansi_format([bold, hfg(black)], Fmt, Args)),

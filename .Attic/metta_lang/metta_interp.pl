@@ -1787,9 +1787,9 @@ do_metta_exec(From,Self,TermV,FOut):-
    give_up(Why),pp_m(red,gave_up(Why)))).
    %format("########################X2 ~w ~w ~w\n",[Self,TermV,FOut]).
 
-
-o_s(['assertEqual'|O],S):- nonvar(O), o_s(O,S).
-o_s(['assertEqualToResult'|O],S):- nonvar(O), o_s(O,S).
+a_e('assertEqual'). a_e('assertNotEqual').
+a_e('assertEqualToResult'). a_e('assertNotEqualToResult').
+o_s([AE|O],S):- nonvar(AE), a_e(AE), nonvar(O), o_s(O,S).
 o_s([O|_],S):- nonvar(O), !, o_s(O,S).
 o_s(S,S).
 into_simple_op(Load,[Op|O],op(Load,Op,S)):- o_s(O,S),!.
@@ -1853,7 +1853,7 @@ eval_S(Self,Form):- nonvar(Form),
   do_metta(true,exec,Self,Form,_Out).
 eval_H(Term,X):- catch_metta_return(eval_args(Term,X),X).
 
-eval_H(StackMax,Self,Term,X):- fast_option_value(compile, save),!.
+eval_H(_StackMax,_Self, Term,Term):- fast_option_value(compile, save),!.
 eval_H(StackMax,Self,Term,X):-  catch_metta_return(eval_args('=',_,StackMax,Self,Term,X),X).
 /*
 eval_H(StackMax,Self,Term,X).
@@ -2241,7 +2241,7 @@ fix_message_hook:-
 %:- ensure_loaded(metta_help).
 
 :- enter_comment.
-
+:- current_prolog_flag(stack_limit,X),X_16 is X * 16, set_prolog_flag(stack_limit,X_16).
 :- initialization(use_corelib_file).
 :- initialization(use_metta_ontology).
 
@@ -2268,7 +2268,7 @@ use_metta_ontology:- time(ensure_loaded(library('metta_ontology.pfc.pl'))).
 
 % Flush any pending output to ensure smooth runtime interactions
 flush_metta_output :-
-    with_output_to(user_error, (write_answer_output, ttyflush)).
+    write_answer_output, ttyflush.
 
 % Write out answers in hyperon-experimental format to user_error
 metta_runtime_write_answers(List) :-
