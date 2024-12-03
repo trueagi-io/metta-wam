@@ -20,6 +20,7 @@ ftp.flybase.net/**
 venv/
 src/canary-*/
 .*
+*.answers
 *.qlf
 *.datalog
 *-wam.vpw?*
