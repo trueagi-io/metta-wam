@@ -29,7 +29,7 @@ ensure_METTA_DIR:- metta_home(LTH),
 %load_mettalog_xref(LTH):- atom_concat(LTH,'/integration/metta_swi',Init),
 %  exists_source(Init),!,metta:ensure_loaded(Init),!,listing(metta:'$lgt_default_flag'/2).
 load_mettalog_xref(LTH):- \+ exists_directory(LTH),!,dmsg("Skipping metta: not exists_directory").
-load_mettalog_xref(LTH):- absolute_file_name('src/canary/metta_interp.pl',File,[relative_to(LTH)]),!,
+load_mettalog_xref(LTH):- absolute_file_name('prolog/metta_lang/metta_interp.pl',File,[relative_to(LTH)]),!,
    notrace(load_mettalog_xref_file(File)).
 load_mettalog_xref(LTH):- dmsg("Skipping metta="+LTH).
 
