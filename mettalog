@@ -590,7 +590,7 @@ LIST_OF_FILE_ARGS=()
 wants_print_help=0
 
 
-PYSWIP_VERSION="prolog/metta"
+PYSWIP_VERSION="prolog/metta_lang"
 
 # Check if the file exists and Read the first line from the file
 VERSION_FILE="$METTALOG_DIR/src/version-config"
@@ -598,7 +598,7 @@ if [ -f "$VERSION_FILE" ]; then
     read -r FIRST_LINE < "$VERSION_FILE"
     FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
     if [ ! -z "$FIRST_LINE" ]; then
-	if [ -d "$METTALOG_DIR/src/$FIRST_LINE/" ]; then
+	if [ -d "$METTALOG_DIR/.Attic/$FIRST_LINE/" ]; then
 	    PYSWIP_VERSION="$FIRST_LINE"
 	fi
     fi
