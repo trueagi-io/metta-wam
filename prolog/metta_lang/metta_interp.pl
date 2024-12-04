@@ -136,7 +136,7 @@
 */
 %:- set_prolog_flag(debug_on_interrupt,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
-:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../../packs/',Dir,[relative_to(Value)]),
+:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../../libraries/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
     atom_concat(Dir,'logicmoo_utils',LU),
     attach_packs(Dir,[duplicate(replace),search(first)]),
@@ -170,13 +170,13 @@ lazy_load_python.
 metta_root_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../../',Dir,[relative_to(Value)]).
 metta_root_dir(Dir):- getenv('METTA_DIR',Dir),!.
 
-metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./library/',Dir,[relative_to(Value)]).
+metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./libraries/',Dir,[relative_to(Value)]).
 
-metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./genome/',Dir,[relative_to(Value)]).
+metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./loaders/genome/',Dir,[relative_to(Value)]).
 metta_dir(Dir):- is_metta_src_dir(Dir).
 metta_dir(Dir):- metta_library_dir(Dir).
 metta_dir(Dir):- metta_root_dir(Dir).
-metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
+%metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
 
 :- dynamic user:file_search_path/2.
 :- multifile user:file_search_path/2.
