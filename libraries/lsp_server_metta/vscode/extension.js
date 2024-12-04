@@ -5,7 +5,7 @@ function activate(context) {
 
   let serverOptions = {
     run: {command: "swipl",
-          args: ["-g", "use_module(library(lsp_server_metta)).",
+          args: ["-g", "use_module(library(metta_lsp)).",
                  "-g", "lsp_server_metta:main",
                  "-t", "halt",
                  "--", "stdio"]},
@@ -14,7 +14,7 @@ function activate(context) {
                    "-g", "openlog(metta_lsp, [], user).",
                    "-g", "use_module(library(debug)).",
                    "-g", "debug(server(high)).",
-                   "-g", "use_module(library(lsp_server_metta)).",
+                   "-g", "use_module(library(metta_lsp)).",
                    "-g", "lsp_server_metta:main",
                    "-t", "halt",
                    "--", "stdio"]}
