@@ -9,8 +9,7 @@
    set_prolog_flag(os_argv, [swipl]).
 
 % Set the directory context for loading packages; use the default directory if context retrieval fails
-:- (prolog_load_context(directory, Value); Value = '.'),
-   absolute_file_name('../packs/', Dir, [relative_to(Value)]),
+:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../../packs/',Dir,[relative_to(Value)]),
    atom_concat(Dir, 'predicate_streams', PS),
    atom_concat(Dir, 'logicmoo_utils', LU),
    attach_packs(Dir, [duplicate(replace), search(first)]),

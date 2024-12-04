@@ -136,7 +136,7 @@
 */
 %:- set_prolog_flag(debug_on_interrupt,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
-:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../packs/',Dir,[relative_to(Value)]),
+:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../../packs/',Dir,[relative_to(Value)]),
     atom_concat(Dir,'predicate_streams',PS),
     atom_concat(Dir,'logicmoo_utils',LU),
     attach_packs(Dir,[duplicate(replace),search(first)]),
@@ -2259,7 +2259,7 @@ immediate_ignore:- ignore(((
    metta_final,
    true))).
 
-use_metta_ontology:- time(ensure_loaded(library('metta_ontology.pfc.pl'))).
+use_metta_ontology:- ensure_loaded(library('metta_ontology.pfc.pl')).
 % use_metta_ontology:- load_pfc_file('metta_ontology.pl.pfc').
 %:- use_metta_ontology.
 %:- initialization(use_metta_ontology).

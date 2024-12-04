@@ -563,7 +563,7 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 
   Configuration File:
      This script reads options from the ~/.mettalogrc file, one option per line.
-     Options specified in ~/.mettalogrc are processed before command-line arguments.
+     Options specified in ~/:.mettalogrc are processed before command-line arguments.
 
   WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
 	     $METTA_CMD
@@ -590,7 +590,7 @@ LIST_OF_FILE_ARGS=()
 wants_print_help=0
 
 
-PYSWIP_VERSION="main"
+PYSWIP_VERSION="prolog/metta"
 
 # Check if the file exists and Read the first line from the file
 VERSION_FILE="$METTALOG_DIR/src/version-config"
@@ -994,10 +994,10 @@ PYSWIP_VERSION="${PYSWIP_VERSION%/}"
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
-      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
     else 
-      INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
+      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
     fi
 fi
 
