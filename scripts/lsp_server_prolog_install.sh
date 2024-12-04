@@ -8,7 +8,7 @@ LINK_NAME="$TARGET_DIR/lsp_server_metta"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Define the relative path to LINK_TARGET
-RELATIVE_LINK_TARGET="../src/packs/lsp_server_metta"
+RELATIVE_LINK_TARGET="../libraries/lsp_server_metta"
 
 # Combine SCRIPT_DIR with the relative path
 LINK_TARGET="${SCRIPT_DIR}/${RELATIVE_LINK_TARGET}"
@@ -63,7 +63,7 @@ else
 fi
 
 # Source and target directories
-SOURCE_DIR="$HOME/metta-wam/src/packs"
+SOURCE_DIR="$HOME/metta-wam/libraries"
 TARGET_DIR="$HOME/.local/share/swi-prolog/pack"
 
 
