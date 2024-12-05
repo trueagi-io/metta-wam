@@ -856,6 +856,7 @@ show_options_values:-
 
 :- ensure_loaded(metta_utils).
 %:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+:- ensure_loaded(metta_pfc_debug).
 :- ensure_loaded(metta_pfc_base).
 :- ensure_loaded(metta_pfc_support).
 :- ensure_loaded(metta_compiler).
