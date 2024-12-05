@@ -135,6 +135,22 @@
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
 		</Folder>
+		<Folder Name="../metta-src-conversions">
+			<F
+				N="../metta-src-conversions/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+		</Folder>
+		<Folder Name="../metta-testsuite">
+			<Folder Name="tests">
+				<F
+					N="../metta-testsuite/tests/*.*"
+					Recurse="1"
+					Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+					L="1"/>
+			</Folder>
+		</Folder>
 		<Folder Name="python">
 			<F
 				N="python/*.*"
