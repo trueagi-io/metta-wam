@@ -7,7 +7,9 @@ flybase_metta.qlf
 ./reports/
 ./reports_local/
 ./venv/lib
+./venv/
 ./reqs/
+./.Attic
 !./reqs/logicmoo_utils
 !./reqs/predicate_streams
 # local development might need these changes without commiting
