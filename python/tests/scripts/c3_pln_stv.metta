@@ -65,6 +65,8 @@
 ; Tests
 !(assertEqual (TV (And (PA) (PB))) (stv 0.3 0.8))
 !(assertEqual (TV (FA)) (stv 0.4 0.8))
+!(assertEqual (TV (And (Evaluation (Predicate P) (Concept A)) (Evaluation (Predicate P) (Concept B)))) (stv 0.3 0.8))
+!(assertEqual (TV (Evaluation (Predicate F) (Concept A))) (stv 0.4 0.8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
