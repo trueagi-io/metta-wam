@@ -4,88 +4,87 @@
 ;; Main predicate to find the owner of the fish
 ((zebra-owner $Owner) :-
  (
-   (set-global &exists-props Nil)
 
-   (init-houses (S (S (S (S (S  Z))))))
-   
+   (same $Houses (Cons (Cons $__202438 $_1_202439) (Cons (Cons $__208019 $_1_208020) (Cons (Cons $__211968 $_1_211969) (Cons (Cons $__215037 $_1_215038) (Cons (Cons $__217602 $_1_217603) Nil))))))
+   (same $Props (Cons $_H6 $_T6))
+   (same $ctx ($Houses $Props))
 
  ;; Clue 1: The Brit lives in the red house.
-   (declare nationality $Brit brit)
-   (declare color $Brit red)
+   (declare nationality $Brit brit in the $ctx)
+   (declare color $Brit red in the $ctx)
 
  ;; Clue 2: The Swede keeps dogs as pets.
-   (declare nationality $Swede swede)
-   (declare pet $Swede dog)
+   (declare nationality $Swede swede in the $ctx)
+   (declare pet $Swede dog in the $ctx)
 
  ;; Clue 3: The Dane drinks tea.
-   (declare nationality $Dane dane)
-   (declare drink $Dane tea)
+   (declare nationality $Dane dane in the $ctx)
+   (declare drink $Dane tea in the $ctx)
 
  ;; Clue 4: The green house is immediately to the left of the white house.
-   (left-of $Green $White)
-   (declare color $Green green)
-   (declare color $White white)
+   (left-of $Green $White in the $ctx)
+   (declare color $Green green in the $ctx)
+   (declare color $White white in the $ctx)
 
  ;; Clue 5: The owner of the green house drinks coffee.
-   (declare color $Green green)
-   (declare drink $Green coffee)
+   (declare color $Green green in the $ctx)
+   (declare drink $Green coffee in the $ctx)
 
  ;; Clue 6: The person who smokes Pall Mall rears birds.
-   (declare smokes $PallMallSmoker pallmall)
-   (declare pet $PallMallSmoker birds)
+   (declare smokes $PallMallSmoker pallmall in the $ctx)
+   (declare pet $PallMallSmoker birds in the $ctx)
 
  ;; Clue 7: The owner of the yellow house smokes Dunhill.
-   (declare color $Yellow yellow)
-   (declare smokes $Yellow dunhill)
+   (declare color $Yellow yellow in the $ctx)
+   (declare smokes $Yellow dunhill in the $ctx)
 
  ;; Clue 8: The man living in the center house drinks milk.
-   (center-house $CenterHouse)
-   (declare drink $CenterHouse milk)
+   (center-house $CenterHouse in the $ctx)
+   (declare drink $CenterHouse milk in the $ctx)
 
  ;; Clue 9: The Norwegian lives in the first house.
-   (first-house $FirstHouse)
-   (declare nationality $FirstHouse norwegian)
+   (first-house $FirstHouse in the $ctx)
+   (declare nationality $FirstHouse norwegian in the $ctx)
 
  ;; Clue 10: The man who smokes Blends lives next to the one who keeps cats.
-   (declare smokes $SmokesBlends blends)
-   (next-to $SmokesBlends $HouseCat)
-   (declare pet $HouseCat cat)
+   (declare smokes $SmokesBlends blends in the $ctx)
+   (next-to $SmokesBlends $HouseCat in the $ctx)
+   (declare pet $HouseCat cat in the $ctx)
 
  ;; Clue 11: The man who keeps horses lives next to the man who smokes Dunhill.
-   (declare pet $HorseKeeper horse)
-   (next-to $HorseKeeper $SmokesDunhills)
-   (declare smokes $SmokesDunhills dunhill)
+   (declare pet $HorseKeeper horse in the $ctx)
+   (next-to $HorseKeeper $SmokesDunhills in the $ctx)
+   (declare smokes $SmokesDunhills dunhill in the $ctx)
 
  ;; Clue 12: The owner who smokes BlueMaster drinks beer.
-   (declare smokes $SmokesBlueMaster bluemaster)
-   (declare drink $SmokesBlueMaster beer)
+   (declare smokes $SmokesBlueMaster bluemaster in the $ctx)
+   (declare drink $SmokesBlueMaster beer in the $ctx)
 
  ;; Clue 13: The German smokes Prince.
-   (declare nationality $German german)
-   (declare smokes $German prince)
+   (declare nationality $German german in the $ctx)
+   (declare smokes $German prince in the $ctx)
 
  ;; Clue 14: The Norwegian lives next to the blue house.
-   (declare nationality $Norwegian norwegian)
-   (next-to $Norwegian $HouseBlue)
-   (declare color $HouseBlue blue)
+   (declare nationality $Norwegian norwegian in the $ctx)
+   (next-to $Norwegian $HouseBlue in the $ctx)
+   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 15: The man who smokes Blends has a neighbor who drinks water.
-   (declare smokes $BlendsSmoker blends)
-   (next-to $BlendsSmoker $WaterDrinker)
-   (declare drink $WaterDrinker water)
+   (declare smokes $BlendsSmoker blends in the $ctx)
+   (next-to $BlendsSmoker $WaterDrinker in the $ctx)
+   (declare drink $WaterDrinker water in the $ctx)
 
  ;; Determine who owns the fish
-   (declare pet $FishOwner fish)
-   (declare nationality $FishOwner $Owner)
+   (declare pet $FishOwner fish in the $ctx)
+   (declare nationality $FishOwner $Owner in the $ctx)
 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helper predicates
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialize Houses as a list of uninitialized exists
-((init-houses $Num) :-
- ((make-houses $Num $Houses)
-   (set-global &neighborhood $Houses)))
+((init-houses $Num $Houses) :-
+ (make-houses $Num $Houses))
 
 ((make-houses (S $N) (Cons $House $Rest)) :-
  ((create-exists $House)
@@ -96,8 +95,8 @@
 
 
 ;; Predicate: L is immediately to the left of R in the list
-((left-of $L $R) :-
- ((get-global &neighborhood $Houses)
+((left-of $L $R in the $ctx) :-
+ ((same $ctx ($Houses $_))
    (left-of-list $L $R $Houses)))
 
 (left-of-list $L $R (Cons $L (Cons $R $_)))
@@ -105,19 +104,19 @@
  ((left-of-list $L $R $Rest)))
 
 ;; Predicate: A and B are next to each other in the list
-((next-to $A $B) :- 
- ((left-of $A $B)))
-((next-to $A $B) :-
- ((left-of $B $A)))
+((next-to $A $B in the $ctx) :- 
+ ((left-of $A $B in the $ctx)))
+((next-to $A $B in the $ctx) :-
+ ((left-of $B $A in the $ctx)))
 
 ;; Predicate to get the first house in the list
-((first-house $First) :-
- ((get-global &neighborhood $Houses)
+((first-house $First in the $ctx) :-
+ ((same $ctx ($Houses $_))
    (nat-nth Z $Houses $First)))
 
 ;; Predicate to get the center house in the list
-((center-house $Center) :-
- ((get-global &neighborhood $Houses)
+((center-house $Center in the $ctx) :-
+ ((same $ctx ($Houses $_))
    (nat-nth (S (S Z)) $Houses $Center)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,15 +124,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; General property declaration predicate
-((declare $PropName $Object $PropValue) :-
- ((get-declare-num $PropName $Num)
+((declare $PropName $Object $PropValue in the $ctx) :-
+ ((get-declare-num $PropName $Num in the $ctx)
    (nat-nth $Num $Template $PropValue)
-   (something-existing $Exists)
+   (something-existing $Exists in the $ctx)
    (same $Template $Object) (same $Template $Object)))
 
 ;; Ensure Exists is a member of Houses
-((something-existing $Exists) :-
- ((get-global &neighborhood $Houses)
+((something-existing $Exists in the $ctx) :-
+ ((same $ctx ($Houses $_))
    (member $Exists $Houses)))
 
 ;; Member predicate for lists
@@ -142,17 +141,15 @@
  ((member $Elem $Tail)))
 
 ;; Map property names to their positions (numbers)
-((get-declare-num $PropName $Num) :-
- ((get-global &exists-props $PropList)
+((get-declare-num $PropName $Num in the $ctx) :-
+ ((same ($_ $PropList) $ctx)
    (declare-index $PropName $PropList Z $Num)))
 
 (declare-index $PropName (Cons $PropName $_) $Num $Num)
 ((declare-index $PropName (Cons $_ $Rest) $Acc $Num) :-
  ((declare-index $PropName $Rest (S $Acc) $Num)))
-((declare-index $PropName Nil $Acc $Acc) :-  ;; If property not found, add it
-  ((get-global &exists-props $PropList)
-   (cons-append $PropList (Cons $PropName Nil) $NewPropList)
-   (set-global &exists-props $NewPropList)))
+((declare-index $PropName $PropList $Acc $Acc) :-  ;; If property not found, add it
+   (cons-append $PropList (Cons $PropName $_Open) $_Ignored))
 
 ;; Zero-based nat-nth predicate
 (nat-nth Z (Cons $Elem $_) $Elem)
@@ -164,12 +161,6 @@
 ((cons-append (Cons $H $T) $List2 (Cons $H $T2)) :-
  ((cons-append $T $List2 $T2)))
 
-((set-global $var $val) :- 
-  (eval (bind! $var (new-state $val))))
-
-((get-global $var $val) :- 
-  (is $val (get-state $var)))
-
 
 (same $x $x)
 
@@ -180,43 +171,43 @@
 ;; length list
 (length Nil 0)
 ((length (Cons $x $rest) $out) :- (
-    (length $rest $out2) 
-    (is $out (+ $out2 1))
+	(length $rest $out2) 
+	(is $out (+ $out2 1))
 )
 )
 
 ;; sum from 0 to n
 (sum 0 0)
 ((sum $n $s) :- (
-    (bool (> $n 0))
-    (is $n1 (- $n 1))
-    (sum $n1 $s1)
-    (is $s (+ $n $s1))
+	(bool (> $n 0))
+	(is $n1 (- $n 1))
+	(sum $n1 $s1)
+	(is $s (+ $n $s1))
 ))
 
 ;; list append
 (append Nil $L $L)
 ((append (Cons $H $T) $L (Cons $H $R)) :- (
-    (append $T $L $R)
+	(append $T $L $R)
 ))
 
 ;; negation as failure test
 ((bachelor $x) :- (
-    (man $x)
-    (naf (married $x))
+	(man $x)
+	(naf (married $x))
 ))
 (man John) (man Tim)
 (married Tim)
 
 ((woman $x) :- (
-    (naf (man $x))
+	(naf (man $x))
 ))
 
 
 ;; First-order logic backward chainer using match
 
 ;; TODO: this is inefficient, we just need at least 1 match
-(: has-match (-> Atom  Atom  Bool))
+(: has-match (-> Atom Atom Bool))
 (= (has-match $space $g)
 	(let $m (collapse (match $space $g True))
 		(if (== $m ())
@@ -226,9 +217,9 @@
 	)
 )
 
-(: backward-chain (-> Atom  Atom  Atom  Atom ))
-(: backward-chain1 (-> Atom  Atom  Atom  Atom ))
-(: backward-chain2 (-> Atom  Atom  Atom  Atom ))
+(: backward-chain (-> Atom Atom Atom Atom))
+(: backward-chain1 (-> Atom Atom Atom Atom))
+(: backward-chain2 (-> Atom Atom Atom Atom))
 
 (= (backward-chain $goal $kb $rb) (backward-chain2 $goal $kb $rb))
 (= (backward-chain $goal $kb $rb) (backward-chain1 $goal $kb $rb))
@@ -251,7 +242,7 @@
 	)
 )
 
-(: match-body (-> Atom  Atom  Atom  Atom  Atom ))
+(: match-body (-> Atom Atom Atom Atom Atom))
 ;; do matching for each atom in the body, then returns goal
 (= (match-body $body $kb $rb $goal)
 	(if (== $body ())
@@ -267,10 +258,10 @@
 	)
 )
 
-(: query (-> Atom  Atom  ))
+(: query (-> Atom Atom))
 ; !(bind! &baseall (new-space))
 (= (query $goal)
-    (backward-chain $goal &self &self)
+	(backward-chain $goal &self &self)
 )
 
 ;;;;;;;;;;;;;;;;;
@@ -319,9 +310,6 @@
 
 !(query (declare nationality $Brit brit))
 
-!(get-state &exists-props)
-!(get-state &neighborhood)
-
 !(query (something-existing $Exists))
 
 
@@ -331,5 +319,4 @@
 
 ;; Verify properties related to the zebra-owner problem
 !(query (declare nationality $Owner norwegian))
-
 
