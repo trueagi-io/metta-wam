@@ -384,7 +384,7 @@ give_pass_credit(TestSrc, _Pre, G) :-
     % Increments the success counter.
     flag(loonit_success, X, X + 1), !,
     % Displays a success message in cyan color.
-    color_g_mesg(cyan, write_src(loonit_success(G))), !.
+    color_g_mesg(cyan, write_src_wi(loonit_success(G))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -829,7 +829,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
     sub_var('BadType',TestSrc), \+ check_type,!,
     write('\n!check_type (not considering this a failure)\n'),
-    color_g_mesg('#D8BFD8',write_src(loonit_failureR(G))),!,
+    color_g_mesg('#D8BFD8',write_src_wi(loonit_failureR(G))),!,
     ignore(((
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
@@ -837,7 +837,7 @@ loonit_asserts1(TestSrc,Pre,G) :-  fail,
 loonit_asserts1(TestSrc, Pre, G) :-
     % Handle failed Goal by logging, flagging failure, and optionally tracing.
     must_det_ll((
-        color_g_mesg(red, write_src(loonit_failureR(G))),
+        color_g_mesg(red, write_src_wi(loonit_failureR(G))),
         write_pass_fail(TestSrc, 'FAIL', G),
         flag(loonit_failure, X, X + 1),
         % Optional trace or REPL on failure based on settings.
