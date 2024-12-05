@@ -1,0 +1,1030 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title></title>
+<style type="text/css">
+.ansi2html-content { display: inline; white-space: pre-wrap; word-wrap: break-word; }
+.body_foreground { color: #AAAAAA; }
+.body_background { background-color: #000000; }
+.inv_foreground { color: #000000; }
+.inv_background { background-color: #AAAAAA; }
+.ansi1 { font-weight: bold; }
+.ansi32 { color: #00aa00; }
+.ansi36 { color: #00aaaa; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165000 { color: #FFA500; }
+.ansi38-015015015 { color: #0F0F0F; }
+.ansi38-255165009 { color: #FFA509; }
+.ansi38-255238088 { color: #FFEE58; }
+.ansi38-013099040 { color: #0D6328; }
+</style>
+</head>
+<body class="body_foreground body_background" style="font-size: normal;" >
+<pre class="ansi2html-content">
+Script started on 2024-09-03 05:34:33-07:00 [COMMAND="swipl  /home/deb12user/metta-wam/src/canary/metta_interp.pl -- --python=enable -- --debug --html --log ./tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta --time=debug --repl --stdin=tty --stdout=tty --stderr=tty" TERM="xterm" TTY="/dev/pts/7" COLUMNS="115" LINES="24"]
+;           (set_option_value  prolog false)
+;           (set_option_value  compat auto)
+;           (set_option_value  compatio true)
+;          (is_cmd_option  execute python --python=enable enable)
+;           (set_option_value  python enable)
+;          (is_cmd_option  execute debug --debug true)
+;           (set_option_value  debug true)
+;           (is_cmd_option  execute html --html true)
+;           (set_option_value  html true)
+
+; (load_metta_file  &self ./tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta)
+;                     (track_load_into_file  /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta)
+;                                     (load_answer_file  /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta.answers /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta)
+;                                      (= 1  "[(: a B), (: cde (Implication (OrLink C D) E)), (: a A), (: abc (Implication (AndLink A B) C)), (: (DisjunctionIntroduction a a) (OrLink B B)), (: (DisjunctionIntroduction a cde) (OrLink B (Implication (OrLink C D) E))), (: (DisjunctionIntroduction a a) (OrLink B A)), (: (DisjunctionIntroduction a abc) (OrLink B (Implication (AndLink A B) C))), (: (DisjunctionIntroduction cde a) (OrLink (Implication (OrLink C D) E) B)), (: (DisjunctionIntroduction cde cde) (OrLink (Implication (OrLink C D) E) (Implication (OrLink C D) E))), (: (DisjunctionIntroduction cde a) (OrLink (Implication (OrLink C D) E) A)), (: (DisjunctionIntroduction cde abc) (OrLink (Implication (OrLink C D) E) (Implication (AndLink A B) C))), (: (DisjunctionIntroduction a a) (OrLink A B)), (: (DisjunctionIntroduction a cde) (OrLink A (Implication (OrLink C D) E))), (: (DisjunctionIntroduction a a) (OrLink A A)), (: (DisjunctionIntroduction a abc) (OrLink A (Implication (AndLink A B) C))), (: (DisjunctionIntroduction abc a) (OrLink (Implication (AndLink A B) C) B)), (: (DisjunctionIntroduction abc cde) (OrLink (Implication (AndLink A B) C) (Implication (OrLink C D) E))), (: (DisjunctionIntroduction abc a) (OrLink (Implication (AndLink A B) C) A)), (: (DisjunctionIntroduction abc abc) (OrLink (Implication (AndLink A B) C) (Implication (AndLink A B) C))), (: (ConjunctionIntroduction a a) (AndLink B B)), (: (ConjunctionIntroduction a cde) (AndLink B (Implication (OrLink C D) E))), (: (ConjunctionIntroduction a a) (AndLink B A)), (: (ConjunctionIntroduction a abc) (AndLink B (Implication (AndLink A B) C))), (: (ConjunctionIntroduction cde a) (AndLink (Implication (OrLink C D) E) B)), (: (ConjunctionIntroduction cde cde) (AndLink (Implication (OrLink C D) E) (Implication (OrLink C D) E))), (: (ConjunctionIntroduction cde a) (AndLink (Implication (OrLink C D) E) A)), (: (ConjunctionIntroduction cde abc) (AndLink (Implication (OrLink C D) E) (Implication (AndLink A B) C))), (: (ConjunctionIntroduction a a) (AndLink A B)), (: (ConjunctionIntroduction a cde) (AndLink A (Implication (OrLink C D) E))), (: (ConjunctionIntroduction a a) (AndLink A A)), (: (ConjunctionIntroduction a abc) (AndLink A (Implication (AndLink A B) C))), (: (ConjunctionIntroduction abc a) (AndLink (Implication (AndLink A B) C) B)), (: (ConjunctionIntroduction abc cde) (AndLink (Implication (AndLink A B) C) (Implication (OrLink C D) E))), (: (ConjunctionIntroduction abc a) (AndLink (Implication (AndLink A B) C) A)), (: (ConjunctionIntroduction abc abc) (AndLink (Implication (AndLink A B) C) (Implication (AndLink A B) C)))]")
+;                                      (= 2  "0.37user 0.00system 0:00.37elapsed 100%CPU (0avgtext+0avgdata 26636maxresident)k")
+;                                      (= 2  "0inputs+0outputs (0major+3504minor)pagefaults 0swaps")
+
+
+;                                     (load_answer_file  /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta.answers /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta)
+;;; Import modules
+;;; Define Nat
+<span class="ansi38-255165000">  (: Nat Type)
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,'Nat','Type'])
+
+</span><span class="ansi38-255165000">  (: Z Nat)
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,'Z','Nat'])
+
+</span><span class="ansi38-255165000">  (: S 
+    (-> Nat Nat))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,'S',[->,'Nat','Nat']])
+
+</span>;;; Enumerate all programs up to a given depth that are consistent with
+;;; the query, using the given axiom non-deterministic functions and rules.
+;;;
+;;; The arguments are:
+;;;
+;;; $query: an Atom under the form (: TERM TYPE).  The atom may contain
+;;;         free variables within TERM and TYPE to form various sort of
+;;;         queries, such as:
+;;;         1. Backward chaining: (: $term (Inheritance $x Mammal))
+;;;         2. Forward chaining: (: ($rule $premise AXIOM) $type)
+;;;         3. Mixed chaining: (: ($rule $premise AXIOM) (Inheritance $x Mammal))
+;;;         4. Type checking: (: TERM TYPE)
+;;;         5. Type inference: (: TERM $type)
+;;;
+;;; $kb: a nullary function to axiom, to non-deterministically pick up
+;;;      an axiom.  An axiom is an Atom of the form (: TERM TYPE).
+;;;
+;;; $rb: a nullary function to rule, to non-deterministically pick up a
+;;;      rule.  A rule is a function mapping premises to conclusion,
+;;;      where premises and conclusion have the form (: TERM TYPE).
+;;;
+;;; $depth: a Nat representing the maximum depth of the generated
+;;;         programs.
+;;;
+;;; TODO: recurse over curried rules instead of duplicating code over
+;;; tuples.
+<span class="ansi38-255165000">  (: synthesize 
+    (-> $a 
+      (-> $kt) 
+      (-> $rt) Nat $a))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,synthesize,[->,_a,[->,_kt],[->,_rt],'Nat',_a]])
+
+</span>;;; Nullary rule (axiom)
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb $depth) 
+    (let $query 
+      ($kb) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,_depth],[let,_query,[_kb],_query]])
+
+</span>;;; Unary rule
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb 
+      (S $k)) 
+    (let* 
+      ( ( (: $ructor 
+            (-> $premise $conclusion)) ($rb)) 
+        ( (: 
+            ($ructor $proof) $conclusion) $query) 
+        ( (: $proof $premise) (synthesize (: $proof $premise) $kb $rb $k))) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,['S',_k]],['let*',[[[:,_ructor,[->,_premise,_conclusion]],[_rb]],[[:,[_ructor,_proof],_conclusion],_query],[[:,_proof,_premise],[synthesize,[:,_proof,_premise],_kb,_rb,_k]]],_query]])
+
+</span>;;; Binary rule
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb 
+      (S $k)) 
+    (let* 
+      ( ( (: $ructor 
+            (-> $premise1 $premise2 $conclusion)) ($rb)) 
+        ( (: 
+            ($ructor $proof1 $proof2) $conclusion) $query) 
+        ( (: $proof1 $premise1) (synthesize (: $proof1 $premise1) $kb $rb $k)) 
+        ( (: $proof2 $premise2) (synthesize (: $proof2 $premise2) $kb $rb $k))) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,['S',_k]],['let*',[[[:,_ructor,[->,_premise1,_premise2,_conclusion]],[_rb]],[[:,[_ructor,_proof1,_proof2],_conclusion],_query],[[:,_proof1,_premise1],[synthesize,[:,_proof1,_premise1],_kb,_rb,_k]],[[:,_proof2,_premise2],[synthesize,[:,_proof2,_premise2],_kb,_rb,_k]]],_query]])
+
+</span>;;; Trinary rule
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb 
+      (S $k)) 
+    (let* 
+      ( ( (: $ructor 
+            (-> $premise1 $premise2 $premise3 $conclusion)) ($rb)) 
+        ( (: 
+            ($ructor $proof1 $proof2 $proof3) $conclusion) $query) 
+        ( (: $proof1 $premise1) (synthesize (: $proof1 $premise1) $kb $rb $k)) 
+        ( (: $proof2 $premise2) (synthesize (: $proof2 $premise2) $kb $rb $k)) 
+        ( (: $proof3 $premise3) (synthesize (: $proof3 $premise3) $kb $rb $k))) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,['S',_k]],['let*',[[[:,_ructor,[->,_premise1,_premise2,_premise3,_conclusion]],[_rb]],[[:,[_ructor,_proof1,_proof2,_proof3],_conclusion],_query],[[:,_proof1,_premise1],[synthesize,[:,_proof1,_premise1],_kb,_rb,_k]],[[:,_proof2,_premise2],[synthesize,[:,_proof2,_premise2],_kb,_rb,_k]],[[:,_proof3,_premise3],[synthesize,[:,_proof3,_premise3],_kb,_rb,_k]]],_query]])
+
+</span>;;; Quaternary rule
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb 
+      (S $k)) 
+    (let* 
+      ( ( (: $ructor 
+            (-> $premise1 $premise2 $premise3 $premise4 $conclusion)) ($rb)) 
+        ( (: 
+            ($ructor $proof1 $proof2 $proof3 $proof4) $conclusion) $query) 
+        ( (: $proof1 $premise1) (synthesize (: $proof1 $premise1) $kb $rb $k)) 
+        ( (: $proof2 $premise2) (synthesize (: $proof2 $premise2) $kb $rb $k)) 
+        ( (: $proof3 $premise3) (synthesize (: $proof3 $premise3) $kb $rb $k)) 
+        ( (: $proof4 $premise4) (synthesize (: $proof4 $premise4) $kb $rb $k))) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,['S',_k]],['let*',[[[:,_ructor,[->,_premise1,_premise2,_premise3,_premise4,_conclusion]],[_rb]],[[:,[_ructor,_proof1,_proof2,_proof3,_proof4],_conclusion],_query],[[:,_proof1,_premise1],[synthesize,[:,_proof1,_premise1],_kb,_rb,_k]],[[:,_proof2,_premise2],[synthesize,[:,_proof2,_premise2],_kb,_rb,_k]],[[:,_proof3,_premise3],[synthesize,[:,_proof3,_premise3],_kb,_rb,_k]],[[:,_proof4,_premise4],[synthesize,[:,_proof4,_premise4],_kb,_rb,_k]]],_query]])
+
+</span>;;; Quintenary rule
+<span class="ansi38-255165000">  (= 
+    (synthesize $query $kb $rb 
+      (S $k)) 
+    (let* 
+      ( ( (: $ructor 
+            (-> $premise1 $premise2 $premise3 $premise4 $premise5 $conclusion)) ($rb)) 
+        ( (: 
+            ($ructor $proof1 $proof2 $proof3 $proof4 $proof5) $conclusion) $query) 
+        ( (: $proof1 $premise1) (synthesize (: $proof1 $premise1) $kb $rb $k)) 
+        ( (: $proof2 $premise2) (synthesize (: $proof2 $premise2) $kb $rb $k)) 
+        ( (: $proof3 $premise3) (synthesize (: $proof3 $premise3) $kb $rb $k)) 
+        ( (: $proof4 $premise4) (synthesize (: $proof4 $premise4) $kb $rb $k)) 
+        ( (: $proof5 $premise5) (synthesize (: $proof5 $premise5) $kb $rb $k))) $query))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[synthesize,_query,_kb,_rb,['S',_k]],['let*',[[[:,_ructor,[->,_premise1,_premise2,_premise3,_premise4,_premise5,_conclusion]],[_rb]],[[:,[_ructor,_proof1,_proof2,_proof3,_proof4,_proof5],_conclusion],_query],[[:,_proof1,_premise1],[synthesize,[:,_proof1,_premise1],_kb,_rb,_k]],[[:,_proof2,_premise2],[synthesize,[:,_proof2,_premise2],_kb,_rb,_k]],[[:,_proof3,_premise3],[synthesize,[:,_proof3,_premise3],_kb,_rb,_k]],[[:,_proof4,_premise4],[synthesize,[:,_proof4,_premise4],_kb,_rb,_k]],[[:,_proof5,_premise5],[synthesize,[:,_proof5,_premise5],_kb,_rb,_k]]],_query]])
+
+</span><span class="ansi38-255165000">  (: kb 
+    (-> Atom))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,kb,[->,'Atom']])
+
+</span><span class="ansi38-255165000">  (= 
+    (kb) 
+    (: a A))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[kb],[:,a,'A']])
+
+</span><span class="ansi38-255165000">  (= 
+    (kb) 
+    (: a B))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[kb],[:,a,'B']])
+
+</span><span class="ansi38-255165000">  (= 
+    (kb) 
+    (: abc 
+      (Implication 
+        (AndLink A B) C)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[kb],[:,abc,['Implication',['AndLink','A','B'],'C']]])
+
+</span><span class="ansi38-255165000">  (= 
+    (kb) 
+    (: cde 
+      (Implication 
+        (OrLink C D) E)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[kb],[:,cde,['Implication',['OrLink','C','D'],'E']]])
+
+</span><span class="ansi38-255165000">  (: rb 
+    (-> Atom))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[:,rb,[->,'Atom']])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: ModusPonens 
+      (-> 
+        (ImplicationLink $p $q) $p $q)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'ModusPonens',[->,['ImplicationLink',_p,_q],_p,_q]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: Deduction 
+      (-> 
+        (ImplicationLink $p $q) 
+        (ImplicationLink $q $r) 
+        (ImplicationLink $p $r))))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'Deduction',[->,['ImplicationLink',_p,_q],['ImplicationLink',_q,_r],['ImplicationLink',_p,_r]]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: DisjunctiveSyllogism 
+      (-> 
+        (OrLink $p $q) 
+        (NotLink $p) $q)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'DisjunctiveSyllogism',[->,['OrLink',_p,_q],['NotLink',_p],_q]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: DisjunctiveSyllogism 
+      (-> 
+        (OrLink $p $q) 
+        (NotLink $q) $p)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'DisjunctiveSyllogism',[->,['OrLink',_p,_q],['NotLink',_q],_p]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: ConjunctionIntroduction 
+      (-> $p $q 
+        (AndLink $p $q))))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'ConjunctionIntroduction',[->,_p,_q,['AndLink',_p,_q]]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: ConjunctionEliminationLeft 
+      (-> 
+        (AndLink $p $q) $p)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'ConjunctionEliminationLeft',[->,['AndLink',_p,_q],_p]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: ConjunctionEliminationRight 
+      (-> 
+        (AndLink $p $q) $q)))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'ConjunctionEliminationRight',[->,['AndLink',_p,_q],_q]]])
+
+</span><span class="ansi38-255165000">  (= 
+    (rb) 
+    (: DisjunctionIntroduction 
+      (-> $p $q 
+        (OrLink $p $q))))
+</span><span class="ansi38-015015015">  ; Action: load=metta_atom_asserted('&self',[=,[rb],[:,'DisjunctionIntroduction',[->,_p,_q,['OrLink',_p,_q]]]])
+
+</span><span class="ansi38-255165009">;; In file as:  
+</span><span class="ansi1 ansi38-255238088">  !(synthesize 
+    (: $term $type) kb rb 
+    (S Z))
+</span>;; To unit test case:
+<span class="ansi38-013099040">  !(assertEqualToResult 
+    (synthesize 
+      (: $term $type) kb rb 
+      (S Z)) 
+    ( (: a B) 
+      (: cde 
+        (Implication 
+          (OrLink C D) E)) 
+      (: a A) 
+      (: abc 
+        (Implication 
+          (AndLink A B) C)) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink B B)) 
+      (: 
+        (DisjunctionIntroduction a cde) 
+        (OrLink B 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink B A)) 
+      (: 
+        (DisjunctionIntroduction a abc) 
+        (OrLink B 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction cde a) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) B)) 
+      (: 
+        (DisjunctionIntroduction cde cde) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction cde a) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) A)) 
+      (: 
+        (DisjunctionIntroduction cde abc) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink A B)) 
+      (: 
+        (DisjunctionIntroduction a cde) 
+        (OrLink A 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink A A)) 
+      (: 
+        (DisjunctionIntroduction a abc) 
+        (OrLink A 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction abc a) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) B)) 
+      (: 
+        (DisjunctionIntroduction abc cde) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction abc a) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) A)) 
+      (: 
+        (DisjunctionIntroduction abc abc) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink B B)) 
+      (: 
+        (ConjunctionIntroduction a cde) 
+        (AndLink B 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink B A)) 
+      (: 
+        (ConjunctionIntroduction a abc) 
+        (AndLink B 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction cde a) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) B)) 
+      (: 
+        (ConjunctionIntroduction cde cde) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction cde a) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) A)) 
+      (: 
+        (ConjunctionIntroduction cde abc) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink A B)) 
+      (: 
+        (ConjunctionIntroduction a cde) 
+        (AndLink A 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink A A)) 
+      (: 
+        (ConjunctionIntroduction a abc) 
+        (AndLink A 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction abc a) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) B)) 
+      (: 
+        (ConjunctionIntroduction abc cde) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction abc a) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) A)) 
+      (: 
+        (ConjunctionIntroduction abc abc) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (AndLink A B) C)))))
+
+</span>[
+
+;<h3 id="SYNTH-BUFFER.SYNTHESIZE.01">;; SYNTH-BUFFER.SYNTHESIZE.01</h3>
+; 
+; EVAL TEST
+; took 0.117 secs. (117.48 milliseconds) 
+
+  !(assertEqualToResult 
+    (synthesize 
+      (: $term $type) kb rb 
+      (S Z)) 
+    ( (: a B) 
+      (: cde 
+        (Implication 
+          (OrLink C D) E)) 
+      (: a A) 
+      (: abc 
+        (Implication 
+          (AndLink A B) C)) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink B B)) 
+      (: 
+        (DisjunctionIntroduction a cde) 
+        (OrLink B 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink B A)) 
+      (: 
+        (DisjunctionIntroduction a abc) 
+        (OrLink B 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction cde a) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) B)) 
+      (: 
+        (DisjunctionIntroduction cde cde) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction cde a) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) A)) 
+      (: 
+        (DisjunctionIntroduction cde abc) 
+        (OrLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink A B)) 
+      (: 
+        (DisjunctionIntroduction a cde) 
+        (OrLink A 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction a a) 
+        (OrLink A A)) 
+      (: 
+        (DisjunctionIntroduction a abc) 
+        (OrLink A 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (DisjunctionIntroduction abc a) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) B)) 
+      (: 
+        (DisjunctionIntroduction abc cde) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (DisjunctionIntroduction abc a) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) A)) 
+      (: 
+        (DisjunctionIntroduction abc abc) 
+        (OrLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink B B)) 
+      (: 
+        (ConjunctionIntroduction a cde) 
+        (AndLink B 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink B A)) 
+      (: 
+        (ConjunctionIntroduction a abc) 
+        (AndLink B 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction cde a) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) B)) 
+      (: 
+        (ConjunctionIntroduction cde cde) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction cde a) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) A)) 
+      (: 
+        (ConjunctionIntroduction cde abc) 
+        (AndLink 
+          (Implication 
+            (OrLink C D) E) 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink A B)) 
+      (: 
+        (ConjunctionIntroduction a cde) 
+        (AndLink A 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction a a) 
+        (AndLink A A)) 
+      (: 
+        (ConjunctionIntroduction a abc) 
+        (AndLink A 
+          (Implication 
+            (AndLink A B) C))) 
+      (: 
+        (ConjunctionIntroduction abc a) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) B)) 
+      (: 
+        (ConjunctionIntroduction abc cde) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (OrLink C D) E))) 
+      (: 
+        (ConjunctionIntroduction abc a) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) A)) 
+      (: 
+        (ConjunctionIntroduction abc abc) 
+        (AndLink 
+          (Implication 
+            (AndLink A B) C) 
+          (Implication 
+            (AndLink A B) C)))))
+
+<span class="ansi36">  (loonit_success  
+    (equal_enough_for_test  
+      ( (: a A) 
+        (: a B) 
+        (: abc 
+          (Implication 
+            (AndLink A B) C)) 
+        (: cde 
+          (Implication 
+            (OrLink C D) E)) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink A A)) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink A B)) 
+        (: 
+          (ConjunctionIntroduction a abc) 
+          (AndLink A 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction a cde) 
+          (AndLink A 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink B A)) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink B B)) 
+        (: 
+          (ConjunctionIntroduction a abc) 
+          (AndLink B 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction a cde) 
+          (AndLink B 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction abc a) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) A)) 
+        (: 
+          (ConjunctionIntroduction abc a) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) B)) 
+        (: 
+          (ConjunctionIntroduction abc abc) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction abc cde) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction cde a) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) A)) 
+        (: 
+          (ConjunctionIntroduction cde a) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) B)) 
+        (: 
+          (ConjunctionIntroduction cde abc) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction cde cde) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink A A)) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink A B)) 
+        (: 
+          (DisjunctionIntroduction a abc) 
+          (OrLink A 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction a cde) 
+          (OrLink A 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink B A)) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink B B)) 
+        (: 
+          (DisjunctionIntroduction a abc) 
+          (OrLink B 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction a cde) 
+          (OrLink B 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction abc a) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) A)) 
+        (: 
+          (DisjunctionIntroduction abc a) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) B)) 
+        (: 
+          (DisjunctionIntroduction abc abc) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction abc cde) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction cde a) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) A)) 
+        (: 
+          (DisjunctionIntroduction cde a) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) B)) 
+        (: 
+          (DisjunctionIntroduction cde abc) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction cde cde) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (OrLink C D) E)))) 
+      ( (: a B) 
+        (: cde 
+          (Implication 
+            (OrLink C D) E)) 
+        (: a A) 
+        (: abc 
+          (Implication 
+            (AndLink A B) C)) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink B B)) 
+        (: 
+          (DisjunctionIntroduction a cde) 
+          (OrLink B 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink B A)) 
+        (: 
+          (DisjunctionIntroduction a abc) 
+          (OrLink B 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction cde a) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) B)) 
+        (: 
+          (DisjunctionIntroduction cde cde) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction cde a) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) A)) 
+        (: 
+          (DisjunctionIntroduction cde abc) 
+          (OrLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink A B)) 
+        (: 
+          (DisjunctionIntroduction a cde) 
+          (OrLink A 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction a a) 
+          (OrLink A A)) 
+        (: 
+          (DisjunctionIntroduction a abc) 
+          (OrLink A 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (DisjunctionIntroduction abc a) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) B)) 
+        (: 
+          (DisjunctionIntroduction abc cde) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (DisjunctionIntroduction abc a) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) A)) 
+        (: 
+          (DisjunctionIntroduction abc abc) 
+          (OrLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink B B)) 
+        (: 
+          (ConjunctionIntroduction a cde) 
+          (AndLink B 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink B A)) 
+        (: 
+          (ConjunctionIntroduction a abc) 
+          (AndLink B 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction cde a) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) B)) 
+        (: 
+          (ConjunctionIntroduction cde cde) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction cde a) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) A)) 
+        (: 
+          (ConjunctionIntroduction cde abc) 
+          (AndLink 
+            (Implication 
+              (OrLink C D) E) 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink A B)) 
+        (: 
+          (ConjunctionIntroduction a cde) 
+          (AndLink A 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction a a) 
+          (AndLink A A)) 
+        (: 
+          (ConjunctionIntroduction a abc) 
+          (AndLink A 
+            (Implication 
+              (AndLink A B) C))) 
+        (: 
+          (ConjunctionIntroduction abc a) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) B)) 
+        (: 
+          (ConjunctionIntroduction abc cde) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (OrLink C D) E))) 
+        (: 
+          (ConjunctionIntroduction abc a) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) A)) 
+        (: 
+          (ConjunctionIntroduction abc abc) 
+          (AndLink 
+            (Implication 
+              (AndLink A B) C) 
+            (Implication 
+              (AndLink A B) C))))))
+</span>Deterministic: ()()
+; Execution took 0.179 secs. (178.93 milliseconds) 
+
+]
+<span class="ansi32">% 2,892,548 inferences, 0.531 CPU in 0.533 seconds (100% CPU, 5442470 Lips)
+</span>;                     (= /home/deb12user/metta-wam/tests/baseline_compat/hyperon-mettalog_sanity/synth_buffer/synthesize.metta  0)
+<span class="ansi1">LoonIt Report
+</span>------------
+<span class="ansi32">Successes: 1
+</span><span class="ansi32">Failures: 0
+</span><br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>
+;           (is_cmd_option  execute time --time=debug debug)
+;            (set_option_value  time debug)
+;             (set_debug  time true)
+metta+>^D
+;            (is_cmd_option  execute stdin --stdin=tty tty)
+;            (set_option_value  stdin tty)
+;            (is_cmd_option  execute stdout --stdout=tty tty)
+;             (set_option_value  stdout tty)
+;            (is_cmd_option  execute stderr --stderr=tty tty)
+;             (set_option_value  stderr tty)
+;           (set_option_value  prolog false)
+;           (set_option_value  compat auto)
+;           (set_option_value  compatio true)
+;           (maybe_halt  7)
+
+Script done on 2024-09-03 05:34:37-07:00 [COMMAND_EXIT_CODE="7"]
+
+</pre>
+</body>
+
+</html>
