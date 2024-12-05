@@ -1126,7 +1126,7 @@ leave_markdown(_Lang) :- !.                                                 % Do
 %  If already inside markdown mode for `Lang`, it does nothing.
 %  If inside markdown mode for a different language, it leaves that mode first.
 %  It outputs the markdown code block opening syntax with the language specifier and sets the flag.
-enter_markdown(_) :- \+ enabled_use_markdown, !.                             If markdown not enabled, do nothing
+enter_markdown(_) :- \+ enabled_use_markdown, !.                            % If markdown not enabled, do nothing
 enter_markdown(Lang) :- inside_markdown(Lang), !.                           % If already inside Lang markdown, do nothing
 enter_markdown(Lang) :- inside_markdown(Other), !, leave_markdown(Other), !, enter_markdown(Lang). % If inside other markdown, leave it, enter Lang markdown
 enter_markdown(Lang) :- log_file_type(Us), Us = Lang, inside_comment, !,             % If current log file type is Lang and inside comment
