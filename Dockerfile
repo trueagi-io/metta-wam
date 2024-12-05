@@ -3,10 +3,21 @@ FROM ubuntu:22.04
 
 # Install prerequisites
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update
-RUN apt install -y python3 python3-pip libpython3-dev git
-RUN apt install -y sudo git curl gcc cmake
-RUN apt install -y python3-venv time wget vim bc dos2unix
+RUN apt update && apt install -y \
+    python3 \
+    python3-pip \
+    libpython3-dev \
+    git \
+    sudo \
+    curl \
+    gcc \
+    cmake \
+    python3-venv \
+    time \
+    wget \
+    vim \
+    bc \
+    dos2unix
 
 # Create user
 ENV USER=user
