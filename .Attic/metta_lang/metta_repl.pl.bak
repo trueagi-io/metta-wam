@@ -1182,7 +1182,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
       true))))),
 
    % Print formatted answer output
-   in_answer_io(format('~n[')),!,
+   in_answer_io(format('~N[')),!,
 
    % Interactive looping with possible timing and stepping control
    (forall_interactive(

@@ -1,0 +1,8 @@
+afn_stem_filename('/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta','/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta','/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta').
+:-multifile user:afn_stem_filename/3.
+:-dynamic user:metta_file_buffer/7.
+:-multifile user:metta_file_buffer/7.
+user:metta_file_buffer(1,1000001,constant,'import!',[],'/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta',range(line_char(0,2),line_char(0,9))).
+user:metta_file_buffer(1,1000001,constant,'stdlib_mettalog.metta',[],'/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta',range(line_char(0,10),line_char(0,31))).
+user:metta_file_buffer(0,1000001,decl(import),exec(['import!','stdlib_mettalog.metta']),[],'/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta',range(line_char(0,0),line_char(0,32))).
+user:metta_file_buffer(0,2000001,constant,end_of_file,[],'/home/deb12user/metta-wam/.Attic/metta_lang/corelib.metta',range(line_char(1,0),line_char(1,0))).
