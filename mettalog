@@ -590,7 +590,7 @@ LIST_OF_FILE_ARGS=()
 wants_print_help=0
 
 
-PYSWIP_VERSION="prolog/metta_lang"
+PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
 
 # Check if the file exists and Read the first line from the file
 VERSION_FILE="$METTALOG_DIR/src/version-config"
