@@ -1,4 +1,67 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
+%********************************************************************************************* 
+% PROGRAM FUNCTION: analyzes and cross-references FlyBase genetic data, discovering connections 
+% between biological entities, tables, and predicates to generate meaningful relationships and 
+% queries across complex genomic information.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The multifile directive allows predicates to be defined across multiple files. 
 :-
   multifile(table_n_type/3),
   multifile(load_state/2),
@@ -9,559 +72,2264 @@
   multifile(fb_arg/1),
   multifile(done_reading/1).
 
+% The discontiguous directive in Prolog allows clauses of a predicate to appear non-consecutively within the same file. 
  :- discontiguous fb_metta_query/1.
-
-
-
-
-
-
-
-
 
 %./KBs/SUMO-OBO/gene-merged-SUMO.kif
 %
 %FBbt_00051628
 
-concept_type(Arg,Type):-
-   fb_arg(Arg),
-   fb_arg_table_n(Arg,Fn,N),
-   table_n_type(Fn,N,Type).
+%!  concept_type(+Arg, -Type) is det.
+%
+%   Determines the type of a given concept (Arg).
+%
+%   This predicate identifies the type of a concept by looking up its metadata 
+%   in a table based on the argument and its position.
+%
+%   @arg Arg  The argument whose type is being determined.
+%   @arg Type The determined type of the argument.
+%
+%   @example
+%     % Retrieve the type of a specific argument.
+%     ?- concept_type(my_arg, Type).
+%     Type = some_type.
+%
+concept_type(Arg, Type) :-
+    % Ensure Arg is a valid argument.
+    fb_arg(Arg),
+    % Retrieve function name (Fn) and position (N).
+    fb_arg_table_n(Arg, Fn, N),
+    % Determine type based on function and position.
+    table_n_type(Fn, N, Type).
 
-good_concept(E1):- var(E1),!,table_columns(F1,P1),nth1(N1,P1,E2),(E1=E2;E1=nth(N1,F1)).
-good_concept(E1):- symbol(E1),!, is_good_symbol_name(E1).
-good_concept(E1):- number(E1),!, E1>300.
-good_concept(listOf(E1,_)):- good_concept(E1),symbol(E1).
-good_concept(listOf(E1)):- good_concept(E1),symbol(E1).
+%!  good_concept(+E1) is nondet.
+%
+%   Determines whether E1 is a valid concept.
+%
+%   A concept is valid if it meets specific criteria based on its type, such 
+%   as being a valid variable, symbol, number, or list.
+%
+%   @arg E1 The concept to be validated.
+%
+%   @example
+%     % Check if a symbol is a good concept.
+%     ?- good_concept(my_symbol).
+%     true.
+%
+good_concept(E1) :-
+    % Case 1: E1 is a variable.
+    var(E1), !,
+    % Retrieve table columns for a function (F1) and positions (P1).
+    table_columns(F1, P1),
+    % Extract the N-th position (N1) and its corresponding element (E2).
+    nth1(N1, P1, E2),
+    % Succeed if E1 matches E2 or is the N-th element of F1.
+    (E1 = E2; E1 = nth(N1, F1)).
+good_concept(E1) :-
+    % Case 2: E1 is a symbol.
+    symbol(E1), !,
+    % Validate that E1 is a good symbol.
+    is_good_symbol_name(E1).
+good_concept(E1) :-
+    % Case 3: E1 is a number.
+    number(E1), !,
+    % Validate that the number is greater than 300.
+    E1 > 300.
+good_concept(listOf(E1, _)) :-
+    % Case 4: E1 is a list of concepts (with additional metadata).
+    good_concept(E1),
+    % Ensure E1 is a valid symbol.
+    symbol(E1).
+good_concept(listOf(E1)) :-
+    % Case 5: E1 is a list of concepts.
+    good_concept(E1),
+    % Ensure E1 is a valid symbol.
+    symbol(E1).
+
 
 %:- abolish(maybe_corisponds/2).
+
 :- dynamic(maybe_corisponds/2).
 
-is_good_symbol_name(E1):- symbol(E1), symbol_length(E1,L),L>=2, \+ symbol_number(E1,_).
+%!  is_good_symbol_name(+E1) is nondet.
+%
+%   Checks whether E1 is a valid symbol name.
+%
+%   A symbol name is valid if:
+%     1. It is a symbol.
+%     2. Its length is at least 2 characters.
+%     3. It does not have an associated numeric value.
+%
+%   @arg E1 The symbol being checked.
+%
+%   @example
+%     % Check if 'abc' is a good symbol name.
+%     ?- is_good_symbol_name(abc).
+%     true.
+%
+is_good_symbol_name(E1) :-
+    symbol(E1),
+    symbol_length(E1, L), L >= 2,
+    \+ symbol_number(E1, _).
 
-fb_pred_g(F,A):-fb_pred_nr(F,A), \+ skipped_anotations(F), A>0, A<20.
+%!  fb_pred_g(+F, +A) is nondet.
+%
+%   Checks if F/A is a valid predicate in the system.
+%
+%   A predicate is valid if:
+%     1. It is a known predicate (via `fb_pred_nr/2`).
+%     2. It is not skipped (via `skipped_anotations/1`).
+%     3. Its arity (A) is between 1 and 19 inclusive.
+%
+%   @arg F The predicate name.
+%   @arg A The arity of the predicate.
+%
+%   @example
+%     % Check if 'my_predicate' with arity 2 is valid.
+%     ?- fb_pred_g(my_predicate, 2).
+%     true.
+%
+fb_pred_g(F, A) :-
+    fb_pred_nr(F, A),
+    \+ skipped_anotations(F),
+    A > 0, A < 20.
 
-mine_corisponds(Concept1,Corispondance):-
- fb_arg_table_n(Concept1,Fn1,Nth1),is_good_symbol_name(Concept1),
- fb_arg_table_n(Concept1,Fn2,Nth2),
- (Fn1+Nth1)@>(Fn2+Nth2),
- tables_can_join(Fn1,Fn2),
- once((table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
-       table_colnum_type(Fn2,Nth2,Type2),nonvar(Type2))),
- (maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))
-  = Corispondance).
+%!  mine_corisponds(+Concept1, -Corispondance) is nondet.
+%
+%   Determines the correspondence between a given concept and others.
+%
+%   This predicate establishes correspondences between `Concept1` and other concepts
+%   based on their function names, argument positions, and types. It validates whether
+%   the two concepts can be joined and retrieves the correspondence mapping.
+%
+%   @arg Concept1      The concept for which correspondence is sought.
+%   @arg Corispondance The resulting correspondence mapping.
+%
+%   @example
+%     % Find correspondence for a concept.
+%     ?- mine_corisponds(concept1, Corispondance).
+%     Corispondance = 'ConceptMapFn'(type1, nth1, fn1).
+%
+mine_corisponds(Concept1, Corispondance) :-
+    fb_arg_table_n(Concept1, Fn1, Nth1),
+    is_good_symbol_name(Concept1),
+    fb_arg_table_n(Concept1, Fn2, Nth2),
+    (Fn1 + Nth1) @> (Fn2 + Nth2),
+    tables_can_join(Fn1, Fn2),
+    once((
+        table_colnum_type(Fn1, Nth1, Type1), nonvar(Type1),
+        table_colnum_type(Fn2, Nth2, Type2), nonvar(Type2)
+    )),
+    (maybe_corisponds('ConceptMapFn'(Type1, Nth1, Fn1/*Arity1*/), 
+                      'ConceptMapFn'(Type2, Nth2, Fn2/*Arity2*/)) = Corispondance).
 
-mine_overlaps:-
-  retractall(maybe_corisponds(_,_)),
-  time(once(mine_overlaps1)),
-  skip(mine_overlaps2).
+%!  mine_overlaps is det.
+%
+%   Computes overlaps among concepts by identifying possible correspondences
+%   and performing necessary updates.
+%
+%   This predicate clears previous correspondences, times the process of 
+%   identifying overlaps (`mine_overlaps1`), and skips further operations.
+%
+%   @example
+%     % Execute the overlap computation process.
+%     ?- mine_overlaps.
+%     true.
+%
+mine_overlaps :-
+    % Clear existing correspondences.
+    retractall(maybe_corisponds(_, _)),
+    % Time the process of identifying overlaps.
+    time(once(mine_overlaps1)),
+    % Skip further overlap processing.
+    skip(mine_overlaps2).
 
-fbel:- ensure_loaded('flybase.metta.qlf').
-mine_overlaps1:-
-  for_all(mine_corisponds(Concept1,How), assert_progress(mine_overlaps1(Concept1),How)).
+%!  fbel is det.
+%
+%   Ensures the required file is loaded for operations.
+%
+%   @example
+%     % Load the 'flybase.metta.qlf' file.
+%     ?- fbel.
+%     true.
+%
+fbel :- ensure_loaded('flybase.metta.qlf').
 
-mine_overlaps2_slow:-
- % for_all(mine_typelevel_overlaps,true),
-  for_all(mine_symbolspace_overlaps,true).
+%!  mine_overlaps1 is det.
+%
+%   Identifies overlaps among concepts and asserts progress for each.
+%
+%   @example
+%     % Run the first stage of overlap computation.
+%     ?- mine_overlaps1.
+%     true.
+%
+mine_overlaps1 :-
+    for_all(mine_corisponds(Concept1, How), assert_progress(mine_overlaps1(Concept1), How)).
 
+%!  mine_overlaps2_slow is det.
+%
+%   Performs additional slow overlap checks among concepts.
+%
+%   This operation checks for type-level overlaps and symbol-space overlaps,
+%   but its functionality is currently commented out.
+%
+%   @example
+%     % Run the second stage of overlap computation.
+%     ?- mine_overlaps2_slow.
+%     true.
+%
+mine_overlaps2_slow :-
+    % Uncomment the following to enable type-level and symbol-space overlap checks.
+    % for_all(mine_typelevel_overlaps, true),
+    for_all(mine_symbolspace_overlaps, true).
 
+%!  mine_typelevel_overlaps is det.
+%
+%   Asserts progress for all type-level overlaps between concepts.
+%
+%   This predicate iterates over all valid combinations of `Concept1`, `SC1`, and `SC2` 
+%   to identify type-level overlaps. For each valid combination, it records the 
+%   progress as `mine_typelevel_overlaps(Concept1)` and stores the correspondence 
+%   as `maybe_corisponds(SC1, SC2)`.
+%
+%   @example
+%     % Run type-level overlap detection.
+%     ?- mine_typelevel_overlaps.
+%     true.
+%
+mine_typelevel_overlaps :-
+    for_all(
+        mine_typelevel_overlaps(Concept1, SC1, SC2),
+        assert_progress(mine_typelevel_overlaps(Concept1), maybe_corisponds(SC1, SC2))
+    ).
 
+%!  tables_can_join(+Fn1, +Fn2) is nondet.
+%
+%   Determines if two tables can be joined.
+%
+%   Two tables, represented by their function names `Fn1` and `Fn2`, can be joined if:
+%     1. `Fn1` is lexicographically greater than `Fn2`.
+%     2. Both tables are valid for joining (determined by `can_join_using/1`).
+%
+%   @arg Fn1 The function name of the first table.
+%   @arg Fn2 The function name of the second table.
+%
+%   @example
+%     % Check if two tables can be joined.
+%     ?- tables_can_join(table1, table2).
+%     true.
+%
+tables_can_join(Fn1, Fn2) :-
+    Fn1 @> Fn2,
+    can_join_using(Fn1),
+    can_join_using(Fn2).
 
-mine_typelevel_overlaps:-
-  for_all(mine_typelevel_overlaps(Concept1,SC1,SC2),
-    assert_progress(mine_typelevel_overlaps(Concept1),maybe_corisponds(SC1,SC2))).
+%!  can_join_using(+V) is nondet.
+%
+%   Determines if a specific table can be used for joining.
+%
+%   Certain tables are explicitly excluded from joining, such as 
+%   `fbgn_exons2affy1_overlaps` and `fbgn_exons2affy2_overlaps`. All other 
+%   tables are considered valid unless they are variables.
+%
+%   @arg V The table's function name or variable.
+%
+%   @example
+%     % Check if a table can be used for joining.
+%     ?- can_join_using(table1).
+%     true.
+%
+can_join_using(V) :-
+    % Case 1: If V is a variable, it is valid for joining.
+    var(V), !.
+can_join_using(fbgn_exons2affy1_overlaps) :-
+    % Case 2: This specific table is explicitly excluded.
+    !, fail.
+can_join_using(fbgn_exons2affy2_overlaps) :-
+    % Case 3: This specific table is explicitly excluded.
+    !, fail.
+can_join_using(_).  % Case 4: All other tables are valid for joining.
 
-tables_can_join(Fn1,Fn2):- Fn1@>Fn2, can_join_using(Fn1),can_join_using(Fn2).
+%!  fb_data_template(+T1, -Data) is nondet.
+%
+%   Generates a data template for a given predicate.
+%
+%   Constructs a `Data` term using the functor `T1` and its arity. The predicate 
+%   `T1/Arity` must exist and have an arity between 2 and 19. 
+%
+%   @arg T1   The name of the predicate template.
+%   @arg Data The generated data term for the predicate.
+%
+%   @example
+%     % Generate a data template for a predicate.
+%     ?- fb_data_template(my_predicate, Data).
+%     Data = my_predicate(_Arg1, _Arg2).
+%
+fb_data_template(T1, Data) :-
+    % Ensure T1 has a valid arity between 2 and 19.
+    fb_pred_g(T1, Arity),
+    Arity > 1, Arity < 20,
+    % Construct the data term with the correct functor and arity.
+    functor(Data, T1, Arity),
+    % Verify that the predicate T1/Arity is defined in the database.
+    current_predicate(T1/Arity).
 
-can_join_using(V):- var(V),!.
-can_join_using(fbgn_exons2affy1_overlaps):- !, fail.
-can_join_using(fbgn_exons2affy2_overlaps):- !, fail.
-can_join_using(_).
-
-fb_data_template(T1,Data):-
-   fb_pred_g(T1,Arity), Arity>1,Arity<20,functor(Data,T1,Arity),
-   current_predicate(T1/Arity).
-fb_data(T1,Data):- fb_data_template(T1,Data),call(Data).
+%!  fb_data(+T1, -Data) is nondet.
+%
+%   Retrieves data for a predicate by generating and invoking its template.
+%
+%   Extends `fb_data_template/2` by calling the constructed `Data` term to retrieve 
+%   matching results.
+%
+%   @arg T1   The name of the predicate template.
+%   @arg Data The retrieved data term.
+%
+%   @example
+%     % Retrieve data for a predicate.
+%     ?- fb_data(my_predicate, Data).
+%     Data = my_predicate(arg1, arg2).
+%
+fb_data(T1, Data) :-
+    % Generate the data template.
+    fb_data_template(T1, Data),
+    % Invoke the template to retrieve matching data.
+    call(Data).
 
 :- multifile(fb_arg_table_n/3).
-fb_arg_table_n(Arg,Fn,N):- fb_data(Fn,Data),arg(N,Data,Arg).
 
-querymaker2(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
-   xref_class(CrossType),
-   table_colnum_type(T1,CN1,CrossType),
-   table_colnum_type(T2,CN2,CrossType),
-  T1\==T2,
-   fb_data_template(T1,Data1),
-   fb_data_template(T2,Data2),
-   arg(CN1,Data1,Inst),arg(CN2,Data2,Inst),
-   once((Data1,Data2,is_good_symbol_name(Inst),
+%!  fb_arg_table_n(+Arg, -Fn, -N) is nondet.
+%
+%   Maps an argument to its corresponding function name and position.
+%
+%   This predicate iterates through known data terms to find one where the 
+%   argument `Arg` matches the N-th argument of the function `Fn`.
+%
+%   @arg Arg The argument being mapped.
+%   @arg Fn  The function name associated with the argument.
+%   @arg N   The position of the argument within the function.
+%
+%   @example
+%     % Retrieve the function and position for an argument.
+%     ?- fb_arg_table_n(my_arg, Fn, N).
+%     Fn = my_function, N = 1.
+%
+fb_arg_table_n(Arg, Fn, N) :-
+    % Iterate through known data terms.
+    fb_data(Fn, Data),
+    % Match the N-th argument with Arg.
+    arg(N, Data, Arg).
 
-   table_colnum_type(T1,Nth1,Type1),Type1\==CrossType,
-   table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
-   arg(Nth1,Data1,V1),
-   arg(Nth2,Data2,V2), CN1\==Nth1,CN2\==Nth2)),
-   sort([Type1-V1,CrossType-Inst,Type2-V2],Sorted),
-   reverse(Sorted,SortedR),
-   maplist(arg(1),SortedR,Sorted1),
-   maplist(arg(2),SortedR,Sorted2),
+%!  querymaker2(+CrossType, +Inst, +Type1V1, +Type2V2, -Query) is det.
+%
+%   Constructs a query based on cross-type relationships between two data templates.
+%
+%   This predicate takes a cross-type identifier and two data types with associated values, 
+%   and generates a query that relates them through a common instance (Inst). The output query 
+%   is a structured list representation suitable for symbolic matching operations.
+%
+%   @arg CrossType The type used to establish the cross-reference relationship.
+%   @arg Inst The instance that serves as the connection point between the two types.
+%   @arg Type1V1 The first data type and its associated value.
+%   @arg Type2V2 The second data type and its associated value.
+%   @arg Query The generated query that connects the provided types and values.
+%
+%   @example
+%     % Example usage of querymaker2/5:
+%     % Generates a query connecting data templates and sorts the results.
+%     ?- querymaker2('Person', 123, ['Age', 30], ['Name', 'Alice'], Query).
+%     Query = [match, &self, [(',', Data1, Data2)], [QP | Sorted2]].
+%
+querymaker2(CrossType, Inst, [Type1, V1], [Type2, V2], Query) :-
+    % Validate that CrossType is a recognized cross-reference class.
+    xref_class(CrossType),
+    % Retrieve table-column type mappings for the cross type.
+    table_colnum_type(T1, CN1, CrossType),
+    table_colnum_type(T2, CN2, CrossType),
+    % Ensure the tables (T1 and T2) are distinct.
+    T1 \== T2,
+    % Generate data templates for the tables.
+    fb_data_template(T1, Data1),
+    fb_data_template(T2, Data2),
+    % Ensure that the instance (Inst) is valid for both data templates.
+    arg(CN1, Data1, Inst), 
+    arg(CN2, Data2, Inst),
+    % Perform a deterministic operation to ensure compatibility.
+    once((
+        Data1, Data2, is_good_symbol_name(Inst),
+        % Retrieve the column numbers for Type1 and Type2, ensuring they differ from CrossType.
+        table_colnum_type(T1, Nth1, Type1), Type1 \== CrossType,
+        table_colnum_type(T2, Nth2, Type2), Type2 \== CrossType, Type1 \== Type2,
+        % Retrieve values (V1, V2) from the appropriate column numbers.
+        arg(Nth1, Data1, V1),
+        arg(Nth2, Data2, V2), 
+        % Ensure column numbers used for instance differ from those for values.
+        CN1 \== Nth1, CN2 \== Nth2
+    )),
+    % Sort and reverse the type-value pairs for further processing.
+    sort([Type1-V1, CrossType-Inst, Type2-V2], Sorted),
+    reverse(Sorted, SortedR),
+    % Extract and concatenate symbolic representations of sorted types and values.
+    maplist(arg(1), SortedR, Sorted1),
+    maplist(arg(2), SortedR, Sorted2),
+    symbolic_list_concat(Sorted1, '-', QPD),
+    into_hyphens(QPD, QP),
+    % Define the main query structure with symbolic representation.
+    Self = '&self',
+    Query =
+        [match, Self,
+         [(','), Data1, Data2],
+         [QP | Sorted2]],
+    % Create a copied version of the query for comparison or debugging.
+    CQuery =
+        [match, Self,
+         [(','), _CData1, _CData2],
+         [QP, CInst, CV1, CV2]],
+    copy_term(Query, CQuery),
+    % Define variable representations for debugging purposes.
+    atom_concat(Type2, '_2', Type22),
+    CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
+    % Assign variable numbers to ensure consistency in CQuery.
+    numbervars(CQuery, 0, _, []),
+    % Print the query and execute related debugging operations.
+    nl,
+    format('~n~n;;; ~w~n~n', [QP]),
+    write_exec(CQuery), nl, nl,
+    % Debug the data templates and handle cases where Data1 and Data2 are distinct.
+    \+ \+ ((once((Data1, Data2)), write_src(Data1),
+            if_t((Data1 \== Data2), (nl, write_src(Data2))))),
+    nl, nl.
 
-   symbolic_list_concat(Sorted1,'-',QPD),
-   into_hyphens(QPD,QP),
+%!  querymaker is det.
+%
+%   Iterates through all possible combinations of cross-type relationships and outputs the
+%   generated queries. This predicate serves as the main entry point for constructing and
+%   displaying queries for debugging or further processing.
+%
+%   It uses forall/2 to ensure all generated queries are processed and outputs them
+%   via write_src/1 for inspection.
+%
+%   @example
+%     % Executes querymaker to display all generated queries:
+%     ?- querymaker.
+%     querymaker('Person', 123, ['Age', 30], ['Name', 'Alice'], Query).
+%
+querymaker :-
+    forall(querymaker(CrossType, Inst, [Type1, V1], [Type2, V2], Query),
+           write_src(querymaker(CrossType, Inst, [Type1, V1], [Type2, V2], Query))).
 
-   Self = '&self',
-  Query =
-    [match,Self,
-       [(','), Data1,Data2],
-       [QP| Sorted2]],
-  CQuery =
-    [match,Self,
-       [(','), _CData1,_CData2],
-       [QP,CInst, CV1, CV2 ]],
-    copy_term(Query,CQuery),
-      atom_concat(Type2,'_2',Type22),
-       CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
-       numbervars(CQuery,0,_,[]),
-       nl,
-       format('~n~n;;; ~w~n~n',[QP]),
-        write_exec(CQuery),nl,nl,
-        \+ \+ ((once((Data1,Data2)),write_src(Data1),
-                         if_t((Data1\==Data2),(nl, write_src(Data2))))),
-        nl,nl.
-
-
-querymaker:-
-  forall(querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query),
-      write_src(querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query))).
-querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
-   xref_class(CrossType),
-  fb_data_template(T1,Data1),
-  fb_data_template(T2,Data2),
-  T1\==T2,
-   table_colnum_type(T1,CN1,CrossType),
-   table_colnum_type(T2,CN2,CrossType),
-   table_colnum_type(T1,Nth1,Type1),Type1\==CrossType,
-   table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
-   arg(Nth1,Data1,V1),arg(CN1,Data1,Inst),
-   arg(Nth2,Data2,V2),arg(CN2,Data2,Inst),
-   sort([Type1-V1,CrossType-Inst,Type2-V2],Sorted),
-   reverse(Sorted,SortedR),
-   maplist(arg(1),SortedR,Sorted1),
-   maplist(arg(2),SortedR,Sorted2),
-   symbolic_list_concat(Sorted1,'-',QPD),
-   into_hyphens(QPD,QP),
-
-   Self = '&self',
-  Query =
-    [match,Self,
-       [(','), Data1,Data2],
-       [QP|Sorted2]],
-  CQuery =
-    [match,Self,
-       [(','), _CData1,_CData2],
-       [QP,CInst, CV1, CV2 ]],
-    copy_term(Query,CQuery),
-      atom_concat(Type2,'_2',Type22),
-       CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
-       numbervars(CQuery,0,_,[]),
-       nl,
-       format('~n~n;;; ~w~n~n',[QP]),
-        write_exec(CQuery),nl,nl,
-        \+ \+ ((once((Data1,Data2, Inst\=="")),write_src(Data1),
-                         if_t((Data1\==Data2),(nl, write_src(Data2))))),
-        nl,nl.
-
-querymaker3(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
-
-
-   call_nth(fb_data(T1,Data1),3), arg(CN1,Data1,Inst), is_good_symbol_name(Inst),
-   fb_data_template(T2,Data2),T1\==T2,
-   arg(CN2,Data2,Inst),
-   once(Data2),
-   arg(Nth1,Data1,V1), Nth1\==CN1,
-   arg(Nth2,Data2,V2), Nth2\==CN2,
-   table_colnum_type(T1,CN1,CrossType),
-   table_colnum_type(T1,Nth1,Type1),Type1\==CrossType,
-   table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
-   sort([Type1,CrossType,Type2],Sorted),
-   reverse(Sorted,SortedR),
-   symbolic_list_concat(SortedR,'-',QPD),
-   into_hyphens(QPD,QP),
-
-   Self = '&self',
-  Query =
-    [match,Self,
-       [(','), Data1,Data2],
-       [QP,Inst, V1, V2 ]],
-
-  \+ \+
-   ((user:once((Data1,Data2)),
-
-  CQuery =
-    [match,Self,
-       [(','), _CData1,_CData2],
-       [QP,CInst, CV1, CV2 ]],
-    copy_term(Query,CQuery),
-      atom_concat(Type2,'_2',Type22),
-       CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
-       numbervars(CQuery,0,_,[]),
-       nl,
-       format('~n~n;;; ~w~n~n',[QP]),
-        write_exec(CQuery),nl,nl,
-         ((write_src(Data1),
-                         if_t((Data1\==Data2),(nl, write_src(Data2))))),
-        nl,nl)).
-
-interesting_inst(II):- \+ var(II),  \+ number(II), II\=='',II\=="".
-
-same_values(Inst,T1,K1,CN1,T2,K2,CN2):-
-   fb_pred_g(T1,Arity1),Arity1>1,Arity1<10,
-   fb_pred_g(T2,Arity2),Arity2>1,Arity2<10,
-   functor(Data1,T1,Arity1),
-   functor(Data2,T2,Arity2),
-   arg(CN1,Data1,Inst),
-   arg(CN2,Data2,Inst),
-   ((T1,CN1)\==(T2,CN2)),
-   call_nth((Data1,Data2),Nth),
-   (Nth=2->!;true),
-   ignore(table_colnum_type(T1,CN1,K1)),
-   ignore(table_colnum_type(T2,CN2,K2)).
-
-xref_class(CrossType):- no_repeats(CrossType,rep_xref_class(CrossType)).
-fb_class(T):- no_repeats(T,table_colnum_type(_,_,T)).
-
-fb_inst_class(I,IT):- no_repeats(IIT,(fb_data(T,Data),arg(Nth,Data,I),table_colnum_type(T,Nth,IT),(IIT=I+IT))).
-rep_xref_class(CrossType):-  table_colnum_type(T1,_,CrossType), table_colnum_type(T2,_,CrossType),T1\==T2.
-
-mine_typelevel_overlaps(Concept1,'ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/)):-
-
-  %fail, % Skip over simple type named things
-
-  Type1=Concept1,Type2=Concept1,
-  table_columns(Fn1,Atom1), table_columns(Fn2,Atom2),
-  fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),
-  Fn1@>Fn2, nth1(Nth1,Atom1,Concept1),
-  good_concept(Concept1),
-  once((nth1(Nth2,Atom2,Concept1),length(Atom1,Arity1),length(Atom2,Arity2))).
-
-mine_symbolspace_overlaps:-
-  fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2),
-  once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
-  tables_can_join(Fn1,Fn2),
-  call(Atom1), arg(Nth1,Atom1,Concept1),good_concept(Concept1), arg(Nth2,Atom2,Concept1),call(Atom2))),
-  once((
-    table_colnum_type(Fn1,Nth1,Type1),nonvar(Type1),
-  table_colnum_type(Fn2,Nth2,Type2),nonvar(Type1))),
-  assert_progress(Concept1,maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Type2,Nth2,Fn2/*Arity2*/))).
-
-mine_unif_overlap:-
-  forall((fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2),
-  once((functor(Atom1,Fn1,Arity1),functor(Atom2,Fn2,Arity2),
-  arg(Nth1,Atom1,Concept1), arg(Nth2,Atom2,Concept1),
-  call(Atom1),call(Atom2),
-  interesting_to_unify(Concept1)))),
-
-  assert_progress(Concept1,maybe_corisponds('ConceptMapFn'(Nth1,Fn1/*Arity1*/),'ConceptMapFn'(Nth2,Fn2/*Arity2*/)))).
-
-interesting_to_unify(Concept1):- string(Concept1),!,symbol_length(Concept1,L),L>3.
-interesting_to_unify(Concept1):- good_concept(Concept1).
-interesting_to_unify(Number):- number(Number),Number>1000.
+%!  querymaker(+CrossType, +Inst, +Type1V1, +Type2V2, -Query) is det.
+%
+%   Constructs a query based on cross-type relationships between two data templates.
+%
+%   This predicate generates a query connecting two data templates (Data1 and Data2) 
+%   through a common cross-reference instance (Inst). It ensures type compatibility,
+%   sorts the type-value pairs, and outputs a query structure suitable for symbolic 
+%   matching operations.
+%
+%   @arg CrossType The type used to establish the cross-reference relationship.
+%   @arg Inst The instance that serves as the connection point between the two types.
+%   @arg Type1V1 The first data type and its associated value.
+%   @arg Type2V2 The second data type and its associated value.
+%   @arg Query The generated query that connects the provided types and values.
+%
+%   @example
+%     % Generates a query between two data templates connected via 'Person' as CrossType.
+%     ?- querymaker('Person', 123, ['Age', 30], ['Name', 'Alice'], Query).
+%     Query = [match, &self, [(',', Data1, Data2)], [QP | Sorted2]].
+%
+querymaker(CrossType, Inst, [Type1, V1], [Type2, V2], Query) :-
+    % Validate that CrossType is a recognized cross-reference class.
+    xref_class(CrossType),
+    % Generate data templates for the tables.
+    fb_data_template(T1, Data1),
+    fb_data_template(T2, Data2),
+    % Ensure the tables (T1 and T2) are distinct.
+    T1 \== T2,
+    % Retrieve table-column type mappings for the cross type and data types.
+    table_colnum_type(T1, CN1, CrossType),
+    table_colnum_type(T2, CN2, CrossType),
+    table_colnum_type(T1, Nth1, Type1), Type1 \== CrossType,
+    table_colnum_type(T2, Nth2, Type2), Type2 \== CrossType, Type1 \== Type2,
+    % Retrieve values (V1, V2) and instance (Inst) from the data templates.
+    arg(Nth1, Data1, V1), arg(CN1, Data1, Inst),
+    arg(Nth2, Data2, V2), arg(CN2, Data2, Inst),
+    % Sort and reverse the type-value pairs for further processing.
+    sort([Type1-V1, CrossType-Inst, Type2-V2], Sorted),
+    reverse(Sorted, SortedR),
+    % Extract and concatenate symbolic representations of sorted types and values.
+    maplist(arg(1), SortedR, Sorted1),
+    maplist(arg(2), SortedR, Sorted2),
+    symbolic_list_concat(Sorted1, '-', QPD),
+    into_hyphens(QPD, QP),
+    % Define the main query structure with symbolic representation.
+    Self = '&self',
+    Query =
+        [match, Self,
+         [(','), Data1, Data2],
+         [QP | Sorted2]],
+    % Create a copied version of the query for comparison or debugging.
+    CQuery =
+        [match, Self,
+         [(','), _CData1, _CData2],
+         [QP, CInst, CV1, CV2]],
+    copy_term(Query, CQuery),
+    % Define variable representations for debugging purposes.
+    atom_concat(Type2, '_2', Type22),
+    CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
+    % Assign variable numbers to ensure consistency in CQuery.
+    numbervars(CQuery, 0, _, []),
+    % Print the query and execute related debugging operations.
+    nl,
+    format('~n~n;;; ~w~n~n', [QP]),
+    write_exec(CQuery), nl, nl,
+    % Debug the data templates and handle cases where Data1 and Data2 are distinct.
+    \+ \+ ((once((Data1, Data2, Inst \== "")), write_src(Data1),
+            if_t((Data1 \== Data2), (nl, write_src(Data2))))),
+    nl, nl.
 
 
-fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):- !,
-  fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),
-  tables_can_join(Fn1,Fn2),
-  between(1,Arity1,Nth1),Nth1<20,between(1,Arity2,Nth2),Nth2<20,
-  (Fn1==Fn2-> (Nth1>Nth2); true).
+%!  querymaker3(+CrossType, +Inst, +Type1V1, +Type2V2, -Query) is det.
+%
+%   Constructs a query by retrieving data templates and linking them through a cross-type relationship.
+%
+%   This predicate uses data extraction and validation steps to generate a query connecting two
+%   data templates (Data1 and Data2) through a common instance (Inst). The generated query is a
+%   structured representation of the symbolic relationship.
+%
+%   @arg CrossType The type used to establish the cross-reference relationship.
+%   @arg Inst The instance that serves as the connection point between the two types.
+%   @arg Type1V1 The first data type and its associated value.
+%   @arg Type2V2 The second data type and its associated value.
+%   @arg Query The generated query that connects the provided types and values.
+%
+%   @example
+%     % Generates a query using the third instance of a dataset:
+%     ?- querymaker3('Person', Inst, ['Age', 30], ['Name', 'Alice'], Query).
+%     Query = [match, &self, [(',', Data1, Data2)], [QP, Inst, V1, V2]].
+%
+querymaker3(CrossType, Inst, [Type1, V1], [Type2, V2], Query) :-
+    % Retrieve the third data template instance for T1 and extract the instance value (Inst).
+    call_nth(fb_data(T1, Data1), 3), arg(CN1, Data1, Inst), is_good_symbol_name(Inst),
+    % Generate data template for T2, ensuring T1 and T2 are distinct.
+    fb_data_template(T2, Data2), T1 \== T2,
+    % Validate that Inst is also present in Data2.
+    arg(CN2, Data2, Inst),
+    % Ensure Data2 is valid.
+    once(Data2),
+    % Extract values (V1, V2) for Type1 and Type2, ensuring column consistency.
+    arg(Nth1, Data1, V1), Nth1 \== CN1,
+    arg(Nth2, Data2, V2), Nth2 \== CN2,
+    % Retrieve column mappings for the cross-reference type and related data types.
+    table_colnum_type(T1, CN1, CrossType),
+    table_colnum_type(T1, Nth1, Type1), Type1 \== CrossType,
+    table_colnum_type(T2, Nth2, Type2), Type2 \== CrossType, Type1 \== Type2,
+    % Sort and reverse the type list for generating a symbolic representation.
+    sort([Type1, CrossType, Type2], Sorted),
+    reverse(Sorted, SortedR),
+    % Concatenate symbolic representations and process them into a query pattern.
+    symbolic_list_concat(SortedR, '-', QPD),
+    into_hyphens(QPD, QP),
+    % Define the main query structure.
+    Self = '&self',
+    Query =
+        [match, Self,
+         [(','), Data1, Data2],
+         [QP, Inst, V1, V2]],
+    % Validate and debug the query using a copied structure.
+    \+ \+ ((user:once((Data1, Data2)),
+            CQuery =
+                [match, Self,
+                 [(','), _CData1, _CData2],
+                 [QP, CInst, CV1, CV2]],
+            copy_term(Query, CQuery),
+            % Define symbolic variable placeholders for debugging.
+            atom_concat(Type2, '_2', Type22),
+            CV1 = '$VAR'(Type1), CV2 = '$VAR'(Type22), CInst = '$VAR'(CrossType),
+            % Assign variable numbers for consistency.
+            numbervars(CQuery, 0, _, []),
+            % Print the query and perform debugging steps.
+            nl,
+            format('~n~n;;; ~w~n~n', [QP]),
+            write_exec(CQuery), nl, nl,
+            % Debug the data templates and handle distinct cases.
+            ((write_src(Data1),
+              if_t((Data1 \== Data2), (nl, write_src(Data2))))),
+            nl, nl)).
 
-fb_two_preds(Fn1,Nth1,Arity1,Fn2,Nth2,Arity2):-
-  fb_pred_g(Fn1,Arity1), fb_pred_g(Fn2,Arity2),Fn1@>Fn2,
-  mine_typelevel_overlaps(_,'ConceptMapFn'(_Type1,Nth1,Fn1/*Arity1*/),'ConceptMapFn'(_Type2,Nth2,Fn2/*Arity2*/)).
+%!  interesting_inst(+II) is nondet.
+%
+%   Succeeds if II is an interesting instance. An instance is considered interesting if it is
+%   not a variable, not a number, and not an empty string.
+%
+%   @arg II The instance to be checked.
+%   @example
+%     ?- interesting_inst('Person').
+%     true.
+%
+%     ?- interesting_inst('').
+%     false.
+%
+interesting_inst(II) :-
+    % Check that II is not an unbound variable.
+    \+ var(II),
+    % Ensure II is not a number.
+    \+ number(II),
+    % Exclude empty string representation ''.
+    II \== '',
+    % Exclude empty string representation "" (double quotes).
+    II \== "".
 
-table_colnum_type(Fn,Nth,Type):- table_n_type(Fn,Nth,TypeC,TypeB),(nonvar(TypeB)->Type=TypeB;Type=TypeC).
+%!  same_values(+Inst, +T1, -K1, +CN1, +T2, -K2, +CN2) is nondet.
+%
+%   Checks if two tables (T1 and T2) share the same value for a given instance (Inst) in their
+%   respective column numbers (CN1 and CN2). Retrieves the associated types (K1 and K2) if available.
+%
+%   This predicate generates two data structures (Data1 and Data2) for T1 and T2, respectively,
+%   and verifies their compatibility based on their arity and shared instance. It ensures that
+%   the two columns being compared are distinct.
+%
+%   @arg Inst The instance shared between the two tables.
+%   @arg T1   The first table name.
+%   @arg K1   The type of the first table's column (optional, unified if available).
+%   @arg CN1  The column number in the first table for the instance.
+%   @arg T2   The second table name.
+%   @arg K2   The type of the second table's column (optional, unified if available).
+%   @arg CN2  The column number in the second table for the instance.
+%
+%   @example
+%     % Checks for shared values between two tables with a common instance.
+%     ?- same_values(123, 'Table1', K1, 2, 'Table2', K2, 3).
+%     K1 = 'Type1',
+%     K2 = 'Type2'.
+%
+same_values(Inst, T1, K1, CN1, T2, K2, CN2) :-
+    % Ensure table T1 has valid arity range.
+    fb_pred_g(T1, Arity1), Arity1 > 1, Arity1 < 10,
+    % Ensure table T2 has valid arity range.
+    fb_pred_g(T2, Arity2), Arity2 > 1, Arity2 < 10,
+    % Create Data1 structure for T1.
+    functor(Data1, T1, Arity1),
+    % Create Data2 structure for T2.
+    functor(Data2, T2, Arity2),
+    % Extract instance (Inst) from Data1 column CN1.
+    arg(CN1, Data1, Inst),
+    % Extract instance (Inst) from Data2 column CN2.
+    arg(CN2, Data2, Inst),
+    % Ensure that T1-CN1 and T2-CN2 are distinct.
+    ((T1, CN1) \== (T2, CN2)),
+    % Retrieve the Nth combination of Data1 and Data2.
+    call_nth((Data1, Data2), Nth),
+    % Stop further processing if Nth is 2.
+    (Nth = 2 -> ! ; true),
+    % Try to retrieve the type K1 for T1 column CN1.
+    ignore(table_colnum_type(T1, CN1, K1)),
+    % Try to retrieve the type K2 for T2 column CN2.
+    ignore(table_colnum_type(T2, CN2, K2)).
 
-synth_conj(QV,(Atom1),(Atom2)):-
-  maybe_corisponds('ConceptMapFn'(Type1,Nth1,Fn1),'ConceptMapFn'(Type2,Nth2,Fn2)),
-  make_symbol(Fn1,Nth1,Atom1,Arg1),
-  make_symbol(Fn2,Nth2,Atom2,Arg2),
-  Fn1\=@=Fn2,
-  skip(Type1),skip(Type2),
-  Arg1=Arg2,QV=Arg1.
+%!  xref_class(-CrossType) is nondet.
+%
+%   Determines cross-reference types (CrossType) that link columns from different tables.
+%
+%   This predicate ensures there are no duplicate results by using no_repeats/2. It retrieves
+%   the cross-reference class based on shared types across different tables.
+%
+%   @arg CrossType The type that serves as a cross-reference between tables.
+%
+%   @example
+%     % Find cross-reference types.
+%     ?- xref_class(CrossType).
+%     CrossType = 'Person'.
+%
+xref_class(CrossType) :-
+    % Use no_repeats/2 to avoid duplicates.
+    no_repeats(CrossType, rep_xref_class(CrossType)).
 
-synth_query(Len,Query):- synth_query(_,Len,Query).
+%!  fb_class(-T) is nondet.
+%
+%   Finds table types (T) based on column-type mappings.
+%
+%   This predicate ensures unique results using no_repeats/2 and identifies table types
+%   by examining the column-type relationships.
+%
+%   @arg T The table type.
+%
+%   @example
+%     % List all table types.
+%     ?- fb_class(Table).
+%     Table = 'Table1'.
+%
+fb_class(T) :-
+    % Identify table types without duplication.
+    no_repeats(T, table_colnum_type(_, _, T)).
 
-synth_query(_,1,[Atom]):- !, make_symbol(Atom).
-synth_query(QV,N,[Q1,Q2|Query]):-
-   M is N -1,
-   synth_conj(QV,Q1,Q2),
-   (M>1 -> dif(QV,QV2) ; true),
-   synth_query(QV2,M,[Q2|Query]),
-   all_dif_functors([Q1,Q2|Query]).
+%!  fb_inst_class(-I, -IT) is nondet.
+%
+%   Finds instance-class pairs (I, IT) by examining data templates and their column-type mappings.
+%
+%   This predicate ensures unique results using no_repeats/2 and relates instances (I) to their
+%   corresponding types (IT).
+%
+%   @arg I  The instance found in a data template.
+%   @arg IT The type associated with the instance.
+%
+%   @example
+%     % Retrieve instance-class pairs.
+%     ?- fb_inst_class(Instance, Type).
+%     Instance = 123,
+%     Type = 'Person'.
+%
+fb_inst_class(I, IT) :-
+    % Retrieve data template for table T.
+    no_repeats(IIT, (
+        fb_data(T, Data),
+        % Extract instance I from Data column Nth.
+        arg(Nth, Data, I),
+        % Retrieve the type IT for table T column Nth.
+        table_colnum_type(T, Nth, IT),
+        % Combine instance and type for result.
+        (IIT = I + IT)
+    )).
 
-all_dif_functors(List):- \+ (select(Q1,List,Rest),member(Q2,Rest),functor(Q1,F1,_),functor(Q2,F2,_), F1==F2, \+ (ok_if_dupped(F1))).
+%!  rep_xref_class(-CrossType) is nondet.
+%
+%   Identifies cross-reference types (CrossType) shared by different tables.
+%
+%   This predicate ensures CrossType is shared between at least two distinct tables.
+%
+%   @arg CrossType The cross-reference type shared by different tables.
+%
+%   @example
+%     % Identify shared cross-reference types.
+%     ?- rep_xref_class('Person').
+%     true.
+%
+rep_xref_class(CrossType) :-
+    % Find CrossType in table T1.
+    table_colnum_type(T1, _, CrossType),
+    % Find CrossType in table T2.
+    table_colnum_type(T2, _, CrossType),
+    % Ensure T1 and T2 are distinct tables.
+    T1 \== T2.
 
-make_symbol(Atom):- fb_pred_g(F,A),functor(Atom,F,A).
-make_symbol(Fn,Nth,Atom,Arg):- fb_pred_g(Fn,Arity),functor(Atom,Fn,Arity),arg(Nth,Atom,Arg).
+%!  mine_typelevel_overlaps(+Concept1, +ConceptMapFn1, +ConceptMapFn2) is nondet.
+%
+%   Identifies type-level overlaps for a given concept (Concept1) across two concept map functions.
+%
+%   This predicate examines two concept map functions ('ConceptMapFn') and checks whether they share 
+%   a type-level overlap based on a common concept. It ensures the validity of concepts and matches 
+%   the corresponding positions (Nth1, Nth2) in their column lists.
+%
+%   @arg Concept1 The concept to be checked for overlaps.
+%   @arg ConceptMapFn1 The first concept map function.
+%   @arg ConceptMapFn2 The second concept map function.
+%
+mine_typelevel_overlaps(Concept1, 'ConceptMapFn'(Type1, Nth1, Fn1/*Arity1*/), 
+ 'ConceptMapFn'(Type2, Nth2, Fn2/*Arity2*/)) :-
+    % Skip over simple type-named things (uncomment the following line if needed).
+    % fail,
+    % Ensure both types match the given concept.
+    Type1 = Concept1,
+    Type2 = Concept1,
+    % Retrieve column details for the concept map functions.
+    table_columns(Fn1, Atom1),
+    table_columns(Fn2, Atom2),
+    % Validate function arities.
+    fb_pred_g(Fn1, Arity1),
+    fb_pred_g(Fn2, Arity2),
+    % Enforce ordering to avoid duplicate matches.
+    Fn1 @> Fn2,
+    % Verify that Concept1 exists at the specified position in Atom1 and Atom2.
+    nth1(Nth1, Atom1, Concept1),
+    good_concept(Concept1),
+    once((
+        nth1(Nth2, Atom2, Concept1),
+        length(Atom1, Arity1),
+        length(Atom2, Arity2)
+    )).
 
+%!  mine_symbolspace_overlaps is nondet.
+%
+%   Identifies overlaps in the symbol space by analyzing pairs of predicates and their arguments.
+%
+%   This predicate examines all pairs of predicates and checks if they share the same concept 
+%   (Concept1) in their respective positions (Nth1, Nth2). It validates the compatibility of the 
+%   predicates and asserts potential mappings for further processing.
+%
+mine_symbolspace_overlaps :-
+    fb_two_preds(Fn1, Nth1, Arity1, Fn2, Nth2, Arity2),
+    once((
+        % Create atoms for the predicates with their respective arities.
+        functor(Atom1, Fn1, Arity1),
+        functor(Atom2, Fn2, Arity2),
+        % Verify that the tables (predicates) can join.
+        tables_can_join(Fn1, Fn2),
+        % Retrieve the shared concept and ensure it is valid.
+        call(Atom1),
+        arg(Nth1, Atom1, Concept1),
+        good_concept(Concept1),
+        arg(Nth2, Atom2, Concept1),
+        call(Atom2)
+    )),
+    once((
+        % Retrieve column types for the positions.
+        table_colnum_type(Fn1, Nth1, Type1),
+        nonvar(Type1),
+        table_colnum_type(Fn2, Nth2, Type2),
+        nonvar(Type1)
+    )),
+    % Assert progress for potential correspondences.
+    assert_progress(Concept1, maybe_corisponds('ConceptMapFn'(Type1, Nth1, Fn1/*Arity1*/), 'ConceptMapFn'(Type2, Nth2, Fn2/*Arity2*/))).
+
+%!  mine_unif_overlap is nondet.
+%
+%   Identifies overlaps based on unification of shared concepts between predicate pairs.
+%
+%   This predicate iterates over pairs of predicates and attempts to unify shared concepts 
+%   between their arguments. If the concepts are deemed interesting for unification, potential 
+%   mappings are asserted for further analysis.
+%
+mine_unif_overlap :-
+    forall((
+        fb_two_preds(Fn1, Nth1, Arity1, Fn2, Nth2, Arity2),
+        once((
+            % Create atoms for the predicates with their respective arities.
+            functor(Atom1, Fn1, Arity1),
+            functor(Atom2, Fn2, Arity2),
+            % Extract shared concepts from the specified positions.
+            arg(Nth1, Atom1, Concept1),
+            arg(Nth2, Atom2, Concept1),
+            % Verify that the concepts can be unified.
+            call(Atom1),
+            call(Atom2),
+            interesting_to_unify(Concept1)
+        ))
+    ),
+    % Assert progress for potential correspondences.
+    assert_progress(Concept1, maybe_corisponds('ConceptMapFn'(Nth1, Fn1/*Arity1*/), 'ConceptMapFn'(Nth2, Fn2/*Arity2*/)))).
+
+%!  interesting_to_unify(+Concept) is nondet.
+%
+%   Determines if the given Concept is "interesting" for unification based on
+%   specific criteria.
+%
+%   A concept is considered "interesting" if:
+%   1. It is a string with a length greater than 3 characters.
+%   2. It satisfies the predicate good_concept/1.
+%   3. It is a number greater than 1000.
+%
+%   @arg Concept The concept to evaluate. This can be a string, a term checked 
+%                by good_concept/1, or a number.
+%
+%   @example
+%     % A string longer than 3 characters is interesting:
+%     ?- interesting_to_unify("hello").
+%     true.
+%
+interesting_to_unify(Concept1) :-
+    % If Concept1 is a string, check if its length is greater than 3.
+    string(Concept1),
+    !,
+    symbol_length(Concept1, L),
+    L > 3.
+interesting_to_unify(Concept1) :-
+    % If Concept1 is not a string but satisfies good_concept/1, it is interesting.
+    good_concept(Concept1).
+interesting_to_unify(Number) :-
+    % If the input is a number greater than 1000, it is interesting.
+    number(Number),
+    Number > 1000.
+
+%!  fb_two_preds(+Fn1, +Nth1, +Arity1, +Fn2, +Nth2, +Arity2) is nondet.
+%
+%   Establishes conditions for two predicates (Fn1 and Fn2) to be considered
+%   compatible based on their arity, position, and specific constraints.
+%
+%   This predicate has two main branches:
+%   1. **Primary Branch:** The predicates must:
+%      - Exist and satisfy `fb_pred_g/2` for their respective arities.
+%      - Be joinable according to `tables_can_join/2`.
+%      - Have positions (`Nth1` and `Nth2`) within their arity and less than 20.
+%      - If Fn1 and Fn2 are the same predicate, ensure `Nth1` is greater than `Nth2`.
+%   2. **Secondary Branch:** The predicates must:
+%      - Exist and satisfy `fb_pred_g/2` for their respective arities.
+%      - Fn1 must be lexicographically greater than Fn2 (using `@>/2`).
+%      - Have overlapping type-level mappings as determined by
+%        `mine_typelevel_overlaps/3`.
+%
+%   @arg Fn1    The first predicate's functor.
+%   @arg Nth1   The position within the arity of Fn1.
+%   @arg Arity1 The arity of the first predicate.
+%   @arg Fn2    The second predicate's functor.
+%   @arg Nth2   The position within the arity of Fn2.
+%   @arg Arity2 The arity of the second predicate.
+%
+%   @example
+%     % Check if two predicates are compatible using the primary branch:
+%     ?- fb_two_preds('pred1', 2, 3, 'pred2', 1, 3).
+%     true.
+%
+%     % Check compatibility using the secondary branch:
+%     ?- fb_two_preds('pred1', 1, 3, 'pred0', 2, 2).
+%     true.
+%
+fb_two_preds(Fn1, Nth1, Arity1, Fn2, Nth2, Arity2) :-
+    % Primary branch: Ensure compatibility based on arity, position, and joinability.
+    !,
+    fb_pred_g(Fn1, Arity1),
+    fb_pred_g(Fn2, Arity2),
+    tables_can_join(Fn1, Fn2),
+    between(1, Arity1, Nth1),
+    Nth1 < 20,
+    between(1, Arity2, Nth2),
+    Nth2 < 20,
+    (Fn1 == Fn2 -> (Nth1 > Nth2) ; true).
+fb_two_preds(Fn1, Nth1, Arity1, Fn2, Nth2, Arity2) :-
+    % Secondary branch: Compatibility based on type-level overlap.
+    fb_pred_g(Fn1, Arity1),
+    fb_pred_g(Fn2, Arity2),
+    Fn1 @> Fn2,
+    mine_typelevel_overlaps(
+        _,
+        'ConceptMapFn'(_Type1, Nth1, Fn1 /*Arity1*/),
+        'ConceptMapFn'(_Type2, Nth2, Fn2 /*Arity2*/)
+    ).
+
+%!  table_colnum_type(+Fn, +Nth, -Type) is det.
+%
+%   Determines the type of a column in a table based on its position.
+%   The type is derived from `table_n_type/4`. If a specific type (`TypeB`)
+%   is available, it is used; otherwise, the more general type (`TypeC`) is chosen.
+%
+%   @arg Fn   The table name (functor).
+%   @arg Nth  The column number.
+%   @arg Type The resolved type of the column.
+%
+table_colnum_type(Fn, Nth, Type) :-
+    % Retrieve the column types for the given functor and position.
+    table_n_type(Fn, Nth, TypeC, TypeB),
+    % Prefer the specific type if available; otherwise, use the general type.
+    (nonvar(TypeB) -> Type = TypeB ; Type = TypeC).
+
+%!  synth_conj(-QV, -Atom1, -Atom2) is nondet.
+%
+%   Synthesizes a conjunction between two atoms (Atom1 and Atom2) based on
+%   their correspondence and shared arguments.
+%   The arguments are constructed using `make_symbol/4`, and the conjunction is
+%   valid if the arguments unify.
+%
+%   @arg QV    The shared variable unifying the arguments of the two atoms.
+%   @arg Atom1 The first synthesized atom.
+%   @arg Atom2 The second synthesized atom.
+%
+synth_conj(QV, (Atom1), (Atom2)) :-
+    % Check if the two concepts may correspond based on their type and position.
+    maybe_corisponds(
+        'ConceptMapFn'(Type1, Nth1, Fn1),
+        'ConceptMapFn'(Type2, Nth2, Fn2)
+    ),
+    % Generate the first symbol and its argument.
+    make_symbol(Fn1, Nth1, Atom1, Arg1),
+    % Generate the second symbol and its argument.
+    make_symbol(Fn2, Nth2, Atom2, Arg2),
+    % Ensure the functors are different.
+    Fn1 \=@= Fn2,
+    % Skip processing for certain types.
+    skip(Type1),
+    skip(Type2),
+    % Unify the arguments and set QV to the shared argument.
+    Arg1 = Arg2,
+    QV = Arg1.
+
+%!  synth_query(+Len, -Query) is det.
+%
+%   Synthesizes a query with a specified length (`Len`) composed of atoms.
+%   A query is generated by recursively combining atoms using `synth_conj/3`.
+%
+%   @arg Len   The number of atoms in the synthesized query.
+%   @arg Query The resulting list of atoms.
+%
+synth_query(Len, Query) :-
+    % Delegate to the internal helper to generate the query.
+    synth_query(_, Len, Query).
+
+%!  synth_query(-QV, +N, -Query) is det.
+%
+%   Internal helper to synthesize a query. Handles cases for a single atom
+%   and multiple atoms.
+%
+%   @arg QV    The shared variable unifying the query arguments.
+%   @arg N     The number of atoms in the query.
+%   @arg Query The resulting list of atoms.
+%
+synth_query(_, 1, [Atom]) :- 
+    % Base case: generate a single atom.
+    !, 
+    make_symbol(Atom).
+
+synth_query(QV, N, [Q1, Q2 | Query]) :-
+    % Calculate the remaining number of atoms.
+    M is N - 1,
+    % Synthesize a conjunction of the first two atoms.
+    synth_conj(QV, Q1, Q2),
+    % Ensure QV and QV2 differ if there are more atoms to process.
+    (M > 1 -> dif(QV, QV2) ; true),
+    % Recursively process the remaining atoms.
+    synth_query(QV2, M, [Q2 | Query]),
+    % Ensure all functors in the query are distinct.
+    all_dif_functors([Q1, Q2 | Query]).
+
+%!  all_dif_functors(+List) is nondet.
+%
+%   Ensures that all functors in the given list of terms are distinct, except
+%   those explicitly allowed by `ok_if_dupped/1`.
+%
+%   @arg List A list of terms to check for functor uniqueness.
+%
+all_dif_functors(List) :-
+    % Check for duplicate functors in the list.
+    \+ ( select(Q1, List, Rest),
+         member(Q2, Rest),
+         functor(Q1, F1, _),
+         functor(Q2, F2, _),
+         % Fail if a duplicate functor is not explicitly allowed.
+         F1 == F2,
+         \+ (ok_if_dupped(F1))
+       ).
+
+%!  make_symbol(-Atom) is det.
+%
+%   Generates an atom using the functor and arity provided by `fb_pred_g/2`.
+%
+%   @arg Atom The resulting atom.
+%
+make_symbol(Atom) :-
+    % Get a functor and arity from fb_pred_g/2.
+    fb_pred_g(F, A),
+    % Create a term with the given functor and arity.
+    functor(Atom, F, A).
+
+%!  make_symbol(+Fn, +Nth, -Atom, -Arg) is det.
+%
+%   Constructs an atom (`Atom`) and its argument (`Arg`) based on the functor
+%   and arity, ensuring the argument is placed at the specified position.
+%
+%   @arg Fn   The functor of the atom.
+%   @arg Nth  The position of the argument in the atom.
+%   @arg Atom The resulting atom.
+%   @arg Arg  The argument placed at position `Nth`.
+%
+make_symbol(Fn, Nth, Atom, Arg) :-
+    % Ensure the functor and arity are valid.
+    fb_pred_g(Fn, Arity),
+    % Create a term with the specified functor and arity.
+    functor(Atom, Fn, Arity),
+    % Set the argument at the specified position.
+    arg(Nth, Atom, Arg).
+
+%!  ok_if_dupped(+Functor) is nondet.
+%
+%   Specifies functors that are allowed to appear multiple times in a query.
+%
+%   @arg Functor The functor to check for exceptions.
+%
 ok_if_dupped(best_gene_summary).
 
-try_overlaps:- try_overlaps(5).
+%!  try_overlaps is det.
+%
+%   Initiates an overlap test by generating queries of length 5 and
+%   evaluating their matches.
+%
+try_overlaps :-
+    % Default to generating queries of length 5.
+    try_overlaps(5).
 
-try_overlaps(N):-
-  synth_query(N,Query),
-  \+ \+ (call_match(Query),
-         pp_fb(grounded=Query),
-         ignore(maybe_english(Query))),nl,nl,
-  AQ = [','|Query],
-  pp_fb('!'(match('&flybase',AQ,AQ))),nl,nl,nl.
+%!  try_overlaps(+N) is det.
+%
+%   Synthesizes and evaluates queries of length `N` for potential matches.
+%   Each query is matched, printed, and optionally converted to English.
+%
+%   @arg N The length of the queries to synthesize.
+%
+try_overlaps(N) :-
+    % Generate a query of length N.
+    synth_query(N, Query),
+    % Ensure the query matches and evaluate it without side effects.
+    \+ \+ ( call_match(Query),
+            % Print the grounded query.
+            pp_fb(grounded = Query),
+            % Optionally, convert the query to English.
+            ignore(maybe_english(Query))
+          ),
+    nl, nl,
+    % Format the query with a separator and print it.
+    AQ = [',' | Query],
+    pp_fb('!'(match('&flybase', AQ, AQ))),
+    nl, nl, nl.
 
-no_english(fbrf_pmid_pmcid_doi,_).
-no_english(physical_interactions_mitab,8).
+%!  no_english(+Fn, +Nth) is nondet.
+%
+%   Specifies predicates and argument positions that should not be checked
+%   for English-like content.
+%
+%   @arg Fn  The functor of the predicate.
+%   @arg Nth The argument position.
+%
+no_english(fbrf_pmid_pmcid_doi, _).
+no_english(physical_interactions_mitab, 8).
 
-maybe_english(Query):-
-         extract_concepts(Query,Concepts),!,
-         ignore((maybe_english(Query,Concepts))),!.
+%!  maybe_english(+Query) is det.
+%
+%   Attempts to process the given Query to extract and analyze English-like
+%   content from its concepts. If concepts are found, they are evaluated for
+%   English characteristics.
+%
+%   @arg Query The query to analyze for English-like content.
+%
+maybe_english(Query) :-
+    % Extract concepts from the query.
+    extract_concepts(Query, Concepts),
+    !,
+    % Process the extracted concepts.
+    ignore((maybe_english(Query, Concepts))), !.
 
-maybe_english(_Query,Concepts):- select(C,Concepts,Rest),is_englishy(C),member(C2,Rest),is_englishy(C2),!, pp_fb(english=[C,C2]).
-maybe_english(_Query,Concepts):- pp_fb(concepts=Concepts), maplist(some_english,Concepts).
+%!  maybe_english(+Query, +Concepts) is det.
+%
+%   Processes the concepts extracted from a query to find and analyze English-like
+%   terms. If two English-like terms are found, they are displayed.
+%
+%   @arg Query    The original query.
+%   @arg Concepts The list of extracted concepts.
+%
+maybe_english(_Query, Concepts) :-
+    % If at least two English-like concepts are found, display them.
+    select(C, Concepts, Rest),
+    is_englishy(C),
+    member(C2, Rest),
+    is_englishy(C2),
+    !,
+    pp_fb(english = [C, C2]).
+maybe_english(_Query, Concepts) :-
+    % If no English-like terms are found, display all concepts.
+    pp_fb(concepts = Concepts),
+    maplist(some_english, Concepts).
 
-is_englishy(C):- \+ symbol(C), \+ string(C), !, fail.
-is_englishy(C):- split_string(C, ". ", " ", [_,_,_|_]).
-is_englishy(C):- symbol_contains(C,". ").
+%!  is_englishy(+C) is nondet.
+%
+%   Determines if a given term is English-like. A term is considered English-like
+%   if it contains words or specific patterns (e.g., periods).
+%
+%   @arg C The term to analyze.
+%
+is_englishy(C) :-
+    % Fail if the term is not a symbol or string.
+    \+ symbol(C), \+ string(C), 
+    !, 
+    fail.
+is_englishy(C) :-
+    % Check if the term splits into multiple parts using spaces or periods.
+    split_string(C, ". ", " ", [_, _, _ | _]).
+is_englishy(C) :-
+    % Check if the term contains a period and space.
+    symbol_contains(C, ". ").
 
-some_english(Term):-
-  ignore((fb_arg_table_n(C,Fn1,Nth1), \+ no_english(Fn1,Nth1),is_englishy(C),
-  make_symbol(Fn1,Nth1,Atom,English),
-  arg(Nth2,Atom,Term),Nth2\==Nth1,
-  call(Atom),English\=='',!,
-  pp_fb(Term=English))).
+%!  some_english(+Term) is det.
+%
+%   Analyzes a term to find English-like content associated with it and prints
+%   the results.
+%
+%   @arg Term The term to analyze.
+%
+some_english(Term) :-
+    ignore((
+        fb_arg_table_n(C, Fn1, Nth1),
+        \+ no_english(Fn1, Nth1),
+        is_englishy(C),
+        % Generate a symbol and extract English-like content.
+        make_symbol(Fn1, Nth1, Atom, English),
+        arg(Nth2, Atom, Term),
+        Nth2 \== Nth1,
+        call(Atom),
+        English \== '',
+        !,
+        pp_fb(Term = English)
+    )).
 
-extract_concepts(Query,Concepts):-
-   findall(C,(sub_term(C,Query),symbolic(C),good_concept(C)),L),
-   predsort(longest_first,L,Concepts).
+%!  extract_concepts(+Query, -Concepts) is det.
+%
+%   Extracts symbolic and valid concepts from a query. The resulting list of
+%   concepts is sorted by length in descending order.
+%
+%   @arg Query    The query to analyze.
+%   @arg Concepts The resulting list of extracted concepts.
+%
+extract_concepts(Query, Concepts) :-
+    % Collect all sub-terms that are symbolic and good concepts.
+    findall(C, (sub_term(C, Query), symbolic(C), good_concept(C)), L),
+    % Sort the concepts by length in descending order.
+    predsort(longest_first, L, Concepts).
 
-longest_first(R,A,B):- into_len(A,L1),into_len(B,L2),compare(R,L2,L1).
-into_len(A,0):- var(A),!.
-into_len(A,L):- \+ string(A), !, sformat(S,"~w",[A]),into_len(S,L).
-into_len(A,0+A):- symbol_contains(A," ").
-into_len(A,L+A):- symbol_length(A,L1), (L1 == 11 -> L = 0 ; L is - L1).
+%!  longest_first(-R, +A, +B) is det.
+%
+%   Comparison predicate to sort terms by their length in descending order.
+%
+%   @arg R The result of the comparison (`<`, `=`, or `>`).
+%   @arg A The first term to compare.
+%   @arg B The second term to compare.
+%
+longest_first(R, A, B) :-
+    into_len(A, L1),
+    into_len(B, L2),
+    compare(R, L2, L1).
 
-assert_progress(Concept,Atom):- Atom=..[OP,A1,A2], A1@>A2,!,AtomSwp=..[OP,A2,A1],!,assert_progress(Concept,AtomSwp).
-assert_progress(Concept,Atom):- call(Atom),!,pp_fb(already(Concept)=Atom).
-assert_progress(Concept,Atom):- pp_fb(assert_progress(Concept)=Atom),pfcAdd_Now(Atom).
+%!  into_len(+A, -L) is det.
+%
+%   Computes the effective length of a term. For strings, the length is directly
+%   computed. For other terms, they are converted to strings before measuring.
+%
+%   @arg A The term to measure.
+%   @arg L The computed length of the term.
+%
+into_len(A, 0) :-
+    % Variables have length 0.
+    var(A),
+    !.
+into_len(A, L) :-
+    % Non-string terms are converted to strings for length computation.
+    \+ string(A),
+    !,
+    sformat(S, "~w", [A]),
+    into_len(S, L).
+into_len(A, 0 + A) :-
+    % Assign additional weight if the term contains spaces.
+    symbol_contains(A, " ").
+into_len(A, L + A) :-
+    % Compute the base length, penalizing terms with length 11.
+    symbol_length(A, L1),
+    (L1 == 11 -> L = 0 ; L is -L1).
 
+%!  assert_progress(+Concept, +Atom) is det.
+%
+%   Asserts progress for a given concept and atom. If the atom's arguments
+%   are out of order, they are swapped before asserting.
+%
+%   @arg Concept The associated concept.
+%   @arg Atom    The atom to assert.
+%
+assert_progress(Concept, Atom) :-
+    % Swap arguments if they are out of order.
+    Atom =.. [OP, A1, A2],
+    A1 @> A2,
+    !,
+    AtomSwp =.. [OP, A2, A1],
+    !,
+    assert_progress(Concept, AtomSwp).
+assert_progress(Concept, Atom) :-
+    % If the atom is already true, print it.
+    call(Atom),
+    !,
+    pp_fb(already(Concept) = Atom).
+assert_progress(Concept, Atom) :-
+    % Otherwise, assert the atom and print progress.
+    pp_fb(assert_progress(Concept) = Atom),
+    pfcAdd_Now(Atom).
 
+%!  pfb is det.
+%
+%   Profiles the loading of a small FlyBase dataset.
+%
+%   This predicate sets the `DISPLAY` environment variable to the specified 
+%   IP and port, and then calls `profile/1` to analyze the performance of 
+%   `load_flybase_tiny/0`.
+%
+%   @example Usage:
+%     ?- pfb.
+%     % Runs the profiling for loading the FlyBase tiny dataset.
+pfb :-
+    % Set the environment variable for graphical display.
+    setenv('DISPLAY', '10.0.0.122:0.0'),
+    % Profile the loading of a small FlyBase dataset.
+    profile(load_flybase_tiny).
 
-pfb:-
-  setenv('DISPLAY','10.0.0.122:0.0'),
-  profile(load_flybase_tiny).
+%!  pfb1 is det.
+%
+%   Profiles the loading of a FlyBase dataset with 100,000 entries.
+%
+%   This predicate sets the `DISPLAY` environment variable and profiles 
+%   the performance of `load_flybase/1` with an argument of 100,000.
+%
+%   @example Usage:
+%     ?- pfb1.
+%     % Runs the profiling for loading 100,000 FlyBase entries.
+pfb1 :-
+    % Set the environment variable for graphical display.
+    setenv('DISPLAY', '10.0.0.122:0.0'),
+    % Profile the loading of the FlyBase dataset with 100,000 entries.
+    profile(load_flybase(100_000)).
 
-pfb1:-
-  setenv('DISPLAY','10.0.0.122:0.0'),
-  profile(load_flybase(100_000)).
+%!  pfb2 is det.
+%
+%   Profiles the loading of a FlyBase dataset with 1,000,000 entries.
+%
+%   This predicate sets the `DISPLAY` environment variable and profiles 
+%   the performance of `load_flybase/1` with an argument of 1,000,000.
+%
+%   @example Usage:
+%     ?- pfb2.
+%     % Runs the profiling for loading 1,000,000 FlyBase entries.
+pfb2 :-
+    % Set the environment variable for graphical display.
+    setenv('DISPLAY', '10.0.0.122:0.0'),
+    % Profile the loading of the FlyBase dataset with 1,000,000 entries.
+    profile(load_flybase(1_000_000)).
 
-pfb2:-
-  setenv('DISPLAY','10.0.0.122:0.0'),
-  profile(load_flybase(1_000_000)).
+%!  pfb3 is det.
+%
+%   Profiles the loading of the full FlyBase dataset.
+%
+%   This predicate sets the `DISPLAY` environment variable and profiles 
+%   the performance of `load_flybase_full/0`.
+%
+%   @example Usage:
+%     ?- pfb3.
+%     % Runs the profiling for loading the full FlyBase dataset.
+pfb3 :-
+    % Set the environment variable for graphical display.
+    setenv('DISPLAY', '10.0.0.122:0.0'),
+    % Profile the loading of the full FlyBase dataset.
+    profile(load_flybase_full).
 
-pfb3:-
-  setenv('DISPLAY','10.0.0.122:0.0'),
-  profile(load_flybase_full).
+%!  into_datum(+Fn, +Arguments, -CompoundTerm) is det.
+%
+%   Converts a function and its arguments into a compound term.
+%
+%   This predicate uses `Data` to unify the function name `Fn` with its 
+%   arguments. Depending on the state of the `pred_va` flag, it constructs 
+%   the term differently.
+%
+%   @arg Fn The function name (atom) to be converted.
+%   @arg Arguments A list of arguments to the function.
+%   @arg CompoundTerm The resulting compound term.
+%
+%   @example Usage:
+%     ?- into_datum(foo, [1, 2, 3], Term).
+%     Term = foo(1, [2, 3]).
+into_datum(Fn, [D | DataL], Data) :-
+    % Check if 'pred_va' is set to 'True' and construct the compound term accordingly.
+    (nb_current(pred_va, 'True') -> Data =.. [Fn, D, DataL] ; Data =.. [Fn, D | DataL]).
 
-
-% Convert a function and its arguments into a compound term
-into_datum(Fn, [D|DataL], Data):-
-    (nb_current(pred_va, 'True') -> Data =.. [Fn,D,DataL]; Data =.. [Fn,D|DataL]).
-
-% Create a new assertion from old data
-make_assertion4(Fn, Cols, NewData, OldData):- fail,
-  OldData=Cols,
-  NewData =..[Fn|Cols],!.
-make_assertion4(Fn, Cols, NewData, OldData):-
+%!  make_assertion4(+Fn, +Columns, -NewData, +OldData) is nondet.
+%
+%   Creates a new assertion from the old data.
+%
+%   This predicate constructs a new data term based on the given function 
+%   name (`Fn`) and columns (`Cols`). It ensures that the old data is 
+%   matched and then optionally adjusts the arguments.
+%
+%   @arg Fn The function name (atom) for the new data.
+%   @arg Columns A list of columns (data elements).
+%   @arg NewData The newly constructed data term.
+%   @arg OldData The original data term for reference.
+%
+%   @example Usage:
+%     ?- make_assertion4(foo, [1, 2], NewData, OldData).
+%     OldData = foo(1, 2),
+%     NewData = foo(1, 2).
+make_assertion4(Fn, Cols, NewData, OldData) :-
+    % Ensure failure for unhandled cases.
+    fail,
+    OldData = Cols,
+    NewData =.. [Fn | Cols], !.
+make_assertion4(Fn, Cols, NewData, OldData) :-
+    % Convert function name and arguments into a compound term.
     into_datum(Fn, Cols, OldData),
-    OldData =.. [Fn|Args],
-    % skip(if_t(var(ArgTypes), must_det_ll_r((once((length(Args,Len),length(ArgTypes,Len),once((table_columns(Fn,ArgTypes);table_columns(F,ArgTypes))))))))),
+    % Decompose the old data into arguments.
+    OldData =.. [Fn | Args],
+    % Adjust the arguments if necessary.
     maybe_fix_args(Fn, Args, NewArgs),
+    % Perform any required sampling of the arguments.
     maybe_sample(Fn, NewArgs),
-    NewData =.. [Fn|NewArgs], !.
+    % Construct the new data term.
+    NewData =.. [Fn | NewArgs], !.
 
-maybe_fix_args( Fn,Args,NewArgs):- do_fix_fast_args( Fn,1,Args,NewArgs),!.
-maybe_fix_args( Fn,Args,NewArgs):- should_fix_args,
-  nb_current(fb_argtypes,ArgTypes), fix_list_args(Fn,ArgTypes,Args,NewArgs),!.
-maybe_fix_args(_Fn,Args,Args).
+%!  maybe_fix_args(+Fn, +Args, -NewArgs) is det.
+%
+%   Adjusts arguments for a given function, if necessary.
+%
+%   This predicate attempts to fix or adjust the arguments of a function (`Fn`). 
+%   It provides three potential branches for adjustment:
+%   1. Fast argument fixing with `do_fix_fast_args/4`.
+%   2. Conditional fixing based on the `fb_argtypes` argument type configuration.
+%   3. Defaults to returning the original arguments if no adjustment is needed.
+%
+%   @arg Fn The function name whose arguments are being adjusted.
+%   @arg Args The original list of arguments.
+%   @arg NewArgs The adjusted list of arguments, or the original if no adjustment was made.
+%
+%   @example Usage:
+%     ?- maybe_fix_args(foo, [arg1, arg2], NewArgs).
+%     % Returns adjusted arguments if applicable.
+maybe_fix_args(Fn, Args, NewArgs) :-
+    % Attempt fast argument adjustment.
+    do_fix_fast_args(Fn, 1, Args, NewArgs), !.
+maybe_fix_args(Fn, Args, NewArgs) :-
+    % Check if arguments should be fixed based on `fb_argtypes`.
+    should_fix_args,
+    nb_current(fb_argtypes, ArgTypes),
+    % Perform argument fixing using the specified argument types.
+    fix_list_args(Fn, ArgTypes, Args, NewArgs), !.
+maybe_fix_args(_Fn, Args, Args).
 
-do_fix_fast_args( Fn,Nth,[A|Args],[New|NewArgs]):- maybe_fix_columns_nth(Fn,Nth,A,New),
-  Nth2 is Nth+1, !, do_fix_fast_args( Fn,Nth2,Args,NewArgs).
-do_fix_fast_args(_,_,A,A).
+%!  do_fix_fast_args(+Fn, +Nth, +Args, -NewArgs) is det.
+%
+%   Iteratively fixes arguments using a fast approach.
+%
+%   This predicate processes each argument in the list and attempts to adjust 
+%   it using `maybe_fix_columns_nth/4`. The adjustments are done for each argument 
+%   starting at the specified position (`Nth`).
+%
+%   @arg Fn The function name being processed.
+%   @arg Nth The current argument position (1-based index).
+%   @arg Args The original list of arguments.
+%   @arg NewArgs The adjusted list of arguments.
+%
+%   @example Usage:
+%     ?- do_fix_fast_args(foo, 1, [arg1, arg2], NewArgs).
+%     % Returns adjusted arguments.
+do_fix_fast_args(Fn, Nth, [A | Args], [New | NewArgs]) :-
+    % Attempt to fix the current argument.
+    maybe_fix_columns_nth(Fn, Nth, A, New),
+    % Increment the position counter and process the remaining arguments.
+    Nth2 is Nth + 1, !,
+    do_fix_fast_args(Fn, Nth2, Args, NewArgs).
+do_fix_fast_args(_, _, A, A).
 
-maybe_fix_columns_nth(Fn,Nth,A,New):- fix_columns_nth(Fn,Nth), fix_concept(A,New),!.
-maybe_fix_columns_nth(_,_,A,A).
+%!  maybe_fix_columns_nth(+Fn, +Nth, +Arg, -NewArg) is det.
+%
+%   Adjusts a specific argument at a given position if necessary.
+%
+%   This predicate checks if an argument at a specific position (`Nth`) 
+%   should be fixed based on the function (`Fn`). If fixing is required, 
+%   it uses `fix_concept/2` to make the adjustment.
+%
+%   @arg Fn The function name being processed.
+%   @arg Nth The position of the argument (1-based index).
+%   @arg Arg The original argument.
+%   @arg NewArg The adjusted argument, or the original if no fixing was required.
+%
+%   @example Usage:
+%     ?- maybe_fix_columns_nth(foo, 1, arg1, NewArg).
+%     % Returns the adjusted argument.
+maybe_fix_columns_nth(Fn, Nth, A, New) :-
+    % Check if the column at position `Nth` requires fixing.
+    fix_columns_nth(Fn, Nth),
+    % Perform the actual adjustment.
+    fix_concept(A, New), !.
+maybe_fix_columns_nth(_, _, A, A).
 
-
-cleanup_arities:- for_all((fb_pred_nr(F,2),fb_pred_nr(F,N),N>2),retract(fb_pred(F,2))).
-
-
-
+%!  cleanup_arities is det.
+%
+%   Cleans up predicates with conflicting arities.
+%
+%   This predicate retracts predicates that have multiple arities, 
+%   keeping only the predicate with arity 2. It iterates through all 
+%   predicates and removes redundant ones.
+%
+%   @example Usage:
+%     ?- cleanup_arities.
+%     % Ensures predicates with conflicting arities are resolved.
+cleanup_arities :-
+    % Iterate over all predicates with conflicting arities.
+    for_all(
+        (fb_pred_nr(F, 2), fb_pred_nr(F, N), N > 2),
+        % Retract predicates with arity 2 if the same predicate has a higher arity.
+        retract(fb_pred(F, 2))
+    ).
 
 :- discontiguous column_names_ext/2.
 :- discontiguous primary_column/2.
 
-must_det_ll_r((G1,G2)):- !, once(G1),must_det_ll_r(G2).
-must_det_ll_r(G):- call(G).
+%!  must_det_ll_r(+Goal) is det.
+%
+%   Ensures that a sequence of goals executes deterministically.
+%
+%   This predicate enforces determinism by executing a sequence of goals (`G1, G2, ...`) 
+%   one by one, ensuring each subgoal is evaluated exactly once using `once/1`. 
+%   If the input is a single goal, it simply calls the goal.
+%
+%   This is particularly useful for enforcing deterministic behavior in situations where 
+%   nondeterminism could lead to unintended outcomes.
+%
+%   @arg Goal The goal or sequence of goals to execute deterministically.
+%
+%   @example Execute a deterministic sequence of goals:
+%     ?- must_det_ll_r((write('Hello'), nl)).
+%     % Outputs "Hello" followed by a newline.
+%
+%   @example Ensure a single goal executes deterministically:
+%     ?- must_det_ll_r(member(X, [1, 2, 3])).
+%     X = 1.
+must_det_ll_r((G1, G2)) :-
+    % If the input is a sequence of goals, execute the first goal deterministically.
+    !,
+    once(G1),
+    % Recursively process the remaining goals in the sequence.
+    must_det_ll_r(G2).
+must_det_ll_r(G) :-
+    % If the input is a single goal, call it directly.
+    call(G).
 
 % Safely executes the given Goal and prints any exception raised.
 % Usage: safe(+Goal, +Info).
+
+%!  safe(+Goal, +Info) is det.
+%
+%   Safely executes the given Goal and handles any exceptions raised.
+%
+%   This predicate attempts to execute the given Goal. If an exception is raised, 
+%   it prints the exception along with debugging information (provided by `Info`) 
+%   using `portray_clause/1`. After logging the exception, it rethrows the exception 
+%   to propagate it.
+%
+%   @arg Goal The Prolog goal to be executed safely.
+%   @arg Info Additional debugging information to be displayed if an exception occurs.
+%
+%   @example Usage:
+%     ?- safe(member(X, [1, 2, 3]), 'Debug Info').
+%     % If no exception occurs, the goal executes normally.
+%     % If an exception occurs, it logs the exception and rethrows it.
 safe(Goal, Info) :-
-    % Try to call Goal. If an exception is raised, unify Exception with the exception.
-    catch(Goal, Exception,
-        % If an exception is raised, portray the clause (Info :- Goal)
-        % along with the exception, then rethrow the exception.
-        (catch_ignore(portray_clause(exception:Exception:(Info:- Goal))), throw(Exception))
-    ).
+    % Attempt to execute the Goal. If an exception occurs, handle it.
+    catch(
+        Goal,
+        Exception,
+        % On exception, portray debugging information and rethrow the exception.
+        (
+            % Ignore any errors that may occur while portraying the exception.
+            catch_ignore(portray_clause(exception:Exception:(Info :- Goal))),
+            % Rethrow the original exception to propagate it.
+            throw(Exception))).
+
 % Safely executes the given Goal and prints any exception raised.
 % Usage: safe(+Goal).
+
+%!  safe(+Goal) is det.
+%
+%   Safely executes the given Goal and handles any exceptions raised.
+%
+%   This is a shorthand version of `safe/2` with a default `Info` value of `safe/1`.
+%
+%   @arg Goal The Prolog goal to be executed safely.
+%
+%   @example Usage:
+%     ?- safe(member(X, [1, 2, 3])).
+%     % If no exception occurs, the goal executes normally.
+%     % If an exception occurs, it logs the exception and rethrows it.
 safe(Goal) :- safe(Goal,safe/1).
 
-
+%!  skipped_annotations(+Annotation) is det.
+%
+%   Indicates that the given annotation was skipped during processing.
+%
+%   This predicate is used to document annotations that are excluded from 
+%   certain workflows or processing pipelines.
+%
+%   @arg Annotation The name of the skipped annotation.
+%
+%   @example Skipped annotations:
+%     ?- skipped_annotations(fbgn_exons2affy1_overlaps).
+%     % Represents that 'fbgn_exons2affy1_overlaps' is excluded.
 skipped_anotations(fbgn_exons2affy1_overlaps).
 skipped_anotations(fbgn_exons2affy2_overlaps).
 skipped_anotations(gene_rpkm_matrix).
 skipped_anotations(dmel_gene_sequence_ontology_annotations).
-%kipped_anotations(fbgn_annotation_ID).
+% skipped_anotations(fbgn_annotation_ID).
 skipped_anotations(transposon_sequence_set).
 
-gc_now:- set_option_value(gc,true), garbage_collect,garbage_collect_atoms,garbage_collect_clauses.
+%!  gc_now is det.
+%
+%   Invokes garbage collection for Prolog terms, atoms, and clauses.
+%
+%   This predicate enables garbage collection and performs cleanup to optimize 
+%   memory usage. It collects unused terms, atoms, and clauses in the Prolog 
+%   environment.
+%
+%   @example Perform garbage collection:
+%     ?- gc_now.
+%     % Cleans up memory by collecting unused resources.
+gc_now :-
+    % Enable garbage collection.
+    set_option_value(gc, true),
+    % Perform garbage collection for terms, atoms, and clauses.
+    garbage_collect,
+    garbage_collect_atoms,
+    garbage_collect_clauses.
 
+%!  extreme_debug(+Message) is det.
+%
+%   Placeholder predicate for debugging.
+%
+%   This predicate can be used for extreme-level debugging, allowing you to 
+%   specify custom debug messages or actions. Currently, it performs no operation.
+%
+%   @arg Message A placeholder argument for debug messages or actions.
+%
+%   @example Debugging example:
+%     ?- extreme_debug('Debugging message').
+%     % Does nothing but serves as a placeholder for future extensions.
 extreme_debug(_).
 
-numbervars_w_singles(P):- term_singletons(P, Vars),
-  numbervars(Vars,260,_,[attvar(bind),singletons(false)]),
-  numbervars(P,14,_,[attvar(bind),singletons(true)]).
+%!  numbervars_w_singles(+Term) is det.
+%
+%   Assigns numbers to variables within a term, handling singletons separately.
+%
+%   This predicate first identifies singleton variables in the term (`Term`) 
+%   using `term_singletons/2` and numbers them. Then, it numbers the entire term, 
+%   excluding singleton variables.
+%
+%   @arg Term The Prolog term whose variables are to be numbered.
+%
+%   @example Number variables in a term:
+%     ?- numbervars_w_singles((X, Y, Z)).
+%     % Assigns numbers to variables in the term.
+numbervars_w_singles(P) :-
+    % Identify singleton variables in the term.
+    term_singletons(P, Vars),
+    % Number the singleton variables starting at 260.
+    numbervars(Vars, 260, _, [attvar(bind), singletons(false)]),
+    % Number the remaining variables in the term starting at 14.
+    numbervars(P, 14, _, [attvar(bind), singletons(true)]).
 
+%!  pp_fb(+Term) is det.
+%
+%   Pretty-prints a term with numbered variables.
+%
+%   This predicate numbers variables within the term (`Term`) using 
+%   `numbervars_w_singles/1` and then delegates the pretty-printing to `pp_fb1/1`.
+%
+%   @arg Term The Prolog term to be pretty-printed.
+%
+%   @example Pretty-print a term:
+%     ?- pp_fb((X, Y, Z)).
+%     % Outputs the term with variables numbered and formatted.
+pp_fb(P) :-
+    % Add a newline for formatting.
+    format("~N "),
+    % Number variables and pretty-print the term in a non-backtracking context.
+    \+ \+ (numbervars_w_singles(P), pp_fb1(P)),
+    % Flush the output buffer.
+    flush_output.
 
-
-pp_fb(P):- format("~N "),  \+ \+ (numbervars_w_singles(P), pp_fb1(P)),flush_output.
-pp_fb1(P):- write_src(P),!,nl.
-:- if(current_predicate(pp_ilp/1)).
-pp_fb1(P):- pp_as(P),!,format("~N"),pp_ilp(P),!.
+%!  pp_fb1(+Term) is det.
+%
+%   Helper predicate for pretty-printing terms.
+%
+%   This predicate attempts various methods of pretty-printing the term (`Term`), 
+%   falling back to printing the term directly or invoking a debug handler.
+%
+%   @arg Term The Prolog term to be pretty-printed.
+pp_fb1(P) :-
+    % Attempt to write the term's source.
+    write_src(P), !, nl.
+:- if(current_predicate(pp_ilp/1)). 
+% if the predicate pp_ilp/1 exists in the current Prolog environment the following code is included.
+pp_fb1(P) :-
+    % Pretty-print the term as an ILP structure.
+    pp_as(P), !, format("~N"), pp_ilp(P), !.
 :- endif.
-pp_fb1(P):- pp_as(P),!.
-pp_fb1(P):- print(P),!,nl.
-pp_fb1(P):- fbdebug1(P),!,nl.
+pp_fb1(P) :-
+    % Pretty-print the term as an abstract structure.
+    pp_as(P), !.
+pp_fb1(P) :-
+    % Print the term directly.
+    print(P), !, nl.
+pp_fb1(P) :-
+    % Fallback to a debug handler for the term.
+    fbdebug1(P), !, nl.
+
+%!  fbgn_exons2affy1_overlaps_each(+Gene, -Attribute) is nondet.
+%
+%   Retrieves attributes for a given gene from `fbgn_exons2affy1_overlaps`.
+%
+%   This predicate queries the `fbgn_exons2affy1_overlaps` predicate for a 
+%   specific gene and retrieves its attributes.
+%
+%   @arg Gene The gene identifier to query.
+%   @arg Attribute The retrieved attribute for the gene.
+%
+%   @example Query gene attributes:
+%     ?- fbgn_exons2affy1_overlaps_each(gene1, Attribute).
+%     % Retrieves attributes for `gene1`.
+fbgn_exons2affy1_overlaps_each(Gene, At) :-
+    % Get the arity of the `fbgn_exons2affy1_overlaps` predicate.
+    fb_pred_nr(fbgn_exons2affy1_overlaps, Arity),
+    % Construct a predicate of the appropriate arity.
+    functor(Pred, fbgn_exons2affy1_overlaps, Arity),
+    % Bind the first argument to the specified gene.
+    arg(1, Pred, Gene),
+    % Call the constructed predicate.
+    call(Pred),
+    % Retrieve the attribute (must be a valid argument index greater than 1).
+    arg(N, Pred, At), N > 1.
+
+%!  fbgn_exons2affy1_overlaps_start_end(+Gene, -Start, -End) is nondet.
+%
+%   Retrieves start and end positions for a given gene's attributes.
+%
+%   This predicate queries `fbgn_exons2affy1_overlaps_each/2` for a gene and 
+%   extracts its start and end positions using `into_start_end/3`.
+%
+%   @arg Gene The gene identifier to query.
+%   @arg Start The start position for the gene's attribute.
+%   @arg End The end position for the gene's attribute.
+%
+%   @example Query gene start and end positions:
+%     ?- fbgn_exons2affy1_overlaps_start_end(gene1, Start, End).
+%     % Retrieves start and end positions for `gene1`.
+fbgn_exons2affy1_overlaps_start_end(Gene, Start, End) :-
+    % Retrieve attributes for the specified gene.
+    fbgn_exons2affy1_overlaps_each(Gene, At),
+    % Extract the start and end positions from the attribute.
+    into_start_end(At, Start, End).
+
+%!  into_start_end(+Attribute, -Start, -End) is det.
+%
+%   Extracts start and end positions from a given attribute representation.
+%
+%   This predicate processes various formats of attributes to extract the 
+%   start and end positions. It supports predefined formats (e.g., `s_e/2`, 
+%   `'..'/2`, `at/2`) and attempts to parse symbolic concatenated formats 
+%   (e.g., `'..'` and `'_at_'` separators).
+%
+%   @arg Attribute The attribute representation, which may take various forms.
+%   @arg Start The extracted start position.
+%   @arg End The extracted end position.
+%
+%   @example Extract start and end from a predefined format:
+%     ?- into_start_end(s_e(5, 10), Start, End).
+%     Start = 5,
+%     End = 10.
+%
+%   @example Extract start and end from a symbolic format:
+%     ?- into_start_end('5..10', Start, End).
+%     Start = 5,
+%     End = 10.
+%
+%   @example Handle unknown formats:
+%     ?- into_start_end(unknown, Start, End).
+%     % Fails if the format cannot be parsed.
+into_start_end(s_e(S, E), S, E) :-
+    % Match the `s_e(Start, End)` format if the start position is non-variable.
+    nonvar(S), !.
+into_start_end('..'(S, E), S, E) :-
+    % Match the `'..'(Start, End)` format if the start position is non-variable.
+    nonvar(S), !.
+into_start_end(at(S, E), S, E) :-
+    % Match the `at(Start, End)` format if the start position is non-variable.
+    nonvar(S), !.
+into_start_end(At, S, E) :-
+    % Attempt to parse symbolic format with `'..'` separator.
+    symbolic_list_concat([SS, EE], '..', At),
+    % Convert symbolic components to numbers or retain as symbols.
+    into_number_or_symbol(SS, S),
+    into_number_or_symbol(EE, E).
+into_start_end(At, S, E) :-
+    % Attempt to parse symbolic format with `'_at_'` separator.
+    symbolic_list_concat([SS, EE], '_at_', At),
+    % Convert symbolic components to numbers or retain as symbols.
+    into_number_or_symbol(SS, S),
+    into_number_or_symbol(EE, E).
 
 
-fbgn_exons2affy1_overlaps_each(Gene,At):-
-   fb_pred_nr(fbgn_exons2affy1_overlaps, Arity),
-   functor(Pred,fbgn_exons2affy1_overlaps, Arity),
-   arg(1,Pred,Gene),
-   call(Pred),
-   arg(N,Pred,At),N>1.
+%!  into_fb_term(+Atom, -Term) is det.
+%
+%   Converts an atom or other representation into a structured term.
+%
+%   This predicate handles various cases for converting an input `Atom` into 
+%   a structured term (`Term`). It supports direct terms, range terms, symbolic 
+%   lists, and other conversions.
+%
+%   @arg Atom The input atom or other representation to convert.
+%   @arg Term The resulting structured term.
+%
+%   @example Convert a range:
+%     ?- into_fb_term('5..10', Term).
+%     Term = '..'(5, 10).
+%
+%   @example Convert a symbolic list:
+%     ?- into_fb_term('a|b|c', Term).
+%     Term = ['a', 'b', 'c'].
+% into_fb_term(Atom, Term) :- compound(Atom), !, Term = Atom.
+into_fb_term(Atom, Term) :-
+    % Handle compound terms directly.
+    \+ atom(Atom), \+ string(Atom), !, Term = Atom.
+into_fb_term(Atom, '..'(S, E)) :-
+    % Convert range-like atoms into '..'(Start, End) terms.
+    into_start_end(Atom, S, E), !.
+into_fb_term(Atom, Term) :-
+    % Convert other atoms into numbers, symbols, or keep them as is.
+    into_number_or_symbol(Atom, Term), !.
 
-fbgn_exons2affy1_overlaps_start_end(Gene,Start,End):-
-   fbgn_exons2affy1_overlaps_each(Gene,At),into_start_end(At,Start,End).
+%!  fb_member(+Element, +List) is nondet.
+%
+%   Checks if an element is a member of a list, converting the input to a proper list.
+%
+%   This predicate ensures that the input `List` is treated as a proper list (using 
+%   `as_list/3`) before checking for membership with `member/2`.
+%
+%   @arg Element The element to check for membership.
+%   @arg List The list to check within.
+%
+%   @example Check membership:
+%     ?- fb_member(a, [a, b, c]).
+%     true.
+fb_member(E, L) :-
+    % Convert input to a proper list.
+    as_list([], L, LL),
+    % Check if the element is a member of the list.
+    member(E, LL).
 
+%!  into_number_or_symbol(+Atom, -Term) is det.
+%
+%   Converts an atom into a number, a structured term, or retains it as a symbol.
+%
+%   This predicate attempts various conversions for the input `Atom`, including:
+%   - Splitting symbolic lists (using '|').
+%   - Parsing as a Prolog term.
+%   - Retaining it as-is if no conversion applies.
+%
+%   @arg Atom The input atom to convert.
+%   @arg Term The resulting term or symbol.
+%
+%   @example Parse a symbolic list:
+%     ?- into_number_or_symbol('1|2|3', Term).
+%     Term = [1, 2, 3].
+%
+%   @example Parse a Prolog term:
+%     ?- into_number_or_symbol('foo(1,2)', Term).
+%     Term = foo(1, 2).
+into_number_or_symbol(Atom, Term) :-
+    % Split symbolic lists using '|'.
+    symbolic_list_concat(List, '|', Atom),
+    List \= [_], !,
+    % Convert each element of the list recursively.
+    maplist(into_fb_term, List, Term).
+% into_number_or_symbol(Atom, Term) :- atom_number(Atom, Term), !, Term = Term.
+into_number_or_symbol(Atom, Term) :-
+    % Convert atom to a Prolog term if possible.
+    catch(atom_to_term(Atom, Term, Vars), _, fail),
+    % Assign values to variables in the parsed term.
+    maplist(a2t_assign_var, Vars).
+into_number_or_symbol(Atom, Term) :-
+    % Default case: retain the atom as-is.
+    Term = Atom.
 
-into_start_end(s_e(S,E),S,E):- nonvar(S),!.
-into_start_end('..'(S,E),S,E):- nonvar(S),!.
-into_start_end(at(S,E),S,E):- nonvar(S),!.
-into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'..',At),
-   into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
-into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'_at_',At),
-   into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
+%!  a2t_assign_var(+Assignment) is det.
+%
+%   Helper predicate to assign variables from term parsing.
+%
+%   This predicate assigns values to variables extracted from a Prolog term 
+%   using `atom_to_term/3`.
+%
+%   @arg Assignment A term in the format `Name=Value`.
+%
+%   @example Assign variables:
+%     ?- a2t_assign_var(X=42).
+%     X = 42.
+a2t_assign_var(N = V) :-
+    % Assign the value to the variable.
+    N = V.
 
+%!  fbgn_exons2affy2_overlaps_each(+Gene, -Attribute) is nondet.
+%
+%   Retrieves attributes for a given gene from `fbgn_exons2affy2_overlaps`.
+%
+%   This predicate queries the `fbgn_exons2affy2_overlaps` predicate for a 
+%   specific gene and retrieves its attributes.
+%
+%   @arg Gene The gene identifier to query.
+%   @arg Attribute The retrieved attribute for the gene.
+%
+%   @example Query gene attributes:
+%     ?- fbgn_exons2affy2_overlaps_each(gene1, Attribute).
+%     % Retrieves attributes for `gene1`.
+fbgn_exons2affy2_overlaps_each(Gene, At) :-
+    % Get the arity of the `fbgn_exons2affy2_overlaps` predicate.
+    fb_pred_nr(fbgn_exons2affy2_overlaps, Arity),
+    % Construct a predicate of the appropriate arity.
+    functor(Pred, fbgn_exons2affy2_overlaps, Arity),
+    % Bind the first argument to the specified gene.
+    arg(1, Pred, Gene),
+    % Call the constructed predicate.
+    call(Pred),
+    % Retrieve the attribute (must be a valid argument index greater than 1).
+    arg(N, Pred, At), N > 1.
 
-%into_fb_term(Atom,Term):- compound(Atom),!,Term=Atom.
-into_fb_term(Atom,Term):- \+ atom(Atom), \+ string(Atom),!,Term=Atom.
-into_fb_term(Atom,'..'(S,E)):- into_start_end(Atom,S,E),!.
-into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
+%!  fbgn_exons2affy2_overlaps_start_end(+Gene, -Start, -End) is nondet.
+%
+%   Retrieves start and end positions for a given gene's attributes.
+%
+%   This predicate queries `fbgn_exons2affy2_overlaps_each/2` for a gene and 
+%   extracts its start and end positions using `into_start_end/3`.
+%
+%   @arg Gene The gene identifier to query.
+%   @arg Start The start position for the gene's attribute.
+%   @arg End The end position for the gene's attribute.
+%
+%   @example Query gene start and end positions:
+%     ?- fbgn_exons2affy2_overlaps_start_end(gene1, Start, End).
+%     % Retrieves start and end positions for `gene1`.
+fbgn_exons2affy2_overlaps_start_end(Gene, Start, End) :-
+    % Retrieve attributes for the specified gene.
+    fbgn_exons2affy2_overlaps_each(Gene, At),
+    % Extract the start and end positions from the attribute.
+    into_start_end(At, Start, End).
 
-fb_member(E,L):- as_list([],L,LL),member(E,LL).
+%!  some_xref_ids(-Id) is nondet.
+%
+%   Provides a list of example cross-reference IDs.
+%
+%   This predicate generates predefined cross-reference IDs for testing or 
+%   demonstration purposes.
+%
+%   @arg Id A cross-reference ID from the predefined list.
+%
+%   @example Get an example cross-reference ID:
+%     ?- some_xref_ids(Id).
+%     Id = 'FBgn0001301'.
+some_xref_ids(Id) :-
+    % Member of the predefined list of cross-reference IDs.
+    member(Id, ['FBgn0001301']).
 
-into_number_or_symbol(Atom,Term):- symbolic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
-%into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.
-into_number_or_symbol(Atom,Term):- catch(atom_to_term(Atom,Term,Vars),_,fail),maplist(a2t_assign_var,Vars).
-into_number_or_symbol(Atom,Term):- Term=Atom.
+%!  findall_flat_set(+Arg, :Goal, -FlatSet) is det.
+%
+%   Collects all solutions to `Goal`, flattens nested lists, and converts the 
+%   result into a set to eliminate duplicates.
+%
+%   This predicate executes `Goal` to generate solutions for `Arg`, flattens 
+%   the resulting list, and converts it into a set to ensure uniqueness.
+%
+%   @arg Arg The term to collect solutions for.
+%   @arg Goal The Prolog goal whose solutions are collected.
+%   @arg FlatSet The resulting flattened and deduplicated set of solutions.
+%
+%   @example Collect and flatten results:
+%     ?- findall_flat_set(X, member(X, [[1, 2], [2, 3]]), FlatSet).
+%     FlatSet = [1, 2, 3].
+findall_flat_set(Arg, Goal, FlatSet) :-
+    % Find all solutions to the Goal.
+    findall(Arg, Goal, List),
+    % Flatten the nested list of results.
+    flatten(List, Flat),
+    % Convert the flattened list to a set to ensure uniqueness.
+    list_to_set(Flat, FlatSet), !.
 
-a2t_assign_var(N=V):- N=V.
+%!  expand_xref(+Id, +N, -SetOfArgs) is det.
+%
+%   Expands cross-references for a given identifier (`Id`) up to `N` levels.
+%
+%   This predicate calls `expand_xref_excpt/4` to perform the cross-reference 
+%   expansion, starting with an empty exclusion list.
+%
+%   @arg Id The identifier for which to expand cross-references.
+%   @arg N The maximum number of expansion levels.
+%   @arg SetOfArgs The resulting set of expanded arguments.
+%
+%   @example Expand cross-references:
+%     ?- expand_xref('example_id', 2, SetOfArgs).
+%     % Expands cross-references for 'example_id' up to 2 levels.
+expand_xref(Id, N, SetOfArgs) :-
+    % Start expansion with an empty exclusion list.
+    expand_xref_excpt([[]], Id, N, SetOfArgs).
 
-fbgn_exons2affy2_overlaps_each(Gene,At):-
-   fb_pred_nr(fbgn_exons2affy2_overlaps, Arity),
-   functor(Pred,fbgn_exons2affy2_overlaps, Arity),
-   arg(1,Pred,Gene),
-   call(Pred),
-   arg(N,Pred,At),N>1.
+%!  expand_xref_excpt(+Except, +Id, +N, -SetOfArgs) is det.
+%
+%   Expands cross-references for `Id`, excluding certain identifiers.
+%
+%   This predicate generates expanded arguments for `Id` up to `N` levels of 
+%   depth, avoiding identifiers listed in `Except`. It uses different strategies 
+%   based on the complexity of `Id` and the value of `N`.
+%
+%   @arg Except A list of identifiers to exclude from expansion.
+%   @arg Id The identifier for which to expand cross-references.
+%   @arg N The maximum number of expansion levels.
+%   @arg SetOfArgs The resulting set of expanded arguments.
+%
+%   @example Expand with exclusions:
+%     ?- expand_xref_excpt(['exclude_id'], 'example_id', 2, SetOfArgs).
+%     % Expands cross-references for 'example_id', excluding 'exclude_id'.
+expand_xref_excpt(_Xcept, Id, _N, SetOfArgs) :-
+    % If `Id` is a compound term, return an empty set.
+    compound(Id), !, SetOfArgs = [].
+expand_xref_excpt(Except, Id, N, SetOfArgs) :-
+    % If `N` is unbound, generate levels from 0 to 5.
+    var(N), !, between(0, 5, N), expand_xref_excpt(Except, Id, N, SetOfArgs).
+expand_xref_excpt(Except, Id, N, SetOfArgs) :-
+    % Base case: when N <= 1, perform a single-level expansion.
+    N =< 1, !,
+    findall_flat_set(SoFar, expand_xref_once_except(Except, Id, N, SoFar), SetOfArgs).
+expand_xref_excpt(Except, Id, N, SetOfArgs) :-
+    % Recursive case: expand to N-1 levels.
+    Nm1 is N - 1,
+    % Perform a single-level expansion first.
+    expand_xref_once_except(Except, Id, 1, SetOfArgs1),
+    % Recursively expand each result from the first level.
+    findall_flat_set(
+        EArgs,
+        (
+            member(E, SetOfArgs1),
+            expand_xref_excpt([Id | Except], E, Nm1, EArgs)
+        ),
+        SetOfArgs
+    ).
 
-fbgn_exons2affy2_overlaps_start_end(Gene,Start,End):-
-   fbgn_exons2affy2_overlaps_each(Gene,At),into_start_end(At,Start,End).
+%!  gather_args(+Except, +F, +Pred, -Args) is det.
+%
+%   Gathers all arguments of a predicate, excluding specified values.
+%
+%   This predicate collects all arguments of `Pred` that are not listed in 
+%   `Except`, and returns them as a flattened and deduplicated set.
+%
+%   @arg Except A list of values to exclude.
+%   @arg F A context or function identifier.
+%   @arg Pred The predicate whose arguments are being gathered.
+%   @arg Args The resulting set of gathered arguments.
+%
+%   @example Gather arguments:
+%     ?- gather_args(['exclude'], some_function, some_predicate, Args).
+%     % Collects all arguments of `some_predicate`, excluding 'exclude'.
+gather_args(Except, F, Pred, Args) :-
+    % Collect all matching arguments using `findall_flat_set`.
+    findall_flat_set(Arg, gather_args(Except, F, Pred, Arg), Args).
 
-some_xref_ids(Id):- member(Id,['FBgn0001301']).
-
-findall_flat_set(Arg,Goal,FlatSet):-
-  findall(Arg,Goal,List),flatten(List,Flat),list_to_set(Flat,FlatSet),!.
-
-expand_xref(Id,N,SetOfArgs):-
-  expand_xref_excpt([[]],Id,N,SetOfArgs).
-
-expand_xref_excpt(_Xcept,Id,_N,SetOfArgs):- compound(Id),!,SetOfArgs=[].
-expand_xref_excpt(Except,Id,N,SetOfArgs):- var(N),!,between(0,5,N),expand_xref_excpt(Except,Id,N,SetOfArgs).
-expand_xref_excpt(Except,Id,N,SetOfArgs):- N=<1,!,
-  findall_flat_set(SoFar,expand_xref_once_except(Except,Id,N,SoFar),SetOfArgs).
-expand_xref_excpt(Except,Id,N,SetOfArgs):- Nm1 is N -1,
-  expand_xref_once_except(Except,Id,1,SetOfArgs1),
-  findall_flat_set(EArgs,(member(E,SetOfArgs1),expand_xref_excpt([Id|Except],E,Nm1,EArgs)),SetOfArgs).
-
-gather_args(Except,F,Pred,Args):- findall_flat_set(Arg,gather_args(Except,F,Pred,Arg),Args).
-gather_each_args(Except,F,Pred,Ele):- arg(N,Pred,Arg), \+ member(Arg,Except),
-   (number(Arg)-> Ele = is_nthOf(Arg,F,N) ; Ele = Arg).
+%!  gather_each_args(+Except, +F, +Pred, -Element) is nondet.
+%
+%   Gathers individual arguments for a predicate, generating elements for 
+%   each argument that is not excluded.
+%
+%   This predicate iterates over each argument of `Pred`, excluding those 
+%   listed in `Except`, and generates elements based on whether the argument 
+%   is a number or not.
+%
+%   @arg Except A list of values to exclude.
+%   @arg F A context or function identifier.
+%   @arg Pred The predicate whose arguments are being gathered.
+%   @arg Element The resulting element for each argument.
+%
+%   @example Gather elements:
+%     ?- gather_each_args(['exclude'], some_function, some_predicate, Element).
+%     % Generates elements for each argument of `some_predicate`, excluding 'exclude'.
+gather_each_args(Except, F, Pred, Ele) :-
+    % Iterate over each argument of the predicate.
+    arg(N, Pred, Arg),
+    % Ensure the argument is not in the exclusion list.
+    \+ member(Arg, Except),
+    % Generate elements based on the argument's type.
+    (
+        number(Arg) ->
+        % If the argument is a number, create an indexed element.
+        Ele = is_nthOf(Arg, F, N)
+    ;
+        % Otherwise, use the argument directly.
+        Ele = Arg
+    ).
 
 %   findall_flat_set([Pred|Args],
 %    (call(Pred),
 %     (N=0 -> Args = [] ; gather_args([Id|Except],F,Pred,Args))),SetOfArgs).
 
+%!  expand_xref_once_except(+Except, +Id, +P1) is det.
+%
+%   Expands cross-references for `Id` using a custom handler `P1`, excluding certain identifiers.
+%
+%   This predicate iterates over possible argument positions (`N` from 1 to 6) 
+%   and invokes `expand_xref_once_except_each/4` to handle each cross-reference.
+%
+%   @arg Except A list of identifiers to exclude from expansion.
+%   @arg Id The identifier for which to expand cross-references.
+%   @arg P1 A custom handler predicate to process each result.
+%
+%   @example Expand cross-references with a handler:
+%     ?- expand_xref_once_except([], 'example_id', writeln).
+%     % Expands cross-references for 'example_id' and prints each result.
+expand_xref_once_except(Except, Id, P1) :-
+    % Ensure P1 is non-variable and not a list.
+    nonvar(P1), \+ is_list(P1),
+    % Iterate over possible argument positions (1 to 6).
+    forall(
+        between(1, 6, N),
+        expand_xref_once_except_each(Except, Id, N, P1)
+    ).
+expand_xref_once_except(Except, Id, Set) :-
+    % Attempt to expand for argument positions (1 to 6).
+    ((between(1, 6, N),
+      expand_xref_once_except_each(Except, Id, N, nop),
+      fail)
+     -> true
+     ; Set = Except).
 
-expand_xref_once_except(Except,Id,P1):- nonvar(P1), \+ is_list(P1),
-  forall(between(1,6,N),
-     expand_xref_once_except_each(Except,Id,N,P1)).
+%!  expand_xref_once_except_each(+Except, +Id, +N, +P1) is det.
+%
+%   Handles cross-reference expansion for a specific argument position.
+%
+%   This predicate checks predicates with argument position `N` and invokes 
+%   `expand_xref_once_except_each_fa/5` to perform the expansion.
+%
+%   @arg Except A list of identifiers to exclude from expansion.
+%   @arg Id The identifier for which to expand cross-references.
+%   @arg N The argument position to check.
+%   @arg P1 A custom handler predicate to process each result.
+%
+%   @example Expand for argument position:
+%     ?- expand_xref_once_except_each([], 'example_id', 1, writeln).
+%     % Expands cross-references for 'example_id' at position 1.
+expand_xref_once_except_each(Except, Id, N, P1) :-
+    % Retrieve predicates and their arity.
+    fb_pred_nr(F, Arity),
+    % Perform garbage collection.
+    xgc,
+    % Ensure the current predicate and argument position are not in the exclusion list.
+    \+ member(argNOf(N, F/Arity), Except),
+    \+ member(F/Arity, Except),
+    % Ensure the predicate has enough arguments.
+    Arity >= N,
+    % Expand the cross-reference using the specific predicate.
+    expand_xref_once_except_each_fa(Except, F, Arity, Id, N, P1).
 
-expand_xref_once_except(Except,Id,Set):-
-  ((between(1,6,N),expand_xref_once_except_each(Except,Id,N,nop),fail)
-    ->true;Set=Except).
+%!  expand_xref_once_except_each_fa(+Except, +F, +Arity, +Id, +N, +P1) is det.
+%
+%   Performs cross-reference expansion for a specific predicate.
+%
+%   This predicate constructs a predicate with the specified functor and arity, 
+%   binds the `Id` to the `N`-th argument, and processes results using the handler `P1`.
+%
+%   @arg Except A list of identifiers to exclude from expansion.
+%   @arg F The functor name of the predicate.
+%   @arg Arity The arity of the predicate.
+%   @arg Id The identifier for which to expand cross-references.
+%   @arg N The argument position to bind.
+%   @arg P1 A custom handler predicate to process each result.
+%
+%   @example Expand for a specific predicate:
+%     ?- expand_xref_once_except_each_fa([], some_functor, 3, 'example_id', 1, writeln).
+%     % Expands cross-references for 'example_id' using the predicate some_functor/3.
+expand_xref_once_except_each_fa(Except, F, Arity, Id, N, P1) :-
+    % Create a predicate with the specified functor and arity.
+    functor(Pred, F, Arity),
+    % Bind the `N`-th argument to the identifier.
+    arg(N, Pred, Id),
+    % Call the constructed predicate.
+    call(Pred),
+    % Add the result to the exclusion list for this specific argument and predicate.
+    add_to_except(argNOf(N, F/Arity), Except),
+    % \+ member(Pred,Except),
+    % add_to_except(Pred,Except),
+    % Process the predicate using the custom handler P1.
+    call(P1, Pred),
+    % Perform garbage collection to free memory.
+    xgc.
 
-expand_xref_once_except_each(Except,Id,N,P1):-
-  fb_pred_nr(F, Arity),
-  xgc,
-  \+ member(argNOf(N,F/Arity),Except),   \+ member(F/Arity,Except),
-  Arity>=N,
-  expand_xref_once_except_each_fa(Except,F,Arity,Id,N,P1).
+%!  xgc is det.
+%
+%   Performs garbage collection for Prolog terms, atoms, and clauses.
+%
+%   This predicate triggers garbage collection for terms, atoms, and clauses 
+%   and includes a brief pause to allow the system to recover memory.
+%
+%   @example Perform garbage collection:
+%     ?- xgc.
+%     % Cleans up memory.
+xgc :-
+    garbage_collect,
+    garbage_collect_atoms,
+    garbage_collect_clauses,
+    % Pause briefly to allow system recovery.
+    sleep(0.033).
 
+%!  add_to_except(+Pred, +Except) is det.
+%
+%   Adds a predicate to the exclusion list.
+%
+%   This predicate appends `Pred` to the second argument of the `Except` term.
+%
+%   @arg Pred The predicate to add to the exclusion list.
+%   @arg Except The exclusion list term.
+%
+%   @example Add a predicate to the exclusion list:
+%     ?- add_to_except(argNOf(1, some_pred/2), ExclusionList).
+%     % Updates the exclusion list with the new predicate.
+add_to_except(Pred, Except) :-
+    % Add `Pred` to the exclusion list in the second argument of `Except`.
+    arg(2, Except, T),
+    nb_setarg(2, Except, [Pred | T]).
 
-expand_xref_once_except_each_fa(Except,F,Arity,Id,N,P1):-
-  functor(Pred,F, Arity),
-  arg(N,Pred,Id),
-  call(Pred),
-  add_to_except(argNOf(N,F/Arity),Except),
-  % \+ member(Pred,Except),
-  % add_to_except(Pred,Except),
-  call(P1,Pred),
-  xgc.
+%!  sx1 is det.
+%
+%   Example query for cross-reference information.
+%
+%   This predicate calls `xinfo/1` with an unbound variable to demonstrate 
+%   retrieving cross-reference information.
+%
+%   @example Example usage:
+%     ?- sx1.
+%     % Retrieves cross-reference information.
+sx1 :-
+    xinfo(_Id).
 
-xgc:-
-  garbage_collect,
-  garbage_collect_atoms,
-  garbage_collect_clauses,
-  sleep(0.033).
+%!  xinfo(+Id) is det.
+%
+%   Retrieves cross-reference information for a specific identifier.
+%
+%   This predicate processes the identifier `Id` and retrieves related 
+%   cross-reference information. It supports various forms of `Id`.
+%
+%   @arg Id The identifier to query, which may be unbound, empty, or a number.
+%
+%   @example Retrieve information for a specific ID:
+%     ?- xinfo('example_id').
+%     % Retrieves cross-reference information for 'example_id'.
+xinfo(Id) :-
+    % Handle unbound identifiers.
+    var(Id), !,
+    some_xref_ids(Id),
+    xinfo(Id).
+xinfo(Id) :-
+    % Skip empty identifiers.
+    Id == '', !.
+xinfo(Id) :-
+    % Skip numeric identifiers.
+    number(Id), !.
+xinfo(Id) :-
+    % Expand cross-references for the identifier.
+    expand_xref_once_except([Id], Id, my_write_src_nl).
 
-add_to_except(Pred,Except):- arg(2,Except,T), nb_setarg(2,Except,[Pred|T]).
-
-sx1:- xinfo(_Id).
-
-xinfo(Id):- var(Id),!,some_xref_ids(Id), xinfo(Id).
-xinfo(Id):- Id=='',!.
-xinfo(Id):- number(Id),!.
-xinfo(Id):- expand_xref_once_except([Id],Id,my_write_src_nl).
-
-my_write_src_nl(X):-!, write_src_nl(X).
-my_write_src_nl(X):-
-  must_det_ll((X=..[F|L], maplist(fast_column,L,LL),!,write_src_nl([F|LL]))).
+%!  my_write_src_nl(+X) is det.
+%
+%   Custom handler for writing source information with optional formatting.
+%
+%   This predicate writes the source representation of `X` and applies formatting 
+%   if necessary.
+%
+%   @arg X The term to be written.
+%
+%   @example Write formatted source information:
+%     ?- my_write_src_nl(some_term).
+%     % Outputs formatted source information for `some_term`.
+my_write_src_nl(X) :-
+    % Write the term using source formatting.
+    !, write_src_nl(X).
+my_write_src_nl(X) :-
+    % Perform detailed formatting and write the term.
+    must_det_ll(
+        (
+            % Decompose the term into its functor and arguments.
+            X =.. [F | L],
+            % Apply fast formatting to each argument.
+            maplist(fast_column, L, LL),
+            % Write the formatted term.
+            !, write_src_nl([F | LL])
+        )
+    ).
 
 /*
 
@@ -591,8 +2359,41 @@ xinfo(Id):-
         fbgn_gleanr/4]),
    expand_xref_once_except_each_fa([[]],F,A,Id,N,_Pred)).
 */
+
 :- dynamic fb_tsv_pred_stats/3.
 
+%!  fb_tsv_pred_stats(+Statistic, +Table, +Values) is det.
+%
+%   Represents statistical information about a tab-separated data table.
+%
+%   This predicate provides insights into various statistics computed from a data table,
+%   such as the number of columns, duplicated rows, total rows, and unique values.
+%
+%   @arg Statistic The name of the statistic being described. Examples include:
+%        - 'num-columns': The total number of columns in the table.
+%        - 'duplicated-rows': The number of duplicated rows in the table.
+%        - 'total-rows': The total number of rows in the table.
+%        - 'unique-values': Statistics about unique values in a specific column.
+%
+%   @arg Table The name of the table being analyzed.
+%   @arg Values A list containing the values associated with the statistic. The interpretation 
+%        of this list depends on the `Statistic`:
+%        - For 'num-columns', it contains a single integer representing the count.
+%        - For 'duplicated-rows' and 'total-rows', it contains a single integer.
+%        - For 'unique-values', it provides details about each column:
+%            * The column index.
+%            * The number of unique values.
+%            * The data type (e.g., 'object', 'integer').
+%
+%   @examples
+%     % Example: Number of columns in the table 'allele_genetic_interactions'.
+%     ?- fb_tsv_pred_stats('num-columns', allele_genetic_interactions, [4]).
+%
+%     % Example: Total rows in the table 'allele_genetic_interactions'.
+%     ?- fb_tsv_pred_stats('total-rows', allele_genetic_interactions, [363452]).
+%
+%     % Example: Unique value statistics for column 1 of 'allele_genetic_interactions'.
+%     ?- fb_tsv_pred_stats('unique-values', allele_genetic_interactions, [1, 28688, object]).
 fb_tsv_pred_stats('num-columns', allele_genetic_interactions, [4]).
 fb_tsv_pred_stats('duplicated-rows', allele_genetic_interactions, [21]).
 fb_tsv_pred_stats('total-rows', allele_genetic_interactions, [363452]).
@@ -2279,4 +4080,34 @@ fb_tsv_pred_stats('less-frequent', transposon_sequence_set, [8, [#, [#, 1.0, 578
 fb_tsv_pred_stats('most-frequent', transposon_sequence_set, [9, [#, [#, 'Ontology_term=SO:0000205', 12], [#, 'Ontology_term=SO:0000551', 24], [#, 'Ontology_term=SO:0000318', 50], [#, 'Ontology_term=SO:0000481', 56], [#, 'Ontology_term=SO:0000316', 62], [#, 'Ontology_term=SO:0000426', 67], [#, 'Ontology_term=SO:0000425', 68]]]).
 fb_tsv_pred_stats('less-frequent', transposon_sequence_set, [9, [#, [#, 'ID=FBte0001033;name=Dmel\\mariner2;source=?;type=DNA;subtype=Tc1-Mariner', 1], [#, 'ID=FBte0000773;name=Dana\\Tom;source=Z24451;type=?;subtype=?', 1], [#, 'ID=FBte0000591;name=Dmel\\invader6;source=NT_033778;type=LTR;subtype=Gypsy', 1], [#, 'Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\pol;translation=KKCKASLDYISSIPTGPRDPRPFLPMRLLNCLVYGLLDSGASISCIGGGVVQAAMENEKFKSLIGEAATADGNSQRIVGLLKIEVEYGDIKKLLKLYVVPSLKQDLYLGIDFWKLYDLLPANLKIAEILSPEPNQQTVVDQHELCEGDKAKLANVINCFPSFSQEGLGKTNLVSHSIDVGTARPVKQRHFPVSPAVEKAMYAEIDRMLRLGVIGESESAWSSPIVMVTKPGKVRICLECRKVNSFTEMDAYPLPQINGILSRLPRAEYISSLDLKDAYWQVPLDPKSRDKTAFTVPGRPLYQFKVMPFGLCNATSTMSRLMDKVVPAHLRNEVFIYLDDLLIVSSCFESHLNVLRELALQIKRAGLTLNVAKSHFCMRRVRYLGHIIGDGGIRTDPEKVSAITDFPLPKSLKSLRSFMGLCGWYRKFVANFATLSAPLTDLMTTKRKFLLTKEAIEAFSKLKECLSKAPVLCSPDFAKPFAIHCDASKSGVGAVLVQVSEEGDERPIAFVSKKLNKAQRNYTVTEQECLAAIVALKNFRAYVEGLPFKIITDHASLKWLMSNHDLNSRLARWALALQRFKFEIEHRKGSLNVVPDTLSRVNEEIVAAMDLQEDLIVDFDSEFFQSGDYVKLVETVKENTSNFSDLKVESGFLYRKAEHLTGERMHDEYAWKLWVPKELVSKILARAHDSPLAAHGGIHKTLERIRRYYFWPGLVSDVRAYISACEVCKSTKSQNFTLRPPLGKAPESQRFFQRLFIDFLGPYPRSRSGNIGIFIVLDHFSKYVFLKPVKKIDSSVVIKYLEDELFMTFGVPEVILSDNGSQFRARTFQRLIRYGVKHTLTAVHSPQANASERVNRSVIAAIRAYLRLDQKDWDEFLSRICCALRSAVHSSIGTSPYYMVFGQHMITSGSTYSLIRRLNLLDDRSLKFDRHESFEIMRKQAVDQMRNKHNENEKRCNIRSRVVSFVEGQEVYREISSQAVSKPVTTPSLDRRS', 1], [#, 'Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\gag;translation=MGLDRSPTRKSPSVSNPVCKLCAAEISTQDLYVTTCHHEFYRECIGNHFKKSEICSRCKLTCRPPAEATERVGRETRSKTKNRRNSRRGSFDISQRCGEKLAVKLKIAATVDGGPSTSASGANANEASSSAVSANAALLAMERRLLATLSEKMADLVQNAITSSMQRIMPTPSPAVVVTASEMSADHPNAYERQYLASPNPVPSPRSASSDLFDRPDKVVHILNGWKIKYSGVGVSVDNFIYRVEAVTRQTLNGNFNLLCRNISVLFEGKANDFFWRYHKFDRVATMGTERFCTALRLQFRQSRDDGDIEELIRNTKQKPNETFDSFYDTVSELVDQLEQPWTANKLVRVLRNNLRPEIRHEILNLDVRTVSELREICKRREAFLADVRRCSSYAKDTPFKREISEVCHESEDEVRSTYEAENDIESFSLVCWNCRIEGHRYQECIAERRVFCYGCGAANTYKPSCRKCSKNFKVGMSKLPVKPKTSNAARNQSTMTDQ', 1], [#, 'ID=FBte0001136;name=Dmel\\gypsy12;source=AE003789;type=LTR;subtype=Gypsy', 1], [#, 'ID=FBte0001041;name=Dmel\\gypsy11;source=?;type=LTR;subtype=Gypsy', 1]]]).
 
-:- forall(fb_tsv_pred_stats(P,A1,Rest),  (G=..[P,A1|Rest],assert(G))).
+%!  assert_fb_tsv_pred_stats is det.
+%
+%   Dynamically asserts predicates based on `fb_tsv_pred_stats/3`.
+%
+%   This predicate processes all facts of the form `fb_tsv_pred_stats/3` and dynamically
+%   asserts new predicates derived from the facts. For each fact `fb_tsv_pred_stats(P, A1, Rest)`,
+%   it constructs a new goal `G` using `P` as the predicate name, `A1` as the first argument,
+%   and the elements of `Rest` as subsequent arguments. This goal is then asserted into the database.
+%
+%   @details
+%   - The `forall/2` construct ensures that the operation is performed for all facts in `fb_tsv_pred_stats/3`.
+%   - The `G=..[P, A1 | Rest]` syntax dynamically constructs the goal `G` from its components.
+%   - The `assert/1` predicate adds the dynamically constructed goal to the Prolog knowledge base.
+%
+%   @examples
+%     % Assuming the following facts:
+%     fb_tsv_pred_stats('num-columns', table1, [4]).
+%     fb_tsv_pred_stats('total-rows', table1, [100]).
+%
+%     % Running this code will dynamically assert:
+%     num_columns(table1, 4).
+%     total_rows(table1, 100).
+%
+%     % Example query:
+%     ?- num_columns(table1, X).
+%     X = 4.
+%
+%     ?- total_rows(table1, Y).
+%     Y = 100.
+%
+:- forall(fb_tsv_pred_stats(P, A1, Rest), (G =.. [P, A1 | Rest], assert(G))).
