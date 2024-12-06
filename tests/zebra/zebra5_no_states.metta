@@ -1,13 +1,24 @@
 
 ; !(bind! &exists-props (new-state Nil))
+((context $ctx) :-
+ (
+
+   (same $Props (Props $_H6 $_T6))
+   (same $ctx ($Houses $Props))
+
+   (get-declare-num nationality $Num1 in the $ctx)
+   (get-declare-num color $Num2 in the $ctx)
+   (get-declare-num pet $Num3 in the $ctx)
+   (get-declare-num drink $Num4 in the $ctx)
+   (get-declare-num drink $Num5 in the $ctx)))
+
 
 ;; Main predicate to find the owner of the fish
 ((zebra-owner $Owner) :-
  (
-
-   (same $Houses (Cons (Cons $__202438 $_1_202439) (Cons (Cons $__208019 $_1_208020) (Cons (Cons $__211968 $_1_211969) (Cons (Cons $__215037 $_1_215038) (Cons (Cons $__217602 $_1_217603) Nil))))))
-   (same $Props (Cons $_H6 $_T6))
+   (context $ctx)
    (same $ctx ($Houses $Props))
+   (same $Houses (Places (House $__202438 $_1_202439) (Places (House $__208019 $_1_208020) (Places (House $__211968 $_1_211969) (Places (House $__215037 $_1_215038) (Places (House $__217602 $_1_217603) Nil))))))
 
  ;; Clue 1: The Brit lives in the red house.
    (declare nationality $Brit brit in the $ctx)
@@ -86,12 +97,12 @@
 ((init-houses $Num $Houses) :-
  (make-houses $Num $Houses))
 
-((make-houses (S $N) (Cons $House $Rest)) :-
+((make-houses (S $N) ($Cons $House $Rest)) :-
  ((create-exists $House)
    (make-houses $N $Rest)))
 (make-houses Z Nil)
 
-(create-exists (Cons $_ $_1))
+(create-exists ($Cons $_ $_1))
 
 
 ;; Predicate: L is immediately to the left of R in the list
@@ -99,8 +110,8 @@
  ((same $ctx ($Houses $_))
    (left-of-list $L $R $Houses)))
 
-(left-of-list $L $R (Cons $L (Cons $R $_)))
-((left-of-list $L $R (Cons $_ $Rest)) :-
+(left-of-list $L $R ($Cons $L ($Cons $R $_)))
+((left-of-list $L $R ($Cons $_ $Rest)) :-
  ((left-of-list $L $R $Rest)))
 
 ;; Predicate: A and B are next to each other in the list
@@ -128,7 +139,7 @@
  ((get-declare-num $PropName $Num in the $ctx)
    (nat-nth $Num $Template $PropValue)
    (something-existing $Exists in the $ctx)
-   (same $Template $Object) (same $Template $Object)))
+   (same $Template $Exists) (same $Template $Object)))
 
 ;; Ensure Exists is a member of Houses
 ((something-existing $Exists in the $ctx) :-
@@ -136,8 +147,8 @@
    (member $Exists $Houses)))
 
 ;; Member predicate for lists
-(member $Elem (Cons $Elem $_))
-((member $Elem (Cons $_ $Tail)) :-
+(member $Elem ($Cons $Elem $_))
+((member $Elem ($Cons $_ $Tail)) :-
  ((member $Elem $Tail)))
 
 ;; Map property names to their positions (numbers)
@@ -145,49 +156,45 @@
  ((same ($_ $PropList) $ctx)
    (declare-index $PropName $PropList Z $Num)))
 
-(declare-index $PropName (Cons $PropName $_) $Num $Num)
-((declare-index $PropName (Cons $_ $Rest) $Acc $Num) :-
- ((declare-index $PropName $Rest (S $Acc) $Num)))
+(declare-index $PropName ($Cons $PropName $_) $Num $Num)
+((declare-index $PropName ($Cons $_ $Rest) $Acc $Num) :- (declare-index $PropName $Rest (S $Acc) $Num))
 ((declare-index $PropName $PropList $Acc $Acc) :-  ;; If property not found, add it
-   (cons-append $PropList (Cons $PropName $_Open) $_Ignored))
+   (cons-append $PropList ($Cons $PropName $_Open) $_Ignored))
 
 ;; Zero-based nat-nth predicate
-(nat-nth Z (Cons $Elem $_) $Elem)
-((nat-nth (S $N) (Cons $_ $Rest) $Elem) :-
+(nat-nth Z ($Cons $Elem $_) $Elem)
+((nat-nth (S $N) ($Cons $_ $Rest) $Elem) :-
  ((nat-nth $N $Rest $Elem)))
 
 ;; Append two lists
 (cons-append Nil $List2 $List2)
-((cons-append (Cons $H $T) $List2 (Cons $H $T2)) :-
+((cons-append ($Cons $H $T) $List2 ($Cons $H $T2)) :-
  ((cons-append $T $List2 $T2)))
 
 
 (same $x $x)
 
 ;; last of list
-(last $x (Cons $x Nil))
-((last $x (Cons $_ $rest)) :- ( (last $x $rest) ) )
+(last $x ($Cons $x Nil))
+((last $x ($Cons $_ $rest)) :- ( (last $x $rest) ) )
 
 ;; length list
 (length Nil 0)
-((length (Cons $x $rest) $out) :- (
-	(length $rest $out2) 
-	(is $out (+ $out2 1))
-)
-)
+((length ($Cons $x $rest) $out) :- 
+   ((length $rest $out2) 
+	(is $out (+ $out2 1))))
 
 ;; sum from 0 to n
 (sum 0 0)
-((sum $n $s) :- (
-	(bool (> $n 0))
+((sum $n $s) :- 
+   ((bool (> $n 0))
 	(is $n1 (- $n 1))
 	(sum $n1 $s1)
-	(is $s (+ $n $s1))
-))
+	(is $s (+ $n $s1))))
 
 ;; list append
 (append Nil $L $L)
-((append (Cons $H $T) $L (Cons $H $R)) :- (
+((append ($Cons $H $T) $L ($Cons $H $R)) :- (
 	(append $T $L $R)
 ))
 
@@ -268,20 +275,20 @@
 ;; TEST query ;;;
 ;;;;;;;;;;;;;;;;;;
 
-
+!("
 ; last element of list
-!(query (last $x (Cons 1 (Cons 2 (Cons 3 Nil)))))
+!(query (last $x ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
 
 ;; length of list
-!(query (length (Cons 1 (Cons 2 (Cons 3 Nil))) $out))
+!(query (length ($Cons 1 ($Cons 2 ($Cons 3 Nil))) $out))
 
 ;; sum up to 3
 !(query (sum 3 $x))
 
 ;; append (multi-directional)
-!(query (append (Cons 1 (Cons 2 Nil)) (Cons 3 (Cons 4 Nil)) $x))
-!(query (append (Cons 1 (Cons 2 Nil)) $Out (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))))
-!(query (append $What $Out (Cons 1 (Cons 2 (Cons 3 (Cons 4 Nil))))))
+!(query (append ($Cons 1 ($Cons 2 Nil)) ($Cons 3 ($Cons 4 Nil)) $x))
+!(query (append ($Cons 1 ($Cons 2 Nil)) $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
+!(query (append $What $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
 
 ;; Negation as failure test
 !(query (bachelor $x))
@@ -295,22 +302,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Check if an element is a member of a list
-;!(query (member 3 (Cons 1 (Cons 2 (Cons 3 Nil)))))
-;!(query (member 5 (Cons 1 (Cons 2 (Cons 3 Nil))))) ;; Should fail
-;!(query (member $x (Cons 1 (Cons 2 (Cons 3 Nil)))))
+;!(query (member 3 ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
+;!(query (member 5 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ;; Should fail
+;!(query (member $x ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
+")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SOLVING FOR THE ZEBRA OWNER ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-!(query (backward-chain (zebra-owner $Owner) &self &self)) ;; Solve for $Owner
+!(query (context $ctx))
+;!(query (backward-chain (zebra-owner $Owner) &self &self)) ;; Solve for $Owner
 
 ;; Query for the zebra owner (who owns the fish)
-!(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
+;!(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
 
-!(query (declare nationality $Brit brit))
+;!(query (declare nationality $Brit brit))
 
-!(query (something-existing $Exists))
+;!(query (something-existing $Exists))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
