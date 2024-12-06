@@ -17,8 +17,34 @@
 ((zebra-owner $Owner) :-
  (
    ; (context $ctx)
+   (same $Houses 
+      (Places (House $__202438 $_39) 
+      (Places (House $__208019 $_1_208020) 
+      (Places (House $_1968 $_11969) 
+      (Places (House $_5037 $_15038) 
+      (Places (House $_7602 $_17603) Nil))))))
+      
+   (same $Props 
+      (Props nationality
+      (Props color
+      (Props pet
+      (Props drink
+      (Props smokes Nil))))))      
+   
    (same $ctx ($Houses $Props))
-   (same $Houses (Places (House $__202438 $_1_202439) (Places (House $__208019 $_1_208020) (Places (House $__211968 $_1_211969) (Places (House $__215037 $_1_215038) (Places (House $__217602 $_1_217603) Nil))))))
+      
+ ;; Clue 8: The man living in the center house drinks milk.
+   (center-house $CenterHouse in the $ctx)
+   (declare drink $CenterHouse milk in the $ctx)   
+   
+ ;; Clue 9: The Norwegian lives in the first house.
+   (first-house $FirstHouse in the $ctx)
+   (declare nationality $FirstHouse norwegian in the $ctx)
+
+ ;; Clue 14: The Norwegian lives next to the blue house.
+   (declare nationality $Norwegian norwegian in the $ctx)
+   (next-to $Norwegian $HouseBlue in the $ctx)
+   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 1: The Brit lives in the red house.
    (declare nationality $Brit brit in the $ctx)
@@ -49,14 +75,6 @@
    (declare color $Yellow yellow in the $ctx)
    (declare smokes $Yellow dunhill in the $ctx)
 
- ;; Clue 8: The man living in the center house drinks milk.
-   (center-house $CenterHouse in the $ctx)
-   (declare drink $CenterHouse milk in the $ctx)
-
- ;; Clue 9: The Norwegian lives in the first house.
-   (first-house $FirstHouse in the $ctx)
-   (declare nationality $FirstHouse norwegian in the $ctx)
-
  ;; Clue 10: The man who smokes Blends lives next to the one who keeps cats.
    (declare smokes $SmokesBlends blends in the $ctx)
    (next-to $SmokesBlends $HouseCat in the $ctx)
@@ -74,11 +92,6 @@
  ;; Clue 13: The German smokes Prince.
    (declare nationality $German german in the $ctx)
    (declare smokes $German prince in the $ctx)
-
- ;; Clue 14: The Norwegian lives next to the blue house.
-   (declare nationality $Norwegian norwegian in the $ctx)
-   (next-to $Norwegian $HouseBlue in the $ctx)
-   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 15: The man who smokes Blends has a neighbor who drinks water.
    (declare smokes $BlendsSmoker blends in the $ctx)
