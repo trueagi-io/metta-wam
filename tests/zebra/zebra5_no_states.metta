@@ -16,7 +16,7 @@
 ;; Main predicate to find the owner of the fish
 ((zebra-owner $Owner) :-
  (
-   (context $ctx)
+   ; (context $ctx)
    (same $ctx ($Houses $Props))
    (same $Houses (Places (House $__202438 $_1_202439) (Places (House $__208019 $_1_208020) (Places (House $__211968 $_1_211969) (Places (House $__215037 $_1_215038) (Places (House $__217602 $_1_217603) Nil))))))
 
@@ -347,6 +347,7 @@
 !(query (append ($Cons 1 ($Cons 2 Nil)) ($Cons 3 ($Cons 4 Nil)) $x))
 !(query (append ($Cons 1 ($Cons 2 Nil)) $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
 !(query (append $What $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
+")
 
 ;; Negation as failure test
 !(query (bachelor $x))
@@ -359,18 +360,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ADDITIONAL TEST QUERIES ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;; Check if an element is a member of a list
 !(query (member 3 ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
 !(query-f (member 5 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ;; Should fail
 !(query (member $x ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
 
-!(query(is$x(+11)))
-!(query!(query (context $ctx))
+!(query (is $x (+ 1 1)))
+; !(query!(query (context $ctx))
 ;!(query (backward-chain (zebra-owner $Owner) &self &self)) ;; Solve for $Owner
 
 ;; Query for the zebra owner (who owns the fish)
-;!(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
+!(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
+
+!("
 
 ;!(query (declare nationality $Brit brit))
 
@@ -384,3 +386,4 @@
 ;; Verify properties related to the zebra-owner problem
 !(query (declare nationality $Owner norwegian))
 
+")
