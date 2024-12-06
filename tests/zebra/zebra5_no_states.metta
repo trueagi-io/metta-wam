@@ -10,7 +10,8 @@
    (get-declare-num color $Num2 in the $ctx)
    (get-declare-num pet $Num3 in the $ctx)
    (get-declare-num drink $Num4 in the $ctx)
-   (get-declare-num drink $Num5 in the $ctx)))
+   (get-declare-num drink $Num5 in the $ctx) ; this should not change the context since its already there
+   (get-declare-num smokes $Num6 in the $ctx)))
 
 
 ;; Main predicate to find the owner of the fish
