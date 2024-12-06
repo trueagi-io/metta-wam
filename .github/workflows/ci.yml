@@ -7,10 +7,10 @@ on:
     - cron: 17 0 * * * # nightly run; 17th minute to decrease odds of delayed or dropped job
   push:
     branches:
-      - main
+      - master
   pull_request_target:
     branches:
-      - main
+      - master
 
 permissions:
   contents: write
