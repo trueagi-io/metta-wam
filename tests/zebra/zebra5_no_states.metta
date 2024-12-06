@@ -153,7 +153,7 @@
 
 ;; Map property names to their positions (numbers)
 ((get-declare-num $PropName $Num in the $ctx) :-
- ((same ($_ $PropList) $ctx)
+  ((same ($_ $PropList) $ctx)
    (declare-index $PropName $PropList Z $Num)))
 
 ((get-declare-num-not-working $PropName $Num in the $ctx) :-
@@ -199,27 +199,27 @@
 (sum 0 0)
 ((sum $n $s) :- (
     (bool (> $n 0))
-	(is $n1 (- $n 1))
-	(sum $n1 $s1)
+    (is $n1 (- $n 1))
+    (sum $n1 $s1)
     (is $s (+ $n $s1))
 ))
 
 ;; list append
 (append Nil $L $L)
 ((append (Cons $H $T) $L (Cons $H $R)) :- (
-	(append $T $L $R)
+    (append $T $L $R)
 ))
 
 ;; negation as failure test
 ((bachelor $x) :- (
-	(man $x)
-	(naf (married $x))
+    (man $x)
+    (naf (married $x))
 ))
 (man John) (man Tim)
 (married Tim)
 
 ((woman $x) :- (
-	(naf (man $x))
+    (naf (man $x))
 ))
 
 
@@ -310,11 +310,12 @@
 		    (() (if (== $m ()) (println! (BAD (cur= $cur) (retVal= $retVal))) ()))
 		    ((quote $cur) $retVal) ;; chain on cur & unify back to propagate vars to $goal
 			(() (println! (OUT (cur= $cur) (goal= $goal))))
-		) 
+		    ) 
 			(match-body $info $rest $kb $rb $goal)
 		)
-	)
+    )
 )
+
 
 (: query (-> Atom Atom))
 ; !(bind! &baseall (new-space))
