@@ -6,7 +6,11 @@
    (same $Props (Props $_H6 $_T6))
    (same $ctx ($Houses $Props))
 
-   (get-declare-num nationality $Num1 in the $ctx)))
+   (get-declare-num nationality $Num1 in the $ctx)
+   (get-declare-num color $Num2 in the $ctx)
+   (get-declare-num pet $Num3 in the $ctx)
+   (get-declare-num drink $Num4 in the $ctx)
+   (get-declare-num drink $Num5 in the $ctx)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,28 +37,20 @@
 ;; Map property names to their positions (numbers)
 ((get-declare-num $PropName $Num in the $ctx) :-
   ((same ($_ $PropList) $ctx)
-   (eval= $dc (declare-index $PropName $PropList Z $Num))))
+   (declare-index $PropName $PropList Z $Num)))
 
-(: declare-index (-> Symbol Expression Nat Nat Bool))
-(= (declare-index $PropName $PropList $Acc $Num)
+((get-declare-num-not-working $PropName $Num in the $ctx) :-
+  ((same ($_ $PropList) $ctx)
+   (eval= $dc (declare-index-m $PropName $PropList Z $Num))))
+
+(: declare-index-m (-> Symbol Expression Nat Nat Bool))
+(= (declare-index-m $PropName $PropList $Acc $Num)
   (case $PropList
 	((($Cons $PropName $_) (nat-equal $Acc $Num))
-     (($Cons $_ $Rest) (declare-index $PropName $Rest (S $Acc) $Num)))))
+     (($Cons $_ $Rest) (declare-index-m $PropName $Rest (S $Acc) $Num)))))
 
-(: Z Nat)
-(: S (-> Nat Nat))
-	  
-(: nat-equal (-> Nat Nat Bool))
-(= (nat-equal $A $A) True)
-
-(: equalz (-> Atom Atom Bool))
-(= (equalz $A $A) True)
-
-(: quote-equalz (-> Atom Atom Bool))
-(= (quote-equalz $A $A) True)
-(= (quote-equalz $A $B) (equalz (quote $A) $B))
-(= (quote-equalz $A $B) (equalz $A (quote $B)))
- 
+(declare-index $PropName ($Cons $PropName $_) $Num $Num)
+((declare-index $PropName ($Cons $Nonvar $Rest) $Acc $Num) :- ( (nonvar $Nonvar) (declare-index $PropName $Rest (S $Acc) $Num)))
 ;((declare-index $PropName ($Cons $_ $Rest) $Acc $Num) :- ((declare-index $PropName $Rest (S $Acc) $Num)))
 ;((declare-index $PropName $PropList $Acc $Acc) :-  ;; If property not found, add it
 ;   ((cons-append $_PropList ($Cons $PropName $_Open) $PropList)))
@@ -122,6 +118,20 @@
 ;; First-order logic backward chainer using match
 
 
+(: Z Nat)
+(: S (-> Nat Nat))
+	  
+(: nat-equal (-> Nat Nat Bool))
+(= (nat-equal $A $A) True)
+
+(: equalz (-> Atom Atom Bool))
+(= (equalz $A $A) True)
+
+(: quote-equalz (-> Atom Atom Bool))
+(= (quote-equalz $A $A) True)
+(= (quote-equalz $A $B) (equalz (quote $A) $B))
+(= (quote-equalz $A $B) (equalz $A (quote $B)))
+
 ;; TODO: this is inefficient, we just need at least 1 match
 (= (has-match $space $g)
 	(let $m (collapse (match $space $g True))
@@ -150,6 +160,8 @@
 		((quote (is $a $b)) (let $a $b (quote $goal))) ;; prolog eval & assign
 		((quote (bool $expr)) (if $expr (quote $goal) (empty))) ;; if predicate is a boolean. This might be unnecessary
 		((quote (eval= $a $expr)) (let $a $expr (quote $goal))) ;; if predicate is a boolean. This might be unnecessary
+		((quote (nonvar $var)) (if (== Variable (get-metatype $var)) (empty) (quote $goal)))
+        ((quote (var $var)) (if (== Variable (get-metatype $var)) (quote $goal) (empty)))
 		((quote (true)) (quote $goal))
 		((quote (fail)) (empty))
 	    ((quote (cut $_)) (if (equalz $info $goal) (quote $goal) (quote $goal)))
@@ -234,5 +246,4 @@
 !(query (is $x (+ 1 1)))
 !(query (same $ctx ($Houses $Props)))
 !(query (context $ctx))
-
 
