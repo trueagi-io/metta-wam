@@ -94,8 +94,6 @@ coerce('Bool',Value,Result):- var(Value), !, Value=Result, freeze(Value,coerce('
 coerce('Bool',Value,Result):- Value=0, !, Result='False'.
 coerce('Bool',Value,Result):- Value='False', !, Result='False'.
 coerce('Bool',Value,Result):- is_list(Value), length(Value, 0), !, Result='False'.
-coerce('Bool',Value,Result):- is_list(Value),!,as_tf(call_true(Value),Result),
-set_list_value(Value,Result).
 coerce('Bool',Value,Result):- !, Result='True'.
 
 coerce('Number',Value,Result):- number(Value), !, Value=Result.
@@ -104,6 +102,7 @@ coerce('Number',Value,Result):- Value='False', !, Result=0.
 coerce('Number',Value,Result):- Value='True', !, Result=1.
 coerce('Number',Value,Result):- atom(Value), !, atom_number(Value, Result).
 
+coerce('String', Value, Result):- string(Value), !, Value=Result.
 coerce('String', Value, Result):- term_string(Value,Result).
 
 set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result]).
