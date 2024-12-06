@@ -17,34 +17,9 @@
 ((zebra-owner $Owner) :-
  (
    ; (context $ctx)
-   (same $Houses 
-      (Places (House $__202438 $_39) 
-      (Places (House $__208019 $_1_208020) 
-      (Places (House $_1968 $_11969) 
-      (Places (House $_5037 $_15038) 
-      (Places (House $_7602 $_17603) Nil))))))
-      
-   (same $Props 
-      (Props nationality
-      (Props color
-      (Props pet
-      (Props drink
-      (Props smokes Nil))))))      
-   
+   (same $Houses (Places (House $__202438 $_39) (Places (House $__208019 $_1_208020) (Places (House $_1968 $_11969) (Places (House $_5037 $_15038) (Places (House $_7602 $_17603) Nil))))))
    (same $ctx ($Houses $Props))
-      
- ;; Clue 8: The man living in the center house drinks milk.
-   (center-house $CenterHouse in the $ctx)
-   (declare drink $CenterHouse milk in the $ctx)   
    
- ;; Clue 9: The Norwegian lives in the first house.
-   (first-house $FirstHouse in the $ctx)
-   (declare nationality $FirstHouse norwegian in the $ctx)
-
- ;; Clue 14: The Norwegian lives next to the blue house.
-   (declare nationality $Norwegian norwegian in the $ctx)
-   (next-to $Norwegian $HouseBlue in the $ctx)
-   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 1: The Brit lives in the red house.
    (declare nationality $Brit brit in the $ctx)
@@ -75,6 +50,14 @@
    (declare color $Yellow yellow in the $ctx)
    (declare smokes $Yellow dunhill in the $ctx)
 
+ ;; Clue 8: The man living in the center house drinks milk.
+   (center-house $CenterHouse in the $ctx)
+   (declare drink $CenterHouse milk in the $ctx)
+
+ ;; Clue 9: The Norwegian lives in the first house.
+   (first-house $FirstHouse in the $ctx)
+   (declare nationality $FirstHouse norwegian in the $ctx)
+
  ;; Clue 10: The man who smokes Blends lives next to the one who keeps cats.
    (declare smokes $SmokesBlends blends in the $ctx)
    (next-to $SmokesBlends $HouseCat in the $ctx)
@@ -92,6 +75,11 @@
  ;; Clue 13: The German smokes Prince.
    (declare nationality $German german in the $ctx)
    (declare smokes $German prince in the $ctx)
+
+ ;; Clue 14: The Norwegian lives next to the blue house.
+   (declare nationality $Norwegian norwegian in the $ctx)
+   (next-to $Norwegian $HouseBlue in the $ctx)
+   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 15: The man who smokes Blends has a neighbor who drinks water.
    (declare smokes $BlendsSmoker blends in the $ctx)
@@ -318,10 +306,12 @@
 		(let* (
 			(($cur $rest) (decons-atom $body))
 			(() (println! (IN (cur= $cur) (goal= $goal))))
-		    ($retVal (backward-chain $info $cur $kb $rb))
-			($m (collapse (equalz (quote $cur) $retVal)))
-		    (() (if (== $m ()) (println! (BAD (cur= $cur) (retVal= $retVal))) ()))
-		    ((quote $cur) $retVal) ;; chain on cur & unify back to propagate vars to $goal
+		    ;($retVal (backward-chain $info $cur $kb $rb))
+			;($m (collapse (equalz (quote $cur) $retVal)))
+		    ;(() (if (== $m ()) (println! (BAD (cur= $cur) (retVal= $retVal))) ()))
+		    ;((quote $cur) $retVal) 
+			;; chain on cur & unify back to propagate vars to $goal
+			((quote $cur) (backward-chain $info $cur $kb $rb))
 			(() (println! (OUT (cur= $cur) (goal= $goal))))
 		    ) 
 			(match-body $info $rest $kb $rb $goal)
@@ -382,6 +372,7 @@
 ; !(query!(query (context $ctx))
 ;!(query (backward-chain (zebra-owner $Owner) &self &self)) ;; Solve for $Owner
 
+!(query (nat-nth (S (S Z)) (SomethingAtThird $1 $2) Third))
 ;; Query for the zebra owner (who owns the fish)
 !(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
 
