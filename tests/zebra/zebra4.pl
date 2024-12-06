@@ -71,6 +71,7 @@ zebra_owner(Owner) :-
 
     % Determine who owns the fish
     declare(pet, FishOwner, fish),
+    write('.'),
     declare(nationality, FishOwner, Owner).
 
 % Initialize Houses as a list of uninitialized existss
