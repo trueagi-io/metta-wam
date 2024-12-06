@@ -50,7 +50,7 @@
      (($Cons $_ $Rest) (declare-index-m $PropName $Rest (S $Acc) $Num)))))
 
 (declare-index $PropName ($Cons $PropName $_) $Num $Num)
-((declare-index $PropName ($Cons $_ $Rest) $Acc $Num) :- ((declare-index $PropName $Rest (S $Acc) $Num)))
+((declare-index $PropName ($Cons $Nonvar $Rest) $Acc $Num) :- ( (nonvar $Nonvar) (declare-index $PropName $Rest (S $Acc) $Num)))
 ;((declare-index $PropName ($Cons $_ $Rest) $Acc $Num) :- ((declare-index $PropName $Rest (S $Acc) $Num)))
 ;((declare-index $PropName $PropList $Acc $Acc) :-  ;; If property not found, add it
 ;   ((cons-append $_PropList ($Cons $PropName $_Open) $PropList)))
@@ -160,6 +160,8 @@
 		((quote (is $a $b)) (let $a $b (quote $goal))) ;; prolog eval & assign
 		((quote (bool $expr)) (if $expr (quote $goal) (empty))) ;; if predicate is a boolean. This might be unnecessary
 		((quote (eval= $a $expr)) (let $a $expr (quote $goal))) ;; if predicate is a boolean. This might be unnecessary
+		((quote (nonvar $var)) (if (== Variable (get-metatype $var)) (empty) (quote $goal)))
+        ((quote (var $var)) (if (== Variable (get-metatype $var)) (quote $goal) (empty)))
 		((quote (true)) (quote $goal))
 		((quote (fail)) (empty))
 	    ((quote (cut $_)) (if (equalz $info $goal) (quote $goal) (quote $goal)))
