@@ -365,5 +365,6 @@
 
 !(query (is $x (+ 1 1)))
 !(query (same $ctx ($Houses $Props)))
-!(query (context $ctx))
+; !(query (context $ctx))
+!(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
 
