@@ -382,6 +382,8 @@
 ; !(query!(query (context $ctx))
 ;!(query (backward-chain (zebra-owner $Owner) &self &self)) ;; Solve for $Owner
 
+!(query (nat-nth (S (S Z)) (SomethingAtThird $1 $2) Third))
+
 ;; Query for the zebra owner (who owns the fish)
 !(query (zebra-owner $Owner)) ;; Solves for the owner of the fish
 
