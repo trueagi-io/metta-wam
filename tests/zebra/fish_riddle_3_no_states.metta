@@ -5,10 +5,10 @@
 
 
 
-; !(include dv-pl) ; why does include work but not import in H-E?
-!(import! &self dv-pl)
-; !(test_normal_queries)
-; !(test_normal_queries)
+!(include dv-pl) ; why does include work but not import in H-E?
+;!(import! &self dv-pl)
+;!(test_normal_queries)
+;!(test_normal_queries)
 
 
 ;;;;;;;;;;;;;;;;;;
@@ -21,7 +21,7 @@
 			(Cons ( 2 $_6 $_7 $_8 $_9 $_10) ; Second house
 			 $Open)))
 
-	(same $Open Nil)
+	;(same $Open Nil)
 
 	; Clue 1: The Norwegian lives in the first house
 	(member ( 1 norwegian $_11 $_12 $_13 $_14) $Houses)
