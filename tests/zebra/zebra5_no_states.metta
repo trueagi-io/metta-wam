@@ -124,16 +124,16 @@
 (make-houses Z Nil) ; Base case: no houses left to create
 
 ;; Create an 'exists' structure for a house
-(create-exists ($Cons $_ $_1))
+(create-exists ($Cons $_1 $_2))
 
 ;; Predicate: $L is immediately to the left of $R in the list
 ((left-of $L $R in the $ctx) :-
- ((same $ctx ($Houses $_)) ; Verify context contains the houses list
+ ((same $ctx ($Houses $_1)) ; Verify context contains the houses list
    (left-of-list $L $R $Houses)))
 
 ;; Helper for 'left-of' within a list structure
-(left-of-list $L $R ($Cons $L ($Cons $R $_))) ; Base case: $L is followed by $R
-((left-of-list $L $R ($Cons $_ $Rest)) :-
+(left-of-list $L $R ($Cons $L ($Cons $R $_1))) ; Base case: $L is followed by $R
+((left-of-list $L $R ($Cons $_1 $Rest)) :-
  ((left-of-list $L $R $Rest))) ; Recursive case: continue checking the list
 
 ;; Predicate: $A and $B are next to each other in the list
@@ -144,12 +144,12 @@
 
 ;; Predicate: Get the first house in the list
 ((first-house $First in the $ctx) :-
- ((same $ctx ($Houses $_)) ; Verify context contains houses
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (nat-nth Z $Houses $First))) ; First element (index 0)
 
 ;; Predicate: Get the center house in the list
 ((center-house $Center in the $ctx) :-
- ((same $ctx ($Houses $_)) ; Verify context contains houses
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (nat-nth (S (S Z)) $Houses $Center))) ; Center element for 5 houses
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -165,27 +165,27 @@
 
 ;; Ensure $Exists is a member of Houses
 ((something-existing $Exists in the $ctx) :-
- ((same $ctx ($Houses $_)) ; Verify context contains houses
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (member $Exists $Houses))) ; Check if $Exists is in houses
 
 ;; Predicate: Check if an element is a member of a list
-(member $Elem ($Cons $Elem $_)) ; Base case: element found
-((member $Elem ($Cons $_ $Tail)) :-
+(member $Elem ($Cons $Elem $_1)) ; Base case: element found
+((member $Elem ($Cons $_1 $Tail)) :-
  ((member $Elem $Tail))) ; Recursive case: continue checking
 
 ;; Map property names to their positions (numbers)
 ((get-declare-num $PropName $Num in the $ctx) :-
-  ((same ($_ $PropList) $ctx);Extractpropertylistfromcontext
+  ((same ($_1 $PropList) $ctx);Extractpropertylistfromcontext
    (declare-index $PropName $PropList Z $Num)));Getindexofproperty
 
 ;; Map property names using manual declaration with incremental indexing
-(declare-index $PropName ($Cons $PropName $_) $Num $Num) ; Found property
+(declare-index $PropName ($Cons $PropName $_1) $Num $Num) ; Found property
 ((declare-index $PropName ($Cons $Nonvar $Rest) $Acc $Num) :- 
  ((nonvar $Nonvar) (declare-index $PropName $Rest (S $Acc) $Num))) ; Increment index
 
 ;; Zero-based natural number indexing in lists
-(nat-nth Z ($Cons $Elem $_) $Elem) ; Base case: first element
-((nat-nth (S $N) ($Cons $_ $Rest) $Elem) :-
+(nat-nth Z ($Cons $Elem $_1) $Elem) ; Base case: first element
+((nat-nth (S $N) ($Cons $_1 $Rest) $Elem) :-
  ((nat-nth $N $Rest $Elem))) ; Recursive case: move to next element
 
 ;; Append two lists
@@ -198,12 +198,12 @@
 
 ;; Predicate to get the last element of a list
 (last $x ($Cons $x Nil)) ; Base case: last element
-((last $x ($Cons $_ $rest)) :- 
+((last $x ($Cons $_1 $rest)) :- 
  ((last $x $rest))) ; Recursive case: move to next element
 
 ;; Calculate length of a list
 (length Nil 0) ; Base case: empty list has length 0
-((length ($Cons $_ $rest) $out) :- 
+((length ($Cons $_1 $rest) $out) :- 
    ((length $rest $out2) 
 	(is $out (+ $out2 1)))) ; Recursive case: increment length
 
@@ -280,7 +280,7 @@
 
 ;; Predicate to check if a function definition exists in a given space
 (= (has-fundef $space $g)
-	(let $m (collapse (match $space (= $g $_) True)) ; Match $g as a function in $space
+	(let $m (collapse (match $space (= $g $_1) True)) ; Match $g as a function in $space
 		(if (== $m ()) ; If no match is found
 			False ; Return False
 			True ; Otherwise, return True
@@ -302,9 +302,9 @@
         ((quote (var $var)) (if (== Variable (get-metatype $var)) (quote $goal) (empty))) ; Variable check
 		((quote (true)) (quote $goal)) ; Always succeeds
 		((quote (fail)) (empty)) ; Always fails
-	    ((quote (cut $_)) (if (equalz $info $goal) (quote $goal) (quote $goal))) ; Cut operator for pruning
+	    ((quote (cut $_1)) (if (equalz $info $goal) (quote $goal) (quote $goal))) ; Cut operator for pruning
 		((quote (naf $expr)) (if (has-match $kb $expr) (empty) (quote $goal))) ; Negation as failure
-		($_ (match $kb $goal (quote $goal))) ; Match against knowledge base
+		($_1 (match $kb $goal (quote $goal))) ; Match against knowledge base
 	)) 
 )
 

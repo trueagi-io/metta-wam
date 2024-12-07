@@ -1,5 +1,4 @@
 
-!(import! &self dv-pl)
 
 ; Initialize a new state for exists-props
 ; !(bind! &exists-props (new-state Nil))
@@ -13,8 +12,6 @@
       (Places (House $_5 $_6) 
       (Places (House $_7 $_8) 
       (Places (House $_9 $_10) Nil))))))
-      
-   (set-global &neighborhood $Houses)
        
    ; Define $Props structure for all properties
    (same $Props 
@@ -22,8 +19,7 @@
       (Props color
       (Props pet
       (Props drink
-      (Props smokes Nil))))))
-   
+      (Props smokes Nil))))))      
    
    ; Ensure $Props represents a specific structure
    (same $Props (Props $_H6 $_T6))
@@ -31,89 +27,88 @@
    (same $ctx ($Houses $Props))
 
    ; Declare numerical properties for various attributes in the context
-   (get-declare-num nationality $Num1)
-   (get-declare-num color $Num2)
-   (get-declare-num pet $Num3)
-   (get-declare-num drink $Num4)
-   (get-declare-num drink $Num5) ; this should not change the context since its already there
-   (get-declare-num smokes $Num6)))
+   (get-declare-num nationality $Num1 in the $ctx)
+   (get-declare-num color $Num2 in the $ctx)
+   (get-declare-num pet $Num3 in the $ctx)
+   (get-declare-num drink $Num4 in the $ctx)
+   (get-declare-num drink $Num5 in the $ctx) ; this should not change the context since its already there
+   (get-declare-num smokes $Num6 in the $ctx)))
 
 
 ;; Main predicate to find the owner of the fish
 ((zebra-owner $Owner) :-
  (
-   (set-global &exists-props $_Props)
-   (init-houses (S (S (S (S (S Z))))))
+    (context5 $ctx)
 
       
  ;; Clue 8: The man in the center house drinks milk
-   (center-house $CenterHouse)
-   (declare drink $CenterHouse milk)   
+   (center-house $CenterHouse in the $ctx)
+   (declare drink $CenterHouse milk in the $ctx)   
    
  ;; Clue 9: The Norwegian lives in the first house
-   (first-house $FirstHouse)
-   (declare nationality $FirstHouse norwegian)
+   (first-house $FirstHouse in the $ctx)
+   (declare nationality $FirstHouse norwegian in the $ctx)
 
  ;; Clue 14: The Norwegian lives next to the blue house
-   (declare nationality $Norwegian norwegian)
-   (next-to $Norwegian $HouseBlue)
-   (declare color $HouseBlue blue)
+   (declare nationality $Norwegian norwegian in the $ctx)
+   (next-to $Norwegian $HouseBlue in the $ctx)
+   (declare color $HouseBlue blue in the $ctx)
 
  ;; Clue 1: The Brit lives in the red house
-   (declare nationality $Brit brit)
-   (declare color $Brit red)
+   (declare nationality $Brit brit in the $ctx)
+   (declare color $Brit red in the $ctx)
 
  ;; Clue 2: The Swede keeps dogs as pets
-   (declare nationality $Swede swede)
-   (declare pet $Swede dog)
+   (declare nationality $Swede swede in the $ctx)
+   (declare pet $Swede dog in the $ctx)
 
  ;; Clue 3: The Dane drinks tea
-   (declare nationality $Dane dane)
-   (declare drink $Dane tea)
+   (declare nationality $Dane dane in the $ctx)
+   (declare drink $Dane tea in the $ctx)
 
  ;; Clue 4: The green house is immediately to the left of the white house
-   (left-of $Green $White)
-   (declare color $Green green)
-   (declare color $White white)
+   (left-of $Green $White in the $ctx)
+   (declare color $Green green in the $ctx)
+   (declare color $White white in the $ctx)
 
  ;; Clue 5: The owner of the green house drinks coffee
-   (declare color $Green green)
-   (declare drink $Green coffee)
+   (declare color $Green green in the $ctx)
+   (declare drink $Green coffee in the $ctx)
 
  ;; Clue 6: The person who smokes Pall Mall rears birds
-   (declare smokes $PallMallSmoker pallmall)
-   (declare pet $PallMallSmoker birds)
+   (declare smokes $PallMallSmoker pallmall in the $ctx)
+   (declare pet $PallMallSmoker birds in the $ctx)
 
  ;; Clue 7: The owner of the yellow house smokes Dunhill
-   (declare color $Yellow yellow)
-   (declare smokes $Yellow dunhill)
+   (declare color $Yellow yellow in the $ctx)
+   (declare smokes $Yellow dunhill in the $ctx)
 
  ;; Clue 10: The man who smokes Blends lives next to the one who keeps cats
-   (declare smokes $SmokesBlends blends)
-   (next-to $SmokesBlends $HouseCat)
-   (declare pet $HouseCat cat)
+   (declare smokes $SmokesBlends blends in the $ctx)
+   (next-to $SmokesBlends $HouseCat in the $ctx)
+   (declare pet $HouseCat cat in the $ctx)
 
  ;; Clue 11: The man who keeps horses lives next to the man who smokes Dunhill
-   (declare pet $HorseKeeper horse)
-   (next-to $HorseKeeper $SmokesDunhills)
-   (declare smokes $SmokesDunhills dunhill)
+   (declare pet $HorseKeeper horse in the $ctx)
+   (next-to $HorseKeeper $SmokesDunhills in the $ctx)
+   (declare smokes $SmokesDunhills dunhill in the $ctx)
 
  ;; Clue 12: The owner who smokes BlueMaster drinks beer
-   (declare smokes $SmokesBlueMaster bluemaster)
-   (declare drink $SmokesBlueMaster beer)
+   (declare smokes $SmokesBlueMaster bluemaster in the $ctx)
+   (declare drink $SmokesBlueMaster beer in the $ctx)
 
  ;; Clue 13: The German smokes Prince
-   (declare nationality $German german)
-   (declare smokes $German prince)
+   (declare nationality $German german in the $ctx)
+   (declare smokes $German prince in the $ctx)
 
  ;; Clue 15: The man who smokes Blends has a neighbor who drinks water
-   (declare smokes $BlendsSmoker blends)
-   (next-to $BlendsSmoker $WaterDrinker)
-   (declare drink $WaterDrinker water)
+   (declare smokes $BlendsSmoker blends in the $ctx)
+   (next-to $BlendsSmoker $WaterDrinker in the $ctx)
+   (declare drink $WaterDrinker water in the $ctx)
 
  ;; Determine who owns the fish
-   (declare pet $FishOwner fish)
-   (declare nationality $FishOwner $Owner)
+   (declare pet $FishOwner fish in the $ctx)
+   (declare nationality $FishOwner $Owner in the $ctx)
 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,8 +129,8 @@
 (create-exists ($Cons $_1 $_1))
 
 ;; Predicate: $L is immediately to the left of $R in the list
-((left-of $L $R) :-
- ((get-global &neighborhood $Houses) ; Verify context contains the houses list
+((left-of $L $R in the $ctx) :-
+ ((same $ctx ($Houses $_1)) ; Verify context contains the houses list
    (left-of-list $L $R $Houses)))
 
 ;; Helper for 'left-of' within a list structure
@@ -144,19 +139,19 @@
  ((left-of-list $L $R $Rest))) ; Recursive case: continue checking the list
 
 ;; Predicate: $A and $B are next to each other in the list
-((next-to $A $B) :- 
- ((left-of $A $B))) ; $A is left of $B
-((next-to $A $B) :-
- ((left-of $B $A))) ; $B is left of $A
+((next-to $A $B in the $ctx) :- 
+ ((left-of $A $B in the $ctx))) ; $A is left of $B
+((next-to $A $B in the $ctx) :-
+ ((left-of $B $A in the $ctx))) ; $B is left of $A
 
 ;; Predicate: Get the first house in the list
-((first-house $First) :-
- ((get-global &neighborhood $Houses) ; Verify context contains houses
+((first-house $First in the $ctx) :-
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (nat-nth Z $Houses $First))) ; First element (index 0)
 
 ;; Predicate: Get the center house in the list
-((center-house $Center) :-
- ((get-global &neighborhood $Houses) ; Verify context contains houses
+((center-house $Center in the $ctx) :-
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (nat-nth (S (S Z)) $Houses $Center))) ; Center element for 5 houses
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -164,33 +159,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; General property declaration predicate
-((declare $PropName $Object $PropValue) :-
- ((get-declare-num $PropName $Num) ; Get position for the property
+((declare $PropName $Object $PropValue in the $ctx) :-
+ ((get-declare-num $PropName $Num in the $ctx) ; Get position for the property
    (nat-nth $Num $Template $PropValue) ; Assign value to property
-   (something-existing $Exists) ; Ensure object exists in houses
+   (something-existing $Exists in the $ctx) ; Ensure object exists in houses
    (same $Template $Exists) (same $Template $Object)))
 
 ;; Ensure $Exists is a member of Houses
-((something-existing $Exists) :-
- ((get-global &neighborhood $Houses) ; Verify context contains houses
+((something-existing $Exists in the $ctx) :-
+ ((same $ctx ($Houses $_1)) ; Verify context contains houses
    (member $Exists $Houses))) ; Check if $Exists is in houses
 
 
 ;; Map property names to their positions (numbers)
-((get-declare-num $PropName $Num) :-
-  ((get-global &exists-props $PropList) ; Extract property list from context
-   (declare-index $PropName $PropList Z $Num) ; Get index of property
-   (set-global &exists-props $PropList))) ; Set index of property
+((get-declare-num $PropName $Num in the $ctx) :-
+  ((same ($_1 $PropList) $ctx) ; Extract property list from context
+   (declare-index $PropName $PropList Z $Num))) ; Get index of property
 
 ;; Map property names using manual declaration with incremental indexing
 (declare-index $PropName ($Cons $PropName $_1) $Num $Num) ; Found property
 ((declare-index $PropName ($Cons $Nonvar $Rest) $Acc $Num) :- 
  ((nonvar $Nonvar) (declare-index $PropName $Rest (S $Acc) $Num))) ; Increment index
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Backward chaining logic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;!(import! &self dv-pl)
 ;; Predicate signatures for backward chaining logic
 (: cur= (-> Atom Atom)) ; Current goal
 (: retVal= (-> Atom Atom)) ; Return value
@@ -215,15 +210,16 @@
 	    ((quote (cut $signal)) (if (equalz $info $signal) (quote $goal) (quote $goal))) ; Cut operator for pruning
 		((quote (naf $expr)) (if (has-match $kb $expr) (empty) (quote $goal))) ; Negation as failure
 		((quote (qnaf $expr)) (let (Failed $_1) (backward-chain $info2 $expr $kb $rb) (quote $goal))) ; Negation as failure at query level
-		($_2 (match $kb $goal (quote $goal))) ; Match against knowledge base
+		($_2 (backward-chain-q2 $info  (quote $goal) $kb $rb)) ; Match against knowledge base
 	)))
-)
 
+(= (backward-chain-q2 $info  (quote $goal) $kb $rb)
+   (match $kb $goal (quote $goal)))
 ;; Recursive case for backward chaining
-(= (backward-chain-q $info  (quote $goal) $kb $rb)
+(= (backward-chain-q2 $old_info  (quote $goal) $kb $rb)
   (function 
     (return ;; if $info is bound that means a clause has called a cut (thus we return empty)
-	   (if (== Variable (get-metatype $info)) 	 
+	   (if (== Variable (get-metatype $old_info)) 	 
 	    (let $r (match $rb ($goal :- $body)
 		(match-body $info $body $kb $rb $goal))
 		     (if (== Variable (get-metatype $info)) ;; if not cut
@@ -301,15 +297,15 @@
 
 
 ;; Query execution logic
-(: query (-> Atom Atom))
-(= (query $goal)
-    (let $m (collapse (backward-chain $info $goal &self &self))
+(: query (-> Atom Atom Atom))
+(= (query $kb $goal)
+    (let $m (collapse (backward-chain $info $goal $kb  $kb))
 		(if (== $m ()) (Failed (quote $goal)) (Succeed $m)))
 )
 
-(: query-f (-> Atom Atom))
-(= (query-f $goal)
-    (let $m (collapse (backward-chain $info $goal &self &self))
+(: query-f (-> Atom Atom Atom))
+(= (query-f $kb $goal)
+    (let $m (collapse (backward-chain $info $goal $kb  $kb))
 		(if (== $m ()) Passed-Negation (Failed $m)))
 )
 
@@ -384,46 +380,104 @@
 ;; TEST Queries ;;
 ;;;;;;;;;;;;;;;;;
 
-(= (test_normal_queries)
+(: traced-eval (-> Atom Atom))
+(= (traced-eval $arg) (traced-eval-q (quote $arg)))
+(: traced-eval-q (-> Expression Atom))
+(= (traced-eval-q (quote $arg))
+   (let* (
+	(() (println! (quote (====>EVAL $arg))))
+	($r $arg)
+	(() (println! (quote (RET<=== $r)))))
+   $r))
 
-(progn (
+(: progn (-> Atom Atom))
+(= (progn $body) (progn-q (quote $body)))
+(: progn-q (-> Expression Atom))
+(= (progn-q (quote $body))
+	(if (== (quote $body) (quote ())) ()
+		(let* (
+			(($head $rest) (decons-atom $body)) ; Deconstruct body
+			($r (traced-eval-q (quote $head))))
+			(if (== (quote $rest) (quote ())) 
+			   $r (progn-q (quote $rest))))))
+
+(= (test_normal_queries $kb)
+
+ (progn-q (quote (
 
 ; Query for the last element in a list
- (query (last $x ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
+ (query $kb (last $x ($Cons 1 ($Cons 2 ($Cons 3 Nil)))))
 
 ; Query for the length of a list
- (query (length ($Cons 1 ($Cons 2 ($Cons 3 Nil))) $out))
+ (query $kb (length ($Cons 1 ($Cons 2 ($Cons 3 Nil))) $out))
 
 ; Query for the sum of numbers up to 3
- (query (sum 3 $x))
+ (query $kb (sum 3 $x))
 
 ; Query for appending lists
- (query (append ($Cons 1 ($Cons 2 Nil)) ($Cons 3 ($Cons 4 Nil)) $x))
- (query (append ($Cons 1 ($Cons 2 Nil)) $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
- (query (append $What $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
+ (query $kb (append ($Cons 1 ($Cons 2 Nil)) ($Cons 3 ($Cons 4 Nil)) $x))
+ (query $kb (append ($Cons 1 ($Cons 2 Nil)) $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
+ (query $kb (append $What $Out ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil))))))
 
 ;; Test list operations
- (query (append ($Cons 1 Nil) ($Cons 2 ($Cons 3 Nil)) $Result)) ; Appending lists
- (query (append ($Cons 1 ($Cons 2 Nil)) $Rest ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil)))))) ; Partial list append
+ (query $kb (append ($Cons 1 Nil) ($Cons 2 ($Cons 3 Nil)) $Result)) ; Appending lists
+ (query $kb (append ($Cons 1 ($Cons 2 Nil)) $Rest ($Cons 1 ($Cons 2 ($Cons 3 ($Cons 4 Nil)))))) ; Partial list append
 
 ;; Negation as failure tests with bachelors and marital status
- (query (bachelor $x)) ; Finds bachelors who are not married
- (query-f (woman Tim)) ; Tests failure for a man labeled as a woman
- (query (woman Jane)) ; Should succeed for Jane if defined as a woman
- (query-f (woman $x)) ; Negative query for undefined women
+ (query $kb (bachelor $x)) ; Finds bachelors who are not married
+ (query-f $kb (woman Tim)) ; Tests failure for a man labeled as a woman
+ (query $kb (woman Jane)) ; Should succeed for Jane if defined as a woman
+ (query-f $kb (woman $x)) ; Negative query for undefined women
 
 ;; Check if an element is a member of a list
- (query (member 3 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should succeed
- (query-f (member 5 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should fail, 5 is not in the list
- (query (member $x ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should find members one by one
+ (query $kb (member 3 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should succeed
+ (query-f $kb (member 5 ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should fail, 5 is not in the list
+ (query $kb (member $x ($Cons 1 ($Cons 2 ($Cons 3 Nil))))) ; Should find members one by one
 
 ;; Query for basic arithmetic
- (query (is $x (+ 1 1))) ; $x should be assigned 2
+ (query $kb (is $x (+ 1 1))) ; $x should be assigned 2
 
 ;; Query for natural number indexing
- (query (nat-nth (S (S Z)) (SomethingAtThird $1 $2) Third)) ; Should find the third element
+ (query $kb (nat-nth (S (S Z)) (SomethingAtThird $1 $2) Third)) ; Should find the third element
 
-)))
+))))
+
+
+;!(import! &self dv-pl)
+;!(test_normal_queries)
+;!(test_normal_queries)
+
+((because $color house keeps $other the $nationality is the $type owner) :- 
+  ((same $Houses
+			(Cons ( 1 $_1 $_2 $_3 $_4 $_5) ; First house
+			(Cons ( 2 $_6 $_7 $_8 $_9 $_10) ; Second house
+			 $Open)))
+
+	(same $Open Nil)
+
+	; Clue 1: The Norwegian lives in the first house
+	(member ( 1 norwegian $_11 $_12 $_13 $_14) $Houses)
+	; Clue 2: The Brit lives in the red house
+	(member ( $_15 brit red $_16 $_17 $_18) $Houses)
+	; Clue 3: The owner of the blue house drinks tea
+	(member ( $_19 $_20 blue tea $_21 $_22) $Houses)
+	; Clue 4: The owner of the red house keeps $other
+	(member ( $_23 $_24 $color $_25 $other $_26) $Houses)
+	; Clue 5: The owner of the tea-drinking house smokes Prince
+	(member ( $_27 $_28 $_29 tea $_30 prince) $Houses)
+	; Determine the $nationality of owns the $type
+	(member ( $_31 $nationality $_32 $_33 $type $_34) $Houses)))
+
+;;;;;;;;;;;;;;;;;;
+;; TEST Queries ;;
+;;;;;;;;;;;;;;;;;;
+
+!(query &self (because red house keeps dogs the $norwegian is the fish owner))
+
+!(query &self (because blue house keeps dogs the $brit is the fish owner))
+
+!(query &self (because red house keeps cats the $norwegian is the fish owner))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -445,9 +499,4 @@
 ;; Verify properties related to the zebra-owner problem;
 ;!(query (declare nationality $Owner norwegian)) ; Declare that $Owner is Norwegian
 
-
-
-!(query (is $x (+ 1 1)))
-!(query (same $ctx ($Houses $Props)))
-!(query (context $ctx))
 
