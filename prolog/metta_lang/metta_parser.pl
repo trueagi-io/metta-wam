@@ -231,6 +231,9 @@ svar_fixname('?'(Name), UP) :-
 svar_fixname('block'(Name), UP) :-
     % Handle 'block' variables.
     !, svar_fixvarname(Name, UP).
+
+svar_fixname('_', '_') :- !.
+
 svar_fixname(SVAR, SVARO) :-
     % If the name is already valid, return it as is.
     ok_var_name(SVAR), !, SVARO = SVAR.
