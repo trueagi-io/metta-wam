@@ -274,6 +274,7 @@ repl3 :-
     % Create the prompt by writing it to an atom `P`.
     with_output_to(atom(P), write_metta_prompt),
     % Set up cleanup for the terminal prompt and execute repl4.
+    %% TODO: Set to ' ' (not '')
     notrace(prompt(Was, P)),
     setup_call_cleanup(
         % Set the terminal prompt without tracing.
@@ -316,6 +317,7 @@ repl4 :-
     nop((write_src(O), nl)),
     % Throw `restart_reading` to restart the REPL input process after execution.
     nop(notrace(throw(restart_reading))))),!.
+
 
 %!  check_has_directive(+V) is nondet.
 %
@@ -458,24 +460,44 @@ balanced_parentheses(Str) :-
 % If input is already a list of characters, check the balance starting at count 0.
 balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
 
-%! balanced_parentheses(+Chars, +N) is semidet.
-%   Recursive helper predicate to check if parentheses are balanced in a list of characters `Chars`.
-%   The second argument `N` keeps track of the net balance of opening and closing parentheses.
+
+%!  balanced_parentheses(+Chars, +N) is semidet.
+%
+%   True when Chars contains a set of balanced parentheses.
+%
+%   Recursive helper predicate to check if parentheses are balanced in a
+%   list of characters `Chars`. The second argument `N` keeps track of
+%   the net balance of opening and closing parentheses.
 %
 %   @arg Chars A list of characters to process for balanced parentheses.
-%   @arg N     A count tracking the net balance of open and close parentheses.
+%   @arg N     An integer count tracking the net balance of open and close
+%   parentheses.
 %
 %   @example
 %   ?- balanced_parentheses(['(', ')', '(', ')'], 0).
 %   true.
+%
+%   Raises unbalanced_parens warning when there are more '(' closing
+%   parentheses than open parentheses. The repl is then restart4ed.
+%
+%   Example:
+%   metta+>())
+%   Warning: Found unbalanced parentheses!
+%   metta+>
 %
 balanced_parentheses([], 0).
 % Increment count when encountering an opening parenthesis.
 balanced_parentheses(['('|T], N) :- N1 is N + 1, !, balanced_parentheses(T, N1).
 % Decrement count when encountering a closing parenthesis, ensuring the count remains positive.
 balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(T, N1).
+% If we have a ')' and the count is 0 or less, then we have a stray ')'.
+balanced_parentheses([')'|_T], N) :- N =< 0, print_message(warning,unbalanced_parens), throw(restart_reading).
 % Skip any characters that are not parentheses.
 balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
+
+prolog:message(unbalanced_parens) -->
+    ['Found unbalanced parentheses!'-[]].
+
 
 %!  next_expr(+ExprI, -Expr) is det.
 %
@@ -587,8 +609,6 @@ repl_read_next(Str, Atom) :- atom_string(Atom, Str), metta_interp_mode(Atom, _),
 
 % Handle input starting with '@'.
 repl_read_next(Str, Expr) :- symbol_concat('@', _, Str), !, atom_string(Expr, Str).
-% Handle incorrect input with unbalanced parentheses.
-repl_read_next(Str, _Expr) :- symbol_concat(')', _, Str), !, fbug(repl_read_syntax(Str)), throw(restart_reading).
 
 % Normalize spaces in the accumulated input and re-read if the normalized result is different.
 repl_read_next(NewAccumulated, Expr) :- fail,
