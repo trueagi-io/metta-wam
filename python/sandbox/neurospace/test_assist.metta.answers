@@ -1,0 +1,19 @@
+[]
+[(Error (llm (Messages () (Messages (system "You are the SingularityNet AI platform and marketplace assistant")) (user "What is the SingularityNET platform?")) (Functions set_subgoal)) Exception caught:
+AuthenticationError: Incorrect API key provided: freeve. You can find your API key at https://platform.openai.com/account/api-keys.
+
+At:
+  /usr/local/lib/python3.11/dist-packages/openai/api_requestor.py(765): _interpret_response_line
+  /usr/local/lib/python3.11/dist-packages/openai/api_requestor.py(700): _interpret_response
+  /usr/local/lib/python3.11/dist-packages/openai/api_requestor.py(298): request
+  /usr/local/lib/python3.11/dist-packages/openai/api_resources/abstract/engine_api_resource.py(153): create
+  /usr/local/lib/python3.11/dist-packages/openai/api_resources/chat_completion.py(26): create
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/neurospace/llm_gate.py(76): llm
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/neurospace/llm_gate.py(95): <lambda>
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(320): execute
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(167): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+)]
+0.40user 0.05system 0:00.62elapsed 72%CPU (0avgtext+0avgdata 70652maxresident)k
+0inputs+0outputs (1major+10524minor)pagefaults 0swaps

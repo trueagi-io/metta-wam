@@ -1,0 +1,117 @@
+
+% --- Core Logical and Arithmetic Operators ---
+property('!', special_operators).                     % Cut operator, prevents backtracking beyond its point.
+property('\\=', logic_comparison).                    % Inequality test.
+property('=', logic_comparison).                      % Equality/unification operator.
+property('==', logic_comparison).                     % Strict equality test.
+property('=<', logic_comparison).                     % Less than or equal to.
+property('<', logic_comparison).                      % Less than.
+property('>=', logic_comparison).                     % Greater than or equal to.
+property('>', logic_comparison).                      % Greater than.
+property('->', control_flow).                         % If-then construct.
+property(';', control_flow).                          % Disjunction; or.
+property(',', control_flow).                          // Conjunction; and.
+property('+', arithmetic_operations).                 % Addition.
+property('-', arithmetic_operations).                 // Subtraction.
+property('*', arithmetic_operations).                 % Multiplication.
+property('mod', arithmetic_operations).               % Modulus operation.
+
+% --- Data Structures, Manipulation, and List Operations ---
+property('collapse', data_manipulation).              % Collapses a structure.
+property('sequential', data_manipulation).            % Sequentially applies operations.
+property('car-atom', list_operations).                % Retrieves the head of a list.
+property('cdr-atom', list_operations).                % Retrieves the tail of a list.
+
+property('Cons', data_structures).                    % Constructs a list.
+property('TupleConcat', data_structures).             % Concatenates tuples.
+property('make_list', list_creation).                 % Creates a list with specified elements.
+
+
+% --- Evaluation, Execution, and Functionality ---
+property('eval', evaluation_execution).               % Evaluates an expression.
+property('time!', evaluation_execution).              % Execution timing.
+
+% --- System and External Integration ---
+property('call-string!', code_inclusion).       % Evaluates a string of Prolog code.
+property('registered-python-function', code_inclusion). % Interacts with Python functions.
+
+% --- Assertions, Testing, and Debugging ---
+property('assertTrue', assertions_testing).           % Asserts a condition is true.
+property('assertFalse', assertions_testing).          % Asserts a condition is false.
+property('assertEqual', assertions_testing).          % Asserts two values are equal.
+property('assertNotEqual', assertions_testing).       % Asserts two values are not equal.
+property('assertEqualToResult', assertions_testing).  % Asserts equality to a result.
+
+property('trace!', debugging_tools).                  % Prints some debug
+
+property('no-rtrace!', debugging_tools).              % Disables tracing for debugging.
+property('rtrace!', debugging_tools).                 % Enables tracing for debugging.
+
+% --- Error Handling, Control Flow, and Conditional Execution ---
+property('if', flow_control).                         % Conditional execution.
+property('case', flow_control).                       % Case selection.
+property('let', flow_control).                        % Variable assignment.
+property('let*', flow_control).                       % Sequential variable assignment.
+property('do', flow_control).                         % Looping construct.
+property('catch', error_handling_advanced).           % Catches exceptions.
+property('throw', error_handling_advanced).           % Throws exceptions.
+property('function', flow_control).         % a Function block.
+property('return', flow_control).           % return value of a function block
+
+property('dedup!', iteration_limit).             % Removes duplicate elements from iteration
+property('nth!', iteration_limit).               % Allows only the Nth1 Iterator   
+property('limit!', iteration_limit).  % Allows only the Nth1 Iterator   
+property('time-limit!', iteration_limit).              
+property(offset!', iteration_limit).              
+
+property('pragma!', compiler_directive).        % Compiler directive for optimizations/settings.
+property('include!', code_inclusion).           % Includes code from another file or context.
+property('load-ascii', code_inclusion).         % Loads ASCII file content.
+property('extend-py!', code_inclusion).    	% Extends integration with Python.
+property('pyr', code_inclusion).                % Calls Python code directly.
+property('import!', code_inclusion).            % Imports an external module or file.
+property('transfer!', state_transfer).          % Transfers space content to another space
+
+
+% --- Symbolic Arithmetic, Enhancements, and Miscellaneous ---
+property('S', symbolic_arithmetic).                   % Successor in Peano arithmetic.
+property('Z', symbolic_arithmetic).                   % Zero in Peano arithmetic.
+property('fromNumber', type_conversion).              % Converts from a numeric type.
+
+
+property('quote', data_manipulation).                 % Prevents evaluation, treating input as literal.
+property('coerce', type_conversion).                  % Forces argument types for compatibility.
+property('enforce', logic_enforcement).               % Enforces a logical rule.
+
+% --- Newly Included and Miscellaneous Properties ---
+property('change-state!', system_interaction).        % Changes the state of a system component.
+property('set-state', state_management).              % Sets the state of a component or system.
+property('get-state', state_management).              % Gets the state of a component or system.
+
+
+property('remove-atom', data_manipulation).           % Removes an atom from a structure.
+property('replace-atom', data_manipulation).          % Replaces an atom within a structure.
+property(',', control_flow).                          % Conjunction; and.
+property('match', pattern_matching).                  % Matches patterns within structures or data.
+property('get-atoms', data_retrieval).                % Retrieves atoms from a structure.
+property('new-space', memory_management).             % Allocates new space or memory region.
+
+property('or', logic_comparison).                     % Logical OR.
+property('and', logic_comparison).                     % Logical OR.
+property('not', logic_comparison).                     % Logical OR.
+
+property('range', arithmetic_operations).             % Generates a range of numbers.
+property('current-arity', property_definition).               % Defines the arity of predicates/functions.
+property('countElement', list_operations).            % Counts occurrences of an element.
+property('collapseCardinality', data_manipulation).   % Collapses structures with cardinality consideration.
+property('Error', error_handling).                    % Defines or triggers an error.
+property('length', list_operations).                  % Determines the length of a list.
+property('nop', control_structure).                   % No-operation placeholder.
+property('number-of', quantitative_analysis).         % Quantifies occurrences.
+property('print', output_operations).                 % Prints text to output.
+property('println!', output_operations).              % Prints text with newline to output.
+property('remove-atom', data_manipulation).           % Removes an atom from structures.
+property('replace-atom', data_manipulation).          % Replaces atoms within structures.
+property('superpose', data_manipulation).             % Superposes data structures.
+property('tuple-count', data_manipulation).           % Counts tuples within a structure.
+property('with-output-to!', output_redirection).      % Redirects output to a specified target.

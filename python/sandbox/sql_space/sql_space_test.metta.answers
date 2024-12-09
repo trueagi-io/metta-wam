@@ -1,0 +1,20 @@
+[]
+[()]
+[]
+[GroundingSpace-0x5644bc8f9998]
+[(Error (Error (new-sql-space musicbrainz_db localhost musicbrainz musicbrainz 5432) Exception caught:
+OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+At:
+  /usr/lib/python3/dist-packages/psycopg2/__init__.py(122): connect
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/sql_space/sql_space.py(134): __init__
+  /opt/logicmoo_opencog/hyperon-wam/examples/python_compat/hyperon-experimental_python/sandbox/sql_space/sql_space.py(230): <lambda>
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(320): execute
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/atoms.py(167): _priv_call_execute_on_grounded_atom
+  /opt/logicmoo_opencog/hyperon-experimental/python/hyperon/runner.py(31): run_step
+  (18): run_step
+) BadType)]
+0.15user 0.01system 0:00.17elapsed 97%CPU (0avgtext+0avgdata 44772maxresident)k
+784inputs+0outputs (7major+4580minor)pagefaults 0swaps

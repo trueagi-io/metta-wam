@@ -1,0 +1,1253 @@
+#!/bin/bash
+
+generate_junit_report=0
+junit_report_file=""
+start_time=0
+export RPWD=$PWD
+IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+# Function to exit the script properly
+if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
+export MeTTa=$(realpath "$SCRIPT")
+export METTALOG_DIR=$(dirname "$SCRIPT")
+# echo "METTALOG_DIR=$METTALOG_DIR"
+#cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+should_compile=0
+never_compile=0
+compatio=false
+#compatio=false
+RC_OPTIONS=()
+TIMEOUT=0
+verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
+OUTPUT_DIR="${METTALOG_OUTPUT}"
+
+cd $METTALOG_DIR
+source ./scripts/ensure_venv
+cd $RPWD
+
+use_docker=auto
+repl_flag=auto
+use_rc_file=~/.mettalogrc
+debug_this_script=false
+contains_halt=false
+dry_run=0
+
+#!/bin/bash
+
+# Store the current values of LANG and LC_ALL, and track if they were originally unset
+if [ -z "${LANG+x}" ]; then
+    LANG_UNSET=true
+else
+    ORIGINAL_LANG="$LANG"
+fi
+
+if [ -z "${LC_ALL+x}" ]; then
+    LC_ALL_UNSET=true
+else
+    ORIGINAL_LC_ALL="$LC_ALL"
+fi
+
+# Function to restore original values on exit
+restore_original_values() {
+    # Restore LANG
+    if [ "${LANG_UNSET}" = true ]; then
+        unset LANG
+    else
+        export LANG="$ORIGINAL_LANG"
+    fi
+
+    # Restore LC_ALL
+    if [ "${LC_ALL_UNSET}" = true ]; then
+        unset LC_ALL
+    else
+        export LC_ALL="$ORIGINAL_LC_ALL"
+    fi
+}
+
+# Trap to ensure the original values are restored when the script exits
+trap restore_original_values EXIT
+
+# Check and set LANG to en_US.UTF-8 if unset or empty
+if [ -z "$LANG" ]; then
+    #echo "LANG is unset or empty. Setting LANG to en_US.UTF-8."
+    export LANG="en_US.UTF-8"
+else
+    : #echo "LANG is set to: $LANG"
+fi
+
+# Check and set LC_ALL to en_US.UTF-8 if unset or empty
+if [ -z "$LC_ALL" ]; then
+    #echo "LC_ALL is unset or empty. Setting LC_ALL to en_US.UTF-8."
+    export LC_ALL="en_US.UTF-8"
+else
+    : #echo "LC_ALL is set to: $LC_ALL"
+fi
+
+
+# Function to add a flag to a list
+add_to_list() {
+    local flag=$1
+    local -n options=$2
+    if [[ -n "$flag" ]]; then
+        options+=("$flag")
+    fi
+}
+
+# Function to set input, output, and error flags based on the I/O sources
+set_io_flags() {
+    #local -n STDIO_OPTIONS=$1
+
+    # Handle stdin flags
+    if [ -p /dev/stdin ]; then
+	add_to_list "--stdin=pipe" STDIO_OPTIONS
+	# Convert the pipe to the /proc/self/fd format
+	local fd_number
+	fd_number=$(readlink /proc/self/fd/0)
+	# Extract the process ID and file descriptor
+	if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+	    pid=$$
+	    fd=0  # stdin is typically file descriptor 0
+	    # Construct the /proc/[pid]/fd/[fd] path
+	    proc_fd_path="/proc/${pid}/fd/${fd}"
+	    add_to_list "--input-filename=${proc_fd_path}" STDIO_OPTIONS
+	fi
+    elif [ -f /dev/stdin ]; then
+	local input_filename
+	input_filename=$(readlink /proc/self/fd/0)
+	add_to_list "--stdin=file" STDIO_OPTIONS
+	add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
+    else
+	add_to_list "--stdin=tty" STDIO_OPTIONS
+    fi
+    
+    # Handle stdout flags
+    if [ ! -t 1 ]; then
+	if [ -p /dev/stdout ]; then
+	    add_to_list "--stdout=pipe" STDIO_OPTIONS
+	    # Convert the pipe to the /proc/self/fd format
+	    local fd_number
+	    fd_number=$(readlink /proc/self/fd/1)
+	    if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+		pid=$$
+		fd=1  # stdout is typically file descriptor 1
+		proc_fd_path="/proc/${pid}/fd/${fd}"
+		add_to_list "--output-filename=${proc_fd_path}" STDIO_OPTIONS
+	    fi
+	elif [ -f /dev/stdout ]; then
+	    local output_filename
+	    output_filename=$(readlink /proc/self/fd/1)
+	    add_to_list "--stdout=file" STDIO_OPTIONS
+	    add_to_list "--output-filename=${output_filename}" STDIO_OPTIONS
+	fi
+    else
+	add_to_list "--stdout=tty" STDIO_OPTIONS
+    fi
+    
+    # Handle stderr flags
+    if [ ! -t 2 ]; then
+	if [ -p /dev/stderr ]; then
+	    add_to_list "--stderr=pipe" STDIO_OPTIONS
+	    # Convert the pipe to the /proc/self/fd format
+	    local fd_number
+	    fd_number=$(readlink /proc/self/fd/2)
+	    # Extract the process ID and file descriptor
+	    if [[ $fd_number =~ pipe:\[(.*)\] ]]; then
+		pid=$$
+		fd=2  # stderr is typically file descriptor 2
+		proc_fd_path="/proc/${pid}/fd/${fd}"
+		add_to_list "--error-filename=${proc_fd_path}" STDIO_OPTIONS
+	    fi
+	elif [ -f /dev/stderr ]; then
+	    local error_filename
+	    error_filename=$(readlink /proc/self/fd/2)
+	    add_to_list "--stderr=file" STDIO_OPTIONS
+	    add_to_list "--error-filename=${error_filename}" STDIO_OPTIONS
+	fi
+    else
+	add_to_list "--stderr=tty" STDIO_OPTIONS
+    fi
+}
+
+# Initialize the STDIO_OPTIONS array
+STDIO_OPTIONS=()
+
+# Set the input, output, and error flags
+set_io_flags
+
+# Function to check if SWI-Prolog is installed
+check_swipl_installed() {
+    if ! command -v swipl &> /dev/null; then
+        echo -e "\033[0;31mError: SWI-Prolog is not installed. Please install it and try again.\033[0m"
+        exit 1
+    fi
+}
+
+# Function to check if SWI-Prolog has Janus support (optional, based on your needs)
+check_janus_support() {
+    if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; then
+        echo -e "\033[0;31mError: SWI-Prolog does not have Janus support. Please install Janus and try again.\033[0m"
+        python_flag=disable
+    fi
+}
+
+
+# Capture original auto margins setting and terminal size
+if [ -t 0 ] ; then
+    original_automargins=$(stty -a | grep -o 'onlcr' || echo 'off')
+    original_size=$(stty size)
+    original_rows=$(echo $original_size | cut -d ' ' -f1)
+    original_cols=$(echo $original_size | cut -d ' ' -f2)
+fi
+
+# Function to reset auto margins and terminal size to their original state
+reset_settings() {
+    if [ -t 0 ] ; then
+        # Reset auto margins to original state
+        if [ "$original_automargins" == "on" ]; then
+            stty onlcr
+        else
+            stty -onlcr
+        fi
+
+        # Reset terminal size to original
+        echo -ne "\e[8;${original_rows};${original_cols}t"
+        stty cols "$original_cols"
+        tput smam
+        echo "Settings reset to original."
+    fi
+}
+
+# Function to disable auto margins and set terminal width to 999 columns
+disable_automargins() {
+    if [ -t 0 ] ; then
+        stty -onlcr  # Disable auto margins
+        tput rmam
+        stty cols 999  # Set columns to a large number to prevent wrapping
+        echo "Auto margins disabled, terminal width set to 999 columns."
+    fi
+}
+
+# Function to set traps for clean exit and interruption
+set_exit_traps() {
+    trap reset_settings EXIT
+    trap 'reset_settings; kill -SIGINT $$' INT
+}
+
+# Initial trap setup for safety
+# set_exit_traps
+
+
+function quote_arg {
+  # Check if the argument contains single quotes
+  if [[ $1 == *\'* ]]; then
+    # Argument contains single quotes, use double quotes and escape necessary characters
+    local escaped=${1//\\/\\\\} # Escape backslashes
+    escaped=${escaped//\"/\\\"} # Escape double quotes
+    echo "\"$escaped\""         # Wrap in double quotes
+  else
+    # Use single quotes for arguments without single quotes, no escaping needed
+    echo "'$1'"
+  fi
+}
+
+function quote_args_if_needed {
+  local -a quoted_array=() # Initialize an empty array to store the results
+  for arg in "$@"; do
+    # Check if the argument contains spaces, exclamation marks, backslashes, or quote characters
+    if [[ $arg =~ [[:space:]] || $arg == *'!'* || $arg == *'\\'* || $arg == *\"* || $arg == *\'* ]]; then
+      # The argument needs to be quoted
+      local quoted_arg=$(quote_arg "$arg")
+      quoted_array+=("$quoted_arg")
+    else
+      # The argument does not need quoting
+      quoted_array+=("$arg")
+    fi
+  done
+  # Output the array elements without newlines, joined by spaces
+  echo "${quoted_array[*]}"
+}
+
+
+function remove_quotes {
+  local arg="$1"
+
+  # Determine the type of quote at the start (if any)
+  local first_char="${arg:0:1}"
+
+  if [[ $first_char == '"' ]]; then
+    # Double-quoted: Remove leading and trailing quotes and unescape backslashes and double quotes
+    arg="${arg#\"}"
+    arg="${arg%\"}"
+    arg="${arg//\\\\/\\}"
+    arg="${arg//\\\"/\"}"
+  elif [[ $first_char == "'" ]]; then
+    # Single-quoted: Remove leading and trailing quotes
+    # Note: Inside single quotes, backslashes and double quotes are treated literally
+    arg="${arg#\'}"
+    arg="${arg%\'}"
+  fi
+
+  echo "$arg"
+}
+
+
+function unquote_arg {
+  # Remove leading and trailing quotes
+  local arg="$1"
+  arg="${arg#\'}"
+  arg="${arg%\'}"
+  arg="${arg#\"}"
+  arg="${arg%\"}"
+
+  # Unescape escaped characters
+  arg="${arg//\\\\/\\}" # Unescape backslashes
+  arg="${arg//\\\"/\"}" # Unescape double quotes
+  arg="${arg//\\\'/\'}" # Unescape single quotes (if needed, depending on usage context)
+
+  echo "$arg"
+}
+
+
+# ANSI escape codes for colors
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BOLD='\033[1m'
+# ANSI escape code to reset color
+NC='\033[0m' # No Color
+
+do_DEBUG() {
+    # Calculate the screen width and 74% of it
+    local screen_width=$(tput cols)
+    local threshold=$((screen_width * 74 / 100))
+
+    # Construct the debug message
+    local msg="; ${YELLOW}DEBUG${NC} $*"
+
+    # Calculate the length of the debug message
+    local msg_length=${#msg}
+
+    if [ "$msg_length" -gt "$threshold" ]; then
+      # If the message is longer than 74% of the screen width,
+      # print a newline before and after the message
+      echo >&2
+      echo -e "$msg" >&2
+      echo >&2
+    else
+      # If the message is not longer than 74% of the screen width, print it as usual
+      echo -e "$msg" >&2
+    fi
+}
+
+DEBUG() {
+  if [ "$debug_this_script" == "true" ]; then
+     do_DEBUG "$@"
+  elif [ "$dry_run" -eq 1 ]; then
+		do_DEBUG "$@"
+	 elif [ "$verbose" -gt 1 ]; then
+		do_DEBUG "$@"
+     elif [[ "$contains_halt" == "true" ]]; then
+     	do_DEBUG "$@"
+     fi
+}
+
+IF_REALLY_DO() {
+    if [ "$dry_run" -eq 1 ]; then
+        do_DEBUG "${BLUE}Dry Run:${NC} $*"
+    else
+        DEBUG "${GREEN}Doing:${NC} $*"
+        eval "$@"
+	return $?
+	#|| { DEBUG "${RED}Error executing command:${NC} $*"; return 1; }
+    fi
+}
+# Function to resolve path upward but stop one level higher than /usr/
+function resolve_upward {
+  local current_dir="$1"
+  while [ "$current_dir" != "/" ]; do
+    if [ "$current_dir" == "/tmp" ]; then
+      echo "/tmp"
+      return
+    fi
+    if [ "$current_dir" == "/usr" ]; then
+      echo "/usr"
+      return
+    fi
+    if [ -d "$current_dir/$2" ]; then
+      echo "$current_dir/$2"
+      return
+    fi
+    current_dir=$(dirname "$current_dir")
+  done
+}
+
+# Initialize the variable to indicate whether to use the test script
+use_test_script=0
+
+
+quoted_args=() # Initialize an empty array to store the results
+for arg in "$@"; do
+  # Check if the argument contains spaces, exclamation marks, backslashes, or quote characters
+  if [[ $arg =~ [[:space:]] || $arg == *'!'* || $arg == *'\\'* || $arg == *\"* || $arg == *\'* ]]; then
+    # The argument needs to be quoted
+    quoted_arg=$(quote_arg "$arg")
+    quoted_args+=("$quoted_arg")
+  else
+    # The argument does not need quoting
+    quoted_args+=("$arg")
+  fi
+done
+
+if [ "$#" -gt 0 ]; then
+    : #echo "ARGS: ${quoted_args[*]}"
+fi
+
+for arg in "$@"; do
+   if [[ "$arg" == "--debugable" ]]; then
+	exec $METTALOG_DIR/scripts/send_keys_debug.sh $(quote_args_if_needed $@)
+    fi
+done
+
+
+function load_rc_file {
+    local file="$1"  # Use the argument as the file
+    local multiline_accumulator=""
+
+    if [[ ! -f "$file" ]]; then
+        [[ "$verbose" -gt 0 ]] && DEBUG "$file does not exist, returning."
+		return
+	fi
+
+    if [[ -f "$file" ]]; then
+        DEBUG "reading $file"
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            # Trim leading and trailing whitespace
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+
+            [[ -z "$line" ]] && continue # Skip empty lines
+
+            # Check for line continuation (trailing '\')
+            if [[ "$line" =~ \\$ ]]; then
+                multiline_accumulator+="${line%\\} "
+                continue
+            else
+                line="$multiline_accumulator$line"
+                multiline_accumulator=""
+            fi
+
+            [[ $line =~ ^# ]] && continue # Skip lines that start with a comment
+
+	    # Check if the option is already in $@
+	    local skip=0
+	    for arg in "$@"; do
+		if [[ "$arg" == "$line" ]]; then
+		    skip=1
+		    break
+		fi
+	    done
+	    if [[ "$skip" -eq 1 ]]; then
+		[[ "$verbose" == "1" ]] && DEBUG "Skipping option already in \$@: $line"
+		continue
+	    fi
+
+
+            RC_OPTIONS+=("$line")
+            
+            [[ "$verbose" -gt 0 ]] && DEBUG "Loaded option: $line"
+
+        done < "$file"
+    fi
+
+    local do_args="${RC_OPTIONS[@]}"
+    [[ -z "$do_args" ]] && return
+    DEBUG "load_rc_file $file: ${do_args}"
+    handle_args "${do_args}"
+}
+
+
+add_to_list() {
+    local item="$1"
+    local -n list_ref="$2"
+    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+        list_ref+=("$item")
+    fi
+}
+
+add_to_front() {
+    local item="$1"
+    local -n list_ref="$2"
+    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+        #PRE_METTALOG_OPTIONS=("--html" "${PRE_METTALOG_OPTIONS[@]}")
+	list_ref=("$item" "${list_ref[@]}")
+    fi
+}
+
+function print_help {
+    echo " Usage: ${MeTTa} [options] <metta-files|directories> ... [-- arg ...passed to your program...]"
+    echo "        ${MeTTa} --help         Display this message"
+    echo "        ${MeTTa} --version      Display version information"
+cat << EOF
+
+     -x state                 Start from state (must be first)
+     -g goal                  Run Prolog-style goal (may be repeated)
+     -G goal                  Run MeTTa goal (may be repeated)
+     -t toplevel              Toplevel goal
+     -f file                  User initialisation file
+     -F file                  Site initialisation file
+     -l file                  Prolog-style script source file
+     -L file                  MeTTa script source file
+     -s file                  Prolog-style script source file
+     -S file                  MeTTa script source file
+     -p alias=path            Define file search path 'alias'
+
+Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
+
+    Compilation:
+
+     ${MeTTa} [options] [-o executable] -c metta-file1 -c metta-file2 ... to compile into executable ...
+
+     -O                       Optimised compilation
+     --debug[=bool]           Do (not) generate debug info
+     --traditional            Disable extensions of version (SWI-Prolog version 7)
+     --abi-version            Display ABI version key (and exit)
+     --arch                   Display architecture (and exit)
+     --dump-runtime-variables[=format]
+			      Dump link info in sh(1) format (and exit)
+
+   Running:
+     --rc File                read command line arguments from a file
+     --repl                   Start the REPL (Read-Eval-Print Loop) after processing metta files.
+			      If no metta files are provided, this is the default behavior.
+     --home[=DIR]             Print home or use DIR as SWI-Prolog home
+     --stack-limit=size[BKMG] Specify maximum size of stacks
+     --table-space=size[BKMG] Specify maximum size of SLG tables
+     --shared-table-space=size[BKMG] Maximum size of *shared* SLG tables
+     --pce[=bool]             Make the xpce gui available
+     --packs[=bool]           Do (not) attach add-ons
+     --pldoc[=port]           Start PlDoc server [at port]
+     --python[=bool]          Enable or disable Python support (default: $python_flag)
+     --tty[=bool]             (Dis)allow tty control
+     --quiet[=bool] (-q)      Do (not) suppress informational messages
+
+   Testing:
+     --test                 Use the test options:
+     --continue               Continue running tests (Generating any missing html files)
+     --failures               Rerun unsuccessfull tests only
+     --regressions            Rerun only tests in which we previously scored 100%
+
+     --timeout=seconds        Kill the script after so many seconds.
+     --html[=bool]            Save an HTML file containing terminal output in the same
+			      directory as the input file or directory.
+			      Defaults to true if exactly one metta file or directory argument was provided
+     --fresh                  Clean up by deleting any .answers files under directory
+     --clean                  Clean up by deleting all .html files under directory
+
+ $( mettalog -g show_help_options )
+
+   Debugging:
+     --exec=skip              Skip over !exec dirrectives
+     --e=debug                Recursively trace Evaluation
+     --time=debug             Provide detailed debug-level timing information
+     --case=debug             Show extra debug info about case statements
+     --signals[=bool]         Do (not) modify signal handling
+     --threads[=bool]         Do (not) allow for threads
+     --debug-on-interrupt[=bool] Trap the debugger on interrupt
+     --prolog                 Drop to the host system debugger
+     --on-error=style         One of print, halt or status
+     --on-warning=style       One of print, halt or status
+  
+
+  Boolean options may be written as --name=bool, --name, --no-name or --noname.
+  Both '-' or '_' are accepted as word-separator for long options.
+
+  Configuration File:
+     This script reads options from the ~/.mettalogrc file, one option per line.
+     Options specified in ~/:.mettalogrc are processed before command-line arguments.
+
+  WAS: ${MeTTa} ${SWI_OPTIONS[*]} -l $INTERP_SRC_DIR/metta_interp.pl -- --python=$python_flag ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} \\
+	     $METTA_CMD
+
+
+EOF
+}
+
+
+# Initialize variables
+SWI_OPTIONS=()
+METTALOG_OPTIONS=()
+METTALOG_OPTIONS_LAST=()
+if [[ "$compatio" == "true" && ! ( $* == *--compatio* ) ]]; then
+  METTALOG_OPTIONS=("--compatio")
+fi
+PRE_METTALOG_OPTIONS=()
+SWI_FLAG_WITH_ARG=false
+python_flag=enable
+# Optional: Check if SWI-Prolog has Janus support
+check_janus_support
+LIST_OF_FILE_ARGS=()
+
+wants_print_help=0
+
+
+PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
+
+# Check if the file exists and Read the first line from the file
+VERSION_FILE="$METTALOG_DIR/src/version-config"
+if [ -f "$VERSION_FILE" ]; then    
+    read -r FIRST_LINE < "$VERSION_FILE"
+    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
+    if [ ! -z "$FIRST_LINE" ]; then
+	if [ -d "$METTALOG_DIR/.Attic/$FIRST_LINE/" ]; then
+	    PYSWIP_VERSION="$FIRST_LINE"
+	fi
+    fi
+fi
+
+
+DefaultSav="Sav.$(hostname).MeTTaLog"
+
+
+function handle_args {
+    SWI_FLAG_WITH_ARG=false
+    METTA_FLAG_WITH_ARG=false
+    SKIP_TO_METTALOG_OPTIONS=false
+    NEXT_ARG_IS_RC_FILE=false
+    PrevDir="${RPWD:-$(pwd)}"  # Default to current directory if PrevDir is not set
+
+    for arg0 in "$@"; do
+      process_arg=true
+      while [ "$process_arg" == "true" ]; do
+        process_arg=false
+        arg=$(remove_quotes "$arg0")  # Remove the quotes
+
+        # Check if the previous argument was --rc
+        if [[ "$NEXT_ARG_IS_RC_FILE" == true ]]; then
+	    NEXT_ARG_IS_RC_FILE=false
+            rc_file_path="$PrevDir/$arg"  # Resolve file path relative to PrevDir
+            rc_file_path="$(realpath "$rc_file_path")"  # Resolve to absolute path
+            load_rc_file "$rc_file_path"
+	    use_rc_file=""
+            continue
+        fi
+        # Add support for --rc followed by a file
+        if [[ "$arg" == "--rc" ]]; then
+            NEXT_ARG_IS_RC_FILE=true
+            continue
+        fi
+
+        if [[ "$arg" == "--norc" ]]; then
+            use_rc_file=""
+            continue
+        fi
+
+
+	arg_realpath="$arg"
+        # track file paths but keep going
+        if [[ -f "$arg" || -d "$arg" ]]; then
+            arg_realpath="$(realpath "$arg")"
+            if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+                add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+            fi
+        fi
+
+	if [ "$SWI_FLAG_WITH_ARG" = true ]; then
+	    add_to_list "$arg_realpath" SWI_OPTIONS
+	    SWI_FLAG_WITH_ARG=false  # Reset the flag
+	    continue
+	fi
+
+	case "$arg" in
+	    --stack-limit=*|--stack_limit=*|--table-space=*|--shared-table-space=*|--pce=*|--pldoc=*|--tty=*|--packs=*|--signals=*|--sigalert=*|--threads=*|--debug=*|--debug-on-interrupt=*|--quiet=*|--traditional|--home=*|--on-error=*|--on-warning=*)
+		add_to_list "$arg" SWI_OPTIONS
+		#continue
+		;;
+	    -D*=*|-O)
+		add_to_list "$arg" SWI_OPTIONS
+		continue
+		;;
+	    -x|-g|-t|-f|-F|-l|-s|-p|-D)  # For options that require an argument in the next round
+		add_to_list "$arg" SWI_OPTIONS
+		SWI_FLAG_WITH_ARG=true
+		continue
+		;;
+	esac
+
+        if [[ $SKIP_TO_METTALOG_OPTIONS == true ]]; then
+            METTALOG_OPTIONS+=("$arg")
+            continue
+        fi
+
+        if [[ "$arg" == "--" ]]; then
+	    METTALOG_OPTIONS+=("$arg")
+            SKIP_TO_METTALOG_OPTIONS=true
+            continue
+        fi
+
+
+	if [[ "$arg" == "--compatio" ]]; then
+	    #debug_this_script=false
+	    compatio=true        
+	fi
+
+	if [[ "$arg" == "--debug" ]]; then
+	    debug_this_script=true
+	    compatio=false
+	fi
+
+	if [[ "$arg" == "--docker=false" ]]; then
+	    use_docker=false
+	fi
+	if [[ "$arg" == "--docker=true" ]]; then
+	    use_docker=true
+	fi
+	if [[ "$arg" == "--docker" ]]; then
+	    use_docker=true
+	fi
+
+	# Check if the argument is a directory
+	if [ -d "$arg" ]; then
+	    use_test_script=1
+	fi
+
+        # Check for specific flags
+        case "$arg" in
+            --fres*|--fail*|--contin*|--regres*|--clean)
+             use_test_script=1
+             ;;
+            --halt*)
+             contains_halt=true
+	     use_test_script=0
+             ;;
+        esac
+
+
+        if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
+            parsed="${BASH_REMATCH[1]}"
+	    #do_DEBUG "TIMEOUT=$TIMEOUT PARSED=$parsed"
+	    TIMEOUT=$parsed
+	    export TIMEOUT
+	    #METTALOG_OPTIONS=("--timeout=$TIMEOUT" "${METTALOG_OPTIONS[@]}")
+	    #add_to_list "$arg" METTALOG_OPTIONS
+	    continue
+	elif [[ "$arg" =~ ^--python=(enable|disable|false)$ ]]; then
+            python_flag="${BASH_REMATCH[1]}"
+	    	continue
+        elif [[ "$arg" == "--python" ]]; then
+            python_flag=enable
+	    	continue
+        elif [[ "$arg" == "--no-python" ]]; then
+            python_flag=false
+            continue
+        elif [[ "$arg" == "--repl" ]]; then
+            #add_to_list "$arg" METTALOG_OPTIONS_LAST
+            repl_flag=true
+	    continue
+        elif [[ "$arg" == "--repl=true" ]]; then
+            repl_flag=true
+	    continue
+        elif [[ "$arg" == "--repl=false" ]]; then
+            repl_flag=false
+	    continue
+        elif [[ "$arg" == "--no-repl" ]]; then
+            repl_flag=false
+	    continue
+        elif [[ "$arg" == "--html" ]]; then
+            add_to_list "$arg" METTALOG_OPTIONS
+            html_flag=enable
+        elif [[ "$arg" == "--no-html" ]]; then
+            html_flag=false
+        elif [[ "$arg" == "--prolog" ]]; then
+	          add_to_list "$arg" METTALOG_OPTIONS
+            repl_flag=false
+        fi
+        
+        [[ "$arg" == "--help" || "$arg" == "-h" ]] && { wants_print_help=1; EXIT_SCRIPT=0; }
+        [[ "$arg" =~ ^--dump-runtime-variables.*$ || "$arg" == "--abi-version" || "$arg" == "--version" || "$arg" == "--arch" ]] && { swipl $@; EXIT_SCRIPT=0; }
+
+        [[ "$SWI_FLAG_WITH_ARG" == true ]] && { SWI_OPTIONS+=("$arg"); SWI_FLAG_WITH_ARG=false; continue; }
+	[[ "$METTA_FLAG_WITH_ARG" == true ]] && { METTALOG_OPTIONS+=("\"$arg\""); METTA_FLAG_WITH_ARG=false; continue; }
+
+        # These options require an argument (like a filename)
+        case $arg in
+
+           --output=*)
+	        add_to_list "$arg" METTALOG_OPTIONS
+		if [[ "$arg" =~ ^--output=(.*)$ ]]; then
+		    OUTPUT_DIR="${BASH_REMATCH[1]}"
+		    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+		fi
+                continue
+                ;;
+
+
+           --log)
+	        add_to_list "$arg" PRE_METTALOG_OPTIONS
+	        add_to_front "--html" PRE_METTALOG_OPTIONS
+	        add_to_front "--debug" PRE_METTALOG_OPTIONS
+		compatio=false
+		html_flag=enable
+                continue
+                ;;
+
+
+           --v=*) PYSWIP_VERSION="${arg#*=}"
+	        if [ -f "${DefaultSav}" ]; then
+		    rm -f "${DefaultSav}"
+		fi
+		never_compile=1
+                continue
+                ;;
+
+            -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
+                SWI_OPTIONS+=("$arg")
+                SWI_FLAG_WITH_ARG=true
+                continue
+                ;;
+
+            -G|-L|-S)
+                METTALOG_OPTIONS+=("$arg")
+                METTA_FLAG_WITH_ARG=true
+                continue
+                ;;
+
+            # These options don't require an argument
+            -O|--traditional|--tty*|--packs*|--signals*|--threads*|--debug*|--debug-on-interrupt*|--quiet*|--pce*)
+                SWI_OPTIONS+=("$arg")
+                continue
+                ;;
+
+            ---*)
+		DASH2="${arg#-}"
+		PRE_METTALOG_OPTIONS=("$DASH2" "${PRE_METTALOG_OPTIONS[@]}")
+                continue
+                ;;
+
+            *)
+                add_to_list "$arg" METTALOG_OPTIONS
+		if [[ -f "$arg" || -d "$arg" ]]; then
+		    arg_realpath="$(realpath "$arg")"
+		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+		        add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+		    fi
+		fi
+                ;;
+        esac
+      done
+    done
+}
+
+
+# pre process command-line arguments
+for arg in "$@"; do
+    arg=$(remove_quotes "$arg")  # Remove the quotes
+
+    if [[ -f "$arg" || -d "$arg" ]]; then
+	arg_realpath="$(realpath "$arg")"
+	if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
+	    add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
+	fi
+    fi
+done
+
+
+#DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
+DIRNAME="${LIST_OF_FILE_ARGS[0]}"
+if [[ -f "$DIRNAME" ]]; then
+  HTML_OUT="${DIRNAME}.html"
+  DIRNAME=$(dirname "${DIRNAME}")
+elif [[ -d "$DIRNAME" ]]; then
+  HTML_OUT="${DIRNAME}/Result.html"
+else
+  DIRNAME="${PWD}"
+  HTML_OUT="${DIRNAME}/Result.html"
+fi
+DIR_RC="$DIRNAME/.mettalogrc"
+#DEBUG "DIR_RC=$DIR_RC"
+
+if [[ -f "$DIR_RC" ]]; then
+   use_rc_file="${DIR_RC}"
+else
+   use_rc_file="~/.mettalogrc"
+fi
+
+# maybe process arguments from ~/.mettalogrc ?
+#load_rc_file "~/.mettalogrc"
+# process actual command-line arguments
+handle_args "$@"
+
+# process specific RC file
+if [[ -f "${use_rc_file}" ]]; then
+   load_rc_file "${use_rc_file}"
+fi
+
+
+# Decide on enabling the REPL
+if [[ "$repl_flag" != "false" ]]; then
+  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
+fi
+
+if [[ "$repl_flag" == "true" ]]; then
+  TIMEOUT=0
+  add_to_list "--repl" METTALOG_OPTIONS_LAST
+fi
+
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then
+    add_to_list "--timeout=$TIMEOUT" PRE_METTALOG_OPTIONS
+fi
+
+
+# Execute the test script *INSTEAD* if the condition is met
+if [[ "$use_test_script" -eq 1 ]]; then
+    #if [[ "$contains_halt" == "false" ]]; then
+	#WILL_CALL=" -y --report=n $(quote_args_if_needed ${PRE_METTALOG_OPTIONS[*]}) $(quote_args_if_needed ${METTALOG_OPTIONS[*]}) $(quote_args_if_needed ${METTALOG_OPTIONS_LAST[*]})"
+	WILL_CALL=" -y --report=n $(quote_args_if_needed ${RC_OPTIONS[*]}) $(quote_args_if_needed $@)"
+	echo -e "${GREEN}test_in_metta.sh $WILL_CALL${NC}\n"
+	exec $METTALOG_DIR/scripts/test_in_metta.sh $WILL_CALL
+    #fi
+fi
+
+
+#export TEE_FILE=${TEE_FILE:-"$METTALOG_DIR/TEE.ansi"}
+
+if [ "$use_docker" != "auto" ]; then
+if [ "$use_docker" == "true" ]; then
+# Check if the script is running inside a Docker container
+if [ ! -f /.dockerenv ]; then
+    # Define the name of the Docker image
+    IMAGE_NAME="mettalog"
+
+    # Check if Docker is installed
+    if command -v docker &> /dev/null; then
+        # Check if the Docker image exists
+        if docker image inspect "$IMAGE_NAME" &> /dev/null; then
+            DEBUG "Updating the Docker image: $IMAGE_NAME"
+
+            # Create a temporary file to capture the build output
+            temp_file=$(mktemp)
+
+            # Build the Docker image and redirect stderr to the temporary file
+            if ! (cd $METTALOG_DIR ; docker build . -t "$IMAGE_NAME" > "$temp_file" ) 2>&1; then
+                echo "Docker build failed. Output:"
+                # Tail the last 30 lines of the build output for debugging
+                tail -30 "$temp_file"
+                # Clean up the temporary file
+                rm "$temp_file"
+                exit 1
+            else
+                # If build succeeds, remove the temporary file
+                rm "$temp_file"
+                DEBUG "Image $IMAGE_NAME successfully updated."
+            fi
+
+            # Setup additional environment variables or paths
+            SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+            # Example: UPWARD=$(resolve_upward "$(pwd)")
+
+            # Run the Docker container with the necessary volumes mounted
+            exec docker run -it \
+                -v "${SCRIPT_DIR}:/home/user/metta-wam" \
+                -v "$(pwd):$(pwd)" \
+                -w "$(pwd)" \
+                "$IMAGE_NAME" \
+                /home/user/metta-wam/mettalog "$@"
+            
+        else
+            DEBUG "Image $IMAGE_NAME is not installed. Continuing with script..."
+        fi
+    else
+        DEBUG "Docker is not installed. Continuing with script..."
+    fi
+fi
+fi
+fi
+
+
+set -e
+
+DEBUG "SWI_OPTIONS: ${SWI_OPTIONS[@]}"
+DEBUG "PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
+DEBUG "LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
+DEBUG "METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
+
+# Store the initial PYTHONPATH for later comparison
+initial_pythonpath="$PYTHONPATH"
+
+# Add DIRNAME to PYTHONPATH if it's a valid path and not already present
+if [[ -d "$DIRNAME" && ":$PYTHONPATH:" != *":$DIRNAME:"* ]]; then
+    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$DIRNAME"
+fi
+
+# Add src to PYTHONPATH if not already present
+[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/src:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/src"
+
+# If PYTHONPATH has changed, echo the new value
+if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
+    : #DEBUG ";; Updated PYTHONPATH: $PYTHONPATH"
+fi
+
+export RUST_BACKTRACE=full
+
+
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+# Directory containing the .pl files
+if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
+  INTERP_SRC_DIR="$PYSWIP_VERSION"
+else 
+    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
+    else 
+      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
+    fi
+fi
+
+INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
+
+DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
+
+
+# Initialize a flag to check if any file is newer or if reference file is missing
+
+if [[ $never_compile -eq 0 ]]; then
+# Reference file
+    reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+    if [[ -z "$reference_file" ]]; then
+      reference_file="$METTALOG_DIR/${DefaultSav}"
+    fi
+
+    # Check if ${DefaultSav} exists
+    if [[ ! -e "$reference_file" ]]; then
+	DEBUG "Reference file $reference_file does not exist. Compiler will be called."
+	should_compile=1
+    else
+	# Iterate over each .pl file to check if it's newer
+	for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
+	    if [[ ! -e "$pl_file" ]]; then
+		DEBUG "No matching .pl files found in $INTERP_SRC_DIR."
+		#exit 1
+	    fi
+
+	    # Check if this .pl file is newer than the reference file
+	    if [[ "$pl_file" -nt "$reference_file" ]]; then
+		DEBUG "$pl_file is newer than $reference_file."
+		should_compile=1
+		break  # No need to check further, exit loop
+	    fi
+	done
+    fi
+fi
+
+# If any newer file found or reference file missing, call the compiler
+if [[ $should_compile -eq 1 ]]; then
+    #if [[ -f "$reference_file" ]]; then
+    #    DEBUG "Calling compiler from $reference_file..."
+    #	swipl -x $reference_file -g qsave_program -g halt
+    #else
+    rm -f $reference_file
+    if [[ "$never_compile" -eq 0 ]]; then
+        :
+	#DEBUG "Compiling $reference_file" 
+	#swipl -l src/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+    fi
+fi
+
+reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+if [[ -z "$reference_file" ]]; then
+  reference_file="$METTALOG_DIR/${DefaultSav}"
+fi
+
+if [[ -f "$reference_file" ]]; then
+   : # Placeholder in case something needs to be done here
+   # rm -f $reference_file
+fi
+
+if [[ -f "$reference_file" ]]; then
+  MLOG="$reference_file"
+
+  if [[ "${#SWI_OPTIONS[@]}" -gt 0 ]]; then
+       MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
+  fi
+  if [[ "$never_compile" -eq 1 ]]; then
+       MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+  fi
+else
+  MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+fi
+
+#add_to_list "--log" METTALOG_OPTIONS
+#html_flag=enable
+#add_to_list "--html" METTALOG_OPTIONS
+
+STDIO_OPTIONS=()
+set_io_flags STDIO_OPTIONS
+
+# Generate the final command
+METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS[*]} ${METTALOG_OPTIONS_LAST[*]} ${STDIO_OPTIONS[*]}"
+
+
+OS=$(uname)
+TIMEOUT_CMD="timeout"
+
+if [[ "$OS" == "Darwin" ]]; then
+    # macOS
+    if command -v gtimeout >/dev/null 2>&1; then
+        TIMEOUT_CMD="gtimeout"
+    else
+        DEBUG "Please install coreutils using Homebrew to get the gtimeout command."
+        [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1
+    fi
+fi
+
+
+
+# Initialize the variable to store the exit status of METTA_CMD
+METTA_CMD_EXIT_STATUS=666
+TEMP_EXIT_CODE_FILE="$(mktemp)"
+
+# Set a trap to ensure stty sane is run on script exit or interruption
+cleanup() {
+    if [ -t 0 ] ; then
+        stty sane
+    fi
+    if [[ -f "$TEMP_EXIT_CODE_FILE" ]]; then
+        METTA_CMD_EXIT_STATUS=$(<"$TEMP_EXIT_CODE_FILE")        
+    else
+        METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
+    fi
+    do_DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
+
+    if [ ! -z "$TEE_FILE" ];then
+        if [ ! -z "$HTML_OUT" ];then
+            IF_REALLY_DO "ansi2html -u < '$TEE_FILE' > '$HTML_OUT'"
+            HTML_OUT=
+        fi
+        IF_REALLY_DO "rm -f '$TEE_FILE'"
+        TEE_FILE=
+    fi
+    if [ "$IS_SOURCED" -eq 1 ]; then
+        return $METTA_CMD_EXIT_STATUS
+    else
+        exit $METTA_CMD_EXIT_STATUS
+    fi
+}
+
+# Trap exit signal to execute cleanup function
+trap cleanup EXIT
+
+if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
+  export TIMEOUT
+  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+fi
+
+function escape_quotes {
+    local value="$1"
+    echo "${value//\"/\\\"}"
+}
+
+cd "${RPWD}"
+set +e
+
+# Function to execute the command with the appropriate redirections
+execute_with_pipes() {
+    local input_redirection=""
+    local output_redirection=""
+    local error_redirection=""
+
+    # Handle stdin redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stdin=file" ]]; then
+        input_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--input-filename=)[^ ]+')
+        input_redirection="<\"$input_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stdin=pipe" ]]; then
+        # stdin is already a pipe, no action needed
+        :
+    else
+        # stdin is a tty, no redirection needed
+        :
+    fi
+
+    # Handle stdout redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stdout=file" ]]; then
+        output_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--output-filename=)[^ ]+')
+        output_redirection=">\"$output_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stdout=pipe" ]]; then
+        # stdout is already a pipe, no action needed
+        :
+    else
+        # stdout is a tty, no redirection needed
+        :
+    fi
+
+    # Handle stderr redirection
+    if [[ "${STDIO_OPTIONS[*]}" =~ "--stderr=file" ]]; then
+        error_file=$(echo "${STDIO_OPTIONS[*]}" | grep -oP '(?<=--error-filename=)[^ ]+')
+        error_redirection="2>\"$error_file\""
+    elif [[ "${STDIO_OPTIONS[*]}" =~ "--stderr=pipe" ]]; then
+        # stderr is already a pipe, no action needed
+        :
+    else
+        # stderr is a tty, no redirection needed
+        :
+    fi
+
+    # Construct the full command with all necessary redirections
+    local full_command="eval \"$METTA_CMD\" $input_redirection $output_redirection $error_redirection"
+
+    # Check if SWI-Prolog is installed
+    check_swipl_installed
+
+    # Execute the command using IF_REALLY_DO
+    IF_REALLY_DO "$full_command"
+}
+
+
+# Conditional to check if html_flag is enabled
+if [[ "$html_flag" == "enable" ]]; then
+    # Generate a random filename for TEE_FILE with date,time,PID
+    random_suffix=$(date +"%Y%m%d_%H%M")_$$
+    TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
+    export TEE_FILE
+
+    if [ ! -z "$HTML_OUT" ];then
+        HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
+        if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+            HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
+        fi
+	export HTML_FILE="${HTML_OUT}"
+    fi
+
+    export TYPESCRIPT=1
+    if [[ "$OS" == "Darwin" ]]; then # macOS
+        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" -c \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
+    else # Assume Linux
+        METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \\\"$(echo "${METTA_CMD}" | sed 's/"/\\"/g')\\\""
+    fi
+
+	[[ "$wants_print_help" == "1" ]] && { print_help; }
+	DEBUG ""
+	DEBUG "Afterwhich ansi2html -u < $TEE_FILE > '$HTML_OUT'"
+	DEBUG ""
+	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+	
+	IF_REALLY_DO "touch '$TEE_FILE'"
+	IF_REALLY_DO "chmod 777 '$TEE_FILE'"
+	IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
+	if [[ "$contains_halt" == "true" ]]; then
+		do_DEBUG "METTA_CMD: $METTA_CMD"
+	fi
+	execute_with_pipes
+	echo $? > "$TEMP_EXIT_CODE_FILE"
+else
+	[[ "$wants_print_help" == "1" ]] && { print_help; [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
+        if [ ! -z "$OUTPUT_DIR" ] ;then
+	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+        fi
+	if [[ "$contains_halt" == "true" ]]; then
+		do_DEBUG "METTA_CMD: $METTA_CMD"
+	fi
+	execute_with_pipes
+	IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
+fi
+
+cd "${RPWD}"
