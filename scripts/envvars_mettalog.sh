@@ -93,7 +93,7 @@ fi
 # Optionally, print the values to verify they are set (you can remove these lines in production)
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # echo "PATH=$PATH"
-echo "PYTHONPATH=$PYTHONPATH"
+#echo "PYTHONPATH=$PYTHONPATH"
 
 
 _mettalog_autocomplete() {
