@@ -23,7 +23,7 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
 
-    if: (github.repository == 'logicmoo/metta-testsuite') || (github.event_name != 'schedule')
+    if: (github.repository == 'logicmoo/metta-testsuite')
 
     env:
       JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
@@ -32,6 +32,19 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    # Clone the metta-testsuite development branch
+    - name: Clone metta-testsuite development branch
+      run: |
+        git clone --branch development --depth 1 https://github.com/logicmoo/metta-testsuite.git metta-testsuite
+
+    # Copy the tests/* directory from metta-testsuite
+    - name: Copy tests from metta-testsuite
+      run: |
+        cp -r metta-testsuite/tests/* tests/
+        cp -r metta-testsuite/tests/* reports/
+        mkdir -p test-scripts/
+        cp -r metta-testsuite/test-scripts/* 
 
     - name: Ensure just-results branch exists
       env:
