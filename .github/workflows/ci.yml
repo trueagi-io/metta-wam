@@ -45,7 +45,7 @@ jobs:
         mkdir -p reports/
         cp -r metta-testsuite/tests/* reports/
         mkdir -p test-scripts/
-        cp -r metta-testsuite/test-scripts/* 
+        cp -r metta-testsuite/test-scripts/* test-scripts/
 
     - name: Ensure just-results branch exists
       env:
