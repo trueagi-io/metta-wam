@@ -42,6 +42,7 @@ jobs:
     - name: Copy tests from metta-testsuite
       run: |
         cp -r metta-testsuite/tests/* tests/
+        mkdir -p reports/
         cp -r metta-testsuite/tests/* reports/
         mkdir -p test-scripts/
         cp -r metta-testsuite/test-scripts/* 
