@@ -1,4 +1,4 @@
-﻿
+
 ; 20241014 r.v.v converted metta-lang.dev to metta 
 ;  !(assertEqualToResult ( )  (  )  ) 
 ; This function accepts an atom of type A and returns an atom of type B

@@ -1,4 +1,4 @@
-﻿;; Define Nat
+;; Define Nat
 (: Nat Type)
 (: Z Nat)
 (: S (-> Nat Nat))

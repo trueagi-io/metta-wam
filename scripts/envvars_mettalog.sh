@@ -231,3 +231,6 @@ _mettalog_autocomplete() {
 complete -F _mettalog_autocomplete mettalog
 complete -F _mettalog_autocomplete MeTTaLog
 complete -F _mettalog_autocomplete MeTTa
+
+
+

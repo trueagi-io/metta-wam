@@ -1,4 +1,4 @@
-﻿/** <module> LSP Utils
+/** <module> LSP Utils
 
 Module with a bunch of helper predicates for looking through prolog
 source and stuff.

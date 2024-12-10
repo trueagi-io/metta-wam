@@ -1,4 +1,4 @@
-﻿
+
 !(extend-py! mettalog)
 
 %!(mettalog::vspace-main)
