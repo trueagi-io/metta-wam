@@ -88,7 +88,7 @@ SKIP_LONG=0
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
 
-SHOW_ALL_OUTPUT=false # Set to false normally, true for debugging
+SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 
 
 # 23+ tests (~30 seconds)
