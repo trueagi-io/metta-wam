@@ -63,15 +63,16 @@ run_mettalog_tests() {
         clean=false  # Reset or remove the clean option after using it
     fi
 
-    if [ "$SHOW_ALL_OUTPUT" = true ]; then
+    
+    #if [ "$SHOW_ALL_OUTPUT" = true ]; then
 	# Execute the command and capture the status
-	"${cmd[@]}"
+	"${cmd[*]}"
 	local status=$?
-    else
+    #else
 	# Execute the command silently and filter output, capturing status
-	script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
-	local status=$?
-    fi
+	#script -q -c "${cmd[*]}" /dev/null | tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
+	#local status=$?
+    #fi
 
 
     if [ $status -eq 4 ]; then
@@ -88,7 +89,7 @@ SKIP_LONG=0
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
 
-SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+SHOW_ALL_OUTPUT=false # Set to false normally, true for debugging
 
 
 # 23+ tests (~30 seconds)
