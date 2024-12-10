@@ -151,3 +151,4 @@ intersect_eq0([X|Xs], Ys, L) :-
  	).
 
 
+

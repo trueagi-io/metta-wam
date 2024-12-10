@@ -2367,3 +2367,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 
 
+

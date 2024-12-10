@@ -446,3 +446,4 @@ whatevah(Goal):- quietly('$sig_atomic'(ignore(catch(Goal,error(A,B),(writeln(mai
 % set_stream(Stream, buffer_size(1)),   % useful?
 % set_stream(Stream, close_on_exec(true)), % useful?
 % set_stream(Stream, close_on_abort(true)), % useful?
+

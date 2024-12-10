@@ -227,3 +227,4 @@ all_duplicates(L) <- [
         every(E, member(E,L), duplicated(E,L)) ].
 
 
+

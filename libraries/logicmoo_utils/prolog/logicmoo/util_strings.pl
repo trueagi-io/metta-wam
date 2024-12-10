@@ -2205,3 +2205,4 @@ baseKB: [debug]  ?- rtrace(convert_to_cycString('hi',O)).
 ^  Exit: (162) [baseKB] logicmoo_util_strings:convert_to_cycString(hi, "hi")
 O = "hi".
 
+

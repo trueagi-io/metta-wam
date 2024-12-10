@@ -33,3 +33,4 @@ lsp_metta_request(_{headers: Headers, body: Body}) -->
     { ground(JsonCodes),
       open_codes_stream(JsonCodes, JsonStream),
       json_read_dict(JsonStream, Body, []) }.
+

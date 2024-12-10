@@ -35,3 +35,4 @@ new_concat_input_stream(List,Stream):-
 check_eof([S|List],Stream):- at_end_of_stream(S)->check_eof(List,Stream);true.
 check_eof([],Stream):-set_stream(Stream,end_of_stream(at)).
 
+

@@ -2549,3 +2549,4 @@ print_prop_val(N=V):- to_prop_name(N,P),format('~N\t\t'),print(P=V),nl.
 ignore_numvars(Name='$VAR'(Name)).
 
 
+

@@ -788,3 +788,4 @@ user:message_hook(Term, Kind, Lines):- current_prolog_flag(runtime_message_hook,
 %user:prolog_exception_hook(A,B,C,D):- fail,
 %   once(copy_term(A,AA)),catchv(( once(bugger_prolog_exception_hook(AA,B,C,D))),_,fail),fail.
 
+

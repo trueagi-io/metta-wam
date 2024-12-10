@@ -2714,3 +2714,4 @@
 'information_schema.columns'(flybase,public,expressionprop,expressionprop_id,1,'nextval(\'expressionprop_expressionprop_id_seq\'::regclass)','NO',integer,'','',32,2,0,'','','','','','','','','','','','',flybase,pg_catalog,int4,'','','','',1,'NO','NO','','','','','','NO','NEVER','','YES').
 'information_schema.columns'(flybase,pg_catalog,pg_statistic_ext,stxnamespace,4,'','NO',oid,'','','','','','','','','','','','','','','','','',flybase,pg_catalog,oid,'','','','',4,'NO','NO','','','','','','NO','NEVER','','YES').
 'information_schema.columns'(flybase,public,library_expression,pub_id,4,'','NO',integer,'','',32,2,0,'','','','','','','','','','','','',flybase,pg_catalog,int4,'','','','',4,'NO','NO','','','','','','NO','NEVER','','YES').
+

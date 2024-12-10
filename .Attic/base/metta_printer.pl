@@ -384,3 +384,4 @@ should_quote_symbol_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ s
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_printer).
 :- ensure_loaded(metta_eval).
+

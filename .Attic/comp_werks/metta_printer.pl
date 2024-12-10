@@ -342,3 +342,4 @@ should_quote_atom_chars(Atom,[Digit|_]) :- fail, char_type(Digit, digit), \+ ato
 % ?- should_quote('123.456').
 % false.
 
+

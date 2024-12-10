@@ -667,3 +667,4 @@ symbolic_list_concat(A,B):- atomic_list_concat(A,B).
 symbol_contains(T,TT):- atom_contains(T,TT).
 */
 
+

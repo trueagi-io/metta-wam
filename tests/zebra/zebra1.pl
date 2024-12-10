@@ -116,3 +116,4 @@ zebra_owner(Owner) :-
     house_pet(FishHouse, fish, Houses),
     house_nationality(FishHouse, Owner, Houses).
 
+

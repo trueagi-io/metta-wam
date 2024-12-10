@@ -70,3 +70,4 @@ load_logtalk:- ensure_LOGTALKUSER,
 :- fixup_exports.
 
 
+

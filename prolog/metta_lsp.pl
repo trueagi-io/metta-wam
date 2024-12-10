@@ -14,3 +14,4 @@ unused:- (prolog_load_context(directory, Value);Value='.'),
 
 
 :- use_module(library(lsp_server_metta)).
+

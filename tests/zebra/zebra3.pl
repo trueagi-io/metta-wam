@@ -176,3 +176,4 @@ append_cons('Nil', List2, List2).
 append_cons('[|]'(H, T), List2, '[|]'(H, T2)) :-
     append_cons(T, List2, T2).
 
+

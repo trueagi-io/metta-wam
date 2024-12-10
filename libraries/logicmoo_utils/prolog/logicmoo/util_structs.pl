@@ -880,3 +880,4 @@ new_struct(map, mutable(O)):- dict_create(O,Name,[]),!.
 new_struct(Name,mutable(O)):- dict_create(O,Name,[]),!.
 */
 :- fixup_exports.
+

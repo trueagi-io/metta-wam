@@ -1332,3 +1332,4 @@ user:portray(_):- tracing, inside_bfly_html_esc, bfly_out,fail.
 
 % user:portray(X):- \+ current_prolog_flag(debug, true), \+ tracing, bfly_portray(X), !.
 
+

@@ -2529,3 +2529,4 @@ subst_each_var([Var|RestOfVars],Term,Output):- !,
 % no more vars left to replace
 subst_each_var(_,TermIO,TermIO).
 
+

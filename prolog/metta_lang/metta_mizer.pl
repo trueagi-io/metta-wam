@@ -455,3 +455,4 @@ count_var_gte(HB,V,Ct):- count_var(HB,V,CtE),Ct>=CtE.
 
 
 
+

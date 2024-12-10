@@ -22,3 +22,4 @@ piler_identity_1722239786_638979(A,[:,B,[C,D,E,F,G]]):-piler_identity_1722239786
 piler_identity_1722239786_638979(A,[:,B,[C,D,E,F,G,H]]):-piler_identity_1722239786_638979_iz(A,B,C,D,E,F,G,H).
 piler_identity_1722239786_638979(1,=,t(f,_x),t(*,_x,_x)).
 :-eval_Line([f,1],piler_identity_1722239786_638979,1).
+

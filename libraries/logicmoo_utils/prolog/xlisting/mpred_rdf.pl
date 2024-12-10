@@ -705,3 +705,4 @@ mpred_online:semweb_startup:- must(sync_to_rdf).
 mpred_online:semweb_startup:- asserta_if_new(baseKB:call_OnEachLoad(sync_to_rdf)).
 mpred_online:semweb_startup:- asserta_if_new(baseKB:call_OnEachLoad(sync_from_rdf)).
 
+

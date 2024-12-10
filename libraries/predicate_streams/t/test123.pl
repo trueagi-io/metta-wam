@@ -23,3 +23,4 @@ save_out(Data):- assert(saved_out(Data)).
 :- with_error_to_predicate(write,ls).
 
 
+

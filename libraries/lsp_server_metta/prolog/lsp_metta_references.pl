@@ -108,3 +108,4 @@ metta_relative_ref_location(_, Goal, imported(Path), Location) :-
   metta_relative_ref_location(ThereUri, Goal, Loc, Location).
 
 
+

@@ -97,3 +97,4 @@ expand_error_message(Msg, Msg).
 
 kind_level(error, 1).
 kind_level(warning, 2).
+

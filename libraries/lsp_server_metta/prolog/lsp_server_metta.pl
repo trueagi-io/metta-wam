@@ -1011,3 +1011,4 @@ restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
 
 %:- initialization(restore_lsp_server_callbacks).
 :- after_boot(restore_lsp_server_callbacks).
+

@@ -3694,3 +3694,4 @@ really_use_corelib_file(Dir, File) :-
                               with_output_to(string(_), include_metta_directory_file('&corelib', Dir, Filename)))),
               asserta(really_using_corelib_file),
               debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]).
+

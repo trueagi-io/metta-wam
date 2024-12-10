@@ -10,3 +10,4 @@ download( 'https://github.com/logicmoo/logicmoo_utils/release/*.zip' ).
 requires(predicate_streams).
 % requires(dictoo).
 autoload(true).
+

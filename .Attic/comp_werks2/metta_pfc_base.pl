@@ -4596,3 +4596,4 @@ pfcRetractOrQuietlyFail(X) :-
         nop((dumpST, pfcWarn("Couldn't retract ~p.", [X]))))),
     !, 
     fail.
+

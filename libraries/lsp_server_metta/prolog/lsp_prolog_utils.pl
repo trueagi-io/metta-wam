@@ -327,3 +327,4 @@ find_var(Term, _Offset, _SubPos, Var), Term \== Var => fail.
 
 
 
+

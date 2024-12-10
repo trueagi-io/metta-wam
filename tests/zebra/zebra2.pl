@@ -159,3 +159,4 @@ length_nat([], 'Z').
 length_nat([_ | Rest], ['S', N]) :-
     length_nat(Rest, N).
 
+

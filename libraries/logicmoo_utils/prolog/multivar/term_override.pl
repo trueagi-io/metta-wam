@@ -35,3 +35,4 @@ new_partial_dict(Dict):-
    extendable_compound(_{},Dict).
 
 
+

@@ -979,3 +979,4 @@ into_eval_for(_Depth,_HeadIs,_Slf,F,Nth,PT,A,N,eval_for(b_2(Nth,F),PT,A,N)):- va
 into_eval_for(_Depth,_HeadIs,_Slf,_F,_Nth,PT,A,N,eval_for(b_1,PT,A,N)):- nonvar(PT),PT\=='Atom', !.
 into_eval_for(_Depth,_HeadIs,_Slf,_F,_Nth,_PT,A,A,true).
 
+

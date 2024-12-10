@@ -63,3 +63,4 @@ if __name__ == "__main__":
     # Print out the generated properties
     sort_and_print_props(final_props, list(git_info.keys()))
 
+

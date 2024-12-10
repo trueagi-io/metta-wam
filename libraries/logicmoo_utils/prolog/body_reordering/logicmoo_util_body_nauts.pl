@@ -85,3 +85,4 @@ disable_nautifiers:- disable_in_file(do_nautifier).
 % some tests
 
 :- endif.
+

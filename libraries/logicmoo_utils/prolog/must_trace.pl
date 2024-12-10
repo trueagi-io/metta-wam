@@ -10,3 +10,4 @@ Trace with your eyes not your hands, the file is distributed, part of rtrace.
 */
 
 :- reexport(library(logicmoo_common)).
+

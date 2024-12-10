@@ -32,3 +32,4 @@ new_broadcast_stream(List,Stream):-
 write_to_streams(List,Data):- maplist(write_rev(Data),List).
 write_rev(Data,Stream):- write(Stream,Data).
 :- endif.
+

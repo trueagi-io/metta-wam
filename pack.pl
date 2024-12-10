@@ -10,3 +10,4 @@ download( 'https://github.com/trueagi-io/metta-wam/release/*.zip' ).
 %requires(predicate_streams).
 % requires(dictoo).
 autoload(true).
+

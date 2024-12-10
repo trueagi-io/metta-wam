@@ -269,3 +269,4 @@ metta_atom_corelib2([':','If',[->,'Bool','Atom','Atom']]).
 metta_atom_asserted_deduced('&corelib', Term):- metta_atom_corelib_types(Term).
 
 
+

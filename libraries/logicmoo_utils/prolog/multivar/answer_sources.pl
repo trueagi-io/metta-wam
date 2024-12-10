@@ -953,3 +953,4 @@ merge_answers(T1,G1, T2,G2, A) :-
         ord_union(L1, L2, Ordered),
         member(A, Ordered).
 
+

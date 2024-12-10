@@ -31,3 +31,5 @@ done < "$file2"
 echo "Lines added: $lines_added"
 echo "Lines skipped: $lines_skipped"
 
+
+

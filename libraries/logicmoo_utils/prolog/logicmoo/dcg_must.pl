@@ -59,3 +59,4 @@ dcg_push(List, S, ListS):- is_list(List), !, =(List,ListO), append(ListO, S, Lis
 dcg_push(A, S, [B|S]):- =(A,B).
 
 :- fixup_exports.
+

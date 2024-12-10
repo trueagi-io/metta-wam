@@ -9,3 +9,4 @@
 :- consult(gvar_syntax_tests).
 
 
+

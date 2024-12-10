@@ -1486,3 +1486,4 @@ listing_vars_file.
 % % % % OFF :- system:use_module(library(logicmoo_utils_all)).
 system:term_expansion((H:-B),_):- current_prolog_flag(source_variables,true),term_expansion_save_vars((H:-B)),fail.
 
+

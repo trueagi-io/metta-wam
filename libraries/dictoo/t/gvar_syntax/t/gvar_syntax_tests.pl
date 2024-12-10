@@ -44,3 +44,4 @@ all_tests:- forall(clause(test(X),Body),(dmsg(test(X)),must(Body))).
 
 :- listing(test(_)).
 
+

@@ -3710,3 +3710,4 @@ pfcSelectJustificationNode(Js, Index, Step) :-
     nth1(JustNo, Js, Justification),  % Get the Justification at position JustNo.
     StepNo is 1 + integer(Index*10 - JustNo*10),  % Calculate the step number.
     nth1(StepNo, Justification, Step).  % Get the Step at position StepNo within the justification.
+

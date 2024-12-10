@@ -1407,3 +1407,4 @@ really_use_corelib_file(Dir,File):- absolute_file_name(File,Filename,[relative_t
   debug(lsp(main),"~q",[end_really_use_corelib_file(Dir,File)]).
 
 
+

@@ -1247,3 +1247,4 @@ is_delimiter(Char) :-
 
 % Ensure the program runs upon initialization.
 :- initialization(main_init, main).
+

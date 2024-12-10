@@ -3396,3 +3396,4 @@ user:portray(S):- term_is_ansi(S), !, write_keeping_ansi(S).
 user:portray(Term):-
   %fail,
   notrace(pc_portray(Term)),!.
+

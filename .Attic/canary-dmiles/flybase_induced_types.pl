@@ -1645,3 +1645,4 @@ table_n_type(synonym, 3, current_symbol, _).
 table_n_type(synonym, 4, current_fullname, _).
 table_n_type(synonym, 5, fullname_synonym, _).
 table_n_type(synonym, 6, symbol_synonym, _).
+

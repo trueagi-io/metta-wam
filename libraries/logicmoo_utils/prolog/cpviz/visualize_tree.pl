@@ -384,3 +384,4 @@ deleteffc([T0|L0], Rank1, T1, T, _VarArg) :-
 	    )
 	).
 
+

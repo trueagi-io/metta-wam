@@ -1044,3 +1044,4 @@ contains_wildcard(Spec):- sformat(S,'~q',[Spec]),
 :- fixup_exports.
 
 
+

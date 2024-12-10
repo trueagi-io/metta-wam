@@ -72,3 +72,4 @@ skip(N) --> [_], { succ(N0, N) }, skip(N0).
 
 line([0'\n]) --> [0'\n], !.
 line([C|Cs]) --> [C], line(Cs).
+

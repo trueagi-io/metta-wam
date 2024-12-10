@@ -49,3 +49,4 @@ This module allows easier loading of common logicmoo utility predicates.
 :- system:reexport(library(logicmoo/util_bb_gvar)).
 % :- system:reexport(library(xlisting/xlisting_web)).
 */
+

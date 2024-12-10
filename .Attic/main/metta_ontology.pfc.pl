@@ -459,3 +459,4 @@ properties('&corelib','tuple-count', [data_structures, qhelp("Counts tuples with
 %properties('&corelib','collapseCardinality', [data_structures, qhelp("Collapses structures with cardinality consideration."), manipulation, cardinality]).
 
 
+

@@ -1146,3 +1146,4 @@ start_dbg_telnet :-
 % Automatically start the server at initialization, ensuring only one server is started
 :- initialization(start_dbg_telnet).
 
+

@@ -638,3 +638,4 @@ json2:- process_json('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/v
 
 
 
+

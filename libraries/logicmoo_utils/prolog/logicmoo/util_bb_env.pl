@@ -490,3 +490,4 @@ maybe_show_env_mpred_op(G):- t_l:db_spy -> show_call(why,G); G.
 */
 
 :- fixup_exports.
+

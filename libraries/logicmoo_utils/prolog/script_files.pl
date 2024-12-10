@@ -376,3 +376,4 @@ maybe_dynamic(M,H):- functor(H,F,A),M:dynamic(M:F/A).
 
 % :- fixup_exports.
 
+

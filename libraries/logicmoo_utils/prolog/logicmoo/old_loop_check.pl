@@ -296,3 +296,4 @@ lco_goal_expansion(B,A):-
 :- multifile system:goal_expansion/2.
 system:goal_expansion(LC,Pos,LCO,Pos):- compound(LC),lco_goal_expansion(LC,LCO)->LC\=@=LCO.
 
+

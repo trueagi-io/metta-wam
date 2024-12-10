@@ -605,3 +605,4 @@ file_to_stream(Spec,Stream):-file_to_stream(match(Spec),Stream).
 copy_stream(HTTP_Stream,Stream):-read_stream_to_codes(HTTP_Stream,Codes),catch(close(HTTP_Stream),_,true),open_codes_stream(Codes,Stream).
 
 :- fixup_exports.
+

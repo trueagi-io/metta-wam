@@ -705,3 +705,4 @@ longest_string_acc([H|T], Acc, Longest) :-
 %
 
 
+

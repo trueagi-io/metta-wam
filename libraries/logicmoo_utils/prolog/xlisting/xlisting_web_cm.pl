@@ -802,3 +802,4 @@ Other terrain types not listed here are for aesthetic purposes only, such
 as </font><font color="#008080">[ ]</font><font color="#C0C0C0"> for temples, </font><font color="#FFFF00">* *</font><font color="#C0C0C0"> for shops, etc.
 </font></font></code></div></pre></td></tr></table>')),!.
 
+

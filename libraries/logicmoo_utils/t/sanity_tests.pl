@@ -37,3 +37,4 @@ term_expansion(EOF,S,Out,S):- nonvar(S),
 
 
 
+

@@ -325,3 +325,4 @@ properties('tuple-count', [data_structures, qhelp("Counts tuples within a struct
 :- set_prolog_flag(expect_pfc_file,never).
 :- set_prolog_flag(pfc_term_expansion,false).
 
+

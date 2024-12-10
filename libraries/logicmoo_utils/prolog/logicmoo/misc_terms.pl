@@ -1294,3 +1294,4 @@ call_no_cuts(CALL):-functor(CALL,F,A),functor(C,F,A),must(once( \+ ( \+ (clause(
 logicmoo_library_file_loaded.
 
 :- fixup_exports.
+

@@ -1109,3 +1109,4 @@ guess_metta_vars(What):-
 name_the_var(N=V):- ignore((atom_concat('_',NV,N),V='$VAR'(NV))).
 
 alpha_unify(What,What0):- What=@=What0,(nonvar(What)->What=What0;What==What0).
+

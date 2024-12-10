@@ -33,3 +33,4 @@ user:expand_query(Goal, Expanded, Bindings, ExpandedBindings):-
 
 */
 
+

@@ -329,3 +329,4 @@ load_xml_structure(Ctx,O):-atomic(O),!,debugFmt(load_xml_structure(Ctx,O)),!.
 
 
 :- fixup_exports.
+

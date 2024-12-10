@@ -510,3 +510,4 @@ ignore_must(Goal):- how_must(fail, Goal).
 %:- ignore(rtrace(non_user_console)).
 :- '$hide'(rtrace/1).
 
+

@@ -166,3 +166,4 @@ valid_date_comment(Line) :-
     sub_atom(Line, 22, 1, _, ':'),         % Check if there's a colon after the hour
     sub_atom(Line, 25, 1, _, ':').         % Check if there's a colon after the minute
 
+

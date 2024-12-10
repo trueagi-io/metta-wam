@@ -83,3 +83,4 @@ disable_body_textstr:- disable_in_file(do_body_textstr).
 % some tests
 
 :- endif.
+

@@ -9,3 +9,4 @@ packager( 'logicmoo/LogicMoo', 'https://github.com/logicmoo/' ).
 maintainer( 'logicmoo', 'https://github.com/logicmoo/' ).
 home('https://github.com/logicmoo/dictoo').
 requires(logicmoo_utils).
+

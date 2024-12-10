@@ -33,3 +33,4 @@
 term_rendering(Term, _Vars, _Options) --> {compound(Term),Term=html(_)}, html(Term).
 
 :- endif.
+

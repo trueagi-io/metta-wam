@@ -101,3 +101,4 @@ list_to_lst(N=V,Tmpl):-!,assertion(atom(N)),!,Tmpl=..[N,V].
 list_to_lst(F/A,Tmpl):-!,assertion((atom(F),integer(A))),functor(Tmpl,F,A).
 list_to_lst(Tmpl,Tmpl).
 
+

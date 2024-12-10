@@ -555,3 +555,4 @@ term_upcase(Value,UC2):-catch(string_upper(Value,UC2),_,(format(string(UC1),'~w'
 		  ic_text/1, xvarx/1, is_mv/1, multivar/1)).
 :- fixup_exports.
 
+

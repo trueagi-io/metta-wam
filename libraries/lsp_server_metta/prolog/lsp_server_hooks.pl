@@ -30,3 +30,4 @@
 :-     multifile(user:metta_file_buffer/7).
 :-       dynamic(user:metta_file_buffer/7).
 
+

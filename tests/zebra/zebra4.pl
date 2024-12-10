@@ -175,3 +175,4 @@ append_cons('Nil', List2, List2).
 append_cons('Cons'(H, T), List2, 'Cons'(H, T2)) :-
     append_cons(T, List2, T2).
 
+

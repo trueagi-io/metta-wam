@@ -292,3 +292,4 @@ simplify_obo_arg(I,O):- atom_concat(O,' ',I),!.
 simplify_obo_arg(I,O):- atom_number(I,O),!.
 
 
+

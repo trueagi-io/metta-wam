@@ -297,3 +297,4 @@ colourise_terms_to_position(Queue, File, Stream, Prev, End) :-
     -> true
     ; colourise_terms_to_position(Queue, File, Stream, Line-Char, End)
     ).
+

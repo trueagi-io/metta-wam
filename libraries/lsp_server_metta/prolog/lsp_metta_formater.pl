@@ -141,3 +141,4 @@ sub_atom_count(Line, Char, Count) :-
     include(=(Char), Chars, CharList),
     length(CharList, Count).
 
+

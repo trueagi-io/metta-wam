@@ -45,3 +45,4 @@ freeze_atom_concat(L,R,LR):- freeze(atom_concat(L,R,LR)).
 
 :- fixup_exports.
 
+

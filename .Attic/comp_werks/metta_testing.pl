@@ -1175,3 +1175,4 @@ fn test_types_in_metta() {
         assert_eq!(result, bind_set![{object: expr!("baloon"), color: expr!("blue")}]);
     }
 
+

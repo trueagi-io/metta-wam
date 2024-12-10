@@ -93,3 +93,4 @@ user:expand_query(Goal, Expanded, Bindings, ExpandedBindings):- fail,
 
 :- fixup_exports.
 
+

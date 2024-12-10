@@ -348,3 +348,4 @@ extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
     atomic_list_concat(CodeLines, '\n', Code).  % Combine the extracted lines into a single code string.
 
 
+

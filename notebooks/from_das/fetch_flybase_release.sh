@@ -45,3 +45,4 @@ if validate_url $URL; then
   else
     echo "Couldn't find release file"
 fi
+

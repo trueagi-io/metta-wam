@@ -68,3 +68,4 @@ user:term_expansion(MIN,P,OUT,PO):-
    PO = P.
 
 :- set_prolog_flag(gvs_syntax,false).
+

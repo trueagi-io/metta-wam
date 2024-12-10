@@ -1432,3 +1432,4 @@ end_of_file.
         subst(Convert, ConvertFunction, Result, Converting),  % Substitute AsFunction by Result in Convert
         f2p(Depth,HeadIs,RetType,RetResult, (AsPred, Converting), Converted).  % Proceed with the conversion of the remaining terms
 
+

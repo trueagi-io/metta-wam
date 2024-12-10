@@ -1177,3 +1177,4 @@ longest_string_acc([H|T], Acc, Longest) :-
     (LenH > LenAcc -> longest_string_acc(T, H, Longest); longest_string_acc(T, Acc, Longest)).
 %
 
+

@@ -2174,3 +2174,4 @@ longest_string_acc([H|T], Acc, Longest) :-
         longest_string_acc(T, Acc, Longest)  % Keep the current longest.
     ).
 
+

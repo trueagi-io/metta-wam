@@ -477,3 +477,4 @@ properties('&corelib','charsToString', [string_operations, qhelp("Convert a list
 properties('&corelib','format-args', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]).
 properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).
 
+

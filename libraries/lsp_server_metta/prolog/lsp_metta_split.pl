@@ -133,3 +133,4 @@ split_text_single_lines(FullText,SplitText) :-
 coalesce_text_d4(SplitText,FullText) :-
     maplist(extract_line_entry,SplitText,Strings),
     concat_strings(Strings,FullText).
+

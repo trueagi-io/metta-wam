@@ -491,3 +491,4 @@ handle_goal(Goal,Vs,success(ID, Vs, false)) :-
     pengine_destroy(ID, []).
 
 :- test_remote_logicmoo2.
+

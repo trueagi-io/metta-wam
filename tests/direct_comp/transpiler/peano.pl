@@ -23,3 +23,4 @@ nspiler_peano_1722089372_5160968(A,[:,B,[C,D,E,F,G,H]]):-nspiler_peano_172208937
 nspiler_peano_1722089372_5160968(1,=,t('Add',_x,'Z'),_x).
 nspiler_peano_1722089372_5160968(1,=,t('Add',_x,t('S',_y)),t('Add',t('S',_x),_y)).
 :-eval_Line(['Add',['S',['S','Z']],['S',['S',['S','Z']]]],nspiler_peano_1722089372_5160968,2).
+

@@ -707,3 +707,4 @@ symbol_reference_uri(Symbol, Location) :-
         uri: Uri,                      % Document URI for the symbol reference
         range: JRange                  % Range within the document
     }.
+

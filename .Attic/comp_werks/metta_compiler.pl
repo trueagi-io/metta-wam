@@ -1480,3 +1480,4 @@ write_clause(Stream, Clause) :-
     nl(Stream).
 
 
+

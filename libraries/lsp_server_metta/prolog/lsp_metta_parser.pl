@@ -268,3 +268,4 @@ annotated_is_delimiter(Char) :-
     char_type(Char, space) ;  % Space is a delimiter.
     arg(_, v('(', ')', end_of_file), Char).  % Other delimiters include parentheses and end of file.
 
+

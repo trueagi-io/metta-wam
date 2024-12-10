@@ -598,3 +598,4 @@ eqmember(E,List):-copy_term_numvars(E:List,E0:List0),member(E0,List0).
 %
 copy_term_numvars(OLD,NEWO):-copy_term_nat(OLD,NEW),numbervars(NEW,0,_),!,NEW=NEWO.
 
+

@@ -295,3 +295,4 @@ trace_eval(P4,TNT,D1,Self,X,Y):-
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
 
+

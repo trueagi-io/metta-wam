@@ -26,3 +26,4 @@ derives(disj_i1(D), Gamma, disj(Phi, Psi)) :- derives(D, Gamma, Phi).
 derives(disj_i2(D), Gamma, disj(Phi, Psi)) :- derives(D, Gamma, Psi).
 derives(disj_e(A, B, C), Gamma, Xi) :- derives(A, Gamma, disj(Phi, Psi)), derives(B, [Phi | Gamma], Xi), derives(C, [Psi | Gamma], Xi).
 
+

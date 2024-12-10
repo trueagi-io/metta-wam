@@ -234,3 +234,5 @@ complete -F _mettalog_autocomplete MeTTa
 
 
 
+
+

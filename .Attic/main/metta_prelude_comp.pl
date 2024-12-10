@@ -240,3 +240,4 @@ metta_defn_ES([call,A,B,C],[ chain,
 % 1,264,919 inferences, 0.139 CPU in 0.140 seconds (99% CPU, 9074539 Lips)
 % (=  metta_prelude.metta 0)
 
+

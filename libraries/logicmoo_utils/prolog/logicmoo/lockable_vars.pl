@@ -250,3 +250,4 @@ test_slock(yes,_Else,InSLock,Sorted,Value):-
   InSLock = slock(InLock,Else,Sorted),
   check_slock(InLock,Else,InSLock,Sorted,Value).
 */
+

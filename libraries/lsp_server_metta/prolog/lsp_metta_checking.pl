@@ -133,3 +133,4 @@ sub_atom_count(Line, Char, Count) :-
     length(CharList, Count).
 
 
+

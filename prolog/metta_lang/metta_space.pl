@@ -2325,3 +2325,4 @@ alpha_unify(What, What0) :-
     What =@= What0,  % Check structural equivalence.
     % If the terms are non-variable, unify them.
     (nonvar(What) -> What = What0; What == What0).
+

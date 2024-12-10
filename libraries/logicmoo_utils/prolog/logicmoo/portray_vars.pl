@@ -1114,3 +1114,4 @@ user:portray(Term):- %JUNIT  \+ tracing,
 :- nb_setval('$variable_names',[]).
 
 
+

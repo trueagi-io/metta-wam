@@ -552,3 +552,4 @@ assert_MeTTa(Data):- !, heartbeat, functor(Data,F,A), A>=2,
 
 %:- dynamic((metta_type/3,metta_defn/3,get_metta_atom/2)).
 
+

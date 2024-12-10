@@ -208,3 +208,4 @@ disable_body_reorder:- disable_in_file(do_body_reorder).
 % some tests
 
 :- endif.
+

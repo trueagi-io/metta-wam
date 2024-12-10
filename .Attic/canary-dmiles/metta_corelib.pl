@@ -158,3 +158,4 @@ metta_atom_corelib( [:, 'get-type', [->, 'Atom', 'Atom']]).
 metta_atom_corelib( [:, 'get-type', [->, 'Atom', 'Atom', 'Atom']]).
 metta_atom_corelib( [:, '==', [->, T, T, 'Bool']]).
 metta_atom_corelib( [:, ':', '%Undefined%']).
+

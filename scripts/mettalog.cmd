@@ -38,3 +38,4 @@ IF "!FILE_FOUND!"=="0" IF "!REPL_FOUND!"=="0" (
 REM Run the command with all arguments
 swipl -l "%METTALOG_DIR%src\main\metta_interp.pl" -- --python=false !ALL_ARGS!
 
+

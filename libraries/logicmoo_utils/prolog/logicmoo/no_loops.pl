@@ -377,3 +377,4 @@ loop_check_term(Call,Key,LoopCaught):-
     each_call_cleanup(trie_insert(Trie, Key, 1),Call,trie_insert(Trie, Key, 0)).
 */
 
+

@@ -1153,3 +1153,4 @@ rebuild_pred_into(OMC,NMC,AssertZ,OtherTraits):-
 :- create_prolog_flag(mpred_te,true,[keep(true)]).
 
 :- fixup_exports.
+

@@ -465,3 +465,4 @@ term_upcase(Value,UC2):-catch(string_upper(Value,UC2),_,(format(string(UC1),'~w'
 
 :- fixup_exports.
 
+

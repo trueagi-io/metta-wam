@@ -122,3 +122,4 @@ pred_info(H,Props):- get_functor(H,F,_),findall(PP,call_u(mpred_isa(F,PP)),Props
 
 
 :- fixup_exports.
+

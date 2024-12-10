@@ -1570,3 +1570,4 @@ solve_quadratic(A, B, I, J, K) :-
     %X in -1000..1000,  % Define a domain for X
      (X + A) * (X + B) #= I*X*X + J*X + K.  % Define the quadratic equation
     %label([X]).  % Find solutions for X
+

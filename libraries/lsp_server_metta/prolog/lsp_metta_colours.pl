@@ -88,3 +88,4 @@ get_document_symbol_aux2(exec(H),FlatList) :- !,get_document_symbol_aux2(H,FlatL
 get_document_symbol_aux2(a(L,C0,C1,Sym),FlatList) :-
     (get_atom_kind_name(Sym,Type,Name),Type>0 -> FlatList=[x(L,C0,C1,Type,Name)] ; FlatList=[]).
 get_document_symbol_aux2(_,[]).
+

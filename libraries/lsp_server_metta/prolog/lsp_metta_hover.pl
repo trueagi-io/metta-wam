@@ -525,3 +525,4 @@ prefix_pred(MC,Term, MCT) :- Term =.. [F | Args], atom_concat(MC, F, MF), MCT =.
 
 ?- f2r(Res, [length, [1, 2, 3]], Terms), prefix_pred('mc__',Terms,TermsMC).
 
+

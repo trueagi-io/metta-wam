@@ -70,3 +70,4 @@ vhar:attr_unify_hook(vhar(_Var,Proxy,Out,Goals),_Value):- vhar(Proxy,New,Goals),
 
 :- fixup_exports.
 
+

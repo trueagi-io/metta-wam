@@ -7,3 +7,4 @@ packager( 'logicmoo/LogicMoo', 'https://github.com/logicmoo/' ).
 maintainer( 'logicmoo', 'https://github.com/logicmoo/' ).
 home('https://github.com/logicmoo/predicate_streams').
 autoload(true).
+

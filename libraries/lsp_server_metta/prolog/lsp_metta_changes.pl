@@ -99,3 +99,4 @@ skip(N) --> [C,_,_,_], { C#>=240, plus(N0, 2, N) }, skip(N0).
 
 line([0'\n]) --> [0'\n], !.
 line([C|Cs]) --> [C], line(Cs).
+

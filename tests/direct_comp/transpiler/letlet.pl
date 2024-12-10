@@ -21,3 +21,4 @@ spiler_letlet_1722089421_1927977(A,[:,B,[C,D,E,F]]):-spiler_letlet_1722089421_19
 spiler_letlet_1722089421_1927977(A,[:,B,[C,D,E,F,G]]):-spiler_letlet_1722089421_1927977_iz(A,B,C,D,E,F,G).
 spiler_letlet_1722089421_1927977(A,[:,B,[C,D,E,F,G,H]]):-spiler_letlet_1722089421_1927977_iz(A,B,C,D,E,F,G,H).
 :-eval_Line([let,_T,[1.0,0.9],['let*',[[['$f1',_c1],_T]],['$f1',_c1]]],spiler_letlet_1722089421_1927977,1).
+

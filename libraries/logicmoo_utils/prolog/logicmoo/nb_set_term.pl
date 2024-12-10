@@ -75,3 +75,4 @@ find_subterm(P,Seg,S):- compound(P), sub_term(S,P),nonvar(S),Seg=S.
 
 :- fixup_exports.
 
+

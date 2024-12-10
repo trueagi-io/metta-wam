@@ -872,3 +872,4 @@ system:term_expansion(In,P,Out,PO):- notrace( current_prolog_flag(predicate_inhe
    notrace((nb_current('$term', Term),In == Term ; (Term=(Head:-_),In == Head))),
    expand_globals(In,Out),P=PO.
 */
+

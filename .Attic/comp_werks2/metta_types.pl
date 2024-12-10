@@ -2219,3 +2219,4 @@ is_math_op('zerop', 1, exists).     % Test for Zero
 %:- load_pfc_file('metta_ontology.pl.pfc').
 
 
+

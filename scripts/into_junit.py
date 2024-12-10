@@ -125,3 +125,4 @@ if __name__ == "__main__":
     move_filesP = sys.argv[3]
     junit_xml = generate_junit_xml(input_file, timestamp, move_filesP)
     print(junit_xml)
+

@@ -513,3 +513,4 @@ dictoo:is_dot_hook(M,Self,Func,Value):- dot_cfg:using_dot_type(_,M) -> is_oo_hoo
 
 
 
+

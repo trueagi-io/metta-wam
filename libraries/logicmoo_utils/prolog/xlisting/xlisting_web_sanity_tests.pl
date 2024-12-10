@@ -16,3 +16,4 @@ test(1):- must_once(fail).
 all_tests:- forall(test(_),true).
 
 :- listing(test(_)).
+

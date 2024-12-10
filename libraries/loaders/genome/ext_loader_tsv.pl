@@ -385,3 +385,4 @@ load_fb_data(ArgTypes,File,Stream,Fn,Sep, is_swipl):-
 
 
 
+

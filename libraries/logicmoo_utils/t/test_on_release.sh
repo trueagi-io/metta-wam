@@ -26,3 +26,4 @@ CMD_TIMEOUT=5m
 lmoo-junit "$GLOB"
 
 )
+
