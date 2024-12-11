@@ -233,6 +233,7 @@ svar_fixname('block'(Name), UP) :-
     !, svar_fixvarname(Name, UP).
 
 svar_fixname('_', '_') :- !.
+svar_fixname('', '__') :- !.
 
 svar_fixname(SVAR, SVARO) :-
     % If the name is already valid, return it as is.
@@ -282,8 +283,8 @@ svar_fixname(I,O):-
 fix_varcase(Word, Word) :-
     % If the word starts with '_', leave it unchanged.
     atom_concat_or_rtrace('_', _, Word), !.
-
 fix_varcase(Word, WordC) :- string(Word),atom_string(Atom,Word),!,fix_varcase(Atom, WordC).
+fix_varcase('', '__') :- !.
 fix_varcase(Word, WordC) :- atom(Word),downcase_atom(Word, UC),Word=UC,atom_concat('_',UC,WordC),!.
 fix_varcase(Word, WordC) :-
     % Convert the first letter to uppercase.
@@ -809,10 +810,13 @@ cont_sexpr_once(EndChar,  Stream, Item):-
     skip_spaces(Stream),  % Ignore whitespace before reading the expression.
     get_char(Stream, Char),
     (   Char = '(' -> read_list(')', Stream, Item)  % If '(', read an S-expression list.
-    ;   Char = '[' -> (read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
+    ;  paren_pair(Char,EndOfParen,Functor) -> (read_list(EndOfParen, Stream, It3m), Item = [Functor,It3m])  % If '[' or '{', read an S-expression list.
+ %  ;  paren_pair(_,Char,_) -> (sformat(Reason,"Unexpected start character: '~w'",[Char]), throw_stream_error(Stream,  syntax_error(unexpected_char(Char),Reason)))
     ;   Char = '{' -> (read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
     ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
     ;  (Char = '!', nb_current('$file_src_depth', 0)) -> (cont_sexpr_once(EndChar, Stream, Subr), Item = exec(Subr))  % Read called directive
+    ;  (Char = '#', peek_char(Stream, '(')) -> (cont_sexpr_once(EndChar, Stream, Subr), univ_maybe_var(Item,Subr))  % Read SExpr as Prolog Expression
+    ;  (Char = '#', peek_char(Stream, '{')) -> (read_prolog_syntax(Stream, Subr), Subr= {Item})  %  Read Prolog Expression
     ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
     ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
     ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
@@ -822,6 +826,41 @@ cont_sexpr_once(EndChar,  Stream, Item):-
 can_do_level(0).
 can_do_level(_).
 
+paren_pair('(',')',_).
+paren_pair('{','}','{...}').
+paren_pair('[',']','[...]').
+
+% #( : user #(load_metta_file &self various_syntaxes.metta) )
+univ_maybe_var(Item,[F|Subr]):- is_list(Subr), atom(F), Item =.. [F|Subr],!.
+univ_maybe_var('#'(Subr),Subr):- !.
+
+read_prolog_syntax(Stream, Clause) :-
+    % Stop if at the end of the stream.
+    at_end_of_stream(Stream), !, Clause = end_of_file.
+read_prolog_syntax(Stream, Clause) :-
+    % Handle errors while reading a clause.
+    catch(read_prolog_syntax_0(Stream, Clause), E,
+           throw_stream_error(Stream,E)), !.
+read_prolog_syntax_0(Stream, Term) :-
+    % Set options for reading the clause with metadata.
+    Options = [ variable_names(Bindings),
+                term_position(Pos),
+                subterm_positions(RawLayout),
+                syntax_errors(error),
+                comments(Comments),
+                module(trans_mod)],
+    % Read the term with the specified options.
+    read_term(Stream, Term, Options),
+    (   (fail, Term == end_of_file)
+    ->  true
+    ;   % Store term position and variable names.
+        b_setval('$term_position', Pos),
+        b_setval('$variable_names', Bindings),
+        % Display information about the term.
+        maplist(star_vars,Bindings),
+        nop(display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments))).
+
+star_vars(N=V):- ignore('$'(N) = V).
 
 %!  maybe_name_vars(+List) is det.
 %
@@ -973,6 +1012,7 @@ import_op(Op):- atom_contains(Op,"load").
 % @arg Reason The reason for the error.
 throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
+    trace,
     throw(stream_error(Line:Col:CharPos, Reason)).
 
 %! read_single_line_comment(+Stream:stream) is det.
@@ -1272,7 +1312,7 @@ read_symbolic_cont(EndChar,  Stream, Chars) :-
 % @arg Char Character to check.
 is_delimiter(Char) :-
     char_type(Char, space) ;  % Space is a delimiter.
-    arg(_, v('(', ')', end_of_file), Char).  % Other delimiters include parentheses and end of file.
+    arg(_, v( /*'(', ')', */ end_of_file), Char).  % Other delimiters include parentheses and end of file.
 
 % Ensure the program runs upon initialization.
 :- initialization(main_init, main).
