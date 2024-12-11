@@ -1166,7 +1166,7 @@ using_all_spaces:- nb_current(with_all_spaces,t).
 metta_container_sub_part(Container,Item):- is_space(Container),!,metta_atom(Container,Item).
 metta_container_sub_part(Container,Item):-  is_list(Container),!,member(Item,Container).
 
-% GUESS `¯\\_ :( _/¯` what version of unify they are trying to use? ¯(°_o)/¯
+% GUESS `Â¯\\_ :( _/Â¯` what version of unify they are trying to use? Â¯(Â°_o)/Â¯
 
 % 1) If Arg1 is a space, then we redirect to a `match` operation.
 eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- is_space(Arg1), !,
