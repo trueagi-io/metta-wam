@@ -9,6 +9,11 @@
 - [Tests](tests/) and [Result Links](reports/TEST_LINKS.md)
 - [Overview Documentation](./docs/OVERVIEW.md).
 
+Repos:
+- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/)  Interpeter/Compiler
+- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Test Suite
+
+
 ## Getting Started
 
 ### :gear: Installation
