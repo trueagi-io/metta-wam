@@ -1462,7 +1462,7 @@ ugtrace(_Why, G):- tracing, !, notrace, rtrace(G), trace.
 % If testing is enabled, handle the failure and abort.
 ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
 % Otherwise, log the reason, trace the goal G, and abort.
-ugtrace(Why, G):- fbugio(Why), ggtrace(G), throw('$aborted').
+ugtrace(Why, G):- fbugio(Why), nortrace, notrace, trace, ggtrace(G), throw('$aborted').
 % ugtrace(Why,G):- ggtrace(G).
 
 %!  give_up(+Why, +N) is det.
