@@ -855,8 +855,6 @@ eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check
 
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
-eval_20(Eq,RetType,Depth,Self,['unify',Space|Args],Res):- !,
-  eval_space_start(Eq,RetType,Depth,Self,['match',Space|Args],Res).
 
 eval_space_start(Eq,RetType,_Depth,_Self,[_Op,_Other,Atom],Res):-
   (Atom == [] ;  Atom =='Empty';  Atom =='Nil'),!,make_nop(RetType,'False',Res),check_returnval(Eq,RetType,Res).
@@ -1165,12 +1163,27 @@ using_all_spaces:- nb_current(with_all_spaces,t).
 % =================================================================
 % =================================================================
 % =================================================================
+sub_part(Container,Item):- is_space(Container),!,metta_atom(Container,Item).
+sub_part(Container,Item):-  is_list(Container),!,member(Item,Container).
 
-eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then,Else],Res):- !,
-   eval_args(Eq,'Bool',Depth,Self,['==',X,Y],TF),
-   (is_True(TF)
-     -> eval_args(Eq,RetType,Depth,Self,Then,Res)
-     ;  eval_args(Eq,RetType,Depth,Self,Else,Res)).
+eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- is_space(Arg1), !,
+  eval_args(Eq,RetType,Depth,Self,['match',Arg1,Arg2|Args],Res).
+% require someone declared this a container of some sort?
+eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- nonvar(Arg1), nonvar(Arg2), get_type(Depth,Self,Arg1,'Container'),
+  eval_args(Eq,RetType,Depth,Self,['container-unify',Arg1,Arg2|Args],Res).
+eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- !,
+  eval_args(Eq,RetType,Depth,Self,['if-unify',Arg1,Arg2|Args],Res).
+
+eval_20(Eq,RetType,Depth,Self,['container-unify',Arg1,Arg2,Then|ElseL],Res):-
+   ((sub_part(Arg1,Part),eval_args_true(Eq,'Bool',Depth,Self,['==',Part,Arg2]))
+    *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
+    ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
+
+eval_20(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
+   (eval_args_true(Eq,'Bool',Depth,Self,['==',X,Y])
+     *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
+    ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
+
 
 
 eval_20(Eq,RetType,Depth,Self,['if-decons-expr',HT,H,T,Then,Else],Res):- !,
