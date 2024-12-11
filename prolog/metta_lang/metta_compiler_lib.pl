@@ -34,17 +34,14 @@ mc__or(_,_,'True').
 
 'mc__cdr-atom'([_|T],T).
 
-'mc__cons-atom'(A,B,[A|B]).
+'mc__cons-atom'(A,B,[AA|B]) :- as_p1(A,AA).
 
 %%%%%%%%%%%%%%%%%%%%% misc
+
+'mc__empty'(_) :- fail.
 
 'mc__stringToChars'(S,C) :- string_chars(S,C).
 
 'mc__charsToString'(C,S) :- string_chars(S,C).
 
 mc__assertEqualToResult(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
-
-
-
-mc__empty(_):-!,fail.
-
