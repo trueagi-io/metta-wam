@@ -1168,13 +1168,13 @@ metta_container_sub_part(Container,Item):-  is_list(Container),!,member(Item,Con
 
 % GUESS `¯\\_ :( _/¯` what version of unify they are trying to use? ¯(°_o)/¯
 
-% 1) If Arg1 is a space, then we redirect to a 'match' operation.
+% 1) If Arg1 is a space, then we redirect to a `match` operation.
 eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- is_space(Arg1), !,
   eval_args(Eq,RetType,Depth,Self,['match',Arg1,Arg2|Args],Res).
-% 2) If Arg1 and Arg2 are nonvars and Arg1 is declared a 'Container', then use 'container-unify'
+% 2) If Arg1 and Arg2 are nonvars and Arg1 is declared a `Container`, then use `container-unify`
 eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- nonvar(Arg1), nonvar(Arg2), get_type(Depth,Self,Arg1,'Container'),
   eval_args(Eq,RetType,Depth,Self,['container-unify',Arg1,Arg2|Args],Res).
-% 3) Otherwise, default to using 'if-unify' for the unify operation.
+% 3) Otherwise, default to using `if-unify` for the unify operation.
 eval_20(Eq,RetType,Depth,Self,['unify',Arg1,Arg2|Args],Res):- !,
   eval_args(Eq,RetType,Depth,Self,['if-unify',Arg1,Arg2|Args],Res).
 
