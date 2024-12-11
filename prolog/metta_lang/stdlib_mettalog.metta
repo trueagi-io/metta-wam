@@ -141,32 +141,32 @@ This reverse functionality is made possible because predicates can describe rela
 
 For example:
   ; Declare the built-in predicate `max` with arity 3
-  (predicate-arity max 3)
+  !(add-atom &dyn-space (predicate-arity max 3))
 
 
   ; Enable `max` as a function
-  (add-atom &dyn-space (function-arity max 2))
+  !(add-atom &dyn-space (function-arity max 2))
 
 
   ; Define the rules for `max`
-  (add-atom &dyn-space (max $X $Y $X) (<= $X $Y))
-  (add-atom &dyn-space (max $X $Y $Y) (> $X $Y))
+  !(add-atom &dyn-space (= (max $X $Y $X) (<= $X $Y)))
+  !(add-atom &dyn-space (= (max $X $Y $Y) (> $X $Y)))
 
 
   ; Using `max` declaratively as a predicate
-  (match &dyn-space (max (5 10) $max)
+  !(match &dyn-space (max (5 10) $max)
          (The maximum is $max))
   ; This resolves `$max = 10`.
 
 
   ; Using `max` procedurally as a function
-  (max 5 10)
+  !(max 5 10)
   ; Returns: 10.
 
 
   ; Reverse execution with `max`
-  (== (max $a $b) 10) ; as a function 
-  (max $a $b 10) ; or as a predicate
+  !(== (max $a $b) 10) ; as a function 
+  !(max $a $b 10) ; or as a predicate
   ; Returns: a pair such as (8 10) or (10 5) where the maximum is 10.
 
 
