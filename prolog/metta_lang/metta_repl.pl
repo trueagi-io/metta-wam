@@ -639,7 +639,8 @@ repl_read_next(Accumulated, Expr) :-
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
-    prompt(_,'|'),
+    format(atom(T),'| ~t',[]),
+    prompt(_,T),
     % Call repl_read_next with the new line concatenated to the accumulated input.
     repl_read_next(Accumulated, Line, Expr).
 
