@@ -1539,6 +1539,7 @@ convert_datalog_to_loadable(DatalogFile, QlfFile) :-
 %     % Convert "example.metta" to a `.qlf` format.
 %     ?- convert_metta_to_loadable('example.metta', QlfFile).
 %
+convert_metta_to_loadable(_Filename, _QlfFile) :- !, fail.
 convert_metta_to_loadable(_Filename, _QlfFile) :-
     % Use fast buffer, so skip Datalog conversion
     use_fast_buffer, !, fail.
@@ -2573,7 +2574,7 @@ new_parse_sexpr_metta_IO1(S, F1):-
               at_end_of_stream(S), !, F1 = end_of_file.
 new_parse_sexpr_metta_IO1(S, F1):-
               % Skip whitespace characters and continue parsing.
-              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
+              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), new_parse_sexpr_metta_IO1(S, F1).
 new_parse_sexpr_metta_IO1(S, _F1):-
               % Read and assert position and item details for non-whitespace characters.
               S = InStream,
@@ -2596,7 +2597,7 @@ new_parse_sexpr_metta_IO1(_S, F1):-
 %   @arg S   The input stream to read from.
 %   @arg F1  The resulting parsed form.
 %
-new_parse_sexpr_metta_IO(S, F1):- new_parse_sexpr_metta_IO1(S, F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S, F1))).
+new_parse_sexpr_metta_IO(S, F1):- new_parse_sexpr_metta_IO1(S, F1),!. % nop(wdmsg(new_parse_sexpr_metta_IO1(S, F1))).
 
 %!  in2_stream(+N1, -S1) is nondet.
 %
