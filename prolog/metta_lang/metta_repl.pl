@@ -228,7 +228,8 @@ repl1 :-
 %
 repl2 :-
     % Load the REPL history and clean it up if necessary.
-    load_and_trim_history,
+    ignore(catch(load_and_trim_history,_,true)),
+
     % Begin an infinite loop using repeat to keep REPL active.
     repeat,
     % Reset internal caches for better performance.
@@ -637,6 +638,8 @@ repl_read_next(NewAccumulated, Expr) :-
 repl_read_next(Accumulated, Expr) :-
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
+    % switch prompts after the first line is read
+    prompt(_,'|'),
     % Call repl_read_next with the new line concatenated to the accumulated input.
     repl_read_next(Accumulated, Line, Expr).
 
@@ -704,7 +707,7 @@ add_history_string(Str) :-
     current_input(Input),
     % If the input is from a terminal, add Str to the history using el_add_history/2.
     (((stream_property(Input, tty(true)))) ->
-        ((notrace(ignore(el_add_history(Input,Str)))))
+        ((notrace(ignore(catch(el_add_history(Input,Str),_,true)))))
     ;
         % Otherwise, do nothing.
         true), !.
