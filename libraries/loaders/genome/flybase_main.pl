@@ -1,24 +1,133 @@
+/*
+ * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
+ * Description: This file is part of the source code for a transpiler designed to convert
+ *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
+ *              optimizing and transforming function/logic programs. It handles different
+ *              logical constructs and performs conversions between functions and predicates.
+ *
+ * Author: Douglas R. Miles
+ * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
+ * License: LGPL
+ * Repository: https://github.com/trueagi-io/metta-wam
+ *             https://github.com/logicmoo/hyperon-wam
+ * Created Date: 8/23/2023
+ * Last Modified: $LastChangedDate$  # You will replace this with Git automation
+ *
+ * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
+ *        on how to contribute or use this project, please refer to the repository README or the project documentation.
+ *
+ * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
+ *               file in the repository.
+ *
+ * Notes:
+ * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
+ * - This project is under active development, and we welcome feedback and contributions.
+ *
+ * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+%********************************************************************************************* 
+% PROGRAM FUNCTION:  This is the main flybase program.
+%*********************************************************************************************
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Set the character encoding for this Prolog file to ISO Latin-1.
 :- encoding(iso_latin_1).
+
+% Ensure that all buffered output is flushed immediately.
 :- flush_output.
-:- setenv('RUST_BACKTRACE',full).
+
+% Set the 'RUST_BACKTRACE' environment variable to 'full' for detailed Rust error traces.
+:- setenv('RUST_BACKTRACE', full).
+
+% Declare fb_pred/2 as a multifile predicate, allowing its definition to be spread across multiple files.
 :- multifile(fb_pred/2).
+
+% Allow fb_pred/2 clauses to be non-contiguous in the source code.
 :- discontiguous(fb_pred/2).
+
+% Define fb_pred/2 as a dynamic predicate, allowing its clauses to be added or removed at runtime.
 :- dynamic(fb_pred/2).
 
+%!  fb_stats is det.
+%
+%   Collects and reports FlyBase statistics by invoking the `metta_stats/0` predicate.
+%   This predicate succeeds deterministically after executing `metta_stats/0`.
+%
+%   @example Usage:
+%       ?- fb_stats.
+%       % Executes metta_stats and completes successfully.
+%
+fb_stats :- metta_stats, !.
 
-
-
-fb_stats:- metta_stats,!.
-
-'&flybase':for_metta('&flybase',P):- fb_pred_nr(F,A),current_predicate(F/A),length(L,A),P=[F|L],apply(F,L).
+%!  '&flybase':for_metta(+Entity, -Predicate) is det.
+%
+%   Dynamically resolves FlyBase predicates based on the given entity ('&flybase') and 
+%   constructs a callable predicate term.
+%
+%   This predicate checks if a predicate with the required arity exists, creates a 
+%   list of arguments of the correct length, and combines them with the predicate name 
+%   into a single term. The predicate is then applied with the constructed arguments.
+%
+%   @arg Entity The FlyBase entity being handled (always '&flybase').
+%   @arg Predicate Unifies with the resolved predicate term `[F|L]`, where F is the 
+%        predicate name, and L is a list of arguments.
+%
+%   @example Usage:
+%       % Dynamically resolves and applies a FlyBase predicate.
+%       ?- '&flybase':for_metta('&flybase', P).
+%       P = [some_predicate_name, Arg1, Arg2, ...].
+%
+'&flybase' : for_metta('&flybase', P) :-
+    % Retrieve the name (F) and arity (A) of a FlyBase predicate.
+    fb_pred_nr(F, A),
+    % Check if a predicate with the name F and arity A is currently defined.
+    current_predicate(F/A),
+    % Create a list L of length A, representing the predicate arguments.
+    length(L, A),
+    % Combine the predicate name F and the arguments list L into the term P.
+    P = [F | L],
+    % Apply the predicate F with the arguments L.
+    apply(F, L).
 
 % ==============
 % OBO LOADER
 % ==============
-:- set_option_value(encoding,utf8).
+% Set the encoding option to UTF-8, ensuring that text is processed using the UTF-8 character encoding.
+:- set_option_value(encoding, utf8).
 %:- ensure_loaded('./obo_loader').
 %:- ensure_loaded(json_loader).
 
+% Ensure that the library `metta_interp` is loaded, providing access to its predicates and functionality.
 :- ensure_loaded(library(metta_interp)).
 
 % ==============
@@ -36,7 +145,25 @@ fb_stats:- metta_stats,!.
 :- set_option_value(samples_per_million,30).
 :- set_option_value(full_canon,true).
 
-
+%!  flybase_identifier(+Prefix, +EntityType) is det.
+%
+%   Maps FlyBase identifier prefixes to their corresponding biological or data entity types.
+%   Each prefix uniquely identifies an entity type, enabling classification and interpretation
+%   of FlyBase data. These mappings are essential for working with FlyBase datasets and 
+%   understanding the context of each entity.
+%
+%   @arg Prefix The FlyBase identifier prefix (e.g., 'FBgn', 'FBal').
+%   @arg EntityType The type of entity represented by the prefix (e.g., 'Gene', 'Allele').
+%
+%   @example
+%       % Mapping for genes and alleles:
+%       flybase_identifier('FBgn', 'Gene').
+%       flybase_identifier('FBal', 'Allele').
+%
+%       % Mapping for anatomy terms and developmental stages:
+%       flybase_identifier('FBbt', 'AnatomyTerm').
+%       flybase_identifier('FBdv', 'DevelopmentalStageTerm').
+%
 flybase_identifier('FBab', 'Aberration').
 flybase_identifier('FBal', 'Allele').
 flybase_identifier('FBba', 'Balancer').
@@ -66,7 +193,31 @@ flybase_identifier('FBte', 'TransgenicElement').
 flybase_identifier('FBtp', 'Transposon'). %flybase_identifier('FBtp', 'transgenic construct or natural transposon').
 flybase_identifier('FBtr', 'Transcript').
 
-% FlyBase prefixes
+%!  symbol_prefix(+Prefix, +Source, +Description) is det.
+%
+%   Maps symbol prefixes to their respective data sources and descriptions. 
+%   This predicate associates a prefix with a source and provides a textual 
+%   description, enabling classification and interpretation of biological or 
+%   ontological entities in FlyBase and related datasets.
+%
+%   FlyBase-specific prefixes are dynamically derived using `flybase_identifier/2`, 
+%   while other common prefixes are manually specified for OBO (Open Biomedical Ontology) 
+%   data sources.
+%
+%   @arg Prefix The prefix used in identifiers or entities (e.g., 'GO', 'DOID').
+%   @arg Source The source or database associated with the prefix (e.g., 'flybase', 'obo').
+%   @arg Description A textual description of the prefix, indicating its meaning or context 
+%        (e.g., 'Gene Ontology', 'Disease Ontology').
+%
+%   @example
+%       % FlyBase-specific prefixes:
+%       symbol_prefix(Prefix, flybase, Desc) :-
+%           flybase_identifier(Prefix, Desc).
+%
+%       % Common OBO prefixes:
+%       symbol_prefix('GO', obo, 'Gene Ontology').
+%       symbol_prefix('DOID', obo, 'Disease Ontology').
+%       symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 symbol_prefix(Prefix, flybase, Desc):- flybase_identifier(Prefix, Desc).
 % Some common OBO prefixes (Note: these are more generalized and not specific to FlyBase)
 symbol_prefix('GO', obo, 'Gene Ontology').
@@ -77,19 +228,70 @@ symbol_prefix('CHEBI', obo, 'Chemical Entities of Biological Interest').
 
 
 %:- abolish(gp_information/0).
-:- forall(retract(fb_pred(F,0)),abolish(F/0)).
+
+% Remove all fb_pred/2 predicates with arity 0 from the database and abolish their definitions.
+:- forall(retract(fb_pred(F, 0)), abolish(F/0)).
+
+% Ensure the `flybase_learn` module is loaded, providing its predicates and functionality.
 :- ensure_loaded(flybase_learn).
-:- prolog_load_context(directory, Here),
-   atom_concat(Here, '/*_loader.pl', Mask),
-   expand_file_name(Mask, Files),
-   maplist([File]>>load_files(File), Files).
+
+% Dynamically load all files matching the '*_loader.pl' pattern in the current directory.
+:- prolog_load_context(directory, Here),           % Retrieve the current directory.
+   atom_concat(Here, '/*_loader.pl', Mask),        % Create a file search pattern.
+   expand_file_name(Mask, Files),                  % Find all matching files.
+   maplist([File] >> load_files(File), Files).     % Load each file using load_files/1.
 
 %fbd(X,P):- fb_pred(F,A),functor(P,F,A),arg(_,P,X), no_repeats(P,call(P)).
-fbdead:- fb_pred_nr(F,A),functor(P,F,A),arg(_,P,xxxxxxxxxxxxxxxxx),no_repeats(P,call(P)),
- writeln(fbdead=P),fail.
+
+%!  fbdead is det.
+%
+%   Identifies and logs "dead" FlyBase predicates by attempting to construct and call 
+%   them with an invalid argument. A "dead" predicate is one that fails or is not 
+%   defined properly when invoked with test data.
+%
+%   This predicate iterates through all known FlyBase predicates, constructs a term with 
+%   an invalid argument, and checks if it can be successfully called. If a predicate is 
+%   identified as "dead," it is logged to the console. The predicate succeeds deterministically 
+%   after all possible predicates have been checked.
+%
+%   @example Usage:
+%       % Check for and log "dead" predicates.
+%       ?- fbdead.
+%       fbdead = some_predicate_name/arity.
+%
+fbdead :-
+    % Retrieve the name (F) and arity (A) of each FlyBase predicate.
+    fb_pred_nr(F, A),
+    % Construct a predicate term (P) with the given name and arity.
+    functor(P, F, A),
+    % Assign an invalid value ('xxxxxxxxxxxxxxxxx') to one of the predicate arguments.
+    arg(_, P, xxxxxxxxxxxxxxxxx),
+    % Ensure there are no duplicate checks or calls for the predicate.
+    no_repeats(P, call(P)),
+    % Log the "dead" predicate to the console.
+    writeln(fbdead = P),
+    % Force backtracking to continue checking other predicates.
+    fail.
+% Ensure fbdead/0 succeeds deterministically after all backtracking is complete.
 fbdead.
 
-
+%!  column_description(+ColumnName, +Description, +DataType, +Category) is det.
+%
+%   Provides metadata and attributes for specific FlyBase data columns. Each column
+%   is characterized by its name, a textual description, its data type, and a category
+%   or label for classification purposes. These mappings are crucial for interpreting
+%   and analyzing FlyBase datasets effectively.
+%
+%   @arg ColumnName The name of the column in the dataset (e.g., 'allele_FBal#', 'phenotype_name').
+%   @arg Description A detailed description of the column's purpose or content.
+%   @arg DataType The type of data the column holds (e.g., identifier, numeric, symbol, text, list, etc.).
+%   @arg Category A short label or classification for the column (e.g., 'Allele Identifier').
+%
+%   @example
+%       % Example for allele-related data columns:
+%       column_description('allele_FBal#', "Current FlyBase identifier (FBal#) of allele.", identifier, 'Allele Identifier').
+%       column_description('allele_symbol', "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
+%
 column_description('allele_FBal#', "Current FlyBase identifier (FBal#) of allele.", identifier, 'Allele Identifier').
 column_description('allele_symbol', "Current FlyBase allele symbol.", symbol, 'Allele Symbol').
 column_description('Bin_value', "The expression bin classification of this gene in this RNA-Seq experiment, based on RPKM value.", numeric, 'Expression Bin').
@@ -162,6 +364,22 @@ column_description(phenotype_name, "Phenotypic name associated with the genotype
 column_description(primary_FBid, "Primary FlyBase identifier for the object.", identifier, 'Object').
 column_description(reference, "Current FlyBase identifer (FBrf) of publication from which data came.", identifier, 'Publication Identifier').
 
+%!  column_names(+Alias, +Columns) is det.
+%
+%   Specifies the column names associated with each dataset in FlyBase. 
+%   The predicate associates an alias with a list of column names, which define the structure
+%   and attributes of the dataset represented by the alias.
+%
+%   Each column can be represented as a simple string or as a `listOf/2` term to indicate a 
+%   compound field with delimiters.
+%
+%   @arg Alias A symbolic name identifying the dataset (e.g., 'allele_genetic_interactions').
+%   @arg Columns A list of column names or compound fields defining the structure of the dataset.
+%
+%   @example
+%       % Columns for allele genetic interactions data.
+%       column_names('allele_genetic_interactions', ['allele_symbol', 'allele_FBal#', 'interaction', 'FBrf#']).
+%
 column_names('allele_genetic_interactions', ['allele_symbol', 'allele_FBal#', 'interaction', 'FBrf#']).
 column_names('fb_synonym', ['primary_FBid', 'organism_abbreviation', 'current_symbol', 'current_fullname', listOf(fullname_synonym, ['|']), listOf(symbol_synonym, ['|'])]).
 column_names('gene_genetic_interactions', [listOf('Starting_gene_symbol', ['|']), listOf('Starting_gene_FBgn', ['|']), listOf('Interacting_gene_symbol', ['|']), listOf('Interacting_gene_FBgn', ['|']), 'Interaction_type', 'Publication_FBrf']).
@@ -171,9 +389,47 @@ column_names('genotype_phenotype_data', [listOf('genotype_symbols', ['/', ' ']),
 column_names('pmid_fbgn_uniprot', ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
 column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
 
+%!  file_location(+Alias, +PathPattern) is det.
+%
+%   Defines the location of specific data files associated with FlyBase data processing.
+%   Each file location is represented by an alias and a corresponding path pattern
+%   that may include wildcards to reference multiple related files.
+%
+%   @arg Alias A symbolic name representing the data file category or purpose.
+%        Example: 'allele_genetic_interactions', 'genotype_phenotype_data'.
+%   @arg PathPattern A file path pattern (including wildcards) indicating the location
+%        or naming convention of the data files.
+%
+%   @example
+%       % File location for allele genetic interactions data.
+%       file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
+%
+%       % File location for genotype-phenotype data.
+%       file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
+%
 file_location('allele_genetic_interactions', "path_to_file/allele_genetic_interactions_*.tsv").
 file_location('genotype_phenotype_data', "path_to_file/genotype_phenotype_data_*.tsv").
 
+%!  primary_column(+DatasetAlias, +PrimaryColumn) is det.
+%
+%   Associates each dataset alias with its primary column. The primary column serves as the
+%   unique identifier or main reference point for each dataset, facilitating indexing and
+%   lookup operations in FlyBase. These mappings are essential for efficient data handling
+%   and querying in analyses.
+%
+%   @arg DatasetAlias The alias representing the dataset (e.g., 'allele_genetic_interactions').
+%   @arg PrimaryColumn The primary column for the dataset, typically an identifier or key
+%        (e.g., 'allele_FBal#').
+%
+%   @example
+%       % Primary columns for datasets related to alleles and genes:
+%       primary_column('allele_genetic_interactions', 'allele_FBal#').
+%       primary_column('gene_rpkm_matrix', 'gene_primary_id').
+%
+%       % Primary columns for expression and interaction datasets:
+%       primary_column('gene_genetic_interactions', 'Starting_gene_FBgn').
+%       primary_column('scRNA-Seq_gene_expression', 'Gene_ID').
+%
 primary_column('allele_genetic_interactions', 'allele_FBal#').
 primary_column('fb_synonym', 'primary_FBid').
 primary_column('gene_genetic_interactions', 'Starting_gene_FBgn').
@@ -194,19 +450,67 @@ primary_column(gene_rpkm_report, 'FBgn').
 primary_column(genotype_phenotype_data, genotype_FBids).
 primary_column(pmid_fbgn_uniprot, 'FBgn_id').
 
-too_generic(Var):- var(Var),!,fail.
+%!  too_generic(+Value) is nondet.
+%
+%   Checks if a given value is considered too generic to be useful in certain contexts.
+%   This predicate is used to filter out overly generic identifiers or terms that may not
+%   provide meaningful distinctions in analyses or datasets.
+%
+%   The predicate uses the following rules to determine if a value is too generic:
+%   1. Variables (`Var`) are always excluded (treated as generic).
+%   2. Certain predefined values (e.g., 'pub_id') are explicitly marked as too generic.
+%   3. A value is deemed too generic if it does not match a specific structural pattern
+%      defined by `symbolic_list_concat/3`.
+%
+%   @arg Value The value being evaluated (e.g., an identifier or term).
+%
+%   @example
+%       % Example where the value is a variable (fails):
+%       ?- too_generic(Var).
+%       false.
+%
+%       % Example where the value is predefined as too generic:
+%       ?- too_generic(pub_id).
+%       true.
+%
+%       % Example with a value failing the structural pattern check:
+%       ?- too_generic('some_value').
+%       false.
+%
+%   @note The `symbolic_list_concat/3` predicate is used to check for values with at least
+%         three underscore-separated parts. Adjust this pattern as needed for specific use cases.
+%
+%   Implementation:
+too_generic(Var) :-
+    % Exclude variables as too generic.
+    var(Var), !, fail.
+% Explicitly mark 'pub_id' as too generic.
 too_generic(pub_id).
-too_generic(X):- \+ symbolic_list_concat([_,_,_|_],'_',X).
+too_generic(X) :-
+    % Check if X fails the pattern of having at least three parts separated by underscores.
+    \+ symbolic_list_concat([_, _, _ | _], '_', X).
 
+%!  flybase_cols(+TableName, +ColumnList) is det.
+%
+%   Maps FlyBase table names to their respective column lists. Each table is represented
+%   by its name and a list of column names defining its structure. This mapping is essential
+%   for understanding the schema of FlyBase data tables and facilitates data querying and processing.
+%
+%   @arg TableName The name of the FlyBase table (e.g., 'allele_genetic_interactions', 'analysis').
+%   @arg ColumnList A list of column names defining the schema of the table.
+%
+%   @example
+%       % Example table with its column schema:
+%       flybase_cols(allele_genetic_interactions, ['##allele_symbol', 'allele_FBal#', interaction, 'FBrf#']).
+%       flybase_cols(analysis, [analysis_id, name, description, program, programversion, algorithm, sourcename]).
+%
 flybase_cols(allele_genetic_interactions,['##allele_symbol','allele_FBal#',interaction,'FBrf#']).
-
 flybase_cols(analysis,[ analysis_id,name,description,program,programversion,algorithm,sourcename,sourceversion,sourceuri,timeexecuted]).
 flybase_cols(analysisfeature,[ analysisfeature_id,feature_id,analysis_id,rawscore,normscore,significance,identity]).
 flybase_cols(analysisgrp,[ analysisgrp_id,rawscore,normscore,significance,identity,analysis_id,grp_id]).
 flybase_cols(analysisgrpmember,[ analysisgrpmember_id,rawscore,normscore,significance,identity,analysis_id,grpmember_id]).
 flybase_cols(analysisprop,[ analysisprop_id,analysis_id,type_id,value]).
 flybase_cols(audit_chado,[ audit_transaction,transaction_timestamp,userid,audited_table,record_pkey,record_ukey_cols,record_ukey_vals,audited_cols,audited_vals]).
-
 flybase_cols(cell_line,[ cell_line_id,name,uniquename,organism_id,timeaccessioned,timelastmodified]).
 flybase_cols(cell_line_loaderm,[ cell_line_loaderm_id,cell_line_id,loaderm_id,pub_id,rank]).
 flybase_cols(cell_line_loadermprop,[ cell_line_loadermprop_id,cell_line_loaderm_id,type_id,value,rank]).
@@ -396,21 +700,96 @@ flybase_cols(synonym,[ synonym_id,name,type_id,synonym_sgml]).
 flybase_cols(tableinfo,[ tableinfo_id,name,primary_key_column,is_view,view_on_table_id,superclass_table_id,is_updateable,modification_date]).
 flybase_cols(update_track,[ update_track_id,release,fbid,time_update,author,statement,comment,annotation_id]).
 
+%!  table_columns(+TableName, -ColumnList) is det.
+%
+%   Retrieves the list of columns associated with a given table name. The columns can
+%   be obtained from multiple sources, such as `column_names/2`, `flybase_cols/2`, or `t_h_n/3`.
+%   This predicate unifies the table name with a known table and provides its corresponding schema.
+%
+%   @arg TableName The name of the table whose column list is to be retrieved.
+%   @arg ColumnList The list of column names associated with the specified table.
+%
+%   @example
+%       % Retrieve columns for a table using various sources:
+%       ?- table_columns('allele_genetic_interactions', Columns).
+%       Columns = ['##allele_symbol', 'allele_FBal#', interaction, 'FBrf#'].
+%
+%   Implementation:
+table_columns(TableName, ColumnList) :-
+    % Check if the table name is mapped to columns via `table_columns_tt/2`.
+    table_columns_tt(MatchingTable, ColumnList),
+    % Ensure that the provided table name matches the mapped table name.
+    eigther_contains(TableName, MatchingTable),
+    !.
 
-table_columns(T,List):- table_columns_tt(TT,List), eigther_contains(T,TT),!.
+%!  table_columns_tt(+MappedTable, -ColumnList) is det.
+%
+%   Determines the column list for a table using various data sources. It tries
+%   the following sources in order of priority:
+%   1. `column_names/2`
+%   2. `flybase_cols/2`
+%   3. `t_h_n/3`
+%
+%   @arg MappedTable The table name or alias matched to a column list.
+%   @arg ColumnList The list of column names for the matched table.
+%
+table_columns_tt(TableName, ColumnList) :-
+    % Attempt to retrieve columns using `column_names/2`.
+    column_names(TableName, ColumnList).
+table_columns_tt(TableName, ColumnList) :-
+    % Attempt to retrieve columns using `flybase_cols/2`.
+    flybase_cols(TableName, ColumnList).
+table_columns_tt(TableName, ColumnList) :-
+    % Attempt to retrieve columns using `t_h_n/3`.
+    t_h_n(TableName, _, ColumnList).
 
-table_columns_tt(TT,List):- column_names(TT,List).
-table_columns_tt(TT,List):- flybase_cols(TT,List).
-table_columns_tt(TT,List):- t_h_n(TT,_,List).
+%!  eigther_contains(+Name1, +Name2) is nondet.
+%
+%   Determines if two names (e.g., table names or aliases) are considered equivalent or 
+%   if one name symbolically contains the other. This predicate supports flexible matching
+%   for aliases or variations in naming conventions.
+%
+%   @arg Name1 The first name to compare.
+%   @arg Name2 The second name to compare.
+%
+%   @example
+%       % Direct equality:
+%       ?- eigther_contains('allele_genetic_interactions', 'allele_genetic_interactions').
+%       true.
+%
+%       % Symbolic containment:
+%       ?- eigther_contains('allele_genetic_interactions', 'genetic').
+%       true.
+%
+%       % No match:
+%       ?- eigther_contains('allele_genetic_interactions', 'nonexistent').
+%       false.
+%
+%   Implementation:
+eigther_contains(Name1, Name2) :-
+    % Check if the names are directly equal.
+    Name1 = Name2,!.
+eigther_contains(Name2, Name1) :-
+    % Check if Name2 symbolically contains Name1.
+    symbol_contains(Name2, Name1), !.
+eigther_contains(Name1, Name2) :-
+    % Check if Name1 symbolically contains Name2.
+    symbol_contains(Name1, Name2), !.
 
-eigther_contains(TT,T):- TT=T,!.
-eigther_contains(T,TT):- symbol_contains(T,TT),!.
-eigther_contains(TT,T):- symbol_contains(T,TT),!.
-
-
-
-
-
+%!  column_names(+TableName, +ColumnList) is det.
+%
+%   Maps table names to their respective column lists. Each table is defined by a name
+%   and a list of columns that describe its schema. This predicate is used to retrieve
+%   column names for FlyBase and other datasets, enabling schema exploration and validation.
+%
+%   @arg TableName The name of the table (e.g., 'allele_genetic_interactions').
+%   @arg ColumnList The list of column names defining the table's schema.
+%
+%   @example
+%       % Example: Retrieve column names for a specific table:
+%       column_names('allele_genetic_interactions', ColumnList).
+%       ColumnList = ['allele_symbol', 'allele_FBal', interaction, 'FBrf'].
+%
 column_names('cyto-genetic-seq', ['Cytogenetic_map_position', 'Genetic_map_position', 'Sequence_coordinates_(release_6)', 'R6_conversion_notes']).
 column_names('Dmel_enzyme', [gene_group_id, gene_group_name, listOf(gene_group_GO_id), listOf(gene_group_GO_name), listOf(gene_group_EC_number), listOf(gene_group_EC_name), gene_id, gene_symbol, gene_name, listOf(gene_EC_number), listOf(gene_EC_name)]).
 column_names('scRNA-Seq_gene_expression', ['Pub_ID', 'Pub_miniref', 'Clustering_Analysis_ID', 'Clustering_Analysis_Name', 'Source_Tissue_Sex', 'Source_Tissue_Stage', 'Source_Tissue_Anatomy', 'Cluster_ID', 'Cluster_Name', 'Cluster_Cell_Type_ID', 'Cluster_Cell_Type_Name', 'Gene_ID', 'Gene_Symbol', 'Mean_Expression', 'Spread']).
@@ -448,49 +827,144 @@ column_names(gene_rpkm_matrix, [gene_primary_id, gene_symbol, gene_fullname, gen
 column_names(gene_rpkm_report, ['Release_ID', 'FBgn', 'GeneSymbol', 'Parent_library_FBlc', 'Parent_library_name', 'RNASource_FBlc', 'RNASource_name', 'RPKM_value', 'Bin_value', 'Unique_exon_base_count', 'Total_exon_base_count', 'Count_used']).
 column_names(gene_snapshots, ['FBgn', 'GeneSymbol', 'GeneName', datestamp, gene_snapshot_text]).
 column_names(genomic_clone, ['FBcl', organism_abbreviation, clone_name, accession]).
-
 column_names(insertion_mapping, [insertion_symbol, 'FBti', genomic_location, range, orientation, estimated_cytogenetic_location, observed_cytogenetic_location]).
 column_names(organism_list, [genus, species, abbreviation, common_name, 'NCBI_taxon', 'drosophilid?']).
 column_names(pathway_group, ['FB_group', 'FB_group_symbol', 'FB_group_name', 'Parent_FB_group', 'Parent_FB_group_symbol', 'Group_member_FB_gene', 'Group_member_FB_gene_symbol']).
 column_names(physical_interactions_mitab, [listOf('ID_Interactor_A'), listOf('ID_Interactor_B'), listOf('Alt_ID_Interactor_A'), listOf('Alt_ID_Interactor_B'), listOf('Alias_Interactor_A'), listOf('Alias_Interactor_B'), listOf('Interaction_Detection_Method'), listOf('Publication_1st_Author'), listOf('Publication'), 'Taxid_Interactor_A', 'Taxid_Interactor_B', listOf('Interaction_Type'), listOf('Source_Database'), listOf('Interaction_Identifier'), listOf('Confidence_Value'), listOf('Expansion_Method'), listOf('Biological_Role_Interactor_A'), listOf('Biological_Role_Interactor_B'), listOf('Experimental_Role_Interactor_A'), listOf('Experimental_Role_Interactor_B'), listOf('Type_Interactor_A'), listOf('Type_Interactor_B'), listOf('Xref_Interactor_A'), listOf('Xref_Interactor_B'), listOf('Interaction_Xref'), listOf('Annotation_Interactor_A'), listOf('Annotation_Interactor_B'), listOf('Interaction_Annotation'), listOf('Host_Organism'), 'Interaction_Parameters', 'Creation_Date', 'Update_Date', 'Checksum_Interactor_A', 'Checksum_Interactor_B', 'Interaction_Checksum', 'Negative', listOf('Feature_Interactor_A'), listOf('Feature_Interactor_B'), 'Stoichiometry_Interactor_A', 'Stoichiometry_Interactor_B', listOf('Identification_Method_Participant_A'), listOf('Identification_Method_Participant_B')]).
 column_names(pmid_fbgn_uniprot, ['FBrf', 'PMID', 'FBgn', 'UniProt_database', 'UniProt_id']).
 column_names(synonym, [primary_FBid, organism_abbreviation, current_symbol, current_fullname, listOf(fullname_synonym), listOf(symbol_synonym)]).
-
 column_names_ext(pmid_fbgn_uniprot, ['FBrf_id', 'PMID', 'FBgn_id', 'UniProt_database', 'UniProt_id']).
 column_names_ext(gene_genetic_interactions, [listOf('Starting_gene_symbol', ['|']), listOf('Starting_gene_FBgn', ['|']), listOf('Interacting_gene_symbol', ['|']), listOf('Interacting_gene_FBgn', ['|']), 'Interaction_type', 'Publication_FBrf']).
 column_names_ext(gene_rpkm_matrix, [gene_primary_id, gene_symbol, gene_fullname, gene_type, 'BCM_1_E2-4hr_(FBlc0000061)', 'BCM_1_E14-16hr_(FBlc0000062)', 'BCM_1_E2-16hr_(FBlc0000063)', 'BCM_1_E2-16hr100_(FBlc0000064)', 'BCM_1_L3i_(FBlc0000065)', 'BCM_1_L3i100_(FBlc0000066)', 'BCM_1_P3d_(FBlc0000067)', 'BCM_1_FA3d_(FBlc0000068)', 'BCM_1_MA3d_(FBlc0000069)', 'BCM_1_P_(FBlc0000070)', 'BCM_1_L_(FBlc0000071)', 'BCM_1_A17d_(FBlc0000072)', 'mE_mRNA_em0-2hr_(FBlc0000086)', 'mE_mRNA_em2-4hr_(FBlc0000087)', 'mE_mRNA_em4-6hr_(FBlc0000088)', 'mE_mRNA_em6-8hr_(FBlc0000089)', 'mE_mRNA_em8-10hr_(FBlc0000090)', 'mE_mRNA_em10-12hr_(FBlc0000091)', 'mE_mRNA_em12-14hr_(FBlc0000092)', 'mE_mRNA_em14-16hr_(FBlc0000093)', 'mE_mRNA_em16-18hr_(FBlc0000094)', 'mE_mRNA_em18-20hr_(FBlc0000095)', 'mE_mRNA_em20-22hr_(FBlc0000096)', 'mE_mRNA_em22-24hr_(FBlc0000097)', 'mE_mRNA_L1_(FBlc0000098)', 'mE_mRNA_L2_(FBlc0000099)', 'mE_mRNA_L3_12hr_(FBlc0000100)', 'mE_mRNA_L3_PS1-2_(FBlc0000101)', 'mE_mRNA_L3_PS3-6_(FBlc0000102)', 'mE_mRNA_L3_PS7-9_(FBlc0000103)', 'mE_mRNA_WPP_(FBlc0000104)', 'mE_mRNA_P5_(FBlc0000105)', 'mE_mRNA_P6_(FBlc0000106)', 'mE_mRNA_P8_(FBlc0000107)', 'mE_mRNA_P9-10_(FBlc0000108)', 'mE_mRNA_P15_(FBlc0000109)', 'mE_mRNA_AdF_Ecl_1days_(FBlc0000110)', 'mE_mRNA_AdF_Ecl_5days_(FBlc0000111)', 'mE_mRNA_AdF_Ecl_30days_(FBlc0000112)', 'mE_mRNA_AdM_Ecl_1days_(FBlc0000113)', 'mE_mRNA_AdM_Ecl_5days_(FBlc0000114)', 'mE_mRNA_AdM_Ecl_30days_(FBlc0000115)', 'mE_mRNA_A_MateF_1d_head_(FBlc0000207)', 'mE_mRNA_A_MateF_4d_ovary_(FBlc0000208)', 'mE_mRNA_A_MateM_1d_head_(FBlc0000209)', 'mE_mRNA_A_VirF_1d_head_(FBlc0000210)', 'mE_mRNA_A_VirF_4d_head_(FBlc0000211)', 'mE_mRNA_A_MateF_20d_head_(FBlc0000212)', 'mE_mRNA_A_MateF_4d_head_(FBlc0000213)', 'mE_mRNA_A_MateM_20d_head_(FBlc0000214)', 'mE_mRNA_A_MateM_4d_acc_gland_(FBlc0000215)', 'mE_mRNA_A_MateM_4d_head_(FBlc0000216)', 'mE_mRNA_A_MateM_4d_testis_(FBlc0000217)', 'mE_mRNA_A_1d_carcass_(FBlc0000218)', 'mE_mRNA_A_1d_dig_sys_(FBlc0000219)', 'mE_mRNA_A_20d_carcass_(FBlc0000220)', 'mE_mRNA_A_20d_dig_sys_(FBlc0000221)', 'mE_mRNA_A_4d_carcass_(FBlc0000222)', 'mE_mRNA_A_4d_dig_sys_(FBlc0000223)', 'mE_mRNA_P8_CNS_(FBlc0000224)', 'mE_mRNA_L3_CNS_(FBlc0000225)', 'mE_mRNA_L3_Wand_carcass_(FBlc0000226)', 'mE_mRNA_L3_Wand_dig_sys_(FBlc0000227)', 'mE_mRNA_L3_Wand_fat_(FBlc0000228)', 'mE_mRNA_L3_Wand_imag_disc_(FBlc0000229)', 'mE_mRNA_L3_Wand_saliv_(FBlc0000230)', 'mE_mRNA_A_VirF_20d_head_(FBlc0000231)', 'mE_mRNA_A_VirF_4d_ovary_(FBlc0000232)', 'mE_mRNA_WPP_fat_(FBlc0000233)', 'mE_mRNA_WPP_saliv_(FBlc0000234)', 'mE_mRNA_P8_fat_(FBlc0000235)', 'mE_mRNA_A_4d_Cold1_(FBlc0000237)', 'mE_mRNA_A_4d_Cold2_(FBlc0000238)', 'mE_mRNA_L3_Cu_0.5mM_(FBlc0000239)', 'mE_mRNA_L3_late_Zn_5mM_(FBlc0000240)', 'mE_mRNA_A_4d_Cu_15mM_(FBlc0000241)', 'mE_mRNA_A_4d_Zn_4.5mM_(FBlc0000242)', 'mE_mRNA_A_4d_Caffeine_25mg/ml_(FBlc0000243)', 'mE_mRNA_A_4d_Caffeine_2.5mg/ml_(FBlc0000244)', 'mE_mRNA_L3_Caffeine_1.5mg/ml_(FBlc0000245)', 'mE_mRNA_A_4d_Cd_0.1M_(FBlc0000246)', 'mE_mRNA_A_4d_Cd_0.05M_(FBlc0000247)', 'mE_mRNA_L3_Cd_12h_(FBlc0000248)', 'mE_mRNA_L3_Cd_6hr_(FBlc0000249)', 'mE_mRNA_A_4d_Paraquat_5mM_(FBlc0000250)', 'mE_mRNA_A_4d_Paraquat_10mM_(FBlc0000251)', 'mE_mRNA_L3_Rotenone_8ug_(FBlc0000252)', 'mE_mRNA_L3_Rotenone_2ug_(FBlc0000253)', 'mE_mRNA_L3_EtOH_10_(FBlc0000254)', 'mE_mRNA_L3_EtOH_5_(FBlc0000255)', 'mE_mRNA_L3_EtOH_2.5_(FBlc0000256)', 'mE_mRNA_A_4d_Heatshock_(FBlc0000257)', 'mE_mRNA_A_10d_Resveratrol_100uM_(FBlc0000672)', 'mE_mRNA_A_10d_Rotenone_Starved_(FBlc0000673)', 'mE_mRNA_F_Sindbis_virus_(FBlc0000674)', 'mE_mRNA_L_Sindbis_virus_(FBlc0000675)', 'mE_mRNA_M_Sindbis_virus_(FBlc0000676)', 'mE_mRNA_P_Sindbis_virus_(FBlc0000677)', 'mE_mRNA_CME-W2_cells_(FBlc0000261)', 'mE_mRNA_GM2_cells_(FBlc0000262)', 'mE_mRNA_mbn2_cells_(FBlc0000263)', 'mE_mRNA_BG2-c2_cells_(FBlc0000264)', 'mE_mRNA_D20-c5_cells_(FBlc0000265)', 'mE_mRNA_S3_cells_(FBlc0000266)', 'mE_mRNA_1182-4H_cells_(FBlc0000267)', 'mE_mRNA_CME_L1_cells_(FBlc0000268)', 'mE_mRNA_Kc167_cells_(FBlc0000269)', 'mE_mRNA_BG1-c1_cells_(FBlc0000270)', 'mE_mRNA_D11_cells_(FBlc0000271)', 'mE_mRNA_D16-c3_cells_(FBlc0000272)', 'mE_mRNA_D17-c3_cells_(FBlc0000273)', 'mE_mRNA_D21_cells_(FBlc0000274)', 'mE_mRNA_D32_cells_(FBlc0000275)', 'mE_mRNA_D4-c1_cells_(FBlc0000276)', 'mE_mRNA_D8_cells_(FBlc0000277)', 'mE_mRNA_D9_cells_(FBlc0000278)', 'mE_mRNA_S1_cells_(FBlc0000279)', 'mE_mRNA_S2R+_cells_(FBlc0000280)', 'mE_mRNA_Sg4_cells_(FBlc0000281)', 'mE_mRNA_OSS_cells_(FBlc0000282)', 'mE_mRNA_OSC_cells_(FBlc0000283)', 'mE_mRNA_fGS_cells_(FBlc0000284)', 'Knoblich_mRNA_L3_CNS_neuroblast_(FBlc0000505)', 'Knoblich_mRNA_L3_CNS_neuron_(FBlc0000506)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Brain_(FBlc0003619)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Crop_(FBlc0003620)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Carcass_(FBlc0003621)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Eye_(FBlc0003622)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_FatBody_(FBlc0003623)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Head_(FBlc0003624)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Hindgut_(FBlc0003625)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Midgut_(FBlc0003626)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Ovary_(FBlc0003627)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_RectalPad_(FBlc0003628)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_SalivaryGland_(FBlc0003629)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_ThoracicoAbdominalGanglion_(FBlc0003630)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_MalpighianTubule_(FBlc0003631)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Mated_Spermathecum_(FBlc0003632)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Virgin_Spermathecum_(FBlc0003633)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Whole_(FBlc0003634)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Brain_(FBlc0003635)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Crop_(FBlc0003636)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Carcass_(FBlc0003637)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Eye_(FBlc0003638)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_FatBody_(FBlc0003639)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Head_(FBlc0003640)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Hindgut_(FBlc0003641)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Midgut_(FBlc0003642)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_RectalPad_(FBlc0003643)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_SalivaryGland_(FBlc0003644)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_ThoracicoAbdominalGanglion_(FBlc0003645)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_MalpighianTubule_(FBlc0003646)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Testis_(FBlc0003647)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_AccessoryGland_(FBlc0003648)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Whole_(FBlc0003649)', 'RNA-Seq_Profile_FlyAtlas2_L3_CNS_(FBlc0003650)', 'RNA-Seq_Profile_FlyAtlas2_L3_FatBody_(FBlc0003651)', 'RNA-Seq_Profile_FlyAtlas2_L3_Hindgut_(FBlc0003652)', 'RNA-Seq_Profile_FlyAtlas2_L3_MalpighianTubule_(FBlc0003653)', 'RNA-Seq_Profile_FlyAtlas2_L3_Midgut_(FBlc0003654)', 'RNA-Seq_Profile_FlyAtlas2_L3_SalivaryGland_(FBlc0003655)', 'RNA-Seq_Profile_FlyAtlas2_L3_Trachea_(FBlc0003656)', 'RNA-Seq_Profile_FlyAtlas2_L3_Carcass_(FBlc0003657)', 'RNA-Seq_Profile_FlyAtlas2_L3_Whole_(FBlc0003658)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Female_Heart_(FBlc0003724)', 'RNA-Seq_Profile_FlyAtlas2_Adult_Male_Heart_(FBlc0003725)']).
 
+%!  flybase_tables(-TableList) is det.
+%
+%   Provides a list of all FlyBase tables. This predicate aggregates the names of tables
+%   used in FlyBase, which can be queried or processed for various operations.
+%
+%   @arg TableList A list of table names as atoms, representing the schema of FlyBase.
+%
+%   @example
+%       % Retrieve the complete list of FlyBase tables:
+%       ?- flybase_tables(Tables).
+%       Tables = [analysis, analysisfeature, analysisgrp, ...].
+%
 flybase_tables([
-analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop, audit_chado, cell_line, cell_line_loaderm, cell_line_loadermprop,
-cell_line_dbxref, cell_line_feature, cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, cell_line_strain,
-cell_line_strainprop, cell_line_synonym, cell_lineprop, cell_lineprop_pub, contact, cv, loaderm, loaderm_dbxref, loaderm_relationship,
-loadermpath, loadermprop, loadermsynonym, db, dbxref, dbxrefprop, eimage, environment, environment_loaderm, expression, expression_loaderm,
-expression_loadermprop, expression_image, expression_pub, expressionprop, feature, feature_loaderm, feature_loaderm_dbxref,
-feature_loadermprop, feature_dbxref, feature_expression, feature_expressionprop, feature_genotype, feature_grpmember,
-feature_grpmember_pub, feature_humanhealth_dbxref, feature_interaction, feature_interaction_pub, feature_interactionprop,
-feature_phenotype, feature_pub, feature_pubprop, feature_relationship, feature_relationship_pub, feature_relationshipprop,
-feature_relationshipprop_pub, feature_synonym, featureloc, featureloc_pub, featuremap, featuremap_pub, featurepos, featureprop,
-featureprop_pub, featurerange, genotype, genotype_loaderm, genotype_loadermprop, genotype_dbxref, genotype_pub, genotype_synonym,
-genotypeprop, genotypeprop_pub, grp, grp_loaderm, grp_dbxref, grp_pub, grp_pubprop, grp_relationship, grp_relationship_pub,
-grp_relationshipprop, grp_synonym, grpmember, grpmember_loaderm, grpmember_pub, grpmemberprop, grpmemberprop_pub, grpprop,
-grpprop_pub, humanhealth, humanhealth_loaderm, humanhealth_loadermprop, humanhealth_dbxref, humanhealth_dbxrefprop,
-humanhealth_dbxrefprop_pub, humanhealth_feature, humanhealth_featureprop, humanhealth_phenotype, humanhealth_phenotypeprop,
-humanhealth_pub, humanhealth_pubprop, humanhealth_relationship, humanhealth_relationship_pub, humanhealth_synonym, humanhealthprop,
-humanhealthprop_pub, interaction, interaction_cell_line, interaction_loaderm, interaction_loadermprop, interaction_expression,
-interaction_expressionprop, interaction_group, interaction_group_feature_interaction, interaction_pub, interactionprop,
-interactionprop_pub, library, library_loaderm, library_loadermprop, library_dbxref, library_dbxrefprop, library_expression,
-library_expressionprop, library_feature, library_featureprop, library_grpmember, library_humanhealth, library_humanhealthprop,
-library_interaction, library_pub, library_relationship, library_relationship_pub, library_strain, library_strainprop, library_synonym,
- libraryprop, libraryprop_pub, lock, organism, organism_loaderm, organism_loadermprop, organism_dbxref, organism_grpmember,
- organism_library, organism_pub, organismprop, organismprop_pub, phendesc, phenotype, phenotype_comparison, phenotype_comparison_loaderm,
-  phenotype_loaderm, phenstatement, project, pub, pub_dbxref, pub_relationship, pubauthor, pubprop, sql_features, sql_implementation_info,
-  sql_parts, sql_sizing, stock, stock_loaderm, stock_dbxref, stock_genotype, stock_pub, stock_relationship, stock_relationship_pub,
-  stockcollection, stockcollection_stock, stockcollectionprop, stockprop, stockprop_pub, strain, strain_loaderm, strain_loadermprop,
-  strain_dbxref, strain_feature, strain_featureprop, strain_phenotype, strain_phenotypeprop,
-strain_pub, strain_relationship, strain_relationship_pub, strain_synonym, strainprop, strainprop_pub, synonym, tableinfo, update_track]).
+    % Analysis-related tables:
+    analysis, analysisfeature, analysisgrp, analysisgrpmember, analysisprop,
+    
+    % Audit-related tables:
+    audit_chado,
+    
+    % Cell line-related tables:
+    cell_line, cell_line_loaderm, cell_line_loadermprop, cell_line_dbxref, cell_line_feature,
+    cell_line_library, cell_line_libraryprop, cell_line_pub, cell_line_relationship, 
+    cell_line_strain, cell_line_strainprop, cell_line_synonym, cell_lineprop, cell_lineprop_pub,
 
+    % Contact and controlled vocabulary tables:
+    contact, cv, loaderm, loaderm_dbxref, loaderm_relationship, loadermpath,
+    loadermprop, loadermsynonym,
 
+    % Database and cross-reference tables:
+    db, dbxref, dbxrefprop,
 
+    % Image and environment tables:
+    eimage, environment, environment_loaderm,
+
+    % Expression-related tables:
+    expression, expression_loaderm, expression_loadermprop, expression_image,
+    expression_pub, expressionprop,
+
+    % Feature-related tables:
+    feature, feature_loaderm, feature_loaderm_dbxref, feature_loadermprop, feature_dbxref,
+    feature_expression, feature_expressionprop, feature_genotype, feature_grpmember,
+    feature_grpmember_pub, feature_humanhealth_dbxref, feature_interaction,
+    feature_interaction_pub, feature_interactionprop, feature_phenotype, feature_pub,
+    feature_pubprop, feature_relationship, feature_relationship_pub, feature_relationshipprop,
+    feature_relationshipprop_pub, feature_synonym, featureloc, featureloc_pub, featuremap,
+    featuremap_pub, featurepos, featureprop, featureprop_pub, featurerange,
+
+    % Genotype-related tables:
+    genotype, genotype_loaderm, genotype_loadermprop, genotype_dbxref, genotype_pub,
+    genotype_synonym, genotypeprop, genotypeprop_pub,
+
+    % Group-related tables:
+    grp, grp_loaderm, grp_dbxref, grp_pub, grp_pubprop, grp_relationship,
+    grp_relationship_pub, grp_relationshipprop, grp_synonym, grpmember,
+    grpmember_loaderm, grpmember_pub, grpmemberprop, grpmemberprop_pub, grpprop, grpprop_pub,
+
+    % Human health-related tables:
+    humanhealth, humanhealth_loaderm, humanhealth_loadermprop, humanhealth_dbxref,
+    humanhealth_dbxrefprop, humanhealth_dbxrefprop_pub, humanhealth_feature,
+    humanhealth_featureprop, humanhealth_phenotype, humanhealth_phenotypeprop,
+    humanhealth_pub, humanhealth_pubprop, humanhealth_relationship,
+    humanhealth_relationship_pub, humanhealth_synonym, humanhealthprop,
+    humanhealthprop_pub,
+
+    % Interaction-related tables:
+    interaction, interaction_cell_line, interaction_loaderm, interaction_loadermprop,
+    interaction_expression, interaction_expressionprop, interaction_group,
+    interaction_group_feature_interaction, interaction_pub, interactionprop,
+    interactionprop_pub,
+
+    % Library-related tables:
+    library, library_loaderm, library_loadermprop, library_dbxref, library_dbxrefprop,
+    library_expression, library_expressionprop, library_feature, library_featureprop,
+    library_grpmember, library_humanhealth, library_humanhealthprop, library_interaction,
+    library_pub, library_relationship, library_relationship_pub, library_strain,
+    library_strainprop, library_synonym, libraryprop, libraryprop_pub,
+
+    % Lock and organism-related tables:
+    lock, organism, organism_loaderm, organism_loadermprop, organism_dbxref,
+    organism_grpmember, organism_library, organism_pub, organismprop, organismprop_pub,
+
+    % Phenotype-related tables:
+    phendesc, phenotype, phenotype_comparison, phenotype_comparison_loaderm,
+    phenotype_loaderm, phenstatement,
+
+    % Project and publication-related tables:
+    project, pub, pub_dbxref, pub_relationship, pubauthor, pubprop,
+
+    % SQL-related tables:
+    sql_features, sql_implementation_info, sql_parts, sql_sizing,
+
+    % Stock-related tables:
+    stock, stock_loaderm, stock_dbxref, stock_genotype, stock_pub,
+    stock_relationship, stock_relationship_pub, stockcollection,
+    stockcollection_stock, stockcollectionprop, stockprop, stockprop_pub,
+
+    % Strain-related tables:
+    strain, strain_loaderm, strain_loadermprop, strain_dbxref, strain_feature,
+    strain_featureprop, strain_phenotype, strain_phenotypeprop, strain_pub,
+    strain_relationship, strain_relationship_pub, strain_synonym, strainprop,
+    strainprop_pub,
+
+    % Synonym and miscellaneous tables:
+    synonym, tableinfo, update_track
+]).
+
+%!  table_n_type(+Table, +ColumnIndex, +ColumnName, +Type) is det.
+%
+%   Defines the structure of various database tables, mapping column indices 
+%   to their respective names and types. Types include specific formats 
+%   (e.g., 'FBgn', 'FBrf') or generic values (_).
+%
+%   @arg Table The name of the table.
+%   @arg ColumnIndex The 1-based index of the column in the table.
+%   @arg ColumnName The name of the column, typically as a string or atom.
+%   @arg Type The data type or category for the column, or `_` for unspecified types.
+%
+%   @examples
+%     % Retrieve the name and type for the first column of the 'stocks' table:
+%     ?- table_n_type(stocks, 1, ColumnName, Type).
+%     ColumnName = stock_id,
+%     Type = 'FBst'.
+%
+%     % Verify if a particular column exists in the 'dmel_paralogs' table:
+%     ?- table_n_type(dmel_paralogs, Index, 'Paralog_FBgn', Type).
+%     Index = 6,
+%     Type = 'FBgn'.
+%
 table_n_type(allele_genetic_interactions, 1, allele_symbol, _).
 table_n_type(allele_genetic_interactions, 2, allele_FBal, 'FBal').
 table_n_type(allele_genetic_interactions, 3, interaction, _).
@@ -775,12 +1249,75 @@ table_n_type(synonym, 4, current_fullname, _).
 table_n_type(synonym, 5, fullname_synonym, _).
 table_n_type(synonym, 6, symbol_synonym, _).
 
-
-guess_rest(P,N,T,Guess):- table_n_type(P,N,T,Guess),var(Guess),fb_pred(P,A),functor(C,P,A),arg(N,C,Guess),once(call(C)).
+%!  guess_rest(+Predicate, +ColumnIndex, +ColumnName, -Guess) is nondet.
+%
+%   Attempts to deduce the type of a column in a given table by analyzing its data.
+%   This predicate utilizes the schema defined by `table_n_type/4` and dynamically
+%   queries the table to infer the type of a column, if not already specified.
+%
+%   @arg Predicate The name of the table (predicate) to be queried.
+%   @arg ColumnIndex The index of the column within the table (1-based index).
+%   @arg ColumnName The name of the column being analyzed.
+%   @arg Guess The inferred type of the column. This is unified with the result.
+%
+%   Details
+%     - The predicate checks if the column type is unspecified (i.e., `var(Guess)`).
+%     - It retrieves the arity of the table using `fb_pred/2` and constructs a callable
+%       term using `functor/3` and `arg/3`.
+%     - A query is executed on the table using `once(call/1)` to infer the data type.
+%
+%   @examples
+%     % Guess the type of a column in a table:
+%     ?- guess_rest(dmel_gene_sequence_ontology_annotations, 3, so_term_name, Guess).
+%     Guess = 'string'.
+%
+%     % Attempt to infer the type of an unspecified column:
+%     ?- guess_rest(fbgn_fbtr_fbpp_expanded, 2, gene_type, Guess).
+%     Guess = 'atom'.
+%
+%   Relies on the predicate `table_n_type/4` for schema definition.
+guess_rest(P, N, T, Guess) :-
+    % Ensure the column type is not already specified.
+    table_n_type(P, N, T, Guess),
+    var(Guess),
+    % Retrieve the arity of the predicate (table).
+    fb_pred(P, A),
+    % Construct a callable term for the predicate.
+    functor(C, P, A),
+    % Bind the guessed value to the argument of the callable term.
+    arg(N, C, Guess),
+    % Execute the query on the table, ensuring it succeeds once.
+    once(call(C)).
 
 :- dynamic numeric_value_p_n/3.
+
+% Each goal associated with a transparent-declared predicate will inherit the context module from its parent goal.
 :- module_transparent numeric_value_p_n/3.
 
+%!  numeric_value_p_n(+Predicate, +ColumnIndex, +ColumnName) is det.
+%
+%   Specifies columns within various predicates that are expected to hold numeric values.
+%   Each fact associates a predicate (representing a database table), a column index,
+%   and the column name for clarity. This mapping aids in identifying which columns 
+%   store numerical data across the tables.
+%
+%   @arg Predicate The name of the table or predicate being queried.
+%   @arg ColumnIndex The 1-based index of the column within the table.
+%   @arg ColumnName The name of the column expected to hold numeric data.
+%
+%   @examples
+%     % Check if a column in a table holds numeric values:
+%     ?- numeric_value_p_n(dmel_human_orthologs_disease, 6, 'DIOPT_score').
+%     true.
+%
+%     % List all columns in the 'gene_rpkm_matrix' table that store numeric data:
+%     ?- numeric_value_p_n(gene_rpkm_matrix, Index, Name).
+%     Index = 5,
+%     Name = 'BCM_1_E2-4hr_(FBlc0000061)' ;
+%     Index = 6,
+%     Name = 'BCM_1_E14-16hr_(FBlc0000062)' ;
+%     ... (additional results).
+%
 numeric_value_p_n(dmel_human_orthologs_disease, 6, 'DIOPT_score').
 numeric_value_p_n(dmel_human_orthologs_disease, 7, 'OMIM_Phenotype_IDs').
 numeric_value_p_n(fbrf_pmid_pmcid_doi, 2, 'PMID').
@@ -966,6 +1503,24 @@ numeric_value_p_n(entity_publication, 4, 'PubMed').
 numeric_value_p_n(organism_list, 5, 'NCBI_taxon').
 
 
+%!  ncRNA_genes_fb_scheme(+Schema) is det.
+%
+%   Represents the JSON schema for RNAcentral ncRNA objects, used to describe
+%   non-coding RNA sequences. The schema outlines the required structure and 
+%   additional properties associated with the ncRNA entities.
+%
+%   @arg Schema A string containing the JSON schema definition for ncRNA objects.
+%
+%   @details
+%   - The schema adheres to Draft 4 of the JSON Schema standard.
+%   - It describes the properties required for an ncRNA object, including primary IDs,
+%     taxon information, sequence data, and cross-references.
+%   - Properties like localization, secondary structure, and sequence features are also supported.
+%   - This schema is typically used for importing ncRNA sequences into databases
+%     like RNAcentral and ensures uniformity in data representation.
+%
+%
+%   @see JSON Schema Draft 4 (http://json-schema.org/draft-04/schema#)
 ncRNA_genes_fb_scheme(
 '
 {
@@ -1138,8 +1693,30 @@ ncRNA_genes_fb_scheme(
         }
 }').
 
-
-
+%!  ucn(+Table, +Columns) is det.
+%
+%   Represents user-customized column numbering (UCN) for various database tables.
+%   This predicate specifies either the columns that require special processing
+%   or a list of all columns for tables where customization is not needed.
+%
+%   @arg Table The name of the table or dataset (predicate) being referenced.
+%   @arg Columns The specific columns or an empty list `[]` if no customization applies.
+%
+%   @examples
+%     % Retrieve the UCN for a table:
+%     ?- ucn(dmel_unique_protein_isoforms, Columns).
+%     Columns = 3.
+%
+%     % Check if a table requires UCN processing:
+%     ?- ucn(fbal_to_fbgn, Columns).
+%     Columns = 1.
+%
+%     % Retrieve all tables without UCN customization:
+%     ?- ucn(Table, []).
+%     Table = allele_genetic_interactions ;
+%     Table = dataset_metadata ;
+%     ... (other results).
+%
 ucn(allele_genetic_interactions,[]).
 ucn(dataset_metadata,[]).
 ucn(disease_model_annotations,[]).
@@ -1161,7 +1738,6 @@ ucn(organism_list,[]).
 ucn(pathway_group,[]).
 ucn(pmid_fbgn_uniprot,[]).
 ucn('scRNA-Seq_gene_expression',[]).
-
 ucn(dmel_unique_protein_isoforms, 3). % ,a-PA,))
 ucn(best_gene_summary, 1). % ,FBgn0031081,) (2 ,Nep3,))
 ucn(cDNA_clone_data, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
@@ -1182,32 +1758,123 @@ ucn(genomic_clone, 1). % ,FBcl0297251,) (3 ,BACR13J02,))
 ucn(stocks ,1). % ,FBst,))
 ucn(physical_interactions_mitab, 14). %,flybase:FBrf0218395-7641.DPiM,))
 
+%!  list_column_names is det.
+%
+%   Lists column names for all tables where:
+%     - The table has at least two columns.
+%     - The table predicate (`fb_pred_nr/2`) matches the length of the column names.
+%
+%   This predicate uses the `column_names/2` and `fb_pred_nr/2` predicates to retrieve
+%   and validate the column names for each table. It then prints the results to the console.
+%
+%   @details
+%     - `column_names(T, CNs)` retrieves the column names (`CNs`) for a table (`T`).
+%     - The length of the column names list is validated to ensure it matches the
+%       predicate's arity as specified by `fb_pred_nr(T, Len)`.
+%     - The predicate is deterministic and prints the results to standard output.
+%
+%   @examples
+%     % Assuming column_names and fb_pred_nr are properly defined:
+%     ?- list_column_names.
+%     column_names(allele_genetic_interactions, [allele_symbol, allele_FBal, interaction, 'FBrf'])
+%     column_names(disease_model_annotations, ['FBgn', 'Gene_symbol', 'HGNC', ...])
+%     ...
+%
+%   @see Relies on `column_names/2` and `fb_pred_nr/2` for data retrieval and validation.
 
-list_column_names:-
-  for_all((column_names(T,CNs),once((length(CNs,Len),Len>=2,fb_pred_nr(T,Len)))),
-  (print(column_names(T,CNs)),nl)).
-
+list_column_names :-
+    for_all(
+        (   % Retrieve column names and ensure they meet the criteria.
+            column_names(T, CNs),
+            once((length(CNs, Len), Len >= 2, fb_pred_nr(T, Len)))),
+        (   % Print the table and its column names.
+            print(column_names(T, CNs)), nl)).
 
 %:- ensure_loaded(read_obo).
 
-show_cmds:- prolog_load_context(source,This),for_all((source_file(P0,This),functor(P0,F,0)),writeln(add_history1(F))).
+%!  show_cmds is det.
+%
+%   Displays commands related to the current Prolog source file.
+%   This predicate identifies all zero-arity predicates (`F/0`) defined in the current
+%   source file and outputs them in a formatted manner.
+%
+%   - `prolog_load_context(source, This)` retrieves the current source file being loaded.
+%   - `source_file(P0, This)` identifies predicates (`P0`) that belong to the current file.
+%   - The `functor/3` predicate checks that the predicate has zero arity (`F/0`).
+%   - For each matching predicate, the `add_history1(F)` command is printed.
+%
+%   @examples
+%     % Assuming the current file defines `foo/0` and `bar/0`:
+%     ?- show_cmds.
+%     add_history1(foo)
+%     add_history1(bar)
+%
+%   Useful for debugging or generating a list of commands for interactive use.
+show_cmds :-
+    % Retrieve the current source file being loaded.
+    prolog_load_context(source, This),
+    % Iterate over all zero-arity predicates defined in the source file.
+    for_all(
+        (   source_file(P0, This),
+            functor(P0, F, 0)
+        ),
+        % Print the command for each predicate.
+        writeln(add_history1(F))).
+
 %add_history1(setup_flybase_cols)
 %add_history1(pmt)
-ah:- add_history1(fb_stats),
-  add_history1(mine_overlaps),
-  add_history1(load_flybase),
-  add_history(fb_stats),
-  add_history(mine_overlaps),
-  add_history(try_overlaps),
-  add_history(load_flybase).
-%:- ah,ah,ah.
+
+%!  ah is det.
+%
+%   Adds a set of predefined commands to the command history for interactive use.
+%   This predicate uses both `add_history1/1` and `add_history/1` to register commands.
+%
+%   Details
+%   - `add_history1/1` and `add_history/1` are assumed to be predicates that register
+%     commands for later invocation in an interactive Prolog session.
+%   - The predicate is idempotent, meaning the same commands can be added multiple times
+%     without causing issues.
+%
+%   Commands added to the history include:
+%   - `fb_stats`
+%   - `mine_overlaps`
+%   - `load_flybase`
+%   - `try_overlaps`
+%
+%   @examples
+%     % Register commands to the history:
+%     ?- ah.
+%     true.
+%
+%     % Verify the commands are added (assuming a history inspection command):
+%     ?- history.
+%     fb_stats
+%     mine_overlaps
+%     load_flybase
+%     try_overlaps
+%
+%   This predicate is typically used for setting up a convenient command environment.
+ah :-
+    % Register commands using add_history1/1.
+    add_history1(fb_stats),
+    add_history1(mine_overlaps),
+    add_history1(load_flybase),
+    % Register commands using add_history/1.
+    add_history(fb_stats),
+    add_history(mine_overlaps),
+    add_history(try_overlaps),
+    add_history(load_flybase).
+% Uncomment to execute `ah` multiple times during initialization.
+% :- ah, ah, ah.
 
 %:- initialization(load_flybase).
 
-
-
-
-
+%!  fb_pred(+Table, +Arity) is det.
+%
+%   Represents the predicate definitions for various FlyBase database tables.
+%
+%   This predicate provides metadata about FlyBase tables, aiding in schema
+%   validation, query construction, and other table-related operations.
 fb_pred('allele_genetic_interactions',4).
 fb_pred('automated_gene_summaries',2).
 fb_pred('automated_gene_summaries',3).
@@ -1486,6 +2153,7 @@ fb_pred('transposon_sequence_set',62).
 fb_pred('transposon_sequence_set',7).
 fb_pred('transposon_sequence_set',8).
 fb_pred('transposon_sequence_set',9).
+
 % ==============
 % METTA COMPILER
 % ==============
@@ -1493,11 +2161,32 @@ fb_pred('transposon_sequence_set',9).
 :- ensure_loaded(library(metta_interp)).
 %:- ensure_loaded(metta_python).
 
-
-ping_file_loaders:-
-  expand_file_name('library/*/ext_loader_*.pl',List),
-  maplist(absolute_file_name,List,AList),
-  maplist(ensure_loaded,AList).
+%!  ping_file_loaders is det.
+%
+%   Ensures that all external loader files matching the pattern `library/*/ext_loader_*.pl`
+%   are loaded into the current Prolog environment.
+%
+%   This predicate performs the following steps:
+%   1. Expands the file name pattern `library/*/ext_loader_*.pl` to retrieve a list of matching files.
+%   2. Converts each relative file path to its absolute path using `absolute_file_name/2`.
+%   3. Ensures that each file in the list is loaded using `ensure_loaded/1`.
+%
+%   The `:- ping_file_loaders.` directive ensures that this process is executed at
+%   compile-time or startup.
+%
+%   @examples
+%     % Load all external loader files:
+%     ?- ping_file_loaders.
+%     true.
+%
+%   This is commonly used to automatically load extensions or plugins defined
+%   in external files.
+ping_file_loaders :-
+    % Expand the file name pattern to a list of matching files.
+    expand_file_name('library/*/ext_loader_*.pl', List),
+    % Convert relative paths to absolute paths.
+    maplist(absolute_file_name, List, AList),
+    % Ensure each file is loaded.
+    maplist(ensure_loaded, AList).
+% Automatically execute ping_file_loaders during initialization.
 :- ping_file_loaders.
-
-
