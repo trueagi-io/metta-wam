@@ -107,13 +107,14 @@ transpiler_show_debug_messages.
 % just so the transpiler_stub_created predicate always exists
 transpiler_stub_created(dummy).
 
-:- dynamic(transpiler_depends_on/2).
+:- dynamic(transpiler_depends_on/4).
 % just so the transpiler_depends_on predicate always exists
-transpiler_depends_on(dummy,dummy).
+transpiler_depends_on(dummy,0,dummy,0).
 
-:- dynamic(transpiler_predicate_store/3).
-% just so the transpiler_predicate_store predicate always exists
-transpiler_predicate_store(dummy,dummy,dummy).
+:- dynamic(transpiler_clause_store/8).
+% just so the transpiler_clause_store predicate always exists
+% transpiler_clause_store(f,arity,types,rettype,lazy,retlazy,head,body)
+transpiler_clause_store(dummy,0,[],'Any',[],eager,dummy,dummy).
 
 as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
 
@@ -184,13 +185,61 @@ compile_for_exec1(AsBodyFn, Converted) :-
 
 arrange_lazy_args(N,_-Y,N-Y).
 
-get_operator_typedef_props(X,FnName,Largs,Types1,RetType) :-
-   get_operator_typedef(X,FnName,Largs,Types0,RetType0),!,
-   maplist(arg_eval_props,Types0,Types1),
-   arg_eval_props(RetType0,RetType).
-get_operator_typedef_props(_,_,Largs,Types,doeval-eager) :-
+get_operator_typedef_props(X,FnName,Largs,Types,RetType) :-
+   get_operator_typedef(X,FnName,Largs,Types,RetType),!.
+get_operator_typedef_props(_,_,Largs,Types,'Any') :-
     length(Types,Largs),
-    maplist(=(doeval-eager), Types).
+    maplist(=('Any'), Types).
+
+member_var(X, [H|T]) :- X == H ; member_var(X, T).
+
+intersect_var([],_,[]).
+intersect_var([H|T],X,Y) :-
+    intersect_var(T,X,Y0),
+    (member_var(H,X) -> Y=[H|Y0] ; Y=Y0).
+
+union_var([],X,X).
+union_var([H|T],X,Y) :-
+    union_var(T,X,Y0),
+    (member_var(H,X) -> Y=Y0 ; Y=[H|Y0]).
+
+determine_eager_vars(lazy,lazy,A,[]) :- fullvar(A),!.
+determine_eager_vars(eager,eager,A,[A]) :- fullvar(A),!.
+determine_eager_vars(Lin,Lout,[if,If,Then,Else],EagerVars) :- !,
+   determine_eager_vars(eager,_,If,EagerVarsIf),
+   determine_eager_vars(Lin,LoutThen,Then,EagerVarsThen),
+   determine_eager_vars(Lin,LoutElse,Else,EagerVarsElse),
+   intersect_var(EagerVarsThen,EagerVarsElse,EagerVars0),
+   union_var(EagerVarsIf,EagerVars0,EagerVars),
+   (LoutThen=eager,LoutElse=eager -> Lout=eager ; Lout=lazy).
+determine_eager_vars(Lin,Lout,[let,V,Vbind,Body],EagerVars) :- !,
+   determine_eager_vars(eager,Vbind,EagerVarsVbind),
+   determine_eager_vars(Lin,Lout,Body,EagerVarsBody),
+   union_var([V],EagerVarsVbind,EagerVars0),
+   union_var(EagerVars0,EagerVarsBody,EagerVars).
+determine_eager_vars(Lin,Lout,['let*',[],Body],EagerVars) :- !,determine_eager_vars(Lin,Lout,Body,EagerVars).
+determine_eager_vars(Lin,Lout,['let*',[[V,Vbind]|T],Body],EagerVars) :- !,
+   determine_eager_vars(eager,Vbind,EagerVarsVbind),
+   determine_eager_vars(Lin,Lout,['let*',T,Body],EagerVarsBody),
+   union_var([V],EagerVarsVbind,EagerVars0),
+   union_var(EagerVars0,EagerVarsBody,EagerVars).
+determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
+   length(Args,LenArgs),
+   LenArgsPlus1 is LenArgs+1,
+   (transpiler_clause_store(Fn,LenArgsPlus1,_,_,ArgsLazy0,RetLazy0,_,_) ->
+      ArgsLazy=ArgsLazy0,
+      RetLazy=RetLazy0
+   ;
+      RetLazy=eager,
+      length(ArgsLazy, LenArgs),
+      maplist(=(eager), ArgsLazy)),
+   maplist(determine_eager_vars,ArgsLazy,_,Args,EagerVars0),
+   foldl(union_var,EagerVars0,[],EagerVars).
+determine_eager_vars(_,eager,A,EagerVars) :- is_list(A),!,
+   maplist(determine_eager_vars(eager),_,A,EagerVars0),foldl(union_var,EagerVars0,[],EagerVars).
+determine_eager_vars(_,eager,_,[]).
+
+set_eager_or_lazy(Vlist,V,R) :- (member_var(V,Vlist) -> R=eager ; R=lazy).
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    %leash(-all),
@@ -208,11 +257,17 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
       (transpiler_show_debug_messages -> format("Retracting stub: ~w\n",[H]) ; true),
       retractall(H)
    ; true),
-   assertz(transpiler_predicate_store(FnName/LenArgsPlus1,HeadIs,AsBodyFn)),
    %AsFunction = HeadIs,
    must_det_ll((
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
-      get_operator_typedef_props(_,FnName,LenArgs,Types1,_-RetLazy),
+      get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
+      maplist(arg_eval_props,Types0,Types1),
+      arg_eval_props(RetType0,_-RetLazy),
+      determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
+      maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
+      format("\n##################################Eager args ~w ~w ~w\n\n",[EagerArgList,EagerLazyList,ResultEager]),
+      %maplist(determine_eager(AsBodyFn),Args,)
+      assertz(transpiler_clause_store(FnName,LenArgsPlus1,Types0,RetType0,EagerLazyList,ResultEager,HeadIs,AsBodyFn)),
       maplist(arrange_lazy_args,Args,Types1,LazyArgs),
       f2p(HeadIs,LazyArgs,HResult,RetLazy,AsBodyFn,NextBody),
 
@@ -230,11 +285,10 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
                   true))))),
 
 
-      ast_to_prolog(caller(FnName/LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
+      ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
       output_language(prolog, (print_pl_source(Converted))),
       true
    )).
-
 
 no_conflict_numbervars(Term):-
     findall(N,(sub_term(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
@@ -444,22 +498,14 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A);\
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
-   (Caller=caller(CallerInt),CallerInt\=F/LArgs1,\+ transpiler_depends_on(CallerInt,F/LArgs1) ->
-      assertz(transpiler_depends_on(CallerInt,F/LArgs1)),
-      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~w,~w)\n",[Caller,F/LArgs1]) -> true)
+   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
+      assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
+      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~w,~w,~w,~w)\n",[CallerInt,CallerSz,F,LArgs1]) -> true)
    ; true),
    ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
       true
    ; check_supporting_predicates('&self',F/LArgs1)).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
-%ast_to_prolog_aux(_,_,x_assign(A,B),R) :- (fullvar(A);\+ compound(A)),!,R=(A=B).
-%ast_to_prolog_aux(Caller,DontStub,x_assign(A,B),R) :- var(B),\+ var(A),!,
-%   ast_to_prolog_aux(Caller,DontStub,x_assign(B,A),R).
-%ast_to_prolog_aux(Caller,DontStub,A,B) :-
-%   compound(A),
-%   A=..A0,!,
-%   maplist(ast_to_prolog_aux(Caller,DontStub),A0,B0),
-%   B=..B0.
 ast_to_prolog_aux(_,_,'#\\'(A),A).
 ast_to_prolog_aux(_,_,A,A).
 
@@ -628,7 +674,10 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
    Convert=[Fn|Args],
    atom(Fn),!,
    length(Args,Largs),
-   get_operator_typedef_props(_,Fn,Largs,EvalArgs,_-RetEvalLazy),
+   %get_operator_typedef_props(_,Fn,Largs,EvalArgs,_-RetEvalLazy),
+   get_operator_typedef_props(_,Fn,Largs,Types0,RetType0),
+   maplist(arg_eval_props,Types0,EvalArgs),
+   arg_eval_props(RetType0,_-RetEvalLazy),
    maplist(do_arg_eval(HeadIs,LazyVars),Args,EvalArgs,NewArgs,NewCodes),
    append(NewCodes,CombinedNewCode),
    %into_x_assign([Fn|NewArgs],RetResult0,Code),
