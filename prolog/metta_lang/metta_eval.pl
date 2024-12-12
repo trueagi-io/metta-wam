@@ -1830,18 +1830,52 @@ eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,Re
 % =================================================================
 % =================================================================
 % =================================================================
-%  METTLOG COMPILER PREDEFS
+%  METTALOG COMPILER PREDEFS
 % =================================================================
 % =================================================================
 % =================================================================
 
+%/* TODO: this should take into account the compilation prefix but
+eval_20(_Eq,_RetType,_Dpth,_Slf,['current-predicate-arity',F],A):-
+% These two are no longer strictly compiler redefinitions - the compiler
+% predicates should be predicate/function-arity (not "current"), for
+% arities explicitly declared by the user. This pair of predicates
+% should instead handle deduced arities of functions defined but without
+% an explicit arity declaration.
+  !,
+  eval_for('Symbol',F,FF),
+  current_predicate_arity(FF,A).
+eval_20(_Eq,_RetType,_Dpth,_Slf,['current-function-arity',F],A):-
+  !,
+  eval_for('Symbol',F,FF),
+  current_function_arity(FF,A).
+%*/
 
-eval_20(_Eq,_RetType,_Dpth,_Slf,['predicate-arity',F],A):- !,
-   eval_for('Symbol',F,FF),
-   predicate_arity(FF,A).
-eval_20(_Eq,_RetType,_Dpth,_Slf,['function-arity',F],A):- !,
-   eval_for('Symbol',F,FF),
-   function_arity(FF,A).
+/* TODO: This could work but the prefixed prdicate/function is not found.
+eval_20(_Eq,_RetType,_Dpth,_Slf,['current-predicate-arity',F],A):-
+  !,
+  eval_for('Symbol',F,FF),
+  transpile_prefix(P),
+  atom_concat(P,FF,FF_mc),
+  current_predicate_arity(FF_mc,A).
+eval_20(_Eq,_RetType,_Dpth,_Slf,['current-function-arity',F],A):-
+  !,
+  eval_for('Symbol',F,FF),
+  transpile_prefix(P),
+  atom_concat(P,FF,FF_mc),
+  current_function_arity(FF_mc,A).
+*/
+
+current_predicate_arity(F,A):-
+  metta_atom('&self',[:,F,[->|Args]]),
+  !,
+  length(Args,A).
+current_predicate_arity(F,A):-
+  current_predicate(F/A).
+
+current_function_arity(F,A):-
+  current_predicate_arity(F,PA)
+  ,A is PA - 1.
 
 
 
