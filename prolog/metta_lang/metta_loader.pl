@@ -3347,7 +3347,20 @@ subst_vars(TermWDV, NewTerm):-
 %   @arg NamedVarsList The list of named variables.
 %
 subst_vars(TermWDV, NewTerm, NamedVarsList) :-
-              subst_vars(TermWDV, NewTerm, [], NamedVarsList).
+      subst_vars(TermWDV, NewTerm, [], NamedVarsList),
+   if_t(fast_option_value('vn', 'true'), memorize_varnames(NamedVarsList)).
+
+
+memorize_varnames(NamedVarsList):- \+ compound(NamedVarsList),!.
+memorize_varnames([NamedVar|NamedVarsList]):- !,
+  memorize_varname(NamedVar),
+  memorize_varnames(NamedVarsList).
+memorize_varnames(_).
+memorize_varname(NamedVar):-  \+ compound(NamedVar),!.
+memorize_varname(Name=Var):- var(Var),atomic(Name),put_attr(Var,vn,Name).
+memorize_varname(_).
+
+
 
 %!  subst_vars(+Term, -Term, +Acc, -NamedVarsList) is det.
 %

@@ -1473,7 +1473,11 @@ write_asrc(Var):- write_bsrc(Var),!.  % Otherwise, write the variable.
 %
 write_bsrc(Var):- Var=='Empty',!,write(Var).  % Special case: write 'Empty' directly.
 write_bsrc(Var):- ground(Var),!,write_bsrc1(Var).  % If the variable is ground, write it directly.
-write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,write_bsrc_goal(Var,Goals).  % For non-ground terms, handle goals.
+write_bsrc(Var):- copy_term(Var,Copy,Goals),Var=Copy,
+  exclude(excluded_hidden_goal,Goals,UnhiddenGoals),
+  write_bsrc_goal(Var,UnhiddenGoals).  % For non-ground terms, handle goals.
+
+excluded_hidden_goal(name_variable(_,_)).
 
 %!  write_bsrc_goal(+Var, +Goals) is det.
 %
