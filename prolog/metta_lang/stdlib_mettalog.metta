@@ -329,7 +329,9 @@ For example:
   (@params (
     (@param "Value to be returned")))
   (@return "Passed argument"))
-(: return (-> $t $t))
+; probably should be (: return (-> $t $t)) 
+(: return (-> Atom Atom))
+
 
 (iz function MinimalMeTTa)
 (@doc function
