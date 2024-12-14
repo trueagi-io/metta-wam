@@ -860,7 +860,7 @@ remove_mds(_, GG, GG).
 %   to `t` or when the system is running in CGI mode.
 %
 %   The `notrace/0` predicate is used to disable tracing.
-%never_rrtrace:-!.
+never_rrtrace:-!.
 never_rrtrace :-
     % If `cant_rrtrace` is currently set to `t`, disable tracing using `notrace`.
     nb_current(cant_rrtrace, t),!,notrace.
@@ -1453,7 +1453,7 @@ on_mettalog_error(Why):- write_src_uo(on_mettalog_error(Why)).
 super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(failed(G)))).
 
 % If there is an error, log it, perform a stack dump
-ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
+%ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
 
 ugtrace(Why, _):- on_mettalog_error(Why), fail.
 % If tracing is already enabled, log the reason and trace the goal G.
@@ -1510,7 +1510,7 @@ is_guitracer:- getenv('DISPLAY', _), current_prolog_flag(gui_tracer, true).
 %   ?- rrtrace(my_wrapper, my_goal).
 %
 % If reversible tracing is disabled, log the message and fail.
-rrtrace(P1, X):- never_rrtrace, !, nop((u_dmsg(cant_rrtrace(P1, X)))), !, fail.
+rrtrace(P1, X):- never_rrtrace, !, ((u_dmsg(cant_rrtrace(P1, X)))), !, fail.
 % If in a CGI environment, log the HTML output and call the goal normally.
 rrtrace(P1, G):- is_cgi, !, u_dmsg(arc_html(rrtrace(P1, G))), call(P1, G).
 % If not in a GUI tracer environment, disable tracing and call the goal, or enable interactive tracing (itrace).
