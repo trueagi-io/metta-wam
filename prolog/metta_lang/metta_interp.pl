@@ -1417,7 +1417,7 @@ metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
+%metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
 metta_atom(KB,Atom):- KB \== '&corelib', !,
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
@@ -1633,15 +1633,23 @@ asserted_do_metta2(Self,Load,PredDecl, Src):-
 
 never_compile(X):- always_exec(X).
 
-always_exec(exec(W)):- !, is_list(W), always_exec(W).
+always_exec(W):- var(W),!,fail.
+always_exec([H|_]):- always_exec_symbol(H),!.
 always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),symbol_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
+always_exec([H|_]):- always_exec_symbol(H),!.
 always_exec(List):- \+ is_list(List),!,fail.
 always_exec([Var|_]):- \+ symbol(Var),!,fail.
 always_exec(['extend-py!'|_]):- !, fail.
-always_exec([H|_]):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/include! etc
 always_exec(['assertEqualToResult'|_]):-!,fail.
 always_exec(['assertEqual'|_]):-!,fail.
 always_exec(_):-!,fail. % everything else
+
+always_exec_symbol(Sym):- \+ symbol(Sym),!,fail.
+always_exec_symbol(H):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/bind!/include! etc
+always_exec_symbol(H):- symbol_concat('add-atom',_,H),!.
+always_exec_symbol(H):- symbol_concat('remove-atom',_,H),!.
+always_exec_symbol(H):- symbol_concat('subst-',_,H),!.
+
 
 file_hides_results([W|_]):- W== 'pragma!'.
 

@@ -1161,22 +1161,24 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
 
     % Commented code for interactive control, previously enabled for file skipping
     /* previously: if From = file(_Filename), option_value('exec',skip),  \+ always_exec(BaseEval) */
-    (((From = file(_Filename), option_value('exec',skip), \+ always_exec(BaseEval)))
+    (((From = file(_Filename), option_value('exec',skip), \+ notrace(always_exec(BaseEval);always_exec(TermV))))
      -> (
          % Skip execution if conditions are met
          GgGgGgGgGgG = (skip(Term),deterministic(Complete)),
          % Mark as skipped
          Skipping = 1,!,
-         % Previously: Output = "Skipped"
-         /* previously: color_g_mesg('#da70d6', (write('% SKIPPING: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))) */
+         color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
+         prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
          true
         )
         ; % Otherwise, execute the goal interactively
+        ( if_t((From = file(_), option_value('exec',skip)),
+              color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV)))),
         GgGgGgGgGgG = (
             % Execute Term and capture the result
             ((  (Term),deterministic(Complete),
                 % Transform output for display and store it in the result
-                xform_out(VOutput,Output), nb_setarg(1,Result,Output)))),
+                xform_out(VOutput,Output), nb_setarg(1,Result,Output))))),
     !, % Ensure the top-level metta evaluation is completed
 
     % Reset result number flag
@@ -1190,7 +1192,6 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
   \+ \+ (user:maplist(name_vars,NamedVarsList),
      user:name_vars('OUT'=X),
      /* previously: add_history_src(exec(BaseEval)) */
-     if_t(Skipping==1,writeln(' ; SKIPPING')),
      /* previously: if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))) */
 
      % Handle interactive result output or non-interactive result history
@@ -1233,8 +1234,8 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
          (
          (((ResNum==1,Complete==true)->(old_not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
          /* previously: handle deterministic result output */
-         (Complete==true -> (old_not_compatio(format('~N~nLast Result(~w): ',[ResNum])),! );
-          old_not_compatio(format('~N~nNDet Result(~w): ',[ResNum]))))),
+         (Complete==true -> (old_not_compatio(format('~N~nResult(~w): ',[ResNum])),! );
+          old_not_compatio(format('~N~nN(~w):',[ResNum]))))),
        ignore(((
             if_t( \+ symbolic(Output), not_compatio(nop(nl))),
             %if_t(ResNum==1,in_answer_io(format('~N['))),
@@ -1247,7 +1248,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 true)))) )) ))))),
      in_answer_io(write_asrc((Output))),
 
-       not_compatio(extra_answer_padding(format('~N'))),  % Just in case, add some virt space between answers
+      % not_compatio(extra_answer_padding(format('~N'))),  % Just in case, add some virt space between answers
 
       ((Complete \== true, WasInteractive, DoLeap \== leap,
                 LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
@@ -1263,7 +1264,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 maplist(print_var,NamedVarsListR), nop(nl)))) ; true))))),
        (
          (Stepping==true) ->
-         (old_not_compatio(write("~npress ';' for more solutions ")),get_single_char_key(C),
+         (old_not_compatio(format("~npress ';' for more solutions ")),get_single_char_key(C),
            old_not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
          (C=='m' -> make ;
@@ -1281,7 +1282,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                     *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
       (in_answer_io(nop(write('['))),old_not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    in_answer_io(write(']\n')),
+                    in_answer_io((write(']'),if_t(\+is_mettalog,nl))),
    ignore(Result = res(FOut)).
 
 old_not_compatio(G):- call(G),ttyflush.
