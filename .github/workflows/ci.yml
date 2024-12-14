@@ -23,7 +23,7 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
 
-    if: (github.repository == 'logicmoo/metta-testsuite')
+    if: (github.repository == 'logicmoo/metta-testsuite') || (github.event_name != 'schedule')
 
     env:
       JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
