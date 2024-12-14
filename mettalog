@@ -21,7 +21,7 @@ verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0
 OUTPUT_DIR="${METTALOG_OUTPUT}"
 
 cd $METTALOG_DIR
-source ./scripts/ensure_venv
+#source ./scripts/ensure_venv
 cd $RPWD
 
 use_docker=auto

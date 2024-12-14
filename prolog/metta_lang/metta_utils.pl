@@ -1237,7 +1237,8 @@ always_rethrow(time_limit_exceeded(_)).
 always_rethrow(time_limit_exceeded).
 always_rethrow(depth_limit_exceeded).
 always_rethrow(restart_reading).
-always_rethrow(E):- never_rrtrace,!,throw(E).
+%always_rethrow(E):- never_rrtrace,!,throw(E).
+%always_rethrow(_).
 
 %!  catch_non_abort(:Goal) is det.
 %

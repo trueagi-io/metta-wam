@@ -515,8 +515,8 @@ unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
 eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
 eval_until_unify(Eq,RetType,Depth,Self,X,Y):- eval_until_eq(Eq,RetType,Depth,Self,X,Y),!.
 
-eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn(X=:=Y),!.
-eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- catch_nowarn('#='(X,Y)),!.
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(catch_nowarn(X=:=Y)),!.
+eval_until_eq(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(catch_nowarn('#='(X,Y))),!.
 eval_until_eq(Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,check_returnval(Eq,RetType,Y).
 %eval_until_eq(Eq,RetType,Depth,Self,X,Y):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
 %eval_until_eq(Eq,RetType,Depth,Self,Y,X):- var(Y),!,eval_in_steps_or_same(Eq,RetType,Depth,Self,X,XX),Y=XX.
@@ -2517,9 +2517,9 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 
 
-
+%catch_err(G,E,C):- catch(G,E,(always_rethrow(E)->(throw(E));C)).
 catch_warn(G):- (catch_err(G,E,(fbug(catch_warn(G)-->E),fail))).
-catch_nowarn(G):- (catch_err(G,error(_,_),fail)).
+catch_nowarn(G):- catch(G,E,(always_rethrow(E)->(throw(E)),fail)).
 
 
 % less Macro-ey Functions
