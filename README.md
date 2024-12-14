@@ -92,17 +92,34 @@ metta+>^D   # Exit the REPL with `ctrl-D`.
 
 To run a script:
 ```bash
-mettalog tests/baseline_compat/metta-morph_tests/nalifier.metta
+mettalog exmaples/puzzles/nalifier.metta
 ```
 
 To run a script and then enter the repl:
 ```bash
-mettalog tests/baseline_compat/metta-morph_tests/nalifier.metta --repl
+mettalog exmaples/puzzles//nalifier.metta --repl
+metta+>!(query &self (because blue house keeps parrots the $who is the fish owner))
+[(Succeed ((quote (because blue house keeps parrots the brit is the fish owner))))]
+metta+>
+
 ```
 
-Execute a unit test:
+## Unit tests
+
+One exmaple is provided in this repository
 ```bash
+mettalog --test exmaples/tests/unit_test_example.metta
 # The output is saved as an HTML file in the same directory.
+```
+
+The rest are in a large REPO @
+```bash
+git clone https://github.com/logicmoo/metta-testsuite/
+ln -s metta-testsuite/tests/ ./tests  
+```
+
+Run a single test
+```bash
 mettalog --test tests/baseline_compat/metta-morph_tests/tests0.metta 
 ```
 Execute baseline sanity tests:
