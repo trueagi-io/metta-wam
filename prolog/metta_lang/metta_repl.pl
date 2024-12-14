@@ -272,18 +272,23 @@ write_metta_prompt :-
 %     metta>
 %
 repl3 :-
-    % Create the prompt by writing it to an atom `P`.
-    with_output_to(atom(P), write_metta_prompt),
     % Set up cleanup for the terminal prompt and execute repl4.
-    %% TODO: Set to ' ' (not '')
-    notrace(prompt(Was, P)),
+    notrace(prompt(Was, Was)),
     setup_call_cleanup(
         % Set the terminal prompt without tracing.
-        true,
+        set_metta_prompt,
         % Flush the terminal and call repl4 to handle input.
         ((ttyflush, repl4, ttyflush)),
         % After execution, restore the previous terminal prompt.
         notrace(prompt(_, Was))).
+
+% Create the prompt by writing it to an atom `P`.
+set_metta_prompt:-
+    with_output_to(atom(P), write_metta_prompt),
+    prompt1(P),
+    prompt(_, P).
+
+
 
 %! repl4 is det.
 %   Executes the REPL logic by reading the input, processing expressions, and handling directives or commands.
@@ -636,6 +641,7 @@ repl_read_next(NewAccumulated, Expr) :-
 
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
+    if_t(flag(need_prompt,1,0),(nl,set_metta_prompt)),
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
@@ -1132,10 +1138,12 @@ interactively_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _W
     eval_args(Self, Term, X).
 
 % Reset evaluation counter
-interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
+interactively_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
     %format("%%%%%%%%%%%%%%%%%%%%%%%%%2 ~w\n",[Term]),
     notrace((
 
+    % Reset result number flag
+    flag(result_num,_,0),
     % Reset evaluation counters for a fresh start
     reset_eval_num,
 
@@ -1181,8 +1189,6 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                 xform_out(VOutput,Output), nb_setarg(1,Result,Output))))),
     !, % Ensure the top-level metta evaluation is completed
 
-    % Reset result number flag
-    flag(result_num,_,0),
 
     % Prepare evaluation for the base term
     PL=eval(Self,BaseEval,X),
@@ -1283,6 +1289,7 @@ interactively_do_metta_exec01(From,Self,_TermV,Term,X,NamedVarsList,Was,VOutput,
                     ; (flag(result_num,ResNum,ResNum),(ResNum==0->
       (in_answer_io(nop(write('['))),old_not_compatio(format('~N<no-results>~n~n')),!,true);true))),
                     in_answer_io((write(']'),if_t(\+is_mettalog,nl))),
+   flag(need_prompt,_,1),
    ignore(Result = res(FOut)).
 
 old_not_compatio(G):- call(G),ttyflush.
