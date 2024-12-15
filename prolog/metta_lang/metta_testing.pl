@@ -245,13 +245,38 @@ color_g_mesg_ok(C, G) :-
 %   @example
 %     % Apply color formatting directly:
 %     ?- our_ansi_format(green, 'Success: ~w', ['All tests passed']).
-our_ansi_format(C, Fmt, Args) :-
-    % If Color is not an atom, apply ansi_format directly.
-    \+ atom(C), % set_stream(current_output,encoding(utf8)),
-    ansi_format(C, Fmt, Args).
-our_ansi_format(C, Fmt, Args) :-
-    % If Color is atomic, set the foreground color and format the output.
-    our_ansi_format([fg(C)], Fmt, Args).
+%
+our_ansi_format(C, Fmt, Args):-
+% This better be a list of ansi_format/3 attributes because we're not
+% checking that. Those can be compound fg, bg etc terms, or single atoms
+% denoting not font style, e.g. bold (but not colour!).
+    is_list(C),
+    !,
+    ansi_format(C,Fmt,Args).
+% ansi_format/3 accepts as its first argument a single compound term
+% denoting a colour attribute, as well as a list thereof. The following
+% clause deals with single, arity-1 compounds. Acceptable attribute
+% terms are found in the SWI-Prolog documentation.
+our_ansi_format(CT, Fmt, Args):-
+    compound(CT),
+    CT =.. [Attr,_C],
+    memberchk(Attr,[fg,bg,hfg,hbg,fg8,bg8]),
+    !,
+    ansi_format(CT,Fmt,Args).
+% The Attribute term may be an arity-3 compound with arguments for R, G
+% and B values.
+our_ansi_format(CT, Fmt, Args):-
+    compound(CT),
+    CT =.. [Attr,_R,_G,_B],
+    memberchk(Attr,[fg,bg]),
+    !,
+    ansi_format(CT,Fmt,Args).
+% If the colour term is a single atom, then it's probably our shortcut
+% for "use this colour in the forergound".
+our_ansi_format(C, Fmt, Args):-
+    atom(C),
+    ansi_format([fg(C)],Fmt,Args).
+
 
 %!  print_current_test is det.
 %
