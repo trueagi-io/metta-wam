@@ -131,7 +131,7 @@ run_mettalog_tests() {
     # Execute command based on output mode
     if [ "$SHOW_ALL_OUTPUT" = true ]; then
         # Execute the command and show all output
-        "${cmd[@]}"
+        ${cmd[@]}
         status=$?
     else
         # Execute the command silently and filter output
@@ -157,10 +157,13 @@ cat /dev/null > /tmp/SHARED.UNITS
 
 
 # 23+ tests (~30 seconds)
-#run_mettalog_tests 40 tests/baseline_compat/module-system/
+run_mettalog_tests 40 tests/baseline_compat/module-system/
+
+SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+
 # 200+ tests (~4 minutes)
-#run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
-#run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
+run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
+run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
 # 50+ tests (~2 minutes)
 #run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 
