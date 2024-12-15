@@ -137,7 +137,7 @@ run_mettalog_tests() {
         # Execute the command silently and filter output
         # The grep pattern matches important test output while filtering noise
         script -q -c "${cmd[*]}" /dev/null | \
-            tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
+            tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_| |warning|es[:] ' >&2) > /dev/null
         status=$?
     fi
 
@@ -159,7 +159,7 @@ cat /dev/null > /tmp/SHARED.UNITS
 # 23+ tests (~30 seconds)
 run_mettalog_tests 40 tests/baseline_compat/module-system/
 
-SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+#SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 
 # 200+ tests (~4 minutes)
 run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
