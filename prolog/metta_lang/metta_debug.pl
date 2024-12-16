@@ -1046,7 +1046,8 @@ enabled_use_comments :- enabled_use_markdown.
 %   this body in case there is some other sort of redirrection we work arround
 %    in most cases this should turn off ansi color printing
 %     EXCEPT when we test log output (because we use ansi2html on _that_ output)
-in_file_output(Goal) :- call(Goal).
+in_file_output(Goal) :-
+  format('~N'),call(Goal),format('~N').
 
 %! into_blocktype(+InfoType, :Goal) is det.
 %  Enters markdown mode for InfoType and executes Goal.
@@ -1071,7 +1072,8 @@ into_blocktype(InfoType, Goal) :- enter_markdown(InfoType), !, call(Goal).
 %output_language( comment, Goal ) :- log_file_type(markdown), !, call(Goal).
 %output_language( comment, Goal ) :- log_file_type(prolog), !, format('~N:- q.~n', [output_language( comment, Goal)]).
 %output_language( comment, Goal ) :- log_file_type(metta), !, in_cmt(Goal).
-output_language( InfoType, Goal ) :- log_file_type(Lang), !, % (Lang==prolog; Lang==metta),!,
+output_language( InfoType, Goal ) :- notrace((output_language_impl( InfoType, Goal ))).
+output_language_impl( InfoType, Goal ) :- log_file_type(Lang), !, % (Lang==prolog; Lang==metta),!,
   in_file_output(((InfoType == Lang -> (must_det_ll((enter_markdown(Lang),leave_comment)),call(Goal)) ; (must_det_ll(enter_comment),into_blocktype(InfoType,Goal))))).
 
 %! log_file_type(-Type) is det.

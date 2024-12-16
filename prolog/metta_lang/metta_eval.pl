@@ -2234,7 +2234,7 @@ eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
     as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
 eval_40(Eq,RetType,_Depth,Self,[EQ,X,Y],TF):- EQ=='==', !,
-    suggest_type(RetType,'Bool'),
+    suggest_type(RetType,'Bool'), !,
     as_tf(eval_until_unify(Eq,_SharedType, X, Y), TF).
     %eq_unify(Eq,_SharedType,Depth,Self, X, Y, Res).
 

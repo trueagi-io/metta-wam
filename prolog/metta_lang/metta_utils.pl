@@ -860,7 +860,7 @@ remove_mds(_, GG, GG).
 %   to `t` or when the system is running in CGI mode.
 %
 %   The `notrace/0` predicate is used to disable tracing.
-never_rrtrace:-!.
+never_rrtrace:- \+ extreme_tracing,!.
 never_rrtrace :-
     % If `cant_rrtrace` is currently set to `t`, disable tracing using `notrace`.
     nb_current(cant_rrtrace, t),!,notrace.
@@ -1447,7 +1447,7 @@ stack_dump:- ignore(catch(bt, _, true)).
 :- set_prolog_flag(mettalog_error,unset).
 %:- set_prolog_flag(mettalog_error,break).
 %:- set_prolog_flag(mettalog_error,keep_going).
-on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,write_src_uo(on_mettalog_error(break,Why)),break.
+on_mettalog_error(Why):- (current_prolog_flag(mettalog_error,break);extreme_tracing),!,bt,write_src_uo(on_mettalog_error(Why)),trace.
 on_mettalog_error(Why):- write_src_uo(on_mettalog_error(Why)).
 
 % super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`

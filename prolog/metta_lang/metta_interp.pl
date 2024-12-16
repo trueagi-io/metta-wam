@@ -1361,7 +1361,7 @@ assertion_neck_cl(':-').
 
 load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
-       functs_to_preds([Eq,H,B],Preds),
+       once(functs_to_preds([Eq,H,B],Preds)),
        assert_preds(Self,Load,Preds),!.
 % old compiler hook
 load_hook0(Load,Assertion):-
@@ -2046,8 +2046,12 @@ arg_types(L,R,LR):- append(L,R,LR).
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
+extreme_tracing:- fail.
+
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
-ggtrace(G):- call(G).
+ggtrace(G):- extreme_tracing,!, rtrace(G).
+ggtrace(G):- !, fail, call(G).
+%ggtrace(G):- call(G).
 ggtrace0(G):- ggtrace,
     leash(-all),
   visible(-all),
@@ -2334,7 +2338,7 @@ calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime) :-
 % Print the elapsed wall and CPU time with a description, output to user_error
 print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
     with_output_to(user_error,
-        format('             % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
+        format('~N          % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
                [WallElapsedTime, CPUElapsedTime, Description])).
 
 % Execute a Prolog query and handle output, performance logging, and time measurements to user_error
