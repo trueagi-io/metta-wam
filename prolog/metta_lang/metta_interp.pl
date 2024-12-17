@@ -2048,7 +2048,7 @@ arg_types(L,R,LR):- append(L,R,LR).
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
-extreme_tracing:- fast_option_value(rrtrace, false),!.
+extreme_tracing:- \+ fast_option_value(rrtrace, false),!.
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 ggtrace(G):- extreme_tracing,!, rtrace(G).
