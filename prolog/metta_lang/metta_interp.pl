@@ -444,6 +444,8 @@ option_value_name_default_type_help('repl-on-error', true, [false, true], "Drop 
 option_value_name_default_type_help('repl-on-fail',  false, [false, true], "Start REPL on failed unit test", 'Debugging and Tracing').
 option_value_name_default_type_help('exit-on-fail',  false, [true, false], "Rust exits on first Assertion Error", 'Debugging and Tracing').
 
+option_value_name_default_type_help('rrtrace',  false, [false, true], "Extreme Tracing", 'Debugging and Tracing').
+
 % Define the possible values for various types
 
 % Verbosity values
@@ -2046,7 +2048,7 @@ arg_types(L,R,LR):- append(L,R,LR).
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
-extreme_tracing:- fail.
+extreme_tracing:- fast_option_value(rrtrace, false),!.
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
 ggtrace(G):- extreme_tracing,!, rtrace(G).
