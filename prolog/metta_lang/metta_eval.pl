@@ -603,6 +603,42 @@ eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 % =================================================================
 % =================================================================
 
+gen_eval_20_stubs:-
+  shell(clear),
+  make,call(gen_eval_20_stubs2).
+gen_eval_20_stubs2:-
+  Clause = (impls([F|Args],Res,ParamTypes,RetType):- Body),
+
+  forall(gen_eval_20_stubs([F|Args],Res,ParamTypes,RetType,Body),
+     ignore((
+     numbervars(Clause,0,_),
+     nonvar(F),atom(F),
+     ast_to_prolog_aux(no_caller,fn_impl(F,Args,Res),Head),
+     ast_to_prolog_aux(Head,Body,Body1),
+     print_tree_nl(Head:-Body1)))).
+
+
+is_like_eval_20(E20):- atom(E20),atom_concat(eval,_,E20),
+        %(E20 = eval_args;E20 = eval_20),
+        \+ atom_concat(find,_,E20),
+        \+ atom_concat(_,e,E20).
+
+gen_eval_20_stubs([F|Args],Res,ParamTypes,RetType,Body):-
+    predicate_property(eval_20(Eq,RetType,Depth,Self,[F|Args],Res),file(File)),
+    predicate_property(Head,file(File)),
+    Head=..[E20,Eq,RetType,Depth,Self,[F|Args],Res],
+    is_like_eval_20(E20),
+    clause(Head, Body),
+    %min_max_args(Args,Startl,Ends),
+    (is_list(Args)->true;between(1,5,Len)),
+    nonvar(F),atom(F),
+    ignore(Depth=666),
+    ignore(Eq= '='),
+    ignore(Self= '&self'),
+    get_operator_typedef(Self,F,Len,ParamTypes,RetType),
+    once(len_or_unbound(Args,Len)).
+
+
 eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType,Y).
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 eval_20(Eq,RetType,Depth,Self,['!',Cond],Res):- !, call(eval_args(Eq,RetType,Depth,Self,Cond,Res)).
@@ -2233,7 +2269,7 @@ eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
-eval_40(Eq,RetType,_Depth,Self,[EQ,X,Y],TF):- EQ=='==', !,
+eval_40(Eq,RetType,_Depth,_Self,[EQ,X,Y],TF):- EQ=='==', !,
     suggest_type(RetType,'Bool'), !,
     as_tf(eval_until_unify(Eq,_SharedType, X, Y), TF).
     %eq_unify(Eq,_SharedType,Depth,Self, X, Y, Res).
