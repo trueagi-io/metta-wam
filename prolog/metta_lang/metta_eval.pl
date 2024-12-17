@@ -2289,6 +2289,10 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
     suggest_type(RetType,'Bool'),
     as_tf(same_terms(X,Y),TF).
 
+/*
+     A bit too dangerous uncommenting these...
+     when the compiler thunks to interpeter
+     these can call the compiler creating a loop
 
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
     prefix_impl_preds('mc__',EQ,Len),
@@ -2301,7 +2305,7 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
     append(Args,[TF],PArgs),length(PArgs,Len),
     atom_concat('mi__',EQ,Fn),!,
     apply(Fn,PArgs).
-
+*/
 
 
 suggest_type(_RetType,_Bool).
