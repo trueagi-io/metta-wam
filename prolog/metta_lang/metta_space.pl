@@ -715,12 +715,13 @@ was_asserted_space('&belief_events').
 %     ?- is_asserted_space('&self').
 %     true.
 %
-is_asserted_space(X) :-
-    was_asserted_space(X).
+is_asserted_space(X) :- was_asserted_space(X).
+/*
 is_asserted_space(X) :-
     \+ is_as_nb_space(X),
     \+ py_named_space(X),
     !.
+*/
 
 %!  is_python_space_not_prolog(+Space) is nondet.
 %

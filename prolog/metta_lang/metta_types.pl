@@ -471,6 +471,7 @@ is_space_type(Space, Test) :-
     % Use no_repeats to ensure uniqueness in space type methods.
     no_repeats(Test, space_type_method(Test, _, _)),
     % Call the test to determine the space type.
+    is_not_prolog_space \== Test,
     call(Test, Space), !.
 
 %!  is_state_type(+State, -Type) is nondet.
