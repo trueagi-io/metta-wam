@@ -21,13 +21,13 @@ maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
 
 
 'mc__:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
+sync_type(D, Self, Obj, Type):- nonvar(Obj), nonvar(Type), !, arg_conform(D, Self, Obj, Type).
 sync_type(D, Self, Obj, Type):- nonvar(Obj), var(Type), !, get_type(D, Self, Obj, Type).
-sync_type(D, Self, Obj, Type):- nonvar(Type), var(Obj), !, set_type(D, Self, Obj, Type), freeze(Obj, arg_conform(D, Self, Obj, Type)).
-sync_type(D, Self, Obj, Type):- nonvar(Type), nonvar(Obj), !, arg_conform(D, Self, Obj, Type).
+sync_type(D, Self, Obj, Type):- nonvar(Type), var(Obj), !, set_type(D, Self, Obj, Type). %, freeze(Obj, arg_conform(D, Self, Obj, Type)).
 sync_type(D, Self, Obj, Type):- freeze(Type,sync_type(D, Self, Obj, Type)), freeze(Obj, sync_type(D, Self, Obj, Type)),!.
 
 
-'mc__get-type'(Obj,Type):-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
+%'mc__get-type'(Obj,Type):-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
 'mc__get-type'(Obj,Type):- current_self(Self), !, get_type(10, Self, Obj,Type).
 
 %%%%%%%%%%%%%%%%%%%%% arithmetic

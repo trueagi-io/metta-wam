@@ -629,14 +629,16 @@ gen_eval_20_stubs([F|Args],Res,ParamTypes,RetType,Body):-
     Head=..[E20,Eq,RetType,Depth,Self,[F|Args],Res],
     is_like_eval_20(E20),
     clause(Head, Body),
+    ignore(once((sub_term(FF==Sym, Body), atom(Sym), FF == F,F=Sym))),
     %min_max_args(Args,Startl,Ends),
     (is_list(Args)->true;between(1,5,Len)),
+    once(len_or_unbound(Args,Len)),
     nonvar(F),atom(F),
     ignore(Depth=666),
-    ignore(Eq= '='),
+   % ignore(Eq= '='),
     ignore(Self= '&self'),
-    get_operator_typedef(Self,F,Len,ParamTypes,RetType),
-    once(len_or_unbound(Args,Len)).
+    once(get_operator_typedef(Self,F,Len,ParamTypes,RetType)).
+
 
 
 eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType,Y).
@@ -2286,6 +2288,20 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='===', !,
 eval_20(_Eq,RetType,_Dpth,_Slf,[EQ,X,Y],TF):- EQ=='====', !,
     suggest_type(RetType,'Bool'),
     as_tf(same_terms(X,Y),TF).
+
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
+    prefix_impl_preds('mc__',EQ,Len),
+    append(Args,[TF],PArgs),length(PArgs,Len),
+    atom_concat('mc__',EQ,Fn),!,
+    apply(Fn,PArgs).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
+    prefix_impl_preds('mi__',EQ,Len),
+    append(Args,[TF],PArgs),length(PArgs,Len),
+    atom_concat('mi__',EQ,Fn),!,
+    apply(Fn,PArgs).
+
 
 
 suggest_type(_RetType,_Bool).
