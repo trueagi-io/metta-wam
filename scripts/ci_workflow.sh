@@ -204,7 +204,7 @@ run_tests() {
     if [ "$JOB_TYPE" == "nightly" ]; then
         ./scripts/run_nightly_tests.sh -t "$TIMESTAMP"
     else
-        ./scripts/run_commit_tests.sh -t "$TIMESTAMP"
+        ./scripts/run_commit_tests.sh -t "$TIMESTAMP" --show-all
     fi
 }
 
