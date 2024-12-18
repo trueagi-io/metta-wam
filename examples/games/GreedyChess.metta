@@ -1,4 +1,4 @@
-;		WORK IN PROGRESS, DOES NOT RUN
+;		WORK IN PROGRESS, Will start but not play yet!
 
 ;        #(convert_to_metta_file dbd $10000 dbd.pl dbd.metta)
 
