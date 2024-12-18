@@ -2226,11 +2226,11 @@ eval_40(Eq,RetType,Depth,Self,LESS,Res):-
    ((((eval_selfless(Eq,RetType,Depth,Self,LESS,Res),fake_notrace(LESS\==Res))))),!.
 
 eval_40(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
-   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+   skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),!,
-   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+   skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),!,
-   eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
+   skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
     rust_metta_run(exec(PredDecl),Res), nop(write_src(res(Res))).
@@ -2239,6 +2239,9 @@ eval_20(_Eq,_RetType,_Depth,_Self,['rust!',PredDecl],Res):- !,
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
     rust_metta_run((PredDecl),Res), nop(write_src(res(Res))).
 
+
+%skip_eval_args(Eq,RetType,Depth,Self,LESS,Res):- eval_args(Eq,RetType,Depth,Self,LESS,Res).
+skip_eval_args(_Eq,_RetType,_Depth,_Self,LESS,Res):- LESS=Res.
 
 %eval_20(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !, must_det_ll((py_list(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !, must_det_ll((py_dict(Arg,Res))).
@@ -2267,11 +2270,11 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_40(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
+eval_20(Eq,RetType,Depth,Self,[EQ, X,Y],Res):- EQ=='==', using_all_spaces, !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_unify(Eq,_SharedType,Depth,Self,X,Y),Res).
 
-eval_40(Eq,RetType,_Depth,_Self,[EQ,X,Y],TF):- EQ=='==', !,
+eval_20(Eq,RetType,_Depth,_Self,[EQ,X,Y],TF):- EQ=='==', !,
     suggest_type(RetType,'Bool'), !,
     as_tf(eval_until_unify(Eq,_SharedType, X, Y), TF).
     %eq_unify(Eq,_SharedType,Depth,Self, X, Y, Res).
