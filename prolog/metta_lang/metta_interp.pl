@@ -1400,10 +1400,10 @@ do_show_options_values:-
 
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
 metta_atom_asserted(X,Y):-
-    metta_atom_asserted_deduced(X,Y),
+    metta_atom_deduced(X,Y),
     \+ clause(metta_atom_asserted(X,Y),true).
 
 

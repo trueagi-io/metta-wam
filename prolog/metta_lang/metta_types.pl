@@ -441,7 +441,7 @@ get_type(Depth, Self, Val, TypeO) :-
     % Ensure no repeated types using no_repeats_var/1.
     no_repeats_var(NoRepeatType),
     % Retrieve the type of the value.
-    get_type_each(Depth, Self, Val, Type),
+    get_type_each(Depth, Self, Val, Type), Type\=='',
     % Ensure the type matches the expected no-repeat type.
     NoRepeatType = Type,
     Type = TypeO,
@@ -1311,7 +1311,7 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
 %
 ignored_args_conform(Depth, Self, A, L) :-
     % If either Args or List is not a conz structure, succeed without further checks.
-    (\+ iz_conz(Args); \+ iz_conz(List)), !.
+    (\+ iz_conz(A); \+ iz_conz(L)), !.
 ignored_args_conform(Depth, Self, A, L) :-
     % Check if each argument conforms to its corresponding expected type.
     maplist(ignored_arg_conform(Depth, Self), A, L).

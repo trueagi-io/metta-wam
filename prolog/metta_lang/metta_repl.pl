@@ -1239,7 +1239,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C==esc('[B',[27,91,66]) -> (nb_setarg(3, Control, leap),Cut=false,Next=true) ;
          (C=='L' -> nb_setarg(2, Control, ResNum) ;
          (C=='l' -> (nb_setarg(3, Control, leap),Next=true) ;
-         (((C=='\n');(C=='\r')) -> (Cut=true,Next=false);
+         (((C=='\n');(C=='\r')) -> (Cut=false,nb_setarg(3, Control, leap),Next=true);
          (C=='g' -> write_src(exec(TermV));
          (C=='s' -> (Cut=true,Next=false);
          (true -> (write('Unknown Char'),fail))))))))))))))))))),
@@ -1258,7 +1258,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
                     ) *-> % Each forall_interactive
                         (((flag(result_num,ResNum,ResNum),ResNum >= MaxResults) -> ! ; true),ignore(Result = res(FOut)),ignore(Output = (FOut)))
                     ; % Last forall_interactive
-                       (flag(result_num,ResNum,ResNum),(ResNum==0-> (old_not_compatio(format('~N;; no-results ;; ~n~n')),!,true);true))
+                       (flag(result_num,ResNum,ResNum),(ResNum==0-> (old_not_compatio(format('~N;; no-results ;; ~n')),!,true);true))
 
    ),
 
@@ -1317,6 +1317,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
 
 
 
+%old_not_compatio(_G):- \+ is_testing, !.
 old_not_compatio(G):- call(G),ttyflush.
 
 %! maybe_assign(+N_V) is det.
