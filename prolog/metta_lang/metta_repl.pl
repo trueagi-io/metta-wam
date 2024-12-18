@@ -216,7 +216,7 @@ repl1 :-
     % Set the option 'doing_repl' to true.
     with_option('doing_repl', true,
     % Set the 'repl' option to true and then start repl2.
-    with_option(repl, true, repl2)).
+        with_option(repl, true, repl2)).
 
 %! repl2 is nondet.
 %   The main loop of the REPL, responsible for managing history, garbage collection, and catching any errors.
@@ -233,9 +233,9 @@ repl2 :-
     % Begin an infinite loop using repeat to keep REPL active.
     repeat,
     % Reset internal caches for better performance.
-    reset_caches,
+    notrace((reset_caches,
     % Force garbage collection to free memory.
-    garbage_collect,
+    garbage_collect)),
     % Execute repl3 and catch any errors that occur during execution.
     ignore(catch((ignore(catch(once(repl3), restart_reading, true))),
     % If an error occurs, print the reason and continue the loop.
@@ -276,7 +276,7 @@ repl3 :-
     notrace(prompt(Was, Was)),
     setup_call_cleanup(
         % Set the terminal prompt without tracing.
-        set_metta_prompt,
+        notrace(set_metta_prompt),
         % Flush the terminal and call repl4 to handle input.
         ((ttyflush, repl4, ttyflush)),
         % After execution, restore the previous terminal prompt.
@@ -300,7 +300,7 @@ set_metta_prompt:-
 %
 repl4 :-
     % Reset the evaluation number to ensure expressions are counted properly.
-    ((reset_eval_num,
+    notrace((reset_eval_num,
     % Write the result of the previous evaluation (if any) to the output.
     write_answer_output,
     % The following command to reset terminal settings is commented out for now.
@@ -314,16 +314,21 @@ repl4 :-
     % Check for any directives embedded in the expression and process them.
     (ignore(check_has_directive(Expr))),
     % Get the current self reference and reading mode for the REPL.
-    current_self(Self), current_read_mode(repl, Mode),
+    current_self(Self), current_read_mode(repl, Mode))),
     % Output the read expression for debugging purposes, if applicable.
-    nop(writeqln(repl_read(Expr))),!,
+    %nop(writeqln(repl_read(Expr))),!,
     % Evaluate the expression using the `do_metta/5` predicate.
     ignore(once((do_metta(repl_true, Mode, Self, Expr, O)))),!,
     % Optionally write the result of the evaluation to the source.
-    nop((write_src(O), nl)),
+    notrace((nop((write_src(O), nl)),
     % Throw `restart_reading` to restart the REPL input process after execution.
     nop(notrace(throw(restart_reading))))),!.
 
+cls:- shell(clear).
+
+:- dynamic(metta_trace_restore/1).
+store_metta_trace:- ignore((\+ metta_trace_restore(_), get_trace_reset(W),assert(metta_trace_restore(W)))),notrace.
+restore_metta_trace:- notrace,ignore((retract(metta_trace_restore(W)),call(W))).
 
 %!  check_has_directive(+V) is nondet.
 %
@@ -1056,8 +1061,8 @@ reset_caches :-
     % For each clause of reset_cache, run the body in rtrace mode to handle errors.
     forall(clause(reset_cache, Body), forall(rtrace_on_error(Body), true)).
 
-%! interactively_do_metta_exec(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
-%   Executes a metta command interactively, handling potential errors and caching.
+%! u_do_metta_exec(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
+%   Executes a metta command (maybe interactively), handling potential errors and caching.
 %   Resets caches and evaluates the execution command, catching any errors that occur.
 %
 %   @arg From is the source of the interaction (e.g., REPL, file).
@@ -1071,22 +1076,22 @@ reset_caches :-
 %   @arg FOut is the final output, after additional processing.
 %
 %   @example
-%       ?- interactively_do_metta_exec(repl, self, TermV, my_term, X, NamedVarsList, Was, Output, FOut).
+%       ?- u_do_metta_exec(repl, self, TermV, my_term, X, NamedVarsList, Was, Output, FOut).
 %       Output = ..., FOut = ...
-interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
+u_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Reset internal caches before executing the command.
     reset_caches,
     % Attempt to execute the command interactively, catching any errors.
-    catch(interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    catch(u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           Error,
           % If an error occurs, log it along with the source and the term.
           write_src(error(Error,From,TermV))).
 
 each_pair_list(A-B,A,B).
 
-%! interactively_do_metta_exec00(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
+%! u_do_metta_exec00(+From, +Self, +TermV, +Term, +X, +NamedVarsList, +Was, -Output, -FOut) is det.
 %   A helper function that handles the core logic of the interactive metta execution, catching potential aborts.
-%   This is the next layer in the call stack after interactively_do_metta_exec/9.
+%   This is the next layer in the call stack after u_do_metta_exec/9.
 %
 %   @arg From is the source of the interaction.
 %   @arg Self is the current context or environment.
@@ -1097,17 +1102,17 @@ each_pair_list(A-B,A,B).
 %   @arg Was is the previous state before execution.
 %   @arg Output is the output generated from the execution.
 %   @arg FOut is the final output, after additional processing.
-interactively_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
-   findall(Output-FOut,interactively_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
+u_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
+   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
    maplist(each_pair_list,List,OutputL,FOutL).
 
-interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
+u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
-    catch(interactively_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           % Handle the '$aborted' exception by logging it.
           '$aborted', fbug(aborted(From,TermV))).
 
-%!  interactively_do_metta_exec01(+From, +Self, +_TermV, +Term, -X, +NamedVarsList, +Was, -VOutput, +FOut) is det.
+%!  u_do_metta_exec01(+From, +Self, +_TermV, +Term, -X, +NamedVarsList, +Was, -VOutput, +FOut) is det.
 %
 %   Executes a term in a controlled interactive environment, handling history, skipping, and timing of results.
 %   This predicate manages evaluation in an interactive session, possibly skipping certain executions based on file source and other conditions.
@@ -1123,174 +1128,194 @@ interactively_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FO
 %   @arg FOut is the final output to be printed.
 %
 %   @example
-%       ?- interactively_do_metta_exec01(file("example"), self, _, term(likes), Result, NamedVarsList, Was, Output, Final).
+%       ?- u_do_metta_exec01(file("example"), self, _, term(likes), Result, NamedVarsList, Was, Output, Final).
 %       Result = likes(X,Y),
 %       Output = "Execution Time: 1.5s",
 %       Final = 'Completed Successfully'.
 %
 %   @see reset_eval_num/0 for resetting evaluation counters, notrace/1 to suppress trace during execution, and lazy_findall/3 for lazy evaluation.
 
+:- discontiguous u_do_metta_exec01/9.
+
 % Handles interactive execution of mettalog commands, but skips execution if From is a file and results are hidden.
-interactively_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _Was, _Output, _FOut) :-
-    % Checks if the term should hide results when sourced from a file
-    file_hides_results(Term), !,
-    % Evaluate arguments and return the result
-    eval_args(Self, Term, X).
+u_do_metta_exec01(file(_), Self, _TermV, Term, X, _NamedVarsList, _Was, _Output, _FOut) :-
+    notrace(file_hides_results(Term)), !, % Checks if the term should hide results when sourced from a file
+    eval_args(Self, Term, X). % Evaluate arguments and return the result
 
-% Reset evaluation counter
-interactively_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
-    %format("%%%%%%%%%%%%%%%%%%%%%%%%%2 ~w\n",[Term]),
+u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
+    notrace((flag(result_num,_,0), % Reset result number flag
+     reset_eval_num, % Reset evaluation counters for a fresh start
+     inside_assert(Term,BaseEval))), % Convert the current term into a base evaluation
+    (notrace(skip_do_metta_exec(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut))-> true;
+     u_do_metta_exec02(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut)).
+
+% --exec=skip
+skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,_FOut):-
+    option_value('exec',skip), From = file(_Filename),
+    \+ always_exec(BaseEval),  \+ always_exec(TermV),
+    color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
+    prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
+    \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList).
+
+maybe_add_history(Self, BaseEval, NamedVarsList) :-
+    % Prepare evaluation for the base term
+    PL=eval(Self,BaseEval,X),
+    user:maplist(name_vars, NamedVarsList),
+    user:name_vars('OUT' = X),
+    if_t(\+ option_value(doing_repl,true),
+        if_t(\+ option_value(repl,true),
+              if_t(option_value(prolog,true), add_history_pl(PL)))),
+    if_t(option_value(repl,true), add_history_src(exec(BaseEval))),
+
+    % Debug output in interactive mode, showing evaluated terms and results
+   prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
+
+u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
     notrace((
-
-    % Reset result number flag
-    flag(result_num,_,0),
-    % Reset evaluation counters for a fresh start
-    reset_eval_num,
+     if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
+     % Was --exec=skip but this is the type of directive we'd do anyways
+     if_t((From = file(_), option_value('exec',skip)), color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV)))),
 
     % Initialize the result variable, with FOut to hold the final output
     Result = res(FOut),
 
+    % If compatible, determine the evaluation mode (either 'leap' or 'each')
+    (is_compatio -> option_else(answer,Leap,leap) ; option_else(answer,Leap, each)),
+
+     % Set options for maximum and initial result counts, infinite results if needed
+     option_else('limit-result-count',MaxResults,inf),
+     option_else('initial-result-count',InitialResults,10),
+
+     % Control variable initialized with max result count and leap control
+     Control = contrl(InitialResults,MaxResults,Leap),
+
+     GgGgGgGgGgG = (
+         % Execute Term and capture the result
+         ((  (Term),deterministic(Complete),  % record if top-level metta evaluation is completed
+             % Transform output for display and store it in the result
+             notrace((xform_out(VOutput,Output), nb_setarg(1,Result,Output)))))),
+
+
     % Placeholder for a previous result, starting with 'Empty'
     Prev = prev_result('Empty'),
 
-    % Assert the current term into a base evaluation
-    inside_assert(Term,BaseEval),
-
-    % If compatible, determine the evaluation mode (either 'leap' or 'each')
-    (is_compatio -> option_else(answer,Leap,leap) ; option_else(answer,Leap,each)),
-
-    % Set options for maximum and initial result counts, infinite results if needed
-    option_else('maximum-result-count',MaxResults,inf),
-    option_else('initial-result-count',LeashResults,10),
-
-    % Control variable initialized with max result count and leap control
-    Control = contrl(MaxResults,Leap),
-    Skipping = _,
-
-    % Commented code for interactive control, previously enabled for file skipping
-    /* previously: if From = file(_Filename), option_value('exec',skip),  \+ always_exec(BaseEval) */
-    (((From = file(_Filename), option_value('exec',skip), \+ notrace(always_exec(BaseEval);always_exec(TermV))))
-     -> (
-         % Skip execution if conditions are met
-         GgGgGgGgGgG = (skip(Term),deterministic(Complete)),
-         % Mark as skipped
-         Skipping = 1,!,
-         color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
-         prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
-         true
-        )
-        ; % Otherwise, execute the goal interactively
-        ( if_t((From = file(_), option_value('exec',skip)),
-              color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV)))),
-        GgGgGgGgGgG = (
-            % Execute Term and capture the result
-            ((  (Term),deterministic(Complete),
-                % Transform output for display and store it in the result
-                xform_out(VOutput,Output), nb_setarg(1,Result,Output))))),
-    !, % Ensure the top-level metta evaluation is completed
-
-
-    % Prepare evaluation for the base term
-    PL=eval(Self,BaseEval,X),
-
-    % Apply mappings and assignments, track result history if necessary
-    ( % with_indents(true,
-  \+ \+ (user:maplist(name_vars,NamedVarsList),
-     user:name_vars('OUT'=X),
-     /* previously: add_history_src(exec(BaseEval)) */
-     /* previously: if_t(TermV\=BaseEval,color_g_mesg('#fa90f6', (write('; '), with_indents(false,write_src(exec(BaseEval)))))) */
-
-     % Handle interactive result output or non-interactive result history
-     if_t((is_interactive(From);Skipping==1),
-          (
-            if_t( \+ option_value(doing_repl,true),
-              if_t( \+ option_value(repl,true),
-                if_t(   option_value(prolog,true), add_history_pl(PL)))),
-            if_t(option_value(repl,true), add_history_src(exec(BaseEval))))),
-
-      % Debug output in interactive mode, showing evaluated terms and results
-      prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL),writeln('.'))))),
-      true))))),
-
-   % Print formatted answer output
-   in_answer_io(format('~n[')),!,
+    % Print formatted answer output
+    in_answer_io(format('~n[')))),!,
 
    % Interactive looping with possible timing and stepping control
-   (forall_interactive(
+   (
+    forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
-     (timed_call(GgGgGgGgGgG,Seconds)),
-  ((((((Complete==true->!;true),
-       %repeat,
-       set_option_value(interactive,WasInteractive),
-       Control = contrl(Max,DoLeap),
-       nb_setarg(1,Result,Output),
-       current_input(CI),
-       read_pending_codes(CI,_,[]),
-       flag(result_num,R,R+1),
-       flag(result_num,ResNum,ResNum),
-       reset_eval_num,
-       %not_compatio(format('~N')), maybe more space between answers?
-
-     user_io((
-       in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
-          nb_setarg(1,Prev,Output))),
+      timed_call(GgGgGgGgGgG,Seconds),
 
 
-     output_language(answers,(if_t(ResNum=<Max,
-         (
-         (((ResNum==1,Complete==true)->(old_not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
-         /* previously: handle deterministic result output */
-         (Complete==true -> (old_not_compatio(format('~N~nResult(~w): ',[ResNum])),! );
-          old_not_compatio(format('~N~nN(~w):',[ResNum]))))),
-       ignore(((
-            if_t( \+ symbolic(Output), not_compatio(nop(nl))),
-            %if_t(ResNum==1,in_answer_io(format('~N['))),
-            % user_io
-            (with_indents(is_mettalog,
-              color_g_mesg_ok(yellow,
-               \+ \+
-               (maybe_name_vars(NamedVarsList),
-                old_not_compatio(write_bsrc(Output)),
-                true)))) )) ))))),
-     in_answer_io(write_asrc((Output))),
+         (((
 
-      % not_compatio(extra_answer_padding(format('~N'))),  % Just in case, add some virt space between answers
+         %(Complete==true->!;true),
 
-      ((Complete \== true, WasInteractive, DoLeap \== leap,
-                LeashResults > ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+         ((print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Result,Seconds,Was,Output,Stepping))),
 
-      %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
-      if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
-      %with_output_to(user_error,give_time('Execution',Seconds)),
-      %user_io(give_time('Execution',Seconds)),
-      %not_compatio(give_time('Execution',Seconds),
-       color_g_mesg(green,
-           ignore((NamedVarsList \=@= Was ->(not_compatio((
-                reverse(NamedVarsList,NamedVarsListR),
-                maplist(print_var,NamedVarsListR), nop(nl)))) ; true))))),
-       (
-         (Stepping==true) ->
-         (old_not_compatio(format("~npress ';' for more solutions ")),get_single_char_key(C),
-           old_not_compatio((writeq(key=C),nl)),
+        (ResNum >= MaxResults -> ! ; true),
+
+
+        Cut = _,
+        Next = _,
+        ((Stepping==true) ->
+         (repeat,
+          old_not_compatio(format("~npress ';' for more solutions ")),get_single_char_key(C),
+          old_not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
-         (C=='m' -> make ;
-         (C=='t' -> (nop(set_debug(eval,true)),rtrace) ;
-         (C=='T' -> (set_debug(eval,true));
-         (C==';' -> true ;
-         (C==esc('[A',[27,91,65]) -> nb_setarg(2, Control, leap) ;
-         (C=='L' -> nb_setarg(1, Control, ResNum) ;
-         (C=='l' -> nb_setarg(2, Control, leap) ;
-         (((C=='\n');(C=='\r')) -> (!,fail);
-         (!,fail))))))))))));
+         (C=='B' -> (once(prolog),fail) ;
+         (C=='a' -> (notrace(abort),fail) ;
+         (C=='e' -> (notrace(halt(5)),fail) ;
+         (C=='m' -> (make,fail) ;
+         (C=='c' -> (trace,Next=true) ;
+         (C==' ' -> (trace,Next=true) ;
+         (C=='t' -> (nop(set_debug(eval,true)),rtrace,Next=true) ;
+         (C=='T' -> (set_debug(eval,true),Next=true);
+         (C=='?' -> (print_debug_help,fail)) ;
+         (C==';' -> Next=true ;
+         (C==esc('[A',[27,91,65]) -> (Cut=true,Next=false) ;
+         (C==esc('[B',[27,91,66]) -> (nb_setarg(3, Control, leap),Cut=false,Next=true) ;
+         (C=='L' -> nb_setarg(2, Control, ResNum) ;
+         (C=='l' -> (nb_setarg(3, Control, leap),Next=true) ;
+         (((C=='\n');(C=='\r')) -> (Cut=true,Next=false);
+         (C=='g' -> write_src(exec(TermV));
+         (C=='s' -> (Cut=true,Next=false);
+         (true -> (write('Unknown Char'),fail))))))))))))))))))),
+         (nonvar(Next);nonvar(Cut))) ; true),
 
-       (Complete\==true, \+ WasInteractive, Control = contrl(Max,leap)) -> true ;
-        (((Complete==true ->! ; true))))), not_compatio(extra_answer_padding(format('~N~n')))))
-                    *-> (ignore(Result = res(FOut)),ignore(Output = (FOut)))
-                    ; (flag(result_num,ResNum,ResNum),(ResNum==0->
-      (in_answer_io(nop(write('['))),old_not_compatio(format('~N<no-results>~n~n')),!,true);true))),
-                    in_answer_io((write(']'),if_t(\+is_mettalog,nl))),
+            ((Complete==true;Cut==true) ->! ; true),
+            (nonvar(Next)->Next==true; true),
+            ((flag(result_num,ResNum,ResNum),ResNum >= MaxResults) -> (!,fail) ; true)
+           /*(Complete\==true, \+ WasInteractive, Control = contrl(_,_,leap)) -> true ;
+
+                          )),
+                     not_compatio(extra_answer_padding(format('~N~n')))
+            )*/
+
+            )))
+                    ) *-> % Each forall_interactive
+                        (((flag(result_num,ResNum,ResNum),ResNum >= MaxResults) -> ! ; true),ignore(Result = res(FOut)),ignore(Output = (FOut)))
+                    ; % Last forall_interactive
+                       (flag(result_num,ResNum,ResNum),(ResNum==0-> (old_not_compatio(format('~N;; no-results ;; ~n~n')),!,true);true))
+
+   ),
+
+   in_answer_io((write(']'),if_t(\+is_mettalog,nl))),
    flag(need_prompt,_,1),
    ignore(Result = res(FOut)).
+
+print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Result,Seconds,Was,Output,Stepping):-
+         set_option_value(interactive,WasInteractive),
+         Control = contrl(LeashResults,Max,DoLeap),
+    assertion(LeashResults==inf;number(LeashResults)),
+    assertion(Max==inf;number(Max)),
+         nb_setarg(1,Result,Output),
+         current_input(CI), read_pending_codes(CI,_,[]),
+         flag(result_num,R,R+1),
+         flag(result_num,ResNum,ResNum),
+         reset_eval_num,
+         %not_compatio(format('~N')), maybe more space between answers?
+
+       user_io((
+         in_answer_io(if_t((Prev\=@=prev_result('Empty')),write(', '))),
+            nb_setarg(1,Prev,Output))),
+
+
+       output_language(answers,(if_t(ResNum=<Max,
+           (
+           (((ResNum==1,Complete==true)->(old_not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
+           /* previously: handle deterministic result output */
+           (Complete==true -> (old_not_compatio(format('~N~nR(~w): ',[ResNum])),! );
+            old_not_compatio(format('~N~nN(~w): ',[ResNum]))))),
+         ignore(((
+              if_t( \+ symbolic(Output), not_compatio(nop(nl))),
+              %if_t(ResNum==1,in_answer_io(format('~N['))),
+              % user_io
+              (with_indents(is_mettalog,
+                color_g_mesg_ok(yellow,
+                 \+ \+
+                 (maybe_name_vars(NamedVarsList),
+                  old_not_compatio(write_bsrc(Output)),
+                  true)))) )) ))))),
+
+         in_answer_io(write_asrc((Output))),
+
+
+         ((Complete \== true, WasInteractive, DoLeap \== leap,
+                  LeashResults =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+
+         %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
+           if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
+
+           color_g_mesg(green,
+              ignore((NamedVarsList \=@= Was ->(not_compatio((
+                   reverse(NamedVarsList,NamedVarsListR),
+                   maplist(print_var,NamedVarsListR), nop(nl)))) ; true))).
+
+
+
 
 old_not_compatio(G):- call(G),ttyflush.
 
@@ -1404,7 +1429,7 @@ forall_interactive(From, WasInteractive, Complete, Goal, After) :-
     % Execute the goal.
     Goal,
     % If the goal is complete, quietly execute 'After', otherwise negate 'After'.
-    (Complete == true -> (quietly(After), !) ; (quietly(\+ After))).
+    (Complete == true -> (quietly(After), !) ; ( \+ quietly(After))).
 
 %!  print_var(+Name, +Var) is det.
 %
@@ -2314,28 +2339,28 @@ handle_command(exit, _, _, _) :-
 %
 %       ?- print_help.
 %
-print_help :-
+print_debug_help :-
     % Print each available debugger command with its description.
     writeln('Debugger commands:'),
     writeln('(;)  next             - Retry with next solution.'),
     writeln('(g)  goal             - Show the current goal.'),
-    writeln('(u)  up               - Finish this goal without interruption.'),
+    %writeln('(u)  up               - Finish this goal without interruption.'),
     writeln('(s)  skip             - Skip to the next solution.'),
     writeln('(c)  creep or <space> - Proceed step by step.'),
     writeln('(l)  leap             - Leap over (the debugging).'),
-    writeln('(f)  fail             - Force the current goal to fail.'),
-    writeln('(B)  back             - Go back to the previous step.'),
+    %writeln('(f)  fail             - Force the current goal to fail.'),
+    %writeln('(B)  back             - Go back to the previous step.'),
     writeln('(t)  trace            - Toggle tracing on or off.'),
     writeln('(e)  exit             - Exit the debugger.'),
     writeln('(a)  abort            - Abort the current operation.'),
     writeln('(b)  break            - Break to a new sub-REPL.'),
-    writeln('(h)  help             - Display this help message.'),
-    writeln('(A)  alternatives     - Show alternative solutions.'),
+    writeln('(?)  help             - Display this help message.'),
+    %writeln('(A)  alternatives     - Show alternative solutions.'),
     writeln('(m)  make             - Recompile/Update the current running code.'),
-    writeln('(C)  compile          - Compile a fresh executable (based on the running state).'),
-    writeln('(E)  error msg        - Show the latest error messages.'),
-    writeln('(r)  retry            - Retry the previous command.'),
-    writeln('(I)  info             - Show information about the current state.'),
+    %writeln('(C)  compile          - Compile a fresh executable (based on the running state).'),
+    %writeln('(E)  error msg        - Show the latest error messages.'),
+    %writeln('(r)  retry            - Retry the previous command.'),
+    %writeln('(I)  info             - Show information about the current state.'),
     !.
 
 
