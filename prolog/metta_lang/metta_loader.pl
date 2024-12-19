@@ -3647,11 +3647,11 @@ generate_interpreter_stubs :-
               forall(metta_type('&corelib', Symb, Def),
                      gen_interp_stubs('&corelib', Symb, Def)).
 
-% Dynamic and multifile declaration for metta_atom_asserted_deduced/2.
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
+% Dynamic and multifile declaration for metta_atom_deduced/2.
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
 
-%!  metta_atom_asserted_deduced(+Source, +Term) is nondet.
+%!  metta_atom_deduced(+Source, +Term) is nondet.
 %
 %   Determines if a `Term` is part of the core library, logging the term if so.
 %
@@ -3661,7 +3661,7 @@ generate_interpreter_stubs :-
 %   @arg Source  The source of the term, expected to be `&corelib`.
 %   @arg Term    The term to verify.
 %
-metta_atom_asserted_deduced('&corelib', Term) :- fail,
+metta_atom_deduced('&corelib', Term) :- fail,
               % Log terms matching core library types.
               %\+ did_generate_interpreter_stubs,
               metta_atom_corelib_types(Term),

@@ -1400,10 +1400,10 @@ do_show_options_values:-
 
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
 metta_atom_asserted(X,Y):-
-    metta_atom_asserted_deduced(X,Y),
+    metta_atom_deduced(X,Y),
     \+ clause(metta_atom_asserted(X,Y),true).
 
 
@@ -1439,26 +1439,36 @@ should_inherit_from_corelib([H,A|T]):- fail,
   % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
   write_src_uo([H,A|T]).
 
-/*
-should_inherit_op_from_corelib('=').
+
+is_code_inheritor(KB):- current_self(KB).  % code runing from a KB can see corlib
+%should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').
 should_inherit_op_from_corelib('@doc').
 %should_inherit_op_from_corelib(_).
-*/
+
 metta_atom_asserted('&self','&corelib').
 metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted('top','&corelib').
+metta_atom_asserted('top','&stdlib').
 metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
 
-/*
+maybe_resolve_space_dag(Var,[XX]):- var(Var),!, \+ attvar(Var), freeze(XX,space_to_ctx(XX,Var)).
+maybe_resolve_space_dag('&self',[Self]):- current_self(Self).
+in_dag(X,XX):- is_list(X),!,member(XX,X).
+in_dag(X,X).
+
+space_to_ctx(Top,Var):- nonvar(Top),current_self(Top),!,Var='&self'.
+space_to_ctx(Top,Var):- 'mod-space'(Top,Var).
+
 'mod-space'(top,'&self').
 'mod-space'(catalog,'&catalog').
 'mod-space'(corelib,'&corelib').
 'mod-space'(stdlib,'&stdlib').
 'mod-space'(Top,'&self'):- Top == self.
-*/
+
 not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
