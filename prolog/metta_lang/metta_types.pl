@@ -452,7 +452,7 @@ get_type(Depth, Self, Val, TypeO) :-
 %
 %   Succeeds if only the first matching type should be returned.
 %
-return_only_first_type :-
+return_only_first_type :- fail,
     % Check if the flag is set to true.
     true_flag.
 
