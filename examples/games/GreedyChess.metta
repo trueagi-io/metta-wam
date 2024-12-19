@@ -48,7 +48,14 @@
         (remove-atom &self (console-messages $msg))
         ; create the board for the first time
         (add-atom &self 
-         (board-state ((1 1 s r) (1 2 s p) (1 3) (1 4) (1 5) (1 6) (1 7 g p) (1 8 g r) (2 1 s n) (2 2 s p) (2 3) (2 4) (2 5) (2 6) (2 7 g p) (2 8 g n) (3 1 s b) (3 2 s p) (3 3) (3 4) (3 5) (3 6) (3 7 g p) (3 8 g b) (4 1 s q) (4 2 s p) (4 3) (4 4) (4 5) (4 6) (4 7 g p) (4 8 g q) (5 1 s k) (5 2 s p) (5 3) (5 4) (5 5) (5 6) (5 7 g p) (5 8 g k) (6 1 s b) (6 2 s p) (6 3) (6 4) (6 5) (6 6) (6 7 g p) (6 8 g b) (7 1 s n) (7 2 s p) (7 3) (7 4) (7 5) (7 6) (7 7 g p) (7 8 g n) (8 1 s r) (8 2 s p) (8 3) (8 4) (8 5) (8 6) (8 7 g p) (8 8 g r)))
+          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
+                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
         ; indicate game has passed the initializing state
         (add-atom &self (console-messages (started)))
@@ -60,8 +67,15 @@
         (; remove the old chess board
         (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
         ; re-create a new board 
-        (add-atom &self 
-          (board-state ((1 1 s r) (1 2 s p) (1 3) (1 4) (1 5) (1 6) (1 7 g p) (1 8 g r) (2 1 s n) (2 2 s p) (2 3) (2 4) (2 5) (2 6) (2 7 g p) (2 8 g n) (3 1 s b) (3 2 s p) (3 3) (3 4) (3 5) (3 6) (3 7 g p) (3 8 g b) (4 1 s q) (4 2 s p) (4 3) (4 4) (4 5) (4 6) (4 7 g p) (4 8 g q) (5 1 s k) (5 2 s p) (5 3) (5 4) (5 5) (5 6) (5 7 g p) (5 8 g k) (6 1 s b) (6 2 s p) (6 3) (6 4) (6 5) (6 6) (6 7 g p) (6 8 g b) (7 1 s n) (7 2 s p) (7 3) (7 4) (7 5) (7 6) (7 7 g p) (7 8 g n) (8 1 s r) (8 2 s p) (8 3) (8 4) (8 5) (8 6) (8 7 g p) (8 8 g r)))
+        (add-atom &self           
+          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
+                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
         ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
         ;
@@ -72,62 +86,29 @@
         empty))))) 
 
 (= (welcome) 
- ((writeln! " ") (writeln! " ") (writeln! " ") (writeln! " ")
-  (writeln! 'M E T T A    G R E E D Y   C H E S S')
-  (writeln! " ")
-  (writeln! 'This program is intended as a MeTTa exercise.')
-  ;  board(A), b(A),
-  (writeln! '******* I N S T R U C T I O N S ********')
-  (writeln! " ")
-  (writeln! '- Your pieces are marked with an asterisk')
-  (writeln! '- Please take note of the following simple commands:')
-  (writeln! '-------- C o m m a n d s -----------')
-  (writeln! '1) TO MOVE YOUR PIECE USE (example) ->  !(m 1 2 1 3)')
-  (writeln! '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.')
-  (writeln! '2) Move MeTTa Greedy Chess          ->  !(g)')
-  (writeln! '3) Reset                            ->  !(r)')
-  (writeln! '4) Commands List                    ->  !(c)')
-  (writeln! '5) Display Board                    ->  !(d)')
-  (writeln! 'You may now enter your move !(m x1 y1 x2 y2) command.')))
-
-!(chess)
-;!(match &self (console-messages $msg) (println! $msg))
-;!(match &self (board-state $board) (println! $board))
-
-;(board-state (. . . . . . . . .))
-
-;(: display-board (-> Atom)) 
-;(= (display-board)
-;  (
-;   (match &self (board $list)      
-;        $list))
-;   )
-
-;      (println! (format-args "\n
-;       {} | {} | {} \n
-;      --------- \n
-;       {} | {} | {} \n
-;      --------- \n
-;       {} | {} | {} \n
-;      " $list)))) ; Formats the board as a 3x3 grid for display.
+  ; write welcome banner to console and call display_board to print the pieces
+ ((println! " ") (println! " ") (println! " ") (println! " ")
+  (println! (format-args 'M E T T A    G R E E D Y   C H E S S' (empty)))
+  (println! " ")
+  (println! (format-args 'This program is a MeTTa exercise which takes the best immediate move without planning far ahead.'
+            (empty)))
+  (display_board (match &self (board-state $board) $board))
+  (println! (format-args '******* I N S T R U C T I O N S ********' (empty)))
+  (println! " ")
+  (println! (format-args '- Your pieces are marked with an asterisk.' (empty)))
+  (println! (format-args '- Please take note of the following simple commands:' (empty)))
+  (println! (format-args '-------- C o m m a n d s -----------' (empty)))
+  (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  !(m 1 2 1 3)' (empty)))
+  (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.' (empty)))
+  (println! (format-args '2) Move MeTTa Greedy Chess          ->  !(g)' (empty)))
+  (println! (format-args '3) Reset                            ->  !(r)' (empty)))
+  (println! (format-args '4) Commands List                    ->  !(c)' (empty)))
+  (println! (format-args '5) Display Board                    ->  !(d)' (empty)))
+  (println! (format-args 'You may now enter your move !(m x1 y1 x2 y2) command.' (empty)))))
 
 
-;; (add-atom &self (board ((1 1 s r) (1 2 s p))))
-;
-;(: chess (-> board-state Atom))
-
-
-  ; (dynamic (/ guimessage 4)) (or (abolish board 1) True) (or (abolish guimessage 1) True) (or (abolish ;guimessage 2) True) (or (abolish guimessage 3) True) (or (abolish guimessage 4) True) #(add-atom &self #;(guimessage chess game started)) #(add-atom &self #(board ((1 1 s r) (1 2 s p) (1 3) (1 4) (1 5) (1 6) (1 7 ;g p) (1 8 g r) (2 1 s n) (2 2 s p) (2 3) (2 4) (2 5) (2 6) (2 7 g p) (2 8 g n) (3 1 s b) (3 2 s p) (3 3) (3 ;4) (3 5) (3 6) (3 7 g p) (3 8 g b) (4 1 s q) (4 2 s p) (4 3) (4 4) (4 5) (4 6) (4 7 g p) (4 8 g q) (5 1 s k) ;(5 2 s p) (5 3) (5 4) (5 5) (5 6) (5 7 g p) (5 8 g k) (6 1 s b) (6 2 s p) (6 3) (6 4) (6 5) (6 6) (6 7 g p) ;(6 8 g b) (7 1 s n) (7 2 s p) (7 3) (7 4) (7 5) (7 6) (7 7 g p) (7 8 g n) (8 1 s r) (8 2 s p) (8 3) (8 4) (8 ;5) (8 6) (8 7 g p) (8 8 g r)))) (set_prolog_flag toplevel_print_options #( :: ((quoted True) (portray ;True)) )) (welcome) (set-det))
-
-
-;(= (welcome) (write 'Deep Blue Dummy Chess -- Copyright 2001 Mike Archbold') (nl) (write 'This program is ;intended as a Prolog exercise') (nl) (nl) (board $A) (b $A) (write '******* I N S T R U C T I O N S ********') ;(nl) (write '- Your pieces are marked with an asterisk') (nl) (write '- Please take note of the following ;simple commands:') (nl) (nl) (write '-------- C o m m a n d s -----------') (nl) (write '1) TO MOVE YOUR PIECE ;USE (example) ->  ?- m(1,2,1,3).') (nl) (write '   Result:  YOUR pawn in 1,2 moved to location 1,3. Standard x/;y.') (nl) (write '2) TO MOVE DEEP BLUE DUMMY type     ->  ?- g.') (nl) (write '3) To reset, ;type                   ->  ?- r.') (nl) (write '4) Display commands, type           ->  ?- c.') (nl) (write ;'5) Display current board type       ->  ?- d.') (nl) (write 'ALL COMMANDS MUST BE TERMINATED WITH A PERIOD ;AND NO SPACES.') (nl) (write 'You may now enter your move (m) command') (nl))
-
-;!(display-board)
-
-;
-;
-;(= (r)  
-;  (chess))
+(= (r)  
+  (chess))
 ;
 ;
 ;(= (c) (write '-------- C o m m a n d s -----------') (nl) (write '1) TO MOVE YOUR PIECE USE (example) ->  ?- m;(1,2,1,3).') (nl) (write '   Result:  YOUR piece in 1,2 moved to location 1,3. Standard x/y.') (nl) (write '2) ;TO MOVE DEEP BLUE DUMMY type     ->  ?- g.') (nl) (write '3) To reset, type                   ->  ?- r.') (nl) ;(write '4) Display commands, type           ->  ?- c.') (nl) (write '5) Display current board type       ->  ?;- d.') (nl) (write 'ALL COMMANDS MUST BE TERMINATED WITH A PERIOD!') (nl))
@@ -140,17 +121,51 @@
 ;(= (d) (board $A) (b $A) (set-det))
 ;
 ;
-;(= (b $A) (write     1  2  3  4  5  6  7  8) (nl) (write   -------------------------) (nl) (write_box 1 8 $A))
-;
-;
-;(= (write_box $A 0 $B) (nl) (write   -------------------------) (nl) (write     1  2  3  4  5  6  7  8) (nl) ;(nl) (nl) (nl))
-;(= (write_box $A $B $C) (= $A  1) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 2) (write $B) (write  |  ) ;(is $E (+ $A 1)) (write_box $E $B $C))
-;(= (write_box $A $B $C) (< $A 8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 2) (write |  ) (is $E (+ $A ;1)) (write_box $E $B $C))
-;(= (write_box $A $B $C) (= $A  8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 2) (write |) (write   | ) ;(write $B) (is $E (- $B 1)) (or (, (> $B 1) (nl) (write   -------------------------) (nl)) True) (write_box 1 ;$E $C))
-;(= (write_box $A $B $C) (< $A 8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 4) (nth1 3 $D g) (nth1 4 $D ;$E) (or (, (= $A  1) (write $B) (write  |)) (write |)) (write ' ') (write $E) (is $F (+ $A 1)) (write_box $F ;$B $C))
-;(= (write_box $A $B $C) (< $A 8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 4) (nth1 3 $D s) (nth1 4 $D ;$E) (or (, (= $A  1) (write $B) (write  |)) (write |)) (write *) (write $E) (is $F (+ $A 1)) (write_box $F $B ;$C))
-;(= (write_box $A $B $C) (= $A  8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 4) (nth1 3 $D g) (nth1 4 ;$D $E) (write |) (write ' ') (write $E) (write | ) (write $B) (is $F (- $B 1)) (= $G  1) (or (, (> $F 0) (nl) ;(write   -------------------------) (nl)) True) (write_box $G $F $C))
-;(= (write_box $A $B $C) (= $A  8) (return_entire_box #( :: ($A $B) ) $D $C) (len $D 4) (nth1 3 $D s) (nth1 4 ;$D $E) (write |) (write *) (write $E) (write | ) (write $B) (is $F (- $B 1)) (= $G  1) (or (, (> $F 0) (nl) ;(write   -------------------------) (nl)) True) (write_box $G $F $C))
+(: identify_piece (-> list string))
+(= (identify_piece $p)
+   (if (== (size-atom $p) 2)
+       "  "
+       "*k"
+   )
+)
+
+; Input the board ($brd), output a list of board with an identifier for each piece, eg., human king is "*k."
+(: display_filter (-> list list))
+(= (display_filter $brd)
+    (if (== (size-atom $brd) 1)
+      ; if on last piece
+       ((identify_piece $brd))
+      ; otherwise convert all pieces to shorter description for display.
+       (let $i (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $i))))
+
+(= (display_board $board) 
+  (
+   (let $a (display_filter     $board ) ())
+  
+   (println! (format-args "\n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      | {} | {} | {} | {} | {} | {} | {} | {} |\n
+      ---------------------------------------- \n
+      " 
+      ;("r " "n " "b " "  " "  " "*b"))
+      $a)
+   ) ; Formats the board as a 3x3 grid for display.
+  )
+)
+
 ;
 ;
 ;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
@@ -568,3 +583,7 @@
 ;      (random $B) 1)))
 ;
 ;
+
+
+
+!(chess)
