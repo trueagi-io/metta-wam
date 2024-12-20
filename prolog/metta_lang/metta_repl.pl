@@ -152,6 +152,10 @@ check_file_exists_for_append(HistoryFile) :-
 %     ?- save_history.
 %     true.
 %
+:- if(is_win64).
+% Dummy to avoid errors on windows.
+save_history.
+:- else.
 save_history :-
     % Get the current input stream.
     current_input(Input),
@@ -163,6 +167,7 @@ save_history :-
     ;
         % Otherwise, do nothing.
         true).
+:- endif.
 
 %! load_and_trim_history is det.
 %   Loads and trims the REPL history if needed, and installs readline support.
@@ -2038,12 +2043,16 @@ interact(Variables, Goal, Tracing) :-
 %   This installs readline/editline support, allowing for line editing and history during input.
 :- dynamic(is_installed_readline_editline/1).
 :- volatile(is_installed_readline_editline/1).
+
+:- if(is_win64).
+:-else.
 install_readline_editline :-
     % Get the current input stream.
     current_input(Input),
     % Install readline support for the current input.
     install_readline(Input),
     !.
+:- endif.
 
 %!  el_wrap_metta(+Input) is det.
 %
