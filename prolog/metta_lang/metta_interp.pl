@@ -368,8 +368,12 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
 
-:- nb_setval(self_space, '&self').
-current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
+use_top_self :- \+ fast_option_value('top-self', false).
+top_self('&top'):- use_top_self,!.
+top_self('&self').
+
+%:- top_self(Self), nb_setval(self_space, '&self'),
+current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;top_self(Self)).
 :- nb_setval(repl_mode, '+').
 
 
@@ -410,7 +414,8 @@ option_value_name_default_type_help('initial-result-count', 10, [inf,10], "For M
 option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
 option_value_name_default_type_help('repeats', true, [true, false], "false to avoid repeated results", 'Miscellaneous').
 option_value_name_default_type_help('time', true, [false, true], "Enable or disable timing for operations (in Rust compatibility mode, this is false)", 'Miscellaneous').
-option_value_name_default_type_help('vn', auto, [auto, true, false], "Enable or disable, (auto = enable but not if it breaks stuff) EXPERIMENTAL BUG-FIX where variable names are preserved (see https://github.com/trueagi-io/metta-wam/issues/221)", 'Miscellaneous').
+option_value_name_default_type_help('vn', true, [true, auto, false], "Enable or disable, (auto = enable but not if it breaks stuff) EXPERIMENTAL BUG-FIX where variable names are preserved (see https://github.com/trueagi-io/metta-wam/issues/221)", 'Miscellaneous').
+option_value_name_default_type_help('top-self', false, [false, true, auto], "Do not pretend &self==top", 'Miscellaneous').
 
 % Testing and Validation
 option_value_name_default_type_help('synth-unit-tests', false, [false, true], "Synthesize unit tests", 'Testing and Validation').
@@ -1419,22 +1424,23 @@ metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
 %metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
+metta_atom(X,Y):- use_top_self,maybe_resolve_space_dag(X,XX),!,in_dag(XX,XXX),XXX\==X,metta_atom(XXX,Y).
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
+%metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
 %metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !,
+metta_atom(KB,Atom):- KB \== '&corelib', !, % is_code_inheritor(KB),
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
 should_inherit_from_corelib(_):- using_all_spaces,!.
-should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
-should_inherit_from_corelib([H|_]):- H == '@doc', !.
+should_inherit_from_corelib([H,A|_]):- nonvar(A), should_inherit_op_from_corelib(H),!,nonvar(A).
+%should_inherit_from_corelib([H|_]):- H == '@doc', !.
 should_inherit_from_corelib([H,A|T]):- fail,
-  H == '=',write_src_uo(try([H,A|T])),!,is_list(A),
-  A=[F|_],nonvar(F), F \==':',
+  H == '=',write_src_uo(try([H,A|T])),!,
+  A=[F|_],nonvar(F), F \==':',is_list(A),
   \+ metta_atom_asserted('&self',[:,F|_]),
   % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
   write_src_uo([H,A|T]).
@@ -1446,12 +1452,13 @@ should_inherit_op_from_corelib(':').
 should_inherit_op_from_corelib('@doc').
 %should_inherit_op_from_corelib(_).
 
-metta_atom_asserted('&self','&corelib').
-metta_atom_asserted('&self','&stdlib').
-metta_atom_asserted('top','&corelib').
-metta_atom_asserted('top','&stdlib').
+%metta_atom_asserted('&self','&corelib').
+%metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted(Top,'&corelib'):- top_self(Top).
+metta_atom_asserted(Top,'&stdlib'):- top_self(Top).
 metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
+metta_atom_asserted('&flybase','&stdlib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
 
@@ -1461,13 +1468,14 @@ in_dag(X,XX):- is_list(X),!,member(XX,X).
 in_dag(X,X).
 
 space_to_ctx(Top,Var):- nonvar(Top),current_self(Top),!,Var='&self'.
-space_to_ctx(Top,Var):- 'mod-space'(Top,Var).
+space_to_ctx(Top,Var):- 'mod-space'(Top,Var),!.
+space_to_ctx(Var,Var).
 
-'mod-space'(top,'&self').
+'mod-space'(top,'&top').
 'mod-space'(catalog,'&catalog').
 'mod-space'(corelib,'&corelib').
 'mod-space'(stdlib,'&stdlib').
-'mod-space'(Top,'&self'):- Top == self.
+'mod-space'(Top,'&self'):- current_self(Top).
 
 not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
 

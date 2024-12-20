@@ -150,7 +150,7 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
 % Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
-:- nb_setval(self_space, '&self').
+%:- nb_setval(self_space, '&self').
 
 
 %current_self(Space):- nb_current(self_space,Space).

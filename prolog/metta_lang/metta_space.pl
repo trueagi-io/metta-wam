@@ -693,6 +693,8 @@ was_asserted_space('&self').
 was_asserted_space('&stdlib').
 was_asserted_space('&corelib').
 was_asserted_space('&flybase').
+was_asserted_space('&top').
+was_asserted_space('&catalog').
 /*
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').
