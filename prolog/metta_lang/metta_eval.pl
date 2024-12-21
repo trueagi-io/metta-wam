@@ -150,7 +150,7 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
 % Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
-%:- nb_setval(self_space, '&self').
+:- nb_setval(self_space, '&self').
 
 
 %current_self(Space):- nb_current(self_space,Space).
@@ -278,8 +278,8 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  
 % %  this next one at least causes no failures and 5x speedup
 subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
-  subst_args(Eq,RetType,Depth2,Self,Y,YO),
-  %Y =YO,
+  %subst_args(Eq,RetType,Depth2,Self,Y,YO),
+  Y =YO,
   notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
      (write_src_uo(needed_subst_args(Y,YO)),bt,sleep(1.0)),
   nop(write_src_uo(unneeded_subst_args(Y))))).
@@ -1547,12 +1547,9 @@ format_args_get_index1(FormatRest, FormatRest, Index, Index).
 % Placeholder to deal with formatting {<n>:<format>} later
 format_args_get_format(FormatRest, FormatRest, _).
 
-format_args_write(Arg,_) :- \+ compound(Arg), !, format_arg(Arg).
-format_args_write('#\\'(Char),_) :- !, format_arg(Char).
-format_args_write(Arg,_) :- format_arg(Arg).
-
-format_arg(Arg) :- string(Arg), !, write(Arg).
-format_arg(Arg):- \+ \+ write_src_woi(Arg).
+format_args_write(Arg,_) :- string(Arg), !, write(Arg).
+format_args_write('#\\'(Arg),_) :- !, write(Arg).
+format_args_write(Arg,_) :- write_src_woi(Arg).
 
 format_nth_args([], _, _).
 format_nth_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_nth_args(FormatRest, Iterator, Args). % escaped

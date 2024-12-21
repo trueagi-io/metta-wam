@@ -65,7 +65,7 @@ self_subst(X):- atom(X),!, \+ nb_bound(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F'). %'
 
 
-%:- nb_setval(self_space, '&self'). % '
+:- nb_setval(self_space, '&self'). % '
 substs_to(XX,Y):- Y==XX,!.
 substs_to(XX,Y):- Y=='True',!, is_True(XX),!. %'
 

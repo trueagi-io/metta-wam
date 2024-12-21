@@ -921,9 +921,9 @@ read_prolog_syntax(Stream, Clause) :-
     at_end_of_stream(Stream), !, Clause = end_of_file.
 read_prolog_syntax(Stream, Clause) :-
     % Handle errors while reading a clause.
-    catch(read_prolog_syntax_unsafe(Stream, Clause), E,
+    catch(read_prolog_syntax_0(Stream, Clause), E,
            throw_stream_error(Stream,E)), !.
-read_prolog_syntax_unsafe(Stream, Term) :-
+read_prolog_syntax_0(Stream, Term) :-
     % Set options for reading the clause with metadata.
     Options = [ variable_names(Bindings),
                 term_position(Pos),
@@ -937,12 +937,12 @@ read_prolog_syntax_unsafe(Stream, Term) :-
     ->  true
     ;   % Store term position and variable names.
         b_setval('$term_position', Pos),
-        nb_setval('$variable_names', Bindings),
+        b_setval('$variable_names', Bindings),
         % Display information about the term.
         maplist(star_vars,Bindings),
         nop(display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments))).
 
-star_vars(N=V):- ignore('$VAR'(N) = V).
+star_vars(N=V):- ignore('$'(N) = V).
 
 %!  maybe_name_vars(+List) is det.
 %

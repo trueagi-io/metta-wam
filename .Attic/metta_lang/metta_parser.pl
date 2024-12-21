@@ -206,6 +206,35 @@ svar_fixvarname(SVAR, UP):- integer(SVAR),!,sformat(SUP,'~w',['$VAR'(SVAR)]), sv
 svar_fixvarname(SVAR, UP):- integer(SVAR),UP=SVAR,!.
 svar_fixvarname(SVAR, UP):- svar(SVAR,UP),!.
 svar_fixvarname(SVAR, UP):- n_to_vn(UP,SVAR),!.
+% convert_to_var_name(+Input, -VarName)
+% Converts Input (atom or string) into a Prolog-legal variable name.
+% It replaces illegal characters with underscores and then prefixes the name with '_'.
+svar_fixvarname(Input, VarName) :-
+    % Convert input to character list
+    (   atom(Input) -> atom_chars(Input, Chars)
+    ;   string(Input) -> string_chars(Input, Chars)
+    ),
+    % Transform each character into an allowed sequence
+    maplist(char_to_allowed_sequence, Chars, TransformedList),
+    % Flatten the list of lists into a single list of chars
+    flatten(TransformedList, SafeChars),
+    % Always prefix with '_'
+    VarChars = ['_'|SafeChars],
+    atom_chars(VarName, VarChars).
+
+% char_to_allowed_sequence(+Char, -Sequence)
+% If Char is alphanumeric or '_', it is kept as is.
+% Otherwise, convert it into '_<ASCII_CODE>'.
+char_to_allowed_sequence(Char, [Char]) :-
+    (char_type(Char, alnum); Char == '_'), !.
+char_to_allowed_sequence(Char, Sequence) :-
+    % Get ASCII code
+    char_code(Char, Code),
+    % Convert code to a list of digits
+    number_chars(Code, CodeChars),
+    % Build a sequence like ['_', '5', '4'] for Code = 54, for example
+    Sequence = ['_'|CodeChars].
+
 
 %!  svar_fixname(?Var, ?NameO) is det.
 %
@@ -231,6 +260,10 @@ svar_fixname('?'(Name), UP) :-
 svar_fixname('block'(Name), UP) :-
     % Handle 'block' variables.
     !, svar_fixvarname(Name, UP).
+
+svar_fixname('_', '_') :- !.
+svar_fixname('', '__') :- !.
+
 svar_fixname(SVAR, SVARO) :-
     % If the name is already valid, return it as is.
     ok_var_name(SVAR), !, SVARO = SVAR.
@@ -279,8 +312,8 @@ svar_fixname(I,O):-
 fix_varcase(Word, Word) :-
     % If the word starts with '_', leave it unchanged.
     atom_concat_or_rtrace('_', _, Word), !.
-
 fix_varcase(Word, WordC) :- string(Word),atom_string(Atom,Word),!,fix_varcase(Atom, WordC).
+fix_varcase('', '__') :- !.
 fix_varcase(Word, WordC) :- atom(Word),downcase_atom(Word, UC),Word=UC,atom_concat('_',UC,WordC),!.
 fix_varcase(Word, WordC) :-
     % Convert the first letter to uppercase.
@@ -778,12 +811,24 @@ write_readably(_, _).
 % @arg Item The item read from the stream.
 read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
 read_sexpr(I,O):-
+  catch(read_sexpr_or_error(I,O),E,handle_read_error(E)).
+
+handle_read_error(E):-
+  write_src_uo(E),
+  print_message(error,E),
+  %throw(E),
+  %throw('$aborted'),
+  !.
+
+read_sexpr_or_error(I,O):-
   setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1_000_000),
     setup_call_cleanup(
        (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
-        cont_sexpr(is_delimiter(),I, O),
+        cont_sexpr(is_delimiter,I, O),
         b_setval('$file_src_depth', Lvl)),
    nop(flag('$file_src_ordinal',_,Ordinal))).
+
+
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.
 %
 % Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
@@ -791,8 +836,6 @@ read_sexpr(I,O):-
 % @arg EndChar that denotes the end of a symbol.
 % @arg Stream Stream from which to read.
 % @arg Item The item read from the stream.
-
-
 cont_sexpr(EndChar,  Stream, Item):-
    skip_spaces(Stream),  % Ignore whitespace before reading the expression.
    read_line_char(Stream, StartRange),
@@ -802,23 +845,104 @@ cont_sexpr(EndChar,  Stream, Item):-
    push_item_range(Item, Range).
 
 
-cont_sexpr_once(EndChar,  Stream, Item):-
-    skip_spaces(Stream),  % Ignore whitespace before reading the expression.
+cont_sexpr_once(EndChar, Stream, Item) :-
+    skip_spaces(Stream),
     get_char(Stream, Char),
-    (   Char = '(' -> read_list(')', Stream, Item)  % If '(', read an S-expression list.
-    ;   Char = '[' -> (read_list(']', Stream, It3m), Item = ['[...]',It3m])  % If '[', read an S-expression list.
-    ;   Char = '{' -> (read_list('}', Stream, It3m), Item = ['{...}',It3m])  % If '{', read an S-expression list.
-    ;   Char = '"' -> read_quoted_string(Stream, '"', Item)  % Read a quoted string.
-    ;  (Char = '!', nb_current('$file_src_depth', 0)) -> (cont_sexpr_once(EndChar, Stream, Subr), Item = exec(Subr))  % Read called directive
-    ;   Char = '\'' -> read_quoted_symbol(Stream, '\'', Item)  % Read a quoted symbol.
-    ;   Char = '`' -> read_quoted_symbol(Stream, '`', Item)  % Read a backquoted symbol.
-    ;   Char = end_of_file -> Item = end_of_file  % If EOF, set Item to 'end_of_file'.
-    ; read_symbolic(EndChar,  Stream, Char, Item)            % Otherwise, read a symbolic expression.
-    ), !.
+    cont_sexpr_from_char(EndChar, Stream, Char, Item), !.
+
+% If EOF, return end_of_file
+cont_sexpr_from_char(_EndChar, _Stream, end_of_file, end_of_file).
+
+% If '(', read an S-expression list.
+cont_sexpr_from_char(_EndChar, Stream, '(', Item) :-
+    read_list(')', Stream, Item).
+
+% If '[', '{', etc. - using paren_pair
+cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair(Char, EndOfParen, Functor),
+    read_list(EndOfParen, Stream, It3m),
+    Item = [Functor, It3m].
+
+% Unexpected start character
+cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair(_, Char, _),
+    nb_current('$file_src_depth', 0),
+    sformat(Reason, "Unexpected start character: '~w'", [Char]),
+    throw_stream_error(Stream, syntax_error(unexpected_char(Char), Reason)),
+    % keep going we consumed the Char (if thorw_stream_error/2 permits)
+    cont_sexpr(EndChar,  Stream, Item).
+
+% If '"', read a quoted string.
+cont_sexpr_from_char(_EndChar, Stream, '"', Item) :-
+    read_quoted_string(Stream, '"', Item).
+
+% If '!' followed by '(', '#', or file depth 0, read a directive to be executed
+cont_sexpr_from_char(EndChar, Stream, '!', Item) :-
+    (  peek_char(Stream, '(')
+     ; peek_char(Stream, '#')
+     ; nb_current('$file_src_depth', 0)),
+    cont_sexpr_once(EndChar, Stream, Subr),
+    Item = exec(Subr).
+
+% If '#' followed by '(', read SExpr as Prolog Expression
+cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
+    cont_sexpr_once(EndChar, Stream, Subr),
+    univ_maybe_var(Item, Subr).
+
+% If '#' followed by '{', read Prolog syntax until '}' and a period
+cont_sexpr_from_char(_EndChar, Stream, '#', Item) :- peek_char(Stream, '{'),
+    read_prolog_syntax(Stream, Subr),
+    Subr = {Item}.
+
+% If '\'', read a quoted symbol.
+cont_sexpr_from_char(_EndChar, Stream, '\'', Item) :-
+    read_quoted_symbol(Stream, '\'', Item).
+
+% If '`', read a backquoted symbol.
+cont_sexpr_from_char(_EndChar, Stream, '`', Item) :-
+    read_quoted_symbol(Stream, '`', Item).
+
+% Otherwise, read a symbolic expression.
+cont_sexpr_from_char(EndChar, Stream, Char, Item) :-
+    read_symbolic(EndChar, Stream, Char, Item).
+
 
 can_do_level(0).
 can_do_level(_).
 
+paren_pair('(',')',_).
+paren_pair('{','}','{...}').
+paren_pair('[',']','[...]').
+
+% #( : user #(load_metta_file &self various_syntaxes.metta) )
+univ_maybe_var(Item,[F|Subr]):- is_list(Subr), atom(F), Item =.. [F|Subr],!.
+univ_maybe_var('#'(Subr),Subr):- !.
+
+read_prolog_syntax(Stream, Clause) :-
+    % Stop if at the end of the stream.
+    at_end_of_stream(Stream), !, Clause = end_of_file.
+read_prolog_syntax(Stream, Clause) :-
+    % Handle errors while reading a clause.
+    catch(read_prolog_syntax_unsafe(Stream, Clause), E,
+           throw_stream_error(Stream,E)), !.
+read_prolog_syntax_unsafe(Stream, Term) :-
+    % Set options for reading the clause with metadata.
+    Options = [ variable_names(Bindings),
+                term_position(Pos),
+                subterm_positions(RawLayout),
+                syntax_errors(error),
+                comments(Comments),
+                module(trans_mod)],
+    % Read the term with the specified options.
+    read_term(Stream, Term, Options),
+    (   (fail, Term == end_of_file)
+    ->  true
+    ;   % Store term position and variable names.
+        b_setval('$term_position', Pos),
+        nb_setval('$variable_names', Bindings),
+        % Display information about the term.
+        maplist(star_vars,Bindings),
+        nop(display_term_info(Stream, Term, Bindings, Pos, RawLayout, Comments))).
+
+star_vars(N=V):- ignore('$VAR'(N) = V).
 
 %!  maybe_name_vars(+List) is det.
 %
@@ -1106,12 +1230,13 @@ read_list(EndChar,  Stream, List):-
   nb_current('$file_src_depth', LvL),
   flag('$file_src_ordinal',Ordinal,Ordinal+1),
   succ(LvL,LvLNext),
-  nb_setval('$file_src_depth', LvLNext),
   read_position(Stream, Line, Col, CharPos, _),
+ setup_call_cleanup(
+  nb_setval('$file_src_depth', LvLNext),
   catch(read_list_cont(EndChar,  Stream, List),
         stream_error(_Where,Why),
         throw(stream_error(Line:Col:CharPos,Why))),
-  nb_setval('$file_src_depth', LvL).
+  nb_setval('$file_src_depth', LvL)).
 
 read_list_cont(EndChar,  Stream, List) :-
     skip_spaces(Stream),  % Skip any leading spaces before reading.
@@ -1269,8 +1394,8 @@ read_symbolic_cont(EndChar,  Stream, Chars) :-
 % @arg Char Character to check.
 is_delimiter(Char) :-
     char_type(Char, space) ;  % Space is a delimiter.
-    arg(_, v('(', ')', end_of_file), Char).  % Other delimiters include parentheses and end of file.
+    arg(_, v( /*'(', ')', */ end_of_file), Char).  % Other delimiters include parentheses and end of file.
 
 % Ensure the program runs upon initialization.
-:- initialization(main_init, main).
+% :- initialization(main_init, main).
 

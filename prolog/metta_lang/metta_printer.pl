@@ -148,7 +148,7 @@ ppct(Msg, Term) :-
     % If Term is a list, apply list-specific formatting.
     is_list(Term), !,
     writeln('---------------------'),
-    numbervars(Term, 666, _, [attvar(skip)]),  % Bind variables for display.
+    numbervars(Term, 666, _, [attvar(bind)]),  % Bind variables for display.
     write((Msg)), write(':'), nl,
     write_src(Term), nl.
 ppct(Msg, Term) :-
@@ -162,14 +162,14 @@ ppct(Msg, Term) :-
     Term = (_ = _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 444, _, [attvar(skip)]),
+    numbervars(Term, 444, _, [attvar(bind)]),
     write_src(Term), nl.
 ppct(Msg, Term) :-
     % For clauses with specific formatting needs, include variable numbering and tree display.
     Term = (_ :- _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 222, _, [attvar(skip)]),
+    numbervars(Term, 222, _, [attvar(bind)]),
     print_tree(Term), nl.
 
 %!  pp_metta(+P) is det.
@@ -190,8 +190,7 @@ ppct(Msg, Term) :-
 %
 pp_metta(P) :-
     % Standardize variable names in P for readability.
-    %pretty_numbervars(P, PP),
-    P=PP,
+    pretty_numbervars(P, PP),
     % Pretty-print PP with the `concepts=false` option.
     with_option(concepts=false, pp_fb(PP)).
 
@@ -239,8 +238,6 @@ print_pl_source(P) :-
     % Run the primary source-printing predicate within `run_pl_source/1`.
     run_pl_source(print_pl_source0(P)).
 
-pnotrace(G):- quietly(G).
-
 %!  run_pl_source(+G) is det.
 %
 %   Executes a goal `G` safely, catching any errors and attempting a retry with tracing if needed.
@@ -276,13 +273,13 @@ run_pl_source(G) :-
 %
 print_pl_source0(_) :-
     % Do not print if compatibility mode is enabled.
-    pnotrace(is_compatio), !.
+    notrace(is_compatio), !.
 print_pl_source0(_) :-
     % Do not print if silent loading mode is enabled.
-    pnotrace(silent_loading), !.
+    notrace(silent_loading), !.
 print_pl_source0(P) :-
     % Check if P was just printed (avoid redundant printing).
-    pnotrace((just_printed(PP), PP =@= P)), !.
+    notrace((just_printed(PP), PP =@= P)), !.
 print_pl_source0((A :- B)) :-
     % For rules (A :- B), display using portray_clause for readability.
     !,portray_clause((A :- B)).
@@ -520,7 +517,7 @@ is_final_write(V) :-
     var(V), !, write_dvar(V), !.
 is_final_write('$VAR'(S)) :-
     % For '$VAR' structures, write the variable name S.
-    !,  write_dvar(S), !.
+    !, write_dvar(S), !.
 is_final_write('#\\'(S)) :-
     % For special character format `#\S`, write S in single quotes.
     !, format("'~w'", [S]).
@@ -713,53 +710,47 @@ py_is_enabled :-
 %   Writes the source of a term `V` with indentation enabled.
 %
 %   This predicate sets indentation mode on by calling `with_indents/2` with `true`,
-%   and then writes the source of `V` using `write_src/1`. The use of `pnotrace/1`
+%   and then writes the source of `V` using `write_src/1`. The use of `notrace/1`
 %   ensures that tracing is disabled during this operation.
 %
 %   @arg V The term whose source is to be written with indentation.
 %
 write_src_wi(V) :-
     % Enable indentation and write the source of V.
-    pnotrace((with_indents(true, write_src(V)))).
+    notrace((with_indents(true, write_src(V)))).
 
 %!  write_src(+V) is det.
 %
 %   Writes the source of a term `V` after guessing Metta variables.
 %
 %   This predicate first tries to identify variables in `V` using `guess_metta_vars/1`
-%   and then formats `V` for output using `pp_sex/1`. The `pnotrace/1` wrapper
+%   and then formats `V` for output using `pp_sex/1`. The `notrace/1` wrapper
 %   ensures tracing is turned off.
 %
 %   @arg V The term to be written as source.
 %
 write_src(V) :-
     % Guess variables in V and pretty-print using `pp_sex/1`.
-    \+ \+ pnotrace((src_vars(V, I), pp_sex(I))), !.
+    \+ \+ notrace((src_vars(V, I), pp_sex(I))), !.
 
 print_compounds_special:- true.
-src_vars(V,I):- var(V),!,I=V.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-              pre_guess_varnames(V,II),ignore(II=V),
-              guess_varnames(II,I),
-              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))).
-pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
-pre_guess_varnames(V,I):- functor(V,F,A),functor(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
-pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
-pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
-pre_guess_varnames(V,V).
+              ignore(guess_varnames(V,I)),
+              ignore(numbervars(V,10000,_,[singleton(true),attvar(skip)])).
+
 %!  write_src_woi(+Term) is det.
 %
 %   Writes the source of a term `Term` with indentation disabled.
 %
 %   This predicate calls `with_indents/2` with `false` to disable indentation,
-%   and then writes `Term` using `write_src/1`. The `pnotrace/1` wrapper ensures
+%   and then writes `Term` using `write_src/1`. The `notrace/1` wrapper ensures
 %   that tracing is disabled.
 %
 %   @arg Term The term to be written without indentation.
 %
 write_src_woi(Term) :-
     % Disable indentation and write the source of Term.
-    pnotrace((with_indents(false, write_src(Term)))).
+    notrace((with_indents(false, write_src(Term)))).
 
 %!  write_src_woi_nl(+X) is det.
 %
@@ -773,7 +764,7 @@ write_src_woi(Term) :-
 %
 write_src_woi_nl(X) :-
     % Guess variables in X, add newlines, and write without indentation.
-    \+ \+ pnotrace((
+    \+ \+ notrace((
         format('~N'), write_src_woi(X), format('~N')
     )).
 

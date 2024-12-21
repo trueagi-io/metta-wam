@@ -441,7 +441,7 @@ get_type(Depth, Self, Val, TypeO) :-
     % Ensure no repeated types using no_repeats_var/1.
     no_repeats_var(NoRepeatType),
     % Retrieve the type of the value.
-    get_type_each(Depth, Self, Val, Type),
+    get_type_each(Depth, Self, Val, Type), Type\=='',
     % Ensure the type matches the expected no-repeat type.
     NoRepeatType = Type,
     Type = TypeO,
@@ -452,7 +452,7 @@ get_type(Depth, Self, Val, TypeO) :-
 %
 %   Succeeds if only the first matching type should be returned.
 %
-return_only_first_type :-
+return_only_first_type :- fail,
     % Check if the flag is set to true.
     true_flag.
 
@@ -471,6 +471,7 @@ is_space_type(Space, Test) :-
     % Use no_repeats to ensure uniqueness in space type methods.
     no_repeats(Test, space_type_method(Test, _, _)),
     % Call the test to determine the space type.
+    is_not_prolog_space \== Test,
     call(Test, Space), !.
 
 %!  is_state_type(+State, -Type) is nondet.
@@ -1310,7 +1311,7 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
 %
 ignored_args_conform(Depth, Self, A, L) :-
     % If either Args or List is not a conz structure, succeed without further checks.
-    (\+ iz_conz(Args); \+ iz_conz(List)), !.
+    (\+ iz_conz(A); \+ iz_conz(L)), !.
 ignored_args_conform(Depth, Self, A, L) :-
     % Check if each argument conforms to its corresponding expected type.
     maplist(ignored_arg_conform(Depth, Self), A, L).
@@ -1365,7 +1366,7 @@ arg_conform(_Dpth, _Slf, _A, L) :-
     nonvar(L), is_nonspecific_type(L), !.
 arg_conform(Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
-    get_type(Depth, Self, A, T),
+    get_type_each(Depth, Self, A, T), T \== 'Var',
     type_conform(T, L), !.
 % arg_conform(_Dpth, _Slf, _, _).
 % arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
@@ -1380,7 +1381,8 @@ arg_conform(Depth, Self, A, L) :-
 type_conform(T, L) :-
     % Succeed if the types are equal.
     T = L, !.
-type_conform(T, L) :-
+type_conform(T, L) :- \+ is_nonspecific_type(T), \+ is_nonspecific_type(L), !, can_assign(T, L).
+type_conform(T, L) :- fail,
     % Succeed if either type is non-specific.
     \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), !.
 type_conform(T, L) :-
@@ -1515,11 +1517,10 @@ metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
 %   @note The commented-out duplicate clause remains for reference.
 %
 % set_type(Depth, Self, Var, Type) :- nop(set_type(Depth, Self, Var, Type)), !.
-set_type(Depth, Self, Var, Type) :-
-    nop(set_type(Depth, Self, Var, Type)), !.
+% set_type(Depth, Self, Var, Type) :- freeze(Obj, get_type(D, Self, Obj,Type)),!.
 set_type(Depth, Self, Var, Type) :-
     % Retrieve the current types of the variable.
-    get_types(Depth, Self, Var, TypeL),
+    (get_types(Depth, Self, Var, TypeL) -> true ; TypeL = []),
     % Add the new type to the list if necessary.
     add_type(Depth, Self, Var, TypeL, Type).
 
@@ -1533,16 +1534,18 @@ set_type(Depth, Self, Var, Type) :-
 %   @arg TypeList The current list of types for the variable.
 %   @arg Type     The new type to add.
 %
-add_type(_Depth, _Self, Var, _TypeL, _Type) :-
-    % If the variable is not bound, do nothing.
-    \+ nonvar(Var), !.
 add_type(_Depth, _Self, _Var, TypeL, Type) :-
     % If the type is already in the list, do nothing.
     \+ \+ (member(E, TypeL), E == Type), !.
-add_type(_Depth, Self, _Var, TypeL, Type) :-
+add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
     append([Type], TypeL, TypeList),
     put_attr(Var, metta_type, Self = TypeList).
+add_type(_Depth, _Self, Var, TypeL, Type) :-
+    ignore(append(_,[Type|_], TypeL)),!.
+    % If the variable is not bound, do nothing.
+
+
 
 %!  can_assign(+Was, +Type) is nondet.
 %
@@ -1556,12 +1559,15 @@ add_type(_Depth, Self, _Var, TypeL, Type) :-
 %     ?- can_assign('Number', 'Number').
 %     true.
 %
-can_assign(Was, Type) :-
-    % If either type is non-specific, assignment is allowed.
-    (is_nonspecific_type(Was); is_nonspecific_type(Type)), !.
-can_assign(Was, Type) :-
-    % If the types are identical, assignment is allowed.
-    Was = Type, !.
+
+% If the types are identical, assignment is allowed.
+can_assign(Was, Type) :- nonvar(Was),nonvar(Type),
+   formated_data_type(Was),formated_data_type(Type),!,Type==Was.
+% If the types are identical, assignment is allowed.
+can_assign(Was, Type) :- Was = Type, !.
+% If either type is non-specific, assignment is allowed.
+can_assign(Was, Type) :- nonvar(Was),nonvar(Type), (is_nonspecific_type(Was); is_nonspecific_type(Type)), !.
+
 %can_assign(Was,Type):- (Was=='Nat';Type=='Nat'),!,fail.
 %can_assign(Was,Type):- \+ cant_assign_to(Was,Type).
 %can_assign(_Ws,_Typ).
@@ -1607,6 +1613,7 @@ is_nonspecific_type0(Var) :-
 
 is_nonspecific_type0('%Undefined%').
 is_nonspecific_type0('ErrorType').
+is_nonspecific_type0('Expression').
 % is_nonspecific_type([]).
 is_nonspecific_type0('Atom').
 is_nonspecific_type0(Any) :-

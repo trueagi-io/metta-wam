@@ -883,11 +883,9 @@ include_metta1(Self, Filename):-
     % If Filename is not a valid symbol or file does not exist, handle wildcards for includes.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
     must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
-
-include_metta1(WSelf, RelFilename):-
+include_metta1(Self, RelFilename):-
     % Ensure RelFilename is a valid symbol and exists as a file.
     must_det_ll((
-    into_top_self(WSelf, Self),
     symbol(RelFilename),
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute path.
