@@ -308,6 +308,9 @@ jobs:
         echo "<li><a href='./${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html'>JUnit Standard Report</a></li>" >> allure-history/index.html
         echo "<li><a href='./${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html'>JUnit Matrix Report</a></li>" >> allure-history/index.html
         #echo "<li><a href='./help-docs/'>Help Documentation</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/trueagi-io/metta-wam/'>Install MeTTaLog</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/logicmoo/metta-wam/'>Interpeter/Compiler Devel</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/logicmoo/metta-testsuite/'>Testing Suite</a></li>" >> allure-history/index.html
         echo "</ul>" >> allure-history/index.html
         echo "</body>" >> allure-history/index.html
         echo "</html>" >> allure-history/index.html
