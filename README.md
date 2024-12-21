@@ -5,10 +5,9 @@
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
   - [With Docker](#whale-running-mettalog-with-docker)
-- [Continuous Reports](https://logicmoo.github.io/metta-testsuite/ci/)
-- [Nightly Reports](https://logicmoo.github.io/metta-wam/nightly/)
-- [More Reports](https://logicmoo.github.io/metta-wam)
-- [Tests](https://github.com/logicmoo/metta-testsuite/blob/development/tests/) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
+- Continuous Reports [https://logicmoo.github.io/metta-testsuite/ci/](https://logicmoo.github.io/metta-testsuite/ci/)
+- Nightly Reports [https://logicmoo.github.io/metta-wam/nightly/](https://logicmoo.github.io/metta-wam/nightly/)
+- More Reports [https://logicmoo.github.io/metta-wam](https://logicmoo.github.io/metta-wam)
 - [Testing Readme](https://github.com/logicmoo/metta-testsuite/blob/development/tests/README.md) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
 - [Overview Documentation](https://github.com/trueagi-io/metta-wam/blob/master/docs/OVERVIEW.md).
 

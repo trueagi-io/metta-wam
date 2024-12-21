@@ -17,7 +17,8 @@ def create_testcase_element(testclass, testname, stdout, identifier, got, expect
     testcase = ET.Element("testcase", classname=testclass, name=testname, time=time)
 
     test_res = f"Assertion: {stdout}\nExpected: {expected}\nActual: {got}"
-    url = url.replace("/./","/").replace("//","/").replace(":/","://")    
+    url = url.replace("/./","/").replace("//","/").replace(":/","://")
+    url = url.replace("github.io/metta-wam/","github.io/metta-testsuite/")    
     if testclass != 'WHOLE-TESTS':
         testfile = testfile_name(url)
         failcount = failcounts_dict[testfile]
