@@ -425,31 +425,6 @@ read_pending_white_codes(In) :-
 % If the input stream is not provided, do nothing.
 read_pending_white_codes(_).
 
-%! call_for_term_variables4v(+Term, +X, -Result, -NamedVarsList, +TF) is det.
-%   Handles the term `Term` and determines the term variable list and final result.
-%   This version handles the case when the term has no variables and converts it to a truth-functional form.
-%
-%   @arg Term The input term to be analyzed.
-%   @arg X The list of variables found within the term. It can be empty or contain one variable.
-%   @arg Result The final result, either as the original term or transformed into a truth-functional form.
-%   @arg NamedVarsList The list of named variables associated with the term.
-%   @arg TF The truth-functional form when the term has no variables.
-%
-%   @example
-%     % Example with no variables:
-%     ?- call_for_term_variables4v(foo, [], Result, Vars, true).
-%     Result = as_tf(foo, true),
-%     Vars = [].
-%
-call_for_term_variables4v(Term, [], as_tf(Term, TF), NamedVarsList, TF) :-
-    % Get global variable names for the term.
-    get_global_varnames(NamedVarsList),
-    % Succeed if no variables are present.
-    !.
-% Handles the case when the term has one variable and passes the term as-is.
-call_for_term_variables4v(Term, [X], Term, NamedVarsList, X) :-
-    % Get global variable names for the term.
-    get_global_varnames(NamedVarsList).
 
 %! balanced_parentheses(+Str) is semidet.
 %   Checks if parentheses are balanced in a string or list of characters `Str`.
@@ -609,9 +584,10 @@ comment_buffer(Comment) :-
 %
 repl_read_next(NewAccumulated, Expr) :-
     % Concatenate the input with '.' and try to interpret it as an atom.
-    symbol_concat(Atom,'.',NewAccumulated),
+    symbol_concat(_Atom,'.',NewAccumulated),
     % Attempt to read the term from the atom, handle errors and retry if necessary.
-    catch_err((read_term_from_atom(Atom, Term, []), Expr = call(Term)), E,
+    open_string(NewAccumulated,Stream),
+    catch_err((read_prolog_syntax_unsafe(Stream, Term), Expr = call(Term)), E,
        (((fail, write('Syntax error: '), writeq(E), nl, repl_read_next(Expr))))), !.
 
 % Previously commented: repl_read_next(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
@@ -786,45 +762,6 @@ add_history_pl(Exec) :-
 % Directive to set a global variable for variable names.
 :- nb_setval(variable_names, []).
 
-%!  call_for_term_variables5(+Term, +DC, +Vars1, +Vars2, -CallTerm, -DCVars, -TF) is det.
-%
-%   Processes term variables and generates a call structure based on the provided term,
-%   handling cases with ground terms, single variables, and multiple variables.
-%
-%   @arg Term     The input term to process.
-%   @arg DC       The direct constraints or variables list (can be empty).
-%   @arg Vars1    The first set of variables (e.g., `[Var=Value]` format).
-%   @arg Vars2    The second set of variables.
-%   @arg CallTerm The generated term call (e.g., `call_nth/2` or `as_tf/2`).
-%   @arg DCVars   The combined list of variables or constraints.
-%   @arg TF       The variable or value associated with the call.
-%
-%   @example Handling a ground term:
-%     ?- call_for_term_variables5(hello, [], [], [], CallTerm, DCVars, TF).
-%     CallTerm = as_tf(hello, TF),
-%     DCVars = [],
-%     TF = _.
-%
-%   @example Single variable case:
-%     ?- call_for_term_variables5(hello, [], [], [X=_], CallTerm, DCVars, TF).
-%     CallTerm = call_nth(hello, Count),
-%     DCVars = ['Count' = Count],
-%     TF = X.
-%
-    % If the term is ground, return the as_tf form.
-call_for_term_variables5(Term,[],[],[],as_tf(Term,TF),[],TF) :- ground(Term), !.
-    % If the term is ground, create a call_nth with the term.
-call_for_term_variables5(Term,DC,[],[],call_nth(Term,TF),DC,TF) :- ground(Term), !.
-% If there is one variable, set the term to call_nth.
-call_for_term_variables5(Term,_,[],[_=Var],call_nth(Term,Count),['Count'=Count],Var).
-% Similar case when the variable is reversed in arguments.
-call_for_term_variables5(Term,_,[_=Var],[],call_nth(Term,Count),['Count'=Count],Var).
-% If both term variables and equal variable are present, pass them along.
-call_for_term_variables5(Term,_,Vars,[_=Var],Term,Vars,Var).
-% Same case but with the variables reversed.
-call_for_term_variables5(Term,_,[_=Var],Vars,Term,Vars,Var).
-% Handle case with more than one variable, generating a call_nth.
-call_for_term_variables5(Term,_,SVars,Vars,call_nth(Term,Count),[Vars,SVars],Count).
 
 %!  is_interactive(+From) is nondet.
 %
@@ -2045,6 +1982,8 @@ interact(Variables, Goal, Tracing) :-
 :- volatile(is_installed_readline_editline/1).
 
 :- if(is_win64).
+% dummy for on windows
+install_readline_editline.
 :-else.
 install_readline_editline :-
     % Get the current input stream.

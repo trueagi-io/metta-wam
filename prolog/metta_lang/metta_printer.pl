@@ -739,9 +739,14 @@ write_src(V) :-
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-              ignore(guess_varnames(V,I)),
-              ignore(numbervars(V,10000,_,[singleton(true),attvar(skip)])).
-
+              pre_guess_varnames(V,II),ignore(II=V),
+              guess_varnames(II,I),
+              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))).
+pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
+pre_guess_varnames(V,I):- functor(V,F,A),functor(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
+pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
+pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
+pre_guess_varnames(V,V).
 %!  write_src_woi(+Term) is det.
 %
 %   Writes the source of a term `Term` with indentation disabled.
