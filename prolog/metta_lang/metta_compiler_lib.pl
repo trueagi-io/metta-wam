@@ -1,4 +1,5 @@
 :- dynamic(transpiler_clause_store/9).
+:- discontiguous transpiler_clause_store/9.
 
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
@@ -13,13 +14,13 @@
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
-mc_2__and(A,B,B):- atomic(A), A\=='False', A\==0.
+mc_2__and(A,B,B):- atomic(A), A\=='False', A\==0, !.
 mc_2__and(_,_,'False').
 
 mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
 mc_2__or(_,_,'True').
 
-mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0.
+mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0, !.
 mc_1__not(_,'True').
 
 %%%%%%%%%%%%%%%%%%%%% comparison
@@ -54,13 +55,15 @@ transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)]
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
-'mc_2__add-atom'(Space,PredDecl,[]) :- 'add-atom'(Space,PredDecl).
+'mc_2__add-atom'(Space,PredDecl,[]) :- format("@@@@ add atom ~w:~w",[Space,PredDecl]),'add-atom'(Space,PredDecl).
 
 'mc_2__remove-atom'(Space,PredDecl,[]) :- 'remove-atom'(Space,PredDecl).
 
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
 
-'mc_3__match'(Space,Pattern,Template,Template) :- metta_atom(Space, Atom),Atom=Pattern.
+% put a fake transpiler_clause_store here, just to force the template to be lazy
+transpiler_clause_store(match, 4, 0, ['Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_3__match'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
@@ -69,6 +72,8 @@ transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)]
 'mc_1__eval'(X,R) :- transpile_eval(X,R).
 
 'mc_1__get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
+
+'mc_1__println!'(X,[]) :- println_impl(X).
 
 'mc_1__stringToChars'(S,C) :- string_chars(S,C).
 
