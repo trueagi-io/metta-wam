@@ -23,7 +23,7 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
 
-    if: (github.repository == 'logicmoo/metta-testsuite') || github.repository == 'logicmoo/metta-wam') || (github.event_name != 'schedule')
+    if: (github.repository == 'logicmoo/metta-testsuite') || (github.repository == 'logicmoo/metta-wam') || (github.event_name != 'schedule')
 
     env:
       JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
@@ -276,7 +276,7 @@ jobs:
         allure_report: allure-report
         allure_history: allure-history
         subfolder: ${{ env.SUBFOLDER }}
-        keep_reports: 120
+        keep_reports: 1200
       env:
         SUBFOLDER: ${{ env.JOB_TYPE }}
 
