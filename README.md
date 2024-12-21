@@ -5,12 +5,16 @@
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
   - [With Docker](#whale-running-mettalog-with-docker)
-- [Test Reports](https://logicmoo.github.io/metta-testsuite/)
-- [Tests](tests/) and [Result Links](reports/TEST_LINKS.md)
-- [Overview Documentation](./docs/OVERVIEW.md).
+- [Continuous Reports](https://logicmoo.github.io/metta-testsuite/ci/)
+- [Nightly Reports](https://logicmoo.github.io/metta-wam/nightly/)
+- [More Reports](https://logicmoo.github.io/metta-wam)
+- [Tests](https://github.com/logicmoo/metta-testsuite/blob/development/tests/) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
+- [Testing Readme](https://github.com/logicmoo/metta-testsuite/blob/development/tests/README.md) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
+- [Overview Documentation](https://github.com/trueagi-io/metta-wam/blob/master/docs/OVERVIEW.md).
 
 Repos:
-- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/)  Interpeter/Compiler
+- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install Interpeter/Compiler
+- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter/Compiler Nightly
 - [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Test Suite
 
 
@@ -92,30 +96,30 @@ metta+>^D   # Exit the REPL with `ctrl-D`.
 
 To run a script:
 ```bash
-mettalog exmaples/puzzles/nalifier.metta
+mettalog examples/puzzles/nalifier.metta
 ```
 
 To run a script and then enter the repl:
 ```bash
-mettalog exmaples/puzzles//nalifier.metta --repl
+mettalog examples/puzzles/fish_riddle_1_no_states.metta --repl
 metta+>!(query &self (because blue house keeps parrots the $who is the fish owner))
 [(Succeed ((quote (because blue house keeps parrots the brit is the fish owner))))]
-metta+>
+metta+>!(halt! 7)
 
 ```
 
 ## Unit tests
 
-One exmaple is provided in this repository
+One examples is provided in this repository
 ```bash
-mettalog --test exmaples/tests/unit_test_example.metta
+mettalog --test examples/tests/unit_test_example.metta
 # The output is saved as an HTML file in the same directory.
 ```
 
-The rest are in a large REPO @
+The rest of the tests are in a large REPO @
 ```bash
 git clone https://github.com/logicmoo/metta-testsuite/
-ln -s metta-testsuite/tests/ ./tests  
+ls ./tests/  # this is a symlink that was already made with # ln -s metta-testsuite/tests/ ./tests  
 ```
 
 Run a single test
