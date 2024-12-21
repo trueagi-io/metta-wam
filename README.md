@@ -1,6 +1,9 @@
 # :rocket: An Implementation of MeTTa designed to run on the Warren Abstract Machine (WAM)
 
 ## Quick Links
+- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install MeTTaLog
+- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter/Compiler Devel
+- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Testing Suite
 - [Getting Started](#getting-started)
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
@@ -11,11 +14,6 @@
 - [Testing Readme](https://github.com/logicmoo/metta-testsuite/blob/development/tests/README.md) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
 - [Overview Documentation](https://github.com/trueagi-io/metta-wam/blob/master/docs/OVERVIEW.md).
 
-Repos:
-- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install Interpeter/Compiler
-- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter/Compiler Nightly
-- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Test Suite
-
 
 ## Getting Started
 
@@ -23,11 +21,13 @@ Repos:
 
 _Before you get started make sure `pip` and `venv` are working good._
 
+
+Linux/WSL/OS X
 Clone and set up MeTTaLog with the following commands:
 ```
 git clone https://github.com/trueagi-io/metta-wam
 cd metta-wam
-source ./INSTALL.sh # Follow the default prompts 
+source ./INSTALL.sh --allow-system-modifications # Follow the default prompts 
 ```
 #### The INSTALL.sh script handles the installation of essential components and updates:
 - Ensures Python's `pip` is installed or installs it.
@@ -42,6 +42,9 @@ source ./INSTALL.sh # Follow the default prompts
 - **Installs metakernel**: (No relation!) but allows our Jupyter Kernel to work.
 
 **Note**: Running this script modifies software configurations and installs packages. Ensure you're prepared for these changes.
+
+Windows Install - Comming Soon
+
 
 ## :whale: Running MeTTaLog with Docker
 
