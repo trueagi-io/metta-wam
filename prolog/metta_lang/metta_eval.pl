@@ -514,13 +514,12 @@ unified(X,Y):- X=Y,!.
 unified(X,Y):- eval(X,XX),X\=@=XX,unified(Y,XX).
 unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
 
-eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
+%eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
 
 
-eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(Y),!,as_tf(X==Y, Res).
-eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(X),!,as_tf(X==Y, Res).
-eval_until_unify_self(Flags,Eq,RetType,Depth,Self,X,Y):- 
-   as_tf(eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y),Res).
+%eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(Y),!,as_tf(X==Y, Res).
+%eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(X),!,as_tf(X==Y, Res).
+%eval_until_unify_self(Flags,Eq,RetType,Depth,Self,X,Y,Res):- as_tf(eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y),Res).
 
 
 eval_until_eq(_Flags,Eq,RetType,_Dpth,_Slf,X,Y):-  X==Y,!,check_returnval(Eq,RetType,Y).
@@ -534,7 +533,7 @@ eval_until_eq(_Flags,Eq,RetType,_Dpth,_Slf,X,Y):-  X=Y,!,check_returnval(Eq,RetT
 eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y):- eval_in_steps_some_change(Eq,RetType,Depth,Self,X,XX),eval_until_eq(Flags,Eq,RetType,Depth,Self,Y,XX),!.
 
 
-eval_until_eq(Flags,_Eq,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
+eval_until_eq(_Flags,_Eq,_RetType,_Dpth,_Slf,X,Y):- length(X,Len), \+ length(Y,Len),!,fail.
 eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
   EX=EY,!, maplist(eval_until_eq(Flags,Eq,RetType,Depth,Self),RX,RY).
 eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y):-  nth1(N,X,EX,RX), nth1(N,Y,EY,RY),
@@ -551,10 +550,10 @@ eval_complete_change(Eq,RetType,Depth,Self,EX,EXX):-
    eval_args(Eq,RetType,Depth,Self,EX,EXX),  EX \=@= EXX.
 
 eval_in_steps_some_change(_Eq,_RetType,_Dpth,_Slf,EX,_):- \+ is_list(EX),!,fail.
-eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXXO):- 
+eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXXO):-
    eval_1change(Eq,RetType,Depth,Self,EX,EXX),!,
    (eval_in_steps_some_change(Eq,RetType,Depth,Self,EXX,EXXO);EXXO=EXX).
-eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y):- 
+eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y):-
   append(L,[EX|R],X),is_list(EX),
     eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
   append(L,[EXX|R],XX),
@@ -1020,15 +1019,15 @@ eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
 eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- fail, is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 % if there is only a void then always return nothing for each Case
-eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
-   '%void%' == Void,
-   eval_args(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
+%eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
+%   ('%void%' == Void),
+%   eval_args(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
 
 % if there is nothing for case just treat like a collapse
-eval_20(Eq,RetType,Depth,Self,['case',A,[]],NoResult):- !,
-  %forall(eval_args(Eq,_RetType2,Depth,Self,Expr,_),true),
-  once(eval_args(Eq,_RetType2,Depth,Self,A,_)),
-  make_nop(RetType,[],NoResult).
+eval_20(Eq,_RetType,Depth,Self,['case',A,[]], _NoResult):- !,
+  forall(eval(Eq,_RetType2,Depth,Self,A,_),true),!, fail.
+  %once(eval_args(Eq,_RetType2,Depth,Self,A,_)),
+  %make_nop(RetType,[],NoResult).
 
 
 into_case_keys(_,[],[]).
@@ -1048,10 +1047,10 @@ eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
 eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
    if_trace((case),(writeqln('case'=A))),
    ((eval_args(Eq,_UnkRetType,Depth,Self,A,AA),
-         if_trace((case),writeqln('switch'=AA)),
-    (select_case(Depth,Self,AA,KVs,Value)->true;(member(Void -Value,KVs),Void=='%void%')))
-     *->true;(member(Void -Value,KVs),Void=='%void%')),
-    eval_args(Eq,CaseRetType,Depth,Self,Value,Res).
+     if_trace((case),writeqln('switch'=AA)))
+      *-> (select_case(Depth,Self,AA,KVs,Value)->true;(member(Void -Value,KVs),Void=='%void%',!))
+       ; (member(Void -Value,KVs),Void=='Empty',!)),
+   eval_args(Eq,CaseRetType,Depth,Self,Value,Res).
 
   select_case(Depth,Self,AA,Cases,Value):-
      (best_key(AA,Cases,Value) -> true ;
@@ -2286,15 +2285,15 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['==', X,Y],Res):- 
+eval_20(_Eq,RetType,_Depth,_Self,['==', X,Y],Res):-
     (var(X);var(Y)),!,X\==Y,!, Res='False',suggest_type(RetType,'Bool').
 eval_40(Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_eq(Eq,_SharedType, Depth,Self, X, Y), TF).
-    
+
 eval_20(Eq,RetType,Depth,Self,_Slf,['===',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
-    as_tf(\+ \+ eval_until_unify(['==='],Eq,_SharedType,Depth,Self,X,Y), TF).
+    as_tf(\+ \+ eval_until_eq(['==='],Eq,_SharedType,Depth,Self,X,Y), TF).
 
 eval_20(_Eq,RetType,_Dpth,_Slf,['====',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
