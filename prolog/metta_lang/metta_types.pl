@@ -442,7 +442,7 @@ get_type(Depth, Self, Val, TypeO) :-
     no_repeats_var(NoRepeatType),
     % Retrieve the type of the value.
     call_nth(get_type_each(Depth, Self, Val, Type),Nth), Type\=='',
-    (Nth >1 -> Type\== 'Atom' ; true),
+    ((Nth > 1) -> Type\== 'Atom' ; true),
     % Ensure the type matches the expected no-repeat type.
     NoRepeatType = Type,
     Type = TypeO,

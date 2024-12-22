@@ -256,7 +256,7 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 set_last_error(_).
 
 */
-subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):- fail,
+subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):- 
     is_space_op(OP),  !,
     subst_args_as(Depth, Self, [OP|ARGS], Template).
 
@@ -714,11 +714,11 @@ subst_args2(Eq,Depth,Self,[F|PredDecl],Res):- fail,
 
 
 % user defined function
-subst_args2(Eq,Depth,Self,[H|PredDecl],Res):- fail,mnotrace(is_user_defined_head(Eq,Self,H)),!,
+subst_args2(Eq,Depth,Self,[H|PredDecl],Res):- mnotrace(is_user_defined_head(Eq,Self,H)),!,
    subst_args30(Eq,Depth,Self,[H|PredDecl],Res).
 
 % function inherited by system
-subst_args2(Eq,Depth,Self,PredDecl,Res):- fail, subst_args40(Eq,Depth,Self,PredDecl,Res).
+subst_args2(Eq,Depth,Self,PredDecl,Res):-  subst_args40(Eq,Depth,Self,PredDecl,Res).
 
 /*
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -843,7 +843,7 @@ is_metta_builtin('pragma!').
 */
 
 
-subst_args30(Eq,Depth,Self,H,B):- fail,  (subst_args34(Depth,Self,H,B)*->true;subst_args37(Eq,Depth,Self,H,B)).
+subst_args30(Eq,Depth,Self,H,B):-  (subst_args34(Depth,Self,H,B)*->true;subst_args37(Eq,Depth,Self,H,B)).
 
 subst_args34(_Dpth,Self,H,B):-  (metta_eq_def(Eq,Self,H,B);(get_metta_atom(Eq,Self,H),B=H)).
 
@@ -854,7 +854,7 @@ subst_args37(Eq,Depth,Self,[H1|Args],Res):-
    mnotrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
    subst_args30(Eq,Depth,Self,[H1|NewArgs],Res).
 
-subst_args37(Eq,Depth,Self,[[H|Start]|T1],Y):-
+subst_args37(Eq,Depth,Self,[[H|Start]|T1],Y):- !,
    mnotrace((is_user_defined_head_f(Eq,Self,H),is_list(Start))),
    metta_eq_def(Eq,Self,[H|Start],Left),
    subst_args(Eq,RetType,Depth,Self,[Left|T1],Y).
