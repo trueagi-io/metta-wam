@@ -514,10 +514,13 @@ unified(X,Y):- X=Y,!.
 unified(X,Y):- eval(X,XX),X\=@=XX,unified(Y,XX).
 unified(X,Y):- eval(Y,YY),Y\=@=YY,unified(YY,X).
 
-eval_until_unify([h_e|_],Eq,RetType,Depth,Self,X,Y):- var(Y),!,X==Y.
-eval_until_unify([h_e|_],Eq,RetType,Depth,Self,X,Y):- var(X),!,X==Y.
-eval_until_unify(Flags,Eq,RetType,Depth,Self,X,Y):- 
-   eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y),!.
+eval_until_unify(_Eq,_RetType,_Dpth,_Slf,X,X):- !.
+
+
+eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(Y),!,as_tf(X==Y, Res).
+eval_until_unify_self([h_e|_],Eq,RetType,Depth,Self,X,Y, Res):- var(X),!,as_tf(X==Y, Res).
+eval_until_unify_self(Flags,Eq,RetType,Depth,Self,X,Y):- 
+   as_tf(eval_until_eq(Flags,Eq,RetType,Depth,Self,X,Y),Res).
 
 
 eval_until_eq(_Flags,Eq,RetType,_Dpth,_Slf,X,Y):-  X==Y,!,check_returnval(Eq,RetType,Y).
@@ -553,7 +556,7 @@ eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXXO):-
    (eval_in_steps_some_change(Eq,RetType,Depth,Self,EXX,EXXO);EXXO=EXX).
 eval_in_steps_some_change(Eq,RetType,Depth,Self,X,Y):- 
   append(L,[EX|R],X),is_list(EX),
-  eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
+    eval_in_steps_some_change(Eq,RetType,Depth,Self,EX,EXX), EX\=@=EXX,
   append(L,[EXX|R],XX),
   eval_in_steps_or_same(Eq,RetType,Depth,Self,XX,Y).
 
@@ -602,7 +605,7 @@ eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- var(V), var(E), !,
 %eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],BodyO):- !,eval_args(Eq,RetType,Depth,Self,E,V),eval_args(Eq,RetType,Depth,Self,Body,BodyO).
 eval_20(Eq,RetType,Depth,Self,['let*',[],Body],RetVal):- !, eval_args(Eq,RetType,Depth,Self,Body,RetVal).
 %eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
-%   eval_until_unify(Flags,Eq,_RetTypeV,Depth,Self,Val,Var),
+%   eval_until_unify_self(Flags,Eq,_RetTypeV,Depth,Self,Val,Var),
 %   eval_20(Eq,RetType,Depth,Self,['let*',LetRest,Body],RetVal).
 eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
     eval_20(Eq,RetType,Depth,Self,['let',Var,Val,['let*',LetRest,Body]],RetVal).
@@ -2283,10 +2286,18 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_20(Eq,RetType,Depth,Self,['==', X,Y],TF):- !,
+eval_20(Eq,RetType,Depth,Self,['==', X,Y],Res):- 
     suggest_type(RetType,'Bool'),
-    (eval_until_unify([h_e,'=='],Eq,_SharedType,Depth,Self,X,Y)->TF='True';TF='False').
+    eval_until_unify_self([h_e,'=='],Eq,_SharedType,Depth,Self,X,Y, Res),
+    (Res=='False' -> (!, fail) ; fail).
 
+%eval_40(Eq,RetType,_Depth,Self,[EQ,X,Y],TF):- fail, EQ=='==', !,
+%    suggest_type(RetType,'Bool'),
+%    as_tf(eval_until_unify(Eq,_SharedType, X, Y), TF).
+eval_40(Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
+    suggest_type(RetType,'Bool'),
+    as_tf(eval_until_eq(Eq,_SharedType, Depth,Self, X, Y), TF).
+    
 eval_20(Eq,RetType,Depth,Self,_Slf,['===',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(\+ \+ eval_until_unify(['==='],Eq,_SharedType,Depth,Self,X,Y), TF).
