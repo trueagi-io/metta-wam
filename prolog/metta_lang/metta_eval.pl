@@ -269,6 +269,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  
 subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
+  %Y =YO,
   notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
      (write_src_uo(needed_subst_args(Y,YO)),bt,sleep(1.0)),
   nop(write_src_uo(unneeded_subst_args(Y))))).
@@ -1537,9 +1538,12 @@ format_args_get_index1(FormatRest, FormatRest, Index, Index).
 % Placeholder to deal with formatting {<n>:<format>} later
 format_args_get_format(FormatRest, FormatRest, _).
 
-format_args_write(Arg,_) :- string(Arg), !, write(Arg).
-format_args_write('#\\'(Arg),_) :- !, write(Arg).
-format_args_write(Arg,_) :- write_src_woi(Arg).
+format_args_write(Arg,_) :- \+ compound(Arg), !, format_arg(Arg).
+format_args_write('#\\'(Char),_) :- !, format_arg(Char).
+format_args_write(Arg,_) :- format_arg(Arg).
+
+format_arg(Arg) :- string(Arg), !, write(Arg).
+format_arg(Arg):- \+ \+ write_src_woi(Arg).
 
 format_nth_args([], _, _).
 format_nth_args(['{','{'|FormatRest], Iterator, Args) :- !, put('{'), format_nth_args(FormatRest, Iterator, Args). % escaped
