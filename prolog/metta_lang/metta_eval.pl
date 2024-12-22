@@ -2287,13 +2287,7 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
 eval_20(Eq,RetType,Depth,Self,['==', X,Y],Res):- 
-    suggest_type(RetType,'Bool'),
-    eval_until_unify_self([h_e,'=='],Eq,_SharedType,Depth,Self,X,Y, Res),
-    (Res=='False' -> (!, fail) ; fail).
-
-%eval_40(Eq,RetType,_Depth,Self,[EQ,X,Y],TF):- fail, EQ=='==', !,
-%    suggest_type(RetType,'Bool'),
-%    as_tf(eval_until_unify(Eq,_SharedType, X, Y), TF).
+    (var(X);var(Y)),!,X\==Y,!, Res='False',suggest_type(RetType,'Bool').
 eval_40(Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_eq(Eq,_SharedType, Depth,Self, X, Y), TF).
