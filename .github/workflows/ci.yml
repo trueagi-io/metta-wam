@@ -149,7 +149,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
-        cp current_test_results.txt previous-results/
+        
         cd previous-results
 
         # Configure Git user information
@@ -160,6 +160,10 @@ jobs:
         git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
         git pull
+                
+        # overwrite test results
+        cp ../current_test_results.txt .
+
         # Stage and commit changes
         git add current_test_results.txt
         git commit -m "Update test results"
