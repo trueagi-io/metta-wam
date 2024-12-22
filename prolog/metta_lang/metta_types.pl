@@ -441,7 +441,8 @@ get_type(Depth, Self, Val, TypeO) :-
     % Ensure no repeated types using no_repeats_var/1.
     no_repeats_var(NoRepeatType),
     % Retrieve the type of the value.
-    get_type_each(Depth, Self, Val, Type), Type\=='',
+    call_nth(get_type_each(Depth, Self, Val, Type),Nth), Type\=='',
+    (Nth >1 -> Type\== 'Atom' ; true),
     % Ensure the type matches the expected no-repeat type.
     NoRepeatType = Type,
     Type = TypeO,
@@ -617,6 +618,7 @@ get_type_each(Depth, Self, Val, Type) :-
         (get_type_cmpd_2nd_non_nil(Depth, Self, Val, Type, How),
          trace_get_type(How, Type, gt(Val))),
         (trace_get_type('FAILED', '', gt(Val)), fail)).
+
 
 %!  get_type_cmpd_2nd_non_nil(+Depth, +Self, +Val, -Type, -How) is nondet.
 %
