@@ -98,8 +98,8 @@
 %transpiler_enable_interpreter_calls.
 transpiler_enable_interpreter_calls :- fail.
 
-transpiler_show_debug_messages.
-%transpiler_show_debug_messages :- fail.
+%transpiler_show_debug_messages.
+transpiler_show_debug_messages :- fail.
 
 :- dynamic(transpiler_stub_created/1).
 % just so the transpiler_stub_created predicate always exists
@@ -526,7 +526,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A);\
    R=..[Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
       assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~w,~w,~w,~w)\n",[CallerInt,CallerSz,F,LArgs1]) -> true)
+      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~w,~w,~w,~w)\n",[CallerInt,CallerSz,F,LArgs1]) ; true)
    ; true),
    ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
       true
@@ -562,11 +562,11 @@ check_supporting_predicates(Space,F/A) :- % already exists
 %         assertz(transpiler_stub_created(F/A)),
 %         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~w\n",[F]),G,B)]))).
          assertz(transpiler_stub_created(F/A)),
-         format("; % ######### warning: creating stub for:~w\n",[F]),
+         (transpiler_show_debug_messages -> format("; % ######### warning: creating stub for:~w\n",[F]) ; true),
          (transpiler_enable_interpreter_calls ->
             create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~w\n",[F]),B)])
          ;
-            create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~w\n",[F]),'$VAR'(A)=[F|AtomList1])])
+            create_and_consult_temp_file(Space,Fp/A,[H:-('$VAR'(A)=[F|AtomList1])])
          )
       )
    ).
@@ -854,10 +854,11 @@ add_assertion1(Space,ACC) :-
       if_t(N=2,
          (Set=[X,Y],
             numbervars(X),
-            numbervars(Y),
-         nl,display(X),
-         nl,display(Y),
-         nl)),
+            numbervars(Y)
+         %nl,display(X),
+         %nl,display(Y),
+         %nl
+         )),
       %wdmsg(list_to_set(F/A,N)),
       abolish(/*'&self':*/F/A),
       create_and_consult_temp_file(Space,F/A, Set)
@@ -1151,7 +1152,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*tr
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
-   format("~w ~w ~w\n",[HeadIs, AsBodyFn, Converted]),
+   %format("~w ~w ~w\n",[HeadIs, AsBodyFn, Converted]),
    AsFunction = HeadIs,
    must_det_ll((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn

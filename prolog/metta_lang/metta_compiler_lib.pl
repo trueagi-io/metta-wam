@@ -28,11 +28,17 @@ mc_1__not(_,'True').
 'mc_2__=='(A,A,1) :- !.
 'mc_2__=='(_,_,0).
 
-'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R=1 ; R=0).
+'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
 'mc_2__<'(A,B,['<',A,B]).
 
-'mc_2__>'(A,B,R) :- number(A),number(B),!,(A>B -> R=1 ; R=0).
+'mc_2__>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
 'mc_2__>'(A,B,['>',A,B]).
+
+'mc_2__>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
+'mc_2__>='(A,B,['>=',A,B]).
+
+'mc_2__<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
+'mc_2__<='(A,B,['<=',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
@@ -43,6 +49,18 @@ mc_1__not(_,'True').
 'mc_2__cons-atom'(A,B,[A|B]).
 
 'mc_1__decons-atom'([A|B],[A,B]).
+
+%%%%%%%%%%%%%%%%%%%%% set
+
+lazy_member(R1,Code2,R2) :- call(Code2),R1=R2.
+
+transpiler_clause_store(subtraction, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_2__subtraction'(is_p1(Code1,R1),is_p1(Code2,R2),R1) :-
+    call(Code1),
+    \+ lazy_member(R1,Code2,R2).
+
+transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_2__union'(U1,is_p1(Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Code2,R2),R) ; call(Code2),R=R2.
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
@@ -55,7 +73,7 @@ transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)]
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
-'mc_2__add-atom'(Space,PredDecl,[]) :- format("@@@@ add atom ~w:~w",[Space,PredDecl]),'add-atom'(Space,PredDecl).
+'mc_2__add-atom'(Space,PredDecl,[]) :- 'add-atom'(Space,PredDecl).
 
 'mc_2__remove-atom'(Space,PredDecl,[]) :- 'remove-atom'(Space,PredDecl).
 
@@ -65,7 +83,15 @@ transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)]
 transpiler_clause_store(match, 4, 0, ['Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
 'mc_3__match'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
+% TODO FIXME: sort out the difference between unify and match
+transpiler_clause_store(unify, 4, 0, ['Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_3__unify'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+
 %%%%%%%%%%%%%%%%%%%%% misc
+
+% put a fake transpiler_clause_store here, just to force the argument to be lazy
+transpiler_clause_store(time, 2, 0, ['Atom'], 'Atom', [x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_1__time'(is_p1(Code,Ret),Ret) :- wtime_eval(Code).
 
 'mc_0__empty'(_) :- fail.
 
