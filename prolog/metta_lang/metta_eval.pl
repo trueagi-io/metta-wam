@@ -1019,9 +1019,9 @@ eval_20(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
 eval_20(Eq,RetType,Depth,Self,[P,X|More],YY):- fail, is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
 % if there is only a void then always return nothing for each Case
-%eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,_]]],Res):-
-%   ('%void%' == Void),
-%   eval_args(Eq,_UnkRetType,Depth,Self,A,_),!,Res =[].
+eval_20(Eq,_RetType,Depth,Self,['case',A,[[Void,Else]]],Res):-
+   ('%void%' == Void;'Empty' == Void),!,
+   (eval_args(Eq,_UnkRetType,Depth,Self,A,_) *-> (fail) ; Res=Else).
 
 % if there is nothing for case just treat like a collapse
 eval_20(Eq,_RetType,Depth,Self,['case',A,[]], _NoResult):- !,
@@ -1044,19 +1044,22 @@ eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res):- !,
    into_case_keys(1,CASES,KVs),
    eval_case(Eq,RetType,Depth,Self,A,KVs,Res).
 
+void_or_empty_value(KVs,Value):- member(Void -Value,KVs),Void=='%void%',!.  % still support void
+void_or_empty_value(KVs,Value):- member(Void -Value,KVs),Void=='Empty',!.
+
 eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
    if_trace((case),(writeqln('case'=A))),
    ((eval_args(Eq,_UnkRetType,Depth,Self,A,AA),
      if_trace((case),writeqln('switch'=AA)))
-      *-> (select_case(Depth,Self,AA,KVs,Value)->true;(member(Void -Value,KVs),Void=='%void%',!))
-       ; (member(Void -Value,KVs),Void=='Empty',!)),
+      *-> (select_case(Depth,Self,AA,KVs,Value)->true;(void_or_empty_value(KVs,Value),!))
+       ; (void_or_empty_value(KVs,Value),!)),
    eval_args(Eq,CaseRetType,Depth,Self,Value,Res).
 
   select_case(Depth,Self,AA,Cases,Value):-
      (best_key(AA,Cases,Value) -> true ;
       (maybe_special_keys(Depth,Self,Cases,CasES),
        (best_key(AA,CasES,Value) -> true ;
-        (member(Void -Value,CasES),Void=='%void%')))).
+        (void_or_empty_value(CasES,Value))))).
 
   best_key(AA,Cases,Value):- member(Match-Value,Cases),AA = Match,!.
   best_key(AA,Cases,Value):-
