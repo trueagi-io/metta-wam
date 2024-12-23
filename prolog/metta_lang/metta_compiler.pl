@@ -98,8 +98,8 @@
 %transpiler_enable_interpreter_calls.
 transpiler_enable_interpreter_calls :- fail.
 
-%transpiler_show_debug_messages.
-transpiler_show_debug_messages :- fail.
+transpiler_show_debug_messages.
+%transpiler_show_debug_messages :- fail.
 
 :- dynamic(transpiler_stub_created/1).
 % just so the transpiler_stub_created predicate always exists
@@ -210,9 +210,9 @@ get_property_evaluate(x(E,_),E).
 determine_eager_vars_case_aux(L,L,[],[]).
 determine_eager_vars_case_aux(Lin,Lout,[[Match,Target]|Rest],EagerVars) :-
    determine_eager_vars(eager,_,Match,EagerVarsMatch),
-   determine_eager_vars(Lin,LoutTarget,Target,Target),
+   determine_eager_vars(Lin,LoutTarget,Target,EagerVarsTarget),
    determine_eager_vars_case_aux(Lin,LoutRest,Rest,EagerVarsRest),
-   intersect_var(Target,EagerVarsRest,EagerVars0),
+   intersect_var(EagerVarsTarget,EagerVarsRest,EagerVars0),
    union_var(EagerVarsMatch,EagerVars0,EagerVars),
    (LoutTarget=eager,LoutRest=eager -> Lout=eager ; Lout=lazy).
 
@@ -225,6 +225,9 @@ determine_eager_vars(Lin,Lout,['if',If,Then,Else],EagerVars) :- !,
    intersect_var(EagerVarsThen,EagerVarsElse,EagerVars0),
    union_var(EagerVarsIf,EagerVars0,EagerVars),
    (LoutThen=eager,LoutElse=eager -> Lout=eager ; Lout=lazy).
+determine_eager_vars(Lin,Lout,['if',If,Then],EagerVars) :- !,
+   determine_eager_vars(eager,_,If,EagerVars),
+   determine_eager_vars(Lin,Lout,Then,_EagerVarsThen).
 % for case, treat it as nested if then else
 determine_eager_vars(Lin,Lout,['case',Val,Cases],EagerVars) :- !,
    determine_eager_vars(eager,_,Val,EagerVarsVal),
@@ -546,7 +549,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A);\
       true
    ; check_supporting_predicates('&self',F/LArgs1)).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
-ast_to_prolog_aux(Caller,DontStub,[match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
+ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 ast_to_prolog_aux(_,_,'#\\'(A),A).
 ast_to_prolog_aux(_,_,A,A).
 
@@ -799,44 +802,12 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
 
 compile_flow_control_case(_,_,RetResult,_,_,[],Converted) :- !,Converted=[[assign,RetResult,'Empty']].
 compile_flow_control_case(HeadIs,LazyVars,RetResult,LazyEval,ValueResult,[[Match,Target]|Rest],Converted) :-
-   f2p(HeadIs,LazyVars,MatchResult,eager,Match,Match),
+   f2p(HeadIs,LazyVars,MatchResult,eager,Match,MatchCode),
    f2p(HeadIs,LazyVars,TargetResult,LazyEval,Target,TargetCode),
    compile_flow_control_case(HeadIs,LazyVars,RestResult,LazyEval,ValueResult,Rest,RestCode),
    append(TargetCode,[[assign,RetResult,TargetResult]],T),
    append(RestCode,[[assign,RetResult,RestResult]],R),
-   Converted=[[prolog_if,[match,ValueResult,MatchResult],T,R]].
-
-/*
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-  Convert =~ ['case',Value,PNil],[]==PNil,!,Converted = (ValueCode,RetResult=[]),
-      f2p(HeadIs,_ValueResult,Value,ValueCode).
-
-
-compile_flow_control(HeadIs,RetResult,Convert, (ValueCode, Converted)) :-
-  Convert =~ ['case',Value|Options], \+ is_ftVar(Value),!,
-  cname_var('CASE_EVAL_',ValueResult),
-  compile_flow_control(HeadIs,RetResult,['case',ValueResult|Options], Converted),
-  f2p(HeadIs,ValueResult,Value,ValueCode).
-
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-  Convert =~ ['case',Value,Options],!,
-   must_det_ll((
-    maplist(compile_case_bodies(HeadIs),Options,Cases),
-    Converted =
-        (( AllCases = Cases,
-           once((member(caseStruct(MatchVar,MatchCode,BodyResult,BodyCode),AllCases),
-                 (MatchCode,unify_enough(Value,MatchVar)))),
-           (BodyCode),
-           BodyResult=RetResult)))).
-
-compile_flow_control(HeadIs,RetResult,Convert, Converted) :-
-  Convert =~ ['case',Value,[Opt|Options]],nonvar(Opt),!,
-   must_det_ll((
-    compile_case_bodies(HeadIs,Opt,caseStruct(Value,If,RetResult,Then)),
-    Converted = ( If -> Then ; Else ),
-    ConvertCases =~ ['case',Value,Options],
-    compile_flow_control(HeadIs,RetResult,ConvertCases,Else))).
-*/
+   append(MatchCode,[[prolog_if,[[prolog_match,ValueResult,MatchResult]],T,R]],Converted).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   Convert = ['if',Cond,Then,Else],!,
@@ -844,6 +815,13 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   f2p(HeadIs,LazyVars,CondResult,eager,Cond,CondCode),
   append(CondCode,[[native(is_True),CondResult]],If),
   compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted).
+
+compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
+  Convert = ['if',Cond,Then],!,
+  %Test = is_True(CondResult),
+  f2p(HeadIs,LazyVars,CondResult,eager,Cond,CondCode),
+  append(CondCode,[[native(is_True),CondResult]],If),
+  compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,'Empty',Converted).
 
 compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
   f2p(HeadIs,LazyVars,ThenResult,LazyEval,Then,ThenCode),
