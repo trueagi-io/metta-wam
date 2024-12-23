@@ -274,12 +274,18 @@ run_pl_source(G) :-
 %
 %   @arg P The Prolog term to be printed.
 %
-print_pl_source0(_) :-
+print_pl_source0(_) :- fail,
     % Do not print if compatibility mode is enabled.
     pnotrace(is_compatio), !.
 print_pl_source0(_) :-
     % Do not print if silent loading mode is enabled.
     pnotrace(silent_loading), !.
+
+print_pl_source0(P) :-!,
+    format('~N'),
+    print_tree(P),
+    format('~N'), !.
+
 print_pl_source0(P) :-
     % Check if P was just printed (avoid redundant printing).
     pnotrace((just_printed(PP), PP =@= P)), !.
