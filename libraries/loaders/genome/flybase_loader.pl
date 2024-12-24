@@ -2081,7 +2081,7 @@ track_load_into_file0(Filename, Goal) :-
         flag(loaded_from_file_count, Was, 0)
     )),
     % Execute the goal within the context of the tracked file.
-    must_det_ll(with_option(loading_file, Filename, time(must_det_ll(Goal)))),
+    must_det_ll(with_option(loading_file, Filename, must_det_ll(Goal))),
     % Finalize the tracking process.
     must_det_ll((
         % Update the loading counter.
