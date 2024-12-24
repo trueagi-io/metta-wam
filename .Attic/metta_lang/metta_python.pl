@@ -150,7 +150,7 @@ is_not_prolog_space(GSpace):-
     is_rust_space(GSpace),!.
 is_not_prolog_space(GSpace):-
     % Check if the space is neither an asserted space nor an nb space.
-    \+ is_asserted_space(GSpace),\+ is_nb_space(GSpace),!.
+    \+ is_asserted_space(GSpace), \+ is_nb_space(GSpace),!.
 
 %!  with_safe_argv(:Goal) is det.
 %

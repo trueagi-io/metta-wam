@@ -883,9 +883,11 @@ include_metta1(Self, Filename):-
     % If Filename is not a valid symbol or file does not exist, handle wildcards for includes.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
     must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
-include_metta1(Self, RelFilename):-
+
+include_metta1(WSelf, RelFilename):-
     % Ensure RelFilename is a valid symbol and exists as a file.
     must_det_ll((
+    into_top_self(WSelf, Self),
     symbol(RelFilename),
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute path.
@@ -1539,6 +1541,7 @@ convert_datalog_to_loadable(DatalogFile, QlfFile) :-
 %     % Convert "example.metta" to a `.qlf` format.
 %     ?- convert_metta_to_loadable('example.metta', QlfFile).
 %
+convert_metta_to_loadable(_Filename, _QlfFile) :- !, fail.
 convert_metta_to_loadable(_Filename, _QlfFile) :-
     % Use fast buffer, so skip Datalog conversion
     use_fast_buffer, !, fail.
@@ -2573,7 +2576,7 @@ new_parse_sexpr_metta_IO1(S, F1):-
               at_end_of_stream(S), !, F1 = end_of_file.
 new_parse_sexpr_metta_IO1(S, F1):-
               % Skip whitespace characters and continue parsing.
-              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), parse_sexpr_metta_IO(S, F1).
+              peek_char(S, Char), char_type(Char, space), !, get_char(S, Char), new_parse_sexpr_metta_IO1(S, F1).
 new_parse_sexpr_metta_IO1(S, _F1):-
               % Read and assert position and item details for non-whitespace characters.
               S = InStream,
@@ -2596,7 +2599,7 @@ new_parse_sexpr_metta_IO1(_S, F1):-
 %   @arg S   The input stream to read from.
 %   @arg F1  The resulting parsed form.
 %
-new_parse_sexpr_metta_IO(S, F1):- new_parse_sexpr_metta_IO1(S, F1), nop(wdmsg(new_parse_sexpr_metta_IO1(S, F1))).
+new_parse_sexpr_metta_IO(S, F1):- new_parse_sexpr_metta_IO1(S, F1),!. % nop(wdmsg(new_parse_sexpr_metta_IO1(S, F1))).
 
 %!  in2_stream(+N1, -S1) is nondet.
 %
@@ -3346,7 +3349,20 @@ subst_vars(TermWDV, NewTerm):-
 %   @arg NamedVarsList The list of named variables.
 %
 subst_vars(TermWDV, NewTerm, NamedVarsList) :-
-              subst_vars(TermWDV, NewTerm, [], NamedVarsList).
+      subst_vars(TermWDV, NewTerm, [], NamedVarsList),
+   if_t(fast_option_value('vn', 'true'), memorize_varnames(NamedVarsList)).
+
+
+memorize_varnames(NamedVarsList):- \+ compound(NamedVarsList),!.
+memorize_varnames([NamedVar|NamedVarsList]):- !,
+  memorize_varname(NamedVar),
+  memorize_varnames(NamedVarsList).
+memorize_varnames(_).
+memorize_varname(NamedVar):-  \+ compound(NamedVar),!.
+memorize_varname(Name=Var):- var(Var),atomic(Name),put_attr(Var,vn,Name).
+memorize_varname(_).
+
+
 
 %!  subst_vars(+Term, -Term, +Acc, -NamedVarsList) is det.
 %
@@ -3633,11 +3649,11 @@ generate_interpreter_stubs :-
               forall(metta_type('&corelib', Symb, Def),
                      gen_interp_stubs('&corelib', Symb, Def)).
 
-% Dynamic and multifile declaration for metta_atom_asserted_deduced/2.
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
+% Dynamic and multifile declaration for metta_atom_deduced/2.
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
 
-%!  metta_atom_asserted_deduced(+Source, +Term) is nondet.
+%!  metta_atom_deduced(+Source, +Term) is nondet.
 %
 %   Determines if a `Term` is part of the core library, logging the term if so.
 %
@@ -3647,7 +3663,7 @@ generate_interpreter_stubs :-
 %   @arg Source  The source of the term, expected to be `&corelib`.
 %   @arg Term    The term to verify.
 %
-metta_atom_asserted_deduced('&corelib', Term) :- fail,
+metta_atom_deduced('&corelib', Term) :- fail,
               % Log terms matching core library types.
               %\+ did_generate_interpreter_stubs,
               metta_atom_corelib_types(Term),

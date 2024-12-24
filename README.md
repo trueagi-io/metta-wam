@@ -1,17 +1,18 @@
 # :rocket: An Implementation of MeTTa designed to run on the Warren Abstract Machine (WAM)
 
 ## Quick Links
+- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install MeTTaLog
+- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter/Compiler Devel
+- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Testing Suite
 - [Getting Started](#getting-started)
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
   - [With Docker](#whale-running-mettalog-with-docker)
-- [Test Reports](https://logicmoo.github.io/metta-testsuite/)
-- [Tests](tests/) and [Result Links](reports/TEST_LINKS.md)
-- [Overview Documentation](./docs/OVERVIEW.md).
-
-Repos:
-- [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/)  Interpeter/Compiler
-- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Test Suite
+- Continuous Reports [https://logicmoo.github.io/metta-testsuite/ci/](https://logicmoo.github.io/metta-testsuite/ci/)
+- Nightly Reports [https://logicmoo.github.io/metta-wam/nightly/](https://logicmoo.github.io/metta-wam/nightly/)
+- More Reports [https://logicmoo.github.io/metta-wam](https://logicmoo.github.io/metta-wam)
+- [Testing Readme](https://github.com/logicmoo/metta-testsuite/blob/development/tests/README.md) and [Result Links](https://github.com/logicmoo/metta-testsuite/blob/development/reports/TEST_LINKS.md)
+- [Overview Documentation](https://github.com/trueagi-io/metta-wam/blob/master/docs/OVERVIEW.md).
 
 
 ## Getting Started
@@ -20,11 +21,13 @@ Repos:
 
 _Before you get started make sure `pip` and `venv` are working good._
 
+
+Linux/WSL/OS X
 Clone and set up MeTTaLog with the following commands:
 ```
 git clone https://github.com/trueagi-io/metta-wam
 cd metta-wam
-source ./INSTALL.sh # Follow the default prompts 
+source ./INSTALL.sh --allow-system-modifications # Follow the default prompts 
 ```
 #### The INSTALL.sh script handles the installation of essential components and updates:
 - Ensures Python's `pip` is installed or installs it.
@@ -39,6 +42,9 @@ source ./INSTALL.sh # Follow the default prompts
 - **Installs metakernel**: (No relation!) but allows our Jupyter Kernel to work.
 
 **Note**: Running this script modifies software configurations and installs packages. Ensure you're prepared for these changes.
+
+Windows Install - Comming Soon
+
 
 ## :whale: Running MeTTaLog with Docker
 
@@ -92,30 +98,30 @@ metta+>^D   # Exit the REPL with `ctrl-D`.
 
 To run a script:
 ```bash
-mettalog exmaples/puzzles/nalifier.metta
+mettalog examples/puzzles/nalifier.metta
 ```
 
 To run a script and then enter the repl:
 ```bash
-mettalog exmaples/puzzles//nalifier.metta --repl
+mettalog examples/puzzles/fish_riddle_1_no_states.metta --repl
 metta+>!(query &self (because blue house keeps parrots the $who is the fish owner))
 [(Succeed ((quote (because blue house keeps parrots the brit is the fish owner))))]
-metta+>
+metta+>!(halt! 7)
 
 ```
 
 ## Unit tests
 
-One exmaple is provided in this repository
+One examples is provided in this repository
 ```bash
-mettalog --test exmaples/tests/unit_test_example.metta
+mettalog --test examples/tests/unit_test_example.metta
 # The output is saved as an HTML file in the same directory.
 ```
 
-The rest are in a large REPO @
+The rest of the tests are in a large REPO @
 ```bash
 git clone https://github.com/logicmoo/metta-testsuite/
-ln -s metta-testsuite/tests/ ./tests  
+ls ./tests/  # this is a symlink that was already made with # ln -s metta-testsuite/tests/ ./tests  
 ```
 
 Run a single test

@@ -65,7 +65,7 @@ self_subst(X):- atom(X),!, \+ nb_bound(X,_),!.
 self_subst('True'). self_subst('False'). self_subst('F'). %'
 
 
-:- nb_setval(self_space, '&self'). % '
+%:- nb_setval(self_space, '&self'). % '
 substs_to(XX,Y):- Y==XX,!.
 substs_to(XX,Y):- Y=='True',!, is_True(XX),!. %'
 
@@ -256,7 +256,7 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 set_last_error(_).
 
 */
-subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):-
+subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):- 
     is_space_op(OP),  !,
     subst_args_as(Depth, Self, [OP|ARGS], Template).
 
@@ -718,7 +718,7 @@ subst_args2(Eq,Depth,Self,[H|PredDecl],Res):- mnotrace(is_user_defined_head(Eq,S
    subst_args30(Eq,Depth,Self,[H|PredDecl],Res).
 
 % function inherited by system
-subst_args2(Eq,Depth,Self,PredDecl,Res):- subst_args40(Eq,Depth,Self,PredDecl,Res).
+subst_args2(Eq,Depth,Self,PredDecl,Res):-  subst_args40(Eq,Depth,Self,PredDecl,Res).
 
 /*
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -854,7 +854,7 @@ subst_args37(Eq,Depth,Self,[H1|Args],Res):-
    mnotrace((ArgRes\==[H2|H2Args], append(Left,[ArgRes|Rest],NewArgs))),
    subst_args30(Eq,Depth,Self,[H1|NewArgs],Res).
 
-subst_args37(Eq,Depth,Self,[[H|Start]|T1],Y):-
+subst_args37(Eq,Depth,Self,[[H|Start]|T1],Y):- !,
    mnotrace((is_user_defined_head_f(Eq,Self,H),is_list(Start))),
    metta_eq_def(Eq,Self,[H|Start],Left),
    subst_args(Eq,RetType,Depth,Self,[Left|T1],Y).

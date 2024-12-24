@@ -97,25 +97,33 @@
 (= (If False $then) (let $n 0 (let $n 1 $n)))
 (= (If $cond $then $else) (if $cond $then $else))
 
+(@doc type-check
+  (@desc "The value of type-check determines MeTTa's type-checking behavior. Set via pragma!. When set to auto (i.e. !(pragma! type-check auto)), types are checked immediately on adding an expression to the space. By default, when unset (or set to anything other than auto), types are checked only on evaluation. For example !(+ 1 \"2\") would trigger a type violation, but (= (foo $x) (+ $x \"2\")) would not, unless type-check is set to auto, in which case both would trigger type violations."))
+(: type-check Symbol)
+
 (iz predicate-arity MeTTaLog)
 
 (@doc predicate-arity
   (@desc "Specifies the arity (number of arguments) for a given predicate, allowing it to be queriable in the system's match framework. This is particularly useful for enabling built-in functions, such as `size-atom`, to be used as predicates in declarative contexts and run in reverse to compute inputs based on outputs.
 
+
 For example:
   ; Enable the built-in function `size-atom` that takes an atom and returns the size
     as a predicate with arity 2
-  (add-atom &dyn-space (predicate-arity size-atom 2))
+  (predicate-arity size-atom 2)
+
 
   ; Now `size-atom` can be used as a predicate in pattern matching
-  (match &dyn-space '(size-atom (a b c) $size) 
+  !(match &dyn-space '(size-atom (a b c) $size) 
          (The abc tuple was len $size))
   ; This pattern will resolve `Size = 3` and execute the action.
 
+
 Additionally, by running `size-atom` in reverse, you can compute a new atom based on a desired size:
-  (match &dyn-space '(size-atom $new-atom 4) 
+  !(match &dyn-space '(size-atom $new-atom 4) 
          (The new atom is $new-atom))
   ; This resolves `$new-atom` to a tuple of size 4, such as ($1 $2 $3 $4).
+
 
 This reverse functionality is made possible because predicates can describe relationships, allowing you to infer inputs from outputs.")
   (@params (
@@ -128,32 +136,43 @@ This reverse functionality is made possible because predicates can describe rela
 (function-arity predicate-arity 1)
 
 
+
+
 (@doc function-arity
   (@desc "Defines the arity of a function, allowing predicates or built-in facts to also behave as callable functions. This enables procedural-style execution where the last argument of the predicate becomes the function's return value, and the system internally resolves the function using a `match` query. 
 
+
 For example:
-  ; Declare the built-in predicate `max` with arity 2
-  (predicate-arity max 2)
+  ; Declare the built-in predicate `max` with arity 3
+  (predicate-arity max 3)
 
   ; Enable `max` as a function
-  (add-atom &dyn-space (function-arity max 2))
+  (function-arity max 2)
+
 
   ; Define the rules for `max`
-  (add-atom &dyn-space (max $X $Y $X) (<= $X $Y))
-  (add-atom &dyn-space (max $X $Y $Y) (> $X $Y))
+  (= (max $X $Y $Y) (<= $X $Y))
+  (= (max $X $Y $X) (> $X $Y))
+
 
   ; Using `max` declaratively as a predicate
-  (match &dyn-space (max (5 10) $max)
+  !(match &self (max (5 10) $max)
          (The maximum is $max))
-  ; This resolves `$max = 10`.
+  [(The maximum is 10)]
+
 
   ; Using `max` procedurally as a function
-  (max 5 10)
-  ; Returns: 10.
+  !(max 5 10)
+  [10]
+  
+
 
   ; Reverse execution with `max`
-  (max $pair 10)
-  ; Returns: a pair such as (8 10) or (10 5) where the maximum is 10.
+  !(let True (== (max $a $b) 10) ($a $b)) ; as a function
+  [(#(exists $a (=< $a 10)) 10), (10 #(exists $b (=< 10 $b )))]
+  !(match &self (max $a $b 10) ($a $b)) ; or as a predicate
+  [(#(exists $a (=< $a 10)) 10), (10 #(exists $b (=< 10 $b )))]
+
 
   This dual behavior allows predicates to act as functions, bridging procedural and declarative paradigms. By defining `function-arity`, the function automatically resolves using the logic of the associated predicate.")
   (@params (
@@ -163,6 +182,7 @@ For example:
 (: function-arity (-> Symbol Number))
 (predicate-arity function-arity 2)
 (function-arity function-arity 1)
+
 
 ;; If Function
 
@@ -312,7 +332,9 @@ For example:
   (@params (
     (@param "Value to be returned")))
   (@return "Passed argument"))
-(: return (-> $t $t))
+; probably should be (: return (-> $t $t)) 
+(: return (-> Atom Atom))
+
 
 (iz function MinimalMeTTa)
 (@doc function

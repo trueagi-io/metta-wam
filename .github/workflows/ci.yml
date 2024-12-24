@@ -23,7 +23,7 @@ jobs:
   generate-reports:
     runs-on: ubuntu-latest
 
-    if: (github.repository == 'logicmoo/metta-testsuite') || (github.event_name != 'schedule')
+    if: (github.repository == 'logicmoo/metta-testsuite') || (github.repository == 'logicmoo/metta-wam') || (github.event_name != 'schedule')
 
     env:
       JOB_TYPE: ${{ github.event_name == 'schedule' && 'nightly' || 'ci' }}
@@ -32,23 +32,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    # Clone the metta-testsuite development branch
-    - name: Clone metta-testsuite development branch
-      run: |
-        git clone --branch development --depth 1 https://github.com/logicmoo/metta-testsuite.git metta-testsuite
-
-    # Copy the tests/* directory from metta-testsuite
-    - name: Copy tests from metta-testsuite
-      run: |
-        rm -rf tests
-        mkdir -p tests/
-        cp -r metta-testsuite/tests/* tests/
-        rm -rf reports
-        mkdir -p reports/
-        cp -r metta-testsuite/reports/* reports/
-        mkdir -p test-scripts/
-        cp -r metta-testsuite/test-scripts/* test-scripts/
 
     - name: Ensure just-results branch exists
       env:
@@ -83,6 +66,23 @@ jobs:
         else
           echo "No previous test results found."
         fi
+        
+    # Clone the metta-testsuite development branch
+    - name: Clone metta-testsuite development branch
+      run: |
+        git clone --branch development --depth 1 https://github.com/logicmoo/metta-testsuite.git metta-testsuite
+
+    # Copy the tests/* directory from metta-testsuite
+    - name: Copy tests from metta-testsuite
+      run: |
+        rm -rf tests
+        mkdir -p tests/
+        cp -r metta-testsuite/tests/* tests/
+        rm -rf reports
+        mkdir -p reports/
+        cp -r metta-testsuite/reports/* reports/
+        mkdir -p test-scripts/
+        cp -r metta-testsuite/test-scripts/* test-scripts/
         
     - name: Make Install Script Executable
       run: chmod +x INSTALL.sh
@@ -149,7 +149,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
       run: |
-        cp current_test_results.txt previous-results/
+        
         cd previous-results
 
         # Configure Git user information
@@ -160,6 +160,10 @@ jobs:
         git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
         git pull
+                
+        # overwrite test results
+        cp ../current_test_results.txt .
+
         # Stage and commit changes
         git add current_test_results.txt
         git commit -m "Update test results"
@@ -276,7 +280,7 @@ jobs:
         allure_report: allure-report
         allure_history: allure-history
         subfolder: ${{ env.SUBFOLDER }}
-        keep_reports: 120
+        keep_reports: 1200
       env:
         SUBFOLDER: ${{ env.JOB_TYPE }}
 
@@ -308,6 +312,9 @@ jobs:
         echo "<li><a href='./${{ env.BASELINE_COMPAT_PATH }}/junit-standard-report.html'>JUnit Standard Report</a></li>" >> allure-history/index.html
         echo "<li><a href='./${{ env.BASELINE_COMPAT_PATH }}/junit-matrix-report.html'>JUnit Matrix Report</a></li>" >> allure-history/index.html
         #echo "<li><a href='./help-docs/'>Help Documentation</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/trueagi-io/metta-wam/'>Install MeTTaLog</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/logicmoo/metta-wam/'>Interpeter/Compiler Devel</a></li>" >> allure-history/index.html
+        echo "<li><a href='https://github.com/logicmoo/metta-testsuite/'>Testing Suite</a></li>" >> allure-history/index.html
         echo "</ul>" >> allure-history/index.html
         echo "</body>" >> allure-history/index.html
         echo "</html>" >> allure-history/index.html
