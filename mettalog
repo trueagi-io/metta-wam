@@ -1114,7 +1114,7 @@ cleanup() {
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
-    do_DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
+    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
 
     if [ ! -z "$TEE_FILE" ];then
         if [ ! -z "$HTML_OUT" ];then
