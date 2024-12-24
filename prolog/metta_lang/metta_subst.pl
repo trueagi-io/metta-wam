@@ -256,7 +256,7 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 set_last_error(_).
 
 */
-subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):- 
+subst_args1(Eq,RetType,Depth, Self, [OP|ARGS], Template):-
     is_space_op(OP),  !,
     subst_args_as(Depth, Self, [OP|ARGS], Template).
 
