@@ -403,7 +403,7 @@ option_value_name_default_type_help(src_indents,  false, [false,true], "Sets the
 all_option_value_name_default_type_help('repl', auto, [false, true, auto], "Enter REPL mode (auto means true unless a file argument was supplied)", 'Execution and Control').
 all_option_value_name_default_type_help('prolog', false, [false, true], "Enable or disable Prolog REPL mode", 'Compatibility and Modes').
 option_value_name_default_type_help('devel', false, [false, true], "Developer mode", 'Compatibility and Modes').
-all_option_value_name_default_type_help('exec', noskip, [noskip, skip], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
+all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
@@ -1664,6 +1664,7 @@ asserted_do_metta2(Self,Load,PredDecl, Src):-
    %ignore(discover_head(Self,Load,PredDecl)),
    color_g_mesg_ok('#ffa505',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
 
+never_compile(_):- option_value('exec',interp),!.
 never_compile(X):- always_exec(X).
 
 always_exec(W):- var(W),!,fail.

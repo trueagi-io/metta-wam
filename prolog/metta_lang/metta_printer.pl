@@ -281,7 +281,7 @@ print_pl_source0(_) :-
     % Do not print if silent loading mode is enabled.
     pnotrace(silent_loading), !.
 
-print_pl_source0(P) :-!,
+print_pl_source0(P) :- fail,!,
     format('~N'),
     print_tree(P),
     format('~N'), !.
