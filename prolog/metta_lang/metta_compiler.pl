@@ -511,10 +511,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       maplist(arrange_lazy_args,Args,FinalLazyArgs,LazyArgsList),
       get_property_lazy(FinalLazyRet,FinalLazyOnlyRet),
 
-      precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
-
-      output_prolog(magenta,TypeInfo),
-      print_ast( green, Ast),
+      %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
+      %output_prolog(magenta,TypeInfo),
+      %print_ast( green, Ast),
 
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyOnlyRet,AsBodyFn,NextBody),
 
