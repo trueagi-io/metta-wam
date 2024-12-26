@@ -1379,8 +1379,8 @@ load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
 
 load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
 load_hook1(Load,Self,Eq,H,B):-
-       once(functs_to_preds([Eq,H,B],Preds)),
-       assert_preds(Self,Load,Preds),!.
+       must_det_lls(functs_to_preds([Eq,H,B],Preds)),
+       must_det_lls(assert_preds(Self,Load,Preds)),!.
 % old compiler hook
 /*
 load_hook0(Load,Assertion):-
@@ -1395,7 +1395,7 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        assert_preds(Self,Load,Preds).
 */
 is_transpiling:- use_metta_compiler.
-use_metta_compiler:- notrace(option_value('compile','full')), !.
+use_metta_compiler:- \+ notrace(option_value('compile','false')), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 show_transpiler:- option_value('code',Something), Something\==silent,!.

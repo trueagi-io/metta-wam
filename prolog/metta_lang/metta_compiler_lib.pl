@@ -5,7 +5,7 @@ from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
 
-pred_uses_impl(F,A):- transpile_impl_prefix(F,Fn),current_predicate(Fn/A).
+pred_uses_impl(F,A):- transpile_impl_prefix(F,A,Fn),current_predicate(Fn/A).
 
 mc_fallback_unimpl(Fn,Arity,Args,Res):-
   (pred_uses_fallback(Fn,Arity);(length(Args,Len),\+pred_uses_impl(Fn,Len))),!,
@@ -20,7 +20,7 @@ maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
     maybe_eval(Self,Types,Args,NewArgs).
 
 
-'mc_2__:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
+%'mc_2__:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
 sync_type(D, Self, Obj, Type):- nonvar(Obj), nonvar(Type), !, arg_conform(D, Self, Obj, Type).
 sync_type(D, Self, Obj, Type):- nonvar(Obj), var(Type), !, get_type(D, Self, Obj, Type).
 sync_type(D, Self, Obj, Type):- nonvar(Type), var(Obj), !, set_type(D, Self, Obj, Type). %, freeze(Obj, arg_conform(D, Self, Obj, Type)).
@@ -71,7 +71,7 @@ mc_1__not(_,'True').
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
-'mc_1__car-atom'([H|_],H).
+'mc_1__car-atom'(Cons,H):- Cons = [H|_] -> true ; throw(metta_type_error).
 
 'mc_1__cdr-atom'([_|T],T).
 
@@ -84,11 +84,15 @@ mc_1__not(_,'True').
 lazy_member(R1,Code2,R2) :- call(Code2),R1=R2.
 
 transpiler_clause_store(subtraction, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_2__subtraction'(is_p1(_Type1,_Src1,Code1,R1),is_p1(_Type2,_Src2,Code2,R2),R1) :- !,
+    call(Code1),
+    \+ lazy_member(R1,Code2,R2).
 'mc_2__subtraction'(is_p1(Code1,R1),is_p1(Code2,R2),R1) :-
     call(Code1),
     \+ lazy_member(R1,Code2,R2).
 
 transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_2__union'(U1,is_p1(_Type1,_Src1,Code2,R2),R) :- !, ('mc_2__subtraction'(U1,is_p1(_Type2,_Src2,Code2,R2),R) ; (call(Code2),R=R2)).
 'mc_2__union'(U1,is_p1(Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Code2,R2),R) ; call(Code2),R=R2.
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
@@ -97,6 +101,8 @@ transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(
 
 % put a fake transpiler_clause_store here, just to force the argument to be lazy
 transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_1__collapse'(is_p1(_Type,_Src,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc_1__collapse'(is_p1(_Type,_Src,true,X),[X]):- !.
 'mc_1__collapse'(is_p1(Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc_1__collapse'(is_p1(true,X),[X]).
 
@@ -110,16 +116,34 @@ transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)]
 
 % put a fake transpiler_clause_store here, just to force the template to be lazy
 transpiler_clause_store(match, 4, 0, ['Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_3__match'(Space,Pattern,is_p1(_Type,_Src,TemplateCode,TemplateRet),TemplateRet) :- !, match_pattern(Space, Pattern), call(TemplateCode).
 'mc_3__match'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+
+
+% This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
+match_pattern(Space, Pattern):- functor(Pattern,F,A), functor(Atom,F,A), metta_atom(Space, Atom), Atom=Pattern.
 
 % TODO FIXME: sort out the difference between unify and match
 transpiler_clause_store(unify, 4, 0, ['Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_3__unify'(Space,Pattern,is_p1(_TypeT,_SrcT,SuccessCode,RetVal),RetVal) :- !, unify_pattern(Space,Pattern), call(SuccessCode).
 'mc_3__unify'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+
+transpiler_clause_store(unify, 5, 0, ['Atom', 'Atom', 'Atom', 'Atom'], ' %Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy), x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_4__unify'(Space,Pattern,is_p1(_TypeT,_SrcT,SuccessCode,RetVal),is_p1(_TypeF,_SrcF,FailureCode,RetVal),RetVal) :-
+    (unify_pattern(Space,Pattern)->call(SuccessCode);call(FailureCode)).
+
+% unify calls pattern matching if arg1 is a space
+unify_pattern(Space,Pattern):- is_metta_space(Space),!, match_pattern(Space, Pattern).
+% otherwise calls prolog unification (with occurs check later)
+unify_pattern(Atom, Pattern):- metta_unify(Atom, Pattern).
+
+metta_unify(Atom, Pattern):- Atom=Pattern.
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
 % put a fake transpiler_clause_store here, just to force the argument to be lazy
 transpiler_clause_store(time, 2, 0, ['Atom'], 'Atom', [x(doeval,lazy)], x(doeval,eager), [], []).
+'mc_1__time'(is_p1(_Type,_Src,Code,Ret),Ret) :- !, wtime_eval(Code).
 'mc_1__time'(is_p1(Code,Ret),Ret) :- wtime_eval(Code).
 
 'mc_0__empty'(_) :- fail.

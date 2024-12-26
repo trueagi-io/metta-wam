@@ -85,7 +85,6 @@
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
-
 % =======================================
 % TODO move non flybase specific code between here and the compiler
 %:- ensure_loaded(flybase_main).
@@ -104,6 +103,8 @@ transpiler_enable_interpreter_calls :- fail.
 transpiler_show_debug_messages.
 %transpiler_show_debug_messages :- fail.
 
+:- dynamic(transpiler_stub_created/1).
+:- multifile(transpiler_stub_created/1).
 :- dynamic(transpiler_stub_created/3).
 % just so the transpiler_stub_created predicate always exists
 transpiler_stub_created(space,dummy,0).
@@ -116,12 +117,14 @@ transpiler_depends_on(dummy,0,dummy,0).
 % transpiler_clause_store(f,arity,clause_number,types,rettype,lazy,retlazy,head,body)
 transpiler_clause_store(dummy,0,0,[],'Any',[],eager,dummy,dummy).
 
-:-dynamic(transpiler_stored_eval/3).
+:- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
-as_p1(is_p1(Code,Ret),Ret):-!,call(Code).
-as_p1(is_p1(_Src,Code,Ret),Ret):-!,call(Code).
-as_p1(is_p1(_Type,_Src,Code,Ret),Ret):-!,call(Code).
+as_p1(X,X):- \+ compound(X),!.
+as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
+as_p1(is_p1(_Src,Code,Ret),Ret):- !, call(Code).
+as_p1(is_p1(_Type,_Src,Code,Ret),Ret):- !, call(Code).
+as_p1(X,X).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -142,7 +145,6 @@ iz_conz(B):- compound(B), B=[_|_].
 '=~0'(A,B):- compound_non_cons(A),var(B),!,A=..B.
 '=~0'(A,B):- compound_non_cons(B),!,A=B.
 '=~0'(A,B):- '=..'(A,B).
-
 
 %into_list_args(A,AA):- is_ftVar(A),AA=A.
 %into_list_args(C,[C]):- \+ compound(C),!.
@@ -190,7 +192,7 @@ print_ast(HB):- print_ast( yellow, HB).
 print_ast(Color,HB):-
    inotrace((printable_vars(HB,HBP),
    color_g_mesg(Color,
-     output_language( ast, (writeln('Ast:======='), print_tree_nl(HBP)))))).
+     output_language( ast, (writeln('======='), print_tree_nl(HBP)))))).
 
 printable_vars(HB,HBPN):-
    copy_term(HB,HBP),
@@ -219,14 +221,16 @@ cns:attr_unify_hook(_V,_T):- true.
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
+must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
+%must_det_lls(G):- must_det_ll(G).
 must_det_lls(G):- notrace,nortrace,trace,call(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,vn,Name),get_attr(V,cns,Set),!,extract_constraints(Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
 extract_constraints(Converted,VSS):- term_variables(Converted,Vars),
-      % assign_vns(0,Vars,_),
-       maplist(extract_constraints,Vars,VSS).
+     % assign_vns(0,Vars,_),
+     maplist(extract_constraints,Vars,VSS).
 extract_constraints(V,[],V=[]):-!.
 extract_constraints(V,Types,V=Types).
 
@@ -307,9 +311,260 @@ precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,Result) :-
     f2p(HeadIs,LazyArgsList,HResult,FinalLazyOnlyRet,AsBodyFn,NextBody),
     HeadAST=[assign,HResult,[call(FnName)|Args]],
     Ast = [=,HeadIs,NextBody],
-    ast_to_prolog_aux(no_caller,[],HeadAST,_HeadC),
-    ast_to_prolog(no_caller,[],NextBody,_NextBodyC),
+    ast_to_prolog(no_caller,HeadAST,_HeadC),
+    ast_to_prolog(no_caller,NextBody,_NextBodyC),
     extract_constraints(Ast,Result))).
+
+:- use_module(library(gensym)).          % for gensym/2
+:- use_module(library(pairs)).           % for group_pair_by_key/2
+:- use_module(library(logicmoo_utils)).  % for print_tree_nl/1 (pretty-print)
+
+/** <module> combine_transform_and_collect_subterm
+
+    Demonstration of a two-pass approach:
+      1) Transform an S-expression so that *nested* calls `[Fn|Args]`
+         become `'$VAR'('temp_N')` with an assignment `'temp_N' = eval([Fn|...])`.
+         The top-level call is preserved.
+      2) Collect underscore variables in the *final expression* by
+         enumerating all subterms with sub_term/2. Whenever we see a call
+         (either `[Fn|Args]` or a compound `Fn(...)`), we look for underscore
+         variables in the arguments and note them as `arg(Fn,Pos)`.
+
+    We then show how to run this on a "big" expression with match-body, if,
+    let*, etc., using logicmoo_utils to print results.
+*/
+
+
+/* ---------------------------------------------------------------------
+   (1) TRANSFORMATION PASS
+   --------------------------------------------------------------------- */
+
+/** transform_expr(+OldExpr, -Assignments, -NewTopExpr) is det
+
+    Leaves the **top-level** `[Fn|Args]` intact,
+    but for each *nested* call `[SubFn|SubArgs]`, create a fresh
+    variable `'$VAR'('temp_N')` and an assignment `'temp_N' = eval([...])`.
+*/
+transform_expr(OldExpr, Assignments, NewTopExpr) :-
+    % unify real Prolog variables as '$VAR'(N), though underscores remain atoms
+    numbervars(OldExpr, 0, _, [attvar(skip)]),
+    transform_top(OldExpr, NewTopExpr, Assignments, 0, _).
+
+transform_top(Var, Var, [], C, C) :- fullvar(Var), !.
+transform_top(Var, Var, [], C, C) :- data_term(Var), !.
+transform_top(Var, Var, [], C, C) :- Var==[], !.
+transform_top(Var, Var, [], C, C) :- \+ is_list(Var).
+transform_top([Fn|Args], [Fn|NewArgs], Assignments, C0, C2) :- atom(Fn), !, transform_list_subcalls(Args, NewArgs, Assignments, C0, C2).
+transform_top(List, ListOut, Assignments, C0, C2) :- is_list(List), !, transform_list_subcalls(List, ListOut, Assignments, C0, C2).
+transform_top(Anything, Anything, [], C, C).
+
+transform_list_subcalls([], [], [], C, C).
+transform_list_subcalls([X|Xs], [Xn|Xsn], Assignments, C0, C2) :-
+    transform_subcall(X, Xn, A1, C0, C1),
+    transform_list_subcalls(Xs, Xsn, A2, C1, C2),
+    append(A1, A2, Assignments).
+
+/** transform_subcall(+Expr, -ExprOut, -Assignments, +C0, -C1) is det
+
+    For *nested* calls `[Fn|Args]`, produce `'$VAR'(temp_N)` plus assignment.
+    Otherwise, just keep recursing.
+*/
+transform_subcall(Var, Var, [], C, C) :-
+    \+ is_list(Var), !.
+transform_subcall([], [], [], C, C) :- !.
+transform_subcall([Fn|Args], TmpVar, [Assignment|Arest], C0, C2) :- atom(Fn), !,
+    transform_list_subcalls(Args, NewArgs, Aargs, C0, C1),
+    gensym('_temp_', TempName),
+    TmpVar = '$VAR'(TempName),
+    Assignment = (TmpVar - eval([Fn|NewArgs])),
+    append(Aargs, [], Arest),
+    C2 is C1.
+
+transform_subcall(List, ListOut, A, C0, C2) :-
+    is_list(List),
+    transform_list_subcalls(List, ListOut, A, C0, C2).
+
+
+/** var_call_refs(+Expression, -VarMappings) is det
+
+    After transformation, we gather references to "underscore variables."
+    We do this by enumerating all subterms with sub_term/2, checking for
+    calls that are either:
+      - `[Fn|Args]` (a Prolog list with an atom head), or
+      - A compound with an atom functor.
+
+    For each Arg that starts with `_`, or is a Prolog var,
+    we produce `_var - arg(Fn,Pos)`.
+
+    Finally group and produce `_varName = [arg(Fn,Pos1), arg(Fn,Pos2), ...]`.
+*/
+var_call_refs(Expression, VarMappings) :-
+    numbervars(Expression, 0, _, [attvar(skip)]),
+
+    % collect all subterms
+    findall(Sub, sub_term(Sub, Expression), SubTerms),
+
+    % for each subterm that is a "function call", gather references
+    gather_all_function_calls(SubTerms, RawPairs),
+
+    % group and unify
+    sort(RawPairs, Sorted),
+    group_pair_by_key(Sorted, Grouped),
+    maplist(to_equals_pair, Grouped, VarMappings).
+
+to_equals_pair(K-List, K-List).
+
+%group_pair_by_key(X,Y):- !, group_pairs_by_key(X,Y).
+group_pair_by_key([], []):-!.
+group_pair_by_key([M-N|T0], Done) :- select(K-Vs,T0,TR), M=@=K,!,
+     flatten([N,Vs],Flat),list_to_set(Flat,Set), group_pair_by_key([M-Set|TR], Done).
+group_pair_by_key([M-N|T0],[M-Set|Done]):-
+  flatten([N],Flat),list_to_set(Flat,Set),
+  group_pair_by_key(T0, Done).
+
+/** gather_all_function_calls(+SubTerms, -AllPairs) is det
+
+    For each subterm in SubTerms, if it's recognized as a function call,
+    call process_function_args/4 to gather underscore variables in the arguments.
+*/
+gather_all_function_calls([], []).
+gather_all_function_calls([Term|Rest], AllPairs) :-
+    (   is_function_call(Term, Fn, Args)
+    ->  process_function_args(Fn, Args, 1, Pairs)
+    ;   Pairs = []
+    ),
+    gather_all_function_calls(Rest, More),
+    append(Pairs, More, AllPairs).
+
+/** is_function_call(+Term, -Fn, -Args) is semidet
+
+    1. If Term is a list [Fn|Args] with `atom(Fn)`, treat it as a call.
+    2. If Term is a compound with `functor = Fn` (an atom) and arguments `Args`,
+       also treat it as a call. For example, `eval([quote,F])` => Fn=eval, Args=[[quote,F]].
+*/
+is_function_call(List, Fn, Args) :-
+    is_list(List),
+    List = [Fn|Args],
+    atom(Fn),
+    !.
+
+is_function_call(Compound, Fn, Var) :-
+    compound(Compound),
+    Compound = (Var - eval([Fn|_])),
+    atom(Fn),!.
+
+
+process_function_args(Fn, Var, _, [Var-arg(Fn,0)]):- is_underscore_var(Var),!.
+process_function_args(_, [], _, []).
+process_function_args(Fn, [Arg|R], N, [Arg-arg(Fn,N)|Out]) :-
+    is_underscore_var(Arg),
+    !,
+    N2 is N + 1,
+    process_function_args(Fn, R, N2, Out).
+process_function_args(Fn, [_|R], N, Out) :-
+    N2 is N + 1,
+    process_function_args(Fn, R, N2, Out).
+
+/** is_underscore_var(+X) is semidet
+
+    True if X is:
+      - a real Prolog variable (var/1 or '$VAR'(_)),
+      - or an atom starting with `_`.
+*/
+is_underscore_var(X) :- var(X), !.
+is_underscore_var('$VAR'(_)) :- !.
+is_underscore_var(X) :-
+    atom(X),
+    sub_atom(X, 0, 1, _, '_').
+
+
+
+/* ---------------------------------------------------------------------
+   (3) PUTTING IT ALL TOGETHER
+   --------------------------------------------------------------------- */
+
+combine_transform_and_collect(OldExpr, Assignments, NewExpr, VarMappings) :-
+    transform_expr(OldExpr, Assignments, NewExpr),
+    % Collect references from both the new expression AND the assignments.
+    % That way, if you have  _temp_9 = eval([quote,F]) ...
+    % the subterm [quote,F] is recognized.
+    var_call_refs(OldExpr+Assignments, VarMappings).
+
+
+/** test_combine_big is det
+
+    Demo with `=`, `match-body`, `if`, nested `let*`, etc.
+    Also picks up any compound calls like eval([quote,_goal]).
+*/
+test_combine_big :-
+    OldExpr =
+      [ =,
+        [ match_body, _info, _body, _kb, _rb, _goal ],
+        [ if,
+          [==, _body, []],
+          eval([quote,_goal]),          % an example compound call
+          [ 'let*',
+            [ [ [ _cur, _rest ],
+                [ decons_atom, _body ]],
+              [ _debugging, 'True' ],
+              [ _bugcheck, 'False' ],
+              [ [],
+                [ if,
+                  _debugging,
+                  [ println,
+                    [ quote,
+                      [ "IN",
+                        ["cur=", _cur],
+                        ["goal=", _goal]]]],
+                  []]],
+              [ _12,
+                [ if,
+                  _bugcheck,
+                  [ 'let*',
+                    [ [ RetVal,
+                        [ backward_chain, _info,_cur,_kb,_rb ] ],
+                      [ _m,
+                        [ collapse, [ equalz, [quote,_cur], _RetVal ] ] ],
+                      [ [],
+                        [ if,
+                          [==,_m,[]],
+                          [ println,
+                            [ quote,
+                              [ "BAD",
+                                ["cur=", _cur ],
+                                ["retVal=", RetVal]]]],
+                          []]]],
+                    []],
+                  []]],
+              [ [ quote, _cur ],
+                [ backward_chain, _info,_cur,_kb,_rb ]],
+              [ [],
+                [ if,
+                  _debugging,
+                  [ println,
+                    [ quote,
+                      [ 'OUT',
+                        ["cur=", _cur],
+                        ["goal=", _goal]]]],
+                  []]]],
+            [ match_body, _info,_rest,_kb,_rb,_goal]]]],
+
+    combine_transform_and_collect(OldExpr, Assignments, NewExpr, VarMappings),
+
+    writeln("=== Original Expression ==="),
+    print_tree_nl(OldExpr),
+
+    writeln("=== Assignments (subcalls replaced) ==="),
+    print_tree_nl(Assignments),
+
+    writeln("=== New Expression ==="),
+    print_tree_nl(NewExpr),
+
+    writeln("=== Var Mappings (underscore variables) ==="),
+    append(Assignments,VarMappings,SM),sort(SM,S),
+    print_tree_nl(S).
+
+%:- test_combine_big.
 
 
 optimize_prolog(_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
@@ -381,9 +636,9 @@ compile_for_exec1(AsBodyFn, Converted) :-
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
    f2p([exec0],[],HResult,eager,AsBodyFn,NextBody),
    %optimize_head_and_body(x_assign([exec0],HResult),NextBody,HeadC,NextBodyB),
-   ast_to_prolog_aux(no_caller,[],[native(exec0),HResult],HeadC),
-   %ast_to_prolog(no_caller,[],[[native(trace)]|NextBody],NextBodyC).
-   ast_to_prolog(no_caller,[],NextBody,NextBodyC))).
+   ast_to_prolog_aux(no_caller,[native(exec0),HResult],HeadC),
+   %ast_to_prolog(no_caller,[[native(trace)]|NextBody],NextBodyC).
+   ast_to_prolog(no_caller,NextBody,NextBodyC))).
 
 arrange_lazy_args(N,x(_,Y),N-Y).
 
@@ -420,6 +675,7 @@ determine_eager_vars_case_aux(Lin,Lout,[[Match,Target]|Rest],EagerVars) :-
 
 determine_eager_vars(lazy,lazy,A,[]) :- fullvar(A),!.
 determine_eager_vars(eager,eager,A,[A]) :- fullvar(A),!.
+determine_eager_vars(eager,eager,[Var|_],[]):- fullvar(Var),!. % avoid binding free var to 'if'
 determine_eager_vars(Lin,Lout,['if',If,Then,Else],EagerVars) :- !,
    determine_eager_vars(eager,_,If,EagerVarsIf),
    determine_eager_vars(Lin,LoutThen,Then,EagerVarsThen),
@@ -482,21 +738,24 @@ transpile_eval(Convert0,Converted,PrologCode) :-
       Converted=Converted0
    ;
       f2p([],[],Converted,eager,Convert,Code),
-      ast_to_prolog(no_caller,[],Code,PrologCode),
+      ast_to_prolog(no_caller,Code,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,Converted))
    ).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
+ must_det_lls((
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    HeadIs=[FnName|Args],
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
+   atomic_list_concat(['mi_',LenArgs,'__',FnName],FnNameWPrefix),
+   print_ast( '#FFA500', [= , HeadIsIn, AsBodyFnIn]),
    % retract any stubs
    (transpiler_stub_created(FnName/LenArgsPlus1) ->
       retract(transpiler_stub_created(FnName/LenArgsPlus1)),
-      atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
+      %atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
       findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
       H=..[FnNameWPrefix|AtomList0],
       (transpiler_show_debug_messages -> format("Retracting stub: ~q\n",[H]) ; true),
@@ -526,10 +785,29 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
       maplist(arrange_lazy_args,Args,FinalLazyArgs,LazyArgsList),
       get_property_lazy(FinalLazyRet,FinalLazyOnlyRet),
 
-      precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
+      %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
 
-      output_prolog(magenta,TypeInfo),
-      print_ast( green, Ast),
+        OldExpr = [defn,HeadIs,AsBodyFn],
+
+        combine_transform_and_collect(OldExpr, Assignments, NewExpr, VarMappings),
+
+        writeln("=== Original Expression ==="),
+        print_ast(OldExpr),
+
+        writeln("=== Assignments (subcalls replaced) ==="),
+        print_ast(Assignments),
+
+        writeln("=== New Expression ==="),
+        print_ast(NewExpr),
+
+        writeln("=== Var Mappings (underscore variables) ==="),
+        append(Assignments,VarMappings,SM),sort(SM,S),
+        group_pair_by_key(S,SK),
+        print_ast(SK),
+
+
+      %output_prolog(magenta,TypeInfo),
+      %print_ast( green, Ast),
 
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyOnlyRet,AsBodyFn,NextBody),
 
@@ -545,25 +823,27 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
       HeadAST=[assign,HResult,[call(FnName)|Args]],
-      ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
+      %ast_to_prolog(no_caller,HeadAST,HeadC),
+      append(Args,[HResult],HArgs),
+      HeadC =.. [FnNameWPrefix|HArgs],
 
 
       print_ast( yellow, [=,HeadAST,NextBody]),
 
 
-      ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
+      ast_to_prolog(caller(FnName,LenArgsPlus1),NextBody,NextBodyC),
 
       %format("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
       %format("###########2 ~q",[Converted]),
       extract_constraints(Converted,EC),
       optimize_prolog([],Converted,Optimized),
-      output_prolog([EC,Converted]),
+      output_prolog(red,[EC,Converted]),!,
       if_t(Optimized\=@=Converted,
              output_prolog(green,Optimized)),
 
       true
-   )).
+   )))).
 
 
 
@@ -757,24 +1037,26 @@ ensure_callee_site(Space,Fn,Arity):-transpiler_stub_created(Space,Fn,Arity),!.
 ensure_callee_site(Space,Fn,Arity):-
  must_det_lls((
     compiler_assertz(transpiler_stub_created(Space,Fn,Arity)),
-    transpile_call_prefix(Fn,CFn),
-    %trace,
-((current_predicate(CFn/Arity) -> true ;
+    transpile_call_prefix(Fn,Arity,CFn),
+
+ ((current_predicate(CFn/Arity) -> true ;
   must_det_lls((( functor(CallP,CFn,Arity),
     CallP=..[CFn|Args],
-    transpile_impl_prefix(Fn,IFn), CallI=..[IFn|Args],
+    transpile_impl_prefix(Fn,Arity,IFn), CallI=..[IFn|Args],
     %dynamic(IFn/Arity),
     append(InArgs,[OutArg],Args),
     Clause= (CallP:-((pred_uses_impl(Fn,Arity),CallI)*->true;(mc_fallback_unimpl(Fn,Arity,InArgs,OutArg)))),
-    output_prolog(Clause),
-    create_and_consult_temp_file(Space,CFn/Arity,[Clause])))))))),!.
+    compiler_assertz(Clause),
+    %output_prolog(Clause),
+    %create_and_consult_temp_file(Space,CFn/Arity,[Clause])
+    true))))))),!.
 
 prefix_impl_preds(Prefix,F,A):- prefix_impl_preds_pp(Prefix,F,A).
-prefix_impl_preds('mc__',F,A):- is_transpile_call_prefix(F,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
-prefix_impl_preds('mi__',F,A):- is_transpile_impl_prefix(F,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
+prefix_impl_preds('mc_',F,A):- is_transpile_call_prefix(F,A,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
+prefix_impl_preds('mi_',F,A):- is_transpile_impl_prefix(F,A,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
 
-prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc__:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor(Preds,Fn,A),
-    ((transpile_impl_prefix(Prefix);transpile_call_prefix(Prefix)),atom_concat(Prefix,F,Fn)).
+prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc_2__:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor(Preds,Fn,A),
+    ((transpile_impl_prefix(Prefix);transpile_call_prefix(Prefix)),atom_list_concat([Prefix,_FNArity,'__',F],Fn)).
 
 maplist_and_conj(_,A,B):- fullvar(A),!,B=A.
 maplist_and_conj(_,A,B):- \+ compound(A),!,B=A.
@@ -824,28 +1106,32 @@ maybe_argo(_Caller,_F,_N,Arg,Arg):- is_list(Arg),!.
 maybe_argo(_Caller,_F,_N,Arg,Arg):- \+ compound(Arg),!.
 maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,Arg,ArgO).
 
-ast_to_prolog(Caller,DontStub,A,Result) :-
-   maplist(ast_to_prolog_aux(Caller,DontStub),A,B),
-   combine_code_list(B,Result),!.
 
-ast_to_prolog(Caller,DontStub,A,Result) :-
-   ast_to_prolog_aux(Caller,DontStub,A,B),
-   combine_code_list(B,Result).
-
+ast_to_prolog(_,[],true):-!.
+ast_to_prolog(Caller,[A|AL],Result) :- is_list(A), !,
+   maplist(ast_to_prolog_aux(Caller),[A|AL],B),
+   combine_code(B,true,Result).
 
 ast_to_prolog(Caller,A,Result) :-
-must_det_lls((ast_to_prolog_aux(Caller,[],A,Result))).
+   ast_to_prolog_aux(Caller,A,B),
+   combine_code(B,true,Result).
 
 
-ast_to_prolog_aux(_,_,A,A) :- fullvar(A),!.
-ast_to_prolog_aux(_Caller,DontStub,H,H):- \+ compound(H),!.
-ast_to_prolog_aux(Caller,DontStub,assign(A,X0),(A=X1)) :- !, ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
-ast_to_prolog_aux(_Caller,DontStub,'#\\'(A),A).
+ast_to_prolog(Caller,A,Result):-
+    must_det_lls((ast_to_prolog_aux(Caller,A,Result))).
+
+
+ast_to_prolog_aux(_,A,A) :- fullvar(A),!.
+ast_to_prolog_aux(_,H,H):- \+ compound(H),!.
+ast_to_prolog_aux(Caller,assign(A,X0),(A=X1)) :- !, ast_to_prolog_aux(Caller,X0,X1),!.
+ast_to_prolog_aux(_Caller,'#\\'(A),A).
 
 % Roy's API
-ast_to_prolog_aux(Caller,DontStub,[assign,[call(F)|Args0],A],R):- ast_to_prolog_aux(Caller,DontStub,fn_eval(F,Args0,A),R).
-ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],R):- ast_to_prolog_aux(Caller,DontStub,fn_native(F,Args0),R).
-ast_to_prolog_aux(Caller,DontStub,[is_p1,Src,Code0,R],is_p1(Src,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
+ast_to_prolog_aux(Caller,[assign,A,[call(F)|Args0]],R):- atom(F), !, ast_to_prolog_aux(Caller,fn_eval(F,Args0,A),R).
+ast_to_prolog_aux(Caller,[assign,[call(F)|Args0],A],R):- atom(F), !, ast_to_prolog_aux(Caller,fn_eval(F,Args0,A),R).
+ast_to_prolog_aux(Caller,[native(F)|Args0],R):- atom(F), ast_to_prolog_aux(Caller,fn_native(F,Args0),R).
+ast_to_prolog_aux(Caller,[is_p1,Src,Code0,R],is_p1(_,Src,Code1,R)) :- !,ast_to_prolog(Caller,Code0,Code1).
+ast_to_prolog_aux(Caller,[is_p1,Type,Src,Code0,R],is_p1(Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,Code0,Code1).
 
 ast_to_prolog_aux(Caller, if_or_else(If,Else),R):- ast_to_prolog_aux(Caller, (If*->true;Else),R).
 ast_to_prolog_aux(Caller, Smack,R):-
@@ -859,82 +1145,87 @@ ast_to_prolog_aux(Caller, Smack,R):-
 ast_to_prolog_aux(Caller, eval([F|Args],Ret),R):- atom(F),is_list(Args),
    ast_to_prolog_aux(Caller,fn_eval(F,Args,Ret),R), !.
 
-ast_to_prolog_aux(Caller,DontStub,(A),B) :- is_list(A),!,maplist(ast_to_prolog_aux(Caller),A,B).
-ast_to_prolog_aux(Caller,DontStub,[A],O) :- !, ast_to_prolog_aux(Caller,DontStub,A,O).
-%ast_to_prolog_aux(Caller,DontStub,list(A),B) :- !,maplist(ast_to_prolog_aux(Caller,DontStub),A,B).
-ast_to_prolog_aux(Caller,DontStub,list(A),B) :- is_list(A),!,maplist(ast_to_prolog_aux(Caller),A,B).
-ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
-   ast_to_prolog(Caller,DontStub,If,If2),
-   ast_to_prolog(Caller,DontStub,Then,Then2),
-   ast_to_prolog(Caller,DontStub,Else,Else2),
+ast_to_prolog_aux(Caller,(A),B) :- is_list(A),!,maplist(ast_to_prolog_aux(Caller),A,B).
+ast_to_prolog_aux(Caller,[A],O) :- !, ast_to_prolog_aux(Caller,A,O).
+%ast_to_prolog_aux(Caller,list(A),B) :- !,maplist(ast_to_prolog_aux(Caller),A,B).
+ast_to_prolog_aux(Caller,list(A),B) :- is_list(A),!,maplist(ast_to_prolog_aux(Caller),A,B).
+ast_to_prolog_aux(Caller,[prolog_if,If,Then,Else],R) :- !,
+   ast_to_prolog(Caller,If,If2),
+   ast_to_prolog(Caller,Then,Then2),
+   ast_to_prolog(Caller,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
-ast_to_prolog_aux(Caller,DontStub,(If*->Then;Else),R) :- !,
-   ast_to_prolog(Caller,DontStub,If,If2),
-   ast_to_prolog(Caller,DontStub,Then,Then2),
-   ast_to_prolog(Caller,DontStub,Else,Else2),   
+ast_to_prolog_aux(Caller,(If*->Then;Else),R) :- !,
+   ast_to_prolog(Caller,If,If2),
+   ast_to_prolog(Caller,Then,Then2),
+   ast_to_prolog(Caller,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
-ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !, ast_to_prolog_aux(Caller,DontStub,fn_native(F,Args0),A).
-ast_to_prolog_aux(Caller,DontStub,fn_native(F,ArgsIn),A) :- !,
+ast_to_prolog_aux(Caller,[native(F)|Args0],A) :- !, ast_to_prolog_aux(Caller,fn_native(F,Args0),A).
+ast_to_prolog_aux(Caller,fn_native(F,ArgsIn),A) :- !,
    %maplist(ast_to_prolog_aux(Caller),Args0,Args1),
    F=..[Fn|Pre], % allow compound natives
    append(Pre,ArgsIn,Args0),
-   label_arg_types(F,1,Args0),
-   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   label_arg_types(F,1,Args1),
-   A=..[F|Args1],
-   notice_callee(Caller,DontStub,A).
-   
-   
-ast_to_prolog_aux(Caller,DontStub,[is_p1,_Types,Src,Code0,R],is_p1(_Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
+   label_arg_types(Fn,1,Args0),
+   maplist(ast_to_prolog_aux(Caller),Args0,Args1),
+   label_arg_types(Fn,1,Args1),
+   A=..[Fn|Args1],
+   notice_callee(Caller,A).
 
-ast_to_prolog_aux(Caller,DontStub,fn_eval(F,Args0,A),R) :- ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R).
 
-ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args00]],R) :- (fullvar(A); \+ compound(A)),atom(F),!,
+ast_to_prolog_aux(Caller,[is_p1,_Types,Src,Code0,R],is_p1(_Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,Code0,Code1).
+
+ast_to_prolog_aux(Caller,fn_eval(F,Args00,A),R) :- !,
+ must_det_lls((
+   %(fullvar(A); \+ compound(A)),
+   atom(F),!,
    maybe_lazy_list(Caller,F,1,Args00,Args0),
    label_arg_types(F,1,Args0),
-   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
+   maplist(ast_to_prolog_aux(Caller),Args0,Args1),
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
    label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
-   notice_callee(Caller,F/LArgs1).
-ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
-ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
+   notice_callee(Caller,F/LArgs1))).
+ast_to_prolog_aux(Caller,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,X0,X1),label_type_assignment(A,X1),!.
+ast_to_prolog_aux(Caller,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,X0,X1),!.
 
-ast_to_prolog_aux(Caller,DontStub,[prolog_catch,Catch,Ex,Catcher],R) :-  ast_to_prolog(Caller,DontStub,Catch,Catch2), R=  catch(Catch2,Ex,Catcher).
-ast_to_prolog_aux(_Caller,DontStub,_DontStub,[prolog_inline,Prolog],R) :- !, R= Prolog.
+ast_to_prolog_aux(Caller,[prolog_catch,Catch,Ex,Catcher],R) :-  ast_to_prolog(Caller,Catch,Catch2), R=  catch(Catch2,Ex,Catcher).
+ast_to_prolog_aux(_Caller,[prolog_inline,Prolog],R) :- !, R= Prolog.
 
 
 
-ast_to_prolog_aux(_,_,'#\\'(A),A).
-ast_to_prolog_aux(_,_,A=B,A=B):- must_det_lls(label_type_assignment(A,B)).
+ast_to_prolog_aux(_,'#\\'(A),A).
+ast_to_prolog_aux(_,A=B,A=B):- must_det_lls(label_type_assignment(A,B)).
 
-ast_to_prolog_aux(Caller,DontStub,(True,T),R) :- True == true, ast_to_prolog_aux(Caller,DontStub,T,R).
-ast_to_prolog_aux(Caller,DontStub,(T,True),R) :- True == true, ast_to_prolog_aux(Caller,DontStub,T,R).
-ast_to_prolog_aux(Caller,DontStub,(H;T),(HH;TT)) :- ast_to_prolog_aux(Caller,DontStub,H,HH),ast_to_prolog_aux(Caller,DontStub,T,TT).
-ast_to_prolog_aux(Caller,DontStub,(H,T),(HH,TT)) :- ast_to_prolog_aux(Caller,DontStub,H,HH),ast_to_prolog_aux(Caller,DontStub,T,TT).
-%ast_to_prolog_aux(Caller,DontStub,[H],HH) :- ast_to_prolog_aux(Caller,DontStub,H,HH).
-%ast_to_prolog_aux(Caller,DontStub,[H|T],(HH,TT)) :- ast_to_prolog_aux(Caller,DontStub,H,HH),ast_to_prolog_aux(Caller,DontStub,T,TT).
-ast_to_prolog_aux(Caller,DontStub,do_metta_runtime(T,G),do_metta_runtime(T,GGG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG),combine_code(GG,GGG).
-ast_to_prolog_aux(Caller,DontStub,loonit_assert_source_tf(T,G),loonit_assert_source_tf(T,GG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
-ast_to_prolog_aux(Caller,DontStub,findall(T,G,L),findall(T,GG,L)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
-ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):- compound(FArgs),!,
+ast_to_prolog_aux(Caller,(True,T),R) :- True == true, ast_to_prolog_aux(Caller,T,R).
+ast_to_prolog_aux(Caller,(T,True),R) :- True == true, ast_to_prolog_aux(Caller,T,R).
+ast_to_prolog_aux(Caller,(H;T),(HH;TT)) :- ast_to_prolog_aux(Caller,H,HH),ast_to_prolog_aux(Caller,T,TT).
+ast_to_prolog_aux(Caller,(H,T),(HH,TT)) :- ast_to_prolog_aux(Caller,H,HH),ast_to_prolog_aux(Caller,T,TT).
+%ast_to_prolog_aux(Caller,[H],HH) :- ast_to_prolog_aux(Caller,H,HH).
+%ast_to_prolog_aux(Caller,[H|T],(HH,TT)) :- ast_to_prolog_aux(Caller,H,HH),ast_to_prolog_aux(Caller,T,TT).
+ast_to_prolog_aux(Caller,do_metta_runtime(T,G),do_metta_runtime(T,GGG)) :- !, ast_to_prolog_aux(Caller,G,GG),combine_code(GG,GGG).
+ast_to_prolog_aux(Caller,loonit_assert_source_tf(T,G),loonit_assert_source_tf(T,GG)) :- !, ast_to_prolog_aux(Caller,G,GG).
+ast_to_prolog_aux(Caller,findall(T,G,L),findall(T,GG,L)) :- !, ast_to_prolog_aux(Caller,G,GG).
+ast_to_prolog_aux(Caller,FArgs,NewFArgs):- compound(FArgs),!,
    compound_name_arguments(FArgs, Name, Args),
    maplist(ast_to_prolog_aux(Caller),Args,NewArgs),
    compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.
 ast_to_prolog_aux(_,A,A).
 
-/*
-%transpile_prefix('').
-transpile_impl_prefix('mi__').
-:- dynamic(is_transpile_impl_prefix/2).
-transpile_impl_prefix(F,Fn):- is_transpile_impl_prefix(F,Fn)*->true;(transpile_impl_prefix(Prefix),atom_concat(Prefix,F,Fn),asserta(is_transpile_impl_prefix(F,Fn))).
 
-transpile_call_prefix('mc__').
-:- dynamic(is_transpile_call_prefix/2).
-transpile_call_prefix(F,Fn):- is_transpile_call_prefix(F,Fn)*->true;(transpile_call_prefix(Prefix),atom_concat(Prefix,F,Fn),asserta(is_transpile_call_prefix(F,Fn))).
+%transpile_prefix('').
+transpile_impl_prefix('mi_').
+:- dynamic(is_transpile_impl_prefix/3).
+transpile_impl_prefix(F,Arity,Fn):- is_transpile_impl_prefix(F,Arity,Fn)*->true;(transpile_impl_prefix(Prefix),FNArity is Arity-1,atomic_list_concat([Prefix,FNArity,'__',F],Fn),asserta(is_transpile_impl_prefix(F,Arity,Fn))).
+
+transpile_call_prefix('mc_').
+:- dynamic(is_transpile_call_prefix/3).
+transpile_call_prefix(F,Arity,Fn):- is_transpile_call_prefix(F,Arity,Fn)*->true;(transpile_call_prefix(Prefix),FNArity is Arity-1,atomic_list_concat([Prefix,FNArity,'__',F],Fn),asserta(is_transpile_call_prefix(F,Arity,Fn))).
+
+
+/*
+
 
 
 combine_code_list(A,R) :- !,
@@ -947,7 +1238,7 @@ combine_code_list(A,R) :- !,
 
 combine_code_list_aux([],[]).
 combine_code_list_aux([true|T],R) :- !,combine_code_list_aux(T,R).
-combine_code_list_aux([H|T],R) :- H=..[','|H0],!,append(H0,T,T0),combine_code_list_aux(T0,R).
+combine_code_list_aux([H|T],R) :- H=..[','|H0],!,combine_code(H0,T,T0),combine_code_list_aux(T0,R).
 combine_code_list_aux([H|T],[H|R]) :- combine_code_list_aux(T,R).
 */
 
@@ -980,8 +1271,8 @@ check_supporting_predicates(Space,F/A) :- % already exists
    ).
 */
 
-create_and_consult_temp_file(_Space, F/A, PredClauses) :- !,
-  abolish(F/A),maplist(compiler_assertz,PredClauses).
+create_and_consult_temp_file(_Space, F/A, PredClauses) :- !,   
+   abolish(F/A),maplist(compiler_assertz,PredClauses).
 
 create_and_consult_temp_file(Space, F/A, PredClauses) :-
     must_det_lls((
@@ -1029,7 +1320,7 @@ create_and_consult_temp_file(Space, F/A, PredClauses) :-
 
         % Confirm the predicate is present
         current_predicate(F/A)
-    )).
+    )),!.
 
 % Predicate to create a temporary file and write the tabled predicate
 create_and_consult_temp_file(Space,F/A, PredClauses) :-
@@ -1118,15 +1409,6 @@ u_assign_c(FList,RR):- as_tf(FList,RR),!.
 u_assign_c(FList,R):- compound(FList), !, FList=~R.
 
 quietlY(G):- call(G).
-unshebang(S,US):- symbol(S),(symbol_concat(US,'!',S)->true;US=S).
-
-compile_maplist_p2(_,[],[],[]).
-compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],PreCode):- \+ fullvar(Var), call(P2,Var,Res), !,
-  compile_maplist_p2(P2,Args,NewArgs,PreCode).
-compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
-  compile_maplist_p2(P2,Args,NewArgs,PreCode),
-  append([[native(P2),Var,Res]],PreCode,TheCode).
-
 
 var_prop_lookup(_,[],eager).
 var_prop_lookup(X,[H-R|T],S) :-
@@ -1136,33 +1418,34 @@ var_prop_lookup(X,[H-R|T],S) :-
 :- discontiguous f2p/6.
 
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
-   (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
+   is_ftVar(Convert),!, % Check if Convert is a variable
    var_prop_lookup(Convert,LazyVars,L),
    lazy_impedance_match(L,ResultLazy,Convert,[],RetResult,Converted).
 
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    (ResultLazy=eager ->
       RetResult=Convert,
-      Converted=[]
-   ;  Converted=[assign,RetResult,[is_p1,'Char','#\\'(Convert),[],Convert]]).
+      Converted=true
+   ;  Converted=assign(RetResult,is_p1('Char','#\\'(Convert),true,Convert))).
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :-
-    once(number(Convert);atomic(Convert);\+compound(Convert);data_term(Convert)),%CheckifConvertisanumberoranatom
+    once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
     %(ResultLazy=eager -> C2=Convert ; C2=[is_p1,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
-    RetResult=Convert, Converted=[],
+    RetResult=Convert, Converted=true,
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
     %trace_break,
     !.  % Set RetResult to Convert as it is already in predicate form
 
+
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
     once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
     get_val_types(Convert,Types),
-    (ResultLazy=eager -> C2=Convert ; C2=[is_p1,Types,Convert,[],Convert]),
-    Converted=[[assign,RetResult,C2]],
+    (ResultLazy=eager -> C2=Convert ; C2=is_p1(Types,Convert,true,Convert)),  % less ambiguous
+    Converted=assign(RetResult,C2),
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
     %trace_break,
@@ -1178,9 +1461,17 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
     Convert=[Fn,Native|Args],atom(Fn),unshebang(Fn,'call-p'),!,
    must_det_lls((
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
-    %RetResult = 'True',
     compile_maplist_p2(from_prolog_args(ResultLazy),NewArgs,Args,PostCode),
-    append([PreCode,[[native(Native),NewArgs],[assign,RetResult,'True']],PostCode],Converted))).
+    combine_code(PreCode,(fn_native(Native,NewArgs),assign(RetResult,'True'),PostCode),Converted))).
+
+unshebang(S,US):- symbol(S),(symbol_concat(US,'!',S)->true;US=S).
+
+compile_maplist_p2(_,[],[],true).
+compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],PreCode):- \+ fullvar(Var), call(P2,Var,Res), !,
+  compile_maplist_p2(P2,Args,NewArgs,PreCode).
+compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
+  compile_maplist_p2(P2,Args,NewArgs,PreCode),
+  combine_code(fn_native(P2,[Var,Res]),PreCode,TheCode).
 
 % !(compile-body! (call-fn length $list))
 f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
@@ -1188,7 +1479,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     append(NewArgs,[Result],CallArgs),
     compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[Result],[RetResult],PostCode),
-    append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
+    combine_code(PreCode,(fn_native(Native,CallArgs),PostCode),Converted).
 
 % !(compile-body! (call-fn-nth 0 wots version))
 f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
@@ -1198,7 +1489,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
    append(Left,Right,S),
    append(Left,[R|Right],Args),!,
     compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[R],[RetResult],PostCode),
-    append([PreCode,[[native(Native),Args]],PostCode],Converted).
+    combine_code(PreCode,(fn_native(Native,Args),PostCode),Converted).
 
 % !(compile-body! (length-p (a b c d) 4))
 % !(compile-body! (format! "~q ~q ~q" (a b c)))
@@ -1207,8 +1498,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     %RetResult = 'True',
     compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),NewArgs,Args,PostCode),
-    append([PreCode,[[native(Native),NewArgs],[assign,RetResult,'True']],PostCode],Converted).
-
+    combine_code(PreCode,(fn_native(Native,NewArgs),assign(RetResult,'True'),PostCode),Converted).
 
 % !(compile-body! (length-fn (a b c d)))
 f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
@@ -1217,8 +1507,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     append(NewArgs,[Result],CallArgs),
     compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[Result],[RetResult],PostCode),
-    append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
-
+    combine_code(PreCode,(fn_native(Native,CallArgs),PostCode),Converted).
 
 f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
    Convert=[Fn|_], \+ atom(Fn),
@@ -1228,9 +1517,9 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
     length(EvalArgs, N),
     maplist(=(eager), EvalArgs),
     maplist(f2p(HeadIs, LazyVars),NewArgs, EvalArgs, Args, NewCodes),
-    append(NewCodes,CombinedNewCode),
-    Code=[assign,RetResult0,list(NewArgs)],
-    append(CombinedNewCode,[Code],Converted0),
+    combine_code(NewCodes,CombinedNewCode),
+    Code=assign(RetResult0,list(NewArgs)),
+    combine_code(CombinedNewCode,Code,Converted0),
     lazy_impedance_match(eager,ResultLazy,RetResult0,Converted0,RetResult,Converted).
 
 update_laziness(x(X,_),x(_,Y),x(X,Y)).
@@ -1241,7 +1530,7 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
    atom(Fn),
    compile_flow_control1(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
 
-% unsupprted flow contols
+% unsupported flow contols
 f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
    Convert=[Fn|_],
    atom(Fn),
@@ -1264,14 +1553,15 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
    maplist(arg_eval_props,Types0,EvalArgs0),
    maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs),
    maplist(do_arg_eval(HeadIs,LazyVars),Args,EvalArgs,NewArgs,NewCodes),
-   append(NewCodes,CombinedNewCode),
-   Code=[assign,RetResult0,[call(Fn)|NewArgs]],
-   append(CombinedNewCode,[Code],Converted0),
+   combine_code(NewCodes,CombinedNewCode),
+   Code=fn_eval(Fn,NewArgs,RetResult0),
+   combine_code(CombinedNewCode,Code,Converted0),
    lazy_impedance_match(RetLazy,ResultLazy,RetResult0,Converted0,RetResult,Converted).
-f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
-   Convert=[Fn|_],
-   atom(Fn),
-   compile_flow_control3(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
+
+f2p(HeadIs,LazyVars,RetResult,ResultLazy,Convert,Converted):-fail,
+    Convert=[Fn|_],
+    atom(Fn),
+    compile_flow_control3(HeadIs,LazyVars,RetResult,ResultLazy,Convert,Converted),!.
 
 
 % The catch-all If no specific case is matched, consider Convert as already converted.
@@ -1287,23 +1577,25 @@ f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- % HeadIs\
    length(EvalArgs, N),
    maplist(=(eager), EvalArgs),
    maplist(f2p_skip_atom(HeadIs, LazyVars),Converted,EvalArgs,Convert,Allcodes),
-   append(Allcodes,Codes).
+   combine_code(Allcodes,Codes).
 
-f2p_skip_atom(_HeadIs, _LazyVars,Converted, _EvalArgs, Convert,true):-
-  \+ compound(Convert), !, Converted = Convert.
-f2p_skip_atom(HeadIs, LazyVars,Converted,EvalArgs,Convert,Allcodes):-
-   f2p(HeadIs, LazyVars,Converted,EvalArgs,Convert,Allcodes).
+f2p_skip_atom(_HeadIs,_LazyVars,Converted,_EvalArgs,Convert,true):-
+\+compound(Convert),!,Converted=Convert.
+f2p_skip_atom(HeadIs,LazyVars,Converted,EvalArgs,Convert,Allcodes):-
+f2p(HeadIs,LazyVars,Converted,EvalArgs,Convert,Allcodes).
 
 
-f2p(HeadIs,LazyVars,_RetResult,EvalArgs,Convert,_Code):-
-   format("Error in f2p ~q ~q ~q ~q\n",[HeadIs,LazyVars,Convert,EvalArgs]),
-   trace,throw(0).
+f2p(HeadIs,LazyVars,_RetResult,EvalArgs,Convert, Code):-
+   format(user_error,"Error in f2p ~q ~q ~q ~q\n",[HeadIs,LazyVars,Convert,EvalArgs]),
+   user_io(print_ast(Convert)),
+   trace, throw(0),
+   Code = Convert.
 
-lazy_impedance_match(L,L,RetResult0,Converted0,RetResult0,Converted0).
+lazy_impedance_match(L,L,       RetResult0,Converted0,RetResult0,Converted0).
 lazy_impedance_match(lazy,eager,RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[native(as_p1),RetResult0,RetResult]],Converted).
+   combine_code(Converted0,fn_native(as_p1,[RetResult0,RetResult]),Converted).
 lazy_impedance_match(eager,lazy,RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[assign,RetResult,[is_p1,_,Converted0,[],RetResult0]]],Converted).
+   combine_code(Converted0,assign(RetResult,is_p1(_,Converted0,true,RetResult0)),Converted).
 
 arg_eval_props('Number',x(doeval,eager)) :- !.
 arg_eval_props('Bool',x(doeval,eager)) :- !.
@@ -1327,67 +1619,70 @@ do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyV
 
 
 
-in_type_set(Set,Type):- Set==Type,!.
-in_type_set(Set,Type):- compound(Set),arg(_,Set,Arg),in_type_set(Arg,Type).
+in_type_set(Set,Type):-Set==Type,!.
+in_type_set(Set,Type):-compound(Set),arg(_,Set,Arg),in_type_set(Arg,Type).
 
-b_put_set(Set,Type):- functor(Set,_,Arg),!,b_put_nset(Set,Arg,Type).
-b_put_nset(Set,_,Type):- in_type_set(Set,Type),!.
-b_put_nset(Set,N,Type):- arg(N,Set,Arg),
-   (compound(Arg)->b_put_set(Arg,Type);b_setarg(N,Set,[Type|Arg])).
+b_put_set(Set,Type):-functor(Set,_,Arg),!,b_put_nset(Set,Arg,Type).
+b_put_nset(Set,_,Type):-in_type_set(Set,Type),!.
+b_put_nset(Set,N,Type):-arg(N,Set,Arg),
+    (compound(Arg)->b_put_set(Arg,Type);b_setarg(N,Set,[Type|Arg])).
 
 is_type_set(Set):-compound(Set),Set=ts(_).
-is_var_set(Set):- compound(Set),Set=vs(_).
+is_var_set(Set):-compound(Set),Set=vs(_).
 foc_var(Cond,vs([Var-Set|LazyVars]),TypeSet):-!,
     (var(Set)->(Cond=Var,TypeSet=Set,TypeSet=ts([]));
-   (Var==Cond -> TypeSet = Set ;
-   (nonvar(LazyVars) -> foc_var(Cond,vs(LazyVars),TypeSet);
+    (Var==Cond->TypeSet=Set;
+    (nonvar(LazyVars)->foc_var(Cond,vs(LazyVars),TypeSet);
     (TypeSet=ts([]),LazyVars=[Var-TypeSet|_])))).
-foc_var(Cond,Set,TSet):-add_type(Set,[Cond-TSet]),ignore(TSet=ts(List)),ignore(List=[]).
+    foc_var(Cond,Set,TSet):-add_type(Set,[Cond-TSet]),ignore(TSet=ts(List)),ignore(List=[]).
 
 add_type(Cond,Type,LazyVars):-is_var_set(LazyVars),!,must_det_lls((foc_var(Cond,LazyVars,TypeSet),!,add_type(TypeSet,Type))).
-add_type(Cond,Type,_LazyVars):- add_type(Cond,Type),!.
+add_type(Cond,Type,_LazyVars):-add_type(Cond,Type),!.
 
 add_type(Cond,Type):-attvar(Cond),get_attr(Cond,ti,TypeSet),!,must_det_lls(add_type(TypeSet,Type)).
 add_type(Cond,Type):-var(Cond),!,must_det_lls(put_attr(Cond,ti,ts(Type))),!.
 add_type(Cond,Type):-is_type_set(Cond),!,must_det_lls(b_put_set(Cond,Type)),!.
 add_type(Cond,Type):-is_var_set(Cond),!,must_det_lls(b_put_set(Cond,Type)),!.
-add_type(Cond,Type):- dmsg(unable_to_add_type(Cond,Type)).
+add_type(Cond,Type):-dmsg(unable_to_add_type(Cond,Type)).
 
 add_assignment(A,B,CodeOld,CodeNew) :-
    (fullvar(A),var(B) ->
       B=A,CodeNew=CodeOld
    ; var(A),fullvar(B) ->
       A=B,CodeNew=CodeOld
-   ;  append(CodeOld,[[assign,A,B]],CodeNew)).
+   ;  combine_code(CodeOld,assign(A,B),CodeNew)).
 
+/*
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-   Convert=['case',Value,Cases],!,
+   Convert =~ ['case',Value,Cases],!,
    f2p(HeadIs,LazyVars,ValueResult,eager,Value,ValueCode),
    compile_flow_control_case(HeadIs,LazyVars,RetResult,LazyEval,ValueResult,Cases,Converted0),
-   append(ValueCode,Converted0,Converted).
+   combine_code(ValueCode,Converted0,Converted).
 
 compile_flow_control_case(_,_,RetResult,_,_,[],Converted) :- !,Converted=[[assign,RetResult,'Empty']].
 compile_flow_control_case(HeadIs,LazyVars,RetResult,LazyEval,ValueResult,[[Match,Target]|Rest],Converted) :-
    f2p(HeadIs,LazyVars,MatchResult,eager,Match,MatchCode),
    f2p(HeadIs,LazyVars,TargetResult,LazyEval,Target,TargetCode),
    compile_flow_control_case(HeadIs,LazyVars,RestResult,LazyEval,ValueResult,Rest,RestCode),
-   append(TargetCode,[[assign,RetResult,TargetResult]],T),
-   append(RestCode,[[assign,RetResult,RestResult]],R),
-   append(MatchCode,[[prolog_if,[[prolog_match,ValueResult,MatchResult]],T,R]],Converted).
-
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-  Convert = ['case', Eval, CaseList],!,
+   combine_code(TargetCode,[[assign,RetResult,TargetResult]],T),
+   combine_code(RestCode,[[assign,RetResult,RestResult]],R),
+   combine_code(MatchCode,[[prolog_if,[[prolog_match,ValueResult,MatchResult]],T,R]],Converted).
+*/
+compile_flow_control(HeadIs,LazyVars,RetResult,_LazyEval,Convert, Converted) :-
+  Convert =~ ['case', Eval, CaseList],!,
   f2p(HeadIs, LazyVars, Var, eager, Eval, CodeCanFail),
-  case_list_to_if_list(Var, CaseList, IfList, [empty], IfEvalFails),
-  compile_test_then_else(RetResult, LazyVars, LazyEval, CodeCanFail, IfList, IfEvalFails, Converted).
+  case_list_to_if_list(RetResult, Var, CaseList, IfEvalSucceeds, [empty], IfEvalFailed),
+  f2p(HeadIs, LazyVars, RetResult, eager, IfEvalFailed, IfEvalFailedCode),
+  Converted = (CodeCanFail *-> IfEvalSucceeds ; IfEvalFailedCode).
 
-case_list_to_if_list(_Var, [], [empty], EvalFailed, EvalFailed) :-!.
-case_list_to_if_list(Var, [[Pattern, Result] | Tail], Next, _Empty, EvalFailed) :-
+case_list_to_if_list(_RetResult,_Var, [], fail, EvalFailed, EvalFailed) :- !.
+case_list_to_if_list(RetResult,Var, [[Pattern, Result] | Tail], Next, _, EvalFailed) :-
     (Pattern=='Empty'; Pattern=='%void%'), !, % if the case Failed
-    case_list_to_if_list(Var, Tail, Next, Result, EvalFailed).
-case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
-    case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
-    Out = ['if', [metta_unify, Var, Pattern], Result, Next].
+    case_list_to_if_list(RetResult,Var, Tail, Next, Result, EvalFailed).
+case_list_to_if_list(RetResult,Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
+    case_list_to_if_list(RetResult,Var, Tail, Next, IfEvalFailed, EvalFailed),
+    f2p(unknown, [], RetResult, eager, Result, ResultCode),
+    Out = ( metta_unify(Var, Pattern) -> ResultCode ; Next ).
 
 
 % !(compile-body! (function 1))
@@ -1396,12 +1691,12 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   (Convert =~ ['function', ['return', Body]] ; Convert =~ ['function', Body]),!,
   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  Converted = [[prolog_catch,BodyCode,metta_return(FunctionResult),FunctionResult=RetResult]].
+  Converted = catch(BodyCode,metta_return(FunctionResult),FunctionResult=RetResult).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   Convert =~ ['return', Body],!,
   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  append(BodyCode,[[prolog_inline,throw(metta_return(RetResult))]],Converted).
+  combine_code(BodyCode,throw(metta_return(RetResult)),Converted).
 
 compile_flow_control(HeadIs, LazyVars, RetResult, ResultLazy, Convert, CodeForSrc) :- % dif_functors(HeadIs,Convert),
    Convert =~ ['eval', Src],
@@ -1414,41 +1709,41 @@ compile_flow_control(HeadIs, LazyVars, RetResult, ResultLazy, Convert, (CodeForS
    Converted = with_space(ResSpace,CodeForSrc).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-  Convert = ['if',Cond,Then,Else],!,
+  Convert =~ ['if',Cond,Then,Else],!,
   %Test = is_True(CondResult),
   f2p(HeadIs,LazyVars,CondResult,eager,Cond,CondCode),
-  append(CondCode,[[native(is_True),CondResult]],If),
+  combine_code(CondCode,fn_native(is_True,[CondResult]),If),
   compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-  Convert = ['if',Cond,Then],!,
+  Convert =~ ['if',Cond,Then],!,
   %Test = is_True(CondResult),
   f2p(HeadIs,LazyVars,CondResult,eager,Cond,CondCode),
-  append(CondCode,[[native(is_True),CondResult]],If),
+  combine_code(CondCode,fn_native(is_True,[CondResult]),If),
   compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,'Empty',Converted).
 
 compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
   f2p(HeadIs,LazyVars,ThenResult,LazyEval,Then,ThenCode),
   f2p(HeadIs,LazyVars,ElseResult,LazyEval,Else,ElseCode),
   % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult
-  append(ThenCode,[[assign,RetResult,ThenResult]],T),
-  append(ElseCode,[[assign,RetResult,ElseResult]],E),
-  Converted=[[prolog_if,If,T,E]].
+  combine_code(ThenCode,assign(RetResult,ThenResult),T),
+  combine_code(ElseCode,assign(RetResult,ElseResult),E),
+  (Converted = (If*->T;E)).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- % dif_functors(HeadIs,Convert),
-  Convert = ['let',Var,Value1,Body],!,
+  Convert =~ ['let',Var,Value1,Body],!,
   f2p(HeadIs,LazyVars,ResValue1,eager,Value1,CodeForValue1),
   add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2),
   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  append(CodeForValue2,BodyCode,Converted).
+  combine_code(CodeForValue2,BodyCode,Converted).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- %dif_functors(HeadIs,Convert),
   Convert =~ ['let*',Bindings,Body],!,
    must_det_lls((
     maplist(compile_let_star(HeadIs,LazyVars),Bindings,CodeList),
-    append(CodeList,Code),
+    combine_code(CodeList,Code),
     f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-    append(Code,BodyCode,Converted))).
+    combine_code(Code,BodyCode,Converted))).
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
   f2p(HeadIs,LazyVars,ResValue1,eager,Value1,CodeForValue1),
@@ -1580,8 +1875,6 @@ compile_flow_control2(HeadIs, LazyVars, RetResult, ResultLazy, Convert,Converted
   Converted = (ValueCode,eval_args(['println!',ValueResult], RetResult)),
   f2p(HeadIs, LazyVars, ValueResult, ResultLazy, Value,ValueCode).
 
-
-
 compile_flow_control4(HeadIs, LazyVars, RetResult, ResultLazy, Convert,CodeForValueConverted) :-
     % TODO: Plus seems an odd name for a variable - get an idea why?
     % Plus signifies something with numbers
@@ -1707,7 +2000,6 @@ compile_flow_control2(HeadIs, LazyVars, RetResult, ResultLazy, sequential(Conver
 compile_flow_control2(HeadIs, _LazyVars, RetResult, _ResultLazy, transpose(Convert), Converted,Code) :- !,
    maplist(each_result(HeadIs,RetResult),Convert, Converted),
    list_to_disjuncts(Converted,Code).
-
 
 each_result(HeadIs,RetResult,Convert,Converted):-
    f2p(HeadIs, _LazyVars, OneResult, _ResultLazy, Convert,Code1),
@@ -2179,24 +2471,7 @@ x_assign(X,X).
 
 
 
-       end_of_file.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+end_of_file.
 
 
 
@@ -3059,10 +3334,6 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
-
-
-
-
 
 
 
