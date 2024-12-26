@@ -1142,7 +1142,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
     Prev = prev_result('Empty'),
 
     % Print formatted answer output
-    in_answer_io(format('~n[')))),!,
+    in_answer_io(format('~N[')))),!,
 
    % Interactive looping with possible timing and stepping control
    (
@@ -1204,7 +1204,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
    ),
 
-   in_answer_io((write(']'),if_t(\+is_mettalog,nl))),
+   in_answer_io((write(']\n'),if_t(\+is_mettalog, nop(nl)))),
    flag(need_prompt,_,1),
    ignore(Result = res(FOut)).
 
@@ -1227,11 +1227,11 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
 
        output_language(answers,(if_t(ResNum=<Max,
            (
-           (((ResNum==1,Complete==true)->(old_not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
+           (((ResNum==1,Complete==true)->(not_compatio(format('~N~nDeterministic: ',  [])), !);          %or Nondet
            /* previously: handle deterministic result output */
-           (Complete==true -> (old_not_compatio(format('~N~nR(~w): ',[ResNum])),! );
-            old_not_compatio(format('~N~nN(~w): ',[ResNum]))))),
-         ignore(((
+           (Complete==true -> (not_compatio(format('~N~nR(~w): ',[ResNum])),! );
+            not_compatio(format('~N~nN(~w): ',[ResNum]))))),
+         not_compatio(ignore(((
               if_t( \+ symbolic(Output), not_compatio(nop(nl))),
               %if_t(ResNum==1,in_answer_io(format('~N['))),
               % user_io
@@ -1240,7 +1240,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
                  \+ \+
                  (maybe_name_vars(NamedVarsList),
                   old_not_compatio(write_bsrc(Output)),
-                  true)))) )) ))))),
+                  true)))) )) )))))),
 
          in_answer_io(write_asrc((Output))),
 
@@ -1796,7 +1796,7 @@ write_compiled_exec(Exec, Goal):-
     % Print the compiled goal with formatting.
     Call = do_metta_runtime(Res, Goal),
     output_language(prolog, notrace((color_g_mesg('#114411', print_pl_source(:- Call))))),
-    call(Call).
+    nop(call(Call)).
 
 
 %!  verbose_unify(+Term) is det.

@@ -1296,8 +1296,9 @@ fn_append1(Term,X,eval_H(Term,X)).
 
 
 
-
+assert_preds('&corelib',_Load, _Clause):-  !.
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
+assert_preds(_Self,_Load,Clause):- compiler_assertz(Clause),!.
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
   expand_to_hb(Preds,H,_B),
@@ -1370,16 +1371,24 @@ assertion_neck_cl('=').
 assertion_neck_cl(':-').
 
 
-load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
+%load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
+
+
 load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
+     load_hook1(Load,Self,Eq,H,B).
+
+load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
+load_hook1(Load,Self,Eq,H,B):-
        once(functs_to_preds([Eq,H,B],Preds)),
        assert_preds(Self,Load,Preds),!.
 % old compiler hook
+/*
 load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
      rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
+*/
 /*
 load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        H\=[':'|_], functs_to_preds([=,H,B],Preds),
@@ -1611,8 +1620,8 @@ write_exec(Exec):- real_notrace(write_exec0(Exec)).
 write_exec0(Exec):-
   wots(S,write_src(exec(Exec))),
   nb_setval(exec_src,Exec),
-  format('~N'),
-  output_language(metta,ignore((notrace((color_g_mesg('#0D6328',writeln(S))))))).
+  not_compatio((format('~N'),
+  output_language(metta,ignore((notrace((color_g_mesg('#0D6328',writeln(S))))))))).
 
 %!(let* (( ($a $b) (collapse (get-atoms &self)))) ((bind! &stdlib $a) (bind! &corelib $b)))
 
@@ -2202,7 +2211,7 @@ do_loon:-
    test_alarm,
    run_cmd_args,
    write_answer_output,
-   maybe_halt(7)]))),!.
+   not_compat_io(maybe_halt(7))]))),!.
 
 need_interaction:- \+ option_value('had_interaction',true),
    \+ is_converting,  \+ is_compiling, \+ is_pyswip,!,
