@@ -1382,6 +1382,13 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
+   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
+      assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
+      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) ; true)
+   ; true),
+   ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
+      true
+   ; check_supporting_predicates('&self',F/LArgs1)),
    notice_callee(Caller,F/LArgs1))).
 
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
@@ -1455,7 +1462,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
 %         (transpiler_enable_interpreter_calls -> G=true;G=fail),
 %         assertz(transpiler_stub_created(F/A)),
 %         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
-         compiler_assertz(transpiler_stub_created(Space,F,A)),
+         assertz(transpiler_stub_created(F/A)),
          (transpiler_show_debug_messages -> format("; % ######### warning: creating stub for:~q\n",[F]) ; true),
          (transpiler_enable_interpreter_calls ->
             create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
@@ -1625,7 +1632,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :-
-    once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
+    once(number(Convert); atomic(Convert); \+ compound(Convert); data_term(Convert)),
     %(ResultLazy=eager -> C2=Convert ; C2=[is_p1,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     RetResult=Convert, Converted=[],
@@ -1636,8 +1643,9 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :-
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
-    get_val_types(Convert,Types),
+    %once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
+    once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
+    must_det_lls(get_val_types(Convert,Types)),
     (ResultLazy=eager -> C2=Convert ; C2=[is_p1,Types,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %

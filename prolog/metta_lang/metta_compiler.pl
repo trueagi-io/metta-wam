@@ -1126,13 +1126,15 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
       %format("HeadIs:~q HResult:~q AsBodyFn:~q NextBody:~q\n",[HeadIs,HResult,AsBodyFn,NextBody]),
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
-      ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],[assign,HResult,[call(FnName)|Args]],HeadC),
 
-      output_language( ast, ((
-       \+ \+ ((   no_conflict_numbervars(HeadC + NextBody),
-                  %write_src_wi([=,HeadC,NextBody]),
-                  print_tree_nl([=,HeadC,NextBody]),
-                  true))))),
+      %ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],[assign,HResult,[call(FnName)|Args]],HeadC),
+      HeadAST=[assign,HResult,[call(FnName)|Args]],
+      %ast_to_prolog(no_caller,HeadAST,HeadC),
+      append(Args,[HResult],HArgs),
+      HeadC =.. [FnNameWPrefix|HArgs],
+
+
+      print_ast( yellow, [=,HeadAST,NextBody]),
 
 
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
@@ -1356,24 +1358,38 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    ast_to_prolog(Caller,DontStub,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
 ast_to_prolog_aux(Caller,DontStub,[is_p1,Code0,R],is_p1(Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
-ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
+ast_to_prolog_aux(Caller,DontStub,[is_p1,Type,Src,Code0,R],is_p1(Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
+ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
+ must_det_lls((
+   FIn=..[F|Pre], % allow compound natives
+   append(Pre,ArgsIn,Args0),
+   label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   A=..[F|Args1].
-ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A);\+ compound(A)),atom(F),!,
+   label_arg_types(F,1,Args1),
+   A=..[F|Args1],
+   notice_callee(Caller,A))).
+ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
+ must_det_lls((
+   FIn=..[F|Pre], % allow compound natives
+   append(Pre,ArgsIn,Args00),
+   maybe_lazy_list(Caller,F,1,Args00,Args0),
+   label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
    label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
-   R=..[Fp|Args2],
+   R=..[Fp|Args2],   
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
       assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
       (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) ; true)
    ; true),
    ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
       true
-   ; check_supporting_predicates('&self',F/LArgs1)).
+   ; check_supporting_predicates('&self',F/LArgs1)),
+   notice_callee(Caller,F/LArgs1))).
+
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 
@@ -1454,6 +1470,58 @@ check_supporting_predicates(Space,F/A) :- % already exists
       )
    ).
 
+
+create_and_consult_temp_file(_Space,F/A,PredClauses):- fail, !,
+    abolish(F/A),maplist(compiler_assertz,PredClauses).
+
+create_and_consult_temp_file(Space,F/A,PredClauses):-  fail, !,
+        must_det_lls((
+        %1)Createthememoryfilehandle
+        new_memory_file(MemFile),
+
+        %2)Openthememoryfileforwriting
+        open_memory_file(MemFile,write,TempStream),
+
+        %Writethetabledpredicatetothememoryfile
+        format(TempStream,':-multifile((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format(TempStream,':-dynamic((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format(TempStream,'~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
+
+        format(TempStream,':-multifile((~q)/~q).~n',[F,A]),
+        format(TempStream,':-dynamic((~q)/~q).~n',[F,A]),
+
+        %Iftablingisturnedon:
+        if_t(
+        option_value('tabling','True'),
+        format(TempStream,':-~q.~n',[table(F/A)])
+    ),
+
+    %Writeeachclause
+    maplist(write_clause(TempStream),PredClauses),
+
+    %Closethewritestream
+    close(TempStream),
+
+    %3)Openthememoryfileforreading
+    open_memory_file(MemFile,read,ConsultStream),
+
+
+    %4)Consultorloadtheclausesfromthememorystream
+    %IfyourPrologsupportsconsult/1onastream,youcoulddo:
+    %consult(ConsultStream).
+    %Otherwise,useload_files/2withstream/1:
+    load_files(user,[stream(ConsultStream)]),
+
+    %Closethereadstream
+    close(ConsultStream),
+
+    %5)Freethememoryfile(noneedforon-diskcleanup)
+    free_memory_file(MemFile),
+
+    %Confirmthepredicateispresent
+    current_predicate(F/A)
+    )),!.
+
 % Predicate to create a temporary file and write the tabled predicate
 create_and_consult_temp_file(Space,F/A, PredClauses) :-
   must_det_lls((
@@ -1479,7 +1547,7 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
 
     % listing(F/A),
     % Delete the temporary file after consulting
-    %delete_file(TempFileName),
+    delete_file(TempFileName),
     current_predicate(F/A),
     %listing(metta_compiled_predicate/3),
     true)).
@@ -1550,7 +1618,7 @@ var_prop_lookup(X,[H-R|T],S) :-
 :- discontiguous f2p/6.
 
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
-   (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
+   is_ftVar(Convert),!, % Check if Convert is a variable
    var_prop_lookup(Convert,LazyVars,L),
    lazy_impedance_match(L,ResultLazy,Convert,[],RetResult,Converted).
 
@@ -1558,12 +1626,15 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    (ResultLazy=eager ->
       RetResult=Convert,
       Converted=[]
-   ;  Converted=[assign,RetResult,[is_p1,[],Convert]]).
+   ;  Converted=[assign,RetResult,[is_p1,'Char','#\\'(Convert),[],Convert]]).
+   
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
-    (ResultLazy=eager -> C2=Convert ; C2=[is_p1,[],Convert]),
+    %once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
+    once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
+    must_det_lls(get_val_types(Convert,Types)),
+    (ResultLazy=eager -> C2=Convert ; C2=[is_p1,Types,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
