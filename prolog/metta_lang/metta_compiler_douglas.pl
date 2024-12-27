@@ -108,6 +108,10 @@ transpiler_show_debug_messages.
 % just so the transpiler_stub_created predicate always exists
 transpiler_stub_created(space,dummy,0).
 
+:- dynamic(transpiler_stub_created/1).
+% just so the transpiler_stub_created predicate always exists
+transpiler_stub_created(dummy).
+
 :- dynamic(transpiler_depends_on/4).
 % just so the transpiler_depends_on predicate always exists
 transpiler_depends_on(dummy1,0,dummy2,0).
@@ -118,6 +122,7 @@ transpiler_clause_store(dummy,0,0,[],'Any',[],eager,dummy,dummy).
 
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
+
 
 as_p1(X,X):- \+ compound(X),!.
 as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
@@ -203,16 +208,16 @@ print_children([mfa(CSpace,CName,CArity)|Rest], Index, Count, Prefix, VisitedIn)
 
     ( memberchk(mfa(CSpace,CName,CArity), VisitedIn) ->
         % cycle
-        format("~w~w(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~q~q(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         VisitedNext = VisitedIn
     ;   % normal
-        format("~w~w~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~q~q~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         % find grandchildren
         findall(mfa(GSpace,GName,GArity),
                 transpiler_depends_on(CSpace, CName, CArity, GSpace, GName, GArity),
                 GrandKids),
         length(GrandKids, GCount),
-        ( Index+1 =:= Count -> NextPrefix = "~w    " ; NextPrefix = "~w│   " ),
+        ( Index+1 =:= Count -> NextPrefix = "~q    " ; NextPrefix = "~q│   " ),
         format(atom(NewPrefix), NextPrefix, [Prefix]),
         print_children(GrandKids, 0, GCount, NewPrefix, [mfa(CSpace,CName,CArity)|VisitedIn]),
         VisitedNext = [mfa(CSpace,CName,CArity)|VisitedIn]
@@ -421,7 +426,7 @@ extract_constraints(V,Types,V=Types).
 label_vns(S,G,E):- term_variables(G,Vars),assign_vns(S,Vars,E),!.
 assign_vns(S,[],S):-!.
 assign_vns(N,[V|Vars],O):- get_attr(V,vn,_),!, assign_vns(N,Vars,O).
-assign_vns(N,[V|Vars],O):- format(atom(VN),'~w',['$VAR'(N)]),
+assign_vns(N,[V|Vars],O):- format(atom(VN),'~q',['$VAR'(N)]),
   put_attr(V,vn,VN), N2 is N+1, assign_vns(N2,Vars,O).
 
 label_arg_types(_,_,[]):-!.
