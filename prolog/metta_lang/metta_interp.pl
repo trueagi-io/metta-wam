@@ -1374,12 +1374,13 @@ assertion_neck_cl(':-').
 %load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
 
 
-load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
+load_hook0(Load,Assertion):- once(assertion_hb(Assertion,Self,Eq,H,B)),
      load_hook1(Load,Self,Eq,H,B).
 
-load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
+%load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
 load_hook1(_,_,_,_,_):- \+ current_prolog_flag(metta_interp,ready),!.
 load_hook1(Load,Self,Eq,H,B):-
+       use_metta_compiler,
        functs_to_preds([Eq,H,B],Preds),
        assert_preds(Self,Load,Preds),!.
 % old compiler hook
@@ -1396,8 +1397,8 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        assert_preds(Self,Load,Preds).
 */
 is_transpiling:- use_metta_compiler.
-use_metta_compiler:- \+ notrace(option_value('compile','false')), !.
-preview_compiler:- \+ option_value('compile',false), !.
+use_metta_compiler:- option_value('compile','full').
+preview_compiler:- notrace(use_metta_compiler;option_value('compile','true')).
 %preview_compiler:- use_metta_compiler,!.
 show_transpiler:- option_value('code',Something), Something\==silent,!.
 show_transpiler:- preview_compiler.
@@ -1699,7 +1700,6 @@ file_hides_results([W|_]):- W== 'pragma!'.
 
 if_t(A,B,C):- trace,if_t((A,B),C).
 
-check_answers_for(_,_):- is_transpiling,!,fail.
 check_answers_for(_,_):- nb_current(suspend_answers,true),!,fail.
 check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
 check_answers_for(TermV,_):-  sformat(S,'~q',[TermV]),atom_contains(S,"[assert"),!,fail.
