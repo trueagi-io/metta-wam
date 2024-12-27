@@ -1296,9 +1296,8 @@ fn_append1(Term,X,eval_H(Term,X)).
 
 
 
-assert_preds('&corelib',_Load, _Clause):-  !.
+
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
-assert_preds(_Self,_Load,Clause):- compiler_assertz(Clause),!.
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
   expand_to_hb(Preds,H,_B),
@@ -1371,31 +1370,23 @@ assertion_neck_cl('=').
 assertion_neck_cl(':-').
 
 
-%load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
-
-
+load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
-     load_hook1(Load,Self,Eq,H,B).
-
-load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
-load_hook1(Load,Self,Eq,H,B):-
-       must_det_lls(functs_to_preds([Eq,H,B],Preds)),
-       must_det_lls(assert_preds(Self,Load,Preds)),!.
+       once(functs_to_preds([Eq,H,B],Preds)),
+       assert_preds(Self,Load,Preds),!.
 % old compiler hook
-/*
 load_hook0(Load,Assertion):-
      assertion_hb(Assertion,Self, Eq, H,B),
      rtrace_on_error(compile_for_assert_eq(Eq, H, B, Preds)),!,
      rtrace_on_error(assert_preds(Self,Load,Preds)).
 load_hook0(_,_):- \+ current_prolog_flag(metta_interp,ready),!.
-*/
 /*
 load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        H\=[':'|_], functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
 */
 is_transpiling:- use_metta_compiler.
-use_metta_compiler:- \+ notrace(option_value('compile','false')), !.
+use_metta_compiler:- notrace(option_value('compile','full')), !.
 preview_compiler:- \+ option_value('compile',false), !.
 %preview_compiler:- use_metta_compiler,!.
 show_transpiler:- option_value('code',Something), Something\==silent,!.
@@ -1698,6 +1689,7 @@ file_hides_results([W|_]):- W== 'pragma!'.
 
 if_t(A,B,C):- trace,if_t((A,B),C).
 
+check_answers_for(_,_):- is_transpiling,!,fail.
 check_answers_for(_,_):- nb_current(suspend_answers,true),!,fail.
 check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
 check_answers_for(TermV,_):-  sformat(S,'~q',[TermV]),atom_contains(S,"[assert"),!,fail.
@@ -1822,6 +1814,7 @@ do_metta(file(Filename),exec,Self,TermV,Out):-
     ((
      is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
+     \+ is_transpiling,
      check_answers_for(TermV,Ans))),!,
      if_t(into_simple_op(exec,TermV,OP),pfcAdd_Now('next-operation'(OP))),
      must_det_ll((

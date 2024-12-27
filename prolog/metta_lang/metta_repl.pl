@@ -779,6 +779,7 @@ add_history_pl(Exec) :-
 %     false.
 %
 % Delegate to the internal helper predicate.
+
 is_interactive(From) :- notrace(is_interactive0(From)).
 
 %!  is_interactive0(+From) is nondet.
