@@ -405,28 +405,28 @@ determine_eager_vars_case_aux(Lin,Lout,[[Match,Target]|Rest],EagerVars) :-
 
 determine_eager_vars(lazy,lazy,A,[]) :- fullvar(A),!.
 determine_eager_vars(eager,eager,A,[A]) :- fullvar(A),!.
-determine_eager_vars(Lin,Lout,['if',If,Then,Else],EagerVars) :- !,
+determine_eager_vars(Lin,Lout,[IF,If,Then,Else],EagerVars) :- atom(IF),IF='if',!,
    determine_eager_vars(eager,_,If,EagerVarsIf),
    determine_eager_vars(Lin,LoutThen,Then,EagerVarsThen),
    determine_eager_vars(Lin,LoutElse,Else,EagerVarsElse),
    intersect_var(EagerVarsThen,EagerVarsElse,EagerVars0),
    union_var(EagerVarsIf,EagerVars0,EagerVars),
    (LoutThen=eager,LoutElse=eager -> Lout=eager ; Lout=lazy).
-determine_eager_vars(Lin,Lout,['if',If,Then],EagerVars) :- !,
+determine_eager_vars(Lin,Lout,[IF,If,Then],EagerVars) :- atom(IF),IF='if',!,
    determine_eager_vars(eager,_,If,EagerVars),
    determine_eager_vars(Lin,Lout,Then,_EagerVarsThen).
 % for case, treat it as nested if then else
-determine_eager_vars(Lin,Lout,['case',Val,Cases],EagerVars) :- !,
+determine_eager_vars(Lin,Lout,[CASE,Val,Cases],EagerVars) :- atom(CASE),CASE='case',!,
    determine_eager_vars(eager,_,Val,EagerVarsVal),
    determine_eager_vars_case_aux(Lin,Lout,Cases,EagarVarsCases),
    union_var(EagerVarsVal,EagarVarsCases,EagerVars).
-determine_eager_vars(Lin,Lout,['let',V,Vbind,Body],EagerVars) :- !,
+determine_eager_vars(Lin,Lout,[LET,V,Vbind,Body],EagerVars) :-  atom(LET),LET='case',!,
    determine_eager_vars(eager,eager,Vbind,EagerVarsVbind),
    determine_eager_vars(Lin,Lout,Body,EagerVarsBody),
    union_var([V],EagerVarsVbind,EagerVars0),
    union_var(EagerVars0,EagerVarsBody,EagerVars).
-determine_eager_vars(Lin,Lout,['let*',[],Body],EagerVars) :- !,determine_eager_vars(Lin,Lout,Body,EagerVars).
-determine_eager_vars(Lin,Lout,['let*',[[V,Vbind]|T],Body],EagerVars) :- !,
+determine_eager_vars(Lin,Lout,[LETS,[],Body],EagerVars) :- atom(LETS),LETS='lets',!,determine_eager_vars(Lin,Lout,Body,EagerVars).
+determine_eager_vars(Lin,Lout,[LETS,[[V,Vbind]|T],Body],EagerVars) :-  atom(LETS),LETS='lets',!,
    determine_eager_vars(eager,eager,Vbind,EagerVarsVbind),
    determine_eager_vars(Lin,Lout,['let*',T,Body],EagerVarsBody),
    union_var([V],EagerVarsVbind,EagerVars0),
