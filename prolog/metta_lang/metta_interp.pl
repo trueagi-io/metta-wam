@@ -588,6 +588,13 @@ is_debug_like(silent, false).
 'is-symbol'(X):- symbol(X).
 %:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
+set_is_unit_test(false):-
+  forall(option_value_def(A,B),set_option_value_interp(A,B)),
+  set_option_value_interp('trace-on-test',false),
+  set_option_value_interp('trace-on-fail',false),
+  set_option_value_interp('load',silent),
+  set_option_value_interp('test',false),
+  !.
 set_is_unit_test(TF):-
   forall(option_value_def(A,B),set_option_value_interp(A,B)),
   set_option_value_interp('trace-on-test',false),
@@ -600,6 +607,7 @@ set_is_unit_test(TF):-
   set_option_value_interp('trace-on-exec',TF),
   set_option_value_interp('trace-on-eval',TF),*/
  % if_t( \+ TF , set_prolog_flag(debug_on_interrupt,true)),
+ % TODO: what is this cutting here?
   !.
 
 :- meta_predicate fake_notrace(0).
