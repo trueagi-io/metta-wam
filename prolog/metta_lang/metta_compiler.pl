@@ -1159,8 +1159,8 @@ lazy_impedance_match(eager,lazy,RetResult0,Converted0,RetResult,Converted) :-
 arg_eval_props('Number',x(doeval,eager)) :- !.
 arg_eval_props('Bool',x(doeval,eager)) :- !.
 arg_eval_props('LazyBool',x(doeval,lazy)) :- !.
-arg_eval_props('Any',x(doeval,eager)) :- !.
-arg_eval_props('Atom',x(doeval,lazy)) :- !.
+arg_eval_props('Any',x(noeval,eager)) :- !.
+arg_eval_props('Atom',x(noeval,lazy)) :- !.
 arg_eval_props('Expression',x(doeval,lazy)) :- !.
 arg_eval_props(_,x(doeval,eager)).
 
