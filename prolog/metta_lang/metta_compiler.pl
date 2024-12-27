@@ -208,10 +208,10 @@ print_children([mfa(CSpace,CName,CArity)|Rest], Index, Count, Prefix, VisitedIn)
 
     ( memberchk(mfa(CSpace,CName,CArity), VisitedIn) ->
         % cycle
-        format("~q~q(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~w~w(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         VisitedNext = VisitedIn
     ;   % normal
-        format("~q~q~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~w~w~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         % find grandchildren
         findall(mfa(GSpace,GName,GArity),
                 transpiler_depends_on(CSpace, CName, CArity, GSpace, GName, GArity),
@@ -411,7 +411,7 @@ cns:attr_unify_hook(_V,_T):- true.
 %must_det_lls(G):- rtrace(G),!.
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
-%must_det_lls(G):- must_det_lls(G).
+%must_det_lls(G):- must_det_ll(G).
 must_det_lls(G):- notrace,nortrace,trace,call(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,vn,Name),get_attr(V,cns,Set),!,extract_constraints(Name,Set,VS),!.
@@ -1061,6 +1061,8 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
    atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
+   ensure_callee_site(Space,FnName,LenArgsPlus1),
+   remove_stub(Space,FnName,LenArgsPlus1),
    % retract any stubs
    (transpiler_stub_created(FnName/LenArgsPlus1) ->
       retract(transpiler_stub_created(FnName/LenArgsPlus1)),
@@ -1137,7 +1139,16 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
       %format("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
       %format("###########2 ~q",[Converted]),
-      output_language(prolog, (print_pl_source(Converted))),
+      extract_constraints(Converted,EC),
+      optimize_prolog([],Converted,Optimized),
+      output_prolog('#F08080',[EC]),!,
+      output_prolog('#ADD8E6',[Converted]),!,
+      if_t(Optimized\=@=Converted,
+             output_prolog(green,Optimized)),
+
+tree_deps(Space,FnName,LenArgsPlus1),
+
+show_recompile(Space,FnName,LenArgsPlus1),
       true
    )))).
 
@@ -1563,6 +1574,61 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):-
    Convert=[Fn|_],
    atom(Fn),
    compile_flow_control(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
+
+% !(compile-body! (call-fn! compile_body (call-p writeln "666"))
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+    Convert=[Fn,Native|Args],atom(Fn),unshebang(Fn,'call-p'),!,
+   must_det_lls((
+    compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
+    %RetResult = 'True',
+    compile_maplist_p2(from_prolog_args(ResultLazy),NewArgs,Args,PostCode),
+    append([PreCode,[[native(Native),NewArgs],[assign,RetResult,'True']],PostCode],Converted))).
+unshebang(S,US):- symbol(S),(symbol_concat(US,'!',S)->true;US=S).
+
+compile_maplist_p2(_,[],[],[]).
+compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],PreCode):- \+ fullvar(Var), call(P2,Var,Res), !,
+  compile_maplist_p2(P2,Args,NewArgs,PreCode).
+compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
+  compile_maplist_p2(P2,Args,NewArgs,PreCode),
+  append([[native(P2),Var,Res]],PreCode,TheCode).
+
+% !(compile-body! (call-fn length $list))
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
+    Convert=[Fn,Native|Args],atom(Fn),unshebang(Fn,'call-fn'),!,
+    compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
+    append(NewArgs,[Result],CallArgs),
+    compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[Result],[RetResult],PostCode),
+    append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
+
+% !(compile-body! (call-fn-nth 0 wots version))
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+   Convert=[Fn,Nth,Native|SIn],atom(Fn),unshebang(Fn,'call-fn-nth'),integer(Nth),!,
+   compile_maplist_p2(as_prolog,SIn,S,PreCode),
+   length(Left,Nth),
+   append(Left,Right,S),
+   append(Left,[R|Right],Args),!,
+    compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[R],[RetResult],PostCode),
+    append([PreCode,[[native(Native),Args]],PostCode],Converted).
+
+% !(compile-body! (length-p (a b c d) 4))
+% !(compile-body! (format! "~q ~q ~q" (a b c)))
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
+    is_host_predicate(Convert,Native,_Len),!,Convert=[_|Args],
+    compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
+    %RetResult = 'True',
+    compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),NewArgs,Args,PostCode),
+    append([PreCode,[[native(Native),NewArgs],[assign,RetResult,'True']],PostCode],Converted).
+
+
+% !(compile-body! (length-fn (a b c d)))
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
+    Convert=[Fn|Args],
+    is_host_function([Fn|Args],Native,_Len),!,
+    compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
+    append(NewArgs,[Result],CallArgs),
+    compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[Result],[RetResult],PostCode),
+    append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
+
 
 f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
    Convert=[Fn|_], \+ atom(Fn),

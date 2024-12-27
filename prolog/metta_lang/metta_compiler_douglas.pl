@@ -208,10 +208,10 @@ print_children([mfa(CSpace,CName,CArity)|Rest], Index, Count, Prefix, VisitedIn)
 
     ( memberchk(mfa(CSpace,CName,CArity), VisitedIn) ->
         % cycle
-        format("~q~q(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~w~w(*) ~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         VisitedNext = VisitedIn
     ;   % normal
-        format("~q~q~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
+        format("~w~w~q:~q/~q~n",[Prefix, BranchSym, CSpace, CName, CArity]),
         % find grandchildren
         findall(mfa(GSpace,GName,GArity),
                 transpiler_depends_on(CSpace, CName, CArity, GSpace, GName, GArity),
@@ -1061,7 +1061,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
    atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
-   ensure_callee_site(_Space,FnName,LenArgsPlus1),
+   ensure_callee_site(Space,FnName,LenArgsPlus1),
    remove_stub(Space,FnName,LenArgsPlus1),
    % retract any stubs
    (transpiler_stub_created(FnName/LenArgsPlus1) ->
@@ -1138,7 +1138,6 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :-
 
 
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
-
       %format("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
       %format("###########2 ~q",[Converted]),
@@ -1688,7 +1687,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
 
 % !(compile-body! (length-p (a b c d) 4))
 % !(compile-body! (format! "~q ~q ~q" (a b c)))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
     is_host_predicate(Convert,Native,_Len),!,Convert=[_|Args],
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     %RetResult = 'True',
