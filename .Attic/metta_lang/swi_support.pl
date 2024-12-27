@@ -343,6 +343,7 @@ p2mE(NA, NA) :-
     \+ atom(NA), !.
 p2mE(false, 'False').  % Convert false to 'False'.
 p2mE(true, 'True').    % Convert true to 'True'.
+p2mE(E, N):- atom(E), atom_number(E, NN),!,NN=N.
 p2mE(E, E).            % Leave other values unchanged.
 
 %!  set_option_value(+Name, +Value) is det.

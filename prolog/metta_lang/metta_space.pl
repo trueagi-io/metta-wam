@@ -377,7 +377,8 @@ skip(_).
 %   @example Clear all atoms from a space:
 %     ?- 'clear-atoms'('my_space').
 %
-'clear-atoms'(SpaceNameOrInstance) :-
+'clear-atoms'(DynSpace) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     % Log the operation of clearing atoms from the specified space.
     dout(space, ['clear-atoms', SpaceNameOrInstance]),
     % Retrieve the appropriate method for clearing the space based on its type.
@@ -404,7 +405,8 @@ skip(_).
 %   @example Add an atom to a space:
 %     ?- 'add-atom'('my_space', my_atom).
 %
-'add-atom'(SpaceNameOrInstance, Atom) :-
+'add-atom'(DynSpace, Atom) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     % Retrieve the method for adding an atom based on the space type.
   ((space_type_method(Type, add_atom, Method),
     % Ensure the space type matches by calling the type predicate.
@@ -447,7 +449,8 @@ skip(_).
 %   @example Remove an atom from a space:
 %     ?- 'remove-atom'('my_space', my_atom).
 %
-'remove-atom'(SpaceNameOrInstance, Atom) :-
+'remove-atom'(DynSpace, Atom) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     % Log the operation of removing an atom from the specified space.
     dout(space, ['remove-atom', SpaceNameOrInstance, Atom]),
     % Retrieve the method for removing an atom based on the space type.
@@ -494,7 +497,8 @@ skip(_).
 %   @example Replace an atom in a space:
 %     ?- 'replace-atom'('my_space', old_atom, new_atom).
 %
-'replace-atom'(SpaceNameOrInstance, Atom, New) :-
+'replace-atom'(DynSpace, Atom, New) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     dout(space, ['replace-atom', SpaceNameOrInstance, Atom, New]),
     space_type_method(Type, replace_atom, Method),
     call(Type, SpaceNameOrInstance),
@@ -536,7 +540,8 @@ skip(_).
 %     ?- 'atom-count'(env, Count).
 %     Count = 10.
 %
-'atom-count'(SpaceNameOrInstance, Count) :-
+'atom-count'(DynSpace, Count) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     dout(space, ['atom-count', SpaceNameOrInstance]),
     space_type_method(Type, atom_count, Method),
     call(Type, SpaceNameOrInstance), !,
@@ -568,7 +573,8 @@ skip(_).
 %     ?- get-atoms('env1', Atoms).
 %     Atoms = [atomA, atomB, atomC].
 %
-'get-atoms'(SpaceNameOrInstance, AtomsL) :-
+'get-atoms'(DynSpace, AtomsL) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     % Output a debug message indicating the 'get-atoms' request to the space.
     dout(space, ['get-atoms', SpaceNameOrInstance]),
     % Determine the method for retrieving atoms based on the space type.
@@ -598,7 +604,8 @@ skip(_).
 %   @example Iterate over atoms in a space:
 %     ?- 'atoms_iter'('my_space', Iter).
 %
-'atoms_iter'(SpaceNameOrInstance, Iter) :-
+'atoms_iter'(DynSpace, Iter) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     dout(space, ['atoms_iter', SpaceNameOrInstance]),
     space_type_method(Type, atoms_iter, Method),
     call(Type, SpaceNameOrInstance),
@@ -621,7 +628,8 @@ skip(_).
 %   @example Match atoms in a space:
 %     ?- 'atoms_match'('my_space', Atoms, my_template, else_clause).
 %
-'atoms_match'(SpaceNameOrInstance, Atoms, Template, Else) :-
+'atoms_match'(DynSpace, Atoms, Template, Else) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     space_type_method(Type, atoms_match, Method),
     call(Type, SpaceNameOrInstance),
     !,
@@ -642,7 +650,8 @@ skip(_).
 %   @example Query a space for an atom:
 %     ?- 'space_query'('my_space', query_atom, Result).
 %
-'space_query'(SpaceNameOrInstance, QueryAtom, Result) :-
+'space_query'(DynSpace, QueryAtom, Result) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     space_type_method(Type, query, Method),
     call(Type, SpaceNameOrInstance),
     !,
@@ -663,7 +672,8 @@ skip(_).
 %     ?- subst_pattern_template('example_space', some_pattern, Template).
 %     Template = [substituted_atom1, substituted_atom2].
 %
-subst_pattern_template(SpaceNameOrInstance, Pattern, Template) :-
+subst_pattern_template(DynSpace, Pattern, Template) :-
+    into_top_self(DynSpace, SpaceNameOrInstance),
     % Log the operation for traceability.
     dout(space, [subst_pattern_template, SpaceNameOrInstance, Pattern, Template]),
     % Match and substitute atoms in the given space according to the pattern.
@@ -689,10 +699,12 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
 %     ?- was_asserted_space('&self').
 %     true.
 %
-was_asserted_space('&self').
+was_asserted_space('&self'):- current_self(X), (X=='&self'->true;was_asserted_space(X)).
 was_asserted_space('&stdlib').
 was_asserted_space('&corelib').
 was_asserted_space('&flybase').
+was_asserted_space('&top').
+was_asserted_space('&catalog').
 /*
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').
@@ -1336,9 +1348,12 @@ metta_assertdb_replace(KB, Old, New) :-
 %     % Get the atom count for a loaded context.
 %     ?- atom_count_provider(some_context, Count).
 %
-atom_count_provider(Self, Count) :-
+
+
+atom_count_provider(SpaceNameOrInstance, Count) :-
+    into_top_self(SpaceNameOrInstance, DynSpace),
     % Check if the context has been loaded into a knowledge base (KB).
-    user:loaded_into_kb(Self, Filename),
+    user:loaded_into_kb(DynSpace, Filename),
     % Retrieve the associated predicate for the given filename.
     once(user:asserted_metta_pred(Mangle, Filename)),
     % Derive a related predicate from the original.
@@ -1355,8 +1370,9 @@ atom_count_provider(Self, Count) :-
     predicate_property(Data, number_of_rules(RC)),
     % Calculate the atom count as the difference between clauses and rules.
     Count is CC - RC.
-atom_count_provider(KB, Count) :-
+atom_count_provider(SpaceNameOrInstance, Count) :-
     must_det_ll((
+        into_top_self(SpaceNameOrInstance, KB),
         % Predicate for asserted atoms.
         AMA = metta_atom_asserted,
         % Declare the predicate with arity 2.
@@ -1406,7 +1422,8 @@ metta_assertdb_count(KB, Count) :-
 %     % Iterate over atoms in 'example_kb' and retrieve them.
 %     ?- metta_assertdb_iter('example_kb', Atom).
 %
-metta_assertdb_iter(KB, Atoms) :-
+metta_assertdb_iter(SpaceNameOrInstance, Atoms) :-
+    into_top_self(SpaceNameOrInstance, KB),
     % Dynamically construct the predicate for the given KB.
     MP =.. [metta_atom, KB, Atoms],
     % Call the constructed predicate to retrieve atoms.
@@ -1427,7 +1444,8 @@ metta_assertdb_iter(KB, Atoms) :-
 %     % Execute a query against the KB and bind variables.
 %     ?- metta_iter_bind('example_kb', my_query(X), Vars, ['X']).
 %
-metta_iter_bind(KB, Query, Vars, VarNames) :-
+metta_iter_bind(SpaceNameOrInstance, Query, Vars, VarNames) :-
+    into_top_self(SpaceNameOrInstance, KB),
     % Extract all variables from the query.
     term_variables(Query, QVars),
     % Align the provided variable names with the query variables.
@@ -1460,7 +1478,8 @@ metta_iter_bind(KB, Query, Vars, VarNames) :-
 %     % Query the KB and retrieve bound variables.
 %     ?- space_query_vars('example_kb', my_query(X), Vars).
 %
-space_query_vars(KB, Query, Vars) :-
+space_query_vars(SpaceNameOrInstance, Query, Vars) :-
+    into_top_self(SpaceNameOrInstance, KB),
     % Check if the knowledge base is an asserted space.
     is_asserted_space(KB), !,
     % Declare the predicate for asserted atoms with arity 2.

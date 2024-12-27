@@ -368,8 +368,12 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
 
-:- nb_setval(self_space, '&self').
-current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;Self='&self').
+use_top_self :- \+ fast_option_value('top-self', false).
+top_self('&top'):- use_top_self,!.
+top_self('&self').
+
+%:- top_self(Self), nb_setval(self_space, '&self'),
+current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;top_self(Self)).
 :- nb_setval(repl_mode, '+').
 
 
@@ -403,14 +407,15 @@ all_option_value_name_default_type_help('exec', noskip, [noskip, skip], "Control
 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
-all_option_value_name_default_type_help('maximum-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
-option_value_name_default_type_help('limit', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
+all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
 option_value_name_default_type_help('initial-result-count', 10, [inf,10], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
 % Miscellaneous
 option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
 option_value_name_default_type_help('repeats', true, [true, false], "false to avoid repeated results", 'Miscellaneous').
 option_value_name_default_type_help('time', true, [false, true], "Enable or disable timing for operations (in Rust compatibility mode, this is false)", 'Miscellaneous').
+option_value_name_default_type_help('vn', true, [true, auto, false], "Enable or disable, (auto = enable but not if it breaks stuff) EXPERIMENTAL BUG-FIX where variable names are preserved (see https://github.com/trueagi-io/metta-wam/issues/221)", 'Miscellaneous').
+option_value_name_default_type_help('top-self', false, [false, true, auto], "Do not pretend &self==top", 'Miscellaneous').
 
 % Testing and Validation
 option_value_name_default_type_help('synth-unit-tests', false, [false, true], "Synthesize unit tests", 'Testing and Validation').
@@ -442,6 +447,8 @@ option_value_name_default_type_help('trace-on-test', true, [silent, false, verbo
 option_value_name_default_type_help('repl-on-error', true, [false, true], "Drop to REPL on error", 'Debugging and Tracing').
 option_value_name_default_type_help('repl-on-fail',  false, [false, true], "Start REPL on failed unit test", 'Debugging and Tracing').
 option_value_name_default_type_help('exit-on-fail',  false, [true, false], "Rust exits on first Assertion Error", 'Debugging and Tracing').
+
+option_value_name_default_type_help('rrtrace',  false, [false, true], "Extreme Tracing", 'Debugging and Tracing').
 
 % Define the possible values for various types
 
@@ -559,7 +566,8 @@ set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\
 set_option_value_interp(N,V):-
   %(different_from(N,V)->Note=true;Note=false),
   Note = true,
-  fbugio(Note,set_option_value(N,V)),set_option_value(N,V),
+  %fbugio(Note,set_option_value(N,V)),
+  set_option_value(N,V),
   ignore(forall(on_set_value(Note,N,V),true)).
 
 on_set_value(Note,N,'True'):- on_set_value(Note,N,true).
@@ -645,8 +653,10 @@ with_answer_output(Goal, S) :-
     ).
 
 null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
-user_io(G):- current_prolog_flag(mettalog_rt, true), !, original_user_error(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
-user_io(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
+
+user_io(G):- notrace(user_io_0(G)).
+user_io_0(G):- current_prolog_flag(mettalog_rt, true), !, original_user_error(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
+user_io_0(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
 user_err(G):- original_user_error(Out), !, with_output_to(Out,G).
 with_output_to_s(Out,G):- current_output(COut),
   redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
@@ -666,8 +676,10 @@ not_compatio(G):- if_t(once(is_mettalog;is_testing; (\+ is_compatio )),
 %   If output is not suspended, it captures the output based on the streams involved.
 %
 %   @arg G The goal to be executed.
-in_answer_io(_):- nb_current(suspend_answers,true),!.
-in_answer_io(G) :-
+
+in_answer_io(G):- notrace((in_answer_io_0(G))).
+in_answer_io_0(_):- nb_current(suspend_answers,true),!.
+in_answer_io_0(G) :-
     % Get the answer_output stream
     answer_output(AnswerOut),
     % Get the current output stream
@@ -856,6 +868,7 @@ show_options_values:-
 
 :- ensure_loaded(metta_utils).
 %:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
+:- ensure_loaded(metta_pfc_debug).
 :- ensure_loaded(metta_pfc_base).
 :- ensure_loaded(metta_pfc_support).
 :- ensure_loaded(metta_compiler).
@@ -1094,7 +1107,7 @@ cmdline_load_metta(Phase,Self,['-G',Str|Rest]):- !,
 cmdline_load_metta(Phase,Self,[M|Rest]):-
   m_opt(M,Opt),
   is_cmd_option(Opt,M,TF),
-  fbug(is_cmd_option(Phase,Opt,M,TF)),
+  %fbug(is_cmd_option(Phase,Opt,M,TF)),
   set_option_value_interp(Opt,TF), !,
   %set_tty_color_term(true),
   cmdline_load_metta(Phase,Self,Rest).
@@ -1311,6 +1324,7 @@ load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
 
+rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
   catch_err(G,E,
@@ -1358,7 +1372,7 @@ assertion_neck_cl(':-').
 
 load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load,Assertion):- assertion_hb(Assertion,Self,Eq,H,B),
-       functs_to_preds([Eq,H,B],Preds),
+       once(functs_to_preds([Eq,H,B],Preds)),
        assert_preds(Self,Load,Preds),!.
 % old compiler hook
 load_hook0(Load,Assertion):-
@@ -1391,14 +1405,19 @@ do_show_options_values:-
 
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
-:- dynamic(metta_atom_asserted_deduced/2).
-:- multifile(metta_atom_asserted_deduced/2).
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
 metta_atom_asserted(X,Y):-
-    metta_atom_asserted_deduced(X,Y),
+    metta_atom_deduced(X,Y),
     \+ clause(metta_atom_asserted(X,Y),true).
 
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
+
+
+maybe_into_top_self(WSelf, Self):- use_top_self,WSelf=='&self',current_self(Self),Self\==WSelf,!.
+into_top_self(WSelf, Self):- maybe_into_top_self(WSelf, Self),!.
+into_top_self(Self, Self).
 
 
 get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
@@ -1410,46 +1429,62 @@ metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
 %metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
+%metta_atom(X,Y):- use_top_self,maybe_resolve_space_dag(X,XX),!,in_dag(XX,XXX),XXX\==X,metta_atom(XXX,Y).
+
+metta_atom(X,Y):- maybe_into_top_self(X, TopSelf),!,metta_atom(TopSelf,Y).
+%metta_atom(X,Y):- var(X),use_top_self,current_self(TopSelf),metta_atom(TopSelf,Y),X='&self'.
 metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
 metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !,
+%metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
+%metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
+metta_atom(KB,Atom):- KB \== '&corelib', !, % is_code_inheritor(KB),
    \+ \+ (metta_atom_asserted(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom).
 should_inherit_from_corelib(_):- using_all_spaces,!.
-should_inherit_from_corelib([H,A|_]):- H == ':',!,nonvar(A).
-should_inherit_from_corelib([H|_]):- H == '@doc', !.
+should_inherit_from_corelib([H,A|_]):- nonvar(A), should_inherit_op_from_corelib(H),!,nonvar(A).
+%should_inherit_from_corelib([H|_]):- H == '@doc', !.
 should_inherit_from_corelib([H,A|T]):- fail,
-  H == '=',write_src_uo(try([H,A|T])),!,is_list(A),
-  A=[F|_],nonvar(F), F \==':',
+  H == '=',write_src_uo(try([H,A|T])),!,
+  A=[F|_],nonvar(F), F \==':',is_list(A),
   \+ metta_atom_asserted('&self',[:,F|_]),
   % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
   write_src_uo([H,A|T]).
 
-/*
-should_inherit_op_from_corelib('=').
+
+is_code_inheritor(KB):- current_self(KB).  % code runing from a KB can see corlib
+%should_inherit_op_from_corelib('=').
 should_inherit_op_from_corelib(':').
 should_inherit_op_from_corelib('@doc').
 %should_inherit_op_from_corelib(_).
-*/
-metta_atom_asserted('&self','&corelib').
-metta_atom_asserted('&self','&stdlib').
+
+%metta_atom_asserted('&self','&corelib').
+%metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted(Top,'&corelib'):- top_self(Top).
+metta_atom_asserted(Top,'&stdlib'):- top_self(Top).
 metta_atom_asserted('&stdlib','&corelib').
 metta_atom_asserted('&flybase','&corelib').
+metta_atom_asserted('&flybase','&stdlib').
 metta_atom_asserted('&catalog','&corelib').
 metta_atom_asserted('&catalog','&stdlib').
 
-/*
-'mod-space'(top,'&self').
+maybe_resolve_space_dag(Var,[XX]):- var(Var),!, \+ attvar(Var), freeze(XX,space_to_ctx(XX,Var)).
+maybe_resolve_space_dag('&self',[Self]):- current_self(Self).
+in_dag(X,XX):- is_list(X),!,member(XX,X).
+in_dag(X,X).
+
+space_to_ctx(Top,Var):- nonvar(Top),current_self(Top),!,Var='&self'.
+space_to_ctx(Top,Var):- 'mod-space'(Top,Var),!.
+space_to_ctx(Var,Var).
+
+'mod-space'(top,'&top').
 'mod-space'(catalog,'&catalog').
 'mod-space'(corelib,'&corelib').
 'mod-space'(stdlib,'&stdlib').
-'mod-space'(Top,'&self'):- Top == self.
-*/
+'mod-space'(Top,'&self'):- current_self(Top).
+
 not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
@@ -1631,15 +1666,23 @@ asserted_do_metta2(Self,Load,PredDecl, Src):-
 
 never_compile(X):- always_exec(X).
 
-always_exec(exec(W)):- !, is_list(W), always_exec(W).
+always_exec(W):- var(W),!,fail.
+always_exec([H|_]):- always_exec_symbol(H),!.
 always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),symbol_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
+always_exec([H|_]):- always_exec_symbol(H),!.
 always_exec(List):- \+ is_list(List),!,fail.
 always_exec([Var|_]):- \+ symbol(Var),!,fail.
 always_exec(['extend-py!'|_]):- !, fail.
-always_exec([H|_]):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/include! etc
 always_exec(['assertEqualToResult'|_]):-!,fail.
 always_exec(['assertEqual'|_]):-!,fail.
 always_exec(_):-!,fail. % everything else
+
+always_exec_symbol(Sym):- \+ symbol(Sym),!,fail.
+always_exec_symbol(H):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/bind!/include! etc
+always_exec_symbol(H):- symbol_concat('add-atom',_,H),!.
+always_exec_symbol(H):- symbol_concat('remove-atom',_,H),!.
+always_exec_symbol(H):- symbol_concat('subst-',_,H),!.
+
 
 file_hides_results([W|_]):- W== 'pragma!'.
 
@@ -1739,24 +1782,29 @@ do_metta(From,comment(Load),Self,Cmt,Out):- write_comment(Cmt),  !,
    ignore(( symbolic(Cmt),symbolic_list_concat([_,Src],'MeTTaLog: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),!.
 
 do_metta(From,How,Self,Src,Out):- string(Src),!,
-    normalize_space(string(TaxM),Src),
-    convert_tax(How,Self,TaxM,Expr,NewHow),!,
+    must_det_ll((normalize_space(string(TaxM),Src),
+    convert_tax(How,Self,TaxM,Expr,NewHow))),
     do_metta(From,NewHow,Self,Expr,Out).
 
 do_metta(From,_,Self,exec(Expr),Out):- !, do_metta(From,exec,Self,Expr,Out).
+
+
+% Prolog CALL
 do_metta(From,_,Self,  call(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
 do_metta(From,_,Self,     ':-'(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
 do_metta(From,call,Self,TermV,FOut):- !,
    if_t(into_simple_op(call,TermV,OP),pfcAdd_Now('next-operation'(OP))),
    call_for_term_variables(TermV,Term,NamedVarsList,X), must_be(nonvar,Term),
    copy_term(NamedVarsList,Was),
-   Output = NamedVarsList,
-   user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut).
+   Output = X,
+   user:u_do_metta_exec(From,Self,call(TermV),Term,X,NamedVarsList,Was,Output,FOut).
 
+% Non Exec
 do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
    if_t(into_simple_op(Load,Src,OP),pfcAdd_Now('next-operation'(OP))),
    dont_give_up(as_tf(asserted_do_metta(Self,Load,Src),Out)).
 
+% Doing Exec
 do_metta(file(Filename),exec,Self,TermV,Out):-
    must_det_ll((inc_exec_num(Filename),
      get_exec_num(Filename,Nth),
@@ -1780,10 +1828,12 @@ do_metta(From,exec,Self,TermV,Out):- !,
 do_metta_exec(From,Self,TermV,FOut):-
   Output = X,
    %format("########################X0 ~w ~w ~w\n",[Self,TermV,FOut]),
- (catch(((output_language(metta,write_exec(TermV)),
+ (catch(((
+   % Show exec from file(_)
+   if_t(From=file(_),output_language(metta,write_exec(TermV))),
    notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
    %format("########################X1 ~w ~w ~w ~w\n",[Term,X,NamedVarsList,Output]),
-   user:interactively_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
+   user:u_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
    give_up(Why),pp_m(red,gave_up(Why)))).
    %format("########################X2 ~w ~w ~w\n",[Self,TermV,FOut]).
 
@@ -1794,13 +1844,79 @@ o_s([O|_],S):- nonvar(O), !, o_s(O,S).
 o_s(S,S).
 into_simple_op(Load,[Op|O],op(Load,Op,S)):- o_s(O,S),!.
 
-call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
- term_variables(TermV, AllVars), call_for_term_variables4v(TermV,AllVars,Term,NamedVarsList,X),!,
- must_be(callable,Term).
-call_for_term_variables(TermV,catch_red(show_failure(Term)),NamedVarsList,X):-
-  get_term_variables(TermV, DCAllVars, Singletons, NonSingletons),
-  call_for_term_variables5(TermV, DCAllVars, Singletons, NonSingletons, Term,NamedVarsList,X),!,
-  must_be(callable,Term).
+
+%! call_for_term_variables(+Term, +X, -Result, -NamedVarsList, +TF) is det.
+%   Handles the term `Term` and determines the term variable list and final result.
+%   This version handles the case when the term has no variables and converts it to a truth-functional form.
+%
+%   @arg Term The input term to be analyzed.
+%   @arg X The list of variables found within the term. It can be empty or contain one variable.
+%   @arg Result The final result, either as the original term or transformed into a truth-functional form.
+%   @arg NamedVarsList The list of named variables associated with the term.
+%   @arg TF The truth-functional form when the term has no variables.
+%
+%   @example
+%     % Example with no variables:
+%     ?- call_for_term_variables(foo, Result, Vars, TF).
+%     Result = as_tf(foo, TF),
+%     Vars = [].
+%
+call_for_term_variables(TermV,catch_red(show_failure(TermR)),NewNamedVarsList,X):-
+  subst_vars(TermV,Term,NamedVarsList),
+  wwdmsg(subst_vars(TermV,Term,NamedVarsList)),
+    term_variables(Term, AllVars),
+    %get_global_varnames(VNs), append(NamedVarsList,VNs,All), nb_setval('$variable_names',All),  wdmsg(term_variables(Term, AllVars)=All),
+    term_singletons(Term, Singletons),term_dont_cares(Term, DontCares),
+
+    wwdmsg((term_singletons(Term, Singletons),term_dont_cares(Term, DontCares))),
+    include(not_in_eq(Singletons), AllVars, NonSingletons),
+    wwdmsg([dc=DontCares, sv=Singletons, ns=NonSingletons]), !,
+    include(not_in_eq(DontCares), NonSingletons, CNonSingletons),
+    include(not_in_eq(DontCares), Singletons, CSingletons),
+    wwdmsg([dc=DontCares, csv=CSingletons, cns=CNonSingletons]),!,
+    maplist(maplist(into_named_vars),
+            [DontCares, CSingletons, CNonSingletons],
+            [DontCaresN, CSingletonsN, CNonSingletonsN]),
+  wwdmsg([dc_nv=DontCaresN, sv_nv=CSingletonsN, ns_nv=CNonSingletonsN]),
+  call_for_term_variables5(Term, DontCaresN, CNonSingletonsN, CSingletonsN, TermR, NamedVarsList, NewNamedVarsList, X),!,
+  wwdmsg(call_for_term_variables5(orig=Term, all=DontCaresN, singles=CSingletonsN, shared=CNonSingletonsN, call=TermR, nvl=NamedVarsList, nvlo=NewNamedVarsList, output=X)).
+
+wwdmsg(_).
+% If the term is ground, return the as_tf form.
+%call_for_term_variables5(Term,_,_,_,as_tf(Term,Ret),VL,['$RetVal'=Ret|VL],[==,['call!',Term],Ret]) :- ground(Term), !.
+% If the term is ground, create a call_nth with the term.
+call_for_term_variables5(Term,_,_,_,call_nth(Term,Count),VL,['Count'=Count|VL],Ret) :- Ret=Term.
+
+
+into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
+   % wdmsg(mc(CALL)),
+    CALL= call(TermV),
+    \+ never_compile(TermV),
+     must_det_ll((((
+     term_variables(TermV,Res),
+    % ignore(Res = '$VAR'('ExecRes')),
+     RealRes = Res,
+     TermV=ExecGoal,
+     %format("~w ~w\n",[Res,ExecGoal]),
+     subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
+     copy_term_g(NamedVarsList,Was),
+     term_variables(Term,Vars),
+
+
+     Call = do_metta_runtime(Res, ExecGoal),
+     output_language(prolog, notrace((color_g_mesg('#114411', print_pl_source(:- Call  ))))),
+     %nl,writeq(Term),nl,
+     ((\+ \+
+     ((
+     %numbervars(v(TermV,Term,NamedVarsList,Vars),999,_,[attvar(skip)]),
+     %nb_current(variable_names,NamedVarsList),
+     %nl,print(subst_vars(Term,NamedVarsList,Vars)),
+     nop(nl))))),
+     nop(maplist(verbose_unify,Vars)),
+     %NamedVarsList=[_=RealRealRes|_],
+     %var(RealRes),
+     X = RealRes)))),!.
+
 
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
  \+ never_compile(TermV),
@@ -2035,8 +2151,12 @@ arg_types(L,R,LR):- append(L,R,LR).
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
+extreme_tracing:- \+ fast_option_value(rrtrace, false),!.
+
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
-ggtrace(G):- call(G).
+ggtrace(G):- extreme_tracing,!, rtrace(G).
+ggtrace(G):- !, fail, call(G).
+%ggtrace(G):- call(G).
 ggtrace0(G):- ggtrace,
     leash(-all),
   visible(-all),
@@ -2323,7 +2443,7 @@ calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime) :-
 % Print the elapsed wall and CPU time with a description, output to user_error
 print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
     with_output_to(user_error,
-        format('             % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
+        format('~N          % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
                [WallElapsedTime, CPUElapsedTime, Description])).
 
 % Execute a Prolog query and handle output, performance logging, and time measurements to user_error

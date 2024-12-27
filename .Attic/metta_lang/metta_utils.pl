@@ -860,7 +860,7 @@ remove_mds(_, GG, GG).
 %   to `t` or when the system is running in CGI mode.
 %
 %   The `notrace/0` predicate is used to disable tracing.
-%never_rrtrace:-!.
+never_rrtrace:- \+ extreme_tracing,!.
 never_rrtrace :-
     % If `cant_rrtrace` is currently set to `t`, disable tracing using `notrace`.
     nb_current(cant_rrtrace, t),!,notrace.
@@ -1237,7 +1237,8 @@ always_rethrow(time_limit_exceeded(_)).
 always_rethrow(time_limit_exceeded).
 always_rethrow(depth_limit_exceeded).
 always_rethrow(restart_reading).
-always_rethrow(E):- never_rrtrace,!,throw(E).
+%always_rethrow(E):- never_rrtrace,!,throw(E).
+%always_rethrow(_).
 
 %!  catch_non_abort(:Goal) is det.
 %
@@ -1446,14 +1447,14 @@ stack_dump:- ignore(catch(bt, _, true)).
 :- set_prolog_flag(mettalog_error,unset).
 %:- set_prolog_flag(mettalog_error,break).
 %:- set_prolog_flag(mettalog_error,keep_going).
-on_mettalog_error(Why):- current_prolog_flag(mettalog_error,break),!,write_src_uo(on_mettalog_error(break,Why)),break.
+on_mettalog_error(Why):- (current_prolog_flag(mettalog_error,break);extreme_tracing),!,bt,write_src_uo(on_mettalog_error(Why)),trace.
 on_mettalog_error(Why):- write_src_uo(on_mettalog_error(Why)).
 
 % super safety checks is optional code that can be ran .. normally this is done with assertion/1 but unfortionately assertion/1 is not guarenteed to keep bindings and can be said to be wrapped in `once/1`
 super_safety_checks(G):- (call(G)*->true;on_mettalog_error(super_safety_checks(failed(G)))).
 
 % If there is an error, log it, perform a stack dump
-ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
+%ugtrace(Why, _):- notrace((write_src_uo(ugtrace(Why,G)),stack_dump, write_src_uo(ugtrace(Why,G)), fail)).
 
 ugtrace(Why, _):- on_mettalog_error(Why), fail.
 % If tracing is already enabled, log the reason and trace the goal G.
@@ -1462,7 +1463,7 @@ ugtrace(_Why, G):- tracing, !, notrace, rtrace(G), trace.
 % If testing is enabled, handle the failure and abort.
 ugtrace(Why, _):- is_testing, !, ignore(give_up(Why, 5)), throw('$aborted').
 % Otherwise, log the reason, trace the goal G, and abort.
-ugtrace(Why, G):- fbugio(Why), ggtrace(G), throw('$aborted').
+ugtrace(Why, G):- fbugio(Why), nortrace, notrace, trace, ggtrace(G), throw('$aborted').
 % ugtrace(Why,G):- ggtrace(G).
 
 %!  give_up(+Why, +N) is det.
@@ -1510,7 +1511,7 @@ is_guitracer:- getenv('DISPLAY', _), current_prolog_flag(gui_tracer, true).
 %   ?- rrtrace(my_wrapper, my_goal).
 %
 % If reversible tracing is disabled, log the message and fail.
-rrtrace(P1, X):- never_rrtrace, !, nop((u_dmsg(cant_rrtrace(P1, X)))), !, fail.
+rrtrace(P1, X):- never_rrtrace, !, ((u_dmsg(cant_rrtrace(P1, X)))), !, fail.
 % If in a CGI environment, log the HTML output and call the goal normally.
 rrtrace(P1, G):- is_cgi, !, u_dmsg(arc_html(rrtrace(P1, G))), call(P1, G).
 % If not in a GUI tracer environment, disable tracing and call the goal, or enable interactive tracing (itrace).

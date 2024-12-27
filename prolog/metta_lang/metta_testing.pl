@@ -743,7 +743,7 @@ test_alarm :-
     !.
 test_alarm :-
     % Set time limit and attempt goal within 0.5 seconds.
-    time(catch(
+    (catch(
         % Run goal with time limit; fail if it exceeds limit.
         (call_with_time_limit(0.5,
             (forall(between(1, 15, _), sleep(0.1)),

@@ -1,6 +1,35 @@
 :- dynamic(transpiler_clause_store/9).
 :- discontiguous transpiler_clause_store/9.
 
+from_prolog_args(_,X,X).
+:-dynamic(pred_uses_fallback/2).
+:-dynamic(pred_uses_impl/2).
+
+pred_uses_impl(F,A):- transpile_impl_prefix(F,Fn),current_predicate(Fn/A).
+
+mc_fallback_unimpl(Fn,Arity,Args,Res):-
+  (pred_uses_fallback(Fn,Arity);(length(Args,Len),\+pred_uses_impl(Fn,Len))),!,
+    get_operator_typedef_props(_,Fn,Arity,Types,_RetType0),
+    current_self(Self),
+    maybe_eval(Self,Types,Args,NewArgs),
+    [Fn|NewArgs]=Res.
+
+maybe_eval(_Self,_Types,[],[]):-!.
+maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
+    into_typed_arg(30,Self,T,A,N),
+    maybe_eval(Self,Types,Args,NewArgs).
+
+
+%'mc_2__:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
+%sync_type(D, Self, Obj, Type):- nonvar(Obj), nonvar(Type), !, arg_conform(D, Self, Obj, Type).
+%sync_type(D, Self, Obj, Type):- nonvar(Obj), var(Type), !, get_type(D, Self, Obj, Type).
+%sync_type(D, Self, Obj, Type):- nonvar(Type), var(Obj), !, set_type(D, Self, Obj, Type). %, freeze(Obj, arg_conform(D, Self, Obj, Type)).
+%sync_type(D, Self, Obj, Type):- freeze(Type,sync_type(D, Self, Obj, Type)), freeze(Obj, sync_type(D, Self, Obj, Type)),!.
+
+
+%'mc_1__get-type'(Obj,Type):-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
+'mc_1__get-type'(Obj,Type):- current_self(Self), !, get_type(10, Self, Obj,Type).
+
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 'mc_2__+'(A,B,R) :- number(A),number(B),!,plus(A,B,R).

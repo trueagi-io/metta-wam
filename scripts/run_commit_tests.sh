@@ -130,14 +130,19 @@ run_mettalog_tests() {
     
     # Execute command based on output mode
     if [ "$SHOW_ALL_OUTPUT" = true ]; then
-        # Execute the command and show all output
-        ${cmd[@]}
-        status=$?
+        # Execute the command silently and filter output
+        # The grep pattern matches important test output while filtering noise
+	script -q -c "${cmd[*]}" /dev/null | \
+	    tee >(
+		grep -v 'HIDDEN_PASSWORDS' >&2
+	    )
+	status=$?
+
     else
         # Execute the command silently and filter output
         # The grep pattern matches important test output while filtering noise
         script -q -c "${cmd[*]}" /dev/null | \
-            tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|^| |warning|es[:] ' >&2) > /dev/null
+            tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
         status=$?
     fi
 
