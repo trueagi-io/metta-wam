@@ -1380,7 +1380,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A
    label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
-   R=..[Fp|Args2],   
+   R=..[Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
       assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
       (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) ; true)
@@ -1421,12 +1421,12 @@ ast_to_prolog_aux(Caller,DontStub,(H,T),(HH,TT)) :- ast_to_prolog_aux(Caller,Don
 ast_to_prolog_aux(Caller,DontStub,do_metta_runtime(T,G),do_metta_runtime(T,GGG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG),combine_code(GG,GGG).
 ast_to_prolog_aux(Caller,DontStub,loonit_assert_source_tf(T,G),loonit_assert_source_tf(T,GG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
 ast_to_prolog_aux(Caller,DontStub,findall(T,G,L),findall(T,GG,L)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
-ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):- 
-   \+ is_list(FArgs), 
+ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):-
+   \+ is_list(FArgs),
    compound(FArgs),!,
    compound_name_arguments(FArgs, Name, Args),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args,NewArgs),
-   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.  
+   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.
 
 
 %ast_to_prolog_aux(Caller,DontStub,[H],HH) :- ast_to_prolog_aux(Caller,DontStub,H,HH).
@@ -1626,15 +1626,15 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    (ResultLazy=eager ->
       RetResult=Convert,
       Converted=[]
-   ;  Converted=[assign,RetResult,[is_p1,'Char','#\\'(Convert),[],Convert]]).
-   
+   ;  Converted=[assign,RetResult,[is_p1,['Char'],'#\\'(Convert),[],Convert]]).
+
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
     %once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
     once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
-    must_det_lls(get_val_types(Convert,Types)),
-    (ResultLazy=eager -> C2=Convert ; C2=[is_p1,Types,Convert,[],Convert]),
+    must_det_lls(get_val_types(Convert,Types)->true;Types=['%NoValTypes%']),
+    (ResultLazy=eager -> C2=Convert ; C2=[is_p1,[ResultLazy|Types],Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
@@ -1766,7 +1766,7 @@ f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- %HeadIs\=
    is_list(Convert),!,
    length(Convert, N),
    % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
-   % such as maplist(=(ResultLazy), EvalArgs), 
+   % such as maplist(=(ResultLazy), EvalArgs),
    length(EvalArgs, N),
    maplist(=(eager), EvalArgs),
    maplist(f2p_skip_atom(HeadIs, LazyVars),Converted,EvalArgs,Convert,Allcodes),
