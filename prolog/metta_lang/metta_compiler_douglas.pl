@@ -217,7 +217,7 @@ print_children([mfa(CSpace,CName,CArity)|Rest], Index, Count, Prefix, VisitedIn)
                 transpiler_depends_on(CSpace, CName, CArity, GSpace, GName, GArity),
                 GrandKids),
         length(GrandKids, GCount),
-        ( Index+1 =:= Count -> NextPrefix = "~q    " ; NextPrefix = "~q│   " ),
+        ( Index+1 =:= Count -> NextPrefix = "~w    " ; NextPrefix = "~w│   " ),
         format(atom(NewPrefix), NextPrefix, [Prefix]),
         print_children(GrandKids, 0, GCount, NewPrefix, [mfa(CSpace,CName,CArity)|VisitedIn]),
         VisitedNext = [mfa(CSpace,CName,CArity)|VisitedIn]
@@ -1061,9 +1061,18 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
    atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
-   remove_stub(Space,FnName,LenArgsPlus1),
-   print_ast( '#FFA500', [= , HeadIsIn, AsBodyFnIn]),
    ensure_callee_site(_Space,FnName,LenArgsPlus1),
+   remove_stub(Space,FnName,LenArgsPlus1),
+   % retract any stubs
+   (transpiler_stub_created(FnName/LenArgsPlus1) ->
+      retract(transpiler_stub_created(FnName/LenArgsPlus1)),
+      atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
+      findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+      H=..[FnNameWPrefix|AtomList0],
+      (transpiler_show_debug_messages -> format("Retracting stub: ~q\n",[H]) ; true),
+      retractall(H)
+   ; true),
+   %AsFunction = HeadIs,
    must_det_lls((
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
@@ -1119,6 +1128,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
+      %ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],[assign,HResult,[call(FnName)|Args]],HeadC),
       HeadAST=[assign,HResult,[call(FnName)|Args]],
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       append(Args,[HResult],HArgs),
@@ -1128,7 +1138,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
       print_ast( yellow, [=,HeadAST,NextBody]),
 
 
-      ast_to_prolog(caller(FnName,LenArgsPlus1),[],NextBody,NextBodyC),
+      ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
 
       %format("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
