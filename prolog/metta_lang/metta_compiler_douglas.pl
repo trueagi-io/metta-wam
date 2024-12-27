@@ -1052,10 +1052,10 @@ transpile_eval(Convert0,Converted,PrologCode) :-
    ).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
-compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
+compile_for_assert(HeadIs, AsBodyFn, Converted) :-
  must_det_lls((
    current_self(Space),
-   subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
+   %subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    HeadIs=[FnName|Args],
    length(Args,LenArgs),
@@ -1066,7 +1066,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Optimized) :-
    % retract any stubs
    (transpiler_stub_created(FnName/LenArgsPlus1) ->
       retract(transpiler_stub_created(FnName/LenArgsPlus1)),
-      atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
       findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
       H=..[FnNameWPrefix|AtomList0],
       (transpiler_show_debug_messages -> format("Retracting stub: ~q\n",[H]) ; true),
@@ -1360,6 +1359,8 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    ast_to_prolog(Caller,DontStub,Then,Then2),
    ast_to_prolog(Caller,DontStub,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
+ast_to_prolog_aux(Caller,DontStub,[is_p1,Code0,R],is_p1(Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
+ast_to_prolog_aux(Caller,DontStub,[is_p1,Type,Src,Code0,R],is_p1(Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
@@ -1369,9 +1370,6 @@ ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
    label_arg_types(F,1,Args1),
    A=..[F|Args1],
    notice_callee(Caller,A))).
-
-ast_to_prolog_aux(Caller,DontStub,[is_p1,Code0,R],is_p1(Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
-ast_to_prolog_aux(Caller,DontStub,[is_p1,Type,Src,Code0,R],is_p1(Type,Src,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
