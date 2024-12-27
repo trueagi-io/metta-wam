@@ -1629,7 +1629,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    ;  Converted=[assign,RetResult,[is_p1,['Char'],'#\\'(Convert),[],Convert]]).
 
 
-% If Convert is a number or an atom, it is considered as already converted.
+% If Convert is not expected to be evaluatble, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
     %once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
     once(number(Convert); atomic(Convert); \+compound(Convert); data_term(Convert)),
