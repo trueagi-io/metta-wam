@@ -1212,9 +1212,9 @@ add_type(Cond,Type):-is_var_set(Cond),!,must_det_lls(b_put_set(Cond,Type)),!.
 add_type(Cond,Type):-dmsg(unable_to_add_type(Cond,Type)).
 
 add_assignment(A,B,CodeOld,CodeNew) :-
-   (fullvar(A),var(B) ->
+   (fullvar(A),var(B),A==B ->
       B=A,CodeNew=CodeOld
-   ; var(A),fullvar(B) ->
+   ; var(A),fullvar(B),A==B ->
       A=B,CodeNew=CodeOld
    ;  append(CodeOld,[[assign,A,B]],CodeNew)).
 
