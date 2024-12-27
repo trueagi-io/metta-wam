@@ -2361,7 +2361,7 @@ eval_30(Eq,RetType,Depth,Self,PredDecl,Res):-
     if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
     if_or_else(eval_maybe_host_function(Eq,RetType,Depth,Self,PredDecl,Res), fail))).
 
-eval_all_args:- true_flag.
+eval_all_args:- fail, true_flag.
 fail_missed_defn:- true_flag.
 fail_on_constructor:- true_flag.
 
