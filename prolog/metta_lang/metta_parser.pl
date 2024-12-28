@@ -34,6 +34,52 @@ handling of lists and individual items.s * *
 % That loads all the predicates called from this file
 :- ensure_loaded(metta_interp).
 
+%!  read_metta(+In, -Expr) is det.
+%
+%   Reads a MeTTa expression from an input source.
+%
+%   This predicate reads expressions from `In`, choosing different parsing methods
+%   based on the input type and stream properties. If the current input stream differs
+%   from `In`, it uses `parse_sexpr_untyped/2` to read the expression.
+%
+%   @arg In   The input source from which to read the expression.
+%   @arg Expr The parsed S-expression (variables are free attvars with `vn` attributes)
+%
+%   @example
+%     % Read an expression from the input stream.
+%     ?- read_metta(In, Expr).
+%
+read_metta(In, Expr) :-
+    % If `In` is the current input stream, read with `repl_read/1`.
+    current_input(In0), In == In0, !, repl_read(Expr).
+
+read_metta(I, O) :-
+    % Use read_file_sexpr/2 to parse the input into an S-expression.
+    catch(parse_sexpr_untyped(I,M),E,handle_read_error(E)),
+    untyped_to_metta(M, O).
+
+handle_read_error(E):-
+    ignore(show_read_error(E)),
+    notrace(throw(E)).
+    %throw('$aborted'),
+
+:- export(extract_lvars/3).
+
+%! read_file_sexpr(+Stream:stream, -Item) is det.
+%
+% Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
+% Throws an error with stream position if the S-expression cannot be parsed.
+% @arg Stream Stream from which to read.
+% @arg Item The item read from the stream with variables as `$VAR`/1s
+read_file_sexpr(I,O):-
+  catch(parse_sexpr(I,O),E,show_read_error(E)).
+
+show_read_error(E):-
+  write_src_uo(E),
+  print_message(error,E),!,
+  fail.
+
+
 %!  parse_sexpr_untyped(+Input, -Output) is det.
 %
 %   Parses an untyped S-expression from the input.
@@ -42,26 +88,109 @@ handling of lists and individual items.s * *
 %   the actual parsing of S-expressions.
 %
 %   @arg Input  The input from which the S-expression is parsed.
-%   @arg Output The parsed S-expression.
+%   @arg Output The parsed S-expression (variables are free attvars with `vn` attributes
 parse_sexpr_untyped(I, O) :-
     % Call the helper predicate to parse the S-expression.
-    parse_sexpr(I, O).
+    parse_sexpr(I, M),
+    subst_varnames(M, O).
 
-%!  parse_sexpr(+Input, -Output) is det.
-%
-%   Parses an S-expression from the input.
-%
-%   This predicate reads the S-expression using `read_sexpr/2`.
-%
-%   @arg Input  The input from which the S-expression is read.
-%   @arg Output The parsed S-expression.
-parse_sexpr(I, O) :-
-    % Use read_sexpr/2 to parse the input into an S-expression.
-    read_sexpr(I, O).
 
-:- export(extract_lvars/3).
+%! parse_sexpr(+Stream:stream, -Item) is det.
+%
+% Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
+% Throws an error with stream position if the S-expression cannot be parsed.
+% @arg Stream Stream from which to read.
+% @arg Item The item read from the stream with variables as `$VAR`/1s
+parse_sexpr(I,O):- string(I), open_string(I,S),!,parse_sexpr(S,O).
+parse_sexpr(_, O) :-   % Remove clause if it exists for a previous read.
+   clause(t_l:s_reader_info(O), _, Ref), erase(Ref).
+parse_sexpr(I,O):-
+  setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1_000_000),
+    setup_call_cleanup(
+       (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
+        cont_sexpr(is_delimiter,I, O),
+        b_setval('$file_src_depth', Lvl)),
+   nop(flag('$file_src_ordinal',_,Ordinal))).
 
-%=
+
+
+%!  subst_vars(+TermWDV, -NewTerm) is det.
+%
+%   Substitutes variables in `TermWDV` to produce `NewTerm`, setting variable names as needed.
+%
+%   This predicate invokes `subst_vars/3` with an accumulator and named variables list,
+%   then optionally sets the variable names.
+%
+%   @arg TermWDV  The term with potential variables.
+%   @arg NewTerm  The term with variables substituted.
+%
+subst_vars(TermWDV, NewTerm):-
+     subst_vars(TermWDV, NewTerm, NamedVarsList),
+     maybe_set_var_names(NamedVarsList).
+
+%!  subst_vars(+TermWDV, -NewTerm, -NamedVarsList) is det.
+%
+%   Substitutes variables in `TermWDV` and collects them in `NamedVarsList`.
+%
+%   @arg TermWDV       The term with variables.
+%   @arg NewTerm       The term with substituted variables.
+%   @arg NamedVarsList The list of named variables.
+%
+subst_vars(TermWDV, NewTerm, NamedVarsList) :-
+      subst_vars(TermWDV, NewTerm, [], NamedVarsList),
+   if_t(fast_option_value('vn', 'true'), memorize_varnames(NamedVarsList)).
+
+
+
+subst_varnames(Convert,Converted):-
+  subst_vars(Convert,Converted,[], NVL),
+  memorize_varnames(NVL).
+
+memorize_varnames(NamedVarsList):- \+ compound(NamedVarsList),!.
+memorize_varnames([NamedVar|NamedVarsList]):- !,
+  memorize_varname(NamedVar),
+  memorize_varnames(NamedVarsList).
+memorize_varnames(_).
+memorize_varname(NamedVar):-  \+ compound(NamedVar),!.
+memorize_varname(Name=Var):- var(Var),atomic(Name),put_attr(Var,vn,Name).
+memorize_varname(_).
+
+
+
+%!  subst_vars(+Term, -Term, +Acc, -NamedVarsList) is det.
+%
+%   Recursively substitutes variables in lists and compound terms, using an accumulator.
+%
+%   @arg Term           The term to process for substitution.
+%   @arg Term           The resulting term with substitutions.
+%   @arg Acc            Accumulator for variable tracking.
+%   @arg NamedVarsList  List of named variables after substitution.
+%
+subst_vars(Term, Term, NamedVarsList, NamedVarsList) :-
+     % Base case: return variable terms directly.
+     var(Term), !.
+subst_vars([], [], NamedVarsList, NamedVarsList):- !.
+subst_vars([TermWDV | RestWDV], [Term | Rest], Acc, NamedVarsList) :- !,
+     subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
+     subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
+subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
+subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :-
+     % Substitute variables with `VName`, applying fixes if necessary.
+     nonvar(VName), svar_fixvarname_dont_capitalize(VName, Name), !,
+     (memberchk(Name = Var, Acc) -> NamedVarsList = Acc ; (!, Var = _, NamedVarsList = [Name = Var | Acc])).
+subst_vars(Term, Var, Acc, NamedVarsList) :-
+     % Substitute variables with names starting with `$`.
+     atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name), !,
+     subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
+
+subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :-
+     % Recursively handle compound terms.
+     compound(TermWDV), !,
+     compound_name_arguments(TermWDV, Functor, ArgsWDV),
+     subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
+     compound_name_arguments(NewTerm, Functor, Args).
+subst_vars(Term, Term, NamedVarsList, NamedVarsList).
+
 
 %!  extract_lvars(?A, ?B, ?After) is det.
 %
@@ -759,12 +888,13 @@ process_expressions(FileName, InStream, OutStream) :-
    WriteOutput = write_readably(OutStream),
 
    % Record the absolute file name, file name stem, and the original file name.
-   call(WriteOutput,  afn_stem_filename(AFNStem, Stem, FileName)),
+
    % Declare multifile predicates for storing file-related facts.
    call(WriteOutput, :- multifile(user:afn_stem_filename/3)),
+   call(WriteOutput, :- dynamic(user:afn_stem_filename/3)),
    call(WriteOutput, :- dynamic(user:metta_file_buffer/7)),
    call(WriteOutput, :- multifile(user:metta_file_buffer/7)),
-
+   call(WriteOutput,  afn_stem_filename(AFNStem, Stem, FileName)),
     locally(nb_setval('$file_src_name', AFNStem),
      locally(nb_setval('$file_src_write_readably', WriteOutput),
      locally(nb_setval('$file_src_depth', 0),
@@ -776,7 +906,7 @@ process_expressions(FileName, InStream, OutStream) :-
 
 process_expressions_now(FileName, InStream):-
     repeat,
-    read_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
+    read_file_sexpr(InStream, Item),  % Read an S-expression or comment from the input stream.
     Item = end_of_file, !,
     % If end of file is reached, stop processing and update the ok_to_stop flag.
     retractall(ok_to_stop(FileName, _)),  % Remove the previous value
@@ -816,31 +946,6 @@ write_readably(OutStream, Item) :- is_stream(OutStream),!,
     writeln(OutStream, '.').  % Append a period and a newline.
 write_readably(OutputP1, Item) :- callable(OutputP1),!, ignore(call(OutputP1, Item)).
 write_readably(_, _).
-
-%! read_sexpr(+Stream:stream, -Item) is det.
-%
-% Reads a single item (S-expression or comment) from the specified stream, handling different formats and encodings.
-% Throws an error with stream position if the S-expression cannot be parsed.
-% @arg Stream Stream from which to read.
-% @arg Item The item read from the stream.
-read_sexpr(I,O):- string(I), open_string(I,S),!,read_sexpr(S,O).
-read_sexpr(I,O):-
-  catch(read_sexpr_or_error(I,O),E,handle_read_error(E)).
-
-handle_read_error(E):-
-  write_src_uo(E),
-  print_message(error,E),
-  %throw(E),
-  %throw('$aborted'),
-  !.
-
-read_sexpr_or_error(I,O):-
-  setup_call_cleanup( flag('$file_src_ordinal',Ordinal,Ordinal+1_000_000),
-    setup_call_cleanup(
-       (nb_current('$file_src_depth', Lvl)->true;(Lvl=0,nb_setval('$file_src_depth', Lvl))),
-        cont_sexpr(is_delimiter,I, O),
-        b_setval('$file_src_depth', Lvl)),
-   nop(flag('$file_src_ordinal',_,Ordinal))).
 
 
 %! cont_sexpr(+EndChar:atom, +Stream:stream, -Item) is det.

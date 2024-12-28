@@ -1007,7 +1007,7 @@ argv_metta(Nth,Value):- metta_argv(Args),nth1(Nth,Args,Value).
 
 set_metta_argv(Before):-  maplist(read_argv,Before,Args),set_prolog_flag(metta_argv, Args),!.
 read_argv(AArg,Arg):- \+ symbol(AArg),!,AArg=Arg.
-read_argv(AArg,Arg):- atom_string(AArg,S),read_metta(S,Arg),!.
+read_argv(AArg,Arg):- atom_string(AArg,S),read_sexpr(S,Arg),!.
 
 
 metta_cmd_args(Args):- current_prolog_flag(mettalog_rt, true),!,mettalog_rt_args(Args).
@@ -1770,8 +1770,7 @@ convert_tax(_How,Self,Tax,Expr,NewHow):-
   convert_tax(Mode,Self,NewTax,Expr,NewHow).
 convert_tax(How,_Self,Tax,Expr,How):-
   %parse_sexpr_metta(Tax,Expr).
-  normalize_space(string(NewTax),Tax),
-  parse_sexpr_metta1(NewTax,Expr).
+  read_metta(Tax,Expr).
 
 %:- if( \+ current_predicate(notrace/1) ).
 %  notrace(G):- once(G).

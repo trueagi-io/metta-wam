@@ -1380,9 +1380,11 @@ parse_answer_str(Inner0, Metta) :- symbolic_list_concat(InnerL, ' , ', Inner0),
 % Apply replacements in Inner0 and parse as a single expression.
 parse_answer_str(Inner0, Metta) :-
     ((replace_in_string([' , '=' '], Inner0, Inner),atomics_to_string(["(", Inner, ")"], Str), !,
-    parse_sexpr_metta(Str, Metta), !,skip((must_det_ll(\+ sub_var(',', rc3(Metta))))),
+    parse_sexp_metta(Str, Metta), !,skip((must_det_ll(\+ sub_var(',', rc3(Metta))))),
     skip((\+ sub_var(',', rc(Metta)))))).
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
+
+parse_sexp_metta(Str,Metta):- notrace(catch(parse_sexpr_untyped(Str,Metta),_,fail)).
 
 %!  remove_m_commas(+InputList, -OutputList) is det.
 %

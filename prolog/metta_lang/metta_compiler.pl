@@ -400,10 +400,6 @@ only_names(Var):-  ignore(catch(del_attr(Var,cns),_,fail)),
 
 
 
-subst_varnames(Convert,Converted):-
-  subst_vars(Convert,Converted,[], NVL),
-  memorize_varnames(NVL).
-
 
 cns:attr_unify_hook(_V,_T):- true.
 
@@ -2196,6 +2192,7 @@ dif_functors(HeadIs,Convert):- compound(HeadIs),compound(Convert),
 is_compiled_and(AND):- member(AND,[ (','), ('and'), ('and-seq')]).
 
 flowc.
+
 unnumbervars_clause(Cl,ClU):-
   copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
 % ===============================
