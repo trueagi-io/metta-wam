@@ -3640,8 +3640,6 @@ really_use_corelib_file :- load_corelib_file, generate_interpreter_stubs.
 %   This predicate checks if stubs have already been generated, and if not, it iterates over
 %   symbols defined in the core library to create interpreter stubs for each.
 %
-
-%generate_interpreter_stubs :- !.  %currently disabled
 generate_interpreter_stubs :-
               % Avoid generating stubs multiple times.
               did_generate_interpreter_stubs, !.

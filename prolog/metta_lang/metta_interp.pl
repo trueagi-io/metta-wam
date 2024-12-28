@@ -891,8 +891,10 @@ extract_prolog_arity([Arrow|ParamTypes],PrologArity):-
     len_or_unbound(ParamTypes,PrologArity).
 
 add_prolog_code(_KB,AssertZIfNew):-
-  fbug(assertz_if_new(AssertZIfNew)),
+  fbug(add_prolog_code(AssertZIfNew)),
   assertz_if_new(AssertZIfNew).
+
+gen_interp_stubs(_KB,_Symb,_Def) :- !.  % currently disabled since these are being handcoded right now in metta_compiler_lib.pl
 gen_interp_stubs(KB,Symb,Def):-
   ignore((is_list(Def),
  must_det_ll((
