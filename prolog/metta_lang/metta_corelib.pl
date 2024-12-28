@@ -71,17 +71,7 @@
 :- dynamic(lazy_load_python/0).
 
 % Import the Janus library, which is used for interfacing with Python.
-:-
-  (module_property(janus,file(File)) ->
-      % If Janus module is already loaded,ensure it is reloaded from the same file.
-      janus:ensure_loaded(File);
-      % If not loaded, try loading from a default location.
-      (exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Fallback to a specific path if it exists.
-          -> janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Otherwise, try loading from the default Janus library.
-          ; janus:ensure_loaded(library(janus)))).
-
+:- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
 
 % Uncomment the next line for quieter runs, meaning any debugging or tracing calls will be suppressed.
 % if_bugger(_):- !.
