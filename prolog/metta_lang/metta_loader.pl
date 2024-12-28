@@ -3006,6 +3006,6 @@ really_use_corelib_file(Dir, File) :-
      asserta(really_using_corelib_file),
      debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))).
 
-without_output(G):- call(G).
-%without_output(G):- with_output_to(string(_), G).
+without_output(G):- is_devel,!,call(G).
+without_output(G):- with_output_to(string(_), G).
 

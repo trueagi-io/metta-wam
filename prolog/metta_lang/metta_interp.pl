@@ -277,6 +277,7 @@ is_compat:- is_metta_flag('compat').
 
 %is_mettalog:- is_win64,!.
 is_mettalog:- is_metta_flag('log').
+is_devel:- is_metta_flag('devel').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
 is_synthing_unit_tests0:- is_testing.
@@ -420,6 +421,7 @@ option_value_name_default_type_help('repeats', true, [true, false], "false to av
 option_value_name_default_type_help('time', true, [false, true], "Enable or disable timing for operations (in Rust compatibility mode, this is false)", 'Miscellaneous').
 option_value_name_default_type_help('vn', true, [true, auto, false], "Enable or disable, (auto = enable but not if it breaks stuff) EXPERIMENTAL BUG-FIX where variable names are preserved (see https://github.com/trueagi-io/metta-wam/issues/221)", 'Miscellaneous').
 option_value_name_default_type_help('top-self', true, [true, false, auto], "When set, stop pretending &self==&top", 'Miscellaneous').
+option_value_name_default_type_help('devel', false, [false, true], "Set all developer flags", 'Miscellaneous').
 
 % Testing and Validation
 option_value_name_default_type_help('synth-unit-tests', false, [false, true], "Synthesize unit tests", 'Testing and Validation').
