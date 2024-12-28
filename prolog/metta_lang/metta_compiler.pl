@@ -1155,15 +1155,16 @@ lazy_impedance_match(lazy,eager,RetResult0,Converted0,RetResult,Converted) :-
 lazy_impedance_match(eager,lazy,RetResult0,Converted0,RetResult,Converted) :-
    append(Converted0,[[assign,RetResult,[is_p1,[],RetResult0]]],Converted).
 
-arg_eval_props('Number',x(doeval,eager)) :- !.
-arg_eval_props('Bool',x(doeval,eager)) :- !.
-arg_eval_props('LazyBool',x(doeval,lazy)) :- !.
-arg_eval_props('Any',x(doeval,eager)) :- !.
-arg_eval_props('Atom',x(noeval,lazy)) :- !.
-arg_eval_props('Expression',x(noeval,lazy)) :- !.
+arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Number',!.
+arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Bool',!.
+arg_eval_props(N,x(doeval,lazy)) :- atom(N),N='LazyBool',!.
+arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Any',!.
+arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Atom',!.
+arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Expression',!.
 arg_eval_props(_,x(doeval,eager)).
 
-do_arg_eval(_,_,Arg,x(noeval,_),Arg,[]).
+do_arg_eval(_,_,Arg,x(noeval,eager),Arg,[]).
+do_arg_eval(_,_,Arg,x(noeval,lazy),[is_p1,[],Arg],[]).
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,SubCode,SubArg],Code) :-
    f2p(HeadIs,LazyVars,SubArg,eager,Arg,SubCode),
    Code=[].
