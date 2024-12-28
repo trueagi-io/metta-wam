@@ -1870,7 +1870,7 @@ is_user_defined_head0(Eq, Other, [H | _]) :-
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
     callable(H), !,
-    functor(H, F, _),
+    functor(H, F, _, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.

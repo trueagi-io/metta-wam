@@ -767,7 +767,7 @@ inside_assert(exec(I),O) :-
     !, inside_assert(I,O).
 inside_assert(Eval,O) :-
     % If the term is an evaluation, extract the relevant part and process it.
-    functor(Eval, eval_H, A), A1 is A - 1, arg(A1, Eval, I), !, inside_assert(I, O).
+    functor(Eval, eval_H, A, _), A1 is A - 1, arg(A1, Eval, I), !, inside_assert(I, O).
 inside_assert(call(I),O) :-
     % Handle call terms by processing the inside assertion.
     !, inside_assert(I, O).

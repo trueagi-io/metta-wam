@@ -1066,12 +1066,12 @@ pp_sexi_c(V) :-
 pp_sexi_c((USER:Body)) :- fail,
     % If `V` is in the format `user:Body`, process `Body` directly.
     USER == user, !, pp_sex(Body).
-pp_sexi_c(exec([H | T])) :-
+pp_sexi_c(exec(S)) :-
     % For `exec([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
-    is_list(T), !, write('!'), pp_sex_l([H | T]).
-pp_sexi_c('!'([H | T])) :-
+     !, write('!'), pp_sex(S).
+pp_sexi_c('!'(S)) :-
     % For `!([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
-    is_list(T), !, write('!'), pp_sex_l([H | T]).
+     !, write('!'), pp_sex(S).
 %pp_sexi_c([H|T]) :- is_list(T),!,unlooped_fbug(pp_sexi_c,pp_sex_l([H|T])).
 pp_sexi_c([H | T]) :-
     % If `V` is a list starting with `H`, print it as an S-expression list.
@@ -1106,7 +1106,7 @@ pp_sexi_c('='(N, V)) :-
     % For `N = V`, print in concept format if allowed.
     allow_concepts, !, format("~N;; ~w == ~n", [N]), !, pp_sex(V).
 %pp_sex_c(V):- writeq(V).
-pp_sexi_c(Term) :-
+pp_sexi_c(Term) :- fail,
     % For `Term` with zero arity, format as a single symbol.
     compound_name_arity(Term, F, 0), !, pp_sex_c([F]).
 
