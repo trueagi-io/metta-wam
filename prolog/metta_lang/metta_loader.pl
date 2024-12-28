@@ -298,7 +298,7 @@ wwp(Fnicate, Dir) :-
     quietly(afn_from('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)])),
     wwp(Fnicate, PyFile).
 wwp(Fnicate, File) :-
-    % If File doesn’t exist as file or directory, search for it with predefined extensions.
+    % If File doesnâ€™t exist as file or directory, search for it with predefined extensions.
     \+ exists_directory(File), \+ exists_file(File),
     extension_search_order(Ext),
     symbolic_list_concat([File|Ext], MeTTafile),
@@ -1017,7 +1017,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
 %
 %   This predicate attempts to include a `.metta` file by first checking if a prebuilt version
 %   (either `.qlf` or `.datalog`) exists and is up-to-date. If a prebuilt version is unavailable,
-%   it assesses the file’s size and uses an alternative loading method if the file is large.
+%   it assesses the fileâ€™s size and uses an alternative loading method if the file is large.
 %
 %   @arg Self      The context or module in which the file is being included.
 %   @arg Directory The directory containing the file.
@@ -1816,55 +1816,115 @@ make_metta_file_buffer(TFMakeFile, FileName, InStream) :-
     process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
 
 
-:- use_module(library(filesex)).  % for make_directory_path/1
 :- use_module(library(system)).   % for absolute_file_name/3
+:- use_module(library(filesex)).  % For make_directory_path/1, etc.
+:- use_module(library(lists)).
+
+/** cache_file(+Original, -CachedFile) is det.
+
+Construct a cache file path for `Original` under `<temp>/metta_cache/`.
+
+Steps:
+  1. Determine a system temp dir (`TMPDIR`/`TMP`/`TEMP`/`TEMPDIR`)
+     or fall back to `C:/Windows/Temp` (on Windows) or `/tmp`.
+  2. Append `/metta_cache/`.
+  3. Create that directory if it doesn't exist.
+  4. Apply multiple find-replace pairs to `Original`:
+       - `:` -> `~`
+       - `\\` -> `/`
+       - `/`  -> `~~`
+       - `' '` (space) -> `~~~`
+  5. Append `.buffer~` extension.
+
+Example:
+
+==
+?- cache_file('C:/some path/file:01', Path).
+Path = 'C:/Windows/Temp/metta_cache/C~~some~~~path~~file~01.buffer~'.
+==
+*/
+cache_file(Original, CachedFile):-  cache_file(Original, '.buffer~', CachedFile).
+cache_file(Original, Ending, CachedFile) :-
+    metta_cache_dir(Dir),
+    make_directory_path(Dir),  % Ensure the directory exists
+    Replacements = [
+       ':'-'~~',
+       '\\'-'/',
+       '/'-'~',
+       ' '-'~~~'
+    ],
+    fr_slashes(Replacements, Original, RelPath),
+    atomic_list_concat([Dir, RelPath, Ending], CachedFile).
 
 
-% cache_file(+Original, -CachedFile)
-%  Example: "H:/foo/bar/my.metta"
-%     => "C:/Users/<user>/AppData/Local/Temp/metta_cache/h/foo/bar/my.metta.buffer~"
-%  Ensures the directories exist so it's ready to write to.
-cache_file(Original, CachedFile) :-
-    % 1) Get the system temp directory from the environment (fallback if missing).
-    (   getenv('TEMP', TempDir)
-    ->  true
-    ;   TempDir = 'C:/Temp'
-    ),
+/** clean_cache_files is det.
 
-    % 2) Parse the drive letter ("H:") and the relative path ("foo/bar/my.metta").
-    parse_drive_path(Original, DriveLetter, RelPath0),
+Delete **all files** in `<temp>/metta_cache/`, but do *not* remove
+subdirectories or the directory itself.
 
-    % 3) Normalize slashes (replace any backslashes with forward slashes).
-    normalize_slashes(RelPath0, RelPath),
+If the directory does not exist, this predicate simply succeeds.
 
-    % 4) Build the new path: <TempDir>/metta_cache/<driveLetter>/<foo/bar/my.metta>.buffer~
-    atomic_list_concat([TempDir, 'metta_cache', DriveLetter, RelPath], '/', NoExt),
-    atom_concat(NoExt, '.buffer~', CachedFile),
+Example:
 
-    % 5) Make sure the directories exist before returning.
-    file_directory_name(CachedFile, Dir),
-    make_directory_path(Dir).
-
-%  E.g. "H:/foo/bar/my.metta" => DriveLetter = h, RelPath = "foo/bar/my.metta".
-parse_drive_path(Path, DriveLetter, RelPath) :-
-    % First character is the drive letter (e.g. "H"), second is ":"
-    sub_atom(Path, 0, 1, _, Drive),
-    sub_atom(Path, 1, 1, _, ':'),
-    downcase_atom(Drive, DriveLetter),
-    % Skip the drive-letter portion
-    sub_atom(Path, 2, _, 0, AfterDrive),
-    % If the next character is '/', remove it to avoid an empty segment
-    ( sub_atom(AfterDrive, 0, 1, _, '/')
-    -> sub_atom(AfterDrive, 1, _, 0, RelPath)
-    ;  RelPath = AfterDrive
+==
+?- clean_cache_files.
+true.
+==
+*/
+clean_cache_files:- clean_cache_files('.buffer~').
+clean_cache_files(Ending) :-
+    metta_cache_dir(Dir),
+    (   exists_directory(Dir)
+    ->  directory_files(Dir, Items),
+        forall(member(Item, Items),
+          ( Item \= '.', Item \= '..',
+            directory_file_path(Dir, Item, FilePath),
+            ( (exists_file(FilePath), atom_concat(_,Ending, FilePath))
+            -> delete_file(FilePath)
+            ; true
+            )
+          ))
+    ;   true
     ).
 
-%% normalize_slashes(+In, -Out)
-%  Convert any backslashes in In to forward slashes in Out.
-normalize_slashes(In, Out) :-
-    atomic_list_concat(Segments, '\\', In),
-    atomic_list_concat(Segments, '/', Out).
+/* ---------------------------------------------------------------------
+   2) HELPER PREDICATES
+   --------------------------------------------------------------------- */
 
+%! metta_cache_dir(-Dir) is det.
+%
+%  Return `<temp>/metta_cache/` (ensuring forward slashes).
+%  Priority environment variables: TMPDIR, TMP, TEMP, TEMPDIR.
+%  Fallback: `C:/Windows/Temp` on Windows, `/tmp` otherwise.
+%
+metta_cache_dir(Dir) :-
+    (   getenv('TMPDIR', TempDir)
+    ;   getenv('TMP', TempDir)
+    ;   getenv('TEMP', TempDir)
+    ;   getenv('TEMPDIR', TempDir)
+    ;  (current_prolog_flag(windows, true)
+    ->  TempDir = 'C:/Windows/Temp'
+    ;   TempDir = '/tmp'
+    )),
+    atomic_list_concat([TempDir, '/metta_cache/'], Dir).
+
+%! fr_slashes(+Pairs, +In, -Out) is det.
+%
+%  Applies each `Find-Replace` pair in `Pairs` to the atom/string `In`,
+%  producing `Out`. For each pair, *all* occurrences of `Find` get replaced
+%  with `Replace`.
+%
+%  Example:
+%  ==
+%  ?- fr_slashes([':'='~',' '='~_'], "File: name", R).
+%  R = "File~ name".
+%  ==
+%
+fr_slashes([], In, In).
+fr_slashes([Find-Replace | Rest], In, Out) :-
+    atomic_list_concat(Pieces, Find, In),
+    atomic_list_concat(Pieces, Replace, Next),
+    fr_slashes(Rest, Next, Out).
 
 
 %!  maybe_write_bf(+TFMakeFile, +BufferFile, +Item) is det.
@@ -2897,7 +2957,7 @@ init_progress_bar(Width) :-
 %   Updates the progress bar based on the `Current` progress out of `Total` with
 %   a specified `Width`.
 %
-%   This predicate checks if the progress bar’s position has changed and redraws it if necessary.
+%   This predicate checks if the progress barâ€™s position has changed and redraws it if necessary.
 %   It then calculates the filled and remaining sections and displays the progress visually.
 %
 %   @arg Current The current progress value.
