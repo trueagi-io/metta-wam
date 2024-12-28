@@ -872,17 +872,17 @@ cont_sexpr_from_char(_EndChar, Stream, '(', Item) :-
     read_list(')', Stream, Item).
 
 % If '[', read an S-expression list.
-cont_sexpr_from_char(_EndChar, Stream, '[', Item) :- prolog_term_char('['),
+cont_sexpr_from_char(_EndChar, Stream, '[', Item) :- prolog_term_start('['),
     read_list(']', Stream, List),
     univ_list_to_item(List,Item).
 
 % If '[', read an S-expression list.
-cont_sexpr_from_char(_EndChar, Stream, '{', Item) :- prolog_term_char('{'),
+cont_sexpr_from_char(_EndChar, Stream, '{', Item) :- prolog_term_start('{'),
     read_list('}', Stream, List),
     univ_list_to_item(List,Item).
 
-% If '[', '{', etc. - using paren_pair
-cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair(Char, EndOfParen, Functor),
+% If '[', '{', etc. - using paren_pair_functor
+cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair_functor(Char, EndOfParen, Functor),
     read_list(EndOfParen, Stream, It3m),
     Item = [Functor, It3m].
 
@@ -892,7 +892,7 @@ cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
     univ_maybe_var(Item, Subr).
 
 % Unexpected start character
-cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair(_, Char, _),
+cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair_functor(_, Char, _),
     nb_current('$file_src_depth', 0),
     sformat(Reason, "Unexpected start character: '~w'", [Char]),
     throw_stream_error(Stream, syntax_error(unexpected_char(Char), Reason)),
@@ -932,7 +932,7 @@ cont_sexpr_from_char(EndChar, Stream, Char, Item) :-
 
 univ_list_to_item([H|List],Item):- is_list(List),atom(H),!,compound_name_arguments(Item,H,List).
 univ_list_to_item([H|List],Item):- is_list(List), \+ atom(H),!,Item=..['holds',H|List].
-univ_list_to_item(Else,Item):- prolog_term_char(S), paren_pair(S,_,Functor), !, Item = [Functor,Else].
+univ_list_to_item(Else,Item):- prolog_term_start(S), paren_pair_functor(S,_,Functor), !, Item = [Functor,Else].
 univ_list_to_item(Else,Item):- Item = ['???',Else].
 
 can_do_level(0).
