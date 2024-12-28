@@ -1,6 +1,109 @@
-;		WORK IN PROGRESS, Will start but not play yet!
+;		WORK IN PROGRESS!!, Will start but not play yet!
 
-;        #(convert_to_metta_file dbd $10000 dbd.pl dbd.metta)
+;   Mettalog Project 2024
+
+;   Function:  Play chess (human vs MeTTa program) using a fairly simple "greedy" approach
+;               with moves that do not project possible boards beyond the present board.
+;   Input:     User's moves from console.
+;   Output:    Chess board displayed to console with computer's move.
+;
+;**********************************************************************
+; * Redistribution and use in source and binary forms, with or without
+; * modification, are permitted provided that the following conditions
+; * are met:
+; *
+; * 1. Redistributions of source code must retain the above copyright
+; *    notice, this list of conditions and the following disclaimer.
+; *
+; * 2. Redistributions in binary form must reproduce the above copyright
+; *    notice, this list of conditions and the following disclaimer in the
+; *    documentation and/or other materials provided with the
+; *    distribution.
+; *
+; * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+; * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+; * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+; * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+; * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+; * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+; * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+; * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+; * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+; * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+; * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; * POSSIBILITY OF SUCH DAMAGE.
+;**********************************************************************
+; 
+
+;*******************************************************
+; Global type definitions
+;*******************************************************
+(: console-messages (-> Expression Atom))  ; The state is an expression type, stored as an atom.
+(: board-state (-> Expression Atom))       
+
+;*******************************************************
+; General utility functions
+;*******************************************************
+
+; nth function, eg:  (nth 2 (a b c)), answer = b
+(: nth (-> Int Expression Atom)) ; Retrieves the nth element from the board.
+(= (nth $n $list) 
+    (if (== $n 1)
+        (car-atom $list)
+        (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
+
+; Input a list and symbol, then return True if found, else False. Eg:  (contains_symbol (a b c) b) returns True.
+(: contains_symbol (-> Expression Atom Bool))
+(= (contains_symbol $list $sym) 
+    (if (== $list ())
+        False
+        (if (== (car-atom $list) $sym)
+            True
+            (contains_symbol (cdr-atom $list) $sym))))
+
+;(= (concat_lists #(Cons Nil $A) $B)  
+;  (concat_lists $A $B))
+;(= (concat_lists #(Cons #(Cons $A $B) $C) #(Cons $A $D))  
+;  (concat_lists 
+;    #(Cons $B $C) $D))
+;
+;
+;#( = #(nth 0 ($A 
+;(= (nth $A #(Cons $B $C) $B)  
+;  (= $A  1))
+;(= (nth $A #(Cons $B $C) $D) (is $E (- $A 1)) (nth $E $C $D))
+;
+;
+;(= (nth1 $Index $_ $_) (< $Index 1) (fail) (set-det))
+;; /* copied from dbd2 */
+;(= (nth1 1 #(Cons $Element $Rest) $Element)  
+;  (set-det))
+;(= (nth1 $I #(Cons $First $List1) $Element) (is $Index (- $I 1)) (nth1 $Index $List1 $Element))
+;
+;
+;#( = #(removelists () $A $A) True )
+;; /* apparently swipl used: nth1(A, B, C):-integer(A), !, D is A-1, nth0_det(D, B, C). nth1(A, B, C):-var(A), ;!, nth_gen(B, C, 1, A). */
+;(= (removelists #(Cons $A $B) #(Cons $A $C) $D)  
+;  (removelists $B $C $D))
+;(= (removelists $A #(Cons $B $C) #(Cons $B $D))  
+;  (removelists $A $C $D))
+;
+;
+;(= (len Nil 0)  
+;  (set-det))
+;(= (len #( :: ($A) ) 1) (atomic $A) (set-det))
+;(= (len #(Cons $A $B) $C) (atomic $A) (len $B $D) (is $C (+ $D 1)))
+;
+;
+;(= (returnrandominteger $A $B)  
+;  (is $A 
+;    (+ 
+;      (random $B) 1)))
+;
+
+;*******************************************************
+; Initialization 
+;*******************************************************
 
 (piece k) 
 (piece q) 
@@ -32,19 +135,19 @@
 (cord 7) 
 (cord 8) 
 
-; Type definitions
-(: console-messages (-> Expression Atom))  ; The state is an expression type, stored as an atom.
-(: board-state (-> Expression Atom))       ; The state is an expression type, stored as an atom.
-
-; Initialization 
 !(add-atom &self (console-messages (initializing)))
 
-; Create the chess board atom with decisions based on console messages which contains game state. 
+;*******************************************************
+; Commands.  The game is executed using the following commands.
+;*******************************************************
+
+; This command must be invoked at startup with "!(chess)"
 (= (chess) 
   (match &self (console-messages $msg)
     ; if first invocation, just create board
-    (if (==  (initializing)   $msg) ; then
-        (; remove the 'initializing' message
+    (if (==  (initializing)   $msg) ; then  
+      (progn (
+        ; remove the 'initializing' message
         (remove-atom &self (console-messages $msg))
         ; create the board for the first time
         (add-atom &self 
@@ -60,11 +163,11 @@
         ; indicate game has passed the initializing state
         (add-atom &self (console-messages (started)))
         ; display welcome messages and board
-        (welcome)
-        )
+        (welcome)))
     ; elif there has already been one game played
     (if (==  (started)   $msg) ; then
-        (; remove the old chess board
+      (progn (
+        ; remove the old chess board
         (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
         ; re-create a new board 
         (add-atom &self           
@@ -80,93 +183,15 @@
         ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
         ;
         ; display welcome messages and board
-        (welcome)
-        )
+        (welcome)))
     (; else if
         empty))))) 
 
-(= (welcome) 
-  ; write welcome banner to console and call display_board to print the pieces
- ((println! " ") (println! " ") (println! " ") (println! " ")
-  (println! (format-args 'M E T T A    G R E E D Y   C H E S S' (empty)))
-  (println! " ")
-  (println! (format-args 'This program is a MeTTa exercise which takes the best immediate move without planning far ahead.'
-            (empty)))
-  (display_board (match &self (board-state $board) $board))
-  (println! (format-args '******* I N S T R U C T I O N S ********' (empty)))
-  (println! " ")
-  (println! (format-args '- Your pieces are marked with an asterisk.' (empty)))
-  (println! (format-args '- Please take note of the following simple commands:' (empty)))
-  (println! (format-args '-------- C o m m a n d s -----------' (empty)))
-  (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  !(m 1 2 1 3)' (empty)))
-  (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.' (empty)))
-  (println! (format-args '2) Move MeTTa Greedy Chess          ->  !(g)' (empty)))
-  (println! (format-args '3) Reset                            ->  !(r)' (empty)))
-  (println! (format-args '4) Commands List                    ->  !(c)' (empty)))
-  (println! (format-args '5) Display Board                    ->  !(d)' (empty)))
-  (println! (format-args 'You may now enter your move !(m x1 y1 x2 y2) command.' (empty)))))
-
-
-(= (r)  
-  (chess))
-;
-;
-;(= (c) (write '-------- C o m m a n d s -----------') (nl) (write '1) TO MOVE YOUR PIECE USE (example) ->  ?- m;(1,2,1,3).') (nl) (write '   Result:  YOUR piece in 1,2 moved to location 1,3. Standard x/y.') (nl) (write '2) ;TO MOVE DEEP BLUE DUMMY type     ->  ?- g.') (nl) (write '3) To reset, type                   ->  ?- r.') (nl) ;(write '4) Display commands, type           ->  ?- c.') (nl) (write '5) Display current board type       ->  ?;- d.') (nl) (write 'ALL COMMANDS MUST BE TERMINATED WITH A PERIOD!') (nl))
-;
-;
-;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
+; The move command moves the human player's piece.
+(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
 ;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
 ;
-;
-;(= (d) (board $A) (b $A) (set-det))
-;
-;
-(: identify_piece (-> list string))
-(= (identify_piece $p)
-   (if (== (size-atom $p) 2)
-       "  "
-       "*k"
-   )
-)
 
-; Input the board ($brd), output a list of board with an identifier for each piece, eg., human king is "*k."
-(: display_filter (-> list list))
-(= (display_filter $brd)
-    (if (== (size-atom $brd) 1)
-      ; if on last piece
-       ((identify_piece $brd))
-      ; otherwise convert all pieces to shorter description for display.
-       (let $i (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $i))))
-
-(= (display_board $board) 
-  (
-   (let $a (display_filter     $board ) ())
-  
-   (println! (format-args "\n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      | {} | {} | {} | {} | {} | {} | {} | {} |\n
-      ---------------------------------------- \n
-      " 
-      ;("r " "n " "b " "  " "  " "*b"))
-      $a)
-   ) ; Formats the board as a 3x3 grid for display.
-  )
-)
-
-;
 ;
 ;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
 ;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
@@ -175,6 +200,120 @@
 ;(= (g) (board $A) (movetoposition $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
 ;(= (g) (board $A) (takehighestopenpawn $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
 ;(= (g) (board $A) (random_move_empty_sq $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (printmove $C $D $A) (set-det))
+;
+
+; The reset command will start the game over.
+(= (reset)  
+  (chess))
+
+; The "commands" command just lists the available commands.
+(= (commands) 
+  (progn
+    (println! " ") (println! " ") (println! " ") (println! " ")
+    (println! (format-args '-------- C o m m a n d s -----------' ()))
+    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  m 1 2 1 3' ()))
+    (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
+    (println! (format-args '2) Move MeTTa Greedy Chess          ->  g' ()))
+    (println! (format-args '3) Reset                            ->  reset' ()))
+    (println! (format-args '4) Commands List                    ->  commands' ()))
+    (println! (format-args '5) Display Board                    ->  display' ()))
+    (println! (format-args 'You may now enter your move m x1 y1 x2 y2 command.' ()))))
+;
+
+; The display command shows the present board.
+(= (display) (display_board (match &self (board-state $board) $board)))
+
+;*******************************************************
+; Code invoked by the basic commands (above) or elsewhere follow
+;*******************************************************
+
+; Get next move
+;(: get-player-move (-> Expression)) ; Function to get a move from the player.
+;(= (get-player-move)
+;   (progn 
+;    (
+;     (flush-output!)
+;     (let $char get-single-char! $char) ; Convert the input character to an integer (1-9).
+;     )))
+(= (get-player-move)  (progn ((flush-output) (get-single-char!) )))
+
+ write welcome banner to console and call display_board to print the pieces
+(= (welcome)  
+ (progn
+   ((println! " ") (println! " ") (println! " ") (println! " ")
+    (println! (format-args 'M E T T A    G R E E D Y   C H E S S' ()))
+    (println! " ")
+    (println! (format-args 'This program is a MeTTa exercise which takes the best immediate move without planning far ahead.'
+              ()))
+    (display_board (match &self (board-state $board) $board))
+    (println! (format-args '******* I N S T R U C T I O N S ********' ()))
+    (println! " ")
+    (println! (format-args '- Your pieces are marked with an asterisk.' ()))
+    (println! (format-args '- Please take note of the following simple commands:' ()))
+    (println! (format-args '-------- C o m m a n d s -----------' ()))
+    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  m 1 2 1 3' ()))
+    (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
+    (println! (format-args '2) Move MeTTa Greedy Chess          ->  g' ()))
+    (println! (format-args '3) Reset                            ->  reset' ()))
+    (println! (format-args '4) Commands List                    ->  commands' ()))
+    (println! (format-args '5) Display Board                    ->  display' ()))
+    (println! (format-args 'You may now enter your move m x1 y1 x2 y2 command.' ()))
+    )))
+
+; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
+; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
+(: identify_piece (-> Expression Atom))
+(= (identify_piece $p)
+   (if (== (size-atom $p) 2)
+      "  "
+      (let*
+        ( ; assign either * or " " 
+          ($player (if (== (contains_symbol $p s) True) * " "))
+          ($piece (nth 4 $p))
+        )
+        (format-args "{}{}" ($player $piece))
+      )
+    )
+)
+
+; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
+(: display_filter (-> Expression Atom))
+(= (display_filter $board)
+    (if (== (size-atom $board) 1)
+      ; if on last piece
+       ((identify_piece (car-atom $board)))
+      ; otherwise convert all pieces to shorter description for display.
+       (let $rest (display_filter (cdr-atom $board))  (cons-atom (identify_piece (car-atom $board)) $rest))))
+
+(= (display_board $board) 
+  (
+   (let $a (display_filter     $board ) 
+          (println! (format-args "\n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+      ------------------------------------------------- \n
+      " 
+      
+          $a)))))
+
+
+!(get-player-move)
+;!(chess)
+;
+
 ;
 ;
 ;(= (kingnotincheck $A) (xy_box $B #( :: (g k) ) $A) (not (take_dest $B s $A)))
@@ -542,48 +681,3 @@
 ;
 ;
 ;#( = #(concat_lists () ()) True )
-;; /************* USER ROUTINES ************/
-;(= (concat_lists #(Cons Nil $A) $B)  
-;  (concat_lists $A $B))
-;(= (concat_lists #(Cons #(Cons $A $B) $C) #(Cons $A $D))  
-;  (concat_lists 
-;    #(Cons $B $C) $D))
-;
-;
-;#( = #(nth 0 ($A 
-;(= (nth $A #(Cons $B $C) $B)  
-;  (= $A  1))
-;(= (nth $A #(Cons $B $C) $D) (is $E (- $A 1)) (nth $E $C $D))
-;
-;
-;(= (nth1 $Index $_ $_) (< $Index 1) (fail) (set-det))
-;; /* copied from dbd2 */
-;(= (nth1 1 #(Cons $Element $Rest) $Element)  
-;  (set-det))
-;(= (nth1 $I #(Cons $First $List1) $Element) (is $Index (- $I 1)) (nth1 $Index $List1 $Element))
-;
-;
-;#( = #(removelists () $A $A) True )
-;; /* apparently swipl used: nth1(A, B, C):-integer(A), !, D is A-1, nth0_det(D, B, C). nth1(A, B, C):-var(A), ;!, nth_gen(B, C, 1, A). */
-;(= (removelists #(Cons $A $B) #(Cons $A $C) $D)  
-;  (removelists $B $C $D))
-;(= (removelists $A #(Cons $B $C) #(Cons $B $D))  
-;  (removelists $A $C $D))
-;
-;
-;(= (len Nil 0)  
-;  (set-det))
-;(= (len #( :: ($A) ) 1) (atomic $A) (set-det))
-;(= (len #(Cons $A $B) $C) (atomic $A) (len $B $D) (is $C (+ $D 1)))
-;
-;
-;(= (returnrandominteger $A $B)  
-;  (is $A 
-;    (+ 
-;      (random $B) 1)))
-;
-;
-
-
-
-!(chess)

@@ -1767,7 +1767,7 @@ find_newest_file_time(Directory, [File | Rest], CurrentNewest, NewestTime) :-
 %
 load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     % Generate buffer file name and check existence
-    atomic(Filename), symbol_concat(Filename, '.buffer~', BufferFile),
+    atomic(Filename), cache_file(Filename, BufferFile),
     exists_file(BufferFile),
     (   % Prefer the buffer file if it is newer and large enough
         use_cache_file(Filename, BufferFile)
@@ -1811,9 +1811,61 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, In) :-
 %
 make_metta_file_buffer(TFMakeFile, FileName, InStream) :-
     % Generate buffer file name with `.buffer~` extension.
-    symbol_concat(FileName, '.buffer~', BufferFile),
+    cache_file(FileName, BufferFile),
     % Process expressions from the input stream with optional buffering.
     process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
+
+
+:- use_module(library(filesex)).  % for make_directory_path/1
+:- use_module(library(system)).   % for absolute_file_name/3
+
+
+% cache_file(+Original, -CachedFile)
+%  Example: "H:/foo/bar/my.metta"
+%     => "C:/Users/<user>/AppData/Local/Temp/metta_cache/h/foo/bar/my.metta.buffer~"
+%  Ensures the directories exist so it's ready to write to.
+cache_file(Original, CachedFile) :-
+    % 1) Get the system temp directory from the environment (fallback if missing).
+    (   getenv('TEMP', TempDir)
+    ->  true
+    ;   TempDir = 'C:/Temp'
+    ),
+
+    % 2) Parse the drive letter ("H:") and the relative path ("foo/bar/my.metta").
+    parse_drive_path(Original, DriveLetter, RelPath0),
+
+    % 3) Normalize slashes (replace any backslashes with forward slashes).
+    normalize_slashes(RelPath0, RelPath),
+
+    % 4) Build the new path: <TempDir>/metta_cache/<driveLetter>/<foo/bar/my.metta>.buffer~
+    atomic_list_concat([TempDir, 'metta_cache', DriveLetter, RelPath], '/', NoExt),
+    atom_concat(NoExt, '.buffer~', CachedFile),
+
+    % 5) Make sure the directories exist before returning.
+    file_directory_name(CachedFile, Dir),
+    make_directory_path(Dir).
+
+%  E.g. "H:/foo/bar/my.metta" => DriveLetter = h, RelPath = "foo/bar/my.metta".
+parse_drive_path(Path, DriveLetter, RelPath) :-
+    % First character is the drive letter (e.g. "H"), second is ":"
+    sub_atom(Path, 0, 1, _, Drive),
+    sub_atom(Path, 1, 1, _, ':'),
+    downcase_atom(Drive, DriveLetter),
+    % Skip the drive-letter portion
+    sub_atom(Path, 2, _, 0, AfterDrive),
+    % If the next character is '/', remove it to avoid an empty segment
+    ( sub_atom(AfterDrive, 0, 1, _, '/')
+    -> sub_atom(AfterDrive, 1, _, 0, RelPath)
+    ;  RelPath = AfterDrive
+    ).
+
+%% normalize_slashes(+In, -Out)
+%  Convert any backslashes in In to forward slashes in Out.
+normalize_slashes(In, Out) :-
+    atomic_list_concat(Segments, '\\', In),
+    atomic_list_concat(Segments, '/', Out).
+
+
 
 %!  maybe_write_bf(+TFMakeFile, +BufferFile, +Item) is det.
 %
