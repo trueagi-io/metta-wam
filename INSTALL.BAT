@@ -1,9 +1,15 @@
 @echo off
 setlocal EnableExtensions
 
-:: 1. Identify this script's directory (where mettalog.cmd is).
-set "SCRIPT_DIR=%~dp0"
+:: ----------------------------------------------------------------
+:: Set console to bright white on black initially
+:: ----------------------------------------------------------------
+color F0
 
+:: ----------------------------------------------------------------
+:: 1. Identify this script's directory (where mettalog.cmd is).
+:: ----------------------------------------------------------------
+set "SCRIPT_DIR=%~dp0"
 
 REM ----------------------------------------------------------------
 REM 1. Get domain & user
@@ -21,9 +27,11 @@ REM ----------------------------------------------------------------
 >nul 2>&1 net session
 if %errorlevel% NEQ 0 (
     echo(
+    call :ColorError
     echo ================================================
     echo  This script must be run with admin privileges.
     echo ================================================
+    call :ColorNormal
     echo  1^) Right-click the file and choose "Run as administrator", OR
     echo  2^) Open an elevated Command Prompt ^(Run as administrator^) and
     echo      navigate to this script's folder, then run:
@@ -54,15 +62,19 @@ if %errorlevel% NEQ 0 (
 
 :NONADMIN_FOUND
     if defined UNC (
+        call :ColorWarn
         echo     Found UNC for drive %DRV%: %UNC%
+        call :ColorNormal
         echo(
         echo     To map this drive in the elevated session
-		echo.
+        echo.
         echo         net use %DRV% "%UNC%"
-		echo         %DRV%
-	    echo         cd %SCRIPT_DIR%
+        echo         %DRV%
+        echo         cd %SCRIPT_DIR%
     ) else (
+        call :ColorWarn
         echo     Could not detect a UNC path automatically.
+        call :ColorNormal
         net use %DRV%
     )
 
@@ -71,6 +83,7 @@ if %errorlevel% NEQ 0 (
     echo mapped drive letter.
     echo ---------------------------------------------------------------
     pause
+    call :ResetColors
     exit /b 1
 )
 
@@ -95,32 +108,40 @@ for /f "skip=4 tokens=1,2,3,*" %%A in ('net use') do (
 
 :ADMIN_MAPPING_FOUND
 if defined UNC (
+    call :ColorWarn
     echo Found UNC path for %DRV%: %UNC%
+    call :ColorNormal
     echo Attempting to ensure this drive is mapped in the admin session...
     net use %DRV% "%UNC%"  >nul 2>&1
     if %errorlevel% NEQ 0 (
         echo(
-        echo Failed to map drive %DRV% to %UNC% with user  .
+        call :ColorError
+        echo Failed to map drive %DRV% to %UNC% with user.
+        call :ColorNormal
         echo Ensure the credentials are correct and try again manually:
         echo     net use %DRV% "%UNC%"
-	    echo     %DRV%
-		echo     cd %SCRIPT_DIR%
+        echo     %DRV%
+        echo     cd %SCRIPT_DIR%
         pause
+        call :ResetColors
         exit /b 1
     )
     echo Drive %DRV% mapped successfully to %UNC% for admin session.
 ) else (
     echo No UNC mapping found for drive %DRV%.
-    echo Attempting to map it to \\server\share with user  ...
+    echo Attempting to map it to \\server\share with user ...
     net use >nul 2>&1
     if %errorlevel% NEQ 0 (
         echo(
-        echo Failed to map drive %DRV% to \\server\share with user  .
+        call :ColorError
+        echo Failed to map drive %DRV% to \\server\share with user.
+        call :ColorNormal
         echo Ensure the share path and credentials are correct and try again manually:
-        echo     net use %DRV% 
-		echo     %DRV%
-		echo     cd %SCRIPT_DIR%
+        echo     net use %DRV%
+        echo     %DRV%
+        echo     cd %SCRIPT_DIR%
         pause
+        call :ResetColors
         exit /b 1
     )
     echo Drive %DRV% successfully mapped to \\server\share for admin session.
@@ -202,7 +223,9 @@ set "REGFILE=%SystemRoot%\temp\metta-association.reg"
 reg import "%REGFILE%"
 if errorlevel 1 (
     @echo.
-    @echo Registry import failed. Make sure you are running as Administrator.
+    call :ColorError
+    echo Registry import failed. Make sure you are running as Administrator.
+    call :ColorNormal
     goto :EOF
 )
 
@@ -226,4 +249,37 @@ endlocal
 
 pause
 :EOF
+call :ResetColors
+exit /b
+
+
+:: ----------------------------------------------------------------
+:: ColorError: Switch to bright red text on black background.
+:: ----------------------------------------------------------------
+:ColorError
+color C0
+goto :EOFColor
+
+:: ----------------------------------------------------------------
+:: ColorWarn: Switch to bright yellow text on black background.
+:: ----------------------------------------------------------------
+:ColorWarn
+color E0
+goto :EOFColor
+
+:: ----------------------------------------------------------------
+:: ColorNormal: Switch back to bright white text on black background.
+:: ----------------------------------------------------------------
+:ColorNormal
+color F0
+goto :EOFColor
+
+:: ----------------------------------------------------------------
+:: ResetColors: Return console to the typical default (white on black).
+:: ----------------------------------------------------------------
+:ResetColors
+color 07
+goto :EOFColor
+
+:EOFColor
 
