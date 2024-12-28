@@ -366,7 +366,7 @@ compile_for_exec1(AsBodyFn, Converted) :-
    %ast_to_prolog(no_caller,[],[[native(trace)]|NextBody],NextBodyC).
    ast_to_prolog(no_caller,[],NextBody,NextBodyC))).
 
-arrange_lazy_args(N,x(_,Y),N-Y).
+arrange_lazy_args(N,x(E,Y),N-x(E,Y)).
 
 get_operator_typedef_props(X,FnName,Largs,Types,RetType) :-
    get_operator_typedef(X,FnName,Largs,Types,RetType),!.
@@ -510,7 +510,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyOnlyRet,AsBodyFn,NextBody),
 
 
@@ -987,7 +986,7 @@ compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
   compile_maplist_p2(P2,Args,NewArgs,PreCode),
   append([[native(P2),Var,Res]],PreCode,TheCode).
 
-var_prop_lookup(_,[],eager).
+var_prop_lookup(_,[],x(doeval,eager)).
 var_prop_lookup(X,[H-R|T],S) :-
    X == H,S=R;  % Test if X and H are the same variable
    var_prop_lookup(X,T,S).  % Recursively check the tail of the list
@@ -996,7 +995,7 @@ var_prop_lookup(X,[H-R|T],S) :-
 
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
-   var_prop_lookup(Convert,LazyVars,L),
+   var_prop_lookup(Convert,LazyVars,x(_E,L)),
    lazy_impedance_match(L,ResultLazy,Convert,[],RetResult,Converted).
 
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
@@ -1159,9 +1158,9 @@ lazy_impedance_match(eager,lazy,RetResult0,Converted0,RetResult,Converted) :-
 arg_eval_props('Number',x(doeval,eager)) :- !.
 arg_eval_props('Bool',x(doeval,eager)) :- !.
 arg_eval_props('LazyBool',x(doeval,lazy)) :- !.
-arg_eval_props('Any',x(noeval,eager)) :- !.
+arg_eval_props('Any',x(doeval,eager)) :- !.
 arg_eval_props('Atom',x(noeval,lazy)) :- !.
-arg_eval_props('Expression',x(doeval,lazy)) :- !.
+arg_eval_props('Expression',x(noeval,lazy)) :- !.
 arg_eval_props(_,x(doeval,eager)).
 
 do_arg_eval(_,_,Arg,x(noeval,_),Arg,[]).
