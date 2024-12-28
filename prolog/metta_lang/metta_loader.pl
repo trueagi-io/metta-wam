@@ -3686,7 +3686,7 @@ load_corelib_file :- really_using_corelib_file, !.
 load_corelib_file :-
               % Load the standard Metta logic file from the source directory.
               is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'), !,
-              assertion(metta_atom('&corelib', [':', 'Any', 'Type'])),
+              must_det_lls(metta_atom('&corelib', [':', 'Any', 'Type'])),
               really_use_corelib_file(Dir, 'corelib.metta').
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 

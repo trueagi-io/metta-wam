@@ -749,7 +749,7 @@ src_vars(V,I):- %ignore(guess_metta_vars(V)),
               guess_varnames(II,I),
               nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
-pre_guess_varnames(V,I):- functor(V,F,A),functor(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
+pre_guess_varnames(V,I):- compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
@@ -949,11 +949,11 @@ pp_sexi_l([F | V]) :-
     % If `F` is a symbol and `V` is a list, format using `write_mobj/2`.
     symbol(F), is_list(V), write_mobj(F, V), !.
 pp_sexi_l([H | T]) :- T == [], !,  % If `T` is an empty list, print `H` in parentheses.
-    portray_compound_type(list,L,_M,R),
+    compound_type_s_m_e(list,L,_M,R),
     write(L), pp_sex_nc(H), write(R).
 pp_sexi_l([H, H2| T]) :- T ==[], !,
     % If `V` has two elements, print `H` followed by `H2` in S-expression format.
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     write(L), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(M,[H2])),
     write(R), !.
 pp_sexi_l([H, S]) :-
@@ -972,7 +972,7 @@ pp_sexi_l([H | T]):- pp_sexi_lc([H | T]).
 
 pp_sexi_lc([H | T]) :-
     % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M, T), write(R), !.
 pp_sexi_lc([H | T]) :-
     % If `H` is a control structure and indents are enabled, apply proper indentation.
@@ -982,7 +982,7 @@ pp_sexi_lc([H | T]) :-
 pp_sexi_lc([H | T]) :-
     % If `T` has 2 or fewer elements, format as S-expression or apply indentation based on length.
     is_list(T), length(T, Args), Args =< 2, fail,
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     wots(SS, ((with_indents(false, (write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M,T), write(R)))))),
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
@@ -1117,7 +1117,7 @@ pp_sexi_c(V) :- print_compounds_special,
     !, compound_name_arguments(V,Functor,Args),
     always_dash_functor(Functor, DFunctor),
     (symbol_glyph(Functor) -> ExtraSpace = ' ' ; ExtraSpace = ''),
-    portray_compound_type(cmpd,L,M,R),
+    compound_type_s_m_e(cmpd,L,M,R),
     write(L), write(ExtraSpace), write_args_as_sexpression(M, [DFunctor|Args]), write(ExtraSpace), write(R), !.
     %maybe_indent_in(Lvl),write('{'), write_args_as_sexpression([F|Args]), write('}'),maybe_indent_out(Lvl).
 
@@ -1643,24 +1643,16 @@ print_sexpr(Expr, Indent) :- is_ftVar(Expr), !,
     pp_sex(Expr).
 
 % Handling for cons lists
-print_sexpr(Expr, Indent) :- is_lcons(Expr), Expr = [H|T],
+print_sexpr(Expr, Indent) :- is_lcons(Expr),
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent), write('('),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    print_rest_elements(T, NextIndent),
-    write(')'),
+    print_compound_type(Indent, list, Expr),
     (Indent == 0 -> nl; true).
+
 % If Expr is non cons compound
 print_sexpr(Expr, Indent) :- compound(Expr),
     once(conjuncts_to_list(Expr,List)), [Expr]\=@=List, is_list(List),
-    List = [H|T],
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent), write('{, '),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    print_rest_elements(T, NextIndent),
-    write('}'),
+    print_compound_type(Indent, cmpd, List),
     (Indent == 0 -> nl; true).
 
 print_sexpr((IF->THEN;ELSE), Indent):- !,
@@ -1673,6 +1665,7 @@ print_sexpr((IF*->THEN), Indent):- !,
   print_sexpr(if_then(IF,THEN), Indent).
 print_sexpr((THEN;ELSE), Indent):- !,
     print_sexpr('or'(THEN,ELSE), Indent).
+
 print_sexpr((Expr :- Body), Indent):- Body==true, !,
   print_sexpr((Expr), Indent).
 print_sexpr((M:Expr :- Body), Indent):- atom(M), \+ number(Expr), print_module(M,Indent),!, print_sexpr((Expr :- Body), Indent).
@@ -1687,19 +1680,11 @@ print_sexpr((Expr :- Body), Indent):-
 
 % If Expr is non cons compound
 print_sexpr(Expr, Indent) :- compound(Expr),
-    compound_name_arguments(Expr,H,T),
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent),
-    portray_compound_type(cmpd,L,M,R),
-    write(L),
-    (symbol_glyph(H)->write(" ");true),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    write(M),
-    print_rest_elements(T, NextIndent),
-    (symbol_glyph(H)->write(" ");true),
-    write(R),
+    compound_name_arguments(Expr, H, T),
+    print_compound_type(Indent, cmpd, [H|T]),
     (Indent == 0 -> nl; true).
+
 % If Expr is not a cons cell (Print a single element)
 print_sexpr(Expr, Indent) :-
     print_indent(Indent),
@@ -1708,23 +1693,46 @@ print_sexpr(Expr, Indent) :-
 print_module(M, _Indent):- M == user,!,nl.
 print_module(M, _Indent):- write('&'), print_sexpr(M, 0),write(' :\n'),!.
 
+last_item(Item,Item):- \+ is_lcons(Item),!.
+last_item([_|T],Last):- T \== [], !, last_item(T,Last).
+last_item([Item],Item).
 
+print_compound_type(Indent, Type, [H|T] ):-
+    last_item([H|T],Last),
+    compound_type_s_m_e(Type,L,M,R),
+    write(L),
+    (symbol_glyph(H)->write(" ");true),
+    NextIndent is Indent + 1,
+    print_sexpr(H, 0),
+    print_rest_elements(M, T, NextIndent),
+    (symbol_glyph(Last)->write(" ");true),
+    write(R),!.
 
 symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
-portray_compound_type(list,'(','@',')').
-portray_compound_type(cmpd,"#(","|",")").
-%portray_compound_type(cmpd,"{","|","}").
-%portray_compound_type(cmpd,"(","@",")").
+
+compound_type_s_m_e(list,'(','.',')').
+compound_type_s_m_e(cmpd,S,E,M):- prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
+compound_type_s_m_e(ocmpd,'#(','.',')').
+compound_type_s_m_e(ocmpd,'[','|',']').
+compound_type_s_m_e(ocmpd,'{','|','}').
+compound_type_s_m_e(ocmpd,'(','@',')').
+
+prolog_term_start('{').
+
+paren_pair_functor('(',')',_).
+paren_pair_functor('{','}','{...}').
+paren_pair_functor('[',']','[...]').
+
 
 % Print the rest of the elements in the list, ensuring spacing
-print_rest_elements(T, _) :- T==[], !.
-print_rest_elements(T, Indent) :- \+ is_lcons(T), !, write(' | '), print_sexpr(T, Indent).
-print_rest_elements([H|T], Indent) :-
+print_rest_elements(_,T, _) :- T==[], !.
+print_rest_elements(M, T, Indent) :- \+ is_lcons(T), !, write(' '), write(M), write(' '), print_sexpr(T, Indent).
+print_rest_elements(M, [H|T], Indent) :-
     write(' '),  % Space before each element after the first
     print_sexpr(H, Indent),
     (is_lcons(H) -> NextIndent is Indent + 0 ; NextIndent is Indent + 0),
-    print_rest_elements(T, NextIndent).
+    print_rest_elements(M, T, NextIndent).
 
 % Helper predicate to print indentation spaces
 
@@ -1753,7 +1761,7 @@ print_indent_now(_).
             min_indent(Indent), write("("),
             NextIndent is Indent + 4,
             print_sexpr(Lvl2, H, NextIndent),
-            print_rest_elements(Lvl2, T, 0),
+            print_rest_elements(M, Lvl2, T, 0),
             write("("),
             (Indent == 0 -> nl; true)))).
 %:- halt.

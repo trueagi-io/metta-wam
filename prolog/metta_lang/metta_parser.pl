@@ -871,10 +871,25 @@ cont_sexpr_from_char(_EndChar, _Stream, end_of_file, end_of_file).
 cont_sexpr_from_char(_EndChar, Stream, '(', Item) :-
     read_list(')', Stream, Item).
 
+% If '[', read an S-expression list.
+cont_sexpr_from_char(_EndChar, Stream, '[', Item) :- prolog_term_char('['),
+    read_list(']', Stream, List),
+    univ_list_to_item(List,Item).
+
+% If '[', read an S-expression list.
+cont_sexpr_from_char(_EndChar, Stream, '{', Item) :- prolog_term_char('{'),
+    read_list('}', Stream, List),
+    univ_list_to_item(List,Item).
+
 % If '[', '{', etc. - using paren_pair
 cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair(Char, EndOfParen, Functor),
     read_list(EndOfParen, Stream, It3m),
     Item = [Functor, It3m].
+
+% If '#' followed by '(', read SExpr as Prolog Expression
+cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
+    cont_sexpr_once(EndChar, Stream, Subr),
+    univ_maybe_var(Item, Subr).
 
 % Unexpected start character
 cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair(_, Char, _),
@@ -891,15 +906,11 @@ cont_sexpr_from_char(_EndChar, Stream, '"', Item) :-
 % If '!' followed by '(', '#', or file depth 0, read a directive to be executed
 cont_sexpr_from_char(EndChar, Stream, '!', Item) :-
     (  peek_char(Stream, '(')
+     ; peek_char(Stream, '[')
      ; peek_char(Stream, '#')
      ; nb_current('$file_src_depth', 0)),
     cont_sexpr_once(EndChar, Stream, Subr),
     Item = exec(Subr).
-
-% If '#' followed by '(', read SExpr as Prolog Expression
-cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
-    cont_sexpr_once(EndChar, Stream, Subr),
-    univ_maybe_var(Item, Subr).
 
 % If '#' followed by '{', read Prolog syntax until '}' and a period
 cont_sexpr_from_char(_EndChar, Stream, '#', Item) :- peek_char(Stream, '{'),
@@ -919,12 +930,13 @@ cont_sexpr_from_char(EndChar, Stream, Char, Item) :-
     read_symbolic(EndChar, Stream, Char, Item).
 
 
+univ_list_to_item([H|List],Item):- is_list(List),atom(H),!,compound_name_arguments(Item,H,List).
+univ_list_to_item([H|List],Item):- is_list(List), \+ atom(H),!,Item=..['holds',H|List].
+univ_list_to_item(Else,Item):- prolog_term_char(S), paren_pair(S,_,Functor), !, Item = [Functor,Else].
+univ_list_to_item(Else,Item):- Item = ['???',Else].
+
 can_do_level(0).
 can_do_level(_).
-
-paren_pair('(',')',_).
-paren_pair('{','}','{...}').
-paren_pair('[',']','[...]').
 
 % #( : user #(load_metta_file &self various_syntaxes.metta) )
 univ_maybe_var(Item,[F|Subr]):- is_list(Subr), atom(F), Item =.. [F|Subr],!.
