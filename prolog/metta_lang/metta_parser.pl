@@ -551,6 +551,14 @@ needs_regeneration(InputFile, _OutputFile) :-
 % Uses the Bash `wc -l` command to count the number of lines in the specified file.
 % @arg FileName The name of the file to count lines in.
 % @arg LineCount The number of lines in the file.
+
+% First clause: Windows (using a manual line-counting approach).
+count_lines_in_file(FileName, LineCount) :- is_win64,  !, % Succeeds if we're on 64-bit Windows
+    open(FileName, read, Stream),
+    read_count_lines(Stream, 0, LineCount),
+    close(Stream).
+
+% Second clause: Unix-like systems (using 'wc -l').
 count_lines_in_file(FileName, LineCount) :-
     process_create(path(wc), ['-l', FileName], [stdout(pipe(Out))]),
     read_line_to_string(Out, Result),  % Read the output from the `wc -l` command
@@ -558,6 +566,12 @@ count_lines_in_file(FileName, LineCount) :-
     split_string(Result, " ", "", [LineStr|_]),  % Extract the line count
     number_string(LineCount, LineStr).  % Convert the string to an integer
 
+% Helper predicate to read lines from a stream until EOF, incrementing a counter.
+read_count_lines(Stream, FinalCount, FinalCount) :- at_end_of_stream(Stream),   !.    % Stop if we've hit the end of the file
+read_count_lines(Stream, CurrentCount, FinalCount) :-
+    read_line_to_codes(Stream, _),   % Read one line (ignore its content here)
+    NextCount is CurrentCount + 1,
+    read_count_lines(Stream, NextCount, FinalCount).
 
 %! report_file_progress(+FileName:atom, +InStream:stream, +TotalLines:int, +StartTime:float) is det.
 %

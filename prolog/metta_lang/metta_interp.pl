@@ -891,7 +891,7 @@ extract_prolog_arity([Arrow|ParamTypes],PrologArity):-
     len_or_unbound(ParamTypes,PrologArity).
 
 add_prolog_code(_KB,AssertZIfNew):-
-  fbug(writeln(AssertZIfNew)),
+  %fbug(assertz_if_new(AssertZIfNew)),
   assertz_if_new(AssertZIfNew).
 gen_interp_stubs(KB,Symb,Def):-
   ignore((is_list(Def),
@@ -2121,6 +2121,7 @@ rtrace_this(_Call):- is_debugging(rtrace),!.
 
 :- abolish(fbug/1).
 fbug(_):- is_compatio,!.
+fbug(_):- \+ option_value('log','true'),!.
 fbug(Info):- real_notrace(in_cmt(color_g_mesg('#2f2f2f',write_src(Info)))).
 example0(_):- fail.
 example1(a). example1(_):- fail.
