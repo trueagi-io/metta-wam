@@ -1110,16 +1110,18 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
    length(Args,Largs),
    LenArgsPlus1 is Largs+1,
    (transpiler_clause_store(Fn,LenArgsPlus1,_,_,_,ArgsLazy0,x(_,RetLazy0),_,_) ->
-      UpToDateArgsLazy=ArgsLazy0,
+      % override whatever the get_operator_typedef_props returns with the signature defined in the library.
+      EvalArgs=ArgsLazy0,
       RetLazy=RetLazy0
    ;
       RetLazy=eager,
       length(UpToDateArgsLazy, Largs),
-      maplist(=(x(doeval,eager)), UpToDateArgsLazy)),
-   % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
-   get_operator_typedef_props(_,Fn,Largs,Types0,_RetType0),
-   maplist(arg_eval_props,Types0,EvalArgs0),
-   maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs),
+      maplist(=(x(doeval,eager)), UpToDateArgsLazy),
+      % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
+      get_operator_typedef_props(_,Fn,Largs,Types0,_RetType0),
+      maplist(arg_eval_props,Types0,EvalArgs0),
+      maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
+   ),
    maplist(do_arg_eval(HeadIs,LazyVars),Args,EvalArgs,NewArgs,NewCodes),
    append(NewCodes,CombinedNewCode),
    Code=[assign,RetResult0,[call(Fn)|NewArgs]],
