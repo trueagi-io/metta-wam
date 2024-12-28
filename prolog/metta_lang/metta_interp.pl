@@ -240,8 +240,12 @@ false_flag:- fail.
 
 is_tRuE(TF):- TF=='True',!.
 is_tRuE(TF):- TF=='true',!.
-is_flag0(What):- nb_current(What,TF),TF\==[],!,is_tRuE(TF).
-is_flag0(What):- current_prolog_flag(What,TF),TF\==[],!,is_tRuE(TF).
+is_fAlSe(TF):- TF=='False',!.
+is_fAlSe(TF):- TF=='false',!.
+is_flag0(What):- nb_current(What,TF),is_tRuE(TF), !.
+is_flag0(What):- nb_current(What,TF),is_fAlSe(TF), !, fail.
+is_flag0(What):- current_prolog_flag(What,TF),is_tRuE(TF),!.
+is_flag0(What):- current_prolog_flag(What,TF),is_fAlSe(TF),!.
 is_flag0(What):-
  symbol_concat('--',What,FWhat),symbol_concat(FWhat,'=true',FWhatTrue),
  symbol_concat('--no-',What,NoWhat),symbol_concat(FWhat,'=false',FWhatFalse),
@@ -250,12 +254,12 @@ is_flag0(What):-
 is_flag0(What,_FWhatTrue,FWhatFalse):-
    current_prolog_flag(os_argv,ArgV),
    member(FWhat,FWhatFalse),member(FWhat,ArgV),!,
-   notrace(catch(set_prolog_flag(What,false),_,true)),
+   %notrace(catch(set_prolog_flag(What,false),_,true)),
    set_option_value(What,'False'),!,fail.
 is_flag0(What,FWhatTrue,_FWhatFalse):-
    current_prolog_flag(os_argv,ArgV),
    member(FWhat,FWhatTrue),member(FWhat,ArgV),!,
-   notrace(catch(set_prolog_flag(What,true),_,true)),
+   %notrace(catch(set_prolog_flag(What,true),_,true)),
    set_option_value(What,'True'),!.
 is_flag0(What,_FWhatTrue,_FWhatFalse):-
   current_prolog_flag(os_argv,ArgV),
@@ -427,7 +431,7 @@ option_value_name_default_type_help('compile', 'false', ['false', 'true', 'full'
 option_value_name_default_type_help('tabling', auto, [auto, true, false], "When to use predicate tabling (memoization)", 'Optimization and Compilation').
 
 % Output and Logging
-option_value_name_default_type_help('log', false, [false, true], "Enable or disable logging", 'Output and Logging').
+option_value_name_default_type_help('log', unset, [false, unset, true], "Act like MeTTaLog more so than H-E (also does generate more logging)", 'Output and Logging').
 all_option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
 all_option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
 option_value_name_default_type_help('output', './', ['./'], "Set the output directory", 'Output and Logging').
