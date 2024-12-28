@@ -1275,8 +1275,14 @@ compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- % dif_functors(HeadIs,Convert),
   Convert = ['let',Var,Value1,Body],!,
+  (fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
   f2p(HeadIs,LazyVars,ResValue1,eager,Value1,CodeForValue1),
-  add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2),
+   (E=doeval ->
+      add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2)
+   ;
+      append(CodeForValue1,[[native(transpile_eval),ResValue1,ResValue1a]],CodeForValue1a),
+      add_assignment(Var,ResValue1a,CodeForValue1a,CodeForValue2)
+   ),
   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
   append(CodeForValue2,BodyCode,Converted).
 
@@ -1289,8 +1295,15 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- %
     append(Code,BodyCode,Converted))).
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
+  (fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
   f2p(HeadIs,LazyVars,ResValue1,eager,Value1,CodeForValue1),
-  add_assignment(Var,ResValue1,CodeForValue1,Code).
+   (E=doeval ->
+      add_assignment(Var,ResValue1,CodeForValue1,Code)
+   ;
+      append(CodeForValue1,[[native(transpile_eval),ResValue1,ResValue1a]],CodeForValue1a),
+      add_assignment(Var,ResValue1a,CodeForValue1a,Code)
+   ).
+  %add_assignment(Var,ResValue1,CodeForValue1,Code).
 
 unnumbervars_clause(Cl,ClU):-
   copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
