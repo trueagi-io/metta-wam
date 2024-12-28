@@ -271,7 +271,7 @@ is_converting:- is_metta_flag('convert').
 
 is_compat:- is_metta_flag('compat').
 
-is_mettalog:- is_win64,!.
+%is_mettalog:- is_win64,!.
 is_mettalog:- is_metta_flag('log').
 
 is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
@@ -289,7 +289,7 @@ is_html:- is_metta_flag('html').
 :- nodebug(metta('trace-on-eval')).
 
 is_compatio:- notrace(is_compatio0).
-is_compatio0:- is_win64,!,fail.
+%is_compatio0:- is_win64,!,fail.
 is_compatio0:- is_testing,!,fail.
 is_compatio0:- is_flag0('compatio').
 is_compatio0:- is_mettalog,!,fail.
@@ -891,14 +891,15 @@ extract_prolog_arity([Arrow|ParamTypes],PrologArity):-
     len_or_unbound(ParamTypes,PrologArity).
 
 add_prolog_code(_KB,AssertZIfNew):-
-  %fbug(assertz_if_new(AssertZIfNew)),
+  fbug(assertz_if_new(AssertZIfNew)),
   assertz_if_new(AssertZIfNew).
 gen_interp_stubs(KB,Symb,Def):-
   ignore((is_list(Def),
  must_det_ll((
      extract_prolog_arity(Def,PrologArity),
+     FunctionArity is PrologArity -1,
        symbol(Symb),
-       symbol_concat('i_',Symb,Tramp),
+       atomic_list_concat(['mc_',FunctionArity,'__',Symb],Tramp),
        length(PrologArgs,PrologArity),
        append(MeTTaArgs,[RetVal],PrologArgs),
        TrampH =.. [Tramp|PrologArgs],
