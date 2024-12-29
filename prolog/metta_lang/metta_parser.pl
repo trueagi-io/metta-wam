@@ -862,7 +862,7 @@ format_time_remaining(Seconds, FormattedTime) :-
 :- dynamic ok_to_stop/1.
 
 process_expressions(FileName,_InStream, _OutStream) :- atomic(FileName), fail,
-    symbol_concat(FileName, '.buffer~', BufferFile),
+    cache_file(FileName, BufferFile),
     exists_file(BufferFile),
     use_cache_file(FileName, BufferFile),
     ensure_loaded(BufferFile), !.
@@ -877,8 +877,8 @@ process_expressions(FileName, InStream, OutStream) :-
     assertz(ok_to_stop(FileName, false)),
 
     % Start a thread to report progress every 30 seconds
-    get_time(StartTime),  % Record the start time
-    thread_create(report_file_progress(FileName, InStream, TotalLines, StartTime), _, [detached(true)]),
+    % get_time(StartTime),  % Record the start time
+    % thread_create(report_file_progress(FileName, InStream, TotalLines, StartTime), _, [detached(true)]),
 
     ignore(stream_property(InStream, file_name(Stem))),  % Get the file name of the stream.
     ignore(Stem = FileName),  % Assign the input file name if no stream file name.

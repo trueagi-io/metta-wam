@@ -1877,13 +1877,13 @@ clean_cache_files(Ending) :-
     (   exists_directory(Dir)
     ->  directory_files(Dir, Items),
         forall(member(Item, Items),
-          ( Item \= '.', Item \= '..',
+          ignore(( Item \= '.', Item \= '..',
             directory_file_path(Dir, Item, FilePath),
             ( (exists_file(FilePath), atom_concat(_,Ending, FilePath))
             -> delete_file(FilePath)
             ; true
             )
-          ))
+          )))
     ;   true
     ).
 
@@ -1906,7 +1906,8 @@ metta_cache_dir(Dir) :-
     ->  TempDir = 'C:/Windows/Temp'
     ;   TempDir = '/tmp'
     )),
-    atomic_list_concat([TempDir, '/metta_cache/'], Dir).
+    absolute_file_name(TempDir,TDir,[access(write),file_type(directory)]),!,
+    directory_file_path(TDir,'metta_cache',Dir).
 
 %! fr_slashes(+Pairs, +In, -Out) is det.
 %
