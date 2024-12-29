@@ -510,7 +510,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %leash(-all),trace,
+      %trace,
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyRet,AsBodyFn,NextBody),
       %notrace,
 
@@ -526,11 +526,10 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       HeadAST=[assign,HResult,[call(FnName)|Args]],
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
-
-
       print_ast( yellow, [=,HeadAST,NextBody]),
+      %leash(+all),
 
-
+      %leash(-all),trace,
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
 
       %format("###########1 ~q",[Converted]),
@@ -815,16 +814,16 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    R=((If2) *-> (Then2);(Else2)).
 ast_to_prolog_aux(Caller,DontStub,[is_p1,Expr,Code0,R],is_p1(Expr,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
-   label_arg_types(F,1,Args0),
+   %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   label_arg_types(F,1,Args1),
+   %label_arg_types(F,1,Args1),
    A=..[F|Args1].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A); \+ compound(A)),atom(F),!,
-   label_arg_types(F,1,Args0),
+   %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
-   label_arg_types(F,0,[A|Args1]),
+   %label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
@@ -1007,7 +1006,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
-    once(number(Convert);atomic(Convert);\+compound(Convert)/*;data_term(Convert)*/),%CheckifConvertisanumberoranatom
+    once(number(Convert);atomic(Convert);\+compound(Convert);atomic(Convert)/*;data_term(Convert)*/),%CheckifConvertisanumberoranatom
     %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     RetResult=Convert, Converted=[],
@@ -1019,7 +1018,7 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
     (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
@@ -1084,7 +1083,7 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
     length(Args, N),
     % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
     length(EvalArgs, N),
-    maplist(=(x(doeval,eager)), EvalArgs),
+    maplist(=(ResultLazy), EvalArgs),
     maplist(do_arg_eval(HeadIs, LazyVars),Args, EvalArgs, NewArgs, NewCodes),
     append(NewCodes,CombinedNewCode),
     Code=[assign,RetResult0,list(NewArgs)],
@@ -1175,9 +1174,11 @@ f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    var_prop_lookup(Convert,LazyVars,EL),
    lazy_impedance_match(EL,ResultLazy,Convert,[],RetResult,Converted).
 
-do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :- !,
+do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :- fullvar(Arg),!,
    var_prop_lookup(Arg,LazyVars,EL),
    lazy_impedance_match(EL,x(noeval,eager),Arg,[],RetArg,Converted).
+do_arg_eval(HeadIs,LazyVars,RetArg,x(noeval,eager),Arg,Converted) :-
+   f2p(HeadIs,LazyVars,Arg,x(noeval,eager),RetArg,Converted).
 do_arg_eval(HeadIs,LazyVars,Arg,x(E,lazy),RetArg,Converted) :- !,
    var_prop_lookup(Arg,LazyVars,EL),
    (EL=x(_,lazy) ->
@@ -1293,36 +1294,24 @@ compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
   Converted=[[prolog_if,If,T,E]].
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- % dif_functors(HeadIs,Convert),
-  Convert = ['let',Var,Value1,Body],!,
-  (fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
-  f2p(HeadIs,LazyVars,ResValue1,x(doeval,eager),Value1,CodeForValue1),
-   (E=doeval ->
-      add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2)
-   ;
-      append(CodeForValue1,[[native(transpile_eval),ResValue1,ResValue1a]],CodeForValue1a),
-      add_assignment(Var,ResValue1a,CodeForValue1a,CodeForValue2)
-   ),
-  f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  append(CodeForValue2,BodyCode,Converted).
+   Convert = ['let',Var,Value1,Body],!,
+   %(fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
+   f2p(HeadIs,LazyVars,ResValue1,x(doeval,eager),Value1,CodeForValue1),
+   add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2),
+   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
+   append(CodeForValue2,BodyCode,Converted).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- %dif_functors(HeadIs,Convert),
   Convert = ['let*',Bindings,Body],!,
-   must_det_lls((
+  must_det_lls((
     maplist(compile_let_star(HeadIs,LazyVars),Bindings,CodeList),
     append(CodeList,Code),
     f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
     append(Code,BodyCode,Converted))).
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
-  (fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
   f2p(HeadIs,LazyVars,ResValue1,x(doeval,eager),Value1,CodeForValue1),
-   (E=doeval ->
-      add_assignment(Var,ResValue1,CodeForValue1,Code)
-   ;
-      append(CodeForValue1,[[native(transpile_eval),ResValue1,ResValue1a]],CodeForValue1a),
-      add_assignment(Var,ResValue1a,CodeForValue1a,Code)
-   ).
-  %add_assignment(Var,ResValue1,CodeForValue1,Code).
+  add_assignment(Var,ResValue1,CodeForValue1,Code).
 
 unnumbervars_clause(Cl,ClU):-
   copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).

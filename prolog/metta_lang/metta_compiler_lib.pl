@@ -168,3 +168,6 @@ transpiler_clause_store('charsToString', 2, 0, ['Expression'], 'String', [x(doev
 
 transpiler_clause_store('assertEqualToResult', 3, 0, ['Atom', 'Atom'], 'Atom', [x(doeval,eager),x(noeval,eager)], x(doeval,eager), [], []).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
+
+transpiler_clause_store('quote', 2, 0, ['Expression'], 'Expression', [x(noeval,eager)], x(noeval,eager), [], []).
+'mc_1__quote'(A,['quote',A]).
