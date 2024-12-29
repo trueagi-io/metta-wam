@@ -511,7 +511,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %print_ast( green, Ast),
       %leash(-all),trace,
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyRet,AsBodyFn,NextBody),
-
+      %notrace,
 
       LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRet,finalLazyOnlyRet:FinalLazyRet,
                       args_list:Args,lazyArgsList:LazyArgsList,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgs],
@@ -1180,7 +1180,7 @@ do_arg_eval(_,LazyVars,Arg,x(noeval,lazy),RetArg,Converted) :-
 %   f2p(HeadIs,LazyVars,SubArg,eager,Arg,SubCode),
 %   Code=[].
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,SubCode,SubArg],Code) :-
-   f2p(HeadIs,LazyVars,SubArg,x(noeval,lazy),Arg,SubCode),
+   f2p(HeadIs,LazyVars,SubArg,x(doeval,eager),Arg,SubCode),
    Code=[].
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyVars,NewArg,x(doeval,eager),Arg,Code).
 
