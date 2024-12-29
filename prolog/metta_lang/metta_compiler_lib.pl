@@ -118,7 +118,7 @@ transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
-transpiler_clause_store(superpose, 2, 0, ['Expression'], 'Atom', [x(noeval,lazy)], x(doeval,eager), [], []).
+transpiler_clause_store(superpose, 2, 0, ['Expression'], 'Atom', [x(doeval,eager)], x(doeval,eager), [], []).
 'mc_1__superpose'(S,R) :- member(R,S).
 
 transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)], x(doeval,eager), [], []).
@@ -169,5 +169,8 @@ transpiler_clause_store('charsToString', 2, 0, ['Expression'], 'String', [x(doev
 transpiler_clause_store('assertEqualToResult', 3, 0, ['Atom', 'Atom'], 'Atom', [x(doeval,eager),x(noeval,eager)], x(doeval,eager), [], []).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
 
+% this is a hack to make 'quote' behave as expected (noeval rather than eval).
+% the reason for this is that stubs are currently created with x(doeval,eager) by default.
+% once the check and recompile loop is done (using transpiler_predicate_store/4, stubs will be correctly created with x(neval,eager), and this can go away.
 transpiler_clause_store('quote', 2, 0, ['Expression'], 'Expression', [x(noeval,eager)], x(noeval,eager), [], []).
 'mc_1__quote'(A,['quote',A]).

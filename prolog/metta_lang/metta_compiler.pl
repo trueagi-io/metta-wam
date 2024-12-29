@@ -445,8 +445,8 @@ determine_eager_vars(_,eager,_,[]).
 set_eager_or_lazy(_,V,eager) :- \+ fullvar(V), !.
 set_eager_or_lazy(Vlist,V,R) :- (member_var(V,Vlist) -> R=eager ; R=lazy).
 
-combine_lazy_types_props(lazy,x(E,lazy),x(E,lazy)) :- !.
-combine_lazy_types_props(_,x(E,_),x(E,eager)).
+combine_lazy_types_props(eager,x(doeval,_),x(doeval,eager)) :- !.
+combine_lazy_types_props(_,X,X).
 
 transpiler_stored_eval_lookup(Convert,PrologCode0,Converted0):-
   transpiler_stored_eval(ConvertM,PrologCode0,Converted0),
@@ -489,8 +489,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
       arg_eval_props(RetType0,RetProps),
-      %determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
-      EagerArgList=[],
+      determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
       maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
       % EagerLazyList: eager/lazy
       % TypeProps: x(doeval/noeval,eager/lazy)
