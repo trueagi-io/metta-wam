@@ -1175,15 +1175,17 @@ f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    var_prop_lookup(Convert,LazyVars,EL),
    lazy_impedance_match(EL,ResultLazy,Convert,[],RetResult,Converted).
 
-do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :-
+do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :- !,
    var_prop_lookup(Arg,LazyVars,EL),
    lazy_impedance_match(EL,x(noeval,eager),Arg,[],RetArg,Converted).
-do_arg_eval(_,LazyVars,Arg,x(noeval,lazy),RetArg,Converted) :-
+do_arg_eval(HeadIs,LazyVars,Arg,x(E,lazy),RetArg,Converted) :- !,
    var_prop_lookup(Arg,LazyVars,EL),
-   lazy_impedance_match(EL,x(noeval,lazy),Arg,[],RetArg,Converted).
-do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,Arg,SubCode,SubArg],Code) :-
-   f2p(HeadIs,LazyVars,SubArg,x(doeval,eager),Arg,SubCode),
-   Code=[].
+   (EL=x(_,lazy) ->
+      lazy_impedance_match(EL,x(E,lazy),Arg,[],RetArg,Converted)
+   ;
+      f2p(HeadIs,LazyVars,SubArg,x(doeval,eager),Arg,SubCode),
+      Converted=[[assign,RetArg,[is_p1,Arg,SubCode,SubArg]]]
+   ).
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyVars,NewArg,x(doeval,eager),Arg,Code).
 
 :- discontiguous(compile_flow_control/6).
