@@ -116,10 +116,8 @@ transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager),dummy,dummy).
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
-as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
-
-as_p2_exec(is_p2(_,Code,Ret),Ret):- !, call(Code).
-as_p2_list(is_p2(L,_,_),L).
+as_p1_exec(is_p1(_,Code,Ret),Ret):- !, call(Code).
+as_p1_expr(is_p1(Expression,_,_),Expression).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -815,7 +813,7 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    ast_to_prolog(Caller,DontStub,Then,Then2),
    ast_to_prolog(Caller,DontStub,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
-ast_to_prolog_aux(Caller,DontStub,[is_p1,Code0,R],is_p1(Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
+ast_to_prolog_aux(Caller,DontStub,[is_p1,Expr,Code0,R],is_p1(Expr,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
    label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
@@ -1005,12 +1003,12 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    (ResultLazy=x(_,eager) ->
       RetResult=Convert,
       Converted=[]
-   ;  Converted=[assign,RetResult,[is_p1,[],Convert]]).
+   ;  Converted=[assign,RetResult,[is_p1,Convert,[],Convert]]).
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
     once(number(Convert);atomic(Convert);\+compound(Convert)/*;data_term(Convert)*/),%CheckifConvertisanumberoranatom
-    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert]),
+    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     RetResult=Convert, Converted=[],
     % For OVER-REACHING categorization of dataobjs %
@@ -1022,7 +1020,7 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
     once(number(Convert); atom(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
-    (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert]),
+    (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
@@ -1154,35 +1152,22 @@ f2p(HeadIs,LazyVars,_RetResult,EvalArgs,Convert,_Code):-
    format("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
    throw(0).
 
-lazy_impedance_match(x(E,L),x(E,L),RetResult0,Converted0,RetResult0,Converted0).
-% lazy
-lazy_impedance_match(x(noeval,lazy),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[native(p2_to_p1),RetResult0,RetResult]],Converted).
-lazy_impedance_match(x(doeval,lazy),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
-% eager
-lazy_impedance_match(x(noeval,eager),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
-lazy_impedance_match(x(doeval,eager),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+lazy_impedance_match(x(_,L),x(_,L),RetResult0,Converted0,RetResult0,Converted0).
 % lazy -> eager
-lazy_impedance_match(x(doeval,lazy),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[native(as_p1),RetResult0,RetResult]],Converted).
-lazy_impedance_match(x(noeval,lazy),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[native(as_p2_exec),RetResult0,RetResult]],Converted).
-lazy_impedance_match(x(noeval,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[native(as_p2_list),RetResult0,RetResult]],Converted).
-lazy_impedance_match(x(doeval,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+lazy_impedance_match(x(_,lazy),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[native(as_p1_exec),RetResult0,RetResult]],Converted).
+lazy_impedance_match(x(_,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[native(as_p1_expr),RetResult0,RetResult]],Converted).
 % eager -> lazy
-lazy_impedance_match(x(doeval,eager),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[assign,RetResult,[is_p1,[],RetResult0]]],Converted).
-lazy_impedance_match(x(noeval,eager),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
-lazy_impedance_match(x(doeval,eager),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
-lazy_impedance_match(x(noeval,eager),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
+lazy_impedance_match(x(_,eager),x(_,lazy),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[assign,RetResult,[is_p1,RetResult0,[],RetResult0]]],Converted).
 
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Number',!.
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Bool',!.
 arg_eval_props(N,x(doeval,lazy)) :- atom(N),N='LazyBool',!.
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Any',!.
 arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Atom',!.
-arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Expression',!.
+arg_eval_props(N,x(noeval,eager)) :- atom(N),N='Expression',!.
 arg_eval_props(_,x(doeval,eager)).
 
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
@@ -1196,10 +1181,7 @@ do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :-
 do_arg_eval(_,LazyVars,Arg,x(noeval,lazy),RetArg,Converted) :-
    var_prop_lookup(Arg,LazyVars,EL),
    lazy_impedance_match(EL,x(noeval,lazy),Arg,[],RetArg,Converted).
-%do_arg_eval(HeadIs,LazyVars,Arg,x(noeval,lazy),[is_p2,Arg,SubCode,SubArg],Code) :-
-%   f2p(HeadIs,LazyVars,SubArg,eager,Arg,SubCode),
-%   Code=[].
-do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,SubCode,SubArg],Code) :-
+do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,Arg,SubCode,SubArg],Code) :-
    f2p(HeadIs,LazyVars,SubArg,x(doeval,eager),Arg,SubCode),
    Code=[].
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyVars,NewArg,x(doeval,eager),Arg,Code).
