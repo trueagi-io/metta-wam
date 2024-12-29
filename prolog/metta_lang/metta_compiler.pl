@@ -443,6 +443,7 @@ determine_eager_vars(_,eager,A,EagerVars) :- is_list(A),!,
    maplist(determine_eager_vars(eager),_,A,EagerVars0),foldl(union_var,EagerVars0,[],EagerVars).
 determine_eager_vars(_,eager,_,[]).
 
+set_eager_or_lazy(_,V,eager) :- \+ fullvar(V), !.
 set_eager_or_lazy(Vlist,V,R) :- (member_var(V,Vlist) -> R=eager ; R=lazy).
 
 combine_lazy_types_props(lazy,x(E,lazy),x(E,lazy)) :- !.
@@ -489,7 +490,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
       arg_eval_props(RetType0,RetProps),
-      determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
+      %determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
+      EagerArgList=[],
       maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
       % EagerLazyList: eager/lazy
       % TypeProps: x(doeval/noeval,eager/lazy)
@@ -1006,7 +1008,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
-    once(number(Convert);atomic(Convert);\+compound(Convert);data_term(Convert)),%CheckifConvertisanumberoranatom
+    once(number(Convert);atomic(Convert);\+compound(Convert)/*;data_term(Convert)*/),%CheckifConvertisanumberoranatom
     %(ResultLazy=eager -> C2=Convert ; C2=[is_p1,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     RetResult=Convert, Converted=[],
@@ -1018,7 +1020,7 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); data_term(Convert)),  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
     (ResultLazy=eager -> C2=Convert ; C2=[is_p1,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
@@ -1083,8 +1085,8 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
     length(Args, N),
     % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
     length(EvalArgs, N),
-    maplist(=(eager), EvalArgs),
-    maplist(f2p(HeadIs, LazyVars),NewArgs, EvalArgs, Args, NewCodes),
+    maplist(=(x(doeval,eager)), EvalArgs),
+    maplist(do_arg_eval(HeadIs, LazyVars),Args, EvalArgs, NewArgs, NewCodes),
     append(NewCodes,CombinedNewCode),
     Code=[assign,RetResult0,list(NewArgs)],
     append(CombinedNewCode,[Code],Converted0),
@@ -1165,8 +1167,20 @@ arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Atom',!.
 arg_eval_props(N,x(noeval,lazy)) :- atom(N),N='Expression',!.
 arg_eval_props(_,x(doeval,eager)).
 
-do_arg_eval(_,_,Arg,x(noeval,eager),Arg,[]).
-do_arg_eval(_,_,Arg,x(noeval,lazy),[is_p1,[],Arg],[]).
+f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
+   (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
+   var_prop_lookup(Convert,LazyVars,x(_E,L)),
+   lazy_impedance_match(L,ResultLazy,Convert,[],RetResult,Converted).
+
+do_arg_eval(_,LazyVars,Arg,x(noeval,eager),RetArg,Converted) :-
+   var_prop_lookup(Arg,LazyVars,x(_E,L)),
+   lazy_impedance_match(L,eager,Arg,[],RetArg,Converted).
+do_arg_eval(_,LazyVars,Arg,x(noeval,lazy),RetArg,Converted) :-
+   var_prop_lookup(Arg,LazyVars,x(_E,L)),
+   lazy_impedance_match(L,lazy,Arg,[],RetArg,Converted).
+%do_arg_eval(HeadIs,LazyVars,Arg,x(noeval,lazy),[is_p2,Arg,SubCode,SubArg],Code) :-
+%   f2p(HeadIs,LazyVars,SubArg,eager,Arg,SubCode),
+%   Code=[].
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,lazy),[is_p1,SubCode,SubArg],Code) :-
    f2p(HeadIs,LazyVars,SubArg,eager,Arg,SubCode),
    Code=[].
