@@ -118,6 +118,9 @@ transpiler_stored_eval([],true,0).
 
 as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
 
+as_p2_exec(is_p2(_,Code,Ret),Ret):- !, call(Code).
+as_p2_list(is_p2(L,_,_),L).
+
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
 for_all(G1,G2):- forall(G1,G2).
@@ -1151,11 +1154,28 @@ f2p(HeadIs,LazyVars,_RetResult,EvalArgs,Convert,_Code):-
    format("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
    throw(0).
 
-lazy_impedance_match(x(_,L),x(_,L),RetResult0,Converted0,RetResult0,Converted0).
-lazy_impedance_match(x(_,lazy),x(_,eager),RetResult0,Converted0,RetResult,Converted) :-
+lazy_impedance_match(x(E,L),x(E,L),RetResult0,Converted0,RetResult0,Converted0).
+% lazy
+lazy_impedance_match(x(noeval,lazy),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[native(p2_to_p1),RetResult0,RetResult]],Converted).
+lazy_impedance_match(x(doeval,lazy),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+% eager
+lazy_impedance_match(x(noeval,eager),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
+lazy_impedance_match(x(doeval,eager),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+% lazy -> eager
+lazy_impedance_match(x(doeval,lazy),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :-
    append(Converted0,[[native(as_p1),RetResult0,RetResult]],Converted).
-lazy_impedance_match(x(_,eager),x(_,lazy),RetResult0,Converted0,RetResult,Converted) :-
+lazy_impedance_match(x(noeval,lazy),x(doeval,eager),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[native(as_p2_exec),RetResult0,RetResult]],Converted).
+lazy_impedance_match(x(noeval,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :-
+   append(Converted0,[[native(as_p2_list),RetResult0,RetResult]],Converted).
+lazy_impedance_match(x(doeval,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+% eager -> lazy
+lazy_impedance_match(x(doeval,eager),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :-
    append(Converted0,[[assign,RetResult,[is_p1,[],RetResult0]]],Converted).
+lazy_impedance_match(x(noeval,eager),x(doeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
+lazy_impedance_match(x(doeval,eager),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no list available
+lazy_impedance_match(x(noeval,eager),x(noeval,lazy),RetResult0,Converted0,RetResult,Converted) :- !,break. % no code available
 
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Number',!.
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Bool',!.
