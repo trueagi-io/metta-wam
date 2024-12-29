@@ -48,11 +48,11 @@ transpiler_clause_store('*', 3, 0, ['Number', 'Number'],'Number', [x(doeval,eage
 %%%%%%%%%%%%%%%%%%%%% logic
 
 %transpiler_clause_store('and', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-%mc_2__and(A,is_p1(CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
+%mc_2__and(A,is_p1(_,CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
 %mc_2__and(_,_,'False').
 
 %transpiler_clause_store('or', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-%mc_2__or(A,is_p1(CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
+%mc_2__or(A,is_p1(_,CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
 %mc_2__or(_,_,'True').
 
 transpiler_clause_store('and', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
@@ -109,12 +109,12 @@ transpiler_clause_store('decons-atom', 2, 0, ['Expression'],'Expression', [x(noe
 lazy_member(R1,Code2,R2) :- call(Code2),R1=R2.
 
 transpiler_clause_store(subtraction, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_2__subtraction'(is_p1(Code1,R1),is_p1(Code2,R2),R1) :-
+'mc_2__subtraction'(is_p1(_,Code1,R1),is_p1(_,Code2,R2),R1) :-
     call(Code1),
     \+ lazy_member(R1,Code2,R2).
 
 transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_2__union'(U1,is_p1(Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Code2,R2),R) ; call(Code2),R=R2.
+'mc_2__union'(U1,is_p1(Expr,Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Expr,Code2,R2),R) ; call(Code2),R=R2.
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
@@ -122,8 +122,8 @@ transpiler_clause_store(superpose, 2, 0, ['Expression'], 'Atom', [x(noeval,lazy)
 'mc_1__superpose'(S,R) :- member(R,S).
 
 transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_1__collapse'(is_p1(Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(is_p1(true,X),[X]).
+'mc_1__collapse'(is_p1(_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc_1__collapse'(is_p1(_,true,X),[X]).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
@@ -137,16 +137,16 @@ transpiler_clause_store('get-atoms', 2, 0, ['Atom'], 'Atom', [x(noeval,eager)], 
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
 
 transpiler_clause_store(match, 4, 0, ['Atom', 'Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_3__match'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+'mc_3__match'(Space,Pattern,is_p1(_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
 % TODO FIXME: sort out the difference between unify and match
 transpiler_clause_store(unify, 4, 0, ['Atom', 'Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_3__unify'(Space,Pattern,is_p1(TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+'mc_3__unify'(Space,Pattern,is_p1(_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
 transpiler_clause_store(time, 2, 0, ['Atom'], 'Atom', [x(doeval,lazy)], x(doeval,eager), [], []).
-'mc_1__time'(is_p1(Code,Ret),Ret) :- wtime_eval(Code).
+'mc_1__time'(is_p1(_,Code,Ret),Ret) :- wtime_eval(Code).
 
 transpiler_clause_store(empty, 1, 0, [], '%Undefined', [], x(doeval,eager), [], []).
 'mc_0__empty'(_) :- fail.
