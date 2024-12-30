@@ -204,6 +204,10 @@ is_win64_ui :-
     % Then, verify if the 'hwnd' Prolog flag is set, indicating GUI availability.
     current_prolog_flag(hwnd, _).
 
+%   This predicate is used as a guard condition in stream-related operations
+%   to prevent unintended changes to Prolog's standard input, output, or error streams.
+%   It ensures that existing stream configurations remain intact, avoiding conflicts 
+%   during operations that might otherwise alter stream properties.
 dont_change_streams:- true.
 
 %!  lazy_load_python is det.
@@ -275,22 +279,22 @@ metta_library_dir(Dir) :-
 
 %!  metta_dir(-Dir) is det.
 %
-%   Determines the directory path for the MeTTa system.
+%   Determines the directory path for the Mettalog system.
 %
 %   This predicate tries multiple approaches to resolve the directory associated 
-%   with MeTTa in a specific order. It prioritizes specific subdirectories, then 
+%   with Mettalog in a specific order. It prioritizes specific subdirectories, then 
 %   falls back to source, library, and root directories.
 %
 %   The resolution strategy is as follows:
-%   1. It attempts to resolve the directory as a subdirectory of the MeTTa library 
+%   1. It attempts to resolve the directory as a subdirectory of the Mettalog library 
 %      path, specifically './loaders/genome/'.
 %   2. Falls back to the directory specified by `is_metta_src_dir/1`.
-%   3. Further falls back to the MeTTa library directory.
-%   4. Finally, it falls back to the MeTTa root directory.
+%   3. Further falls back to the Mettalog library directory.
+%   4. Finally, it falls back to the Mettalog root directory.
 %
-%   @arg Dir The absolute directory path to the MeTTa system.
+%   @arg Dir The absolute directory path to the Mettalog system.
 %
-%   @example Find the MeTTa directory:
+%   @example Find the Mettalog directory:
 %     ?- metta_dir(Dir).
 %     Dir = '/path/to/metta/loaders/genome/'.
 %
@@ -298,16 +302,16 @@ metta_library_dir(Dir) :-
 %   @see is_metta_src_dir/1
 %   @see metta_root_dir/1
 metta_dir(Dir) :-
-    % Attempt to resolve using the MeTTa library directory and './loaders/genome/'.
+    % Attempt to resolve using the Mettalog library directory and './loaders/genome/'.
     metta_library_dir(Value),
     absolute_file_name('./loaders/genome/', Dir, [relative_to(Value)]).
     % Fallback to the source directory if the above resolution fails.
 metta_dir(Dir) :-
     is_metta_src_dir(Dir).
-    % Fallback to the MeTTa library directory if previous attempts fail.
+    % Fallback to the Mettalog library directory if previous attempts fail.
 metta_dir(Dir) :-
     metta_library_dir(Dir).
-    % Final fallback to the MeTTa root directory.
+    % Final fallback to the Mettalog root directory.
 metta_dir(Dir) :-
     metta_root_dir(Dir).
 % metta_dir(Dir) :- is_metta_src_dir(Value), absolute_file_name('../flybase/', Dir, [relative_to(Value)]).
@@ -319,10 +323,10 @@ metta_dir(Dir) :-
 %   with specific directories, making it easier to reference files without 
 %   hardcoding their paths. In this case:
 %
-%   - `library` is mapped to the MeTTa directory, enabling searches for 
-%     library files relative to the MeTTa root.
-%   - `mettalog` is also mapped to the MeTTa directory, likely to handle 
-%     specific files related to the MeTTaLog transpiler/interpreter.
+%   - `library` is mapped to the Mettalog directory, enabling searches for 
+%     library files relative to the Mettalog root.
+%   - `mettalog` is also mapped to the Mettalog directory, likely to handle 
+%     specific files related to the MettalogLog transpiler/interpreter.
 :- multifile user:file_search_path/2.
 user:file_search_path(library,Dir):- metta_dir(Dir).
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
@@ -336,7 +340,7 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 %   :- initialization(attach_packs).
 
-%   'nodebug' disables specific debugging flags for various MeTTa-related modules.
+%   'nodebug' disables specific debugging flags for various Mettalog-related modules.
 %
 %   These directives ensure that certain debugging categories (`metta(eval)`, 
 %   `metta(exec)`, `metta(load)`, and `metta(prolog)`) are disabled by default. 
@@ -350,8 +354,8 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 %
 %   This section declares several dynamic and multifile predicates used in the 
-%   MeTTa system. These predicates support runtime updates, extensibility, and 
-%   modular design. They cover various aspects of MeTTa functionality.
+%   Mettalog system. These predicates support runtime updates, extensibility, and 
+%   modular design. They cover various aspects of Mettalog functionality.
 %
 %   These predicates are marked as `dynamic` to allow runtime modifications 
 %   and as `multifile` to enable contributions from multiple modules.
