@@ -234,15 +234,15 @@ lazy_load_python.
 
 %!  metta_root_dir(-Dir) is det.
 %
-%   Determines the root directory of the Metta project.
+%   Determines the root directory of the Mettalog project.
 %
 %   This predicate attempts to determine the root directory by first using the 
 %   `user:is_metta_src_dir/1` dynamic predicate. If that is unavailable or fails, 
 %   it falls back to the `METTA_DIR` environment variable.
 %
-%   @arg Dir The absolute path to the Metta root directory.
+%   @arg Dir The absolute path to the Mettalog root directory.
 %
-%   @example Determine the Metta root directory:
+%   @example Determine the Mettalog root directory:
 %     ?- metta_root_dir(Dir).
 %     Dir = '/path/to/metta/root'.
 %
@@ -259,14 +259,14 @@ metta_root_dir(Dir) :-
 
 %!  metta_library_dir(-Dir) is det.
 %
-%   Determines the library directory of the Metta project.
+%   Determines the library directory of the Mettalog project.
 %
-%   This predicate resolves the library directory relative to the Metta root 
+%   This predicate resolves the library directory relative to the Mettalog root 
 %   directory using `metta_root_dir/1`.
 %
-%   @arg Dir The absolute path to the Metta library directory.
+%   @arg Dir The absolute path to the Mettalog library directory.
 %
-%   @example Determine the Metta library directory:
+%   @example Determine the Mettalog library directory:
 %     ?- metta_library_dir(Dir).
 %     Dir = '/path/to/metta/root/libraries/'.
 %
