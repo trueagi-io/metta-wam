@@ -2746,8 +2746,7 @@ eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L):-
     eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
 
 
-eval_defn_success(Eq,RetType,Depth,Self,XIn,ResOutY,XX,B0,USED):-
-  eval_adjust_args(Eq,RetType,Y,ResOutY,Depth,Self,XIn,X),
+eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED):-
   X=XX, Y=B0, X\=@=B0,
   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(USED)))),
   light_eval(Eq,RetType,Depth,Self,B0,Y),!.
