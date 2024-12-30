@@ -420,9 +420,9 @@ determine_eager_vars(Lin,Lout,[LET,V,Vbind,Body],EagerVars) :-  atom(LET),LET='l
    determine_eager_vars(Lin,Lout,Body,EagerVarsBody),
    (fullvar(V) -> union_var([V],EagerVarsVbind,EagerVars0) ; EagerVarsVbind=EagerVars0),
    union_var(EagerVars0,EagerVarsBody,EagerVars).
-determine_eager_vars(Lin,Lout,[LETS,[],Body],EagerVars) :- atom(LETS),LETS='lets',!,determine_eager_vars(Lin,Lout,Body,EagerVars).
-determine_eager_vars(Lin,Lout,[LETS,[[V,Vbind]|T],Body],EagerVars) :-  atom(LETS),LETS='lets',!,
-   determine_eager_vars(eager,eager,Vbind,EagerVarsVbind),
+determine_eager_vars(Lin,Lout,[LETS,[],Body],EagerVars) :- atom(LETS),LETS='let*',!,determine_eager_vars(Lin,Lout,Body,EagerVars).
+determine_eager_vars(Lin,Lout,[LETS,[[V,Vbind]|T],Body],EagerVars) :-  atom(LETS),LETS='let*',!,
+   determine_eager_vars(eager,_,Vbind,EagerVarsVbind),
    determine_eager_vars(Lin,Lout,['let*',T,Body],EagerVarsBody),
    (fullvar(V) -> union_var([V],EagerVarsVbind,EagerVars0) ; EagerVarsVbind=EagerVars0),
    union_var(EagerVars0,EagerVarsBody,EagerVars).
