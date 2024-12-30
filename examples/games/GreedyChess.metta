@@ -33,7 +33,7 @@
 ; * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; * POSSIBILITY OF SUCH DAMAGE.
 ;**********************************************************************
-; 
+; *
 
 ;*******************************************************
 ; Global type definitions
@@ -262,8 +262,8 @@
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
-(: identify_piece (-> Expression Atom))
-(= (identify_piece $p)
+(: identify_piece (-> list symbol))
+(= (identify_piece $p) 
    (if (== (size-atom $p) 2)
       "  "
       (let*
@@ -277,13 +277,13 @@
 )
 
 ; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
-(: display_filter (-> Expression Atom))
-(= (display_filter $board)
-    (if (== (size-atom $board) 1)
-      ; if on last piece
-       ((identify_piece (car-atom $board)))
+(: display_filter (-> list list))
+(= (display_filter $brd) 
+    (if (== (size-atom $brd) 1) 
+      ; if on last piece, return a one element list of this form eg.:  (*k). Extra parens are needed to create list.
+      ( (identify_piece (car-atom $brd)) )
       ; otherwise convert all pieces to shorter description for display.
-       (let $rest (display_filter (cdr-atom $board))  (cons-atom (identify_piece (car-atom $board)) $rest))))
+      (let $i (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $i))))
 
 (= (display_board $board) 
   (
@@ -309,9 +309,9 @@
       
           $a)))))
 
-
+!(chess)
 !(get-player-move)
-;!(chess)
+
 ;
 
 ;
