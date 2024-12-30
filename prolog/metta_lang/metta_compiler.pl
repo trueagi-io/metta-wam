@@ -415,16 +415,16 @@ determine_eager_vars(Lin,Lout,[CASE,Val,Cases],EagerVars) :- atom(CASE),CASE='ca
    determine_eager_vars(eager,_,Val,EagerVarsVal),
    determine_eager_vars_case_aux(Lin,Lout,Cases,EagarVarsCases),
    union_var(EagerVarsVal,EagarVarsCases,EagerVars).
-determine_eager_vars(Lin,Lout,[LET,V,Vbind,Body],EagerVars) :-  atom(LET),LET='case',!,
-   determine_eager_vars(eager,eager,Vbind,EagerVarsVbind),
+determine_eager_vars(Lin,Lout,[LET,V,Vbind,Body],EagerVars) :-  atom(LET),LET='let',!,
+   determine_eager_vars(eager,_,Vbind,EagerVarsVbind),
    determine_eager_vars(Lin,Lout,Body,EagerVarsBody),
-   union_var([V],EagerVarsVbind,EagerVars0),
+   (fullvar(V) -> union_var([V],EagerVarsVbind,EagerVars0) ; EagerVarsVbind=EagerVars0),
    union_var(EagerVars0,EagerVarsBody,EagerVars).
 determine_eager_vars(Lin,Lout,[LETS,[],Body],EagerVars) :- atom(LETS),LETS='lets',!,determine_eager_vars(Lin,Lout,Body,EagerVars).
 determine_eager_vars(Lin,Lout,[LETS,[[V,Vbind]|T],Body],EagerVars) :-  atom(LETS),LETS='lets',!,
    determine_eager_vars(eager,eager,Vbind,EagerVarsVbind),
    determine_eager_vars(Lin,Lout,['let*',T,Body],EagerVarsBody),
-   union_var([V],EagerVarsVbind,EagerVars0),
+   (fullvar(V) -> union_var([V],EagerVarsVbind,EagerVars0) ; EagerVarsVbind=EagerVars0),
    union_var(EagerVars0,EagerVarsBody,EagerVars).
 determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
    length(Args,LenArgs),
@@ -489,6 +489,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
       arg_eval_props(RetType0,RetProps),
+      %leash(-all),trace,
       determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
       maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
       % EagerLazyList: eager/lazy
@@ -509,15 +510,12 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %trace,
       f2p(HeadIs,LazyArgsList,HResult,FinalLazyRet,AsBodyFn,NextBody),
-      %notrace,
 
       LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRet,finalLazyOnlyRet:FinalLazyRet,
                       args_list:Args,lazyArgsList:LazyArgsList,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgs],
 
-       output_prolog(LazyEagerInfo),
-
+      output_prolog(LazyEagerInfo),
 
       %format("HeadIs:~q HResult:~q AsBodyFn:~q NextBody:~q\n",[HeadIs,HResult,AsBodyFn,NextBody]),
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
@@ -526,7 +524,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       HeadAST=[assign,HResult,[call(FnName)|Args]],
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
       print_ast( yellow, [=,HeadAST,NextBody]),
-      %leash(+all),
 
       %leash(-all),trace,
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
@@ -813,16 +810,16 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    R=((If2) *-> (Then2);(Else2)).
 ast_to_prolog_aux(Caller,DontStub,[is_p1,Expr,Code0,R],is_p1(Expr,Code1,R)) :- !,ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
-   %label_arg_types(F,1,Args0),
+   label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   %label_arg_types(F,1,Args1),
+   label_arg_types(F,1,Args1),
    A=..[F|Args1].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A); \+ compound(A)),atom(F),!,
-   %label_arg_types(F,1,Args0),
+   label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
-   %label_arg_types(F,0,[A|Args1]),
+   label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],

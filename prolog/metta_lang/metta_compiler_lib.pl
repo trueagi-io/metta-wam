@@ -47,21 +47,21 @@ transpiler_clause_store('*', 3, 0, ['Number', 'Number'],'Number', [x(doeval,eage
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
-%transpiler_clause_store('and', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-%mc_2__and(A,is_p1(_,CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
-%mc_2__and(_,_,'False').
-
-%transpiler_clause_store('or', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
-%mc_2__or(A,is_p1(_,CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
-%mc_2__or(_,_,'True').
-
-transpiler_clause_store('and', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
-mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
+transpiler_clause_store('and', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+mc_2__and(A,is_p1(_,CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
 mc_2__and(_,_,'False').
 
-transpiler_clause_store('or', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
-mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
+transpiler_clause_store('or', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+mc_2__or(A,is_p1(_,CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
 mc_2__or(_,_,'True').
+
+%transpiler_clause_store('and', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+%mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
+%mc_2__and(_,_,'False').
+
+%transpiler_clause_store('or', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+%mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
+%mc_2__or(_,_,'True').
 
 transpiler_clause_store('not', 2, 0, ['Bool'],'Bool', [x(doeval,eager)], x(doeval,eager), [], []).
 mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0, !.
