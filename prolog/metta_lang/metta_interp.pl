@@ -50,6 +50,16 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+%*********************************************************************************************
+% PROGRAM FUNCTION: Interpret MeTTa code within the SWI-Prolog environment, enabling logical 
+% inference, runtime evaluation, and cross-language integration with Python and Rust.
+%*********************************************************************************************
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Set the encoding for the Prolog system to UTF-8 to ensure proper handling of characters.
 % The previously commented out line was for iso_latin_1 encoding.
 % UTF-8 is more universal and can handle a wider range of characters.
@@ -103,8 +113,6 @@
 % This library provides tools for generating and interacting with Prolog documentation.
 :- ensure_loaded(library(pldoc)).
 
-
-
 /*
 % Set the encoding of the `current_input` stream to UTF-8.
 % This ensures that any input read from `current_input` (which is typically `user_input`) is interpreted as UTF-8.
@@ -136,16 +144,65 @@
 */
 %:- set_prolog_flag(debug_on_interrupt,true).
 %:- set_prolog_flag(compile_meta_arguments,control).
-:- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../../libraries/',Dir,[relative_to(Value)]),
-    atom_concat(Dir,'predicate_streams',PS),
-    atom_concat(Dir,'logicmoo_utils',LU),
-    attach_packs(Dir,[duplicate(replace),search(first)]),
-    pack_attach(PS,[duplicate(replace),search(first)]),
-    pack_attach(LU,[duplicate(replace),search(first)]).
+
+%   Load required Prolog packs and set up their paths dynamically.
+%
+%   - Ensures consistent library resolution regardless of the system or environment.
+%   - Avoids issues arising from hard-coded paths.
+%   - Facilitates maintainability and portability of the codebase.
+%   - Supports dynamic pack management during runtime without requiring manual adjustments.
+%
+:- (prolog_load_context(directory, Value); Value='.'), 
+   % Resolve the absolute path to the '../../libraries/' directory.
+   absolute_file_name('../../libraries/', Dir, [relative_to(Value)]),
+   % Build paths for specific libraries/packs.
+   atom_concat(Dir, 'predicate_streams', PS),
+   atom_concat(Dir, 'logicmoo_utils', LU),   
+   % Attach the base library directory with specified options.
+   attach_packs(Dir, [duplicate(replace), search(first)]),
+      % Attach the `predicate_streams` and `logicmoo_utils` packs.
+   pack_attach(PS, [duplicate(replace), search(first)]),
+   pack_attach(LU, [duplicate(replace), search(first)]).
+
 %   :- attach_packs.
 %:- ensure_loaded(metta_interp).
-is_win64:- current_prolog_flag(windows,_).
-is_win64_ui:- is_win64,current_prolog_flag(hwnd,_).
+
+%!  is_win64 is nondet.
+%
+%   Succeeds if the current Prolog system is running on a 64-bit Windows operating system.
+%
+%   This predicate checks the Prolog flag `windows` to determine if the current operating
+%   system is Windows. It does not specifically check whether it is a 32-bit or 64-bit version,
+%   but typically Prolog systems set this flag on any Windows environment.
+%
+%   @example Check if the system is running on Windows:
+%     ?- is_win64.
+%     true.
+%
+is_win64 :-
+    % Check if the 'windows' Prolog flag is set.
+    current_prolog_flag(windows, _).
+
+%!  is_win64_ui is nondet.
+%
+%   Succeeds if the current Prolog system is running on a 64-bit Windows operating system
+%   and has a graphical user interface (GUI) enabled.
+%
+%   This predicate extends `is_win64/0` by also checking if the `hwnd` Prolog flag is set,
+%   which typically indicates the presence of a GUI (e.g., SWI-Prolog's graphical tools).
+%
+%   @see is_win64/0
+%   @see current_prolog_flag/2
+%
+%   @example Check if the system is running on Windows with a GUI:
+%     ?- is_win64_ui.
+%     true.
+%
+is_win64_ui :-
+    % First, verify if running on Windows.
+    is_win64,
+    % Then, verify if the 'hwnd' Prolog flag is set, indicating GUI availability.
+    current_prolog_flag(hwnd, _).
 
 dont_change_streams:- true.
 
@@ -153,7 +210,7 @@ dont_change_streams:- true.
 %
 %   This predicate represents a placeholder or a stub for lazily loading the Python
 %   integration. Currently, it does not contain any implementation logic.
-%   Presumably, it would attempt to load Python-related resources or interfaces
+%   This would attempt to load Python-related resources or interfaces
 %   when needed, avoiding unnecessary overhead if Python is not required.
 %
 %   The implementation should be added to perform the actual lazy loading of
@@ -162,39 +219,145 @@ dont_change_streams:- true.
 :- dynamic(lazy_load_python/0).
 lazy_load_python.
 
+% 'dynamic' enables runtime modification
 :- dynamic(user:is_metta_src_dir/1).
+% Ensure the `user:is_metta_src_dir/1` predicate is updated with the current directory.
+% This retrieves the current loading directory, clears any previous assertions,
+% and asserts the new directory dynamically.
 :- prolog_load_context(directory,Dir),
   retractall(user:is_metta_src_dir(_)),
   asserta(user:is_metta_src_dir(Dir)).
 
-metta_root_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../../',Dir,[relative_to(Value)]).
-metta_root_dir(Dir):- getenv('METTA_DIR',Dir),!.
+%!  metta_root_dir(-Dir) is det.
+%
+%   Determines the root directory of the Metta project.
+%
+%   This predicate attempts to determine the root directory by first using the 
+%   `user:is_metta_src_dir/1` dynamic predicate. If that is unavailable or fails, 
+%   it falls back to the `METTA_DIR` environment variable.
+%
+%   @arg Dir The absolute path to the Metta root directory.
+%
+%   @example Determine the Metta root directory:
+%     ?- metta_root_dir(Dir).
+%     Dir = '/path/to/metta/root'.
+%
+%   @see is_metta_src_dir/1
+%   @see getenv/2
+%   @see absolute_file_name/3
+metta_root_dir(Dir) :-
+    % Attempt to resolve the root directory relative to the source directory.
+    is_metta_src_dir(Value),
+    absolute_file_name('../../', Dir, [relative_to(Value)]).
+metta_root_dir(Dir) :-
+    % Fallback to using the METTA_DIR environment variable.
+    getenv('METTA_DIR', Dir), !.
 
-metta_library_dir(Dir):- metta_root_dir(Value), absolute_file_name('./libraries/',Dir,[relative_to(Value)]).
+%!  metta_library_dir(-Dir) is det.
+%
+%   Determines the library directory of the Metta project.
+%
+%   This predicate resolves the library directory relative to the Metta root 
+%   directory using `metta_root_dir/1`.
+%
+%   @arg Dir The absolute path to the Metta library directory.
+%
+%   @example Determine the Metta library directory:
+%     ?- metta_library_dir(Dir).
+%     Dir = '/path/to/metta/root/libraries/'.
+%
+%   @see metta_root_dir/1
+%   @see absolute_file_name/3
+metta_library_dir(Dir) :-
+    % Resolve the library directory relative to the root directory.
+    metta_root_dir(Value),
+    absolute_file_name('./libraries/', Dir, [relative_to(Value)]).
 
-metta_dir(Dir):- metta_library_dir(Value), absolute_file_name('./loaders/genome/',Dir,[relative_to(Value)]).
-metta_dir(Dir):- is_metta_src_dir(Dir).
-metta_dir(Dir):- metta_library_dir(Dir).
-metta_dir(Dir):- metta_root_dir(Dir).
-%metta_dir(Dir):- is_metta_src_dir(Value), absolute_file_name('../flybase/',Dir,[relative_to(Value)]).
+%!  metta_dir(-Dir) is det.
+%
+%   Determines the directory path for the MeTTa system.
+%
+%   This predicate tries multiple approaches to resolve the directory associated 
+%   with MeTTa in a specific order. It prioritizes specific subdirectories, then 
+%   falls back to source, library, and root directories.
+%
+%   The resolution strategy is as follows:
+%   1. It attempts to resolve the directory as a subdirectory of the MeTTa library 
+%      path, specifically './loaders/genome/'.
+%   2. Falls back to the directory specified by `is_metta_src_dir/1`.
+%   3. Further falls back to the MeTTa library directory.
+%   4. Finally, it falls back to the MeTTa root directory.
+%
+%   @arg Dir The absolute directory path to the MeTTa system.
+%
+%   @example Find the MeTTa directory:
+%     ?- metta_dir(Dir).
+%     Dir = '/path/to/metta/loaders/genome/'.
+%
+%   @see metta_library_dir/1
+%   @see is_metta_src_dir/1
+%   @see metta_root_dir/1
+metta_dir(Dir) :-
+    % Attempt to resolve using the MeTTa library directory and './loaders/genome/'.
+    metta_library_dir(Value),
+    absolute_file_name('./loaders/genome/', Dir, [relative_to(Value)]).
+    % Fallback to the source directory if the above resolution fails.
+metta_dir(Dir) :-
+    is_metta_src_dir(Dir).
+    % Fallback to the MeTTa library directory if previous attempts fail.
+metta_dir(Dir) :-
+    metta_library_dir(Dir).
+    % Final fallback to the MeTTa root directory.
+metta_dir(Dir) :-
+    metta_root_dir(Dir).
+% metta_dir(Dir) :- is_metta_src_dir(Value), absolute_file_name('../flybase/', Dir, [relative_to(Value)]).
 
+% The Prolog 'dynamic' enables runtime modification of predicate.
 :- dynamic user:file_search_path/2.
+%
+%   The `user:file_search_path/2` predicate allows associating logical aliases 
+%   with specific directories, making it easier to reference files without 
+%   hardcoding their paths. In this case:
+%
+%   - `library` is mapped to the MeTTa directory, enabling searches for 
+%     library files relative to the MeTTa root.
+%   - `mettalog` is also mapped to the MeTTa directory, likely to handle 
+%     specific files related to the MeTTaLog transpiler/interpreter.
 :- multifile user:file_search_path/2.
 user:file_search_path(library,Dir):- metta_dir(Dir).
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
-
+%
+%   This directive conditionally loads the `logicmoo_utils` library if the system 
+%   is detected as Windows 64-bit. If the platform is not Windows 64-bit, the 
+%   directive does nothing.
+%
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
 
 %   :- initialization(attach_packs).
+
+%   'nodebug' disables specific debugging flags for various MeTTa-related modules.
+%
+%   These directives ensure that certain debugging categories (`metta(eval)`, 
+%   `metta(exec)`, `metta(load)`, and `metta(prolog)`) are disabled by default. 
+%   This reduces console output noise and improves runtime performance in 
+%   non-debugging environments.
+%
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
 :- nodebug(metta(load)).
 :- nodebug(metta(prolog)).
 
+%
+%   This section declares several dynamic and multifile predicates used in the 
+%   MeTTa system. These predicates support runtime updates, extensibility, and 
+%   modular design. They cover various aspects of MeTTa functionality.
+%
+%   These predicates are marked as `dynamic` to allow runtime modifications 
+%   and as `multifile` to enable contributions from multiple modules.
+%
 :- dynamic(function_arity/2).
 :- dynamic(predicate_arity/2).
-
 
 :-multifile(user:metta_file/3).
 :-dynamic(user:metta_file/3).
@@ -206,7 +369,6 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
     :-multifile(metta_defn/3).
     :-dynamic(metta_defn/3).
-
 
 :-multifile(user:asserted_metta_pred/2).
 :-dynamic(user:asserted_metta_pred/2).
