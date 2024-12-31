@@ -382,60 +382,212 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :- multifile(metta_compiled_predicate/3).
 :- dynamic(metta_compiled_predicate/3).
 
+%!  once_writeq_nl(+P) is det.
+%
+%   Ensures that the given term `P` is printed exactly once in the current session.
+%
+%   This predicate prevents duplicate printing of the same term using a global 
+%   non-backtrackable variable (`$once_writeq_ln`). It utilizes `numbervars/4` 
+%   to standardize variable names for comparison and `ansi_format/3` to provide 
+%   colored output.
+%
+%   @arg P The term to be printed. It will be printed once per invocation with 
+%          `ansi_format` using cyan foreground text.
+%
+%   @example Print a term only once:
+%     ?- once_writeq_nl(foo(bar)).
+%     foo(bar).
+%
+once_writeq_nl(_) :-
+    % If the predicate `pfcTraceExecution` is not defined, succeed immediately.
+    \+ clause(pfcTraceExecution, true), !.
+once_writeq_nl(P) :-
+    % If `$once_writeq_ln` is already set to the current term `P`, succeed silently.
+    nb_current('$once_writeq_ln', W),
+    W=@=P,!.
+once_writeq_nl(P) :-
+    % Standardize variable names in `P` and print it using `ansi_format`.
+    % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
+    \+ \+ (numbervars(P, 444, _, [attvar(skip), singletons(true)]),
+           ansi_format([fg(cyan)], '~N~q.~n', [P])),
+    nb_setval('$once_writeq_ln', P),!.
 
-once_writeq_nl(_):- \+ clause(pfcTraceExecution,true),!.
-once_writeq_nl(P):- nb_current('$once_writeq_ln',W),W=@=P,!.
-once_writeq_nl(P):-
- \+ \+ (numbervars(P,444,_,[attvar(skip),singletons(true)]),
- ansi_format([fg(cyan)],'~N~q.~n',[P])),nb_setval('$once_writeq_ln',P),!.
-% TODO uncomment this next line but it is breaking the curried chainer
+%!  pfcAdd_Now(+P) is det.
+%
+%   Adds a clause or fact `P` to the database using `pfcAdd/1` or `assert/1`.
+%
+%   This predicate checks whether the predicate `pfcAdd/1` exists in the database.
+%   If it exists, it calls `pfcAdd/1` after printing the term using `once_writeq_nl`.
+%   If not, it defaults to using `assert/1` after printing the term.
+%
+%   @arg P The clause or fact to be added to the database.
+%
+%   @example Add a fact to the database:
+%     ?- pfcAdd_Now(foo(bar)).
+%     foo(bar).
+%
+%   @see once_writeq_nl/1
+%
+% TODO: Uncomment the following line if the `pfcAdd` predicate is stable and 
+%       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
-pfcAdd_Now(P):- current_predicate(pfcAdd/1),!, once_writeq_nl(pfcAdd(P)),pfcAdd(P).
-pfcAdd_Now(P):- once_writeq_nl(asssert(P)),assert(P).
+pfcAdd_Now(P) :-
+    % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
+    current_predicate(pfcAdd/1),!,
+    once_writeq_nl(pfcAdd(P)),
+    pfcAdd(P).
+pfcAdd_Now(P) :-
+    % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
+    once_writeq_nl(asssert(P)),
+    assert(P).
 %:- endif.
 
-system:copy_term_g(I,O):- ground(I),!,I=O.
-system:copy_term_g(I,O):- copy_term(I,O).
+%!  system:copy_term_g(+I, -O) is det.
+%
+%   Optimized version of `copy_term/2` for ground terms.
+%
+%   If `I` is ground, it unifies `I` directly with `O`. Otherwise, it behaves 
+%   like `copy_term/2`, creating a fresh copy of `I`.
+%
+%   @arg I The input term (ground or non-ground).
+%   @arg O The output term, a copy of `I`.
+%
+system:copy_term_g(I, O) :-
+    % Directly unify if the input is ground.
+    ground(I),!,I = O.
+system:copy_term_g(I, O) :-
+    % Otherwise, use `copy_term/2`.
+    copy_term(I, O).
 
 :- ensure_loaded(metta_debug).
 
-is_metta_flag(What):- notrace(is_flag0(What)).
+%!  is_metta_flag(+What) is nondet.
+%
+%   Checks if a specific flag `What` is enabled in the current configuration.
+%
+%   This predicate uses `is_flag0/1` to verify the status of the given flag,
+%   while suppressing tracing for performance reasons.
+%
+%   @arg What The name of the flag to check.
+%
+is_metta_flag(What) :-
+    % Check the flag without enabling tracing.
+    notrace(is_flag0(What)).
 
+%
+%   Always succeeds, representing a logical flag that evaluates to true.
+%
 true_flag.
-false_flag:- fail.
 
-is_tRuE(TF):- TF=='True',!.
-is_tRuE(TF):- TF=='true',!.
-is_fAlSe(TF):- TF=='False',!.
-is_fAlSe(TF):- TF=='false',!.
-is_flag0(What):- nb_current(What,TF),is_tRuE(TF), !.
-is_flag0(What):- nb_current(What,TF),is_fAlSe(TF), !, fail.
-is_flag0(What):- current_prolog_flag(What,TF),is_tRuE(TF),!.
-is_flag0(What):- current_prolog_flag(What,TF),is_fAlSe(TF),!.
-is_flag0(What):-
- symbol_concat('--',What,FWhat),symbol_concat(FWhat,'=true',FWhatTrue),
- symbol_concat('--no-',What,NoWhat),symbol_concat(FWhat,'=false',FWhatFalse),
- is_flag0(What,[FWhat,FWhatTrue],[NoWhat,FWhatFalse]).
+%
+%   Always fails, representing a logical flag that evaluates to false.
+%
+false_flag :- fail.
 
-is_flag0(What,_FWhatTrue,FWhatFalse):-
-   current_prolog_flag(os_argv,ArgV),
-   member(FWhat,FWhatFalse),member(FWhat,ArgV),!,
-   %notrace(catch(set_prolog_flag(What,false),_,true)),
-   set_option_value(What,'False'),!,fail.
-is_flag0(What,FWhatTrue,_FWhatFalse):-
-   current_prolog_flag(os_argv,ArgV),
-   member(FWhat,FWhatTrue),member(FWhat,ArgV),!,
-   %notrace(catch(set_prolog_flag(What,true),_,true)),
-   set_option_value(What,'True'),!.
-is_flag0(What,_FWhatTrue,_FWhatFalse):-
-  current_prolog_flag(os_argv,ArgV),
-  symbolic_list_concat(['--',What,'='],Starts),
-  member(FWhat,ArgV),symbol_concat(Starts,Rest,FWhat),
-  set_option_value_interp(What,Rest),!.
+%!  is_tRuE(+TF) is det.
+%
+%   Checks if the given term `TF` represents a logical "true" value.
+%
+%   @arg TF A term expected to be either `'True'` or `'true'`.
+%
+is_tRuE(TF) :-
+    % Match 'True' exactly.
+    TF == 'True',!.
+is_tRuE(TF) :-
+    % Match 'true' exactly.
+    TF == 'true',!.
 
-is_compiling:- current_prolog_flag(os_argv,ArgV),member(E,ArgV),   (E==qcompile_mettalog;E==qsave_program),!.
-is_compiled:- current_prolog_flag(os_argv,ArgV), member('-x',ArgV),!.
-is_compiled:- current_prolog_flag(os_argv,ArgV),\+ member('swipl',ArgV),!.
+%!  is_fAlSe(+TF) is det.
+%
+%   Checks if the given term `TF` represents a logical "false" value.
+%
+%   @arg TF A term expected to be either `'False'` or `'false'`.
+%
+is_fAlSe(TF) :-
+    % Match 'False' exactly.
+    TF == 'False',!.
+is_fAlSe(TF) :-
+    % Match 'false' exactly.
+    TF == 'false',!.
+
+%!  is_flag0(+What) is nondet.
+%
+%   Checks if a flag `What` is logically true in the current environment.
+%
+%   @arg What The flag to check.
+%
+is_flag0(What) :-
+    % Check if the flag exists as a non-backtrackable global variable and is true.
+    nb_current(What, TF),is_tRuE(TF),!.
+is_flag0(What) :-
+    % Check if the flag exists as a non-backtrackable global variable and is false.
+    nb_current(What, TF),is_fAlSe(TF),!,fail.
+is_flag0(What) :-
+    % Check if the flag exists as a Prolog configuration flag and is true.
+    current_prolog_flag(What, TF),is_tRuE(TF),!.
+is_flag0(What) :-
+    % Check if the flag exists as a Prolog configuration flag and is false.
+    current_prolog_flag(What, TF),is_fAlSe(TF),!.
+is_flag0(What) :-
+    % Build flag strings for parsing command-line arguments.
+    symbol_concat('--', What, FWhat),
+    symbol_concat(FWhat, '=true', FWhatTrue),
+    symbol_concat('--no-', What, NoWhat),
+    symbol_concat(FWhat, '=false', FWhatFalse),
+    is_flag0(What, [FWhat, FWhatTrue], [NoWhat, FWhatFalse]).
+
+%!  is_flag0(+What, +FWhatTrue, +FWhatFalse) is nondet.
+%
+%   Checks command-line arguments (`os_argv`) to determine the status of a flag.
+%
+%   @arg What       The flag being checked.
+%   @arg FWhatTrue  A list of patterns representing a "true" status for the flag.
+%   @arg FWhatFalse A list of patterns representing a "false" status for the flag.
+%
+is_flag0(What, _FWhatTrue, FWhatFalse) :-
+    % Check if the flag is explicitly set to false in command-line arguments.
+    current_prolog_flag(os_argv, ArgV),member(FWhat, FWhatFalse),member(FWhat, ArgV),!,
+    % notrace(catch(set_prolog_flag(What, false), _, true)),
+    set_option_value(What, 'False'),!,fail.
+is_flag0(What, FWhatTrue, _FWhatFalse) :-
+    % Check if the flag is explicitly set to true in command-line arguments.
+    current_prolog_flag(os_argv, ArgV),member(FWhat, FWhatTrue),member(FWhat, ArgV),!,
+    % notrace(catch(set_prolog_flag(What, true), _, true)),
+    set_option_value(What, 'True'),!.
+is_flag0(What, _FWhatTrue, _FWhatFalse) :-
+    % Parse flags with specific key-value pair syntax in command-line arguments.
+    current_prolog_flag(os_argv, ArgV),symbolic_list_concat(['--', What, '='], Starts),
+    member(FWhat, ArgV),symbol_concat(Starts, Rest, FWhat),set_option_value_interp(What, Rest),!.
+
+%!  is_compiling is nondet.
+%
+%   Succeeds if the program is currently in a compilation phase.
+%
+%   This predicate checks the Prolog runtime arguments (`os_argv`) to determine if 
+%   the system is performing specific compilation tasks, such as `qcompile_mettalog` 
+%   or `qsave_program`.
+%
+is_compiling :-
+    current_prolog_flag(os_argv, ArgV),member(E, ArgV),
+    % Check if compilation-specific arguments are present.
+    (E == qcompile_mettalog; E == qsave_program),!.
+
+%!  is_compiled is nondet.
+%
+%   Succeeds if the program has been compiled into an executable.
+%
+%   This predicate verifies whether Prolog is running a precompiled executable by 
+%   checking for the `-x` flag in `os_argv` or ensuring `swipl` is not present in the 
+%   argument list.
+%
+is_compiled :-
+    current_prolog_flag(os_argv, ArgV),
+    % Check if the `-x` flag is present, indicating an executable was started.
+    member('-x', ArgV),!.
+is_compiled :-
+    current_prolog_flag(os_argv, ArgV),
+    % If 'swipl' is absent from the arguments, assume it is a compiled binary.
+    \+ member('swipl', ArgV),!.
 
 is_converting:- is_metta_flag('convert').
 
