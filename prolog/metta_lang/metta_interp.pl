@@ -428,6 +428,7 @@ once_writeq_nl(P) :-
 %
 %   @see once_writeq_nl/1
 %
+
 % TODO: Uncomment the following line if the `pfcAdd` predicate is stable and 
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
@@ -474,14 +475,7 @@ is_metta_flag(What) :-
     % Check the flag without enabling tracing.
     notrace(is_flag0(What)).
 
-%
-%   Always succeeds, representing a logical flag that evaluates to true.
-%
 true_flag.
-
-%
-%   Always fails, representing a logical flag that evaluates to false.
-%
 false_flag :- fail.
 
 %!  is_tRuE(+TF) is det.
