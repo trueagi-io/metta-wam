@@ -1114,7 +1114,8 @@ cleanup() {
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
-    do_DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS to $HTML_OUT or $file_html or $HTML_FILE"
+
+    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS to $HTML_OUT"
 
     if [ ! -z "$TEE_FILE" ];then
 
@@ -1216,9 +1217,11 @@ if [[ "$html_flag" == "enable" ]]; then
     export TEE_FILE
 
     if [ ! -z "$HTML_OUT" ];then
-        HTML_OUT=$(readlink -m --relative-to="$(pwd)" "$HTML_OUT")
+        #HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
         if [ ! -z "$OUTPUT_DIR" ] ;then
-	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
+	  if [ -z "$METTALOG_OUTPUT" ] ;then
+	   export METTALOG_OUTPUT="${OUTPUT_DIR}"
+	  fi
            # HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
         fi
     fi

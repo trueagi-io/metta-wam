@@ -687,9 +687,9 @@ while [ "$#" -gt 0 ]; do
 	--output=*) METTALOG_OUTPUT="${1#*=}"  ;;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
-        --regression*) clean=0; if_failures=0; if_regressions=1 ;;
-        --continu*) clean=0; if_failures=0 ;;	
-        --failure*) clean=0; if_failures=1 ;;
+        --regres*) clean=0; if_failures=0; if_regressions=1 ;;
+        --contin*) clean=0; if_failures=0 ;;	
+        --fail*) clean=0; if_failures=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;

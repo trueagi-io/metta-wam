@@ -86,7 +86,7 @@
 (: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
 
 (: pragma! (-> Atom Atom (->)))
-(: = (-> Atom Atom %Undefined%))
+;(: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
 (: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
@@ -204,7 +204,7 @@ For example:
 
 (predicate-arity predicate-arity 2)
 (predicate-arity : 2)
-;; (= (: $F P1) (predicate-arity $F 1))
+(= (: $F P1) (predicate-arity $F 1))
 
 ;; Source Predicate and Function Types
 
@@ -311,7 +311,7 @@ For example:
     (@param "Result of reduction or transformation of the first pattern")))
   (@return "Not reduced itself unless custom equalities over equalities are added") )
 (: = (-> $t $t Atom))
-(: = (-> Atom Atom Atom))
+;(: = (-> Atom Atom Atom))
 
 (iz ErrorType MeTTa)
 (@doc ErrorType (@desc "Type of the atom which contains error"))
