@@ -120,7 +120,7 @@ set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result
 % is_self_eval_l_fa('=',2).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
-is_self_eval_l_fa('=',_):- nb_current(evaling_args,t).
+%is_self_eval_l_fa('=',_):- nb_current(evaling_args,t).
 is_self_eval_l_fa(':',_):- nb_current(evaling_args,t).
 is_self_eval_l_fa('Error',_).
 is_self_eval_l_fa('{...}',_).
