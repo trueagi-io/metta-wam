@@ -7,7 +7,7 @@ export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Function to exit the script properly
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
-export MeTTa=$(realpath "$SCRIPT")
+export MeTTa=$(readlink -m "$SCRIPT")
 export METTALOG_DIR=$(dirname "$SCRIPT")
 # echo "METTALOG_DIR=$METTALOG_DIR"
 #cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
@@ -625,7 +625,7 @@ function handle_args {
         if [[ "$NEXT_ARG_IS_RC_FILE" == true ]]; then
 	    NEXT_ARG_IS_RC_FILE=false
             rc_file_path="$PrevDir/$arg"  # Resolve file path relative to PrevDir
-            rc_file_path="$(realpath "$rc_file_path")"  # Resolve to absolute path
+            rc_file_path="$(readlink -m "$rc_file_path")"  # Resolve to absolute path
             load_rc_file "$rc_file_path"
 	    use_rc_file=""
             continue
@@ -645,7 +645,7 @@ function handle_args {
 	arg_realpath="$arg"
         # track file paths but keep going
         if [[ -f "$arg" || -d "$arg" ]]; then
-            arg_realpath="$(realpath "$arg")"
+            arg_realpath="$(readlink -m "$arg")"
             if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
                 add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
             fi
@@ -826,7 +826,7 @@ function handle_args {
             *)
                 add_to_list "$arg" METTALOG_OPTIONS
 		if [[ -f "$arg" || -d "$arg" ]]; then
-		    arg_realpath="$(realpath "$arg")"
+		    arg_realpath="$(readlink -m "$arg")"
 		    if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 		        add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 		    fi
@@ -843,7 +843,7 @@ for arg in "$@"; do
     arg=$(remove_quotes "$arg")  # Remove the quotes
 
     if [[ -f "$arg" || -d "$arg" ]]; then
-	arg_realpath="$(realpath "$arg")"
+	arg_realpath="$(readlink -m "$arg")"
 	if [[ -f "$arg_realpath" || -d "$arg_realpath" ]]; then
 	    add_to_list "$arg_realpath" LIST_OF_FILE_ARGS
 	fi
@@ -854,13 +854,13 @@ done
 #DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
 DIRNAME="${LIST_OF_FILE_ARGS[0]}"
 if [[ -f "$DIRNAME" ]]; then
-  HTML_OUT="${DIRNAME}.html"
+  HTML_OUT_MAYBE="${DIRNAME}.html"
   DIRNAME=$(dirname "${DIRNAME}")
 elif [[ -d "$DIRNAME" ]]; then
-  HTML_OUT="${DIRNAME}/Result.html"
+  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
 else
   DIRNAME="${PWD}"
-  HTML_OUT="${DIRNAME}/Result.html"
+  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
 fi
 DIR_RC="$DIRNAME/.mettalogrc"
 #DEBUG "DIR_RC=$DIR_RC"
@@ -1001,7 +1001,7 @@ else
     fi
 fi
 
-INTERP_SRC_DIR="$(realpath "${INTERP_SRC_DIR}")"
+INTERP_SRC_DIR="$(readlink -m "${INTERP_SRC_DIR}")"
 
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 
@@ -1114,12 +1114,14 @@ cleanup() {
     else
         METTA_CMD_EXIT_STATUS=${METTA_CMD_EXIT_STATUS:-$?}
     fi
-    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS"
+
+    DEBUG "Exit code of METTA_CMD: $METTA_CMD_EXIT_STATUS to $HTML_OUT"
 
     if [ ! -z "$TEE_FILE" ];then
-        if [ ! -z "$HTML_OUT" ];then
+
+        if [ ! -z "$HTML_FILE" ];then
             IF_REALLY_DO "ansi2html -u < '$TEE_FILE' > '$HTML_OUT'"
-            HTML_OUT=
+            export HTML_FILE=""
         fi
         IF_REALLY_DO "rm -f '$TEE_FILE'"
         TEE_FILE=
@@ -1199,6 +1201,13 @@ execute_with_pipes() {
     IF_REALLY_DO "$full_command"
 }
 
+if [ -z "$HTML_OUT" ];then
+    HTML_OUT=HTML_OUT_MAYBE
+fi
+
+if [ ! -z "$file_html" ];then
+    HTML_OUT="$file_html"
+fi
 
 # Conditional to check if html_flag is enabled
 if [[ "$html_flag" == "enable" ]]; then
@@ -1208,13 +1217,20 @@ if [[ "$html_flag" == "enable" ]]; then
     export TEE_FILE
 
     if [ ! -z "$HTML_OUT" ];then
-        HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
+        #HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
         if [ ! -z "$OUTPUT_DIR" ] ;then
-	    export METTALOG_OUTPUT="${OUTPUT_DIR}"
-            HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
+	  if [ -z "$METTALOG_OUTPUT" ] ;then
+	   export METTALOG_OUTPUT="${OUTPUT_DIR}"
+	  fi
+           # HTML_OUT="${OUTPUT_DIR}/${HTML_OUT}"
         fi
-	export HTML_FILE="${HTML_OUT}"
     fi
+
+    if [ ! -z "$file_html" ];then
+	HTML_OUT="$file_html"
+    fi
+
+    export HTML_FILE="${HTML_OUT}"
 
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS

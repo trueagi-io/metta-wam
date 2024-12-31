@@ -1200,7 +1200,7 @@ adjust_argsB(Else, _Eq, _RetType, Res, Res, Depth, Self, _, X, Y) :-
 %   @arg Adjusted    The result after evaluation.
 %
 eval_1_arg(Else, Eq, ReturnType, Depth, Self, Arg, Adjusted) :-
-    must_det_ll(
+    (
         if_or_else(
             eval(Eq, ReturnType, Depth, Self, Arg, Adjusted),
             call(Else, Arg, Adjusted))).
@@ -1460,7 +1460,7 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 into_typed_arg0(Depth, Self, T, M, Y) :-
     % If the type is a variable, determine the value type and evaluate if needed.
     var(T), !,
-    must_det_ll((
+    ((
         get_type(Depth, Self, M, T),
         (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
 into_typed_arg0(Depth, Self, T, M, Y) :-
@@ -1870,7 +1870,7 @@ is_user_defined_head0(Eq, Other, [H | _]) :-
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
     callable(H), !,
-    functor(H, F, _, _),
+    functor(H, F, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.

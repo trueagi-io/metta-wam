@@ -52,7 +52,7 @@
  */
 
 %*********************************************************************************************
-% PROGRAM FUNCTION: Interpret MeTTa code within the SWI-Prolog environment, enabling logical 
+% PROGRAM FUNCTION: Interpret MeTTa code within the SWI-Prolog environment, enabling logical
 % inference, runtime evaluation, and cross-language integration with Python and Rust.
 %*********************************************************************************************
 
@@ -152,12 +152,12 @@
 %   - Facilitates maintainability and portability of the codebase.
 %   - Supports dynamic pack management during runtime without requiring manual adjustments.
 %
-:- (prolog_load_context(directory, Value); Value='.'), 
+:- (prolog_load_context(directory, Value); Value='.'),
    % Resolve the absolute path to the '../../libraries/' directory.
    absolute_file_name('../../libraries/', Dir, [relative_to(Value)]),
    % Build paths for specific libraries/packs.
    atom_concat(Dir, 'predicate_streams', PS),
-   atom_concat(Dir, 'logicmoo_utils', LU),   
+   atom_concat(Dir, 'logicmoo_utils', LU),
    % Attach the base library directory with specified options.
    attach_packs(Dir, [duplicate(replace), search(first)]),
       % Attach the `predicate_streams` and `logicmoo_utils` packs.
@@ -206,7 +206,7 @@ is_win64_ui :-
 
 %   This predicate is used as a guard condition in stream-related operations
 %   to prevent unintended changes to Prolog's standard input, output, or error streams.
-%   It ensures that existing stream configurations remain intact, avoiding conflicts 
+%   It ensures that existing stream configurations remain intact, avoiding conflicts
 %   during operations that might otherwise alter stream properties.
 dont_change_streams:- true.
 
@@ -236,8 +236,8 @@ lazy_load_python.
 %
 %   Determines the root directory of the Mettalog project.
 %
-%   This predicate attempts to determine the root directory by first using the 
-%   `user:is_metta_src_dir/1` dynamic predicate. If that is unavailable or fails, 
+%   This predicate attempts to determine the root directory by first using the
+%   `user:is_metta_src_dir/1` dynamic predicate. If that is unavailable or fails,
 %   it falls back to the `METTA_DIR` environment variable.
 %
 %   @arg Dir The absolute path to the Mettalog root directory.
@@ -261,7 +261,7 @@ metta_root_dir(Dir) :-
 %
 %   Determines the library directory of the Mettalog project.
 %
-%   This predicate resolves the library directory relative to the Mettalog root 
+%   This predicate resolves the library directory relative to the Mettalog root
 %   directory using `metta_root_dir/1`.
 %
 %   @arg Dir The absolute path to the Mettalog library directory.
@@ -281,12 +281,12 @@ metta_library_dir(Dir) :-
 %
 %   Determines the directory path for the Mettalog system.
 %
-%   This predicate tries multiple approaches to resolve the directory associated 
-%   with Mettalog in a specific order. It prioritizes specific subdirectories, then 
+%   This predicate tries multiple approaches to resolve the directory associated
+%   with Mettalog in a specific order. It prioritizes specific subdirectories, then
 %   falls back to source, library, and root directories.
 %
 %   The resolution strategy is as follows:
-%   1. It attempts to resolve the directory as a subdirectory of the Mettalog library 
+%   1. It attempts to resolve the directory as a subdirectory of the Mettalog library
 %      path, specifically './loaders/genome/'.
 %   2. Falls back to the directory specified by `is_metta_src_dir/1`.
 %   3. Further falls back to the Mettalog library directory.
@@ -319,21 +319,21 @@ metta_dir(Dir) :-
 % The Prolog 'dynamic' enables runtime modification of predicate.
 :- dynamic user:file_search_path/2.
 %
-%   The `user:file_search_path/2` predicate allows associating logical aliases 
-%   with specific directories, making it easier to reference files without 
+%   The `user:file_search_path/2` predicate allows associating logical aliases
+%   with specific directories, making it easier to reference files without
 %   hardcoding their paths. In this case:
 %
-%   - `library` is mapped to the Mettalog directory, enabling searches for 
+%   - `library` is mapped to the Mettalog directory, enabling searches for
 %     library files relative to the Mettalog root.
-%   - `mettalog` is also mapped to the Mettalog directory, likely to handle 
+%   - `mettalog` is also mapped to the Mettalog directory, likely to handle
 %     specific files related to the MettalogLog transpiler/interpreter.
 :- multifile user:file_search_path/2.
 user:file_search_path(library,Dir):- metta_dir(Dir).
 user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 %
-%   This directive conditionally loads the `logicmoo_utils` library if the system 
-%   is detected as Windows 64-bit. If the platform is not Windows 64-bit, the 
+%   This directive conditionally loads the `logicmoo_utils` library if the system
+%   is detected as Windows 64-bit. If the platform is not Windows 64-bit, the
 %   directive does nothing.
 %
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
@@ -342,9 +342,9 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 
 %   'nodebug' disables specific debugging flags for various Mettalog-related modules.
 %
-%   These directives ensure that certain debugging categories (`metta(eval)`, 
-%   `metta(exec)`, `metta(load)`, and `metta(prolog)`) are disabled by default. 
-%   This reduces console output noise and improves runtime performance in 
+%   These directives ensure that certain debugging categories (`metta(eval)`,
+%   `metta(exec)`, `metta(load)`, and `metta(prolog)`) are disabled by default.
+%   This reduces console output noise and improves runtime performance in
 %   non-debugging environments.
 %
 :- nodebug(metta(eval)).
@@ -353,11 +353,11 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :- nodebug(metta(prolog)).
 
 %
-%   This section declares several dynamic and multifile predicates used in the 
-%   Mettalog system. These predicates support runtime updates, extensibility, and 
+%   This section declares several dynamic and multifile predicates used in the
+%   Mettalog system. These predicates support runtime updates, extensibility, and
 %   modular design. They cover various aspects of Mettalog functionality.
 %
-%   These predicates are marked as `dynamic` to allow runtime modifications 
+%   These predicates are marked as `dynamic` to allow runtime modifications
 %   and as `multifile` to enable contributions from multiple modules.
 %
 :- dynamic(function_arity/2).
