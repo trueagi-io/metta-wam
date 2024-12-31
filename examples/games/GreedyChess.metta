@@ -3,8 +3,8 @@
 ;   Mettalog Project 2024
 
 ;   Function:  Play chess (human vs MeTTa program) using a fairly simple "greedy" approach
-;               with moves that do not project possible boards beyond the present board.
-;   Input:     User's moves from console.
+;              with moves that do not project possible boards beyond the present board.
+;   Input:     User's commands and moves from console.
 ;   Output:    Chess board displayed to console with computer's move.
 ;
 ;**********************************************************************
@@ -237,10 +237,13 @@
 (= (get-player-command $input_list)  
    (let $cmd (get-single-char!)
       (progn
+          ; if initial execution flush output
           (if (== (size-atom $input_list) 0) (flush-output!) ())
-          (if (== $cmd 13) 
-            $input_list
-            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list))))))
+          (if (== $cmd 13) ; if user hit <ENTER>
+            ;return all input
+            $input_list    
+            ;else gather more input
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
 
 
 ; write welcome banner to console and call display_board to print the pieces
@@ -276,12 +279,10 @@
       (let*
         ( ; assign either * or " " 
           ($player (if (== (contains_symbol $p s) True) * " "))
+          ; identify piece
           ($piece (nth 4 $p))
         )
-        (format-args "{}{}" ($player $piece))
-      )
-    )
-)
+        (format-args "{}{}" ($player $piece)))))
 
 ; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
 (: display_filter (-> list list))
@@ -322,6 +323,7 @@
 (= (command-loop)
   (do
     (println! "Please enter your command.")
+    ; case statement for commands
     (let $command (get-player-command ())
       (if (== $command 77)
           (do 
