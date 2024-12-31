@@ -28,7 +28,7 @@ process_file() {
 
     export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
-    export HTML_OUT="${file}.html"
+    export HTML_OUT="$file_html"
 
     DEBUG "==========================================================================="
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
@@ -47,8 +47,8 @@ process_file() {
     DEBUG "==========================================================================="
 
     # Add unique absolute paths to PYTHONPATH
-    pp1=$(realpath "$(dirname "${file}")")
-    pp2=$(realpath "$(dirname "${pp1}")")
+    pp1=$(readlink -m "$(dirname "${file}")")
+    pp2=$(readlink -m "$(dirname "${pp1}")")
     for pp in $pp1 $pp2; do
         if [[ ":$PYTHONPATH:" != *":$pp:"* ]]; then
             export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$pp"
@@ -69,7 +69,7 @@ process_file() {
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
         #IF_REALLY_DO cat /dev/null > "${file}.answers"
         IF_REALLY_DO rm -f "${file}.answers"
-       # git checkout "${file}.answers"
+        # git checkout "${file}.answers"
 
         # Function to handle SIGINT
         handle_sigint() {
@@ -163,11 +163,12 @@ process_file() {
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
-        TEST_CMD="./mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
+        TEST_CMD="$METTALOG_DIR/mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         # DEBUG "${BOLD}$TEST_CMD${NC}"
-
-
+	    
             EXTRA_INFO="Under $METTALOG_MAX_TIME seconds"
+
+	    DEBUG "HTML_OUT=$HTML_OUT"
 
             # Start the timer
             local START_TIME=$(date +%s)
@@ -225,6 +226,21 @@ process_file() {
                 LOGFILE="$file_html"
             fi
 
+	    DEBUG "file_html=$file_html"
+
+	    # Check if the file exists
+	    if [ -f "$file_html" ]; then
+		# Get the file size in bytes
+		file_size=$(stat --format="%s" "$file_html")
+		    if [ "$file_size" -lt 20 ]; then
+			DEBUG "${RED}(warning) The file '$file_html' is less than 20 bytes!${NC}"
+		    else
+			DEBUG "The file '$file_html' exists and is $file_size bytes."
+		    fi
+	    else
+		DEBUG "${RED}The file '$file_html' does not exist.${NC}"
+	    fi
+
             # Redirect debug messages to both the logfile and console
             echo "$DEBUG_MESSAGE" | tee -a "$LOGFILE"
 
@@ -247,21 +263,26 @@ process_file() {
 # Check if the script is being sourced or run directly
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Save the directory one level above where this script resides
+SCRIPTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPTS="$(readlink -m "$SCRIPTS")"
+
 METTALOG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+METTALOG_DIR="$(readlink -m "$METTALOG_DIR")"
+
+SCRIPT_NAME=$(basename "$0")
 
 passed_along_to_mettalog=()
 METTALOG_MAX_TIME=45
+RUST_METTA_MAX_TIME=60
 
-SCRIPT_NAME=$(basename "$0")
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-METTALOG_OUTPUT="reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+METTALOG_OUTPUT="$METTALOG_DIR/reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
 fresh=0
 clean=0  # 0 means don't clean, 1 means do clean
 if_failures=0
 if_regressions=0
 show_help=0
-RUST_METTA_MAX_TIME=60
 EXTRA_FIND_ARGS=" ! -path '*/.*' ! -path '*~*' ! -size +10M"
 EXTRA_GREP_ARGS=""
 dry_run=0
@@ -498,7 +519,7 @@ generate_final_MeTTaLog() {
     cd "$METTALOG_DIR" || exit 1
 
     if [ 1 -eq 0 ]; then
-	python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
+	python3 $SCRIPTS/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
 
 	junit2html "$METTALOG_OUTPUT/junit.xml"
 	junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
@@ -522,14 +543,22 @@ generate_final_MeTTaLog() {
     {   echo "| TEST NAME | STATUS | URL LOCATION | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|-----------|--------|--------------|----------------|---------------|-----------------|"
         cat "${SHARED_UNITS}" | awk -F'\\(|\\) \\| \\(' '{ print $1 " " $0 }' | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
-    } > ./$METTALOG_OUTPUT/PASS_FAIL.md
+    } > $METTALOG_OUTPUT/PASS_FAIL.md
 
 
-   ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
+   echo "$SCRIPTS/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md"
+
+   METTALOG_OUTPUT_RELATIVE=$(realpath --no-symlinks --relative-to="$PWD" "$METTALOG_OUTPUT")
+   $SCRIPTS/pass_fail_totals.sh $METTALOG_OUTPUT_RELATIVE/ > $METTALOG_OUTPUT/TEST_LINKS.md
+
    printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
+
+   cat "$METTALOG_OUTPUT/_REPORT_.md"
+
    cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
    | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
-   ./scripts/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
+
+   $SCRIPTS/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
 
 }
 
@@ -682,7 +711,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-source ./scripts/ensure_venv
+source $SCRIPTS/ensure_venv
 
 extract_all_parent_directories
 
@@ -706,7 +735,7 @@ fi
 
 if [ -z "$SHARED_UNITS" ]; then
     if [ -d "$METTALOG_OUTPUT" ]; then
-	export SHARED_UNITS=$(realpath $METTALOG_OUTPUT)/SHARED.UNITS
+	export SHARED_UNITS=$(readlink -m $METTALOG_OUTPUT)/SHARED.UNITS
     fi
 fi
 touch $SHARED_UNITS
@@ -726,23 +755,30 @@ else
 fi
 
 # Directory containing the .pl files
+PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
+# Directory containing the .pl files
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+# Directory containing the .pl files
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
-      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
     else 
-	if [ -f "$METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl" ]; then
-	  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
-	else 
-	  INTERP_SRC_DIR="$METTALOG_DIR/src/canary"
-	fi
+      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
     fi
 fi
 
+
+
+METTALOG_OUTPUT_RELATIVE="$METTALOG_OUTPUT"
+METTALOG_OUTPUT="$(readlink -m "$METTALOG_OUTPUT")"
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 DEBUG "METTALOG_OUTPUT=$METTALOG_OUTPUT"
+DEBUG "METTALOG_OUTPUT_RELATIVE=$METTALOG_OUTPUT_RELATIVE"
+SHARED_UNITS="$(readlink -m "$SHARED_UNITS")"
 DEBUG "SHARED_UNITS=$SHARED_UNITS"
+export SHARED_UNITS
 
 if [[ ! -f "${METTALOG_OUTPUT}/src/" ]]; then
   :
