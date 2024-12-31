@@ -28,7 +28,7 @@
             dif_matrix/2,
             term_singleslots/2,
           term_singleslots/3,
-          term_singleslots/5,         
+          term_singleslots/5,
             set_varname/2,
             set_varname/3,
             write_functor/2,
@@ -67,7 +67,7 @@
 
             no_varnaming/1,
             no_vars_needed/1,
-            
+
    print_numbervars_maybe/1,
    print_numbervars/1,
    scan_for_varnames0/0,
@@ -93,7 +93,7 @@
             try_get_inner_vars/1,
             set_varname/2,
             try_save_vars/1,
-            
+
             v_dif_rest/2,
             vmust/1,
             init_varname_stores/1,
@@ -103,7 +103,7 @@
 
 
 /** <module> Utility LOGICMOO UTIL VARNAMES / Name Prolog variables (debugging)
-This module holds utilities to access and change the names of prolog variables. 
+This module holds utilities to access and change the names of prolog variables.
 - @author Douglas R. Miles
 - @license LGPL
 */
@@ -156,15 +156,15 @@ This module holds utilities to access and change the names of prolog variables.
             get_clause_vars_copy/2,
             get_clause_vars_hb_int/2,
             imploded_copyvars/2,
-            locate_clause_ref/5,  
-            
+            locate_clause_ref/5,
+
             listing_vars_file/0,
             make_subterm_path/3,
             maybe_record_scanned_file/0,
             no_varnaming/1,
             without_varname_scan/1,
             no_vars_needed/1,
-            
+
    print_numbervars_maybe/1,
    print_numbervars/1,
             read_source_file_vars/1,
@@ -188,7 +188,7 @@ This module holds utilities to access and change the names of prolog variables.
             try_get_inner_vars/1,
             set_varname/2,
             try_save_vars/1,
-            
+
             v_dif_rest/2,
             % name_variable/2, variable_name/2,
             vmust/1,
@@ -237,7 +237,7 @@ This module holds utilities to access and change the names of prolog variables.
 %
 member_open(C, [B|A]) :-  (nonvar(B),B=C) ; (nonvar(A),member_open(C, A)).
 
-%= 	 	 
+%=
 
 %% source_variables_lwv( ?AllS) is det.
 %
@@ -283,12 +283,12 @@ when_var_locked(What):- t_l:varname_lock(What),!.
 % Hook To [dom:attr_unify_hook/2] For Module Logicmoo_varnames.
 % Attr Unify Hook.
 %
-vn:attr_unify_hook(X,Y):- ignore(quietly(must(vn_auh_0(X,Y)))).
+vn:attr_unify_hook(X,Y):- ignore(quietly((vn_auh_0(X,Y)))).
 
-vn_auh_0(_, Var):- cyclic_term(Var),!,fail.
-vn_auh_0(Var,_):- cyclic_term(Var),!,fail.
 vn_auh_0(Name1, Var):- when_var_locked(What),!,(unify_name_based(Name1, Var)->true;call(What,Var)).
 vn_auh_0(Name1, Var):- var(Var),unify_name_based(Name1, Var),!.
+vn_auh_0(_, Var):- cyclic_term(Var),!,fail.
+%vn_auh_0(Var,_):- cyclic_term(Var),!,fail.
 vn_auh_0(_Form, _OtherValue):-!.
 
 
@@ -339,11 +339,11 @@ user:portray(Sk):- get_attr(Sk, vn, Name), get_attrs(Sk,att(vn,Name,[])),write(N
 % Portray Attribute Variable.
 %
 portray_attvar(Var) :-
-	write('{<'),
+    write('{<'),
         ((get_attr(Var,vn, VarName))->true;sformat(VarName,'~q',[Var])),
-	get_attrs(Var, Attr),
-	catch(writeq('??'(VarName,Attr)),_,'$attvar':portray_attrs(Attr, Var)),
-	write('>}').
+    get_attrs(Var, Attr),
+    catch(writeq('??'(VarName,Attr)),_,'$attvar':portray_attrs(Attr, Var)),
+    write('>}').
 */
 
 
@@ -353,14 +353,14 @@ portray_attvar(Var) :-
 % % % OFF :- system:use_module(library(when)).
 
 :- prolog_clause:multifile((
-	unify_goal/5,			% +Read, +Decomp, +M, +Pos, -Pos
-	unify_clause_hook/5,
-	make_varnames_hook/5,
-	open_source/2)).			% +Input, -Stream
+    unify_goal/5,           % +Read, +Decomp, +M, +Pos, -Pos
+    unify_clause_hook/5,
+    make_varnames_hook/5,
+    open_source/2)).            % +Input, -Stream
 
 :- predicate_options(prolog_clause:clause_info/5, 5,
-		     [ variable_names(-list)
-		     ]).
+             [ variable_names(-list)
+             ]).
 
 % % % OFF :- system:use_module(library(prolog_source)).
 % % % OFF :- system:use_module(library(prolog_clause)). % read_term_at_line/6
@@ -916,7 +916,7 @@ save_to_clause_ref(ClauseRef,Vs,Why):- ain00(names(ClauseRef,Vs)),ain00(names_wh
 save_clause_vars(M,H,MB,B,Vs,Why:_):-atom(Why),!,save_clause_vars(M,H,MB,B,Vs,Why).
 save_clause_vars(M,H,MB,B,Vs,Why):- fail, locate_clause_ref(M,H,MB,B,ClauseRef),clause_ref_vars(ClauseRef,Was),
    ((Was=Vs) -> fail ; save_to_clause_ref(ClauseRef,Vs,Why)),!.
-save_clause_vars(_M,H,_MB,B,Vs,Why):- 
+save_clause_vars(_M,H,_MB,B,Vs,Why):-
   ain00(varname_cache:varname_info(H,B,Vs,Why)).
 
 
@@ -1138,13 +1138,13 @@ imploded_copyvars(C,CT):-vmust((source_variables_l(Vs),copy_term(C-Vs,CT-VVs,_),
 %
 % Source Variables.
 %
-source_variables(Vs):- 
+source_variables(Vs):-
  (prolog_load_context(variable_names,Vs2);Vs2=[]),
  execute_goal_vs(Vs1),
  append(Vs1,Vs2,Vs3),list_to_set(Vs3,Vs),
  (Vs\==Vs2 -> b_setval('$variable_names',Vs) ; true).
 
-source_variables0(Vs):- 
+source_variables0(Vs):-
  (prolog_load_context(variable_names,Vs2);Vs2=[]),
  execute_goal_vs(Vs1),
  append(Vs1,Vs2,Vs3),list_to_set(Vs3,Vs).
@@ -1219,7 +1219,7 @@ maybe_scan_for_varnames:- current_prolog_flag(source_variables, true)->scan_for_
 % Scan For Varnames.
 %
 scan_for_varnames:- thglobal:scanning_for_varnames_already,!.
-scan_for_varnames:- %swc, 
+scan_for_varnames:- %swc,
  setup_call_cleanup(
    asserta(thglobal:scanning_for_varnames_already),
    scan_for_varnames0,
@@ -1286,22 +1286,22 @@ save_file_source_vars(F,T,Vs):- put_variable_names(Vs),!,locally(t_l:current_why
 
 read_source_vars(File,In):-
    Module = module(_),
-	repeat,
-	  catch(prolog_read_source_term(In, Term, Expanded, [ variable_names(Vs), syntax_errors(error) , term_position(TermPos)  ]),
-		E,(nop((dmsg(E))),fail)),
+    repeat,
+      catch(prolog_read_source_term(In, Term, Expanded, [ variable_names(Vs), syntax_errors(error) , term_position(TermPos)  ]),
+        E,(nop((dmsg(E))),fail)),
           arg(1,Module,M),
           (Term = module(MM,_) -> (nb_setarg(1,Module,MM),fail);
           ((stream_position_data(line_count, TermPos, LineNo),
 
-	  ignore(save_file_source_vars(mfl4(Vs,M,File,LineNo),Term,Vs)),
-	  (   is_list(Expanded)
-	  ->  member(T, Expanded)
-	  ;   T = Expanded
-	  ),
-	(   T == end_of_file
-	->  ! ;
+      ignore(save_file_source_vars(mfl4(Vs,M,File,LineNo),Term,Vs)),
+      (   is_list(Expanded)
+      ->  member(T, Expanded)
+      ;   T = Expanded
+      ),
+    (   T == end_of_file
+    ->  ! ;
            ( T\==Term, save_file_source_vars(mfl4(Vs,M,File,LineNo),T,Vs),
-	    fail))))).
+        fail))))).
 
 
 % new method
@@ -1316,10 +1316,10 @@ read_source_file_vars_1('/usr/lib/swi-prolog/library/sandbox.pl'):-!.
 read_source_file_vars_1(File):-
    once(current_prolog_flag(xref, Was);Was=false),
    locally(set_prolog_flag(xref, true),
-	setup_call_cleanup(
-	    prolog_open_source(File, In),
-	    read_source_vars(File,In),
-	    (prolog_close_source(In),
+    setup_call_cleanup(
+        prolog_open_source(File, In),
+        read_source_vars(File,In),
+        (prolog_close_source(In),
               current_prolog_flag(xref, Was)))),!.
 
 

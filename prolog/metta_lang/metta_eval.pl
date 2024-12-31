@@ -121,7 +121,7 @@ set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
 is_self_eval_l_fa('quote',_).
 %is_self_eval_l_fa('=',_):- nb_current(evaling_args,t).
-is_self_eval_l_fa(':',_):- nb_current(evaling_args,t).
+%is_self_eval_l_fa(':',_):- nb_current(evaling_args,t).
 is_self_eval_l_fa('Error',_).
 is_self_eval_l_fa('{...}',_).
 is_self_eval_l_fa('[...]',_).
@@ -2325,8 +2325,6 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
 
 suggest_type(_RetType,_Bool).
 
-naive_eval_args:-
-    false.
 
 eval_41(Eq,RetType,Depth,Self,[AE|More],Res):- naive_eval_args,!,
   maplist(must_eval_args(Eq,_,Depth,Self),More,Adjusted),
@@ -2363,6 +2361,8 @@ eval_30(Eq,RetType,Depth,Self,PredDecl,Res):-
     if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
     if_or_else(eval_maybe_host_function(Eq,RetType,Depth,Self,PredDecl,Res), fail))).
 
+
+naive_eval_args:- false_flag.
 eval_all_args:- naive_eval_args.
 fail_missed_defn:- true_flag.
 fail_on_constructor:- true_flag.
@@ -2752,7 +2752,7 @@ eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED):-
   light_eval(Eq,RetType,Depth,Self,B0,Y),!.
 eval_defn_failure(Eq,RetType,Depth,Self,X,Res):-
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
-  eval_constructor(Eq,RetType,Depth,Self,X,Res).
+  eval_constructor(Eq,RetType,Depth,Self,X,Res),
   \+ fail_missed_defn.
 
 

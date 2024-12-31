@@ -476,7 +476,7 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
                 get_last_call_duration(Duration),
                 DurationX1000 is Duration * 1000,
                 % Write the detailed formatted log entry.
-                format(Stream,'| ~w | ~w |[~w](https://trueagi-io.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
                     [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
                     trim_gstring_bar_I(write_src_woi([P,C]),600),
                     trim_gstring_bar_I(write_src_woi(G1),600),
