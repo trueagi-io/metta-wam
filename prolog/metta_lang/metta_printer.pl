@@ -1718,7 +1718,7 @@ compound_type_s_m_e(ocmpd,'[','|',']').
 compound_type_s_m_e(ocmpd,'{','|','}').
 compound_type_s_m_e(ocmpd,'(','@',')').
 
-prolog_term_start('{').
+prolog_term_start('[').
 
 paren_pair_functor('(',')',_).
 paren_pair_functor('{','}','{...}').
