@@ -583,94 +583,330 @@ is_compiled :-
     % If 'swipl' is absent from the arguments, assume it is a compiled binary.
     \+ member('swipl', ArgV),!.
 
-is_converting:- is_metta_flag('convert').
+%!  is_converting is nondet.
+%
+%   Succeeds if the 'convert' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_converting.
+%     true.
+is_converting :- is_metta_flag('convert').
 
-is_compat:- is_metta_flag('compat').
+%!  is_compat is nondet.
+%
+%   Succeeds if the 'compat' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_compat.
+%     true.
+is_compat :- is_metta_flag('compat').
 
-%is_mettalog:- is_win64,!.
-is_mettalog:- is_metta_flag('log').
-is_devel:- is_metta_flag('devel').
+%!  is_mettalog is nondet.
+%
+%   Succeeds if the 'log' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_mettalog.
+%     true.
 
-is_synthing_unit_tests:- notrace(is_synthing_unit_tests0).
-is_synthing_unit_tests0:- is_testing.
-%is_synthing_unit_tests0:- is_html.
-% is_synthing_unit_tests0:- is_compatio,!,fail.
+% is_mettalog :- is_win64,!.
+is_mettalog :- is_metta_flag('log').
 
-is_testing:- is_metta_flag('test').
-is_html:- is_metta_flag('html').
+%!  is_devel is nondet.
+%
+%   Succeeds if the 'devel' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_devel.
+%     true.
+is_devel :- is_metta_flag('devel').
 
+%!  is_synthing_unit_tests is nondet.
+%
+%   Wrapper around is_synthing_unit_tests0/0, executed without tracing.
+%
+%   @see is_synthing_unit_tests0/0
+%
+%   @example
+%     ?- is_synthing_unit_tests.
+%     true.
+is_synthing_unit_tests :- notrace(is_synthing_unit_tests0).
+
+%!  is_synthing_unit_tests0 is nondet.
+%
+%   Succeeds if is_testing/0 is true.
+%
+%   @see is_testing/0
+%
+%   @example
+%     ?- is_synthing_unit_tests0.
+%     true.
+is_synthing_unit_tests0 :- is_testing.
+% is_synthing_unit_tests0 :- is_html.
+% is_synthing_unit_tests0 :- is_compatio,!,fail.
+
+%!  is_testing is nondet.
+%
+%   Succeeds if the 'test' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_testing.
+%     true.
+is_testing :- is_metta_flag('test').
+
+%!  is_html is nondet.
+%
+%   Succeeds if the 'html' flag is set using is_metta_flag/1.
+%
+%   @see is_metta_flag/1
+%
+%   @example
+%     ?- is_html.
+%     true.
+is_html :- is_metta_flag('html').
+
+% If the file is not already loaded, this is equivalent to consult/1. Otherwise, if the file defines a module,
+% import all public predicates. Finally, if the file is already loaded, is not a module file, and the context  
+% module is not the global user module, ensure_loaded/1 will call consult/1.
 :- ensure_loaded(metta_printer).
 :- ensure_loaded(metta_loader).
 
-
+%   This directive ensures that debugging messages or tracing for
+%   `'trace-on-eval'` are suppressed, reducing console output during evaluation.
 :- nodebug(metta('trace-on-eval')).
 
-is_compatio:- notrace(is_compatio0).
-%is_compatio0:- is_win64,!,fail.
-is_compatio0:- is_testing,!,fail.
-is_compatio0:- is_flag0('compatio').
-is_compatio0:- is_mettalog,!,fail.
-%is_compatio0:- is_html,!,fail.
-is_compatio0:- !.
+%!  is_compatio is nondet.
+%
+%   Succeeds if `is_compatio0/0` succeeds, executed without tracing.
+%
+%   This predicate wraps around `is_compatio0/0`, using `notrace/1`
+%   to suppress tracing during its execution.
+%
+%   @example
+%     ?- is_compatio.
+%     true.
+is_compatio :- notrace(is_compatio0).
 
-keep_output:- !.
-keep_output:- dont_change_streams,!.
-keep_output:- is_win64,!.
-keep_output:- is_mettalog,!.
-keep_output:- is_testing,!.
+%!  is_compatio0 is nondet.
+%
+%   Base predicate for determining compatibility conditions.
+%
+%   This predicate evaluates several conditions, each possibly
+%   succeeding or failing based on system flags or runtime conditions.
+%
+%   @example
+%     ?- is_compatio0.
+%     true.
 
-keep_output:- is_compatio,!,fail.
+%is_compatio0 :- is_win64,!,fail.
+is_compatio0 :- is_testing, !, fail.
+is_compatio0 :- is_flag0('compatio').
+is_compatio0 :- is_mettalog, !, fail.
+%is_compatio0 :- is_html,!,fail.
+is_compatio0 :- !.
 
+%!  keep_output is nondet.
+%
+%   Determines if output should be preserved based on several conditions.
+%
+%   This predicate evaluates multiple conditions in sequence to decide
+%   whether output streams should remain unchanged or suppressed.
+%
+%   @example
+%     ?- keep_output.
+%     true.
+keep_output :- !.
+keep_output :- dont_change_streams, !.
+keep_output :- is_win64, !.
+keep_output :- is_mettalog, !.
+keep_output :- is_testing, !.
+% fail condition
+keep_output :- is_compatio, !, fail.
 
+%
+%   The `volatile/1` directive indicates that the predicate should not
+%   be saved in a saved state of the program (e.g., when using `qsave_program/2`).
+%   It ensures that `original_user_output/1` is only meaningful during runtime
+%   and is not preserved across sessions.
+%
+%   @example
+%     ?- volatile(original_user_output/1).
+%     true.
 :- volatile(original_user_output/1).
+
+% This directive allows the predicate `original_user_output/1` to be modified during runtime.
 :- dynamic(original_user_output/1).
-original_user_output(X):- stream_property(X,file_no(1)).
-original_user_error(X):- stream_property(X,file_no(2)).
+
+%!  original_user_output(-X) is nondet.
+%
+%   Retrieves the stream associated with the standard output (file descriptor 1).
+%
+%   This predicate succeeds if `X` unifies with a stream that corresponds to the
+%   standard output stream, as determined by the stream property `file_no(1)`.
+%
+%   @arg X The stream associated with standard output.
+%
+%   @example
+%     ?- original_user_output(Stream).
+%     Stream = <stream>.
+original_user_output(X) :- stream_property(X, file_no(1)).
+
+%!  original_user_error(-X) is nondet.
+%
+%   Retrieves the stream associated with the standard error (file descriptor 2).
+%
+%   This predicate succeeds if `X` unifies with a stream that corresponds to the
+%   standard error stream, as determined by the stream property `file_no(2)`.
+%
+%   @arg X The stream associated with standard error.
+%
+%   @example
+%     ?- original_user_error(Stream).
+%     Stream = <stream>.
+original_user_error(X) :- stream_property(X, file_no(2)).
+
+% Ensure that the original output stream is set if not already defined.
 :- original_user_output(_)->true;(current_output(Out),asserta(original_user_output(Out))).
-unnullify_output:- current_output(MFS),  original_user_output(OUT), MFS==OUT, !.
-unnullify_output:- original_user_output(MFS), set_prolog_IO(user_input,MFS,user_error).
 
-null_output(MFS):- dont_change_streams,!, original_user_output(MFS),!.
-null_output(MFS):- use_module(library(memfile)),
-  new_memory_file(MF),open_memory_file(MF,append,MFS).
+%!  unnullify_output is det.
+%
+%   Restores the output stream to its original state.
+%
+%   If the current output stream matches the original user output, the predicate
+%   succeeds immediately. Otherwise, it restores the output stream to the value
+%   stored in `original_user_output/1`.
+%
+%   @example
+%     ?- unnullify_output.
+%     true.
+unnullify_output :- 
+    current_output(MFS), 
+    original_user_output(OUT), 
+    MFS == OUT, 
+    !.
+unnullify_output :- 
+    original_user_output(MFS), 
+    set_prolog_IO(user_input, MFS, user_error).
+
+%!  null_output(-MFS) is det.
+%
+%   Sets the output stream to a memory file stream.
+%
+%   If `dont_change_streams/0` succeeds, the original user output is preserved.
+%   Otherwise, a new memory file is created and used as the output stream.
+%
+%   @arg MFS The memory file stream set as the output.
+%
+%   @example
+%     ?- null_output(Stream).
+%     Stream = <memory_file_stream>.
+null_output(MFS) :- dont_change_streams, !, original_user_output(MFS), !.
+null_output(MFS) :- use_module(library(memfile)),new_memory_file(MF),open_memory_file(MF, append, MFS).
+
+% Ensure `null_user_output/1` is not preserved in saved states (e.g., with qsave_program/2).
 :- volatile(null_user_output/1).
+
+% Allow `null_user_output/1` to be modified dynamically at runtime.
 :- dynamic(null_user_output/1).
-:- null_user_output(_)->true;(null_output(MFS),
-   asserta(null_user_output(MFS))).
 
+% Initialize `null_user_output/1` with a memory file stream if it is not already defined.
+:- null_user_output(_) -> true ; (null_output(MFS), asserta(null_user_output(MFS))).
 
-nullify_output:- keep_output,!.
-nullify_output:- dont_change_streams,!.
-nullify_output:- nullify_output_really.
-nullify_output_really:- current_output(MFS), null_user_output(OUT),  MFS==OUT, !.
-nullify_output_really:- null_user_output(MFS), set_prolog_IO(user_input,MFS,MFS).
+%!  nullify_output is det.
+%
+%   Redirects the output stream to a memory file.
+%
+%   If `keep_output/0` or `dont_change_streams/0` succeed, the predicate does nothing.
+%   Otherwise, it calls `nullify_output_really/0` to set up the memory file stream.
+%
+%   @example
+%     ?- nullify_output.
+%     true.
+nullify_output :- keep_output, !.
+nullify_output :- dont_change_streams, !.
+nullify_output :- nullify_output_really.
 
-set_output_stream :- dont_change_streams,!.
-set_output_stream :- \+ keep_output -> nullify_output;  unnullify_output.
+%!  nullify_output_really is det.
+%
+%   Forces the output stream to be redirected to a memory file.
+%
+%   If the current output matches `null_user_output/1`, the predicate succeeds.
+%   Otherwise, it switches to the memory file stream defined in `null_user_output/1`.
+%
+%   @example
+%     ?- nullify_output_really.
+%     true.
+nullify_output_really :- current_output(MFS), null_user_output(OUT), MFS == OUT, !.
+nullify_output_really :- null_user_output(MFS), set_prolog_IO(user_input, MFS, MFS).
+
+%!  set_output_stream is det.
+%
+%   Configures the output stream based on current conditions.
+%
+%   If `dont_change_streams/0` is true, no changes are made.
+%   Otherwise, the stream is either nullified or restored, depending on `keep_output/0`.
+%
+%   @example
+%     ?- set_output_stream.
+%     true.
+set_output_stream :- dont_change_streams, !.
+set_output_stream :- \+ keep_output -> nullify_output; unnullify_output.
+
+% Initialize the output stream configuration at startup.
 :- set_output_stream.
 % :- nullify_output.
 
-switch_to_mettalog:-
-  unnullify_output,
-  set_option_value('compatio',false),
-  set_option_value('compat',false),
-  set_option_value('load',show),
-  set_option_value('load',verbose),
-  set_option_value('log',true),
-  %set_option_value('test',true),
-  forall(mettalog_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
-  set_output_stream.
+%!  switch_to_mettalog is det.
+%
+%   Switches the system configuration to the `mettalog` mode.
+%
+%   This predicate adjusts several runtime options specific to the
+%   `mettalog` mode, including output stream configuration and option values.
+%   It ensures the system behaves according to the `mettalog` runtime settings.
+%
+%   @example
+%     ?- switch_to_mettalog.
+%     true.
+switch_to_mettalog :-
+    unnullify_output,
+    set_option_value('compatio', false),
+    set_option_value('compat', false),
+    set_option_value('load', show),
+    set_option_value('load', verbose),
+    set_option_value('log', true),
+    %set_option_value('test', true),
+    forall(mettalog_option_value_def(Name, DefaultValue), set_option_value(Name, DefaultValue)),
+    set_output_stream.
 
-switch_to_mettarust:-
-  nullify_output,
-  set_option_value('compatio',true),
-  set_option_value('compat',true),
-  set_option_value('log',false),
-  set_option_value('test',false),
-  forall(rust_option_value_def(Name, DefaultValue),set_option_value(Name, DefaultValue)),
-  set_output_stream.
-
-
+%!  switch_to_mettarust is det.
+%
+%   Switches the system configuration to the `mettarust` mode.
+%
+%   This predicate adjusts several runtime options specific to the
+%   `mettarust` mode, including output stream configuration and option values.
+%   It ensures the system behaves according to the `mettarust` runtime settings.
+%
+%   @example
+%     ?- switch_to_mettarust.
+%     true.
+switch_to_mettarust :-
+    nullify_output,
+    set_option_value('compatio', true),
+    set_option_value('compat', true),
+    set_option_value('log', false),
+    set_option_value('test', false),
+    forall(rust_option_value_def(Name, DefaultValue), set_option_value(Name, DefaultValue)),
+    set_output_stream.
 
 show_os_argv:- is_compatio,!.
 show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
