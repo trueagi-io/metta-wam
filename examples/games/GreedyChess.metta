@@ -3,8 +3,8 @@
 ;   Mettalog Project 2024
 
 ;   Function:  Play chess (human vs MeTTa program) using a fairly simple "greedy" approach
-;               with moves that do not project possible boards beyond the present board.
-;   Input:     User's moves from console.
+;              with moves that do not project possible boards beyond the present board.
+;   Input:     User's commands and moves from console.
 ;   Output:    Chess board displayed to console with computer's move.
 ;
 ;**********************************************************************
@@ -203,41 +203,50 @@
 ;
 
 ; The reset command will start the game over.
-(= (reset)  
+(: R (-> command))
+(= (R)  
   (chess))
 
 ; The "commands" command just lists the available commands.
-(= (commands) 
+(: C (-> command))
+(= (C) 
   (progn
     (println! " ") (println! " ") (println! " ") (println! " ")
     (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  m 1 2 1 3' ()))
+    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  M 1 2 1 3' ()))
     (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2) Move MeTTa Greedy Chess          ->  g' ()))
-    (println! (format-args '3) Reset                            ->  reset' ()))
-    (println! (format-args '4) Commands List                    ->  commands' ()))
-    (println! (format-args '5) Display Board                    ->  display' ()))
-    (println! (format-args 'You may now enter your move m x1 y1 x2 y2 command.' ()))))
+    (println! (format-args '2) Move MeTTa Greedy Chess          ->  G' ()))
+    (println! (format-args '3) Reset                            ->  R' ()))
+    (println! (format-args '4) Commands List                    ->  C' ()))
+    (println! (format-args '5) Display Board                    ->  D' ()))
+    (println! (format-args '6) Quit                             ->  Q' ()))
+    (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))))
 ;
 
 ; The display command shows the present board.
-(= (display) (display_board (match &self (board-state $board) $board)))
+(: D (-> command))
+(= (D) (display_board (match &self (board-state $board) $board)))
 
 ;*******************************************************
 ; Code invoked by the basic commands (above) or elsewhere follow
 ;*******************************************************
 
-; Get next move
-;(: get-player-move (-> Expression)) ; Function to get a move from the player.
-;(= (get-player-move)
-;   (progn 
-;    (
-;     (flush-output!)
-;     (let $char get-single-char! $char) ; Convert the input character to an integer (1-9).
-;     )))
-(= (get-player-move)  (progn ((flush-output) (get-single-char!) )))
 
- write welcome banner to console and call display_board to print the pieces
+; Invoke with empty list, will return characters input from console until ENTER.
+(: (get-player-command (-> list list)))
+(= (get-player-command $input_list)  
+   (let $cmd (get-single-char!)
+      (progn
+          ; if initial execution flush output
+          (if (== (size-atom $input_list) 0) (flush-output!) ())
+          (if (== $cmd 13) ; if user hit <ENTER>
+            ;return all input
+            $input_list    
+            ;else gather more input
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
+
+
+; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
  (progn
    ((println! " ") (println! " ") (println! " ") (println! " ")
@@ -251,13 +260,14 @@
     (println! (format-args '- Your pieces are marked with an asterisk.' ()))
     (println! (format-args '- Please take note of the following simple commands:' ()))
     (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  m 1 2 1 3' ()))
+    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  M 1 2 1 3' ()))
     (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2) Move MeTTa Greedy Chess          ->  g' ()))
-    (println! (format-args '3) Reset                            ->  reset' ()))
-    (println! (format-args '4) Commands List                    ->  commands' ()))
-    (println! (format-args '5) Display Board                    ->  display' ()))
-    (println! (format-args 'You may now enter your move m x1 y1 x2 y2 command.' ()))
+    (println! (format-args '2) Move MeTTa Greedy Chess          ->  G' ()))
+    (println! (format-args '3) Reset                            ->  R' ()))
+    (println! (format-args '4) Commands List                    ->  C' ()))
+    (println! (format-args '5) Display Board                    ->  D' ()))
+    (println! (format-args '6) Quit                             ->  Q' ()))
+    (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))
     )))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
@@ -269,12 +279,10 @@
       (let*
         ( ; assign either * or " " 
           ($player (if (== (contains_symbol $p s) True) * " "))
+          ; identify piece
           ($piece (nth 4 $p))
         )
-        (format-args "{}{}" ($player $piece))
-      )
-    )
-)
+        (format-args "{}{}" ($player $piece)))))
 
 ; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
 (: display_filter (-> list list))
@@ -283,7 +291,7 @@
       ; if on last piece, return a one element list of this form eg.:  (*k). Extra parens are needed to create list.
       ( (identify_piece (car-atom $brd)) )
       ; otherwise convert all pieces to shorter description for display.
-      (let $i (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $i))))
+      (let $rest (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $rest))))
 
 (= (display_board $board) 
   (
@@ -309,10 +317,48 @@
       
           $a)))))
 
-!(chess)
-!(get-player-move)
+;*******************************************************
+;   M A I N   C O M M A N D   L O O P
+;*******************************************************
+(= (command-loop)
+  (do
+    (println! "Please enter your command.")
+    ; case statement for commands
+    (let $command (get-player-command ())
+      (if (== $command 77)
+          (do 
+            (println! "running command M") ; Run valid command
+            (command-loop))              ; Get next command, stay in loop.
+      (if (== $command 71)
+          (do 
+            (println! "running command G") ; Run valid command
+            (command-loop))              ; Get next command, stay in loop.
+      (if (== $command 82)
+          (do 
+            (R)                          ; Reset = "R"
+            (command-loop))              ; Get next command, stay in loop.
+      (if (== $command 67)
+          (do 
+            (C)                          ; List valid commands = "C"
+            (command-loop))              ; Get next command, stay in loop.
+      (if (== $command 68)
+          (do 
+            (D)                          ; Display board "D"
+            (command-loop))              ; Get next command, stay in loop.
+      (if (== $command 81)
+            (println! "Quitting MeTTa Greedy Chess.")
+      ; otherwise
+      (do 
+          (println! " ") (println! "Invalid command, please try again or enter C for a list of commands.") 
+          (command-loop)))))))))))
 
-;
+;-----------;
+(= (main_loop) 
+  (do
+    (chess)          ; Start the chess game
+    (command-loop))) ; Enter the recursive command-processing loop
+!(main_loop)
+;-----------;
 
 ;
 ;
