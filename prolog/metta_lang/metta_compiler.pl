@@ -113,6 +113,10 @@ transpiler_depends_on(dummy,0,dummy,0).
 % transpiler_clause_store(f,arity,clause_number,types,rettype,lazy,retlazy,head,body)
 transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager),dummy,dummy).
 
+% just so the transpiler_predicate_store predicate always exists
+% transpiler_predicate_store(f,arity,lazy,retlazy)
+transpiler_predicate_store(dummy,0,[],x(doeval,eager)).
+
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
@@ -467,6 +471,10 @@ transpile_eval(Convert0,Converted,PrologCode) :-
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,Converted))
    ).
 
+combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj) :-
+   findall(ArgsLazy-RetLazy,transpiler_clause_store(FnName,LenArgsPlus1,_,_,_,ArgsLazy,RetLazy,_,_),[H|T]),
+   H=FinalLazyArgsAdj-FinalLazyRetAdj.
+
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
@@ -499,21 +507,21 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       combine_lazy_types_props(ResultEager,RetProps,FinalLazyRet),
 
       findall(ClauseIDt,transpiler_clause_store(FnName,LenArgsPlus1,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
-      (ClauseIdList=[] ->
-         ClauseId=0
-      ;
-         max_list(ClauseIdList,ClauseIdm1),ClauseId is ClauseIdm1+1
-      ),
+      (ClauseIdList=[] -> ClauseId=0 ; max_list(ClauseIdList,ClauseIdm1),ClauseId is ClauseIdm1+1),
       compiler_assertz(transpiler_clause_store(FnName,LenArgsPlus1,ClauseId,Types0,RetType0,FinalLazyArgs,FinalLazyRet,HeadIs,AsBodyFn)),
-      maplist(arrange_lazy_args,Args,FinalLazyArgs,LazyArgsList),
+      FinalLazyArgsAdj=FinalLazyArgs,
+      FinalLazyRetAdj=FinalLazyRet,
+      %combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj),
+      format("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ~q-~q ~q-~q",[FinalLazyArgs,FinalLazyArgsAdj,FinalLazyRet,FinalLazyRetAdj]),
+      maplist(arrange_lazy_args,Args,FinalLazyArgsAdj,LazyArgsListAdj),
 
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      f2p(HeadIs,LazyArgsList,HResult,FinalLazyRet,AsBodyFn,NextBody),
+      f2p(HeadIs,LazyArgsListAdj,HResult,FinalLazyRetAdj,AsBodyFn,NextBody),
 
-      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRet,finalLazyOnlyRet:FinalLazyRet,
-                      args_list:Args,lazyArgsList:LazyArgsList,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgs],
+      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,
+                      args_list:Args,lazyArgsList:LazyArgsListAdj,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
 
       output_prolog(LazyEagerInfo),
 
