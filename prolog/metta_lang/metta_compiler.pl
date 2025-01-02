@@ -73,6 +73,7 @@
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_space).
 :- dynamic(transpiler_clause_store/9).
+:- dynamic(transpiler_predicate_store/4).
 :- ensure_loaded(metta_compiler_lib).
 
 % ==============================
@@ -433,7 +434,7 @@ determine_eager_vars(Lin,Lout,[LETS,[[V,Vbind]|T],Body],EagerVars) :-  atom(LETS
 determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
-   (transpiler_clause_store(Fn,LenArgsPlus1,_,_,_,ArgsLazy0,RetLazy0,_,_) ->
+   (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
       get_property_lazy(RetLazy0,RetLazy)
    ;
@@ -471,9 +472,29 @@ transpile_eval(Convert0,Converted,PrologCode) :-
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,Converted))
    ).
 
+arg_properties_widen(L,L,L) :- !.
+arg_properties_widen(_,_,x(noeval,lazy)).
+
+combine_transpiler_cause_store_aux(ArgsN-RetN,Args0-Ret0,Args1-Ret1) :-
+   maplist(arg_properties_widen,ArgsN,Args0,Args1),
+   arg_properties_widen(RetN,Ret0,Ret1).
+
 combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj) :-
    findall(ArgsLazy-RetLazy,transpiler_clause_store(FnName,LenArgsPlus1,_,_,_,ArgsLazy,RetLazy,_,_),[H|T]),
-   H=FinalLazyArgsAdj-FinalLazyRetAdj.
+   foldl(combine_transpiler_cause_store_aux,T,H,FinalLazyArgsAdj-FinalLazyRetAdj),
+   (transpiler_predicate_store(FnName,LenArgsPlus1,FinalLazyArgsOld,FinalLazyRetOld) ->
+      (FinalLazyArgsAdj=FinalLazyArgsOld,FinalLazyRetAdj=FinalLazyRetOld ->
+         % already there in current form, nothing to see here
+         true
+      ;
+         % signature is changed, need to do a recompile
+         format("~q/~q signature is changed, need to do a recompile",FnName,LenArgsPlus1),
+         break
+      )
+   ;
+      % new, insert clause
+      compiler_assertz(transpiler_predicate_store(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj))
+   ).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
@@ -493,6 +514,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    ; true),
    %AsFunction = HeadIs,
    must_det_lls((
+      %trace(f2p/6),
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
@@ -509,10 +531,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       findall(ClauseIDt,transpiler_clause_store(FnName,LenArgsPlus1,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
       (ClauseIdList=[] -> ClauseId=0 ; max_list(ClauseIdList,ClauseIdm1),ClauseId is ClauseIdm1+1),
       compiler_assertz(transpiler_clause_store(FnName,LenArgsPlus1,ClauseId,Types0,RetType0,FinalLazyArgs,FinalLazyRet,HeadIs,AsBodyFn)),
-      FinalLazyArgsAdj=FinalLazyArgs,
-      FinalLazyRetAdj=FinalLazyRet,
-      %combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj),
-      format("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ~q-~q ~q-~q",[FinalLazyArgs,FinalLazyArgsAdj,FinalLazyRet,FinalLazyRetAdj]),
+      combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj),
+      %format("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ~q-~q ~q-~q",[FinalLazyArgs,FinalLazyArgsAdj,FinalLazyRet,FinalLazyRetAdj]),
       maplist(arrange_lazy_args,Args,FinalLazyArgsAdj,LazyArgsListAdj),
 
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
@@ -599,7 +619,7 @@ functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
    sexpr_s2p(I, M),
-   f2p(_,[],_,_Evaluated,M,O),
+   f2p([],[],_,_Evaluated,M,O),
    expand_to_hb(O,H,B),
    head_preconds_into_body(H,B,HH,BB),!,
    OO = ':-'(HH,BB).
@@ -828,16 +848,9 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(F)|Args0]],R) :- (fullvar(A); 
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
    label_arg_types(F,0,[A|Args1]),
-   LArgs1 is LArgs+1,
+   %LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
-   R=..[Fp|Args2],
-   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs1),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs1) ->
-      compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) ; true)
-   ; true),
-   ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
-      true
-   ; check_supporting_predicates('&self',F/LArgs1)).
+   R=..[Fp|Args2].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 
@@ -885,6 +898,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
 %         compiler_assertz(transpiler_stub_created(F/A)),
 %         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
          compiler_assertz(transpiler_stub_created(F/A)),
+
          (transpiler_show_debug_messages -> format("; % ######### warning: creating stub for:~q\n",[F]) ; true),
          (transpiler_enable_interpreter_calls ->
             create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
@@ -996,6 +1010,8 @@ var_prop_lookup(X,[H-R|T],S) :-
    var_prop_lookup(X,T,S).  % Recursively check the tail of the list
 
 :- discontiguous f2p/6.
+
+%f2p(X,_,_,_,_,_) :- fullvar(X),bt,break.
 
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
@@ -1112,12 +1128,30 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Co
    Convert=[Fn|Args],
    atom(Fn),!,
    length(Args,Largs),
-   LenArgsPlus1 is Largs+1,
-   (transpiler_clause_store(Fn,LenArgsPlus1,_,_,_,ArgsLazy0,RetLazy0,_,_) ->
+   LArgs1 is Largs+1,
+   (transpiler_predicate_store(Fn,LArgs1,ArgsLazy0,RetLazy0) ->
       % override whatever the get_operator_typedef_props returns with the signature defined in the library.
       EvalArgs=ArgsLazy0,
       RetLazy=RetLazy0
    ;
+      (HeadIs=[FnHead|ArgsHead], length(ArgsHead,ArgsHeadSz), ArgsHeadSz1 is ArgsHeadSz+1, ((FnHead-ArgsHeadSz1)=(Fn-LArgs1) ; transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)) ->
+         true
+      ;
+         (HeadIs=[FnHeadx|ArgsHeadx] ->
+            length(ArgsHeadx,ArgsHeadSzx),
+            ArgsHeadSz1x is ArgsHeadSzx+1,
+            compiler_assertz(transpiler_depends_on(FnHeadx,ArgsHeadSz1x,Fn,LArgs1)),
+            (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHeadx,ArgsHeadSz1x,Fn,LArgs1]) ; true)
+         ;
+            true
+         ),
+         atomic_list_concat(['mc_',Largs,'__',Fn],Fp),
+         (current_predicate(Fp/LArgs1) ->
+            true
+         ;
+            check_supporting_predicates('&self',Fn/LArgs1)
+         )
+      ),
       RetLazy=x(doeval,eager),
       length(UpToDateArgsLazy, Largs),
       maplist(=(x(doeval,eager)), UpToDateArgsLazy),
@@ -1280,16 +1314,16 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   %Test = is_True(CondResult),
   f2p(HeadIs,LazyVars,CondResult,x(doeval,eager),Cond,CondCode),
   append(CondCode,[[native(is_True),CondResult]],If),
-  compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted).
+  compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,Else,Converted).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   Convert = ['if',Cond,Then],!,
   %Test = is_True(CondResult),
   f2p(HeadIs,LazyVars,CondResult,x(doeval,eager),Cond,CondCode),
   append(CondCode,[[native(is_True),CondResult]],If),
-  compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,'Empty',Converted).
+  compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,'Empty',Converted).
 
-compile_test_then_else(RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
+compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,Else,Converted):-
   f2p(HeadIs,LazyVars,ThenResult,LazyEval,Then,ThenCode),
   f2p(HeadIs,LazyVars,ElseResult,LazyEval,Else,ElseCode),
   % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult

@@ -1,5 +1,5 @@
-:- dynamic(transpiler_clause_store/9).
-:- discontiguous transpiler_clause_store/9.
+:- dynamic(transpiler_predicate_store/4).
+:- discontiguous transpiler_predicate_store/4.
 
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
@@ -27,150 +27,150 @@ maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
 %sync_type(D, Self, Obj, Type):- freeze(Type,sync_type(D, Self, Obj, Type)), freeze(Obj, sync_type(D, Self, Obj, Type)),!.
 
 
-transpiler_clause_store('get-type', 2, 0, ['Atom'],'Atom', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('get-type', 2, [x(noeval,eager)], x(doeval,eager)).
 %'mc_1__get-type'(Obj,Type):-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
 'mc_1__get-type'(Obj,Type):- current_self(Self), !, get_type(10, Self, Obj,Type).
 
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
-transpiler_clause_store('+', 3, 0, ['Number', 'Number'],'Number', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('+', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__+'(A,B,R) :- number(A),number(B),!,plus(A,B,R).
 'mc_2__+'(A,B,['+',A,B]).
 
-transpiler_clause_store('-', 3, 0, ['Number', 'Number'],'Number', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('-', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__-'(A,B,R) :- number(A),number(B),!,plus(B,R,A).
 'mc_2__-'(A,B,['-',A,B]).
 
-transpiler_clause_store('*', 3, 0, ['Number', 'Number'],'Number', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('*', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__*'(A,B,R) :- number(A),number(B),!,R is A*B.
 'mc_2__*'(A,B,['*',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
-transpiler_clause_store('and', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 mc_2__and(A,is_p1(_,CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
 mc_2__and(_,_,'False').
 
-transpiler_clause_store('or', 3, 0, ['Bool', 'LazyBool'],'Bool', [x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 mc_2__or(A,is_p1(_,CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
 mc_2__or(_,_,'True').
 
-%transpiler_clause_store('and', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+%transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 %mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
 %mc_2__and(_,_,'False').
 
-%transpiler_clause_store('or', 3, 0, ['Bool', 'Bool'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+%transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 %mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
 %mc_2__or(_,_,'True').
 
-transpiler_clause_store('not', 2, 0, ['Bool'],'Bool', [x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('not', 2, [x(doeval,eager)], x(doeval,eager)).
 mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0, !.
 mc_1__not(_,'True').
 
 %%%%%%%%%%%%%%%%%%%%% comparison
 
 % not sure about the signature for this one
-transpiler_clause_store('==', 3, 0, ['Any', 'Any'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('==', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__=='(A,A,1) :- !.
 'mc_2__=='(_,_,0).
 
-transpiler_clause_store('<', 3, 0, ['Number', 'Number'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('<', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
 'mc_2__<'(A,B,['<',A,B]).
 
-transpiler_clause_store('>', 3, 0, ['Number', 'Number'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('>', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
 'mc_2__>'(A,B,['>',A,B]).
 
-transpiler_clause_store('>=', 3, 0, ['Number', 'Number'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('>=', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
 'mc_2__>='(A,B,['>=',A,B]).
 
-transpiler_clause_store('<=', 3, 0, ['Number', 'Number'],'Bool', [x(doeval,eager), x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('<=', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 'mc_2__<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
 'mc_2__<='(A,B,['<=',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
-transpiler_clause_store('car-atom', 2, 0, ['Expression'],'Atom', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('car-atom', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__car-atom'([H|_],H).
 
-transpiler_clause_store('cdr-atom', 2, 0, ['Expression'],'Expression', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('cdr-atom', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__cdr-atom'([_|T],T).
 
-transpiler_clause_store('cons-atom', 2, 3, ['Atom', 'Expression'],'Expression', [x(noeval,eager), x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('cons-atom', 3, [x(noeval,eager), x(noeval,eager)], x(doeval,eager)).
 'mc_2__cons-atom'(A,B,[A|B]).
 
-transpiler_clause_store('decons-atom', 2, 0, ['Expression'],'Expression', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager)], x(doeval,eager)).
 'mc_1__decons-atom'([A|B],[A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% set
 
 lazy_member(R1,Code2,R2) :- call(Code2),R1=R2.
 
-transpiler_clause_store(subtraction, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(subtraction, 3, [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager)).
 'mc_2__subtraction'(is_p1(_,Code1,R1),is_p1(_,Code2,R2),R1) :-
     call(Code1),
     \+ lazy_member(R1,Code2,R2).
 
-transpiler_clause_store(union, 3, 0, ['Atom','Atom'], 'Atom', [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(union, 3, [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager)).
 'mc_2__union'(U1,is_p1(Expr,Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Expr,Code2,R2),R) ; call(Code2),R=R2.
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
-transpiler_clause_store(superpose, 2, 0, ['Expression'], 'Atom', [x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store(superpose, 2, [x(doeval,eager)], x(doeval,eager)).
 'mc_1__superpose'(S,R) :- member(R,S).
 
-transpiler_clause_store(collapse, 2, 0, ['Atom'], 'Expression', [x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(collapse, 2, [x(doeval,lazy)], x(doeval,eager)).
 'mc_1__collapse'(is_p1(_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc_1__collapse'(is_p1(_,true,X),[X]).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
-transpiler_clause_store('add-atom', 3, 0, ['Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('add-atom', 3, [x(doeval,eager), x(noeval,eager)], x(doeval,eager)).
 'mc_2__add-atom'(Space,PredDecl,[]) :- 'add-atom'(Space,PredDecl).
 
-transpiler_clause_store('remove-atom', 3, 0, ['Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('remove-atom', 3, [x(doeval,eager), x(noeval,eager)], x(doeval,eager)).
 'mc_2__remove-atom'(Space,PredDecl,[]) :- 'remove-atom'(Space,PredDecl).
 
-transpiler_clause_store('get-atoms', 2, 0, ['Atom'], 'Atom', [x(noeval,eager)], x(noeval,eager), [], []).
+transpiler_predicate_store('get-atoms', 2, [x(noeval,eager)], x(noeval,eager)).
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
 
-transpiler_clause_store(match, 4, 0, ['Atom', 'Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(match, 4, [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 'mc_3__match'(Space,Pattern,is_p1(_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
 % TODO FIXME: sort out the difference between unify and match
-transpiler_clause_store(unify, 4, 0, ['Atom', 'Atom', 'Atom'], '%Undefined%', [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(unify, 4, [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 'mc_3__unify'(Space,Pattern,is_p1(_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
-transpiler_clause_store(time, 2, 0, ['Atom'], 'Atom', [x(doeval,lazy)], x(doeval,eager), [], []).
+transpiler_predicate_store(time, 2, [x(doeval,lazy)], x(doeval,eager)).
 'mc_1__time'(is_p1(_,Code,Ret),Ret) :- wtime_eval(Code).
 
-transpiler_clause_store(empty, 1, 0, [], '%Undefined', [], x(doeval,eager), [], []).
+transpiler_predicate_store(empty, 1, [], x(doeval,eager)).
 'mc_0__empty'(_) :- fail.
 
-transpiler_clause_store('eval', 2, 0, ['Atom'], 'Atom', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('eval', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__eval'(X,R) :- transpile_eval(X,R).
 
-transpiler_clause_store('get-metatype', 2, 0, ['Atom'], 'Atom', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('get-metatype', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
 
-transpiler_clause_store('println!', 2, 0, ['%Undefined'], '%Undefined', [x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('println!', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__println!'(X,[]) :- println_impl(X).
 
-transpiler_clause_store('stringToChars', 2, 0, ['String'], 'Expression', [x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('stringToChars', 2, [x(doeval,eager)], x(doeval,eager)).
 'mc_1__stringToChars'(S,C) :- string_chars(S,C).
 
-transpiler_clause_store('charsToString', 2, 0, ['Expression'], 'String', [x(doeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('charsToString', 2, [x(doeval,eager)], x(doeval,eager)).
 'mc_1__charsToString'(C,S) :- string_chars(S,C).
 
-transpiler_clause_store('assertEqualToResult', 3, 0, ['Atom', 'Atom'], 'Atom', [x(doeval,eager),x(noeval,eager)], x(doeval,eager), [], []).
+transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager),x(noeval,eager)], x(doeval,eager)).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
 
 % this is a hack to make 'quote' behave as expected (noeval rather than eval).
 % the reason for this is that stubs are currently created with x(doeval,eager) by default.
 % once the check and recompile loop is done (using transpiler_predicate_store/4, stubs will be correctly created with x(neval,eager), and this can go away.
-transpiler_clause_store('quote', 2, 0, ['Expression'], 'Expression', [x(noeval,eager)], x(noeval,eager), [], []).
+transpiler_predicate_store('quote', 2, [x(noeval,eager)], x(noeval,eager)).
 'mc_1__quote'(A,['quote',A]).
