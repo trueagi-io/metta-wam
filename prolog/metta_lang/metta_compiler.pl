@@ -747,7 +747,7 @@ numeric_or_var('$VAR'(_)).
 
 get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
 
-fullvar(V) :- var(V).
+fullvar(V) :- var(V), !.
 fullvar('$VAR'(_)).
 
 ensure_callee_site(Space,Fn,Arity):-transpiler_stub_created(Space,Fn,Arity),!.

@@ -92,16 +92,16 @@ transpiler_predicate_store('<=', 3, [x(doeval,eager), x(doeval,eager)], x(doeval
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
-transpiler_predicate_store('car-atom', 2, [x(noeval,eager)], x(doeval,eager)).
+transpiler_predicate_store('car-atom', 2, [x(noeval,eager)], x(noeval,eager)).
 'mc_1__car-atom'([H|_],H).
 
-transpiler_predicate_store('cdr-atom', 2, [x(noeval,eager)], x(doeval,eager)).
+transpiler_predicate_store('cdr-atom', 2, [x(noeval,eager)], x(noeval,eager)).
 'mc_1__cdr-atom'([_|T],T).
 
-transpiler_predicate_store('cons-atom', 3, [x(noeval,eager), x(noeval,eager)], x(doeval,eager)).
+transpiler_predicate_store('cons-atom', 3, [x(noeval,eager), x(noeval,eager)], x(noeval,eager)).
 'mc_2__cons-atom'(A,B,[A|B]).
 
-transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager)], x(doeval,eager)).
+transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager)], x(noeval,eager)).
 'mc_1__decons-atom'([A|B],[A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% set
