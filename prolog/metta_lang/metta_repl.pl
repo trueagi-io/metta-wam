@@ -264,7 +264,8 @@ write_metta_prompt :-
     % Display the current REPL mode (e.g., normal, query).
     current_read_mode(repl, Mode), write(Mode),
     % Display the current self reference, unless it is '&self'.
-    current_self(Self), (Self == '&self' -> true ; write(Self)),
+    current_self(Self), top_self(Top),
+    ((Self == '&self' ; Self == Top) -> true ; write(Self)),
     % Write the final '>' as the prompt and flush the output again.
     write('>'), flush_output(current_output).
 
@@ -1909,17 +1910,14 @@ interact(Variables, Goal, Tracing) :-
 :- dynamic(is_installed_readline_editline/1).
 :- volatile(is_installed_readline_editline/1).
 
-:- if(is_win64).
-% dummy for on windows
-install_readline_editline.
-:-else.
+install_readline_editline :-  is_win64,!.
 install_readline_editline :-
     % Get the current input stream.
     current_input(Input),
     % Install readline support for the current input.
     install_readline(Input),
     !.
-:- endif.
+
 
 %!  el_wrap_metta(+Input) is det.
 %
@@ -1968,16 +1966,16 @@ el_wrap_metta(_NoTTY) :-
 add_metta_commands(Input) :-
     % TODO: File name completion would be useful, but it is currently skipped for Prolog atom completion.
     % Bind a function for atom and file completion. Commented out.
-    % editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
+    editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
     % Bind a function to list completions. Also commented out.
-    % editline:el_addfn(Input,show_completions,'List completions',editline:show_completions),
+    editline:el_addfn(Input,show_completions,'List completions',editline:show_completions),
     % Bind the electric function to highlight matching brackets during input.
     editline:el_addfn(Input, electric, 'Indicate matching bracket', editline:electric),
     % Bind the incremental search function to allow searching through input history.
     editline:el_addfn(Input, isearch_history, 'Incremental search in history', editline:isearch_history),
     % Previously bound commands for tab completion and listing completions, commented out for now.
-    % editline:el_bind(Input,["^I",complete]),
-    % editline:el_bind(Input,["^[?",show_completions]),
+    editline:el_bind(Input,["^I",complete]),
+    editline:el_bind(Input,["^[?",show_completions]),
     % Bind the "^R" key to initiate an incremental search through history.
     editline:el_bind(Input, ["^R", isearch_history]),
     % Enable the electric mode for the current input.
