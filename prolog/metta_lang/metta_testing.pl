@@ -405,11 +405,11 @@ give_pass_credit(TestSrc, _Pre, _G) :-
     always_exec(BaseEval), !.
 give_pass_credit(TestSrc, _Pre, G) :-
     % Logs the test as passed with 'PASS' status.
-    write_pass_fail(TestSrc, 'PASS', G),
+    must_det_lls((write_pass_fail(TestSrc, 'PASS', G),
     % Increments the success counter.
     flag(loonit_success, X, X + 1), !,
     % Displays a success message in cyan color.
-    color_g_mesg(cyan, write_src_wi(loonit_success(G))), !.
+    color_g_mesg(cyan, write_src_wi(loonit_success(G))))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -435,6 +435,8 @@ write_pass_fail([P, C, _], PASS_FAIL, G) :-
         arg(2, G, G2),
         % Logs the formatted test name, source, category, status, and arguments.
         write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2))).
+
+write_pass_fail(LIST, PASS_FAIL, G) :- is_list(LIST), PCC = [P, _, _], member(PCC,LIST), nonvar(P), !, write_pass_fail(PCC, PASS_FAIL, G).
 
 %!  write_pass_fail(+TestName, +Source, +Category, +Status, +GoalArg1, +GoalArg2) is det.
 %
@@ -846,9 +848,9 @@ tst_call_limited(Goal) :-
 loonit_asserts1(TestSrc, Pre, G) :-
     % Run precondition and record duration of Goal execution.
     _ = nop(Pre),
-    record_call_duration((G)),
+    record_call_duration(G),
     % Log as passed if Goal succeeds.
-    give_pass_credit(TestSrc, Pre, G),
+    must_det_ll(give_pass_credit(TestSrc, Pre, G)),
     !.
 /*
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
@@ -859,6 +861,13 @@ loonit_asserts1(TestSrc,Pre,G) :-  fail,
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
 */
+loonit_asserts1(TestSrc, Pre, G) :-
+    % Run precondition and record duration of Goal execution.
+    _ = nop(Pre),
+    call(G),
+    % Log as passed if Goal succeeds.
+    trace,give_pass_credit(TestSrc, Pre, G),
+    !.
 loonit_asserts1(TestSrc, Pre, G) :-
     % Handle failed Goal by logging, flagging failure, and optionally tracing.
     must_det_ll((
