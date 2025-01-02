@@ -850,7 +850,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
     _ = nop(Pre),
     record_call_duration(G),
     % Log as passed if Goal succeeds.
-    must_det_ll(give_pass_credit(TestSrc, Pre, G)),
+    must_det_lls(give_pass_credit(TestSrc, Pre, G)),
     !.
 /*
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
@@ -861,13 +861,6 @@ loonit_asserts1(TestSrc,Pre,G) :-  fail,
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
 */
-loonit_asserts1(TestSrc, Pre, G) :-
-    % Run precondition and record duration of Goal execution.
-    _ = nop(Pre),
-    call(G),
-    % Log as passed if Goal succeeds.
-    trace,give_pass_credit(TestSrc, Pre, G),
-    !.
 loonit_asserts1(TestSrc, Pre, G) :-
     % Handle failed Goal by logging, flagging failure, and optionally tracing.
     must_det_ll((

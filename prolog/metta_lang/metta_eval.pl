@@ -260,7 +260,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  
     if_or_else( (fail,finish_eval(Eq,RetType,Depth2,Self,Y,YO)),
         Y=YO))).
 
-'[|]'(A,B,C):- C=[A,B].
+%'[|]'(A,B,C):- C=[A,B].
 '[|]'(A,B,C):- trace,break.
 
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
@@ -1598,7 +1598,7 @@ eval_20(Eq,RetType,_Depth,_Self,['flip'],Bool):-
 
 eval_20( Eq, RetType, Depth, Self, [ 'parse' , L ] , Exp ):- !,
     eval_args( Eq, RetType, Depth, Self, L, Str ),
-    once(parse_sexpr_metta1( Str, Exp )).
+    once(read_metta( Str, Exp )).
 
 eval_20( _Eq, _RetType, _Depth, _Self, [ 'repr' , L ] , Sxx ):- !,
    %eval_args( Eq, RetType, Depth, Self, L, Lis2 ),
@@ -1656,14 +1656,14 @@ eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Othe
   assert(was_asserted_space(Other)),
   make_nop(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
-   must_det_ll((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
+   must((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
     nb_bind(Name,Value),  make_nop(RetType,Value,RetVal))),
    check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
    set_option_value_interp(Name,Value))),  make_nop(RetType,Value,RetVal),
     check_returnval(Eq,RetType,RetVal))).
-eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
+eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must((include_metta(Self,File),
    make_nop(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
 
 
@@ -2378,8 +2378,8 @@ eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,X,Y):-
 
 eval_adjust_args1(Eq,RetType,ResIn,ResOut,Depth,Self,[AE|More],[AE|Adjusted]):-
  adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
-adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
-    adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
+%adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
+%    adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):-
    if_or_else(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted),
       if_or_else(with_debug(eval_args,adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted)),
