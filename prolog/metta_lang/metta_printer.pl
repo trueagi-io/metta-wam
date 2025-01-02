@@ -759,6 +759,7 @@ pre_guess_varnames(V,V).
 materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
 materialize_vn(Var):- \+ attvar(Var),!.
 materialize_vn(Var):- get_attr(Var,vn,NN),ignore((Var = '$VAR'(NN))),!.
+materialize_vn(_).
 
 %!  write_src_woi(+Term) is det.
 %
