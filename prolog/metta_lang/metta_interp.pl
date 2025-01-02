@@ -386,18 +386,19 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %
 %   Ensures that the given term `P` is printed exactly once in the current session.
 %
-%   This predicate prevents duplicate printing of the same term using a global 
-%   non-backtrackable variable (`$once_writeq_ln`). It utilizes `numbervars/4` 
-%   to standardize variable names for comparison and `ansi_format/3` to provide 
+%   This predicate prevents duplicate printing of the same term using a global
+%   non-backtrackable variable (`$once_writeq_ln`). It utilizes `numbervars/4`
+%   to standardize variable names for comparison and `ansi_format/3` to provide
 %   colored output.
 %
-%   @arg P The term to be printed. It will be printed once per invocation with 
+%   @arg P The term to be printed. It will be printed once per invocation with
 %          `ansi_format` using cyan foreground text.
 %
 %   @example Print a term only once:
 %     ?- once_writeq_nl(foo(bar)).
 %     foo(bar).
 %
+
 once_writeq_nl(_) :-
     % If the predicate `pfcTraceExecution` is not defined, succeed immediately.
     \+ clause(pfcTraceExecution, true), !.
@@ -405,11 +406,13 @@ once_writeq_nl(P) :-
     % If `$once_writeq_ln` is already set to the current term `P`, succeed silently.
     nb_current('$once_writeq_ln', W),
     W=@=P,!.
-once_writeq_nl(P) :-
+once_writeq_nl(P):- once_writeq_nl_now(P).
+once_writeq_nl_now(P) :-
     % Standardize variable names in `P` and print it using `ansi_format`.
     % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
-    \+ \+ (numbervars(P, 444, _, [attvar(skip), singletons(true)]),
-           ansi_format([fg(cyan)], '~N~q.~n', [P])),
+    \+ \+ (must_det_ll((numbervars(P, 444, _, [attvar(skip), singletons(true)]),
+           src_vars(P,PP),
+           with_output_to(user_error,ansi_format([fg(cyan)], '~N~q.~n', [PP]))))),
     nb_setval('$once_writeq_ln', P),!.
 
 %!  pfcAdd_Now(+P) is det.
@@ -429,7 +432,7 @@ once_writeq_nl(P) :-
 %   @see once_writeq_nl/1
 %
 
-% TODO: Uncomment the following line if the `pfcAdd` predicate is stable and 
+% TODO: Uncomment the following line if the `pfcAdd` predicate is stable and
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
 pfcAdd_Now(P) :-
@@ -439,7 +442,7 @@ pfcAdd_Now(P) :-
     pfcAdd(P).
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
-    once_writeq_nl(asssert(P)),
+    once_writeq_nl(assssssssssssssert(P)),
     assert(P).
 %:- endif.
 
@@ -447,7 +450,7 @@ pfcAdd_Now(P) :-
 %
 %   Optimized version of `copy_term/2` for ground terms.
 %
-%   If `I` is ground, it unifies `I` directly with `O`. Otherwise, it behaves 
+%   If `I` is ground, it unifies `I` directly with `O`. Otherwise, it behaves
 %   like `copy_term/2`, creating a fresh copy of `I`.
 %
 %   @arg I The input term (ground or non-ground).
@@ -557,8 +560,8 @@ is_flag0(What, _FWhatTrue, _FWhatFalse) :-
 %
 %   Succeeds if the program is currently in a compilation phase.
 %
-%   This predicate checks the Prolog runtime arguments (`os_argv`) to determine if 
-%   the system is performing specific compilation tasks, such as `qcompile_mettalog` 
+%   This predicate checks the Prolog runtime arguments (`os_argv`) to determine if
+%   the system is performing specific compilation tasks, such as `qcompile_mettalog`
 %   or `qsave_program`.
 %
 is_compiling :-
@@ -570,8 +573,8 @@ is_compiling :-
 %
 %   Succeeds if the program has been compiled into an executable.
 %
-%   This predicate verifies whether Prolog is running a precompiled executable by 
-%   checking for the `-x` flag in `os_argv` or ensuring `swipl` is not present in the 
+%   This predicate verifies whether Prolog is running a precompiled executable by
+%   checking for the `-x` flag in `os_argv` or ensuring `swipl` is not present in the
 %   argument list.
 %
 is_compiled :-
@@ -676,7 +679,7 @@ is_testing :- is_metta_flag('test').
 is_html :- is_metta_flag('html').
 
 % If the file is not already loaded, this is equivalent to consult/1. Otherwise, if the file defines a module,
-% import all public predicates. Finally, if the file is already loaded, is not a module file, and the context  
+% import all public predicates. Finally, if the file is already loaded, is not a module file, and the context
 % module is not the global user module, ensure_loaded/1 will call consult/1.
 :- ensure_loaded(metta_printer).
 :- ensure_loaded(metta_loader).
@@ -789,13 +792,13 @@ original_user_error(X) :- stream_property(X, file_no(2)).
 %   @example
 %     ?- unnullify_output.
 %     true.
-unnullify_output :- 
-    current_output(MFS), 
-    original_user_output(OUT), 
-    MFS == OUT, 
+unnullify_output :-
+    current_output(MFS),
+    original_user_output(OUT),
+    MFS == OUT,
     !.
-unnullify_output :- 
-    original_user_output(MFS), 
+unnullify_output :-
+    original_user_output(MFS),
     set_prolog_IO(user_input, MFS, user_error).
 
 %!  null_output(-MFS) is det.
@@ -921,12 +924,12 @@ is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
 :- use_module(library(shell)).
 %:- use_module(library(tabling)).
 
-use_top_self :- \+ fast_option_value('top-self', false).
+use_top_self :- fast_option_value('top-self', true).
 top_self('&top'):- use_top_self,!.
 top_self('&self').
 
 %:- top_self(Self), nb_setval(self_space, '&self'),
-current_self(Self):- ((nb_current(self_space,Self),Self\==[])->true;top_self(Self)).
+current_self(Self):- ((nb_current(self_space,Self),Self\==[],assertion(Self\=='&self'))->true;top_self(Self)).
 :- nb_setval(repl_mode, '+').
 
 
@@ -1926,10 +1929,10 @@ rtrace_on_failure_and_break(G):-
 
 assertion_hb(metta_eq_def(Eq,Self,H,B),Self,Eq,H,B):-!.
 assertion_hb(metta_defn(Self,H,B),Self,'=',H,B):-!.
-assertion_hb(metta_atom_asserted(KB,HB),Self,Eq,H,B):- !, assertion_hb(metta_atom(KB,HB),Self,Eq,H,B).
-assertion_hb(metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
 assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
-assertion_hb(asserted_metta_atom(Self,[Eq,H,B]),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
+assertion_hb(X,Self,Eq,H,B):- maybe_xform(X,Y),!, assertion_hb(Y,Self,Eq,H,B).
+assertion_hb(metta_atom_asserted(Self,[Eq,H,B]),Self,Eq,H,B):- !, assertion_neck_cl(Eq),!.
+
 
 assertion_neck_cl(Eq):- \+ symbol(Eq),!,fail.
 assertion_neck_cl('=').
@@ -1983,17 +1986,25 @@ do_show_options_values:-
 :- multifile(metta_atom_asserted/2).
 :- dynamic(metta_atom_deduced/2).
 :- multifile(metta_atom_deduced/2).
-metta_atom_asserted(X,Y):-
-    metta_atom_deduced(X,Y),
-    \+ clause(metta_atom_asserted(X,Y),true).
-
+:- dynamic(metta_atom_in_file/2).
+:- multifile(metta_atom_in_file/2).
+:- dynamic(metta_atom_asserted_last/2).
+:- multifile(metta_atom_asserted_last/2).
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
 
-maybe_into_top_self(WSelf, Self):- use_top_self,WSelf=='&self',current_self(Self),Self\==WSelf,!.
+maybe_into_top_self(_, _):- \+ use_top_self, !, fail.
+maybe_into_top_self(WSelf, Self):- var(WSelf), !, \+ attvar(WSelf), !, freeze(Self, from_top_self(Self, WSelf)).
+maybe_into_top_self(WSelf, Self):- WSelf='&self',current_self(Self),Self\==WSelf,!.
 into_top_self(WSelf, Self):- maybe_into_top_self(WSelf, Self),!.
 into_top_self(Self, Self).
+
+from_top_self(Self, WSelf):- var(Self), !, \+  attvar(Self), !, freeze(Self, from_top_self(Self, WSelf)).
+%from_top_self(Self, WSelf):- var(Self), trace, !, freeze(Self, from_top_self(Self, WSelf)).
+from_top_self(Self, WSelf):- top_self(CSelf), CSelf == Self, WSelf='&self', !.
+from_top_self(Self, WSelf):- current_self(CSelf), CSelf == Self, WSelf='&self', !.
+from_top_self(Self, Self).
 
 
 get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
@@ -2001,6 +2012,14 @@ get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
 get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
 
 metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
+
+metta_atom_added(X,Y):- metta_atom_asserted(X,Y).
+metta_atom_added(X,Y):- metta_atom_in_file(X,Y).
+metta_atom_added(X,Y):-
+        metta_atom_deduced(X,Y),
+        \+ clause(metta_atom_asserted(X,Y),true).
+metta_atom_added(X,Y):- metta_atom_asserted_last(X,Y).
+
 %metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
@@ -2009,18 +2028,45 @@ metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predica
 
 metta_atom(X,Y):- maybe_into_top_self(X, TopSelf),!,metta_atom(TopSelf,Y).
 %metta_atom(X,Y):- var(X),use_top_self,current_self(TopSelf),metta_atom(TopSelf,Y),X='&self'.
-metta_atom(KB,Atom):- metta_atom_in_file( KB,Atom).
-metta_atom(KB,Atom):- metta_atom_asserted( KB,Atom).
+metta_atom(KB,Atom):- metta_atom_added( KB,Atom).
 
 %metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
 %metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
 %metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
-metta_atom(KB,Atom):- KB \== '&corelib', !, % is_code_inheritor(KB),
-   \+ \+ (metta_atom_asserted(KB,'&corelib'),
+
+metta_atom(KB,Atom):- fail, nonvar(KB), \+ nb_current(space_inheritance,false), should_inhert_from(KB,Atom).
+%metta_atom(KB,Atom):- metta_atom_asserted_last(KB,Atom).
+
+:- dynamic(no_space_inheritance_to/1).
+wo_inheritance_to(Where,Goal):- setup_call_cleanup(asserta(no_space_inheritance_to(Where),Clause), Goal, erase(Clause)).
+
+should_inhert_from(KB,Atom):- \+ no_space_inheritance_to(KB), wo_inheritance_to(KB,should_inhert_from_now(KB,Atom)).
+
+should_inhert_from_now(KB,Atom):- \+ attvar(Atom),
+   freeze(SubKB, symbol(SubKB)), !,
+   metta_atom_added(KB,SubKB), SubKB \== KB,
+   metta_atom(SubKB,Atom),
+   \+ should_not_inherit_from(KB, SubKB, Atom).
+/*
+   KB \== '&corelib',  % is_code_inheritor(KB),
+   \+ \+ (metta_atom_added(KB,'&corelib'),
           should_inherit_from_corelib(Atom)), !,
-   metta_atom('&corelib',Atom).
+   metta_atom('&corelib',Atom),
+   \+ should_not_inherit_from_corelib(Atom).
+*/
+
+should_not_inherit_from(_,_,S):- symbol(S).
+/*
+should_not_inherit_from_corelib('&corelib').
+should_not_inherit_from_corelib('&stdlib').
+should_not_inherit_from_corelib('&self').
+%should_not_inherit_from_corelib('&top').
+*/
+
+
 should_inherit_from_corelib(_):- using_all_spaces,!.
-should_inherit_from_corelib([H,A|_]):- nonvar(A), should_inherit_op_from_corelib(H),!,nonvar(A).
+should_inherit_from_corelib(_):- !.
+should_inherit_from_corelib([H,A|_]):- nonvar(H), should_inherit_op_from_corelib(H),!,nonvar(A).
 %should_inherit_from_corelib([H|_]):- H == '@doc', !.
 should_inherit_from_corelib([H,A|T]):- fail,
   H == '=',write_src_uo(try([H,A|T])),!,
@@ -2038,13 +2084,14 @@ should_inherit_op_from_corelib('@doc').
 
 %metta_atom_asserted('&self','&corelib').
 %metta_atom_asserted('&self','&stdlib').
-metta_atom_asserted(Top,'&corelib'):- top_self(Top).
-metta_atom_asserted(Top,'&stdlib'):- top_self(Top).
-metta_atom_asserted('&stdlib','&corelib').
-metta_atom_asserted('&flybase','&corelib').
-metta_atom_asserted('&flybase','&stdlib').
-metta_atom_asserted('&catalog','&corelib').
-metta_atom_asserted('&catalog','&stdlib').
+metta_atom_asserted_last(Top,'&corelib'):- top_self(Top).
+metta_atom_asserted_last(Top,'&stdlib'):- top_self(Top).
+metta_atom_asserted_last('&stdlib','&corelib').
+metta_atom_asserted_last('&flybase','&corelib').
+metta_atom_asserted_last('&flybase','&stdlib').
+metta_atom_asserted_last('&catalog','&corelib').
+metta_atom_asserted_last('&catalog','&stdlib').
+
 
 maybe_resolve_space_dag(Var,[XX]):- var(Var),!, \+ attvar(Var), freeze(XX,space_to_ctx(XX,Var)).
 maybe_resolve_space_dag('&self',[Self]):- current_self(Self).
@@ -2088,17 +2135,24 @@ maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,['=',Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
 maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
+maybe_xform(metta_atom_in_file(KB,HB),metta_atom_asserted(KB,HB)).
+maybe_xform(metta_atom_deduced(KB,HB),metta_atom_asserted(KB,HB)).
+maybe_xform(metta_atom_asserted_last(KB,HB),metta_atom_asserted(KB,HB)).
+maybe_xform(metta_atom_asserted(WKB,HB),metta_atom_asserted(KB,HB)):- maybe_into_top_self(WKB, KB),!.
+
+
 maybe_xform(_OBO,_XForm):- !, fail.
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
 metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
 metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
-metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!,'add-atom'(Space, Atom).
+metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!, 'add-atom'(Space, Atom).
 metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
 metta_anew1(unload_all,OBO):- OBO= forall(metta_atom(Space,Atom),ignore('remove-atom'(Space, Atom))).
 
 metta_anew1(load,OBO):- !,
-  must_det_ll((load_hook(load,OBO),
+  must_det_ll((
+   load_hook(load,OBO),
    subst_vars(OBO,Cl),
    pfcAdd_Now(Cl))). %to_metta(Cl).
 metta_anew1(load,OBO):- !,
@@ -2110,6 +2164,14 @@ metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
   predicate_property(Head,number_of_clauses(_)),
   ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),
     (Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(unload(Cl)))).
+
+metta_anew1(unload_all,OBO):- !,
+  must_det_ll((
+   load_hook(unload_all,OBO),
+   subst_vars(OBO,Cl),
+   once_writeq_nl_now(retractall(Cl)),
+   retractall(Cl))). %to_metta(Cl).
+
 metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
   expand_to_hb(Cl,Head,Body),
   predicate_property(Head,number_of_clauses(_)),
