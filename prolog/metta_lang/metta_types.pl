@@ -217,27 +217,30 @@ mnotrace(G) :-
 %
 %   @arg Type The type being checked.
 %
-is_decl_utype('%Undefined%').
-is_decl_utype('Number').
-is_decl_utype('Symbol').
-is_decl_utype('Expression').
-is_decl_utype('String').
-is_decl_utype('Bool').
-is_decl_utype('Type').
-is_decl_utype('Any').
-is_decl_utype('Atom').
+is_decl_utype(U):- is_decl_utype(U,_).
+is_decl_utype('Atom',1).
+is_decl_utype('Expression',5).
+is_decl_utype('Any',3).
+is_decl_utype('%Undefined%',3).
+is_decl_utype('AnyRet',3).
+is_decl_utype('Type',5).
+is_decl_utype('Number',5).
+is_decl_utype('Symbol',5).
+is_decl_utype('String',5).
+is_decl_utype('Bool',5).
 % is_decl_utype(Type) :- is_decl_type_l(Type).
 
 %!  is_decl_mtype(+Type) is nondet.
 %
 %   @arg Type The type being checked.
 %
-is_decl_mtype('Variable').
-is_decl_mtype('Number').
-is_decl_mtype('Symbol').
-is_decl_mtype('Expression').
-is_decl_mtype('Grounded').
-is_decl_mtype('PyObject').
+is_decl_mtype(U):- is_decl_mtype(U,_).
+is_decl_mtype('Variable',5).
+is_decl_mtype('Number',5).
+is_decl_mtype('Symbol',5).
+is_decl_mtype('Expression',5).
+is_decl_mtype('Grounded',4).
+is_decl_mtype('PyObject',4).
 
 % is_decl_type([ST|_]) :- !, atom(ST), is_decl_type_l(ST).
 % is_decl_type(ST) :- \+ atom(ST), !, fail.
@@ -1870,7 +1873,7 @@ is_user_defined_head0(Eq, Other, [H | _]) :-
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
     callable(H), !,
-    functor(H, F, _),
+    functor(H, F, _, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.
@@ -2227,6 +2230,324 @@ is_math_op('zerop', 1, exists).     % Test for Zero
 
 % :- load_pfc_file('metta_ontology.pl.pfc').
 
+
+
+% Enums for Guarded Type Handling in Prolog
+
+% GuardMatchResult: Describes the result of evaluating several type guards against the function arguments.
+mo_match_behavior(fail_on_no_match).
+mo_match_behavior(return_original_on_no_match).
+% EvaluationOrder: Describes how the type guards are prioritized during evaluation.
+evaluation_order(fittest_first_priority).
+evaluation_order(clause_order_priority).
+% ExecutionResult: Describes the outcome of executing the guarded expression.
+execution_result_behavior(cut_on_first_success).
+execution_result_behavior(continue_on_success).
+% ExecutionResult: Describes the outcome of executing the guarded expression.
+execution_failed_behavior(cut_on_first_failure).
+execution_failed_behavior(continue_on_failure).
+% What do when there are no successfull bodies
+out_of_clauses_behavior(fail_on_no_success).
+out_of_clauses_behavior(return_original_on_no_success).
+
+
+%predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
+predicate_behavior_impl('get-type', 1, fail_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, fail_on_no_success).
+% default
+predicate_behavior_fallback(_, _, return_original_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, return_original_on_no_success).
+
+predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior):-
+   predicate_behavior_impl(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
+    *->true; predicate_behavior_fallback(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior).
+
+function_declaration(Predicate, Len, Parameters, ParamTypes, RetType, [let,ReturnVal,Body,ReturnVal], ReturnVal):-
+   Self='&self',
+   len_or_unbound(Parameters, Len),
+   NR = ([Predicate|Parameters]+Body),
+   copy_term(NR,NRR),
+   no_repeats_var(NRR),
+   metta_defn(Self,[Predicate|Parameters],Body),
+   get_operator_typedef(Self, Predicate, Len, ParamTypes, RetType),
+   NR=NRR,
+   write_src_nl(metta_defn(Self,[Predicate|Parameters],Body)).
+
+clause_match_level(Predicate, Len, Parameters, Score, Body, ReturnVal):-
+   function_declaration(Predicate, Len, Parameters, Types, RetType, Body, ReturnVal),
+   maplist(nc_weight,[RetType|Types],XXL),sumlist(XXL,Score).
+
+info_about(Predicate, Len):-
+   predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
+   write_src_nl(predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)),!,
+   findall(Score- Body, clause_match_level(Predicate, Len, Parameters, Score, Body, ReturnVal), ScoredBodies),
+   maplist(write_src_nl,ScoredBodies),!.
+
+implement_predicate([Predicate|Parameters], ReturnVal):-
+  catch(implement_predicate_nr([Predicate|Parameters], ReturnVal),metta_notreducable(ReturnVal),true).
+
+implement_predicate_nr([Predicate|Parameters], ReturnVal) :-
+    len_or_unbound(Parameters, Len),
+
+    predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
+
+    % Generate Score-Body pairs
+    findall(Score- Body, clause_match_level(Predicate, Len, Parameters, Score, Body, ReturnVal), ScoredBodies),
+
+    % Handle no matches
+    (ScoredBodies \== [] ->
+        true ;
+        (NoMatchBehavior == fail_on_no_match -> fail ; throw(metta_notreducable([Predicate | Parameters])))), % vs return_original_on_no_match
+
+    % Sort based on evaluation order
+    (EvaluationOrder == clause_order_priority ->
+        OrderedBodies = ScoredBodies ;
+        sort(ScoredBodies, OrderedBodies)), % fittest_first_priority
+
+    % Extract bodies from sorted or original pairs
+    maplist(arg(2), OrderedBodies, Bodies),
+
+    % Iterate over bodies and handle success/failure policies
+    (((member(Body, Bodies), call(Body)) *->
+        (SuccessBehavior == cut_on_first_success -> ! ; true) % vs continue_on_success
+    ;
+        (FailureBehavior == cut_on_first_failure -> (!, fail) ; fail)) % vs continue_on_failure
+    *->
+        true ;
+        (OutOfClausesBehavior == fail_on_no_success -> fail ; throw(metta_notreducable([Predicate | Parameters])))). % vs return_original_on_no_success
+
+
+
+% ------------------------------------------------------------------------------
+% Core Logic with Type Guards
+% ------------------------------------------------------------------------------
+
+% Helper to check type guards.
+guard_match(X, number) :- number(X).
+guard_match(X, atom) :- atom(X).
+guard_match(X, list) :- is_list(X).
+guard_match(X, complex) :- is_list(X), length(X, N), N > 5.
+guard_match(X, simple) :- is_list(X), length(X, N), N =< 5.
+guard_match(_, generic).
+
+% Define what happens inside the guarded body.
+guarded_body(X, Result, success) :-
+    writeln(successful_guard(X)),
+    Result = processed(X).
+
+guarded_body(X, Result, failure) :-
+    writeln(failed_guard(X)),
+    Result = return_original(X).
+
+% Fallback logic if no guards match.
+fallback_logic(X, Result) :-
+    writeln('No type guard matched. Executing fallback.'),
+    Result = default_value(X).
+
+% Nested guard logic.
+nested_guard(X, Result) :-
+    (   X = hello ->
+        Result = special_case_handled
+    ;   Result = default_atom_result
+    ).
+
+% ------------------------------------------------------------------------------
+% Tests
+% ------------------------------------------------------------------------------
+
+% Test 1: Simple Type Guard Matching
+test_simple_guard :-
+    function(42, Result1), writeln(Result1),
+    function(hello, Result2), writeln(Result2),
+    function([], Result3), writeln(Result3),
+    function(foo, Result4), writeln(Result4).
+
+% Test 2: Fallback Behavior
+test_fallback :-
+    function_with_fallback([], Result), writeln(Result).
+
+% Test 3: Prioritized Type Guard Evaluation
+test_prioritized :-
+    prioritized_function([1,2,3], Result1), writeln(Result1),
+    prioritized_function([1,2,3,4,5,6], Result2), writeln(Result2),
+    prioritized_function(hello, Result3), writeln(Result3).
+
+% Test 4: Nested Guarded Logic with Errors
+test_nested :-
+    nested_function(42, Result1), writeln(Result1),
+    nested_function(hello, Result2), writeln(Result2),
+    nested_function(world, Result3), writeln(Result3),
+    nested_function([], Result4), writeln(Result4).
+
+% ------------------------------------------------------------------------------
+% Function Definitions
+% ------------------------------------------------------------------------------
+
+% Function with basic guards.
+function(X, Result) :-
+    (   guard_match(X, number) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, atom) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, list) ->
+        guarded_body(X, Result, success)
+    ;   guarded_body(X, Result, failure)
+    ).
+
+% Function with a fallback mechanism.
+function_with_fallback(X, Result) :-
+    (   guard_match(X, number) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, atom) ->
+        guarded_body(X, Result, success)
+    ;   fallback_logic(X, Result)
+    ).
+
+% Function with prioritized guards.
+prioritized_function(X, Result) :-
+    evaluation_order(fittest_first), % Assume we process most specific guards first.
+    (   guard_match(X, complex) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, simple) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, generic) ->
+        guarded_body(X, Result, success)
+    ;   guarded_body(X, Result, failure)
+    ).
+
+% Function with nested guards and error handling.
+nested_function(X, Result) :-
+    (   guard_match(X, number) ->
+        guarded_body(X, Result, success)
+    ;   guard_match(X, atom) ->
+        nested_guard(X, Result)
+    ;   fallback_logic(X, Result)
+    ).
+
+ffffff:- writeln('
+    ?- test_simple_guard.
+    ?- test_fallback.
+    ?- test_prioritized.
+    ?- test_nested.
+').
+
+
+%! freeist(+X, +Y, -Result) is det.
+%
+%  A comparison predicate for `predsort/3` that sorts terms by freeness.
+%
+%  Terms are sorted based on the following criteria:
+%  - Variables are considered the "most free" and are sorted first.
+%  - Partially instantiated terms come next.
+%  - Fully ground terms are sorted last. Among them, they are further sorted by
+%    their complexity (the total number of functors and arguments in the term).
+%
+%  If two terms have the same degree of freeness and complexity, a lexicographic comparison
+%  is used as a final fallback.
+%
+%  Example usage with `predsort/3`:
+%  ==
+%  ?- predsort(freeist, [X, f(Y), g(a), Z, b, h(1,2,3)], Sorted).
+%  % Sorted = [X, Z, f(Y), b, g(a), h(1, 2, 3)].
+%
+%  ?- predsort(freeist, [a, f(a), h(a, b, c), g(a), b], Sorted).
+%  % Sorted = [a, b, g(a), f(a), h(a, b, c)].
+%
+%  ?- predsort(freeist, [X, Z, f(X, Y), b, h(a), g(a)], Sorted).
+%  % Sorted = [X, Z, f(X, Y), b, g(a), h(a)].
+%
+%  ?- predsort(freeist, [g(a), g(b), f(a, b), a, h(a, b, c), X, Z], Sorted).
+%  % Sorted = [X, Z, a, g(a), g(b), f(a, b), h(a, b, c)].
+%  ==
+%
+%  @param Result Comparison result: `<`, `=`, or `>`.
+%  @param Y Second term to compare.
+%  @param X First term to compare.
+
+%freeist(Result, X, Y):- X == Y, !, Result = (=).
+freeist(Result, X, Y):- X =@= Y, !, compare(Result, Y, X).
+freeist(Result, Y, X) :- compound(Y),Y=(YY-_),!,freeist(Result, YY, X).
+freeist(Result, Y, X) :- compound(X),X=(XX-_),!,freeist(Result, Y, XX).
+freeist(Result, Y, X) :-
+    term_freeness(Y, FX),
+    term_freeness(X, FY),
+    ( FX = FY ->
+        ( FX = 2 -> % If both terms are ground
+            term_arity(Y, AX),
+            term_arity(X, AY),
+            ( AX = AY ->
+                term_complexity(Y, CX),
+                term_complexity(X, CY),
+                ( CX = CY ->
+                    (compound_term_compare(ResultNE, X, Y), (ResultNE \= (=) -> ResultNE=Result ; compare(Result, Y, X))) % Compare compound terms argument by argument
+                ; compare(Result, CX, CY) )
+            ; compare(Result, AX, AY) )
+        ; compare(Result, Y, X) ) % Fallback for other types if freeness is the same
+    ; compare(Result, FX, FY) % Compare by freeness
+    ), !.
+
+% Calculate term freeness
+term_freeness(Term, 1) :- attvar(Term), !.
+term_freeness(Term, 0) :- var(Term), !.
+%term_freeness(Term, 1) :- term_variables(Term, Vars), Vars \= [], !.
+term_freeness(_, 2).
+
+% Calculate term arity (number of arguments)
+term_arity(Term, Arity) :-
+    %ground(Term), % Only applies to ground terms
+    Term =.. [_|Args],
+    length(Args, Arity).
+term_arity([_|Args], Arity):-length(Args, Arity).
+
+% Calculate term complexity (total number of functors and arguments in the term)
+term_complexity(Term, Complexity) :- fail,
+    ground(Term), % Only applies to ground terms
+    term_complexity_acc(Term, 0, Complexity).
+term_complexity(_,1).
+
+term_complexity_acc(Term, Acc, Complexity) :-
+    Term =.. [_|Args],
+    length(Args, ArgCount),
+    NewAcc is Acc + 1 + ArgCount,
+    foldl(term_complexity_acc, Args, NewAcc, Complexity).
+
+term_to_list(L, [L]):- \+ compound(L),!.
+term_to_list(L,L):- is_list(L),!.
+term_to_list(C, [F|Args]):- C \=[_|_],!, compound_name_arguments(C,F,Args).
+term_to_list(L, [L]).
+
+% Compare compound terms argument by argument
+compound_term_compare(Result, X, Y) :-
+    term_to_list(X,XX),
+    term_to_list(Y,YY),
+    maplist(nc_weight,XX,XXL),sumlist(XXL,SX),
+    maplist(nc_weight,YY,YYL),sumlist(YYL,SY),
+    compare(FunctorResult, SY, SX), % Compare functors lexicographically
+    ( FunctorResult = (=) ->
+        compare_args(Result, XX, YY)  % Compare arguments recursively
+    ; Result = FunctorResult ).
+
+% Recursively compare lists of arguments
+compare_args(Result, [A1|Rest1], [A2|Rest2]) :- !,
+    non_compound_compare(ArgResult, A1, A2), % Compare individual arguments using the custom predicate
+    ( ArgResult = (=) ->
+        compare_args(Result, Rest1, Rest2) % Continue with the remaining arguments
+    ; Result = ArgResult ).
+compare_args(Result, A, B) :- A==B, Result = (=). % Both lists are empty
+compare_args(Result, A, _) :- A==[], Result = (<). % First list is shorter
+compare_args(Result, _, B) :- B==[], Result = (>). % Second list is shorter
+
+% Example custom comparison for individual atoms or non-compound terms
+non_compound_compare(Result, A, B) :-
+    % Example: Comparing atoms by custom weights
+    nc_weight(A, WA),
+    nc_weight(B, WB),
+    (WA==WB-> compare(Result, WB, WA); compare(Result, A, B)).
+
+% Example weight mapping for atomics
+nc_weight(Attvar, 7):- attvar(Attvar),!.
+nc_weight(Var, 8):- var(Var),!.
+nc_weight(T, N):- is_decl_mtype(T,N),!.
+nc_weight(T, N):- is_decl_utype(T,N),!.
+nc_weight(T, 6):- atomic(T),!.
 
 
 

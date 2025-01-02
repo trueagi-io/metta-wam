@@ -524,6 +524,7 @@ find_top_dirs(SpaceName,Top,Dir):-
 %     % Find the parent directory containing the identifier `Top`.
 %     ?- parent_dir_of('/current/dir', 'top', Dir).
 %
+parent_dir_of(PWD, _Top, _Dir) :- PWD == '/',!, fail.
 parent_dir_of(PWD, Top, Dir) :-
     directory_file_path(Parent, TTop, PWD),
     % Check if the current top matches
@@ -714,6 +715,7 @@ load_metta(Filename):-
 %
 %   @throws An error if the file is already in the list of currently loaded files.
 %
+load_metta(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, load_metta(TopSelf, Module).
 load_metta(_Self, Filename):-
     % Special case: if the Filename is '--repl', start the REPL instead of loading a file.
     Filename == '--repl', !, repl.
@@ -738,6 +740,7 @@ load_metta(Self, Filename):-
 %     % Attempt to load a file named "example.metta".
 %     ?- load_metta1('&self', 'example.metta').
 %
+load_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, load_metta1(TopSelf, Module).
 load_metta1(Self, Filename):-
     % Check if the Filename is not a valid symbol or does not exist as a file.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
@@ -770,6 +773,7 @@ load_metta1(Self, RelFilename):-
 %
 %   @throws An error if the file is already in the list of currently imported files.
 %
+import_metta(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta(TopSelf, Module).
 import_metta(Self, Filename):-
     % Define the goal for importing the Metta file.
     About = import_metta1(Self, Filename),
@@ -816,6 +820,7 @@ complain_if_missing(_, About):-
 %     % Import a Python module named "example_py_module" into the Prolog environment.
 %     ?- import_metta1('&self', 'example_py_module').
 %
+import_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta1(TopSelf, Module).
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
     current_predicate(py_is_module/1), py_is_module(Module),!,
@@ -857,6 +862,7 @@ import_metta1(Self, RelFilename):-
 %
 %   @throws An error if the file is already in the list of currently included files.
 %
+include_metta(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, include_metta(TopSelf, Filename).
 include_metta(Self, Filename):-
     % Use without_circular_error/2 to handle circular dependencies for including files.
     without_circular_error(include_metta1(Self, Filename),
@@ -879,15 +885,15 @@ include_metta(Self, Filename):-
 %     % Include a valid file "example.metta" into the current knowledge base context.
 %     ?- include_metta1('&self', 'example.metta').
 %
+include_metta1(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, include_metta1(TopSelf, Filename).
 include_metta1(Self, Filename):-
     % If Filename is not a valid symbol or file does not exist, handle wildcards for includes.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
     must_det_ll(with_wild_path(include_metta(Self), Filename)),!.
 
-include_metta1(WSelf, RelFilename):-
+include_metta1(Self, RelFilename):-
     % Ensure RelFilename is a valid symbol and exists as a file.
     must_det_ll((
-    into_top_self(WSelf, Self),
     symbol(RelFilename),
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute path.
@@ -1027,6 +1033,7 @@ include_metta_directory_file_prebuilt(Self, _Directory, Filename):-
 %     % Include a file named "example.metta" from a specific directory.
 %     ?- include_metta_directory_file('&self', '/path/to/directory', 'example.metta').
 %
+include_metta_directory_file(Self, Directory, Filename) :- maybe_into_top_self(Self, TopSelf), !, include_metta_directory_file(TopSelf, Directory, Filename).
 include_metta_directory_file(Self, Directory, Filename):-
     % Attempt to include the file via a prebuilt version if it exists.
     include_metta_directory_file_prebuilt(Self, Directory, Filename), !.
@@ -1632,6 +1639,7 @@ accept_line2(Self, S) :-
 %     % Load and process a `.metta` file stream in the context of `&self`.
 %     ?- load_metta_file_stream('example.metta', '&self', In).
 %
+load_metta_file_stream(Filename, Self, In) :- maybe_into_top_self(Self, TopSelf), !, load_metta_file_stream(Filename, TopSelf, In).
 load_metta_file_stream(Filename, Self, In) :-
     % Check if the filename is atomic and exists, then get file size.
     if_t((atomic(Filename), exists_file(Filename)), size_file(Filename, Size)),
@@ -1765,6 +1773,8 @@ find_newest_file_time(Directory, [File | Rest], CurrentNewest, NewestTime) :-
 %     % Load a `.metta` file using a buffer if possible.
 %     ?- load_metta_file_stream_fast(10000, read_file_sexpr, 'example.metta', '&self', In).
 %
+
+load_metta_file_stream_fast(Size, P2, Filename, Self, In) :- maybe_into_top_self(Self, TopSelf), !, load_metta_file_stream_fast(Size, P2, Filename, TopSelf, In).
 load_metta_file_stream_fast(_Size, _P2, Filename, Self, _In) :-
     % Generate buffer file name and check existence
     atomic(Filename), cache_file(Filename, BufferFile),
@@ -2051,6 +2061,7 @@ metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount) :-
 %     % Load the buffered contents of "example.metta" into the knowledge base.
 %     ?- load_metta_buffer('&self', 'example.metta').
 %
+load_metta_buffer(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, load_metta_buffer(TopSelf, Filename).
 load_metta_buffer(Self, Filename) :-
     % Set execution number, load answer file, and reset execution.
     set_exec_num(Filename, 1),

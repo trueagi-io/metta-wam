@@ -1083,10 +1083,18 @@ star_vars(N=V):- ignore('$VAR'(N) = V).
 maybe_name_vars(List):- \+ is_list(List), !.
 maybe_name_vars([]):-!.
 maybe_name_vars([N=Var|List]):-
-    must_det_ll((n_to_vn(N,NN), ignore((Var = '$VAR'(NN))))),
+    maybe_name_var(N,Var),
     maybe_name_vars(List).
 
+maybe_name_var(_,Var):- nonvar(Var),!.
+maybe_name_var(_,Var):- get_attr(Var,vn,_),!.
+maybe_name_var(N,Var):-
+    svar_fixname(N,NN), % ignore((Var = '$VAR'(NN))))),
+    put_attr(Var,vn,NN),!.
+maybe_name_var(_N,_Var).
+
 n_to_vn(N,NN):- n_to_vn0(N,NNS),name(NN,NNS).
+n_to_vn0(N,NN):- attvar(N),!,get_attr(N,vn,NN),!.
 n_to_vn0(N,NN):- var(N),!,sformat(NN,'~p',[N]).
 n_to_vn0(N,NN):- integer(N),sformat(NN,'~p',['$VAR'(N)]).
 n_to_vn0(N,NN):- number(N),sformat(NN,'~p',['$VAR'(N)]).
