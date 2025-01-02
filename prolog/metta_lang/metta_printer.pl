@@ -532,7 +532,7 @@ is_final_write('#\\'(S)) :-
     !, format("'~w'", [S]).
 is_final_write(V) :-
     % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
-    py_is_enabled, py_is_py(V), !, py_ppp(V), !.
+    py_is_enabled, notrace(catch(((py_is_py(V),_,fail), !, py_ppp(V)),_,fail)), !.
 is_final_write([VAR, V | T]) :-
     % For lists like ['$VAR', Value], write the variable if the tail is empty.
     '$VAR' == VAR, T == [], !, write_dvar(V).
@@ -745,14 +745,21 @@ write_src(V) :-
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-              pre_guess_varnames(V,II),ignore(II=V),
+             must_det_lls((pre_guess_varnames(V,II),
+              call(II=V),
               guess_varnames(II,I),
-              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))).
+              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))),
+              materialize_vns(I))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
-pre_guess_varnames(V,I):- compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
+pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
+
+materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
+materialize_vn(Var):- \+ attvar(Var),!.
+materialize_vn(Var):- get_attr(Var,vn,NN),ignore((Var = '$VAR'(NN))),!.
+
 %!  write_src_woi(+Term) is det.
 %
 %   Writes the source of a term `Term` with indentation disabled.
