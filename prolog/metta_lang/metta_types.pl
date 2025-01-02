@@ -2422,7 +2422,7 @@ nested_function(X, Result) :-
     ;   fallback_logic(X, Result)
     ).
 
-:- writeln('
+ffffff:- writeln('
     ?- test_simple_guard.
     ?- test_fallback.
     ?- test_prioritized.
