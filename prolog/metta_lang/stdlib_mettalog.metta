@@ -91,11 +91,7 @@
 (: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
-(: If (-> Bool Atom Atom Atom))
-(: If (-> Bool Atom Atom))
-(= (If True $then) $then)
-(= (If False $then) (let $n 0 (let $n 1 $n)))
-(= (If $cond $then $else) (if $cond $then $else))
+
 
 (@doc type-check
   (@desc "The value of type-check determines MeTTa's type-checking behavior. Set via pragma!. When set to auto (i.e. !(pragma! type-check auto)), types are checked immediately on adding an expression to the space. By default, when unset (or set to anything other than auto), types are checked only on evaluation. For example !(+ 1 \"2\") would trigger a type violation, but (= (foo $x) (+ $x \"2\")) would not, unless type-check is set to auto, in which case both would trigger type violations."))
@@ -183,22 +179,21 @@ For example:
 (predicate-arity function-arity 2)
 (function-arity function-arity 1)
 
+;; MettaMorph-If Function
 
-;; If Function
-
-(iz If MeTTa)
-(@doc If
+(iz MettaMorph-If MeTTaMorph)
+(@doc MettaMorph-If
   (@desc "Conditional function that evaluates and returns one of the provided atoms based on a boolean condition.")
   (@params (
     (@param "Boolean condition")
     (@param "Atom to return if condition is True")
     (@param "Atom to return if condition is False (optional)")))
   (@return "Either the second or third argument depending on the condition"))
-(: If (-> Bool Atom Atom Atom))
-(: If (-> Bool Atom Atom))
-(= (If True $then) $then)
-(= (If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
-(= (If $cond $then $else) (if $cond $then $else))
+(: MettaMorph-If (-> Bool Atom Atom Atom))
+(: MettaMorph-If (-> Bool Atom Atom))
+(= (MettaMorph-If True $then) $then)
+(= (MettaMorph-If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
+(= (MettaMorph-If $cond $then $else) (if $cond $then $else))
 
 ;; Arity Assignments
 
