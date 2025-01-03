@@ -905,48 +905,254 @@ switch_to_mettarust :-
     forall(rust_option_value_def(Name, DefaultValue), set_option_value(Name, DefaultValue)),
     set_output_stream.
 
-show_os_argv:- is_compatio,!.
-show_os_argv:- current_prolog_flag(os_argv,ArgV),write('; libswipl: '),writeln(ArgV).
-is_pyswip:- current_prolog_flag(os_argv,ArgV),member( './',ArgV).
+%!  show_os_argv is det.
+%
+%   Displays the operating system arguments (`os_argv`) used during the execution of the Prolog program.
+%
+%   This predicate prints the list of command-line arguments passed to the Prolog interpreter.
+%   If compatibility mode (`is_compatio/0`) is enabled, it does nothing.
+%
+%   @example Display the Prolog command-line arguments:
+%     ?- show_os_argv.
+%     ; libswipl: ['swipl', '-g', 'main', '--', 'arg1', 'arg2'].
+%
+show_os_argv :-
+    % If compatibility mode is enabled, do nothing and succeed silently.
+    is_compatio, !.
+show_os_argv :-
+    % Retrieve and print the command-line arguments using the 'os_argv' Prolog flag.
+    current_prolog_flag(os_argv, ArgV),
+    write('; libswipl: '),
+    writeln(ArgV).
+
+%!  is_pyswip is det.
+%
+%   Succeeds if the current Prolog interpreter was invoked via PySwip.
+%
+%   This predicate checks the `os_argv` Prolog flag to determine if the argument list
+%   contains an entry starting with `'./'`, which is a common indicator that the program
+%   was launched via a PySwip wrapper script or similar integration.
+%
+%   @example Check if Prolog is running via PySwip:
+%     ?- is_pyswip.
+%     true.
+%
+is_pyswip :-
+    % Retrieve the operating system arguments.
+    current_prolog_flag(os_argv, ArgV),
+    % Check if any argument starts with './'.
+    member('./', ArgV).
+
+% 'multifile' allows a predicate's clauses to be defined across multiple files or modules, while dynamic 
+% enables runtime modification (asserting or retracting) of a predicate's clauses.
 :- multifile(is_metta_data_functor/1).
 :- dynamic(is_metta_data_functor/1).
 :- multifile(is_nb_space/1).
 :- dynamic(is_nb_space/1).
+
 %:- '$set_source_module'('user').
+
+%
+%   Provides predicates for extended file operations, such as copying, moving,
+%   deleting files, and manipulating file paths.
+%
 :- use_module(library(filesex)).
+
+%
+%   Offers predicates for interacting with the operating system, such as
+%   executing commands, retrieving environment variables, and system-level tasks.
+%
 :- use_module(library(system)).
+
+%
+%   Provides predicates for executing shell commands from Prolog, allowing
+%   integration with external programs and system utilities.
+%
+%   Example usage:
+%     ?- shell('ls -l').
+%     (Lists directory contents).
 :- use_module(library(shell)).
+
 %:- use_module(library(tabling)).
 
-use_top_self :- fast_option_value('top-self', true).
-top_self('&top'):- use_top_self,!.
-top_self('&self').
+%!  use_top_self is nondet.
+%
+%   Succeeds if the 'top-self' option is enabled.
+%
+%   This predicate checks the runtime option `'top-self'` using `fast_option_value/2`.
+%   If the option is set to `true`, it indicates that the system should treat `&self` 
+%   as `&top` in certain contexts.
+%
+%   Example usage:
+%     ?- use_top_self.
+%     true.
+use_top_self :- 
+    % Check if the 'top-self' option is set to true.
+    fast_option_value('top-self', true).
 
+%!  top_self(-Self) is det.
+%
+%   Determines the current self-reference context.
+%
+%   If `use_top_self/0` succeeds, `Self` is unified with `&top`, indicating 
+%   a global context. Otherwise, it defaults to `&self`.
+%
+%   @arg Self The current self-reference context, either `&top` or `&self`.
+%
+%   Example usage:
+%     ?- top_self(Self).
+%     Self = '&top'.
+%
+%     ?- set_option_value('top-self', false), top_self(Self).
+%     Self = '&self'.
+top_self('&top') :- 
+    % If 'top-self' is enabled, return '&top'.
+    use_top_self, !.
+top_self('&self').
 %:- top_self(Self), nb_setval(self_space, '&self'),
-current_self(Self):- ((nb_current(self_space,Self),Self\==[],assertion(Self\=='&self'))->true;top_self(Self)).
+
+%!  current_self(-Self) is det.
+%
+%   Retrieves the current self-reference context.
+%
+%   Retrieves the current self-reference context. If the non-backtrackable
+%   global variable `self_space` is set, non-empty, and not `&self`, unifies
+%   `Self` with its value. Otherwise, falls back to `top_self/1`.
+%
+%   @arg Self The current self-reference context, typically `&self` or `&top`.
+%
+current_self(Self) :-
+    % Check if 'self_space' is set and not empty or '&self'.
+    ((  nb_current(self_space, Self),
+        Self \== [],
+        assertion(Self \== '&self'))
+    ->  true
+    ;   % If not, fall back to 'top_self'.
+        top_self(Self)
+    ).
+
+%
+%   Sets the initial value of the REPL mode.
+%
+%   The non-backtrackable global variable `repl_mode` is initialized with `'+'`,
+%   indicating a default REPL mode behavior.
 :- nb_setval(repl_mode, '+').
 
-
 % Define the option and call help documentation
+
+%!  option_value_def(+Name, -DefaultValue) is nondet.
+%
+%   Retrieves the default value of an option.
+%
+%   This predicate queries the option definitions to fetch the default value
+%   associated with a given option `Name`. The default value is extracted 
+%   from the `all_option_value_name_default_type_help/5` predicate.
+%
+%   @arg Name The name of the option whose default value is to be retrieved.
+%   @arg DefaultValue The default value associated with the option.
+%
+%   Example usage:
+%     ?- option_value_def('compat', Default).
+%     Default = false.
 option_value_def(Name, DefaultValue) :-
+    % Fetch the default value for the given option.
     all_option_value_name_default_type_help(Name, DefaultValue, _, _, _).
 
+%!  rust_option_value_def(+Name, -DefaultValue) is nondet.
+%
+%   Retrieves the default value of a Rust-specific option.
+%
+%   This predicate examines option definitions specifically related to Rust
+%   compatibility mode. It fetches the MettaLog default value and ensures 
+%   it differs from the standard default value.
+%
+%   @arg Name The name of the Rust-specific option.
+%   @arg DefaultValue The default value specific to Rust compatibility mode.
+%
+%   Example usage:
+%     ?- rust_option_value_def('compat', Default).
+%     Default = true.
 rust_option_value_def(Name, DefaultValue) :-
-    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    % Fetch the MettaLog default value and ensure it's different from the standard default.
+    all_option_value_name_default_type_help(Name, MettaLogDV, [DefaultValue|_],_Cmt,_Topic),
     MettaLogDV \= DefaultValue.
 
+%!  mettalog_option_value_def(+Name, -MettaLogDV) is nondet.
+%
+%   Retrieves the MettaLog-specific default value of an option.
+%
+%   This predicate fetches the MettaLog-specific default value for an option,
+%   ensuring it differs from the general default value.
+%
+%   @arg Name The name of the option.
+%   @arg MettaLogDV The MettaLog-specific default value.
+%
+%   Example usage:
+%     ?- mettalog_option_value_def('compat', MettaLogDV).
+%     MettaLogDV = true.
 mettalog_option_value_def(Name, MettaLogDV) :-
-    all_option_value_name_default_type_help(Name, MettaLogDV,[DefaultValue|_], _Cmt,_Topic),
+    % Fetch the MettaLog-specific default value and ensure it's different from the general default.
+    all_option_value_name_default_type_help(Name, MettaLogDV, [DefaultValue|_],_Cmt,_Topic),
     MettaLogDV \= DefaultValue.
 
-
+% The discontiguous directive allows clauses of the same predicate to appear non-consecutively in a 
+% source file, enabling better organization of related code segments across different parts of the file.
 :- discontiguous(option_value_name_default_type_help/5).
 :- discontiguous(all_option_value_name_default_type_help/5).
 
-all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic):-
- option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic).
+%!  all_option_value_name_default_type_help(+Name, -DefaultValue, -Type, -Cmt, -Topic) is nondet.
+%
+%   Retrieves the details of an option, including its default value, type,
+%   comment, and topic.
+%
+%   This predicate acts as a wrapper around `option_value_name_default_type_help/5`
+%   to provide details about a specific configuration option. It ensures consistent
+%   querying of option metadata from a centralized source.
+%
+%   @arg Name The name of the option.
+%   @arg DefaultValue The default value of the option.
+%   @arg Type A list of valid types or values for the option.
+%   @arg Cmt A comment describing the option's purpose.
+%   @arg Topic The category or topic to which the option belongs.
+%
+%   @example Retrieve details of an option:
+%     ?- all_option_value_name_default_type_help('compat', Default, Type, Cmt, Topic).
+%     Default = false,
+%     Type = [true, false],
+%     Cmt = "Enable all compatibility with MeTTa-Rust",
+%     Topic = 'Compatibility and Modes'.
+all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic) :-
+    % Delegate to the core predicate for retrieving option details.
+    option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic).
 
 % Compatibility and Modes
+
+%!  option_value_name_default_type_help(+Name, -DefaultValue, -Type, -Cmt, -Topic) is nondet.
+%
+%   Provides metadata about a specific configuration option.
+%
+%   This predicate defines various configuration options, their default values,
+%   allowed types, descriptions, and the categories (topics) they belong to.
+%   It is primarily used for querying and managing runtime options in the system.
+%
+%   @arg Name The name of the configuration option.
+%   @arg DefaultValue The default value assigned to the option.
+%   @arg Type A list of valid types or values for the option.
+%   @arg Cmt A descriptive comment explaining the option's purpose.
+%   @arg Topic The category or topic the option belongs to.
+%
+%   @examples
+%     ?- option_value_name_default_type_help('compat', Default, Type, Cmt, Topic).
+%     Default = false,
+%     Type = [true, false],
+%     Cmt = "Enable all compatibility with MeTTa-Rust",
+%     Topic = 'Compatibility and Modes'.
+%
+%     ?- option_value_name_default_type_help('devel', Default, Type, Cmt, Topic).
+%     Default = false,
+%     Type = [false, true],
+%     Cmt = "Developer mode",
+%     Topic = 'Compatibility and Modes'.
 option_value_name_default_type_help('compat', false, [true, false], "Enable all compatibility with MeTTa-Rust", 'Compatibility and Modes').
 option_value_name_default_type_help('compatio', false, [true, false], "Enable IO compatibility with MeTTa-Rust", 'Compatibility and Modes').
 option_value_name_default_type_help(src_indents,  false, [false,true], "Sets the indenting of list printing", 'Compatibility and Modes').
