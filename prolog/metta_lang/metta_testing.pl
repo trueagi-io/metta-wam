@@ -405,7 +405,7 @@ give_pass_credit(TestSrc, _Pre, _G) :-
     always_exec(BaseEval), !.
 give_pass_credit(TestSrc, _Pre, G) :-
     % Logs the test as passed with 'PASS' status.
-    must_det_lls((write_pass_fail(TestSrc, 'PASS', G),
+    must_det_lls((ignore(write_pass_fail(TestSrc, 'PASS', G)),
     % Increments the success counter.
     flag(loonit_success, X, X + 1), !,
     % Displays a success message in cyan color.
