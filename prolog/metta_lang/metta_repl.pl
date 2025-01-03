@@ -206,6 +206,7 @@ load_and_trim_history :-
 %     metta>
 %
 repl :-
+    flag(need_prompt,_,1),
     % Catch any end_of_input exception and terminate the REPL gracefully.
     catch(repl2, end_of_input, true).
 
@@ -581,6 +582,8 @@ repl_read_next(Accumulated, Expr) :-
     symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
     repl_read_next(NewAccumulated, Expr).
+
+
 
 % if stream error is not recoverable restart_reading
 check_unbalanced_parens(SE):- var(SE),!. % no error
@@ -973,11 +976,15 @@ each_pair_list(A-B,A,B).
 %   @arg Was is the previous state before execution.
 %   @arg Output is the output generated from the execution.
 %   @arg FOut is the final output, after additional processing.
-u_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
-   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
+
+u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+   catch(u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),'$aborted', fbug(aborted(From,TermV))).
+
+u_do_metta_exec000(FromLSP,Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- ground(FromLSP), FromLSP = file(lsp(From)), nonvar(From), !,
+   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),!,
    maplist(each_pair_list,List,OutputL,FOutL).
 
-u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
+u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
     catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           % Handle the '$aborted' exception by logging it.
@@ -1022,7 +1029,7 @@ u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
 
 % --exec=skip
 skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,_FOut):-
-    option_value('exec',skip), From = file(_Filename),
+    option_value('exec',skip), From = file(_Filename), \+ use_metta_compiler,
     \+ always_exec(BaseEval),  \+ always_exec(TermV),
     color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
     prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
@@ -1041,11 +1048,14 @@ maybe_add_history(Self, BaseEval, NamedVarsList) :-
     % Debug output in interactive mode, showing evaluated terms and results
    prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
 
+
+
 u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
      % Was --exec=skip but this is the type of directive we'd do anyways
-     if_t((From = file(_), option_value('exec',skip)), color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV)))),
+     if_t((From = file(_), option_value('exec',skip)), \+ \+ color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV),nl,
+        write_w_attvars(Term)))),
 
     % Initialize the result variable, with FOut to hold the final output
     Result = res(FOut),
@@ -1062,7 +1072,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
      GgGgGgGgGgG = (
          % Execute Term and capture the result
-         ((  (Term),deterministic(Complete),  % record if top-level metta evaluation is completed
+         ((  (Term,deterministic(Complete)),  % record if top-level metta evaluation is completed
              % Transform output for display and store it in the result
              notrace((xform_out(VOutput,Output), nb_setarg(1,Result,Output)))))),
 
@@ -1101,6 +1111,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='e' -> (notrace(halt(5)),fail) ;
          (C=='m' -> (make,fail) ;
          (C=='c' -> (trace,Next=true) ;
+         (C=='C' -> (once(cls),fail) ;
          (C==' ' -> (trace,Next=true) ;
          (C=='t' -> (nop(set_debug(eval,true)),rtrace,Next=true) ;
          (C=='T' -> (set_debug(eval,true),Next=true);
@@ -1112,8 +1123,9 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='l' -> (nb_setarg(3, Control, leap),Next=true) ;
          (((C=='\n');(C=='\r')) -> (Cut=false,nb_setarg(3, Control, leap),Next=true);
          (C=='g' -> write_src(exec(TermV));
+         (C=='G' -> (bt, Next=false);
          (C=='s' -> (Cut=true,Next=false);
-         (true -> (write('Unknown Char'),fail))))))))))))))))))),
+         (true -> (write('Unknown Char'),fail))))))))))))))))))))), % should consume 'b's paren
          (nonvar(Next);nonvar(Cut))) ; true),
 
             ((Complete==true;Cut==true) ->! ; true),
@@ -1278,15 +1290,13 @@ get_single_char_key(C, A):- name(A, [C]).
 %   @arg Complete indicates whether the goal reached a final result.
 %   @arg Goal is the main goal to be executed interactively.
 %   @arg After is the action to perform after the goal is executed.
-forall_interactive(file(_), false, Complete, Goal, After) :-
-    !,
+forall_interactive(file(_), false, Complete, Goal, After) :- !,
     % Execute the goal.
     %format("%%%%%%%%%%%%%%%%%%%%%%%%%0 ~w\n",[Goal]),
     Goal,
     % If the goal is complete, execute 'After', otherwise skip it.
-    (Complete == true -> (After, !) ; (\+ After)).
-forall_interactive(prolog, false, Complete, Goal, After) :-
-    !,
+    (Complete == true -> (!, call(After), !) ; ( \+ quietly(After))).
+forall_interactive(prolog, false, Complete, Goal, After) :- !,
     % Execute the goal.
     %format("%%%%%%%%%%%%%%%%%%%%%%%%%1 ~w\n",[Goal]),
     Goal,
@@ -1301,7 +1311,7 @@ forall_interactive(From, WasInteractive, Complete, Goal, After) :-
     % Execute the goal.
     Goal,
     % If the goal is complete, quietly execute 'After', otherwise negate 'After'.
-    (Complete == true -> (quietly(After), !) ; ( \+ quietly(After))).
+    (Complete == true -> (!, quietly(After), !) ; ( \+ quietly(After))).
 
 %!  print_var(+Name, +Var) is det.
 %

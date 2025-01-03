@@ -1137,13 +1137,13 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
       HeadAST=[assign,HResult,[call(FnName)|Args]],
-      
-      
+
+
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       %append(Args,[HResult],HArgs),
       %HeadC =.. [FnNameWPrefix|HArgs],
-      
-      
+
+
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
       print_ast( yellow, [=,HeadAST,NextBody]),
       %leash(+all),
@@ -1162,7 +1162,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
              output_prolog(green,Optimized)),
 
         tree_deps(Space,FnName,LenArgsPlus1),
-        
+
         show_recompile(Space,FnName,LenArgsPlus1),
       true
    )))).

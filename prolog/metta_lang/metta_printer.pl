@@ -745,8 +745,8 @@ write_src(V) :-
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-             must_det_lls((pre_guess_varnames(V,II),
-              call(II=V),
+             must_det_lls((
+              pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
               nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))),
               materialize_vns(I))).
@@ -755,6 +755,25 @@ pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compoun
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
+
+write_w_attvars(Term):- \+ \+ write_w_attvars0(Term).
+write_w_attvars0(Term):-
+    src_vars(Term,PrintSV),
+    copy_term(Term,TermC,Goals), PrintSV = TermC,
+    materialize_vns(PrintSV),
+    ignore(numbervars(PrintSV,20000,_,[singleton(true),attvar(skip)])),
+    ignore(numbervars(PrintSV,26,_,[singleton(true),attvar(bind)])),
+    must(PrintSV = Term),
+    once_writeq_nl_now(green,Term),
+    if_t(Goals\==[], once_writeq_nl_now(yellow,{Goals})),!.
+
+once_writeq_nl_now(Color,P) :-
+    % Standardize variable names in `P` and print it using `ansi_format`.
+    % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
+    \+ \+ (must_det_ll((
+           src_vars(P,PP),
+           with_output_to(user_error,ansi_format([fg(Color)], '~N~q.~n', [PP]))))).
+
 
 materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
 materialize_vn(Var):- \+ attvar(Var),!.

@@ -406,14 +406,8 @@ once_writeq_nl(P) :-
     % If `$once_writeq_ln` is already set to the current term `P`, succeed silently.
     nb_current('$once_writeq_ln', W),
     W=@=P,!.
-once_writeq_nl(P):- once_writeq_nl_now(P).
-once_writeq_nl_now(P) :-
-    % Standardize variable names in `P` and print it using `ansi_format`.
-    % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
-    \+ \+ (must_det_ll((numbervars(P, 444, _, [attvar(skip), singletons(true)]),
-           src_vars(P,PP),
-           with_output_to(user_error,ansi_format([fg(cyan)], '~N~q.~n', [PP]))))),
-    nb_setval('$once_writeq_ln', P),!.
+once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P),!.
+
 
 %!  pfcAdd_Now(+P) is det.
 %
@@ -964,7 +958,7 @@ all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
 all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
-option_value_name_default_type_help('initial-result-count', 10, [inf,10], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
+option_value_name_default_type_help('initial-result-count', 1, [inf,10], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
 % Miscellaneous
 option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
@@ -2169,7 +2163,7 @@ metta_anew1(unload_all,OBO):- !,
   must_det_ll((
    load_hook(unload_all,OBO),
    subst_vars(OBO,Cl),
-   once_writeq_nl_now(retractall(Cl)),
+   once_writeq_nl_now(yellow, retractall(Cl)),
    retractall(Cl))). %to_metta(Cl).
 
 metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
@@ -3088,12 +3082,14 @@ print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
 
 % Execute a Prolog query and handle output, performance logging, and time measurements to user_error
 do_metta_runtime(_Var,_Call) :- fast_option_value(compile, save),!.
+do_metta_runtime( Var, Eval) :- is_list(Eval), compile_for_exec(Var, Eval, Call), !, do_metta_runtime( Var, Call).
+do_metta_runtime( Var, Goal) :- nonvar(Var), is_ftVar(Var), subst(Goal,Var,NewVar,Call),!, do_metta_runtime(NewVar, Call).
 do_metta_runtime( Var, Call) :-
     functor(Call, Func, _),
     atom_concat('Testing ', Func, Description),
     current_times(WallStart, CPUStart),
     % Execute the query and collect results
-    with_output_to(user_error, findall(Var, Call, List)),
+    with_output_to(user_error, findall_or_skip(Var, Call, List)),
     % Record stop time
     calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
     % Show results
@@ -3102,6 +3098,8 @@ do_metta_runtime( Var, Call) :-
     print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description),
     flush_metta_output.
 
+findall_or_skip(Var, Call, []):- fast_option_value(exec, skip),!, once_writeq_nl_now(red,(skipping:- time(findall(Var, Call, _List)))).
+findall_or_skip(Var, Call, List):- findall(Var, Call, List).
 
 
 :- set_prolog_flag(metta_interp,ready).

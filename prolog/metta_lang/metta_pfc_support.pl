@@ -810,7 +810,7 @@ find_hb_mfl(H, _B, uses_call_only(H), MFL) :-
 % This directive fixes up the exports for the current module by adjusting the exports list,
 % ensuring that all required predicates are properly exported. It may be used to ensure that
 % predicates are available for use in other modules or systems.
-:- fixup_exports.
+%:- fixup_exports.
 
 % The next line, which is commented out, shows a previous approach where exports were fixed
 % up specifically for a module identified by the 'pfc_shared_module' flag (such as 'BaseKB').

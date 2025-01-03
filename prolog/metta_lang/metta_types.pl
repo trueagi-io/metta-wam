@@ -2235,26 +2235,33 @@ is_math_op('zerop', 1, exists).     % Test for Zero
 % Enums for Guarded Type Handling in Prolog
 
 % GuardMatchResult: Describes the result of evaluating several type guards against the function arguments.
-mo_match_behavior(fail_on_no_match).
 mo_match_behavior(return_original_on_no_match).
+mo_match_behavior(fail_on_no_match).
+mo_match_behavior(throw_type_error_on_no_match).
 % EvaluationOrder: Describes how the type guards are prioritized during evaluation.
-evaluation_order(fittest_first_priority).
 evaluation_order(clause_order_priority).
+evaluation_order(fittest_first_priority).
 % ExecutionResult: Describes the outcome of executing the guarded expression.
-execution_result_behavior(cut_on_first_success).
 execution_result_behavior(continue_on_success).
+execution_result_behavior(cut_on_first_success).
 % ExecutionResult: Describes the outcome of executing the guarded expression.
-execution_failed_behavior(cut_on_first_failure).
 execution_failed_behavior(continue_on_failure).
+execution_failed_behavior(cut_on_first_failure).
 % What do when there are no successfull bodies
-out_of_clauses_behavior(fail_on_no_success).
-out_of_clauses_behavior(return_original_on_no_success).
+out_of_clauses_behavior(fail_on_final_failure).
+out_of_clauses_behavior(return_original_on_final_failure).
+
+
 
 
 %predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
-predicate_behavior_impl('get-type', 1, fail_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, fail_on_no_success).
+predicate_behavior_impl('get-type', 1, fail_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, fail_on_final_failure).
+
+predicate_behavior_impl('foo', 2, return_original_on_no_match, fittest_first_priority, continue_on_success, continue_on_failure, return_original_on_final_failure).
+
+predicate_behavior_impl('match', 4, fail_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, fail_on_final_failure).
 % default
-predicate_behavior_fallback(_, _, return_original_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, return_original_on_no_success).
+predicate_behavior_fallback(_, _, return_original_on_no_match, clause_order_priority, continue_on_success, continue_on_failure, return_original_on_final_failure).
 
 predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior):-
    predicate_behavior_impl(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
@@ -2312,7 +2319,7 @@ implement_predicate_nr([Predicate|Parameters], ReturnVal) :-
         (FailureBehavior == cut_on_first_failure -> (!, fail) ; fail)) % vs continue_on_failure
     *->
         true ;
-        (OutOfClausesBehavior == fail_on_no_success -> fail ; throw(metta_notreducable([Predicate | Parameters])))). % vs return_original_on_no_success
+        (OutOfClausesBehavior == fail_on_final_failure -> fail ; throw(metta_notreducable([Predicate | Parameters])))). % vs return_original_on_final_failure
 
 
 
