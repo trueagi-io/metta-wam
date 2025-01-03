@@ -423,7 +423,7 @@ give_pass_credit(TestSrc, _Pre, G) :-
 %   @example
 %     % Log the details of a test with a passing status:
 %     ?- write_pass_fail(['source', 'category', 'type'], 'PASS', some_goal(arg1, arg2)).
-write_pass_fail([P, C, _], PASS_FAIL, G) :-
+write_pass_fail([P, C| _], PASS_FAIL, G) :- !,
     % Ensures deterministic logging of the test result.
     must_det_ll((
         % Retrieves the current test number.
@@ -437,6 +437,7 @@ write_pass_fail([P, C, _], PASS_FAIL, G) :-
         write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2))).
 
 write_pass_fail(LIST, PASS_FAIL, G) :- is_list(LIST), PCC = [P, _, _], member(PCC,LIST), nonvar(P), !, write_pass_fail(PCC, PASS_FAIL, G).
+write_pass_fail(LIST, PASS_FAIL, G) :- is_list(LIST), PCC = [P|_], member(PCC,LIST), nonvar(P), !, write_pass_fail(PCC, PASS_FAIL, G).
 
 %!  write_pass_fail(+TestName, +Source, +Category, +Status, +GoalArg1, +GoalArg2) is det.
 %
