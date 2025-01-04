@@ -1238,13 +1238,16 @@ type_value(error_mode, 'default').  % Default error handling mode
 type_value(warning_mode, 'default'). % Default warning handling mode
 
 % Dynamically show all available options with descriptions in the required format, grouped and halt
-show_help_options_no_halt :-
+show_help_options_no_halt(Prefix) :-
     findall([Name, DefaultValue, Type, Help, Group],
             option_value_name_default_type_help(Name, DefaultValue, Type, Help, Group),
             Options),
     max_name_length(Options, MaxLen),
     format("  First value is the default; if a brown value is listed, it is the Rust compatibility default:\n\n"),
-    group_options(Options, MaxLen),!.
+    group_options(Prefix, Options, MaxLen),!.
+
+show_repl_help:- show_help_options_no_halt("    @").
+show_help_options_no_halt:- show_help_options_no_halt("     --").
 
 show_help_options:-
     show_help_options_no_halt,
@@ -1256,23 +1259,23 @@ max_name_length(Options, MaxLen) :-
     max_list(Lengths, MaxLen).
 
 % Group the options by category and print them
-group_options(Options, MaxLen) :-
+group_options(Prefix, Options, MaxLen) :-
     findall(Group, member([_, _, _, _, Group], Options), Groups),
     list_to_set(Groups, SortedGroups),
-    print_groups(SortedGroups, Options, MaxLen).
+    print_groups(Prefix, SortedGroups, Options, MaxLen).
 
 
 % Print options by group with clarification for defaults and Rust compatibility
-print_groups([], _, _).
-print_groups([Group | RestGroups], Options, MaxLen) :-
+print_groups(_, [], _, _).
+print_groups(Prefix, [Group | RestGroups], Options, MaxLen) :-
     format("   ~w:\n", [Group]),
-    print_group_options(Group, Options, MaxLen),
+    print_group_options(Prefix, Group, Options, MaxLen),
     format("\n"),
-    print_groups(RestGroups, Options, MaxLen).
+    print_groups(Prefix, RestGroups, Options, MaxLen).
 
 % Print options in each group, aligned to the longest option name, mentioning Rust changes explicitly
-print_group_options(_, [], _).
-print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
+print_group_options(_, _, [], _).
+print_group_options(Prefix, Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
     % Remove duplicates from the list of values
     list_to_set(Type, UniqueValues),
     list_to_set([DefaultValue|Type], [_,_|UniqueValues2]),
@@ -1282,8 +1285,8 @@ print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], Max
     ->  % Print default first, then other values, omit empty lists
         (format_value_list(RestOfValues, CleanRest),
          ( (CleanRest \= '')
-         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CleanRest, CommentColumn, Help])
-         ;   format("     --~w~*t=<\033[1;37m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CommentColumn, Help])
+         ->  format("~w~w~*t=<\033[1;37m~w\033[0m|~w> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, CleanRest, CommentColumn, Help])
+         ;   format("~w~w~*t=<\033[1;37m~w\033[0m> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, CommentColumn, Help])
          ))
     ;   % Case 2: If the default value is not first, list default first and mark the first value as Rust-specific
         (UniqueValues = [RustSpecificValue | _RestOfValues],
@@ -1291,14 +1294,14 @@ print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], Max
     ->  % Print default first, mark the Rust value in brown, then other values, omit empty lists
         (format_value_list(UniqueValues2, CleanRest),
          ( (CleanRest \= '')
-         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
-         ;   format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
+         ->  format("~w~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
+         ;   format("~w~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
          ))
     ),
-    print_group_options(Group, Rest, MaxLen).
+    print_group_options(Prefix, Group, Rest, MaxLen).
 
-print_group_options(Group, [_ | Rest], MaxLen) :-
-    print_group_options(Group, Rest, MaxLen).
+print_group_options(Prefix, Group, [_ | Rest], MaxLen) :-
+    print_group_options(Prefix, Group, Rest, MaxLen).
 
 % Helper to print the list of values without square brackets
 format_value_list([], '').
