@@ -289,15 +289,15 @@ function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, RetType, Body
 score_term(Types, Score):- term_to_list(Types, XX), maplist(nc_weight, XX, XXL), sumlist(XXL, Score).
 
 % Main Entry Point
-implement_predicate([Op | Parameters], ReturnVal) :-
+implement_predicate(Self, [Op | Parameters], ReturnVal) :-
     % Safely execute the main logic, falling back on a default behavior if needed.
-    catch(implement_predicate_nr([Op | Parameters], ReturnVal), metta_notreducable(Original), ReturnVal = Original).
+    catch(implement_predicate_nr(Self, [Op | Parameters], ReturnVal), metta_notreducable(Original), ReturnVal = Original).
 
 :- op(700,xfx,('haz_value')).
 'haz_value'(List,E):- member(EE,List),EE==E.
 
 % Main Logic
-implement_predicate_nr([Op | Parameters], ReturnVal) :-
+implement_predicate_nr(Self, [Op | Parameters], ReturnVal) :-
 
     Original = [Op | Parameters],
 
@@ -315,10 +315,10 @@ implement_predicate_nr([Op | Parameters], ReturnVal) :-
     % Extract parameter types and group them by index across all clauses
     findall(Types, (member(thbr(Types, _, _, _, RetType), Clauses)), ParamTypesPerClause),
     group_types_by_param_index(ParamTypesPerClause, Grouped),
-    convert_to_unique_sets(Grouped, GroupedParamTypes),
+    convert_to_unique_sets(Grouped, ParamTypeSets),
 
     % Generate a coercion table mapping parameters to their possible coerced types
-    parameter_coercion_table(Parameters, GroupedParamTypes, CoercionTable),
+    parameter_coercion_table(Parameters, ParamTypeSets, CoercionTable),
 
     % Phase 1: Filter and Score Type Matching
     findall(TypeScore - (MinimizedTypes, ReducedParams, Params, Body, ReturnVal, RetType),
@@ -350,7 +350,7 @@ implement_predicate_nr([Op | Parameters], ReturnVal) :-
 
     % Process Ordered Bodies
     (((member(_TypeScore - (_MinimizedTypes, ReducedParams, Params, Body, ReturnVal, RetType), OrderedBodies), match_head(Params, ReducedParams)) *->
-        (call(Body) *->
+        (eval_args(Body,ReturnVal) *->
             (SuccessBehavior haz_value 'Deterministic' -> ! ; true) % vs Nondeterministic
         ;
             (FailureBehavior haz_value 'ClauseFailDet' -> % vs ClauseFailNonDet
@@ -435,7 +435,8 @@ type_of(['S', _], 'List').
 
 % Subtype Relationships
 assignable_to(Was, _):- Was = '%Undefined%', !, fail.
-assignable_to(_, _).
+assignable_to(From,To):- can_assign(From,To).
+%assignable_to(_, _).
 
 % Enums Validation
 validate_function_type_enums(MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior) :-
@@ -459,120 +460,6 @@ validate_enum_value(EnumType, Value) :-
 match_head(Params, Parameters) :-
     Params = Parameters.
 
-
-
-% ------------------------------------------------------------------------------
-% Core Logic with Type Guards
-% ------------------------------------------------------------------------------
-
-% Helper to check type guards.
-guard_match(X, number) :- number(X).
-guard_match(X, atom) :- atom(X).
-guard_match(X, list) :- is_list(X).
-guard_match(X, complex) :- is_list(X), length(X, N), N > 5.
-guard_match(X, simple) :- is_list(X), length(X, N), N =< 5.
-guard_match(_, generic).
-
-% Define what happens inside the guarded body.
-guarded_body(X, Result, success) :-
-    writeln(successful_guard(X)),
-    Result = processed(X).
-
-guarded_body(X, Result, failure) :-
-    writeln(failed_guard(X)),
-    Result = return_original(X).
-
-% Fallback logic if no guards match.
-fallback_logic(X, Result) :-
-    writeln('No type guard matched. Executing fallback.'),
-    Result = default_value(X).
-
-% Nested guard logic.
-nested_guard(X, Result) :-
-    (   X = hello ->
-        Result = special_case_handled
-    ;   Result = default_atom_result
-    ).
-
-% ------------------------------------------------------------------------------
-% Tests
-% ------------------------------------------------------------------------------
-
-% Test 1: Simple Type Guard Matching
-test_simple_guard :-
-    function(42, Result1), writeln(Result1),
-    function(hello, Result2), writeln(Result2),
-    function([], Result3), writeln(Result3),
-    function(foo, Result4), writeln(Result4).
-
-% Test 2: Fallback Behavior
-test_fallback :-
-    function_with_fallback([], Result), writeln(Result).
-
-% Test 3: Prioritized Type Guard Evaluation
-test_prioritized :-
-    prioritized_function([1, 2, 3], Result1), writeln(Result1),
-    prioritized_function([1, 2, 3, 4, 5, 6], Result2), writeln(Result2),
-    prioritized_function(hello, Result3), writeln(Result3).
-
-% Test 4: Nested Guarded Logic with Errors
-test_nested :-
-    nested_function(42, Result1), writeln(Result1),
-    nested_function(hello, Result2), writeln(Result2),
-    nested_function(world, Result3), writeln(Result3),
-    nested_function([], Result4), writeln(Result4).
-
-% ------------------------------------------------------------------------------
-% Function Definitions
-% ------------------------------------------------------------------------------
-
-% Function with basic guards.
-function(X, Result) :-
-    (   guard_match(X, number) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, atom) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, list) ->
-        guarded_body(X, Result, success)
-    ;   guarded_body(X, Result, failure)
-    ).
-
-% Function with a fallback mechanism.
-function_with_fallback(X, Result) :-
-    (   guard_match(X, number) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, atom) ->
-        guarded_body(X, Result, success)
-    ;   fallback_logic(X, Result)
-    ).
-
-% Function with prioritized guards.
-prioritized_function(X, Result) :-
-    evaluation_order(fittest_first), % Assume we process most specific guards first.
-    (   guard_match(X, complex) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, simple) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, generic) ->
-        guarded_body(X, Result, success)
-    ;   guarded_body(X, Result, failure)
-    ).
-
-% Function with nested guards and error handling.
-nested_function(X, Result) :-
-    (   guard_match(X, number) ->
-        guarded_body(X, Result, success)
-    ;   guard_match(X, atom) ->
-        nested_guard(X, Result)
-    ;   fallback_logic(X, Result)
-    ).
-
-ffffff:- writeln('
-    ?- test_simple_guard.
-    ?- test_fallback.
-    ?- test_prioritized.
-    ?- test_nested.
-').
 
 
 %! freeist(+X, +Y, -Result) is det.
