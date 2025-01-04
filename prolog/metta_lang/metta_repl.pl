@@ -575,12 +575,19 @@ repl_read_next(Accumulated, Expr) :-
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
-    format(atom(T),'| ~t',[]),
-    prompt(_,T),
+    repl_read_next(Accumulated, Expr, Line).
+
+repl_read_next(Accumulated, Expr, Line):-
+    normalize_space(string(NAccumulated), Accumulated), NAccumulated = "",
+    normalize_space(string(NLine), Line), NLine = "", !,
+    repl_read_next(Accumulated, Expr).
+
+repl_read_next(Accumulated, Expr, Line):-
     (Line==end_of_file->notrace(throw(end_of_input));true),
     % Concatenate the accumulated input with the new line using a space between them.
     symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
+    format(atom(T),'| ~t',[]),prompt(_,T),
     repl_read_next(NewAccumulated, Expr).
 
 
