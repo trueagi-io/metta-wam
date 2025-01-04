@@ -198,8 +198,8 @@ For example:
 ;; Arity Assignments
 
 (predicate-arity predicate-arity 2)
-(predicate-arity : 2)
-(= (: $F P1) (predicate-arity $F 1))
+;(predicate-arity : 3)
+; (= (: $F P1) (predicate-arity $F 1))
 
 ;; Source Predicate and Function Types
 
