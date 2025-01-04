@@ -843,10 +843,10 @@ get_dict_type(_Vl, Type, TypeO) :-
 get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'type' field.
     get_dict(Val, type, Type).
-get_dict_type(Val, _, TypeO) :-
+get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'class' field.
     get_dict(Val, class, Type).
-get_dict_type(Val, _, TypeO) :-
+get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'types' field if it is a list.
     get_dict(Val, types, TypeL),
     is_list(TypeL),
@@ -939,7 +939,7 @@ get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, maplist(get_type)) :-
     maplist(get_type(Depth2, Self), List, Type),
     % Ensure the expression is not badly typed.
     \+ badly_typed_expression(Depth, Self, Type).
-get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, eval_first) :-
+get_type_cmpd_eval(Depth2, Self, _EvalMe, Val, Type, eval_first) :-
     % Handle first-evaluation strategy.
     !,
     \+ needs_eval(Val),
@@ -1159,7 +1159,7 @@ adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
 %   @arg X         The input arguments.
 %   @arg Y         The final adjusted arguments.
 %
-adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_argsA(_Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
