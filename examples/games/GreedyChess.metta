@@ -61,12 +61,40 @@
             True
             (contains_symbol (cdr-atom $list) $sym))))
 
-;(= (concat_lists #(Cons Nil $A) $B)  
-;  (concat_lists $A $B))
-;(= (concat_lists #(Cons #(Cons $A $B) $C) #(Cons $A $D))  
-;  (concat_lists 
-;    #(Cons $B $C) $D))
+; helper routines if desired
+(: car-car (-> Expression Atom))
+(= (car-car $list) (let $first_list (car-atom $list) (car-atom $first_list)))
+(: car-cdr (-> Expression Atom))
+(= (car-cdr $list) (let $first_list (car-atom $list) (cdr-atom $first_list)))
+
+; Input a list of lists. Output the concatenation of the input flattened (only flattens at top level).
+; For example:  
+;   Input list of lists    =  ((1 2) (3 4) () (5)) 
+;   Output list            =  (1 2 3 4 5)
 ;
+(: concat_lists (-> list list))
+(= (concat_lists $ListofLists)
+  ; if list of lists is empty, return empty list
+  (if (==  (size-atom $ListofLists) 0) 
+      ()
+  ; if the first list in the list of lists is empty, ie., ( ()....), skip and return the rest of the list of lists.
+  (if (== (size-atom (car-atom $ListofLists)) 0)
+      (concat_lists  (cdr-atom $ListofLists))
+  ; otherwise recursively transform eg ( (1 2) (3) ) into --> ( 1 (2) (3))...  into finally --> ( 1 2 3).
+  ; (cons-atom (first-symbol (concat_lists (cdr-atom (car-atom ($ListofLists) cdr-atom ($ListofLists))))))
+  (let*
+    (  ;assign variables
+      ($a (car-car $ListofLists))  ; the first symbol in first list
+      ($b (car-cdr $ListofLists))  ; the rest of the first list 
+      ($c (cdr-atom $ListofLists)) ; the lists following the first list
+    )   ; $a = next symbol  $d = remaining list of lists
+      ;(let $d (cons-atom $b $c) (cons-atom $a (concat_lists $d)))  ;<-- intended!!!
+      (let $d (cons-atom $b $c) (let $f (concat_lists $d) (cons-atom $a $f )))  
+  ))
+))
+
+;
+!(concat_lists (() (1 2 3) () (4 5) (6) ) )
 ;
 ;#( = #(nth 0 ($A 
 ;(= (nth $A #(Cons $B $C) $B)  
@@ -357,7 +385,7 @@
   (do
     (chess)          ; Start the chess game
     (command-loop))) ; Enter the recursive command-processing loop
-!(main_loop)
+;!(main_loop)
 ;-----------;
 
 ;
