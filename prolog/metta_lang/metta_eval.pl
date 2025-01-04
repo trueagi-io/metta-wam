@@ -532,8 +532,8 @@ eval_until_eq_tf(Flags, Eq, XType,YType,Depth,Self,X,Y,TF):-
 
 
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
-eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf(X=:=Y,TF)),!.
-eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf('#='(X,Y),TF)),!.
+eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
+eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
 %eval_until_eq(Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X\=@=Y,X=Y,!,check_returnval(Eq,XType,YType,Y,TF).
 eval_until_eq(_Flags,Eq,XType,YType,_Depth,_Self,X,Y,TF):- var(X),var(Y),!,as_tf_traceable(X=Y,TF),check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),!.
 %eval_until_eq(_Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X=Y,!,check_returnval(Eq,XType,YType,Y,TF).
@@ -1514,7 +1514,7 @@ fetch_or_create_state(NameOrInstance, State) :-
             nb_bound(NameOrInstance, State))
     ;   is_valid_nb_state(NameOrInstance)
     ->  State = NameOrInstance
-    ;   writeln('Error: Invalid input.')
+    ;   fbug('Error: Invalid input.')
     ),
     is_valid_nb_state(State).
 
@@ -2613,12 +2613,14 @@ join_s2ps('Cons',[H,T],[H|T]):-!.
 join_s2ps(F,Args,P):-atom(F),P=..[F|Args].
 
 eval_call(S,TF):-
-  s2ps(S,P), !, fbug(eval_call(P,'$VAR'('TF'))),
+  s2ps(S,P), !, fbug_eval(eval_call(P,'$VAR'('TF'))),
   as_tf_traceable(P,TF).
 
 eval_call_fn(S,R):-
-  s2ps(S,P), !, fbug(eval_call_fn(P,'$VAR'('R'))),
+  s2ps(S,P), !, fbug_eval(eval_call_fn(P,'$VAR'('R'))),
   as_tf_traceable(call(P,R),TF),TF\=='False'.
+
+fbug_eval(G):- if_trace(e,fbug(G)).
 
 is_host_function([AE|More],Pred,Len):-
   is_system_pred(AE),
@@ -2682,7 +2684,9 @@ as_nop([]).
 
 as_nop(G,NoResult):-  G\=[_|_], rtrace_on_failure(G),!,
   as_nop(NoResult).
+
 as_tf(G,TF):-  G\=[_|_], catch_warn((call(G)*->TF='True';TF='False')).
+as_tf_nowarn(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
 as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((trace,writeln(E),rtrace(G),!,throw(E))))*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
@@ -2704,10 +2708,10 @@ eval_selfless_0(E,R):- eval_selfless_2(E,R).
 allow_clp:- false_flag.
 
 eval_selfless_1([F|XY],TF):- allow_clp, \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
-eval_selfless_1(['>',X,Y],TF):-!,as_tf(X>Y,TF).
-eval_selfless_1(['<',X,Y],TF):-!,as_tf(X<Y,TF).
-eval_selfless_1(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
-eval_selfless_1(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+eval_selfless_1(['>',X,Y],TF):-!,as_tf_nowarn(X>Y,TF).
+eval_selfless_1(['<',X,Y],TF):-!,as_tf_nowarn(X<Y,TF).
+eval_selfless_1(['=>',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
+eval_selfless_1(['<=',X,Y],TF):-!,as_tf_nowarn(X=<Y,TF).
 eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
 eval_selfless_2([F|_],_):- var(F),!,fail.
