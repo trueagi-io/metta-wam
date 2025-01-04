@@ -57,7 +57,6 @@
 %*********************************************************************************************
 
 
-
 :- discontiguous default_isa/2.
 :- discontiguous desc_aka/2.
 :- discontiguous explicit_isa/2.
@@ -139,10 +138,10 @@ explicit_isa('FailureEmpty', 'OutOfClausesEnum').
 explicit_isa('FailureOriginal', 'OutOfClausesEnum').
 
 
-% predicate_behavior(Predicate, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
-predicate_behavior(Predicate, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior) :-
-    predicate_behavior_impl(Predicate, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
-    *-> true ; predicate_behavior_fallback(Predicate, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior).
+% predicate_behavior(Op, Len, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
+predicate_behavior(Op, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior) :-
+    predicate_behavior_impl(Op, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)
+    *-> true ; predicate_behavior_fallback(Op, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior).
 
 % default
 predicate_behavior_fallback(_, _, 'MismatchOriginal', 'NoMatchOriginal', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal').
@@ -151,6 +150,24 @@ predicate_behavior_impl('get-type', 1, 'MismatchFail', 'NoMatchFail', 'OrderClau
 predicate_behavior_impl('foo', 2, 'MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal').
 predicate_behavior_impl('match', 4, 'MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty').
 
+
+get_ftype(Eq,RetType,Depth,Self,Val,TypeO):-
+  if_or_else(get_ftype_decl(Eq,RetType,Depth,Self,Val,TypeO),get_ftype_fallback(Eq,RetType,Depth,Self,Val,TypeO)).
+
+get_ftype_decl(_Eq,_RetType,Depth,Self,Val,TypeO):-
+    get_type(Depth,Self,Val,TypeO),is_list(TypeO),[Type|_]=TypeO,Type=='->'.
+
+get_ftype_fallback(_Eq,_Type,_Depth,Self,[Op|Args],TypeO):- nonvar(Op), len_or_unbound(Args,Len),!,get_operator_ftypedef(Self, Op, Len, TypeO).
+get_ftype_fallback(_Eq,_Type,_Depth,Self,Op,TypeO):- get_operator_ftypedef(Self, Op, _Len, TypeO).
+
+op_farity(Op,Len):- no_repeats_var(Len), if_or_else(op_farity_decl(Op,Len),op_farity_fallback(Op,Len)).
+
+op_farity_decl(Op,Len):- metta_defn(_Self, [Op | Args], _Body), len_or_unbound(Args,Len).
+op_farity_decl(Op,Len):- metta_type(_Self, Op, [Ar,_|Types]), Ar=='->', len_or_unbound(Types,Len).
+op_farity_fallback(_Op,Len):- between(0,8,Len).
+
+get_operator_ftypedef(Self, Op, Len, TypeO):- (var(Len)->op_farity(Op,Len);true),
+   get_operator_typedef(Self, Op, Len, ParamTypes, RetType), append(['->'|ParamTypes],[RetType],TypeO).
 
 /*
 metta_defn('&self', ['double-it', 'Z'], 'Z').
@@ -164,52 +181,108 @@ function_declaration('double-it', 1, [['S', X]], ['List'], 'List', ['let', Retur
 
 */
 
-function_declaration(Predicate, Len, Parameters, ParamTypes, RetType, [let, ReturnVal, Body, ReturnVal], ReturnVal) :-
+fake_body([Op | Parameters], [Op | Parameters]).
+
+
+metta_defn_return(Self, Original, Body, DeclBody, ReturnVal):-
+  if_or_else(metta_defn_decl(Self,Original, Body, DeclBody, ReturnVal),metta_defn_fallback(Self, Original, Body, DeclBody, ReturnVal)).
+
+metta_defn_decl(Self, [Op | Parameters], Body, [let, ReturnVal, Body, ReturnVal], ReturnVal):- metta_defn(Self, [Op | Parameters], Body).
+metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):-
+   Body = [let, [quote,ReturnVal], [quote,[Op | Parameters]], ReturnVal].
+
+
+function_declaration(Op, Len, Parameters, ParamTypes, RetType, DeclBody, ReturnVal) :-
     Self = '&self',
     len_or_unbound(Parameters, Len),
-    NR = ([Predicate | Parameters] + Body),
+    metta_defn_return(Self, [Op | Parameters], Body, DeclBody, ReturnVal),
+    len_or_unbound(Parameters, Len),
+    NR = ([Op | Parameters] + Body),
     copy_term(NR, NRR),
     no_repeats_var(NRR),
-    metta_defn(Self, [Predicate | Parameters], Body),
-    get_operator_typedef(Self, Predicate, Len, ParamTypes, RetType),
+    get_operator_typedef_near(Self, Op, Len, ParamTypes, RetType, [Op | Parameters], Body),
     NR = NRR,
-    write_src_nl(metta_defn(Self, [Predicate | Parameters], Body)).
+    nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body))).
 
-info_about(Predicate, Len) :-
+get_operator_typedef_near(Self, Op, Len, ParamTypes, RetType, Head, Body):-
+    src_data_ordinal([=,Head,Body],FileLineClause),
+    length(ParamTypes,Len),
+    findall(FileLineType-pr(ParamTypes, RetType),(src_data_ordinal([:,Op,[Ar|Type]],FileLineType),Ar=='->',append(ParamTypes,[RetType],Type)),LocTypes),
+    get_operator_typedef_near(Self, Op, Len, ParamTypes, RetType, Head, Body, FileLineClause,LocTypes).
+
+src_data_ordinal(Data,Ordinal):-
+    user:metta_file_buffer(0,Ordinal,_TypeNameCompound,Data,_NamedVarsListC,_Context,_Range).
+
+get_operator_typedef_near(_Self, _Op, _Len, ParamTypes, RetType, _Head, _Body, FileLineClause,LocTypes):-
+    select(FileLineType-pr(ParamTypes, RetType),LocTypes,Rest),
+    Space is FileLineType-FileLineClause,
+    Space<0,
+    \+ (member(FileLineTypeOther-_,Rest),
+       SpaceOther is FileLineTypeOther-FileLineClause,
+       SpaceOther<0, SpaceOther>Space),!.
+
+get_operator_typedef_near(_Self, _Op, _Len, ParamTypes, RetType, _Head, _Body, FileLineClause,LocTypes):-
+    select(FileLineType-pr(ParamTypes, RetType),LocTypes,Rest),
+    Space is FileLineType-FileLineClause,
+    Space>0,
+    \+ (member(FileLineTypeOther-_,Rest),
+       SpaceOther is FileLineTypeOther-FileLineClause,
+       SpaceOther>0, SpaceOther<Space),!.
+
+finfo([Op|Args]):- is_list(Args),!,length(Args,Len),finfo(Op, Len).
+finfo(Op):- atomic(Op), !, finfo(Op, _, _).
+finfo(Op, Len):- finfo(Op, Len, _).
+
+finfo(Op, Len, Head) :-
     % length(Parameters, Len),
-    predicate_behavior(Predicate, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
-    write_src_nl(predicate_behavior(Predicate, Len, MisMatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior)), !,
+    op_farity(Op,Len),
+    show_pall(predicate_behavior(Op, Len, _MisMatchBehavior, _NoMatchBehavior, _EvaluationOrder, _SuccessBehavior, _FailureBehavior, _OutOfClausesBehavior)),
+    length(Args,Len),
+    [Op|Args] = Head,
+    show_pall(get_ftype('=',_RetType1,20,'&self',Head, TypeO),get_ftype('&self',Head, TypeO)),
+    %show_pall(metta_atom(_,[iz,Op,_])),
+    %show_pall(metta_atom(_,[':',Op,_])),
+    show_pall(function_declaration_scores(Op, Len, _Parameters, _ParamTypes, _RetType, _Body, _ReturnVal, _Scores)),
+    show_pall((metta_atom(KB,[A,B|Out]),sub_var(Op,[A,B])),ist(KB,[A,B|Out])),
+    true.
 
-    SHOW = function_declaration_scores(Predicate, Len, _Parameters, _ParamTypes, _RetType, _Body, _ReturnVal, _Scores),
-    findall(SHOW, SHOW, ScoredBodies),
+show_pall(Var):- \+ callable(Var),!.
+show_pall(Atom):- atom(Atom),!,current_predicate(Atom/_,SHOWP),!,show_pall(SHOWP,SHOWP).
+show_pall(Op/Len):- !,current_predicate(Op/Len,SHOWP),!,show_pall(SHOWP,SHOWP).
+show_pall(SHOWP):- show_pall(SHOWP,SHOWP),!.
+
+show_pall(SHOWP,Template):- current_predicate(_,SHOWP),!,
+    no_repeats_var(TemplateNR),
+    findall(Template, (SHOWP,TemplateNR=Template), ScoredBodies),
     maplist(write_src_nl, ScoredBodies), !.
+show_pall(SHOWP,_Template):- write_src_nl(unknown(SHOWP)).
 
-function_declaration_scores(Predicate, Len, Parameters, ParamTypes, RetType, Body, ReturnVal, Score + HScore):-
-   function_declaration(Predicate, Len, Parameters, ParamTypes, RetType, Body, ReturnVal),
+function_declaration_scores(Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal, Score + HScore):-
+   function_declaration(Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal),
    score_term(ParamTypes, Score), score_term(Parameters, HScore).
 
 score_term(Types, Score):- term_to_list(Types, XX), maplist(nc_weight, XX, XXL), sumlist(XXL, Score).
 
 % Main Entry Point
-implement_predicate([Predicate | Parameters], ReturnVal) :-
+implement_predicate([Op | Parameters], ReturnVal) :-
     % Safely execute the main logic, falling back on a default behavior if needed.
-    catch(implement_predicate_nr([Predicate | Parameters], ReturnVal), metta_notreducable(Original), ReturnVal = Original).
+    catch(implement_predicate_nr([Op | Parameters], ReturnVal), metta_notreducable(Original), ReturnVal = Original).
 
 % Main Logic
-implement_predicate_nr([Predicate | Parameters], ReturnVal) :-
+implement_predicate_nr([Op | Parameters], ReturnVal) :-
 
-    Original = [Predicate | Parameters],
+    Original = [Op | Parameters],
 
     % Determine the expected arity of the predicate
     len_or_unbound(Parameters, Len),
     % Retrieve the behavior configuration for the predicate
-    predicate_behavior(Predicate, Len, MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
+    predicate_behavior(Op, Len, MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
 
     % Validate enums dynamically using explicit_isa to ensure valid inputs
     validate_function_type_enums(MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
 
     % Retrieve all clauses for the predicate
-    findall(thbr(ParamTypes, Params, Body, ReturnVal, RetType), function_declaration(Predicate, Len, Params, ParamTypes, RetType, Body, ReturnVal), Clauses),
+    findall(thbr(ParamTypes, Params, Body, ReturnVal, RetType), function_declaration(Op, Len, Params, ParamTypes, RetType, Body, ReturnVal), Clauses),
 
     % Extract parameter types and group them by index across all clauses
     findall(Types, (member(thbr(Types, _, _, _, RetType), Clauses)), ParamTypesPerClause),
@@ -251,7 +324,7 @@ implement_predicate_nr([Predicate | Parameters], ReturnVal) :-
             (SuccessBehavior == 'Deterministic' -> ! ; true) % vs Nondeterministic
         ;
             (FailureBehavior == 'ClauseFailDet' -> % vs ClauseFailNonDet
-                (OutOfClausesBehavior == 'FailureOriginal' -> throw(metta_notreducable([Predicate| ReducedParams])) ; (!, fail));
+                (OutOfClausesBehavior == 'FailureOriginal' -> throw(metta_notreducable([Op| ReducedParams])) ; (!, fail));
              fail)))
     *-> true ;
     (OutOfClausesBehavior == 'FailureOriginal' -> throw(metta_notreducable(Original)) ; (!, fail))).
