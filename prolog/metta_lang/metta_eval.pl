@@ -1559,19 +1559,8 @@ eval_20(_Eq,_RetType,Depth,Self,['get-types',Val],TypeO):- !,
     get_types(Depth,Self,Val,TypeO).
 
 eval_20(Eq,RetType,Depth,Self,['get-ftype',Val],TypeO):- !,
-   if_or_else(get_ftype(Eq,RetType,Depth,Self,Val,TypeO),get_ftype_fallback(Eq,RetType,Depth,Self,Val,TypeO)).
+   get_ftype(Eq,RetType,Depth,Self,Val,TypeO).
 
-get_ftypes(Eq,RetType,Depth,Self,Val,TypeO):-
-  if_or_else(get_ftype(Eq,RetType,Depth,Self,Val,TypeO),get_ftype_fallback(Eq,RetType,Depth,Self,Val,TypeO)).
-
-get_ftype(_Eq,_RetType,Depth,Self,Val,TypeO):-
-    get_type(Depth,Self,Val,TypeO),is_list(TypeO),[Type|_]=TypeO,Type=='->'.
-get_ftype(_Eq,_Type,_Depth,Self,[Op|Args],TypeO):- nonvar(Op), !,
-   once(len_or_unbound(Args,Len)),
-   get_operator_typedef(Self, Op, Len, ParamTypes, RetType), append(['->'|ParamTypes],[RetType],TypeO).
-get_ftype(_Eq,_Type,_Depth,Self,Op,TypeO):-
-   between(0,8,Len),
-   get_operator_typedef(Self, Op, Len, ParamTypes, RetType), append(['->'|ParamTypes],[RetType],TypeO).
 
 % use default self
 eval_20(Eq,RetType,Depth,Self,['get-type',Val,Self],Type):- current_self(Self), !,
