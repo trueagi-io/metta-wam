@@ -88,7 +88,7 @@
 (: pragma! (-> Atom Atom (->)))
 ;(: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
-(: case (-> Expression Atom Atom))
+;(: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
 
