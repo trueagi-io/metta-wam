@@ -1308,6 +1308,11 @@ skip_block_comment(Stream) :-
     ;   true  % Otherwise, no block comment, continue processing.
     ).
 
+
+skip_chars(_, N):- N<1,!.
+skip_chars(Stream, N):- Nm1 is N -1, get_char(Stream,_), !, skip_chars(Stream, Nm1).
+
+
 %! read_block_comment(+Stream:stream) is det.
 %
 % Reads a block comment (including nested block comments) from the stream
@@ -1317,7 +1322,8 @@ skip_block_comment(Stream) :-
 % @arg Stream The input stream from which to read the block comment.
 read_block_comment(Stream) :-
     read_line_char(Stream, StartRange),  % Capture the start position.
-    get_string(Stream, 2, _),  % Skip the '/*' characters.
+    %get_string(Stream, 2, _),  % Skip the '/*' characters.
+    skip_chars(Stream, 2),
     read_nested_block_comment(Stream, 1, Chars),  % Read the block comment, supporting nested ones.
     string_chars(Comment, Chars),
    read_line_char(Stream, EndRange),   %capture the end pos
@@ -1339,7 +1345,7 @@ read_nested_block_comment(Stream, Level, Comment) :-
 read_nested_block_comment(Stream, Level, Acc, Comment) :-
     peek_string(Stream, 2, LookAhead),
     (   LookAhead = "*/" ->
-        (   get_string(Stream, 2, _),  % Consume the '*/'.
+        (   skip_chars(Stream, 2),  % Consume the '*/'.
             NewLevel is Level - 1,  % Decrease the nesting level.
             (   NewLevel = 0 ->
                 reverse(Acc, Comment)  % If outermost comment is closed, return the accumulated comment.
@@ -1347,7 +1353,7 @@ read_nested_block_comment(Stream, Level, Acc, Comment) :-
             )
         )
     ;   LookAhead = "/*" ->
-        (   get_string(Stream, 2, _),  % Consume the '/*'.
+        (   skip_chars(Stream, 2),  % Consume the '/*'.
             NewLevel is Level + 1,  % Increase the nesting level.
             read_nested_block_comment(Stream, NewLevel, ['/', '*' | Acc], Comment)  % Continue, append '/*'.
         )
