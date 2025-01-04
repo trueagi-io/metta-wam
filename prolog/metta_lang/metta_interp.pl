@@ -360,8 +360,8 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   These predicates are marked as `dynamic` to allow runtime modifications
 %   and as `multifile` to enable contributions from multiple modules.
 %
-:- dynamic(function_arity/2).
-:- dynamic(predicate_arity/2).
+:- dynamic(function_arity/3).
+:- dynamic(predicate_arity/3).
 
 :-multifile(user:metta_file/3).
 :-dynamic(user:metta_file/3).
@@ -943,7 +943,7 @@ is_pyswip :-
     % Check if any argument starts with './'.
     member('./', ArgV).
 
-% 'multifile' allows a predicate's clauses to be defined across multiple files or modules, while dynamic 
+% 'multifile' allows a predicate's clauses to be defined across multiple files or modules, while dynamic
 % enables runtime modification (asserting or retracting) of a predicate's clauses.
 :- multifile(is_metta_data_functor/1).
 :- dynamic(is_metta_data_functor/1).
@@ -980,13 +980,13 @@ is_pyswip :-
 %   Succeeds if the 'top-self' option is enabled.
 %
 %   This predicate checks the runtime option `'top-self'` using `fast_option_value/2`.
-%   If the option is set to `true`, it indicates that the system should treat `&self` 
+%   If the option is set to `true`, it indicates that the system should treat `&self`
 %   as `&top` in certain contexts.
 %
 %   Example usage:
 %     ?- use_top_self.
 %     true.
-use_top_self :- 
+use_top_self :-
     % Check if the 'top-self' option is set to true.
     fast_option_value('top-self', true).
 
@@ -994,7 +994,7 @@ use_top_self :-
 %
 %   Determines the current self-reference context.
 %
-%   If `use_top_self/0` succeeds, `Self` is unified with `&top`, indicating 
+%   If `use_top_self/0` succeeds, `Self` is unified with `&top`, indicating
 %   a global context. Otherwise, it defaults to `&self`.
 %
 %   @arg Self The current self-reference context, either `&top` or `&self`.
@@ -1005,7 +1005,7 @@ use_top_self :-
 %
 %     ?- set_option_value('top-self', false), top_self(Self).
 %     Self = '&self'.
-top_self('&top') :- 
+top_self('&top') :-
     % If 'top-self' is enabled, return '&top'.
     use_top_self, !.
 top_self('&self').
@@ -1045,7 +1045,7 @@ current_self(Self) :-
 %   Retrieves the default value of an option.
 %
 %   This predicate queries the option definitions to fetch the default value
-%   associated with a given option `Name`. The default value is extracted 
+%   associated with a given option `Name`. The default value is extracted
 %   from the `all_option_value_name_default_type_help/5` predicate.
 %
 %   @arg Name The name of the option whose default value is to be retrieved.
@@ -1063,7 +1063,7 @@ option_value_def(Name, DefaultValue) :-
 %   Retrieves the default value of a Rust-specific option.
 %
 %   This predicate examines option definitions specifically related to Rust
-%   compatibility mode. It fetches the MettaLog default value and ensures 
+%   compatibility mode. It fetches the MettaLog default value and ensures
 %   it differs from the standard default value.
 %
 %   @arg Name The name of the Rust-specific option.
@@ -1095,7 +1095,7 @@ mettalog_option_value_def(Name, MettaLogDV) :-
     all_option_value_name_default_type_help(Name, MettaLogDV, [DefaultValue|_],_Cmt,_Topic),
     MettaLogDV \= DefaultValue.
 
-% The discontiguous directive allows clauses of the same predicate to appear non-consecutively in a 
+% The discontiguous directive allows clauses of the same predicate to appear non-consecutively in a
 % source file, enabling better organization of related code segments across different parts of the file.
 :- discontiguous(option_value_name_default_type_help/5).
 :- discontiguous(all_option_value_name_default_type_help/5).
@@ -1238,16 +1238,13 @@ type_value(error_mode, 'default').  % Default error handling mode
 type_value(warning_mode, 'default'). % Default warning handling mode
 
 % Dynamically show all available options with descriptions in the required format, grouped and halt
-show_help_options_no_halt(Prefix) :-
+show_help_options_no_halt :-
     findall([Name, DefaultValue, Type, Help, Group],
             option_value_name_default_type_help(Name, DefaultValue, Type, Help, Group),
             Options),
     max_name_length(Options, MaxLen),
     format("  First value is the default; if a brown value is listed, it is the Rust compatibility default:\n\n"),
-    group_options(Prefix, Options, MaxLen),!.
-
-show_repl_help:- show_help_options_no_halt("    @").
-show_help_options_no_halt:- show_help_options_no_halt("     --").
+    group_options(Options, MaxLen),!.
 
 show_help_options:-
     show_help_options_no_halt,
@@ -1259,23 +1256,23 @@ max_name_length(Options, MaxLen) :-
     max_list(Lengths, MaxLen).
 
 % Group the options by category and print them
-group_options(Prefix, Options, MaxLen) :-
+group_options(Options, MaxLen) :-
     findall(Group, member([_, _, _, _, Group], Options), Groups),
     list_to_set(Groups, SortedGroups),
-    print_groups(Prefix, SortedGroups, Options, MaxLen).
+    print_groups(SortedGroups, Options, MaxLen).
 
 
 % Print options by group with clarification for defaults and Rust compatibility
-print_groups(_, [], _, _).
-print_groups(Prefix, [Group | RestGroups], Options, MaxLen) :-
+print_groups([], _, _).
+print_groups([Group | RestGroups], Options, MaxLen) :-
     format("   ~w:\n", [Group]),
-    print_group_options(Prefix, Group, Options, MaxLen),
+    print_group_options(Group, Options, MaxLen),
     format("\n"),
-    print_groups(Prefix, RestGroups, Options, MaxLen).
+    print_groups(RestGroups, Options, MaxLen).
 
 % Print options in each group, aligned to the longest option name, mentioning Rust changes explicitly
-print_group_options(_, _, [], _).
-print_group_options(Prefix, Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
+print_group_options(_, [], _).
+print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
     % Remove duplicates from the list of values
     list_to_set(Type, UniqueValues),
     list_to_set([DefaultValue|Type], [_,_|UniqueValues2]),
@@ -1285,8 +1282,8 @@ print_group_options(Prefix, Group, [[Name, DefaultValue, Type, Help, Group] | Re
     ->  % Print default first, then other values, omit empty lists
         (format_value_list(RestOfValues, CleanRest),
          ( (CleanRest \= '')
-         ->  format("~w~w~*t=<\033[1;37m~w\033[0m|~w> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, CleanRest, CommentColumn, Help])
-         ;   format("~w~w~*t=<\033[1;37m~w\033[0m> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, CommentColumn, Help])
+         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CleanRest, CommentColumn, Help])
+         ;   format("     --~w~*t=<\033[1;37m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, CommentColumn, Help])
          ))
     ;   % Case 2: If the default value is not first, list default first and mark the first value as Rust-specific
         (UniqueValues = [RustSpecificValue | _RestOfValues],
@@ -1294,14 +1291,14 @@ print_group_options(Prefix, Group, [[Name, DefaultValue, Type, Help, Group] | Re
     ->  % Print default first, mark the Rust value in brown, then other values, omit empty lists
         (format_value_list(UniqueValues2, CleanRest),
          ( (CleanRest \= '')
-         ->  format("~w~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
-         ;   format("~w~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Prefix, Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
+         ->  format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
+         ;   format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
          ))
     ),
-    print_group_options(Prefix, Group, Rest, MaxLen).
+    print_group_options(Group, Rest, MaxLen).
 
-print_group_options(Prefix, Group, [_ | Rest], MaxLen) :-
-    print_group_options(Prefix, Group, Rest, MaxLen).
+print_group_options(Group, [_ | Rest], MaxLen) :-
+    print_group_options(Group, Rest, MaxLen).
 
 % Helper to print the list of values without square brackets
 format_value_list([], '').
