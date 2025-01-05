@@ -175,7 +175,7 @@ eval(Eq,RetType,Depth,Self,X,O):-
 
 eval_reducable(Eq,RetType,Depth,Self,X,G,Y,O):- catch_metta_return(G,Y), return_x_g_y(Eq,RetType,Depth,Self,X,X,Y,O).
 
-return_x_g_y(_Eq,_RetType,_Depth,_Self,X,_,Y,R):- Y == 'NotReducable',!,R=X.
+return_x_g_y(_Eq,_RetType,_Depth,_Self,X,_,Y,R):- Y == 'NotReducible',!,R=X.
 return_x_g_y(Eq,RetType,Depth,    Self,X,M,Y,R):- M\=@=Y, !, eval_args(Eq,RetType,Depth,Self,Y,Z), return_x_g_y(Eq,RetType,Depth,Self,X,Y,Z,R).
 return_x_g_y(_Eq,_RetType,_Depth,_Self,_X,_M,R,R).
 
@@ -2862,7 +2862,7 @@ eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
   ((eval_args(Eq,RetType,Depth,Self,Funcall,E))
     *-> is_returned(E);(fail,E=Funcall)).
 
-is_returned(E):- notrace( \+ is_empty(E)), nop(assertion(E \== 'NotReducable')).
+is_returned(E):- notrace( \+ is_empty(E)), nop(assertion(E \== 'NotReducible')).
 is_empty(E):- notrace(( nonvar(E), sub_var('Empty',E))),!.
 
 

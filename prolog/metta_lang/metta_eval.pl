@@ -79,7 +79,7 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 self_eval0('Empty').
 self_eval0([]).
 self_eval0('%Undefined%').
-self_eval0(X):- atom(X),!, X\=='NotReducable', \+ nb_bound(X,_),!.
+self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X), compound(X). % spaces and states are stored as compounds
@@ -307,7 +307,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
-      (Name=='NotReducable'->throw(metta_NotReducable);
+      (Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
        Y = Name)).
 
@@ -2807,7 +2807,7 @@ eval_constructor(Eq,RetType,Depth,Self,X,Res):-
 
 eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
     findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),!,
-    catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducable,X=Y).
+    catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
 eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
     eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,[]),!.
 
