@@ -748,7 +748,7 @@ src_vars(V,I):- %ignore(guess_metta_vars(V)),
              must_det_lls((
               pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
-              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))),
+              nop(ignore(numbervars(I,400,_,[singleton(true),attvar(skip)]))),
               materialize_vns(I))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
 pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
@@ -758,22 +758,48 @@ pre_guess_varnames(V,V).
 
 write_w_attvars(Term):- \+ \+ write_w_attvars0(Term).
 write_w_attvars0(Term):-
+    number_src_vars(Term,PrintSV,Goals),
+    once_writeq_nl_now(PrintSV),
+    if_t(Goals\==[], once_writeq_nl_now(yellow,goals={Goals})),!.
+
+number_src_vars(Term,PrintSV,Goals):-
     src_vars(Term,PrintSV),
     copy_term(Term,TermC,Goals), PrintSV = TermC,
     materialize_vns(PrintSV),
-    ignore(numbervars(PrintSV,20000,_,[singleton(true),attvar(skip)])),
+    ignore(numbervars(PrintSV,260,_,[singleton(true),attvar(skip)])),
     ignore(numbervars(PrintSV,26,_,[singleton(true),attvar(bind)])),
-    must(PrintSV = Term),
-    once_writeq_nl_now(green,Term),
-    if_t(Goals\==[], once_writeq_nl_now(yellow,{Goals})),!.
+    must(PrintSV = Term),!.
 
-once_writeq_nl_now(Color,P) :-
+once_writeq_nl_now(P) :-
     % Standardize variable names in `P` and print it using `ansi_format`.
     % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
     \+ \+ (must_det_ll((
            src_vars(P,PP),
-           with_output_to(user_error,ansi_format([fg(Color)], '~N~q.~n', [PP]))))).
+           format('~N~q.~n', [PP])))).
 
+% Standardize variable names in `P` and print it using `ansi_format`.
+% Use `nb_setval` to store the printed term in `$once_writeq_ln`.
+once_writeq_nl_now(Color,P) :- w_color(Color,once_writeq_nl_now(P)).
+
+%!  write_src_nl(+Src) is det.
+%
+%   Prints a source line followed by a newline.
+%
+%   @arg Src The source line to print.
+%
+write_src_nl(Src) :-
+    % Print a newline, the source line, and another newline.
+    \+ \+ (must_det_ll((
+               number_src_vars(Src, SrcSrc, Goals),
+               (format('~N'), write_src(SrcSrc),
+                if_t(Goals\==[],once_writeq_nl_now(yellow,goals=Goals)),
+                format('~N'))))).
+
+
+w_color(Color,Goal):-
+    \+ \+ (must_det_ll((
+           wots(Text,Goal),
+           with_output_to(user_error,ansi_format([fg(Color)], '~w', [Text]))))).
 
 materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
 materialize_vn(Var):- \+ attvar(Var),!.

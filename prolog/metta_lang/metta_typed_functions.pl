@@ -203,9 +203,21 @@ fake_body([Op | Parameters], [Op | Parameters]).
 
 
 metta_defn_return(Self, Original, Body, WrappedBody, ReturnVal):-
-  if_or_else(metta_defn_decl(Self, Original, Body, WrappedBody, ReturnVal), metta_defn_fallback(Self, Original, Body, WrappedBody, ReturnVal)).
+  if_or_else(metta_defn_decl(Self, Original, Body, WrappedBody, ReturnVal),
+         metta_defn_fallback(Self, Original, Body, WrappedBody, ReturnVal)).
 
 metta_defn_decl(Self, [Op | Parameters], Body, [let, ReturnVal, Body, ReturnVal], ReturnVal):- metta_defn(Self, [Op | Parameters], Body).
+
+must_length(List,Len):- is_list(List),!,must_det_lls(length(List,Len)).
+must_length(List,Len):- integer(Len),!,must_det_lls(length(List,Len)).
+must_length(List,Len):- trace,length(List,Len).
+
+metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal], Body, ReturnVal):-
+   must_length(Parameters, Len),
+   format(atom(Fn),'mc_~w__~w',[Len,Op]),
+   current_predicate(Fn/_),
+   Body = ['call-fn',Fn|Parameters],!.
+
 metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):-
    Body = [let, [quote, ReturnVal], [quote, [Op | Parameters]], ReturnVal].
 
@@ -213,23 +225,29 @@ metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):-
 metta_typed_defn(Self, ParamTypes, RetType, Head, WrappedBody, ReturnVal):-  Head = [Op | Parameters],
    function_declaration(Self, Op, _Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal).
 
-function_declaration(Self, Op, Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal) :-
+function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal) :-
+  must_det_lls((
     %Self = '&self',
     len_or_unbound(Parameters, Len),
+    %(var(Len)->op_farity(Op, Len);true),
+    %len_or_unbound(Parameters, Len),
+    nop(no_repeats_var(NRR)),
     metta_defn_return(Self, [Op | Parameters], Body, WrappedBody, ReturnVal),
-    len_or_unbound(Parameters, Len),
+    must_length(Parameters, Len),
     NR = ([Op | Parameters] + Body),
-    copy_term(NR, NRR),
-    no_repeats_var(NRR),
     head_body_typedef(Self, Op, Len, ParamTypes, RetType, [Op | Parameters], Body),
-    NR = NRR. %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body))).
+    NR = NRR)). %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body))).
 
 head_body_typedef(Self, Op, Len, ParamTypes, RetType, Head, Body):-
-    (src_data_ordinal(Self, [=, Head, Body], ClauseOrdinal)*->true; (ClauseOrdinal = -1)),
+    (src_data_ordinal(Self, [=, Head, Body], ClauseOrdinal)*->true;
+    (src_data_ordinal(Self, [=, Head, _], ClauseOrdinal)*->true;
+    (ClauseOrdinal = -1))),
     length(ParamTypes, Len),
     SrcObject = pr(ParamTypes, RetType),
     findall(TypeDeclLoc-SrcObject, (src_data_ordinal(Self, [:, Op, [Ar|Type]], TypeDeclLoc), Ar=='->', append(ParamTypes, [RetType], Type)), SrcObjectList),
-    nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList).
+    nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList),!.
+head_body_typedef(Self, Op, Len, ParamTypes, RetType, _Head, _Body):-
+    get_operator_typedef(Self, Op, Len, ParamTypes, RetType).
 
 src_data_ordinal(_Self, Data, Ordinal):-
     user:metta_file_buffer(0, Ordinal, _TypeNameCompound, Data, _NamedVarsListC, _Context, _Range).
@@ -250,7 +268,8 @@ nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
        DistanceOther is LocOther-ClauseOrdinal,
        DistanceOther>0, DistanceOther<Distance), !.
 
-nearest_src_object(SrcObject, _, SrcObjectList):- last(_ - SrcObject, SrcObjectList).
+nearest_src_object(SrcObject, _, SrcObjectList):- last(_ - SrcObject, SrcObjectList),!.
+
 
 finfo([Op|Args]):- is_list(Args), !, length(Args, Len), finfo(Op, Len).
 finfo(Op):- atomic(Op), !, finfo(Op, _, _).
@@ -259,28 +278,43 @@ finfo(Op, Len):- finfo(Op, Len, _).
 finfo(Op, Len, Head) :-
     % length(Parameters, Len),
     op_farity(Op, Len),
+    succ(Len,LenP1),
     call_showing(predicate_behavior(Self, Op, Len, [List|_]), predicate_behavior(Self, Op, Len, List)),
     length(Parameters, Len),
     length(ParamTypes, Len),
     [Op|Parameters] = Head,
-    call_showing(get_ftype('=', _RetType1, 20, Self, Head, TypeO), get_ftype(Self, Head, TypeO)),
+    call_showing(get_ftype('=', _RetType1, 20, Self, Head, TypeO), [['get-ftype', Self, Head],==>,TypeO]),
     %call_showing(metta_atom(_, [iz, Op, _])),
     %call_showing(metta_atom(_, [':', Op, _])),
-    % ReturnVal = '$VAR'('ReturnVal'),
-    call_showing(function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, _RetType, _Body, _ReturnVal, _Scores)),
-    call_showing((metta_atom(KB, [A, B|Out]), sub_var(Op, [A, B])), ist(KB, [A, B|Out])),
+    ReturnVal = '$VAR'('_returnVal'),
+    call_showing(transpiler_predicate_store(Op, LenP1, _, _)),
+    call_showing(transpiler_clause_store(Op, LenP1, _, _, _, _, _, _, _)),
+    format(atom(Fn),'mc_~w__~w',[Len,Op]), % forall(current_predicate(Fn/LenP1),listing(Fn/LenP1)),
+    call_showing(Fn/LenP1),
+    call_showing(function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, _RetType, Body, ReturnVal,_)),
+    if_t(\+ metta_defn(Self, [Op | Parameters], Body), call_showing(metta_defn_return(Self, [Op | Parameters], Body, _, ReturnVal),[=,[Op | Parameters],Body])),
+    call_showing((metta_atom(KB, [A, B|Out]), sub_var(Op, [A, B])), [ist,KB, [A, B|Out]]),
     true.
 
-call_showing(Var):- \+ callable(Var), !.
-call_showing(Atom):- atom(Atom), !, current_predicate(Atom/_, SHOWP), !, call_showing(SHOWP, SHOWP).
-call_showing(Op/Len):- !, current_predicate(Op/Len, SHOWP), !, call_showing(SHOWP, SHOWP).
-call_showing(SHOWP):- call_showing(SHOWP, SHOWP), !.
+call_showing(Var):- \+ callable(Var), !, write_src_nl(not(callable(Var))).
+call_showing(Atom):- atom(Atom), \+ current_predicate(Atom/_, _), !, write_src_nl(unknown(Atom)).
+call_showing(Atom):- atom(Atom), !, forall(current_predicate(Atom/N),call_showing(Atom/N)).
+call_showing(Op/Len):- \+ current_predicate(Op/Len), !, write_src_nl(unknown(Op/Len)).
+call_showing(Op/Len):- !, forall(current_predicate(Op/Len, SHOWP), call_showing(clause(SHOWP,Body), (SHOWP:-Body))).
+call_showing(SHOWP):- \+ current_predicate(_, SHOWP), !, write_src_nl(unknown(SHOWP)).
+call_showing(SHOWP):- call_showing(SHOWP, SHOWP).
 
-call_showing(SHOWP, Template):- current_predicate(_, SHOWP), !,
+call_showing(SHOWP, Template):-
     no_repeats_var(TemplateNR),
     findall(Template, (SHOWP, TemplateNR=Template), ScoredBodies),
-    maplist(write_src_nl, ScoredBodies), !.
-call_showing(SHOWP, _Template):- write_src_nl(unknown(SHOWP)).
+    maplist(output_showing, ScoredBodies),
+    ignore((ScoredBodies==[], functor(Template,F,A),output_showing(missing(F/A)))).
+
+output_showing(List):- is_list(List),!,write_src_nl(List).
+output_showing(Info):- w_color(white,write_w_attvars(Info)),nl, !.
+output_showing(Info):- write_src_nl(Info).
+
+
 
 function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal, Score + HScore):-
    function_declaration(Self, Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal),
