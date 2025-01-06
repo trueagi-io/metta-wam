@@ -218,15 +218,15 @@ metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal],
    current_predicate(Fn/_),
    Body = ['call-fn',Fn|Parameters],!.
 
-metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):-
-   Body = [let, [quote, ReturnVal], [quote, [Op | Parameters]], ReturnVal].
+metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):- fail,
+   Body = [let, [quote, ReturnVal], [quote, ['interp!', Op | Parameters]], ReturnVal], Op \=='interp!'.
 
 
 metta_typed_defn(Self, ParamTypes, RetType, Head, WrappedBody, ReturnVal):-  Head = [Op | Parameters],
    function_declaration(Self, Op, _Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal).
 
-function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal) :-
-  must_det_lls((
+function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal) :-
+
     %Self = '&self',
     len_or_unbound(Parameters, Len),
     %(var(Len)->op_farity(Op, Len);true),
@@ -236,7 +236,7 @@ function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, WrappedBody, R
     must_length(Parameters, Len),
     NR = ([Op | Parameters] + Body),
     head_body_typedef(Self, Op, Len, ParamTypes, RetType, [Op | Parameters], Body),
-    NR = NRR)). %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body))).
+    NR = NRR. %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body).
 
 head_body_typedef(Self, Op, Len, ParamTypes, RetType, Head, Body):-
     (src_data_ordinal(Self, [=, Head, Body], ClauseOrdinal)*->true;
@@ -317,7 +317,7 @@ output_showing(Info):- write_src_nl(Info).
 
 
 function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal, Score + HScore):-
-   function_declaration(Self, Op, Len, Parameters, ParamTypes, RetType, Body, ReturnVal),
+   function_declaration(Self, Op, Len, Parameters, ParamTypes, RetType, Body, _WrappedBody, ReturnVal),
    score_term(ParamTypes, Score), score_term(Parameters, HScore).
 
 score_term(Types, Score):- term_to_list(Types, XX), maplist(nc_weight, XX, XXL), sumlist(XXL, Score).
@@ -344,7 +344,7 @@ implement_predicate_nr(Self, [Op | Parameters], ReturnVal) :-
     %validate_function_type_enums(MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
 
     % Retrieve all clauses for the predicate
-    findall(thbr(ParamTypes, Params, Body, ReturnVal, RetType), function_declaration(Self, Op, Len, Params, ParamTypes, RetType, Body, ReturnVal), Clauses),
+    findall(thbr(ParamTypes, Params, Body, ReturnVal, RetType), function_declaration(Self, Op, Len, Params, ParamTypes, RetType, Body, _WrappedBody, ReturnVal), Clauses),
 
     % Extract parameter types and group them by index across all clauses
     findall(Types, (member(thbr(Types, _, _, _, RetType), Clauses)), ParamTypesPerClause),
