@@ -749,7 +749,7 @@ src_vars(V,I):- %ignore(guess_metta_vars(V)),
               pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
               nop(ignore(numbervars(I,400,_,[singleton(true),attvar(skip)]))),
-              materialize_vns(I))).
+              nop(materialize_vns(I)))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
 pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
