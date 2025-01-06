@@ -413,9 +413,6 @@ only_names(Var):-  ignore(catch(del_attr(Var,cns),_,fail)),
 
 
 
-
-cns:attr_unify_hook(_V,_T):- true.
-
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
@@ -423,7 +420,7 @@ must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
 must_det_lls(G):- notrace,nortrace,trace,call(G),!.
 
-extract_constraints(V,VS):- var(V),get_attr(V,vn,Name),get_attr(V,cns,Set),!,extract_constraints(Name,Set,VS),!.
+extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
 extract_constraints(Converted,VSS):- term_variables(Converted,Vars),
       % assign_vns(0,Vars,_),
@@ -492,14 +489,14 @@ merge_types(List,Types):- list_to_set(List,Types),!.
 
 get_just_types_of(V,Types):- get_types_of(V,VTypes),exclude(is_functor_val,VTypes,Types).
 
-get_types_of(V,Types):- attvar(V),get_attr(V,cns,Types),!.
+get_types_of(V,Types):- attvar(V),get_attr(V,cns,_Self=Types),!.
 get_types_of(V,Types):- compound(V),V=arg(_,_),!,Types=[V].
 get_types_of(V,Types):- findall(Type,get_type_for_args(V,Type),Types).
 
 get_type_for_args(V,Type):- get_type(V,Type), Type\==[], Type\=='%Undefined%', Type\=='list'.
 
 set_types_of(V,_Types):- nonvar(V),!.
-set_types_of(V,Types):- list_to_set(Types,Set),put_attr(V,cns,Set),   nop(wdmsg(V=Types)).
+set_types_of(V,Types):- list_to_set(Types,Set),put_attr(V,cns,_Self=Set),   nop(wdmsg(V=Types)).
 
 precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,Result) :-
  must_det_lls((
