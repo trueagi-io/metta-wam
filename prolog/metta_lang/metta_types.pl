@@ -597,6 +597,8 @@ get_type_each(Depth, _Slf, _Type, _) :-
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
+get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),member(Type,Set).
+
 get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
     notrace(is_valid_nb_state(Expr)), !,
@@ -606,7 +608,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
     var(Var), !,
-    get_attr(Var, metta_type, Self = TypeList),
+    get_attr(Var, cns, Self = TypeList),
     member(Type, TypeList).
 get_type_each(_Dpth, _Slf, Expr, 'hyperon::space::DynSpace') :-
     % Check if the expression is a dynamic space.
@@ -969,7 +971,6 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 %     ?- get_value_type(_, _, X, Type).
 %     Type = '%Undefined%'.
 %
-get_value_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_value_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_value_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_value_type(Depth,Self,Val,T):- get_type(Depth,Self,Val,T), T\==[], T\=='%Undefined%',!.
@@ -1445,7 +1446,7 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M), !, Y = M, nop(put_attr(M, metta_type, Self = T)).
+    var(M), !, Y = M, nop(put_attr(M, cns, Self = T)).
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
     into_typed_arg0(Depth, Self, T, M, Y) *-> true ; M = Y.
@@ -1490,20 +1491,26 @@ wants_eval_kind(T) :-
     nonvar(T), is_pro_eval_kind(T), !.
 wants_eval_kind(_) :- true.
 
-%!  metta_type:attr_unify_hook(+Input, +NewValue) is det.
+%!  cns:attr_unify_hook(+Input, +NewValue) is det.
 %
-%   Handles the unification of a value with a `metta_type` attribute.
+%   Handles the unification of a value with a `cns` attribute.
 %
 %   @arg Input     The context or structure being evaluated.
 %   @arg NewValue  The value being unified with the attribute.
 %
-metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
+prevent_type_violations(BecomingValue,RequireType):- non_arg_violation(_Self, RequireType, BecomingValue).
+% TODO make sure it is inclusive rather than exclusive
+cns:attr_unify_hook(_=TypeRequirements,BecomingValue):- \+ maplist(prevent_type_violations(BecomingValue),TypeRequirements), !, fail.
+cns:attr_unify_hook(Self = TypeList, NewValue) :-
     % If the new value is an attributed variable, assign the same attribute.
-    attvar(NewValue), !, put_attr(NewValue, metta_type, Self = TypeList).
-metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
+    attvar(NewValue), !, put_attr(NewValue, cns, Self = TypeList).
+cns:attr_unify_hook(Self = TypeList, NewValue) :-
     % Retrieve the type of the new value and check if it can be assigned.
     get_type(20, Self, NewValue, Was),
     can_assign(Was, Type).
+
+
+
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.
 %
@@ -1545,7 +1552,7 @@ add_type(_Depth, _Self, _Var, TypeL, Type) :-
 add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
     append([Type], TypeL, TypeList),
-    put_attr(Var, metta_type, Self = TypeList).
+    put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-
     ignore(append(_,[Type|_], TypeL)),!.
     % If the variable is not bound, do nothing.
