@@ -81,9 +81,19 @@
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
 
-(: get-type (-> Atom Type)) ; get all type declarations for Atom
-(: get-type0 (-> Atom Atom)) ; get-type now returns multiple return values.. this act like the old one that reutrns a sngle value
+
+
+(: get-vtype (-> Atom Atom)) ; returns only the first type of a symbol
+(: get-vtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+
+(: get-types (-> Atom Atom)) ; returns only the first type of a symbol
+(: get-types (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+
+(: get-dtype (-> Atom Atom)) ; returns only the data value types of a symbol
+(: get-dtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the data value types of a symbol
+
 (: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
+(: get-ftype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the function types of a symbol
 
 (: pragma! (-> Atom Atom (->)))
 ;(: = (-> Atom Atom %Undefined%))
@@ -1601,7 +1611,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom"))
 (: get-type (-> Atom Atom))
-(: get-type (-> Atom Atom Atom))
+(: get-type (-> Atom hyperon::space::DynSpace Atom))
 
 (iz get-type-space MeTTa)
 (@doc get-type-space
@@ -1611,7 +1621,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
 (iz get-type-space MeTTa)
-(: get-type-space (-> Atom Atom Atom))
+(: get-type-space (-> hyperon::space::DynSpace Atom Atom))
 (= (get-type-space $space $atom)
 	(get-type $atom $space))
 
