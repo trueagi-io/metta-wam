@@ -531,21 +531,30 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
      --quiet[=bool] (-q)      Do (not) suppress informational messages
 
    Testing:
-     --test                 Use the test options:
-     --continue               Continue running tests (Generating any missing html files)
-     --failures               Rerun unsuccessfull tests only
-     --regressions            Rerun only tests in which we previously scored 100%
+     --test 			Defaults to true if directory argument was provided as <metta-files|directories>
+			        
+   Test options:
+     --continue                 The default. Continue running tests (Generating any missing html files)
+     --failures                 Rerun Unsuccessful tests
+     --regress                  Rerun Successful tests (files where score was 100%)
 
-     --timeout=seconds        Kill the script after so many seconds.
+     --report=(Y/N)             Generate a report (if not supplied, will be asked at the end)
+     --output=DIR               Specify the output directory (current: $METTALOG_OUTPUT)
+     --[in|ex]clude=PATTERN     Include or exclude tests based on pattern
+
+     --timeout=SECONDS        Specify a timeout value in seconds for mettalog
+     --rust-timeout=SECONDS   Specify a timeout value in seconds for .answer files
      --html[=bool]            Save an HTML file containing terminal output in the same
-			      directory as the input file or directory.
-			      Defaults to true if exactly one metta file or directory argument was provided
-     --fresh                  Clean up by deleting any .answers files under directory
-     --clean                  Clean up by deleting all .html files under directory
+
+     --fresh                    Clean up by deleting any .answers files under directory
+     --no-regen                 Do not create/recreate .answers files
+     --clean                    Clean up by deleting all .html files under directory
+     --skip-tests               Dont actualy run mettalog tests
 
  $( mettalog -g show_help_options )
 
    Debugging:
+     --log                    Act more like a logic debugger
      --exec=skip              Skip over !exec dirrectives
      --e=debug                Recursively trace Evaluation
      --time=debug             Provide detailed debug-level timing information
