@@ -489,15 +489,56 @@ combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazy
       ;
          % signature is changed, need to do a recompile
          format("~q/~q signature is changed, need to do a recompile",FnName,LenArgsPlus1),
-         break
+         recompile_from_depends(FnName,LenArgsPlus1)
       )
    ;
       % new, insert clause
-      compiler_assertz(transpiler_predicate_store(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj))
+      compiler_assertz(transpiler_predicate_store(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj)),
+      recompile_from_depends(FnName,LenArgsPlus1)
    ).
 
+recompile_from_depends(FnName,LenArgsPlus1) :-
+   format("recompile_from_depends ~w/~w\n",[FnName,LenArgsPlus1]),flush_output(user_output),
+   %LenArgs is LenArgsPlus1-1,
+   %atomic_list_concat(['mc_',LenArgs,'__',FnName],FnNameWPrefix),
+   %findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+   %H=..[FnNameWPrefix|AtomList0],
+   %(transpiler_show_debug_messages -> format("Retracting stub: ~q\n",[H]) ; true),
+   %retractall(H),
+   findall(FnD/ArityD,transpiler_depends_on(FnD,ArityD,FnName,LenArgsPlus1),List),
+   format("recompile_from_depends list ~w\n",[List]),
+   maplist(recompile_from_depends0,List).
+
+recompile_from_depends0(Fn/Arity) :-
+   format("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
+   Aritym1 is Arity-1,
+   %retract(transpiler_predicate_store(Fn,Arity,_,_)),
+   atomic_list_concat(['mc_',Aritym1,'__',Fn],FnWPrefix),
+   abolish(FnWPrefix/Arity),
+   % retract(transpiler_stub_created(Fn/Arity)),
+   % create an ordered list of integers to make sure to do them in order
+   findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
+   sort(ClauseIdList,SortedClauseIdList),
+   maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Heads,Bodies),
+   %leash(-all),trace,
+   format("X: ~w ~w\n",[Heads,Bodies]),flush_output(user_output),
+   maplist(compile_for_assert_with_add,Heads,Bodies).
+
+compile_for_assert_with_add(Head,Body) :-
+   compile_for_assert(recompile,Head,Body,Converted),
+   assertz(Converted).
+
+extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head,Body) :-
+   transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
+   format("Extracted clause: ~w:-~w\n",[Head,Body]),
+   retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
+
+%recompile_from_depends1(Fn,Arity,Index) :-
+%   transpiler_clause_store(Fn,Arity,Index,_,_,LazyArgs,LazyRet,Head,Body),break.
+
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
-compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
+compile_for_assert(CompileStep, HeadIsIn, AsBodyFnIn, Converted) :-
+   %leash(-all),trace(combine_transpiler_cause_store_and_maybe_recompile/4),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    HeadIs=[FnName|Args],
@@ -515,6 +556,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    %AsFunction = HeadIs,
    must_det_lls((
       %trace(f2p/6),
+      %trace,
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
@@ -532,7 +574,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       (ClauseIdList=[] -> ClauseId=0 ; max_list(ClauseIdList,ClauseIdm1),ClauseId is ClauseIdm1+1),
       compiler_assertz(transpiler_clause_store(FnName,LenArgsPlus1,ClauseId,Types0,RetType0,FinalLazyArgs,FinalLazyRet,HeadIs,AsBodyFn)),
       combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj),
-      %format("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ~q-~q ~q-~q",[FinalLazyArgs,FinalLazyArgsAdj,FinalLazyRet,FinalLazyRetAdj]),
       maplist(arrange_lazy_args,Args,FinalLazyArgsAdj,LazyArgsListAdj),
 
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
@@ -556,13 +597,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %leash(-all),trace,
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],NextBody,NextBodyC),
 
-      %format("###########1 ~q",[Converted]),
-      %numbervars(Converted,0,_),
-      %format("###########2 ~q",[Converted]),
       extract_constraints(Converted,EC),
-      output_prolog([EC,Converted]),
-
-      true
+      output_prolog([EC,Converted])
+      %(ClauseId=0,CompileStep=first_compile -> recompile_from_depends(FnName,LenArgsPlus1) ; true)
    )).
 
 no_conflict_numbervars(Term):-
@@ -614,7 +651,7 @@ no_conflict_numbervars(Term):-
 functs_to_preds(I,OO):-
    must_det_lls(functs_to_preds0(I,OO)),!.
 
-functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
+functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(first_compile, H, B, OO),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
@@ -1011,8 +1048,6 @@ var_prop_lookup(X,[H-R|T],S) :-
 
 :- discontiguous f2p/6.
 
-%f2p(X,_,_,_,_,_) :- fullvar(X),bt,break.
-
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    (is_ftVar(Convert);number(Convert)),!, % Check if Convert is a variable
    var_prop_lookup(Convert,LazyVars,EL),
@@ -1037,7 +1072,7 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
 
 
 % If Convert is a number or an atom, it is considered as already converted.
-f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
+f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\==Convert,
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
     (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
@@ -1052,7 +1087,7 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):-
    compile_flow_control(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
 
 % !(compile-body! (call-fn! compile_body (call-p writeln "666"))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
     Convert=[Fn,Native|Args],atom(Fn),unshebang(Fn,'call-p'),!,
    must_det_lls((
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
@@ -1061,7 +1096,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
     append([PreCode,[[native(Native),NewArgs],[assign,RetResult,'True']],PostCode],Converted))).
 
 % !(compile-body! (call-fn length $list))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\==Convert,
     Convert=[Fn,Native|Args],atom(Fn),unshebang(Fn,'call-fn'),!,
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     append(NewArgs,[Result],CallArgs),
@@ -1069,7 +1104,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=
     append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
 
 % !(compile-body! (call-fn-nth 0 wots version))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
    Convert=[Fn,Nth,Native|SIn],atom(Fn),unshebang(Fn,'call-fn-nth'),integer(Nth),!,
    compile_maplist_p2(as_prolog,SIn,S,PreCode),
    length(Left,Nth),
@@ -1080,7 +1115,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
 
 % !(compile-body! (length-p (a b c d) 4))
 % !(compile-body! (format! "~q ~q ~q" (a b c)))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
     is_host_predicate(Convert,Native,_Len),!,Convert=[_|Args],
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
     %RetResult = 'True',
@@ -1089,7 +1124,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=C
 
 
 % !(compile-body! (length-fn (a b c d)))
-f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=Convert,
+f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\==Convert,
     Convert=[Fn|Args],
     is_host_function([Fn|Args],Native,_Len),!,
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
@@ -1097,7 +1132,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :-  HeadIs\=@=
     compile_maplist_p2(from_prolog_args(maybe(ResultLazy)),[Result],[RetResult],PostCode),
     append([PreCode,[[native(Native),CallArgs]],PostCode],Converted).
 
-f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
    Convert=[Fn|_], \+ atom(Fn),
     Args = Convert,
     length(Args, N),
@@ -1124,45 +1159,68 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
    atom(Fn),
    compile_flow_control2(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
 
-f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\=@=Convert,
+f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
    Convert=[Fn|Args],
    atom(Fn),!,
-   length(Args,Largs),
-   LArgs1 is Largs+1,
+   length(Args,LArgs),
+   LArgs1 is LArgs+1,
+   (HeadIs=[FnHead|ArgsHead] ; (HeadIs=[],FnHead='',ArgsHead=[])),
+   length(ArgsHead,ArgsHeadSz),
+   ArgsHeadSz1 is ArgsHeadSz+1,
    (transpiler_predicate_store(Fn,LArgs1,ArgsLazy0,RetLazy0) ->
-      % override whatever the get_operator_typedef_props returns with the signature defined in the library.
+      % use whatever signature is defined from the library or compiled code rather than get_operator_typedef_props
       EvalArgs=ArgsLazy0,
-      RetLazy=RetLazy0
+      RetLazy=RetLazy0,
+      Docall=yes
+   ; (FnHead=Fn, ArgsHeadSz1=LArgs1) ->
+      EvalArgs=LazyVars,
+      RetLazy=ResultLazy,
+      Docall=yes
    ;
-      (HeadIs=[FnHead|ArgsHead], length(ArgsHead,ArgsHeadSz), ArgsHeadSz1 is ArgsHeadSz+1, ((FnHead-ArgsHeadSz1)=(Fn-LArgs1) ; transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)) ->
-         true
-      ;
-         (HeadIs=[FnHeadx|ArgsHeadx] ->
-            length(ArgsHeadx,ArgsHeadSzx),
-            ArgsHeadSz1x is ArgsHeadSzx+1,
-            compiler_assertz(transpiler_depends_on(FnHeadx,ArgsHeadSz1x,Fn,LArgs1)),
-            (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHeadx,ArgsHeadSz1x,Fn,LArgs1]) ; true)
-         ;
-            true
+      (transpiler_enable_interpreter_calls ->
+         % create a stub to call the interpreter
+         (atomic_list_concat(['mc_',LArgs,'__',Fn],Fp),
+         (current_predicate(Fp/LArgs1) -> true ;
+            findall(Atom0, (between(1, LArgs1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+            H=..[Fp|AtomList0],
+            findall(Atom1, (between(1, LArgs, I1), Atom1='$VAR'(I1)), AtomList1),
+            B=..[u_assign,[F|AtomList1],'$VAR'(LArgs1)],
+            compiler_assertz(transpiler_stub_created(F/LArgs1)),
+            (transpiler_show_debug_messages -> format("; % ######### warning: creating stub for:~q\n",[F]) ; true),
+            create_and_consult_temp_file('&self',Fp/LArgs1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
          ),
-         atomic_list_concat(['mc_',Largs,'__',Fn],Fp),
-         (current_predicate(Fp/LArgs1) ->
-            true
-         ;
-            check_supporting_predicates('&self',Fn/LArgs1)
-         )
+         Docall=yes)
+      ;
+         % no inteprter calls, so make this inline
+         Docall=no
       ),
       RetLazy=x(doeval,eager),
-      length(UpToDateArgsLazy, Largs),
+      length(UpToDateArgsLazy, LArgs),
       maplist(=(x(doeval,eager)), UpToDateArgsLazy),
-      % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
-      get_operator_typedef_props(_,Fn,Largs,Types0,_RetType0),
-      maplist(arg_eval_props,Types0,EvalArgs0),
-      maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
+      % NOTE: it seems to be important not to call get_operator_typedef_props for a predicate that has not been defined yet
+      (transpiler_predicate_store(Fn,LArgs1,_,_) ->
+         % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
+         get_operator_typedef_props(_,Fn,LArgs,Types0,_RetType0),
+         maplist(arg_eval_props,Types0,EvalArgs0),
+         maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
+      ;
+         EvalArgs=UpToDateArgsLazy
+      )
+   ),
+   % add transpiler_depends_on clause if not already there
+   (((FnHead-ArgsHeadSz1)=(Fn-LArgs1) ; transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)) ->
+      true
+   ;
+      compiler_assertz(transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)),
+      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHead,ArgsHeadSz1,Fn,LArgs1]) ; true)
    ),
    maplist(do_arg_eval(HeadIs,LazyVars),Args,EvalArgs,NewArgs,NewCodes),
    append(NewCodes,CombinedNewCode),
-   Code=[assign,RetResult0,[call(Fn)|NewArgs]],
+   (Docall=yes ->
+      Code=[assign,RetResult0,[call(Fn)|NewArgs]]
+   ;
+      Code=[assign,RetResult0,list([Fn|NewArgs])]
+   ),
    append(CombinedNewCode,[Code],Converted0),
    lazy_impedance_match(RetLazy,ResultLazy,RetResult0,Converted0,RetResult,Converted).
 
@@ -1175,9 +1233,9 @@ compile_flow_control3(HeadIs,LazyVars,RetResult,ResultLazy,Convert,Converted),!.
 %f2p(_HeadIs,_RetResult,x_assign(Convert,Res), x_assign(Convert,Res)):- !.
 %f2p(_HeadIs,RetResult,Convert, Code):- into_x_assign(Convert,RetResult,Code).
 
-%f2p(HeadIs, list(Convert), Convert, []) :- trace,HeadIs\=@=Convert,
+%f2p(HeadIs, list(Convert), Convert, []) :- trace,HeadIs\==Convert,
 %   is_list(Convert),!.
-f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- HeadIs\=@=Convert, is_list(Convert),!,
+f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- HeadIs\==Convert, is_list(Convert),!,
    length(Convert, N),
    % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
    length(EvalArgs, N),
@@ -3010,7 +3068,7 @@ f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
 f2p(_HeadIs,RetResult,Convert, RetResultConverted) :-
      number(Convert),!,into_equals(RetResult,Convert,RetResultConverted).
 
-f2p(_HeadIs,RetResult,Convert, Converted) :- % HeadIs\=@=Convert,
+f2p(_HeadIs,RetResult,Convert, Converted) :- % HeadIs\==Convert,
      is_arity_0(Convert,F), !, Converted = x_assign([F],RetResult),!.
 
 
@@ -3035,7 +3093,7 @@ f2p(_HeadIs,_RetResult,Convert, Converted):-
 f2p(HeadIs,RetResult,Convert, Converted) :-
      atom(Convert),  functional_predicate_arg(Convert,Nth,Nth2),
       Nth==1,Nth2==1,
-      HeadIs\=@=Convert,
+      HeadIs\==Convert,
       Convert = F,!,
       must_det_lls((
         do_predicate_function_canonical(FP,F),
