@@ -1421,7 +1421,7 @@ fbugio(TF,P):-
 fbugio(IO):- 
     fbugio(true, IO).
 
-%!  different_from(+N, +V) is semidet.
+%!  different_from(+N, +V) is nondet.
 %
 %   Succeeds if the value associated with `N` is different from `V`.
 %
@@ -1560,7 +1560,7 @@ is_debug_like(nodebug, false).
 % 'silent' indicates no debugging output.
 is_debug_like(silent, false).
 
-%!  'is-symbol'(+X) is semidet.
+%!  'is-symbol'(+X) is nondet.
 %
 %   Checks if `X` is a valid symbol.
 %
