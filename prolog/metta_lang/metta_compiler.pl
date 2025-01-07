@@ -525,7 +525,7 @@ recompile_from_depends0(Fn/Arity) :-
    maplist(compile_for_assert_with_add,Heads,Bodies).
 
 compile_for_assert_with_add(Head,Body) :-
-   compile_for_assert(recompile,Head,Body,Converted),
+   compile_for_assert(Head,Body,Converted),
    assertz(Converted).
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head,Body) :-
@@ -537,7 +537,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head,Body) :-
 %   transpiler_clause_store(Fn,Arity,Index,_,_,LazyArgs,LazyRet,Head,Body),break.
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
-compile_for_assert(CompileStep, HeadIsIn, AsBodyFnIn, Converted) :-
+compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    %leash(-all),trace(combine_transpiler_cause_store_and_maybe_recompile/4),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
@@ -651,7 +651,7 @@ no_conflict_numbervars(Term):-
 functs_to_preds(I,OO):-
    must_det_lls(functs_to_preds0(I,OO)),!.
 
-functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(first_compile, H, B, OO),!.
+functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
