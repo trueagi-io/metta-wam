@@ -972,6 +972,30 @@ cont_sexpr_once(EndChar, Stream, Item) :-
 % If EOF, return end_of_file
 cont_sexpr_from_char(_EndChar, _Stream, end_of_file, end_of_file).
 
+% If '!' followed by '(', '#', or file depth 0, read a directive to be executed
+cont_sexpr_from_char(EndChar, Stream, '!', Item) :-
+    peek_char(Stream, Next),
+    \+ paren_pair_functor(_, Next, _),
+    if_t(Next == ' ',  nb_current('$file_src_depth', 0) ),
+    once(
+       Next == '('
+     ; Next == '['
+     ; Next == '#'
+     ; true
+     ; nb_current('$file_src_depth', 0)),
+
+    cont_sexpr_once(EndChar, Stream, Subr), !,
+    Item = exec(Subr).
+
+% allow in mettalog the special ` ,(<eval this>) ` form in intepreter
+cont_sexpr_from_char(EndChar, Stream, ',', Item) :-
+    peek_char(Stream, Next),
+    Next == '(',
+    %\+ paren_pair_functor(_, Next, _),
+    %Next \== ' ',
+    cont_sexpr_once(EndChar, Stream, Subr), !,
+    Item = exec(Subr).
+
 % If '(', read an S-expression list.
 cont_sexpr_from_char(_EndChar, Stream, '(', Item) :-
     read_list(')', Stream, Item).
@@ -996,10 +1020,10 @@ cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
     cont_sexpr_once(EndChar, Stream, Subr),
     univ_maybe_var(Item, Subr).
 
-% Unexpected start character
+% Unexpected end character
 cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair_functor(_, Char, _),
     nb_current('$file_src_depth', 0),
-    sformat(Reason, "Unexpected start character: '~w'", [Char]),
+    sformat(Reason, "Unexpected end character: '~w'", [Char]),
     throw_stream_error(Stream, syntax_error(unexpected_char(Char), Reason)),
     % keep going we consumed the Char (if thorw_stream_error/2 permits)
     cont_sexpr(EndChar,  Stream, Item).
@@ -1007,15 +1031,6 @@ cont_sexpr_from_char(EndChar, Stream, Char, Item) :- paren_pair_functor(_, Char,
 % If '"', read a quoted string.
 cont_sexpr_from_char(_EndChar, Stream, '"', Item) :-
     read_quoted_string(Stream, '"', Item).
-
-% If '!' followed by '(', '#', or file depth 0, read a directive to be executed
-cont_sexpr_from_char(EndChar, Stream, '!', Item) :-
-    (  peek_char(Stream, '(')
-     ; peek_char(Stream, '[')
-     ; peek_char(Stream, '#')
-     ; nb_current('$file_src_depth', 0)),
-    cont_sexpr_once(EndChar, Stream, Subr),
-    Item = exec(Subr).
 
 % If '#' followed by '{', read Prolog syntax until '}' and a period
 cont_sexpr_from_char(_EndChar, Stream, '#', Item) :- peek_char(Stream, '{'),

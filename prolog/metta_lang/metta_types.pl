@@ -1022,7 +1022,7 @@ get_value_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %
 as_prolog(I, O) :-
     % Use default recursion depth of 10 and '&self' as context.
-    as_prolog(10, '&self', I, O).
+    as_prolog(0, '&self', I, O).
 
 %!  as_prolog(+Depth, +Self, +I, -O) is det.
 %
@@ -1041,32 +1041,43 @@ as_prolog(I, O) :-
 %     ?- as_prolog(_, _, ['@', foo, a, b], O).
 %     O = foo(a, b).
 %
+
+:- dynamic(dont_de_Cons/0).
+
+as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
+as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
+as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
     \+ iz_conz(I), !, I = O.
-as_prolog(Depth, Self, [Cons, H, T], [HH | TT]) :-
+as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
-    !,
-    as_prolog(Depth, Self, H, HH),
-    as_prolog(Depth, Self, T, TT).
-as_prolog(Depth, Self, [List, H | T], O) :-
+    Nil == [], \+ dont_de_Cons, !,
+    as_prolog(0, Self, H, HH),
+    as_prolog(0, Self, T, TT).
+as_prolog(0, Self, [CC | List], O) :-
     % Handle '::' operator by mapping elements to Prolog terms.
-    List=='::',
-    !,
-    maplist(as_prolog(Depth, Self), [H | T], L),
+    CC =='::',
+    is_list(List), !,
+    maplist(as_prolog(0, Self), List, L),
     !, O = L.
-as_prolog(Depth, Self, [At, H | T], O) :-
+as_prolog(0, Self, [At| List], O) :-
     % Handle '@' symbol by constructing compound terms.
     At=='@',
-    !,
-    maplist(as_prolog(Depth, Self), [H | T], [HH | L]),
-    atom(H), !,
-    O =.. [HH | L].
+    is_list(List),
+    maplist(as_prolog(0, Self), List, [HH | L]),
+    atom(HH), !,
+    compound_name_arguments(O, HH, L).
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
     maplist(as_prolog(Depth, Self), I, O).
+as_prolog(Depth, Self, [H|T], [HH|TT]) :-
+    % If is a list, map each element to Prolog terms.
+    as_prolog(Depth, Self, H, HH),
+    as_prolog(1, Self, T, TT).
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
