@@ -61,7 +61,7 @@
             True
             (contains_symbol (cdr-atom $list) $sym))))
 
-; helper routines if desired
+; helper routines
 (: car-car (-> Expression Atom))
 (= (car-car $list) (let $first_list (car-atom $list) (car-atom $first_list)))
 (: car-cdr (-> Expression Atom))
@@ -94,7 +94,7 @@
 ))
 
 ;
-!(concat_lists (() (1 2 3) () (4 5) (6) ) )
+!(concat_lists (() (1 2 3) () (4 5) (6) (7 8 0) () ) )
 ;
 ;#( = #(nth 0 ($A 
 ;(= (nth $A #(Cons $B $C) $B)  
@@ -216,11 +216,18 @@
         empty))))) 
 
 ; The move command moves the human player's piece.
-(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
+(: M (-> command))
+(= (M)  
+  (println! "Moving!"))
+;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
 ;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
 ;
 
 ;
+(: G (-> command))
+(= (G)  
+  (println! "Greedy chess moving"))
+
 ;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
 ;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
 ;(= (g) (board $A) (playdefenseR $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) (b ;$B) (examine_king $B s g) (printmove $C $D $A) (set-det))
@@ -258,7 +265,6 @@
 ;*******************************************************
 ; Code invoked by the basic commands (above) or elsewhere follow
 ;*******************************************************
-
 
 ; Invoke with empty list, will return characters input from console until ENTER.
 (: (get-player-command (-> list list)))
@@ -355,11 +361,11 @@
     (let $command (get-player-command ())
       (if (== $command 77)
           (do 
-            (println! "running command M") ; Run valid command
+            (M)                          ; Move human piece
             (command-loop))              ; Get next command, stay in loop.
       (if (== $command 71)
           (do 
-            (println! "running command G") ; Run valid command
+            (G)                          ; AI move
             (command-loop))              ; Get next command, stay in loop.
       (if (== $command 82)
           (do 
@@ -385,7 +391,7 @@
   (do
     (chess)          ; Start the chess game
     (command-loop))) ; Enter the recursive command-processing loop
-;!(main_loop)
+!(main_loop)
 ;-----------;
 
 ;

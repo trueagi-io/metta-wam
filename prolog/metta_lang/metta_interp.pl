@@ -1207,8 +1207,18 @@ option_value_name_default_type_help('exit-on-fail',  false, [true, false], "Rust
 
 option_value_name_default_type_help('rrtrace',  false, [false, true], "Extreme Tracing", 'Debugging and Tracing').
 
-% Define the possible values for various types
-
+%!  type_value(+Type, +Value) is det.
+%
+%   Defines possible values for various configuration types used in the system.
+%   These values represent different modes and behaviors that can be toggled 
+%   or configured dynamically during runtime.
+%
+%   @arg Type The type of configuration or operational mode being defined. 
+%             Examples include `verbosity_mode`, `compile_mode`, `exec_mode`, 
+%             `fail_mode`, and `error_mode`.
+%   @arg Value The specific value associated with the given type. Each type has 
+%              a predefined set of valid values.
+%
 % Verbosity values
 type_value(verbosity_mode, 'silent').  % No output or only critical errors
 type_value(verbosity_mode, 'error').   % Only errors are shown
@@ -1216,8 +1226,6 @@ type_value(verbosity_mode, 'warn').    % Errors and warnings are shown
 type_value(verbosity_mode, 'info').    % General information (default level)
 type_value(verbosity_mode, 'debug').   % Detailed debug output
 type_value(verbosity_mode, 'trace').   % Extremely detailed output, execution trace
-
-
 
 % Compile modes
 type_value(compile_mode, 'false').  % Compilation is disabled
@@ -1238,6 +1246,18 @@ type_value(error_mode, 'default').  % Default error handling mode
 type_value(warning_mode, 'default'). % Default warning handling mode
 
 % Dynamically show all available options with descriptions in the required format, grouped and halt
+
+%!  show_help_options_no_halt is det.
+%
+%   Displays all available runtime options with their descriptions in a grouped format.
+%   Options are categorized based on their groups, and each entry displays:
+%     - Name: The option's name.
+%     - Default Value: The default value for the option.
+%     - Possible Values: A list of acceptable values for the option.
+%     - Description: A brief explanation of the option's purpose.
+%
+%   The output groups options logically and formats them for clarity.
+%
 show_help_options_no_halt :-
     findall([Name, DefaultValue, Type, Help, Group],
             option_value_name_default_type_help(Name, DefaultValue, Type, Help, Group),
@@ -1246,31 +1266,91 @@ show_help_options_no_halt :-
     format("  First value is the default; if a brown value is listed, it is the Rust compatibility default:\n\n"),
     group_options(Options, MaxLen),!.
 
-show_help_options:-
+%!  show_help_options is det.
+%
+%   Displays all available runtime options in a grouped format and halts execution.
+%   This predicate is a wrapper around `show_help_options_no_halt/0` and ensures
+%   the program stops after displaying the options.
+%
+show_help_options :-
     show_help_options_no_halt,
     halt.
 
-% Calculate the maximum length of option names
+%!  max_name_length(+Options, -MaxLen) is det.
+%
+%   Calculates the maximum length of option names from a list of options.
+%
+%   This predicate iterates over a list of options and determines the length 
+%   of each option's name. The maximum length is then unified with `MaxLen`.
+%   This value is typically used for aligning descriptions when displaying 
+%   options in a formatted output.
+%
+%   @arg Options A list of options, where each option is represented as a list 
+%                with at least one element (`Name`) being an atom.
+%   @arg MaxLen  The maximum length (in characters) of the option names in `Options`.
+%
+%   @examples
+%     ?- max_name_length([['verbosity', _, _, _, _], ['compile_mode', _, _, _, _]], MaxLen).
+%     MaxLen = 12.
+%
 max_name_length(Options, MaxLen) :-
-    findall(Length, (member([Name, _, _, _, _], Options), atom_length(Name, Length)), Lengths),
+    % Extract the length of each option name from the Options list.
+    findall(Length, 
+            (member([Name, _, _, _, _], Options), % For each option, extract the name.
+             atom_length(Name, Length)            % Get the length of the name.
+            ), Lengths),
+    % Find the maximum value in the list of lengths.
     max_list(Lengths, MaxLen).
 
-% Group the options by category and print them
+%!  group_options(+Options, +MaxLen) is det.
+%
+%   Groups runtime options by category and prints them in an organized format.
+%
+%   This predicate collects option categories (groups) from the options list,
+%   removes duplicates, and then passes each group to `print_groups/3` for display.
+%
+%   @arg Options A list of options, where each option includes a group category.
+%   @arg MaxLen  The maximum length of option names for formatting alignment.
+%
 group_options(Options, MaxLen) :-
+    % Extract all groups from the options list
     findall(Group, member([_, _, _, _, Group], Options), Groups),
+    % Remove duplicate groups
     list_to_set(Groups, SortedGroups),
+    % Print each group
     print_groups(SortedGroups, Options, MaxLen).
 
-
-% Print options by group with clarification for defaults and Rust compatibility
-print_groups([], _, _).
+%!  print_groups(+Groups, +Options, +MaxLen) is det.
+%
+%   Print options by group with clarification for defaults and Rust compatibility.
+%
+%   This predicate iterates over each group, displays the group name, and calls
+%   `print_group_options/3` to display the group's options.
+%
+%   @arg Groups  A list of unique option groups.
+%   @arg Options A list of all options.
+%   @arg MaxLen  The maximum length of option names for formatting alignment.
+%
+print_groups([], _, _). % Base case: no groups left to print.
 print_groups([Group | RestGroups], Options, MaxLen) :-
+    % Print group header
     format("   ~w:\n", [Group]),
+    % Print options within the current group
     print_group_options(Group, Options, MaxLen),
+    % Add spacing after group
     format("\n"),
+    % Recursively print the next group
     print_groups(RestGroups, Options, MaxLen).
 
-% Print options in each group, aligned to the longest option name, mentioning Rust changes explicitly
+%!  print_group_options(+Group, +Options, +MaxLen) is det.
+%
+%   Prints all options belonging to a specific group, aligned by the longest option name.
+%   Special formatting is applied to highlight default values and Rust-specific values.
+%
+%   @arg Group   The category of options to print.
+%   @arg Options A list of options, each represented by `[Name, DefaultValue, Type, Help, Group]`.
+%   @arg MaxLen  The maximum length of option names for consistent alignment.
+%
 print_group_options(_, [], _).
 print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], MaxLen) :-
     % Remove duplicates from the list of values
@@ -1296,68 +1376,250 @@ print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], Max
          ))
     ),
     print_group_options(Group, Rest, MaxLen).
-
+% Skip options that don't match the current group and continue processing the rest.
 print_group_options(Group, [_ | Rest], MaxLen) :-
     print_group_options(Group, Rest, MaxLen).
 
-% Helper to print the list of values without square brackets
-format_value_list([], '').
-format_value_list([H], H) :- !.
+%!  format_value_list(+Values, -Formatted) is det.
+%
+%   Converts a list of values into a formatted string, separating entries with a pipe (`|`) character.
+%
+%   This predicate handles lists of values, removing square brackets and ensuring a clean string format.
+%
+%   @arg Values    A list of atomic values to format.
+%   @arg Formatted The resulting string where values are concatenated and separated by `|`.
+%
+%   @examples
+%     ?- format_value_list([a, b, c], Formatted).
+%     Formatted = "a|b|c".
+%
+%     ?- format_value_list([a], Formatted).
+%     Formatted = "a".
+%
+format_value_list([], ''). % Base case: Empty list results in an empty string.
+% Single-element list, return the element directly.
+format_value_list([H], H) :- !. 
 format_value_list([H|T], Formatted) :-
+    % Recursively format the tail of the list
     format_value_list(T, Rest),
+    % Concatenate head and rest with a pipe `|`
     format(atom(Formatted), "~w|~w", [H, Rest]).
 
+%!  fbugio(+TF, +P) is det.
+%
+%   Outputs debugging information based on a truth-functional flag.
+%
+%   @arg TF A truth-functional flag
+%   @arg P  The message or term to be passed to `fbug/1` for debugging.
+%
 
+%fbugio(TF,P):-!, ignore(( TF,!,write_src_uo(fbug(P)))). % Previously used for different debugging output.
+%fbugio(_,_):- is_compatio,!. % Bypasses debugging in compatibility mode.
+fbugio(TF,P):- 
+    !, ignore((TF,!,fbug(P))).
+% Assumes TF is true by default.
+fbugio(IO):- 
+    fbugio(true, IO).
 
-%fbugio(TF,P):-!, ignore(( TF,!,write_src_uo(fbug(P)))).
-%fbugio(_,_):- is_compatio,!.
-fbugio(TF,P):-!, ignore(( TF,!,fbug(P))).
-fbugio(IO):-fbugio(true,IO).
+%!  different_from(+N, +V) is nondet.
+%
+%   Succeeds if the value associated with `N` is different from `V`.
+%
+%   This predicate checks whether the value tied to `N` (through `option_value_def/2` 
+%   or `nb_current/2`) differs from `V`. It is primarily used to determine if a 
+%   configuration option or global variable has a non-matching value.
+%
+%   @arg N The name of the option or variable to check.
+%   @arg V The value to compare against.
+%
+%   @examples
+%     ?- different_from('verbosity', 'debug').
+%     true.
+%
+%     ?- different_from('verbosity', 'info').
+%     false.
+%
+different_from(N,V) :-
+    % Check if N matches V via option_value_def/2, fail if it matches.
+    \+ \+ option_value_def(N,V), !, fail.
+different_from(N,V) :-
+    % Check if N matches V via nb_current/2, fail if it matches.
+    \+ \+ nb_current(N,V), !, fail.
+different_from(_,_). % Default case: succeeds if no match was found.
 
-different_from(N,V):- \+ \+ option_value_def(N,V),!,fail.
-different_from(N,V):- \+ \+ nb_current(N,V),!,fail.
-different_from(_,_).
-
-set_option_value_interp(N,V):- symbol(N), symbolic_list_concat(List,',',N),List\=[_],!,
-  forall(member(E,List),set_option_value_interp(E,V)).
+%!  set_option_value_interp(+N, +V) is det.
+%
+%   Sets the value of an option or multiple options, handling comma-separated lists.
+%
+%   If `N` contains multiple comma-separated option names, it splits them 
+%   and applies `set_option_value_interp/2` to each. Otherwise, it directly sets 
+%   the value for `N` and triggers any necessary callbacks via `on_set_value/3`.
+%
+%   @arg N The option name or a comma-separated list of option names.
+%   @arg V The value to set for the option(s).
+%
+%   @examples
+%     ?- set_option_value_interp('verbosity', 'debug').
+%     true.
+%
+%     ?- set_option_value_interp('verbosity,logging', 'info').
+%     true.
+%
+set_option_value_interp(N,V):- 
+    % If N is a comma-separated list, split and set each option individually.
+    symbol(N), symbolic_list_concat(List,',',N), 
+    List \= [_], % Ensure it's not a single-element list.
+    !,forall(member(E,List), set_option_value_interp(E,V)).
 set_option_value_interp(N,V):-
-  %(different_from(N,V)->Note=true;Note=false),
-  Note = true,
-  %fbugio(Note,set_option_value(N,V)),
-  set_option_value(N,V),
-  ignore(forall(on_set_value(Note,N,V),true)).
+    % Directly set the option value and trigger any callbacks.
+    % Note can be used for debugging purposes (commented out).
+    %(different_from(N,V)->Note=true;Note=false),
+    Note = true,
+    %fbugio(Note,set_option_value(N,V)), % Uncomment for debugging.
+    set_option_value(N,V), % Set the value for the option.
+    ignore(forall(on_set_value(Note,N,V), true)). % Trigger callbacks if any.
 
-on_set_value(Note,N,'True'):- on_set_value(Note,N,true).
-on_set_value(Note,N,'False'):- on_set_value(Note,N,false).
-on_set_value(_Note,log,true):- switch_to_mettalog.
-on_set_value(_Note,compatio,true):- switch_to_mettarust.
-on_set_value(Note,N,V):- symbol(N), symbol_concat('trace-on-',F,N),fbugio(Note,set_debug(F,V)),set_debug(F,V).
-on_set_value(Note,N,V):- symbol(N), is_debug_like(V,TF),fbugio(Note,set_debug(N,TF)),set_debug(N,TF).
+%!  on_set_value(+Note, +N, +V) is det.
+%
+%   Handles callbacks and side effects when an option value is set.
+%
+%   Depending on the option name (`N`) and value (`V`), this predicate triggers
+%   specific behaviors such as switching modes, enabling debugging, or setting
+%   flags. It also supports string-based logical values ('True', 'False').
+%
+%   @arg Note A debugging or informational flag, typically set to `true` or `false`.
+%   @arg N    The name of the option being set.
+%   @arg V    The value assigned to the option.
+%
+%   @examples
+%     ?- on_set_value(true, 'log', true).
+%     % Switches to mettalog mode.
+%
+%     ?- on_set_value(true, 'trace-on-load', true).
+%     % Enables trace-on-load debugging.
+%
 
+% Map string logical values ('True', 'False') to their atom equivalents.
+on_set_value(Note,N,'True'):- 
+    on_set_value(Note,N,true).    % true
+on_set_value(Note,N,'False'):- 
+    on_set_value(Note,N,false).   % false
+on_set_value(_Note,log,true):- 
+    % Switch to mettalog mode if 'log' is set to true.
+    switch_to_mettalog.
+on_set_value(_Note,compatio,true):- 
+    % Switch to mettarust mode if 'compatio' is set to true.
+    switch_to_mettarust.
+on_set_value(Note,N,V):- 
+    % Handle trace-specific options by extracting the trace flag from the option name.
+    symbol(N), 
+    % Extract trace-specific flag.
+    symbol_concat('trace-on-',F,N), 
+     % Debugging output.
+    fbugio(Note,set_debug(F,V)),
+    % Enable or disable trace based on value.
+    set_debug(F,V). 
+on_set_value(Note,N,V):- 
+    % General debugging setting for other options.
+    symbol(N), 
+    % Check if the value is debug-like.
+    is_debug_like(V,TF), 
+    % Debugging output.
+    fbugio(Note,set_debug(N,TF)), 
+    % Enable or disable debug mode based on value.
+    set_debug(N,TF). 
 
+%!  is_debug_like(+Value, -Flag) is det.
+%
+%   Determines whether a given value represents a debugging-related flag.
+%
+%   This predicate maps symbolic values commonly used for debugging (`trace`, 
+%   `debug`, `silent`, etc.) to their corresponding Boolean representations.
+%
+%   @arg Value The symbolic value representing a debugging state.
+%   @arg Flag  The Boolean flag (`true` or `false`) representing the debugging state.
+%
+%   @examples
+%     ?- is_debug_like(trace, Flag).
+%     Flag = true.
+%
+%     ?- is_debug_like(silent, Flag).
+%     Flag = false.
+%
+
+% Previously included case for explicit 'false' mapping (commented out).
 %is_debug_like(false, false).
+% Trace mode is considered a debugging state.
 is_debug_like(trace, true).
+% 'notrace' disables debugging.
 is_debug_like(notrace, false).
+% Debug mode is explicitly enabled.
 is_debug_like(debug, true).
+% 'nodebug' disables debugging.
 is_debug_like(nodebug, false).
+% 'silent' indicates no debugging output.
 is_debug_like(silent, false).
 
-'is-symbol'(X):- symbol(X).
+%!  'is-symbol'(+X) is nondet.
+%
+%   Checks if `X` is a valid symbol.
+%
+%   This predicate succeeds if `X` is recognized as a symbol. 
+%   It acts as a wrapper around the built-in `symbol/1` predicate.
+%
+%   @arg X The term to check.
+%
+%   @examples
+%     ?- 'is-symbol'(hello).
+%     true.
+%
+%     ?- 'is-symbol'(123).
+%     false.
+%
+'is-symbol'(X):- 
+    % Check if X is a symbol.
+    symbol(X).
+
 %:- (is_mettalog->switch_to_mettalog;switch_to_mettarust).
 
+%!  set_is_unit_test(+TF) is det.
+%
+%   Configures runtime settings for unit testing mode.
+%
+%   This predicate sets various runtime options based on the value of `TF`.
+%   When `TF` is `false`, testing-related settings are disabled, and default 
+%   values are restored. When `TF` is `true`, unit testing settings are applied.
+%
+%   @arg TF A Boolean value (`true` or `false`) indicating whether unit testing mode should be enabled.
+%
+%   @examples
+%     ?- set_is_unit_test(true).
+%     % Enables unit testing mode with specific options.
+%
+%     ?- set_is_unit_test(false).
+%     % Disables unit testing mode and restores defaults.
+%
+
+% Disable unit testing and reset runtime options to defaults.
 set_is_unit_test(false):-
-  forall(option_value_def(A,B),set_option_value_interp(A,B)),
-  set_option_value_interp('trace-on-test',false),
-  set_option_value_interp('trace-on-fail',false),
-  set_option_value_interp('load',silent),
-  set_option_value_interp('test',false),
-  !.
+    % Reset all options to their default values.
+    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    % Explicitly disable trace and test-related settings.
+    set_option_value_interp('trace-on-test', false),
+    set_option_value_interp('trace-on-fail', false),
+    set_option_value_interp('load', silent),
+    set_option_value_interp('test', false),
+    !.
+% Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
-  forall(option_value_def(A,B),set_option_value_interp(A,B)),
-  set_option_value_interp('trace-on-test',false),
-  set_option_value_interp('trace-on-fail',false),
-  set_option_value_interp('load',show),
-  set_option_value_interp('test',TF),
+    % Reset all options to their default values.
+    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    % Disable specific trace settings during unit testing.
+    set_option_value_interp('trace-on-test', false),
+    set_option_value_interp('trace-on-fail', false),
+    % Enable specific load and test options.
+    set_option_value_interp('load', show),
+    set_option_value_interp('test', TF),    
     %set_option_value_interp('trace-on-load',TF),
 /*  if_t(TF,set_option_value_interp('exec',debug)),
   if_t(TF,set_option_value_interp('eval',debug)),
@@ -3328,7 +3590,6 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
-
 
 
 
