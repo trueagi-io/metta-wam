@@ -168,9 +168,3 @@ transpiler_predicate_store('charsToString', 2, [x(doeval,eager)], x(doeval,eager
 
 transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager),x(noeval,eager)], x(doeval,eager)).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
-
-% this is a hack to make 'quote' behave as expected (noeval rather than eval).
-% the reason for this is that stubs are currently created with x(doeval,eager) by default.
-% once the check and recompile loop is done (using transpiler_predicate_store/4, stubs will be correctly created with x(neval,eager), and this can go away.
-transpiler_predicate_store('quote', 2, [x(noeval,eager)], x(noeval,eager)).
-'mc_1__quote'(A,['quote',A]).

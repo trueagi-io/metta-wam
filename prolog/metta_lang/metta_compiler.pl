@@ -1044,7 +1044,7 @@ compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
   compile_maplist_p2(P2,Args,NewArgs,PreCode),
   append([[native(P2),Var,Res]],PreCode,TheCode).
 
-var_prop_lookup(_,[],x(doeval,eager)).
+var_prop_lookup(_,[],x(noeval,eager)).
 var_prop_lookup(X,[H-R|T],S) :-
    X == H,S=R;  % Test if X and H are the same variable
    var_prop_lookup(X,T,S).  % Recursively check the tail of the list
@@ -1146,7 +1146,7 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Con
     append(NewCodes,CombinedNewCode),
     Code=[assign,RetResult0,list(NewArgs)],
     append(CombinedNewCode,[Code],Converted0),
-    lazy_impedance_match(x(doeval,eager),ResultLazy,RetResult0,Converted0,RetResult,Converted).
+    lazy_impedance_match(x(noeval,eager),ResultLazy,RetResult0,Converted0,RetResult,Converted).
 
 update_laziness(x(X,_),x(_,Y),x(X,Y)).
 
@@ -1197,9 +1197,9 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Con
          % no inteprter calls, so make this inline
          Docall=no
       ),
-      RetLazy=x(doeval,eager),
+      RetLazy=x(noeval,eager),
       length(UpToDateArgsLazy, LArgs),
-      maplist(=(x(doeval,eager)), UpToDateArgsLazy),
+      maplist(=(x(noeval,eager)), UpToDateArgsLazy),
       % NOTE: it seems to be important not to call get_operator_typedef_props for a predicate that has not been defined yet
       (transpiler_predicate_store(Fn,LArgs1,_,_) ->
          % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
@@ -1242,7 +1242,7 @@ f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- HeadIs\==
    length(Convert, N),
    % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
    length(EvalArgs, N),
-   maplist(=(x(doeval,eager)), EvalArgs),
+   maplist(=(x(noeval,eager)), EvalArgs),
    maplist(f2p(HeadIs, LazyVars),Converted,EvalArgs,Convert,Allcodes),
    append(Allcodes,Codes).
 
