@@ -1630,19 +1630,54 @@ set_is_unit_test(TF):-
   !.
 
 :- meta_predicate fake_notrace(0).
-fake_notrace(G):- tracing,!,real_notrace(G).
-fake_notrace(G):- !,notrace(G).
-fake_notrace(G):- !,once(G).
-% `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
-fake_notrace(G):- quietly(G),!.
-:- meta_predicate real_notrace(0).
-real_notrace(Goal) :-
-    setup_call_cleanup('$notrace'(Flags, SkipLevel),
-                       once(Goal),
-                       '$restore_trace'(Flags, SkipLevel)).
 
+%!  fake_notrace(:Goal) is det.
+%
+%   Executes the given Goal with modified tracing behavior. 
+%
+%   @arg Goal The goal to execute.
+fake_notrace(G) :-
+    % If tracing is active, suppress tracing using `real_notrace/1`.
+    tracing, !, real_notrace(G).
+fake_notrace(G) :-
+    % If tracing is inactive, execute the goal without tracing using `notrace/1`.
+    !, notrace(G).
+fake_notrace(G) :-
+    !, once(G).
+% `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
+fake_notrace(G) :-
+    quietly(G), !.
+
+:- meta_predicate real_notrace(0).
+
+%!  real_notrace(:Goal) is det.
+%
+%   Executes the given Goal while completely suppressing tracing. This ensures
+%   that the execution of Goal is not interrupted by trace events or debugging.
+%
+%   @arg Goal The goal to execute.
+%
+real_notrace(Goal) :-
+    % Temporarily disable tracing and execute the goal.
+    setup_call_cleanup(
+        % Save current tracing state and skip level.
+        '$notrace'(Flags, SkipLevel),
+        % Execute the goal once.
+        once(Goal),
+        % Restore the original tracing state and skip level.
+        '$restore_trace'(Flags, SkipLevel)
+    ).
 
 :- dynamic(is_answer_output_stream/2).
+
+%!  answer_output(-Stream) is det.
+%
+%   Retrieves or creates a stream for writing answers. If an answer output stream
+%   is already open, it is reused. Otherwise, a new memory file is created, and a 
+%   stream is opened for writing to it.
+%
+%   @arg Stream The stream for writing answers.
+%
 
 %answer_output(Stream):- is_testing,original_user_output(Stream),!.
 %answer_output(Stream):- !,original_user_output(Stream),!. % yes, the cut is on purpose
@@ -1653,6 +1688,16 @@ answer_output(Stream) :-
     open_memory_file(MemFile, write, Stream, [encoding(utf8)]),  % Open it as a stream
     asserta(is_answer_output_stream(MemFile, Stream)).  % Store memory file and stream reference
 
+%!  write_answer_output is det.
+%
+%   Handles the output of answers stored in a memory file. This predicate performs
+%   the following steps:
+%   1. Retrieves and removes the reference to the current memory file and its stream.
+%   2. Closes the stream safely.
+%   3. Reads the contents of the memory file as a string.
+%   4. Writes the string to the standard output.
+%   5. Frees the memory file to release resources.
+%
 write_answer_output :-
     retract(is_answer_output_stream(MemFile, Stream)), !,  % Retrieve and remove memory file reference
     ignore(catch_log(close(Stream))),                     % Close the stream
@@ -1663,7 +1708,16 @@ write_answer_output.
 
 :- at_halt(write_answer_output).  % Ensure cleanup at halt
 
-
+%!  with_answer_output(:Goal, -String) is det.
+%
+%   Executes the specified Goal while capturing its output into a string.
+%   This predicate creates a temporary memory file and stream for capturing
+%   output, executes the Goal, retrieves the output as a string, and cleans up
+%   all resources after execution.
+%
+%   @arg Goal   The Prolog goal to execute.
+%   @arg String The string capturing the output of the Goal.
+%
 with_answer_output(Goal, S) :-
     new_memory_file(MemFile),                         % Create a new memory file
     open_memory_file(MemFile, write, Stream, [encoding(utf8)]),  % Open it as a stream
@@ -1679,22 +1733,111 @@ with_answer_output(Goal, S) :-
         )
     ).
 
-null_io(G):- null_user_output(Out), !, with_output_to(Out,G).
+%!  null_io(:Goal) is det.
+%
+%   Executes the specified Goal while suppressing its output. The output
+%   is redirected to a null output stream.
+%
+%   @arg Goal The Prolog goal to execute with output suppressed.
+%
+null_io(G) :-
+    % Redirect output to a null stream and execute the Goal.
+    null_user_output(Out), !,
+    with_output_to(Out, G).
 
-user_io(G):- notrace(user_io_0(G)).
-user_io_0(G):- current_prolog_flag(mettalog_rt, true), !, original_user_error(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
-user_io_0(G):- original_user_output(Out), ttyflush, !, with_output_to(Out,G), flush_output(Out), ttyflush.
-user_err(G):- original_user_error(Out), !, with_output_to(Out,G).
-with_output_to_s(Out,G):- current_output(COut),
-  redo_call_cleanup(set_prolog_IO(user_input, Out,user_error), G,
-                     set_prolog_IO(user_input,COut,user_error)).
+%!  user_io(:Goal) is det.
+%
+%   Executes the specified Goal while directing its output to the user.
+%   This predicate avoids tracing overhead and supports MettaLog runtime.
+%
+%   @arg Goal The Prolog goal to execute with user-directed output.
+%
+user_io(G) :-
+    % Execute the goal using the user_io_0/1 helper.
+    notrace(user_io_0(G)).
 
-not_compatio(G):- nb_current(in_not_compatio, true),!,call(G).
-not_compatio(G):- if_t(once(is_mettalog;is_testing; (\+ is_compatio )),
-  user_err( locally(nb_setval(in_not_compatio, true), G))).
+%!  user_io_0(:Goal) is det.
+%
+%   A helper predicate for `user_io/1` that directs output based on the
+%   runtime environment. In MettaLog runtime mode, output is directed to
+%   `original_user_error/1`; otherwise, it is directed to `original_user_output/1`.
+%
+%   @arg Goal The Prolog goal to execute with appropriate output redirection.
+%
+user_io_0(G) :-
+    % If in MettaLog runtime mode, output to the error stream.
+    current_prolog_flag(mettalog_rt, true), !,
+    original_user_error(Out),
+    ttyflush, !,
+    with_output_to(Out, G),
+    flush_output(Out),
+    ttyflush.
+user_io_0(G) :-
+    % Otherwise, output to the original user output stream.
+    original_user_output(Out),
+    ttyflush, !,
+    with_output_to(Out, G),
+    flush_output(Out),
+    ttyflush.
 
- extra_answer_padding(_).
+%!  user_err(:Goal) is det.
+%
+%   Executes the specified Goal while directing its output to the error stream.
+%
+%   @arg Goal The Prolog goal to execute with error-directed output.
+%
+user_err(G) :-
+    % Redirect output to the original error stream and execute the Goal.
+    original_user_error(Out), !,
+    with_output_to(Out, G).
 
+%!  with_output_to_s(+Stream, :Goal) is det.
+%
+%   Temporarily redirects the current output to the specified stream while
+%   executing the given Goal. Restores the previous output settings afterward.
+%
+%   @arg Stream The stream to which output should be redirected.
+%   @arg Goal   The Prolog goal to execute with redirected output.
+%
+with_output_to_s(Out, G) :-
+    % Save the current output stream.
+    current_output(COut),
+    % Temporarily redirect output and execute the Goal.
+    redo_call_cleanup(
+        set_prolog_IO(user_input, Out, user_error),
+        G,
+        % Restore the original output stream after execution.
+        set_prolog_IO(user_input, COut, user_error)
+    ).
+
+%!  not_compatio(:Goal) is det.
+%
+%   Executes the specified Goal only if the current context is not in compatibility mode.
+%   This behavior depends on the `is_mettalog`, `is_testing`, and `is_compatio` conditions.
+%
+%   @arg Goal The Prolog goal to execute when compatibility mode is off.
+%
+not_compatio(G) :-
+    % If already in a `not_compatio` context, execute the Goal directly.
+    nb_current(in_not_compatio, true), !,
+    call(G).
+not_compatio(G) :-
+    % Otherwise, determine whether compatibility mode is off and execute the Goal.
+    if_t(
+        once(is_mettalog ; is_testing ; (\+ is_compatio)),
+        user_err(
+            locally(nb_setval(in_not_compatio, true), G)
+        )
+    ).
+
+%!  extra_answer_padding(+Arg) is det.
+%
+%   Placeholder predicate for padding answers. Currently, this predicate
+%   performs no operation.
+%
+%   @arg Arg Placeholder argument, unused in this implementation.
+%
+extra_answer_padding(_).
 
 %!  in_answer_io(+G) is det.
 %
@@ -1703,7 +1846,6 @@ not_compatio(G):- if_t(once(is_mettalog;is_testing; (\+ is_compatio )),
 %   If output is not suspended, it captures the output based on the streams involved.
 %
 %   @arg G The goal to be executed.
-
 in_answer_io(G):- notrace((in_answer_io_0(G))).
 in_answer_io_0(_):- nb_current(suspend_answers,true),!.
 in_answer_io_0(G) :-
