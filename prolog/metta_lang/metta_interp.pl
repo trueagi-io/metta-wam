@@ -1870,24 +1870,29 @@ in_answer_io_0(G) :-
 
 %!  get_stdout_stream(-StdOutStream) is det.
 %
-%   Helper predicate to retrieve the standard output stream.
-%This uses `current_stream/3` to find the stream associated with file descriptor 1 (stdout).
+%   Retrieves the standard output stream. This predicate identifies the stream
+%   associated with file descriptor 1 (stdout) by using `current_stream/3` and
+%   checking its properties.
 %
-%@argStdOutStreamUnifieswiththestandardoutputstream.
+%   @arg StdOutStream The variable that unifies with the standard output stream.
+%
 get_stdout_stream(StdOutStream) :-
+    % Find a stream that is open for writing and matches file descriptor 1.
     current_stream(_, write, StdOutStream),
-    stream_property(StdOutStream, file_no(1)),!.
+    stream_property(StdOutStream, file_no(1)), !.
 
 %!  capture_output_per_solution(+G, +CurrentOut, +AnswerOut, +StdOutStream, +CurrentEncoding) is det.
 %
 %   Captures and processes the output for each solution of a nondeterministic goal.
-%Usesamemoryfiletotemporarilystoretheoutputandthenfinalizestheoutputhandling.
+%   A memory file is used to temporarily store the output for each solution, which
+%   is then finalized and handled appropriately.
 %
-%@argGThegoalwhoseoutputisbeingcaptured.
-%@argCurrentOutThecurrentoutputstream.
-%@argAnswerOutTheansweroutputstream.
-%@argStdOutStreamThestandardoutputstream.
-%@argCurrentEncodingTheencodingusedforcapturingandwritingoutput.
+%   @arg G               The goal whose output is being captured.
+%   @arg CurrentOut      The current output stream.
+%   @arg AnswerOut       The answer output stream.
+%   @arg StdOutStream    The standard output stream.
+%   @arg CurrentEncoding The encoding used for capturing and writing output.
+%
 capture_output_per_solution(G, CurrentOut, AnswerOut, StdOutStream, CurrentEncoding) :-
     % Prepare initial memory file and write stream
     State = state(_, _),
