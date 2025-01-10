@@ -140,10 +140,8 @@ process_file() {
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
 
-	    if grep -q "Got" filename.txt; then
-		echo "The word was found in the file."
-	    else
-		echo "The word was not found in the file."
+	    if grep -q "Got" "${file}.answers"; then
+		      DEBUG "${RED}Failures in Rust Answers${NC}"
 	    fi
 
 	    echo INFO >> "${file}.answers"
@@ -211,11 +209,11 @@ process_file() {
 
     set +e
     if [ "$take_test" -eq 1 ]; then
-	if [[ "$skip_tests" -eq 1 ]]; then
-	    take_test=0
-	    DEBUG_WHY "--skip-tests flag is set. Disabled taking test"
-	fi
-    if
+        if [[ "$skip_tests" -eq 1 ]]; then
+            take_test=0
+            DEBUG_WHY "--skip-tests flag is set. Disabled taking test"
+        fi
+    fi
 
     if [ "$take_test" -eq 1 ]; then
         sleep 0.1
@@ -600,9 +598,16 @@ generate_final_MeTTaLog() {
 
 
     # Create a markdown file with test links and headers
-    {   echo "| TEST NAME | STATUS | URL LOCATION | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+    {
+        echo "| TEST NAME | STATUS | URL LOCATION | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|-----------|--------|--------------|----------------|---------------|-----------------|"
-        cat "${SHARED_UNITS}" | awk -F'\\(|\\) \\| \\(' '{ print $1 " " $0 }' | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
+        cat "${SHARED_UNITS}" \
+          | awk -F'\\(|\\) \\| \\(' '{ print $1 " " $0 }' \
+          | sort \
+          | cut -d' ' -f2- \
+          | tac \
+          | awk '!seen[$0]++' \
+          | tac
     } > $METTALOG_OUTPUT/PASS_FAIL.md
 
 
@@ -615,8 +620,10 @@ generate_final_MeTTaLog() {
 
    cat "$METTALOG_OUTPUT/_REPORT_.md"
 
-   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
-   | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
+    cat $METTALOG_OUTPUT/TEST_LINKS.md \
+      | sed -e "s|$METTALOG_OUTPUT|reports|g" \
+      | sed -e "s|Directory:     ./reports/tests/|D: |g" \
+      >> "$METTALOG_OUTPUT/_REPORT_.md"
 
    $SCRIPTS/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
 
@@ -760,7 +767,7 @@ while [ "$#" -gt 0 ]; do
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
 	--no-regen*) no_regen=1 ;;
-        --v=*) PYSWIP_VERSION="${1#*=}" ; add_to_list "$1" passed_along_to_mettalog ;;
+        --v=*) PYSWIP_VERSION="${1#*=}"; add_to_list "$1" passed_along_to_mettalog ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
         -h|--help) DEBUG "Usage: $0 [options] [directory] [extra args]"; show_help=1; dry_run=1 ;;
@@ -823,9 +830,8 @@ fi
 
 # Directory containing the .pl files
 PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
-# Directory containing the .pl files
 PYSWIP_VERSION="${PYSWIP_VERSION%/}"
-# Directory containing the .pl files
+
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
@@ -855,11 +861,8 @@ fi
 mkdir -p "${METTALOG_OUTPUT}/src/"
 cp -af "${INTERP_SRC_DIR}/"* "${METTALOG_OUTPUT}/src/"
 
-#{ return 0 2>/dev/null || exit 0; }
-
 # Run tests and generate MeTTaLog report
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-   # run our selected tests
     run_tests
 else
     DEBUG "Skipping test run."
