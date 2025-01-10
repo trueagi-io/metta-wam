@@ -567,7 +567,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
       arg_eval_props(RetType0,RetProps),
-      %trace,
       %leash(-all),trace,
       determine_eager_vars(lazy,ResultEager,AsBodyFn,EagerArgList),
       maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
@@ -1454,8 +1453,8 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted, Conv
 compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,Else,Converted, Converted):-
   f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
   f2p(HeadIs,LazyVars,ElseResult,ElseResultN,ElseLazyEval,Else,ElseCode,ElseCodeN),
-  LazyEval=x(doeval,eager),
-  %arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
+  %LazyEval=x(doeval,eager),
+  arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
   lazy_impedance_match(ThenLazyEval,LazyEval,ThenResult,ThenCode,ThenResultN,ThenCodeN,ThenResult1,ThenCode1),
   lazy_impedance_match(ElseLazyEval,LazyEval,ElseResult,ElseCode,ElseResultN,ElseCodeN,ElseResult1,ElseCode1),
   % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult
