@@ -121,8 +121,8 @@ transpiler_predicate_store(dummy,0,[],x(doeval,eager)).
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
-as_p1_exec(is_p1(_,_,Code,Ret),Ret) :- !, call(Code).
-as_p1_expr(is_p1(Code,Ret,_,_),Ret) :- !, call(Code).
+as_p1_exec(is_p1(_,Code,Ret),Ret) :- !, call(Code).
+as_p1_expr(is_p1(Expr,_,_),Expr).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -542,7 +542,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    HeadIs=[FnName|Args],
-   %(FnName='backward-chain' -> trace ; true),
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
    % retract any stubs
@@ -556,6 +555,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    ; true),
    %AsFunction = HeadIs,
    must_det_lls((
+      (FnName='backward-chain' -> trace ; true),
       %trace(f2p/6),
       %trace,
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
@@ -874,8 +874,7 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    ast_to_prolog(Caller,DontStub,Then,Then2),
    ast_to_prolog(Caller,DontStub,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
-ast_to_prolog_aux(Caller,DontStub,[is_p1,CodeN0,Expr,Code0,R],is_p1(CodeN1,Expr,Code1,R)) :- !,
-   ast_to_prolog(Caller,DontStub,CodeN0,CodeN1),
+ast_to_prolog_aux(Caller,DontStub,[is_p1,Expr,Code0,R],is_p1(Expr,Code1,R)) :- !,
    ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
    label_arg_types(F,1,Args0),
@@ -1060,12 +1059,12 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
    (ResultLazy=x(_,eager) ->
       RetResult=Convert,
       Converted=[]
-   ;  Converted=[assign,RetResult,[is_p1,[],Convert,[],Convert]]).
+   ;  Converted=[assign,RetResult,[is_p1,Convert,[],Convert]]).
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
     once(number(Convert);atomic(Convert);\+compound(Convert);atomic(Convert)/*;data_term(Convert)*/),%CheckifConvertisanumberoranatom
-    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert,[],Convert]),
+    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     RetResult=Convert, Converted=[],
     % For OVER-REACHING categorization of dataobjs %
@@ -1077,7 +1076,7 @@ f2p(_HeadIs, _LazyVars, RetResult, _ResultLazy, Convert, Converted) :- fail,
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\==Convert,
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),  % Check if Convert is a number or an atom
-    (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert,[],Convert]),
+    (ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
@@ -1258,7 +1257,7 @@ lazy_impedance_match(x(_,lazy),x(noeval,eager),RetResult0,Converted0,RetResult,C
    append(Converted0,[[native(as_p1_expr),RetResult0,RetResult]],Converted).
 % eager -> lazy
 lazy_impedance_match(x(_,eager),x(_,lazy),RetResult0,Converted0,RetResult,Converted) :-
-   append(Converted0,[[assign,RetResult,[is_p1,[],RetResult0,[],RetResult0]]],Converted).
+   append(Converted0,[[assign,RetResult,[is_p1,RetResult0,[],RetResult0]]],Converted).
 
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Number',!.
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Bool',!.
@@ -1284,9 +1283,9 @@ do_arg_eval(HeadIs,LazyVars,Arg,x(E,lazy),RetArg,Converted) :- !,
       lazy_impedance_match(EL,x(E,lazy),Arg,[],RetArg,Converted)
    ;
       f2p(HeadIs,LazyVars,SubArgE,x(doeval,eager),Arg,SubCodeE),
-      convert_expression_instantiate_lazy1(LazyVars,Arg,ArgT,[],AsP1Table),
-      maplist(convert_p1_table_to_code,AsP1Table,SubCodeN),
-      Converted=[[assign,RetArg,[is_p1,SubCodeN,ArgT,SubCodeE,SubArgE]]]
+      %convert_expression_instantiate_lazy1(LazyVars,Arg,ArgT,[],AsP1Table),
+      %maplist(convert_p1_table_to_code,AsP1Table,SubCodeN),
+      Converted=[[assign,RetArg,[is_p1,Arg,SubCodeE,SubArgE]]]
    ).
 do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyVars,NewArg,x(doeval,eager),Arg,Code).
 
