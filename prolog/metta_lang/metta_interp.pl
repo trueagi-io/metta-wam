@@ -2191,6 +2191,7 @@ show_options_values :-
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+:- nb_setval(self_space, '&top').
 
 %!  set_is_unit_test(+Flag) is det.
 %
@@ -3777,7 +3778,11 @@ t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 print_goals(TermV):- write_src(TermV).
 
 
-if_or_else(Goal,Else):- call(Goal)*->true;call(Else).
+if_or_else(IfTrue1,OrElse2):- call(IfTrue1)*->true;call(OrElse2).
+if_or_else(IfTrue1,OrElse2,OrElse3):-                 if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3)).
+if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4):-         if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4)).
+if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4,OrElse5):- if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4,OrElse5)).
+
 
 interacting:- tracing,!.
 interacting:- current_prolog_flag(debug,true),!.
