@@ -740,7 +740,9 @@ write_src_wi(V) :-
 %
 write_src(V) :-
     % Guess variables in V and pretty-print using `pp_sex/1`.
-    \+ \+ pnotrace((src_vars(V, I), pp_sex(I))), !.
+    \+ \+ pnotrace((number_src_vars(V, I, Goals),
+               copy_term_nat(I+Goals,Nat+NatGoals), pp_sex(Nat),
+               maybe_write_goals(NatGoals))), !.
 
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
@@ -757,25 +759,36 @@ pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_var
 pre_guess_varnames(V,V).
 
 write_w_attvars(Term):- \+ \+ write_w_attvars0(Term).
-write_w_attvars0(Term):-
-    number_src_vars(Term,PrintSV,Goals),
-    once_writeq_nl_now(PrintSV),
-    if_t(Goals\==[], once_writeq_nl_now(yellow,goals={Goals})),!.
 
-number_src_vars(Term,PrintSV,Goals):-
-    src_vars(Term,PrintSV),
-    copy_term(Term,TermC,Goals), PrintSV = TermC,
-    materialize_vns(PrintSV),
-    ignore(numbervars(PrintSV,260,_,[singleton(true),attvar(skip)])),
-    ignore(numbervars(PrintSV,26,_,[singleton(true),attvar(bind)])),
-    must(PrintSV = Term),!.
+write_w_attvars0(Term):-
+   number_src_vars(Term,PP,Goals),
+   copy_term_nat(PP+Goals,Nat+NatGoals),
+   writeq(Nat),
+   maybe_write_goals(NatGoals), !.
+
+number_src_vars(Term,TermC,Goals):-
+  must_det_lls((
+    src_vars(Term,PP),
+    copy_term(Term,TermC,Goals),
+    % copy_term(Goals,CGoals,GoalsGoals),
+    PP = TermC,
+    must(PP = Term),
+    materialize_vns(PP),
+    ignore(numbervars(PP,260,_,[singleton(true),attvar(skip)])),
+    ignore(numbervars(PP,26,_,[singleton(true),attvar(bind)])))).
+
 
 once_writeq_nl_now(P) :-
-    % Standardize variable names in `P` and print it using `ansi_format`.
-    % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
-    \+ \+ (must_det_ll((
-           src_vars(P,PP),
-           format('~N~q.~n', [PP])))).
+    \+ \+ (pnotrace((
+             format('~N'),
+             write_w_attvars(P),
+             format('~N')))).
+
+maybe_write_goals(Goals):-
+   exclude(is_f_nv,Goals,LGoals),
+   if_t(LGoals\==[],format(' {~q} ', [LGoals])).
+   %if_t(LGoals\==[],with_output_to(user_error,ansi_format([fg(yellow)], ' {~q} ', [LGoals]))).
+is_f_nv(F):- compound(F), functor(F,name_variable,2,_).
 
 % Standardize variable names in `P` and print it using `ansi_format`.
 % Use `nb_setval` to store the printed term in `$once_writeq_ln`.
@@ -790,9 +803,7 @@ once_writeq_nl_now(Color,P) :- w_color(Color,once_writeq_nl_now(P)).
 write_src_nl(Src) :-
     % Print a newline, the source line, and another newline.
     \+ \+ (must_det_ll((
-               number_src_vars(Src, SrcSrc, Goals),
-               (format('~N'), write_src(SrcSrc),
-                if_t(Goals\==[],once_writeq_nl_now(yellow,goals=Goals)),
+               (format('~N'), write_src(Src),
                 format('~N'))))).
 
 

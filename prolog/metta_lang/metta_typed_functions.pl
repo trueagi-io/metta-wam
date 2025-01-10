@@ -101,6 +101,19 @@ desc_aka('OrderFittest', fittest_first_priority).
 explicit_isa('OrderClause', 'EvaluationOrderEnum').
 explicit_isa('OrderFittest', 'EvaluationOrderEnum').
 
+/*
+;(: a (-> Number Number ) )
+(= (a $x) (+ $x $x))
+(= (a 1) 1)
+
+;(: a (-> String Number ) )
+(= (a $x ) (repr (a (parse $x))))
+
+(a "3") > "6"
+
+(a 1) -> 1
+*/
+
 % FunctionResultBehavior
 % Determines the outcome after successful evaluation.
 % Nondeterministic = continue_on_success.
@@ -164,24 +177,33 @@ update_types([One|Patches],Before,After):- !, update_type(One,Before,Middle), up
 
 
 predicate_behavior_impl(_, 'get-type', 1, ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-predicate_behavior_impl('&self', 'foo', 2, ['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
-predicate_behavior_impl(_, 'match', 4, ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-predicate_behavior_impl(_, 'case', 2, ['MismatchOriginal', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
+predicate_behavior_impl('&self', 'foo', 2,['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
+predicate_behavior_impl(_, 'match', 4,    ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
 
+predicate_behavior_impl(_, 'case', 2,     ['MismatchOriginal', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
+
+%(case (empty) ((Empty ())))
+
+%(if (== (+ 2 3) 5) True False)
+%(assert 0)
 
 get_ftype(Eq, RetType, Depth, Self, Val, TypeO):-
-  if_or_else(get_ftype_decl(Eq, RetType, Depth, Self, Val, TypeO), get_ftype_fallback(Eq, RetType, Depth, Self, Val, TypeO)).
+  if_or_else(get_ftype_decl(Eq, RetType, Depth, Self, Val, TypeO),
+             get_ftype_decl2(Eq, RetType, Depth, Self, Val, TypeO),
+             get_ftype_fallback(Eq, RetType, Depth, Self, Val, TypeO)).
 
-get_ftype_decl(_Eq, _RetType, Depth, Self, Val, TypeO):-
-    get_type(Depth, Self, Val, TypeO), is_list(TypeO), [Type|_]=TypeO, Type=='->'.
+get_ftype_decl(_Eq, _RetType, Depth, Self, Val, TypeO):- get_type(Depth, Self, Val, TypeO), arrow_type(TypeO,_,_).
+get_ftype_decl2(Eq, RetType, Depth, Self, [Val|_], TypeO):- is_list(Val), get_ftype_decl(Eq, RetType, Depth, Self, Val, TypeO).
 
 get_ftype_fallback(_Eq, _Type, _Depth, Self, [Op|Args], TypeO):- nonvar(Op), len_or_unbound(Args, Len), !, get_operator_ftypedef(Self, Op, Len, TypeO).
 get_ftype_fallback(_Eq, _Type, _Depth, Self, Op, TypeO):- get_operator_ftypedef(Self, Op, _Len, TypeO).
 
-op_farity(Op, Len):- no_repeats_var(Len), if_or_else(op_farity_decl(Op, Len), op_farity_fallback(Op, Len)).
+op_farity(Op, Len):- no_repeats_var(Len),
+   if_or_else(op_farity_decl(Op, Len),op_farity_fallback(Op, Len)).
 
-op_farity_decl(Op, Len):- metta_defn(_Self, [Op | Args], _Body), len_or_unbound(Args, Len).
 op_farity_decl(Op, Len):- metta_type(_Self, Op, [Ar, _|Types]), Ar=='->', len_or_unbound(Types, Len).
+op_farity_decl(Op, Len):- metta_defn(_Self, [Op1 | Args], _Body),Op==Op1, len_or_unbound(Args, Len).
+op_farity_decl(Op, Len):- metta_defn(_Self, [[Op1|Args]|_], _Body),Op==Op1, len_or_unbound(Args, Len).
 op_farity_fallback(_Op, Len):- between(0, 8, Len).
 
 get_operator_ftypedef(Self, Op, Len, TypeO):- (var(Len)->op_farity(Op, Len);true),
@@ -194,39 +216,58 @@ get_operator_typedef('&self', 'double-it', 1, ['List'], 'List').
 
 -->
 
-function_declaration('&self', 'double-it', 1, ['Z'], ['List'], 'List', ['let', ReturnVal, 'Z', ReturnVal], 'Z').
-function_declaration('&self', 'double-it', 1, [['S', X]], ['List'], 'List', ['let', ReturnVal, ['S', ['S', ['double-it', X]]], ReturnVal], ['S', ['S', ['double-it', X]]]).
 
 */
 
 fake_body([Op | Parameters], [Op | Parameters]).
 
+must_length(List,Len):- is_list(List),!,must_det_lls(length(List,Len)).
+must_length(List,Len):- integer(Len),!,must_det_lls(length(List,Len)).
+must_length(List,Len):- trace,length(List,Len).
 
 metta_defn_return(Self, Original, Body, WrappedBody, ReturnVal):-
   if_or_else(metta_defn_decl(Self, Original, Body, WrappedBody, ReturnVal),
          metta_defn_fallback(Self, Original, Body, WrappedBody, ReturnVal)).
 
-metta_defn_decl(Self, [Op | Parameters], Body, [let, ReturnVal, Body, ReturnVal], ReturnVal):- metta_defn(Self, [Op | Parameters], Body).
+metta_defn_decl(Self, [Op | Args], Body, [let, ReturnVal, Body, ReturnVal], ReturnVal):- metta_defn(Self, [Op | Args], Body).
+%metta_defn_decl(Self, [[Op | Args] | Apply], [ apply, Body | Apply], [let, ReturnVal, [ Body | Apply], ReturnVal], ReturnVal):- is_list( Args), metta_defn(Self, [Op | Args] , Body).
+%metta_defn_decl(Self, [Op | Args], [ [do_apply ,[Op | Args], Body] | Apply], [let, ReturnVal, [Body|Apply], ReturnVal], ReturnVal):- is_list( Args),
+%   metta_defn(Self, [[Op | Args] | Apply], Body).
 
-must_length(List,Len):- is_list(List),!,must_det_lls(length(List,Len)).
-must_length(List,Len):- integer(Len),!,must_det_lls(length(List,Len)).
-must_length(List,Len):- trace,length(List,Len).
-
-metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal], Body, ReturnVal):-
+metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal], Body, ReturnVal):- is_list(Parameters),
    must_length(Parameters, Len),
    format(atom(Fn),'mc_~w__~w',[Len,Op]),
    current_predicate(Fn/_),
    Body = ['call-fn',Fn|Parameters],!.
-
 metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):- fail,
    Body = [let, [quote, ReturnVal], [quote, ['interp!', Op | Parameters]], ReturnVal], Op \=='interp!'.
 
 
 metta_typed_defn(Self, ParamTypes, RetType, Head, WrappedBody, ReturnVal):-  Head = [Op | Parameters],
-   function_declaration(Self, Op, _Len, Parameters, ParamTypes, RetType, WrappedBody, ReturnVal).
+   must_length(Parameters, Len), must_length(CParameters, Len), must_length(ParamTypes, Len), must_length(CParamTypes, Len),
+   function_declaration_impl(Self, Op, _Len, CParameters, CParamTypes, CRetType, WrappedBody, CReturnVal),
+   ParamTypes = CParamTypes, Parameters = CParameters, CRetType = RetType, CReturnVal = ReturnVal.
 
-function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal) :-
+:- dynamic(function_declaration_cache/9).
+function_declaration_cache('&self', 'double-it', 1, ['Z'], ['List'], 'List', ['let', ReturnVal, 'Z', ReturnVal], 'Z').
+function_declaration_cache('&self', 'double-it', 1, [['S', X]], ['List'], 'List', ['let', ReturnVal, ['S', ['S', ['double-it', X]]], ReturnVal], ['S', ['S', ['double-it', X]]]).
 
+
+function_declaration(Self,  Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal):-
+   must_length(Parameters, Len), must_length(CParameters, Len), must_length(ParamTypes, Len), must_length(CParamTypes, Len),
+   function_declaration_impl(Self, Op, Len, CParameters, CParamTypes, CRetType, CBody, CWrappedBody, CReturnVal),
+   ParamTypes = CParamTypes, Parameters = CParameters,  CRetType = RetType, CBody = Body, CWrappedBody = WrappedBody, CReturnVal = ReturnVal.
+
+
+function_declaration_impl(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal):-
+  if_or_else(function_declaration_impl1(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal),
+             function_declaration_impl2(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal)).
+
+function_declaration_impl2(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal):-
+  wdmsg(failed(function_declaration_impl(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal))),fail.
+
+function_declaration_impl1(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal) :-
+   call((
     %Self = '&self',
     len_or_unbound(Parameters, Len),
     %(var(Len)->op_farity(Op, Len);true),
@@ -235,22 +276,32 @@ function_declaration(_, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedB
     metta_defn_return(Self, [Op | Parameters], Body, WrappedBody, ReturnVal),
     must_length(Parameters, Len),
     NR = ([Op | Parameters] + Body),
-    head_body_typedef(Self, Op, Len, ParamTypes, RetType, [Op | Parameters], Body),
-    NR = NRR. %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body).
+    once(head_body_typedef(Self, Op, Len, ParamTypes, RetType, [Op | Parameters], Body)),
+    NR = NRR)). %nop(write_src_nl(metta_defn(Self, [Op | Parameters], Body).
 
 head_body_typedef(Self, Op, Len, ParamTypes, RetType, Head, Body):-
-    (src_data_ordinal(Self, [=, Head, Body], ClauseOrdinal)*->true;
-    (src_data_ordinal(Self, [=, Head, _], ClauseOrdinal)*->true;
-    (ClauseOrdinal = -1))),
-    length(ParamTypes, Len),
+    if_or_else(src_data_ordinal(Self, [=, Head, Body], ClauseOrdinal),
+               src_data_ordinal(Self, [=, Head, _], ClauseOrdinal),
+               ClauseOrdinal = -1),
+    must_length(ParamTypes, Len),
     SrcObject = pr(ParamTypes, RetType),
     findall(TypeDeclLoc-SrcObject, (src_data_ordinal(Self, [:, Op, [Ar|Type]], TypeDeclLoc), Ar=='->', append(ParamTypes, [RetType], Type)), SrcObjectList),
+    SrcObjectList\==[],
     nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList),!.
-head_body_typedef(Self, Op, Len, ParamTypes, RetType, _Head, _Body):-
+head_body_typedef(Self, Op, Len, ParamTypes, RetType, _Head, _Body):- %trace,
     get_operator_typedef(Self, Op, Len, ParamTypes, RetType).
 
-src_data_ordinal(_Self, Data, Ordinal):-
-    user:metta_file_buffer(0, Ordinal, _TypeNameCompound, Data, _NamedVarsListC, _Context, _Range).
+src_data_ordinal(Self, Data, Ordinal):-
+   if_or_else(src_data_ordinal_exact(Self, Data, Ordinal),src_data_ordinal_unifable(Self, Data, Ordinal)).
+src_data_ordinal_exact(Self, Data, Ordinal):- copy_term(Data,DataC),
+    user:metta_file_buffer(0, Ordinal, _TypeNameCompound, DataC, _NamedVarsListC, Context, _Range), DataC=@=Data,
+    \+ \+ visible_from(Context, Self).
+src_data_ordinal_unifable(Self, Data, Ordinal):- copy_term(Data,DataC),
+    user:metta_file_buffer(0, Ordinal, _TypeNameCompound, DataC, _NamedVarsListC, Context, _Range),
+    Data=DataC,
+    \+ \+ visible_from(Context, Self).
+
+visible_from(_Context, _Self).
 
 nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
     select(TypeDeclLoc-SrcObject, SrcObjectList, Rest),
@@ -259,6 +310,9 @@ nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
     \+ (member(LocOther-_, Rest),
        DistanceOther is LocOther-ClauseOrdinal,
        DistanceOther<0, DistanceOther>Distance), !.
+
+nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):-
+    wdmsg(failing(nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList))),fail.
 
 nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
     select(TypeDeclLoc-SrcObject, SrcObjectList, Rest),
@@ -271,19 +325,37 @@ nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
 nearest_src_object(SrcObject, _, SrcObjectList):- last(_ - SrcObject, SrcObjectList),!.
 
 
-finfo([Op|Args]):- is_list(Args), !, length(Args, Len), finfo(Op, Len).
-finfo(Op):- atomic(Op), !, finfo(Op, _, _).
-finfo(Op, Len):- finfo(Op, Len, _).
 
-finfo(Op, Len, Head) :-
+heads_of_op(Op,Head):- metta_type(Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType),arrow_type(RetType,LT,_LR),
+   same_len_copy(ParamTypes,PTL),same_len_copy(LT,LTL),
+   Head=[[Op|PTL]|LTL].
+heads_of_op(Op,Head):- metta_type(Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType), \+ arrow_type(RetType,_LT,_LR),
+   same_len_copy(ParamTypes,PTL),
+   Head=[Op|PTL].
+
+arrow_type([Ar|TypeDecl],ParamTypes,RetType):- Ar=='->',append(ParamTypes,[RetType],TypeDecl).
+
+
+finfo_atomic(Op):-
+   if_or_else(  (heads_of_op(Op,Head), finfo_head(Head)),
+                (op_farity(Op, Len), finfo_arity(Op, Len))).
+
+finfo_head([[Op|LA]|Args]):- atom(Op), is_list(LA), is_list(Args), !, length(LA, Len), finfo(Op,Len,[[Op|LA]|Args]).
+finfo_head([Op|Args]):- atom(Op), is_list(Args), !, length(Args, Len), finfo(Op, Len, [Op|Args]).
+% curried
+
+finfo(Op):- atomic(Op), !, finfo_atomic(Op).
+finfo(Op):- is_list(Op), !, finfo_head(Op).
+finfo(Op, Len):- atomic(Op), finfo_arity(Op, Len).
+finfo_arity(Op, Len):- if_t(var(Len),op_farity(Op, Len)), length(Args, Len), finfo([Op|Args]).
+finfo(Op, Len, Head):-
     % length(Parameters, Len),
-    op_farity(Op, Len),
+    if_t(var(Len),op_farity(Op, Len)),
     succ(Len,LenP1),
     call_showing(predicate_behavior(Self, Op, Len, [List|_]), predicate_behavior(Self, Op, Len, List)),
-    length(Parameters, Len),
-    length(ParamTypes, Len),
-    [Op|Parameters] = Head,
-    call_showing(get_ftype('=', _RetType1, 20, Self, Head, TypeO), [['get-ftype', Self, Head],==>,TypeO]),
+    %length(Parameters, Len),
+    %length(ParamTypes, Len),
+    call_showing(get_ftype('=', _RetType1, 20, Self, Head, TypeO), [['get-ftype', Head, Self],==>,TypeO]),
     %call_showing(metta_atom(_, [iz, Op, _])),
     %call_showing(metta_atom(_, [':', Op, _])),
     ReturnVal = '$VAR'('_returnVal'),
@@ -292,6 +364,8 @@ finfo(Op, Len, Head) :-
     format(atom(Fn),'mc_~w__~w',[Len,Op]), % forall(current_predicate(Fn/LenP1),listing(Fn/LenP1)),
     call_showing(Fn/LenP1),
     call_showing(function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, _RetType, Body, ReturnVal,_)),
+    if_t(\+ function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, __RetType, Body, ReturnVal,_),
+        call_showing(function_declaration_impl(_, Op, Len, Parameters, ParamTypes, ___RetType, Body, __WrappedBody, ReturnVal))),
     if_t(\+ metta_defn(Self, [Op | Parameters], Body), call_showing(metta_defn_return(Self, [Op | Parameters], Body, _, ReturnVal),[=,[Op | Parameters],Body])),
     call_showing((metta_atom(KB, [A, B|Out]), sub_var(Op, [A, B])), [ist,KB, [A, B|Out]]),
     true.
