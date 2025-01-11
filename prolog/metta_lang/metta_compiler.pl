@@ -121,8 +121,8 @@ transpiler_predicate_store(dummy,0,[],x(doeval,eager)).
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
-as_p1_exec(is_p1(_,Code,Ret),Ret) :- !, call(Code).
-as_p1_expr(is_p1(Expr,_,_),Expr).
+as_p1_exec(is_p1(_,_,Code,Ret),Ret) :- !, call(Code).
+as_p1_expr(is_p1(Code,Ret,_,_),Ret) :- !, call(Code).
 
 % Meta-predicate that ensures that for every instance where G1 holds, G2 also holds.
 :- meta_predicate(for_all(0,0)).
@@ -560,9 +560,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    ; true),
    %AsFunction = HeadIs,
    must_det_lls((
-      (FnName='If2' -> trace ; true),
+      %(FnName='facF' -> trace ; true),
       %trace(f2p/6),
-      %trace,
+      trace,
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgs,Types0,RetType0),
       maplist(arg_eval_props,Types0,TypeProps),
@@ -580,8 +580,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       (ClauseIdList=[] -> ClauseId=0 ; max_list(ClauseIdList,ClauseIdm1),ClauseId is ClauseIdm1+1),
       compiler_assertz(transpiler_clause_store(FnName,LenArgsPlus1,ClauseId,Types0,RetType0,FinalLazyArgs,FinalLazyRet,HeadIs,AsBodyFn)),
       combine_transpiler_cause_store_and_maybe_recompile(FnName,LenArgsPlus1,FinalLazyArgsAdj,FinalLazyRetAdj0),
-      FinalLazyRetAdj0=x(_,L),
-      FinalLazyRetAdj=x(doeval,L),
+      FinalLazyRetAdj=FinalLazyRetAdj0,
+      %FinalLazyRetAdj0=x(_,L),
+      %FinalLazyRetAdj=x(doeval,L),
       maplist(arrange_lazy_args,Args,FinalLazyArgsAdj,LazyArgsListAdj),
 
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
@@ -883,8 +884,9 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
    ast_to_prolog(Caller,DontStub,Then,Then2),
    ast_to_prolog(Caller,DontStub,Else,Else2),
    R=((If2) *-> (Then2);(Else2)).
-ast_to_prolog_aux(Caller,DontStub,[is_p1,Expr,Code0,R],is_p1(Expr,Code1,R)) :- !,
-   ast_to_prolog(Caller,DontStub,Code0,Code1).
+ast_to_prolog_aux(Caller,DontStub,[is_p1,CodeN0,Expr,Code0,R],is_p1(CodeN1,Expr,Code1,R)) :- !,
+   ast_to_prolog(Caller,DontStub,Code0,Code1),
+   ast_to_prolog(Caller,DontStub,CodeN0,CodeN1).
 ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
    label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
@@ -1071,7 +1073,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager), '#\\'(Convert), [], [
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager), Convert, [], []) :- fail,
     once(number(Convert);atomic(Convert);\+compound(Convert);atomic(Convert)/*;data_term(Convert)*/),!. %CheckifConvertisanumberoranatom
-    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
+    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     %RetResult=Convert, Converted=[],
     % For OVER-REACHING categorization of dataobjs %
@@ -1083,7 +1085,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager), Convert, [], []) :- f
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager), Convert, [], []) :- % HeadIs\==Convert,
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
-    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,Convert,[],Convert]),
+    %(ResultLazy=x(_,eager) -> C2=Convert ; C2=[is_p1,[],Convert,[],Convert]),
     %Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
     % wdmsg(data_term(Convert)),
@@ -1093,8 +1095,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager), Convert, [], []) :- %
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN):-
    Convert=[Fn|_],
    atom(Fn),
-   compile_flow_control(HeadIs,LazyVars,RetResult, ResultLazy, Convert, Converted, ConvertedN),
-   RetResultN=RetResult,!.
+   compile_flow_control(HeadIs,LazyVars,RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN),!.
 
 
 /*
@@ -1298,8 +1299,8 @@ lazy_impedance_match(x(_,L),x(noeval,L),_ValE,_CodeE,ValN,CodeN,ValN,CodeN).
 lazy_impedance_match(x(_,lazy),x(doeval,eager),ValE,CodeE,_ValN,_CodeN,RetResult,Code) :- append(CodeE,[[native(as_p1_exec),ValE,RetResult]],Code).
 lazy_impedance_match(x(_,lazy),x(noeval,eager),_ValE,_CodeE,ValN,CodeN,RetResult,Code) :- append(CodeN,[[native(as_p1_expr),ValN,RetResult]],Code).
 % eager -> lazy
-lazy_impedance_match(x(_,eager),x(doeval,lazy),ValE,CodeE,_ValN,_CodeN,RetResult,Code) :- append(CodeE,[[assign,RetResult,[is_p1,ValE,[],ValE]]],Code).
-lazy_impedance_match(x(_,eager),x(noeval,lazy),_ValE,_CodeE,ValN,CodeN,RetResult,Code) :- append(CodeN,[[assign,RetResult,[is_p1,ValN,[],ValN]]],Code).
+lazy_impedance_match(x(_,eager),x(doeval,lazy),ValE,CodeE,ValN,CodeN,RetResult,Code) :- Code=[[assign,RetResult,[is_p1,CodeN,ValN,CodeE,ValE]]].
+lazy_impedance_match(x(_,eager),x(noeval,lazy),ValE,CodeE,ValN,CodeN,RetResult,Code) :- Code=[[assign,RetResult,[is_p1,CodeN,ValN,CodeE,ValE]]].
 
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Number',!.
 arg_eval_props(N,x(doeval,eager)) :- atom(N),N='Bool',!.
@@ -1321,7 +1322,7 @@ arg_eval_props(_,x(doeval,eager)).
 %      f2p(HeadIs,LazyVars,SubArgE,x(doeval,eager),Arg,SubCodeE),
 %      %convert_expression_instantiate_lazy1(LazyVars,Arg,ArgT,[],AsP1Table),
 %      %maplist(convert_p1_table_to_code,AsP1Table,SubCodeN),
-%      Converted=[[assign,RetArg,[is_p1,Arg,SubCodeE,SubArgE]]]
+%      Converted=[[assign,RetArg,[is_p1,[],Arg,SubCodeE,SubArgE]]]
 %   ).
 %do_arg_eval(HeadIs,LazyVars,Arg,x(doeval,eager),NewArg,Code) :- f2p(HeadIs,LazyVars,NewArg,x(doeval,eager),Arg,Code).
 
@@ -1352,7 +1353,7 @@ convert_expression_instantiate_lazy1(LazyVars,ValIn,ValOut,TableIn,TableOut) :-
 
 convert_p1_table_to_code(X-Y,[native(as_p1_expr),X,Y]).
 
-:- discontiguous(compile_flow_control/6).
+:- discontiguous(compile_flow_control/8).
 :- discontiguous(compile_flow_control3/6).
 :- discontiguous(compile_flow_control2/6).
 :- discontiguous(compile_flow_control1/6).
@@ -1436,14 +1437,14 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   append(BodyCode,[[prolog_inline,throw(metta_return(RetResult))]],Converted).
 */
 
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted, ConvertedN) :-
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResult,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['if',Cond,Then,Else],!,
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
   append(CondCode1,[[native(is_True),CondResult1]],If),
   compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN).
 
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted, ConvertedN) :-
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResult,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['if',Cond,Then],!,
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
@@ -1453,35 +1454,35 @@ compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted, Conv
 compile_test_then_else(HeadIs,RetResult,LazyVars,LazyEval,If,Then,Else,Converted, Converted):-
   f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
   f2p(HeadIs,LazyVars,ElseResult,ElseResultN,ElseLazyEval,Else,ElseCode,ElseCodeN),
-  %LazyEval=x(doeval,eager),
-  arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
+  %arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
+  (Else=='Empty' -> LazyEval=ThenLazyEval ; arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval)),
   lazy_impedance_match(ThenLazyEval,LazyEval,ThenResult,ThenCode,ThenResultN,ThenCodeN,ThenResult1,ThenCode1),
   lazy_impedance_match(ElseLazyEval,LazyEval,ElseResult,ElseCode,ElseResultN,ElseCodeN,ElseResult1,ElseCode1),
   % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult
   append(ThenCode1,[[assign,RetResult,ThenResult1]],T),
   append(ElseCode1,[[assign,RetResult,ElseResult1]],E),
   Converted=[[prolog_if,If,T,E]].
-/*
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- % dif_functors(HeadIs,Convert),
-   Convert = ['let',Var,Value1,Body],!,
-   %(fullvar(Value1) -> var_prop_lookup(Value1,LazyVars,x(E,_)) ; E=doeval),
-   f2p(HeadIs,LazyVars,ResValue1,x(doeval,eager),Value1,CodeForValue1),
-   add_assignment(Var,ResValue1,CodeForValue1,CodeForValue2),
-   f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-   append(CodeForValue2,BodyCode,Converted).
 
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :- %dif_functors(HeadIs,Convert),
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :- % dif_functors(HeadIs,Convert),
+   Convert = ['let',Var,Value1,Body],!,
+   compile_let_star(HeadIs,LazyVars,[Var,Value1],Code),
+   f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
+   append(Code,BodyCode,Converted),
+   append(Code,BodyCodeN,ConvertedN).
+
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :- %dif_functors(HeadIs,Convert),
   Convert = ['let*',Bindings,Body],!,
   must_det_lls((
     maplist(compile_let_star(HeadIs,LazyVars),Bindings,CodeList),
     append(CodeList,Code),
-    f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-    append(Code,BodyCode,Converted))).
+   f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
+   append(Code,BodyCode,Converted),
+   append(Code,BodyCodeN,ConvertedN))).
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
-  f2p(HeadIs,LazyVars,ResValue1,x(doeval,eager),Value1,CodeForValue1),
-  add_assignment(Var,ResValue1,CodeForValue1,Code).
-*/
+  f2p(HeadIs,LazyVars,ResValue1,ResValueN,LazyRet,Value1,CodeForValue1,CodeForValueN),
+  lazy_impedance_match(LazyRet,x(doeval,eager),ResValue1,CodeForValue1,ResValueN,CodeForValueN,Result,ResultCode),
+  add_assignment(Var,Result,ResultCode,Code).
 
 unnumbervars_clause(Cl,ClU):-
   copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
