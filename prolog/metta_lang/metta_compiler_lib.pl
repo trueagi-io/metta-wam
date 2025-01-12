@@ -157,7 +157,7 @@ transpiler_predicate_store('eval', 2, [x(noeval,eager)], x(doeval,eager)).
 transpiler_predicate_store('get-metatype', 2, [x(noeval,eager)], x(doeval,eager)).
 'mc_1__get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
 
-transpiler_predicate_store('println!', 2, [x(noeval,eager)], x(doeval,eager)).
+transpiler_predicate_store('println!', 2, [x(doeval,eager)], x(doeval,eager)).
 'mc_1__println!'(X,[]) :- println_impl(X).
 
 transpiler_predicate_store('stringToChars', 2, [x(doeval,eager)], x(doeval,eager)).
@@ -168,6 +168,9 @@ transpiler_predicate_store('charsToString', 2, [x(doeval,eager)], x(doeval,eager
 
 transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager),x(noeval,eager)], x(doeval,eager)).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
+
+transpiler_predicate_store('prolog-trace', 1, [], x(doeval,eager)).
+'mc_0__prolog-trace'([]) :- trace.
 
 % this is a hack to make 'quote' behave as expected (noeval rather than eval).
 % the reason for this is that stubs are currently created with x(doeval,eager) by default.
