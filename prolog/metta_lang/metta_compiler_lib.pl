@@ -123,7 +123,9 @@ transpiler_predicate_store(superpose, 2, [x(doeval,eager)], x(doeval,eager)).
 
 transpiler_predicate_store(collapse, 2, [x(doeval,lazy)], x(doeval,eager)).
 'mc_1__collapse'(is_p1(_,_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(is_p1(_,_,true,X),[X]).
+'mc_1__collapse'(is_p1(_,_,true,X),[X]) :- !.
+'mc_1__collapse'(is_p1(_,_,Code,'True'),['True']) :- call(Code).
+'mc_1__collapse'(is_p1(_,_,Code,'1'),['1']) :- call(Code).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
