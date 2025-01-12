@@ -477,7 +477,6 @@ transpile_eval(Convert0,LiConverted,PrologCode) :-
    ).
 
 arg_properties_widen(L,L,L) :- !.
-arg_properties_widen(x(_,eager),x(_,eager),x(noeval,eager)) :- !.
 arg_properties_widen(_,_,x(noeval,lazy)).
 
 combine_transpiler_cause_store_aux(ArgsN-RetN,Args0-Ret0,Args1-Ret1) :-
@@ -588,6 +587,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
+      trace,
       f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
@@ -1294,7 +1294,7 @@ f2p(HeadIs,LazyVars,_,_,EvalArgs,Convert,_,_):-
 
 % eager -> eager, lazy -> lazy
 lazy_impedance_match(x(_,L),x(doeval,L),ValE,CodeE,_ValN,_CodeN,ValE,CodeE).
-lazy_impedance_match(x(_,L),x(noeval,L),ValE,CodeE,_ValN,_CodeN,ValE,CodeE).
+lazy_impedance_match(x(_,L),x(noeval,L),_ValE,_CodeE,ValN,CodeN,ValN,CodeN).
 % lazy -> eager
 lazy_impedance_match(x(_,lazy),x(doeval,eager),ValE,CodeE,_ValN,_CodeN,RetResult,Code) :- append(CodeE,[[native(as_p1_exec),ValE,RetResult]],Code).
 lazy_impedance_match(x(_,lazy),x(noeval,eager),_ValE,_CodeE,ValN,CodeN,RetResult,Code) :- append(CodeN,[[native(as_p1_expr),ValN,RetResult]],Code).
@@ -1467,6 +1467,7 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
    Convert = ['let',Var,Value1,Body],!,
    compile_let_star(HeadIs,LazyVars,[Var,Value1],Code),
    f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
+   trace,
    append(Code,BodyCode,Converted),
    append(Code,BodyCodeN,ConvertedN).
 
