@@ -590,7 +590,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %trace,
+      %leash(-all),trace,
       f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
@@ -1403,22 +1403,29 @@ add_assignment(A,B,CodeOld,CodeNew) :-
       A=B,CodeNew=CodeOld
    ;  append(CodeOld,[[assign,A,B]],CodeNew)).
 
-/*
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
    Convert=['case',Value,Cases],!,
-   f2p(HeadIs,LazyVars,ValueResult,x(doeval,eager),Value,ValueCode),
-   compile_flow_control_case(HeadIs,LazyVars,RetResult,LazyEval,ValueResult,Cases,Converted0),
-   append(ValueCode,Converted0,Converted).
+   f2p(HeadIs,LazyVars,ValueResult,ValueResultN,LazyRetValue,Value,ValueCode,ValueCodeN),
+   lazy_impedance_match(LazyRetValue,x(doeval,eager),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
+   compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1,Cases,Converted0,Converted0N),
+   append(ValueCode1,Converted0,Converted),
+   append(ValueCode1,Converted0N,ConvertedN).
 
-compile_flow_control_case(_,_,RetResult,_,_,[],Converted) :- !,Converted=[[assign,RetResult,'Empty']].
-compile_flow_control_case(HeadIs,LazyVars,RetResult,LazyEval,ValueResult,[[Match,Target]|Rest],Converted) :-
-   f2p(HeadIs,LazyVars,MatchResult,x(doeval,eager),Match,MatchCode),
-   f2p(HeadIs,LazyVars,TargetResult,LazyEval,Target,TargetCode),
-   compile_flow_control_case(HeadIs,LazyVars,RestResult,LazyEval,ValueResult,Rest,RestCode),
+compile_flow_control_case(_,_,RetResult,RetResultN,_,_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
+compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
+   f2p(HeadIs,LazyVars,MatchResult,MatchResultN,LazyRetMatch,Match,MatchCode,MatchCodeN),
+   lazy_impedance_match(LazyRetMatch,x(doeval,eager),MatchResult,MatchCode,MatchResultN,MatchCodeN,MatchResult1,MatchCode1),
+   f2p(HeadIs,LazyVars,TargetResult,TargetResultN,LazyEval0,Target,TargetCode,TargetCodeN),
+   compile_flow_control_case(HeadIs,LazyVars,RestResult,RestResultN,LazyEval1,ValueResult,Rest,RestCode,RestCodeN),
+   arg_properties_widen(LazyEval0,LazyEval1,LazyEval),
    append(TargetCode,[[assign,RetResult,TargetResult]],T),
+   append(TargetCodeN,[[assign,RetResultN,TargetResultN]],TN),
    append(RestCode,[[assign,RetResult,RestResult]],R),
-   append(MatchCode,[[prolog_if,[[prolog_match,ValueResult,MatchResult]],T,R]],Converted).
+   append(RestCodeN,[[assign,RetResultN,RestResultN]],RN),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],T,R]],Converted),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],TN,RN]],ConvertedN).
 
+/*
 compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
   Convert = ['case', Eval, CaseList],!,
   f2p(HeadIs, LazyVars, Var, x(doeval,eager), Eval, CodeCanFail),
@@ -1432,20 +1439,6 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Next, _Empty, EvalFailed) 
 case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
     case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
     Out = ['if', [case_match, Var, Pattern], Result, Next].
-
-
-% !(compile-body! (function 1))
-% !(compile-body! (function (throw 1)))
-% !(compile-body! (superpose ((throw 1) (throw 2))))
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-  Convert = ['function', Body],!,
-  f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  Converted = [[prolog_catch,BodyCode,metta_return(FunctionResult),FunctionResult=RetResult]].
-
-compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
-  Convert = ['return',Body],!,
-  f2p(HeadIs,LazyVars,RetResult,LazyEval,Body,BodyCode),
-  append(BodyCode,[[prolog_inline,throw(metta_return(RetResult))]],Converted).
 */
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
@@ -1476,6 +1469,21 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ThenCodeN,[[assign,RetResultN,ThenResultN]],TN),
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
+
+% !(compile-body! (function 1))
+% !(compile-body! (function (throw 1)))
+% !(compile-body! (superpose ((throw 1) (throw 2))))
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted,ConvertedN) :-
+  Convert = ['function', Body],!,
+  f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
+  Converted = [[prolog_catch,BodyCode,metta_return(FunctionResult),FunctionResult=RetResult]],
+  ConvertedN = [[prolog_catch,BodyCodeN,metta_return(FunctionResultN),FunctionResultN=RetResultN]].
+
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
+  Convert = ['return',Body],!,
+  f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
+  append(BodyCode,[[prolog_inline,throw(metta_return(RetResult))]],Converted),
+  append(BodyCodeN,[[prolog_inline,throw(metta_return(RetResultN))]],ConvertedN).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :- % dif_functors(HeadIs,Convert),
    Convert = ['let',Var,Value1,Body],!,
