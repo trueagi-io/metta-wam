@@ -1263,10 +1263,10 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       append(Converteds2,[[assign,RetResult,[call(Fn)|RetResults]]],Converted),
-      append(Converteds2,[[assign,RetResult,list([Fn|RetResults])]],ConvertedN),
-      RetResultN=RetResult
+      append(Converteds2,[[assign,RetResultN,list([Fn|RetResults])]],ConvertedN)
    ;
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
+      % do this twice so that RetResult and RetResultN are distinct
       f2p_do_group(x(doeval,eager),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
       f2p_do_group(x(noeval,eager),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
       append(DoEvalCodeCollected,[[assign,RetResult,list(DoEvalRetResults)]],Converted),

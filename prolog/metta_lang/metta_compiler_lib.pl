@@ -124,8 +124,7 @@ transpiler_predicate_store(superpose, 2, [x(doeval,eager)], x(doeval,eager)).
 transpiler_predicate_store(collapse, 2, [x(doeval,lazy)], x(doeval,eager)).
 'mc_1__collapse'(is_p1(_,_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc_1__collapse'(is_p1(_,_,true,X),[X]) :- !.
-'mc_1__collapse'(is_p1(_,_,Code,'True'),['True']) :- call(Code).
-'mc_1__collapse'(is_p1(_,_,Code,'1'),['1']) :- call(Code).
+'mc_1__collapse'(is_p1(_,_,Code,A),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
@@ -174,8 +173,5 @@ transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager),x(noeval,e
 transpiler_predicate_store('prolog-trace', 1, [], x(doeval,eager)).
 'mc_0__prolog-trace'([]) :- trace.
 
-% this is a hack to make 'quote' behave as expected (noeval rather than eval).
-% the reason for this is that stubs are currently created with x(doeval,eager) by default.
-% once the check and recompile loop is done (using transpiler_predicate_store/4, stubs will be correctly created with x(neval,eager), and this can go away.
-%transpiler_predicate_store('quote', 2, [x(noeval,eager)], x(noeval,eager)).
-%'mc_1__quote'(A,['quote',A]).
+transpiler_predicate_store('quote', 2, [x(noeval,eager)], x(noeval,eager)).
+'mc_1__quote'(A,['quote',A]).
