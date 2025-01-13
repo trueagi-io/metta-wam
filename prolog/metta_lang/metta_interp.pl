@@ -2773,174 +2773,710 @@ do_cmdline_load_metta(Phase, Self, Rest) :-
     forall(process_late_opts, true).
 
 :- if( \+ current_predicate(load_metta_file/2)).
-load_metta_file(Self,Filemask):- symbol_concat(_,'.metta',Filemask),!, load_metta(Self,Filemask).
-load_metta_file(_Slf,Filemask):- load_flybase(Filemask).
+
+%!  load_metta_file(+Self, +Filemask) is det.
+%
+%   Determines the appropriate loading mechanism for a given file based on its extension.
+%
+%   This predicate checks if the provided `Filemask` matches a file with the `.metta` extension.
+%   If so, it calls `load_metta/2` to handle the file. Otherwise, it defaults to `load_flybase/1`.
+%
+%   The `:- if/1` directive ensures that this predicate is only defined if `load_metta_file/2`
+%   is not already defined elsewhere, preventing conflicts during reloading or loading from
+%   other files.
+%
+%   @arg Self The context or "space" in which the file is to be loaded.
+%   @arg Filemask The file path or pattern to be loaded. Files ending in `.metta` will be processed
+%        differently from other files.
+%
+%   @example
+%     % Load a `.metta` file:
+%     ?- load_metta_file('&self', 'example.metta').
+%     % Calls load_metta('&self', 'example.metta').
+%
+load_metta_file(Self, Filemask) :-
+    % If the file has a `.metta` extension, call `load_metta/2`.
+    symbol_concat(_, '.metta', Filemask), !,
+    load_metta(Self, Filemask).
+load_metta_file(_Slf, Filemask) :-
+    % Otherwise, call `load_flybase/1` to handle the file.
+    load_flybase(Filemask).
+
 :- endif.
 
-catch_abort(From,Goal):-
-   catch_abort(From,Goal,Goal).
-catch_abort(From,TermV,Goal):-
-   catch(Goal,'$aborted',fbug(aborted(From,TermV))).
+%!  catch_abort(+From, :Goal) is det.
+%
+%   Executes a Goal, handling any '$aborted' exceptions gracefully.
+%   This is a utility predicate to ensure that if the Goal raises an `$aborted`
+%   exception, it logs the error and avoids abrupt termination of the program.
+%
+%   The first clause is a shorthand for calling `catch_abort/3` with `From` and the
+%   same `Goal` as both arguments for `TermV` and `Goal`.
+%
+%   @arg From  A term describing the origin of the Goal, typically used for debugging
+%              or tracing the source of the operation.
+%   @arg Goal  The Prolog goal to be executed.
+%
+%   @example
+%     % Execute a goal and handle '$aborted' exceptions:
+%     ?- catch_abort(my_source, writeln('Hello, World!')).
+%     Hello, World!
+%
+%     % Handle an '$aborted' exception gracefully:
+%     ?- catch_abort(my_source, abort).
+%     % Logs: aborted(my_source, abort)
+%
+catch_abort(From, Goal) :-
+    % Redirect to the three-argument version of `catch_abort`.
+    catch_abort(From, Goal, Goal).
+
+%!  catch_abort(+From, +TermV, :Goal) is det.
+%
+%   Executes a Goal, catching and handling any '$aborted' exceptions.
+%   If a '$aborted' exception is raised, it logs the `From` and `TermV` using `fbug/1`.
+%
+%   @arg From   A term describing the origin of the Goal, used for logging.
+%   @arg TermV  The term or context associated with the Goal, often the same as the Goal.
+%   @arg Goal   The Prolog goal to be executed.
+%
+%   @example
+%     % Catch an '$aborted' exception and log the details:
+%     ?- catch_abort(my_source, some_context, abort).
+%     % Logs: aborted(my_source, some_context)
+%
+catch_abort(From, TermV, Goal) :-
+    % Use `catch/3` to handle exceptions raised by the Goal.
+    catch(
+        Goal,               % The goal to execute.
+        '$aborted',         % Catch '$aborted' exceptions.
+        % Log the exception using `fbug/1`.
+        fbug(aborted(From, TermV))
+    ).
 % done
 
-before_arfer_dash_dash(Rest,Args,NewRest):-
-  append(Args,['--'|NewRest],Rest)->true;([]=NewRest,Args=Rest).
+%!  before_arfer_dash_dash(+Rest, -Args, -NewRest) is det.
+%
+%   Splits a list of arguments at the first occurrence of `--`.
+%   Arguments before `--` are unified with `Args`, and those after `--`
+%   are unified with `NewRest`. If `--` is not found, the entire list is
+%   treated as `Args`, and `NewRest` is unified with an empty list.
+%
+%   @arg Rest     The input list of arguments to process.
+%   @arg Args     The arguments before the first occurrence of `--`.
+%   @arg NewRest  The arguments after the first occurrence of `--`, or an empty list if no `--` exists.
+%
+%   @example
+%     % Example with `--` present in the list:
+%     ?- before_arfer_dash_dash([a, b, '--', c, d], Args, NewRest).
+%     Args = [a, b],
+%     NewRest = [c, d].
+%
+%     % Example without `--` in the list:
+%     ?- before_arfer_dash_dash([a, b, c], Args, NewRest).
+%     Args = [a, b, c],
+%     NewRest = [].
+%
+before_arfer_dash_dash(Rest, Args, NewRest) :-
+    % Attempt to split the list at `--`.
+    append(Args, ['--' | NewRest], Rest) ->
+        true; % If `--` is found, split the list accordingly.
+        % If `--` is not found, assign the entire list to `Args` and set `NewRest` to an empty list.
+        ([] = NewRest, Args = Rest).
 
-cmdline_load_metta(_,_,Nil):- Nil==[],!.
+%!  cmdline_load_metta(+Phase, +Self, +Args) is det.
+%
+%   Processes Metta command-line arguments based on the given Phase.
+%   Handles various options and directives, including `--args`, `--repl`, `--log`,
+%   file loading, and custom commands like `-g` and `-G`.
+%
+%   @arg Phase The phase of processing (e.g., `prescan`, `execute`).
+%   @arg Self  The context or "space" in which to execute commands or load files.
+%   @arg Args  A list of command-line arguments to process.
+%
+%   @example
+%     % Example of processing `--args`:
+%     ?- cmdline_load_metta(execute, '&self', ['--args', '--file=example.metta']).
+%
 
-cmdline_load_metta(Phase,Self,['--'|Rest]):- !,
-  cmdline_load_metta(Phase,Self,Rest).
+% Base case: succeed when the argument list is empty.
+cmdline_load_metta(_, _, Nil) :-
+    Nil == [], !.
+% Handle double-dash (`--`) by skipping it and continuing with the rest of the arguments.
+cmdline_load_metta(Phase, Self, ['--' | Rest]) :-
+    !,
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle `--args` by extracting arguments before `--` and setting them for Metta.
+cmdline_load_metta(Phase, Self, ['--args' | Rest]) :-
+    !,
+    before_arfer_dash_dash(Rest, Before, NewRest),
+    !,
+    set_metta_argv(Before),
+    cmdline_load_metta(Phase, Self, NewRest).
+% Handle `--repl` by entering the REPL during the execution phase.
+cmdline_load_metta(Phase, Self, ['--repl' | Rest]) :-
+    !,
+    if_phase(Phase, execute, repl),
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle `--log` by switching to MettaLog mode during the execution phase.
+cmdline_load_metta(Phase, Self, ['--log' | Rest]) :-
+    !,
+    if_phase(Phase, execute, switch_to_mettalog),
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle file loading when the argument does not start with `-`.
+cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
+    symbol(Filemask),
+    \+ symbol_concat('-', _, Filemask),
+    if_phase(Phase, execute, cmdline_load_file(Self, Filemask)),
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle `-g` by executing the given Prolog term.
+cmdline_load_metta(Phase, Self, ['-g', M | Rest]) :-
+    !,
+    if_phase(Phase, execute, catch_abort(['-g', M], ((
+        read_term_from_atom(M, Term, []),
+        ignore(call(Term)))
+    ))),
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle `-G` by evaluating a Metta expression within the current context.
+cmdline_load_metta(Phase, Self, ['-G', Str | Rest]) :-
+    !,
+    current_self(Self),
+    if_phase(Phase, execute, catch_abort(['-G', Str], ignore(call_sexpr('!', Self, Str, _S, _Out)))),
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle command-line options by setting their corresponding values.
+cmdline_load_metta(Phase, Self, [M | Rest]) :-
+    m_opt(M, Opt),
+    is_cmd_option(Opt, M, TF),
+    set_option_value_interp(Opt, TF),
+    !,
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle unrecognized command-line options by logging a warning.
+cmdline_load_metta(Phase, Self, [M | Rest]) :-
+    format('~N'),
+    fbug(unused_cmdline_option(Phase, M)),
+    !,
+    cmdline_load_metta(Phase, Self, Rest).
 
-cmdline_load_metta(Phase,Self,['--args'|Rest]):- !,
-  before_arfer_dash_dash(Rest,Before,NewRest),!,
-  set_metta_argv(Before),
-  cmdline_load_metta(Phase,Self,NewRest).
+%!  install_ontology is det.
+%
+%   Installs the core ontology by ensuring core library types are loaded.
+%   This predicate serves as a setup step for ontology-related operations,
+%   preparing the necessary types required by the system.
+%
+%   @example
+%     % Ensure the core library types are installed:
+%     ?- install_ontology.
+%
+install_ontology :-
+    ensure_corelib_types.
 
-cmdline_load_metta(Phase,Self,['--repl'|Rest]):- !,
-  if_phase(Phase,execute,repl),
-  cmdline_load_metta(Phase,Self,Rest).
-cmdline_load_metta(Phase,Self,['--log'|Rest]):- !,
-  if_phase(Phase,execute,switch_to_mettalog),
-  cmdline_load_metta(Phase,Self,Rest).
-cmdline_load_metta(Phase,Self,[Filemask|Rest]):- symbol(Filemask), \+ symbol_concat('-',_,Filemask),
-  if_phase(Phase,execute,cmdline_load_file(Self,Filemask)),
-  cmdline_load_metta(Phase,Self,Rest).
-
-cmdline_load_metta(Phase,Self,['-g',M|Rest]):- !,
-  if_phase(Phase,execute,catch_abort(['-g',M],((read_term_from_atom(M, Term, []),ignore(call(Term)))))),
-  cmdline_load_metta(Phase,Self,Rest).
-
-cmdline_load_metta(Phase,Self,['-G',Str|Rest]):- !,
-  current_self(Self),
-  if_phase(Phase,execute,catch_abort(['-G',Str],ignore(call_sexpr('!',Self,Str,_S,_Out)))),
-  cmdline_load_metta(Phase,Self,Rest).
-
-cmdline_load_metta(Phase,Self,[M|Rest]):-
-  m_opt(M,Opt),
-  is_cmd_option(Opt,M,TF),
-  %fbug(is_cmd_option(Phase,Opt,M,TF)),
-  set_option_value_interp(Opt,TF), !,
-  %set_tty_color_term(true),
-  cmdline_load_metta(Phase,Self,Rest).
-
-cmdline_load_metta(Phase,Self,[M|Rest]):-
-  format('~N'), fbug(unused_cmdline_option(Phase,M)), !,
-  cmdline_load_metta(Phase,Self,Rest).
-
-
-install_ontology:- ensure_corelib_types.
-load_ontology:- option_value(compile,false),!.
+%!  load_ontology is det.
+%
+%   Loads the ontology unless the `compile` option is explicitly set to `false`.
+%   If the `compile` option is `false`, the predicate succeeds immediately without
+%   performing any operations.
+%
+%   @example
+%     % Load ontology when `compile` option is true:
+%     ?- load_ontology.
+%
+load_ontology :-
+    % Skip loading if the `compile` option is set to `false`.
+    option_value(compile, false), !.
 load_ontology.
 
-%cmdline_load_file(Self,Filemask):- is_converting,!,
+%!  cmdline_load_file(+Self, +Filemask) is det.
+%
+%   Loads a file in the given context (`Self`) based on the specified `Filemask`.
+%   The predicate attempts to load the file using `load_metta_file/2` and handles
+%   any exceptions gracefully using `catch_abort/2`. During execution, it ensures
+%   compatibility checks and output flushing.
+%
+%   @arg Self      The context or "space" in which the file is to be loaded.
+%   @arg Filemask  The file path or pattern to be loaded.
+%
+%   @example
+%     % Load a Metta file in the current context:
+%     ?- cmdline_load_file('&self', 'example.metta').
+%
 
-cmdline_load_file(Self,Filemask):-
-    Src=(user:load_metta_file(Self,Filemask)),
+%cmdline_load_file(Self, Filemask):- is_converting, !,
+cmdline_load_file(Self, Filemask) :-
+    % Construct the source for file loading.
+    Src = (user:load_metta_file(Self, Filemask)),
+    % Use `catch_abort/2` to handle exceptions during file loading.
     catch_abort(Src,
-    (must_det_ll((
-          not_compatio((nl,write('; '),write_src(Src),nl)),
-          catch_red(Src),!,flush_output)))),!.
+        (
+            must_det_ll((
+                % Ensure compatibility checks and write debug output.
+                not_compatio((nl, write('; '), write_src(Src), nl)),
+                % Execute the file loading logic with error handling.
+                catch_red(Src),
+                !,
+                % Flush output streams to ensure sync.
+                flush_output
+            ))
+        )
+    ),
+    !.
 
-if_phase(Current,Phase,Goal):- ignore((sub_var(Current,Phase),!, Goal)).
+%!  if_phase(+Current, +Phase, :Goal) is det.
+%
+%   Executes a Goal if the Current phase matches the specified Phase.
+%   This predicate is useful for controlling execution flow during specific phases.
+%
+%   @arg Current The current execution phase.
+%   @arg Phase   The target phase to match.
+%   @arg Goal    The Prolog goal to execute if the phases match.
+%
+%   @example
+%     % Execute a goal during the `execute` phase:
+%     ?- if_phase(execute, execute, writeln('Executing...')).
+%     Executing...
+%
+if_phase(Current, Phase, Goal) :-
+    ignore((sub_var(Current, Phase), !, Goal)).
 
-set_tty_color_term(TF):-
-  current_output(X),set_stream(X,tty(TF)),
-                    set_stream(X, encoding(utf8)),
-  set_stream(current_output,tty(TF)),
-  set_stream(current_output, encoding(utf8)),
-  set_prolog_flag(color_term ,TF).
+%!  set_tty_color_term(+TF) is det.
+%
+%   Configures terminal output to enable or disable color formatting and ensures UTF-8 encoding.
+%
+%   Updates the current output stream to reflect the `tty` mode based on the input flag.
+%
+%   @arg TF A boolean indicating whether to enable (`true`) or disable (`false`) color formatting.
+%
+%   @example
+%     % Enable color formatting for the terminal output:
+%     ?- set_tty_color_term(true).
+%
+set_tty_color_term(TF) :-
+    current_output(X),
+    set_stream(X, tty(TF)),
+    set_stream(X, encoding(utf8)),
+    set_stream(current_output, tty(TF)),
+    set_stream(current_output, encoding(utf8)),
+    set_prolog_flag(color_term, TF).
 
-m_opt(M,Opt):-
-  m_opt0(M,Opt1),
-  m_opt1(Opt1,Opt).
+%!  m_opt(+M, -Opt) is det.
+%
+%   Extracts the option name from a given command-line argument.
+%   This predicate handles prefixes like `--`, `--no-`, and `-`.
+%
+%   @arg M   The raw command-line option (e.g., `--verbose`, `-debug`).
+%   @arg Opt The extracted option name (e.g., `verbose`, `debug`).
+%
+%   @example
+%     % Extract the option name from a raw command-line argument:
+%     ?- m_opt('--no-debug', Opt).
+%     Opt = debug.
+%
+m_opt(M, Opt) :-
+    m_opt0(M, Opt1),
+    m_opt1(Opt1, Opt).
 
-m_opt1(Opt1,Opt):- symbolic_list_concat([Opt|_],'=',Opt1).
+%!  m_opt1(+Opt1, -Opt) is det.
+%
+%   Processes options containing an `=` sign to extract the core option name.
+%
+%   @arg Opt1 The input option with or without `=` (e.g., `verbose=true`).
+%   @arg Opt  The extracted option name (e.g., `verbose`).
+%
+%   @example
+%     % Extract the core option from an option string:
+%     ?- m_opt1('verbose=true', Opt).
+%     Opt = verbose.
+%
+m_opt1(Opt1, Opt) :-
+    symbolic_list_concat([Opt | _], '=', Opt1).
 
-m_opt0(M,Opt):- symbol_concat('--no-',Opt,M),!.
-m_opt0(M,Opt):- symbol_concat('--',Opt,M),!.
-m_opt0(M,Opt):- symbol_concat('-',Opt,M),!.
+%!  m_opt0(+M, -Opt) is det.
+%
+%   Strips prefixes like `--no-`, `--`, or `-` from the given option.
+%
+%   @arg M   The raw command-line option (e.g., `--no-debug`).
+%   @arg Opt The stripped option name (e.g., `debug`).
+%
+%   @example
+%     % Remove prefixes from an option string:
+%     ?- m_opt0('--no-debug', Opt).
+%     Opt = debug.
+%
+m_opt0(M, Opt) :-
+    symbol_concat('--no-', Opt, M), !.
+m_opt0(M, Opt) :-
+    symbol_concat('--', Opt, M), !.
+m_opt0(M, Opt) :-
+    symbol_concat('-', Opt, M), !.
 
-:- set_prolog_flag(occurs_check,true).
+%!  set_prolog_flag(occurs_check, true) is det.
+%
+%   Ensures that Prolog's `occurs_check` flag is set to `true`, enabling
+%   strict unification checking to prevent infinite terms.
+%
+%   This directive is applied globally during the compilation of the program.
+%
+%   @example
+%     % Verify that `occurs_check` is enabled:
+%     ?- current_prolog_flag(occurs_check, true).
+%     true.
+%
+:- set_prolog_flag(occurs_check, true).
 
-start_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
-start_html_of(_Filename):-!.
-start_html_of(_Filename):-
- must_det_ll((
-  S = _,
-  %retractall(metta_eq_def(Eq,S,_,_)),
-  nop(retractall(metta_type(S,_,_))),
-  %retractall(get_metta_atom(Eq,S,_,_,_)),
-  loonit_reset,
-  tee_file(TEE_FILE),
-  sformat(S,'cat /dev/null > "~w"',[TEE_FILE]),
+%!  start_html_of(+Filename) is det.
+%
+%   Prepares the environment for HTML output generation.
+%   This includes clearing associated states and resetting the specified output file.
+%
+%   If no output file is configured via `tee_file/1`, the predicate exits silently.
+%   Otherwise, it performs the following:
+%   - Resets internal states using `loonit_reset/0`.
+%   - Deletes the contents of the output file.
+%
+%   @arg Filename The name of the file for which HTML output is being prepared.
+%
+%   @example
+%     % Prepare an HTML output file:
+%     ?- start_html_of('output.html').
+%
+start_html_of(_Filename) :-
+    % Exit silently if no terminal output file is set.
+    \+ tee_file(_TEE_FILE), !.
+start_html_of(_Filename) :- !.
+start_html_of(_Filename) :-
+    must_det_ll((
+        S = _,
+        % Remove any existing type definitions for the given context.
+        %retractall(metta_eq_def(Eq, S, _, _)),
+        nop(retractall(metta_type(S, _, _))),
+        % Remove any existing atom definitions for the given context.
+        %retractall(get_metta_atom(Eq, S, _, _, _)),
+        % Reset the internal state to a clean configuration.
+        loonit_reset,
+        % Retrieve the terminal output file path.
+        tee_file(TEE_FILE),
+        % Clear the contents of the terminal output file.
+        sformat(S, 'cat /dev/null > "~w"', [TEE_FILE]),
+        % Debugging output to indicate the action being performed.
+        writeln(doing(S)),
+        % Execute the shell command to clear the file.
+        ignore(shell(S))
+    )).
 
-  writeln(doing(S)),
-  ignore(shell(S)))).
+%!  save_html_of(+Filename) is det.
+%
+%   Finalizes and saves the generated HTML output. If the `tee_file/1` is not configured
+%   or there are no results to save (`has_loonit_results/0` is false), the predicate exits silently.
+%
+%   If HTML generation is required, the following is performed:
+%   - Generates a summary using `loonit_report/0`.
+%   - Converts ANSI terminal output to HTML using `ansi2html`.
+%
+%   @arg Filename The name of the output file for saving the HTML content.
+%
+%   @example
+%     % Save the generated HTML output:
+%     ?- save_html_of('output.metta').
+%
+save_html_of(_Filename) :-
+    % Exit silently if no terminal output file is set.
+    \+ tee_file(_TEE_FILE), !.
+save_html_of(_) :-
+    % Exit if there are no results or HTML output is disabled.
+    \+ has_loonit_results,
+    \+ option_value('html', true).
+save_html_of(_) :-
+    % Generate the summary report if applicable.
+    loonit_report, !,
+    writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>').
+save_html_of(_Filename) :- !.
+save_html_of(Filename) :-
+    must_det_ll((
+        % Prepare the HTML output filename.
+        file_name_extension(Base, _, Filename),
+        file_name_extension(Base, 'metta.html', HtmlFilename),
+        % Reset the internal state.
+        loonit_reset,
+        % Retrieve the terminal output file path.
+        tee_file(TEE_FILE),
+        % Write the summary report link.
+        writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>'),
+        % Convert ANSI terminal output to HTML.
+        sformat(S, 'ansi2html -u < "~w" > "~w" ', [TEE_FILE, HtmlFilename]),
+        % Debugging output to indicate the action being performed.
+        writeln(doing(S)),
+        % Execute the shell command to generate the HTML file.
+        ignore(shell(S))
+    )).
 
-save_html_of(_Filename):- \+ tee_file(_TEE_FILE),!.
-save_html_of(_):- \+ has_loonit_results, \+ option_value('html',true).
-save_html_of(_):- loonit_report, !, writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>').
-save_html_of(_Filename):-!.
-save_html_of(Filename):-
- must_det_ll((
-  file_name_extension(Base,_,Filename),
-  file_name_extension(Base,'metta.html',HtmlFilename),
-  loonit_reset,
-  tee_file(TEE_FILE),
-  writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>'),
-  sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
-  writeln(doing(S)),
-  ignore(shell(S)))).
+%!  tee_file(-TEE_FILE) is nondet.
+%
+%   Determines the path to the terminal output file (`TEE_FILE`).
+%   The path is resolved as follows:
+%   1. If the environment variable `TEE_FILE` is set, its value is used.
+%   2. Otherwise, a default path is constructed using the Metta directory.
+%
+%   @arg TEE_FILE The resolved path to the terminal output file.
+%
+%   @example
+%     % Retrieve the terminal output file path:
+%     ?- tee_file(Path).
+%
+tee_file(TEE_FILE) :-
+    getenv('TEE_FILE', TEE_FILE), !.
+tee_file(TEE_FILE) :-
+    metta_dir(Dir),
+    directory_file_path(Dir, 'TEE.ansi', TEE_FILE), !.
 
-tee_file(TEE_FILE):- getenv('TEE_FILE',TEE_FILE),!.
-tee_file(TEE_FILE):- metta_dir(Dir),directory_file_path(Dir,'TEE.ansi',TEE_FILE),!.
+%!  clear_spaces is det.
+%
+%   Clears all spaces by invoking `clear_space/1` for each relevant context.
+%
+%   @example
+%     % Clear all spaces:
+%     ?- clear_spaces.
+%
+clear_spaces :- clear_space(_).
 
+%!  clear_space(+S) is det.
+%
+%   Clears all references and types associated with a given space (`S`).
+%   This includes retracting asserted atoms and other type-related information.
+%
+%   @arg S The identifier of the space to clear.
+%
+%   @example
+%     % Clear a specific space:
+%     ?- clear_space(my_space).
+%
+clear_space(S) :-
+    % Remove loaded knowledge base entries for the space.
+    retractall(user:loaded_into_kb(S, _)),
+    % Remove type definitions for the space.
+    %retractall(metta_eq_def(_, S, _, _)),
+    nop(retractall(metta_type(S, _, _))),
+    % Remove asserted atoms for the space.
+    retractall(metta_atom_asserted(S, _)).
 
-clear_spaces:- clear_space(_).
-clear_space(S):-
-   retractall(user:loaded_into_kb(S,_)),
-   %retractall(metta_eq_def(_,S,_,_)),
-   nop(retractall(metta_type(S,_,_))),
-   retractall(metta_atom_asserted(S,_)).
+%!  dcall(:G) is det.
+%
+%   A direct wrapper for `call/1`.
+%   This predicate provides a shorthand for invoking any Prolog goal.
+%
+%   @arg G The Prolog goal to execute.
+%
+%   @example
+%     % Execute a goal:
+%     ?- dcall(writeln('Hello, World!')).
+%     Hello, World!
+%
+dcall(G) :- call(G).
 
-dcall(G):- call(G).
+%!  lsm is det.
+%
+%   Lists metadata associated with all spaces.
+%   This includes file references, dynamic types, and definitions for each space.
+%
+%   @example
+%     % List metadata for all spaces:
+%     ?- lsm.
+%
+lsm :- lsm(_).
 
-lsm:- lsm(_).
-lsm(S):-
-   listing(metta_file(S,_,_)),
-   %listing(mdyn_type(S,_,_,_)),
-   forall(mdyn_type(S,_,_,Src),color_g_mesg('#22a5ff',write_f_src(Src))),
-   nl,nl,nl,
-   forall(mdyn_defn(S,_,_,Src),color_g_mesg('#00ffa5',write_f_src(Src))),
-   %listing(mdyn_defn(S,_,_,_)),
-   !.
+%!  lsm(+S) is det.
+%
+%   Lists metadata associated with a specific space (`S`).
+%   Displays file references, dynamic types, and definitions related to the space.
+%
+%   @arg S The identifier of the space for which metadata is listed.
+%
+%   @example
+%     % List metadata for a specific space:
+%     ?- lsm(my_space).
+%
+lsm(S) :-
+    % List files associated with the space.
+    listing(metta_file(S, _, _)),
+    % List dynamic types for the space with color-coded messages.
+    %listing(mdyn_type(S, _, _, _)),
+    forall(mdyn_type(S, _, _, Src), color_g_mesg('#22a5ff', write_f_src(Src))),
+    nl, nl, nl,
+    % List definitions for the space with color-coded messages.
+    forall(mdyn_defn(S, _, _, Src), color_g_mesg('#00ffa5', write_f_src(Src))),
+    %listing(mdyn_defn(S, _, _, _)),
+    !.
 
-write_f_src(H,B):- H=@=B,!,write_f_src(H).
-write_f_src(H,B):- write_f_src(['=',H,B]).
+%!  write_f_src(+H, +B) is det.
+%
+%   Writes a formatted representation of a source term to the output.
+%   This predicate handles two cases:
+%   1. If the terms `H` and `B` are structurally identical (`=@=/2`), it writes the term `H`.
+%   2. Otherwise, it writes a list containing `=` and the terms `H` and `B`.
+%
+%   @arg H The first term to format and write.
+%   @arg B The second term to format and write.
+%
+%   @example
+%     % Write a single term when `H` and `B` are identical:
+%     ?- write_f_src(foo, foo).
+%     foo
+%
+%     % Write a formatted list when `H` and `B` differ:
+%     ?- write_f_src(foo, bar).
+%     [=,foo,bar]
+%
+write_f_src(H, B) :-
+    % If the terms `H` and `B` are structurally identical, write `H`.
+    H=@=B, !,
+    write_f_src(H).
+write_f_src(H, B) :-
+    % Otherwise, write a list containing `=` and the terms `H` and `B`.
+    write_f_src(['=', H, B]).
 
+%!  hb_f(+HB, -ST) is nondet.
+%
+%   Determines a sub-term (`ST`) of `HB` that satisfies specific conditions.
+%   The sub-term must:
+%   - Be a symbol.
+%   - Not be the term `=` or `:`.
+%
+%   @arg HB The input term from which the sub-term is extracted.
+%   @arg ST The sub-term of `HB` that meets the specified conditions.
+%
+%   @example
+%     % Extract a valid sub-term:
+%     ?- hb_f(foo(bar, baz), ST).
+%     ST = bar.
+%
 hb_f(HB,ST):- sub_term(ST,HB),(symbol(ST),ST\==(=),ST\==(:)),!.
-write_f_src(HB):-
-  hb_f(HB,ST),
-  option_else(current_def,CST,[]),!,
-  (CST == ST -> true ; (nl,nl,nl,set_option_value_interp(current_def,ST))),
-  write_src(HB).
 
+%!  write_f_src(+HB) is det.
+%
+%   Writes the formatted representation of a higher-level construct (`HB`).
+%   This includes managing the current definition state and invoking the `write_src/1` predicate.
+%
+%   Steps:
+%   1. Extract a sub-term `ST` from `HB` using `hb_f/2`.
+%   2. Check the `current_def` option and update it if it differs from `ST`.
+%   3. Write the formatted source term using `write_src/1`.
+%
+%   @arg HB The higher-level construct to process and write.
+%
+%   @example
+%     % Write the formatted source of a term:
+%     ?- write_f_src(foo(bar)).
+%
+write_f_src(HB) :-
+    % Extract a sub-term `ST` from `HB`.
+    hb_f(HB, ST),
+    % Retrieve the current definition state, defaulting to an empty list if not set.
+    option_else(current_def, CST, []),
+    !,
+    % Update the `current_def` option if it differs from `ST`.
+    (CST == ST -> true ; (nl, nl, nl, set_option_value_interp(current_def, ST))),
+    % Write the source term.
+    write_src(HB).
 
+%!  debug_only(:G) is det.
+%
+%   Executes the goal `G` in debug mode, suppressing any warnings or errors.
+%   This predicate ignores warnings and uses `notrace/1` to prevent tracing during execution.
+%
+%   @arg G The Prolog goal to execute in debug mode.
+%
+%   @example
+%     % Run a goal in debug mode:
+%     ?- debug_only(writeln('Debugging...')).
+%     Debugging...
+%
+debug_only(G) :-
+    notrace(ignore(catch_warn(G))).
 
-debug_only(G):- notrace(ignore(catch_warn(G))).
-debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
+%!  debug_only(+What, :G) is det.
+%
+%   Executes the goal `G` in debug mode, with a context identifier (`What`).
+%   Similar to `debug_only/1`, but includes a `What` argument for contextual debugging.
+%
+%   @arg What A term describing the context of the debug operation.
+%   @arg G    The Prolog goal to execute in debug mode.
+%
+%   @example
+%     % Run a goal in debug mode with context:
+%     ?- debug_only(some_context, writeln('Debugging...')).
+%
+debug_only(_What, G) :-
+    ignore((fail, notrace(catch_warn(G)))).
 
+%!  'True' is det.
+%
+%   A predicate that always succeeds. It is an alias for `true/0`.
+%
+%   @example
+%     % Use the 'True' predicate:
+%     ?- 'True'.
+%     true.
+%
+'True' :-
+    true.
 
-'True':- true.
-'False':- fail.
+%!  'False' is det.
+%
+%   A predicate that always fails. It is an alias for `fail/0`.
+%
+%   @example
+%     % Use the 'False' predicate:
+%     ?- 'False'.
+%     false.
+%
+'False' :-
+    fail.
 
+%!  'mettalog::vspace-main' is det.
+%
+%   The main entry point for the MettaLog REPL.
+%   This predicate initializes the REPL interface for user interaction.
+%
+%   @example
+%     % Start the MettaLog REPL:
+%     ?- 'mettalog::vspace-main'.
+%
+'mettalog::vspace-main' :-
+    repl.
 
-'mettalog::vspace-main':- repl.
+%!  into_underscores(+D, -U) is det.
+%
+%   Transforms a symbol by replacing hyphens (`-`) with underscores (`_`).
+%   If the input is not a symbol, it recursively applies the transformation to its components.
+%
+%   @arg D The input term to transform.
+%   @arg U The transformed term with hyphens replaced by underscores.
+%
+%   @example
+%     % Transform a symbol:
+%     ?- into_underscores('some-symbol', Result).
+%     Result = 'some_symbol'.
+%
+into_underscores(D, U) :-
+    symbol(D),
+    !,
+    symbolic_list_concat(L, '-', D),
+    symbolic_list_concat(L, '_', U).
+into_underscores(D, U) :-
+    descend_and_transform(into_underscores, D, U),
+    !.
 
-into_underscores(D,U):- symbol(D),!,symbolic_list_concat(L,'-',D),symbolic_list_concat(L,'_',U).
-into_underscores(D,U):- descend_and_transform(into_underscores,D,U),!.
-
-
+%!  descend_and_transform(+P2, +Input, -Transformed) is det.
+%
+%   Recursively applies a transformation predicate to all components of a term.
+%   Variables remain unchanged. Compound terms are decomposed, their components transformed,
+%   and then reconstructed. Non-compound terms are processed using the provided transformation predicate.
+%
+%   @arg P2          The transformation predicate to apply.
+%   @arg Input       The input term to transform.
+%   @arg Transformed The transformed term.
+%
+%   @example
+%     % Transform components of a compound term:
+%     ?- descend_and_transform(into_underscores, foo('some-symbol', bar-baz), Result).
+%     Result = foo('some_symbol', bar_baz).
 descend_and_transform(P2, Input, Transformed) :-
     (   var(Input)
     ->  Transformed = Input  % Keep variables as they are
@@ -2977,35 +3513,179 @@ is_metta_data_functor(Eq,Other,H):-
   \+ get_metta_atom(Eq,Other,[H|_]),
   \+ metta_eq_def(Eq,Other,[H|_],_).
 */
-is_function(F):- symbol(F).
 
-is_False(X):- X\=='True', (is_False1(X)-> true ; (eval_H(X,Y),is_False1(Y))).
-is_False1(Y):- (Y==0;Y==[];Y=='False').
+%!  is_function(+F) is nondet.
+%
+%   Checks if `F` is a symbol, determining if it is a function.
+%
+%   @arg F The term to check.
+%
+%   @example
+%     % Check if 'foo' is a function:
+%     ?- is_function(foo).
+%     true.
+%
+is_function(F) :-
+    symbol(F).
 
-is_conz(Self):- compound(Self), Self=[_|_].
+%!  is_False(+X) is nondet.
+%
+%   Determines if `X` evaluates to `False`. This is done by:
+%   1. Checking if `X` satisfies `is_False1/1`.
+%   2. If not, evaluating `X` and checking if the result satisfies `is_False1/1`.
+%
+%   @arg X The term to evaluate for "false-ness."
+%
+%   @example
+%     % Check if 'False' evaluates to false:
+%     ?- is_False('False').
+%     true.
+%
+is_False(X) :-
+    X \== 'True',
+    (is_False1(X) -> true ; (eval_H(X, Y), is_False1(Y))).
 
-%dont_x(eval_H(Depth,Self,metta_if(A<B,L1,L2),R)).
+%!  is_False1(+Y) is nondet.
+%
+%   A helper predicate for `is_False/1`.
+%   Determines if `Y` is one of the following:
+%   - `0`
+%   - `[]`
+%   - `'False'`
+%
+%   @arg Y The term to check for "false-ness."
+%
+is_False1(Y) :-
+    (Y == 0 ; Y == [] ; Y == 'False').
+
+%!  is_conz(+Self) is nondet.
+%
+%   Checks if `Self` is a compound term with a list-like structure.
+%
+%   @arg Self The term to check.
+%
+%   @example
+%     % Check if a term is a cons:
+%     ?- is_conz([a, b]).
+%     true.
+%
+is_conz(Self) :-
+    compound(Self),
+    Self = [_|_].
+
+%!  dont_x(+Term) is nondet.
+%
+%   Specifies terms that should not be expanded or executed.
+%   In this case, prevents evaluation of terms involving a less-than comparison (`<`) within `eval_H`.
+%
+%   @arg Term The term to check against restricted forms.
+%
+%   @example
+%     % Check if a term is restricted:
+%     ?- dont_x(eval_H(1<2, _)).
+%     true.
+%
+
+% dont_x(eval_H(Depth,Self,metta_if(A<B,L1,L2),R)).
 dont_x(eval_H(_<_,_)).
 
-into_fp(D,D):- \+ \+ dont_x(D),!.
-into_fp(ListX,CallAB):-
-  sub_term(STerm,ListX),needs_expanded(STerm,Term),
-  %copy_term_g(Term,CTerm),
-  =(Term,CTerm),
-  substM(ListX,CTerm,Var,CallB), fn_append1(Term,Var,CallA),
-  into_fp((CallA,CallB),CallAB).
-into_fp(A,A).
+%!  into_fp(+D, -CallAB) is det.
+%
+%   Transforms a term `D` into a functional program representation `CallAB`.
+%   If `D` does not require transformation (checked using `dont_x/1`), it remains unchanged.
+%
+%   @arg D       The input term to transform.
+%   @arg CallAB  The transformed functional program representation.
+%
+%   @example
+%     % Transform a term into functional program representation:
+%     ?- into_fp(my_term, Result).
+%
+into_fp(D, D) :-
+    \+ \+ dont_x(D),
+    !.
+into_fp(ListX, CallAB) :-
+    sub_term(STerm, ListX),
+    needs_expanded(STerm, Term),
+    % copy_term_g(Term, CTerm),  % Original commented-out line
+    =(Term, CTerm),
+    substM(ListX, CTerm, Var, CallB),
+    fn_append1(Term, Var, CallA),
+    into_fp((CallA, CallB), CallAB).
+into_fp(A, A).
 
-needs_expand(Expand):- compound(Expand),functor(Expand,F,N),N>=1,symbol_concat(metta_,_,F).
-needs_expanded(eval_H(Term,_),Expand):- !,sub_term(Expand,Term),compound(Expand),Expand\=@=Term,
-   compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
-needs_expanded([A|B],Expand):- sub_term(Expand,[A|B]), compound(Expand), \+ is_conz(Expand), \+ is_ftVar(Expand), needs_expand(Expand).
+%!  needs_expand(+Expand) is nondet.
+%
+%   Checks if the term `Expand` needs to be expanded.
+%   This is determined if `Expand` is a compound term with a functor name starting with `metta_`.
+%
+%   @arg Expand The term to check.
+%
+needs_expand(Expand) :-
+    compound(Expand),
+    functor(Expand, F, N),
+    N >= 1,
+    symbol_concat(metta_, _, F).
 
-fn_append1(eval_H(Term,X),X,eval_H(Term,X)):-!.
-fn_append1(Term,X,eval_H(Term,X)).
+%!  needs_expanded(+Term, -Expand) is nondet.
+%
+%   Determines if a sub-term of `Term` needs to be expanded.
+%   The sub-term must satisfy the following conditions:
+%   - It is compound.
+%   - It is not a cons-like structure.
+%   - It is not an ftVar.
+%   - It satisfies `needs_expand/1`.
+%
+%   @arg Term    The input term containing potential sub-terms.
+%   @arg Expand  The sub-term that requires expansion.
+%
+needs_expanded(eval_H(Term, _), Expand) :-
+    !,
+    sub_term(Expand, Term),
+    compound(Expand),
+    Expand\=@=Term,
+    compound(Expand),
+    \+ is_conz(Expand),
+    \+ is_ftVar(Expand),
+    needs_expand(Expand).
+needs_expanded([A|B], Expand) :-
+    sub_term(Expand, [A|B]),
+    compound(Expand),
+    \+ is_conz(Expand),
+    \+ is_ftVar(Expand),
+    needs_expand(Expand).
 
+%!  fn_append1(+Term, +X, -Result) is det.
+%
+%   Appends `X` to a term `Term`, creating a functional program representation.
+%
+%   @arg Term   The input term.
+%   @arg X      The value to append.
+%   @arg Result The resulting functional program representation.
+%
+fn_append1(eval_H(Term, X), X, eval_H(Term, X)) :- !.
+fn_append1(Term, X, eval_H(Term, X)).
 
-
+%!  assert_preds(+Self, +Load, +Preds) is det.
+%
+%   Asserts predicates (`Preds`) into the current context (`Self`).
+%   Handles individual clauses, lists of clauses, and expanded forms.
+%
+%   This predicate provides a mechanism for asserting clauses into the Prolog database,
+%   with additional logic for dynamic and table declarations when `show_transpiler` or
+%   tabling options are enabled.
+%
+%   @arg Self  The context or namespace for the predicates being asserted.
+%   @arg Load  An indicator or flag for loading behavior (unused in some clauses).
+%   @arg Preds The predicates or list of predicates to assert.
+%
+%   @example
+%     % Assert a single predicate:
+%     ?- assert_preds('&self', _Load, (example_pred :- true)).
+%
+%     % Assert a list of predicates:
+%     ?- assert_preds('&self', _Load, [(example_pred1 :- true), (example_pred2 :- fail)]).
+%
 
 %assert_preds('&corelib',_Load, _Clause):-  !.
 assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),List).
@@ -4275,5 +4955,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
-
 
