@@ -46,14 +46,14 @@
 ;*******************************************************
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
-(: nth (-> Int Expression Atom)) ; Retrieves the nth element from the board.
+; (: nth (-> Int Expression Atom)) ; Retrieves the nth element from the board.
 (= (nth $n $list) 
     (if (== $n 1)
         (car-atom $list)
         (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
 
 ; Input a list and symbol, then return True if found, else False. Eg:  (contains_symbol (a b c) b) returns True.
-(: contains_symbol (-> Expression Atom Bool))
+; (: contains_symbol (-> Expression Atom Bool))
 (= (contains_symbol $list $sym) 
     (if (== $list ())
         False
@@ -93,8 +93,24 @@
   ))
 ))
 
+; below might work
+(= (concat_lists $ListofLists)
+  (if (== (size-atom $ListofLists) 0)
+      ()
+      (let $first_list (car-atom $ListofLists)
+        (if (== (size-atom $first_list) 0)
+            (concat_lists (cdr-atom $ListofLists))
+            (let*
+              ($a (car-atom $first_list))
+              ($b (cdr-atom $first_list))
+              ($c (cdr-atom $ListofLists))
+              ($d (cons-atom $b $c))
+              ($f (concat_lists $d))
+              (cons-atom $a $f)
+            )))))
+
 ;
-!(concat_lists (() (1 2 3) () (4 5) (6) (7 8 0) () ) )
+;!(concat_lists ((1 2 3)  (4 5) (6) (7 8 0) () ) )
 ;
 ;#( = #(nth 0 ($A 
 ;(= (nth $A #(Cons $B $C) $B)  
@@ -248,13 +264,13 @@
   (progn
     (println! " ") (println! " ") (println! " ") (println! " ")
     (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  M 1 2 1 3' ()))
+    (println! (format-args '1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3' ()))
     (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2) Move MeTTa Greedy Chess          ->  G' ()))
-    (println! (format-args '3) Reset                            ->  R' ()))
-    (println! (format-args '4) Commands List                    ->  C' ()))
-    (println! (format-args '5) Display Board                    ->  D' ()))
-    (println! (format-args '6) Quit                             ->  Q' ()))
+    (println! (format-args '2 Move MeTTa Greedy Chess          ->  G' ()))
+    (println! (format-args '3 Reset                            ->  R' ()))
+    (println! (format-args '4 Commands List                    ->  C' ()))
+    (println! (format-args '5 Display Board                    ->  D' ()))
+    (println! (format-args '6 Quit                             ->  Q' ()))
     (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))))
 ;
 
@@ -267,18 +283,20 @@
 ;*******************************************************
 
 ; Invoke with empty list, will return characters input from console until ENTER.
-(: (get-player-command (-> list list)))
-(= (get-player-command $input_list)  
-   (let $cmd (get-single-char!)
-      (progn
-          ; if initial execution flush output
-          (if (== (size-atom $input_list) 0) (flush-output!) ())
-          (if (== $cmd 13) ; if user hit <ENTER>
-            ;return all input
-            $input_list    
-            ;else gather more input
-            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
+;(: (get-player-command (-> list list)))
+;(= (get-player-command $input_list)  
+;   (let $cmd (get-single-char!)
+;      (progn
+;          ; if initial execution flush output
+;          (if (== (size-atom $input_list) 0) (flush-output!) ())
+;          (if (== $cmd 13) ; if user hit <ENTER>
+;            ;return all input
+;            $input_list    
+;            ;else gather more input
+;            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
 
+(= (get-player-command $input_list)  
+    ((py-atom input)))
 
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
@@ -294,13 +312,13 @@
     (println! (format-args '- Your pieces are marked with an asterisk.' ()))
     (println! (format-args '- Please take note of the following simple commands:' ()))
     (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1) TO MOVE YOUR PIECE USE (example) ->  M 1 2 1 3' ()))
+    (println! (format-args '1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3' ()))
     (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2) Move MeTTa Greedy Chess          ->  G' ()))
-    (println! (format-args '3) Reset                            ->  R' ()))
-    (println! (format-args '4) Commands List                    ->  C' ()))
-    (println! (format-args '5) Display Board                    ->  D' ()))
-    (println! (format-args '6) Quit                             ->  Q' ()))
+    (println! (format-args '2 Move MeTTa Greedy Chess          ->  G' ()))
+    (println! (format-args '3 Reset                            ->  R' ()))
+    (println! (format-args '4 Commands List                    ->  C' ()))
+    (println! (format-args '5 Display Board                    ->  D' ()))
+    (println! (format-args '6 Quit                             ->  Q' ()))
     (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))
     )))
 
@@ -359,27 +377,27 @@
     (println! "Please enter your command.")
     ; case statement for commands
     (let $command (get-player-command ())
-      (if (== $command 77)
+      (if (== $command "M") 
           (do 
             (M)                          ; Move human piece
             (command-loop))              ; Get next command, stay in loop.
-      (if (== $command 71)
+      (if (== $command "G")
           (do 
             (G)                          ; AI move
             (command-loop))              ; Get next command, stay in loop.
-      (if (== $command 82)
+      (if (== $command "R")
           (do 
             (R)                          ; Reset = "R"
             (command-loop))              ; Get next command, stay in loop.
-      (if (== $command 67)
+      (if (== $command "C")
           (do 
             (C)                          ; List valid commands = "C"
             (command-loop))              ; Get next command, stay in loop.
-      (if (== $command 68)
+      (if (== $command "D")
           (do 
             (D)                          ; Display board "D"
             (command-loop))              ; Get next command, stay in loop.
-      (if (== $command 81)
+      (if (== $command "Q")
             (println! "Quitting MeTTa Greedy Chess.")
       ; otherwise
       (do 
@@ -391,7 +409,7 @@
   (do
     (chess)          ; Start the chess game
     (command-loop))) ; Enter the recursive command-processing loop
-!(main_loop)
+;!(main_loop)
 ;-----------;
 
 ;
