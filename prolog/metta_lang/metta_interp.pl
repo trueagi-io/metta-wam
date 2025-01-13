@@ -3107,7 +3107,6 @@ m_opt0(M, Opt) :-
 m_opt0(M, Opt) :-
     symbol_concat('-', Opt, M), !.
 
-%!  set_prolog_flag(occurs_check, true) is det.
 %
 %   Ensures that Prolog's `occurs_check` flag is set to `true`, enabling
 %   strict unification checking to prevent infinite terms.
