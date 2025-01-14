@@ -875,6 +875,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
     must_det_ll((
         color_g_mesg(red, write_src_wi(loonit_failureR(G))),
         write_pass_fail(TestSrc, 'FAIL', G),
+        display(G),
         flag(loonit_failure, X, X + 1),
         % Optional trace or REPL on failure based on settings.
         if_t(option_value('on-fail', 'repl'), repl),
