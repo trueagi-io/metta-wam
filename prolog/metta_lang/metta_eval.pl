@@ -150,7 +150,7 @@ is_metta_declaration_f(F,H):- F == '=', !, is_list(H),  \+ (current_self(Space),
 % is_metta_declaration([F|T]):- is_list(T), is_user_defined_head([F]),!.
 
 % Sets the current self space to '&self'. This is likely used to track the current context or scope during the evaluation of Metta code.
-:- nb_setval(self_space, '&self').
+%:- nb_setval(self_space, '&self').
 
 
 %current_self(Space):- nb_current(self_space,Space).
@@ -237,7 +237,10 @@ allow_repeats_eval_([F|_]):- atom(F),allow_repeats_eval_f(F).
 allow_repeats_eval_f('superpose').
 allow_repeats_eval_f('collapse').
 
-as_prolog_x(IDepth,Self,X,XX):- as_prolog(IDepth,Self,X,XX).
+
+as_prolog_x(_Depth,_Slf,X,X):-!.
+%as_prolog_x(IDepth,Self,X,XX):- is_list(X), !, maplist(as_prolog(IDepth,Self),X,XX).
+%as_prolog_x(IDepth,Self,X,XX):- as_prolog(IDepth,Self,X,XX).
 
 :- nodebug(metta(overflow)).
 eval_00(Eq,RetType,Depth,Self,X,YO):-
@@ -274,7 +277,7 @@ subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
   %Y =YO,
-  notrace(if_t_else((wont_need_subst(Y),Y\=@=YO),
+  notrace(if_t_else((Y\=@=YO,wont_need_subst(Y)),
      (write_src_uo(needed_subst_args(Y,YO)),bt,sleep(1.0)),
   nop(write_src_uo(unneeded_subst_args(Y))))).
 
@@ -299,7 +302,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 :- discontiguous eval_20/6.
 :- discontiguous eval_21/6.
 %:- discontiguous eval_30/6.
-:- discontiguous eval_40/6.
+:- discontiguous eval_40/7.
 :- discontiguous eval_70/6.
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
@@ -375,8 +378,8 @@ eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eva
 eval_20(_,_,_,_,['echo',Value],Value):- !.
 eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 
-eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc_1+__make-var'(Types,Var).
-eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mc_2+__bless-var'(Var,Types,Var).
+eval_40(_Original,=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc_1+__make-var'(Types,Var).
+eval_40(_Original,=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mc_2+__bless-var'(Var,Types,Var).
 
 
 % =================================================================
@@ -726,25 +729,47 @@ eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
         ['assertEqual',X,Y],XX,YY,
         (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
          findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
-         equal_enough_for_test(XX,YY), RetVal).
+         equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertNotEqual',X,Y],XX,YY,
         (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
          findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
-         ( \+ equal_enough(XX,YY)), RetVal).
+         ( \+ equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY)), RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',X,Y],XX,YY,
         (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
-         =(Y,YY)),
-         equal_enough_for_test(XX,YY), RetVal).
+                                    as_prolog(Y,YY)),
+         equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY), RetVal).
+
+
+eval_20(Eq,_RetType,Depth,Self,['assertAlphaEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertAlphaEqual',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         equal_enough_for_test_renumbered_l(alpha_equ,XX,YY), RetVal).
+
+eval_20(Eq,_RetType,Depth,Self,['assertNotAlphaEqual',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertNotAlphaEqual',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+         findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
+         \+ equal_enough_for_test_renumbered_l(alpha_equ,XX,YY), RetVal).
+
+eval_20(Eq,_RetType,Depth,Self,['assertAlphaEqualToResult',X,Y],RetVal):- !,
+   loonit_assert_source_tf_empty(
+        ['assertAlphaEqualToResult',X,Y],XX,YY,
+        (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
+                                    as_prolog(Y,YY)),
+         equal_enough_for_test_renumbered_l(alpha_equ,XX,YY), RetVal).
 
 loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
     loonit_assert_source_tf(Src,Goal,Check,TF),
-    tf_to_empty(TF,['Error'(got(XX),expected(YY))],RetVal).
+    tf_to_empty(TF,['Error',['~nGot: ',XX],['~nExpected: ',YY]],RetVal).
 
 tf_to_empty(TF,Else,RetVal):-
   (TF=='True'->as_nop(RetVal);RetVal=Else).
@@ -794,50 +819,76 @@ sort_univ(L,S):- cl_list_to_set(L,E),sort(E,S).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
 is_tollerant:- \+ option_value('unit-tests','exact').
 
-equal_enough_for_test(X,Y):- X==Y,!.
-equal_enough_for_test(X,Y):- X=@=Y,!.
-equal_enough_for_test(X,Y):- is_list(X),is_list(Y),sort(X,X0),sort(Y,Y0),
-       Y0=[YY],X0=[XX],!,equal_enough_for_test(XX,YY).
-equal_enough_for_test(X,Y):- is_list(X),is_list(Y),X=[ErrorX|_],Y=[ErrorY|_],ErrorX=='Error',
+strict_equals_allow_vn(X,Y):- X==Y,!.
+strict_equals_allow_vn(X,Y):- attvar(X),attvar(Y),get_attr(X,vn,XX),get_attr(Y,vn,YY),!,XX==YY.
+strict_equals_allow_vn(X,Y):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,X=Y.
+strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,X=Y.
+strict_equals_allow_vn(X,Y):- X=@=Y,!.
+
+equal_enough_for_test_renumbered_l(_P2,X,Y):- is_blank(X),is_blank(Y),!.
+equal_enough_for_test_renumbered_l(P2,X,Y):- must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
+    maplist(equal_enough_for_test_renumbered(P2),X0,Y0).
+
+equal_enough_for_test_l(P2,X,Y):-            must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
+    maplist(equal_enough_for_test(P2),X0,Y0).
+
+equal_enough_for_test_renumbered(P2,X0,Y0):- equal_renumbered(X0,Y0,XX,YY), equal_enough_for_test(P2, XX,YY).
+
+equal_enough_for_test(P2,X,Y):- equal_enough(P2,X,Y),!.
+
+/*
+
+equal_enough_for_test(_2,X,Y):- is_list(X),is_list(Y),X=[ErrorX|_],Y=[ErrorY|_],ErrorX=='Error',
       ErrorY == ErrorX,!.
-equal_enough_for_test(X,Y):- is_blank(X),!,is_blank(Y).
-equal_enough_for_test(X,Y):- has_let_star(Y),!,\+ is_blank(X).
-equal_enough_for_test(X,Y):- is_list(X),is_list(Y),
-   Y=[YY],X=[XX],!,equal_enough_for_test(XX,YY).
+equal_enough_for_test(_P2,X,Y):- is_blank(X),!,is_blank(Y).
+equal_enough_for_test(_P2,X,Y):- has_let_star(Y),!,\+ is_blank(X).
+equal_enough_for_test(P2,X,Y):- is_list(X),is_list(Y),
+   Y=[YY],X=[XX],!,equal_enough_for_test(P2,XX,YY).
    %length(XX,XL),length(YY,YL),
 
-%equal_enough_for_test(X,Y):-!,fail.
+%equal_enough_for_test(P2,X,Y):-!,fail.
 
-equal_enough_for_test(X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
-  equal_enough_for_test2(XX,YY),!.
-equal_enough_for_test2(X,Y):- equal_enough(X,Y).
+equal_enough_for_test(P2,X,Y):- must_det_ll((subst_vars(X,XX),subst_vars(Y,YY))),!,
+  equal_enough_for_test2(P2,XX,YY),!.
+equal_enough_for_test2(P2,X,Y):- equal_enough(P2,X,Y).
 
-equal_enough(R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(RR,VV),!.
-equal_enough(R,V):- copy_term(R,RR),copy_term(V,VV),equal_enouf(R,V),!,R=@=RR,V=@=VV. % has not altered the term
-equal_enouf(R,V):- is_ftVar(R), is_ftVar(V), R=V,!.
-equal_enouf(X,Y):- is_blank(X),!,is_blank(Y).
-equal_enouf(R,V):- py_is_py(R),py_is_py(V),py_pp_str(R,RR),py_pp_str(V,VV),!,RR=VV.
-equal_enouf(X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
-equal_enouf(R,V):- R=@=V, R=V, !.
-equal_enouf(_,V):- V=@='...',!.
+equal_enough(P2,R,V):- is_list(R),is_list(V),sort_univ(R,RR),sort_univ(V,VV),!,equal_enouf(P2,RR,VV),!.
+*/
 
-equal_enouf(L,C):- is_tollerant, is_list(L),is_list(C),
-     maybe_remove_nils(C,CC),equal_enouf(L,CC).
 
-equal_enouf(L,C):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
-equal_enouf(C,L):- is_list(L),into_list_args(C,CC),!,equal_enouf_l(CC,L).
-%equal_enouf(R,V):- (var(R),var(V)),!, R=V.
-equal_enouf(R,V):- (var(R);var(V)),!, R==V.
-equal_enouf(R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
-equal_enouf(R,V):- atom(R),!,atom(V), has_unicode(R),has_unicode(V).
-equal_enouf(R,V):- (\+ compound(R) ; \+ compound(V)),!, R==V.
-equal_enouf(L,C):- into_list_args(L,LL),into_list_args(C,CC),!,equal_enouf_l(CC,LL).
+equal_enough(P2,R,V):- copy_term(R+V,RR+VV),equal_enouf(P2,R,V),!,ignore(R=@=RR),ignore(V=@=VV). % has not altered the returned term
 
-equal_enouf_l([S1,V1|_],[S2,V2|_]):- S1 == 'State',S2 == 'State',!, equal_enouf(V1,V2).
-equal_enouf_l(C,L):- \+ compound(C),!,L=@=C.
-equal_enouf_l(L,C):- \+ compound(C),!,L=@=C.
-equal_enouf_l([C|CC],[L|LL]):- !, equal_enouf(L,C),!,equal_enouf_l(CC,LL).
 
+equal_enouf(_,_,V):- V=='...',!.
+equal_enouf(P2,R,V):- call(P2,R,V), !.
+equal_enouf(P2,R,V):- (var(R);var(V)),!,fail.
+equal_enouf(P2,R,V):- is_ftVar(R), is_ftVar(V), call(P2,R,V), !.
+equal_enouf(_,X,Y):- is_blank(X),!,is_blank(Y).
+equal_enouf(_TODO,R,V):- py_is_py(R),py_is_py(V),py_pp_str(R,RR),py_pp_str(V,VV),!,RR=VV.
+equal_enouf(_,X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
+equal_enouf(_2,R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
+equal_enouf(P2,C,L):- \+ compound(C),!,call(P2,L,C).
+equal_enouf(P2,L,C):- \+ compound(C),!,call(P2,L,C).
+equal_enouf(P2,L,C):- into_list_args(L,LL),into_list_args(C,CC),!,equal_enouf_la(P2,LL,CC).
+
+equal_enouf_la(P2,[S1,V1|_],[S2,V2|_]):- S1 == 'State', !, S2 == 'State',!, equal_enouf(P2,V1,V2).
+equal_enouf_la(_2,[ErrorX|_],[ErrorY|_]):- ErrorX=='Error', !, ErrorY == ErrorX,!.
+equal_enouf_la(P2,C,L):- equal_enouf_l(P2,C,L).
+
+equal_enouf_l(P2,C,L):- \+ compound(C),!,call(P2,L,C).
+equal_enouf_l(P2,L,C):- \+ compound(C),!,call(P2,L,C).
+equal_enouf_l(P2,[C|CC],[L|LL]):- !, equal_enouf(P2,L,C),!,equal_enouf_l(P2,CC,LL).
+
+/*
+equal_enouf(P2,L,C):- is_tollerant, is_list(L),is_list(C),
+     maybe_remove_nils(C,CC),equal_enouf(P2,L,CC).
+
+equal_enouf(P2,R,V):- (var(R);var(V)),!, call(P2,R,V).
+equal_enouf(_2,R,V):- atom(R),!,atom(V), has_unicode(R),has_unicode(V).
+equal_enouf(P2,R,V):- (\+ compound(R) ; \+ compound(V)),!, call(P2,R,V).
+equal_enouf(P2,L,C):- into_list_args(L,LL),into_list_args(C,CC),!,equal_enouf_l(P2,CC,LL).
+
+*/
 maybe_remove_nils(I,O):- always_remove_nils(I,O),!,I\=@=O.
 always_remove_nils(I,O):- \+ compound(I),!,I=O.
 always_remove_nils([H|T], TT):- H==[],!, always_remove_nils(T,TT).
@@ -847,6 +898,100 @@ always_remove_nils([H|T],[H|TT]):- always_remove_nils(T,TT).
 has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
+
+'mx_2__=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
+'mx_2__=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
+alpha_equ(X,Y):- X=@=Y,!.
+
+remove_attr(Attr,Var):- del_attr(Var, Attr).
+with_attr(Attr,Var,Value):- get_attr(Var, Attr, Val).
+
+%make_some( $foo,  (made $some $foo))
+%make_some( $bar,  (made $some $bar))
+
+%! merge_same_named_vars(+XVars, +YVars, -SameExactVars, -SameNames, -LeftOverXVars, -LeftOverYVars) is det
+% XVars and YVars are lists of attributed variables.
+% SameExactVars contains variables that are identical in both lists.
+% SameNames contains pairs of variables (from XVars and YVars) whose attributes match.
+% LeftOverXVars and LeftOverYVars contain remaining variables from XVars and YVars, respectively.
+
+merge_same_named_vars([], VYs, [], [], [], VYs):- !.
+merge_same_named_vars(VXs, [], [], [], VXs, []):- !.
+
+merge_same_named_vars([VX|VXs], VYs, [VX|MoreOfTheSames], SameNames, LeftOverXVars, LeftOverYVars) :-
+    select(VY, VYs, RVYs), VX == VY, !,
+    merge_same_named_vars(VXs, RVYs, MoreOfTheSames, SameNames, LeftOverXVars, LeftOverYVars).
+
+merge_same_named_vars([VX|VXs], VYs, SameExact, Unmerged, LeftOverXVars, LeftOverYVars) :-
+    get_attr(VX, vn, XVal),
+    select(VY, VYs, RVYs), get_attr(VY, vn, YVal), XVal == YVal, !,
+    get_attrs_or_nil(VX, Attr1),
+    get_attrs_or_nil(VY, Attr2),
+    push_attributes(VX, Attr2),
+    push_attributes(VY, Attr1),
+    merge_same_named_vars(VXs, RVYs, SameExactVars, MorePairs, LeftOverXVars, LeftOverYVars),
+    ((VX=VY)
+     ->  (SameExact=[VX|SameExactVars], Unmerged = MorePairs)
+     ; (SameExactVars = SameExact, [(VX, VY)|MorePairs]=Unmerged)).
+
+merge_same_named_vars([VX|VXs], VYs, SameExactVars, SameNames, [VX|LeftOverXVars], LeftOverYVars) :-
+    merge_same_named_vars(VXs, VYs, SameExactVars, SameNames, LeftOverXVars, LeftOverYVars).
+
+
+blend_vars(VX,VY):- VX=VY,!.
+%blend_vars(VX,VY):- remerge_attrs(VX-VY),!.
+blend_vars(VX,VY):-
+    get_attrs_or_nil(VX, Attr1),
+    get_attrs_or_nil(VY, Attr2),
+    push_attributes(VX, Attr2),
+    push_attributes(VY, Attr1),
+    (VX=VY -> true ; remerge_attrs(VX-VY)),!.
+
+remerge_attrs(VX-VY):- get_attrs_or_nil(VY, FinalAttr), put_attrs(VX,FinalAttr).
+
+get_attrs_or_nil(Var, Attributes) :-
+    ( get_attrs(Var, Attributes) -> true ; Attributes = [] ).
+
+
+%% push_attributes(+AttributesToAdd, +Var) is det
+%  Adds attributes to the attributed variable Var.
+%  AttributesToAdd is a term of the form att(Module, Value, MoreAttributes).
+%  If the module and value already exist, they are skipped.
+
+push_attributes([], _Var) :- !.
+push_attributes(att(Mod, Val, Rest), Var) :-
+    get_attr(Var, Mod, Existing), !,
+    (Existing == Val -> true ; (get_attrs(Var,Att3Before), put_attrs(Var,att(Mod, Val, Att3Before)))),
+    push_attributes(Rest, Var).
+push_attributes(att(Mod, Val, Rest), Var) :-
+    put_attr(Var, Mod, Val),
+    push_attributes(Rest, Var).
+
+equal_renumbered(X0,Y0,XX,YY):-
+   copy_term(X0+Y0,X+Y),
+   term_variables(X,VXs), term_variables(Y,VYs),
+   merge_same_named_vars(VXs,VYs,Same,Merges,_LOXVs,_LOYVs),
+   max_var_number(X+Y,0,N),succ(N,N2),
+   maplist(remerge_attrs,Merges),
+   maplist(remove_attr(vn),VXs), maplist(remove_attr(vn),VYs),
+   numbervars(Same,N2,_,[attvar(skip)]),
+   %numbervars(_Merges,N3,_,[attvar(skip)]),
+   renumber_vars_wo_confict_tu(X,XX),
+   renumber_vars_wo_confict_tu(Y,YY),!.
+   %wdmsg(equal_enough_for_test(P2,XX,YY)),
+
+
+renumber_vars_wo_confict_tu(X,XXX):-
+   copy_term(X,XX),
+   max_var_number(XX,0,N),
+   succ(N,N2),
+   numbervars(XX,N2,_,[attvar(skip)]), % TODO
+   unnumbervars_wco(XX,XXX).
+
+unnumbervars_wco(X,XXX):- compound(X),
+   sub_term(E, X), compound(E), E = '$VAR'(_),!,
+   subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
+unnumbervars_wco(X,X).
 
 
 % =================================================================
@@ -1077,7 +1222,7 @@ eval_case(Eq,CaseRetType,Depth,Self,A,KVs,Res):-
   best_key(AA,Cases,Value):- member(Match-Value,Cases),AA = Match,!.
   best_key(AA,Cases,Value):-
      ((member(Match-Value,Cases),AA ==Match)->true;
-      ((member(Match-Value,Cases),AA=@=Match)->true;
+      ((member(Match-Value,Cases),(AA=@=Match,ignore(AA=Match)))->true;
         (member(Match-Value,Cases),AA = Match))).
 
     into_case_list(CASES,CASES):- is_list(CASES),!.
@@ -2063,9 +2208,9 @@ eval_20(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- fail, (is_list(A);is_list
 
 
 /*
-  fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
-   freeze(Var1,fromNumber(Var1,Var2)),
-   freeze(Var2,fromNumber(Var1,Var2)).
+  fromNumber(VX,VY):- var(VX),var(VY),!,
+   freeze(VX,fromNumber(VX,VY)),
+   freeze(VY,fromNumber(VX,VY)).
 fromNumber(0,'Z'):-!.
 fromNumber(N,['S',Nat]):- integer(N), M is N -1,!,fromNumber(M,Nat).
 
@@ -2232,13 +2377,13 @@ eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-strin
 into_values(List,Many):- List==[],!,Many=[].
 into_values([X|List],Many):- List==[],is_list(X),!,Many=X.
 into_values(Many,Many).
-eval_40(Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
+eval_40(_Original,Eq,RetType,_Dpth,_Slf,Name,Value):- atom(Name), nb_current(Name,Value),!.
 */
 % Macro Functions
 %eval_20(Eq,RetType,Depth,_,_,_):- Depth<1,!,fail.
 /*
-eval_40(_Eq,_RetType,Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).
-eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):-
+eval_40(_Original,_Eq,_RetType,Depth,_,X,Y):- Depth<3, !, fail, ground(X), (Y=X).
+eval_40(_Original,Eq,RetType,Depth,Self,[F|PredDecl],Res):-
    fail,
    Depth>1,
    fake_notrace((sub_sterm1(SSub,PredDecl), ground(SSub),SSub=[_|Sub], is_list(Sub), maplist(atomic,SSub))),
@@ -2253,14 +2398,14 @@ eval_40(Eq,RetType,Depth,Self,[F|PredDecl],Res):-
 % =================================================================
 % =================================================================
 % =================================================================
-eval_40(Eq,RetType,Depth,Self,LESS,Res):-
+eval_40(_Original,Eq,RetType,Depth,Self,LESS,Res):-
    ((((eval_selfless(Eq,RetType,Depth,Self,LESS,Res),fake_notrace(LESS\==Res))))),!.
 
-eval_40(Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
+eval_40(_Original,Eq,RetType,Depth,Self,['+',N1,N2],N):- number(N1),!,
    skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1+N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
-eval_40(Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),!,
+eval_40(_Original,Eq,RetType,Depth,Self,['-',N1,N2],N):- number(N1),!,
    skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1-N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
-eval_40(Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),!,
+eval_40(_Original,Eq,RetType,Depth,Self,['*',N1,N2],N):- number(N1),!,
    skip_eval_args(Eq,RetType,Depth,Self,N2,N2Res), fake_notrace(catch_err(N is N1*N2Res,_E,(set_last_error(['Error',N2Res,'Number']),fail))).
 
 eval_20(_Eq,_RetType,_Depth,_Self,['rust',Bang,PredDecl],Res):- Bang == '!', !,
@@ -2280,30 +2425,30 @@ eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
   must_det_ll((py_tuple(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
   must_det_ll((py_chain(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
+eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
   must_det_ll((py_atom(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
+eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
   must_det_ll((py_atom_type(Arg,Type,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
+eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
   must_det_ll((py_dot([Arg1,Arg2],Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
+eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
   must_det_ll((py_eval(Arg,Res))).
 
-eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
+eval_40(_Original,Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 
 
 /*
-eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
+eval_40(_Original,Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!,
-   eval_40(Eq,RetType,Depth,Self,[P,A,XX|More],YY).
+   eval_40(_Original,Eq,RetType,Depth,Self,[P,A,XX|More],YY).
 */
-%eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
+%eval_40(_Original,Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
 eval_20(_Eq,RetType,_Depth,_Self,['==', X,Y],Res):-
     (var(X);var(Y)),!,X\==Y,!, Res='False',suggest_type(RetType,'Bool').
-eval_40(Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
+eval_40(_Original,Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(eval_until_eq(Eq,_SharedType, Depth,Self, X, Y), TF).
 
@@ -2334,6 +2479,23 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
 */
 
 
+eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
+    length(Args,Len),succ(Len,LenP1),
+    symbolic_list_concat(['mx_',Len,'__',Sym],Fn),
+    current_predicate(Fn/LenP1),!,
+    append(Args,[Res],PArgs),
+    with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
+
+eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
+    length(Args,Len),succ(Len,LenP1),
+    symbolic_list_concat(['mi_',Len,'__',Sym],Fn),
+    current_predicate(Fn/LenP1),!,
+    append(Args,[Res],PArgs),
+    with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
+
+with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(Fn,PArgs).
+with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,Goal):-  Goal.
+
 suggest_type(_RetType,_Bool).
 
 naive_eval_args:-
@@ -2357,10 +2519,10 @@ eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
              eval_31(Eq,RetType,Depth,Self,PredDecl,Res)).
 
 eval_31(Eq,RetType,Depth,Self,X,Y):-
-  (eval_40(Eq,RetType,Depth,Self,X,M)*-> M=Y ;
+  (eval_40(_Original,Eq,RetType,Depth,Self,X,M)*-> M=Y ;
      % finish_eval(Depth,Self,M,Y);
     (eval_failed(Depth,Self,X,Y)*->true;X=Y)).
-eval_40(Eq,RetType,Depth,Self,AEMore,ResOut):- eval_41(Eq,RetType,Depth,Self,AEMore,ResOut).
+eval_40(_Original,Eq,RetType,Depth,Self,AEMore,ResOut):- eval_41(Eq,RetType,Depth,Self,AEMore,ResOut).
 eval_70(Eq,RetType,Depth,Self,PredDecl,Res):-
    % if_or_else(eval_maybe_python(Eq,RetType,Depth,Self,PredDecl,Res),
    % if_or_else(eval_maybe_host_predicate(Eq,RetType,Depth,Self,PredDecl,Res),
@@ -2614,8 +2776,11 @@ as_nop([]).
 
 as_nop(G,NoResult):-  G\=[_|_], rtrace_on_failure(G),!,
   as_nop(NoResult).
-as_tf(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
-as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
+
+as_tf(G,TF):-  G\=[_|_], catch_warn((call(G)*->TF='True';TF='False')).
+as_tf_nowarn(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
+as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((trace,writeln(E),rtrace(G),!,throw(E))))*->TF='True';TF='False')).
+
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
 
@@ -2832,7 +2997,8 @@ not_template_arg(TArg):- atomic(TArg),!.
 % =================================================================
 % =================================================================
 
-cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
+cwdl(DL,Eval, Res):- call_with_depth_limit(eval(Eval,Res),DL, R), ignore(R==depth_limit_exceeded->Res=R;true).
+%cwdl(DL,Goal):- call_with_depth_limit(Goal,DL,R), (R==depth_limit_exceeded->(!,fail);true).
 
 %cwtl(DL,Goal):- catch(call_with_time_limit(DL,Goal),time_limit_exceeded,fail).
 
