@@ -81,7 +81,7 @@
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
 
-
+;(: current-predicate-arity (-> Predicate Number)) ; returns only the first type of a symbol
 
 (: get-vtype (-> Atom Atom)) ; returns only the first type of a symbol
 (: get-vtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
@@ -1785,6 +1785,13 @@ For example:
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 (: assertEqualToResult (-> Atom Atom Atom))
 
+(iz assertAlphaEqual MeTTa)
+(@doc assertAlphaEqual
+  (@desc "Compares (sets of) results of evaluation of two expressions using alpha equality")
+  (@params (
+    (@param "First expression")
+    (@param "Second expression")))
+  (@return "Unit atom if both expressions after evaluation are alpha equal, error - otherwise"))
 
 (iz assertNotEqualToResult MeTTaLog)
 (@doc assertNotEqualToResult
