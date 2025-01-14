@@ -48,11 +48,11 @@ transpiler_predicate_store('*', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,
 %%%%%%%%%%%%%%%%%%%%% logic
 
 transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
-mc_2__and(A,is_p1(_,_,CodeB,B),B) :- atomic(A), A\=='False', A\==0, !, call(CodeB).
+mc_2__and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
 mc_2__and(_,_,'False').
 
 transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
-mc_2__or(A,is_p1(_,_,CodeB,B),B):- (\+ atomic(A); A='False'; A=0), !, call(CodeB).
+mc_2__or(A,B,C):- (\+ atomic(A); A='False'; A=0), !, as_p1_exec(B,C).
 mc_2__or(_,_,'True').
 
 %transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
@@ -106,15 +106,13 @@ transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager)], x(noeval,eager)
 
 %%%%%%%%%%%%%%%%%%%%% set
 
-lazy_member(R1,Code2,R2) :- call(Code2),R1=R2.
+lazy_member(P,R2) :- as_p1_exec(R2,P).
 
 transpiler_predicate_store(subtraction, 3, [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager)).
-'mc_2__subtraction'(is_p1(_,_,Code1,R1),is_p1(_,_,Code2,R2),R1) :-
-    call(Code1),
-    \+ lazy_member(R1,Code2,R2).
+'mc_2__subtraction'(P1,P2,S) :- as_p1_exec(P1,S), \+ lazy_member(S,P2).
 
 transpiler_predicate_store(union, 3, [x(doeval,lazy),x(doeval,lazy)], x(doeval,eager)).
-'mc_2__union'(U1,is_p1(Code1,Expr,Code2,R2),R) :- 'mc_2__subtraction'(U1,is_p1(Code1,Expr,Code2,R2),R) ; call(Code2),R=R2.
+'mc_2__union'(U1,U2,R) :- 'mc_2__subtraction'(U1,U2,R) ; as_p1_exec(U2,R).
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
@@ -122,9 +120,17 @@ transpiler_predicate_store(superpose, 2, [x(doeval,eager)], x(doeval,eager)).
 'mc_1__superpose'(S,R) :- member(R,S).
 
 transpiler_predicate_store(collapse, 2, [x(doeval,lazy)], x(doeval,eager)).
-'mc_1__collapse'(is_p1(_,_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(is_p1(_,_,true,X),[X]) :- !.
-'mc_1__collapse'(is_p1(_,_,Code,A),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc_1__collapse'(ispu(X),[X]).
+'mc_1__collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc_1__collapse'(ispuU(X,true),[X]) :- !.
+'mc_1__collapse'(ispuU(A,Code),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc_1__collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc_1__collapse'(ispeEn(X,true,_),[X]) :- !.
+'mc_1__collapse'(ispeEn(A,Code,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc_1__collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc_1__collapse'(ispeEnN(X,true,_,_),[X]) :- !.
+'mc_1__collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
@@ -138,16 +144,16 @@ transpiler_predicate_store('get-atoms', 2, [x(noeval,eager)], x(noeval,eager)).
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
 
 transpiler_predicate_store(match, 4, [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
-'mc_3__match'(Space,Pattern,is_p1(_,_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+'mc_3__match'(Space,Pattern,P1,Ret) :- metta_atom(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 
 % TODO FIXME: sort out the difference between unify and match
 transpiler_predicate_store(unify, 4, [x(doeval,eager), x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
-'mc_3__unify'(Space,Pattern,is_p1(_,_,TemplateCode,TemplateRet),TemplateRet) :- metta_atom(Space, Atom),Atom=Pattern,call(TemplateCode).
+'mc_3__unify'(Space,Pattern,P1,Ret) :- metta_atom(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
 transpiler_predicate_store(time, 2, [x(doeval,lazy)], x(doeval,eager)).
-'mc_1__time'(is_p1(_,_,Code,Ret),Ret) :- wtime_eval(Code).
+'mc_1__time'(P,Ret) :- wtime_eval(as_p1_exec(P,Ret)).
 
 transpiler_predicate_store(empty, 1, [], x(doeval,eager)).
 'mc_0__empty'(_) :- fail.
