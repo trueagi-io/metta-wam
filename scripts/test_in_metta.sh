@@ -70,12 +70,12 @@ process_file() {
     if [ -f "${file}.answers" ]; then
 	if grep -q "Got" "${file}.answers"; then
 	    should_regenerate=true
-	    DEBUG_WHY "Failures are found if the .answers file"
+	    DEBUG_WHY "Failures found in ${file}.answers"
 	else
-	    DEBUG_WHY "No failures are found if the .answers file"
+	    DEBUG_WHY "No failures are found in ${file}.answers"
 	fi
     else
-	DEBUG_WHY "Missing .answers file"
+	DEBUG_WHY "Missing ${file}.answers"
     fi
 
     # Perform the checks and set the boolean
@@ -159,14 +159,14 @@ process_file() {
 
     if [ "$if_regressions" -eq 1 ]; then
         if [[ ! -f "$file_html" ]]; then
-            DEBUG_WHY "Not taking test since HTML file does not exist."
-            return
+            DEBUG_WHY "Not retaking test since HTML file does not exist."
+	    return 7
         fi
 
         failures_zero=$(grep -h -c "Failures: 0" "$file_html")
         if [ "$failures_zero" -eq 0 ]; then
             DEBUG_WHY "Not taking test since Failures not 0."
-            return
+            return 7
         fi
         take_test=1
         DEBUG_WHY "Taking test since Failures: 0 and looking for regressions."
@@ -337,7 +337,7 @@ METTALOG_OUTPUT="$METTALOG_DIR/reports/tests_output/testrun_$(date +%Y%m%d_%H%M%
 fresh=0
 no_regen=0
 clean=0  # 0 means don't clean, 1 means do clean
-if_failures=0
+if_failures=1
 if_regressions=0
 skip_tests=0
 show_help=0
@@ -761,7 +761,7 @@ while [ "$#" -gt 0 ]; do
         --clean) clean=1; if_failures=0 ;;
         --regression*) clean=0; if_failures=0; if_regressions=1 ;;
         --continu*) clean=0; if_failures=0 ;;
-        --failure*) clean=0; if_failures=1 ;;
+        --fail*) clean=0; if_failures=1 ;;
 	--skip) skip_tests=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
