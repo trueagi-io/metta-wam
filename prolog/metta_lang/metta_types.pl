@@ -1065,13 +1065,16 @@ as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
     \+ iz_conz(I), !, I = O.
+
 as_prolog(N, Self, [At| List], O) :-
     % Handle '@' symbol by constructing compound terms.
-    At=='@',
-    is_list(List),
+    At=='@', \+ dont_de_Cons,
+    is_list(List), \+ dont_de_Cons,
     maplist(as_prolog(N, Self), List, [HH | L]),
     atom(HH), !,
     compound_name_arguments(O, HH, L).
+
+
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
@@ -1079,7 +1082,7 @@ as_prolog(Depth, Self, I, O) :-
 as_prolog(Depth, Self, [H|T], [HH|TT]) :-
     % If is a list, map each element to Prolog terms.
     as_prolog(Depth, Self, H, HH),
-    as_prolog(1, Self, T, TT).
+    as_prolog(1, Self, T, TT), !.
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
