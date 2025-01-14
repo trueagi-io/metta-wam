@@ -1655,10 +1655,10 @@ answer_output(Stream) :-
 
 write_answer_output :-
     retract(is_answer_output_stream(MemFile, Stream)), !,  % Retrieve and remove memory file reference
-    ignore(catch_log(close(Stream))),                     % Close the stream
+    ignore(catch_ignore(close(Stream))),                     % Close the stream
     memory_file_to_string(MemFile, String),               % Read contents from the memory file
     write(String),                                        % Write the contents to output
-    free_memory_file(MemFile).                            % Free the memory file
+    catch_ignore(free_memory_file(MemFile)).              % Free the memory file
 write_answer_output.
 
 :- at_halt(write_answer_output).  % Ensure cleanup at halt
@@ -3242,8 +3242,11 @@ call_nth(USol,XX,Nth,Det,Prev):-
          ( nb_setarg(1,USol,XX))
          ; (!, arg(1,USol,Prev))).
 
-catch_red(Term):- catch_err(Term,E,pp_m(red,in(Term,E))).
+catch_red(Term):- catch_err(Term,E,pp_m_m_red(red,in(Term,E))).
 %catch_red(Term):- call(Term).
+
+pp_m_m_red(_,T):- T =@= in(not_compat_io(maybe_halt(7)),unwind(halt(7))),!.
+pp_m_m_red(C,T):- pp_m(C,T).
 
 s2p(I,O):- sexpr_s2p(I,O),!.
 
