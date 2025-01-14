@@ -1,4 +1,5 @@
 #!/bin/bash
+set +e
 
 SHOULD_EXIT=0
 
@@ -119,7 +120,7 @@ process_file() {
 
 	    # Record the start time
 	    start_time=$(date +%s)
-            set +x
+            #set +x
             IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             TEST_EXIT_CODE=$?
             take_test=1
@@ -170,43 +171,45 @@ process_file() {
         fi
         take_test=1
         DEBUG_WHY "Taking test since Failures: 0 and looking for regressions."
+
     elif [[ ! -f "$file_html" ]]; then
         take_test=1
         DEBUG_WHY "Taking test since HTML file does not exist."
-    else
-        if [ "$clean" -eq 1 ]; then
-            take_test=1
-            DEBUG_WHY "Taking test since --clean."
-        elif [ "$if_failures" -eq 1 ]; then
-            failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
-            if [ "$failures_not_zero" -eq 0 ]; then
-                success_missing=0
-
-                if ! grep -q "Successes: " "$file_html"; then
-                    success_missing=1
-                fi
-
-                if [ "$success_missing" -eq 1 ]; then
-                    DEBUG_WHY "Retaking Test since the word 'Success' is missing from $file_html."
-                    take_test=1
-                else
-                    DEBUG_WHY "The word 'Success' is present in $file_html."
-                fi
-            fi
-            if [ "$failures_not_zero" -gt 0 ]; then
-                take_test=1
-                DEBUG_WHY "Retaking test since failures are present."
-                IF_REALLY_DO rm -f "$file_html"
-            else
-                if [ "$take_test" -eq 0 ]; then
-                    DEBUG_WHY "Not retaking since Failures: 0."
-                fi
-            fi
-        else
-            DEBUG_WHY "Results present, not taking test."
-        fi
     fi
+    if [ "$clean" -eq 1 ]; then
+	take_test=1
+	DEBUG_WHY "Taking test since --clean."
+    fi
+    if [ "$if_failures" -eq 1 ]; then
+	if [[ -f "$file_html" ]]; then
+	    failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
+	    if [ "$failures_not_zero" -eq 0 ]; then
+		success_missing=0
 
+		if ! grep -q "Successes: " "$file_html"; then
+		    success_missing=1
+		fi
+
+		if [ "$success_missing" -eq 1 ]; then
+		    DEBUG_WHY "Retaking Test since the word 'Success' is missing from $file_html."
+		    take_test=1
+		else
+		    DEBUG_WHY "The word 'Success' is present in $file_html."
+		fi
+	    fi
+	    if [ "$failures_not_zero" -gt 0 ]; then
+		take_test=1
+		DEBUG_WHY "Retaking test since failures are present."
+		IF_REALLY_DO rm -f "$file_html"
+	    else
+		if [ "$take_test" -eq 0 ]; then
+		    DEBUG_WHY "Not retaking since Failures: 0."
+		fi
+	    fi
+	else
+	    DEBUG_WHY "Results present, not taking test."
+	fi
+    fi
     set +e
     if [ "$take_test" -eq 1 ]; then
         if [[ "$skip_tests" -eq 1 ]]; then
@@ -337,7 +340,7 @@ METTALOG_OUTPUT="$METTALOG_DIR/reports/tests_output/testrun_$(date +%Y%m%d_%H%M%
 fresh=0
 no_regen=0
 clean=0  # 0 means don't clean, 1 means do clean
-if_failures=1
+if_failures=0
 if_regressions=0
 skip_tests=0
 show_help=0
@@ -497,7 +500,7 @@ function add_test_units_dir() {
     local BASE_DIR="${1}"
     DEBUG "Running tests in $BASE_DIR"
 
-      set +v
+      #set +v
          DEBUG "Finding files with 'test' in their name and apply $EXTRA_FIND_ARGS ..."
          mapfile -t test_files < <(find "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -iname "*test*.metta")
          DEBUG "'Test' files found: ${#test_files[@]}"
