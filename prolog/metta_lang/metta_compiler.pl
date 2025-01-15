@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
  * Description: This file is part of the source code for a transpiler designed to convert
  *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
