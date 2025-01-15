@@ -1043,14 +1043,10 @@ as_prolog(I, O) :-
 %
 
 :- dynamic(dont_de_Cons/0).
+dont_de_Cons.
 
 as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
-as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
-as_prolog(_, Self, quote(O), O) :- !.
-as_prolog(_Dpth, _Slf, I, O) :-
-    % If I is not a 'conz' structure, unify it directly with O.
-    \+ iz_conz(I), !, I = O.
 as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
@@ -1060,16 +1056,25 @@ as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
 as_prolog(0, Self, [CC | List], O) :-
     % Handle '::' operator by mapping elements to Prolog terms.
     CC =='::',
-    is_list(List), !,
+    is_list(List), \+ dont_de_Cons, !,
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
-as_prolog(0, Self, [At| List], O) :-
+
+as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, quote(O), O) :- !.
+as_prolog(_Dpth, _Slf, I, O) :-
+    % If I is not a 'conz' structure, unify it directly with O.
+    \+ iz_conz(I), !, I = O.
+
+as_prolog(N, Self, [At| List], O) :-
     % Handle '@' symbol by constructing compound terms.
-    At=='@',
-    is_list(List),
-    maplist(as_prolog(0, Self), List, [HH | L]),
+    At=='@', \+ dont_de_Cons,
+    is_list(List), \+ dont_de_Cons,
+    maplist(as_prolog(N, Self), List, [HH | L]),
     atom(HH), !,
     compound_name_arguments(O, HH, L).
+
+
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
@@ -1077,7 +1082,7 @@ as_prolog(Depth, Self, I, O) :-
 as_prolog(Depth, Self, [H|T], [HH|TT]) :-
     % If is a list, map each element to Prolog terms.
     as_prolog(Depth, Self, H, HH),
-    as_prolog(1, Self, T, TT).
+    as_prolog(1, Self, T, TT), !.
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.

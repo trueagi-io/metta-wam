@@ -3891,6 +3891,18 @@ ppawt(FA) :-
                     ignore_ops(false), quoted(true), quote_non_ascii(true),
                     brace_terms(false)]).
 
+%%  intersect_eq(+List1, +List2, -Intersection)
+%
+%   Determine the intersection of two lists without unifying values.
+
+intersect_eq([], _, []).
+intersect_eq([X|Xs], Ys, L) :-
+    (   clpr:memberchk_eq(X, Ys)
+    ->  L = [X|T],
+        intersect_eq(Xs, Ys, T)
+    ;   intersect_eq(Xs, Ys, L)
+    ).
+
 %!  intersection(+APoints, +BPoints, -Intersected, -LeftOverA, -LeftOverB) is det.
 %
 %   Computes the intersection of two sets of points, also returning leftover points from both sets.
