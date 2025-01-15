@@ -43,8 +43,37 @@ source ./INSTALL.sh --allow-system-modifications # Follow the default prompts
 
 **Note**: Running this script modifies software configurations and installs packages. Ensure you're prepared for these changes.
 
-Windows Install - Comming Soon
 
+### Windows Installation
+
+If you’re on **Windows**, follow these steps to install MeTTaLog and create `.metta` file associations:
+
+1. **Install SWI-Prolog (with Janus support)**  
+   - You need a version of [SWI-Prolog](https://www.swi-prolog.org/) that includes **Janus** functionality. If you’re compiling from source, see the [SWI-Prolog docs](https://www.swi-prolog.org/build/) for details on building with additional packages.
+   
+2. **Clone the `metta-wam` repository**  
+   ```bash
+   git clone https://github.com/trueagi-io/metta-wam
+   cd metta-wam
+   ```
+3. **Run `INSTALL.bat` as Administrator**  
+   - Right-click on `INSTALL.bat` and choose **Run as administrator**, **or** open an **elevated** Command Prompt/PowerShell in this folder:
+     ```cmd
+     INSTALL.bat
+     ```
+   - This script **modifies the Windows registry** to add the `.metta` file association, so admin privileges are required.
+   - When prompted, choose **I** (Install) to associate `.metta` files with **mettalog**.
+
+4. **.metta File Association**  
+   - Once installed, you can double-click `.metta` files or launch them from the command line to run inside **mettalog** (backed by SWI-Prolog Janus).
+
+**Uninstalling**  
+- Re-run the same `INSTALL.bat` as administrator and pick **U** (Uninstall) to remove the `.metta` association.
+
+**Network Drive Note**  
+- If you cloned the repository on a network drive, you may need to **map** that drive in the elevated session. Otherwise, Windows may not recognize the drive letter under administrative privileges.
+
+---
 
 ## :whale: Running MeTTaLog with Docker
 

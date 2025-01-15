@@ -2,8 +2,9 @@
 
 SHOULD_EXIT=0
 
+BRIGHT_GREEN='\033[1;32m'
 DEBUG_WHY() {
-   DEBUG "${GREEN}WHY: ${BOLD}${*}${NC}"
+   DEBUG "${BRIGHT_GREEN}WHY: ${BOLD}${*}${NC}"
 }
 
 
@@ -28,7 +29,7 @@ process_file() {
 
     export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
-    export HTML_OUT="${file}.html"
+    export HTML_OUT="$file_html"
 
     DEBUG "==========================================================================="
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
@@ -47,8 +48,8 @@ process_file() {
     DEBUG "==========================================================================="
 
     # Add unique absolute paths to PYTHONPATH
-    pp1=$(realpath "$(dirname "${file}")")
-    pp2=$(realpath "$(dirname "${pp1}")")
+    pp1=$(readlink -m "$(dirname "${file}")")
+    pp2=$(readlink -m "$(dirname "${pp1}")")
     for pp in $pp1 $pp2; do
         if [[ ":$PYTHONPATH:" != *":$pp:"* ]]; then
             export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$pp"
@@ -64,37 +65,86 @@ process_file() {
     local TEST_EXIT_CODE=0
         set -e
 
-    # Combined condition check
-    if [[ "$fresh" -eq 1 ]] || [ ! -f "${file}.answers" ] || ([ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]); then
+    should_regenerate=false
+
+    if [ -f "${file}.answers" ]; then
+	if grep -q "Got" "${file}.answers"; then
+	    should_regenerate=true
+	    DEBUG_WHY "Failures are found if the .answers file"
+	else
+	    DEBUG_WHY "No failures are found if the .answers file"
+	fi
+    else
+	DEBUG_WHY "Missing .answers file"
+    fi
+
+    # Perform the checks and set the boolean
+    if [[ "$fresh" -eq 1 ]]; then
+	should_regenerate=true
+	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
+    fi
+
+    if [ ! -f "${file}.answers" ]; then
+	should_regenerate=true
+	DEBUG_WHY "Should regenerate: Answers file does not exist."
+    elif [ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]; then
+	should_regenerate=true
+	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
+    fi
+
+    if $should_regenerate; then
+	if [[ "$no_regen" -eq 1 ]]; then
+	    should_regenerate=false
+	    DEBUG_WHY "--no-regen flag is set. Disabling generation of .answers"
+	fi
+    fi
+
+    # Use the boolean to drive the decision
+    if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
         #IF_REALLY_DO cat /dev/null > "${file}.answers"
         IF_REALLY_DO rm -f "${file}.answers"
-       # git checkout "${file}.answers"
+        # git checkout "${file}.answers"
 
-        # Function to handle SIGINT
-        handle_sigint() {
-            do_DEBUG "${RED}SIGINT received, stopping metta but continuing script...${NC}"
+        # Function to handle SIGKILL
+        handle_sigkill() {
+            do_DEBUG "${RED}SIGKILL received, stopping metta but continuing script...${NC}"
             stty sane
         }
 
-        # Trap SIGINT
-        trap 'handle_sigint' SIGINT
+        # Trap SIGKILL
+        trap 'handle_sigkill' SIGKILL
 
         (cd "$(dirname "${file}")" || true
 
+	    # Record the start time
+	    start_time=$(date +%s)
             set +x
-            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGINT $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
+            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             TEST_EXIT_CODE=$?
             take_test=1
+	    # Record the current time
+	    end_time=$(date +%s)
+	    # Calculate elapsed time
+	    elapsed_time=$((end_time - start_time))
             #set +x
             if [ $TEST_EXIT_CODE -eq 124 ]; then
-                DEBUG "${RED}Rust MeTTa Killed (definitely due to timeout) after $RUST_METTA_MAX_TIME seconds: ${TEST_CMD}${NC}"
+	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Killed (definitely due to timeout) after $RUST_METTA_MAX_TIME seconds: ${TEST_CMD}"
+                DEBUG "${RED}${INFO}${NC}"
                 [ "$if_failures" -eq 1 ] && rm -f "$file_html"
             elif [ $TEST_EXIT_CODE -ne 0 ]; then
-                DEBUG "${RED}Rust MeTTa Completed with error (EXITCODE=$TEST_EXIT_CODE) under $RUST_METTA_MAX_TIME seconds${NC}"
+	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Completed with error under $RUST_METTA_MAX_TIME seconds"
+                DEBUG "${RED}${INFO}${NC}"
             else
-                DEBUG "${GREEN}Rust MeTTa Completed successfully (EXITCODE=0) under $RUST_METTA_MAX_TIME seconds${NC}!"		
+	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_METTA_MAX_TIME seconds"
+                DEBUG "${GREEN}$INFO${NC}"		
             fi	    
+
+	    if grep -q "Got" "${file}.answers"; then
+		      DEBUG "${RED}Failures in Rust Answers${NC}"
+	    fi
+
+	    echo INFO >> "${file}.answers"
 
         ) || true
         stty sane
@@ -102,9 +152,9 @@ process_file() {
 
         set -e
 
-       trap - SIGINT
+       trap - SIGKILL
     else
-        DEBUG "Comparing: $file.answers"
+        DEBUG "Kept: $file.answers"
     fi
 
     if [ "$if_regressions" -eq 1 ]; then
@@ -158,16 +208,23 @@ process_file() {
     fi
 
     set +e
+    if [ "$take_test" -eq 1 ]; then
+        if [[ "$skip_tests" -eq 1 ]]; then
+            take_test=0
+            DEBUG_WHY "--skip-tests flag is set. Disabled taking test"
+        fi
+    fi
 
     if [ "$take_test" -eq 1 ]; then
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
-        TEST_CMD="./mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
+        TEST_CMD="$METTALOG_DIR/mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         # DEBUG "${BOLD}$TEST_CMD${NC}"
-
-
+	    
             EXTRA_INFO="Under $METTALOG_MAX_TIME seconds"
+
+	    DEBUG "HTML_OUT=$HTML_OUT"
 
             # Start the timer
             local START_TIME=$(date +%s)
@@ -225,6 +282,21 @@ process_file() {
                 LOGFILE="$file_html"
             fi
 
+	    DEBUG "file_html=$file_html"
+
+	    # Check if the file exists
+	    if [ -f "$file_html" ]; then
+		# Get the file size in bytes
+		file_size=$(stat --format="%s" "$file_html")
+		    if [ "$file_size" -lt 20 ]; then
+			DEBUG "${RED}(warning) The file '$file_html' is less than 20 bytes!${NC}"
+		    else
+			DEBUG "The file '$file_html' exists and is $file_size bytes."
+		    fi
+	    else
+		DEBUG "${RED}The file '$file_html' does not exist.${NC}"
+	    fi
+
             # Redirect debug messages to both the logfile and console
             echo "$DEBUG_MESSAGE" | tee -a "$LOGFILE"
 
@@ -247,21 +319,28 @@ process_file() {
 # Check if the script is being sourced or run directly
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
 # Save the directory one level above where this script resides
+SCRIPTS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPTS="$(readlink -m "$SCRIPTS")"
+
 METTALOG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+METTALOG_DIR="$(readlink -m "$METTALOG_DIR")"
+
+SCRIPT_NAME=$(basename "$0")
 
 passed_along_to_mettalog=()
 METTALOG_MAX_TIME=45
+RUST_METTA_MAX_TIME=60
 
-SCRIPT_NAME=$(basename "$0")
 run_tests_auto_reply=""
 generate_report_auto_reply=""
-METTALOG_OUTPUT="reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
+METTALOG_OUTPUT="$METTALOG_DIR/reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
 fresh=0
+no_regen=0
 clean=0  # 0 means don't clean, 1 means do clean
 if_failures=0
 if_regressions=0
+skip_tests=0
 show_help=0
-RUST_METTA_MAX_TIME=60
 EXTRA_FIND_ARGS=" ! -path '*/.*' ! -path '*~*' ! -size +10M"
 EXTRA_GREP_ARGS=""
 dry_run=0
@@ -498,7 +577,7 @@ generate_final_MeTTaLog() {
     cd "$METTALOG_DIR" || exit 1
 
     if [ 1 -eq 0 ]; then
-	python3 ./scripts/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
+	python3 $SCRIPTS/into_junit.py "${SHARED_UNITS}" > "$METTALOG_OUTPUT/junit.xml"
 
 	junit2html "$METTALOG_OUTPUT/junit.xml"
 	junit2html "$METTALOG_OUTPUT/junit.xml" --summary-matrix
@@ -519,17 +598,34 @@ generate_final_MeTTaLog() {
 
 
     # Create a markdown file with test links and headers
-    {   echo "| TEST NAME | STATUS | URL LOCATION | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
+    {
+        echo "| TEST NAME | STATUS | URL LOCATION | TEST CONDITION | ACTUAL RESULT | EXPECTED RESULT |"
         echo "|-----------|--------|--------------|----------------|---------------|-----------------|"
-        cat "${SHARED_UNITS}" | awk -F'\\(|\\) \\| \\(' '{ print $1 " " $0 }' | sort | cut -d' ' -f2- | tac | awk '!seen[$0]++' | tac
-    } > ./$METTALOG_OUTPUT/PASS_FAIL.md
+        cat "${SHARED_UNITS}" \
+          | awk -F'\\(|\\) \\| \\(' '{ print $1 " " $0 }' \
+          | sort \
+          | cut -d' ' -f2- \
+          | tac \
+          | awk '!seen[$0]++' \
+          | tac
+    } > $METTALOG_OUTPUT/PASS_FAIL.md
 
 
-   ./scripts/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md
+   echo "$SCRIPTS/pass_fail_totals.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/TEST_LINKS.md"
+
+   METTALOG_OUTPUT_RELATIVE=$(realpath --no-symlinks --relative-to="$PWD" "$METTALOG_OUTPUT")
+   $SCRIPTS/pass_fail_totals.sh $METTALOG_OUTPUT_RELATIVE/ > $METTALOG_OUTPUT/TEST_LINKS.md
+
    printf '%s\n' "${@}" > "$METTALOG_OUTPUT/_REPORT_.md"
-   cat $METTALOG_OUTPUT/TEST_LINKS.md | sed -e "s|$METTALOG_OUTPUT|reports|g" \
-   | sed -e "s|Directory:     ./reports/tests/|D: |g" >> "$METTALOG_OUTPUT/_REPORT_.md"
-   ./scripts/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
+
+   cat "$METTALOG_OUTPUT/_REPORT_.md"
+
+    cat $METTALOG_OUTPUT/TEST_LINKS.md \
+      | sed -e "s|$METTALOG_OUTPUT|reports|g" \
+      | sed -e "s|Directory:     ./reports/tests/|D: |g" \
+      >> "$METTALOG_OUTPUT/_REPORT_.md"
+
+   $SCRIPTS/html_pass_fail.sh $METTALOG_OUTPUT/ > $METTALOG_OUTPUT/REPORT.html
 
 }
 
@@ -564,14 +660,18 @@ show_help() {
     echo "  -y|--yes                   Automatically choose 'y' for rerunning all tests"
     echo "  -n|--no                    Automatically choose 'n'"
     echo "  --fresh                    Clean up by deleting any .answers files under directory"
+    echo "  --no-regen                 Do not create/recreate .answers files"
     echo "  --clean                    Clean up by deleting all .html files under directory"
-    echo "  --continue                 Continue running tests (Generating any missing html files)"
-    echo "  --failures                 Rerun unsuccessful tests only"
+    echo "  --continue                 The default. Continue running tests (Generating any missing html files)"
+    echo "  --failures                 Rerun Unsuccessful tests"
+    echo "  --regress                  Rerun Successful tests (files where score was 100%)"
     echo "  --timeout=SECONDS          Specify a timeout value in seconds (current: $METTALOG_MAX_TIME)"
+    echo "  --rust-timeout=SECONDS     Specify a timeout value in seconds (current: $RUST_METTA_MAX_TIME)"
     echo "  --report=(Y/N)             Generate a report (if not supplied, will be asked at the end)"
     echo "  --output=DIR               Specify the output directory (current: $METTALOG_OUTPUT)"
     echo "  --[in|ex]clude=PATTERN     Include or exclude tests based on pattern"
     echo "  --dry-run                  Simulate the execution without actually running the tests"
+    echo "  --skip-tests               Dont actualy run mettalog tests"
     echo "  -h|--help                  Display this help message"
     echo ""
     echo "Arguments:"
@@ -655,16 +755,19 @@ while [ "$#" -gt 0 ]; do
         -y|--yes) run_tests_auto_reply="y" ;;
         -n|--no) run_tests_auto_reply="n" ;;
         --timeout=*) METTALOG_MAX_TIME="${1#*=}" ;;
+	--rust-timeout=*) RUST_METTA_MAX_TIME="${1#*=}" ;;
 	--output=*) METTALOG_OUTPUT="${1#*=}"  ;;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
         --regression*) clean=0; if_failures=0; if_regressions=1 ;;
-        --continu*) clean=0; if_failures=0 ;;	
+        --continu*) clean=0; if_failures=0 ;;
         --failure*) clean=0; if_failures=1 ;;
+	--skip) skip_tests=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
-        --v=*) PYSWIP_VERSION="${1#*=}" ; add_to_list "$1" passed_along_to_mettalog ;;
+	--no-regen*) no_regen=1 ;;
+        --v=*) PYSWIP_VERSION="${1#*=}"; add_to_list "$1" passed_along_to_mettalog ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
         -h|--help) DEBUG "Usage: $0 [options] [directory] [extra args]"; show_help=1; dry_run=1 ;;
@@ -682,7 +785,7 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-source ./scripts/ensure_venv
+source $SCRIPTS/ensure_venv
 
 extract_all_parent_directories
 
@@ -706,7 +809,7 @@ fi
 
 if [ -z "$SHARED_UNITS" ]; then
     if [ -d "$METTALOG_OUTPUT" ]; then
-	export SHARED_UNITS=$(realpath $METTALOG_OUTPUT)/SHARED.UNITS
+	export SHARED_UNITS=$(readlink -m $METTALOG_OUTPUT)/SHARED.UNITS
     fi
 fi
 touch $SHARED_UNITS
@@ -726,23 +829,29 @@ else
 fi
 
 # Directory containing the .pl files
+PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+
 if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
 else 
-    if [ -f "$PYSWIP_VERSION/src/canary/metta_interp.pl" ]; then
-      INTERP_SRC_DIR="$PYSWIP_VERSION/src/canary"
+    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
+      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
     else 
-	if [ -f "$METTALOG_DIR/src/$PYSWIP_VERSION/metta_interp.pl" ]; then
-	  INTERP_SRC_DIR="$METTALOG_DIR/src/$PYSWIP_VERSION"
-	else 
-	  INTERP_SRC_DIR="$METTALOG_DIR/src/canary"
-	fi
+      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
     fi
 fi
 
+
+
+METTALOG_OUTPUT_RELATIVE="$METTALOG_OUTPUT"
+METTALOG_OUTPUT="$(readlink -m "$METTALOG_OUTPUT")"
 DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 DEBUG "METTALOG_OUTPUT=$METTALOG_OUTPUT"
+DEBUG "METTALOG_OUTPUT_RELATIVE=$METTALOG_OUTPUT_RELATIVE"
+SHARED_UNITS="$(readlink -m "$SHARED_UNITS")"
 DEBUG "SHARED_UNITS=$SHARED_UNITS"
+export SHARED_UNITS
 
 if [[ ! -f "${METTALOG_OUTPUT}/src/" ]]; then
   :
@@ -752,11 +861,8 @@ fi
 mkdir -p "${METTALOG_OUTPUT}/src/"
 cp -af "${INTERP_SRC_DIR}/"* "${METTALOG_OUTPUT}/src/"
 
-#{ return 0 2>/dev/null || exit 0; }
-
 # Run tests and generate MeTTaLog report
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-   # run our selected tests
     run_tests
 else
     DEBUG "Skipping test run."

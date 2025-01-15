@@ -51,8 +51,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%*********************************************************************************************% 
-% PROGRAM FUNCTION: provides predicates to create and manipulate atoms, bindings, spaces, 
+%*********************************************************************************************%
+% PROGRAM FUNCTION: provides predicates to create and manipulate atoms, bindings, spaces,
 % and other components necessary for Mettalog interactions with Python.
 %*********************************************************************************************%
 
@@ -71,7 +71,7 @@
 :- dynamic(lazy_load_python/0).
 
 % Import the Janus library, which is used for interfacing with Python.
-:- use_module(library(janus)).
+:- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
 
 % Uncomment the next line for quieter runs, meaning any debugging or tracing calls will be suppressed.
 % if_bugger(_):- !.
@@ -92,7 +92,7 @@ nop(_).
 %   This predicate attempts to execute a goal and, if it fails, it logs the failure and optionally traces the goal.
 %
 %   @arg Goal The goal to be executed. If the goal consists of two subgoals (A, B), both will be traced separately if necessary.
-%   
+%
 %   @example
 %     % Trace a compound goal and handle failure:
 %     ?- trace_failures((member(X, [1,2,3]), member(Y, [a,b,c]))).
@@ -104,7 +104,7 @@ trace_failures((A, B)) :- !,
     (B *-> trace_failures(A); wfailed(((A, B))))).
 
 % Handle simple goals (non-compound).
-trace_failures(A) :- 
+trace_failures(A) :-
     % If A succeeds deterministically (*->), nothing is traced. If it fails, log and trace.
     (A *-> true; (wfailed(A), trace, A)).
 
@@ -118,17 +118,17 @@ trace_failures(A) :-
 %     % Log a failed goal:
 %     ?- wfailed(member(X, [1,2,3])).
 %
-wfailed(G) :- 
+wfailed(G) :-
     % Write a failure message to the console.
-    writeln(wfailed(G)), 
+    writeln(wfailed(G)),
     % Fail to indicate that the goal has failed.
     fail.
 
-:- endif.  % trace_failures 
+:- endif.  % trace_failures
 
 %!  py_is_tf(+Goal, -TF) is det.
 %
-%   Evaluates the given Goal and unifies TF with '@'(true) if the goal succeeds, 
+%   Evaluates the given Goal and unifies TF with '@'(true) if the goal succeeds,
 %   or '@'(false) if it fails.
 %
 %   @arg Goal The Prolog goal to evaluate.
@@ -197,8 +197,8 @@ from_python(ModuleFunctionName, _TupleArgs, LArgs, KwArgs, Result) :-
     if_bugger(format('Calling existing Prolog predicate: ~q -> ~q ', [Predicate, ReturnType])), !,
     trace_failures(once((call_ret_type(Predicate, ReturnType, Return, Result),
                     if_bugger(writeln(Return -> Result)), nonvar(Result)))).
-from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :- 
-    % Fallback clause if no corresponding Prolog predicate is found, calls the original Python function. 
+from_python(_ModuleFunctionName, _TupleArgs, _LArgs, _KwArgs, 'call_original_function') :-
+    % Fallback clause if no corresponding Prolog predicate is found, calls the original Python function.
     !.
 from_python(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
     format('No Prolog predicate found for: ~w. Calling original Python function.~n', [ModuleFunctionName]),
@@ -240,8 +240,8 @@ call_ret_type(Predicate, _RetType, Return, Result) :- !,
 
 %!  ret_res(+Return, -Result) is det.
 %
-%   A helper predicate that unifies the return value with the result. 
-%   This is typically used in scenarios where you want to pass the return 
+%   A helper predicate that unifies the return value with the result.
+%   This is typically used in scenarios where you want to pass the return
 %   value through unchanged or extract a value from more complex structures.
 %
 %   @arg Return The value to unify.
@@ -326,7 +326,7 @@ test_override_hyperonpy :-
 %
 load_metta_python_override :-
     % If already loaded, do nothing.
-    did_load_metta_python_override, !.  
+    did_load_metta_python_override, !.
 load_metta_python_override :-
     % Retrieve the Python override content.
     metta_python_override(String),
@@ -352,8 +352,8 @@ maybe_load_metta_python_override :-
     % If lazy loading fails, load the Metta Python override manually.
     load_metta_python_override.
 
-% The following directives ensure that `maybe_load_metta_python_override/0` is called 
-% during system initialization. The first initialization runs when the program 
+% The following directives ensure that `maybe_load_metta_python_override/0` is called
+% during system initialization. The first initialization runs when the program
 % starts, and the second runs when the system is restored from a saved state.
 %:- initialization(maybe_load_metta_python_override).
 %:- initialization(maybe_load_metta_python_override, restore).
@@ -415,7 +415,7 @@ load_metta_python_patcher :-
     % Assert that the patcher has now been loaded.
     assert(did_load_metta_python_patcher), !,
     % Try to load the module again, ignoring any errors.
-    %ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))), 
+    %ignore(notrace(with_safe_argv(catch(py_module(metta_python_patcher, String), _, true)))),
     !.
 
 %!  maybe_load_metta_python_patcher is det.
@@ -433,8 +433,8 @@ maybe_load_metta_python_patcher :-
     % If lazy loading fails, load the Metta Python patcher manually.
     load_metta_python_patcher.
 
-% The following directives ensure that `maybe_load_metta_python_patcher/0` is called 
-% during system initialization. The first initialization runs when the program 
+% The following directives ensure that `maybe_load_metta_python_patcher/0` is called
+% during system initialization. The first initialization runs when the program
 % starts, and the second runs when the system is restored from a saved state.
 %:- initialization(maybe_load_metta_python_patcher).
 %:- initialization(maybe_load_metta_python_patcher, restore).
@@ -510,7 +510,7 @@ hyperonpy_repl :-
 %   @arg KwArgs Keyword arguments.
 %   @arg Return Result of the Python function call.
 %
-call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :- 
+call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs, Return) :-
     fail,
     py_call(metta_python_override:call_python_original(ModuleFunctionName, TupleArgs, LArgs, KwArgs), Return).
 
@@ -531,7 +531,7 @@ my_module_add(A, B, _, R) :- R is A + B.
 
 %!  maybe_info(+Fmt, +Args) is det.
 %
-%   Conditionally logs information based on the provided format and arguments. 
+%   Conditionally logs information based on the provided format and arguments.
 %   If no logging is needed, the first clause suppresses the output using a cut.
 %   Otherwise, the second clause formats and outputs the message.
 %
@@ -570,8 +570,8 @@ my_module_factorial(N, F) :- N > 0,N1 is N - 1,my_module_factorial(N1, F1),F is 
 %
 %   This enables Prolog to invoke multiple Python functions in Hyperon.
 %
-%   This predicate declares a module named `hyperonpy_prolog_translation`. It exports a large number of predicates 
-%   used for interacting with the Python `hyperonpy` library, including for managing atoms, bindings, spaces, 
+%   This predicate declares a module named `hyperonpy_prolog_translation`. It exports a large number of predicates
+%   used for interacting with the Python `hyperonpy` library, including for managing atoms, bindings, spaces,
 %   interpretation, and other related operations.
 %
 no_module:- module(hyperonpy_prolog_translation, [
@@ -739,13 +739,13 @@ no_module:- module(hyperonpy_prolog_translation, [
     hyperonpy_load_ascii/3           % 130
 ]).
 
-% Declares a dynamic predicate `metta_atom/2` 
+% Declares a dynamic predicate `metta_atom/2`
 :- dynamic metta_atom/2.
 
-% Declares a dynamic predicate `o_f_v/3` 
+% Declares a dynamic predicate `o_f_v/3`
 :- dynamic(o_f_v/3).
 
-% Declares a dynamic predicate `t_f_v/3` 
+% Declares a dynamic predicate `t_f_v/3`
 :- dynamic(t_f_v/3).
 
 % ==================================================
@@ -755,8 +755,8 @@ no_module:- module(hyperonpy_prolog_translation, [
 %!  from_obj(+Value, -Obj) is det.
 %
 %   Predicate to handle objects directly if they are strings, numbers, symbols, or variables.
-%   Converts Value to Obj. If Value is a variable, it is returned as-is. If Value is 
-%   a direct atom (symbol, string, number, or variable), it is returned as-is. 
+%   Converts Value to Obj. If Value is a variable, it is returned as-is. If Value is
+%   a direct atom (symbol, string, number, or variable), it is returned as-is.
 %   Otherwise, Obj is set to Value.
 %
 %   @arg Value The value to be converted.
@@ -778,14 +778,14 @@ direct_atom(Value) :- (symbol_not_ref(Value); string(Value); number(Value); bvar
 %!  o_f_v(+Object, +FieldName, -Value) is det.
 %
 %   Main predicate to manage object fields based on their type.
-%   Retrieves the value of FieldName for Object by determining its type and then 
+%   Retrieves the value of FieldName for Object by determining its type and then
 %   fetching the field value.
 %
 %   @arg Object    The object from which to get the field value.
 %   @arg FieldName The field to retrieve.
 %   @arg Value     The field value.
 %
-o_f_v(Object, FieldName, Value) :- 
+o_f_v(Object, FieldName, Value) :-
     determine_object_type(Object, Type),!,object_field_value(Type, Object, FieldName, Value).
 
 %!  p1_typename(+Predicate, -TypeName) is det.
@@ -860,7 +860,7 @@ bvar(Var, Symbol) :- compound(Var), !, Var = '$VAR'(Symbol).
 
 %!  determine_object_type(+Object, -TypeName) is det.
 %
-%   Determines the type of the given Object based on mappings defined in 
+%   Determines the type of the given Object based on mappings defined in
 %   `p1_typename/2`. The predicate calls the appropriate check based on the
 %   predicate name associated with the type.
 %
@@ -900,7 +900,7 @@ atom_kind(EXPR, Value):- py_call(hyperonpy:'AtomKind', EXPR, Value).
 %
 %   Retrieves the field value for an object based on its MetaType and FieldName.
 %   This predicate handles objects of various types such as 'Expression', 'Variable',
-%   'Symbol', 'String', and 'Number'. Depending on the object type, it returns 
+%   'Symbol', 'String', and 'Number'. Depending on the object type, it returns
 %   the corresponding type, metatype, value, or grounded_type.
 %
 %   @arg MetaType   The metatype of the object ('Expression', 'Variable', 'Symbol', etc.).
@@ -968,13 +968,13 @@ object_field_value_base(Object, FieldName, Value, GroundedType) :-
 %!  oo_new(+Type, +Attributes, -ObjectID) is det.
 %
 %   Creates a new object or retrieves an existing one based on its attributes.
-%   The object state is stored using the predicate `o_f_v/3`, where `ID` is 
-%   the object identifier, `FieldName` represents the attribute name, and 
+%   The object state is stored using the predicate `o_f_v/3`, where `ID` is
+%   the object identifier, `FieldName` represents the attribute name, and
 %   `Value` holds the corresponding value.
 %
 %   The first clause attempts to find an existing object with matching attributes,
 %   particularly handling cases where the `value` field is present. If a matching
-%   object is found, its ID is returned. If no match is found, the second clause 
+%   object is found, its ID is returned. If no match is found, the second clause
 %   creates a new object with a unique ID and stores the attributes.
 %
 %   @arg Type       The type of the object to be created or matched.
@@ -990,7 +990,7 @@ object_field_value_base(Object, FieldName, Value, GroundedType) :-
 %     ?- oo_new('Person', [name:'John', age:30], ObjectID).
 %     ObjectID = 1.
 %
-oo_new(Type, Attributes, ObjectID) :- 
+oo_new(Type, Attributes, ObjectID) :-
     fail,  % This clause will fail, leading to the next one if no match is found.
     % Attempt to find an existing object by matching the 'value' field.
     select(value:ValueIn, Attributes, RestOf),
@@ -1019,8 +1019,8 @@ oo_new(Type, Attributes, ObjectID) :-
 %!  setup_default_fields(+Type, +ObjectID, +ProvidedFields) is det.
 %
 %   Helper predicate to set up default fields from t_f_v/3 if not explicitly provided.
-%   Sets up default fields for an object based on its type. The default fields 
-%   are retrieved from the `t_f_v/3` predicate, which defines the default field 
+%   Sets up default fields for an object based on its type. The default fields
+%   are retrieved from the `t_f_v/3` predicate, which defines the default field
 %   values for each type. If any fields are explicitly provided, they take priority
 %   over the defaults.
 %
@@ -1043,7 +1043,7 @@ setup_default_fields(Type, ObjectID, ProvidedFields) :-
 %!  merge_fields(+Defaults, +ProvidedFields, -FinalFields) is det.
 %
 %   Merges a list of default fields with a list of provided fields, giving priority
-%   to the provided fields. If a field is explicitly provided, it overrides the 
+%   to the provided fields. If a field is explicitly provided, it overrides the
 %   corresponding default value. The merged result is stored in FinalFields.
 %
 %   @arg Defaults       A list of field-value pairs representing the default fields.
@@ -1080,8 +1080,8 @@ generate_object_id(Type, ID) :- atom_concat(Type, '_', TempID),gensym(TempID, ID
 
 %!  oo_free(+ObjectID) is det.
 %
-%   Frees (removes) an object from the system by retracting all facts associated 
-%   with the given ObjectID from the `o_f_v/3` predicate. This effectively deletes 
+%   Frees (removes) an object from the system by retracting all facts associated
+%   with the given ObjectID from the `o_f_v/3` predicate. This effectively deletes
 %   the object state and attributes.
 %
 %   @arg ObjectID  The unique ID of the object to be removed.
@@ -1115,7 +1115,7 @@ oo_free(ObjectID) :-
 %     ?- oo_get('Person', 'Object_1', name, Value).
 %     Value = 'John'.
 %
-oo_get(Type, ObjectID, FieldName, Value) :- 
+oo_get(Type, ObjectID, FieldName, Value) :-
     fail,  % This clause attempts to fail, leading to fallback on the next clause.
     o_f_v(ObjectID, type, Type),( o_f_v(ObjectID, FieldName, Value); (t_f_v(Type, FieldName, Value))), !.
 oo_get(_Type, ObjectID, FieldName, Value) :- o_f_v(ObjectID, FieldName, Value), !.
@@ -1138,7 +1138,7 @@ oo_get(_Type, ObjectID, _FieldName, Value) :- o_f_v(ObjectID, value, Value), !.
 %     ?- oo_get_else('Person', 'Object_1', age, Value, 25).
 %     Value = 25.
 %
-oo_get_else(Type, ObjectID, FieldName, Value, Else) :- oo_get(Type, ObjectID, FieldName, Value) -> true 
+oo_get_else(Type, ObjectID, FieldName, Value, Else) :- oo_get(Type, ObjectID, FieldName, Value) -> true
             ; Value = Else.
 
 %!  oo_set(+ObjectID, +FieldName, +Value) is det.
@@ -1264,8 +1264,8 @@ collect_object_state(ObjectID, State) :- findall(FieldName-Value, o_f_v(ObjectID
 
 %!  hyperonpy_atom_sym(+Symbol, -Atom) is det.
 %
-%   Creates a symbolic atom from a given symbol. If the provided `Symbol` is a valid 
-%   symbol, it directly returns the symbol as the atom. Otherwise, it converts the 
+%   Creates a symbolic atom from a given symbol. If the provided `Symbol` is a valid
+%   symbol, it directly returns the symbol as the atom. Otherwise, it converts the
 %   `String` into a symbol and creates a new symbolic atom using `hyperonpy_sym_sym/2`.
 %
 %   @arg Symbol  The input symbol or string from which the atom is created.
@@ -1300,10 +1300,10 @@ hyperonpy_atom_sym(String, Atom) :-
 %     ?- hyperonpy_sym_sym('ref_symbol', Atom).
 %     Atom = some_atom_id.
 %
-hyperonpy_sym_sym(Symbol, Atom) :- 
+hyperonpy_sym_sym(Symbol, Atom) :-
     % If the symbol is not a reference, return it directly.
     symbol_not_ref(Symbol), !, Atom = Symbol.
-hyperonpy_sym_sym(Symbol, Atom) :-    
+hyperonpy_sym_sym(Symbol, Atom) :-
     % Otherwise, create a new atom object with the symbol metatype as 'Symbol'.
     oo_new(atom, [metatype:'Symbol', value:Symbol], Atom), !.
 
@@ -1313,7 +1313,7 @@ hyperonpy_sym_sym(Symbol, Atom) :-
 %
 %   Creates a variable atom from a given variable name. If the variable name
 %   is in the form of a custom `bvar/2` variable, the corresponding symbol is used.
-%   Otherwise, the variable name is converted to a symbol, and a new variable atom 
+%   Otherwise, the variable name is converted to a symbol, and a new variable atom
 %   is created.
 %
 %   @arg VarName  The name of the variable (either a custom `bvar` variable or a string).
@@ -1339,7 +1339,7 @@ hyperonpy_atom_var(VarName, Atom) :-
 %!  hyperonpy_atom_expr(+ExpressionList, -Atom) is det.
 %
 %   Creates an expression atom from a list of expressions. The resulting atom will
-%   have the `metatype` set to 'Expression' and its value set to the given list of 
+%   have the `metatype` set to 'Expression' and its value set to the given list of
 %   expressions.
 %
 %   @arg ExpressionList  A list of expressions to be wrapped in an atom.
@@ -1358,7 +1358,7 @@ hyperonpy_atom_expr(ExpressionList, Atom) :-
 
 %!  hyperonpy_atom_gnd(+Object, +GroundedType, -Atom) is det.
 %
-%   Creates a grounded atom from a given object and its specified type. If the 
+%   Creates a grounded atom from a given object and its specified type. If the
 %   `GroundedType` is 'Number' and the object is a number, it is handled directly.
 %   For other grounded types, a new grounded atom is created with the provided type.
 %
@@ -1430,7 +1430,7 @@ hyperonpy_atom_to_str(Atom, Str) :-
         format(atom(Str), "(~w)", [Value])
     ; Metatype == 'Grounded' ->
         format(atom(Str), "<~w>", [Value])
-    ; 
+    ;
         % Default to an empty string if no known metatype is found.
         Str = ""
     ).
@@ -1500,7 +1500,7 @@ hyperonpy_atom_get_children(Atom, Children) :-
 %!  hyperonpy_atom_get_grounded_type(+Atom, -GroundedType) is det.
 %
 %   Retrieves the grounded type of a grounded atom. This is only applicable if the atom
-%   is grounded, meaning its `metatype` is 'Grounded', and the grounded type is stored in 
+%   is grounded, meaning its `metatype` is 'Grounded', and the grounded type is stored in
 %   the `grounded_type` field.
 %
 %   @arg Atom          The unique ID of the grounded atom.
@@ -1640,7 +1640,7 @@ hyperonpy_atom_get_metatype(Atom, MetaType) :-
 
 %!  hyperonpy_atom_get_space(+Atom, -Space) is det.
 %
-%   Retrieves the space associated with an atom. The space represents the context 
+%   Retrieves the space associated with an atom. The space represents the context
 %   or environment in which the atom exists.
 %
 %   @arg Atom   The unique ID of the atom.
@@ -1660,7 +1660,7 @@ hyperonpy_atom_get_space(Atom, Space) :-
 %!  hyperonpy_atom_iterate(+Atom, -List) is det.
 %
 %   Iterates over the components of an atom. If the atom is of metatype 'Expression',
-%   it retrieves the list of components (sub-expressions) from the atom value. 
+%   it retrieves the list of components (sub-expressions) from the atom value.
 %   Otherwise, it returns an empty list.
 %
 %   @arg Atom  The unique ID of the atom.
@@ -1689,8 +1689,8 @@ hyperonpy_atom_iterate(Atom, List) :-
 
 %!  hyperonpy_atom_match_atom(+Atom1, +Atom2, -BindingsSet) is det.
 %
-%   Matches two atoms and returns the resulting set of bindings. If the atoms 
-%   are identical (exact match), the result is an empty bindings list. If the atoms 
+%   Matches two atoms and returns the resulting set of bindings. If the atoms
+%   are identical (exact match), the result is an empty bindings list. If the atoms
 %   do not match, an empty set of bindings is returned.
 %
 %   @arg Atom1        The first atom to be matched.
@@ -1762,8 +1762,8 @@ hyperonpy_atom_clone(Atom, ClonedAtom) :-
 
 %!  match_atoms(+Atom1, +Atom2, +BindingsIn, -BindingsOut) is nondet.
 %
-%   Matches two atoms and updates the bindings accordingly. If `Atom1` is a variable, 
-%   it adds the variable name and `Atom2` to the bindings. If both atoms have the same 
+%   Matches two atoms and updates the bindings accordingly. If `Atom1` is a variable,
+%   it adds the variable name and `Atom2` to the bindings. If both atoms have the same
 %   metatype and value, it succeeds without changing the bindings. Otherwise, it fails.
 %
 %   @arg Atom1       The first atom to be matched.
@@ -1780,12 +1780,12 @@ match_atoms(Atom1, Atom2, BindingsIn, BindingsOut) :-
     % Get the metatype of both atoms.
     oo_get(atom, Atom1, metatype, Type1),
     oo_get(atom, Atom2, metatype, Type2),
-    
+
     % If Atom1 is a variable, add its binding to the bindings list.
     (Type1 == 'Variable' ->
         oo_get(atom, Atom1, value, VarName),
         BindingsOut = [VarName-Atom2 | BindingsIn]
-    
+
     % If the types are the same, check if the values match.
     ; Type1 == Type2 ->
         oo_get(atom, Atom1, value, Value1),
@@ -1797,7 +1797,7 @@ match_atoms(Atom1, Atom2, BindingsIn, BindingsOut) :-
             % If the values do not match, fail.
             fail
         )
-    
+
     % If the metatypes are different, fail.
     ;
         fail
@@ -1810,7 +1810,7 @@ match_atoms(Atom1, Atom2, BindingsIn, BindingsOut) :-
 %!  t_f_v(+Type, +FieldName, -DefaultValue) is det.
 %
 %   Defines the default value for a specific field in a given type. This predicate
-%   provides a default value for the `value` field of the `atom_vec` type, which is 
+%   provides a default value for the `value` field of the `atom_vec` type, which is
 %   an empty list `[]`.
 %
 %   @arg Type         The type of the object (e.g., `atom_vec`).
@@ -1846,7 +1846,7 @@ hyperonpy_atom_vec_new(AtomVec) :-
 
 %!  hyperonpy_atom_vec_from_list(+List, -AtomVec) is det.
 %
-%   Creates an atom vector from a given list of atoms. The list is stored in the 
+%   Creates an atom vector from a given list of atoms. The list is stored in the
 %   `value` field of the newly created `atom_vec` object.
 %
 %   @arg List     A list of atoms to initialize the atom vector.
@@ -1984,7 +1984,7 @@ hyperonpy_bindings_free(Bindings) :-
 
 %!  hyperonpy_bindings_add_var_binding(+Bindings, +VarAtom, +BoundAtom, -Success) is det.
 %
-%   Adds a variable binding to the bindings. If the variable is already bound, 
+%   Adds a variable binding to the bindings. If the variable is already bound,
 %   the addition fails. Otherwise, the new binding is added.
 %
 %   @arg Bindings   The unique ID of the bindings object.
@@ -2168,7 +2168,7 @@ hyperonpy_bindings_to_str(Bindings, Str) :-
 
 %!  hyperonpy_bindings_narrow_vars(+Bindings, +VarAtomVec) is det.
 %
-%   Narrows the variable bindings in the bindings by keeping only the variables that 
+%   Narrows the variable bindings in the bindings by keeping only the variables that
 %   exist in the given variable atom vector.
 %
 %   @arg Bindings    The unique ID of the bindings object.
@@ -2185,7 +2185,7 @@ hyperonpy_bindings_narrow_vars(Bindings, VarAtomVec) :-
     % Retrieve the list of variable atoms from the atom vector.
     oo_get(atom_vec, VarAtomVec, value, VarAtoms),
     % Narrow the bindings list by keeping only the variables that exist in VarAtomVec.
-    findall(VarName-BoundAtom, 
+    findall(VarName-BoundAtom,
        (member(VarName-BoundAtom, BindingsList),
         member(VarAtom, VarAtoms),
         hyperonpy_atom_get_name(VarAtom, VarName)
@@ -2637,7 +2637,7 @@ hyperonpy_metta_tokenizer(Metta, Tokenizer) :-
 
 %!  hyperonpy_metta_run(+Metta, +SExprParser, -ResultList) is det.
 %
-%   Runs an S-expression parser in the Metta instance. It parses and evaluates each 
+%   Runs an S-expression parser in the Metta instance. It parses and evaluates each
 %   S-expression and returns the results as a list.
 %
 %   @arg Metta        The unique ID of the Metta instance.
@@ -2694,98 +2694,98 @@ run_metta(SExpr, Result) :-
 
 %!  instance_MeTTa_evaluate_atom(+Inst, +Value, -RetVal) is det.
 %
-%   Evaluates an atom in a MeTTa instance. The instance, the value to be evaluated, 
+%   Evaluates an atom in a MeTTa instance. The instance, the value to be evaluated,
 %   and the return value are printed using the `format/3` predicate.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The value (atom) to be evaluated.
 %   @arg RetVal  The result of the evaluation.
 %
-instance_MeTTa_evaluate_atom(Inst, Value, RetVal) :- 
+instance_MeTTa_evaluate_atom(Inst, Value, RetVal) :-
     format('instance_MeTTa_evaluate_atom(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_load_module_at_path(+Inst, +Value, -RetVal) is det.
 %
-%   Loads a module in the MeTTa instance from a specified path. The instance, 
+%   Loads a module in the MeTTa instance from a specified path. The instance,
 %   the path of the module, and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The path to the module.
 %   @arg RetVal  The result of the operation.
 %
-instance_MeTTa_load_module_at_path(Inst, Value, RetVal) :- 
+instance_MeTTa_load_module_at_path(Inst, Value, RetVal) :-
     format('instance_MeTTa_load_module_at_path(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_load_module_direct_from_func(+Inst, +Value, -RetVal) is det.
 %
-%   Loads a module directly from a function in the MeTTa instance. The instance, 
+%   Loads a module directly from a function in the MeTTa instance. The instance,
 %   the function, and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The function to load the module from.
 %   @arg RetVal  The result of the operation.
 %
-instance_MeTTa_load_module_direct_from_func(Inst, Value, RetVal) :- 
+instance_MeTTa_load_module_direct_from_func(Inst, Value, RetVal) :-
     format('instance_MeTTa_load_module_direct_from_func(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_load_module_direct_from_pymod(+Inst, +Value, -RetVal) is det.
 %
-%   Loads a module directly from a Python module in the MeTTa instance. The instance, 
+%   Loads a module directly from a Python module in the MeTTa instance. The instance,
 %   the Python module, and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The Python module to load from.
 %   @arg RetVal  The result of the operation.
 %
-instance_MeTTa_load_module_direct_from_pymod(Inst, Value, RetVal) :- 
+instance_MeTTa_load_module_direct_from_pymod(Inst, Value, RetVal) :-
     format('instance_MeTTa_load_module_direct_from_pymod(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_parse_all(+Inst, +Value, -RetVal) is det.
 %
-%   Parses all expressions from a given input in the MeTTa instance. The instance, 
+%   Parses all expressions from a given input in the MeTTa instance. The instance,
 %   the input value, and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The input to be parsed.
 %   @arg RetVal  The result of the parsing.
 %
-instance_MeTTa_parse_all(Inst, Value, RetVal) :- 
+instance_MeTTa_parse_all(Inst, Value, RetVal) :-
     format('instance_MeTTa_parse_all(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_parse_single(+Inst, +Value, -RetVal) is det.
 %
-%   Parses a single expression from a given input in the MeTTa instance. The instance, 
+%   Parses a single expression from a given input in the MeTTa instance. The instance,
 %   the input value, and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The input to be parsed.
 %   @arg RetVal  The result of the parsing.
 %
-instance_MeTTa_parse_single(Inst, Value, RetVal) :- 
+instance_MeTTa_parse_single(Inst, Value, RetVal) :-
     format('instance_MeTTa_parse_single(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_register_atom(+Inst, +Value, -RetVal) is det.
 %
-%   Registers an atom in the MeTTa instance. The instance, the atom to register, 
+%   Registers an atom in the MeTTa instance. The instance, the atom to register,
 %   and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The atom to register.
 %   @arg RetVal  The result of the registration.
 %
-instance_MeTTa_register_atom(Inst, Value, RetVal) :- 
+instance_MeTTa_register_atom(Inst, Value, RetVal) :-
     format('instance_MeTTa_register_atom(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MeTTa_register_token(+Inst, +Value, -RetVal) is det.
 %
-%   Registers a token in the MeTTa instance. The instance, the token to register, 
+%   Registers a token in the MeTTa instance. The instance, the token to register,
 %   and the return value are printed.
 %
 %   @arg Inst    The MeTTa instance.
 %   @arg Value   The token to register.
 %   @arg RetVal  The result of the registration.
 %
-instance_MeTTa_register_token(Inst, Value, RetVal) :- 
+instance_MeTTa_register_token(Inst, Value, RetVal) :-
     format('instance_MeTTa_register_token(~q, ~q, ~q)', [Inst, Value, RetVal]).
 
 %!  instance_MyClass_slot_field(+Inst, -Out) is det.
@@ -2796,7 +2796,7 @@ instance_MeTTa_register_token(Inst, Value, RetVal) :-
 %   @arg Inst  The instance of `MyClass`.
 %   @arg Out   The formatted output string.
 %
-instance_MyClass_slot_field(Inst, Out) :- 
+instance_MyClass_slot_field(Inst, Out) :-
     sformat(Out, 'was_instance_MyClass_slot_field(~q)', [Inst]).
 
 %!  instance_MyClass_prop_field(+Inst, -Out) is det.
@@ -2807,7 +2807,7 @@ instance_MyClass_slot_field(Inst, Out) :-
 %   @arg Inst  The instance of `MyClass`.
 %   @arg Out   The formatted output string.
 %
-instance_MyClass_prop_field(Inst, Out) :- 
+instance_MyClass_prop_field(Inst, Out) :-
     sformat(Out, 'was_instance_MyClass_prop_field(~q)', [Inst]).
 
 %!  static_MyClass_slot_field(+Inst, -Out) is det.
@@ -2818,7 +2818,7 @@ instance_MyClass_prop_field(Inst, Out) :-
 %   @arg Inst  The instance of `MyClass`.
 %   @arg Out   The formatted output string.
 %
-static_MyClass_slot_field(Inst, Out) :- 
+static_MyClass_slot_field(Inst, Out) :-
     sformat(Out, 'was_static_MyClass_slot_field(~q)', [Inst]).
 
 %!  set_static_MyClass_slot_field(+Inst, +Value) is det.
@@ -2829,7 +2829,7 @@ static_MyClass_slot_field(Inst, Out) :-
 %   @arg Inst   The instance of `MyClass`.
 %   @arg Value  The value to set in the static slot field.
 %
-set_static_MyClass_slot_field(Inst, Value) :- 
+set_static_MyClass_slot_field(Inst, Value) :-
     format('setting_static_MyClass_slot_field(~q, ~q)', [Inst, Value]).
 
 %!  myclass_class_field(-FieldValue) is det.
@@ -2843,7 +2843,7 @@ myclass_class_field('Overridden class field from Prolog').
 
 %!  myclass_instance_field(-FieldValue) is det.
 %
-%   Retrieves the value of the `instance_field` for instances of `MyClass`. This value 
+%   Retrieves the value of the `instance_field` for instances of `MyClass`. This value
 %   is overridden from Prolog and returns the string `'Overridden instance field from Prolog'`.
 %
 %   @arg FieldValue  The overridden value of the `instance_field`.
@@ -2854,7 +2854,7 @@ myclass_instance_field('Overridden instance field from Prolog').
 
 %!  set_my_module_MyClass_class_field(+Class, +NewValue) is det.
 %
-%   Sets the value of the class field for `MyClass` dynamically. The existing value for 
+%   Sets the value of the class field for `MyClass` dynamically. The existing value for
 %   the specified class is retracted, and the new value is asserted.
 %
 %   @arg Class     The class for which the field value is being set.
@@ -2873,7 +2873,7 @@ set_my_module_MyClass_class_field(Class, NewValue) :-
 
 %!  hyperonpy_metta_evaluate_expressions(+Metta, +Exprs, -Results) is det.
 %
-%   Helper predicate to evaluate a list of expressions in the Metta environment. 
+%   Helper predicate to evaluate a list of expressions in the Metta environment.
 %   It recursively evaluates each expression in the list and returns a list of results.
 %
 %   @arg Metta     The Metta instance in which the expressions are evaluated.
@@ -2887,8 +2887,8 @@ hyperonpy_metta_evaluate_expressions(Metta, [Expr | Exprs], [Result | Results]) 
 
 %!  hyperonpy_metta_evaluate_expression(+Metta, +Expr, -Result) is det.
 %
-%   Evaluates a single expression in the Metta environment. If the expression is 
-%   an `Expression` atom, it evaluates it as a function with arguments. If it is a 
+%   Evaluates a single expression in the Metta environment. If the expression is
+%   an `Expression` atom, it evaluates it as a function with arguments. If it is a
 %   non-expression atom, the result is the atom itself.
 %
 %   @arg Metta     The Metta instance.
@@ -2906,7 +2906,7 @@ hyperonpy_metta_evaluate_expression(Metta, Expr, Result) :-
 
 %!  evaluate_function(+Metta, +FunctionAtom, +Args, -Result) is det.
 %
-%   Evaluates a function with arguments in the Metta environment. The function is 
+%   Evaluates a function with arguments in the Metta environment. The function is
 %   dispatched based on its name, and the corresponding operation is performed.
 %
 %   @arg Metta         The Metta instance.
@@ -3004,7 +3004,7 @@ print_arguments([Arg | Args]) :-
 
 %!  hyperonpy_atom_error(+Message, -Atom) is det.
 %
-%   Creates an error atom with the given error message. The error atom will have the 
+%   Creates an error atom with the given error message. The error atom will have the
 %   `metatype` set to 'Error' and store the error message.
 %
 %   @arg Message  The error message.
@@ -3028,57 +3028,57 @@ hyperonpy_atom_error(Message, Atom) :-
 % oo_new(sexpr_parser, [expressions:[Expr1, Expr2, ...]], SExprParser).
 
 
-example_usage_run :- 
+example_usage_run :-
     % ==================================================
     % Example Usage
     % ==================================================
-    
+
     % Suppose we have the following expressions to evaluate:
     % SExprParser contains expressions: [(add 1 2), (multiply 3 4), (define (foo bar)), (query (foo X))]
-    
+
     % Construct the SExprParser object:
     % Create atoms for the expressions
     hyperonpy_atom_sym('add', AddFunc),
     hyperonpy_atom_gnd(1, 'Number', Num1),
     hyperonpy_atom_gnd(2, 'Number', Num2),
     hyperonpy_atom_expr([AddFunc, Num1, Num2], AddExpr),
-    
+
     hyperonpy_atom_sym('multiply', MultiplyFunc),
     hyperonpy_atom_gnd(3, 'Number', Num3),
     hyperonpy_atom_gnd(4, 'Number', Num4),
     hyperonpy_atom_expr([MultiplyFunc, Num3, Num4], MultiplyExpr),
-    
+
     hyperonpy_atom_sym('define', DefineFunc),
     hyperonpy_atom_sym('foo', FooSym),
     hyperonpy_atom_sym('bar', BarSym),
     hyperonpy_atom_expr([FooSym, BarSym], FooBarExpr),
     hyperonpy_atom_expr([DefineFunc, FooBarExpr], DefineExpr),
-    
+
     hyperonpy_atom_sym('query', QueryFunc),
     hyperonpy_atom_sym('foo', FooSym2),
     hyperonpy_atom_var('X', XVar),
     hyperonpy_atom_expr([FooSym2, XVar], QueryPattern),
     hyperonpy_atom_expr([QueryFunc, QueryPattern], QueryExpr),
-    
+
     % Create the SExprParser object with the expressions
     oo_new(sexpr_parser, [expressions:[AddExpr, MultiplyExpr, DefineExpr, QueryExpr]], SExprParser),
-    
+
     % Create a new Metta instance with an empty space
     hyperonpy_space_new_grounding(Space),
     hyperonpy_env_builder_start(EnvBuilder),
     hyperonpy_metta_new(Space, EnvBuilder, Metta),
-    
+
     % Run the expressions in the Metta instance
     hyperonpy_metta_run(Metta, SExprParser, ResultList),
     dmsg(ResultList),
-    
+
     % The ResultList should contain the results of each expression evaluation.
-    
+
     % ==================================================
     % End of improved hyperonpy_metta_run/3 implementation
     % ==================================================
     !.
-    
+
 % 69. hyperonpy_metta_err_str/2
 
 %!  hyperonpy_metta_err_str(+Metta, -ErrorStr) is det.
@@ -3301,7 +3301,7 @@ hyperonpy_env_builder_set_config_dir(EnvBuilder, ConfigDir) :-
 %     Result = '@'(true).
 %
 hyperonpy_env_builder_create_config_dir(EnvBuilder, ShouldCreate, Result) :-
-    oo_get(EnvBuilder, config_dir, ConfigDir),    
+    oo_get(EnvBuilder, config_dir, ConfigDir),
     ((make_directory(ConfigDir), ShouldCreate == '@'(true)) ->
         Result = '@'(true)
     ;
@@ -4407,7 +4407,7 @@ handle_method_call(syntax_node, ID, _, free(), _) :-
 % syntax_node_is_null
 handle_method_call(syntax_node, _ID, Attributes, is_null(), IsNull) :-
     py_is_tf( ( \+ member_chk(value:_, Attributes)), IsNull).
-    
+
 
 % syntax_node_clone
 handle_method_call(syntax_node, NewID, Attributes, clone(), _) :-
@@ -4451,7 +4451,7 @@ true.
 % Create a new atom vector from a list
 ?- hyperonpy_atom_vec_from_list([Atom1, Atom2, Atom3], AtomVec).
 % AtomVec = o3(atom_vec, atom_vec_1, [type:atom_vec, value:[o3(atom, atom_1, ...), o3(atom, atom_2, ...), o3(atom, atom_3, ...)]]).
-    
+
 % Get the length of the atom vector
 ?- hyperonpy_atom_vec_len(AtomVec, Length).
 % Length = 3.

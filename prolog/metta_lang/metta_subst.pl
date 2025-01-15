@@ -718,7 +718,7 @@ subst_args2(Eq,Depth,Self,[H|PredDecl],Res):- mnotrace(is_user_defined_head(Eq,S
    subst_args30(Eq,Depth,Self,[H|PredDecl],Res).
 
 % function inherited by system
-subst_args2(Eq,Depth,Self,PredDecl,Res):-  subst_args40(Eq,Depth,Self,PredDecl,Res).
+%subst_args2(Eq,Depth,Self,PredDecl,Res):-  subst_args40(Eq,Depth,Self,PredDecl,Res).
 
 /*
 last_element(T,E):- \+ compound(T),!,E=T.
@@ -843,9 +843,9 @@ is_metta_builtin('pragma!').
 */
 
 
-subst_args30(Eq,Depth,Self,H,B):-  (subst_args34(Depth,Self,H,B)*->true;subst_args37(Eq,Depth,Self,H,B)).
+subst_args30(Eq,Depth,Self,H,B):- if_or_else(subst_args34(Depth,Self,H,B),subst_args37(Eq,Depth,Self,H,B)).
 
-subst_args34(_Dpth,Self,H,B):-  (metta_eq_def(Eq,Self,H,B);(get_metta_atom(Eq,Self,H),B=H)).
+subst_args34(_Dpth,Self,H,B):-  if_or_else(metta_eq_def(Eq,Self,H,B),(get_metta_atom(Eq,Self,H),B=H)).
 
 % Has argument that is headed by the same function
 subst_args37(Eq,Depth,Self,[H1|Args],Res):-

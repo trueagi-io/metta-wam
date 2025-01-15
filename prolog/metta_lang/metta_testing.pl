@@ -405,11 +405,11 @@ give_pass_credit(TestSrc, _Pre, _G) :-
     always_exec(BaseEval), !.
 give_pass_credit(TestSrc, _Pre, G) :-
     % Logs the test as passed with 'PASS' status.
-    write_pass_fail(TestSrc, 'PASS', G),
+    must_det_lls((ignore(write_pass_fail(TestSrc, 'PASS', G)),
     % Increments the success counter.
     flag(loonit_success, X, X + 1), !,
     % Displays a success message in cyan color.
-    color_g_mesg(cyan, write_src_wi(loonit_success(G))), !.
+    color_g_mesg(cyan, write_src_wi(loonit_success(G))))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -423,7 +423,7 @@ give_pass_credit(TestSrc, _Pre, G) :-
 %   @example
 %     % Log the details of a test with a passing status:
 %     ?- write_pass_fail(['source', 'category', 'type'], 'PASS', some_goal(arg1, arg2)).
-write_pass_fail([P, C, _], PASS_FAIL, G) :-
+write_pass_fail([P, C| _], PASS_FAIL, G) :- !,
     % Ensures deterministic logging of the test result.
     must_det_ll((
         % Retrieves the current test number.
@@ -435,6 +435,9 @@ write_pass_fail([P, C, _], PASS_FAIL, G) :-
         arg(2, G, G2),
         % Logs the formatted test name, source, category, status, and arguments.
         write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2))).
+
+write_pass_fail(LIST, PASS_FAIL, G) :- is_list(LIST), PCC = [P, _, _], member(PCC,LIST), nonvar(P), !, write_pass_fail(PCC, PASS_FAIL, G).
+write_pass_fail(LIST, PASS_FAIL, G) :- is_list(LIST), PCC = [P|_], member(PCC,LIST), nonvar(P), !, write_pass_fail(PCC, PASS_FAIL, G).
 
 %!  write_pass_fail(+TestName, +Source, +Category, +Status, +GoalArg1, +GoalArg2) is det.
 %
@@ -465,9 +468,6 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
         must_det_ll((
             (tee_file(TEE_FILE) -> true ; 'TEE.ansi' = TEE_FILE),
             ((
-                % Optional shared units for organized logging.
-                shared_units(UNITS),
-                open(UNITS, append, Stream, [encoding(utf8)]),
                 % Retrieve or create HTML file name.
                 once(getenv('HTML_FILE', HTML_OUT) ; sformat(HTML_OUT, '~w.metta.html', [Base])),
                 % Compute and store a per-test HTML output.
@@ -476,15 +476,19 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
                 get_last_call_duration(Duration),
                 DurationX1000 is Duration * 1000,
                 % Write the detailed formatted log entry.
-                format(Stream,'| ~w | ~w |[~w](https://trueagi-io.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+                % Optional shared units for organized logging.
+             ignore((   shared_units(UNITS),
+             catch(setup_call_cleanup(
+                open(UNITS, append, Stream, [encoding(utf8)]),
+                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
                     [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
                     trim_gstring_bar_I(write_src_woi([P,C]),600),
                     trim_gstring_bar_I(write_src_woi(G1),600),
                     trim_gstring_bar_I(write_src_woi(G2),600),
                     DurationX1000,
-                    HTML_OUT_PerTest]),!,
+                    HTML_OUT_PerTest]),
                 % Close the log stream
-                close(Stream))))).
+                close(Stream)),_,true))))))).
 
 % Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
 
@@ -514,14 +518,21 @@ output_directory(OUTPUT_DIR) :- getenv('OUTPUT_DIR', OUTPUT_DIR), !.
 %     % Get the shared units file path:
 %     ?- shared_units(Units).
 %     Units = '/path/to/SHARED.UNITS'.
-shared_units(UNITS) :-
+shared_units(UNITS):- shared_units0(UNITS), exists_file(UNITS),!.
+
+shared_units0(UNITS) :-
     % Needs not to be relative to CWD
-    getenv('SHARED_UNITS', UNITS), !.
-shared_units(UNITS) :-
-    output_directory(OUTPUT_DIR),  !,
-    directory_file_path(OUTPUT_DIR, 'SHARED.UNITS', UNITS).
-shared_units(UNITS) :-
+    getenv('SHARED_UNITS', UNITS).
+shared_units0(UNITS) :-
+    metta_root_dir(ROOT_DIR),
+    getenv('SHARED_UNITS', VAR_UNITS),
+    absolute_file_name(VAR_UNITS, UNITS, [relative_to(ROOT_DIR)]).
+shared_units0(UNITS) :-
+    output_directory(OUTPUT_DIR),
+    absolute_file_name('SHARED.UNITS', UNITS, [relative_to(OUTPUT_DIR)]).
+shared_units0(UNITS) :-
     UNITS = '/tmp/SHARED.UNITS'.
+
 
 % currently in a shared file per TestCase class..
 %   but we might make each test dump its stuff to its own HTML file for easier spotting why test failed
@@ -846,9 +857,9 @@ tst_call_limited(Goal) :-
 loonit_asserts1(TestSrc, Pre, G) :-
     % Run precondition and record duration of Goal execution.
     _ = nop(Pre),
-    record_call_duration((G)),
+    record_call_duration(G),
     % Log as passed if Goal succeeds.
-    give_pass_credit(TestSrc, Pre, G),
+    must_det_lls(give_pass_credit(TestSrc, Pre, G)),
     !.
 /*
 loonit_asserts1(TestSrc,Pre,G) :-  fail,
@@ -1383,6 +1394,8 @@ parse_answer_str(Inner0, Metta) :-
     parse_sexpr_metta(Str, Metta), !,skip((must_det_ll(\+ sub_var(',', rc3(Metta))))),
     skip((\+ sub_var(',', rc(Metta)))))).
 %parse_answer_string(String,Metta):- String=Metta,!,fail.
+
+parse_sexpr_metta(Str,Metta):- notrace(catch(parse_sexpr_untyped(Str,Metta),_,fail)).
 
 %!  remove_m_commas(+InputList, -OutputList) is det.
 %

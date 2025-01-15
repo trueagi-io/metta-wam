@@ -83,7 +83,7 @@ load_mettalog_xref:- dmsg("Skipping metta: no home dir").
 
 
 % :- endif.
-:- fixup_exports.
+%:- fixup_exports.
 
 
 

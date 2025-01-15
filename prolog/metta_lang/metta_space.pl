@@ -1664,15 +1664,6 @@ cmpd_to_pyswip(PS, "and", Uery, Call) :-
     % Print each line of the source code.
     maplist(write_src_nl, SrcL).
 
-%!  write_src_nl(+Src) is det.
-%
-%   Prints a source line followed by a newline.
-%
-%   @arg Src The source line to print.
-%
-write_src_nl(Src) :-
-    % Print a newline, the source line, and another newline.
-    format('~N'), write_src(Src), format('~N').
 
 %'get-metta-src'(Pred,[Len|SrcL]):-
 %    findall(['AtomDef',Src], 'get-metta-src1'(Pred,Src), SrcL),

@@ -110,16 +110,8 @@ Prolog Extensions with Python:
 %     ?- janus_initialization.
 %     false.
 %
-:-
-  (module_property(janus,file(File)) ->
-      % If Janus module is already loaded,ensure it is reloaded from the same file.
-      janus:ensure_loaded(File);
-      % If not loaded, try loading from a default location.
-      (exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Fallback to a specific path if it exists.
-          -> janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Otherwise, try loading from the default Janus library.
-          ; janus:ensure_loaded(library(janus)))).
+:- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
+
 
 % Declare the multifile and dynamic predicates for determining the type of logical space.
 % These predicates are used to determine whether the given space is Python-based or not.

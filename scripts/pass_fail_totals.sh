@@ -7,7 +7,13 @@ if [ -z "$1" ]; then
 fi
 
 start_dir="${1%/}"
-#start_dir=$1
+
+# Function to strip the start_dir prefix from directories
+strip_start_dir() {
+    local dir=$1
+    echo "${dir#$start_dir/}"
+}
+
 
 reverse_path() {
     # The original path is read from the first argument to the function
@@ -66,6 +72,7 @@ find "$start_dir" -type d -not -path '*/__pycache__*' | while read -r dir; do
     echo "$dir $slash_count $(reverse_path $dir)" >> "$temp_file"
 done
 
+# cat "$temp_file" #debugging
 
 file_info_tmp=$(mktemp)
 chart1=$(mktemp)
@@ -81,8 +88,8 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count rvdir; do
     # Process each .metta.html file in the directory
     while read -r file; do
             # Extract successes and failures
-       pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
-       fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
+            pass=$(tac "$file" | grep -oP 'Successes: \K\d+' | head -n 1 | bc || echo 0)
+            fail=$(tac "$file" | grep -oP 'Failures: \K\d+' | head -n 1 | bc || echo 0)
 
             # Add to totals
             total_pass=$((total_pass + pass))
@@ -112,7 +119,9 @@ sort -k1,1r -k2,2nr  "$temp_file" | while read -r dir slash_count rvdir; do
                   show_total_as="${show_total_as}"
 		  missing="${files_no_totals}"
             fi
-	    mdir="$(convert_path $dir)"
+            
+        tdir="$(strip_start_dir "$dir")" 
+	    mdir="$(convert_path $tdir)"
 	    mod="$(convert_mod $mdir)"
            printf "|%4d|%-2s%3d|%4s|  %3d%% | %-30s | %s |\n" "$total_pass" "$missing" "$total_fail" "$show_total_as" "$dir_percent" "$mod" "$mdir"  >> $chart1
 
@@ -176,7 +185,9 @@ sort -k3,3 -k2,2nr "$temp_file" | while read -r dir slash_count rvdir; do
                fail=-1
                pass=-1
             fi
-            relative_path=$(echo "$file" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
+            
+            tfile="$(strip_start_dir "$file")"
+            relative_path=$(echo "$tfile" | sed 's/^\.\///' | sed -e 's|examples|reports|g' -e 's|-reports|-examples|g')
             github_link="${base_url}${relative_path}"
             printf "| %5d | %5d |  %5d%%  | [%s](%s) |\n" "$pass" "$fail" "$file_percent" "$(basename "${file%.html}")" "$github_link" >> $file_info_tmp
         fi
@@ -185,7 +196,8 @@ sort -k3,3 -k2,2nr "$temp_file" | while read -r dir slash_count rvdir; do
     # Calculate and print the directory percentage
     total_tests=$((total_pass + total_fail))
     dir_percent=0
-    mdir="$(convert_path $dir)"
+    tdir="$(strip_start_dir "$dir")"
+    mdir="$(convert_path $tdir)"
     if [ "$total_tests" -ne 0 ]; then
         dir_percent=$((100 * total_pass / total_tests))
         if [ "$had_files" == "true" ]; then

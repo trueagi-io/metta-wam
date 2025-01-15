@@ -217,27 +217,30 @@ mnotrace(G) :-
 %
 %   @arg Type The type being checked.
 %
-is_decl_utype('%Undefined%').
-is_decl_utype('Number').
-is_decl_utype('Symbol').
-is_decl_utype('Expression').
-is_decl_utype('String').
-is_decl_utype('Bool').
-is_decl_utype('Type').
-is_decl_utype('Any').
-is_decl_utype('Atom').
+is_decl_utype(U):- is_decl_utype(U,_).
+is_decl_utype('Atom',1).
+is_decl_utype('Expression',5).
+is_decl_utype('Any',3).
+is_decl_utype('%Undefined%',3).
+is_decl_utype('AnyRet',3).
+is_decl_utype('Type',5).
+is_decl_utype('Number',5).
+is_decl_utype('Symbol',5).
+is_decl_utype('String',5).
+is_decl_utype('Bool',5).
 % is_decl_utype(Type) :- is_decl_type_l(Type).
 
 %!  is_decl_mtype(+Type) is nondet.
 %
 %   @arg Type The type being checked.
 %
-is_decl_mtype('Variable').
-is_decl_mtype('Number').
-is_decl_mtype('Symbol').
-is_decl_mtype('Expression').
-is_decl_mtype('Grounded').
-is_decl_mtype('PyObject').
+is_decl_mtype(U):- is_decl_mtype(U,_).
+is_decl_mtype('Variable',5).
+is_decl_mtype('Number',5).
+is_decl_mtype('Symbol',5).
+is_decl_mtype('Expression',5).
+is_decl_mtype('Grounded',4).
+is_decl_mtype('PyObject',4).
 
 % is_decl_type([ST|_]) :- !, atom(ST), is_decl_type_l(ST).
 % is_decl_type(ST) :- \+ atom(ST), !, fail.
@@ -594,6 +597,8 @@ get_type_each(Depth, _Slf, _Type, _) :-
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
+get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),member(Type,Set).
+
 get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
     notrace(is_valid_nb_state(Expr)), !,
@@ -603,7 +608,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
     var(Var), !,
-    get_attr(Var, metta_type, Self = TypeList),
+    get_attr(Var, cns, Self = TypeList),
     member(Type, TypeList).
 get_type_each(_Dpth, _Slf, Expr, 'hyperon::space::DynSpace') :-
     % Check if the expression is a dynamic space.
@@ -840,10 +845,10 @@ get_dict_type(_Vl, Type, TypeO) :-
 get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'type' field.
     get_dict(Val, type, Type).
-get_dict_type(Val, _, TypeO) :-
+get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'class' field.
     get_dict(Val, class, Type).
-get_dict_type(Val, _, TypeO) :-
+get_dict_type(Val, _, Type) :-
     % Retrieve the type from the dictionary 'types' field if it is a list.
     get_dict(Val, types, TypeL),
     is_list(TypeL),
@@ -936,7 +941,7 @@ get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, maplist(get_type)) :-
     maplist(get_type(Depth2, Self), List, Type),
     % Ensure the expression is not badly typed.
     \+ badly_typed_expression(Depth, Self, Type).
-get_type_cmpd_eval(Depth2, Self, EvalMe, Val, Type, eval_first) :-
+get_type_cmpd_eval(Depth2, Self, _EvalMe, Val, Type, eval_first) :-
     % Handle first-evaluation strategy.
     !,
     \+ needs_eval(Val),
@@ -966,7 +971,6 @@ state_decltype(Expr,Type):- functor(Expr,_,A),
 %     ?- get_value_type(_, _, X, Type).
 %     Type = '%Undefined%'.
 %
-get_value_type(_Dpth,_Slf,Var,'%Undefined%'):- var(Var),!.
 get_value_type(_Dpth,_Slf,Val,'Number'):- number(Val),!.
 get_value_type(_Dpth,_Slf,Val,'String'):- string(Val),!.
 get_value_type(Depth,Self,Val,T):- get_type(Depth,Self,Val,T), T\==[], T\=='%Undefined%',!.
@@ -1018,7 +1022,7 @@ get_value_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %
 as_prolog(I, O) :-
     % Use default recursion depth of 10 and '&self' as context.
-    as_prolog(10, '&self', I, O).
+    as_prolog(0, '&self', I, O).
 
 %!  as_prolog(+Depth, +Self, +I, -O) is det.
 %
@@ -1037,32 +1041,43 @@ as_prolog(I, O) :-
 %     ?- as_prolog(_, _, ['@', foo, a, b], O).
 %     O = foo(a, b).
 %
+
+:- dynamic(dont_de_Cons/0).
+
+as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
+as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
+as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
     \+ iz_conz(I), !, I = O.
-as_prolog(Depth, Self, [Cons, H, T], [HH | TT]) :-
+as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
-    !,
-    as_prolog(Depth, Self, H, HH),
-    as_prolog(Depth, Self, T, TT).
-as_prolog(Depth, Self, [List, H | T], O) :-
+    Nil == [], \+ dont_de_Cons, !,
+    as_prolog(0, Self, H, HH),
+    as_prolog(0, Self, T, TT).
+as_prolog(0, Self, [CC | List], O) :-
     % Handle '::' operator by mapping elements to Prolog terms.
-    List=='::',
-    !,
-    maplist(as_prolog(Depth, Self), [H | T], L),
+    CC =='::',
+    is_list(List), !,
+    maplist(as_prolog(0, Self), List, L),
     !, O = L.
-as_prolog(Depth, Self, [At, H | T], O) :-
+as_prolog(0, Self, [At| List], O) :-
     % Handle '@' symbol by constructing compound terms.
     At=='@',
-    !,
-    maplist(as_prolog(Depth, Self), [H | T], [HH | L]),
-    atom(H), !,
-    O =.. [HH | L].
+    is_list(List),
+    maplist(as_prolog(0, Self), List, [HH | L]),
+    atom(HH), !,
+    compound_name_arguments(O, HH, L).
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
     maplist(as_prolog(Depth, Self), I, O).
+as_prolog(Depth, Self, [H|T], [HH|TT]) :-
+    % If is a list, map each element to Prolog terms.
+    as_prolog(Depth, Self, H, HH),
+    as_prolog(1, Self, T, TT).
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
@@ -1156,7 +1171,7 @@ adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
 %   @arg X         The input arguments.
 %   @arg Y         The final adjusted arguments.
 %
-adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_argsA(_Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
@@ -1200,7 +1215,7 @@ adjust_argsB(Else, _Eq, _RetType, Res, Res, Depth, Self, _, X, Y) :-
 %   @arg Adjusted    The result after evaluation.
 %
 eval_1_arg(Else, Eq, ReturnType, Depth, Self, Arg, Adjusted) :-
-    must_det_ll(
+    (
         if_or_else(
             eval(Eq, ReturnType, Depth, Self, Arg, Adjusted),
             call(Else, Arg, Adjusted))).
@@ -1442,7 +1457,7 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M), !, Y = M, nop(put_attr(M, metta_type, Self = T)).
+    var(M), !, Y = M, nop(put_attr(M, cns, Self = T)).
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
     into_typed_arg0(Depth, Self, T, M, Y) *-> true ; M = Y.
@@ -1460,7 +1475,7 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 into_typed_arg0(Depth, Self, T, M, Y) :-
     % If the type is a variable, determine the value type and evaluate if needed.
     var(T), !,
-    must_det_ll((
+    ((
         get_type(Depth, Self, M, T),
         (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
 into_typed_arg0(Depth, Self, T, M, Y) :-
@@ -1487,20 +1502,26 @@ wants_eval_kind(T) :-
     nonvar(T), is_pro_eval_kind(T), !.
 wants_eval_kind(_) :- true.
 
-%!  metta_type:attr_unify_hook(+Input, +NewValue) is det.
+%!  cns:attr_unify_hook(+Input, +NewValue) is det.
 %
-%   Handles the unification of a value with a `metta_type` attribute.
+%   Handles the unification of a value with a `cns` attribute.
 %
 %   @arg Input     The context or structure being evaluated.
 %   @arg NewValue  The value being unified with the attribute.
 %
-metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
+prevent_type_violations(BecomingValue,RequireType):- non_arg_violation(_Self, RequireType, BecomingValue).
+% TODO make sure it is inclusive rather than exclusive
+cns:attr_unify_hook(_=TypeRequirements,BecomingValue):- \+ maplist(prevent_type_violations(BecomingValue),TypeRequirements), !, fail.
+cns:attr_unify_hook(Self = TypeList, NewValue) :-
     % If the new value is an attributed variable, assign the same attribute.
-    attvar(NewValue), !, put_attr(NewValue, metta_type, Self = TypeList).
-metta_type:attr_unify_hook(Self = TypeList, NewValue) :-
+    attvar(NewValue), !, put_attr(NewValue, cns, Self = TypeList).
+cns:attr_unify_hook(Self = TypeList, NewValue) :-
     % Retrieve the type of the new value and check if it can be assigned.
     get_type(20, Self, NewValue, Was),
     can_assign(Was, Type).
+
+
+
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.
 %
@@ -1542,7 +1563,7 @@ add_type(_Depth, _Self, _Var, TypeL, Type) :-
 add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
     append([Type], TypeL, TypeList),
-    put_attr(Var, metta_type, Self = TypeList).
+    put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-
     ignore(append(_,[Type|_], TypeL)),!.
     % If the variable is not bound, do nothing.
@@ -1870,7 +1891,7 @@ is_user_defined_head0(Eq, Other, [H | _]) :-
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
     callable(H), !,
-    functor(H, F, _),
+    functor(H, F, _, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.
@@ -2227,6 +2248,4 @@ is_math_op('zerop', 1, exists).     % Test for Zero
 
 % :- load_pfc_file('metta_ontology.pl.pfc').
 
-
-
-
+:- ensure_loaded(metta_typed_functions).

@@ -423,7 +423,7 @@ xref_source_expired(Path):-
    retractall(lsp_state:made_metta_file_buffer(Path)),
    retractall(lsp_cache:gave_document_symbols(Path,_)),
    %metta_file_buffer(0,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)
-   symbol_concat(Path, '.buffer~', BufferFile),
+   cache_file(Path, '.buffer~', BufferFile),
    if_t(exists_file(BufferFile),delete_file(BufferFile)),
    retractall(user:metta_file_buffer(_Lvl,_Ord,_Kind, _Term, _NamedVarsList, Path, _Pos)))),!.
 

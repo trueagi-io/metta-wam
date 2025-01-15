@@ -206,6 +206,7 @@ load_and_trim_history :-
 %     metta>
 %
 repl :-
+    flag(need_prompt,_,1),
     % Catch any end_of_input exception and terminate the REPL gracefully.
     catch(repl2, end_of_input, true).
 
@@ -264,7 +265,8 @@ write_metta_prompt :-
     % Display the current REPL mode (e.g., normal, query).
     current_read_mode(repl, Mode), write(Mode),
     % Display the current self reference, unless it is '&self'.
-    current_self(Self), (Self == '&self' -> true ; write(Self)),
+    current_self(Self), top_self(Top),
+    ((Self == '&self' ; Self == Top) -> true ; write(Self)),
     % Write the final '>' as the prompt and flush the output again.
     write('>'), flush_output(current_output).
 
@@ -290,7 +292,7 @@ repl3 :-
 % Create the prompt by writing it to an atom `P`.
 set_metta_prompt:-
     with_output_to(atom(P), write_metta_prompt),
-    prompt1(P),
+    %prompt1(P),
     prompt(_, P).
 
 
@@ -426,66 +428,6 @@ read_pending_white_codes(In) :-
 read_pending_white_codes(_).
 
 
-%! balanced_parentheses(+Str) is semidet.
-%   Checks if parentheses are balanced in a string or list of characters `Str`.
-%   This version handles both string input and list input by converting the string to a list of characters.
-%
-%   @arg Str A string or list of characters to check for balanced parentheses.
-%
-%   @example
-%   ?- balanced_parentheses("(())").
-%   true.
-%
-%   ?- balanced_parentheses("(()").
-%   false.
-%
-%   ?- balanced_parentheses("text(with(parentheses))").
-%   true.
-%
-balanced_parentheses(Str) :-
-    % If the input is a string, convert it to a list of characters.
-    string(Str),
-    string_chars(Str, Chars),
-    % Delegate to the list-based version.
-    !, balanced_parentheses(Chars, 0).
-% If input is already a list of characters, check the balance starting at count 0.
-balanced_parentheses(Chars) :- balanced_parentheses(Chars, 0).
-
-
-%!  balanced_parentheses(+Chars, +N) is semidet.
-%
-%   True when Chars contains a set of balanced parentheses.
-%
-%   Recursive helper predicate to check if parentheses are balanced in a
-%   list of characters `Chars`. The second argument `N` keeps track of
-%   the net balance of opening and closing parentheses.
-%
-%   @arg Chars A list of characters to process for balanced parentheses.
-%   @arg N     An integer count tracking the net balance of open and close
-%   parentheses.
-%
-%   @example
-%   ?- balanced_parentheses(['(', ')', '(', ')'], 0).
-%   true.
-%
-%   Raises unbalanced_parens warning when there are more '(' closing
-%   parentheses than open parentheses. The repl is then restart4ed.
-%
-%   Example:
-%   metta+>())
-%   Warning: Found unbalanced parentheses!
-%   metta+>
-%
-balanced_parentheses([], 0).
-% Increment count when encountering an opening parenthesis.
-balanced_parentheses(['('|T], N) :- N1 is N + 1, !, balanced_parentheses(T, N1).
-% Decrement count when encountering a closing parenthesis, ensuring the count remains positive.
-balanced_parentheses([')'|T], N) :- N > 0, N1 is N - 1, !, balanced_parentheses(T, N1).
-% If we have a ')' and the count is 0 or less, then we have a stray ')'.
-balanced_parentheses([')'|_T], N) :- N =< 0, print_message(warning,unbalanced_parens), throw(restart_reading).
-% Skip any characters that are not parentheses.
-balanced_parentheses([H|T], N) :- H \= '(', H \= ')', !, balanced_parentheses(T, N).
-
 prolog:message(unbalanced_parens) -->
     ['Found unbalanced parentheses!'-[]].
 
@@ -582,6 +524,10 @@ comment_buffer(Comment) :-
 %     ?- repl_read_next("write(hello)", Expr).
 %     Expr = call(write(hello)).
 %
+repl_read_next(In, Expr) :-
+    % If `In` is the current input stream, read with `repl_read/1`.
+    current_input(In0), In == In0, !, repl_read(Expr).
+
 repl_read_next(NewAccumulated, Expr) :-
     % Concatenate the input with '.' and try to interpret it as an atom.
     symbol_concat(_Atom,'.',NewAccumulated),
@@ -591,7 +537,6 @@ repl_read_next(NewAccumulated, Expr) :-
        (((fail, write('Syntax error: '), writeq(E), nl, repl_read_next(Expr))))), !.
 
 % Previously commented: repl_read_next(Str, Expr):- ((clause(t_l:s_reader_info(Expr),_,Ref),erase(Ref))).
-
 % Handle special case for '!' symbol.
 repl_read_next("!", '!') :- !.
 % Handle special case for '+' symbol.
@@ -602,12 +547,6 @@ repl_read_next(Str, Atom) :- atom_string(Atom, Str), metta_interp_mode(Atom, _),
 % Handle input starting with '@'.
 repl_read_next(Str, Expr) :- symbol_concat('@', _, Str), !, atom_string(Expr, Str).
 
-% Normalize spaces in the accumulated input and re-read if the normalized result is different.
-repl_read_next(NewAccumulated, Expr) :- fail,
-    normalize_space(string(Renew), NewAccumulated),
-    Renew \== NewAccumulated, !,
-    repl_read_next(Renew, Expr).
-
 % Previously commented: repl_read_next(Str, 'add-atom'('&self',Expr)):- symbol_concat('+',W,Str),!,repl_read_next(W,Expr).
 % Previously commented: repl_read_next(NewAccumulated, exec(Expr)):- string_concat("!", Renew, NewAccumulated), !, repl_read_next(Renew, Expr).
 
@@ -617,54 +556,53 @@ repl_read_next(NewAccumulated, Expr) :-
     normalize_space(string(Renew), NewAccumulated),
     % Convert the accumulated string to a list of characters.
     string_chars(Renew, Chars),
-    % Check if the parentheses are balanced.
-    balanced_parentheses(Chars),
     % Ensure there is some content in the input.
     length(Chars, Len), Len > 0,
     % Parse the metta expression from the accumulated input.
-    catch(read_metta(Renew, Expr),stream_error(_,_),fail),!,
-    add_history_string(Renew).
+
+    % for debugging
+    % notrace(catch(read_sexpr(NewAccumulated, Expr),SE,true)),
+    % for non-debugging
+    notrace(catch(parse_sexpr(NewAccumulated, Expr),SE,true)),
+    check_unbalanced_parens(SE),!,
+    add_history_src(Expr).
 
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
     if_t(flag(need_prompt,1,0),(nl,set_metta_prompt)),
+        % On windows we need to output the prompt again
+    (is_win64-> (ttyflush,prompt(P, P),write(P), ttyflush) ; true),
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
-    format(atom(T),'| ~t',[]),
-    prompt(_,T),
-    % Call repl_read_next with the new line concatenated to the accumulated input.
-    repl_read_next(Accumulated, Line, Expr).
+    repl_read_next(Accumulated, Expr, Line).
 
-%!  repl_read_next(+Accumulated, +Line, -Expr) is det.
-%
-%   Handles reading input, including special cases such as end-of-file.
-%   Accumulates lines of input and processes them to form valid expressions.
-%   It gracefully manages EOF, concatenates input, and continues reading.
-%
-%   @arg Accumulated The accumulated input so far.
-%   @arg Line        The new line to be added to the accumulated input.
-%   @arg Expr        The resulting expression or an indication of end-of-file.
-%
-%   @example
-%     % Handle end-of-file input gracefully.
-%     ?- repl_read_next(_, end_of_file, Expr).
-%     Expr = end_of_file.
-%
-repl_read_next(_, end_of_file, end_of_file) :- nop(writeln("")), notrace(throw(end_of_input)).
+repl_read_next(Accumulated, Expr, Line):-
+    normalize_space(string(NAccumulated), Accumulated), NAccumulated = "",
+    normalize_space(string(NLine), Line), NLine = "", !,
+    repl_read_next(Accumulated, Expr).
 
-% Continue reading if no input has been accumulated yet.
-% repl_read_next(Accumulated, "", Expr) :- !, repl_read_next(Accumulated, Expr).
-% Handle end-of-file as a valid input.
-repl_read_next(_Accumulated, Line, Expr) :- Line == end_of_file, !, Expr = Line.
-
-% Concatenate accumulated input with the new line and continue reading.
-repl_read_next(Accumulated, Line, Expr) :-
+repl_read_next(Accumulated, Expr, Line):-
+    (Line==end_of_file->notrace(throw(end_of_input));true),
     % Concatenate the accumulated input with the new line using a space between them.
     symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
+    format(atom(T),'| ~t',[]),prompt(_,T),
     repl_read_next(NewAccumulated, Expr).
 
+
+
+% if stream error is not recoverable restart_reading
+check_unbalanced_parens(SE):- var(SE),!. % no error
+check_unbalanced_parens(SE):- \+ compound(SE),!,notrace(throw(SE)). % rethrow no compounds
+check_unbalanced_parens(stream_error(_, syntax_error(unexpected_char(_Char), _Reason))):- print_message(warning,unbalanced_parens), notrace(throw(restart_reading)).
+check_unbalanced_parens(SE):- SE=stream_error(_,_), !,
+    %print_message(error,SE),
+    %writeln(continue_reading),
+    fail.
+check_unbalanced_parens(SE):-  writeln(restart_reading), ignore((print_message(error,SE))), writeln(restart_reading), notrace(throw(restart_reading)).
+%check_unbalanced_parens(SE):- trace, SE = stream_error(_,syntax_error(unexpected_end_of_file,_)),!.
+%check_unbalanced_parens(SE):- wdmsg(SE), print_message(warning,unbalanced_parens), notrace(throw(restart_reading)).
 % Retrieve stored reader info and erase it.
 repl_read_next(O2) :- clause(t_l:s_reader_info(O2), _, Ref), erase(Ref).
 
@@ -779,6 +717,7 @@ add_history_pl(Exec) :-
 %     false.
 %
 % Delegate to the internal helper predicate.
+
 is_interactive(From) :- notrace(is_interactive0(From)).
 
 %!  is_interactive0(+From) is nondet.
@@ -839,7 +778,7 @@ inside_assert(exec(I),O) :-
     !, inside_assert(I,O).
 inside_assert(Eval,O) :-
     % If the term is an evaluation, extract the relevant part and process it.
-    functor(Eval, eval_H, A), A1 is A - 1, arg(A1, Eval, I), !, inside_assert(I, O).
+    functor(Eval, eval_H, A, _), A1 is A - 1, arg(A1, Eval, I), !, inside_assert(I, O).
 inside_assert(call(I),O) :-
     % Handle call terms by processing the inside assertion.
     !, inside_assert(I, O).
@@ -1044,11 +983,15 @@ each_pair_list(A-B,A,B).
 %   @arg Was is the previous state before execution.
 %   @arg Output is the output generated from the execution.
 %   @arg FOut is the final output, after additional processing.
-u_do_metta_exec00(file(lsp(From)),Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- fail, nonvar(From), !,
-   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),
+
+u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
+   catch(u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),'$aborted', fbug(aborted(From,TermV))).
+
+u_do_metta_exec000(FromLSP,Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- ground(FromLSP), FromLSP = file(lsp(From)), nonvar(From), !,
+   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),!,
    maplist(each_pair_list,List,OutputL,FOutL).
 
-u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
+u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
     catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           % Handle the '$aborted' exception by logging it.
@@ -1093,7 +1036,7 @@ u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
 
 % --exec=skip
 skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,_FOut):-
-    option_value('exec',skip), From = file(_Filename),
+    option_value('exec',skip), From = file(_Filename), \+ use_metta_compiler,
     \+ always_exec(BaseEval),  \+ always_exec(TermV),
     color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
     prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
@@ -1112,11 +1055,14 @@ maybe_add_history(Self, BaseEval, NamedVarsList) :-
     % Debug output in interactive mode, showing evaluated terms and results
    prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
 
+
+
 u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
      % Was --exec=skip but this is the type of directive we'd do anyways
-     if_t((From = file(_), option_value('exec',skip)), color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV)))),
+     if_t((From = file(_), option_value('exec',skip)), \+ \+ color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV),nl,
+        write_w_attvars(Term)))),
 
     % Initialize the result variable, with FOut to hold the final output
     Result = res(FOut),
@@ -1133,7 +1079,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
      GgGgGgGgGgG = (
          % Execute Term and capture the result
-         ((  (Term),deterministic(Complete),  % record if top-level metta evaluation is completed
+         ((  (Term,deterministic(Complete)),  % record if top-level metta evaluation is completed
              % Transform output for display and store it in the result
              notrace((xform_out(VOutput,Output), nb_setarg(1,Result,Output)))))),
 
@@ -1172,6 +1118,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='e' -> (notrace(halt(5)),fail) ;
          (C=='m' -> (make,fail) ;
          (C=='c' -> (trace,Next=true) ;
+         (C=='C' -> (once(cls),fail) ;
          (C==' ' -> (trace,Next=true) ;
          (C=='t' -> (nop(set_debug(eval,true)),rtrace,Next=true) ;
          (C=='T' -> (set_debug(eval,true),Next=true);
@@ -1183,8 +1130,9 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='l' -> (nb_setarg(3, Control, leap),Next=true) ;
          (((C=='\n');(C=='\r')) -> (Cut=false,nb_setarg(3, Control, leap),Next=true);
          (C=='g' -> write_src(exec(TermV));
+         (C=='G' -> (bt, Next=false);
          (C=='s' -> (Cut=true,Next=false);
-         (true -> (write('Unknown Char'),fail))))))))))))))))))),
+         (true -> (write('Unknown Char'),fail))))))))))))))))))))), % should consume 'b's paren
          (nonvar(Next);nonvar(Cut))) ; true),
 
             ((Complete==true;Cut==true) ->! ; true),
@@ -1349,15 +1297,13 @@ get_single_char_key(C, A):- name(A, [C]).
 %   @arg Complete indicates whether the goal reached a final result.
 %   @arg Goal is the main goal to be executed interactively.
 %   @arg After is the action to perform after the goal is executed.
-forall_interactive(file(_), false, Complete, Goal, After) :-
-    !,
+forall_interactive(file(_), false, Complete, Goal, After) :- !,
     % Execute the goal.
     %format("%%%%%%%%%%%%%%%%%%%%%%%%%0 ~w\n",[Goal]),
     Goal,
     % If the goal is complete, execute 'After', otherwise skip it.
-    (Complete == true -> (After, !) ; (\+ After)).
-forall_interactive(prolog, false, Complete, Goal, After) :-
-    !,
+    (Complete == true -> (!, call(After), !) ; ( \+ quietly(After))).
+forall_interactive(prolog, false, Complete, Goal, After) :- !,
     % Execute the goal.
     %format("%%%%%%%%%%%%%%%%%%%%%%%%%1 ~w\n",[Goal]),
     Goal,
@@ -1372,7 +1318,7 @@ forall_interactive(From, WasInteractive, Complete, Goal, After) :-
     % Execute the goal.
     Goal,
     % If the goal is complete, quietly execute 'After', otherwise negate 'After'.
-    (Complete == true -> (quietly(After), !) ; ( \+ quietly(After))).
+    (Complete == true -> (!, quietly(After), !) ; ( \+ quietly(After))).
 
 %!  print_var(+Name, +Var) is det.
 %
@@ -1981,17 +1927,14 @@ interact(Variables, Goal, Tracing) :-
 :- dynamic(is_installed_readline_editline/1).
 :- volatile(is_installed_readline_editline/1).
 
-:- if(is_win64).
-% dummy for on windows
-install_readline_editline.
-:-else.
+install_readline_editline :-  is_win64,!.
 install_readline_editline :-
     % Get the current input stream.
     current_input(Input),
     % Install readline support for the current input.
     install_readline(Input),
     !.
-:- endif.
+
 
 %!  el_wrap_metta(+Input) is det.
 %
@@ -2040,16 +1983,16 @@ el_wrap_metta(_NoTTY) :-
 add_metta_commands(Input) :-
     % TODO: File name completion would be useful, but it is currently skipped for Prolog atom completion.
     % Bind a function for atom and file completion. Commented out.
-    % editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
+    editline:el_addfn(Input,complete,'Complete atoms and files',editline:complete),
     % Bind a function to list completions. Also commented out.
-    % editline:el_addfn(Input,show_completions,'List completions',editline:show_completions),
+    editline:el_addfn(Input,show_completions,'List completions',editline:show_completions),
     % Bind the electric function to highlight matching brackets during input.
     editline:el_addfn(Input, electric, 'Indicate matching bracket', editline:electric),
     % Bind the incremental search function to allow searching through input history.
     editline:el_addfn(Input, isearch_history, 'Incremental search in history', editline:isearch_history),
     % Previously bound commands for tab completion and listing completions, commented out for now.
-    % editline:el_bind(Input,["^I",complete]),
-    % editline:el_bind(Input,["^[?",show_completions]),
+    editline:el_bind(Input,["^I",complete]),
+    editline:el_bind(Input,["^[?",show_completions]),
     % Bind the "^R" key to initiate an incremental search through history.
     editline:el_bind(Input, ["^R", isearch_history]),
     % Enable the electric mode for the current input.

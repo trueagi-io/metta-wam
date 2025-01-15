@@ -3,14 +3,16 @@
 ;  are separate modules, but in no python mode there is no Python stdlib
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Even at the very beginning of the script `(get-atoms &self)`
-; returns two atoms.  One is from the imported stdlib, and the other
-; is corelib, which was a dependency of stdlib that has been promoted
-; These atoms are both wrapped spaces, as is `&self`
+; At the very beginning of the script `(get-atoms &self)`
+; returns no atoms. In fact it imports one or two libraries:
+; corelib is a necessary core library and stdlib if Python is enabled.
+; But these libraries are considered to be a part of the space content.
+; TODO: if get-deps is implemented we could check it returns corelib and stdlib
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-!(assertEqual
+!(assertEqualToResult
   ((let $x (get-atoms &self) (get-type $x)))
-  (superpose (((get-type &self)) ((get-type &self)))))
+  ())
+
 
 ; stdlib is already loaded
 !(assertEqual
@@ -36,10 +38,11 @@
 (= (is-space $atom)
    (let* (($type (get-type $atom)) ($space (get-type &self))) (== $type $space)))
 
-; It's first atom is a space
+; It is not returned by get-atoms as well
+; TODO: after implementing get-deps we can check new dependency is added
 !(assertEqual
   (let $x (collapse (get-atoms &m)) (contains $x is-space))
-  True)
+  False)
 
 ; FIXME? Now, it is moduleC space.
 ;        Should it be `stdlib` atom for a separately imported space
