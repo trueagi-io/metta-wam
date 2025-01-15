@@ -1168,7 +1168,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head,Body) :-
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    format("######### ~w :- ~w\n",[HeadIsIn,AsBodyFnIn]),
-   trace,
+   %trace,
  must_det_lls((
    current_self(Space),
   subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
