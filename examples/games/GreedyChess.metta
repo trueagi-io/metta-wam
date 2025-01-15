@@ -46,14 +46,12 @@
 ;*******************************************************
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
-; (: nth (-> Int Expression Atom)) ; Retrieves the nth element from the board.
 (= (nth $n $list) 
     (if (== $n 1)
         (car-atom $list)
         (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
 
 ; Input a list and symbol, then return True if found, else False. Eg:  (contains_symbol (a b c) b) returns True.
-; (: contains_symbol (-> Expression Atom Bool))
 (= (contains_symbol $list $sym) 
     (if (== $list ())
         False
@@ -61,54 +59,28 @@
             True
             (contains_symbol (cdr-atom $list) $sym))))
 
-; helper routines
-(: car-car (-> Expression Atom))
-(= (car-car $list) (let $first_list (car-atom $list) (car-atom $first_list)))
-(: car-cdr (-> Expression Atom))
-(= (car-cdr $list) (let $first_list (car-atom $list) (cdr-atom $first_list)))
-
 ; Input a list of lists. Output the concatenation of the input flattened (only flattens at top level).
 ; For example:  
 ;   Input list of lists    =  ((1 2) (3 4) () (5)) 
 ;   Output list            =  (1 2 3 4 5)
 ;
-(: concat_lists (-> list list))
 (= (concat_lists $ListofLists)
-  ; if list of lists is empty, return empty list
-  (if (==  (size-atom $ListofLists) 0) 
-      ()
-  ; if the first list in the list of lists is empty, ie., ( ()....), skip and return the rest of the list of lists.
-  (if (== (size-atom (car-atom $ListofLists)) 0)
-      (concat_lists  (cdr-atom $ListofLists))
-  ; otherwise recursively transform eg ( (1 2) (3) ) into --> ( 1 (2) (3))...  into finally --> ( 1 2 3).
-  ; (cons-atom (first-symbol (concat_lists (cdr-atom (car-atom ($ListofLists) cdr-atom ($ListofLists))))))
-  (let*
-    (  ;assign variables
-      ($a (car-car $ListofLists))  ; the first symbol in first list
-      ($b (car-cdr $ListofLists))  ; the rest of the first list 
-      ($c (cdr-atom $ListofLists)) ; the lists following the first list
-    )   ; $a = next symbol  $d = remaining list of lists
-      ;(let $d (cons-atom $b $c) (cons-atom $a (concat_lists $d)))  ;<-- intended!!!
-      (let $d (cons-atom $b $c) (let $f (concat_lists $d) (cons-atom $a $f )))  
-  ))
-))
-
-; below might work
-(= (concat_lists $ListofLists)
-  (if (== (size-atom $ListofLists) 0)
+  (if (== $ListofLists () )
       ()
       (let $first_list (car-atom $ListofLists)
-        (if (== (size-atom $first_list) 0)
+        (if (== $first_list ())
             (concat_lists (cdr-atom $ListofLists))
             (let*
-              ($a (car-atom $first_list))
-              ($b (cdr-atom $first_list))
-              ($c (cdr-atom $ListofLists))
-              ($d (cons-atom $b $c))
-              ($f (concat_lists $d))
-              (cons-atom $a $f)
+              (
+              ($a (car-atom $first_list))   ;$a = first element first list
+              ($b (cdr-atom $first_list))   ;$b = rest of first list
+              ($c (cdr-atom $ListofLists))  ;$c = all the remaining lists
+              ) ;$d = remaining elements of first list and rest of lists
+                ;$f = the concatenation of the rest of the lists
+                ;we return the first element of the first list and concatenation of the remainder.
+              (let $d (cons-atom $b $c) (let $f (concat_lists $d) (cons-atom $a $f )))  
             )))))
-
+            
 ;
 ;!(concat_lists ((1 2 3)  (4 5) (6) (7 8 0) () ) )
 ;
@@ -263,15 +235,15 @@
 (= (C) 
   (progn
     (println! " ") (println! " ") (println! " ") (println! " ")
-    (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3' ()))
-    (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2 Move MeTTa Greedy Chess          ->  G' ()))
-    (println! (format-args '3 Reset                            ->  R' ()))
-    (println! (format-args '4 Commands List                    ->  C' ()))
-    (println! (format-args '5 Display Board                    ->  D' ()))
-    (println! (format-args '6 Quit                             ->  Q' ()))
-    (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))))
+    (println! (format-args "-------- C o m m a n d s -----------" ()))
+    (println! (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
+    (println! (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
+    (println! (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
+    (println! (format-args "3 Reset                            ->  R" ()))
+    (println! (format-args "4 Commands List                    ->  C" ()))
+    (println! (format-args "5 Display Board                    ->  D" ()))
+    (println! (format-args "6 Quit                             ->  Q" ()))
+    (println! (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
 ;
 
 ; The display command shows the present board.
@@ -301,26 +273,26 @@
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
  (progn
-   ((println! " ") (println! " ") (println! " ") (println! " ")
-    (println! (format-args 'M E T T A    G R E E D Y   C H E S S' ()))
+    (println! " ") (println! " ") (println! " ") (println! " ")
+    (println! (format-args "M E T T A    G R E E D Y   C H E S S" ()))
     (println! " ")
-    (println! (format-args 'This program is a MeTTa exercise which takes the best immediate move without planning far ahead.'
+    (println! (format-args "This program is a MeTTa exercise which takes the best immediate move without planning far ahead."
               ()))
-    (display_board (match &self (board-state $board) $board))
-    (println! (format-args '******* I N S T R U C T I O N S ********' ()))
+    ;(display_board (match &self (board-state $board) $board))
+    (println! (format-args "******* I N S T R U C T I O N S ********" ()))
     (println! " ")
-    (println! (format-args '- Your pieces are marked with an asterisk.' ()))
-    (println! (format-args '- Please take note of the following simple commands:' ()))
-    (println! (format-args '-------- C o m m a n d s -----------' ()))
-    (println! (format-args '1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3' ()))
-    (println! (format-args '   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.'   ()))
-    (println! (format-args '2 Move MeTTa Greedy Chess          ->  G' ()))
-    (println! (format-args '3 Reset                            ->  R' ()))
-    (println! (format-args '4 Commands List                    ->  C' ()))
-    (println! (format-args '5 Display Board                    ->  D' ()))
-    (println! (format-args '6 Quit                             ->  Q' ()))
-    (println! (format-args 'You may now enter your move M x1 y1 x2 y2 command.' ()))
-    )))
+    (println! (format-args "- Your pieces are marked with an asterisk." ()))
+    (println! (format-args "- Please take note of the following simple commands:" ()))
+    (println! (format-args "-------- C o m m a n d s -----------" ()))
+    (println! (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
+    (println! (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
+    (println! (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
+    (println! (format-args "3 Reset                            ->  R" ()))
+    (println! (format-args "4 Commands List                    ->  C" ()))
+    (println! (format-args "5 Display Board                    ->  D" ()))
+    (println! (format-args "6 Quit                             ->  Q" ()))
+    (println! (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))
+    ))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
@@ -374,7 +346,7 @@
 ;*******************************************************
 (= (command-loop)
   (do
-    (println! "Please enter your command.")
+    (println! "Please enter your command!")
     ; case statement for commands
     (let $command (get-player-command ())
       (if (== $command "M") 
@@ -409,7 +381,7 @@
   (do
     (chess)          ; Start the chess game
     (command-loop))) ; Enter the recursive command-processing loop
-;!(main_loop)
+!(main_loop)
 ;-----------;
 
 ;

@@ -3709,12 +3709,36 @@ assert_preds(Self,Load,Preds):-
   if_t(is_transpiling, add_assertion(Self,Preds)),
   nop(metta_anew1(Load,Preds)).
 
+%!  load_hook(+Load, -Hooked) is det.
+%
+%   Processes the loading of a file or resource by invoking custom hooks.
+%   This predicate attempts to apply all defined hooks for the given `Load`
+%   argument. If no hooks are successfully applied, it ensures the operation
+%   continues gracefully.
+%
+%   @arg Load   The item being loaded (e.g., file or module).
+%   @arg Hooked The result of applying the load hooks.
+%
+%   @example
+%     % Process a load operation with hooks:
+%     ?- load_hook(my_file, Hooked).
 
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
-
+%!  rtrace_on_error(:Goal) is det.
+%
+%   Executes the given Goal and handles errors using tracing.
+%   If the Goal raises an exception, it writes debugging information and
+%   re-executes the Goal under the Prolog tracer (`rtrace`).
+%
+%   @arg Goal The Prolog goal to execute.
+%
+%   @example
+%     % Execute a goal and trace errors:
+%     ?- rtrace_on_error(writeln('Hello, World!')).
+%
 rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
@@ -3725,6 +3749,18 @@ rtrace_on_error(G):-
     catch(rtrace(G),E,throw(give_up(E=G))),
     throw(E))).
 
+%!  rtrace_on_failure(:Goal) is det.
+%
+%   Executes the given Goal and handles failures using tracing.
+%   If the Goal fails, it writes debugging information, enables the Prolog tracer,
+%   and re-executes the Goal.
+%
+%   @arg Goal The Prolog goal to execute.
+%
+%   @example
+%     % Execute a goal and trace failures:
+%     ?- rtrace_on_failure(writeln('This will not fail.')).
+%
 rtrace_on_failure(G):- tracing,!,call(G).
 rtrace_on_failure(G):-
   catch_err((G*->true;(write_src_uo(rtrace_on_failure(G)),
@@ -3737,42 +3773,149 @@ rtrace_on_failure(G):-
     catch(rtrace(G),E,throw(give_up(E=G))),
     throw(E))).
 
-rtrace_on_failure_and_break(G):- tracing,!,call(G).
+%!  rtrace_on_failure_and_break(:Goal) is det.
+%
+%   Executes the given Goal and handles failures using tracing and debugging.
+%   If the Goal fails, it writes debugging information, enables the Prolog tracer,
+%   re-executes the Goal, and allows the user to inspect the failure using `break/0`.
+%
+%   @arg Goal The Prolog goal to execute.
+%
+%   @example
+%     % Execute a goal and trace failures, breaking on failure:
+%     ?- rtrace_on_failure_and_break(writeln('This may fail.')).
+%
+rtrace_on_failure_and_break(G):- 
+    % If tracing is already active, execute the Goal directly.
+    tracing, !, call(G).
 rtrace_on_failure_and_break(G):-
-  catch_err((G*->true;(write_src(rtrace_on_failure(G)),
-                       ignore(rtrace(G)),
+    % Catch any exceptions during the execution of the Goal.
+    catch_err((G *-> true ; (
+                       % Log the failure and enable tracing.
                        write_src(rtrace_on_failure(G)),
-                       !,break,fail)),E,
-   (%notrace,
-    write_src_uo(E=G),
-    %catch(rtrace(G),E,throw(E)),
-    catch(rtrace(G),E,throw(give_up(E=G))),
-    throw(E))).
+                       ignore(rtrace(G)),
+                       % Log the failure again and enter debugging mode.
+                       write_src(rtrace_on_failure(G)),
+                       !, break, fail)), E,
+       (% notrace
+        % Write debugging information about the error.
+        write_src_uo(E = G),
+        % Re-execute the Goal with tracing enabled.
+        % Previously commented-out version:
+        % catch(rtrace(G), E, throw(E)),
+        catch(rtrace(G), E, throw(give_up(E = G))),
+        % Re-throw the original exception.
+        throw(E)
+       )).
 
-assertion_hb(metta_eq_def(Eq,Self,H,B),Self,Eq,H,B):-!.
-assertion_hb(metta_defn(Self,H,B),Self,'=',H,B):-!.
-assertion_hb(metta_defn(Eq,Self,H,B),Self,Eq,H,B):- assertion_neck_cl(Eq),!.
-assertion_hb(X,Self,Eq,H,B):- maybe_xform(X,Y),!, assertion_hb(Y,Self,Eq,H,B).
-assertion_hb(metta_atom_asserted(Self,[Eq,H,B]),Self,Eq,H,B):- !, assertion_neck_cl(Eq),!.
+%!  assertion_hb(+Clause, -Self, -Eq, -H, -B) is det.
+%
+%   Processes various forms of clauses to extract or transform their components.
+%   Handles specific patterns like `metta_eq_def/4`, `metta_defn/3`, and others,
+%   mapping them into a unified structure of `Self`, `Eq`, `H`, and `B`.
+%
+%   @arg Clause The input clause to process.
+%   @arg Self   The "space" or context in which the clause is defined.
+%   @arg Eq     The equality or relationship operator (e.g., `=` or `:-`).
+%   @arg H      The head of the clause.
+%   @arg B      The body of the clause.
+%
+%   @example
+%     % Process a `metta_eq_def/4` clause:
+%     ?- assertion_hb(metta_eq_def('foo', '&self', head, body), Self, Eq, H, B).
+%     Self = '&self',
+%     Eq = 'foo',
+%     H = head,
+%     B = body.
+%
+assertion_hb(metta_eq_def(Eq, Self, H, B), Self, Eq, H, B) :- !.
+assertion_hb(metta_defn(Self, H, B), Self, '=', H, B) :- !.
+assertion_hb(metta_defn(Eq, Self, H, B), Self, Eq, H, B) :-
+    % Ensure the equality operator is valid.
+    assertion_neck_cl(Eq), !.
+assertion_hb(X, Self, Eq, H, B) :-
+    % Attempt to transform `X` into a recognized form and recurse.
+    maybe_xform(X, Y), !,
+    assertion_hb(Y, Self, Eq, H, B).
+assertion_hb(metta_atom_asserted(Self, [Eq, H, B]), Self, Eq, H, B) :-
+    % Handle clauses asserted as `metta_atom_asserted`.
+    !,
+    assertion_neck_cl(Eq),
+    !.
 
-
-assertion_neck_cl(Eq):- \+ symbol(Eq),!,fail.
+%!  assertion_neck_cl(+Eq) is nondet.
+%
+%   Verifies if the provided equality operator (`Eq`) is valid.
+%   Accepts symbolic equality operators such as `=` and `:-`.
+%
+%   @arg Eq The equality operator to check.
+%
+%   @example
+%     % Check a valid equality operator:
+%     ?- assertion_neck_cl('='). 
+%     true.
+%
+%     % Fail for invalid operators:
+%     ?- assertion_neck_cl(foo). 
+%     false.
+%
+assertion_neck_cl(Eq) :-
+    % Fail if `Eq` is not a symbol.
+    \+ symbol(Eq), !, fail.
 assertion_neck_cl('=').
 assertion_neck_cl(':-').
 
+%!  load_hook0(+Load, +Assertion) is det.
+%
+%   Processes a given `Assertion` within the context of a `Load` operation.
+%   Transforms the `Assertion` into its components (`Self`, `Eq`, `H`, `B`) using
+%   `assertion_hb/5` and then passes these components to `load_hook1/5` for further handling.
+%
+%   @arg Load       The loading operation context (e.g., file or resource being loaded).
+%   @arg Assertion  The assertion to process and handle.
+%
+%   @example
+%     % Example usage:
+%     ?- load_hook0(my_load, metta_eq_def('=', self, head, body)).
+%
+%   @see assertion_hb/5, load_hook1/5
+%
 
-%load_hook0(_,_):- \+ show_transpiler, !. % \+ is_transpiling, !.
+%   % load_hook0(_, _) :- \+ show_transpiler, !. % \+ is_transpiling, !.
+load_hook0(Load, Assertion) :-
+    % Extract components of the assertion using `assertion_hb/5`.
+    once(assertion_hb(Assertion, Self, Eq, H, B)),
+    % Pass the components to `load_hook1/5` for further processing.
+    load_hook1(Load, Self, Eq, H, B).
 
+%!  load_hook1(+Load, +Self, +Eq, +H, +B) is det.
+%
+%   Handles the processing of assertions (`Eq`, `H`, `B`) within a specific
+%   context (`Self`) during a `Load` operation. Converts function-like terms
+%   to predicates and asserts them into the knowledge base if the system is ready.
+%
+%   @arg Load The loading operation context (e.g., file or resource being loaded).
+%   @arg Self The "space" or context in which the assertion applies.
+%   @arg Eq   The equality or relationship operator (e.g., `=` or `:-`).
+%   @arg H    The head of the assertion.
+%   @arg B    The body of the assertion.
+%
+%   @example
+%     % Example usage:
+%     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
-load_hook0(Load,Assertion):- once(assertion_hb(Assertion,Self,Eq,H,B)),
-     load_hook1(Load,Self,Eq,H,B).
-
-%load_hook1(_Load,'&corelib',_Eq,_H,_B):-!.
-load_hook1(_,_,_,_,_):- \+ current_prolog_flag(metta_interp,ready),!.
-load_hook1(Load,Self,Eq,H,B):-
-       use_metta_compiler,
-       functs_to_preds([Eq,H,B],Preds),
-       assert_preds(Self,Load,Preds),!.
+% load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
+load_hook1(_, _, _, _, _) :-
+    % Skip processing if the `metta_interp` flag is not set to `ready`.
+    \+ current_prolog_flag(metta_interp, ready), !.
+load_hook1(Load, Self, Eq, H, B) :-
+    % Ensure the Metta compiler is ready for use.
+    use_metta_compiler,
+    % Convert functions to predicates.
+    functs_to_preds([Eq, H, B], Preds),
+    % Assert the converted predicates into the knowledge base.
+    assert_preds(Self, Load, Preds), !.
+       
 % old compiler hook
 /*
 load_hook0(Load,Assertion):-
@@ -3786,32 +3929,151 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
        H\=[':'|_], functs_to_preds([=,H,B],Preds),
        assert_preds(Self,Load,Preds).
 */
-is_transpiling:- use_metta_compiler.
-use_metta_compiler:- option_value('compile','full').
-preview_compiler:- notrace(use_metta_compiler;option_value('compile','true')).
-%preview_compiler:- use_metta_compiler,!.
-show_transpiler:- option_value('code',Something), Something\==silent,!.
-show_transpiler:- preview_compiler.
 
-option_switch_pred(F):-
-  current_predicate(F/0),interpreter_source_file(File),
-  source_file(F, File), \+ \+ (member(Prefix,[is_,show_,trace_on_]), symbol_concat(Prefix,_,F)),
-  F \== show_help_options.
+%!  is_transpiling is nondet.
+%
+%   Succeeds if the system is in a state where the Metta compiler is being used.
+%   This is determined by the availability or readiness of the Metta compiler.
+%
+%   @example
+%     % Check if the system is transpiling:
+%     ?- is_transpiling.
+%     true.
+%
+is_transpiling :- 
+    % Check if the Metta compiler is in use.
+    use_metta_compiler.
 
+%!  use_metta_compiler is nondet.
+%
+%   Succeeds if the `compile` option is set to `full`, indicating that the
+%   Metta compiler is fully enabled and operational.
+%
+%   @example
+%     % Verify if the Metta compiler is enabled:
+%     ?- use_metta_compiler.
+%     true.
+%
+use_metta_compiler :- 
+    % Check if the `compile` option is set to `full`.
+    option_value('compile', 'full').
+
+%!  preview_compiler is nondet.
+%
+%   Succeeds if the Metta compiler is enabled or if the `compile` option is set to `true`.
+%   This predicate provides a lightweight check to determine the availability of the compiler.
+%
+%   @example
+%     % Preview the compiler status:
+%     ?- preview_compiler.
+%     true.
+%
+% preview_compiler :- use_metta_compiler, !.
+preview_compiler :- 
+    % Use the compiler or check if the `compile` option is `true`.
+    notrace(use_metta_compiler; option_value('compile', 'true')).
+
+%!  show_transpiler is nondet.
+%
+%   Succeeds if the transpiler should display output, based on the `code` option.
+%   The transpiler is shown if the `code` option is not set to `silent` or if
+%   the compiler is in preview mode.
+%
+%   @example
+%     % Check if the transpiler should display output:
+%     ?- show_transpiler.
+%     true.
+%
+show_transpiler :- 
+    % Check if the `code` option has a value other than `silent`.
+    option_value('code', Something), 
+    Something \== silent, !.
+show_transpiler :- 
+    % Fallback to preview mode.
+    preview_compiler.
+
+%!  option_switch_pred(-F) is nondet.
+%
+%   Identifies predicates that act as option switches, based on their naming conventions and source location.
+%   A predicate qualifies as an option switch if:
+%   - It is defined in the current source file.
+%   - Its name starts with one of the prefixes: `is_`, `show_`, or `trace_on_`.
+%   - It is not `show_help_options`.
+%
+%   @arg F The name of a predicate that acts as an option switch.
+%
+option_switch_pred(F) :-
+    % Check if the predicate exists and is defined in the current source file.
+    current_predicate(F/0),
+    interpreter_source_file(File),
+    source_file(F, File),
+    % Ensure the predicate name matches one of the prefixes.
+    \+ \+ (member(Prefix, [is_, show_, trace_on_]), symbol_concat(Prefix, _, F)),
+    % Exclude `show_help_options` from the results.
+    F \== show_help_options.
+
+%!  do_show_option_switches is det.
+%
+%   Displays the status (enabled or disabled) of all identified option switch predicates.
+%   For each option switch predicate, it prints:
+%   - `yes(F)` if the predicate succeeds when called.
+%   - `not(F)` if the predicate fails when called.
+%
+%   @example
+%     % Display the status of all option switch predicates:
+%     ?- do_show_option_switches.
+%     yes(is_debug).
+%     not(trace_on_error).
+%
 do_show_option_switches :-
-  forall(distinct(option_switch_pred(F)),(call(F)-> writeln(yes(F)); writeln(not(F)))).
-do_show_options_values:-
-  forall((nb_current(N,V), \+((symbol(N),symbol_concat('$',_,N)))),write_src_nl(['pragma!',N,V])),
-  do_show_option_switches,
-  display_metta_debug_topics.
+    % Iterate over all distinct option switch predicates.
+    forall(distinct(option_switch_pred(F)),
+           % Call the predicate and print its status.
+           (call(F) -> writeln(yes(F)) ; writeln(not(F)))).
 
-display_metta_debug_topics:-
-  distinct(Sub,debugging(metta(Sub),_)),
-  format(user_error,'~N@~w=trace~n',[Sub]),
-  fail.
-display_metta_debug_topics:- !.
+%!  do_show_options_values is det.
+%
+%   Displays the current values of non-hidden runtime options, followed by the
+%   statuses of all option switches and debugging topics.
+%   Hidden options (whose names start with `$`) are excluded from the output.
+%
+%   @example
+%     % Display all current option values and statuses:
+%     ?- do_show_options_values.
+%     pragma!(option_name, option_value)
+%     yes(is_debug)
+%     @debug_topic=trace
+%
+do_show_options_values :-
+    % Display all non-hidden option values.
+    forall((nb_current(N, V), \+ ((symbol(N), symbol_concat('$', _, N)))),
+           write_src_nl(['pragma!', N, V])),
+    % Display the status of option switches.
+    do_show_option_switches,
+    % Display debugging topics.
+    display_metta_debug_topics.
 
+%!  display_metta_debug_topics is det.
+%
+%   Displays all active Metta debugging topics in the format `@topic=trace`.
+%   Iterates over all unique debugging topics and prints them to the error stream.
+%
+%   @example
+%     % Display all active debugging topics:
+%     ?- display_metta_debug_topics.
+%     @debug_topic=trace
+%
+display_metta_debug_topics :-
+    % Iterate over all distinct debugging topics.
+    distinct(Sub, debugging(metta(Sub), _)),
+    % Print each debugging topic to the error stream.
+    format(user_error, '~N@~w=trace~n', [Sub]),
+    fail.
+% Ensure the predicate always succeeds, even if no debugging topics are active.
+display_metta_debug_topics :- !.
 
+% Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across 
+% multiple files.
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
 :- dynamic(metta_atom_deduced/2).
@@ -3823,60 +4085,246 @@ display_metta_debug_topics:- !.
 
 %get_metta_atom(Eq,KB, [F|List]):- KB='&flybase',fb_pred(F, Len), length(List,Len),apply(F,List).
 
+%!  maybe_into_top_self(+WSelf, -Self) is nondet.
+%
+%   Conditionally maps `WSelf` to the current `Self` context if `use_top_self` is enabled.
+%   The mapping is deferred if `WSelf` or `Self` is unbound, using `freeze/2`.
+%
+%   @arg WSelf The working self-reference (`&self` or variable).
+%   @arg Self  The resolved self-reference.
+%
+maybe_into_top_self(_, _) :- 
+    % Fail if `use_top_self` is not enabled.
+    \+ use_top_self, !, fail.
+maybe_into_top_self(WSelf, Self) :- 
+    % Handle unbound `WSelf` with deferred resolution.
+    var(WSelf), !, \+ attvar(WSelf), !, freeze(Self, from_top_self(Self, WSelf)).
+maybe_into_top_self(WSelf, Self) :- 
+    % Map `&self` to the current context.
+    WSelf = '&self',
+    current_self(Self),
+    Self \== WSelf, !.
 
-maybe_into_top_self(_, _):- \+ use_top_self, !, fail.
-maybe_into_top_self(WSelf, Self):- var(WSelf), !, \+ attvar(WSelf), !, freeze(Self, from_top_self(Self, WSelf)).
-maybe_into_top_self(WSelf, Self):- WSelf='&self',current_self(Self),Self\==WSelf,!.
-into_top_self(WSelf, Self):- maybe_into_top_self(WSelf, Self),!.
+%!  into_top_self(+WSelf, -Self) is det.
+%
+%   Resolves `WSelf` to `Self` using `maybe_into_top_self/2`. If mapping fails, `Self` defaults to `WSelf`.
+%
+%   @arg WSelf The working self-reference.
+%   @arg Self  The resolved self-reference.
+%
+into_top_self(WSelf, Self) :- 
+    % Attempt conditional mapping.
+    maybe_into_top_self(WSelf, Self), !.
 into_top_self(Self, Self).
 
-from_top_self(Self, WSelf):- var(Self), !, \+  attvar(Self), !, freeze(Self, from_top_self(Self, WSelf)).
+%!  from_top_self(+Self, -WSelf) is det.
+%
+%   Maps `Self` back to its working form (`WSelf`). Handles unbound `Self` using `freeze/2`.
+%
+%   @arg Self  The resolved self-reference.
+%   @arg WSelf The working self-reference.
+%
+from_top_self(Self, WSelf) :- 
+    % Handle unbound `Self` with deferred resolution.
+    var(Self), !, \+ attvar(Self), !, freeze(Self, from_top_self(Self, WSelf)).
 %from_top_self(Self, WSelf):- var(Self), trace, !, freeze(Self, from_top_self(Self, WSelf)).
-from_top_self(Self, WSelf):- top_self(CSelf), CSelf == Self, WSelf='&self', !.
-from_top_self(Self, WSelf):- current_self(CSelf), CSelf == Self, WSelf='&self', !.
+from_top_self(Self, WSelf) :- 
+    % Map from top self-reference.
+    top_self(CSelf), CSelf == Self, WSelf = '&self', !.
+from_top_self(Self, WSelf) :- 
+    % Map from current self-reference.
+    current_self(CSelf), CSelf == Self, WSelf = '&self', !.
 from_top_self(Self, Self).
 
+%!  get_metta_atom_from(+KB, -Atom) is nondet.
+%
+%   Retrieves an atom associated with the specified knowledge base (`KB`).
+%
+%   @arg KB   The knowledge base context.
+%   @arg Atom The atom associated with the knowledge base.
+%
+get_metta_atom_from(KB, Atom) :- 
+    metta_atom(KB, Atom).
 
-get_metta_atom_from(KB,Atom):- metta_atom(KB,Atom).
+%!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
+%
+%   Retrieves an atom associated with a space, excluding specific equality atoms (`Eq`).
+%
+%   @arg Eq    The equality to exclude.
+%   @arg Space The context or space.
+%   @arg Atom  The retrieved atom.
+%
+get_metta_atom(Eq, Space, Atom) :- 
+    metta_atom(Space, Atom), 
+    \+ (Atom = [EQ, _, _], EQ == Eq).
 
-get_metta_atom(Eq,Space, Atom):- metta_atom(Space, Atom), \+ (Atom =[EQ,_,_], EQ==Eq).
+%!  metta_atom(-Atom) is nondet.
+%
+%   Retrieves an atom associated with the current knowledge base (`current_self/1`).
+%
+%   @arg Atom The atom associated with the current knowledge base.
+%
+metta_atom(Atom) :- 
+    current_self(KB), 
+    metta_atom(KB, Atom).
 
-metta_atom(Atom):- current_self(KB),metta_atom(KB,Atom).
+%!  metta_atom_added(+X, -Y) is nondet.
+%
+%   Determines if an atom has been added to the specified space (`X`). 
+%   Checks for assertions, file associations, deductions, or recent assertions.
+%
+%   @arg X The context or space.
+%   @arg Y The atom to check.
+%
+metta_atom_added(X, Y) :- 
+    % Check if the atom was explicitly asserted.
+    metta_atom_asserted(X, Y).
+metta_atom_added(X, Y) :- 
+    % Check if the atom is associated with a file.
+    metta_atom_in_file(X, Y).
+metta_atom_added(X, Y) :- 
+    % Check if the atom was deduced and not explicitly asserted.
+    metta_atom_deduced(X, Y),
+    \+ clause(metta_atom_asserted(X, Y), true).
+metta_atom_added(X, Y) :- 
+    % Check if the atom was recently asserted.
+    metta_atom_asserted_last(X, Y).
 
-metta_atom_added(X,Y):- metta_atom_asserted(X,Y).
-metta_atom_added(X,Y):- metta_atom_in_file(X,Y).
-metta_atom_added(X,Y):-
-        metta_atom_deduced(X,Y),
-        \+ clause(metta_atom_asserted(X,Y),true).
-metta_atom_added(X,Y):- metta_atom_asserted_last(X,Y).
+%!  metta_atom(+Space, -Atom) is nondet.
+%
+%   Retrieves atoms associated with a given space or knowledge base (`Space`).
+%   Handles various conditions such as typed lists, predicates from `&flybase`,
+%   and atoms added or inherited from other spaces.
+%
+%   @arg Space The context or knowledge base.
+%   @arg Atom  The atom associated with the given space.
+%
 
-%metta_atom([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
-metta_atom(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
-metta_atom(KB, [F, A| List]):- KB=='&flybase',fb_pred_nr(F, Len),current_predicate(F/Len), length([A|List],Len),apply(F,[A|List]).
-%metta_atom(KB,Atom):- KB=='&corelib',!, metta_atom_corelib(Atom).
-%metta_atom(X,Y):- use_top_self,maybe_resolve_space_dag(X,XX),!,in_dag(XX,XXX),XXX\==X,metta_atom(XXX,Y).
-
-metta_atom(X,Y):- maybe_into_top_self(X, TopSelf),!,metta_atom(TopSelf,Y).
-%metta_atom(X,Y):- var(X),use_top_self,current_self(TopSelf),metta_atom(TopSelf,Y),X='&self'.
-metta_atom(KB,Atom):- metta_atom_added( KB,Atom).
-
-%metta_atom(KB,Atom):- KB == '&corelib', !, metta_atom_asserted('&self',Atom).
-%metta_atom(KB,Atom):- KB \== '&corelib', using_all_spaces,!, metta_atom('&corelib',Atom).
-%metta_atom(KB,Atom):- KB \== '&corelib', !, metta_atom('&corelib',Atom).
-
-metta_atom(KB,Atom):- fail, nonvar(KB), \+ nb_current(space_inheritance,false), should_inhert_from(KB,Atom).
-%metta_atom(KB,Atom):- metta_atom_asserted_last(KB,Atom).
+% metta_atom([Superpose,ListOf], Atom):-
+%     Superpose == 'superpose',
+%     is_list(ListOf), !,
+%     member(KB, ListOf),
+%     get_metta_atom_from(KB, Atom).
+metta_atom(Space, Atom) :-
+    % Retrieve atoms from a typed list.
+    typed_list(Space, _, L), !,
+    member(Atom, L).
+metta_atom(KB, [F, A | List]) :-
+    % Retrieve atoms from `&flybase` predicates.
+    KB == '&flybase',
+    fb_pred_nr(F, Len),
+    current_predicate(F/Len),
+    length([A | List], Len),
+    apply(F, [A | List]).
+% metta_atom(KB, Atom):-
+%     KB == '&corelib', !,
+%     metta_atom_corelib(Atom).
+% metta_atom(X, Y):-
+%     use_top_self,
+%     maybe_resolve_space_dag(X, XX), !,
+%     in_dag(XX, XXX),
+%     XXX \== X,
+%     metta_atom(XXX, Y).
+metta_atom(X, Y) :-
+    % Handle mappings to top self-reference.
+    maybe_into_top_self(X, TopSelf), !,
+    metta_atom(TopSelf, Y).
+% metta_atom(X, Y):-
+%     var(X),
+%     use_top_self,
+%     current_self(TopSelf),
+%     metta_atom(TopSelf, Y),
+%     X = '&self'.
+metta_atom(KB, Atom) :-
+    % Retrieve atoms that were added (asserted, deduced, etc.).
+    metta_atom_added(KB, Atom).
+% metta_atom(KB, Atom):-
+%     KB == '&corelib', !,
+%     metta_atom_asserted('&self', Atom).
+% metta_atom(KB, Atom):-
+%     KB \== '&corelib',
+%     using_all_spaces, !,
+%     metta_atom('&corelib', Atom).
+% metta_atom(KB, Atom):-
+%     KB \== '&corelib', !,
+%     metta_atom('&corelib', Atom).
+metta_atom(KB, Atom) :-
+    % Handle inheritance of atoms (disabled with fail).
+    fail,
+    nonvar(KB),
+    \+ nb_current(space_inheritance, false),
+    should_inhert_from(KB, Atom).
+% metta_atom(KB, Atom):-
+%     metta_atom_asserted_last(KB, Atom).
 
 :- dynamic(no_space_inheritance_to/1).
-wo_inheritance_to(Where,Goal):- setup_call_cleanup(asserta(no_space_inheritance_to(Where),Clause), Goal, erase(Clause)).
 
-should_inhert_from(KB,Atom):- \+ no_space_inheritance_to(KB), wo_inheritance_to(KB,should_inhert_from_now(KB,Atom)).
+%!  wo_inheritance_to(+Where, :Goal) is det.
+%
+%   Temporarily disables space inheritance to a specific location (`Where`) while
+%   executing the provided `Goal`. The original state of inheritance is restored
+%   after the `Goal` completes.
+%
+%   @arg Where The location or space where inheritance is temporarily disabled.
+%   @arg Goal  The Prolog goal to execute while inheritance is disabled.
+%
+%   @example
+%     % Temporarily disable inheritance to a specific space:
+%     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
+%
+wo_inheritance_to(Where, Goal) :-
+    % Temporarily assert the `no_space_inheritance_to/1` fact.
+    setup_call_cleanup(
+        asserta(no_space_inheritance_to(Where), Clause),
+        Goal,
+        erase(Clause)
+    ).
 
-should_inhert_from_now(KB,Atom):- \+ attvar(Atom),
-   freeze(SubKB, symbol(SubKB)), !,
-   metta_atom_added(KB,SubKB), SubKB \== KB,
-   metta_atom(SubKB,Atom),
-   \+ should_not_inherit_from(KB, SubKB, Atom).
+%!  should_inhert_from(+KB, -Atom) is nondet.
+%
+%   Determines if an atom (`Atom`) should be inherited from the specified knowledge
+%   base (`KB`). Inheritance is temporarily disabled for `KB` while checking for
+%   the atom's inheritance.
+%
+%   @arg KB   The knowledge base to check for inheritance.
+%   @arg Atom The atom to inherit, if applicable.
+%
+%   @example
+%     % Check if an atom should be inherited:
+%     ?- should_inhert_from('&my_space', Atom).
+%
+should_inhert_from(KB, Atom) :-
+    % Fail if inheritance to `KB` is explicitly disabled.
+    \+ no_space_inheritance_to(KB),
+    % Temporarily disable inheritance to `KB` and check inheritance rules.
+    wo_inheritance_to(KB, should_inhert_from_now(KB, Atom)).
+
+%!  should_inhert_from_now(+KB, -Atom) is nondet.
+%
+%   Directly checks if an atom (`Atom`) can be inherited from the given knowledge
+%   base (`KB`). Handles variable atoms using `freeze/2` and ensures inheritance
+%   exclusions are respected.
+%
+%   @arg KB   The knowledge base to check for inheritance.
+%   @arg Atom The atom to inherit, if applicable.
+%
+%   @example
+%     % Check if an atom can be inherited directly:
+%     ?- should_inhert_from_now('&my_space', Atom).
+%
+should_inhert_from_now(KB, Atom) :-
+    % Ensure the atom is not an attributed variable.
+    \+ attvar(Atom),
+    % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
+    freeze(SubKB, symbol(SubKB)), !,
+    % Retrieve a sub-knowledge base associated with `KB`.
+    metta_atom_added(KB, SubKB),
+    SubKB \== KB,
+    % Retrieve atoms from the sub-knowledge base.
+    metta_atom(SubKB, Atom),
+    % Ensure the atom is not excluded from inheritance.
+    \+ should_not_inherit_from(KB, SubKB, Atom).
+
 /*
    KB \== '&corelib',  % is_code_inheritor(KB),
    \+ \+ (metta_atom_added(KB,'&corelib'),
@@ -3885,43 +4333,146 @@ should_inhert_from_now(KB,Atom):- \+ attvar(Atom),
    \+ should_not_inherit_from_corelib(Atom).
 */
 
-should_not_inherit_from(_,_,S):- symbol(S).
+%!  should_not_inherit_from(+KB, +SubKB, +Atom) is nondet.
+%
+%   Determines whether an atom (`Atom`) should not be inherited from a specific
+%   sub-knowledge base (`SubKB`) within the context of the parent knowledge base (`KB`).
+%   Currently, the rule only excludes symbols (`symbol/1`) from inheritance.
+%
+%   @arg KB    The parent knowledge base.
+%   @arg SubKB The sub-knowledge base being checked.
+%   @arg Atom  The atom to check for inheritance exclusion.
+%
+%   @example
+%     % Exclude symbols from inheritance:
+%     ?- should_not_inherit_from('&my_space', '&sub_space', my_atom).
+%     false.
+%
+%     % Exclude symbols explicitly:
+%     ?- should_not_inherit_from('&my_space', '&sub_space', my_symbol).
+%     true.
+%
+should_not_inherit_from(_, _, S) :- 
+    % Exclude symbols from inheritance.
+    symbol(S).
 /*
+% Commented-out inheritance exclusions for core libraries.
+% Uncomment or modify as needed to apply specific rules for inheritance exclusion.
 should_not_inherit_from_corelib('&corelib').
 should_not_inherit_from_corelib('&stdlib').
 should_not_inherit_from_corelib('&self').
-%should_not_inherit_from_corelib('&top').
+% should_not_inherit_from_corelib('&top').
 */
 
+%!  should_inherit_from_corelib(+Atom) is nondet.
+%
+%   Determines whether a specific atom (`Atom`) should be inherited from the `&corelib` space.
+%   The decision is based on the current configuration (e.g., `using_all_spaces`) and the structure of the atom.
+%
+%   @arg Atom The atom to check for inheritance from `&corelib`.
+%
+%   @example
+%     % Check inheritance when all spaces are used:
+%     ?- using_all_spaces, should_inherit_from_corelib(my_atom).
+%     true.
+%
+%     % Check inheritance for a structured atom:
+%     ?- should_inherit_from_corelib([=, [my_functor, arg1], body]).
+%
+should_inherit_from_corelib(_) :-
+    % Automatically allow inheritance if all spaces are used.
+    using_all_spaces, !.
+should_inherit_from_corelib(_) :- 
+    % Default case: inheritance is disallowed unless explicitly permitted.
+    !.
+should_inherit_from_corelib([H, A | _]) :-
+    % Check if the operator `H` is permitted for inheritance and `A` is nonvar.
+    nonvar(H),
+    should_inherit_op_from_corelib(H), 
+    !, 
+    nonvar(A).
+% should_inherit_from_corelib([H | _]) :-
+%     % Uncomment to allow inheritance for `@doc` headers.
+%     H == '@doc', !.
+should_inherit_from_corelib([H, A | T]) :-
+    % Additional rule for inheritance based on specific conditions.
+    fail, % Disabled; uncomment or modify as needed.
+    H == '=', 
+    write_src_uo(try([H, A | T])), 
+    !,
+    A = [F | _],
+    nonvar(F),
+    F \== ':', 
+    is_list(A),
+    % Ensure the functor `F` is not already asserted in `&self`.
+    \+ metta_atom_asserted('&self', [:, F | _]),
+    % Optionally check if the functor exists in `&corelib`.
+    % Uncomment the following line to enforce this check.
+    % \+ \+ metta_atom_asserted('&corelib', [=, [F | _] | _]),
+    write_src_uo([H, A | T]).
 
-should_inherit_from_corelib(_):- using_all_spaces,!.
-should_inherit_from_corelib(_):- !.
-should_inherit_from_corelib([H,A|_]):- nonvar(H), should_inherit_op_from_corelib(H),!,nonvar(A).
-%should_inherit_from_corelib([H|_]):- H == '@doc', !.
-should_inherit_from_corelib([H,A|T]):- fail,
-  H == '=',write_src_uo(try([H,A|T])),!,
-  A=[F|_],nonvar(F), F \==':',is_list(A),
-  \+ metta_atom_asserted('&self',[:,F|_]),
-  % \+ \+ metta_atom_asserted('&corelib',[=,[F|_]|_]),
-  write_src_uo([H,A|T]).
+%!  is_code_inheritor(+KB) is nondet.
+%
+%   Determines whether the current execution context (`KB`) can inherit from a code base.
+%   This is true if the current self (`current_self/1`) matches the provided `KB`.
+%
+%   @arg KB The knowledge base to check for code inheritance.
+%
+%   @example
+%     % Check if the current context is a code inheritor:
+%     ?- is_code_inheritor('&corelib').
+%     true.
+%
+is_code_inheritor(KB) :- 
+    % Check if the current self matches `KB`.
+    current_self(KB).
 
+%!  should_inherit_op_from_corelib(+Op) is nondet.
+%
+%   Determines whether a specific operator (`Op`) should be inherited from `&corelib`.
+%   By default, operators like `:` and `@doc` are considered inheritable.
+%
+%   @arg Op The operator to check for inheritance from `&corelib`.
+%
+%   @example
+%     % Check if an operator should be inherited:
+%     ?- should_inherit_op_from_corelib(':').
+%     true.
+%
+%   Commented-out rules allow customization for other operators.
+%
 
-is_code_inheritor(KB):- current_self(KB).  % code runing from a KB can see corlib
-%should_inherit_op_from_corelib('=').
+% should_inherit_op_from_corelib('=').  % Uncomment to include the '=' operator.
 should_inherit_op_from_corelib(':').
 should_inherit_op_from_corelib('@doc').
-%should_inherit_op_from_corelib(_).
+% should_inherit_op_from_corelib(_).    % Uncomment to allow all operators.
 
-%metta_atom_asserted('&self','&corelib').
-%metta_atom_asserted('&self','&stdlib').
-metta_atom_asserted_last(Top,'&corelib'):- top_self(Top).
-metta_atom_asserted_last(Top,'&stdlib'):- top_self(Top).
-metta_atom_asserted_last('&stdlib','&corelib').
-metta_atom_asserted_last('&flybase','&corelib').
-metta_atom_asserted_last('&flybase','&stdlib').
-metta_atom_asserted_last('&catalog','&corelib').
-metta_atom_asserted_last('&catalog','&stdlib').
-
+%!  metta_atom_asserted_last(+KB, -Atom) is nondet.
+%
+%   Retrieves the last asserted atom associated with a specific knowledge base (`KB`).
+%   Handles top-level contexts and predefined relationships like `&corelib` and `&stdlib`.
+%
+%   @arg KB   The knowledge base or context for which the atom is being checked.
+%   @arg Atom The last asserted atom associated with the knowledge base.
+%
+%   @example
+%     % Retrieve the last asserted atom for a specific knowledge base:
+%     ?- metta_atom_asserted_last('&flybase', Atom).
+%     Atom = '&corelib'.
+%
+% metta_atom_asserted('&self','&corelib').
+% metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted_last(Top, '&corelib') :- 
+    % Assert `&corelib` for the top-level context.
+    top_self(Top).
+metta_atom_asserted_last(Top, '&stdlib') :- 
+    % Assert `&stdlib` for the top-level context.
+    top_self(Top).
+metta_atom_asserted_last('&stdlib', '&corelib').
+metta_atom_asserted_last('&flybase', '&corelib').
+metta_atom_asserted_last('&flybase', '&stdlib').
+metta_atom_asserted_last('&catalog', '&corelib').
+metta_atom_asserted_last('&catalog', '&stdlib').
 
 maybe_resolve_space_dag(Var,[XX]):- var(Var),!, \+ attvar(Var), freeze(XX,space_to_ctx(XX,Var)).
 maybe_resolve_space_dag('&self',[Self]):- current_self(Self).
