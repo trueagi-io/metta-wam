@@ -1138,6 +1138,17 @@ recompile_from_depends(FnName,LenArgsPlus1) :-
    format("recompile_from_depends list ~w\n",[List]),
    maplist(recompile_from_depends0,List).
 
+unnumbervars_wco(X,XXX):- compound(X),
+   sub_term(E, X), compound(E), E = '$VAR'(_),!,
+   subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
+unnumbervars_wco(X,X).
+
+number_vars_wo_conficts(X,XX):-
+   copy_term(X,XX),
+   max_var_number(XX,0,N),
+   succ(N,N2),
+   numbervars(XX,N2,_,[attvar(skip)]).
+
 recompile_from_depends0(Fn/Arity) :-
    format("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
    Aritym1 is Arity-1,
@@ -1148,16 +1159,17 @@ recompile_from_depends0(Fn/Arity) :-
    % create an ordered list of integers to make sure to do them in order
    findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
    sort(ClauseIdList,SortedClauseIdList),
-   maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Heads,Bodies),
+   maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Clause),
    %leash(-all),trace,
-   format("X: ~w ~w\n",[Heads,Bodies]),flush_output(user_output),
-   maplist(compile_for_assert_with_add,Heads,Bodies).
+   format("X: ~w\n",[Clause]),flush_output(user_output),
+   number_vars_wo_conficts(Clause,Clause2),
+   maplist(compile_for_assert_with_add,Clause2).
 
-compile_for_assert_with_add(Head,Body) :-
+compile_for_assert_with_add(Head-Body) :-
    compile_for_assert(Head,Body,Converted),
    assertz(Converted).
 
-extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head,Body) :-
+extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
    format("Extracted clause: ~w:-~w\n",[Head,Body]),
    retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
