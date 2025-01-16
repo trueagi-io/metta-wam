@@ -4475,94 +4475,299 @@ metta_atom_asserted_last('&flybase', '&stdlib').
 metta_atom_asserted_last('&catalog', '&corelib').
 metta_atom_asserted_last('&catalog', '&stdlib').
 
-maybe_resolve_space_dag(Var,[XX]):- var(Var),!, \+ attvar(Var), freeze(XX,space_to_ctx(XX,Var)).
-maybe_resolve_space_dag('&self',[Self]):- current_self(Self).
-in_dag(X,XX):- is_list(X),!,member(XX,X).
-in_dag(X,X).
+%!  maybe_resolve_space_dag(+Var, +XX) is det.
+%
+%   Resolves the context or space for a variable `Var` based on the given list `[XX]`.
+%   If `Var` is uninstantiated and not an attributed variable, it sets up a freeze
+%   on `[XX]`, which triggers the `space_to_ctx/2` predicate when `[XX]` is resolved.
+%
+%   @arg Var The variable or context to resolve.
+%   @arg XX The list containing a potential context to bind `Var` to.
+%
+maybe_resolve_space_dag(Var, [XX]) :-
+    var(Var),                  % Check if `Var` is uninstantiated.
+    !,                        % Cut to ensure this clause is used for variables.
+    \+ attvar(Var),           % Ensure `Var` is not an attributed variable.
+    freeze(XX, space_to_ctx(XX, Var)).  % Set up a freeze to resolve context when `XX` is instantiated.
 
-space_to_ctx(Top,Var):- nonvar(Top),current_self(Top),!,Var='&self'.
-space_to_ctx(Top,Var):- 'mod-space'(Top,Var),!.
-space_to_ctx(Var,Var).
+maybe_resolve_space_dag('&self', [Self]) :-
+    current_self(Self).       % If `Var` is '&self', unify `Self` with the current self.
 
-'mod-space'(top,'&top').
-'mod-space'(catalog,'&catalog').
-'mod-space'(corelib,'&corelib').
-'mod-space'(stdlib,'&stdlib').
-'mod-space'(Top,'&self'):- current_self(Top).
+%!  in_dag(+X, -XX) is nondet.
+%
+%   Checks if `XX` is part of `X`. Handles both list and atomic inputs.
+%   If `X` is a list, succeeds if `XX` is a member of the list.
+%   If `X` is not a list, succeeds if `X` equals `XX`.
+%
+%   @arg X The input which may be a list or atomic value.
+%   @arg XX The value to check for membership or equality.
+%
+in_dag(X, XX) :-
+    is_list(X),               % Check if `X` is a list.
+    !,                        % Cut to avoid backtracking to the next clause.
+    member(XX, X).            % Check if `XX` is a member of the list.
+in_dag(X, X).                 % If `X` is not a list, succeed if `X` equals `XX`.
 
-not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
+%!  space_to_ctx(+Top, -Var) is det.
+%
+%   Resolves the context for a given `Top` and unifies it with `Var`.
+%   If `Top` is the current self context, `Var` is set to '&self'.
+%   Otherwise, attempts to map `Top` to a context using 'mod-space'/2.
+%
+%   @arg Top The input to resolve.
+%   @arg Var The resolved context or space.
+%
+space_to_ctx(Top, Var) :-
+    nonvar(Top),              % Ensure `Top` is instantiated.
+    current_self(Top),        % Check if `Top` is the current self context.
+    !,                        % Cut to ensure this clause is used in this case.
+    Var = '&self'.            % Unify `Var` with '&self'.
+space_to_ctx(Top, Var) :-
+    'mod-space'(Top, Var),    % Attempt to map `Top` to a context using 'mod-space'/2.
+    !.
+space_to_ctx(Var, Var).       % If no mapping is possible, unify `Var` with itself.
+
+%!  'mod-space'(+Top, -Var) is det.
+%
+%   Maps specific values of `Top` to corresponding context identifiers.
+%   Used by `space_to_ctx/2` to resolve contexts.
+%
+'mod-space'(top, '&top').
+'mod-space'(catalog, '&catalog').
+'mod-space'(corelib, '&corelib').
+'mod-space'(stdlib, '&stdlib').
+'mod-space'(Top, '&self') :- current_self(Top).  % Fallback to '&self' if `Top` matches the current self.
+
+%!  not_metta_atom_corelib(+A, +N) is det.
+%
+%   Succeeds if `A` is not '&corelib' but `N` is a metta atom associated with '&corelib'.
+%   Ensures that the given `A` is distinct from '&corelib' while still linking to a metta
+%   atom from the corelib context.
+%
+%   @arg A The input to verify is not '&corelib'.
+%   @arg N The metta atom to check against '&corelib'.
+%
+not_metta_atom_corelib(A, N) :-
+    A \== '&corelib',         % Ensure `A` is not '&corelib'.
+    metta_atom('&corelib', N). % Check if `N` is a metta atom in the '&corelib' context.
 
 %metta_atom_asserted_fallback( KB,Atom):- metta_atom_stdlib(KB,Atom)
 
-
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-is_metta_space(Space):- nonvar(Space), \+ \+ is_space_type(Space,_Test).
 
-%metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
-%metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='), if_or_else(metta_atom(KB,[Eq,H,B]),not_metta_atom_corelib(KB,[Eq,H,B])).
+%!  is_metta_space(+Space) is nondet.
+%
+%   Checks if the given `Space` is a valid Metta space.
+%   This predicate uses a double negation (`\+ \+`) to enforce a deterministic result.
+%   It succeeds if `is_space_type/2` succeeds for the given `Space` with any test.
+%
+%   The double negation ensures that `is_metta_space/1` behaves deterministically:
+%   - It succeeds if `is_space_type/2` succeeds.
+%   - It fails if `is_space_type/2` fails.
+%
+%   @arg Space The space to check for being a valid Metta space.
+%
+%   @example
+%     % Check if a given space is a valid Metta space:
+%     ?- is_metta_space('&corelib').
+%     true.
+%
+%     ?- is_metta_space('&unknown_space').
+%     false.
+%
+is_metta_space(Space) :-  nonvar(Space), 
+    \+ \+ is_space_type(Space, _Test).  % Enforce deterministic behavior using double negation.
 
-%metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
-%metta_defn(KB,H,B):- if_or_else(metta_atom(KB,['=',H,B]),not_metta_atom_corelib(KB,['=',H,B])).
-metta_defn(KB,H,B):- metta_eq_def('=',KB,H,B).
-%metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
-metta_type(KB,H,B):- metta_eq_def(':',KB,H,B).
-%metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
-%typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
+%!  metta_eq_def(+Eq, +KB, +H, +B) is det.
+%
+%   Defines equality (`=`) within a specific knowledge base (`KB`) for given head (`H`)
+%   and body (`B`). The predicate first ensures `Eq` is unified with the equality operator (`=`).
+%   Then, it attempts to define the equality in the `KB` using `metta_atom/2`.
+%   If this fails, it falls back to checking that the equality is not tied to the corelib context
+%   via `not_metta_atom_corelib/2`.
+%
+%   @arg Eq The equality operator, typically '='.
+%   @arg KB The knowledge base in which the equality is defined.
+%   @arg H  The head of the equality definition.
+%   @arg B  The body of the equality definition.
+%
+%   @example
+%     % Define equality in a KB:
+%     ?- metta_eq_def('=', 'my_kb', 'head', 'body').
+%     true.
+%
+
+% metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
+% metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
+metta_eq_def(Eq, KB, H, B) :-
+    % Ensure `Eq` is unified with '='.
+    ignore(Eq = '='),
+    if_or_else(
+        % Check if equality is defined in `KB`.
+        metta_atom(KB, [Eq, H, B]),
+        % If not, ensure it does not belong to `&corelib`.
+        not_metta_atom_corelib(KB, [Eq, H, B])
+    ).
+
+% Original commented-out code, retained as-is for potential future use:
+% metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
+% metta_defn(KB,H,B):- if_or_else(metta_atom(KB,['=',H,B]),not_metta_atom_corelib(KB,['=',H,B])).
+
+%!  metta_defn(+KB, +H, +B) is det.
+%
+%   Defines a predicate or function within the given knowledge base (`KB`).
+%   The definition uses the equality operator (`=`) to associate `H` (head)
+%   with `B` (body).
+%
+%   @arg KB The knowledge base in which the definition is made.
+%   @arg H  The head of the definition.
+%   @arg B  The body of the definition.
+metta_defn(KB, H, B) :-
+    % Use `=` to define the relation in the given knowledge base.
+    metta_eq_def('=', KB, H, B).
+
+%!  metta_type(+KB, +H, +B) is det.
+%
+%   Associates a type (`B`) with a head (`H`) in the given knowledge base (`KB`).
+%   This uses the type operator (`:`) for the association.
+%
+%   @arg KB The knowledge base in which the type association is defined.
+%   @arg H  The head being associated with a type.
+%   @arg B  The type being associated with the head.
+
+% metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
+metta_type(KB, H, B) :-
+    % Use `:` to associate the head with a type in the given knowledge base.
+    metta_eq_def(':', KB, H, B).
+% metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
+
+% typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 
 %metta_atom_corelib(KB,Atom):- KB\='&corelib',!,metta_atom('&corelib',Atom).
 
-%maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
-maybe_xform(metta_eq_def(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
-maybe_xform(metta_defn(KB,Head,Body),metta_atom(KB,['=',Head,Body])).
-maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
-maybe_xform(metta_atom_in_file(KB,HB),metta_atom_asserted(KB,HB)).
-maybe_xform(metta_atom_deduced(KB,HB),metta_atom_asserted(KB,HB)).
-maybe_xform(metta_atom_asserted_last(KB,HB),metta_atom_asserted(KB,HB)).
-maybe_xform(metta_atom_asserted(WKB,HB),metta_atom_asserted(KB,HB)):- maybe_into_top_self(WKB, KB),!.
+%!  maybe_xform(+Original, -Transformed) is nondet.
+%
+%   Transforms Metta constructs into a normalized or alternative representation.
+%   This predicate handles various forms of Metta terms, converting them into
+%   their respective representations or normal forms for further processing.
+%
+%   @arg Original   The original Metta term to be transformed.
+%   @arg Transformed The transformed or normalized version of the term.
 
+% maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
+% Transform `metta_eq_def` into a `metta_atom` representation.
+maybe_xform(metta_eq_def(Eq, KB, Head, Body), metta_atom(KB, [Eq, Head, Body])).
+% Transform `metta_defn` into a `metta_atom` representation using `=` as the operator.
+maybe_xform(metta_defn(KB, Head, Body), metta_atom(KB, ['=', Head, Body])).
+% Transform `metta_type` into a `metta_atom` representation using `:` as the operator.
+maybe_xform(metta_type(KB, Head, Body), metta_atom(KB, [':', Head, Body])).
+% Transform `metta_atom` into its asserted form.
+maybe_xform(metta_atom(KB, HeadBody), metta_atom_asserted(KB, HeadBody)).
+% Transform `metta_atom_in_file` into its asserted form.
+maybe_xform(metta_atom_in_file(KB, HB), metta_atom_asserted(KB, HB)).
+% Transform `metta_atom_deduced` into its asserted form.
+maybe_xform(metta_atom_deduced(KB, HB), metta_atom_asserted(KB, HB)).
+% Transform `metta_atom_asserted_last` into its asserted form.
+maybe_xform(metta_atom_asserted_last(KB, HB), metta_atom_asserted(KB, HB)).
+% Transform a workspace knowledge base (`WKB`) into a top-level knowledge base (`KB`).
+maybe_xform(metta_atom_asserted(WKB, HB), metta_atom_asserted(KB, HB)) :-
+    % Convert `WKB` into `KB` using `maybe_into_top_self/2`.
+    maybe_into_top_self(WKB, KB),
+    !.
+% Catch-all clause: fail if no transformation applies.
+maybe_xform(_OBO, _XForm) :-
+    !, fail.
 
-maybe_xform(_OBO,_XForm):- !, fail.
+%!  metta_anew1(+Load, +OBO) is det.
+%
+%   Handles different operations (`Load`, `unload`, `unload_all`) on Metta objects (`OBO`).
+%   Depending on the mode or type of the input, it applies the appropriate transformation
+%   and performs actions like adding, removing, or processing atoms in the knowledge base.
+%
+%   @arg Load The operation mode (e.g., `load`, `unload`, `unload_all`).
+%   @arg OBO  The object being processed (e.g., `metta_atom(Space, Atom)`).
 
-metta_anew1(Load,_OBO):- var(Load),trace,!.
-metta_anew1(Ch,OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew1(Mode,OBO).
-metta_anew1(Load,OBO):- maybe_xform(OBO,XForm),!,metta_anew1(Load,XForm).
-metta_anew1(load,OBO):- OBO= metta_atom(Space,Atom),!, 'add-atom'(Space, Atom).
-metta_anew1(unload,OBO):- OBO= metta_atom(Space,Atom),!,'remove-atom'(Space, Atom).
-metta_anew1(unload_all,OBO):- OBO= forall(metta_atom(Space,Atom),ignore('remove-atom'(Space, Atom))).
-
-metta_anew1(load,OBO):- !,
-  must_det_ll((
-   load_hook(load,OBO),
-   subst_vars(OBO,Cl),
-   pfcAdd_Now(Cl))). %to_metta(Cl).
-metta_anew1(load,OBO):- !,
-  must_det_ll((load_hook(load,OBO),
-  subst_vars(OBO,Cl),
-  show_failure(pfcAdd_Now(Cl)))).
-metta_anew1(unload,OBO):- subst_vars(OBO,Cl),load_hook(unload,OBO),
-  expand_to_hb(Cl,Head,Body),
-  predicate_property(Head,number_of_clauses(_)),
-  ignore((clause(Head,Body,Ref),clause(Head2,Body2,Ref),
-    (Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(unload(Cl)))).
-
-metta_anew1(unload_all,OBO):- !,
-  must_det_ll((
-   load_hook(unload_all,OBO),
-   subst_vars(OBO,Cl),
-   once_writeq_nl_now(yellow, retractall(Cl)),
-   retractall(Cl))). %to_metta(Cl).
-
-metta_anew1(unload_all,OBO):- subst_vars(OBO,Cl),load_hook(unload_all,OBO),
-  expand_to_hb(Cl,Head,Body),
-  predicate_property(Head,number_of_clauses(_)),
-  forall(
-    (clause(Head,Body,Ref),clause(Head2,Body2,Ref)),
-    must_det_ll((((Head+Body)=@=(Head2+Body2))
-               ->(erase(Ref),nop(pp_m(unload_all(Ref,Cl))))
-               ;(pp_m(unload_all_diff(Cl,(Head+Body)\=@=(Head2+Body2))))))).
-
+% If `Load` is unbound, start tracing to diagnose the issue.
+metta_anew1(Load, _OBO) :-
+    var(Load), % Check if `Load` is uninstantiated.
+    trace,     % Enable tracing for debugging.
+    !.
+% Resolve the mode for `Ch` using `metta_interp_mode/2`, then recurse with the resolved mode.
+metta_anew1(Ch, OBO) :-
+    metta_interp_mode(Ch, Mode), % Determine the mode for `Ch`.
+    !,
+    metta_anew1(Mode, OBO).      % Recurse with the resolved mode.
+% Attempt to transform `OBO` using `maybe_xform/2`, then recurse with the transformed form.
+metta_anew1(Load, OBO) :-
+    maybe_xform(OBO, XForm),     % Transform `OBO` if possible.
+    !,
+    metta_anew1(Load, XForm).    % Recurse with the transformed form.
+% Handle `load` operation for `metta_atom`.
+metta_anew1(load, OBO) :-
+    OBO = metta_atom(Space, Atom), % Match the structure of `OBO`.
+    !,
+    'add-atom'(Space, Atom).       % Add the atom to the specified space.
+% Handle `unload` operation for `metta_atom`.
+metta_anew1(unload, OBO) :-
+    OBO = metta_atom(Space, Atom), % Match the structure of `OBO`.
+    !,
+    'remove-atom'(Space, Atom).    % Remove the atom from the specified space.
+% Handle `unload_all` for all `metta_atom` objects.
+metta_anew1(unload_all, OBO) :-
+    OBO = forall(metta_atom(Space, Atom), ignore('remove-atom'(Space, Atom))). % Remove all atoms.
+% Default `load` operation with hooks and PFC integration.
+metta_anew1(load, OBO) :-
+    !,
+    must_det_ll((
+        load_hook(load, OBO),         % Execute the load hook.
+        subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+        pfcAdd_Now(Cl)                % Add the clause using PFC.
+    )).
+% Alternative `load` operation with error handling.
+metta_anew1(load, OBO) :-
+    !,
+    must_det_ll((
+        load_hook(load, OBO),         % Execute the load hook.
+        subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+        show_failure(pfcAdd_Now(Cl))  % Add the clause and show errors if any.
+    )).
+% Handle `unload` by erasing matching clauses.
+metta_anew1(unload, OBO) :-
+    subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+    load_hook(unload, OBO),       % Execute the unload hook.
+    expand_to_hb(Cl, Head, Body), % Expand to head and body.
+    predicate_property(Head, number_of_clauses(_)), % Check if the predicate has clauses.
+    ignore((
+        clause(Head, Body, Ref),   % Find a clause matching the head and body.
+        clause(Head2, Body2, Ref), % Retrieve the clause again for validation.
+        (Head + Body) =@= (Head2 + Body2), % Check if the clauses are equivalent.
+        erase(Ref),               % Erase the clause.
+        pp_m(unload(Cl))          % Log the unload operation.
+    )).
+% Handle `unload_all` by retracting all matching clauses.
+metta_anew1(unload_all, OBO) :-
+    !,
+    must_det_ll((
+        load_hook(unload_all, OBO),  % Execute the unload_all hook.
+        subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
+        once_writeq_nl_now(yellow, retractall(Cl)), % Log and retract all matching clauses.
+        retractall(Cl)      %to_metta(Cl).
+    )).
+% Alternative `unload_all` operation with detailed clause handling.
+metta_anew1(unload_all, OBO) :-
+    subst_vars(OBO, Cl),           % Substitute variables in `OBO`.
+    load_hook(unload_all, OBO),    % Execute the unload_all hook.
+    expand_to_hb(Cl, Head, Body),  % Expand to head and body.
+    predicate_property(Head, number_of_clauses(_)), % Check if the predicate has clauses.
+    forall(
+        (clause(Head, Body, Ref), clause(Head2, Body2, Ref)), % Iterate over all matching clauses.
+        must_det_ll((
+            ((Head + Body) =@= (Head2 + Body2)) -> % Check if the clauses are equivalent.
+                (erase(Ref), nop(pp_m(unload_all(Ref, Cl)))) % Erase and log equivalent clauses.
+            ;
+                (pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2)))) % Log differences.
+        ))
+    ).
 
 /*
 metta_anew2(Load,_OBO):- var(Load),trace,!.
@@ -4579,69 +4784,279 @@ metta_anew2(unload_all,OBO):- subst_vars_not_last(OBO,Cl),load_hook(unload_all,O
   forall((clause(Head,Body,Ref),clause(Head2,Body2,Ref),(Head+Body)=@=(Head2+Body2),erase(Ref),pp_m(Cl)),true).
 */
 
-metta_anew(Load,Src,OBO):- maybe_xform(OBO,XForm),!,metta_anew(Load,Src,XForm).
-metta_anew(Ch, Src, OBO):-  metta_interp_mode(Ch,Mode), !, metta_anew(Mode,Src,OBO).
-metta_anew(Load,_Src,OBO):- silent_loading,!,metta_anew1(Load,OBO).
-metta_anew(Load,Src,OBO):-
+%!  metta_anew(+Load, +Src, +OBO) is det.
+%
+%   Processes operations (`Load`) on Metta objects (`OBO`) with source information (`Src`).
+%   This predicate delegates tasks to `metta_anew1/2` after handling transformations,
+%   modes, and logging or output behavior.
+%
+%   @arg Load The operation mode (e.g., `load`, `unload`, etc.).
+%   @arg Src  The source context or description for the operation.
+%   @arg OBO  The object being processed.
+metta_anew(Load, Src, OBO) :- % Transform `OBO` if possible and retry with the transformed version.
+    maybe_xform(OBO, XForm),  % Attempt to transform `OBO`.
+    !,
+    metta_anew(Load, Src, XForm).  % Recur with the transformed object.
+% Resolve the mode for `Ch` using `metta_interp_mode/2`, then retry with the resolved mode.
+metta_anew(Ch, Src, OBO) :-
+    metta_interp_mode(Ch, Mode),  % Determine the mode for `Ch`.
+    !,
+    metta_anew(Mode, Src, OBO).   % Recur with the resolved mode.
+% If silent loading is enabled, process the object without additional output.
+metta_anew(Load, _Src, OBO) :-
+    silent_loading,  % Check if silent loading is active.
+    !,
+    metta_anew1(Load, OBO).  % Directly delegate to `metta_anew1/2`.
+% Default handling with output and logging behavior.
+metta_anew(Load, Src, OBO) :-
+    % Handle non-compatible I/O operations.
     not_compat_io((
-    output_language( metta, (if_show(load, color_g_mesg('#ffa500', ((format('~N '), write_src(Src))))))),
-    % format('~N'),
-    output_language( Load, (if_verbose(load,color_g_mesg('#4f4f0f', (( (write('; Action: '),writeq(Load=OBO),nl))))))),
-    true)),
-        metta_anew1(Load,OBO),not_compat_io((format('~N'))).
+        % Output information about the source if in Metta language.
+        output_language(metta, (
+            if_show(load, color_g_mesg('#ffa500', ((
+                format('~N '),  % Newline for separation.
+                  % format('~N'),
+                write_src(Src)  % Display source information.
+            ))))
+        )),
+        % Output information about the operation and object.
+        output_language(Load, (
+            if_verbose(load, color_g_mesg('#4f4f0f', (((
+                write('; Action: '),  % Indicate the action being performed.
+                writeq(Load = OBO),  % Display the operation and object.
+                nl  % Newline for clarity.
+            )))
+        )))),
+        true  % Ensure successful execution of all output steps.
+    )),
+    % Perform the main operation using `metta_anew1/2`.
+    metta_anew1(Load, OBO),
+    % Add a final newline for output separation.
+    not_compat_io((format('~N'))).
 
-subst_vars_not_last(A,B):-
-  functor(A,_F,N),arg(N,A,E),
-  subst_vars(A,B),
-  nb_setarg(N,B,E),!.
+%!  subst_vars_not_last(+A, -B) is det.
+%
+%   Substitutes variables in `A` to produce `B`, while ensuring that the last
+%   argument of `B` matches the corresponding last argument of `A`.
+%   This predicate uses `subst_vars/2` for the substitution process and ensures
+%   that the last argument remains unchanged by reassigning it using `nb_setarg/3`.
+%
+%   @arg A The input term with potential variables to substitute.
+%   @arg B The output term with variables substituted and the last argument restored.
+subst_vars_not_last(A, B) :-
+    % Get the arity (number of arguments) of the term `A`.
+    functor(A, _F, N),
+    % Retrieve the last argument (`E`) of the term `A`.
+    arg(N, A, E),
+    % Perform the variable substitution on the term `A` to create `B`.
+    subst_vars(A, B),
+    % Restore the last argument of `B` to match the last argument of `A`.
+    nb_setarg(N, B, E),
+    % Ensure determinism by cutting any alternative solutions.
+    !.
 
-con_write(W):-check_silent_loading, not_compat_io((write(W))).
-con_writeq(W):-check_silent_loading, not_compat_io((writeq(W))).
-writeqln(Q):- check_silent_loading,not_compat_io((write(' '),con_writeq(Q),connl)).
+%!  con_write(+W) is det.
+%
+%   Writes the term `W` to the current output stream if silent loading is not active.
+%   Ensures compatibility with I/O operations.
+%
+%   @arg W The term to write.
+con_write(W) :-
+    % Check if silent loading is active; skip writing if true.
+    check_silent_loading,
+    % Perform the write operation if compatible with I/O settings.
+    not_compat_io((write(W))).
 
+%!  con_writeq(+W) is det.
+%
+%   Writes the term `W` to the current output stream using quoted format,
+%   if silent loading is not active. Ensures compatibility with I/O operations.
+%
+%   @arg W The term to write in quoted format.
+con_writeq(W) :-
+    % Check if silent loading is active; skip writing if true.
+    check_silent_loading,
+    % Perform the write operation in quoted format if compatible with I/O settings.
+    not_compat_io((writeq(W))).
 
-into_space(Self,'&self',Self):-!.
-into_space(_,Other,Other):-!.
+%!  writeqln(+Q) is det.
+%
+%   Writes the term `Q` in quoted format followed by a newline.
+%   Ensures compatibility with I/O operations and silent loading settings.
+%
+%   @arg Q The term to write in quoted format with a newline.
+writeqln(Q) :-
+    % Check if silent loading is active; skip writing if true.
+    check_silent_loading,
+    % Write a space, the term `Q` in quoted format, and a newline.
+    not_compat_io((write(' '), con_writeq(Q), connl)).
 
+%!  into_space(+Self, +Myself, -SelfO) is det.
+%
+%   Resolves the space identifier (`SelfO`) based on `Self` and `Myself`.
+%   If `Myself` is `&self`, `SelfO` is set to `Self`.
+%   Otherwise, `SelfO` is set to `Myself`.
+%
+%   @arg Self   The current space identifier.
+%   @arg Myself The candidate space identifier.
+%   @arg SelfO  The resolved space identifier.
+into_space(Self, '&self', Self) :- !.
+into_space(_, Other, Other) :- !.
+into_space(Self, Myself, SelfO) :-
+    % Use a default depth of 30 when calling the arity-4 version.
+    into_space(30, Self, Myself, SelfO).
 
-into_space(Self,Myself,SelfO):- into_space(30,Self,Myself,SelfO).
+%!  into_space(+Depth, +Self, +Myself, -SelfO) is det.
+%
+%   Resolves the space identifier (`SelfO`) based on depth, `Self`, and `Myself`.
+%   Handles specific cases for `&self` and `None`.
+%
+%   @arg Depth  The current depth for evaluation.
+%   @arg Self   The current space identifier.
+%   @arg Myself The candidate space identifier.
+%   @arg SelfO  The resolved space identifier.
+into_space(_Dpth, Self, Myself, Self) :-
+    % If `Myself` is `&self`, resolve to `Self`.
+    Myself == '&self',
+    !.
+into_space(_Dpth, Self, None, Self) :-
+    % If `Myself` is `None`, resolve to `Self`.
+    'None' == None,
+    !.
+into_space(Depth, Self, Other, Result) :-
+    % Evaluate the result using the `eval_H/4` predicate.
+    eval_H(Depth, Self, Other, Result).
 
-into_space(_Dpth,Self,Myself,Self):-Myself=='&self',!.
-into_space(_Dpth,Self,None,Self):- 'None' == None,!.
-into_space(Depth,Self,Other,Result):- eval_H(Depth,Self,Other,Result).
-into_name(_,Other,Other).
+%!  into_name(+Self, +Other, -Other) is det.
+%
+%   Resolves a name based on the input `Other`.
+%   If no specific handling is needed, the name remains unchanged.
+%
+%   @arg Self  The current self identifier (unused).
+%   @arg Other The input name or identifier.
+%   @arg Other The resolved name, same as the input.
+into_name(_, Other, Other).
 
 %eval_f_args(Depth,Self,F,ARGS,[F|EARGS]):- maplist(eval_H(Depth,Self),ARGS,EARGS).
 
+%!  combine_result(+TF, +R2, -Result) is det.
+%
+%   Combines two results (`TF` and `R2`) into a single result.
+%   If `TF` is an empty list, the result is `R2`. Otherwise, the result is `TF`.
+%
+%   @arg TF     The first result to combine.
+%   @arg R2     The second result to combine.
+%   @arg Result The combined result.
+combine_result(TF, R2, R2) :-
+    % If `TF` is an empty list, unify `Result` with `R2`.
+    TF == [],
+    !.
+combine_result(TF, _, TF) :-
+    % Otherwise, unify `Result` with `TF`.
+    !.
 
-combine_result(TF,R2,R2):- TF == [], !.
-combine_result(TF,_,TF):-!.
+%!  do_metta1_e(+Self, +LoadExec, +Term) is det.
+%
+%   Processes Metta expressions or terms based on their structure.
+%   Supports special handling for executable terms, equality expressions, and generic terms.
+%
+%   @arg Self     The current self context (unused here).
+%   @arg LoadExec The execution context or mode (used for specific terms).
+%   @arg Term     The term to process.
+do_metta1_e(_Self, _, exec(Exec)) :-
+    % If the term is an executable expression, write the execution representation.
+    !,write_exec(Exec),!.
+do_metta1_e(_Self, _, [=, A, B]) :-
+    % If the term is an equality expression, write it in structured format.
+    !,
+    with_concepts(false, (
+        % Begin writing the equality expression.
+        con_write('(= '),
+        % Write the left-hand side (`A`) with no indentation.
+        with_indents(false, write_src(A)),
+        % Add a newline if `B` is a list.
+        (is_list(B) -> connl ; true),
+        % Write the right-hand side (`B`) with indentation.
+        con_write(' '),
+        with_indents(true, write_src(B)),
+        % Close the equality expression.
+        con_write(')')
+    )),
+    connl.
+do_metta1_e(_Self, _LoadExec, Term) :-
+    % For other terms, simply write the term and append a newline.
+    write_src(Term),
+    connl.
 
+%!  write_exec(+Exec) is det.
+%
+%   Writes the representation of an executable term (`Exec`).
+%   Ensures tracing is disabled during the operation.
+%
+%   @arg Exec The executable term to write.
+write_exec(Exec) :-
+    % Call the helper predicate `write_exec0/1` without tracing.
+    real_notrace(write_exec0(Exec)).
 
-do_metta1_e(_Self,_,exec(Exec)):- !,write_exec(Exec),!.
-do_metta1_e(_Self,_,[=,A,B]):- !, with_concepts(false,
-  (con_write('(= '), with_indents(false,write_src(A)),
-    (is_list(B) -> connl ; true),
-    con_write(' '),with_indents(true,write_src(B)),con_write(')'))),connl.
-do_metta1_e(_Self,_LoadExec,Term):- write_src(Term),connl.
+% Original commented-out code retained for potential future use:
+% write_exec0(Exec):- symbol(Exec),!,write_exec0([Exec]).
 
-write_exec(Exec):- real_notrace(write_exec0(Exec)).
-%write_exec0(Exec):- symbol(Exec),!,write_exec0([Exec]).
-
-write_exec0(Exec):-
-  wots(S,write_src(exec(Exec))),
-  nb_setval(exec_src,Exec),
-  not_compatio((format('~N'),
-  output_language(metta,ignore((notrace((color_g_mesg('#0D6328',writeln(S))))))))).
+%!  write_exec0(+Exec) is det.
+%
+%   Writes a structured representation of the executable term (`Exec`).
+%   Updates the execution source value and logs the formatted output.
+%
+%   @arg Exec The executable term to write.
+write_exec0(Exec) :-
+    % Generate the structured representation of the execution term.
+    wots(S, write_src(exec(Exec))),
+    % Update the execution source value for tracking.
+    nb_setval(exec_src, Exec),
+    % Output the structured representation with formatting.
+    not_compatio((
+        format('~N'),  % Insert a newline.
+        output_language(metta, ignore((
+            notrace((color_g_mesg('#0D6328', writeln(S))))))))).
 
 %!(let* (( ($a $b) (collapse (get-atoms &self)))) ((bind! &stdlib $a) (bind! &corelib $b)))
 
-asserted_do_metta(Space,Ch,Src):- metta_interp_mode(Ch,Mode), !, asserted_do_metta(Space,Mode,Src).
+%!  asserted_do_metta(+Space, +Ch, +Src) is det.
+%
+%   Executes a Metta command (`Ch`) within the given space (`Space`) using the source (`Src`).
+%   Determines the interpretation mode for `Ch` and delegates processing accordingly.
+%
+%   @arg Space The space in which the command is executed.
+%   @arg Ch    The command or operation to interpret and execute.
+%   @arg Src   The source input or term associated with the command.
+asserted_do_metta(Space, Ch, Src) :-
+    % Resolve the interpretation mode for `Ch` and recurse with the resolved mode.
+    metta_interp_mode(Ch, Mode),
+    !,
+    asserted_do_metta(Space, Mode, Src).
+asserted_do_metta(Space, Load, Src) :-
+    % If the mode is `exec`, handle execution using the `do_metta_exec/4` predicate.
+    Load == exec,
+    !,
+    do_metta_exec(python, Space, Src, _Out).
+asserted_do_metta(Space, Load, Src) :-
+    % Delegate to `asserted_do_metta2/4` for other modes.
+    asserted_do_metta2(Space, Load, Src, Src).
 
-asserted_do_metta(Space,Load,Src):- Load==exec,!,do_metta_exec(python,Space,Src,_Out).
-asserted_do_metta(Space,Load,Src):- asserted_do_metta2(Space,Load,Src,Src).
-
-asserted_do_metta2(Space,Ch,Info,Src):- nonvar(Ch), metta_interp_mode(Ch,Mode), !, asserted_do_metta2(Space,Mode,Info,Src).
+%!  asserted_do_metta2(+Space, +Ch, +Info, +Src) is det.
+%
+%   Handles Metta commands with additional information (`Info`) and source input (`Src`).
+%   Resolves the interpretation mode for the command (`Ch`) and delegates accordingly.
+%
+%   @arg Space The space in which the command is executed.
+%   @arg Ch    The command or operation to interpret and execute.
+%   @arg Info  Additional context or information associated with the command.
+%   @arg Src   The source input or term associated with the command.
+asserted_do_metta2(Space, Ch, Info, Src) :-
+    % Resolve the interpretation mode for `Ch` and recurse with the resolved mode.
+    nonvar(Ch),
+    metta_interp_mode(Ch, Mode),
+    !,
+    asserted_do_metta2(Space, Mode, Info, Src).
 /*
 asserted_do_metta2(Self,Load,[TypeOp,Fn,Type], Src):- TypeOp == ':',  \+ is_list(Type),!,
  must_det_ll((
@@ -4680,13 +5095,27 @@ asserted_do_metta2(Self,Load,[EQ,Head,Result], Src):- EQ=='=', !,
     metta_anew(Load,Src,metta_eq_def(EQ,Self,Head,Result)),
     discover_body(Self,Load,Result)))).
 */
-asserted_do_metta2(Self,Load,PredDecl, Src):-
-   %ignore(discover_head(Self,Load,PredDecl)),
-   color_g_mesg_ok('#ffa505',metta_anew(Load,Src,metta_atom(Self,PredDecl))).
+asserted_do_metta2(Self, Load, PredDecl, Src) :-
+    % Discover the head of the predicate declaration (commented-out code retained).
+    % ignore(discover_head(Self, Load, PredDecl)),
+    % Execute the command and indicate success with a color-coded message.
+    color_g_mesg_ok('#ffa505', metta_anew(Load, Src, metta_atom(Self, PredDecl))).
 
+%!  never_compile(+X) is det.
+%
+%   Determines whether a given term (`X`) should never be compiled.
+%   This is based on the execution mode (interpreted) or specific conditions.
+%
+%   @arg X The term to check.
 never_compile(_):- option_value('exec',interp),!.
 never_compile(X):- always_exec(X).
 
+%!  always_exec(+W) is nondet.
+%
+%   Determines if a given term (`W`) should always be executed rather than compiled.
+%   Handles various conditions to evaluate whether execution is appropriate.
+%
+%   @arg W The term to evaluate.
 always_exec(W):- var(W),!,fail.
 always_exec([H|_]):- always_exec_symbol(H),!.
 always_exec(Comp):- compound(Comp),compound_name_arity(Comp,Name,N),symbol_concat('eval',_,Name),Nm1 is N-1, arg(Nm1,Comp,TA),!,always_exec(TA).
@@ -4698,26 +5127,79 @@ always_exec(['assertEqualToResult'|_]):-!,fail.
 always_exec(['assertEqual'|_]):-!,fail.
 always_exec(_):-!,fail. % everything else
 
+%!  always_exec_symbol(+Sym) is nondet.
+%
+%   Determines if a given symbol (`Sym`) should always be executed.
+%   Checks for specific symbol patterns, such as those with a `!` suffix.
+%
+%   @arg Sym The symbol to evaluate.
 always_exec_symbol(Sym):- \+ symbol(Sym),!,fail.
 always_exec_symbol(H):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/bind!/include! etc
 always_exec_symbol(H):- symbol_concat('add-atom',_,H),!.
 always_exec_symbol(H):- symbol_concat('remove-atom',_,H),!.
 always_exec_symbol(H):- symbol_concat('subst-',_,H),!.
 
+%!  file_hides_results(+List) is nondet.
+%
+%   Checks if the given list indicates that results should be hidden.
+%   Specifically, looks for the presence of the `pragma!` keyword as the first element.
+%
+%   @arg List The list to check.
+file_hides_results([W|_]) :-
+    % Succeed if the first element of the list is `pragma!`.
+    W == 'pragma!'.
 
-file_hides_results([W|_]):- W== 'pragma!'.
+%!  if_t(+A, +B, +C) is det.
+%
+%   Executes conditional logic while tracing. Calls itself recursively with modified arguments.
+%
+%   @arg A The condition to check.
+%   @arg B The true branch to execute if `A` succeeds.
+%   @arg C The alternative branch to execute if `A` fails.
+if_t(A, B, C) :-
+    % Enable tracing for debugging and execute conditional logic.
+    trace,
+    if_t((A, B), C).
 
-if_t(A,B,C):- trace,if_t((A,B),C).
-
-check_answers_for(_,_):- nb_current(suspend_answers,true),!,fail.
-check_answers_for(TermV,Ans):- (string(TermV);var(Ans);var(TermV)),!,fail.
-check_answers_for(TermV,_):-  sformat(S,'~q',[TermV]),atom_contains(S,"[assert"),!,fail.
-check_answers_for(_,Ans):- contains_var('BadType',Ans),!,fail.
-check_answers_for(TermV,_):-  inside_assert(TermV,BaseEval), always_exec(BaseEval),!,fail.
-
-%check_answers_for([TermV],Ans):- !, check_answers_for(TermV,Ans).
-%check_answers_for(TermV,[Ans]):- !, check_answers_for(TermV,Ans).
-check_answers_for(_,_).
+%!  check_answers_for(+TermV, +Ans) is nondet.
+%
+%   Validates if answers (`Ans`) for a given term (`TermV`) can be checked. 
+%   Various conditions are applied to ensure that certain cases (e.g., suspended answers,
+%   bad types, or invalid terms) are rejected.
+%
+%   @arg TermV The term being checked.
+%   @arg Ans   The answer to validate.
+check_answers_for(_, _) :-
+    % Fail if answers are suspended (tracked by `suspend_answers` flag).
+    nb_current(suspend_answers, true),
+    !,
+    fail.
+check_answers_for(TermV, Ans) :-
+    % Fail if `TermV` is a string, or if `Ans` or `TermV` is uninstantiated.
+    (string(TermV); var(Ans); var(TermV)),
+    !,
+    fail.
+check_answers_for(TermV, _) :-
+    % Fail if `TermV` contains "assert" (used to identify test-like structures).
+    sformat(S, '~q', [TermV]),
+    atom_contains(S, "[assert"),
+    !,
+    fail.
+check_answers_for(_, Ans) :-
+    % Fail if the answer contains the variable `BadType`.
+    contains_var('BadType', Ans),
+    !,
+    fail.
+check_answers_for(TermV, _) :-
+    % Fail if `TermV` involves an assertion with executable content.
+    inside_assert(TermV, BaseEval),
+    always_exec(BaseEval),
+    !,
+    fail.
+% check_answers_for([TermV],Ans):- !, check_answers_for(TermV,Ans).
+% check_answers_for(TermV,[Ans]):- !, check_answers_for(TermV,Ans).
+% Default case: succeed without further checks.
+check_answers_for(_, _).
 
     /*
 got_exec_result2(Val,Nth,Ans):- is_list(Ans), exclude(==(','),Ans,Ans2), Ans\==Ans2,!,
@@ -5519,4 +6001,3 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
-
