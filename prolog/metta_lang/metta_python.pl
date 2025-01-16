@@ -579,10 +579,268 @@ def get_str_rep(func):
         return func.__name__
     return f"{func.__module__}.{func.__name__}"
 
+
+import importlib
+import types
+
+def py_call_method_and_args(*method_and_args):
+    """
+    Calls a Python callable (function, method, or constructor) with the provided arguments.
+
+    Handles various cases including:
+    - Bound methods.
+    - Function or method name as a string with an instance.
+    - Class and method name as a string.
+    - Object and method name as a string.
+    - Unbound methods with an instance.
+    - Other callable objects.
+
+    Args:
+        *method_and_args: Variable length argument list.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If no callable is provided.
+        TypeError: If the callable cannot be invoked.
+        AttributeError: If the method does not exist on the given class or instance.
+    """
+    # Check if a single argument is provided and if it is a list or tuple
+    if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
+        # Unpack the single list or tuple argument
+        method_and_args = method_and_args[0]
+
+    # Ensure there is at least one element to extract the callable
+    if not method_and_args:
+        raise ValueError("No callable provided to invoke.")
+
+    # Extract the first element as the potential callable
+    callable_obj, *args = method_and_args
+
+    # Case 1: Bound method
+    if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
+        # Call the bound method with the arguments
+        return callable_obj(*args)
+
+    # Case 2: Function or method name as a string with an instance
+    if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
+        method_name = callable_obj
+        instance = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the instance
+        method = getattr(instance, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return method(*method_args)
+
+    # Case 3: Class and method name as a string
+    if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
+        cls = callable_obj
+        method_name = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the class
+        method = getattr(cls, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return method(*method_args)
+
+    # Case 4: Object and method name as a string
+    if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
+        obj = method_and_args[0]
+        method_name = method_and_args[1]
+        args = method_and_args[2:]
+
+        # Retrieve the method from the object
+        method = getattr(obj, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The object has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return method(*args)
+
+    # Case 5: Unbound method (function) with an instance
+    if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
+        instance = args[0]
+        method_args = args[1:]
+
+        # Bind the method to the instance and call it
+        return callable_obj(instance, *method_args)
+
+    # Case 6: Other callable objects
+    if callable(callable_obj):
+        return callable_obj(*args)
+
+    # If none of the above, raise an error
+    raise TypeError("The provided arguments do not form a callable invocation.")
+
+
+import importlib
+import types
+from types import MethodType
+
+def make_py_dot_callable(target, method):
+    return make_py_dot_bool(target, method, alwaysReturnAsCallable=True)
+
+def make_py_dot(target, method):
+    return make_py_dot_bool(target, method, alwaysReturnAsCallable=False)
+
+def make_py_dot_bool(target, method, alwaysReturnAsCallable=False):
+    """
+    Returns a callable that dynamically invokes a method or function based on the provided target and method.
+
+    Args:
+        target (str or module or type or object): The module name, module object, class name, class object, or instance.
+        method (str or callable): The method name as a string (supports dot-separated paths) or an already resolved callable.
+        alwaysReturnAsCallable (bool): If True, wraps non-callable attributes into a callable that returns the attribute.
+
+    Returns:
+        callable: A function that takes any arguments and keyword arguments, and calls the specified method or function.
+        If alwaysReturnAsCallable is True, non-callable attributes are wrapped in a callable.
+
+    Raises:
+        ImportError: If the specified module cannot be imported.
+        AttributeError: If the specified method does not exist.
+        TypeError: If the specified method is not callable and alwaysReturnAsCallable is False.
+    """
+    # If the method is already a callable, bind it to the target if required
+    if callable(method):
+        # Check if the target is required for the callable (e.g., unbound instance method)
+        if isinstance(method, MethodType) and method.__self__ is None and isinstance(target, object):
+            # Bind the method to the target
+            return MethodType(method, target)
+        # Otherwise, return the method as-is
+        return method
+
+    # If the method is not a string or callable, raise an error
+    if not isinstance(method, str):
+        raise TypeError(f"The method should be a string or callable, got {type(method)} instead.")
+
+    # Resolve the target if it is a string (assumed to be a module or class name)
+    if isinstance(target, str):
+        try:
+            resolved_target = make_py_atom(target)
+            if resolved_target is not None:
+                target = resolved_target
+        except ValueError:
+            resolved_target = None
+
+        # If not resolved by make_py_atom, try importing it as a module
+        if resolved_target is None:
+            try:
+                target = importlib.import_module(target)
+            except ImportError:
+                try:
+                    # Attempt to import the class from the module path
+                    module_name, class_name = target.rsplit(".", 1)
+                    module = importlib.import_module(module_name)
+                    target = getattr(module, class_name)
+                except (ImportError, ValueError, AttributeError) as e:
+                    raise ImportError(f"Could not import ''{target}''. Ensure it is a valid module or class name.") from e
+
+    attr = getattr(target, method, None)
+    if attr is not None:
+      return attr
+
+    # If the target is a module, class, or instance, resolve the method
+    if isinstance(target, (types.ModuleType, type, object)):
+
+        try:
+            # Resolve dot-separated method paths
+            for attr in method.split("."):
+                target = getattr(target, attr)
+        except AttributeError as e:
+            raise AttributeError(f"''{target}'' has no attribute ''{method}'' or part of the method path could not be resolved.") from e
+
+        # If the resolved attribute is not callable and alwaysReturnAsCallable is True, wrap it
+        if not callable(target):
+            if alwaysReturnAsCallable:
+                def callable_function(*args, **kwargs):
+                    return target
+                return callable_function
+            else:
+                raise TypeError(f"The attribute ''{method}'' of ''{target}'' is not callable.")
+
+        # If the target is an instance and the resolved method requires self, bind it
+        if isinstance(target, MethodType) and hasattr(target, "__self__") and target.__self__ is None:
+            # Bind the method to the instance
+            bound_method = MethodType(target, target.__self__)
+            def callable_function(*args, **kwargs):
+                return bound_method(*args, **kwargs)
+            return callable_function
+
+        # Return a callable that invokes the resolved function with provided arguments
+        def callable_function(*args, **kwargs):
+            return target(*args, **kwargs)
+
+        return callable_function
+
+    raise TypeError(f"Unsupported target type: {type(target)}. Expected module, class, or instance.")
+
+
+import importlib
+
+def make_py_atom(target):
+    """
+    Resolves and returns a dynamic object, module, or expression result based on the provided target.
+    Supports multi-dot paths for resolving nested attributes or methods.
+
+    Args:
+        target (str or object): The object, module name, fully qualified name, or expression to resolve.
+
+    Returns:
+        object: The resolved object, module, or expression result.
+
+    Raises:
+        ValueError: If the string cannot be evaluated, resolved, or imported.
+    """
+    # If the target is not a string, return it as is
+    if not isinstance(target, str):
+        return target
+
+    # First, attempt to evaluate the string as a Python expression
+    try:
+        result = eval_string(target)
+        return result
+    except Exception:
+        pass  # Ignore eval failure, proceed to other cases
+
+    # If eval fails, try to resolve it as a module or a multi-dot attribute path
+    try:
+        # Split the target by dots and attempt to resolve recursively
+        parts = target.split(".")
+        module_name = parts[0]
+        resolved = importlib.import_module(module_name)  # Start with the first part as a module
+        for attr in parts[1:]:
+            resolved = getattr(resolved, attr)  # Resolve nested attributes
+        return resolved
+    except (ImportError, AttributeError) as e:
+        pass  # Not a fully qualified name, proceed to eval fallback
+
+    # If all else fails, raise an error
+    raise ValueError(f"Could not resolve ''{target}''. Ensure it is a valid object, module, or expression.")
+
+
+
 the_modules_and_globals = merge_modules_and_globals()
 
 ')),
     assert(did_load_builtin_module).
+
+
+%!  py_call_method_and_args(+List, -Py) is det.
+%
+%   Converts a list `List` into a Python call, returning the result as `Py`.
+%
+%   @arg O The input list to be converted toi call.
+%   @arg Py The result.
+py_call_method_and_args(List, Py):- py_obi(py_call_method_and_args(List),Py),!.
 
 
 %!  py_ppp(+V) is det.
@@ -743,7 +1001,7 @@ def rust_deref(obj):
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call.
 %
-py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),error(_,_), fail),!,O=M.
+py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),E,py_error_fail(E)),!,O=M.
 
 %!  py_scall(+I, -O) is semidet.
 %
@@ -752,7 +1010,7 @@ py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dic
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M.
+py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_acall(+I, -O) is semidet.
 %
@@ -761,7 +1019,7 @@ py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as an atom.
 %
-py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
+py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_ocall(+I, -O) is semidet.
 %
@@ -770,7 +1028,7 @@ py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(_,_),fail),!,O=M.
+py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_bi(+I, -O, +Opts) is semidet.
 %
@@ -781,7 +1039,7 @@ py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(
 %   @arg O Output term that unifies with the result of the Python call.
 %   @arg Opts Options passed to the Python call.
 %
-py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),error(_,_),fail),!,O=M.
+py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),E,py_error_fail(E)),!,O=M.
 
 %!  py_obi(+I, -O) is semidet.
 %
@@ -823,6 +1081,7 @@ get_str_rep(I,O):- py_mbi(get_str_rep(I),O),!.
 %   @arg O Output term that unifies with the Python atom or its Prolog equivalent.
 %
 py_atom(I,O):- var(I),!,O=I.
+py_atom(A,Py):- atomic(A),!,catch(py_obi(make_py_atom(A),Py),E,py_error_fail(E)),!.
 py_atom([I|Is],O):- !,py_dot(I,II),py_dot_from(II,Is,O),!.
 py_atom(I,O):- atomic(I),!,py_atomic(I,O).
 py_atom(I,O):- py_ocall(I,O),!.
@@ -854,6 +1113,7 @@ py_atom_type(I,_Type,O):- I=O.
 py_atomic([],O):- py_ocall("[]",O),!.
 py_atomic(I,O):- py_is_object(I),!,O=I.
 py_atomic(I,O):- string(I),py_eval(I,O),!.
+py_atomic(I,O):- symbol(I),py_eval(I,O),!.
 py_atomic(I,O):- py_ocall(I,O),!.
 py_atomic(I,O):- py_eval(I,O),!.
 py_atomic(I,O):- \+ symbol_contains(I,'('), atomic_list_concat([A,B|C],'.',I), py_dot([A,B|C],O),!.
@@ -925,7 +1185,7 @@ py_exec(I):- py_exec(I, O),pybug(O).
 %
 %   @arg I The input string or atom representing a Python object.
 %   @arg O The output which will unify with the Python object.
-py_dot(I,O):- string(I),atom_string(A, I),py_atom(A, O),A\==O,!.
+py_dot(I,O):- string(I),py_obi(eval_string(I),O),!.
 py_dot(I,O):- py_atom(I,O).
 
 %!  py_dot_from(+From, +I, -O) is det.
@@ -939,7 +1199,13 @@ py_dot(I,O):- py_atom(I,O).
 py_dot_from(From,I,O):- I==[],!,O=From.
 py_dot_from(From,[I|Is],O):- !,py_dot_from(From, I, M),py_dot_from(M, Is, O).
 py_dot_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_dot_from(From,[A,B|C],O).
-py_dot_from(From,I,O):- py_dot(From,I,O).
+py_dot_from(From,I,O):- make_py_dot(From,I,O).
+
+make_py_dot(A,B,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
+make_py_dot(A,B,Py):- py_dot([A,B],Py),!.
+
+
+py_error_fail(E):- bt,wdmsg(E),!,trace,fail.
 
 %!  py_eval_object(+Var, -VO) is det.
 %
@@ -959,9 +1225,14 @@ py_eval_object(VO,VO).
 %
 %   @arg O The input object to check.
 py_is_function(O):- \+ py_is_object(O),!,fail.
-py_is_function(O):- py_type(O,function),!.
-% we might need to include methods soon
-%py_is_function(O):- py_type(O, method),!.
+py_is_function(PyObject) :-
+    py_type(PyObject, Type),
+    py_is_method_type(Type).
+py_is_method_type(type).
+py_is_method_type(builtin_function_or_method).
+py_is_method_type(function).
+py_is_method_type(method).
+
 
 %!  py_eval_from(+From, +I, -O) is det.
 %
