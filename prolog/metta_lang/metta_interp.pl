@@ -4361,7 +4361,7 @@ should_not_inherit_from(_, _, S) :-
 should_not_inherit_from_corelib('&corelib').
 should_not_inherit_from_corelib('&stdlib').
 should_not_inherit_from_corelib('&self').
-% should_not_inherit_from_corelib('&top').
+%should_not_inherit_from_corelib('&top').
 */
 
 %!  should_inherit_from_corelib(+Atom) is nondet.
@@ -4459,9 +4459,10 @@ should_inherit_op_from_corelib('@doc').
 %     % Retrieve the last asserted atom for a specific knowledge base:
 %     ?- metta_atom_asserted_last('&flybase', Atom).
 %     Atom = '&corelib'.
-%
-% metta_atom_asserted('&self','&corelib').
-% metta_atom_asserted('&self','&stdlib').
+
+
+%metta_atom_asserted('&self','&corelib').
+%metta_atom_asserted('&self','&stdlib').
 metta_atom_asserted_last(Top, '&corelib') :- 
     % Assert `&corelib` for the top-level context.
     top_self(Top).
