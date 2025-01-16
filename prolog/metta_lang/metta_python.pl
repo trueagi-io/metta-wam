@@ -140,7 +140,7 @@ is_rust_space(GSpace):- is_python_space(GSpace).
 is_not_prolog_space(GSpace):-
     % Check if it is a Rust space (which includes Python spaces).
     is_rust_space(GSpace),!.
-is_not_prolog_space(GSpace):-
+is_not_prolog_space(GSpace):- fail,
     % Check if the space is neither an asserted space nor an nb space.
     \+ is_asserted_space(GSpace), \+ is_nb_space(GSpace),!.
 

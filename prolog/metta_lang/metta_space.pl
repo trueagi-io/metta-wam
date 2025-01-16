@@ -728,6 +728,7 @@ was_asserted_space('&belief_events').
 %     true.
 %
 is_asserted_space(X) :- was_asserted_space(X).
+
 /*
 is_asserted_space(X) :-
     \+ is_as_nb_space(X),
@@ -747,7 +748,7 @@ is_asserted_space(X) :-
 %     ?- is_python_space_not_prolog('unknown_space').
 %     true.
 %
-is_python_space_not_prolog(X) :-
+is_python_space_not_prolog(X) :- is_python_space(X),
     \+ is_as_nb_space(X),
     \+ is_asserted_space(X).
 
