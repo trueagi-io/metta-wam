@@ -3785,7 +3785,7 @@ rtrace_on_failure(G):-
 %     % Execute a goal and trace failures, breaking on failure:
 %     ?- rtrace_on_failure_and_break(writeln('This may fail.')).
 %
-rtrace_on_failure_and_break(G):- 
+rtrace_on_failure_and_break(G):-
     % If tracing is already active, execute the Goal directly.
     tracing, !, call(G).
 rtrace_on_failure_and_break(G):-
@@ -3852,11 +3852,11 @@ assertion_hb(metta_atom_asserted(Self, [Eq, H, B]), Self, Eq, H, B) :-
 %
 %   @example
 %     % Check a valid equality operator:
-%     ?- assertion_neck_cl('='). 
+%     ?- assertion_neck_cl('=').
 %     true.
 %
 %     % Fail for invalid operators:
-%     ?- assertion_neck_cl(foo). 
+%     ?- assertion_neck_cl(foo).
 %     false.
 %
 assertion_neck_cl(Eq) :-
@@ -3915,7 +3915,7 @@ load_hook1(Load, Self, Eq, H, B) :-
     functs_to_preds([Eq, H, B], Preds),
     % Assert the converted predicates into the knowledge base.
     assert_preds(Self, Load, Preds), !.
-       
+
 % old compiler hook
 /*
 load_hook0(Load,Assertion):-
@@ -3940,7 +3940,7 @@ load_hook0(Load,get_metta_atom(Eq,Self,H)):- B = 'True',
 %     ?- is_transpiling.
 %     true.
 %
-is_transpiling :- 
+is_transpiling :-
     % Check if the Metta compiler is in use.
     use_metta_compiler.
 
@@ -3954,7 +3954,7 @@ is_transpiling :-
 %     ?- use_metta_compiler.
 %     true.
 %
-use_metta_compiler :- 
+use_metta_compiler :-
     % Check if the `compile` option is set to `full`.
     option_value('compile', 'full').
 
@@ -3969,7 +3969,7 @@ use_metta_compiler :-
 %     true.
 %
 % preview_compiler :- use_metta_compiler, !.
-preview_compiler :- 
+preview_compiler :-
     % Use the compiler or check if the `compile` option is `true`.
     notrace(use_metta_compiler; option_value('compile', 'true')).
 
@@ -3984,11 +3984,11 @@ preview_compiler :-
 %     ?- show_transpiler.
 %     true.
 %
-show_transpiler :- 
+show_transpiler :-
     % Check if the `code` option has a value other than `silent`.
-    option_value('code', Something), 
+    option_value('code', Something),
     Something \== silent, !.
-show_transpiler :- 
+show_transpiler :-
     % Fallback to preview mode.
     preview_compiler.
 
@@ -4072,7 +4072,7 @@ display_metta_debug_topics :-
 % Ensure the predicate always succeeds, even if no debugging topics are active.
 display_metta_debug_topics :- !.
 
-% Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across 
+% Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across
 % multiple files.
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
@@ -4093,13 +4093,13 @@ display_metta_debug_topics :- !.
 %   @arg WSelf The working self-reference (`&self` or variable).
 %   @arg Self  The resolved self-reference.
 %
-maybe_into_top_self(_, _) :- 
+maybe_into_top_self(_, _) :-
     % Fail if `use_top_self` is not enabled.
     \+ use_top_self, !, fail.
-maybe_into_top_self(WSelf, Self) :- 
+maybe_into_top_self(WSelf, Self) :-
     % Handle unbound `WSelf` with deferred resolution.
     var(WSelf), !, \+ attvar(WSelf), !, freeze(Self, from_top_self(Self, WSelf)).
-maybe_into_top_self(WSelf, Self) :- 
+maybe_into_top_self(WSelf, Self) :-
     % Map `&self` to the current context.
     WSelf = '&self',
     current_self(Self),
@@ -4112,7 +4112,7 @@ maybe_into_top_self(WSelf, Self) :-
 %   @arg WSelf The working self-reference.
 %   @arg Self  The resolved self-reference.
 %
-into_top_self(WSelf, Self) :- 
+into_top_self(WSelf, Self) :-
     % Attempt conditional mapping.
     maybe_into_top_self(WSelf, Self), !.
 into_top_self(Self, Self).
@@ -4124,14 +4124,14 @@ into_top_self(Self, Self).
 %   @arg Self  The resolved self-reference.
 %   @arg WSelf The working self-reference.
 %
-from_top_self(Self, WSelf) :- 
+from_top_self(Self, WSelf) :-
     % Handle unbound `Self` with deferred resolution.
     var(Self), !, \+ attvar(Self), !, freeze(Self, from_top_self(Self, WSelf)).
 %from_top_self(Self, WSelf):- var(Self), trace, !, freeze(Self, from_top_self(Self, WSelf)).
-from_top_self(Self, WSelf) :- 
+from_top_self(Self, WSelf) :-
     % Map from top self-reference.
     top_self(CSelf), CSelf == Self, WSelf = '&self', !.
-from_top_self(Self, WSelf) :- 
+from_top_self(Self, WSelf) :-
     % Map from current self-reference.
     current_self(CSelf), CSelf == Self, WSelf = '&self', !.
 from_top_self(Self, Self).
@@ -4143,7 +4143,7 @@ from_top_self(Self, Self).
 %   @arg KB   The knowledge base context.
 %   @arg Atom The atom associated with the knowledge base.
 %
-get_metta_atom_from(KB, Atom) :- 
+get_metta_atom_from(KB, Atom) :-
     metta_atom(KB, Atom).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
@@ -4154,8 +4154,8 @@ get_metta_atom_from(KB, Atom) :-
 %   @arg Space The context or space.
 %   @arg Atom  The retrieved atom.
 %
-get_metta_atom(Eq, Space, Atom) :- 
-    metta_atom(Space, Atom), 
+get_metta_atom(Eq, Space, Atom) :-
+    metta_atom(Space, Atom),
     \+ (Atom = [EQ, _, _], EQ == Eq).
 
 %!  metta_atom(-Atom) is nondet.
@@ -4164,29 +4164,29 @@ get_metta_atom(Eq, Space, Atom) :-
 %
 %   @arg Atom The atom associated with the current knowledge base.
 %
-metta_atom(Atom) :- 
-    current_self(KB), 
+metta_atom(Atom) :-
+    current_self(KB),
     metta_atom(KB, Atom).
 
 %!  metta_atom_added(+X, -Y) is nondet.
 %
-%   Determines if an atom has been added to the specified space (`X`). 
+%   Determines if an atom has been added to the specified space (`X`).
 %   Checks for assertions, file associations, deductions, or recent assertions.
 %
 %   @arg X The context or space.
 %   @arg Y The atom to check.
 %
-metta_atom_added(X, Y) :- 
+metta_atom_added(X, Y) :-
     % Check if the atom was explicitly asserted.
     metta_atom_asserted(X, Y).
-metta_atom_added(X, Y) :- 
+metta_atom_added(X, Y) :-
     % Check if the atom is associated with a file.
     metta_atom_in_file(X, Y).
-metta_atom_added(X, Y) :- 
+metta_atom_added(X, Y) :-
     % Check if the atom was deduced and not explicitly asserted.
     metta_atom_deduced(X, Y),
     \+ clause(metta_atom_asserted(X, Y), true).
-metta_atom_added(X, Y) :- 
+metta_atom_added(X, Y) :-
     % Check if the atom was recently asserted.
     metta_atom_asserted_last(X, Y).
 
@@ -4352,7 +4352,7 @@ should_inhert_from_now(KB, Atom) :-
 %     ?- should_not_inherit_from('&my_space', '&sub_space', my_symbol).
 %     true.
 %
-should_not_inherit_from(_, _, S) :- 
+should_not_inherit_from(_, _, S) :-
     % Exclude symbols from inheritance.
     symbol(S).
 /*
@@ -4382,14 +4382,14 @@ should_not_inherit_from_corelib('&self').
 should_inherit_from_corelib(_) :-
     % Automatically allow inheritance if all spaces are used.
     using_all_spaces, !.
-should_inherit_from_corelib(_) :- 
+should_inherit_from_corelib(_) :-
     % Default case: inheritance is disallowed unless explicitly permitted.
     !.
 should_inherit_from_corelib([H, A | _]) :-
     % Check if the operator `H` is permitted for inheritance and `A` is nonvar.
     nonvar(H),
-    should_inherit_op_from_corelib(H), 
-    !, 
+    should_inherit_op_from_corelib(H),
+    !,
     nonvar(A).
 % should_inherit_from_corelib([H | _]) :-
 %     % Uncomment to allow inheritance for `@doc` headers.
@@ -4397,12 +4397,12 @@ should_inherit_from_corelib([H, A | _]) :-
 should_inherit_from_corelib([H, A | T]) :-
     % Additional rule for inheritance based on specific conditions.
     fail, % Disabled; uncomment or modify as needed.
-    H == '=', 
-    write_src_uo(try([H, A | T])), 
+    H == '=',
+    write_src_uo(try([H, A | T])),
     !,
     A = [F | _],
     nonvar(F),
-    F \== ':', 
+    F \== ':',
     is_list(A),
     % Ensure the functor `F` is not already asserted in `&self`.
     \+ metta_atom_asserted('&self', [:, F | _]),
@@ -4423,7 +4423,7 @@ should_inherit_from_corelib([H, A | T]) :-
 %     ?- is_code_inheritor('&corelib').
 %     true.
 %
-is_code_inheritor(KB) :- 
+is_code_inheritor(KB) :-
     % Check if the current self matches `KB`.
     current_self(KB).
 
@@ -4463,10 +4463,10 @@ should_inherit_op_from_corelib('@doc').
 
 %metta_atom_asserted('&self','&corelib').
 %metta_atom_asserted('&self','&stdlib').
-metta_atom_asserted_last(Top, '&corelib') :- 
+metta_atom_asserted_last(Top, '&corelib') :-
     % Assert `&corelib` for the top-level context.
     top_self(Top).
-metta_atom_asserted_last(Top, '&stdlib') :- 
+metta_atom_asserted_last(Top, '&stdlib') :-
     % Assert `&stdlib` for the top-level context.
     top_self(Top).
 metta_atom_asserted_last('&stdlib', '&corelib').
@@ -4496,7 +4496,7 @@ not_metta_atom_corelib(A,N):-  A \== '&corelib' , metta_atom('&corelib',N).
 
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
-is_metta_space(Space):- \+ \+ is_space_type(Space,_Test).
+is_metta_space(Space):- nonvar(Space), \+ \+ is_space_type(Space,_Test).
 
 %metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
 %metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
