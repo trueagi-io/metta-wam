@@ -74,6 +74,7 @@
 :- ensure_loaded(metta_space).
 :- dynamic(transpiler_clause_store/9).
 :- dynamic(transpiler_predicate_store/4).
+:- discontiguous(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 
 non_arg_violation(_,_,_).
@@ -87,7 +88,6 @@ non_arg_violation(_,_,_).
 % ==============================
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
-
 
 % =======================================
 % TODO move non flybase specific code between here and the compiler
@@ -167,13 +167,13 @@ create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
 create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
 create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- !.
-%create_p1(ERet,ECode,NRet,NCode,R) :-
-%   partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
-%   (CCode=[] ->
-%      R=[ispeEnN,ERet,ECode,NRet,NCode]
-%   ;
-%      R=[ispeEnNC,ERet,ECode1,NRet,NCode1,CCode]).
-create_p1(ERet,ECode,NRet,NCode,[ispeEnN,ERet,ECode,NRet,NCode]).
+create_p1(ERet,ECode,NRet,NCode,R) :-
+   partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
+   (CCode=[] ->
+      R=[ispeEnN,ERet,ECode,NRet,NCode]
+   ;
+      R=[ispeEnNC,ERet,ECode1,NRet,NCode1,CCode]).
+%create_p1(ERet,ECode,NRet,NCode,[ispeEnN,ERet,ECode,NRet,NCode]).
 
 % Combine code so that is_p1 clauses are not so large
 % partial_combine_lists(L1,L2,Lcomb,L1a,L2a)
@@ -1589,6 +1589,10 @@ ast_to_prolog_aux(Caller,DontStub,[ispeEn,R,Code0,Expr],ispeEn(R,Code1,Expr)) :-
 ast_to_prolog_aux(Caller,DontStub,[ispeEnN,R,Code0,Expr,CodeN0],ispeEnN(R,Code1,Expr,CodeN1)) :- !,
    ast_to_prolog(Caller,DontStub,Code0,Code1),
    ast_to_prolog(Caller,DontStub,CodeN0,CodeN1).
+ast_to_prolog_aux(Caller,DontStub,[ispeEnNC,R,Code0,Expr,CodeN0,CodeC0],ispeEnNC(R,Code1,Expr,CodeN1,CodeC1)) :- !,
+   ast_to_prolog(Caller,DontStub,Code0,Code1),
+   ast_to_prolog(Caller,DontStub,CodeN0,CodeN1),
+   ast_to_prolog(Caller,DontStub,CodeC0,CodeC1).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
