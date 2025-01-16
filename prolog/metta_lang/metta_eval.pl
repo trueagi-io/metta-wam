@@ -316,7 +316,12 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 
 eval_10(Eq,RetType,Depth,Self,[Sym|Args],Res):-
     atomic(Sym), py_is_function(Sym), is_list(Args),
-    !, py_call_method_and_args([Sym|Args],Res).
+    !, py_call_method_and_args([Sym|Args],Ret),
+    py_metta_return_value(Ret,Res).
+
+py_metta_return_value(None,[]):- None=='@'(none),!.
+py_metta_return_value(IO,IO):-!.
+
 
 
 eval_10(Eq,RetType,Depth,Self,X,Y):- (var(X);  \+ (X=[Var|_],  atom(Var))), !,

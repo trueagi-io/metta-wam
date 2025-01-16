@@ -809,7 +809,7 @@ def make_py_atom(target):
         result = eval_string(target)
         return result
     except Exception:
-        pass  # Ignore eval failure, proceed to other cases
+        result = target # pass  # Ignore eval failure, proceed to other cases
 
     # If eval fails, try to resolve it as a module or a multi-dot attribute path
     try:
