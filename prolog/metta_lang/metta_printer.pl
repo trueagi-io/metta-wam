@@ -887,7 +887,7 @@ pp_sexi((USER:Body)) :- fail,
 pp_sexi(V) :-
     % If concepts are allowed, disable concept formatting and print `V`.
     allow_concepts, !, with_concepts('False', pp_sex(V)), flush_output.
-pp_sexi('Empty') :-
+pp_sexi('Empty') :- fail,
     % If `V` is the atom 'Empty', do not print anything.
     !.
 pp_sexi('') :-
