@@ -140,7 +140,7 @@ is_rust_space(GSpace):- is_python_space(GSpace).
 is_not_prolog_space(GSpace):-
     % Check if it is a Rust space (which includes Python spaces).
     is_rust_space(GSpace),!.
-is_not_prolog_space(GSpace):-
+is_not_prolog_space(GSpace):- fail,
     % Check if the space is neither an asserted space nor an nb space.
     \+ is_asserted_space(GSpace), \+ is_nb_space(GSpace),!.
 
@@ -809,7 +809,7 @@ def make_py_atom(target):
         result = eval_string(target)
         return result
     except Exception:
-        pass  # Ignore eval failure, proceed to other cases
+        result = target # pass  # Ignore eval failure, proceed to other cases
 
     # If eval fails, try to resolve it as a module or a multi-dot attribute path
     try:

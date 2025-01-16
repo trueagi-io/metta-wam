@@ -62,6 +62,7 @@
 :- meta_predicate(color_g_mesg(+,0)).
 :- multifile(color_g_mesg/2).
 
+self_eval0(X):- var(X),!,fail.
 self_eval0(X):- \+ callable(X),!.
 self_eval0(X):- py_is_py(X),!.
 %self_eval0(X):- py_type(X,List), List\==list,!.
@@ -312,6 +313,16 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 %:- discontiguous eval_30fz/5.
 %:- discontiguous eval_31/5.
 %:- discontiguous eval_maybe_defn/5.
+
+eval_10(Eq,RetType,Depth,Self,[Sym|Args],Res):-
+    atomic(Sym), py_is_function(Sym), is_list(Args),
+    !, py_call_method_and_args([Sym|Args],Ret),
+    py_metta_return_value(Ret,Res).
+
+py_metta_return_value(None,[]):- None=='@'(none),!.
+py_metta_return_value(IO,IO):-!.
+
+
 
 eval_10(Eq,RetType,Depth,Self,X,Y):- (var(X);  \+ (X=[Var|_],  atom(Var))), !,
   as_prolog_x(0,Self,X,XX),
@@ -1480,7 +1491,7 @@ eval_10(Eq,RetType,Depth,Self,['container-unify',Arg1,Arg2,Then|ElseL],Res):-
     ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
 
 eval_10(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
-   (eval_args_true(Eq,'Bool',Depth,Self,['==',X,Y])
+   (if_or_else(X=Y,eval_args_true(Eq,'Bool',Depth,Self,['==',X,Y]))
      *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
     ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
 
@@ -1672,7 +1683,7 @@ fetch_or_create_state(NameOrInstance, State) :-
             nb_bound(NameOrInstance, State))
     ;   is_valid_nb_state(NameOrInstance)
     ->  State = NameOrInstance
-    ;   writeln('Error: Invalid input.')
+    ;   fbug('Error: Invalid input.')
     ),
     is_valid_nb_state(State).
 
@@ -1884,14 +1895,14 @@ eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Othe
   assert(was_asserted_space(Other)),
   make_nop(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
-   must_det_ll((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
+   must((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
     nb_bind(Name,Value),  make_nop(RetType,Value,RetVal))),
    check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
    set_option_value_interp(Name,Value))),  make_nop(RetType,Value,RetVal),
     check_returnval(Eq,RetType,RetVal))).
-eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must_det_ll((include_metta(Self,File),
+eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must((include_metta(Self,File),
    make_nop(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
 
 
@@ -1911,7 +1922,7 @@ nd_ignore(Goal):- call(Goal)*->true;true.
 % =================================================================
 % =================================================================
 
-is_True(T):- atomic(T), T\=='False', T\==0.
+is_True(T):- atomic(T),!,(T=='True';T==1),!.
 
 is_and(S):- \+ atom(S),!,fail.
 %is_and(',').
@@ -2496,7 +2507,8 @@ eval_20(_Eq,_RetType,_Depth,_Self,['rust',PredDecl],Res):- !,
 skip_eval_args(_Eq,_RetType,_Depth,_Self,LESS,Res):- LESS=Res.
 
 %eval_20(_Eq,_RetType,_Depth,_Self,['py-list',Arg],Res):- !, must_det_ll((py_list(Arg,Res))).
-eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !, must_det_ll((py_dict(Arg,Res))).
+eval_20(_Eq,_RetType,_Depth,_Self,['py-dict',Arg],Res):- !,
+  must_det_ll((py_dict(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
   must_det_ll((py_tuple(Arg,Res))).
 eval_20(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
@@ -2506,7 +2518,9 @@ eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
 eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
   must_det_ll((py_atom_type(Arg,Type,Res))).
 eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
-  must_det_ll((py_dot(Arg1,Arg2,Res))).
+  make_py_dot(Arg1,Arg2,Res).
+eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
+  must_det_ll((py_type(Arg,Res))).
 eval_40(_Original,_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
   must_det_ll((py_eval(Arg,Res))).
 
@@ -2812,13 +2826,6 @@ eval_maybe_host_function(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_fun
  %  fake_notrace(is_user_defined_head(Self,H)),!,
  %  eval_defn(Eq,RetType,Depth,Self,[H|PredDecl],Res).
 
-/*eval_maybe_defn(Eq,RetType,Depth,Self,PredDecl,Res):-
-    eval_defn(Eq,RetType,Depth,Self,PredDecl,Res).
-
-eval_maybe_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
-    subst_args_h(Eq,RetType,Depth,Self,PredDecl,Res).
-*/
-
 
 
 :- if( \+  current_predicate( check_returnval / 3 )).
@@ -2875,10 +2882,10 @@ eval_selfless_0(E,R):- eval_selfless_2(E,R).
 allow_clp:- false_flag.
 
 eval_selfless_1([F|XY],TF):- allow_clp, \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
-eval_selfless_1(['>',X,Y],TF):-!,as_tf(X>Y,TF).
-eval_selfless_1(['<',X,Y],TF):-!,as_tf(X<Y,TF).
-eval_selfless_1(['=>',X,Y],TF):-!,as_tf(X>=Y,TF).
-eval_selfless_1(['<=',X,Y],TF):-!,as_tf(X=<Y,TF).
+eval_selfless_1(['>',X,Y],TF):-!,as_tf_nowarn(X>Y,TF).
+eval_selfless_1(['<',X,Y],TF):-!,as_tf_nowarn(X<Y,TF).
+eval_selfless_1(['=>',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
+eval_selfless_1(['<=',X,Y],TF):-!,as_tf_nowarn(X=<Y,TF).
 eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
 eval_selfless_2([F|_],_):- var(F),!,fail.
