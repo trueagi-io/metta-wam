@@ -532,7 +532,7 @@ is_final_write('#\\'(S)) :-
     !, format("'~w'", [S]).
 is_final_write(V) :-
     % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
-    py_is_enabled, notrace(catch(((py_is_py(V),_,fail), !, py_ppp(V)),_,fail)), !.
+    py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
 is_final_write([VAR, V | T]) :-
     % For lists like ['$VAR', Value], write the variable if the tail is empty.
     '$VAR' == VAR, T == [], !, write_dvar(V).
