@@ -913,6 +913,7 @@ strict_equals_allow_vn(X,Y):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,v
 strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,XX=Y.
 strict_equals_allow_vn(X,Y):- X=@=Y,!.
 
+equal_enough_for_test_renumbered_l(P2,X,Y):- call(P2,X,Y), !.
 equal_enough_for_test_renumbered_l(_P2,X,Y):- is_blank(X),is_blank(Y),!.
 equal_enough_for_test_renumbered_l(P2,X,Y):- must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
     maplist(equal_enough_for_test_renumbered(P2),X0,Y0).
