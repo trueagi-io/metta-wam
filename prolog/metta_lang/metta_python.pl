@@ -805,8 +805,14 @@ def make_py_dot_bool(target, method, alwaysReturnAsCallable=False):
     if not isinstance(method, str):
         raise TypeError(f"The method should be a string or callable, got {type(method)} instead.")
 
+
+
     # Resolve the target if it is a string (assumed to be a module or class name)
     if isinstance(target, str):
+        # search the string type for the method name
+        str_callable = getattr(target, method, None)
+        if str_callable is not None:
+          return str_callable
         try:
             resolved_target = make_py_atom(target)
             if resolved_target is not None:
@@ -1022,6 +1028,7 @@ py_arg(Final, Final).
 %     my_python_object_cleaned_output
 %
 py_ppp(V):- py_is_object(V), py_type(V,'Term'),py_call(repr(V),String),!,write(String).
+
 py_ppp(V):- py_is_object(V), py_type(V,'SymbolAtom'),py_call(repr(V),String),!,write(String).
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
