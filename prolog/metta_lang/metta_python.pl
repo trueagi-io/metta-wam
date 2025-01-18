@@ -579,6 +579,7 @@ def get_str_rep(func):
         return func.__name__
     return f"{func.__module__}.{func.__name__}"
 
+DEBUG_MODE = False  # Set this to True to enable debug output
 
 import importlib
 import types
@@ -680,9 +681,6 @@ def py_call_method_and_args(*method_and_args):
     # If none of the above, raise an error
     raise TypeError("The provided arguments do not form a callable invocation.")
 
-import inspect
-
-
 def py_call_w_args(callable_obj, *w_args):
     """
     Calls a Python callable with the provided arguments, handling both positional and keyword arguments.
@@ -749,6 +747,13 @@ def py_call_w_args(callable_obj, *w_args):
             else:
                 raise TypeError("Non-keyword arguments found after processing all parameters")
 
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {kwargs}")
+
     try:
         return callable_obj(*method_args, **kwargs)
     finally:
@@ -763,6 +768,196 @@ def wild_test_function(a, b, c=3, *args, d, **kwargs):
 # Correct usage
 def test_wild_test_function():
     py_call_method_and_args(test_function, 1, 2, 4, 5, d=6, e=7)
+
+
+def py_call_method_and_args_kw(kwa, *method_and_args):
+    """
+    Calls a Python callable (function, method, or constructor) with the provided arguments.
+
+    Handles various cases including:
+    - Bound methods.
+    - Function or method name as a string with an instance.
+    - Class and method name as a string.
+    - Object and method name as a string.
+    - Unbound methods with an instance.
+    - Other callable objects.
+
+    Args:
+        method_and_args: Variable length argument list.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If no callable is provided.
+        TypeError: If the callable cannot be invoked.
+        AttributeError: If the method does not exist on the given class or instance.
+    """
+
+    if DEBUG_MODE:
+        print("Debug: Initial method_and_args =", method_and_args)
+        print("Debug: Initial kwa =", kwa)
+
+    # Check if a single argument is provided and if it is a list or tuple
+    if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
+        method_and_args = method_and_args[0]
+        if DEBUG_MODE:
+            print("Debug: Unpacked method_and_args =", method_and_args)
+
+    kwargs = kwa
+
+
+    # Ensure there is at least one element to extract the callable
+    if not method_and_args:
+        raise ValueError("No callable provided to invoke.")
+
+    callable_obj, *args = list(method_and_args)
+
+    # Debug after extracting callable and args
+    if DEBUG_MODE:
+        print("Debug: Callable object =", callable_obj)
+        print("Debug: Positional arguments =", args)
+
+    # Case 1: Bound method
+    if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
+        # Call the bound method with the arguments
+        return py_call_kw_args(kwargs,  callable_obj, *args)
+
+    # Case 2: Function or method name as a string with an instance
+    if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
+        method_name = callable_obj
+        instance = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the instance
+        method = getattr(instance, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs,  method, *method_args)
+
+    # Case 3: Class and method name as a string
+    if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
+        cls = callable_obj
+        method_name = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the class
+        method = getattr(cls, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *method_args)
+
+    # Case 4: Object and method name as a string
+    if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
+        obj = method_and_args[0]
+        method_name = method_and_args[1]
+        args = method_and_args[2:]
+
+        # Retrieve the method from the object
+        method = getattr(obj, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The object has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *args)
+
+    # Case 5: Unbound method (function) with an instance
+    if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
+        instance = args[0]
+        method_args = args[1:]
+
+        # Bind the method to the instance and call it
+        return py_call_kw_args(kwargs, callable_obj, *method_args)
+
+    # Case 6: Other callable objects
+    if callable(callable_obj):
+        return py_call_kw_args(kwargs, callable_obj, *args)
+
+    # If none of the above, raise an error
+    raise TypeError("The provided arguments do not form a callable invocation.")
+
+import inspect
+
+
+def py_call_kw_args(kwargs, callable_obj, *w_args):
+    """
+    Calls a callable object with positional and keyword arguments,
+    ensuring compatibility with its signature.
+
+    :param kwargs: Dictionary of keyword arguments.
+    :param callable_obj: The callable object to be invoked.
+    :param w_args: Additional positional arguments.
+    :return: The result of invoking the callable object.
+    :raises ValueError: If the first argument is not callable.
+    """
+    if not callable(callable_obj):
+        raise ValueError("First argument must be callable.")
+
+    args = list(w_args)  # Positional arguments
+    sig = inspect.signature(callable_obj)
+
+    # Separate the expected keyword arguments from the function signature
+    kwarg_names = {param.name for param in sig.parameters.values()
+                   if param.kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.VAR_KEYWORD]}
+
+    # Prepare arguments for the callable
+    method_args = []
+    method_kwargs = {}
+
+    # Positional arguments from the signature
+    for i, (name, param) in enumerate(sig.parameters.items()):
+        if param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            if i < len(args):
+                method_args.append(args[i])
+            elif name in kwargs:
+                method_args.append(kwargs.pop(name))
+            elif param.default is not param.empty:
+                method_args.append(param.default)
+            else:
+                raise TypeError(f"Missing required positional argument: \'{name}\'")
+
+    # Handle *args (VAR_POSITIONAL)
+    for param in sig.parameters.values():
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            remaining_args = args[len(method_args):]  # Extract remaining arguments
+            method_args.extend(remaining_args)
+            break
+
+    # Handle keyword-only arguments
+    for name, param in sig.parameters.items():
+        if param.kind == inspect.Parameter.KEYWORD_ONLY:
+            if name in kwargs:
+                method_kwargs[name] = kwargs.pop(name)
+            elif param.default is not param.empty:
+                method_kwargs[name] = param.default
+            else:
+                raise TypeError(f"Missing required keyword-only argument: \'{name}\'")
+
+    # Handle **kwargs if present in the signature
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values()):
+        method_kwargs.update(kwargs)
+    elif kwargs:
+        # If the function does not accept **kwargs and extras are provided
+        raise TypeError(f"Got unexpected keyword arguments: {\', \'.join(kwargs.keys())}")
+
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {method_kwargs}")
+
+    # Call the function with the prepared arguments
+    try:
+        return callable_obj(*method_args, **method_kwargs)
+    finally:
+        flush_stdout_stderr()
+
+
 
 import importlib
 import types
@@ -805,9 +1000,7 @@ def make_py_dot_bool(target, method, alwaysReturnAsCallable=False):
     if not isinstance(method, str):
         raise TypeError(f"The method should be a string or callable, got {type(method)} instead.")
 
-
-
-    # Resolve the target if it is a string (assumed to be a module or class name)
+   # Resolve the target if it is a string (assumed to be a module or class name)
     if isinstance(target, str):
         # search the string type for the method name
         str_callable = getattr(target, method, None)
@@ -967,15 +1160,32 @@ the_modules_and_globals = merge_modules_and_globals()
 %
 %   @arg O The input list to be converted toi call.
 %   @arg Py The result.
-py_call_method_and_args([F|List], Py):- maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py),!.
+py_call_method_and_args([F|List], Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
+   maplist(py_arg,NewList,PyArgs),
+   py_list([F|PyArgs],PyList),
+   py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
+py_call_method_and_args([F|List], Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
 
-/*
-map_tuple(P2,DashA,DashB):- compound(DashA),compound_name_arguments(DashA,'-',ArgsA),maplist(P2,ArgsA,ArgsB),compound_name_arguments(DashB,'-',ArgsB).
-map_tuple(P2,A,AA):- \+ compound(A),call(P2,A,AA),!.
-map_tuple(P2,-A,-AA):- map_tuple(P2,A,AA),!.
-map_tuple(P2,A-B,AA-BB):- map_tuple(P2,A,AA),!,map_tuple(P2,B,BB),!.
-map_tuple(P2,A,AA):- call(P2,A,AA),!.
-*/
+pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
+% Handle compound terms like (key=value)
+pair_arg(Compound, Key,PyValue) :- compound(Compound), Compound = (Key=Value), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key, ':', value]
+pair_arg([Key, Delimiter, Value], Key,PyValue) :- Delimiter == ':', !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key=value]
+pair_arg([KeyEquals, Value], Key,PyValue) :- symbol(KeyEquals), atom_concat(Key, '=', KeyEquals), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key:value]
+pair_arg([KeyColon, Value], Key,PyValue) :- symbol(KeyColon),atom_concat(Key, ':', KeyColon), !, py_arg(Value, PyValue).
+
+make_kw_args(KwArgs,KeyWordArgs):- lists_to_pairlist(KwArgs,Pairs),py_dict(Pairs,KeyWordArgs).
+lists_to_pairlist(L,L):- \+ compound(L),!.
+lists_to_pairlist([Kw,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([Kw,Eq,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Eq,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([List|Args],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([[List|Args]],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+%lists_to_pairlist([],[]).
+
+pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
+pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
 
 % !((py-atom print) "Hello, World!" [ = end "\n\n\n" ])
 % py_arg(Var,Var):- var(Var),!.
@@ -993,13 +1203,7 @@ py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(_), py_dict(Dict, PyObject), 
 %py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(KVL),conjuncts_to_list(KVL,List),is_dict(Number), py_dict(Dict, PyObject), !.
 py_arg(PythonObject, PythonObject) :- py_is_object(PythonObject), !.
 % Handle compound terms like (key=value)
-py_arg(Compound, {Key: PyValue}) :- compound(Compound), Compound = (Key=Value), !, py_arg(Value, PyValue).
-% Handle list with key-value pair represented as [key, ':', value]
-py_arg([Key, Delimiter, Value], {Key: PyValue}) :- Delimiter == ':', !, py_arg(Value, PyValue).
-% Handle list with key-value pair represented as [key=value]
-py_arg([KeyEquals, Value], {Key: PyValue}) :- symbol(KeyEquals), atom_concat(Key, '=', KeyEquals), !, py_arg(Value, PyValue).
-% Handle list with key-value pair represented as [key:value]
-py_arg([KeyColon, Value], {Key: PyValue}) :- symbol(KeyColon),atom_concat(Key, ':', KeyColon), !, py_arg(Value, PyValue).
+py_arg(Compound, {Key: PyValue}) :- pair_arg(Compound, Key,PyValue).
 % Handle Python-native objects
 py_arg(PythonNativeObject, PythonNativeObject) :- py_is_py(PythonNativeObject), !.
 % Handle strings
@@ -1118,13 +1322,20 @@ def get_children(metta_iterable):
             raise ValueError("Provided object cannot be iterated or converted to an iterable.")
 
 # chain python objects with |  (syntactic sugar for langchain)
-def py_chain(metta_tuple):
+def py_chain_metta(metta_tuple):
     unwrap1 = rust_deref(metta_tuple)
     objects = [rust_deref(a) for a in get_children(unwrap1)]
     result = objects[0]
     for obj in objects[1:]:
         result = result | obj
     return result
+
+def py_chain(objects):
+    result = objects[0]
+    for obj in objects[1:]:
+        result = result | obj
+    return result
+
 
 def rust_metta_run(obj):
     return runner.run(obj)
