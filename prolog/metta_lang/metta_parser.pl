@@ -1005,7 +1005,7 @@ cont_sexpr_from_char(_EndChar, Stream, '[', Item) :- prolog_term_start('['),
     read_list(']', Stream, List),
     univ_list_to_item(List,Item).
 
-% If '[', read an S-expression list.
+% If '{', read an S-expression list.
 cont_sexpr_from_char(_EndChar, Stream, '{', Item) :- prolog_term_start('{'),
     read_list('}', Stream, List),
     univ_list_to_item(List,Item).
