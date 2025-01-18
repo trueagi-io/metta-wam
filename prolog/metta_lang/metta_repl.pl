@@ -1032,7 +1032,7 @@ u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
      reset_eval_num, % Reset evaluation counters for a fresh start
      inside_assert(Term,BaseEval))), % Convert the current term into a base evaluation
     (notrace(skip_do_metta_exec(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut))-> true;
-     u_do_metta_exec02(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut)).
+      u_do_metta_exec02(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut)).
 
 % --exec=skip
 skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,_FOut):-
@@ -1072,7 +1072,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
      % Set options for maximum and initial result counts, infinite results if needed
      option_else('limit-result-count',MaxResults,inf),
-     option_else('initial-result-count',InitialResults,10),
+     option_else('initial-result-count',InitialResults,4),
 
      % Control variable initialized with max result count and leap control
      Control = contrl(InitialResults,MaxResults,Leap),
@@ -1158,8 +1158,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
 print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Result,Seconds,Was,Output,Stepping):-
          set_option_value(interactive,WasInteractive),
-         Control = contrl(LeashResults,Max,DoLeap),
-    assertion(LeashResults==inf;number(LeashResults)),
+         Control = contrl(InitialResultLeash,Max,DoLeap),
+    assertion(InitialResultLeash==inf;number(InitialResultLeash)),
     assertion(Max==inf;number(Max)),
          nb_setarg(1,Result,Output),
          current_input(CI), read_pending_codes(CI,_,[]),
@@ -1194,7 +1194,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
 
 
          ((Complete \== true, WasInteractive, DoLeap \== leap,
-                  LeashResults =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+                  InitialResultLeash =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
          %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
            if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
