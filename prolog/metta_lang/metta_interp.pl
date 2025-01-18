@@ -1164,7 +1164,7 @@ all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
 all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
-option_value_name_default_type_help('initial-result-count', 10, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
+option_value_name_default_type_help('initial-result-count', 4, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
 % Miscellaneous
 option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
@@ -4200,62 +4200,26 @@ metta_atom_added(X, Y) :-
 %   @arg Atom  The atom associated with the given space.
 %
 
-% metta_atom([Superpose,ListOf], Atom):-
-%     Superpose == 'superpose',
-%     is_list(ListOf), !,
-%     member(KB, ListOf),
-%     get_metta_atom_from(KB, Atom).
-metta_atom(Space, Atom) :-
-    % Retrieve atoms from a typed list.
-    typed_list(Space, _, L), !,
-    member(Atom, L).
+% metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
+metta_atom(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
 metta_atom(KB, [F, A | List]) :-
-    % Retrieve atoms from `&flybase` predicates.
-    KB == '&flybase',
-    fb_pred_nr(F, Len),
-    current_predicate(F/Len),
-    length([A | List], Len),
-    apply(F, [A | List]).
-% metta_atom(KB, Atom):-
-%     KB == '&corelib', !,
-%     metta_atom_corelib(Atom).
-% metta_atom(X, Y):-
-%     use_top_self,
-%     maybe_resolve_space_dag(X, XX), !,
-%     in_dag(XX, XXX),
-%     XXX \== X,
-%     metta_atom(XXX, Y).
-metta_atom(X, Y) :-
-    % Handle mappings to top self-reference.
-    maybe_into_top_self(X, TopSelf), !,
-    metta_atom(TopSelf, Y).
-% metta_atom(X, Y):-
-%     var(X),
-%     use_top_self,
-%     current_self(TopSelf),
-%     metta_atom(TopSelf, Y),
-%     X = '&self'.
-metta_atom(KB, Atom) :-
-    % Retrieve atoms that were added (asserted, deduced, etc.).
-    metta_atom_added(KB, Atom).
-% metta_atom(KB, Atom):-
-%     KB == '&corelib', !,
-%     metta_atom_asserted('&self', Atom).
-% metta_atom(KB, Atom):-
-%     KB \== '&corelib',
-%     using_all_spaces, !,
-%     metta_atom('&corelib', Atom).
-% metta_atom(KB, Atom):-
-%     KB \== '&corelib', !,
-%     metta_atom('&corelib', Atom).
-metta_atom(KB, Atom) :-
-    % Handle inheritance of atoms (disabled with fail).
-    fail,
-    nonvar(KB),
-    \+ nb_current(space_inheritance, false),
+    KB == '&flybase', fb_pred_nr(F, Len), current_predicate(F/Len),
+    length([A | List], Len), apply(F, [A | List]).
+% metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
+% metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
+
+metta_atom(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+% metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
+
+metta_atom(KB, Atom) :- metta_atom_added(KB, Atom).
+% metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
+% metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
+%metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
+
+metta_atom(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
-% metta_atom(KB, Atom):-
-%     metta_atom_asserted_last(KB, Atom).
+% metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
+
 
 :- dynamic(no_space_inheritance_to/1).
 
@@ -4272,6 +4236,7 @@ metta_atom(KB, Atom) :-
 %     % Temporarily disable inheritance to a specific space:
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
+wo_inheritance_to(_Where, Goal):- !, call(Goal).
 wo_inheritance_to(Where, Goal) :-
     % Temporarily assert the `no_space_inheritance_to/1` fact.
     setup_call_cleanup(
@@ -4312,6 +4277,20 @@ should_inhert_from(KB, Atom) :-
 %     % Check if an atom can be inherited directly:
 %     ?- should_inhert_from_now('&my_space', Atom).
 %
+
+should_inhert_from_now(KB, Atom) :-
+    attvar(Atom), !,
+    % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
+    freeze(SubKB, symbol(SubKB)), !,
+    % Retrieve a sub-knowledge base associated with `KB`.
+    metta_atom_added(KB, SubKB),
+    SubKB \== KB,
+    % Retrieve atoms from the sub-knowledge base.
+    metta_atom(SubKB, Atom),
+    % Ensure the atom is not excluded from inheritance.
+    \+ should_not_inherit_from(KB, SubKB, Atom).
+
+
 should_inhert_from_now(KB, Atom) :-
     % Ensure the atom is not an attributed variable.
     \+ attvar(Atom),
@@ -4328,7 +4307,7 @@ should_inhert_from_now(KB, Atom) :-
 /*
    KB \== '&corelib',  % is_code_inheritor(KB),
    \+ \+ (metta_atom_added(KB,'&corelib'),
-          should_inherit_from_corelib(Atom)), !,
+          should_inherit_atom_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom),
    \+ should_not_inherit_from_corelib(Atom).
 */
@@ -4355,16 +4334,19 @@ should_inhert_from_now(KB, Atom) :-
 should_not_inherit_from(_, _, S) :-
     % Exclude symbols from inheritance.
     symbol(S).
+should_not_inherit_from(KB, Sub, _S) :- should_not_inherit_from_corelib(KB),should_not_inherit_from_corelib(Sub),!.
+
+should_not_inherit_from_corelib('&corelib').
+should_not_inherit_from_corelib('&stdlib').
 /*
 % Commented-out inheritance exclusions for core libraries.
 % Uncomment or modify as needed to apply specific rules for inheritance exclusion.
-should_not_inherit_from_corelib('&corelib').
-should_not_inherit_from_corelib('&stdlib').
+
 should_not_inherit_from_corelib('&self').
 %should_not_inherit_from_corelib('&top').
 */
 
-%!  should_inherit_from_corelib(+Atom) is nondet.
+%!  should_inherit_atom_from_corelib(+Atom) is nondet.
 %
 %   Determines whether a specific atom (`Atom`) should be inherited from the `&corelib` space.
 %   The decision is based on the current configuration (e.g., `using_all_spaces`) and the structure of the atom.
@@ -4373,37 +4355,27 @@ should_not_inherit_from_corelib('&self').
 %
 %   @example
 %     % Check inheritance when all spaces are used:
-%     ?- using_all_spaces, should_inherit_from_corelib(my_atom).
+%     ?- using_all_spaces, should_inherit_atom_from_corelib(my_atom).
 %     true.
 %
 %     % Check inheritance for a structured atom:
-%     ?- should_inherit_from_corelib([=, [my_functor, arg1], body]).
+%     ?- should_inherit_atom_from_corelib([=, [my_functor, arg1], body]).
 %
-should_inherit_from_corelib(_) :-
+should_inherit_atom_from_corelib(_) :-
     % Automatically allow inheritance if all spaces are used.
     using_all_spaces, !.
-should_inherit_from_corelib(_) :-
-    % Default case: inheritance is disallowed unless explicitly permitted.
-    !.
-should_inherit_from_corelib([H, A | _]) :-
-    % Check if the operator `H` is permitted for inheritance and `A` is nonvar.
-    nonvar(H),
-    should_inherit_op_from_corelib(H),
-    !,
-    nonvar(A).
-% should_inherit_from_corelib([H | _]) :-
+% Default case: inheritance is disallowed unless explicitly permitted.
+%should_inherit_atom_from_corelib(Top) :- metta_atom_asserted_last(Top, '&corelib').
+% Check if the operator `H` is permitted for inheritance and `A` is nonvar.
+should_inherit_atom_from_corelib([H, A | _]) :- nonvar(H), should_inherit_op_from_corelib(H), !, nonvar(A).
+% should_inherit_atom_from_corelib([H | _]) :-
 %     % Uncomment to allow inheritance for `@doc` headers.
 %     H == '@doc', !.
-should_inherit_from_corelib([H, A | T]) :-
+should_inherit_atom_from_corelib([H, A | T]) :-
     % Additional rule for inheritance based on specific conditions.
     fail, % Disabled; uncomment or modify as needed.
-    H == '=',
-    write_src_uo(try([H, A | T])),
-    !,
-    A = [F | _],
-    nonvar(F),
-    F \== ':',
-    is_list(A),
+    H == '=', write_src_uo(try([H, A | T])), !,
+    A = [F | _], nonvar(F), F \== ':', is_list(A),
     % Ensure the functor `F` is not already asserted in `&self`.
     \+ metta_atom_asserted('&self', [:, F | _]),
     % Optionally check if the functor exists in `&corelib`.
@@ -4423,8 +4395,7 @@ should_inherit_from_corelib([H, A | T]) :-
 %     ?- is_code_inheritor('&corelib').
 %     true.
 %
-is_code_inheritor(KB) :-
-    % Check if the current self matches `KB`.
+is_code_inheritor(KB) :- % Check if the current self matches `KB`.
     current_self(KB).
 
 %!  should_inherit_op_from_corelib(+Op) is nondet.
@@ -4575,7 +4546,7 @@ not_metta_atom_corelib(A, N) :-
 %     ?- is_metta_space('&unknown_space').
 %     false.
 %
-is_metta_space(Space) :-  nonvar(Space), 
+is_metta_space(Space) :-  nonvar(Space),
     \+ \+ is_space_type(Space, _Test).  % Enforce deterministic behavior using double negation.
 
 %!  metta_eq_def(+Eq, +KB, +H, +B) is det.
@@ -5163,7 +5134,7 @@ if_t(A, B, C) :-
 
 %!  check_answers_for(+TermV, +Ans) is nondet.
 %
-%   Validates if answers (`Ans`) for a given term (`TermV`) can be checked. 
+%   Validates if answers (`Ans`) for a given term (`TermV`) can be checked.
 %   Various conditions are applied to ensure that certain cases (e.g., suspended answers,
 %   bad types, or invalid terms) are rejected.
 %
@@ -5499,7 +5470,7 @@ t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 print_goals(TermV):- write_src(TermV).
 
 
-if_or_else(IfTrue1,OrElse2):- call(IfTrue1)*->true;call(OrElse2).
+if_or_else(IfTrue1,OrElse2):- call(IfTrue1) *-> true ; call(OrElse2).
 if_or_else(IfTrue1,OrElse2,OrElse3):-                 if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3)).
 if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4):-         if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4)).
 if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4,OrElse5):- if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4,OrElse5)).
