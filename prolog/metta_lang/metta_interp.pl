@@ -7404,6 +7404,6 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
     { Likelihood2 = 0.5 * Likelihood3 },
     { Likelihood3 < 1.0 },
     { Likelihood3 > 0.0 }.
-
+    
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
