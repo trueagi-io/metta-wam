@@ -532,7 +532,7 @@ is_final_write('#\\'(S)) :-
     !, format("'~w'", [S]).
 is_final_write(V) :-
     % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
-    py_is_enabled, notrace(catch(((py_is_py(V),_,fail), !, py_ppp(V)),_,fail)), !.
+    py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
 is_final_write([VAR, V | T]) :-
     % For lists like ['$VAR', Value], write the variable if the tail is empty.
     '$VAR' == VAR, T == [], !, write_dvar(V).
@@ -1034,6 +1034,11 @@ pp_sexi_l([=, H, B]) :-
 
 pp_sexi_l([H | T]):- pp_sexi_lc([H | T]).
 
+
+pp_sexi_lc([H | T]) :- \+ is_list(T),!,
+    %write('#{'), writeq([H|T]), write('}.').
+    print_compound_type(0, cmpd, [H|T]).
+
 pp_sexi_lc([H | T]) :-
     % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
     compound_type_s_m_e(list,L,M,R),
@@ -1050,6 +1055,8 @@ pp_sexi_lc([H | T]) :-
     wots(SS, ((with_indents(false, (write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M,T), write(R)))))),
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
+
+
 /*
 
 pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,

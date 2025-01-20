@@ -579,6 +579,7 @@ def get_str_rep(func):
         return func.__name__
     return f"{func.__module__}.{func.__name__}"
 
+DEBUG_MODE = False  # Set this to True to enable debug output
 
 import importlib
 import types
@@ -621,7 +622,7 @@ def py_call_method_and_args(*method_and_args):
     # Case 1: Bound method
     if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
         # Call the bound method with the arguments
-        return callable_obj(*args)
+        return py_call_w_args( callable_obj, *args)
 
     # Case 2: Function or method name as a string with an instance
     if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
@@ -635,7 +636,7 @@ def py_call_method_and_args(*method_and_args):
             raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
 
         # Call the method with the arguments
-        return method(*method_args)
+        return py_call_w_args( method, *method_args)
 
     # Case 3: Class and method name as a string
     if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
@@ -649,7 +650,7 @@ def py_call_method_and_args(*method_and_args):
             raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
 
         # Call the method with the arguments
-        return method(*method_args)
+        return py_call_w_args(method, *method_args)
 
     # Case 4: Object and method name as a string
     if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
@@ -663,7 +664,7 @@ def py_call_method_and_args(*method_and_args):
             raise AttributeError(f"The object has no callable method named ''{method_name}''.")
 
         # Call the method with the arguments
-        return method(*args)
+        return py_call_w_args(method, *args)
 
     # Case 5: Unbound method (function) with an instance
     if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
@@ -671,14 +672,291 @@ def py_call_method_and_args(*method_and_args):
         method_args = args[1:]
 
         # Bind the method to the instance and call it
-        return callable_obj(instance, *method_args)
+        return py_call_w_args(callable_obj, *method_args)
 
     # Case 6: Other callable objects
     if callable(callable_obj):
-        return callable_obj(*args)
+        return py_call_w_args(callable_obj, *args)
 
     # If none of the above, raise an error
     raise TypeError("The provided arguments do not form a callable invocation.")
+
+def py_call_w_args(callable_obj, *w_args):
+    """
+    Calls a Python callable with the provided arguments, handling both positional and keyword arguments.
+
+    This function dynamically adjusts arguments based on the signature of the callable,
+    consuming positional arguments and extracting keyword arguments from various formats provided in *w_args.
+
+    Args:
+        callable_obj: A callable (function, method, or other callable object) to be invoked.
+        *w_args: Variable length argument list, which may include positional arguments, dictionaries, lists, or tuples for keyword arguments.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If the first argument is not callable.
+        TypeError: If required arguments are missing or if unexpected arguments are provided.
+    """
+
+    if not callable(callable_obj):
+        raise ValueError("First argument must be callable.")
+
+    args = list(w_args)
+    kwargs = {}
+    sig = inspect.signature(callable_obj)
+    kwarg_names = {param.name for param in sig.parameters.values()
+                   if param.kind in [param.KEYWORD_ONLY, param.VAR_KEYWORD]}
+
+    method_args = []
+    keyword_order_index = 0
+    keyword_order = [name for name in sig.parameters if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY]
+
+    for param in sig.parameters.values():
+        if param.kind in [param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD]:
+            if args and not isinstance(args[0], (dict, list, tuple)):
+                method_args.append(args.pop(0))
+            elif param.default is inspect.Parameter.empty:
+                raise TypeError(f"Missing required positional argument: ''{param.name}''")
+        elif param.kind == param.VAR_POSITIONAL:
+            while args and not isinstance(args[0], (dict, list, tuple)):
+                method_args.append(args.pop(0))
+            break
+        elif param.kind == param.KEYWORD_ONLY:
+            if args and isinstance(args[0], (list, tuple)) and all(isinstance(x, (list, tuple)) for x in args[0]):
+                # Handle a list or tuple of key-value pairs
+                while args and isinstance(args[0], (list, tuple)):
+                    pair = args.pop(0)
+                    if pair[0] in kwarg_names:
+                        kwargs[pair[0]] = pair[1]
+                    else:
+                        raise TypeError(f"Unexpected keyword argument: ''{pair[0]}''")
+            elif args and keyword_order_index < len(keyword_order):
+                # Assume the next argument corresponds to the next keyword-only parameter by order
+                kwargs[keyword_order[keyword_order_index]] = args.pop(0)
+                keyword_order_index += 1
+            else:
+                raise TypeError(f"Expected keyword argument for ''{keyword_order[keyword_order_index]}'' not provided")
+
+    # Handle remaining variadic keyword arguments
+    if args:
+        for arg in args:
+            if isinstance(arg, dict):
+                kwargs.update(arg)
+            else:
+                raise TypeError("Non-keyword arguments found after processing all parameters")
+
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {kwargs}")
+
+    try:
+        return callable_obj(*method_args, **kwargs)
+    finally:
+        flush_stdout_stderr()
+
+
+
+# Example usage
+def wild_test_function(a, b, c=3, *args, d, **kwargs):
+    print(f"a={a}, b={b}, c={c}, args={args}, d={d}, kwargs={kwargs}")
+
+# Correct usage
+def test_wild_test_function():
+    py_call_method_and_args(test_function, 1, 2, 4, 5, d=6, e=7)
+
+
+def py_call_method_and_args_kw(kwa, *method_and_args):
+    """
+    Calls a Python callable (function, method, or constructor) with the provided arguments.
+
+    Handles various cases including:
+    - Bound methods.
+    - Function or method name as a string with an instance.
+    - Class and method name as a string.
+    - Object and method name as a string.
+    - Unbound methods with an instance.
+    - Other callable objects.
+
+    Args:
+        method_and_args: Variable length argument list.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If no callable is provided.
+        TypeError: If the callable cannot be invoked.
+        AttributeError: If the method does not exist on the given class or instance.
+    """
+
+    if DEBUG_MODE:
+        print("Debug: Initial method_and_args =", method_and_args)
+        print("Debug: Initial kwa =", kwa)
+
+    # Check if a single argument is provided and if it is a list or tuple
+    if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
+        method_and_args = method_and_args[0]
+        if DEBUG_MODE:
+            print("Debug: Unpacked method_and_args =", method_and_args)
+
+    kwargs = kwa
+
+
+    # Ensure there is at least one element to extract the callable
+    if not method_and_args:
+        raise ValueError("No callable provided to invoke.")
+
+    callable_obj, *args = list(method_and_args)
+
+    # Debug after extracting callable and args
+    if DEBUG_MODE:
+        print("Debug: Callable object =", callable_obj)
+        print("Debug: Positional arguments =", args)
+
+    # Case 1: Bound method
+    if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
+        # Call the bound method with the arguments
+        return py_call_kw_args(kwargs,  callable_obj, *args)
+
+    # Case 2: Function or method name as a string with an instance
+    if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
+        method_name = callable_obj
+        instance = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the instance
+        method = getattr(instance, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs,  method, *method_args)
+
+    # Case 3: Class and method name as a string
+    if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
+        cls = callable_obj
+        method_name = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the class
+        method = getattr(cls, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *method_args)
+
+    # Case 4: Object and method name as a string
+    if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
+        obj = method_and_args[0]
+        method_name = method_and_args[1]
+        args = method_and_args[2:]
+
+        # Retrieve the method from the object
+        method = getattr(obj, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The object has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *args)
+
+    # Case 5: Unbound method (function) with an instance
+    if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
+        instance = args[0]
+        method_args = args[1:]
+
+        # Bind the method to the instance and call it
+        return py_call_kw_args(kwargs, callable_obj, *method_args)
+
+    # Case 6: Other callable objects
+    if callable(callable_obj):
+        return py_call_kw_args(kwargs, callable_obj, *args)
+
+    # If none of the above, raise an error
+    raise TypeError("The provided arguments do not form a callable invocation.")
+
+import inspect
+
+
+def py_call_kw_args(kwargs, callable_obj, *w_args):
+    """
+    Calls a callable object with positional and keyword arguments,
+    ensuring compatibility with its signature.
+
+    :param kwargs: Dictionary of keyword arguments.
+    :param callable_obj: The callable object to be invoked.
+    :param w_args: Additional positional arguments.
+    :return: The result of invoking the callable object.
+    :raises ValueError: If the first argument is not callable.
+    """
+    if not callable(callable_obj):
+        raise ValueError("First argument must be callable.")
+
+    args = list(w_args)  # Positional arguments
+    sig = inspect.signature(callable_obj)
+
+    # Separate the expected keyword arguments from the function signature
+    kwarg_names = {param.name for param in sig.parameters.values()
+                   if param.kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.VAR_KEYWORD]}
+
+    # Prepare arguments for the callable
+    method_args = []
+    method_kwargs = {}
+
+    # Positional arguments from the signature
+    for i, (name, param) in enumerate(sig.parameters.items()):
+        if param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            if i < len(args):
+                method_args.append(args[i])
+            elif name in kwargs:
+                method_args.append(kwargs.pop(name))
+            elif param.default is not param.empty:
+                method_args.append(param.default)
+            else:
+                raise TypeError(f"Missing required positional argument: \'{name}\'")
+
+    # Handle *args (VAR_POSITIONAL)
+    for param in sig.parameters.values():
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            remaining_args = args[len(method_args):]  # Extract remaining arguments
+            method_args.extend(remaining_args)
+            break
+
+    # Handle keyword-only arguments
+    for name, param in sig.parameters.items():
+        if param.kind == inspect.Parameter.KEYWORD_ONLY:
+            if name in kwargs:
+                method_kwargs[name] = kwargs.pop(name)
+            elif param.default is not param.empty:
+                method_kwargs[name] = param.default
+            else:
+                raise TypeError(f"Missing required keyword-only argument: \'{name}\'")
+
+    # Handle **kwargs if present in the signature
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values()):
+        method_kwargs.update(kwargs)
+    elif kwargs:
+        # If the function does not accept **kwargs and extras are provided
+        raise TypeError(f"Got unexpected keyword arguments: {\', \'.join(kwargs.keys())}")
+
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {method_kwargs}")
+
+    # Call the function with the prepared arguments
+    try:
+        return callable_obj(*method_args, **method_kwargs)
+    finally:
+        flush_stdout_stderr()
+
 
 
 import importlib
@@ -722,8 +1000,12 @@ def make_py_dot_bool(target, method, alwaysReturnAsCallable=False):
     if not isinstance(method, str):
         raise TypeError(f"The method should be a string or callable, got {type(method)} instead.")
 
-    # Resolve the target if it is a string (assumed to be a module or class name)
+   # Resolve the target if it is a string (assumed to be a module or class name)
     if isinstance(target, str):
+        # search the string type for the method name
+        str_callable = getattr(target, method, None)
+        if str_callable is not None:
+          return str_callable
         try:
             resolved_target = make_py_atom(target)
             if resolved_target is not None:
@@ -826,6 +1108,42 @@ def make_py_atom(target):
     # If all else fails, raise an error
     raise ValueError(f"Could not resolve ''{target}''. Ensure it is a valid object, module, or expression.")
 
+import sys
+
+def flush_stdout_stderr():
+    """
+    Flushes both stdout and stderr to ensure all pending output is written immediately.
+
+    This function checks if stdout and stderr are not None before attempting to flush them,
+    and safely ignores any errors that occur during flushing. This provides a robust
+    flushing operation in various environments where these streams might be redirected or
+    could potentially raise exceptions when being flushed (e.g., if they have been closed).
+    """
+    try:
+        if sys.stdout is not None:
+            sys.stdout.flush()
+    except Exception as e:
+        # Optionally log or handle the specific exception here if needed
+        pass  # Ignoring any error occurred during stdout flush
+
+    try:
+        if sys.stderr is not None:
+            sys.stderr.flush()
+    except Exception as e:
+        # Optionally log or handle the specific exception here if needed
+        pass  # Ignoring any error occurred during stderr flush
+
+import io
+import sys
+
+def py_to_str(arg):
+    captured_output = io.StringIO()  # Create a StringIO object to capture output
+    sys.stdout = captured_output    # Redirect standard output to StringIO
+    try:
+        print(arg, end='''')                  # Call print with the argument
+    finally:
+        sys.stdout = sys.__stdout__  # Restore standard output
+    return captured_output.getvalue()  # Get the captured output as a string
 
 
 the_modules_and_globals = merge_modules_and_globals()
@@ -834,13 +1152,69 @@ the_modules_and_globals = merge_modules_and_globals()
     assert(did_load_builtin_module).
 
 
+
+
 %!  py_call_method_and_args(+List, -Py) is det.
 %
 %   Converts a list `List` into a Python call, returning the result as `Py`.
 %
 %   @arg O The input list to be converted toi call.
 %   @arg Py The result.
-py_call_method_and_args(List, Py):- py_obi(py_call_method_and_args(List),Py),!.
+py_call_method_and_args([F|List], Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
+   maplist(py_arg,NewList,PyArgs),
+   py_list([F|PyArgs],PyList),
+   py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
+py_call_method_and_args([F|List], Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
+
+pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
+% Handle compound terms like (key=value)
+pair_arg(Compound, Key,PyValue) :- compound(Compound), Compound = (Key=Value), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key, ':', value]
+pair_arg([Key, Delimiter, Value], Key,PyValue) :- Delimiter == ':', !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key=value]
+pair_arg([KeyEquals, Value], Key,PyValue) :- symbol(KeyEquals), atom_concat(Key, '=', KeyEquals), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key:value]
+pair_arg([KeyColon, Value], Key,PyValue) :- symbol(KeyColon),atom_concat(Key, ':', KeyColon), !, py_arg(Value, PyValue).
+
+make_kw_args(KwArgs,KeyWordArgs):- lists_to_pairlist(KwArgs,Pairs),py_dict(Pairs,KeyWordArgs).
+lists_to_pairlist(L,L):- \+ compound(L),!.
+lists_to_pairlist([Kw,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([Kw,Eq,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Eq,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([List|Args],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([[List|Args]],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+%lists_to_pairlist([],[]).
+
+pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
+pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
+
+% !((py-atom print) "Hello, World!" [ = end "\n\n\n" ])
+% py_arg(Var,Var):- var(Var),!.
+% Handle variable input
+py_arg(Variable, PyObject) :- var(Variable), py_obi(identity(prolog(Variable)), PyObject), !.
+% Handle symbols (atoms)
+py_arg(Symbol, PyObject) :- symbol(Symbol), py_obi(identity(prolog(Symbol)), PyObject), !.
+% Handle lists
+py_arg(List, PyList) :- is_list(List), !, maplist(py_arg, List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
+% Handle Python objects
+py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall(tuple(Mapped),PyObject).
+%py_arg(Tuple, PyObject) :- py_type(Tuple,'tuple'),!,map_tuple(py_arg,Tuple, Mapped),py_ocall(tuple(Mapped),PyObject),!. %py_tuple(Mapped,PyObject).
+py_arg(Dict, PyObject) :- is_dict(Dict), py_dict(Dict, PyObject), !.
+py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(_), py_dict(Dict, PyObject), !.
+%py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(KVL),conjuncts_to_list(KVL,List),is_dict(Number), py_dict(Dict, PyObject), !.
+py_arg(PythonObject, PythonObject) :- py_is_object(PythonObject), !.
+% Handle compound terms like (key=value)
+py_arg(Compound, {Key: PyValue}) :- pair_arg(Compound, Key,PyValue).
+% Handle Python-native objects
+py_arg(PythonNativeObject, PythonNativeObject) :- py_is_py(PythonNativeObject), !.
+% Handle strings
+py_arg(String, PyObject) :- string(String), py_obi(identity(String), PyObject), !.
+% Handle numbers
+py_arg(Number, PyObject) :- number(Number), py_obi(identity(Number), PyObject), !.
+% Handle general terms by converting to Python objects
+py_arg(GeneralTerm, PyObject) :- py_obi(identity(prolog(GeneralTerm)), PyObject), !.
+%py_arg(Symbol,After):- symbol(Symbol),atom_string(Symbol,Str),load_hyperon_module,py_call(hyperon_module:rust_py_symbol(Str),After),!.
+% Default case
+py_arg(Final, Final).
 
 
 %!  py_ppp(+V) is det.
@@ -857,12 +1231,17 @@ py_call_method_and_args(List, Py):- py_obi(py_call_method_and_args(List),Py),!.
 %     ?- py_ppp(my_python_object).
 %     my_python_object_cleaned_output
 %
+py_ppp(V):- py_is_object(V), py_type(V,'Term'),py_call(repr(V),String),!,write(String).
+
+py_ppp(V):- py_is_object(V), py_type(V,'SymbolAtom'),py_call(repr(V),String),!,write(String).
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
     flush_output, py_pp_str(V,String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
 
+py_pp_str(V,String):- py_is_object(V), py_type(V,'SymbolAtom'),!,py_call(repr(V),String).
+py_pp_str(V,String):- string(V), !, sformat(String,'~q',[V]).
 py_pp_str(V,String):-
    janus:opts_kws([], Kws),
     PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
@@ -902,7 +1281,8 @@ py_pp_str(V,String):-
 %
 load_hyperon_module:-
     % If the module is already loaded, do nothing.
-    did_load_hyperon_module, !.
+    did_load_hyperon_module, !,
+    did_load_hyperon_module_loaded.
 load_hyperon_module:-
     % Mark the module as loaded.
     assert(did_load_hyperon_module),
@@ -919,6 +1299,7 @@ from hyperon.runner import MeTTa
 from hyperon.atoms import *
 from hyperon.stdlib import *
 import hyperonpy as hp
+
 
 import sys
 import readline
@@ -941,13 +1322,20 @@ def get_children(metta_iterable):
             raise ValueError("Provided object cannot be iterated or converted to an iterable.")
 
 # chain python objects with |  (syntactic sugar for langchain)
-def py_chain(metta_tuple):
+def py_chain_metta(metta_tuple):
     unwrap1 = rust_deref(metta_tuple)
     objects = [rust_deref(a) for a in get_children(unwrap1)]
     result = objects[0]
     for obj in objects[1:]:
         result = result | obj
     return result
+
+def py_chain(objects):
+    result = objects[0]
+    for obj in objects[1:]:
+        result = result | obj
+    return result
+
 
 def rust_metta_run(obj):
     return runner.run(obj)
@@ -960,11 +1348,28 @@ def rust_py_char(ch):
   from hyperon.stdlib import Char
   return Char(ch)
 
+def rust_py_symbol(ch):
+  return SymbolAtom(str(ch))
+
+import io
+import sys
+
+def rust_symbol_atom(arg):
+    captured_output = io.StringIO()  # Create a StringIO object to capture output
+    sys.stdout = captured_output    # Redirect standard output to StringIO
+    try:
+        print(arg, end='''')                  # Call print with the argument
+    finally:
+        sys.stdout = sys.__stdout__  # Restore standard output
+    return captured_output.getvalue()  # Get the captured output as a string
+
+import janus
+# from janus import *
+
 def rust_unwrap(obj):
     if obj is None:
         return obj
-    if isinstance(obj, janus.Term):
-        return obj
+
     if isinstance(obj,SymbolAtom):
         return obj.get_name()
     if isinstance(obj,ExpressionAtom):
@@ -977,6 +1382,10 @@ def rust_unwrap(obj):
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
+
+    if isinstance(obj, janus.Term):
+        return obj
+
     # Check if obj is a list or a tuple, but not a string
     if isinstance(obj, (list, tuple)) and not isinstance(obj, str):
         return type(obj)(rust_deref(element) for element in obj)
@@ -990,7 +1399,7 @@ def rust_deref(obj):
     if undone is None: return obj
     obj = undone
 
-')).
+')),assert(did_load_hyperon_module_loaded).
 
 
 %!  py_mcall(+I, -O) is semidet.
@@ -1763,7 +2172,9 @@ pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 %
 %   @arg MeTTa The Prolog term to be converted.
 %   @arg PyList The resulting Python list.
-py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
+
+py_list(MeTTa,PyList):- py_arg(MeTTa,PyList),!. %,
+%py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 %!  py_tuple(+O, -Py) is det.
 %
@@ -1772,7 +2183,8 @@ py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 %   @arg O The input list to be converted.
 %   @arg Py The resulting Python tuple.
 
-py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
+py_tuple(O,Py):- py_arg(O,Arg),!,py_obi(py_tuple(Arg),Py),!.
+%py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
 % py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
 
 
@@ -1816,7 +2228,13 @@ py_dict(O,Py):- py_ocall(dict(O),Py),!.  % Otherwise, convert `O` to a Python di
 %   @arg L The Python list.
 %   @arg Nth The index of the element to retrieve.
 %   @arg E The resulting element at the specified index.
-py_nth(L,Nth,E):- py_mbi(py_nth(L,Nth),E).
+
+py_nth(L,Nth,E):- is_list(L),!,nth0(Nth,L,E).
+py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
+
+py_nth0(Nth,L,E):- is_list(L),!,nth0(Nth,L,E).
+py_nth0(Nth,L,E):- py_obi(py_nth(L,Nth),E).
+%py_nth0(Nth,L,E):- py_obi(py_nth(L,Nth),E).
 % py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
 
 %!  py_len(+L, -E) is det.
@@ -2792,4 +3210,11 @@ subst_each_var([Var|RestOfVars],Term,Output):- !,
 % no more vars left to replace
 subst_each_var(_,TermIO,TermIO).
 
+py_portray(O):- py_is_object(O),write(' '),py_ppp(O),!.
+% py_portray(O):- is_list(O),write(' '),write_src(O),!.
+py_portray(O):- py_is_py(O),write(' '),py_ppp(O),!.
+
+:- dynamic(user:portray/1).
+:- multifile(user:portray/1).
+user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
 

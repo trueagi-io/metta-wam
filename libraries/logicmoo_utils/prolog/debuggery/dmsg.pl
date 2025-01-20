@@ -29,7 +29,7 @@
     ansicall_6/3,
     ansifmt/2,
     ansifmt/3,
-    cls/0,
+    %cls/0,
     colormsg/2,
     contains_atom/2,
     contrasting_color/2,
@@ -1643,15 +1643,15 @@ ansifmt(Ctrl, Format, Args) :- ansifmt(current_output, Ctrl, Format, Args).
 ansifmt(Stream, Ctrl, Format, Args) :-
      % we can "assume"
         % ignore(((stream_property(Stream, tty(true)),current_prolog_flag(color_term, true)))), !,
-	(   is_list(Ctrl)
-	->  maplist(ansi_term:sgr_code_ex, Ctrl, Codes),
-	    atomic_list_concat(Codes, (';'), OnCode)
-	;   ansi_term:sgr_code_ex(Ctrl, OnCode)
-	),
-	'smart_format'(string(Fmt), '\e[~~wm~w\e[0m', [Format]),
+    (   is_list(Ctrl)
+    ->  maplist(ansi_term:sgr_code_ex, Ctrl, Codes),
+        atomic_list_concat(Codes, (';'), OnCode)
+    ;   ansi_term:sgr_code_ex(Ctrl, OnCode)
+    ),
+    'smart_format'(string(Fmt), '\e[~~wm~w\e[0m', [Format]),
         retractall(tlbugger:last_used_color(Ctrl)),asserta(tlbugger:last_used_color(Ctrl)),
-	'smart_format'(Stream, Fmt, [OnCode|Args]),
-	flush_output,!.
+    'smart_format'(Stream, Fmt, [OnCode|Args]),
+    flush_output,!.
 ansifmt(Stream, _Attr, Format, Args) :- 'smart_format'(Stream, Format, Args).
 
 */
@@ -2328,9 +2328,9 @@ flush_output_safe(X):-ignore(catch(flush_output(X),_,true)).
 %
 writeFailureLog(E,X):-
   get_thread_current_error(ERR),
-		(fmt(ERR,'\n% error: ~q ~q\n',[E,X]),flush_output_safe(ERR),!,
-		%,true.
-		fmt('\n% error: ~q ~q\n',[E,X]),!,flush_output).
+        (fmt(ERR,'\n% error: ~q ~q\n',[E,X]),flush_output_safe(ERR),!,
+        %,true.
+        fmt('\n% error: ~q ~q\n',[E,X]),!,flush_output).
 
 %unknown(Old, autoload).
 
@@ -2339,11 +2339,12 @@ writeFailureLog(E,X):-
 
 %=
 
-%% cls is det.
+% % cls is det.
 %
 % Clauses.
 %
-cls:- ignore(catch(system:shell(cls,0),_,fail)).
+
+%cls:- ignore(catch(system:shell(cls,0),_,fail)).
 
 % % % OFF
 :- system:use_module(library(error)).

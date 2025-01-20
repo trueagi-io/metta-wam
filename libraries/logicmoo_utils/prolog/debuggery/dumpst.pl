@@ -223,8 +223,8 @@ get_dump_frame(Current,Frame):- (nb_current('$dump_frame',Frame),number(Frame))-
 % Dump S T9.
 %
 dumpST9(_,_):- tlbugger:ifHideTrace,!.
-dumpST9(Frame,MaxDepth):- integer(MaxDepth),!,dumpST_now(Frame,[max_depth(MaxDepth),numbervars(true),show([level,has_alternatives,hidden,context_module,goal,clause])]).
-dumpST9(Frame,From-MaxDepth):- integer(MaxDepth),!,dumpST_now(Frame,[skip_depth(From),max_depth(MaxDepth),numbervars(true),show([level,has_alternatives,hidden,context_module,goal,clause])]).
+dumpST9(Frame,MaxDepth):- integer(MaxDepth),!,dumpST_now(Frame,[max_depth(MaxDepth),numbervars(false),show([level,has_alternatives,hidden,context_module,goal,clause])]).
+dumpST9(Frame,From-MaxDepth):- integer(MaxDepth),!,dumpST_now(Frame,[skip_depth(From),max_depth(MaxDepth),numbervars(false),show([level,has_alternatives,hidden,context_module,goal,clause])]).
 dumpST9(Frame,List):- is_list(List),dumpST_now(Frame,[show([level,has_alternatives,hidden,context_module,goal,clause])|List]).
 
 
@@ -347,7 +347,7 @@ if_defined_mesg_color(G,C):- current_predicate(mesg_color/2),mesg_color(G,C).
 fdmsg1(txt(S)):-'format'(S,[]),!.
 fdmsg1(level=L):-'format'('(~q)',[L]),!.
 fdmsg1(context_module=G):- simplify_m(G,M),!,if_defined_mesg_color(G,Ctrl),ansicall(Ctrl,format('[~w]',[M])),!.
-fdmsg1(has_alternatives=G):- (G==(false)->true;'format'('<*>',[])),!.
+fdmsg1(has_alternatives=G):- (G==(false)->true;ansicall([bold,fg(white)],blink_text(' < * > '))).
 fdmsg1(hidden=G):- (G==(false)->true;'format'('$',[])),!.
 fdmsg1(goal=G):- do_fdmsg1(G).
 fdmsg1(clause=[F,L]):- directory_file_path(_,FF,F),'format'('  %  ~w:~w: ',[FF,L]),!.
@@ -355,6 +355,9 @@ fdmsg1(clause=[F,L]):- fresh_line,'format'('%  ~w:~w: ',[F,L]),!.
 fdmsg1(clause=[]):-'format'(' /*DYN*/ ',[]),!.
 fdmsg1(G):- if_defined_mesg_color(G,Ctrl),ansicall(Ctrl,fmt_gg(G)),!.
 fdmsg1(M):-dmsg(failed_fdmsg1(M)).
+
+blink_text(Text) :-
+    format('~c[5m~w~c[0m', [27, Text, 27]).
 
 do_fdmsg1(G):-
   simplify_goal_printed(G,GG),!,
@@ -369,10 +372,34 @@ term_contains_ansi_b(S,S):- atom(S),!,sub_string(S,_,_,_,'\x1B').
 do_fdmsg2(GG):- term_contains_ansi_b(GG,_),write(GG),!.
 %do_fdmsg2(GG):- term_contains_ansi_b(GG,N),write(N),fail.
 do_fdmsg2(GG):-
-  term_variables(GG,_Vars),
-  copy_term_nat(GG,GGG), =(GG,GGG),
-  numbervars(GGG,0,_,[attvar(skip)]),
-  if_defined_mesg_color(GGG,Ctrl),ansicall(Ctrl,fmt_gg(GGG)),!.
+  \+ \+ ((safety_vars(GG,GGG),
+    if_defined_mesg_color(GGG,Ctrl),ansicall(Ctrl,fmt_gg(GGG)))),!.
+
+safety_vars(GG,GGG):- fail, % old code
+    term_variables(GG,_Vars),
+    copy_term_nat(GG,GGG), =(GG,GGG),
+    numbervars(GGG,0,_,[attvar(skip)]),!.
+safety_vars(GG,GGG):- % newer code
+    term_variables(GG,Vars),
+    maybe_give_better_names_vsubst(Vars,GG,GGG),!.
+safety_vars(GG,GG).
+
+maybe_give_better_names_vsubst([Var|Vars],G,GGG):-
+  maybe_give_better_name(Var,G,GG),
+  maybe_give_better_names(Vars,GG,GGG),!.
+maybe_give_better_names(_,GG,GG).
+
+maybe_give_better_name(Var,GG,G):-
+  easier_atom(Var,NN),
+  vsubst(GG,Var,NN,G).
+maybe_give_better_name(_,G,G).
+
+easier_atom(Var,'$VAR'(NN)):- attvar(Var),get_attr(Var,vn,NN),!.
+easier_atom(Var,'$VAR'(NN)):-
+  \+ attvar(Var), format(atom(N),'~w',[Var]),
+  atom_chars(N,['_',Digit|Rest]),char_type(Digit,digit),length(Rest,Len), Len>2,
+  append(_,[A,B,C],Rest), atom_chars(NN,['_','S',A,B,C]),!.
+easier_atom(N,N).
 
 fmt_gg(GGG):- term_contains_ansi_b(GGG,_),!,write(' '),write(GGG),write('. ').
 fmt_gg(GGG):- format(' ~q. ',[GGG]).
