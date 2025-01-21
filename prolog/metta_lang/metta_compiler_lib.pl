@@ -53,10 +53,42 @@ transpiler_predicate_store('*', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,
 transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 mc_2__and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
 mc_2__and(_,_,'False').
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
+  Convert = ['and',A,B],!,
+  LazyEval=x(doeval,eager),
+  % eval case
+  f2p(HeadIs,LazyVars,AResult,AResultN,LazyRetA,A,ACode,ACodeN),
+  lazy_impedance_match(LazyRetA,x(doeval,eager),AResult,ACode,AResultN,ACodeN,AResult1,ACode1),
+  f2p(HeadIs,LazyVars,BResult,BResultN,LazyRetB,B,BCode,BCodeN),
+  lazy_impedance_match(LazyRetB,x(doeval,eager),BResult,BCode,BResultN,BCodeN,BResult1,BCode1),
+  append(ACode1,[[native(is_True),AResult1]],ATest),
+  append(BCode1,[[assign,RetResult,BResult1]],BTest),
+  CodeIf=[[prolog_if,ATest,BTest,[[assign,RetResult,'False']]]],
+  Converted=CodeIf,
+  % noeval case
+  maplist(f2p(HeadIs,LazyVars), _RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, _ConvertedParts, ConvertedNParts),
+  f2p_do_group(x(noeval,eager),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
+  assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
 transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,lazy)], x(doeval,eager)).
 mc_2__or(A,B,C):- (\+ atomic(A); A='False'; A=0), !, as_p1_exec(B,C).
 mc_2__or(_,_,'True').
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
+  Convert = ['or',A,B],!,
+  LazyEval=x(doeval,eager),
+  % eval case
+  f2p(HeadIs,LazyVars,AResult,AResultN,LazyRetA,A,ACode,ACodeN),
+  lazy_impedance_match(LazyRetA,x(doeval,eager),AResult,ACode,AResultN,ACodeN,AResult1,ACode1),
+  f2p(HeadIs,LazyVars,BResult,BResultN,LazyRetB,B,BCode,BCodeN),
+  lazy_impedance_match(LazyRetB,x(doeval,eager),BResult,BCode,BResultN,BCodeN,BResult1,BCode1),
+  append(ACode1,[[native(is_True),AResult1]],ATest),
+  append(BCode1,[[assign,RetResult,BResult1]],BTest),
+  CodeIf=[[prolog_if,ATest,[[assign,RetResult,'True']],BTest]],
+  Converted=CodeIf,
+  % noeval case
+  maplist(f2p(HeadIs,LazyVars), _RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, _ConvertedParts, ConvertedNParts),
+  f2p_do_group(x(noeval,eager),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
+  assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
 %transpiler_predicate_store('and', 3, [x(doeval,eager), x(doeval,eager)], x(doeval,eager)).
 %mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
@@ -133,6 +165,7 @@ transpiler_predicate_store(collapse, 2, [x(doeval,lazy)], x(doeval,eager)).
 'mc_1__collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc_1__collapse'(ispeEnN(X,true,_,_),[X]) :- !.
 'mc_1__collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc_1__collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
 'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
 %'mc_1__collapse'(is_p1(_Type,_Expr,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 %'mc_1__collapse'(is_p1(_Type,_Expr,true,X),[X]) :- !.

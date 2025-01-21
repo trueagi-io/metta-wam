@@ -74,6 +74,7 @@
 :- ensure_loaded(metta_space).
 :- dynamic(transpiler_clause_store/9).
 :- dynamic(transpiler_predicate_store/4).
+:- discontiguous(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 
 non_arg_violation(_,_,_).
@@ -138,11 +139,11 @@ arg_eval_props(_,x(doeval,eager)).
 
 %NOTE TODO: as_p1() and is_p1 are going away soon
 
-as_p1(X,X):- \+ compound(X),!.
-as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
-as_p1(is_p1(_Expr,Code,Ret),Ret):-!,call(Code).
-as_p1(is_p1(_Type,_Expr,Code,Ret),Ret):-!,call(Code).
-as_p1(X,X).
+%as_p1(X,X):- \+ compound(X),!.
+%as_p1(is_p1(Code,Ret),Ret):- !, call(Code).
+%as_p1(is_p1(_Expr,Code,Ret),Ret):-!,call(Code).
+%as_p1(is_p1(_Type,_Expr,Code,Ret),Ret):-!,call(Code).
+%as_p1(X,X).
 
 
 as_p1_exec(is_p1(Code,Ret),Ret):- !, call(Code).
@@ -167,13 +168,13 @@ create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
 create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
 create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- !.
-%create_p1(ERet,ECode,NRet,NCode,R) :-
-%   partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
-%   (CCode=[] ->
-%      R=[ispeEnN,ERet,ECode,NRet,NCode]
-%   ;
-%      R=[ispeEnNC,ERet,ECode1,NRet,NCode1,CCode]).
-create_p1(ERet,ECode,NRet,NCode,[ispeEnN,ERet,ECode,NRet,NCode]).
+create_p1(ERet,ECode,NRet,NCode,R) :-
+   partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
+   (CCode=[] ->
+      R=[ispeEnN,ERet,ECode,NRet,NCode]
+   ;
+      R=[ispeEnNC,ERet,ECode1,NRet,NCode1,CCode]).
+%create_p1(ERet,ECode,NRet,NCode,[ispeEnN,ERet,ECode,NRet,NCode]).
 
 % Combine code so that is_p1 clauses are not so large
 % partial_combine_lists(L1,L2,Lcomb,L1a,L2a)
@@ -1246,15 +1247,13 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
       %leash(-all),trace,
+      maplist(h2p(LazyArgsListAdj),Args,Args2,Code),
       f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
 
       LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,
-                      args_list:Args,lazyArgsList:LazyArgsListAdj,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
-
-
-
+                      args_list:Args2,lazyArgsList:LazyArgsListAdj,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
 
       output_prolog(LazyEagerInfo),
 
@@ -1262,19 +1261,20 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
-      HeadAST=[assign,HResult,[call(FnName)|Args]],
+      HeadAST=[assign,HResult,[call(FnName)|Args2]],
 
-
+      append(Code,CodeAppend),
+      append(CodeAppend,FullCode,FullCode2),
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       %append(Args,[HResult],HArgs),
       %HeadC =.. [FnNameWPrefix|HArgs],
 
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
-      print_ast( yellow, [=,HeadAST,FullCode]),
+      print_ast( yellow, [=,HeadAST,FullCode2]),
 
       %leash(-all),trace,
-      ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],FullCode,NextBodyC),
+      ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],FullCode2,NextBodyC),
 
       %format("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
@@ -1589,6 +1589,10 @@ ast_to_prolog_aux(Caller,DontStub,[ispeEn,R,Code0,Expr],ispeEn(R,Code1,Expr)) :-
 ast_to_prolog_aux(Caller,DontStub,[ispeEnN,R,Code0,Expr,CodeN0],ispeEnN(R,Code1,Expr,CodeN1)) :- !,
    ast_to_prolog(Caller,DontStub,Code0,Code1),
    ast_to_prolog(Caller,DontStub,CodeN0,CodeN1).
+ast_to_prolog_aux(Caller,DontStub,[ispeEnNC,R,Code0,Expr,CodeN0,CodeC0],ispeEnNC(R,Code1,Expr,CodeN1,CodeC1)) :- !,
+   ast_to_prolog(Caller,DontStub,Code0,Code1),
+   ast_to_prolog(Caller,DontStub,CodeN0,CodeN1),
+   ast_to_prolog(Caller,DontStub,CodeC0,CodeC1).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
@@ -1859,7 +1863,7 @@ compile_maplist_p2(P2,[Var|Args],[Res|NewArgs],TheCode):-
 
 var_prop_lookup(_,[],x(noeval,eager)).
 var_prop_lookup(X,[H-R|T],S) :-
-   X == H,S=R;  % Test if X and H are the same variable
+   X == H,!,S=R;  % Test if X and H are the same variable
    var_prop_lookup(X,T,S).  % Recursively check the tail of the list
 
 assign_or_direct_var_only([],Value,Value,[]) :- var(Value),!.
@@ -1881,6 +1885,25 @@ lazy_impedance_match(x(_,lazy),x(noeval,eager),_ValE,_CodeE,ValN,CodeN,RetResult
 % eager -> lazy
 lazy_impedance_match(x(_,eager),x(doeval,lazy),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
 lazy_impedance_match(x(_,eager),x(noeval,lazy),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
+
+h2p(_LazyVars,Convert,Convert,[]) :- is_ftVar(Convert), !.
+
+h2p(_LazyVars,Convert,Convert,[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
+
+h2p(_LazyVars,'#\\'(Convert),Convert,[]) :- !.
+
+h2p(LazyVars,Convert,Convert,Code) :-
+   Convert=['quote',QuoteContents],
+   var_prop_lookup(Convert,LazyVars,x(_,eager)),!,
+   h2p(LazyVars,QuoteContents,QuoteContents,Code).
+
+h2p(LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]]) :-
+   Convert=['quote',_QuoteContents],
+   var_prop_lookup(Convert,LazyVars,x(_,lazy)),!.
+
+h2p(_LazyVars,X,X,[]) :-
+   format("Error in h2p: ~w",[X]),
+   throw(0).
 
 :- discontiguous f2p/8.
 
@@ -2293,12 +2316,14 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
-/*
-compile_flow_control(HeadIs,LazyVars,['quote',QuotedResult1],['quote',QuotedResult1],LazyRetQuoted,Convert, QuotedCode1, QuotedCode1) :-
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
   Convert = ['quote',Quoted],!,
   f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
-  lazy_impedance_match(LazyRetQuoted,x(noeval,eager),QuotedResult,QuotedCode,QuotedResultN,QuotedCodeN,QuotedResult1,QuotedCode1).
-*/
+  lazy_impedance_match(LazyRetQuoted,x(noeval,eager),QuotedResult,QuotedCode,QuotedResultN,QuotedCodeN,QuotedResult1,QuotedCode1),
+  QuotedResult1a=['quote',QuotedResult1],
+  lazy_impedance_match(x(noeval,eager),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
+  assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
+  assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
 % !(compile-body! (function 1))
 % !(compile-body! (function (throw 1)))
