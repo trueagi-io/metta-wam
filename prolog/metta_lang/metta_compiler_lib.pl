@@ -235,6 +235,9 @@ transpiler_predicate_store('charsToString', 2, [x(doeval,eager)], x(doeval,eager
 transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager),x(noeval,eager)], x(doeval,eager)).
 'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
 
+transpiler_predicate_store('assertEqual', 3, [x(doeval,eager),x(noeval,eager)], x(doeval,eager)).
+'mc_2__assertEqual'(A, B, C) :- u_assign([assertEqual, A, B], C).
+
 transpiler_predicate_store('prolog-trace', 1, [], x(doeval,eager)).
 'mc_0__prolog-trace'([]) :- trace.
 

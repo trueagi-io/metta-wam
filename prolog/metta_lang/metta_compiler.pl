@@ -1892,14 +1892,23 @@ h2p(_LazyVars,Convert,Convert,[]) :- (number(Convert) ; atom(Convert); atomic(Co
 
 h2p(_LazyVars,'#\\'(Convert),Convert,[]) :- !.
 
-h2p(LazyVars,Convert,Convert,Code) :-
-   Convert=['quote',QuoteContents],
+h2p(LazyVars,Convert,Converted,CodeOut) :-
+   Convert=[Fn|QuoteContents],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,eager)),!,
-   h2p(LazyVars,QuoteContents,QuoteContents,Code).
+   maplist(h2p(LazyVars),QuoteContents,QuoteContentsOut,Code),
+   Converted=[Fn|QuoteContentsOut],
+   append(Code,CodeOut).
 
 h2p(LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]]) :-
-   Convert=['quote',_QuoteContents],
+   Convert=[Fn|_],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,lazy)),!.
+
+h2p(LazyVars,Convert,Converted,CodeOut) :-
+   is_list(Convert),
+   var_prop_lookup(Convert,LazyVars,x(_,eager)),!,
+   maplist(h2p(LazyVars),Convert,Converted,Code),
+   append(Code,CodeOut).
+
 
 h2p(_LazyVars,X,X,[]) :-
    format("Error in h2p: ~w",[X]),
