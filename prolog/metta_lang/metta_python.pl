@@ -269,13 +269,34 @@ py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
 
 %py_is_py(_):- \+ py_is_enabled,!,fail.
 py_is_py(V):- var(V),!,get_attr(V, pyobj, _),!.
-py_is_py(V):- py_is_tuple(V),!.
-py_is_py(V):- py_is_py_dict(V),!.
 py_is_py(V):- atomic(V),!,\+ atom(V),py_is_object(V),!.
 py_is_py(V):- \+ callable(V),!,fail.
-py_is_py(V):- compound(V),!,fail.
+py_is_py(V):- \+ compound(V),!,fail.
+py_is_py('@'(S)) :-
+    % Succeeds if S is a non-variable and recognized as a Python constant.
+    !, nonvar(S), is_py_const(S,_).
 py_is_py(V):- is_list(V),!,fail.
 py_is_py(V):- py_is_list(V),!.
+py_is_py(V):- py_is_tuple(V),!.
+py_is_py(V):- py_is_py_dict(V),!.
+
+
+%!  is_py_const(+Const) is nondet.
+%
+%   Succeeds if the given Const is a recognized Python constant.
+%
+%   @arg Const The constant to be evaluated.
+%
+%   @example
+%     ?- is_py_const('True').
+%     true.
+%
+%     ?- is_py_const('Unknown').
+%     false.
+%
+is_py_const(none,'None').
+is_py_const(false,'False').
+is_py_const(true,'True').
 
 %!  py_resolve(+V, -Py) is det.
 %
@@ -3216,5 +3237,5 @@ py_portray(O):- py_is_py(O),write(' '),py_ppp(O),!.
 
 :- dynamic(user:portray/1).
 :- multifile(user:portray/1).
-% user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
+%user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
 
