@@ -3216,5 +3216,5 @@ py_portray(O):- py_is_py(O),write(' '),py_ppp(O),!.
 
 :- dynamic(user:portray/1).
 :- multifile(user:portray/1).
-user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
+% user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
 
