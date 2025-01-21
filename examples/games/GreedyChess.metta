@@ -63,7 +63,6 @@
 ; For example:  
 ;   Input list of lists    =  ((1 2) (3 4) () (5)) 
 ;   Output list            =  (1 2 3 4 5)
-;
 (= (concat_lists $ListofLists)
   (if (== $ListofLists () )
       ()
@@ -80,7 +79,22 @@
                 ;we return the first element of the first list and concatenation of the remainder.
               (let $d (cons-atom $b $c) (let $f (concat_lists $d) (cons-atom $a $f )))  
             )))))
-            
+;
+; Execute a block of unevaluated statements sequentially.
+; Input: (do_quoted
+;          (
+;          (quote ( some function )) 
+;          (quote ( some function )) 
+;          .....))
+; Result:  Evaluate each function in sequence.
+;                    
+(: (do_quoted) (-> Expression Atom))
+(= (do_quoted $exp) 
+      (if (== $exp ())
+            empty
+            (let () (unquote (car-atom $exp)) (do_quoted (cdr-atom $exp)))))
+;
+
 ;
 ;!(concat_lists ((1 2 3)  (4 5) (6) (7 8 0) () ) )
 ;
@@ -206,7 +220,7 @@
 ; The move command moves the human player's piece.
 (: M (-> command))
 (= (M)  
-  (println! "Moving!"))
+  ((py-atom print) "Moving!"))
 ;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
 ;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
 ;
@@ -214,7 +228,7 @@
 ;
 (: G (-> command))
 (= (G)  
-  (println! "Greedy chess moving"))
+  ((py-atom print) "Greedy chess moving"))
 
 ;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
 ;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
@@ -234,16 +248,16 @@
 (: C (-> command))
 (= (C) 
   (progn
-    (println! " ") (println! " ") (println! " ") (println! " ")
-    (println! (format-args "-------- C o m m a n d s -----------" ()))
-    (println! (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
-    (println! (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
-    (println! (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
-    (println! (format-args "3 Reset                            ->  R" ()))
-    (println! (format-args "4 Commands List                    ->  C" ()))
-    (println! (format-args "5 Display Board                    ->  D" ()))
-    (println! (format-args "6 Quit                             ->  Q" ()))
-    (println! (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
+    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
+    ((py-atom print) (format-args "-------- C o m m a n d s -----------" ()))
+    ((py-atom print) (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
+    ((py-atom print) (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
+    ((py-atom print) (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
+    ((py-atom print) (format-args "3 Reset                            ->  R" ()))
+    ((py-atom print) (format-args "4 Commands List                    ->  C" ()))
+    ((py-atom print) (format-args "5 Display Board                    ->  D" ()))
+    ((py-atom print) (format-args "6 Quit                             ->  Q" ()))
+    ((py-atom print) (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
 ;
 
 ; The display command shows the present board.
@@ -255,44 +269,41 @@
 ;*******************************************************
 
 ; Invoke with empty list, will return characters input from console until ENTER.
-;(: (get-player-command (-> list list)))
-;(= (get-player-command $input_list)  
-;   (let $cmd (get-single-char!)
-;      (progn
-;          ; if initial execution flush output
-;          (if (== (size-atom $input_list) 0) (flush-output!) ())
-;          (if (== $cmd 13) ; if user hit <ENTER>
-;            ;return all input
-;            $input_list    
-;            ;else gather more input
-;            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
-
+; Not presently used but works for single char input.
+(: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
-    ((py-atom input)))
+   (let $cmd (get-single-char!)
+      (progn
+          ; if initial execution flush output
+          (if (== (size-atom $input_list) 0) (flush-output!) ())
+          (if (== $cmd 13) ; if user hit <ENTER>
+            ;return all input
+            $input_list    
+            ;else gather more input
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
 
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
- (progn
-    (println! " ") (println! " ") (println! " ") (println! " ")
-    (println! (format-args "M E T T A    G R E E D Y   C H E S S" ()))
-    (println! " ")
-    (println! (format-args "This program is a MeTTa exercise which takes the best immediate move without planning far ahead."
-              ()))
-    ;(display_board (match &self (board-state $board) $board))
-    (println! (format-args "******* I N S T R U C T I O N S ********" ()))
-    (println! " ")
-    (println! (format-args "- Your pieces are marked with an asterisk." ()))
-    (println! (format-args "- Please take note of the following simple commands:" ()))
-    (println! (format-args "-------- C o m m a n d s -----------" ()))
-    (println! (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
-    (println! (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
-    (println! (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
-    (println! (format-args "3 Reset                            ->  R" ()))
-    (println! (format-args "4 Commands List                    ->  C" ()))
-    (println! (format-args "5 Display Board                    ->  D" ()))
-    (println! (format-args "6 Quit                             ->  Q" ()))
-    (println! (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))
-    ))
+ (progn  (
+    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
+    ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
+    ((py-atom print) " ")
+    ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.")
+    (display_board (match &self (board-state $board) $board))
+    ((py-atom print) "******* I N S T R U C T I O N S ********" )
+    ((py-atom print) " ")
+    ((py-atom print) "- Your pieces are marked with an asterisk.")
+    ((py-atom print) "- Please take note of the following simple commands:")
+    ((py-atom print) "-------- C o m m a n d s -----------")
+    ((py-atom print) "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3")
+    ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
+    ((py-atom print) "2 Move MeTTa Greedy Chess          ->  G")
+    ((py-atom print) "3 Reset                            ->  R")
+    ((py-atom print) "4 Commands List                    ->  C")
+    ((py-atom print) "5 Display Board                    ->  D")
+    ((py-atom print) "6 Quit                             ->  Q")
+    ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.")
+    )))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
@@ -321,6 +332,7 @@
   (
    (let $a (display_filter     $board ) 
           (println! (format-args "\n
+      ------------------------------------------------- \n
       | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
       ------------------------------------------------- \n
       | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
@@ -345,42 +357,42 @@
 ;   M A I N   C O M M A N D   L O O P
 ;*******************************************************
 (= (command-loop)
-  (do
-    (println! "Please enter your command!")
+  (progn 
+   (((py-atom print) "Please enter your command.")
+    (let $command ((py-atom input))   ; get user command
     ; case statement for commands
-    (let $command (get-player-command ())
-      (if (== $command "M") 
-          (do 
-            (M)                          ; Move human piece
-            (command-loop))              ; Get next command, stay in loop.
-      (if (== $command "G")
-          (do 
-            (G)                          ; AI move
-            (command-loop))              ; Get next command, stay in loop.
-      (if (== $command "R")
-          (do 
-            (R)                          ; Reset = "R"
-            (command-loop))              ; Get next command, stay in loop.
-      (if (== $command "C")
-          (do 
-            (C)                          ; List valid commands = "C"
-            (command-loop))              ; Get next command, stay in loop.
-      (if (== $command "D")
-          (do 
-            (D)                          ; Display board "D"
-            (command-loop))              ; Get next command, stay in loop.
-      (if (== $command "Q")
-            (println! "Quitting MeTTa Greedy Chess.")
-      ; otherwise
-      (do 
-          (println! " ") (println! "Invalid command, please try again or enter C for a list of commands.") 
-          (command-loop)))))))))))
+    (if (== $command "M") 
+        (progn (
+          (M)                          ; Move human piece
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "G")
+        (progn (
+          (G)                          ; AI move
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "R")
+        (progn (
+          (R)                          ; Reset = "R"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "C")
+        (progn (
+          (C)                          ; List valid commands = "C"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "D")
+        (progn (
+          (D)                          ; Display board "D"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "Q")              ; EXIT HERE
+          ((py-atom print) "Quitting MeTTa Greedy Chess.")
+    ; otherwise
+    (progn (
+        ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
+        (command-loop)))))))))))))
 
 ;-----------;
 (= (main_loop) 
-  (do
-    (chess)          ; Start the chess game
-    (command-loop))) ; Enter the recursive command-processing loop
+  (progn
+   ((chess)           ; Start the chess game
+    (command-loop)))) ; Enter the recursive command-processing loop
 !(main_loop)
 ;-----------;
 
