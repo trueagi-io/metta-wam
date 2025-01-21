@@ -1185,8 +1185,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
  must_det_lls((
    current_self(Space),
   subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
-   %leash(-all),
-   %trace,
+   %leash(-all),trace,
    HeadIs=[FnName|Args],
    length(Args,LenArgs),
    LenArgsPlus1 is LenArgs+1,
@@ -1248,6 +1247,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %print_ast( green, Ast),
       %leash(-all),trace,
       maplist(h2p(LazyArgsListAdj),Args,Args2,Code),
+      %trace,
       f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
@@ -1271,9 +1271,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
-      print_ast( yellow, [=,HeadAST,FullCode2]),
+      %print_ast( yellow, [=,HeadAST,FullCode2]),
 
-      %leash(-all),trace,
       ast_to_prolog(caller(FnName,LenArgsPlus1),[FnName/LenArgsPlus1],FullCode2,NextBodyC),
 
       %format("###########1 ~q",[Converted]),
@@ -1573,9 +1572,9 @@ ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args0),
-   label_arg_types(F,1,Args0),
+   %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   label_arg_types(F,1,Args1),
+   %label_arg_types(F,1,Args1),
    A=..[F|Args1],
    notice_callee(Caller,A))).
 ast_to_prolog_aux(Caller,DontStub,[is_p1,CodeN0,Expr,Code0,R],is_p1(CodeN1,Expr,Code1,R)) :- !,
@@ -1598,11 +1597,11 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A
    FIn=..[F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args00),
    maybe_lazy_list(Caller,F,1,Args00,Args0),
-   label_arg_types(F,1,Args0),
+   %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    length(Args0,LArgs),
    atomic_list_concat(['mc_',LArgs,'__',F],Fp),
-   label_arg_types(F,0,[A|Args1]),
+   %label_arg_types(F,0,[A|Args1]),
    LArgs1 is LArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
