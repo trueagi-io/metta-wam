@@ -1248,7 +1248,11 @@ reset_cache :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator.
 %
-get_operator_typedef(Self, Op, Len, ParamTypes, RetType) :-
+
+get_operator_typedef(Self, Op, Len, ParamTypes, RetType):-
+    no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType)).
+
+get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Ensure the length matches the parameter types or is unbound.
     len_or_unbound(ParamTypes, Len),
     % Try to retrieve the type definition from cache, or fallback to other strategies.
@@ -1748,17 +1752,17 @@ narrow_types([A], A).
 is_pro_eval_kind(Var) :-
     % If the input is a variable, succeed.
     var(Var), !.
-is_pro_eval_kind(SDT) :-
-    % Check if the type is a formatted data type.
-    formated_data_type(SDT).
-is_pro_eval_kind(A) :-
-    % Fail for certain types.
+is_pro_eval_kind(A) :- is_non_eval_kind(A),!,fail.
+is_pro_eval_kind(SDT) :- % Check if the type is a formatted data type.
+    formated_data_type(SDT), !.
+is_pro_eval_kind(A) :- % Fail for certain types.
     A == 'Atom', !, fail.
 is_pro_eval_kind(A) :-
-    A == '%Undefined%', !, fail.
+    A == '%Undefined%', !.
 is_pro_eval_kind(A) :-
     % Check for non-specific "any" types.
     is_nonspecific_any(A), !.
+is_pro_eval_kind(_A) :- !.
 
 %!  is_feo_f(+F) is nondet.
 %
@@ -1870,7 +1874,7 @@ is_user_defined_head0(Eq, Other, [H | _]) :-
 is_user_defined_head0(Eq, Other, H) :-
     % If the head is callable, extract its functor and check it.
     callable(H), !,
-    functor(H, F, _),
+    functor(H, F, _, _),
     is_user_defined_head_f(Eq, Other, F).
 is_user_defined_head0(Eq, Other, H) :-
     % Default case: directly check the head.
