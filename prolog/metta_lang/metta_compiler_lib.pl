@@ -105,23 +105,23 @@ mc_1__not(_,'True').
 %%%%%%%%%%%%%%%%%%%%% comparison
 
 % not sure about the signature for this one
-transpiler_predicate_store('==', 3, [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[])).
+transpiler_predicate_store('==', 3, [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
 'mc_2__=='(A,A,1) :- !.
 'mc_2__=='(_,_,0).
 
-transpiler_predicate_store('<', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+transpiler_predicate_store('<', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
 'mc_2__<'(A,B,['<',A,B]).
 
-transpiler_predicate_store('>', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+transpiler_predicate_store('>', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc_2__>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
 'mc_2__>'(A,B,['>',A,B]).
 
-transpiler_predicate_store('>=', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+transpiler_predicate_store('>=', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc_2__>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
 'mc_2__>='(A,B,['>=',A,B]).
 
-transpiler_predicate_store('<=', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+transpiler_predicate_store('<=', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc_2__<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
 'mc_2__<='(A,B,['<=',A,B]).
 
