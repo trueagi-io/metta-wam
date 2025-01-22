@@ -84,15 +84,15 @@ process_file() {
 
     should_regenerate=false
 
-    if [ -f "${result_file}" ]; then
-	if grep -q "Got" "${result_file}"; then
+    if [ -f "${hyperon_results}" ]; then
+	if grep -q "Got" "${hyperon_results}"; then
 	    should_regenerate=true
-	    DEBUG_WHY "Failures found in ${result_file}"
+	    DEBUG_WHY "Failures found in ${hyperon_results}"
 	else
-	    DEBUG_WHY "No failures are found in ${result_file}"
+	    DEBUG_WHY "No failures are found in ${hyperon_results}"
 	fi
     else
-	DEBUG_WHY "Missing ${result_file}"
+	DEBUG_WHY "Missing ${hyperon_results}"
     fi
 
     # Perform the checks and set the boolean
@@ -101,10 +101,10 @@ process_file() {
 	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
     fi
 
-    if [ ! -f "${result_file}" ]; then
+    if [ ! -f "${hyperon_results}" ]; then
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Answers file does not exist."
-    elif [ "${file}" -nt "${result_file}" ] && [ -s "${result_file}" ]; then
+    elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
     fi
@@ -119,9 +119,9 @@ process_file() {
     # Use the boolean to drive the decision
     if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
-        #IF_REALLY_DO cat /dev/null > "${result_file}"
-        IF_REALLY_DO rm -f "${result_file}"
-        # git checkout "${result_file}"
+        #IF_REALLY_DO cat /dev/null > "${hyperon_results}"
+        IF_REALLY_DO rm -f "${hyperon_results}"
+        # git checkout "${hyperon_results}"
 
         # Function to handle SIGKILL
         handle_sigkill() {
@@ -157,11 +157,11 @@ process_file() {
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
 
-	    if grep -q "Got" "${result_file}"; then
+	    if grep -q "Got" "${hyperon_results}"; then
 		      DEBUG "${RED}Failures in Rust Answers${NC}"
 	    fi
 
-	    echo INFO >> "${result_file}"
+	    echo INFO >> "${hyperon_results}"
 
         ) || true
         stty sane
@@ -171,7 +171,7 @@ process_file() {
 
        trap - SIGKILL
     else
-        DEBUG "Kept: $file.answers"
+        DEBUG "Kept: $hyperon_results"
     fi
 
     if [ "$if_regressions" -eq 1 ]; then
