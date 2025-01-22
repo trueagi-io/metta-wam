@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if a start directory is provided
 if [ -z "$1" ]; then
