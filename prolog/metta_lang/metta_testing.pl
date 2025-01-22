@@ -1186,8 +1186,7 @@ calc_answer_file(AnsFile,AnsFile):- \+ atom_concat(_, metta, AnsFile),!.
 calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
 % Finds a file using expand_file_name for wildcard matching.
 calc_answer_file(MeTTaFile,AnsFile):-  atom_concat(MeTTaFile, '.?*', Pattern),
-        expand_file_name(Pattern, Matches), % Select the first match
-        Matches = [AnsFile|_], !.
+        expand_file_name(Pattern, Matches), Matches = [AnsFile|_], !. % Select the first match
 calc_answer_file(Base,AnsFile):- ensure_extension(Base, answers, AnsFile),!.
 
 %!  load_answer_file_now(+File) is det.
@@ -1205,8 +1204,7 @@ load_answer_file_now(Base) :-
     calc_answer_file(Base, AnsFile),
     ignore((
         % Ensure correct file extension for result storage files.
-        file_name_extension(File, Current, AnsFile),
-        remove_specific_extension(AnsFile, Current, StoredAs),
+        file_name_extension(StoredAs, _, AnsFile),
         % Initialize execution count and start loading.
         set_exec_num(StoredAs, 1),
         fbug(load_answer_file(AnsFile, StoredAs)),
