@@ -49,18 +49,20 @@ process_file() {
     DEBUG "==========================================================================="
 
 
-    # List of extensions to check
-    extensions=( ".unknown_error" ".SIGKILLED" ".timeout" ".test_error" ".answers" ".old_answers")
+    # gets any other names as well 
+    export hyperon_results=(${file}.*)
+    # List of extensions to prioritize if the above explansion didnt file anything
+    extensions=( ".unknown_error" ".aborted" ".SIGKILLED" ".timeout" ".test_error" ".answers" ".old_answers")
     # try to guess the results file   
     for ext in "${extensions[@]}"; do      
       related_file="${base_name}${ext}"
       # Check for each file with the specified extensions
       if [[ -f "$related_file" ]]; then
           DEBUG "Found: $related_file"
-          export results_file=$related_file
+          export hyperon_results=$related_file
       fi
     done
-    DEBUG "Results are saved to $results_file"
+    DEBUG "Results are saved to $hyperon_results"
 
     # Add unique absolute paths to PYTHONPATH
     pp1=$(readlink -m "$(dirname "${file}")")
