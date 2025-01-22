@@ -105,6 +105,12 @@ transpiler_enable_interpreter_calls :- fail.
 transpiler_show_debug_messages.
 %transpiler_show_debug_messages :- fail.
 
+:- dynamic(transpiler_trace/1).
+%transpiler_trace('backward-chain-q2').
+
+:- dynamic(transpiler_trace_compile/1).
+transpiler_trace_compile('backward-chain-q2').
+
 :-dynamic(transpiler_stub_created/3).
 % just so the transpiler_stub_created predicate always exists
 transpiler_stub_created(space,dummy,0).
@@ -1180,8 +1186,6 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-   format("######### ~w :- ~w\n",[HeadIsIn,AsBodyFnIn]),
-   %trace,
  must_det_lls((
    current_self(Space),
   subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
@@ -1262,8 +1266,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
       HeadAST=[assign,HResult,[call(FnName)|Args2]],
-
-      append(Code,CodeAppend),
+      (transpiler_trace(FnName) -> Prefix=[[native(trace)]] ; Prefix=[]),
+      append([Prefix|Code],CodeAppend),
       append(CodeAppend,FullCode,FullCode2),
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       %append(Args,[HResult],HArgs),
@@ -1877,8 +1881,15 @@ assign_only(CodeIn,Ret,Value,CodeOut) :- append(CodeIn,[[assign,Ret,Value]],Code
 update_laziness(x(X,_,T),x(_,Y,_),x(X,Y,T)).
 
 % eager -> eager, lazy -> lazy
-lazy_impedance_match(x(_,L,_),x(doeval,L,_),ValE,CodeE,_ValN,_CodeN,ValE,CodeE).
-lazy_impedance_match(x(_,L,_),x(noeval,L,_),_ValE,_CodeE,ValN,CodeN,ValN,CodeN).
+lazy_impedance_match(x(_,eager,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,ValN,CodeN).
+lazy_impedance_match(x(_,eager,_),x(doeval,eager,_),ValE,CodeE,_ValN,_CodeN,ValE,CodeE).
+lazy_impedance_match(x(_,lazy,_),x(noeval,lazy,_),_ValE,_CodeE,ValN,[],ValN,[]) :- !.
+lazy_impedance_match(x(_,lazy,_),x(doeval,lazy,_),ValE,[],_ValN,_CodeN,ValE,[]) :- !.
+lazy_impedance_match(x(_,lazy,_),x(_,lazy,_),ValE,CodeE,ValN,CodeN,Val,Code) :- !,
+   append(CodeE,[[native(as_p1_exec),ValE,RetResultE]],CodeAE),
+   append(CodeN,[[native(as_p1_expr),ValN,RetResultN]],CodeAN),
+   create_p1(RetResultE,CodeAE,RetResultN,CodeAN,P1),Code=[[assign,Val,P1]].
+
 % lazy -> eager
 lazy_impedance_match(x(_,lazy,_),x(doeval,eager,_),ValE,CodeE,_ValN,_CodeN,RetResult,Code) :- append(CodeE,[[native(as_p1_exec),ValE,RetResult]],Code).
 lazy_impedance_match(x(_,lazy,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,RetResult,Code) :- append(CodeN,[[native(as_p1_expr),ValN,RetResult]],Code).
@@ -2084,6 +2095,7 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
 
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :- HeadIs\==Convert,
    Convert=[Fn|Args],
+   %(HeadIs=[FnC|_],transpiler_trace_compile(FnC),Fn='match-body' -> trace ; true),
    atom(Fn),!,
    length(Args,LArgs),
    LArgs1 is LArgs+1,
