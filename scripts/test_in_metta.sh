@@ -50,7 +50,7 @@ process_file() {
 
 
     # List of extensions to check
-    extensions=(".answers" ".timeout" ".test_error" ".old_answers")
+    extensions=( ".unknown_error" ".SIGKILLED" ".timeout" ".test_error" ".answers" ".old_answers")
     # try to guess the results file   
     for ext in "${extensions[@]}"; do      
       related_file="${base_name}${ext}"
