@@ -48,6 +48,20 @@ process_file() {
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
     DEBUG "==========================================================================="
 
+
+    # List of extensions to check
+    extensions=(".answers" ".timeout" ".test_error" ".old_answers")
+    # try to guess the results file   
+    for ext in "${extensions[@]}"; do      
+      related_file="${base_name}${ext}"
+      # Check for each file with the specified extensions
+      if [[ -f "$related_file" ]]; then
+          DEBUG "Found: $related_file"
+          export results_file=$related_file
+      fi
+    done
+    DEBUG "Results are saved to $results_file"
+
     # Add unique absolute paths to PYTHONPATH
     pp1=$(readlink -m "$(dirname "${file}")")
     pp2=$(readlink -m "$(dirname "${pp1}")")
@@ -68,15 +82,15 @@ process_file() {
 
     should_regenerate=false
 
-    if [ -f "${file}.answers" ]; then
-	if grep -q "Got" "${file}.answers"; then
+    if [ -f "${result_file}" ]; then
+	if grep -q "Got" "${result_file}"; then
 	    should_regenerate=true
-	    DEBUG_WHY "Failures found in ${file}.answers"
+	    DEBUG_WHY "Failures found in ${result_file}"
 	else
-	    DEBUG_WHY "No failures are found in ${file}.answers"
+	    DEBUG_WHY "No failures are found in ${result_file}"
 	fi
     else
-	DEBUG_WHY "Missing ${file}.answers"
+	DEBUG_WHY "Missing ${result_file}"
     fi
 
     # Perform the checks and set the boolean
@@ -85,10 +99,10 @@ process_file() {
 	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
     fi
 
-    if [ ! -f "${file}.answers" ]; then
+    if [ ! -f "${result_file}" ]; then
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Answers file does not exist."
-    elif [ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]; then
+    elif [ "${file}" -nt "${result_file}" ] && [ -s "${result_file}" ]; then
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
     fi
@@ -103,9 +117,9 @@ process_file() {
     # Use the boolean to drive the decision
     if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
-        #IF_REALLY_DO cat /dev/null > "${file}.answers"
-        IF_REALLY_DO rm -f "${file}.answers"
-        # git checkout "${file}.answers"
+        #IF_REALLY_DO cat /dev/null > "${result_file}"
+        IF_REALLY_DO rm -f "${result_file}"
+        # git checkout "${result_file}"
 
         # Function to handle SIGKILL
         handle_sigkill() {
@@ -141,11 +155,11 @@ process_file() {
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
 
-	    if grep -q "Got" "${file}.answers"; then
+	    if grep -q "Got" "${result_file}"; then
 		      DEBUG "${RED}Failures in Rust Answers${NC}"
 	    fi
 
-	    echo INFO >> "${file}.answers"
+	    echo INFO >> "${result_file}"
 
         ) || true
         stty sane
