@@ -106,7 +106,7 @@ process_file() {
 	DEBUG_WHY "Should regenerate: Answers file does not exist."
     elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
 	should_regenerate=true
-	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
+	DEBUG_WHY "Should regenerate: Original file is newer than results file and results file is not empty."
     fi
 
     if $should_regenerate; then
@@ -120,7 +120,7 @@ process_file() {
     if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
         #IF_REALLY_DO cat /dev/null > "${hyperon_results}"
-        IF_REALLY_DO rm -f "${hyperon_results}"
+        #IF_REALLY_DO rm -f "${hyperon_results}"
         # git checkout "${hyperon_results}"
 
         # Function to handle SIGKILL
@@ -156,12 +156,12 @@ process_file() {
 	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_METTA_MAX_TIME seconds"
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
-
-	    if grep -q "Got" "${hyperon_results}"; then
-		      DEBUG "${RED}Failures in Rust Answers${NC}"
+	    if [ -f "${hyperon_results}" ]; then
+		if grep -q "Got" "${hyperon_results}"; then
+		    DEBUG "${RED}Failures in Rust Answers${NC}"
+		fi
+		echo INFO >> "${hyperon_results}"
 	    fi
-
-	    echo INFO >> "${hyperon_results}"
 
         ) || true
         stty sane
@@ -905,6 +905,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     DEBUG "Skipping report generation."
 fi
+
 
 
 
