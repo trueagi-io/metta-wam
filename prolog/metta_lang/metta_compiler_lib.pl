@@ -193,6 +193,7 @@ match_pattern(Space, Pattern):-
 
 transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
+%'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
 %transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 %'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),as_p1_exec(Pattern,Atom),as_p1_exec(P1,Ret).
 

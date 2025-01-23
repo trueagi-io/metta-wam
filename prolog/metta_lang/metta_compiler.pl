@@ -2273,9 +2273,10 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Conve
    Convert=['case',Value,Cases],!,
    f2p(HeadIs,LazyVars,ValueResult,ValueResultN,LazyRetValue,Value,ValueCode,ValueCodeN),
    lazy_impedance_match(LazyRetValue,x(doeval,eager,[]),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
-   compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1,Cases,Converted0,Converted0N),
-   append(ValueCode1,Converted0,Converted),
-   append(ValueCode1,Converted0N,ConvertedN).
+   ValueCode1a=[[prolog_if,ValueCode1,[[assign,ValueResult1a,ValueResult1]],[[assign,ValueResult1a,'Empty']]]],
+   compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1a,Cases,Converted0,Converted0N),
+   append(ValueCode1a,Converted0,Converted),
+   append(ValueCode1a,Converted0N,ConvertedN).
 
 compile_flow_control_case(_,_,RetResult,RetResultN,_,_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
 compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
