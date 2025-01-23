@@ -106,8 +106,8 @@ mc_1__not(_,'True').
 
 % not sure about the signature for this one
 transpiler_predicate_store('==', 3, [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
-'mc_2__=='(A,A,1) :- !.
-'mc_2__=='(_,_,0).
+'mc_2__=='(A,B,'True') :- A==B,!.
+'mc_2__=='(_,_,'False').
 
 transpiler_predicate_store('<', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
