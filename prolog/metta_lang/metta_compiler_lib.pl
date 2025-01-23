@@ -235,11 +235,11 @@ transpiler_predicate_store('stringToChars', 2, [x(doeval,eager,[])], x(doeval,ea
 transpiler_predicate_store('charsToString', 2, [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc_1__charsToString'(C,S) :- string_chars(S,C).
 
-transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__assertEqualToResult'(A, B, C) :- u_assign([assertEqualToResult, A, B], C).
-
 transpiler_predicate_store('assertEqual', 3, [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__assertEqual'(A, B, C) :- u_assign([assertEqual, A, B], C).
+'mc_2__assertEqual'(A,B,C) :- u_assign([assertEqual,A,B],C).
+
+transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,lazy,[]),x(doeval,eager,[])], x(doeval,eager,[])).
+'mc_2__assertEqualToResult'(A,B,C) :- 'mc_1__collapse'(A,A2),u_assign([assertEqualToResult,A2,[B]],C).
 
 transpiler_predicate_store('prolog-trace', 1, [], x(doeval,eager,[])).
 'mc_0__prolog-trace'([]) :- trace.
