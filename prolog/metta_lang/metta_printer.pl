@@ -132,6 +132,8 @@ ppc1(Msg, Term) :-
         write_src(Term), nl  % Display source representation.
     ).
 
+dont_numbervars(_,_,_,_).
+
 %!  ppct(+Msg, +Term) is det.
 %
 %   Specific pretty-print handler for terms that are lists, clauses, or equations.
@@ -148,7 +150,7 @@ ppct(Msg, Term) :-
     % If Term is a list, apply list-specific formatting.
     is_list(Term), !,
     writeln('---------------------'),
-    numbervars(Term, 666, _, [attvar(skip)]),  % Bind variables for display.
+    dont_numbervars(Term, 666, _, [attvar(skip)]),  % Bind variables for display.
     write((Msg)), write(':'), nl,
     write_src(Term), nl.
 ppct(Msg, Term) :-
@@ -162,14 +164,14 @@ ppct(Msg, Term) :-
     Term = (_ = _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 444, _, [attvar(skip)]),
+    dont_numbervars(Term, 444, _, [attvar(skip)]),
     write_src(Term), nl.
 ppct(Msg, Term) :-
     % For clauses with specific formatting needs, include variable numbering and tree display.
     Term = (_ :- _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 222, _, [attvar(skip)]),
+    dont_numbervars(Term, 222, _, [attvar(skip)]),
     print_tree(Term), nl.
 
 %!  pp_metta(+P) is det.
@@ -750,7 +752,7 @@ src_vars(V,I):- %ignore(guess_metta_vars(V)),
              must_det_lls((
               pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
-              nop(ignore(numbervars(I,400,_,[singleton(true),attvar(skip)]))),
+              nop(ignore(dont_numbervars(I,400,_,[singleton(true),attvar(skip)]))),
               nop(materialize_vns(I)))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
 pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
@@ -774,8 +776,8 @@ number_src_vars(Term,TermC,Goals):-
     PP = TermC,
     must(PP = Term),
     materialize_vns(PP),
-    ignore(numbervars(PP,260,_,[singleton(true),attvar(skip)])),
-    ignore(numbervars(PP,26,_,[singleton(true),attvar(bind)])))).
+    nop(ignore(dont_numbervars(PP,260,_,[singleton(true),attvar(skip)]))),
+    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))).
 
 
 once_writeq_nl_now(P) :-

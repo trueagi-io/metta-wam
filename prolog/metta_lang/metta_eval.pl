@@ -1337,16 +1337,19 @@ metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
    eval_sometimes(Eq,_RetType,Depth,Self,B,BB).
 */
 
-metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
+metta_atom_iter(_Eq,Depth,_,_,_):- Depth<0,!,fail.
+metta_atom_iter(Eq,Depth,Self,Other,X):- X == [],!,fail.
+metta_atom_iter(Eq,Depth,Self,Other,X):- var(X),!, throw(metta_atom_iter(Eq,Depth,Self,Other,X)).
 metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
   (Y==[] -> true ;
     ( D2 is Depth -1, Y = [H|T],
-       metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
+       metta_atom_iter(Eq,D2,Self,Other,H),
+       metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
-metta_atom_iter(Eq,Depth,Self,Other,X):-
+metta_atom_iter(Eq,Depth,Self,Other,XX):-
   %copy_term(X,XX),
-  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)). %, X=XX.
+  dcall0000000000(metta_atom_true(Eq,Depth,Self,Other,X)), X=XX.
 
 metta_atom_true(_Eq,_Depth,_Self,Other,H):-
       can_be_ok(metta_atom_true,H),
@@ -2832,7 +2835,7 @@ is_host_predicate([AE|More],Pred,Len):-
 
 % predicate inherited by system
 eval_40(_O,Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
-  is_host_predicate([AE|More],Pred,_Len),
+  is_host_predicate([AE|More],Pred,Len),
   current_predicate(Pred/Len),!,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),
@@ -3070,15 +3073,17 @@ same_len_copy(Args,NewArgs):- must_be(proper_list,Args),length(Args,N),length(Ne
 get_defn_expansions(_Eq,_RetType,_Depth,Self,[[H|HArgs]|Args],XX,B0):- symbol(H),
    is_list(HArgs),is_list(Args),
    same_len_copy(Args,NewArgs), same_len_copy(HArgs,NewHArgs),
-   metta_atom(Self,[=,[[HH|NewHArgs]|NewArgs],B0]),H==HH,
-   [[H|NewHArgs]|NewArgs]=XX,
+   [[HH|NewHArgs]|NewArgs]=XX,
+   metta_atom(Self,[=,XX,B0]),H==HH,
    sanity_check_eval(curry0,B0).
 
-get_defn_expansions(Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
-   metta_atom(Self,[=,[HH|NewArgs],B0]),H==HH.
+get_defn_expansions(_Eq,_RetType,_Depth,Self,[H|Args],XX,B0):- same_len_copy(Args,NewArgs),
+   [HH|NewArgs]=XX,
+   metta_atom(Self,[=,XX,B0]),H==HH.
 
-get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),
+get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],XXX,[Y|T1]):- is_list(Start),
     same_len_copy(Start,NewStart),
+    XXX = [[H|NewStart]|NewT1],
     X = [H|NewStart],
     findall((XX->B0),get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),XXB0L),
     XXB0L\=[], if_trace((defn;metta_defn;eval_args),maplist(print_templates(Depth,'curry 1'),XXB0L)),!,
