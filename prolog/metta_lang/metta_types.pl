@@ -574,7 +574,7 @@ get_type_each(Depth, _Slf, _Type, _) :-
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
-get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),member(Type,Set).
+get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),is_list(Set),member(Type,Set).
 
 get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
@@ -585,7 +585,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
     var(Var), !,
-    get_attr(Var, cns, Self = TypeList),
+    get_attr(Var, cns, Self = TypeList),is_list(TypeList),
     member(Type, TypeList).
 get_type_each(_Dpth, _Slf, Expr, 'hyperon::space::DynSpace') :-
     % Check if the expression is a dynamic space.
@@ -1548,10 +1548,12 @@ set_type(Depth, Self, Var, Type) :-
 %   @arg Type     The new type to add.
 %
 add_type(_Depth, _Self, _Var, TypeL, Type) :-
+    is_list(TypeL),
     % If the type is already in the list, do nothing.
     \+ \+ (member(E, TypeL), E == Type), !.
 add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
+    is_list(TypeL),
     append([Type], TypeL, TypeList),
     put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-

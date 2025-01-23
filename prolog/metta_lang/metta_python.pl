@@ -373,7 +373,7 @@ py_is_py_dict(X):- atomic(X),py_is_object(X),py_type(X,dict).
 %
 %   @arg X The term to check if it is a Python list.
 %
-py_is_list(X):- py_resolve(X,V),py_type(V,list).
+py_is_list(X):- py_resolve(X,V),py_is_object(V),py_type(V,list).
 %py_is_list(V):- py_is_tuple(V).
 
 % Evaluations and Iterations
