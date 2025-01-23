@@ -141,6 +141,7 @@ arg_eval_props(N,x(doeval,lazy,[boolean])) :- atom(N),N='LazyBool',!.
 arg_eval_props(N,x(doeval,eager,[])) :- atom(N),N='Any',!.
 arg_eval_props(N,x(noeval,lazy,[])) :- atom(N),N='Atom',!.
 arg_eval_props(N,x(noeval,eager,[])) :- atom(N),N='Expression',!.
+arg_eval_props(['->'|_],x(noeval,eager,[[predicate_call]])) :- !.
 arg_eval_props(_,x(doeval,eager,[])).
 
 %NOTE TODO: as_p1() and is_p1 are going away soon
@@ -1293,7 +1294,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
         show_recompile(Space,FnName,LenArgsPlus1),
       true
-   )))).
+   ))))
+   .
 
 no_conflict_numbervars(Term):-
     findall(N,(sub_term(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
@@ -1939,10 +1941,27 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), '#\\'(Convert), []
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- fail,
     once(number(Convert);atomic(Convert);\+compound(Convert);atomic(Convert)/*;data_term(Convert)*/),!. %CheckifConvertisanumberoranatom
 
-
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- % HeadIs\==Convert,
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   Convert=[Fn|Args],
+   fullvar(Fn),
+   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
+   length(Args,LArgs),
+   %LArgs1 is LArgs+1,
+   ResultLazy=x(noeval,eager,[]),
+   length(UpToDateArgsLazy, LArgs),
+   maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
+   EvalArgs=UpToDateArgsLazy,
+   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
+   maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
+   append(Converteds,Converteds2),
+   append(RetResults,[RetResult],RetResults2),
+   atomic_list_concat(['mc_',LArgs,'__'],Prefix),
+   append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
+   assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
 
 /*
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
