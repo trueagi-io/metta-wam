@@ -1251,14 +1251,13 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
       %leash(-all),trace,
-      maplist(h2p(LazyArgsListAdj),Args,Args2,Code),
+      maplist(h2p(LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
+      append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
       %trace,
-      f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
+      f2p(HeadIs,NewLazyVarsAggregate,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
-
-      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,
-                      args_list:Args2,lazyArgsList:LazyArgsListAdj,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
+      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,args_list:Args2,lazyArgsList:NewLazyVarsAggregate,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
 
       output_prolog(LazyEagerInfo),
 
@@ -1899,34 +1898,40 @@ lazy_impedance_match(x(_,lazy,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,RetRe
 lazy_impedance_match(x(_,eager,_),x(doeval,lazy,_),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
 lazy_impedance_match(x(_,eager,_),x(noeval,lazy,_),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
 
-h2p(_LazyVars,Convert,Convert,[]) :- is_ftVar(Convert), !.
+h2p(_LazyVars,Convert,Convert,[],[]) :- is_ftVar(Convert), !.
 
-h2p(_LazyVars,Convert,Convert,[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
+h2p(_LazyVars,Convert,Convert,[],[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
 
-h2p(_LazyVars,'#\\'(Convert),Convert,[]) :- !.
+h2p(_LazyVars,'#\\'(Convert),Convert,[],[]) :- !.
 
-h2p(LazyVars,Convert,Converted,CodeOut) :-
+h2p(LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    Convert=[Fn|QuoteContents],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   maplist(h2p(LazyVars),QuoteContents,QuoteContentsOut,Code),
+   maplist(h2p(LazyVars),QuoteContents,QuoteContentsOut,Code,NewLazyVars),
+   append(NewLazyVars,NewLazyVarsAggregate),
    Converted=[Fn|QuoteContentsOut],
    append(Code,CodeOut).
 
-h2p(LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]]) :-
+h2p(LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]],[]) :-
    Convert=[Fn|_],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,lazy,_)),!.
 
-h2p(LazyVars,Convert,Converted,CodeOut) :-
+h2p(LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    is_list(Convert),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   maplist(h2p(LazyVars),Convert,Converted,Code),
+   maplist(h2p(LazyVars),Convert,Converted,Code,NewLazyVars),
+   append(NewLazyVars,NewLazyVarsAggregate),
    append(Code,CodeOut).
 
-h2p(_LazyVars,X,X,[]) :-
+h2p(_LazyVars,X,X,[],[]) :-
    format("Error in h2p: ~w",[X]),
    throw(0).
 
 :- discontiguous f2p/8.
+
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   nb_bound(Convert,X),!,
+   f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
 
 f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
    (is_ftVar(Convert)),!, % Check if Convert is a variable
