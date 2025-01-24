@@ -192,10 +192,13 @@ match_pattern(Space, Pattern):-
     metta_atom(Space, Atom), Atom=Pattern.
 
 transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc_3__match'(Space,[','|Patterns],P1,Ret) :- !,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
 'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 %'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
 %transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 %'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),as_p1_exec(Pattern,Atom),as_p1_exec(P1,Ret).
+
+match_aux(Space,Pattern) :- 'mc_3__match'(Space,Pattern,ispu(true),true).
 
 % unify calls pattern matching if arg1 is a space
 unify_pattern(Space,Pattern):- is_metta_space(Space),!, match_pattern(Space, Pattern).
