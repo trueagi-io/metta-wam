@@ -1171,15 +1171,23 @@ inc_exec_num(FileName) :-
 %   @example
 %     % Load an answer file with automatic path resolution:
 %     ?- load_answer_file('answers_file.ans').
-load_answer_file(File) :-
-    % Resolve to an absolute file path if necessary.
-    (   \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
-    absolute_file_name(File, AbsFile), File\=@=AbsFile,
-    load_answer_file_now(AbsFile),
-    !.
-load_answer_file(File) :-
+load_answer_file(Base) :-
+    calc_answer_file(Base,File),
     load_answer_file_now(File),
     !.
+
+
+
+calc_answer_file(RelFile,AnsFile):- \+ atom_concat(_, metta, RelFile),
+    (   \+ atom(RelFile); \+ is_absolute_file_name(RelFile); \+ exists_file(RelFile)),
+    % Resolve to an absolute file path if necessary.
+    absolute_file_name(RelFile, AnsFile), RelFile\=@=AnsFile.
+calc_answer_file(AnsFile,AnsFile):- \+ atom_concat(_, metta, AnsFile),!.
+calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
+% Finds a file using expand_file_name for wildcard matching.
+calc_answer_file(MeTTaFile,AnsFile):-  atom_concat(MeTTaFile, '.?*', Pattern),
+        expand_file_name(Pattern, Matches), Matches = [AnsFile|_], !. % Select the first match
+calc_answer_file(Base,AnsFile):- ensure_extension(Base, answers, AnsFile),!.
 
 %!  load_answer_file_now(+File) is det.
 %
@@ -1191,11 +1199,12 @@ load_answer_file(File) :-
 %   @example
 %     % Begin loading an answer file, initializing execution tracking:
 %     ?- load_answer_file_now('/path/to/answers_file.ans').
-load_answer_file_now(File) :-
+
+load_answer_file_now(Base) :-
+    calc_answer_file(Base, AnsFile),
     ignore((
-        % Ensure correct file extension for answer files.
-        ensure_extension(File, answers, AnsFile),
-        remove_specific_extension(AnsFile, answers, StoredAs),
+        % Ensure correct file extension for result storage files.
+        file_name_extension(StoredAs, _, AnsFile),
         % Initialize execution count and start loading.
         set_exec_num(StoredAs, 1),
         fbug(load_answer_file(AnsFile, StoredAs)),

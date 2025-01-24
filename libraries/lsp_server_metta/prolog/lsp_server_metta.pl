@@ -23,6 +23,11 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- use_module(library(apply), [maplist/2]).
 :- use_module(library(debug), [debug/3, debug/1]).
 :- use_module(library(http/json), [atom_json_dict/3]).
+:- use_module(library(socket), [tcp_socket/1,
+                                tcp_bind/2,
+                                tcp_accept/3,
+                                tcp_listen/2,
+                                tcp_open_socket/2]).
 :- use_module(library(thread)).
 :- use_module(library(thread_pool)).
 %:- use_module(library(prolog_xref)).
@@ -107,6 +112,10 @@ main :-
 start([stdio]) :- !,
     debug_lsp(main, "Starting stdio client", []),
     stdio_server.
+start([port, Port]) :- !,
+    debug_lsp(main, "Starting socket client on port ~w", [Port]),
+    atom_number(Port, PortN),
+    socket_server(PortN).
 start(Args) :-
     debug_lsp(main, "Unknown args ~w", [Args]),
     stdio_server.
@@ -117,29 +126,59 @@ start(Args) :-
 % stdio server initialization
 stdio_server :-
     current_input(In),
-    set_stream(In, buffer(full)),
-    set_stream(In, newline(posix)),
-    set_stream(In, tty(false)),
-    set_stream(In, representation_errors(error)),
-    % Handling UTF decoding in JSON parsing, but doing the auto-translation
-    % causes Content-Length to be incorrect
-    set_stream(In, encoding(octet)),
     current_output(Out),
-    set_stream(Out, encoding(utf8)),
-    %stdio_handler_io(In, Out). %(might use this one later)
-    asserta(lsp_hooks:is_lsp_output_stream(Out)),
-    stream_property(StdErr,file_no(2)),
+    stream_property(StdErr, file_no(2)),
     %open('/dev/null',read,NullIn,[]),
     %set_system_IO(In,Out,StdErr), % ensure we are talking over stdin/stderr
-    set_prolog_IO(In,StdErr,StdErr), % redirect **accidental** writes to stdout to stderr instead
+    set_prolog_IO(In, StdErr, StdErr), % redirect **accidental** writes to stdout to stderr instead
+    stream_pair(StreamPair, In, Out),
+    %% stdio_handler(In, Out).
+    configure_client_streams(StreamPair),
     stdio_handler(In, Out).
 
 stdio_handler(In, Out):-
   repeat,
-   catch(stdio_handler(A-A, In, Out),_,fail),
+   catch(client_handler(A-A, In, Out),_,fail),
    fail.
 
-stdio_handler(Extra-ExtraTail, In, Out) :-
+% socket server
+socket_server(Port) :-
+    tcp_socket(Socket),
+    tcp_bind(Socket, Port),
+    tcp_listen(Socket, 5),
+    tcp_open_socket(Socket, StreamPair),
+    stream_pair(StreamPair, AcceptFd, _),
+    dispatch_socket_client(AcceptFd).
+
+dispatch_socket_client(AcceptFd) :-
+    tcp_accept(AcceptFd, Socket, Peer),
+    thread_create(process_client(Socket, Peer), _, [detached(true)]),
+    dispatch_socket_client(AcceptFd).
+
+process_client(Socket, Peer) :-
+    setup_call_cleanup(
+        tcp_open_socket(Socket, StreamPair),
+        ( debug_lsp(main, "Socket client connected ~w", [Peer]),
+          configure_client_streams(StreamPair),
+          stream_pair(StreamPair, In, Out),
+          client_handler(A-A, In, Out) ),
+        close(StreamPair)).
+
+% Common stream handler
+
+configure_client_streams(StreamPair) :-
+    stream_pair(StreamPair, In, Out),
+    set_stream(In, buffer(full)),
+    set_stream(In, newline(posix)),
+    set_stream(In, tty(false)),
+    set_stream(In, representation_errors(error)),
+    % handling UTF decoding in JSON parsing, but doing the auto-translation
+    % causes Content-Length to be incorrect
+    set_stream(In, encoding(octet)),
+    set_stream(Out, encoding(utf8)),
+    asserta(lsp_hooks:is_lsp_output_stream(Out)).
+
+client_handler(Extra-ExtraTail, In, Out) :-
     wait_for_input([In], _, infinite),
     fill_buffer(In),
     read_pending_codes(In, ReadCodes, Tail),
@@ -147,7 +186,7 @@ stdio_handler(Extra-ExtraTail, In, Out) :-
     -> true
     ; ( ExtraTail = ReadCodes,
         handle_requests(Out, Extra, Remainder),
-        stdio_handler(Remainder-Tail, In, Out) )
+        client_handler(Remainder-Tail, In, Out) )
     ).
 
 handle_requests(Out, InCodes, Tail) :-
