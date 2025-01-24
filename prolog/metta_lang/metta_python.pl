@@ -1662,6 +1662,7 @@ py_is_method_type(type).
 py_is_method_type(builtin_function_or_method).
 py_is_method_type(function).
 py_is_method_type(method).
+py_is_method_type('method-wrapper').
 
 
 %!  py_eval_from(+From, +I, -O) is det.

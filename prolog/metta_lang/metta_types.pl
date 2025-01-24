@@ -1271,7 +1271,7 @@ get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Try to retrieve the type definition from cache, or fallback to other strategies.
     if_or_else(
         get_operator_typedef0(Self, Op, Len, ParamTypes, RetType),
-            get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
+        get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
         get_operator_typedef2(Self, Op, Len, ParamTypes, RetType)).
 
 %!  get_operator_typedef_R(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
@@ -1323,6 +1323,15 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator (default is `'AnyRet'`).
 %
+get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_concat(_,'!',Op);symbol_concat(_,'@',Op)),!,
+    % Default return type is 'AnyRet'.
+    ignore('Atom' = RetType),
+    % Ensure all parameter types are valid evaluation kinds.
+    maplist(=('Atom'), ParamTypes),
+    % Cache the result for future lookups.
+    assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
+    % nop(wdmsg(missing(get_operator_typedef2(Self, Op, ParamTypes, RetType)))), !, fail.
+
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     % Default return type is 'AnyRet'.
     ignore('AnyRet' = RetType),
