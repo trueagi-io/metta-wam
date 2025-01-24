@@ -59,6 +59,20 @@
             True
             (contains_symbol (cdr-atom $list) $sym))))
 
+; convert a char to int, if invalid returns "no results"
+(= (char_to_int $char)
+   (if (== $char "0") 0
+   (if (== $char "1") 1
+   (if (== $char "2") 2
+   (if (== $char "3") 3
+   (if (== $char "4") 4
+   (if (== $char "5") 5
+   (if (== $char "6") 6
+   (if (== $char "7") 7
+   (if (== $char "8") 8
+   (if (== $char "9") 9
+   )))))))))))
+
 ; Input a list of lists. Output the concatenation of the input flattened (only flattens at top level).
 ; For example:  
 ;   Input list of lists    =  ((1 2) (3 4) () (5)) 
@@ -176,9 +190,9 @@
   (match &self (console-messages $msg)
     ; if first invocation, just create board
     (if (==  (initializing)   $msg) ; then  
-      (progn (
+      (progn (  
         ; remove the 'initializing' message
-        (remove-atom &self (console-messages $msg))
+        (remove-atom &self (console-messages $msg)) 
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
@@ -218,9 +232,33 @@
         empty))))) 
 
 ; The move command moves the human player's piece.
-(: M (-> command))
+;(: M (-> command))
 (= (M)  
-  ((py-atom print) "Moving!"))
+  (progn 
+    ; prompt for x/y location
+    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
+    ((py-atom print) "Enter coordinates.")
+    (let $coordinates ((py-atom input)) ())
+    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
+    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
+    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
+    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
+    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
+    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+    (if (not (== $f $g))                      ; Ensure source and destination are not the same.
+    (progn (
+    ;return_entire_box(F, H, E),  % Retrieve the source box details.
+    ;return_entire_box(G, I, E),  % Retrieve the destination box details.
+    ;if (len(I, 2); not(samecolor(H, I))), % Ensure the destination is valid (empty or opponent's piec
+    )
+    
+    )
+    ; exception conditions are in reverse order of 'if' statements...
+    ((py-atom print) "Cannot move to same location"))    
+  )
+)
+
+
 ;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
 ;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
 ;
@@ -251,7 +289,7 @@
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) (format-args "-------- C o m m a n d s -----------" ()))
     ((py-atom print) (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
-    ((py-atom print) (format-args "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
+    ((py-atom print) (format-args "  Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
     ((py-atom print) (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
     ((py-atom print) (format-args "3 Reset                            ->  R" ()))
     ((py-atom print) (format-args "4 Commands List                    ->  C" ()))
@@ -269,27 +307,26 @@
 ;*******************************************************
 
 ; Invoke with empty list, will return characters input from console until ENTER.
-; Not presently used but works for single char input.
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
    (let $cmd (get-single-char!)
-      (progn
+      (progn (
           ; if initial execution flush output
           (if (== (size-atom $input_list) 0) (flush-output!) ())
           (if (== $cmd 13) ; if user hit <ENTER>
             ;return all input
             $input_list    
             ;else gather more input
-            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))) 
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))))
 
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
- (progn  (
+ (progn  ( 
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
     ((py-atom print) " ")
-    ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.")
-    (display_board (match &self (board-state $board) $board))
+    ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.") 
+    (display_board (match &self (board-state $board) $board)) 
     ((py-atom print) "******* I N S T R U C T I O N S ********" )
     ((py-atom print) " ")
     ((py-atom print) "- Your pieces are marked with an asterisk.")
@@ -302,7 +339,7 @@
     ((py-atom print) "4 Commands List                    ->  C")
     ((py-atom print) "5 Display Board                    ->  D")
     ((py-atom print) "6 Quit                             ->  Q")
-    ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.")
+    ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.") 
     )))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
@@ -331,7 +368,7 @@
 (= (display_board $board) 
   (
    (let $a (display_filter     $board ) 
-          (println! (format-args "\n
+          ((py-atom print) (format-args "\n
       ------------------------------------------------- \n
       | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
       ------------------------------------------------- \n
@@ -363,7 +400,7 @@
     ; case statement for commands
     (if (== $command "M") 
         (progn (
-          (M)                          ; Move human piece
+          (M)                          ; Move human piece 
           (command-loop)))             ; Get next command, stay in loop.
     (if (== $command "G")
         (progn (
