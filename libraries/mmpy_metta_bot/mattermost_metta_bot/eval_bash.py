@@ -38,37 +38,50 @@ INTERPRETER_CONFIGS = {
 # Dictionary to maintain MeTTaLog instances keyed by friendly names
 friendly_name_to_metta = defaultdict(lambda: MeTTaLog())
 
-
-
-
-
-
-def get_metta_instance(
-    channel_id=None, user_id=None, is_private=False, is_mention=False):
+def get_friendly_name(user_id=None, username=None, channel_id=None, channel_name=None, is_private=False):
     """
-    Retrieves the appropriate MeTTaLog instance:
-    - One instance per channel for shared channel interpreters.
-    - One instance per user for private messages.
-    - One instance per user for public mentions in a channel.
+    Generates or retrieves a friendly name for a user or channel.
     """
     if is_private:
-        logging.debug(f"Fetching MeTTaLog instance for private message with user: {user_id}")
-        return metta_instances[f"user:{user_id}"]
-    elif is_mention and channel_id and user_id:
-        logging.debug(f"Fetching personal MeTTaLog instance for user {user_id} in public channel {channel_id}")
-        return metta_instances[f"user:{user_id}"]
-    elif channel_id:
-        logging.debug(f"Fetching shared MeTTaLog instance for channel: {channel_id}")
-        return metta_instances[f"channel:{channel_id}"]
-    else:
-        raise ValueError("Insufficient information to determine MeTTaLog instance.")
+        return f"Private-{username or user_id}"
+    if username:
+        return username
+    if channel_name:
+        return channel_name
+    return f"Channel-{channel_id}" if channel_id else f"User-{user_id}"
+
+def generate_friendly_name(base_name, unique_suffix):
+    """
+    Generates a friendly name by appending a unique suffix if the name already exists.
+    """
+    if base_name not in friendly_name_to_metta:
+        return base_name
+    return f"{base_name}_{unique_suffix}"
+    
+
+def get_metta_instance(
+    user_id=None, username=None, channel_id=None, channel_name=None, is_private=False, is_mention=False):
+    """
+    Retrieves or initializes the appropriate MeTTaLog instance based on friendly names.
+    """
+    friendly_name = get_friendly_name(
+        user_id=user_id, username=username, channel_id=channel_id, channel_name=channel_name, is_private=is_private
+    )
+    unique_suffix = f"{user_id or channel_id}"
+    key = generate_friendly_name(friendly_name, unique_suffix)
+
+    # If no instance exists, create one
+    if key not in friendly_name_to_metta:
+        logging.debug(f"Creating new MeTTaLog instance for key: {key}")
+        friendly_name_to_metta[key] = MeTTaLog(name=key)
+    return friendly_name_to_metta[key]
 
 class MeTTaLog:
     def __init__(self, interp_type="metta", name=None):
         self.set_interpreter(interp_type)
         self.name = name or "Unnamed Interpreter"
 
-    def set_interpreter(self, interp_type):        
+    def set_interpreter(self, interp_type):
         """Sets the interpreter type and updates configurations."""
         interp_type = interp_type.strip()
         if interp_type not in INTERPRETER_CONFIGS:
@@ -166,7 +179,6 @@ class MeTTaLog:
             except Exception as e:
                 logging.error(f"Failed to remove temporary file: {e}")
 
-
 class MeTTaBotReplPlugin(Plugin):
     """
     A plugin that logs all attributes of the Message object, evaluates commands,
@@ -258,9 +270,11 @@ class MeTTaBotReplPlugin(Plugin):
             channel_name=message.channel_name,
             is_private=is_private
         )
+
         response, should_reply = self.evaluate_command(metta_instance, message.text.strip())
         if should_reply:
             await self.respond_or_edit(message, response, edited=edited)
+
 
     def evaluate_command(self, metta_instance, command: str) -> (str, bool):
         """
@@ -280,12 +294,12 @@ class MeTTaBotReplPlugin(Plugin):
 
             # Evaluate expressions starting with backticks
             if '`!' in command:
-                expression = command.split('`!')[1].strip().split('`')[0]                
+                expression = command.split('`!')[1].strip().split('`')[0]
                 result = metta_instance.eval(expression)
                 return result, True
 
             if '`(' in command:
-                expression = command.split('`(')[1].strip().split('`')[0]                
+                expression = command.split('`(')[1].strip().split('`')[0]
                 result = metta_instance.exec(expression)
                 return result, True
 
