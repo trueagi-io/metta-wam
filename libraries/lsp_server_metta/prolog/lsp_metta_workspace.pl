@@ -1,3 +1,5 @@
+:- module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_metta_workspace.pl
 %
@@ -48,7 +50,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
 %:- module(lsp_metta_workspace, [
 %                        xref_metta_source/1]).
@@ -286,7 +288,7 @@ xref_enqueue_file(File) :- xref_file_queue(File),!.
 xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File),!.
 xref_enqueue_file(Path):- disable_thread_system, !, xref_source_now_maybe(Path).
 xref_enqueue_file(File) :-
-    xref_ensure_worker_thread_running(),
+    xref_ensure_worker_thread_running,
     xref_update_file_state(File, submitted),
     ( xref_file_queue(File) ->
         true  % File is already in the queue; do nothing
@@ -356,7 +358,7 @@ xref_update_file_state(File, State) :-
     assertz(xref_file_state(File, State)).
 
 % Worker thread for processing files
-xref_ensure_worker_thread_running() :-
+xref_ensure_worker_thread_running :-
     ( xref_thread_control(ThreadID) ->
         ( thread_property(ThreadID, status(running)) ->
             true  % The thread is running; do nothing

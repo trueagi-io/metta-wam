@@ -1,7 +1,16 @@
-%:- module(lsp_metta_outline, [
-%                        xref_document_symbols/2,
-%                        xref_metta_source/1]).
+:- module(lsp_metta_outline, [
+              xref_document_symbols/2,
+              xref_document_symbol/5
+              ]).
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace, [ xref_metta_source/1,
+                                     maybe_doc_path/2,
+                                     doc_path/2,
+                                     into_json_range/2
+                                   ]).
+
+:- use_module(lsp_metta_hover, [ is_documented/1 ]).
 
 :- dynamic(lsp_cache:gave_document_symbols/2).
 :- retractall(lsp_cache:gave_document_symbols(_, _)). % when we reload this file

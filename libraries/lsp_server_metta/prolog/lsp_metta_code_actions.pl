@@ -1,3 +1,5 @@
+:- module(lsp_metta_code_actions, []).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Actions with ChatGPT Integration
 %
@@ -86,14 +88,6 @@ lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
 :- use_module(library(http/http_open)).
 :- use_module(library(http/http_json)).
 :- use_module(library(readutil)).
-% General Helper Predicates
-% These helpers are used across different handlers.
-safe_clause_call(Head):- clause(Head,Body), catch(Body,_,true).
-
-must_succeed(G):- call(G)*->true;fail.
-
-must_succeed1((A,B)):- !, must_succeed1(A),must_succeed1(B),!.
-must_succeed1(G):- call(G)->true;(throw(failed_succeed(G)),fail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request

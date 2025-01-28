@@ -1,10 +1,15 @@
+:- module(lsp_metta_references, []).
+
+:- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+
+% textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
+
 %! metta_called_at(+Path:atom, +Term:term, -By:term, -Location:term) is nondet.
 %  Find the callers and locations of the goal =Term=, starting from
 %  the file =Path=. =Location= will be bound to all the callers and
 %  locations that the =Term= is called from like =Caller-Location=.
-:- include(lsp_metta_include).
-
-% textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
 metta_called_at(Path, Term, By, Location) :-
   matta_name_callable(Term, Callable),
   xref_metta_source(Path),

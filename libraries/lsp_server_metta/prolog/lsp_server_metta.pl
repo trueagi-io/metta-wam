@@ -61,17 +61,17 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 */
 
 % will change to module in a few days (easier to test externally from `user`)
-:- user:ensure_loaded(lsp_metta_code_actions).
-:- user:ensure_loaded(lsp_metta_save_actions).
-:- user:ensure_loaded(lsp_metta_hover).
-:- user:ensure_loaded(lsp_metta_workspace).
-:- user:ensure_loaded(lsp_metta_references).
-:- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
+:- use_module(lsp_metta_code_actions).
+:- use_module(lsp_metta_save_actions).
+:- use_module(lsp_metta_hover).
+:- use_module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+:- use_module(lsp_metta_references).
+:- use_module(lsp_metta_outline, [ xref_document_symbol/5, xref_document_symbols/2 ]).
 :- dynamic(lsp_state:full_text/2).
-:- user:ensure_loaded(lsp_prolog_changes).
-:- user:ensure_loaded(lsp_prolog_checking).
-:- user:ensure_loaded(lsp_prolog_colours).
-:- user:ensure_loaded(lsp_prolog_utils).
+:- use_module(lsp_prolog_changes).
+:- use_module(lsp_prolog_checking).
+:- use_module(lsp_prolog_colours).
+:- use_module(lsp_prolog_utils).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 
@@ -526,7 +526,9 @@ handle_request(JobId, JobInfo, OutStream, Req) :-
         ( get_time(StartTime),
           time_diff_string(PostTime, StartTime, "Waited", DurationPostToStart),
           debug_lsp(high, "Request ~w started after ~w", [JobInfo, DurationPostToStart]),
-          debug_lsp(high, "..~q.", [Req]),
+          ( user:nodebug_lsp_request(Method)
+          -> debug_lsp(high, "..{method: ~w, params: ...}", [Method])
+          ; debug_lsp(high, "..~q.", [Req]) ),
 
           % Process the request
           catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
@@ -576,6 +578,8 @@ handle_request(JobId, JobInfo, OutStream, Req) :-
             )
         ))
     ).
+
+user:nodebug_lsp_request("textDocument/didOpen").
 
 % Hide responses for certain methods
 user:nodebug_lsp_response("textDocument/hover").
@@ -738,7 +742,8 @@ handle_msg("initialize", Msg,
 
 handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
     _{id: Id} :< Msg,
-    debug_lsp(main, "received shutdown message", []).
+    debug_lsp(main, "received shutdown message", []),
+    halt.
 
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
@@ -770,7 +775,8 @@ handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallb
 %     maplist(convert_docsymbol_json,DocKinds,DocJson).
 
 handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
-     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
+     xref_document_symbols(Doc, Symbols),
      assertion(is_list(Symbols)), !.
 %handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, error: _{ code: -32602, message: "No symbol changes" }}):-!.
 handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: null}) :- !. % No symbol changes

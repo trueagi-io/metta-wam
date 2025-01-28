@@ -1,3 +1,6 @@
+:- module(lsp_metta_hover, [ hover_at_position/4,
+                             is_documented/1
+                           ]).
 /** <module> LSP Utils
 
 Module with a bunch of helper predicates for looking through prolog
@@ -10,6 +13,7 @@ source and stuff.
 */
 :- include(lsp_metta_include).
 
+:- use_module(lsp_metta_workspace, [ metta_atom_xref/1 ]).
 
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
