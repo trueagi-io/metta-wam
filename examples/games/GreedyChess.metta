@@ -110,21 +110,6 @@
 ;
 
 ;
-;!(concat_lists ((1 2 3)  (4 5) (6) (7 8 0) () ) )
-;
-;#( = #(nth 0 ($A 
-;(= (nth $A #(Cons $B $C) $B)  
-;  (= $A  1))
-;(= (nth $A #(Cons $B $C) $D) (is $E (- $A 1)) (nth $E $C $D))
-;
-;
-;(= (nth1 $Index $_ $_) (< $Index 1) (fail) (set-det))
-;; /* copied from dbd2 */
-;(= (nth1 1 #(Cons $Element $Rest) $Element)  
-;  (set-det))
-;(= (nth1 $I #(Cons $First $List1) $Element) (is $Index (- $I 1)) (nth1 $Index $List1 $Element))
-;
-;
 ;#( = #(removelists () $A $A) True )
 ;; /* apparently swipl used: nth1(A, B, C):-integer(A), !, D is A-1, nth0_det(D, B, C). nth1(A, B, C):-var(A), ;!, nth_gen(B, C, 1, A). */
 ;(= (removelists #(Cons $A $B) #(Cons $A $C) $D)  
@@ -182,128 +167,7 @@
 !(add-atom &self (console-messages (initializing)))
 
 ;*******************************************************
-; Commands.  The game is executed using the following commands.
-;*******************************************************
-
-; This command must be invoked at startup with "!(chess)"
-(= (chess) 
-  (match &self (console-messages $msg)
-    ; if first invocation, just create board
-    (if (==  (initializing)   $msg) ; then  
-      (progn (  
-        ; remove the 'initializing' message
-        (remove-atom &self (console-messages $msg)) 
-        ; create the board for the first time
-        (add-atom &self 
-          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
-                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
-                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
-                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
-        )
-        ; indicate game has passed the initializing state
-        (add-atom &self (console-messages (started)))
-        ; display welcome messages and board
-        (welcome)))
-    ; elif there has already been one game played
-    (if (==  (started)   $msg) ; then
-      (progn (
-        ; remove the old chess board
-        (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
-        ; re-create a new board 
-        (add-atom &self           
-          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
-                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
-                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
-                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
-        )
-        ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
-        ;
-        ; display welcome messages and board
-        (welcome)))
-    (; else if
-        empty))))) 
-
-; The move command moves the human player's piece.
-;(: M (-> command))
-(= (M)  
-  (progn 
-    ; prompt for x/y location
-    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-    ((py-atom print) "Enter coordinates.")
-    (let $coordinates ((py-atom input)) ())
-    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-    (if (not (== $f $g))                      ; Ensure source and destination are not the same.
-    (progn (
-    ;return_entire_box(F, H, E),  % Retrieve the source box details.
-    ;return_entire_box(G, I, E),  % Retrieve the destination box details.
-    ;if (len(I, 2); not(samecolor(H, I))), % Ensure the destination is valid (empty or opponent's piec
-    )
-    
-    )
-    ; exception conditions are in reverse order of 'if' statements...
-    ((py-atom print) "Cannot move to same location"))    
-  )
-)
-
-
-;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
-;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
-;
-
-;
-(: G (-> command))
-(= (G)  
-  ((py-atom print) "Greedy chess moving"))
-
-;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
-;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
-;(= (g) (board $A) (playdefenseR $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) (b ;$B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (takehighestopen $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (movetoposition $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (takehighestopenpawn $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (random_move_empty_sq $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (printmove $C $D $A) (set-det))
-;
-
-; The reset command will start the game over.
-(: R (-> command))
-(= (R)  
-  (chess))
-
-; The "commands" command just lists the available commands.
-(: C (-> command))
-(= (C) 
-  (progn
-    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
-    ((py-atom print) (format-args "-------- C o m m a n d s -----------" ()))
-    ((py-atom print) (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
-    ((py-atom print) (format-args "  Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
-    ((py-atom print) (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
-    ((py-atom print) (format-args "3 Reset                            ->  R" ()))
-    ((py-atom print) (format-args "4 Commands List                    ->  C" ()))
-    ((py-atom print) (format-args "5 Display Board                    ->  D" ()))
-    ((py-atom print) (format-args "6 Quit                             ->  Q" ()))
-    ((py-atom print) (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
-;
-
-; The display command shows the present board.
-(: D (-> command))
-(= (D) (display_board (match &self (board-state $board) $board)))
-
-;*******************************************************
-; Code invoked by the basic commands (above) or elsewhere follow
+; Code invoked by the basic commands 
 ;*******************************************************
 
 ; Invoke with empty list, will return characters input from console until ENTER.
@@ -389,49 +253,6 @@
       " 
       
           $a)))))
-
-;*******************************************************
-;   M A I N   C O M M A N D   L O O P
-;*******************************************************
-(= (command-loop)
-  (progn 
-   (((py-atom print) "Please enter your command.")
-    (let $command ((py-atom input))   ; get user command
-    ; case statement for commands
-    (if (== $command "M") 
-        (progn (
-          (M)                          ; Move human piece 
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "G")
-        (progn (
-          (G)                          ; AI move
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "R")
-        (progn (
-          (R)                          ; Reset = "R"
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "C")
-        (progn (
-          (C)                          ; List valid commands = "C"
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "D")
-        (progn (
-          (D)                          ; Display board "D"
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "Q")              ; EXIT HERE
-          ((py-atom print) "Quitting MeTTa Greedy Chess.")
-    ; otherwise
-    (progn (
-        ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
-        (command-loop)))))))))))))
-
-;-----------;
-(= (main_loop) 
-  (progn
-   ((chess)           ; Start the chess game
-    (command-loop)))) ; Enter the recursive command-processing loop
-!(main_loop)
-;-----------;
 
 ;
 ;
@@ -545,9 +366,30 @@
 ;(= (take_dest $A $B $C) (takingboxes $B $C $D) (set-det) (list_clear_route $C $A $D $E) (set-det) (\== $E Nil))
 ;
 ;
-;(= (return_entire_box $A $B #(Cons $C $D)) (nth1 1 $C $E) (nth1 2 $C $F) (concat_lists #( :: (#( :: ($E) ) #( ;:: ($F) )) ) $G) (== $G $A) (= $B  $C) (set-det))
-;(= (return_entire_box $A $B #(Cons $C $D)) (return_entire_box $A $B $D) (set-det))
+
+;   (return_entire_box)
+;   Retrieve the full details of a square on the board based on its coordinates
+;   using a sequential search.
+;   
+;   Input:
+;   $Coordinates The coordinates of the desired square.
+;   $Board The current board configuration.
 ;
+;   Returns:
+;   $next-square The full contents of square.
+(= (return_entire_box $Coordinates $Board) 
+  (let*
+    ;examine the next square on the board
+    (($next-square (car-atom $Board)  )
+    ($X (nth 1 $next-square) )
+    ($Y (nth 2 $next-square) )
+    ($G (concat_lists (($X) ($Y))) ))
+    ; then execute
+    (if (== $G $Coordinates) 
+      $next-square
+      (return_entire_box $Coordinates (cdr-atom $Board)))
+   ) 
+)
 ;
 ;(= (xy_box $A #( :: ($B $C) ) #(Cons $D $E)) (len $D 4) (nth1 3 $D $F) (nth1 4 $D $G) (== $B $F) (== $C $G) ;(nth1 1 $D $H) (nth1 2 $D $I) (concat_lists #( :: (#( :: ($H) ) #( :: ($I) )) ) $A))
 ;(= (xy_box $A $B #(Cons $C $D))  
@@ -800,3 +642,172 @@
 ;
 ;
 ;#( = #(concat_lists () ()) True )
+
+;*******************************************************
+; Basic commands.  The game is executed using the following commands.
+;*******************************************************
+
+; This command must be invoked at startup with "!(chess)"
+(= (chess) 
+  (match &self (console-messages $msg)
+    ; if first invocation, just create board
+    (if (==  (initializing)   $msg) ; then  
+      (progn (  
+        ; remove the 'initializing' message
+        (remove-atom &self (console-messages $msg)) 
+        ; create the board for the first time
+        (add-atom &self 
+          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
+                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
+        )
+        ; indicate game has passed the initializing state
+        (add-atom &self (console-messages (started)))
+        ; display welcome messages and board
+        (welcome)))
+    ; elif there has already been one game played
+    (if (==  (started)   $msg) ; then
+      (progn (
+        ; remove the old chess board
+        (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
+        ; re-create a new board 
+        (add-atom &self           
+          (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
+                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
+        )
+        ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
+        ;
+        ; display welcome messages and board
+        (welcome)))
+    (; else if
+        empty))))) 
+
+; The move command moves the human player's piece.
+;(: M (-> command))
+(= (M)  
+  (progn 
+    ; prompt for x/y location
+    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
+    ((py-atom print) "Enter coordinates.")
+    (let $coordinates ((py-atom input)) ())
+    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
+    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
+    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
+    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
+    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
+    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+    (match &self (board-state $starting_board) $starting_board)
+    (if (not (== $f $g))                      ; Ensure source and destination are not the same.
+    (
+    (println! (return_entire_box $f  $starting_board))               ; Retrieve the source box details.
+    (println! (return_entire_box $g  $starting_board))               ; Retrieve the source box details.
+    )
+    ;return_entire_box(G, I, E),  % Retrieve the destination box details.
+    ;if (len(I, 2); not(samecolor(H, I))), % Ensure the destination is valid (empty or opponent's piec
+    ;)
+    
+    ;)
+    ; exception conditions are in reverse order of 'if' statements...
+    ((py-atom print) "Cannot move to same location")
+    )
+  )
+)
+
+
+
+;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
+;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
+;
+
+;
+(: G (-> command))
+(= (G)  
+  ((py-atom print) "Greedy chess moving"))
+
+;(= (g) (guimessage checkmate $A $B) (write 'Game over.') (nl) (set-det))
+;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
+;(= (g) (board $A) (playdefenseR $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) (b ;$B) (examine_king $B s g) (printmove $C $D $A) (set-det))
+;(= (g) (board $A) (takehighestopen $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
+;(= (g) (board $A) (movetoposition $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
+;(= (g) (board $A) (takehighestopenpawn $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
+;(= (g) (board $A) (random_move_empty_sq $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (printmove $C $D $A) (set-det))
+;
+
+; The reset command will start the game over.
+(: R (-> command))
+(= (R)  
+  (chess))
+
+; The "commands" command just lists the available commands.
+(: C (-> command))
+(= (C) 
+  (progn
+    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
+    ((py-atom print) (format-args "-------- C o m m a n d s -----------" ()))
+    ((py-atom print) (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
+    ((py-atom print) (format-args "  Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
+    ((py-atom print) (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
+    ((py-atom print) (format-args "3 Reset                            ->  R" ()))
+    ((py-atom print) (format-args "4 Commands List                    ->  C" ()))
+    ((py-atom print) (format-args "5 Display Board                    ->  D" ()))
+    ((py-atom print) (format-args "6 Quit                             ->  Q" ()))
+    ((py-atom print) (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
+;
+
+; The display command shows the present board.
+(: D (-> command))
+(= (D) (display_board (match &self (board-state $board) $board)))
+
+;*******************************************************
+;   M A I N   C O M M A N D   L O O P
+;*******************************************************
+(= (command-loop)
+  (progn 
+   (((py-atom print) "Please enter your command.")
+    (let $command ((py-atom input))   ; get user command
+    ; case statement for commands
+    (if (== $command "M") 
+        (progn (
+          (M)                          ; Move human piece 
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "G")
+        (progn (
+          (G)                          ; AI move
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "R")
+        (progn (
+          (R)                          ; Reset = "R"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "C")
+        (progn (
+          (C)                          ; List valid commands = "C"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "D")
+        (progn (
+          (D)                          ; Display board "D"
+          (command-loop)))             ; Get next command, stay in loop.
+    (if (== $command "Q")              ; EXIT HERE
+          ((py-atom print) "Quitting MeTTa Greedy Chess.")
+    ; otherwise
+    (progn (
+        ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
+        (command-loop)))))))))))))
+
+;-----------;
+(= (main_loop) 
+  (progn
+   ((chess)           ; Start the chess game
+    (command-loop)))) ; Enter the recursive command-processing loop
+!(main_loop)
+;-----------;
