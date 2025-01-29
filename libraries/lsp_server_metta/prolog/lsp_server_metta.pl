@@ -715,11 +715,12 @@ handle_msg(Method, Msg, _) :-
    %Method \== "textDocument/hover",
    Method \== "textDocument/semanticTokens/range",
    % Method =="textDocument/codeAction" % is the most authoratative
-    once((  _{params: Params} :< Msg,
-      _{ range: Range } :< Params,
-      retractall(lsp_state:last_range(Method,_)),
-      asserta(lsp_state:last_range(Method,Range)))),
-      fail.
+    once(( _{params: Params} :< Msg,
+           is_dict(Params),
+           _{ range: Range } :< Params,
+           retractall(lsp_state:last_range(Method,_)),
+           asserta(lsp_state:last_range(Method,Range)) )),
+    fail.
 
 
 handle_msg(Method, Msg, Response):-
