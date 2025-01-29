@@ -417,7 +417,7 @@ catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
         ( canceled_signal(Err) ->
             throw(Err)
-        ; ((with_output_to(user_errr,print_message(error, Err)),
+        ; ((with_output_to(user_error,print_message(error, Err)),
             debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
             throw(Err)
          ))
