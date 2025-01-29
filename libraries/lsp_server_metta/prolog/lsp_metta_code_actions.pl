@@ -79,6 +79,10 @@
                                  xref_call/1
                                ]).
 
+:- use_module(lsp_metta_utils, [ get_code_at_range/4,
+                                 get_src_code_at_range/4
+                               ]).
+
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
     clause(handle_code_action_msg(Method, Msg, Result), Body), !,

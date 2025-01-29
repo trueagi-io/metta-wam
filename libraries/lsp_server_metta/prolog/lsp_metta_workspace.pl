@@ -2,6 +2,7 @@
                                  into_json_range/2,
                                  into_line_char/2,
                                  into_line_char_range/2,
+                                 metta_atom_xref/1,
                                  metta_atom_xref/3,
                                  path_doc/2,
                                  skip_xref_atom/1,

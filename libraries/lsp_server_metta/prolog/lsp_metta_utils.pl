@@ -1,4 +1,7 @@
-:- module(lsp_metta_utils, [clause_with_arity_in_file_at_position/4]).
+:- module(lsp_metta_utils, [ clause_with_arity_in_file_at_position/4,
+                             get_code_at_range/4,
+                             get_src_code_at_range/4
+                           ]).
 
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).

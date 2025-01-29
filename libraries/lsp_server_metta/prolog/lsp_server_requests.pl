@@ -54,6 +54,7 @@ Assumptions:
 
 :- include(lsp_metta_include).
 
+:- use_module(lsp_metta_workspace, [into_json_range/2]).
 
 receive_response(MsgId, MsgBody):-
   debug_lsp(requests,begin_receive_response(MsgId)),
