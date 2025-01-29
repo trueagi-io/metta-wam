@@ -204,7 +204,6 @@ handle_requests(_, T, T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Handle requests that need immediate or cancellable responses
-immediate_method(Request) :- is_dict(Request), !, immediate_request(Request).
 immediate_method("$/cancelRequest").
 immediate_method(TM) :- cancelable_method(TM), !, fail.
 % immediate_method(_). % This line would act as a fallback for "immediate" methods, allowing any request method not specified as "cancellable" to be treated as immediate if uncommented.
