@@ -1,6 +1,8 @@
 :- module(lsp_metta_colours, [
                         token_types/1,
-                        token_modifiers/1]).
+                        token_modifiers/1,
+                        metta_colours/2
+          ]).
 
 % these are LSP token types/modifiers.
 

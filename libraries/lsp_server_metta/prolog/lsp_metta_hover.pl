@@ -1,6 +1,8 @@
 :- module(lsp_metta_hover, [ hover_at_position/4,
                              is_documented/1,
-                             get_code_at_range_type/1
+                             get_code_at_range_type/1,
+                             each_type_at_sorted/2,
+                             xref_call/1
                            ]).
 /** <module> LSP Utils
 

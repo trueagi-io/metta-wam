@@ -1,4 +1,6 @@
-:- module(lsp_metta_code_actions, [ metta_to_json/2 ]).
+:- module(lsp_metta_code_actions, [ metta_to_json/2,
+                                    lsp_call_metta/2
+                                  ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Actions with ChatGPT Integration

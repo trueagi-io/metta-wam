@@ -1,6 +1,7 @@
 :- module(lsp_metta_outline, [
               xref_document_symbols/2,
-              xref_document_symbol/5
+              xref_document_symbol/5,
+              line_col/2
               ]).
 :- include(lsp_metta_include).
 
