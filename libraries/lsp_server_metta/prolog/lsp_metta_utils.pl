@@ -1,7 +1,5 @@
-not_mod_lsp_metta_utils
-:- module(lsp_metta_utils, [
-                        clause_with_arity_in_file_at_position/4
-                        ]).
+:- module(lsp_metta_utils, [clause_with_arity_in_file_at_position/4]).
+
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
 :- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
