@@ -258,7 +258,7 @@ term_info_string_resolved(Path, Loc, Term, Arity, Str):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 in_markdown(G):- setup_call_cleanup(format('~n```~n', []), G, format('~n```lisp~n')).
 banner_for(Type, Target):- in_markdown(format('---~n ## ~w: ~w', [Type, Target])).
-lsp_separator():- in_markdown(format('---',[])).
+lsp_separator :- in_markdown(format('---',[])).
 
 show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
@@ -299,18 +299,18 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
 % Vitaly's initial impl of Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
-    lsp_separator(),
-    xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+    lsp_separator,
+    xref_call(eval(['help!', Target], _)), lsp_separator.  % Evaluate the help command for the term.
 
 
 
 lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
-  lsp_separator(),
+  lsp_separator,
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
      true)))*->true; (Try=Term,Type='%Undefined%')),
    in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvars(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
-   lsp_separator().
+   lsp_separator.
 
 %
 some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
@@ -321,11 +321,11 @@ lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
   ArityDoc \== [],  % Ensure the documentation is not empty.
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
-  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator() .  % Output a message if there's an arity mismatch.
+  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator.  % Output a message if there's an arity mismatch.
 
 
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
-  lsp_separator(),
+  lsp_separator,
   each_type_at_sorted(Target, Term, AtPath, AtLoc, Type),
   write_src_xref(Term, Type, AtPath, AtLoc).  % Write the source cross-reference for the atom.
 
@@ -345,9 +345,9 @@ A1: whY
 </details>
 */
 lsp_hooks:hover_print(Path, Loc, Term, Arity):- debug_positions,
-  lsp_separator(),
+  lsp_separator,
   setup_call_cleanup(
-     lsp_separator(),
+     lsp_separator,
      debug_positions(Path, Loc, Term, Arity),
      in_markdown(format('~n</details>~n'))).
 
