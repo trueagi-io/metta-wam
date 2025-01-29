@@ -48,6 +48,22 @@ process_file() {
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
     DEBUG "==========================================================================="
 
+
+    # gets any other names as well 
+    export hyperon_results=(${file}.*)
+    # List of extensions to prioritize if the above explansion didnt file anything
+    extensions=( ".unknown_error" ".aborted" ".SIGKILLED" ".timeout" ".test_error" ".answers" ".old_answers")
+    # try to guess the results file   
+    for ext in "${extensions[@]}"; do      
+      related_file="${base_name}${ext}"
+      # Check for each file with the specified extensions
+      if [[ -f "$related_file" ]]; then
+          DEBUG "Found: $related_file"
+          export hyperon_results=$related_file
+      fi
+    done
+    DEBUG "Results are saved to $hyperon_results"
+
     # Add unique absolute paths to PYTHONPATH
     pp1=$(readlink -m "$(dirname "${file}")")
     pp2=$(readlink -m "$(dirname "${pp1}")")
@@ -68,15 +84,15 @@ process_file() {
 
     should_regenerate=false
 
-    if [ -f "${file}.answers" ]; then
-	if grep -q "Got" "${file}.answers"; then
+    if [ -f "${hyperon_results}" ]; then
+	if grep -q "Got" "${hyperon_results}"; then
 	    should_regenerate=true
-	    DEBUG_WHY "Failures found in ${file}.answers"
+	    DEBUG_WHY "Failures found in ${hyperon_results}"
 	else
-	    DEBUG_WHY "No failures are found in ${file}.answers"
+	    DEBUG_WHY "No failures are found in ${hyperon_results}"
 	fi
     else
-	DEBUG_WHY "Missing ${file}.answers"
+	DEBUG_WHY "Missing ${hyperon_results}"
     fi
 
     # Perform the checks and set the boolean
@@ -85,12 +101,12 @@ process_file() {
 	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
     fi
 
-    if [ ! -f "${file}.answers" ]; then
+    if [ ! -f "${hyperon_results}" ]; then
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Answers file does not exist."
-    elif [ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]; then
-	should_regenerate=true
-	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
+    elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
+	#should_regenerate=true
+	DEBUG_WHY "Should regenerate: Original file is newer than results file and results file is not empty."
     fi
 
     if $should_regenerate; then
@@ -103,9 +119,9 @@ process_file() {
     # Use the boolean to drive the decision
     if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
-        #IF_REALLY_DO cat /dev/null > "${file}.answers"
-        IF_REALLY_DO rm -f "${file}.answers"
-        # git checkout "${file}.answers"
+        #IF_REALLY_DO cat /dev/null > "${hyperon_results}"
+        #IF_REALLY_DO rm -f "${hyperon_results}"
+        # git checkout "${hyperon_results}"
 
         # Function to handle SIGKILL
         handle_sigkill() {
@@ -140,12 +156,12 @@ process_file() {
 	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_METTA_MAX_TIME seconds"
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
-
-	    if grep -q "Got" "${file}.answers"; then
-		      DEBUG "${RED}Failures in Rust Answers${NC}"
+	    if [ -f "${hyperon_results}" ]; then
+		if grep -q "Got" "${hyperon_results}"; then
+		    DEBUG "${RED}Failures in Rust Answers${NC}"
+		fi
+		echo INFO >> "${hyperon_results}"
 	    fi
-
-	    echo INFO >> "${file}.answers"
 
         ) || true
         stty sane
@@ -155,7 +171,7 @@ process_file() {
 
        trap - SIGKILL
     else
-        DEBUG "Kept: $file.answers"
+        DEBUG "Kept: $hyperon_results"
     fi
 
     if [ "$if_regressions" -eq 1 ]; then
@@ -889,6 +905,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     DEBUG "Skipping report generation."
 fi
+
 
 
 

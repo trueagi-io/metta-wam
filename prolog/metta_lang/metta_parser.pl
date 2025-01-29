@@ -692,7 +692,7 @@ count_lines_in_file(FileName, LineCount) :-
     process_create(path(wc), ['-l', FileName], [stdout(pipe(Out))]),
     read_line_to_string(Out, Result),  % Read the output from the `wc -l` command
     close(Out),  % Close the stream
-    split_string(Result, " ", "", [LineStr|_]),  % Extract the line count
+    split_string(Result, " ", " ", [LineStr|_]),  % Extract the line count
     number_string(LineCount, LineStr).  % Convert the string to an integer
 
 % Helper predicate to read lines from a stream until EOF, incrementing a counter.

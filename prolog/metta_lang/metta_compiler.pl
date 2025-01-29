@@ -142,7 +142,7 @@ arg_eval_props(N,x(doeval,eager,[])) :- atom(N),N='Any',!.
 arg_eval_props(N,x(noeval,lazy,[])) :- atom(N),N='Atom',!.
 arg_eval_props(N,x(noeval,eager,[])) :- atom(N),N='Expression',!.
 arg_eval_props(['->'|_],x(noeval,eager,[[predicate_call]])) :- !.
-arg_eval_props(_,x(doeval,eager,[])).
+arg_eval_props(N,x(doeval,eager,[N])).
 
 %NOTE TODO: as_p1() and is_p1 are going away soon
 
@@ -535,6 +535,7 @@ merge_types(List,Types):- list_to_set(List,Types),!.
 get_just_types_of(V,Types):- get_types_of(V,VTypes),exclude(is_functor_val,VTypes,Types).
 
 get_types_of(V,Types):- attvar(V),get_attr(V,cns,_Self=Types),!.
+get_types_of(V,Types):- compound(V),V=list(_),!,Types=['Expression'].
 get_types_of(V,Types):- compound(V),V=arg(_,_),!,Types=[V].
 get_types_of(V,Types):- findall(Type,get_type_for_args(V,Type),Types).
 
