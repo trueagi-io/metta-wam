@@ -696,31 +696,35 @@
 ; The move command moves the human player's piece.
 ;(: M (-> command))
 (= (M)  
-  (progn 
-    ; prompt for x/y location
-    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-    ((py-atom print) "Enter coordinates.")
-    (let $coordinates ((py-atom input)) ())
-    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-    (match &self (board-state $starting_board) $starting_board)
-    (if (not (== $f $g))                      ; Ensure source and destination are not the same.
-    (
-    (println! (return_entire_box $f  $starting_board))               ; Retrieve the source box details.
-    (println! (return_entire_box $g  $starting_board))               ; Retrieve the source box details.
-    )
-    ;return_entire_box(G, I, E),  % Retrieve the destination box details.
-    ;if (len(I, 2); not(samecolor(H, I))), % Ensure the destination is valid (empty or opponent's piec
-    ;)
+  (progn (
+  ; prompt for x/y location
+  ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
+  ; add edit to make sure move within boundaries!
+  (py-atom print) "Enter coordinates.")
+  (let $coordinates ((py-atom input)) ())
+  (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
+  (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
+  (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
+  (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
+  (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
+  (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+  (match &self (board-state $starting_board) $starting_board)
+  ; if source location and destination are the same fail
+  (if (== $f $g)                            
+    ((py-atom print) "Invalid move.")
+  ;else continue
+  (progn (
+  (let $h (return_entire_box $f  $starting_board) ())               ; Retrieve the source box details.
+  (let $i (return_entire_box $g  $starting_board) ())               ; Retrieve the destination box details.
+  ; if destination is not empty or destination has same color piece fail
+  (if (not (or (== (size-atom $i) 2) (not (== (nth 3 $h) (nth 3 $i)) )))
+    ((py-atom print) "Invalid move.") 
+    (println! "continuing")
+     )
+        )
+  )
     
-    ;)
-    ; exception conditions are in reverse order of 'if' statements...
-    ((py-atom print) "Cannot move to same location")
-    )
+  )
   )
 )
 
