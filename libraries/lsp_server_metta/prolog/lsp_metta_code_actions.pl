@@ -1,4 +1,4 @@
-:- module(lsp_metta_code_actions, []).
+:- module(lsp_metta_code_actions, [ metta_to_json/2 ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Actions with ChatGPT Integration
@@ -71,6 +71,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_hover, [ get_code_at_range_type/1,
+                                 xref_call/1
+                               ]).
 
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
@@ -299,7 +304,7 @@ load_metta_code(For, Uri, Code, Result) :-
 % Helper Predicate: maybe_parse_sexpr_metta1/2
 maybe_parse_sexpr_metta1(Code, Parsed) :-
     string(Code),
-    catch(parse_sexpr_metta1(Code, Parsed), _, fail), !.
+    catch(read_metta(Code, Parsed), _, fail), !.
 maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 
 % The report_diagnostics/3 predicate would be defined elsewhere.
@@ -701,4 +706,3 @@ symbol_reference_uri(Symbol, Location) :-
         uri: Uri,                      % Document URI for the symbol reference
         range: JRange                  % Range within the document
     }.
-

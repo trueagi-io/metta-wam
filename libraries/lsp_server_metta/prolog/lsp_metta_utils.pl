@@ -9,8 +9,15 @@ not_mod_lsp_metta_utils
 :- use_module(lsp_metta_split, [
         split_document_get_section_only/4
 ]).
+:- use_module(lsp_metta_workspace, [ maybe_doc_path/2,
+                                     into_json_range/2,
+                                     into_line_char_range/2,
+                                     source_file_text/2
+                                   ]).
 
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace, [succl/2]).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 

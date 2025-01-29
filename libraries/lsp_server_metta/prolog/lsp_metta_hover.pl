@@ -1,5 +1,6 @@
 :- module(lsp_metta_hover, [ hover_at_position/4,
-                             is_documented/1
+                             is_documented/1,
+                             get_code_at_range_type/1
                            ]).
 /** <module> LSP Utils
 
@@ -13,7 +14,9 @@ source and stuff.
 */
 :- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [ metta_atom_xref/1 ]).
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_references, [ type_expand/2 ]).
+:- use_module(lsp_metta_code_actions, [ lsp_call_metta/2 ]).
 
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
@@ -482,7 +485,7 @@ position_line(Position, Line2):-
    into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
 % Emacs does return a Client Configuration List
-is_in_emacs :- fail, \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
+is_in_emacs :- fail, \+ ( lsp_state:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
 
 end_of_file.

@@ -1,8 +1,13 @@
-:- module(lsp_metta_references, []).
+:- module(lsp_metta_references, [ type_expand/2,
+                                  type_defined_at/4
+                                ]).
 
 :- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_hover, [each_type_at_sorted/2]).
+:- use_module(lsp_metta_outline, [line_col/2]).
+:- use_module(lsp_prolog_utils, [prolog_defined_at/3]).
 
 % textDocument/references: returns a list of specific locations where the symbol is referenced or called from. Moreover, it includes the results from textDocument/implementation (which itself includes textDocument/definition and textDocument/declaration), providing a comprehensive overview of the symbol's usage across the codebase.
 

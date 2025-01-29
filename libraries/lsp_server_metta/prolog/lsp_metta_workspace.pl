@@ -1,4 +1,18 @@
-:- module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+:- module(lsp_metta_workspace, [ doc_path/2,
+                                 into_json_range/2,
+                                 into_line_char/2,
+                                 into_line_char_range/2,
+                                 metta_atom_xref/3,
+                                 path_doc/2,
+                                 skip_xref_atom/1,
+                                 source_file_text/2,
+                                 succl/2,
+                                 xref_maybe/2,
+                                 xref_metta_source/1,
+                                 xref_metta_source/1,
+                                 xref_reload_source/1,
+                                 xref_source_expired/1
+                               ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_metta_workspace.pl
@@ -51,6 +65,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_outline, [line_col/2]).
 
 %:- module(lsp_metta_workspace, [
 %                        xref_metta_source/1]).

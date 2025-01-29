@@ -61,16 +61,17 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 */
 
 % will change to module in a few days (easier to test externally from `user`)
-:- use_module(lsp_metta_code_actions).
+:- use_module(lsp_metta_code_actions, [ lsp_call_metta/2, metta_to_json/2 ]).
 :- use_module(lsp_metta_save_actions).
-:- use_module(lsp_metta_hover).
-:- use_module(lsp_metta_workspace, [ xref_metta_source/1 ]).
+:- use_module(lsp_metta_hover, [ get_code_at_range_type/1 ]).
+:- use_module(lsp_metta_workspace).
 :- use_module(lsp_metta_references).
 :- use_module(lsp_metta_outline, [ xref_document_symbol/5, xref_document_symbols/2 ]).
 :- dynamic(lsp_state:full_text/2).
 :- use_module(lsp_prolog_changes).
 :- use_module(lsp_prolog_checking).
 :- use_module(lsp_prolog_colours).
+:- use_module(lsp_metta_colours, [ metta_colours/2 ]).
 :- use_module(lsp_prolog_utils).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
