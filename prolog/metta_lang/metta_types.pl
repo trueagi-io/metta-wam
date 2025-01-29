@@ -574,7 +574,7 @@ get_type_each(Depth, _Slf, _Type, _) :-
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
-get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),member(Type,Set).
+get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),is_list(Set),member(Type,Set).
 
 get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
@@ -585,7 +585,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
     var(Var), !,
-    get_attr(Var, cns, Self = TypeList),
+    get_attr(Var, cns, Self = TypeList),is_list(TypeList),
     member(Type, TypeList).
 get_type_each(_Dpth, _Slf, Expr, 'hyperon::space::DynSpace') :-
     % Check if the expression is a dynamic space.
@@ -1271,7 +1271,7 @@ get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Try to retrieve the type definition from cache, or fallback to other strategies.
     if_or_else(
         get_operator_typedef0(Self, Op, Len, ParamTypes, RetType),
-            get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
+        get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
         get_operator_typedef2(Self, Op, Len, ParamTypes, RetType)).
 
 %!  get_operator_typedef_R(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
@@ -1323,6 +1323,15 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator (default is `'AnyRet'`).
 %
+get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_concat(_,'!',Op);symbol_concat(_,'@',Op)),!,
+    % Default return type is 'AnyRet'.
+    ignore('Atom' = RetType),
+    % Ensure all parameter types are valid evaluation kinds.
+    maplist(=('Atom'), ParamTypes),
+    % Cache the result for future lookups.
+    assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
+    % nop(wdmsg(missing(get_operator_typedef2(Self, Op, ParamTypes, RetType)))), !, fail.
+
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     % Default return type is 'AnyRet'.
     ignore('AnyRet' = RetType),
@@ -1548,10 +1557,12 @@ set_type(Depth, Self, Var, Type) :-
 %   @arg Type     The new type to add.
 %
 add_type(_Depth, _Self, _Var, TypeL, Type) :-
+    is_list(TypeL),
     % If the type is already in the list, do nothing.
     \+ \+ (member(E, TypeL), E == Type), !.
 add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
+    is_list(TypeL),
     append([Type], TypeL, TypeList),
     put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-

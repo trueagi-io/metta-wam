@@ -105,7 +105,7 @@ process_file() {
 	should_regenerate=true
 	DEBUG_WHY "Should regenerate: Answers file does not exist."
     elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
-	should_regenerate=true
+	#should_regenerate=true
 	DEBUG_WHY "Should regenerate: Original file is newer than results file and results file is not empty."
     fi
 
