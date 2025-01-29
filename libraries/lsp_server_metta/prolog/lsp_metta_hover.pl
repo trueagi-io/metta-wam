@@ -309,7 +309,7 @@ lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
      true)))*->true; (Try=Term,Type='%Undefined%')),
-   in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvars(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
+   in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvar(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
    lsp_separator.
 
 %
@@ -356,7 +356,7 @@ debug_positions(_Path, Loc, Term, Arity) :-
 
 debug_positions(_Path, _Loc, _Term, _Arity) :-
    lsp_state:last_range(Method,Range),
-   numbervars(Range,0,_,[singletons(true),attvars(skip)]),
+   numbervars(Range,0,_,[singletons(true),attvar(skip)]),
    in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
 
 debug_positions(Path, Loc, _Term, _Arity) :-
