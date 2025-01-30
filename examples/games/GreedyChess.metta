@@ -399,6 +399,8 @@
 ;(= (samecolor $A $B) (nth1 3 $A $C) (nth1 3 $B $D) (set-det) (== $C $D))
 ;
 ;
+
+
 ;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
 ;(= (clear_route #( :: ($A $B $C n) ) #(Cons $D #(Cons $E $F)) $G) (or (is $E (+ $B 2)) (is $E (- $B 2))) (or ;(is $D (+ $A 1)) (is $D (- $A 1))))
 ;(= (clear_route #( :: ($A $B $C n) ) #(Cons $D #(Cons $E $F)) $G) (or (is $E (+ $B 1)) (is $E (- $B 1))) (or ;(is $D (+ $A 2)) (is $D (- $A 2))))
@@ -414,14 +416,37 @@
 ;      ($A $B $C b) ) 
 ;    #(Cons $D 
 ;      #(Cons $E $F)) $G))
+
+; Return True if there is a clear route for piece else False
+(: (clear_route) (-> Expression Expression Expression Bool))
+
 ;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (= $B  2) (is $G (- $B 1)) ;(return_entire_box #( :: ($A $G) ) $H $F) (len $H 2) (is $D (- $B 2)) (return_entire_box #( :: ($C $D) ) $I ;$F) (len $I 2))
-;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (is $D (- $B 1)) ;(return_entire_box #( :: ($C $D) ) $G $F) (len $G 2))
+;( = (clear_route ($x $y g p) $B $C)
+;    (println! $B))
+
+; Move gold AI pawn 1 space down the board
+(= (clear_route ($A $B g p) $destination $Board) 
+  (let*
+    ( ($entire (return_entire_box $destination  $Board))
+      ($C (nth 1 $destination) )
+      ($D (nth 2 $destination) ))
+    ; clear if moving to empty box 1 row down...
+    (if (and  
+        (== $D  (- $B  1))
+        (== (size-atom $entire) 2)
+        )
+        True
+        False)))
+
 ;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (+ $A 1)) (is $D (- $B 1)))
 ;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (- $A 1)) (is $D (- $B 1)))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (is $D (+ $B 1)) ;(return_entire_box #( :: ($C $D) ) $G $F) (len $G 2))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (= $B  2) (is $G (+ $B 1)) ;(return_entire_box #( :: ($A $G) ) $H $F) (len $H 2) (is $D (+ $B 2)) (return_entire_box #( :: ($C $D) ) $I ;$F) (len $I 2))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (+ $A 1)) (is $D (+ $B 1)))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (- $A 1)) (is $D (+ $B 1)))
+
+
+
 ;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (= $A  $D) (> $E $B) (is $H (- $E 1)) (is $I ;(+ $B 1)) (checkclearup $A $I $H $G))
 ;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (= $A  $D) (< $E $B) (is $H (+ $E 1)) (is $I ;(- $B 1)) (checkcleardown $A $I $H $G))
 ;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (< $A $D) (= $E  $B) (is $H (- $D 1)) (is $I ;(+ $A 1)) (checkclearright $B $I $H $G))
@@ -694,12 +719,15 @@
         empty))))) 
 
 ; The move command moves the human player's piece.
+
+;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
+
 ;(: M (-> command))
 (= (M)  
   (progn (
   ; prompt for x/y location
   ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-  ; add edit to make sure move within boundaries!
+  ; add edit to make sure move within boundaries of 1 -> 8!
   (py-atom print) "Enter coordinates.")
   (let $coordinates ((py-atom input)) ())
   (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
@@ -708,29 +736,33 @@
   (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
   (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
   (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+  ; get the current board
   (match &self (board-state $starting_board) $starting_board)
-  ; if source location and destination are the same fail
-  (if (== $f $g)                            
-    ((py-atom print) "Invalid move.")
-  ;else continue
-  (progn (
-  (let $h (return_entire_box $f  $starting_board) ())               ; Retrieve the source box details.
-  (let $i (return_entire_box $g  $starting_board) ())               ; Retrieve the destination box details.
-  ; if destination is not empty or destination has same color piece fail
-  (if (not (or (== (size-atom $i) 2) (not (== (nth 3 $h) (nth 3 $i)) )))
-    ((py-atom print) "Invalid move.") 
-    (println! "continuing")
-     )
-        )
-  )
-    
-  )
+  ; check if source location and destination are not the same
+  (if (not (== $f $g))                            
+   ; check if destination is empty or destination has opponent's piece  
+    (progn (
+    (let $h (return_entire_box $f  $starting_board) ())               ; Retrieve the source box details.
+    (let $i (return_entire_box $g  $starting_board) ())               ; Retrieve the destination box details.
+    (if (xor  
+            ; OK to move to open square size 2...
+            (== (size-atom $i) 2)     
+            ; OK to take another piece, check color is not the same...
+            (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i)) )))
+      (if (clear_route $h $i $starting_board)
+        (println! "continuing")
+        ((py-atom print) "Can't move piece there."))
+      ; else (moving to location with same piece or other problem)
+      ((py-atom print) "Can't move there.")
+    )
+    )
+    )
+    ;else (trying to move to same location)
+    ((py-atom print) "Can't move to same location."))
   )
 )
 
 
-
-;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
 ;(= (m $A $B $C $D) (board $E) (concat_lists #( :: (#( :: ($A) ) #( :: ($B) )) ) $F) (concat_lists #( :: (#( :: ;($C) ) #( :: ($D) )) ) $G) (\= $F $G) (return_entire_box $F $H $E) (return_entire_box $G $I $E) (or (len $I 2) ;(not (samecolor $H $I))) (set-det) (clear_route $H $I $E) (move_piece $H $I $E $J) (xy_box $K #( :: (s k) ) ;$J) (not (take_dest $K g $J)) (move_piece $H $I $E $L) (= $M  $E) #(remove-atom &self #(board $E)) #(add-atom &;self #(board $L)) (b $L) (printmove $H $I $M) (set-det) (examine_king $L g s) (garbage_collect) (trim_stacks) ;(set-det))
 ;
 
