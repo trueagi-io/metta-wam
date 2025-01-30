@@ -1,7 +1,13 @@
-%:- module(lsp_metta_outline, [
-%                        xref_document_symbols/2,
-%                        xref_metta_source/1]).
+:- module(lsp_metta_outline, [
+              xref_document_symbols/2,
+              xref_document_symbol/5,
+              line_col/2
+              ]).
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace).
+
+:- use_module(lsp_metta_hover, [ is_documented/1 ]).
 
 :- dynamic(lsp_cache:gave_document_symbols/2).
 :- retractall(lsp_cache:gave_document_symbols(_, _)). % when we reload this file
@@ -44,7 +50,7 @@ xref_document_symbol_examples(_Path, Outline, KindNumber, Start:1, End:0,KindNam
 xref_document_symbol_d4(Doc, PrettyString, KindNumber, StartEnd, PrettyString):-
    doc_path(Doc,Path),lsp_metta_changes:doc_text_d4(Path,D4s),
    nth1(Nth,D4s,D4), nonvar(D4),
-   d4_document_symbol(Nth,D4, PrettyString, KindNumber, StartEnd).
+   d4_document_symbol(Nth,D4, PrettyString, _, KindNumber, StartEnd).
 
 d4_document_symbol(Nth, d(_,Str,_,_), S, 12, Nth:1, End:1):- succl(Nth,End), outline_name(Str,S).
 

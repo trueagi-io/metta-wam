@@ -1,3 +1,5 @@
+:- module(lsp_metta_formatter, []).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_metta_formater.pl
 %
@@ -23,6 +25,8 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace, [source_file_text/2]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the 'textDocument/formatting' Request and Format the Lisp Document

@@ -28,7 +28,7 @@
 
 :- include(lsp_metta_include).
 
-
+:- use_module(lsp_metta_workspace, [source_file_text/2]).
 
 :- discontiguous(handle_completions/3).
 

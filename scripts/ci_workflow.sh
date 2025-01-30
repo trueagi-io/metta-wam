@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Set default timestamp format and paths
 TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S")

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 get_line_count() {
   wc -l "$1" | cut -d' ' -f1
