@@ -1158,8 +1158,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
 print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Result,Seconds,Was,Output,Stepping):-
          set_option_value(interactive,WasInteractive),
-         Control = contrl(LeashResults,Max,DoLeap),
-    assertion(LeashResults==inf;number(LeashResults)),
+         Control = contrl(InitialResultLeash,Max,DoLeap),
+    assertion(InitialResultLeash==inf;number(InitialResultLeash)),
     assertion(Max==inf;number(Max)),
          nb_setarg(1,Result,Output),
          current_input(CI), read_pending_codes(CI,_,[]),
@@ -1194,7 +1194,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
 
 
          ((Complete \== true, WasInteractive, DoLeap \== leap,
-                  LeashResults =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+                  InitialResultLeash =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
          %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
            if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),

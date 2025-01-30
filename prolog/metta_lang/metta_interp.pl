@@ -4200,62 +4200,26 @@ metta_atom_added(X, Y) :-
 %   @arg Atom  The atom associated with the given space.
 %
 
-% metta_atom([Superpose,ListOf], Atom):-
-%     Superpose == 'superpose',
-%     is_list(ListOf), !,
-%     member(KB, ListOf),
-%     get_metta_atom_from(KB, Atom).
-metta_atom(Space, Atom) :-
-    % Retrieve atoms from a typed list.
-    typed_list(Space, _, L), !,
-    member(Atom, L).
+% metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
+metta_atom(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
 metta_atom(KB, [F, A | List]) :-
-    % Retrieve atoms from `&flybase` predicates.
-    KB == '&flybase',
-    fb_pred_nr(F, Len),
-    current_predicate(F/Len),
-    length([A | List], Len),
-    apply(F, [A | List]).
-% metta_atom(KB, Atom):-
-%     KB == '&corelib', !,
-%     metta_atom_corelib(Atom).
-% metta_atom(X, Y):-
-%     use_top_self,
-%     maybe_resolve_space_dag(X, XX), !,
-%     in_dag(XX, XXX),
-%     XXX \== X,
-%     metta_atom(XXX, Y).
-metta_atom(X, Y) :-
-    % Handle mappings to top self-reference.
-    maybe_into_top_self(X, TopSelf), !,
-    metta_atom(TopSelf, Y).
-% metta_atom(X, Y):-
-%     var(X),
-%     use_top_self,
-%     current_self(TopSelf),
-%     metta_atom(TopSelf, Y),
-%     X = '&self'.
-metta_atom(KB, Atom) :-
-    % Retrieve atoms that were added (asserted, deduced, etc.).
-    metta_atom_added(KB, Atom).
-% metta_atom(KB, Atom):-
-%     KB == '&corelib', !,
-%     metta_atom_asserted('&self', Atom).
-% metta_atom(KB, Atom):-
-%     KB \== '&corelib',
-%     using_all_spaces, !,
-%     metta_atom('&corelib', Atom).
-% metta_atom(KB, Atom):-
-%     KB \== '&corelib', !,
-%     metta_atom('&corelib', Atom).
-metta_atom(KB, Atom) :-
-    % Handle inheritance of atoms (disabled with fail).
-    fail,
-    nonvar(KB),
-    \+ nb_current(space_inheritance, false),
+    KB == '&flybase', fb_pred_nr(F, Len), current_predicate(F/Len),
+    length([A | List], Len), apply(F, [A | List]).
+% metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
+% metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
+
+metta_atom(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+% metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
+
+metta_atom(KB, Atom) :- metta_atom_added(KB, Atom).
+% metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
+% metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
+%metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
+
+metta_atom(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
-% metta_atom(KB, Atom):-
-%     metta_atom_asserted_last(KB, Atom).
+% metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
+
 
 :- dynamic(no_space_inheritance_to/1).
 
@@ -4272,6 +4236,7 @@ metta_atom(KB, Atom) :-
 %     % Temporarily disable inheritance to a specific space:
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
+wo_inheritance_to(_Where, Goal):- !, call(Goal).
 wo_inheritance_to(Where, Goal) :-
     % Temporarily assert the `no_space_inheritance_to/1` fact.
     setup_call_cleanup(
@@ -4312,6 +4277,20 @@ should_inhert_from(KB, Atom) :-
 %     % Check if an atom can be inherited directly:
 %     ?- should_inhert_from_now('&my_space', Atom).
 %
+
+should_inhert_from_now(KB, Atom) :-
+    attvar(Atom), !,
+    % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
+    freeze(SubKB, symbol(SubKB)), !,
+    % Retrieve a sub-knowledge base associated with `KB`.
+    metta_atom_added(KB, SubKB),
+    SubKB \== KB,
+    % Retrieve atoms from the sub-knowledge base.
+    metta_atom(SubKB, Atom),
+    % Ensure the atom is not excluded from inheritance.
+    \+ should_not_inherit_from(KB, SubKB, Atom).
+
+
 should_inhert_from_now(KB, Atom) :-
     % Ensure the atom is not an attributed variable.
     \+ attvar(Atom),
@@ -4328,7 +4307,7 @@ should_inhert_from_now(KB, Atom) :-
 /*
    KB \== '&corelib',  % is_code_inheritor(KB),
    \+ \+ (metta_atom_added(KB,'&corelib'),
-          should_inherit_from_corelib(Atom)), !,
+          should_inherit_atom_from_corelib(Atom)), !,
    metta_atom('&corelib',Atom),
    \+ should_not_inherit_from_corelib(Atom).
 */
@@ -4355,16 +4334,19 @@ should_inhert_from_now(KB, Atom) :-
 should_not_inherit_from(_, _, S) :-
     % Exclude symbols from inheritance.
     symbol(S).
+should_not_inherit_from(KB, Sub, _S) :- should_not_inherit_from_corelib(KB),should_not_inherit_from_corelib(Sub),!.
+
+should_not_inherit_from_corelib('&corelib').
+should_not_inherit_from_corelib('&stdlib').
 /*
 % Commented-out inheritance exclusions for core libraries.
 % Uncomment or modify as needed to apply specific rules for inheritance exclusion.
-should_not_inherit_from_corelib('&corelib').
-should_not_inherit_from_corelib('&stdlib').
+
 should_not_inherit_from_corelib('&self').
 %should_not_inherit_from_corelib('&top').
 */
 
-%!  should_inherit_from_corelib(+Atom) is nondet.
+%!  should_inherit_atom_from_corelib(+Atom) is nondet.
 %
 %   Determines whether a specific atom (`Atom`) should be inherited from the `&corelib` space.
 %   The decision is based on the current configuration (e.g., `using_all_spaces`) and the structure of the atom.
@@ -4373,37 +4355,27 @@ should_not_inherit_from_corelib('&self').
 %
 %   @example
 %     % Check inheritance when all spaces are used:
-%     ?- using_all_spaces, should_inherit_from_corelib(my_atom).
+%     ?- using_all_spaces, should_inherit_atom_from_corelib(my_atom).
 %     true.
 %
 %     % Check inheritance for a structured atom:
-%     ?- should_inherit_from_corelib([=, [my_functor, arg1], body]).
+%     ?- should_inherit_atom_from_corelib([=, [my_functor, arg1], body]).
 %
-should_inherit_from_corelib(_) :-
+should_inherit_atom_from_corelib(_) :-
     % Automatically allow inheritance if all spaces are used.
     using_all_spaces, !.
-should_inherit_from_corelib(_) :-
-    % Default case: inheritance is disallowed unless explicitly permitted.
-    !.
-should_inherit_from_corelib([H, A | _]) :-
-    % Check if the operator `H` is permitted for inheritance and `A` is nonvar.
-    nonvar(H),
-    should_inherit_op_from_corelib(H),
-    !,
-    nonvar(A).
-% should_inherit_from_corelib([H | _]) :-
+% Default case: inheritance is disallowed unless explicitly permitted.
+%should_inherit_atom_from_corelib(Top) :- metta_atom_asserted_last(Top, '&corelib').
+% Check if the operator `H` is permitted for inheritance and `A` is nonvar.
+should_inherit_atom_from_corelib([H, A | _]) :- nonvar(H), should_inherit_op_from_corelib(H), !, nonvar(A).
+% should_inherit_atom_from_corelib([H | _]) :-
 %     % Uncomment to allow inheritance for `@doc` headers.
 %     H == '@doc', !.
-should_inherit_from_corelib([H, A | T]) :-
+should_inherit_atom_from_corelib([H, A | T]) :-
     % Additional rule for inheritance based on specific conditions.
     fail, % Disabled; uncomment or modify as needed.
-    H == '=',
-    write_src_uo(try([H, A | T])),
-    !,
-    A = [F | _],
-    nonvar(F),
-    F \== ':',
-    is_list(A),
+    H == '=', write_src_uo(try([H, A | T])), !,
+    A = [F | _], nonvar(F), F \== ':', is_list(A),
     % Ensure the functor `F` is not already asserted in `&self`.
     \+ metta_atom_asserted('&self', [:, F | _]),
     % Optionally check if the functor exists in `&corelib`.
@@ -4423,8 +4395,7 @@ should_inherit_from_corelib([H, A | T]) :-
 %     ?- is_code_inheritor('&corelib').
 %     true.
 %
-is_code_inheritor(KB) :-
-    % Check if the current self matches `KB`.
+is_code_inheritor(KB) :- % Check if the current self matches `KB`.
     current_self(KB).
 
 %!  should_inherit_op_from_corelib(+Op) is nondet.
@@ -5226,127 +5197,392 @@ write_pass_fail_result_c(TestName,exec,Exec,PASS_FAIL,Ans,Val):-
   write_pass_fail_result(TestName,exec,Exec,PASS_FAIL,Ans,Val).
 */
 
-is_unit_test_exec(Exec):- sformat(S,'~w',[Exec]),sub_atom(S,_,_,_,'assert').
-is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
+%!  is_unit_test_exec(+Exec) is nondet.
+%
+%   Checks whether the given executable term (`Exec`) appears to be part of a unit test.
+%   This predicate examines the string representation of the term for specific patterns
+%   that indicate a test-related operation (e.g., `assert` or Metta assertions `!'`).
+%
+%   @arg Exec The executable term to be analyzed.
+%
+%   @example
+%     ?- is_unit_test_exec(assert(something)).
+%     true.
+%
+%     ?- is_unit_test_exec(!('assert-something')).
+%     true.
+%
+is_unit_test_exec(Exec) :-
+    % Format the term into a string and check for the presence of the word 'assert'.
+    sformat(S, '~w', [Exec]),
+    sub_atom(S, _, _, _, 'assert').
+is_unit_test_exec(Exec) :-
+    % Format the term into a quoted string and check for the presence of Metta-style assertion ('!').
+    sformat(S, '~q', [Exec]),
+    sub_atom(S, _, _, _, "!',").
 
-make_empty(Empty):- 'Empty'=Empty.
-make_empty(_,Empty):- make_empty(Empty).
-make_empty(_RetType,_,Empty):- make_empty(Empty).
+%!  make_empty(-Empty) is det.
+%
+%   Produces an empty result. This is used as a placeholder or default value
+%   in scenarios where an "empty" or "null" equivalent is required.
+%
+%   @arg Empty The output term representing emptiness. Defaults to `'Empty'`.
+%
+%   @example
+%     ?- make_empty(X).
+%     X = Empty.
+%
+make_empty(Empty) :-
+    % Default value for "empty" is the atom 'Empty'.
+    'Empty' = Empty.
 
+%!  make_empty(+_Input, -Empty) is det.
+%
+%   Produces an empty result, ignoring the input.
+%
+%   @arg _Input An ignored input.
+%   @arg Empty  The output term representing emptiness.
+%
+make_empty(_, Empty) :-
+    make_empty(Empty).
 
-make_nop(Nop):- []=Nop.
-make_nop(_,Nop):- make_nop(Nop).
-make_nop(_RetType,_,Nop):- make_nop(Nop).
+%!  make_empty(+_RetType, +_Input, -Empty) is det.
+%
+%   Produces an empty result, ignoring the input and return type.
+%
+%   @arg _RetType An ignored return type.
+%   @arg _Input   An ignored input.
+%   @arg Empty    The output term representing emptiness.
+%
+make_empty(_RetType, _, Empty) :-
+    make_empty(Empty).
 
+%!  make_nop(-Nop) is det.
+%
+%   Produces a "no-operation" result. This is typically used as a placeholder
+%   when no meaningful operation is required.
+%
+%   @arg Nop The output term representing no-operation. Defaults to an empty list (`[]`).
+%
+%   @example
+%     ?- make_nop(X).
+%     X = [].
+%
+make_nop(Nop) :-
+    % Default "no-operation" value is an empty list.
+    [] = Nop.
 
-convert_tax(_How,Self,Tax,Expr,NewHow):-
-  metta_interp_mode(Ch,Mode),
-  string_concat(Ch,TaxM,Tax),!,
-  normalize_space(string(NewTax),TaxM),
-  convert_tax(Mode,Self,NewTax,Expr,NewHow).
-convert_tax(How,_Self,Tax,Expr,How):-
-  %parse_sexpr_metta(Tax,Expr).
-  read_metta(Tax,Expr).
+%!  make_nop(+_Input, -Nop) is det.
+%
+%   Produces a "no-operation" result, ignoring the input.
+%
+%   @arg _Input An ignored input.
+%   @arg Nop    The output term representing no-operation.
+%
+make_nop(_, Nop) :-
+    make_nop(Nop).
+
+%!  make_nop(+_RetType, +_Input, -Nop) is det.
+%
+%   Produces a "no-operation" result, ignoring the input and return type.
+%
+%   @arg _RetType An ignored return type.
+%   @arg _Input   An ignored input.
+%   @arg Nop      The output term representing no-operation.
+%
+make_nop(_RetType, _, Nop) :-
+    make_nop(Nop).
+
+%!  convert_tax(+How, +Self, +Tax, -Expr, -NewHow) is nondet.
+%
+%   Converts a tax expression into a normalized form. Depending on the interpretation mode,
+%   it may process the `Tax` string differently. The result is a parsed representation of
+%   the `Tax` as `Expr`, and the transformation method is unified with `NewHow`.
+%
+%   @arg How    The current transformation method.
+%   @arg Self   The current context or space.
+%   @arg Tax    The input tax string to be converted.
+%   @arg Expr   The parsed expression result.
+%   @arg NewHow The updated transformation method.
+%
+%   @example
+%     % Example usage with a direct read of a Metta tax expression:
+%     ?- convert_tax(current_mode, '&self', 'tax_expr', Expr, NewHow).
+%
+convert_tax(_How, Self, Tax, Expr, NewHow) :-
+    % Retrieve the current Metta interpretation mode and channel.
+    metta_interp_mode(Ch, Mode),
+    % Check if the `Tax` string starts with the interpretation channel.
+    string_concat(Ch, TaxM, Tax),
+    !,
+    % Normalize the tax string by removing extraneous spaces.
+    normalize_space(string(NewTax), TaxM),
+    % Recurse with the updated mode and normalized tax string.
+    convert_tax(Mode, Self, NewTax, Expr, NewHow).
+convert_tax(How, _Self, Tax, Expr, How) :-
+    % Default case: read the `Tax` string as a Metta expression.
+    % parse_sexpr_metta(Tax,Expr).
+    read_metta(Tax, Expr).
 
 %:- if( \+ current_predicate(notrace/1) ).
 %  notrace(G):- once(G).
 %:- endif.
 
-metta_interp_mode('+',load).
-metta_interp_mode('-',unload).
-metta_interp_mode('--',unload_all).
-metta_interp_mode('!',exec).
-metta_interp_mode('?',call).
-metta_interp_mode('^',load_like_file).
+%!  metta_interp_mode(+Symbol, -Mode) is det.
+%
+%   Maps specific symbols to interpretation modes in the Metta language.
+%   Each symbol represents a distinct action, such as loading, unloading, or executing code.
+%
+%   @arg Symbol The symbol representing the interpretation mode.
+%   @arg Mode   The corresponding interpretation mode.
+%
+%   @example
+%     % Retrieve the mode for the '+' symbol:
+%     ?- metta_interp_mode('+', Mode).
+%     Mode = load.
+%
+metta_interp_mode('+', load).         % '+' symbol indicates "load" mode.
+metta_interp_mode('-', unload).       % '-' symbol indicates "unload" mode.
+metta_interp_mode('--', unload_all).  % '--' symbol indicates "unload all" mode.
+metta_interp_mode('!', exec).         % '!' symbol indicates "execute" mode.
+metta_interp_mode('?', call).         % '?' symbol indicates "call" mode.
+metta_interp_mode('^', load_like_file). % '^' symbol indicates "load-like-file" mode.
 
+%!  call_sexpr(+How, +Self, +Tax, -S, -Out) is det.
+%
+%   Processes a symbolic or string Tax expression using the given interpretation method (`How`)
+%   and context (`Self`). The Tax expression is first normalized and converted into a parsed
+%   Metta expression (`Expr`), and the resulting mode (`NewHow`) is used to execute the operation.
+%   Finally, the output (`Out`) is obtained from the execution.
+%
+%   @arg How   The current interpretation method.
+%   @arg Self  The context or "space" in which the operation is executed.
+%   @arg Tax   The input tax expression (symbolic or string) to be processed.
+%   @arg S     Reserved or ignored output variable.
+%   @arg Out   The result of executing the processed expression.
+%
+%   @example
+%     % Execute a Metta expression with 'exec' mode:
+%     ?- call_sexpr('!', '&self', 'assert(a)', S, Out).
+%
+call_sexpr(How, Self, Tax, _S, Out) :-
+    % Ensure the Tax expression is either a symbol or a string.
+    (symbol(Tax); string(Tax)),
+    % Normalize the Tax expression by removing extraneous spaces.
+    normalize_space(string(TaxM), Tax),
+    % Convert the normalized Tax expression into a parsed Metta expression (Expr),
+    % and determine the updated mode (NewHow).
+    convert_tax(How, Self, TaxM, Expr, NewHow),
+    !,
+    % Display the execution process and execute the Metta operation.
+    show_call(do_metta(python, NewHow, Self, Expr, Out)).
 
-call_sexpr(How,Self,Tax,_S,Out):-
-  (symbol(Tax);string(Tax)),
-    normalize_space(string(TaxM),Tax),
-    convert_tax(How,Self,TaxM,Expr,NewHow),!,
-    show_call(do_metta(python,NewHow,Self,Expr,Out)).
+%!  do_metta(+File, +Load, +Self, +In, -Out) is det.
+%
+%   Main handler for processing Metta expressions (`In`). Depending on the `Load` mode
+%   and the type of the input, different operations are executed. The result of processing
+%   is unified with `Out`.
+%
+%   @arg File The source of the input (e.g., a file or other context).
+%   @arg Load The interpretation mode (e.g., `exec`, `call`, `unload`).
+%   @arg Self The context or "space" in which the operation is executed.
+%   @arg In   The input expression to process.
+%   @arg Out  The output resulting from processing the input expression.
 
 /*
 do_metta(File,Load,Self,Cmt,Out):-
   fail,
   if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 */
-
-do_metta(_File,_Load,_Self,In,Out):- var(In),!,In=Out.
-do_metta(_From,_Mode,_Self,end_of_file,'Empty'):- !. %, halt(7), writeln('\n\n% To restart, use: ?- repl.').
-do_metta(_File,Load,_Self,Cmt,Out):- Load \==exec, Cmt==[],!, ignore(Out=[]).
-
-do_metta(From,Load,Self,'$COMMENT'(Expr,_,_),Out):- !, do_metta(From,comment(Load),Self,Expr,Out).
-do_metta(From,Load,Self,'$STRING'(Expr),Out):- !, do_metta(From,comment(Load),Self,Expr,Out).
-do_metta(From,comment(Load),Self,[Expr],Out):-  !, do_metta(From,comment(Load),Self,Expr,Out).
-do_metta(From,comment(Load),Self,Cmt,Out):- write_comment(Cmt),  !,
-   ignore(( symbolic(Cmt),symbolic_list_concat([_,Src],'MeTTaLog only: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),
-   ignore(( symbolic(Cmt),symbolic_list_concat([_,Src],'MeTTaLog: ',Cmt),!,atom_string(Src,SrcCode),do_metta(mettalog_only(From),Load,Self,SrcCode,Out))),!.
-
-do_metta(From,How,Self,Src,Out):- string(Src),!,
-    must_det_ll((normalize_space(string(TaxM),Src),
-    convert_tax(How,Self,TaxM,Expr,NewHow))),
-    do_metta(From,NewHow,Self,Expr,Out).
-
-do_metta(From,_,Self,exec(Expr),Out):- !, do_metta(From,exec,Self,Expr,Out).
-
-
+do_metta(_File, _Load, _Self, In, Out) :-
+    % If the input is a variable, unify it directly with the output.
+    var(In), !, In = Out.
+do_metta(_From, _Mode, _Self, end_of_file, 'Empty') :- !.
+    % When reaching the end of a file, return `'Empty'`.
+    % halt(7), writeln('\n\n% To restart, use: ?- repl.').
+do_metta(_File, Load, _Self, Cmt, Out) :-
+    % If the mode is not `exec` and the input is an empty list, produce an empty output.
+    Load \== exec, Cmt == [], !, ignore(Out = []).
+do_metta(From, Load, Self, '$COMMENT'(Expr, _, _), Out) :- !,
+    % Handle Metta comments with the `$COMMENT` wrapper.
+    do_metta(From, comment(Load), Self, Expr, Out).
+do_metta(From, Load, Self, '$STRING'(Expr), Out) :- !,
+    % Handle Metta strings with the `$STRING` wrapper.
+    do_metta(From, comment(Load), Self, Expr, Out).
+do_metta(From, comment(Load), Self, [Expr], Out) :- !,
+    % Handle single-element lists as comments.
+    do_metta(From, comment(Load), Self, Expr, Out).
+do_metta(From, comment(Load), Self, Cmt, Out) :-
+    % Write the comment and handle specific cases of MettaLog comments.
+    write_comment(Cmt), !,
+    ignore((symbolic(Cmt),
+            symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
+            !,
+            atom_string(Src, SrcCode),
+            do_metta(mettalog_only(From), Load, Self, SrcCode, Out))),
+    ignore((symbolic(Cmt),
+            symbolic_list_concat([_, Src], 'MeTTaLog: ', Cmt),
+            !,
+            atom_string(Src, SrcCode),
+            do_metta(mettalog_only(From), Load, Self, SrcCode, Out))),!.
+do_metta(From, How, Self, Src, Out) :-
+    % Process string inputs by normalizing and converting to Metta expressions.
+    string(Src), !,
+    must_det_ll((normalize_space(string(TaxM), Src),
+                 convert_tax(How, Self, TaxM, Expr, NewHow))),
+    do_metta(From, NewHow, Self, Expr, Out).
+do_metta(From, _, Self, exec(Expr), Out) :- !,
+    % Directly execute Metta expressions wrapped in `exec`.
+    do_metta(From, exec, Self, Expr, Out).
 % Prolog CALL
-do_metta(From,_,Self,  call(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
-do_metta(From,_,Self,     ':-'(Expr),Out):- !, do_metta(From,call,Self,Expr,Out).
-do_metta(From,call,Self,TermV,FOut):- !,
-   if_t(into_simple_op(call,TermV,OP),pfcAdd_Now('next-operation'(OP))),
-   call_for_term_variables(TermV,Term,NamedVarsList,X), must_be(nonvar,Term),
-   copy_term(NamedVarsList,Was),
+do_metta(From, _, Self, call(Expr), Out) :- !,
+    % Handle explicit Prolog calls wrapped in `call`.
+    do_metta(From, call, Self, Expr, Out).
+do_metta(From, _, Self, ':-'(Expr), Out) :- !,
+    % Handle `:-` as a Prolog call.
+    do_metta(From, call, Self, Expr, Out).
+do_metta(From, call, Self, TermV, FOut) :- !,
+    % Handle Prolog `call` terms by preparing and executing the call.
+    if_t(into_simple_op(call, TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    call_for_term_variables(TermV, Term, NamedVarsList, X),
+    must_be(nonvar, Term),
+    copy_term(NamedVarsList, Was),
    Output = X,
-   user:u_do_metta_exec(From,Self,call(TermV),Term,X,NamedVarsList,Was,Output,FOut).
-
+    user:u_do_metta_exec(From, Self, call(TermV), Term, X, NamedVarsList, Was, Output, FOut).
 % Non Exec
-do_metta(_File,Load,Self,Src,Out):- Load\==exec, !,
-   if_t(into_simple_op(Load,Src,OP),pfcAdd_Now('next-operation'(OP))),
-   dont_give_up(as_tf(asserted_do_metta(Self,Load,Src),Out)).
-
+do_metta(_File, Load, Self, Src, Out) :-
+    % Handle non-executable inputs for modes other than `exec`.
+    Load \== exec, !,
+    if_t(into_simple_op(Load, Src, OP), pfcAdd_Now('next-operation'(OP))),
+    dont_give_up(as_tf(asserted_do_metta(Self, Load, Src), Out)).
 % Doing Exec
-do_metta(file(Filename),exec,Self,TermV,Out):-
+do_metta(file(Filename), exec, Self, TermV, Out) :-
+    % Handle executable terms when processing files.
    must_det_ll((inc_exec_num(Filename),
-     get_exec_num(Filename,Nth),
-     Nth>0)),
+                 get_exec_num(Filename, Nth),
+                 Nth > 0)),
     ((
      is_synthing_unit_tests,
      file_answers(Filename, Nth, Ans),
      \+ is_transpiling,
-     check_answers_for(TermV,Ans))),!,
-     if_t(into_simple_op(exec,TermV,OP),pfcAdd_Now('next-operation'(OP))),
+        check_answers_for(TermV, Ans))), !,
+    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
      must_det_ll((
       ensure_increments((color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
-        color_g_mesg([bold,fg('#FFEE58')], write_src(exec(TermV))),
-        write(';; To unit test case:'))),!,
-        call(do_metta_exec(file(Filename),Self,['assertEqualToResult',TermV,Ans],Out)))))).
+                           color_g_mesg([bold, fg('#FFEE58')], write_src(exec(TermV))),
+                           write(';; To unit test case:'))), !,
+                          call(do_metta_exec(file(Filename), Self,
+                                             ['assertEqualToResult', TermV, Ans], Out)))))).
+%   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode. 
+do_metta(From, exec, Self, TermV, Out) :- !,
+    % Simplify the term into an operation (if possible) and register it.
+    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    % Attempt to execute the term, preventing failure propagation.
+    dont_give_up(do_metta_exec(From, Self, TermV, Out)).
 
-do_metta(From,exec,Self,TermV,Out):- !,
-    if_t(into_simple_op(exec,TermV,OP),pfcAdd_Now('next-operation'(OP))),
-    dont_give_up(do_metta_exec(From,Self,TermV,Out)).
-
-do_metta_exec(From,Self,TermV,FOut):-
+%!  do_metta_exec(+From, +Self, +TermV, -FOut) is det.
+%
+%   Executes a Metta term (`TermV`) in the specified context (`Self`) and source (`From`).
+%   This predicate:
+%   1. Optionally outputs the execution trace if the source is a file.
+%   2. Converts the term into a callable Prolog term using `into_metta_callable/5`.
+%   3. Executes the term with `user:u_do_metta_exec/8`.
+%   4. Catches any errors raised during execution and logs them as "gave up."
+%
+%   @arg From   The source of the execution (e.g., a file or runtime context).
+%   @arg Self   The context or "space" in which the term is executed.
+%   @arg TermV  The Metta term to be executed.
+%   @arg FOut   The result of the execution.
+%
+%   @example
+%     % Execute a term with a file source:
+%     ?- do_metta_exec(file('example.metta'), '&self', 'assert(foo)', Out).
+%     Out = ResultOfExecution.
+%
+do_metta_exec(From, Self, TermV, FOut) :-
   Output = X,
-   %format("########################X0 ~w ~w ~w\n",[Self,TermV,FOut]),
+    % Debugging output for initial state.
+    % format("########################X0 ~w ~w ~w\n", [Self, TermV, FOut]),
  (catch(((
-   % Show exec from file(_)
-   if_t(From=file(_),output_language(metta,write_exec(TermV))),
-   notrace(into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),!,
-   %format("########################X1 ~w ~w ~w ~w\n",[Term,X,NamedVarsList,Output]),
-   user:u_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut))),
-   give_up(Why),pp_m(red,gave_up(Why)))).
-   %format("########################X2 ~w ~w ~w\n",[Self,TermV,FOut]).
+        % Show execution trace if the source is a file.
+        if_t(From = file(_), output_language(metta, write_exec(TermV))),
+        % Convert the term into a callable Prolog term.
+        notrace(into_metta_callable(Self, TermV, Term, X, NamedVarsList, Was)), !,
+        % Debugging output for intermediate state.
+        % format("########################X1 ~w ~w ~w ~w\n", [Term, X, NamedVarsList, Output]),
+        % Perform the execution using the user-defined handler.
+        user:u_do_metta_exec(From, Self, TermV, Term, X, NamedVarsList, Was, Output, FOut))),
+        % Catch errors during execution and log them.
+        give_up(Why), pp_m(red, gave_up(Why)))).
+    % Debugging output for final state.
+    % format("########################X2 ~w ~w ~w\n", [Self, TermV, FOut]).
 
-a_e('assertEqual'). a_e('assertNotEqual').
-a_e('assertEqualToResult'). a_e('assertNotEqualToResult').
-o_s([AE|O],S):- nonvar(AE), a_e(AE), nonvar(O), o_s(O,S).
-o_s([O|_],S):- nonvar(O), !, o_s(O,S).
-o_s(S,S).
-into_simple_op(Load,[Op|O],op(Load,Op,S)):- o_s(O,S),!.
+%!  a_e(+Assertion) is nondet.
+%
+%   Defines valid assertion operation names in Metta. These operations are typically used
+%   in unit testing to compare expected and actual values.
+%
+%   @arg Assertion The assertion operation name as a string.
+%
+%   @example
+%     % Check if an operation is a valid assertion:
+%     ?- a_e('assertEqual').
+%     true.
+%
+a_e('assertEqual').
+a_e('assertNotEqual').
+a_e('assertEqualToResult').
+a_e('assertNotEqualToResult').
 
+%!  o_s(+OpArgs, -Simplified) is det.
+%
+%   Simplifies a list of operation arguments (`OpArgs`) to a single term.
+%   This predicate:
+%   1. Recognizes assertion operations (e.g., `assertEqual`) as the primary operation.
+%   2. Returns the last argument as the simplified result if no assertion is present.
+%
+%   @arg OpArgs     The list of operation arguments to simplify.
+%   @arg Simplified The resulting simplified term.
+%
+%   @example
+%     % Simplify operation arguments with an assertion:
+%     ?- o_s(['assertEqual', foo, bar], Simplified).
+%     Simplified = bar.
+%
+%     % Simplify operation arguments without an assertion:
+%     ?- o_s([foo, bar], Simplified).
+%     Simplified = bar.
+%
+o_s([AE | O], S) :-
+    % If the first element is a valid assertion and there are other arguments,
+    % simplify the remaining list to the last argument.
+    nonvar(AE), a_e(AE), nonvar(O), o_s(O, S).
+o_s([O | _], S) :-
+    % If the first element is non-variable and not an assertion, simplify directly.
+    nonvar(O), !, o_s(O, S).
+o_s(S, S). % Base case: the list itself is the simplified term.
+
+%!  into_simple_op(+Load, +Args, -Op) is nondet.
+%
+%   Converts a list of arguments (`Args`) into a simplified operation (`Op`).
+%   The operation includes:
+%   - The `Load` mode.
+%   - The primary operation (`Op`).
+%   - A simplified version of the remaining arguments.
+%
+%   @arg Load The current mode of execution (e.g., `exec`).
+%   @arg Args The list of arguments to simplify.
+%   @arg Op   The resulting operation term.
+%
+%   @example
+%     % Simplify arguments into a structured operation:
+%     ?- into_simple_op(exec, ['assertEqual', foo, bar], Op).
+%     Op = op(exec, 'assertEqual', bar).
+%
+into_simple_op(Load, [Op | O], op(Load, Op, S)) :-
+    % Simplify the remaining arguments and construct the operation term.
+    o_s(O, S), !.
 
 %! call_for_term_variables(+Term, +X, -Result, -NamedVarsList, +TF) is det.
 %   Handles the term `Term` and determines the term variable list and final result.
@@ -5364,33 +5600,80 @@ into_simple_op(Load,[Op|O],op(Load,Op,S)):- o_s(O,S),!.
 %     Result = as_tf(foo, TF),
 %     Vars = [].
 %
-call_for_term_variables(TermV,catch_red(show_failure(TermR)),NewNamedVarsList,X):-
-  subst_vars(TermV,Term,NamedVarsList),
-  wwdmsg(subst_vars(TermV,Term,NamedVarsList)),
+call_for_term_variables(TermV, catch_red(show_failure(TermR)), NewNamedVarsList, X) :-
+    % Substitute variables in the term, producing a processed term and an initial named variable list.
+    subst_vars(TermV, Term, NamedVarsList),
+    % Debugging output: Show substitutions and variable analysis.
+    wwdmsg(subst_vars(TermV, Term, NamedVarsList)),
+    % Retrieve all variables in the term.
     term_variables(Term, AllVars),
-    %get_global_varnames(VNs), append(NamedVarsList,VNs,All), nb_setval('$variable_names',All),  wdmsg(term_variables(Term, AllVars)=All),
-    term_singletons(Term, Singletons),term_dont_cares(Term, DontCares),
-
-    wwdmsg((term_singletons(Term, Singletons),term_dont_cares(Term, DontCares))),
+    % Debugging output for all variables.
+    % get_global_varnames(VNs), append(NamedVarsList, VNs, All), nb_setval('$variable_names', All),
+    % wdmsg(term_variables(Term, AllVars) = All),
+    % Identify singletons (unused variables) in the term.
+    term_singletons(Term, Singletons),
+    % Identify don't-care variables in the term.
+    term_dont_cares(Term, DontCares),
+    % Debugging output for singletons and don't-cares.
+    wwdmsg((term_singletons(Term, Singletons), term_dont_cares(Term, DontCares))),
+    % Filter out variables that are in the singleton list from all variables.
     include(not_in_eq(Singletons), AllVars, NonSingletons),
-    wwdmsg([dc=DontCares, sv=Singletons, ns=NonSingletons]), !,
+    wwdmsg([dc = DontCares, sv = Singletons, ns = NonSingletons]), !,
+    % Further refine variables by removing those in the don't-care list.
     include(not_in_eq(DontCares), NonSingletons, CNonSingletons),
     include(not_in_eq(DontCares), Singletons, CSingletons),
-    wwdmsg([dc=DontCares, csv=CSingletons, cns=CNonSingletons]),!,
+    wwdmsg([dc = DontCares, csv = CSingletons, cns = CNonSingletons]), !,
+    % Map the variables to named representations.
     maplist(maplist(into_named_vars),
             [DontCares, CSingletons, CNonSingletons],
             [DontCaresN, CSingletonsN, CNonSingletonsN]),
-  wwdmsg([dc_nv=DontCaresN, sv_nv=CSingletonsN, ns_nv=CNonSingletonsN]),
-  call_for_term_variables5(Term, DontCaresN, CNonSingletonsN, CSingletonsN, TermR, NamedVarsList, NewNamedVarsList, X),!,
-  wwdmsg(call_for_term_variables5(orig=Term, all=DontCaresN, singles=CSingletonsN, shared=CNonSingletonsN, call=TermR, nvl=NamedVarsList, nvlo=NewNamedVarsList, output=X)).
+    wwdmsg([dc_nv = DontCaresN, sv_nv = CSingletonsN, ns_nv = CNonSingletonsN]),
+    % Delegate to `call_for_term_variables5/8` for further processing.
+    call_for_term_variables5(
+        Term, DontCaresN, CNonSingletonsN, CSingletonsN,
+        TermR, NamedVarsList, NewNamedVarsList, X), !,
+    % Debugging output for final processed result.
+    wwdmsg(call_for_term_variables5(
+        orig = Term, all = DontCaresN, singles = CSingletonsN, 
+        shared = CNonSingletonsN, call = TermR, 
+        nvl = NamedVarsList, nvlo = NewNamedVarsList, output = X)).
 
+%!  wwdmsg(+Message) is det.
+%
+%   A placeholder debugging predicate. It can be replaced with custom
+%   debugging or logging implementations as needed. Currently, it does nothing.
+%
+%   @arg Message The debugging message or data to output.
+%
 wwdmsg(_).
+
+%!  call_for_term_variables5(+Term, +DontCares, +NonSingletons, +Singletons, -CallTerm, -VarList, -UpdatedVarList, -Return) is det.
+%
+%   Handles the processing of a term (`Term`) to generate a callable term representation
+%   (`CallTerm`) when the term is ground (contains no variables). It also builds or updates
+%   a variable list for the term's context.
+%
+
 % If the term is ground, return the as_tf form.
 %call_for_term_variables5(Term,_,_,_,as_tf(Term,Ret),VL,['$RetVal'=Ret|VL],[==,['call!',Term],Ret]) :- ground(Term), !.
 % If the term is ground, create a call_nth with the term.
 call_for_term_variables5(Term,_,_,_,call_nth(Term,Count),VL,['Count'=Count|VL],Ret) :- Ret=Term.
 
-
+%!  into_metta_callable(+Self, +InputTerm, -OutputTerm, -Result, -NamedVarsList, -CopiedVars) is nondet.
+%
+%   Processes an input term (`InputTerm`) into a callable representation (`OutputTerm`)
+%   within the Metta framework. This predicate handles:
+%   - Substitution of variables within the term.
+%   - Conversion of terms for execution, including runtime calls.
+%   - Transpilation if enabled.
+%
+%   @arg Self           The context or space for processing the term.
+%   @arg InputTerm      The input term to process (e.g., `call/1`, raw expressions).
+%   @arg OutputTerm     The resulting term, ready for execution.
+%   @arg Result         The result variable for execution.
+%   @arg NamedVarsList  A list of variable mappings within the term.
+%   @arg CopiedVars     A copy of the named variables for safe processing.
+%
 into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
    % wdmsg(mc(CALL)),
     CALL= call(TermV),
@@ -5465,15 +5748,64 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
   %nop(maplist(verbose_unify,Vars)))))),!.
   )))),!.
 
+%!  eval_S(+Self, +Form) is det.
+%
+%   Evaluates a given form (`Form`) in the context of a specific `Self` if the current 
+%   context matches `Self`. This predicate ensures the form is executed in `exec` mode 
+%   using the `do_metta/5` predicate.
+%
+%   @arg Self  The context or "space" in which the evaluation should occur.
+%   @arg Form  The form or term to be evaluated.
+%
+%   @example
+%     % Evaluate a form when the current self matches:
+%     ?- current_self('&self'), eval_S('&self', some_term).
+%
+eval_S(Self, Form) :-
+    % Ensure the `Form` is instantiated (not a variable).
+    nonvar(Form),
+    % Check if the current self matches the provided `Self`.
+    current_self(SelfS), SelfS == Self, !,
+    % Execute the form in `exec` mode.
+    do_metta(true, exec, Self, Form, _Out).
 
+%!  eval_H(+Term, -Result) is det.
+%
+%   Handles the evaluation of a term (`Term`) and captures the result (`Result`).
+%   This version wraps the evaluation with `catch_metta_return/2` for error handling.
+%
+%   @arg Term    The term to evaluate.
+%   @arg Result  The result of the evaluation.
+%
+%   @example
+%     % Evaluate a term with error handling:
+%     ?- eval_H(some_term, Result).
+%
+eval_H(Term, X) :-
+    % Wrap the evaluation in `catch_metta_return/2` to handle any errors.
+    catch_metta_return(eval_args(Term, X), X).
 
-eval_S(Self,Form):- nonvar(Form),
-  current_self(SelfS),SelfS==Self,!,
-  do_metta(true,exec,Self,Form,_Out).
-eval_H(Term,X):- catch_metta_return(eval_args(Term,X),X).
-
-eval_H(_StackMax,_Self, Term,Term):- fast_option_value(compile, save),!.
-eval_H(StackMax,Self,Term,X):-  catch_metta_return(eval_args('=',_,StackMax,Self,Term,X),X).
+%!  eval_H(+StackMax, +Self, +Term, -Result) is det.
+%
+%   Evaluates a term (`Term`) in the context of a specific `Self`, with a limit on stack size.
+%   If the `compile` option is set to `save`, it skips evaluation and directly returns the term.
+%   Otherwise, it delegates to `eval_args/6` for evaluation.
+%
+%   @arg StackMax  The maximum allowable stack size for the evaluation.
+%   @arg Self      The context or "space" for evaluation.
+%   @arg Term      The term to be evaluated.
+%   @arg Result    The result of the evaluation.
+%
+%   @example
+%     % Evaluate a term with a stack size limit:
+%     ?- eval_H(100, '&self', some_term, Result).
+%
+eval_H(_StackMax, _Self, Term, Term) :-
+    % If the `compile` option is set to `save`, return the term unchanged.
+    fast_option_value(compile, save), !.
+eval_H(StackMax, Self, Term, X) :-
+    % Otherwise, perform evaluation with error handling, passing the stack limit.
+    catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
 /*
 eval_H(StackMax,Self,Term,X).
 
@@ -5496,41 +5828,165 @@ t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 
-print_goals(TermV):- write_src(TermV).
+%!  print_goals(+TermV) is det.
+%
+%   Outputs the source representation of a term (`TermV`).
+%
+%   @arg TermV The term to be printed.
+%
+%   @example
+%     % Print a term:
+%     ?- print_goals(foo(bar)).
+%     foo(bar).
+%
+print_goals(TermV) :-
+    % Write the source representation of the term.
+    write_src(TermV).
 
+%!  if_or_else(+IfTrue1, +OrElse2) is det.
+%
+%   Executes the first goal (`IfTrue1`). If it succeeds, the predicate succeeds.
+%   If the first goal fails, executes the alternative goal (`OrElse2`).
+%
+%   @arg IfTrue1 The first goal to try.
+%   @arg OrElse2 The alternative goal to execute if `IfTrue1` fails.
+%
+%   @example
+%     % Example usage of if_or_else/2:
+%     ?- if_or_else(true, writeln('Else executed')).
+%     true.
+%
+%     ?- if_or_else(fail, writeln('Else executed')).
+%     Else executed
+%     true.
+%
+if_or_else(IfTrue1, OrElse2) :-
+    % Execute `IfTrue1`; if it succeeds, succeed. Otherwise, execute `OrElse2`.
+    call(IfTrue1) *-> true ; call(OrElse2).
 
-if_or_else(IfTrue1,OrElse2):- call(IfTrue1)*->true;call(OrElse2).
-if_or_else(IfTrue1,OrElse2,OrElse3):-                 if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3)).
-if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4):-         if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4)).
-if_or_else(IfTrue1,OrElse2,OrElse3,OrElse4,OrElse5):- if_or_else(IfTrue1,if_or_else(OrElse2,OrElse3,OrElse4,OrElse5)).
+%!  if_or_else(+IfTrue1, +OrElse2, +OrElse3) is det.
+%
+%   Executes the first goal (`IfTrue1`). If it succeeds, the predicate succeeds.
+%   Otherwise, tries `OrElse2`. If `OrElse2` fails, executes `OrElse3`.
+%
+%   @arg IfTrue1 The first goal to try.
+%   @arg OrElse2 The second goal to try if `IfTrue1` fails.
+%   @arg OrElse3 The third goal to try if both `IfTrue1` and `OrElse2` fail.
+%
+if_or_else(IfTrue1, OrElse2, OrElse3) :-
+    % Chain the calls, trying each alternative in sequence.
+    if_or_else(IfTrue1, if_or_else(OrElse2, OrElse3)).
 
+%!  if_or_else(+IfTrue1, +OrElse2, +OrElse3, +OrElse4) is det.
+%
+%   Extends `if_or_else/3` to include a fourth alternative (`OrElse4`).
+%
+if_or_else(IfTrue1, OrElse2, OrElse3, OrElse4) :-
+    % Chain the calls, trying each alternative in sequence.
+    if_or_else(IfTrue1, if_or_else(OrElse2, OrElse3, OrElse4)).
 
-interacting:- tracing,!.
-interacting:- current_prolog_flag(debug,true),!.
-interacting:- option_value(interactive,true),!.
-interacting:- option_value(prolog,true),!.
+%!  if_or_else(+IfTrue1, +OrElse2, +OrElse3, +OrElse4, +OrElse5) is det.
+%
+%   Extends `if_or_else/4` to include a fifth alternative (`OrElse5`).
+%
+if_or_else(IfTrue1, OrElse2, OrElse3, OrElse4, OrElse5) :-
+    % Chain the calls, trying each alternative in sequence.
+    if_or_else(IfTrue1, if_or_else(OrElse2, OrElse3, OrElse4, OrElse5)).
 
-% call_max_time(+Goal, +MaxTime, +Else)
-call_max_time(Goal,_MaxTime, Else) :- interacting,!, if_or_else(Goal,Else).
-call_max_time(Goal,_MaxTime, Else) :- !, if_or_else(Goal,Else).
+%!  interacting is nondet.
+%
+%   Determines if the system is in an interactive mode.
+%   This predicate succeeds if:
+%   - Tracing is enabled.
+%   - Debug mode is active.
+%   - The `interactive` option is set to `true`.
+%   - The `prolog` option is set to `true`.
+%
+interacting :-
+    % Check if tracing is enabled.
+    tracing, !.
+interacting :-
+    % Check if debugging is enabled.
+    current_prolog_flag(debug, true), !.
+interacting :-
+    % Check if the `interactive` option is enabled.
+    option_value(interactive, true), !.
+interacting :-
+    % Check if the `prolog` option is enabled.
+    option_value(prolog, true), !.
+
+%!  call_max_time(+Goal, +MaxTime, +Else) is det.
+%
+%   Executes a goal (`Goal`) with a maximum time limit (`MaxTime`).
+%   If the goal fails or the time limit is exceeded, executes the alternative goal (`Else`).
+%
+%   @arg Goal     The goal to execute.
+%   @arg MaxTime  The maximum time allowed for `Goal`.
+%   @arg Else     The alternative goal to execute if `Goal` fails or times out.
+%
+%   @example
+%     % Run a goal with a time limit:
+%     ?- call_max_time(true, 5, writeln('Timeout or failure occurred')).
+%
+call_max_time(Goal, _MaxTime, Else) :-
+    % If the system is in interactive mode, skip the time limit and execute directly.
+    interacting, !, if_or_else(Goal, Else).
+call_max_time(Goal, _MaxTime, Else) :-
+    % Fallback to executing the goal directly if no time limit is set.
+    !, if_or_else(Goal, Else).
 call_max_time(Goal, MaxTime, Else) :-
-    catch(if_or_else(call_with_time_limit(MaxTime, Goal),Else), time_limit_exceeded, Else).
+    % Use `call_with_time_limit/2` to enforce the time limit, handling exceptions for timeouts.
+    catch(if_or_else(call_with_time_limit(MaxTime, Goal), Else), time_limit_exceeded, Else).
 
+%!  catch_err(+Goal, +Exception, +Handler) is det.
+%
+%   Executes a goal (`Goal`) and handles exceptions using a handler (`Handler`).
+%   If the exception satisfies `always_rethrow/1`, it is rethrown instead of being handled.
+%
+%   @arg Goal      The goal to execute.
+%   @arg Exception The exception to catch.
+%   @arg Handler   The handler to execute if an exception occurs.
+%
+catch_err(G, E, C) :-
+    catch(G, E, (always_rethrow(E) -> (throw(E)) ; C)).
 
-catch_err(G,E,C):- catch(G,E,(always_rethrow(E)->(throw(E));C)).
-dont_give_up(G):- catch(G,give_up(E),write_src_uo(dont_give_up(E))).
+%!  dont_give_up(+Goal) is det.
+%
+%   Attempts to execute a goal (`Goal`), catching `give_up/1` exceptions.
+%   Logs the exception using `write_src_uo/1` if caught.
+%
+%   @arg Goal The goal to execute.
+%
+dont_give_up(G) :-
+    catch(G, give_up(E), write_src_uo(dont_give_up(E))).
 
+%!  not_in_eq(+List, +Element) is nondet.
+%
+%   Succeeds if an element (`Element`) is in a list (`List`) and is equal
+%   to an existing element using the `==` operator.
+%
+%   @arg List     The list to search.
+%   @arg Element  The element to compare.
+%
+%   @example
+%     % Check for exact equality in a list:
+%     ?- not_in_eq([a, b, c], b).
+%     true.
+%
 not_in_eq(List, Element) :-
+    % Iterate over the list and check for equality using `==`.
     member(V, List), V == Element.
 
 :- ensure_loaded(metta_repl).
 
-
+% Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
 :- nodebug(metta(eval)).
 :- nodebug(metta(exec)).
 :- nodebug(metta(load)).
 :- nodebug(metta(prolog)).
-% Measures the execution time of a Prolog goal and displays the duration in seconds,
+
+% 
+% Below code measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
 % Args:
@@ -5556,174 +6012,665 @@ not_in_eq(List, Element) :-
 %   ; Evaluation took 123.45 ms.
 %   ; Evaluation took 0.012 ms. (12.33 microseconds)
 %
-time_eval(Goal):- time_eval('Evaluation',Goal).
-time_eval(What,Goal) :-
-    timed_call(Goal,Seconds),
-    give_time(What,Seconds).
 
-ctime_eval(Goal):- ctime_eval('Evaluation',Goal).
-ctime_eval(What,Goal) :-
-    ctimed_call(Goal,Seconds),
-    give_time(What,Seconds).
+%!  time_eval(+Goal) is det.
+%
+%   Measures the execution time of a Prolog goal (`Goal`) and displays the duration
+%   in seconds, milliseconds, or microseconds, depending on the elapsed time.
+%   Uses CPU time for measurement.
+%
+%   @arg Goal The Prolog goal to be executed and timed.
+%
+%   @example
+%     % Measure and display the time for a simple goal:
+%     ?- time_eval(my_goal(X)).
+%
+%     % Measure the time for a goal with a delay:
+%     ?- time_eval(sleep(0.95)).
+%
+time_eval(Goal) :-
+    time_eval('Evaluation', Goal).
 
-wtime_eval(Goal):- wtime_eval('Evaluation',Goal).
-wtime_eval(What,Goal) :-
-    wtimed_call(Goal,Seconds),
-    give_time(What,Seconds).
+%!  time_eval(+What, +Goal) is det.
+%
+%   Extended version of `time_eval/1` allowing a custom description (`What`) to be
+%   displayed in the timing output.
+%
+%   @arg What A description of the evaluated task.
+%   @arg Goal The Prolog goal to be executed and timed.
+%
+time_eval(What, Goal) :-
+    timed_call(Goal, Seconds),
+    give_time(What, Seconds).
+
+%!  ctime_eval(+Goal) is det.
+%
+%   Similar to `time_eval/1`, but explicitly uses CPU time for measuring the
+%   execution time of the goal (`Goal`).
+%
+ctime_eval(Goal) :-
+    ctime_eval('Evaluation', Goal).
+
+%!  ctime_eval(+What, +Goal) is det.
+%
+%   Allows a custom description (`What`) for CPU time-based evaluation.
+%
+ctime_eval(What, Goal) :-
+    ctimed_call(Goal, Seconds),
+    give_time(What, Seconds).
+
+%!  wtime_eval(+Goal) is det.
+%
+%   Measures the wall-clock (real) time for the execution of a goal (`Goal`).
+%   Suitable for tasks involving delays or external interactions.
+%
+wtime_eval(Goal) :-
+    wtime_eval('Evaluation', Goal).
+
+%!  wtime_eval(+What, +Goal) is det.
+%
+%   Allows a custom description (`What`) for wall-clock time-based evaluation.
+%
+wtime_eval(What, Goal) :-
+    wtimed_call(Goal, Seconds),
+    give_time(What, Seconds).
+
+%!  give_time(+What, +Seconds) is det.
+%
+%   Formats and displays the elapsed time for a task (`What`) based on the duration
+%   in seconds (`Seconds`). Adjusts the output units to seconds, milliseconds, or
+%   microseconds based on the value of `Seconds`.
+%
+%   @arg What    A description of the evaluated task.
+%   @arg Seconds The elapsed time in seconds.
+%
+%   Output rules:
+%   - More than 2 seconds: Displays in seconds.
+%   - Between 1 ms and 2 seconds: Displays in milliseconds.
+%   - Less than 1 ms: Displays in microseconds.
+%
 
 %give_time(_What,_Seconds):- is_compatio,!.
-give_time(What,Seconds):-
+give_time(What, Seconds) :-
     Milliseconds is Seconds * 1_000,
     (Seconds > 2
         -> format('~N; ~w took ~2f seconds.~n~n', [What, Seconds])
         ; (Milliseconds >= 1
             -> format('~N; ~w took ~3f secs. (~2f milliseconds) ~n~n', [What, Seconds, Milliseconds])
-            ;( Micro is Milliseconds * 1_000,
+            ; (Micro is Milliseconds * 1_000,
               format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
 
-timed_call(Goal,Seconds):- ctimed_call(Goal,Seconds).
+%!  timed_call(+Goal, -Seconds) is det.
+%
+%   Measures the CPU time taken to execute a Prolog goal (`Goal`).
+%   Delegates to `ctimed_call/2` for actual measurement.
+%
+%   @arg Goal    The goal to be executed and timed.
+%   @arg Seconds The elapsed time in seconds.
+%
+timed_call(Goal, Seconds) :-
+    ctimed_call(Goal, Seconds).
 
-ctimed_call(Goal,Seconds):-
+%!  ctimed_call(+Goal, -Seconds) is det.
+%
+%   Measures the CPU time taken to execute a Prolog goal (`Goal`) using
+%   `statistics/2`.
+%
+%   @arg Goal    The goal to be executed and timed.
+%   @arg Seconds The elapsed CPU time in seconds.
+%
+ctimed_call(Goal, Seconds) :-
     statistics(cputime, Start),
-    ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
+    % Use `rtrace` for debugging if applicable.
+    ( \+ rtrace_this(Goal) -> rtrace_on_error(Goal) ; rtrace(Goal) ),
     statistics(cputime, End),
     Seconds is End - Start.
 
-wtimed_call(Goal,Seconds):-
-    statistics(walltime, [Start,_]),
-    ( \+ rtrace_this(Goal)->rtrace_on_error(Goal);rtrace(Goal)),
-    statistics(walltime, [End,_]),
-    Seconds is (End - Start)/1000.
+%!  wtimed_call(+Goal, -Seconds) is det.
+%
+%   Measures the wall-clock (real) time taken to execute a Prolog goal (`Goal`)
+%   using `statistics/2`.
+%
+%   @arg Goal    The goal to be executed and timed.
+%   @arg Seconds The elapsed wall-clock time in seconds.
+%
+wtimed_call(Goal, Seconds) :-
+    statistics(walltime, [Start, _]),
+    % Use `rtrace` for debugging if applicable.
+    ( \+ rtrace_this(Goal) -> rtrace_on_error(Goal) ; rtrace(Goal) ),
+    statistics(walltime, [End, _]),
+    Seconds is (End - Start) / 1000.
 
-
-rtrace_this(eval_H(_, _, P , _)):- compound(P), !, rtrace_this(P).
-rtrace_this([P|_]):- P == 'pragma!',!,fail.
-rtrace_this([P|_]):- P == 'import!',!,fail.
-rtrace_this([P|_]):- P == 'rtrace!',!.
-rtrace_this(_Call):- option_value(rtrace,true),!.
-rtrace_this(_Call):- is_debugging(rtrace),!.
+%!  rtrace_this(+Call) is nondet.
+%
+%   Determines whether a given call (`Call`) should be traced using `rtrace/1`.
+%   The predicate checks various conditions to decide if tracing should be enabled:
+%   - Specific forms of `Call` are explicitly excluded from tracing.
+%   - Tracing is enabled based on runtime options or debugging flags.
+%
+%   @arg Call The goal or term to be checked for tracing.
+%
+%   @example
+%     % Enable tracing for general terms:
+%     ?- option_value(rtrace, true), rtrace_this(my_goal(foo)).
+%     true.
+%
+%     % Exclude certain pragmas or imports:
+%     ?- rtrace_this(['pragma!', foo]).
+%     false.
+%
+%     % Check nested compound terms:
+%     ?- rtrace_this(eval_H(_, _, foo(bar), _)).
+%     true.
+%
+rtrace_this(eval_H(_, _, P, _)) :-
+    % If the third argument (`P`) is compound, recursively check its structure.
+    compound(P), !, rtrace_this(P).
+rtrace_this([P|_]) :-
+    % Exclude the pragma directive `'pragma!'`.
+    P == 'pragma!', !, fail.
+rtrace_this([P|_]) :-
+    % Exclude the import directive `'import!'`.
+    P == 'import!', !, fail.
+rtrace_this([P|_]) :-
+    % Allow tracing for the directive `'rtrace!'`.
+    P == 'rtrace!', !.
+rtrace_this(_Call) :-
+    % Enable tracing if the `rtrace` option is set to `true`.
+    option_value(rtrace, true), !.
+rtrace_this(_Call) :-
+    % Enable tracing if the `rtrace` debugging flag is active.
+    is_debugging(rtrace), !.
 
 %:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
-:- abolish(fbug/1).
-fbug(_):- is_compatio,!.
-fbug(_):- \+ option_value('log','true'),!.
-fbug(Info):- real_notrace(in_cmt(color_g_mesg('#2f2f2f',write_src(Info)))).
-example0(_):- fail.
-example1(a). example1(_):- fail.
-example2(a). example2(b). example2(_):- fail.
-example3(a). example3(b). example3(c). example3(_):- fail.
-%eval_H(100,'&self',['change-state!','&var',[+,1,['get-state','&var']]],OUT)
+:- abolish(fbug/1).  % Removes any existing definition of `fbug/1` to ensure a clean slate.
+
+%!  fbug(+Info) is det.
+%
+%   Handles debug logging for the system. It determines whether logging should occur
+%   based on compatibility checks and runtime options. If logging is enabled,
+%   it outputs the provided debug information (`Info`) in a specific format.
+%
+%   @arg Info The debug information to be logged.
+%
+fbug(_) :-
+    % If compatibility mode (`is_compatio`) is active, do nothing.
+    is_compatio, !.
+fbug(_) :-
+    % If the 'log' option is not set to 'true', do nothing.
+    \+ option_value('log', 'true'), !.
+fbug(Info) :-
+    % Otherwise, log the debug information using `write_src/1` with formatting.
+    real_notrace(in_cmt(color_g_mesg('#2f2f2f', write_src(Info)))).
+
+%!  example0(+Input) is det.
+%
+%   An example predicate that always fails, regardless of the input.
+%
+example0(_) :- fail.
+
+%!  example1(+Input) is nondet.
+%
+%   Succeeds only for the input `a`. Fails for any other input.
+%
+example1(a).
+example1(_) :- fail.
+
+%!  example2(+Input) is nondet.
+%
+%   Succeeds for `a` and `b`. Fails for any other input.
+%
+example2(a).
+example2(b).
+example2(_) :- fail.
+
+%!  example3(+Input) is nondet.
+%
+%   Succeeds for `a`, `b`, and `c`. Fails for any other input.
+%
+example3(a).
+example3(b).
+example3(c).
+example3(_) :- fail.
+
+% eval_H(100, '&self', ['change-state!', '&var', [+, 1, ['get-state', '&var']]], OUT)
+
+%!  dcall(+Goal) is nondet.
+%
+%   Executes a given goal (`Goal`) and determines if it is deterministic.
+%   If deterministic, it applies a cut (`!`) to prevent backtracking.
+%
+%   @arg Goal The goal to execute.
+%
 %dcall(X):- (call(X),deterministic(YN)),trace,((YN==true)->!;true).
-chkdet_call(XX):- !, call(XX).
-chkdet_call0(XX):- !, call(XX).
 
-dcall0000000000(XX):-
+%!  chkdet_call(+Goal) is det.
+%
+%   A variant of `call/1` that executes a goal deterministically.
+%
+%   @arg Goal The goal to execute.
+%
+chkdet_call(XX) :- !, call(XX).
+
+%!  chkdet_call0(+Goal) is det.
+%
+%   Similar to `chkdet_call/1`, executes a goal deterministically.
+%
+%   @arg Goal The goal to execute.
+%
+chkdet_call0(XX) :- !, call(XX).
+
+%!  dcall0000000000(+Goal) is nondet.
+%
+%   Executes a goal (`XX`) and manages deterministic and nondeterministic cases.
+%   Uses `call_nth/5` to execute the goal and track its solution number (`Nth`) and determinism (`Det`).
+%
+%   @arg Goal The goal to be executed.
+%
+dcall0000000000(XX) :-
+    % Create a structure to track the solution (`USol`).
    USol = sol(dead),
-   copy_term_g(XX,X),
-   call_nth(USol,X,Nth,Det,Prev),
-   %fbug(call_nth(USol,X,Nth,Det,Prev)),
-   XX=Prev,
-   (Det==yes -> (!, (XX=Prev;XX=X)) ;
-   (((var(Nth) -> ( ! , Prev\==dead) ;
+    % Create a copy of the goal (`XX`) to avoid unintended modifications.
+    copy_term_g(XX, X),
+    % Execute the goal and retrieve its solution number, determinism, and previous state.
+    call_nth(USol, X, Nth, Det, Prev),
+    % Optionally log the call (commented out in the original code).
+    % fbug(call_nth(USol, X, Nth, Det, Prev)),
+    % Unify `XX` with the previous result (`Prev`).
+    XX = Prev,
+    % Handle deterministic and nondeterministic cases.
+    (Det == yes ->
+        % If deterministic, commit the result and unify `XX` with the result or copy.
+        (!, (XX = Prev ; XX = X))
+    ;
+        % Handle nondeterministic cases based on the solution number (`Nth`).
+        (((var(Nth) ->
+            % If `Nth` is unbound, commit the result if `Prev` is not `dead`.
+            (!, Prev \== dead)
+        ;
       true),
-   (Nth==1 -> ! ; true)))).
+        % If `Nth` equals 1, commit the result; otherwise, allow backtracking.
+        (Nth == 1 -> ! ; true)))).
 
-call_nth(USol,XX,Nth,Det,Prev):-
+%!  call_nth(+USol, +Goal, -Nth, -Det, -Prev) is nondet.
+%
+%   Executes a goal (`XX`) and tracks its solution number (`Nth`) and determinism (`Det`).
+%   Updates the `USol` structure with the latest solution (`Prev`).
+%
+%   @arg USol  A structure to hold the previous solution.
+%   @arg Goal  The goal to be executed.
+%   @arg Nth   The solution number of the goal.
+%   @arg Det   Indicates if the goal is deterministic (`yes` or `no`).
+%   @arg Prev  The previous solution for the goal.
+%
+call_nth(USol, XX, Nth, Det, Prev) :-
   repeat,
-   ((call_nth(XX,Nth),deterministic(Det),arg(1,USol,Prev))*->
-         ( nb_setarg(1,USol,XX))
-         ; (!, arg(1,USol,Prev))).
+    (
+        % Execute the goal, track its solution number and determinism, and update `USol`.
+        (call_nth(XX, Nth), deterministic(Det), arg(1, USol, Prev)) *->
+            % Update the solution in `USol`.
+            (nb_setarg(1, USol, XX))
+        ;
+            % Commit the previous solution if no new ones are available.
+            (!, arg(1, USol, Prev))
+    ).
 
-catch_red(Term):- catch_err(Term,E,pp_m_m_red(red,in(Term,E))).
-%catch_red(Term):- call(Term).
+%!  catch_red(+Term) is det.
+%
+%   Executes a goal (`Term`) and catches any exceptions, logging them with `pp_m_m_red/2`.
+%
+%   @arg Term The term to be executed.
+%
+catch_red(Term) :-
+    catch_err(Term, E, pp_m_m_red(red, in(Term, E))).
 
-pp_m_m_red(_,T):- T =@= in(not_compat_io(maybe_halt(7)),unwind(halt(7))),!.
-pp_m_m_red(C,T):- pp_m(C,T).
+% catch_red(Term):- call(Term).
 
-s2p(I,O):- sexpr_s2p(I,O),!.
+%!  pp_m_m_red(+Color, +Term) is det.
+%
+%   Handles exceptions and logs them in a formatted manner, skipping specific cases.
+%
+%   @arg Color The color used for formatting the log.
+%   @arg Term  The exception or term to be logged.
+%
+pp_m_m_red(_, T) :-
+    % Skip logging for specific error terms.
+    T =@= in(not_compat_io(maybe_halt(7)), unwind(halt(7))), !.
+pp_m_m_red(C, T) :-
+    % Log the term with the given color.
+    pp_m(C, T).
 
-discover_head(Self,Load,Head):-
- ignore(([Fn|PredDecl]=Head,
- nop(( arg_types(PredDecl,[],EachArg),
-  metta_anew1(Load,metta_head(Self,Fn,EachArg)))))).
+%!  s2p(+Input, -Output) is det.
+%
+%   Converts a symbolic expression (`Input`) to a Prolog term (`Output`).
+%   Uses `sexpr_s2p/2` for the actual conversion.
+%
+%   @arg Input  The input symbolic expression.
+%   @arg Output The converted Prolog term.
+%
+s2p(I, O) :- sexpr_s2p(I, O), !.
 
-discover_body(Self,Load,Body):-
-  nop(( [Fn|PredDecl] = Body, arg_types(PredDecl,[],EachArg),
-  metta_anew1(Load,metta_body(Self,Fn,EachArg)))).
+%!  discover_head(+Self, +Load, +Head) is det.
+%
+%   Discovers the head of a predicate and processes it within a specific context (`Self`).
+%   This includes analyzing the argument types and creating a new Metta head.
+%
+%   @arg Self The context in which the predicate is being loaded.
+%   @arg Load The load operation to apply.
+%   @arg Head The predicate head to be analyzed.
+%
+discover_head(Self, Load, Head) :-
+    ignore((
+        [Fn | PredDecl] = Head,
+        nop((
+            arg_types(PredDecl, [], EachArg),
+            metta_anew1(Load, metta_head(Self, Fn, EachArg))
+        ))
+    )).
 
-decl_length(TypeDecL,Len):- is_list(TypeDecL),!,length(TypeDecL,Len).
-decl_length(_TypeDecL,1).
+%!  discover_body(+Self, +Load, +Body) is det.
+%
+%   Discovers the body of a predicate and processes it within a specific context (`Self`).
+%   This includes analyzing the argument types and creating a new Metta body.
+%
+%   @arg Self The context in which the predicate is being loaded.
+%   @arg Load The load operation to apply.
+%   @arg Body The predicate body to be analyzed.
+%
+discover_body(Self, Load, Body) :-
+    nop((
+        [Fn | PredDecl] = Body,
+        arg_types(PredDecl, [], EachArg),
+        metta_anew1(Load, metta_body(Self, Fn, EachArg))
+    )).
 
-arg_types([Ar|L],R,LR):- Ar == '->', !, arg_types(L,R,LR).
-arg_types([[Ar|L]],R,LR):- Ar == '->', !, arg_types(L,R,LR).
-arg_types(L,R,LR):- append(L,R,LR).
+%!  decl_length(+TypeDeclaration, -Length) is det.
+%
+%   Computes the length of a type declaration (`TypeDeclaration`).
+%   For lists, it calculates the actual length. For other types, it defaults to 1.
+%
+%   @arg TypeDeclaration The type declaration to analyze.
+%   @arg Length           The computed length of the declaration.
+%
+decl_length(TypeDecL, Len) :-
+    is_list(TypeDecL), !,
+    length(TypeDecL, Len).
+decl_length(_TypeDecL, 1).
+
+%!  arg_types(+ArgList, +Rest, -FinalArgList) is det.
+%
+%   Processes an argument list (`ArgList`) by removing `->` separators and appending
+%   the rest of the arguments (`Rest`) to produce a final argument list (`FinalArgList`).
+%
+%   @arg ArgList       The initial list of arguments.
+%   @arg Rest          Additional arguments to append.
+%   @arg FinalArgList  The resulting argument list.
+%
+arg_types([Ar | L], R, LR) :-
+    Ar == '->', !,
+    arg_types(L, R, LR).
+arg_types([[Ar | L]], R, LR) :-
+    Ar == '->', !,
+    arg_types(L, R, LR).
+arg_types(L, R, LR) :-
+    append(L, R, LR).
 
 %:- ensure_loaded('../../examples/factorial').
 %:- ensure_loaded('../../examples/fibonacci').
 
-extreme_tracing:- \+ fast_option_value(rrtrace, false),!.
+%!  extreme_tracing is nondet.
+%
+%   Determines whether extreme tracing should be enabled. This predicate checks
+%   the value of the runtime option `rrtrace`. If the `rrtrace` option is not set
+%   to `false`, it succeeds, enabling extreme tracing behavior.
+%
+%   This allows conditional activation of detailed tracing based on configuration.
+%
+%   @example
+%     % Enable extreme tracing when `rrtrace` is not explicitly set to `false`:
+%     ?- extreme_tracing.
+%     true.
+%
+%     % Disable extreme tracing when `rrtrace` is set to `false`:
+%     ?- fast_option_value(rrtrace, false), extreme_tracing.
+%     false.
+%
+extreme_tracing :-
+    % Check if the `rrtrace` option is not set to `false`. If true, enable tracing.
+    \+ fast_option_value(rrtrace, false), !.
 
 %print_preds_to_functs:-preds_to_functs_src(factorial_tail_basic)
-ggtrace(G):- extreme_tracing,!, rtrace(G).
-ggtrace(G):- !, fail, call(G).
-%ggtrace(G):- call(G).
-ggtrace0(G):- ggtrace,
+
+%!  ggtrace(+Goal) is nondet.
+%
+%   Executes a goal (`Goal`) with conditional tracing. If `extreme_tracing` is
+%   enabled, the goal is executed using `rtrace/1` for detailed debugging. If not,
+%   the predicate either fails silently or executes the goal without tracing.
+%
+%   @arg Goal The goal to be executed with or without tracing.
+%
+%   @example
+%     % Execute with `rtrace` if extreme tracing is enabled:
+%     ?- ggtrace(my_goal(X)).
+%
+%     % Fails if extreme tracing is not enabled:
+%     ?- ggtrace(my_failing_goal).
+%
+ggtrace(G) :-
+    % If extreme tracing is enabled, use `rtrace/1` for the goal.
+    extreme_tracing, !, rtrace(G).
+ggtrace(G) :-
+    % If extreme tracing is disabled, fail silently.
+    !, fail, call(G).
+
+% ggtrace(G):- call(G).  % Original fallback clause (commented out).
+
+%!  ggtrace0(+Goal) is det.
+%
+%   Executes a goal (`Goal`) with enhanced tracing options. Configures tracing behavior
+%   using `leash/1`, `visible/1`, and other debugging settings. Ensures that tracing
+%   starts before executing the goal and stops after its completion.
+%
+%   @arg Goal The goal to be executed with detailed tracing.
+%
+%   @example
+%     % Execute a goal with enhanced tracing:
+%     ?- ggtrace0(my_goal(X)).
+%
+ggtrace0(G) :-
+    % Enable general tracing using `ggtrace/1`.
+    ggtrace,
+    % Suppress all Prolog debugger prompts.
     leash(-all),
+    % Make all ports invisible by default.
   visible(-all),
+    % Customize visibility for specific ports (e.g., call and exception).
     % debug,
-  %visible(+redo),
+    % visible(+redo),  % Uncomment to make redo ports visible.
   visible(+call),
   visible(+exception),
+    % Optionally allow leash on exceptions.
     maybe_leash(+exception),
-   setup_call_cleanup(trace,G,notrace).
+    % Setup tracing for the goal, ensuring cleanup after execution.
+    setup_call_cleanup(trace, G, notrace).
+
 :- dynamic(began_loon/1).
-loon:- loon(typein).
 
+%!  loon is det.
+%
+%   The main entry point for the `loon` predicate. By default, it invokes
+%   `loon(typein)` to handle user input or interactive behavior.
+%
+%   @example
+%     % Start the loon system in its default mode:
+%     ?- loon.
+%
+loon :-
+    % Invoke the `loon/1` predicate with the default argument `typein`.
+    loon(typein).
 
-catch_red_ignore(G):- if_or_else(catch_red(G),true).
+%!  catch_red_ignore(+Goal) is det.
+%
+%   Executes a goal (`G`) and suppresses any errors raised during execution.
+%   It uses `catch_red/1` to catch errors and ignores them, always succeeding.
+%
+%   @arg Goal The goal to be executed.
+%
+%   @example
+%     % Execute a goal, ignoring errors:
+%     ?- catch_red_ignore(my_goal(X)).
+%
+catch_red_ignore(G) :-
+    % Execute `catch_red/1` and always succeed, even if it fails.
+    if_or_else(catch_red(G), true).
 
+%
+%   Exports the `loon/1` predicate, making it accessible to other modules.
+%
 :- export(loon/1).
+
+%
+%   Declares the `loon/1` predicate as public, ensuring it is visible and callable
+%   even if this file is loaded into a restricted environment or module.
+%
 :- public(loon/1).
 
+%!  loon(+Why) is det.
+%
+%   Handles the initialization or continuation of the `loon` process based on the
+%   context (`Why`). The predicate considers various conditions, such as whether
+%   compilation or reloading is occurring, and acts accordingly.
+%
+%   @arg Why A description or reason for invoking `loon`.
+%
+%   @example
+%     % Start loon with a specific reason:
+%     ?- loon(toplevel).
+%
 
-%loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
-loon(Why):- is_compiling,!,fbug(compiling_loon(Why)),!.
-%loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
+% loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
+loon(Why) :-
+    % If in compilation mode, log the event and succeed.
+    is_compiling, !,
+    fbug(compiling_loon(Why)), !.
+% loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
-loon(Why):- is_compiled, Why\==toplevel,!,fbugio(compiled_loon(Why)),!.
-loon(Why):- began_loon(_),!,fbugio(skip_loon(Why)).
-loon(Why):- fbugio(began_loon(Why)), assert(began_loon(Why)),
+loon(Why) :-
+    % If the program is already compiled and not in the `toplevel` phase,
+    % log the event and succeed.
+    is_compiled, Why \== toplevel, !,
+    fbugio(compiled_loon(Why)), !.
+loon(Why) :-
+    % If `loon` has already begun for any reason, log the event and skip further processing.
+    began_loon(_), !,
+    fbugio(skip_loon(Why)).
+loon(Why) :-
+    % Otherwise, log the beginning of `loon`, record it, and start `do_loon`.
+    fbugio(began_loon(Why)),
+    assert(began_loon(Why)),
   do_loon.
 
-do_loon:-
+%!  do_loon is det.
+%
+%   Performs the core initialization and execution tasks for `loon`. This includes:
+%   - Setting up the environment (e.g., readline and output stream).
+%   - Ensuring compatibility and loading essential components.
+%   - Running commands and handling results.
+%   - Safely ignoring errors for specific initialization steps.
+%
+do_loon :-
  ignore((
-  \+ prolog_load_context(reloading,true),
-  maplist(catch_red_ignore,[
-
-   %if_t(is_compiled,ensure_mettalog_py),
+        % Avoid reloading context interference.
+        \+ prolog_load_context(reloading, true),
+        % Execute a sequence of initialization tasks, ignoring errors where needed.
+        maplist(catch_red_ignore, [
+            % Uncomment the following lines if needed during compilation:
+            % if_t(is_compiled, ensure_mettalog_py),
           install_readline_editline,
-   %nts1,
-   %install_ontology,
+            % nts1,
+            % install_ontology,
    metta_final,
    % ensure_corelib_types,
    set_output_stream,
-   if_t(is_compiled,update_changed_files),
+            if_t(is_compiled, update_changed_files),
    test_alarm,
    run_cmd_args,
    write_answer_output,
-   not_compat_io(maybe_halt(7))]))),!.
+            not_compat_io(maybe_halt(7))
+        ])
+    )), !.
 
-need_interaction:- \+ option_value('had_interaction',true),
-   \+ is_converting,  \+ is_compiling, \+ is_pyswip,!,
-    option_value('prolog',false), option_value('repl',false),  \+ metta_file(_Self,_Filename,_Directory).
+%!  need_interaction is nondet.
+%
+%   Determines if user interaction is required. Interaction is needed if:
+%   - The `had_interaction` option is not set to `true`.
+%   - The system is not currently converting, compiling, or using `pyswip`.
+%   - The `prolog` and `repl` options are both set to `false`.
+%   - There are no active Metta files loaded.
+%
+%   @example
+%     % Check if interaction is needed:
+%     ?- need_interaction.
+%
+need_interaction :-
+    % Check if the `had_interaction` option is not set to true.
+    \+ option_value('had_interaction', true),
+    % Ensure the system is not converting, compiling, or using `pyswip`.
+    \+ is_converting, \+ is_compiling, \+ is_pyswip, !,
+    % Check if both `prolog` and `repl` options are false.
+    option_value('prolog', false),
+    option_value('repl', false),
+    % Ensure no Metta files are currently loaded.
+    \+ metta_file(_Self, _Filename, _Directory).
 
-pre_halt1:- is_compiling,!,fail.
-pre_halt1:- loonit_report,fail.
-pre_halt2:- is_compiling,!,fail.
-pre_halt2:-  option_value('prolog',true),!,set_option_value('prolog',started),call_cleanup(prolog,pre_halt2).
-pre_halt2:-  option_value('repl',true),!,set_option_value('repl',started),call_cleanup(repl,pre_halt2).
-pre_halt2:-  need_interaction, set_option_value('had_interaction',true),call_cleanup(repl,pre_halt2).
+%!  pre_halt1 is nondet.
+%
+%   Performs pre-halt tasks. This predicate checks specific conditions to decide
+%   whether halting should proceed or additional steps are required:
+%   - If compiling, halting is skipped.
+%   - Otherwise, generates a `loonit_report` and fails to prevent halting.
+%
+%   @example
+%     % Perform pre-halt checks:
+%     ?- pre_halt1.
+%
+pre_halt1 :-
+    % Skip halting if the system is compiling.
+    is_compiling, !, fail.
+pre_halt1 :-
+    % Generate a `loonit_report` and fail.
+    loonit_report, fail.
+
+%!  pre_halt2 is nondet.
+%
+%   Performs extended pre-halt tasks. Depending on the system state, it may:
+%   - Skip halting if compiling.
+%   - Start the Prolog interpreter or REPL if the corresponding options are enabled.
+%   - Initiate interaction if needed.
+%
+%   @example
+%     % Perform pre-halt tasks and handle interaction:
+%     ?- pre_halt2.
+%
+pre_halt2 :-
+    % Skip halting if the system is compiling.
+    is_compiling, !, fail.
+pre_halt2 :-
+    % If the `prolog` option is true, start Prolog and retry `pre_halt2`.
+    option_value('prolog', true), !,
+    set_option_value('prolog', started),
+    call_cleanup(prolog, pre_halt2).
+pre_halt2 :-
+    % If the `repl` option is true, start the REPL and retry `pre_halt2`.
+    option_value('repl', true), !,
+    set_option_value('repl', started),
+    call_cleanup(repl, pre_halt2).
+pre_halt2 :-
+    % If interaction is needed, set `had_interaction` to true and start the REPL.
+    need_interaction,
+    set_option_value('had_interaction', true),
+    call_cleanup(repl, pre_halt2).
 
 %loon:- time(loon_metta('./examples/compat/test_scripts/*.metta')),fail.
 %loon:- repl, (option_value('halt',false)->true;halt(7)).
@@ -5731,27 +6678,80 @@ pre_halt2:-  need_interaction, set_option_value('had_interaction',true),call_cle
 %maybe_halt(Seven):- option_value('repl',true),!,call_cleanup(repl,(set_option_value_interp('repl',false),maybe_halt(Seven))).
 %maybe_halt(Seven):- option_value('repl',true),!,halt(Seven).
 
-maybe_halt(_):- once(pre_halt1), fail.
-maybe_halt(Seven):- option_value('repl',false),!,halt(Seven).
-maybe_halt(Seven):- option_value('halt',true),!,halt(Seven).
-maybe_halt(_):- once(pre_halt2), fail.
-maybe_halt(Seven):- fbugio(maybe_halt(Seven)), fail.
-maybe_halt(_):- current_prolog_flag(mettalog_rt,true),!.
-maybe_halt(H):- halt(H).
+%!  maybe_halt(+ExitCode) is det.
+%
+%   Handles system halting logic with pre-halt checks and conditional behavior
+%   based on runtime options and flags. The predicate evaluates multiple conditions
+%   before deciding whether to halt the system, run the REPL, or perform additional tasks.
+%
+%   @arg ExitCode The exit code to use if the system halts.
+%
+%   @example
+%     % Attempt to halt the system with exit code 7:
+%     ?- maybe_halt(7).
+%
+maybe_halt(_) :-
+    % Perform preliminary halting checks (`pre_halt1`) and fail.
+    once(pre_halt1), fail.
+maybe_halt(Seven) :-
+    % If the REPL is disabled (`repl = false`), halt with the specified exit code.
+    option_value('repl', false), !, halt(Seven).
+maybe_halt(Seven) :-
+    % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
+    option_value('halt', true), !, halt(Seven).
+maybe_halt(_) :-
+    % Perform extended halting checks (`pre_halt2`) and fail.
+    once(pre_halt2), fail.
+maybe_halt(Seven) :-
+    % Log the halting attempt and fail.
+    fbugio(maybe_halt(Seven)), fail.
+maybe_halt(_) :-
+    % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
+    current_prolog_flag(mettalog_rt, true), !.
+maybe_halt(H) :-
+    % If no other conditions apply, halt with the specified exit code.
+    halt(H).
 
+%
+%   Runs initialization steps when the program is loaded. These include setting
+%   the `cmt_override` variable and restoring the system state.
+%
+:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')), restore).
 
-:- initialization(nb_setval(cmt_override,lse('; ',' !(" ',' ") ')),restore).
+% needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 
-
-%needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 %  libswipl: ['./','-q',--home=/usr/local/lib/swipl]
 
+%
+%   Displays the operating system arguments (`os_argv`) during initialization.
+%
 :- initialization(show_os_argv).
 
-
+%!  ensure_mettalog_system_compilable is det.
+%
+%   Ensures that the MettaLog system is in a compilable state. This involves
+%   loading necessary modules and initializing the environment.
+%
+%   @example
+%     % Prepare the system for compilation:
+%     ?- ensure_mettalog_system_compilable.
+%
 ensure_mettalog_system_compilable:-
     %ensure_loaded(library(metta_python)),
     ensure_mettalog_system.
+
+%!  ensure_mettalog_system is det.
+%
+%   Sets up the MettaLog system by loading essential modules and performing
+%   initialization tasks. This includes:
+%   - Resetting dynamic predicates.
+%   - Loading standard Prolog libraries.
+%   - Enabling autoloading and recompilation of code.
+%
+%   @example
+%     % Prepare the MettaLog system:
+%     ?- ensure_mettalog_system.
+%
 ensure_mettalog_system:-
     abolish(began_loon/1),
     dynamic(began_loon/1),
@@ -5784,82 +6784,274 @@ ensure_mettalog_system:-
     %pack_install(dictoo, [upgrade(true),global(true)]),
     !.
 
-file_save_name(E,_):- \+ symbol(E),!,fail.
-file_save_name(E,Name):- file_base_name(E,BN),BN\==E,!,file_save_name(BN,Name).
-file_save_name(E,E):- symbol_concat('Sav.',_,E),!.
-file_save_name(E,E):- symbol_concat('Bin.',_,E),!.
-before_underscore(E,N):-symbolic_list_concat([N|_],'_',E),!.
-save_name(Name):- current_prolog_flag(os_argv,ArgV),member(E,ArgV),file_save_name(E,Name),!.
-next_save_name(Name):- save_name(E),
-  before_underscore(E,N),
-  symbol_concat(N,'_',Stem),
-  gensym(Stem,Name),
-  \+ exists_file(Name),
-  Name\==E,!.
-next_save_name(SavMeTTaLog):- option_value(exeout,SavMeTTaLog),
-  symbolic(SavMeTTaLog),atom_length(SavMeTTaLog,Len),Len>1,!.
-next_save_name('Sav.MeTTaLog').
-qcompile_mettalog:-
-    ensure_mettalog_system,
-    option_value(exeout,Named),
-    catch_err(qsave_program(Named,
-        [class(development),autoload(true),goal(loon(goal)),
-         toplevel(loon(toplevel)), stand_alone(true)]),E,writeln(E)),
-    halt(0).
-qsave_program:-  ensure_mettalog_system, next_save_name(Name),
-    catch_err(qsave_program(Name,
-        [class(development),autoload(true),goal(loon(goal)), toplevel(loon(toplevel)), stand_alone(false)]),E,writeln(E)),
-    !.
+%!  file_save_name(+File, -SaveName) is nondet.
+%
+%   Determines the save name for a given file (`File`). The save name is derived
+%   based on specific prefixes (`Sav.` or `Bin.`) or by processing the file's base name.
+%
+%   @arg File     The input file to process.
+%   @arg SaveName The resulting save name.
+%
+file_save_name(E, _) :-
+    % Fail if `E` is not a symbol.
+    \+ symbol(E), !, fail.
+file_save_name(E, Name) :-
+    % If the base name of `E` differs from `E`, recursively derive the save name.
+    file_base_name(E, BN), BN \== E, !,
+    file_save_name(BN, Name).
+file_save_name(E, E) :-
+    % Accept names prefixed with `Sav.`.
+    symbol_concat('Sav.', _, E), !.
+file_save_name(E, E) :-
+    % Accept names prefixed with `Bin.`.
+    symbol_concat('Bin.', _, E), !.
 
+%!  before_underscore(+Symbol, -Prefix) is nondet.
+%
+%   Extracts the part of a symbol (`Symbol`) before the first underscore (`_`).
+%
+%   @arg Symbol The input symbol to process.
+%   @arg Prefix The part of the symbol before the underscore.
+%
+before_underscore(E, N) :-
+    symbolic_list_concat([N | _], '_', E), !.
+
+%!  save_name(-Name) is det.
+%
+%   Determines the current save name based on the operating system arguments.
+%   The first matching file name derived by `file_save_name/2` is returned.
+%
+%   @arg Name The resulting save name.
+%
+save_name(Name) :-
+    current_prolog_flag(os_argv, ArgV),
+    member(E, ArgV),
+    file_save_name(E, Name), !.
+
+%!  next_save_name(-Name) is det.
+%
+%   Generates the next save name for the program. The name is derived from the
+%   current save name or a predefined option (`exeout`). It ensures that the
+%   generated name does not conflict with an existing file.
+%
+%   @arg Name The resulting save name.
+%
+next_save_name(Name) :-
+    % Derive the name from the current save name and append a unique suffix.
+    save_name(E),
+    before_underscore(E, N),
+    symbol_concat(N, '_', Stem),
+    gensym(Stem, Name),
+  \+ exists_file(Name),
+    Name \== E, !.
+next_save_name(SavMeTTaLog) :-
+    % Use the `exeout` option if it is valid and sufficiently long.
+    option_value(exeout, SavMeTTaLog),
+    symbolic(SavMeTTaLog),
+    atom_length(SavMeTTaLog, Len),
+    Len > 1, !.
+next_save_name('Sav.MeTTaLog').
+
+%!  qcompile_mettalog is det.
+%
+%   Compiles the MettaLog system into a standalone executable program.
+%   The program name is derived from the `exeout` option. If an error occurs,
+%   it is caught and displayed.
+%
+qcompile_mettalog :-
+    % Ensure the system is initialized.
+    ensure_mettalog_system,
+    % Retrieve the target executable name from the `exeout` option.
+    option_value(exeout, Named),
+    % Attempt to save the program as an executable.
+    catch_err(qsave_program(Named, [
+        class(development),
+        autoload(true),
+        goal(loon(goal)),
+        toplevel(loon(toplevel)),
+        stand_alone(true)
+    ]), E, writeln(E)),
+    % Exit the program with success status.
+    halt(0).
+
+%!  qsave_program is det.
+%
+%   Saves the current Prolog program to a file as a non-standalone executable.
+%   The save name is generated using `next_save_name/1`.
+%
+qsave_program :-
+    % Ensure the system is initialized.
+    ensure_mettalog_system,
+    % Generate the next save name.
+    next_save_name(Name),
+    % Attempt to save the program.
+    catch_err(qsave_program(Name, [
+        class(development),
+        autoload(true),
+        goal(loon(goal)),
+        toplevel(loon(toplevel)),
+        stand_alone(false)
+    ]), E, writeln(E)), !.
 
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
+
+%
+%   Specifies an initialization goal to be executed when the program is loaded.
+%   This directive performs two actions:
+%   1. `update_changed_files`: Checks and updates any files that have been modified
+%      since the last program run, ensuring the system is synchronized.
+%   2. `restore`: Restores the system to a prepared state, likely reinitializing any
+%      essential components.
+%
 :- initialization(update_changed_files,restore).
 
-nts :- nts1.
-nts1:- !. % disable redefinition
-nts1:-  redefine_system_predicate(system:notrace/1),
+%!  nts is det.
+%
+%   Main entry point for initializing or running `nts1`.
+%
+nts :-
+    nts1.
+
+%!  nts1 is det.
+%
+%   Configures or redefines specific system predicates. The first clause
+%   disables further redefinition by cutting execution early. If redefinition
+%   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
+%
+nts1 :- 
+    % Disable redefinition by cutting execution.
+    !.
+nts1 :-
+    % Redefine the system predicate `system:notrace/1` to customize its behavior.
+    redefine_system_predicate(system:notrace/1),
   %listing(system:notrace/1),
+    % Remove the existing definition of `system:notrace/1`.
   abolish(system:notrace/1),
+    % Declare `system:notrace/1` as a dynamic predicate, allowing runtime modifications.
   dynamic(system:notrace/1),
+    % Define the meta-predicate behavior for `system:notrace/1`.
   meta_predicate(system:notrace(0)),
-  asserta((system:notrace(G):- (!,once(G)))).
-nts1:- !.
+    % Define the new behavior for `system:notrace/1`.
+    % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
+    asserta((
+        system:notrace(G) :-
+            (!, once(G)
+    ))).
+nts1 :- 
+    % Ensure that further redefinitions of `nts1` are not allowed after the first.
+    !.
 
-:- nts1.
+:-nts1.
 
-nts0:-  redefine_system_predicate(system:notrace/0),
+%!  nts0 is det.
+%
+%   Configures or redefines the `system:notrace/0` predicate. 
+%   The redefined version writes debug information to `write_src_uo/1` when called.
+%
+nts0 :-
+    % Redefine the system predicate `system:notrace/0`.
+    redefine_system_predicate(system:notrace/0),
+    % Remove the existing definition of `system:notrace/0`.
   abolish(system:notrace/0),
-  asserta((system:notrace:- write_src_uo(notrace))).
-%:- nts0.
+    % Define the new behavior for `system:notrace/0`.
+    % The redefined version writes debug output for tracing.
+    asserta((
+        system:notrace :-
+            write_src_uo(notrace)
+    )).
 
-override_portray:-
+% Optionally initialize `nts0`.
+% :- nts0.
+
+%!  override_portray is det.
+%
+%   Overrides the default `portray/1` behavior in the user module. Existing
+%   clauses for `user:portray/1` are moved to `user:portray_prev/1` for backup.
+%   A new `user:portray/1` implementation is then asserted, which delegates
+%   portrayal to `metta_portray/1`.
+%
+%   @example
+%     % Override the `portray/1` predicate:
+%     ?- override_portray.
+%
+override_portray :-
+    % For each existing clause of `user:portray/1`:
     forall(
         clause(user:portray(List), Where:Body, Cl),
-    (assert(user:portray_prev(List):- Where:Body),
-    erase(Cl))),
+        (
+            % Backup the existing clause as `user:portray_prev/1`.
+            assert(user:portray_prev(List) :- Where:Body),
+            % Erase the original clause.
+            erase(Cl)
+        )
+    ),
+    % Add a new `user:portray/1` clause that delegates to `metta_portray/1`.
     asserta((user:portray(List) :- metta_portray(List))).
 
+%!  metta_message_hook(+A, +B, +C) is nondet.
+%
+%   Handles error messages by invoking `fbug/1` for logging when `B == error`.
+%   Fails to indicate that the message should be handled by the default mechanism.
+%
+%   @arg A The message identifier.
+%   @arg B The message kind (e.g., `error`).
+%   @arg C Additional message context.
+%
 metta_message_hook(A, B, C) :-
-      user:
-      (   B==error,
+    user:(
+        % If the message kind is `error`, log it and fail.
+        B == error,
           fbug(metta_message_hook(A, B, C)),
           fail
       ).
 
-override_message_hook:-
+%!  override_message_hook is det.
+%
+%   Overrides the `message_hook/3` predicate in the user module. Existing clauses
+%   for `user:message_hook/3` are moved to a backup version. A new implementation
+%   is added to delegate message handling to `metta_message_hook/3`.
+%
+%   @example
+%     % Override the `message_hook/3` predicate:
+%     ?- override_message_hook.
+%
+override_message_hook :-
+    % For each existing clause of `user:message_hook/3`:
       forall(
-          clause(user:message_hook(A,B,C), Where:Body, Cl),
-      (assert(user:message_hook(A,B,C):- Where:Body), erase(Cl))),
-      asserta((user:message_hook(A,B,C) :- metta_message_hook(A,B,C))).
+        clause(user:message_hook(A, B, C), Where:Body, Cl),
+        (
+            % Backup the existing clause as a new version.
+            assert(user:message_hook(A, B, C) :- Where:Body),
+            % Erase the original clause.
+            erase(Cl)
+        )
+    ),
+    % Add a new `user:message_hook/3` clause that delegates to `metta_message_hook/3`.
+    asserta((user:message_hook(A, B, C) :- metta_message_hook(A, B, C))).
 
-fix_message_hook:-
-      clause(message_hook(A, B, C),
-        user:
-        (   B==error,
+%!  fix_message_hook is det.
+%
+%   Fixes the `message_hook/3` predicate by removing specific clauses where the
+%   message kind is `error`. The identified clause is erased after logging it.
+%
+%   @example
+%     % Fix the `message_hook/3` predicate:
+%     ?- fix_message_hook.
+%
+fix_message_hook :-
+    % Identify clauses of `message_hook/3` where `B == error`.
+    clause(
+        message_hook(A, B, C),
+        user:(
+            B == error,
             fbug(user:message_hook(A, B, C)),
             fail
-        ), Cl),erase(Cl).
+        ),
+        Cl
+    ),
+    % Erase the identified clause.
+    erase(Cl).
 
 :- unnullify_output.
 
@@ -5872,12 +7064,39 @@ fix_message_hook:-
 %:- ensure_loaded(metta_help).
 
 :- enter_comment.
-stack_times_16:- current_prolog_flag(stack_limit,X),X_16 is X * 16, set_prolog_flag(stack_limit,X_16).
+
+%!  stack_times_16 is det.
+%
+%   Increases the Prolog stack limit to 16 times its current value. This is useful
+%   in scenarios requiring significantly more stack space, such as deep recursion
+%   or handling large datasets.
+%
+%   @example
+%     % Increase the stack limit by 16 times:
+%     ?- stack_times_16.
+%
+stack_times_16 :-
+    % Retrieve the current stack limit.
+    current_prolog_flag(stack_limit, X),
+    % Calculate the new stack limit as 16 times the current value.
+    X_16 is X * 16,
+    % Set the new stack limit.
+    set_prolog_flag(stack_limit, X_16).
+
 :- initialization(stack_times_16).
 :- initialization(use_corelib_file).
 :- initialization(use_metta_ontology).
 
-
+%!  immediate_ignore is det.
+%
+%   Executes a sequence of initialization steps, ignoring any errors or failures
+%   that occur during execution. The predicate includes several key tasks for
+%   setting up the environment and running finalization steps.
+%
+%   @example
+%     % Perform immediate initialization while ignoring errors:
+%     ?- immediate_ignore.
+%
 immediate_ignore:- ignore(((
    %write_src_uo(init_prog),
    use_corelib_file,
@@ -5892,6 +7111,16 @@ immediate_ignore:- ignore(((
    metta_final,
    true))).
 
+%!  use_metta_ontology is det.
+%
+%   Loads the `metta_ontology` library to initialize the ontology used in the MettaLog system.
+%   This ensures that all necessary predicates and rules defined in the ontology are available
+%   for use. The library is expected to contain Prolog facts and rules for the system.
+%
+%   @example
+%     % Load the Metta ontology:
+%     ?- use_metta_ontology.
+%
 use_metta_ontology:- ensure_loaded(library('metta_ontology.pfc.pl')).
 % use_metta_ontology:- load_pfc_file('metta_ontology.pl.pfc').
 %:- use_metta_ontology.
@@ -5899,87 +7128,251 @@ use_metta_ontology:- ensure_loaded(library('metta_ontology.pfc.pl')).
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
 
-% Flush any pending output to ensure smooth runtime interactions
+%!  flush_metta_output is det.
+%
+%   Ensures that any pending output is flushed to the terminal, ensuring smooth
+%   runtime interactions. This predicate is typically used to clear the output buffer
+%   after writing results or messages.
+%
+%   @example
+%     % Flush pending output to the terminal:
+%     ?- flush_metta_output.
+%
 flush_metta_output :-
-    write_answer_output, ttyflush.
+    % Write any pending answers to the output and flush the terminal buffer.
+    write_answer_output,
+    ttyflush.
 
-% Write out answers in hyperon-experimental format to user_error
+%!  metta_runtime_write_answers(+List) is det.
+%
+%   Writes a list of answers in `hyperon-experimental` format to the `user_error` stream.
+%   The output is formatted as a JSON-like list, providing an easy way to analyze
+%   results in real-time.
+%
+%   @arg List A list of answers to be written.
+%
+%   @example
+%     % Write answers to the user_error stream:
+%     ?- metta_runtime_write_answers([answer1, answer2]).
+%
+%     Output:
+%     [answer1, answer2]
+%
 metta_runtime_write_answers(List) :-
-    with_output_to(user_error, (write('['), write_answers_aux(List), write(']'))).
+    % Write the list of answers to `user_error` in JSON-like format.
+    with_output_to(user_error, (
+        write('['), write_answers_aux(List), write(']')
+    )).
 
-% Helper predicate to manage answer formatting to user_error
-write_answers_aux([]) :- !.
+%!  write_answers_aux(+List) is det.
+%
+%   Helper predicate for `metta_runtime_write_answers/1` that formats and writes
+%   each element of the list to the `user_error` stream. Elements are separated by commas.
+%
+%   @arg List A list of answers to be written.
+%
+%   @example
+%     % Format and write a list of answers:
+%     ?- write_answers_aux([answer1, answer2]).
+%
+%     Output:
+%     answer1, answer2
+%
+write_answers_aux([]) :- 
+    % Stop when the list is empty.
+    !.
 write_answers_aux([H|T]) :-
-    with_output_to(user_error, (write_src_woi(H), (T == [] -> true ; write(', '), write_answers_aux(T)))).
+    % Write the current element (`H`) to `user_error`.
+    with_output_to(user_error, (
+        write_src_woi(H),
+        % If there are more elements, write a comma and continue.
+        (T == [] -> true ; write(', '), write_answers_aux(T))
+    )).
 
-% Dynamically describe the current file or an actively reading file, providing context for runtime sessions
+%!  file_desc(-Message) is det.
+%
+%   Dynamically describes the current file or an actively reading file. This predicate
+%   provides context for runtime sessions by indicating which file is being loaded or
+%   processed.
+%
+%   @arg Message A string describing the file context.
+%
+%   @example
+%     % Get the description of the current file:
+%     ?- file_desc(Message).
+%     Message = "File(current_file_name.pl)".
+%
 file_desc(Message) :-
+    % Get the current file from the Prolog load context.
     prolog_load_context(file, CurrentFile),
-    (   stream_property(Stream, mode(read)),
+    (
+        % Check if there is an open stream in read mode that is not at the end.
+        stream_property(Stream, mode(read)),
         stream_property(Stream, file_name(File)),
         \+ at_end_of_stream(Stream),
         File \= CurrentFile,
         !,
+        % If an active file is being read, use its name.
         sformat(Message, 'File(~w)', [File])
-    ;   sformat(Message, 'File(~w)', [CurrentFile])
+    ;
+        % Otherwise, use the current file.
+        sformat(Message, 'File(~w)', [CurrentFile])
     ).
 
 :- dynamic(runtime_session/4).
 
-% Begin a runtime session with detailed time recording, output to user_error
+%!  begin_metta_runtime is det.
+%
+%   Starts a Metta runtime session by recording the wall clock and CPU start times.
+%   The runtime session details are stored dynamically and a message is written
+%   to `user_error` indicating the session start.
+%
+%   @example
+%     % Start a runtime session:
+%     ?- begin_metta_runtime.
+%
 begin_metta_runtime :-
+    % Get a description of the current file or active file context.
     file_desc(Description),
+    % Record the current wall clock and CPU times.
     current_times(WallStart, CPUStart),
+    % Store the runtime session details dynamically.
     asserta(runtime_session(start, WallStart, CPUStart, Description)),
+    % Write the start message to `user_error`.
     with_output_to(user_error, format('~w started.~n', [Description])).
 
-% End a runtime session, calculate and print elapsed times, output to user_error
+%!  end_metta_runtime is det.
+%
+%   Ends a Metta runtime session by calculating and printing the elapsed wall
+%   clock and CPU times. If no session start information is found, an error
+%   message is written to `user_error`.
+%
+%   @example
+%     % End a runtime session:
+%     ?- end_metta_runtime.
+%
 end_metta_runtime :-
+    % Get a description of the current file or active file context.
     file_desc(Description),
+    % Attempt to retract the stored runtime session details.
     (   retract(runtime_session(start, WallStart, CPUStart, Description))
-    ->  calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
+    ->  % If successful, calculate and print the elapsed times.
+        calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
         print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description)
-    ;   with_output_to(user_error, format('Error: No runtime session start information found for "~w".~n', [Description]))
+    ;   % If no session start information is found, log an error message.
+        with_output_to(user_error,
+            format('Error: No runtime session start information found for "~w".~n', [Description]))
     ).
 
-% Wall and CPU time
+%!  current_times(-WallStart, -CPUStart) is det.
+%
+%   Retrieves the current wall clock and CPU start times.
+%
+%   @arg WallStart The current wall clock time.
+%   @arg CPUStart  The current CPU time.
+%
 current_times(WallStart, CPUStart) :-
+    % Get the current wall clock time.
     get_time(WallStart),
+    % Get the current CPU time.
     statistics(cputime, CPUStart).
 
-% Calculate elapsed times
+%!  calculate_elapsed_time(+WallStart, +CPUStart, -WallElapsedTime, -CPUElapsedTime) is det.
+%
+%   Calculates the elapsed wall clock and CPU times by comparing the current
+%   times with the recorded start times.
+%
+%   @arg WallStart        The wall clock start time.
+%   @arg CPUStart         The CPU start time.
+%   @arg WallElapsedTime  The calculated elapsed wall clock time.
+%   @arg CPUElapsedTime   The calculated elapsed CPU time.
+%
 calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime) :-
+    % Get the current wall clock and CPU times.
     current_times(WallEnd, CPUEnd),
+    % Calculate the elapsed wall clock time.
     WallElapsedTime is WallEnd - WallStart,
+    % Calculate the elapsed CPU time.
     CPUElapsedTime is CPUEnd - CPUStart.
 
-% Print the elapsed wall and CPU time with a description, output to user_error
+%!  print_elapsed_time(+WallElapsedTime, +CPUElapsedTime, +Description) is det.
+%
+%   Prints the elapsed wall clock and CPU times with a description to `user_error`.
+%
+%   @arg WallElapsedTime The elapsed wall clock time.
+%   @arg CPUElapsedTime  The elapsed CPU time.
+%   @arg Description     The description of the runtime session.
+%
+%   @example
+%     % Print the elapsed times:
+%     ?- print_elapsed_time(5.123, 4.567, "File(metta_example.pl)").
+%
 print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
     with_output_to(user_error,
         format('~N          % Walltime: ~9f seconds, CPUtime: ~9f seconds for ~w~n',
                [WallElapsedTime, CPUElapsedTime, Description])).
 
-% Execute a Prolog query and handle output, performance logging, and time measurements to user_error
-do_metta_runtime(_Var,_Call) :- fast_option_value(compile, save),!.
-do_metta_runtime( Var, Eval) :- is_list(Eval), compile_for_exec(Var, Eval, Call), !, do_metta_runtime( Var, Call).
-do_metta_runtime( Var, Goal) :- nonvar(Var), is_ftVar(Var), subst(Goal,Var,NewVar,Call),!, do_metta_runtime(NewVar, Call).
-do_metta_runtime( Var, Call) :-
+%!  do_metta_runtime(+Var, +Call) is det.
+%
+%   Executes a Prolog query (`Call`) with performance logging, time measurement,
+%   and result handling. The results are output to `user_error`, including
+%   execution details, elapsed times, and formatted results.
+%
+%   @arg Var  The variable used for collecting results.
+%   @arg Call The Prolog query or goal to be executed.
+%
+%   @example
+%     % Execute a runtime query:
+%     ?- do_metta_runtime(Result, my_goal(X)).
+%
+do_metta_runtime(_Var, _Call) :-
+    % Skip execution if the `compile` option is set to `save`.
+    fast_option_value(compile, save), !.
+do_metta_runtime(Var, Eval) :-
+    % If `Eval` is a list, compile it into an executable query (`Call`) and execute.
+    is_list(Eval),
+    compile_for_exec(Var, Eval, Call), !,
+    do_metta_runtime(Var, Call).
+do_metta_runtime(Var, Goal) :-
+    % Handle cases where `Var` is a flexible type variable (ftVar) by substituting
+    % it into the `Goal`, producing a new query to execute.
+    nonvar(Var),
+    is_ftVar(Var),
+    subst(Goal, Var, NewVar, Call), !,
+    do_metta_runtime(NewVar, Call).
+do_metta_runtime(Var, Call) :-
+    % Extract the functor name from the goal (`Call`) to create a description.
     functor(Call, Func, _),
     atom_concat('Testing ', Func, Description),
+    % Record the start times (wall clock and CPU time).
     current_times(WallStart, CPUStart),
-    % Execute the query and collect results
+    % Execute the query and collect results, outputting progress to `user_error`.
     with_output_to(user_error, findall_or_skip(Var, Call, List)),
-    % Record stop time
+    % Calculate elapsed times (wall clock and CPU).
     calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
-    % Show results
+    % Output the collected results in a formatted manner.
     with_output_to(user_error, metta_runtime_write_answers(List)),
-    % Print elapsed time
+    % Print the elapsed times for the query execution.
     print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description),
+    % Flush any pending output to ensure smooth runtime interactions.
     flush_metta_output.
 
-findall_or_skip(Var, Call, []):- fast_option_value(exec, skip),!, once_writeq_nl_now(red,(skipping:- time(findall(Var, Call, _List)))).
-findall_or_skip(Var, Call, List):- findall(Var, Call, List).
-
+%!  findall_or_skip(+Var, +Call, -List) is det.
+%
+%   Executes a `findall/3` query unless the `exec` option is set to `skip`.
+%   If skipping is enabled, logs the skipped query execution to `user_error`.
+%
+%   @arg Var  The variable to collect results into.
+%   @arg Call The query or goal to be executed.
+%   @arg List The list of results collected by `findall/3`.
+%
+findall_or_skip(Var, Call, []) :-
+    % If the `exec` option is set to `skip`, log the skipped execution and return an empty list.
+    fast_option_value(exec, skip), !,
+    once_writeq_nl_now(red, (skipping :- time(findall(Var, Call, _List)))).
+findall_or_skip(Var, Call, List) :-
+    % Execute the query using `findall/3` to collect results into `List`.
+    findall(Var, Call, List).
 
 :- set_prolog_flag(metta_interp,ready).
 %:- ensure_loaded(metta_runtime).
@@ -5992,7 +7385,19 @@ findall_or_skip(Var, Call, List):- findall(Var, Call, List).
 %:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 
 
-% Define a predicate to relate the likelihoods of three events
+%!  complex_relationship3_ex(+Likelihood1, +Likelihood2, +Likelihood3) is nondet.
+%
+%   Define a predicate to relate the likelihoods of three events.
+%
+%   Describes a set of constraints between three likelihood variables:
+%   - `Likelihood1` is 30% of `Likelihood2`.
+%   - `Likelihood2` is 50% of `Likelihood3`.
+%   - `Likelihood3` must be between 0 and 1 (exclusive).
+%
+%   @arg Likelihood1 The first likelihood variable.
+%   @arg Likelihood2 The second likelihood variable.
+%   @arg Likelihood3 The third likelihood variable, which bounds the relationships.
+%
 complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
     { Likelihood1 = 0.3 * Likelihood2 },
     { Likelihood2 = 0.5 * Likelihood3 },
