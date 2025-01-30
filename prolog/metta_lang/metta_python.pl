@@ -1640,6 +1640,7 @@ py_is_function(PyObject) :-
 py_is_method_type(type).
 py_is_method_type(builtin_function_or_method).
 py_is_method_type(function).
+py_is_method_type('method-wrapper').
 py_is_method_type(method).
 
 
