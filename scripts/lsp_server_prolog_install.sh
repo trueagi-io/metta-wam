@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Define the target directory and symlink source and destination
 TARGET_DIR="$HOME/.local/share/swi-prolog/pack"
