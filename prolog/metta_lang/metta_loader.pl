@@ -1864,8 +1864,7 @@ cache_file(Original, Ending, CachedFile) :-
        ' '-'~~~'
     ],
     fr_slashes(Replacements, Original, RelPath),
-    atomic_list_concat([RelPath, Ending], BufferFile),
-    directory_file_path(Dir, BufferFile, CachedFile).
+    atomic_list_concat([Dir, RelPath, Ending], CachedFile).
 
 
 /** clean_cache_files is det.

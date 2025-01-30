@@ -1432,7 +1432,8 @@ For example:
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
 (: get-doc (-> Atom Atom))
-(= (get-doc $atom)
+(: metta-get-doc (-> Atom Atom))
+(= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1520,12 +1521,13 @@ For example:
 
 (iz help! MeTTa)
 (@doc help!
-  (@desc "Function prints documentation for the input atom. Without parameters prints the list of the stdlib functions.")
+  (@desc "Function prints documentation for the input atom.")
   (@params (
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
 (: help! (-> Atom (->)))
-(= (help! $atom)
+(: metta-help! (-> Atom (->)))
+(= (metta-help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)
@@ -1543,17 +1545,12 @@ For example:
       () ))
     ($other (Error $other "Cannot match @doc-formal structure") ))))
 
-(@doc help!
-  (@desc "Without parameters prints the list of the stdlib functions.")
-  (@params ())
-  (@return "Unit atom"))
-
 (: help! (-> (->)))
-(= (help!) (let $top-space (mod-space! top)
+(= (metta-help!) (let $top-space (mod-space! top)
     (unify $top-space (@doc $name (@desc $desc) $params $ret)
       (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
       Empty)))
-(= (help!) (let $top-space (mod-space! top)
+(= (metta-help!) (let $top-space (mod-space! top)
     (unify $top-space (@doc $name (@desc $desc))
       (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
       Empty)))

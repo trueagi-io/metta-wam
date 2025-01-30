@@ -77,7 +77,7 @@ def get_metta_instance(
     return friendly_name_to_metta[key]
 
 class MeTTaLog:
-    def __init__(self, interp_type="metta", name=None):
+    def __init__(self, interp_type="mettalog", name=None):
         self.set_interpreter(interp_type)
         self.name = name or "Unnamed Interpreter"
 
@@ -96,7 +96,7 @@ class MeTTaLog:
         """
         content = content.strip()
         if '\n' in content or len(content) > 80:
-            return f"\n{label}```\n{content}\n```"
+            return f"\n{label}\n```\n{content}\n```\n"
         else:
             return f"\n{label}`{content}`\n"
 
