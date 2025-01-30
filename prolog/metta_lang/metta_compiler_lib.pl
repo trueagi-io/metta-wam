@@ -238,11 +238,23 @@ transpiler_predicate_store('stringToChars', 2, [x(doeval,eager,[])], x(doeval,ea
 transpiler_predicate_store('charsToString', 2, [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc_1__charsToString'(C,S) :- string_chars(S,C).
 
-transpiler_predicate_store('assertEqual', 3, [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__assertEqual'(A,B,C) :- u_assign([assertEqual,A,B],C).
+transpiler_predicate_store('assertEqual', 3, [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
+'mc_2__assertEqual'(A,B,C) :-
+   loonit_assert_source_tf_empty(
+        ['assertEqual',A,B],AA,BB,
+        ('mc_1__collapse'(A,AA),
+         'mc_1__collapse'(B,BB)),
+         equal_enough_for_test_renumbered_l(strict_equals_allow_vn,AA,BB), C).
 
-transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,lazy,[]),x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_2__assertEqualToResult'(A,B,C) :- 'mc_1__collapse'(A,A2),u_assign([assertEqualToResult,A2,[B]],C).
+transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,lazy,[]),x(noeval,eager,[])], x(doeval,eager,[])).
+'mc_2__assertEqualToResult'(A,B,C) :-
+   loonit_assert_source_tf_empty(
+        ['assertEqualToResult',A,B],AA,B,
+        ('mc_1__collapse'(A,AA)),
+         equal_enough_for_test_renumbered_l(strict_equals_allow_vn,AA,B), C).
+
+%transpiler_predicate_store('assertEqualToResult', 3, [x(doeval,lazy,[]),x(doeval,eager,[])], x(doeval,eager,[])).
+%'mc_2__assertEqualToResult'(A,B,C) :- 'mc_1__collapse'(A,A2),u_assign([assertEqualToResult,A2,[B]],C).
 
 transpiler_predicate_store('prolog-trace', 1, [], x(doeval,eager,[])).
 'mc_0__prolog-trace'([]) :- trace.
