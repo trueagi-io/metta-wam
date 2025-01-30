@@ -30,6 +30,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
                                 tcp_open_socket/2]).
 :- use_module(library(thread)).
 :- use_module(library(thread_pool)).
+:- use_module(library(time)).
 %:- use_module(library(prolog_xref)).
 %:- use_module(library(prolog_source), [directory_source_files/3]).
 :- use_module(library(utf8), [utf8_codes//1]).
@@ -61,17 +62,18 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 */
 
 % will change to module in a few days (easier to test externally from `user`)
-:- user:ensure_loaded(lsp_metta_code_actions).
-:- user:ensure_loaded(lsp_metta_save_actions).
-:- user:ensure_loaded(lsp_metta_hover).
-:- user:ensure_loaded(lsp_metta_workspace).
-:- user:ensure_loaded(lsp_metta_references).
-:- user:ensure_loaded(lsp_metta_outline). %( [xref_metta_source/1, xref_document_symbol/5, xref_document_symbols/2]).
+:- use_module(lsp_metta_code_actions, [ lsp_call_metta/2, metta_to_json/2 ]).
+:- use_module(lsp_metta_save_actions).
+:- use_module(lsp_metta_hover, [ get_code_at_range_type/1, hover_at_position/4 ]).
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_references).
+:- use_module(lsp_metta_outline, [ xref_document_symbol/5, xref_document_symbols/2 ]).
 :- dynamic(lsp_state:full_text/2).
-:- user:ensure_loaded(lsp_prolog_changes).
-:- user:ensure_loaded(lsp_prolog_checking).
-:- user:ensure_loaded(lsp_prolog_colours).
-:- user:ensure_loaded(lsp_prolog_utils).
+:- use_module(lsp_prolog_changes).
+:- use_module(lsp_prolog_checking).
+:- use_module(lsp_prolog_colours).
+:- use_module(lsp_metta_colours, [ metta_colours/2 ]).
+:- use_module(lsp_prolog_utils).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 
@@ -151,9 +153,13 @@ socket_server(Port) :-
     dispatch_socket_client(AcceptFd).
 
 dispatch_socket_client(AcceptFd) :-
-    tcp_accept(AcceptFd, Socket, Peer),
-    thread_create(process_client(Socket, Peer), _, [detached(true)]),
-    dispatch_socket_client(AcceptFd).
+    catch(
+        call_with_time_limit(
+            1, ( tcp_accept(AcceptFd, Socket, Peer),
+                 thread_create(process_client(Socket, Peer), _, [detached(true)]) )),
+        time_limit_exceeded,
+        true),
+    ( shutdown_request_recieved -> true ; dispatch_socket_client(AcceptFd) ).
 
 process_client(Socket, Peer) :-
     setup_call_cleanup(
@@ -203,14 +209,16 @@ handle_requests(_, T, T).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Handle requests that need immediate or cancellable responses
-immediate_method(Request) :- is_dict(Request), !, immediate_request(Request).
 immediate_method("$/cancelRequest").
+immediate_method("exit").
 immediate_method(TM) :- cancelable_method(TM), !, fail.
 % immediate_method(_). % This line would act as a fallback for "immediate" methods, allowing any request method not specified as "cancellable" to be treated as immediate if uncommented.
 
 cancelable_method('textDocument/documentSymbol').
 cancelable_method('textDocument/hover').
 % cancelable_method('textDocument/didOpen'). % This line is an option to make 'textDocument/didOpen' cancelable if needed
+
+:- dynamic shutdown_request_recieved/0.
 
 % Extract everything after the last '/' in the FileUri
 after_slash(FileUri, FileUriAS) :-
@@ -235,10 +243,15 @@ handle_parsed_request(Out, Req) :-
     sformat(JobInfo, "JID: ~w ~q=~q", [JobId, Method, FileUri]),
     (number(RequestId)-> ( assert(lsp_ti:id_info(RequestId,JobInfo))) ; true),
     % Handle the request based on threading mode or immediacy
-    ((lsp_worker_threads(0) ; immediate_method(Method)) ->
+    ( shutdown_request_recieved
+    -> ( Method == "exit" -> handle_request(JobId, JobInfo, Out, Req)
+       ; send_message(Out,
+                      _{id: RequestId,
+                        error: _{code: -32600, message: "Invalid Request"}}))
+    ; ((lsp_worker_threads(0) ; immediate_method(Method)) ->
         (handle_request(JobId, JobInfo, Out, Req))
     ;( post_job('$lsp_worker_pool', lsp_task(Out, JobId, JobInfo, Req)),
-       debug_lsp(threads, "Posted job for ~w", [JobInfo]))),!.
+       debug_lsp(threads, "Posted job for ~w", [JobInfo])))),!.
 
 % Post a job by storing it in the database and posting the job ID to the queue
 post_job(QueueId, Task) :-
@@ -273,7 +286,7 @@ job_info:-
 do_work(QueueId) :-
     repeat,
     catch(do_work_stuff(QueueId), _, true),
-    fail.
+    shutdown_request_recieved.
 
 do_work_stuff(QueueId) :-
     thread_self(ThreadId),
@@ -282,11 +295,10 @@ do_work_stuff(QueueId) :-
     set_prolog_IO(StdIn,StdErr,StdErr), % redirect accidental writes to stdout to stderr instead
     repeat,
     once(do_work_stuff_tid(QueueId, ThreadId)),
-    fail.
+    shutdown_request_recieved.
 
 do_work_stuff_tid(QueueId, ThreadId) :-
     canceled_signal(Signal),
-    repeat,
     % Retrieve the job ID from the queue
     thread_get_message(QueueId, JobId),
 
@@ -296,34 +308,30 @@ do_work_stuff_tid(QueueId, ThreadId) :-
         request_id(Req, RequestId),
         (JobId==RequestId -> JR = JobId  ; JR = (JobId/RequestId)),
         % Register this thread handling RequestId
-        with_mutex('$lsp_request_mutex', (
-            (lsp_ti:id_was_canceled(RequestId) ->
-               (debug_lsp(threads, "Request ~w was canceled before it got started! ~w", [JR, JobInfo]),
-                ignore(retract(lsp_ti:job_data(RequestId,_))),
-                ignore(lsp_ti:id_was_canceled(RequestId))),
-                ignore(retract(lsp_ti:id_info(RequestId,_))),
-                debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
-                send_cancellation_response(Out, RequestId),
-                throw(Signal),
-                true)
-            ; assertz(lsp_ti:task_thread(RequestId, ThreadId))
-        ))),
+        with_mutex('$lsp_request_mutex',
+                   ( lsp_ti:id_was_canceled(RequestId) ->
+                     ( debug_lsp(threads, "Request ~w was canceled before it got started! ~w", [JR, JobInfo]),
+                       ignore(retract(lsp_ti:job_data(RequestId,_))),
+                       ignore(retract(lsp_ti:id_was_canceled(RequestId))),
+                       ignore(retract(lsp_ti:id_info(RequestId,_))),
+                       debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
+                       send_cancellation_response(Out, RequestId),
+                       throw(Signal) )
+                   ; ( assertz(lsp_ti:task_thread(RequestId, ThreadId) )) )),
 
         debug_lsp(threads, "Worker ~w processing task with JobId ~w: ~w", [ThreadId, JR, JobInfo]),
 
         % Process the request and handle cancellation
-        catch(
-            handle_request(JobId, JobInfo, Out, Req),
-            Signal,
-            ( debug_lsp(threads, "Request ~w was canceled: ~w", [JR, JobInfo]),
-              send_cancellation_response(Out, RequestId)
-            )
-        ),
+        catch(handle_request(JobId, JobInfo, Out, Req),
+              Signal,
+              ( debug_lsp(threads, "Request ~w was canceled: ~w by ~w", [JR, JobInfo, Signal]),
+                send_cancellation_response(Out, RequestId) ) ),
 
         % Clean up lsp_ti:task_thread
         with_mutex('$lsp_request_mutex', (
-            ignore(retract(lsp_ti:task_thread(RequestId, ThreadId))),
-            true))
+                       ignore(retract(lsp_ti:task_thread(RequestId, ThreadId))),
+                       ignore(retract(lsp_ti:id_info(RequestId, _))),
+                       true)))
     ;   debug_lsp(threads, "Job ID ~w not found in the database", [JobId])
     ).
 
@@ -417,8 +425,8 @@ catch_with_backtrace(Goal):-
      catch_with_backtrace(Goal,Err,
         ( canceled_signal(Err) ->
             throw(Err)
-        ; ((with_output_to(user_errr,print_message(error, Err)),
-            debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~@~n\n", [Goal, print_message(error, Err)]),
+        ; ((with_output_to(user_error,print_message(error, Err)),
+            debug_lsp(errors, "Error in:\n\n?- catch_with_backtrace(~q).\n\nHandling message:\n\n~q~n~@~n\n", [Goal, Err, print_message(error, Err)]),
             throw(Err)
          ))
         )
@@ -526,7 +534,9 @@ handle_request(JobId, JobInfo, OutStream, Req) :-
         ( get_time(StartTime),
           time_diff_string(PostTime, StartTime, "Waited", DurationPostToStart),
           debug_lsp(high, "Request ~w started after ~w", [JobInfo, DurationPostToStart]),
-          debug_lsp(high, "..~q.", [Req]),
+          ( user:nodebug_lsp_request(Method)
+          -> debug_lsp(high, "..{method: ~w, params: ...}", [Method])
+          ;  debug_lsp(high, "..~q.", [Req]) ),
 
           % Process the request
           catch_with_backtrace(handle_msg(Method, Req.body, Resp)),
@@ -576,6 +586,8 @@ handle_request(JobId, JobInfo, OutStream, Req) :-
             )
         ))
     ).
+
+user:nodebug_lsp_request("textDocument/didOpen").
 
 % Hide responses for certain methods
 user:nodebug_lsp_response("textDocument/hover").
@@ -711,11 +723,12 @@ handle_msg(Method, Msg, _) :-
    %Method \== "textDocument/hover",
    Method \== "textDocument/semanticTokens/range",
    % Method =="textDocument/codeAction" % is the most authoratative
-    once((  _{params: Params} :< Msg,
-      _{ range: Range } :< Params,
-      retractall(lsp_state:last_range(Method,_)),
-      asserta(lsp_state:last_range(Method,Range)))),
-      fail.
+    once(( _{params: Params} :< Msg,
+           is_dict(Params),
+           _{ range: Range } :< Params,
+           retractall(lsp_state:last_range(Method,_)),
+           asserta(lsp_state:last_range(Method,Range)) )),
+    fail.
 
 
 handle_msg(Method, Msg, Response):-
@@ -736,9 +749,10 @@ handle_msg("initialize", Msg,
     save_json(client_capabilities,ClientCapabilities),
     server_capabilities(ServerCapabilities).
 
-handle_msg("shutdown", Msg, _{id: Id, result: null}) :-
+handle_msg("shutdown", Msg, _{id: Id, result: []}) :-
     _{id: Id} :< Msg,
-    debug_lsp(main, "received shutdown message", []).
+    debug_lsp(main, "received shutdown message", []),
+    asserta(shutdown_request_recieved).
 
 % CALL: textDocument/hover
 % IN: params:{position:{character:11,line:56},textDocument:{uri:file://<FILEPATH>}}}
@@ -770,7 +784,8 @@ handle_msg("textDocument/hover", Msg, _{id: Msg.id, result: null}) :- !. % Fallb
 %     maplist(convert_docsymbol_json,DocKinds,DocJson).
 
 handle_msg("textDocument/documentSymbol", Msg, _{id: Id, result: Symbols}) :-
-     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg, xref_document_symbols(Doc, Symbols),
+     _{id: Id, params: _{textDocument: _{uri: Doc}}} :< Msg,
+     xref_document_symbols(Doc, Symbols),
      assertion(is_list(Symbols)), !.
 %handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, error: _{ code: -32602, message: "No symbol changes" }}):-!.
 handle_msg("textDocument/documentSymbol", Msg, _{id: Msg.id, result: null}) :- !. % No symbol changes
@@ -945,8 +960,13 @@ handle_msg("$/cancelRequest", Msg, false) :-
 % Handle the 'exit' notification
 handle_msg("exit", _Msg, false) :-
     debug_lsp(main, "Received exit, shutting down", []),
-    halt(7).
-
+    job_info,
+    sleep(2),
+    ( shutdown_request_recieved
+    -> ( debug_lsp(main, "Post-shutdown exit, okay", []),
+         halt(0) )
+    ;  ( debug_lsp(main, "No shutdown, unexpected exit", []),
+         halt(1) ) ).
 
 % Handle the 'workspace/symbol' Request
 handle_msg("workspace/symbol", Msg, _{id: Id, result: Symbols}) :-

@@ -23,6 +23,8 @@ Module with predicates for colourizing Prolog code, via library(prolog_colour).
 :- use_module(lsp_prolog_utils, [seek_to_line/2,
                           linechar_offset/3]).
 
+:- use_module(lsp_metta_workspace, [source_file_text/2]).
+
 token_types([namespace,
              type,
              class,
