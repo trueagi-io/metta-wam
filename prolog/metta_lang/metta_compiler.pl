@@ -2131,6 +2131,18 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
    compile_flow_control2(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
 */
 
+/*
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   Convert=[[py-atom Fn]|Args],
+   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
+   f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
+   f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
+   append(Args,[RetResult],Args1),
+   append(DoEvalCodeCollected,[[native(py_atom),Fn,FnPy]],Converted),
+   %assign_or_direct(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
+   assign_or_direct(NoEvalCodeCollected,RetResultN,list([[py-atom Fn]|NoEvalRetResults]),ConvertedN).
+*/
+
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :- HeadIs\==Convert,
    Convert=[Fn|Args],
    %(HeadIs=[FnC|_],transpiler_trace_compile(FnC),Fn='match-body' -> trace ; true),
