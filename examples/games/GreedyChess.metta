@@ -400,6 +400,8 @@
 ;
 ;
 
+; Return True if there is a clear route for piece else False
+(: (clear_route) (-> Expression Expression Expression Bool))
 
 ;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
 ;(= (clear_route #( :: ($A $B $C n) ) #(Cons $D #(Cons $E $F)) $G) (or (is $E (+ $B 2)) (is $E (- $B 2))) (or ;(is $D (+ $A 1)) (is $D (- $A 1))))
@@ -417,28 +419,70 @@
 ;    #(Cons $D 
 ;      #(Cons $E $F)) $G))
 
-; Return True if there is a clear route for piece else False
-(: (clear_route) (-> Expression Expression Expression Bool))
-
-;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (= $B  2) (is $G (- $B 1)) ;(return_entire_box #( :: ($A $G) ) $H $F) (len $H 2) (is $D (- $B 2)) (return_entire_box #( :: ($C $D) ) $I ;$F) (len $I 2))
-;( = (clear_route ($x $y g p) $B $C)
-;    (println! $B))
-
-; Move gold AI pawn 1 space down the board
-(= (clear_route ($A $B g p) $destination $Board) 
+; Move gold AI pawn 2 spaces straight down the board 
+; This version can only succeed if starting in row 7 and destination is row 5 
+(= (clear_route ($X1 $Y1 g p) $destination $Board) 
   (let*
-    ( ($entire (return_entire_box $destination  $Board))
-      ($C (nth 1 $destination) )
-      ($D (nth 2 $destination) ))
+    ( ($entiredest (return_entire_box $destination  $Board))
+      ($X2 (nth 1 $destination) )
+      ($Y2 (nth 2 $destination) )
+      ; we need to take a look at the next box down which must be empty to allow passage.
+      ($passing_1 ($X2 6) )
+      ($entire_box_down_one  (return_entire_box $passing_1  $Board))
+    )
     ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $D  (- $B  1))
-        (== (size-atom $entire) 2)
-        )
+    (if (and 
+        ; moving down in same column  
+        (== $X1 $X2)
+        (and 
+        ; moving from row 7
+        (== $Y1 7)
+        (and 
+        ; definitely moving down 2 
+        (== $Y2 5)
+        (and 
+        ; destination box down 2 is clear
+        (== (size-atom $entiredest) 2)       
+        ; first box down 1 is clear
+        (== (size-atom $entire_box_down_one) 2))
+        )))        
         True
         False)))
 
-;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (+ $A 1)) (is $D (- $B 1)))
+; Move gold AI pawn 1 space straight down the board 
+(= (clear_route ($X1 $Y1 g p) $destination $Board) 
+  (let*
+    ( ($entire (return_entire_box $destination  $Board))
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) ))
+    ; clear if moving to empty box 1 row down...
+    (if (and  
+        (== $X1 $X2)
+        (and 
+        (== $Y2 (- $Y1  1))
+        ; check empty box to move in to
+        (== (size-atom $entire) 2)
+        ))
+        True
+        False)))
+
+; Move gold AI pawn 1 space diagonally down to right and take piece
+(= (clear_route ($X1 $Y1 g p) $destination $Board)
+   (let*
+    ( ($entire (return_entire_box $destination  $Board))
+      ($X2 (nth 1 $destination) )
+      ($Y2 (nth 2 $destination) ))
+    ; clear if moving to empty box 1 row down...
+    (if (and  
+        (== $X2 (+ $X1 1))
+        (and 
+        (== $Y2 (- $Y1 1))
+        ; make sure there is a piece to take
+        (== (size-atom $entire) 4)
+        )) (println! "True") (println! "false"))))
+        ;True
+        ;False)))
+
 ;(= (clear_route #( :: ($A $B g p) ) #(Cons $C #(Cons $D $E)) $F) (return_entire_box #( :: ($C $D) ) $G $F) ;(len $G 4) (is $C (- $A 1)) (is $D (- $B 1)))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (is $D (+ $B 1)) ;(return_entire_box #( :: ($C $D) ) $G $F) (len $G 2))
 ;(= (clear_route #( :: ($A $B s p) ) #(Cons $C #(Cons $D $E)) $F) (= $A  $C) (= $B  2) (is $G (+ $B 1)) ;(return_entire_box #( :: ($A $G) ) $H $F) (len $H 2) (is $D (+ $B 2)) (return_entire_box #( :: ($C $D) ) $I ;$F) (len $I 2))
@@ -684,7 +728,7 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 6) (2 6 s q) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
@@ -744,16 +788,17 @@
     (progn (
     (let $h (return_entire_box $f  $starting_board) ())               ; Retrieve the source box details.
     (let $i (return_entire_box $g  $starting_board) ())               ; Retrieve the destination box details.
-    (if (xor  
-            ; OK to move to open square size 2...
-            (== (size-atom $i) 2)     
-            ; OK to take another piece, check color is not the same...
-            (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i)) )))
+    (if (and (== (size-atom $h) 4)                                    ; Check there is a piece to move.
+             (xor  
+             ; OK to move to open square size 2...
+             (== (size-atom $i) 2)     
+             ; OK to take another piece, check color is not the same...
+             (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
       (if (clear_route $h $i $starting_board)
         (println! "continuing")
         ((py-atom print) "Can't move piece there."))
       ; else (moving to location with same piece or other problem)
-      ((py-atom print) "Can't move there.")
+      ((py-atom print) "Invalid move.")
     )
     )
     )
