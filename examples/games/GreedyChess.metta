@@ -698,19 +698,35 @@
 ;(= (checkclearupBDL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
 ;(= (checkclearupBDL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (- $B 1)) (checkclearupBDL $G $H $C $D $E))
 ;
+(= (replace_square $X1 $Y1 $color $rank $current_board)
+   (if (== (size-atom $current_board) 0)
+        ()
+        (let* (
+          ($next-sq (car-atom $current_board))
+          ($X2 (nth 1 $next-sq))
+          ($Y2 (nth 2 $next-sq))
+              )
+        (if (and (== X1 X2) (== Y1 Y2))
+          (cons-atom ($X1 $Y1 $color $rank) (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)))
+          (cons-atom $next-sq (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)))
+        )
+        )
+   )
+)
 ;
 ; move_piece
 ;   Input   starting square, target square, current board
 ;   Output: new board
-(= (move_piece $A $B $C $D) 
-    (nth1 3 $A $E) (nth1 4 $A $F) 
-    (sort $C $G) (sort #( :: ($A $B) ) $H) 
-    (removelists ;$H $G $I) 
-    (nth1 1 $A $J) (nth1 2 $A $K) 
-    $L = ($J $K) )) 
-    (nth1 1 $B $M) (nth1 2 $B $N) (= 
-    $O  ($M $N $E $F) )) 
-    (sort #(Cons $L #(Cons $O $I)) $D) (set-det))
+(= (move_piece $starting_square $target_square $current_board $D) 
+  (let* (
+    ($X  (nth1 1 $target_square))
+    ($Y  (nth1 2 $target_square))
+    ($color (nth1 3 $starting_square))
+    ($rank  (nth1 4 $starting_square))
+    ($new_board (replace_square $X $Y $color $rank $current_board))
+        ) 
+    $new_board))
+
 ;
 ;
 ;(= (printmove $A $B $C) (nth1 1 $A $D) (nth1 2 $A $E) (nth1 3 $A $F) (nth1 4 $A $G) (nth1 1 $B $H) (nth1 2 $B ;$I) (or (, (len $B 4) (return_entire_box #( :: ($H $I) ) $J $C) (nth1 4 $J $K)) (= $K  nil)) (or (, (== $F g) ;(write 'DBD moves from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) (write and2) (write ;$I)) (, (== $F s) (write 'YOU move from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) ;(write and2) (write $I))) #(add-atom &self #(guimessage move $A $B $K)) (or (, (\= $K nil) (nl) (write 'Piece ;captured!! -> ') (write $K) (nl)) nl) (write 'Type c. for commands you can use.'))
