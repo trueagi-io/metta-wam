@@ -22,18 +22,32 @@ logging.basicConfig(level=logging.DEBUG)
 # Map interpreter types to their respective BASH_BEFORE and BASH_AFTER values
 INTERPRETER_CONFIGS = {
     "swipl": {
-        "BASH_BEFORE": ["swipl", "-q", "-f"],
-        "BASH_AFTER": ["-t", "halt"]
+        "BASH_BEFORE": ["timeout", "10s", "swipl", "-q", "-f"],
+        "BASH_AFTER": ["-t", "halt"],
+        "FILE_SUFFIX": ".pl"  # Prolog files typically use .pl
     },
     "metta": {
-        "BASH_BEFORE": ["metta"],
-        "BASH_AFTER": []
+        "BASH_BEFORE": ["timeout", "10s", "metta"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".metta"  # Assuming .metta for Metta files
     },
     "mettalog": {
-        "BASH_BEFORE": ["mettalog"],
-        "BASH_AFTER": []
+        "BASH_BEFORE": ["timeout", "10s", "mettalog"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".metta"  # Assuming .metta for MettaLog files
+    },
+    "bash": {
+        "BASH_BEFORE": ["bash", "-c"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".sh"  # Shell scripts typically use .sh
+    },
+    "python": {
+        "BASH_BEFORE": ["timeout", "10s", "python3"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".py"  # Python scripts use .py
     }
 }
+
 
 # Dictionary to maintain MeTTaLog instances keyed by friendly names
 friendly_name_to_metta = defaultdict(lambda: MeTTaLog())
@@ -89,6 +103,7 @@ class MeTTaLog:
         self.interp_type = interp_type
         self.BASH_BEFORE = INTERPRETER_CONFIGS[interp_type]["BASH_BEFORE"]
         self.BASH_AFTER = INTERPRETER_CONFIGS[interp_type]["BASH_AFTER"]
+        self.FILE_SUFFIX = INTERPRETER_CONFIGS[interp_type]["FILE_SUFFIX"]
 
     def format_output(self, label, content):
         """
@@ -105,7 +120,7 @@ class MeTTaLog:
         Executes a block of code by writing it to a temporary file and invoking the interpreter.
         Captures both stdout and stderr.
         """
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".metta", mode="w") as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=self.FILE_SUFFIX, mode="w") as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
 
@@ -148,7 +163,7 @@ class MeTTaLog:
         else:
             query_code = "!" + expression + "\n"
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".metta", mode="w") as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=self.FILE_SUFFIX, mode="w") as temp_file:
             temp_file.write(query_code)
             temp_file_path = temp_file.name
 
@@ -185,7 +200,7 @@ class MeTTaBotReplPlugin(Plugin):
     and handles edits by responding appropriately.
     """
 
-    @listen_to(".*use (swipl|metta|mettalog)$", re.IGNORECASE)
+    @listen_to("^use (\w+)$", re.IGNORECASE)
     async def switch_interpreter(self, message, interp_type):
         """Switches the interpreter type for the current user/channel."""
         try:
@@ -312,6 +327,11 @@ class MeTTaBotReplPlugin(Plugin):
             # Handle commands wrapped in parentheses
             if command.startswith('(') and command.endswith(')'):
                 result = metta_instance.exec(command)
+                return result, True
+
+            if command.startswith('`') and command.endswith('`'):
+                code_within_backticks = command[1:-1].strip()  # Slicing to remove the backticks
+                result = metta_instance.exec(code_within_backticks)
                 return result, True
 
         except Exception as e:
