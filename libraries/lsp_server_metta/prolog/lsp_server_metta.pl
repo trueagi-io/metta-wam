@@ -285,7 +285,7 @@ job_info:-
 % Worker loop
 do_work(QueueId) :-
     repeat,
-    catch(do_work_stuff(QueueId), _, true),
+    catch(notrace((do_work_stuff(QueueId))), _, true),
     shutdown_request_recieved.
 
 do_work_stuff(QueueId) :-
@@ -422,7 +422,7 @@ send_cancellation_response(OutStream, RequestId) :-
 
 % Backtrace error handler
 catch_with_backtrace(Goal):-
-     catch_with_backtrace(Goal,Err,
+     notrace((catch_with_backtrace(Goal,Err,
         ( canceled_signal(Err) ->
             throw(Err)
         ; ((with_output_to(user_error,print_message(error, Err)),
@@ -430,7 +430,7 @@ catch_with_backtrace(Goal):-
             throw(Err)
          ))
         )
-     ).
+     ))).
 
 lsp_output_stream(OutStream):- nb_current('$lsp_output_stream', OutStream),!.
 lsp_output_stream(OutStream):- lsp_hooks:is_lsp_output_stream(OutStream).
@@ -1050,6 +1050,12 @@ check_errors_resp(_, false) :-
     debug_lsp(errors, "Failed checking errors", []).
 
 
+make_lsp_untraced:-
+   unsetenv('DISPLAY'),
+   redefine_system_predicate(system:trace/0),
+   abolish(system:trace/0),
+   assert(system:trace:- throw('$abort')).
+
 
 :- dynamic lsp_server_callback_file_path/1.
 :- dynamic restored_lsp_server_callbacks/0.
@@ -1071,3 +1077,5 @@ restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
 %:- initialization(restore_lsp_server_callbacks).
 :- after_boot(restore_lsp_server_callbacks).
 
+
+:- initialization(make_lsp_untraced).
