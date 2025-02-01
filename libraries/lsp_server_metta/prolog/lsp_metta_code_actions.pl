@@ -149,8 +149,8 @@ lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
 lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
    lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
 
-lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)).
-lsp_call_metta_json(Eval,Ret):- catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
+lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), notrace((xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)))).
+lsp_call_metta_json(Eval,Ret):- notrace((catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))))).
 
 pretend_json(Obj):- var(Obj), !.
 pretend_json(Obj):- is_dict(Obj), !.
