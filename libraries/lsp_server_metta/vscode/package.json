@@ -79,7 +79,8 @@
               "foreignCodeIndexing",
               "codeExecution",
               "testRunning"
-            ]},
+            ]
+          },
           "default": [
             "codeExecution",
             "systemCodeIndexing",
@@ -98,19 +99,20 @@
           "scope": "window",
           "type": "array",
           "items": {
-          "type": "string",
-          "enum": [
-            "show_thread_monitor",
-            "show_debug_window",
-            "debug_main",
-            "debug_errors",
-            "debug_threads",
-            "debug_high",
-            "debug_low",
-            "debug_position",
-            "debug_todo",
-            "debug_xref"
-          ]},
+            "type": "string",
+            "enum": [
+              "show_thread_monitor",
+              "show_debug_window",
+              "debug_main",
+              "debug_errors",
+              "debug_threads",
+              "debug_high",
+              "debug_low",
+              "debug_position",
+              "debug_todo",
+              "debug_xref"
+            ]
+          },
           "default": [
             "debug_main",
             "debug_errors",
@@ -149,9 +151,37 @@
           "scope": "window",
           "type": "number",
           "default": 0.7,
-          "minimum": 0.0,
-          "maximum": 1.0,
+          "minimum": 0,
+          "maximum": 1,
           "description": "Adjusts the variability of ChatGPT responses, controlling the balance between creativity and consistency."
+        },
+        "metta-lsp.server.mode": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "stdio",
+            "port"
+          ],
+          "default": "stdio",
+          "description": "Determines how the LSP server is launched: using standard I/O (stdio) or a TCP port."
+        },
+        "metta-lsp.server.spawnProcess": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "If 'port' mode is selected, choose whether to spawn a new SWI-Prolog process on that port (true) or connect to an already-running server (false)."
+        },
+        "metta-lsp.server.port": {
+          "scope": "window",
+          "type": "number",
+          "default": 40222,
+          "description": "If using 'port' mode, the TCP port that the LSP server listens on or that the client should connect to."
+        },
+        "metta-lsp.server.address": {
+          "scope": "window",
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "If using 'port' mode with spawnProcess=false, the hostname or IP address to connect to. Defaults to localhost (127.0.0.1)."
         }
       }
     },
@@ -170,3 +200,4 @@
     "vscode": "^1.1.6"
   }
 }
+
