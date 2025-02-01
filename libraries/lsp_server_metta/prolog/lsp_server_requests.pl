@@ -246,6 +246,31 @@ sample_code_lens(Uri, SL0, CodeLens):-
         }
     }.
 
+
+% Utility for sending a custom LSP notification to the client
+% method "metta-lsp/showMessage"
+% with params { text: "...", type: <MessageTypeValue> }.
+
+metta_lsp_show_message(Message) :-
+  ignore((
+    Message \== null,
+    Message \== "",
+    Message \== "null",
+    into_message_string(Message, SMessage),
+    Msg = _{
+      method: "metta-lsp/showMessage",
+      params: _{
+        text: SMessage
+      }
+    },
+    send_client_message(Msg)
+  )).
+
+% The rest of your helper predicates (into_message_string/2, resolve_enum/3,
+% send_client_message/1, etc.) can remain the same as in your existing code.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sample Predicate for Code Lens Action
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
