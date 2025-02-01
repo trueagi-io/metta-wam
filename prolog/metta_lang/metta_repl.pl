@@ -141,8 +141,8 @@ check_file_exists_for_append(HistoryFile) :-
 check_file_exists_for_append(HistoryFile) :-
     % If the file cannot be created, print an error message and halt the program.
     write("Error opening history file: "),
-    writeln(HistoryFile),
-    halt(1).
+    writeln(HistoryFile),!.
+    %halt(1).
 
 %! save_history is det.
 %   Saves the current input history to a file if input is from a terminal (tty).
