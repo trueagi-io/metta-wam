@@ -241,7 +241,8 @@ print_pl_source(P) :-
     % Run the primary source-printing predicate within `run_pl_source/1`.
     run_pl_source(print_pl_source0(P)).
 
-pnotrace(G):- quietly(G).
+pnotrace(G):- notrace(G).
+%pnotrace(G):- quietly(G).
 
 %!  run_pl_source(+G) is det.
 %
@@ -755,6 +756,7 @@ src_vars(V,I):- %ignore(guess_metta_vars(V)),
               nop(ignore(dont_numbervars(I,400,_,[singleton(true),attvar(skip)]))),
               nop(materialize_vns(I)))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
+pre_guess_varnames(V,I):- ground(V),!,I=V.
 pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
