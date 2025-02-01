@@ -4546,7 +4546,7 @@ not_metta_atom_corelib(A, N) :-
 %     ?- is_metta_space('&unknown_space').
 %     false.
 %
-is_metta_space(Space) :-  nonvar(Space), 
+is_metta_space(Space) :-  nonvar(Space),
     \+ \+ is_space_type(Space, _Test).  % Enforce deterministic behavior using double negation.
 
 %!  metta_eq_def(+Eq, +KB, +H, +B) is det.
@@ -5134,7 +5134,7 @@ if_t(A, B, C) :-
 
 %!  check_answers_for(+TermV, +Ans) is nondet.
 %
-%   Validates if answers (`Ans`) for a given term (`TermV`) can be checked. 
+%   Validates if answers (`Ans`) for a given term (`TermV`) can be checked.
 %   Various conditions are applied to ensure that certain cases (e.g., suspended answers,
 %   bad types, or invalid terms) are rejected.
 %
@@ -5474,7 +5474,7 @@ do_metta(file(Filename), exec, Self, TermV, Out) :-
                            write(';; To unit test case:'))), !,
                           call(do_metta_exec(file(Filename), Self,
                                              ['assertEqualToResult', TermV, Ans], Out)))))).
-%   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode. 
+%   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode.
 do_metta(From, exec, Self, TermV, Out) :- !,
     % Simplify the term into an operation (if possible) and register it.
     if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
@@ -5634,8 +5634,8 @@ call_for_term_variables(TermV, catch_red(show_failure(TermR)), NewNamedVarsList,
         TermR, NamedVarsList, NewNamedVarsList, X), !,
     % Debugging output for final processed result.
     wwdmsg(call_for_term_variables5(
-        orig = Term, all = DontCaresN, singles = CSingletonsN, 
-        shared = CNonSingletonsN, call = TermR, 
+        orig = Term, all = DontCaresN, singles = CSingletonsN,
+        shared = CNonSingletonsN, call = TermR,
         nvl = NamedVarsList, nvlo = NewNamedVarsList, output = X)).
 
 %!  wwdmsg(+Message) is det.
@@ -5750,8 +5750,8 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
 
 %!  eval_S(+Self, +Form) is det.
 %
-%   Evaluates a given form (`Form`) in the context of a specific `Self` if the current 
-%   context matches `Self`. This predicate ensures the form is executed in `exec` mode 
+%   Evaluates a given form (`Form`) in the context of a specific `Self` if the current
+%   context matches `Self`. This predicate ensures the form is executed in `exec` mode
 %   using the `do_metta/5` predicate.
 %
 %   @arg Self  The context or "space" in which the evaluation should occur.
@@ -5985,7 +5985,7 @@ not_in_eq(List, Element) :-
 :- nodebug(metta(load)).
 :- nodebug(metta(prolog)).
 
-% 
+%
 % Below code measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
@@ -6919,7 +6919,7 @@ nts :-
 %   disables further redefinition by cutting execution early. If redefinition
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
-nts1 :- 
+nts1 :-
     % Disable redefinition by cutting execution.
     !.
 nts1 :-
@@ -6938,7 +6938,7 @@ nts1 :-
         system:notrace(G) :-
             (!, once(G)
     ))).
-nts1 :- 
+nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
@@ -6946,7 +6946,7 @@ nts1 :-
 
 %!  nts0 is det.
 %
-%   Configures or redefines the `system:notrace/0` predicate. 
+%   Configures or redefines the `system:notrace/0` predicate.
 %   The redefined version writes debug information to `write_src_uo/1` when called.
 %
 nts0 :-
@@ -7178,7 +7178,7 @@ metta_runtime_write_answers(List) :-
 %     Output:
 %     answer1, answer2
 %
-write_answers_aux([]) :- 
+write_answers_aux([]) :-
     % Stop when the list is empty.
     !.
 write_answers_aux([H|T]) :-
