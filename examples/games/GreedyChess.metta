@@ -698,7 +698,8 @@
 ;(= (checkclearupBDL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
 ;(= (checkclearupBDL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (- $B 1)) (checkclearupBDL $G $H $C $D $E))
 ;
-(= (replace_square $X1 $Y1 $color $rank $current_board)
+
+(= (replace_square $X1 $Y1 $color $rank $current_board) 
    (if (== (size-atom $current_board) 0)
         ()
         (let* (
@@ -706,27 +707,34 @@
           ($X2 (nth 1 $next-sq))
           ($Y2 (nth 2 $next-sq))
               )
-        (if (and (== X1 X2) (== Y1 Y2))
-          (cons-atom ($X1 $Y1 $color $rank) (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)))
-          (cons-atom $next-sq (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)))
-        )
-        )
-   )
-)
+        (if (and (== $X1 $X2) (== $Y1 $Y2))
+          (let $rest (cdr-atom $current_board) 
+            (if (== $color NIL)
+              (cons-atom ($X1 $Y1) $rest)   
+              (cons-atom ($X1 $Y1 $color $rank) $rest)))
+          (let $rest (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)) 
+            (cons-atom $next-sq $rest))
+        ))))
 ;
 ; move_piece
 ;   Input   starting square, target square, current board
 ;   Output: new board
-(= (move_piece $starting_square $target_square $current_board $D) 
+(= (move_piece $starting_square $target_square $current_board) 
   (let* (
-    ($X  (nth1 1 $target_square))
-    ($Y  (nth1 2 $target_square))
-    ($color (nth1 3 $starting_square))
-    ($rank  (nth1 4 $starting_square))
-    ($new_board (replace_square $X $Y $color $rank $current_board))
+    ; move to new square
+    ($X1  (nth 1 $target_square))
+    ($Y1  (nth 2 $target_square))
+    ($color1 (nth 3 $starting_square))
+    ($rank1  (nth 4 $starting_square))
+    ($new_board1 (replace_square $X1 $Y1 $color1 $rank1 $current_board))
+    ; delete piece from old square
+    ($X2  (nth 1 $starting_square))
+    ($Y2  (nth 2 $starting_square))
+    ($color NIL)
+    ($rank  NIL)
+    ($new_board2 (replace_square $X2 $Y2 $color $rank $new_board1))
         ) 
-    $new_board))
-
+    $new_board2))
 ;
 ;
 ;(= (printmove $A $B $C) (nth1 1 $A $D) (nth1 2 $A $E) (nth1 3 $A $F) (nth1 4 $A $G) (nth1 1 $B $H) (nth1 2 $B ;$I) (or (, (len $B 4) (return_entire_box #( :: ($H $I) ) $J $C) (nth1 4 $J $K)) (= $K  nil)) (or (, (== $F g) ;(write 'DBD moves from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) (write and2) (write ;$I)) (, (== $F s) (write 'YOU move from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) ;(write and2) (write $I))) #(add-atom &self #(guimessage move $A $B $K)) (or (, (\= $K nil) (nl) (write 'Piece ;captured!! -> ') (write $K) (nl)) nl) (write 'Type c. for commands you can use.'))
@@ -915,7 +923,8 @@
              (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
       (if (== (clear_route $h $i $starting_board) True)
         ; Try moving piece provisionally
-        (let $provisional_board  (move_piece $h, $i, $starting_board) (println! $provisional_board))
+        (let $provisional_board  (move_piece $h $i $starting_board) 
+            (println! (display_board $provisional_board)))
         ((py-atom print) "Can't move piece there."))
       ; else (moving to location with same piece or other problem)
       ((py-atom print) "Invalid move.")
