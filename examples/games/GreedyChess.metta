@@ -699,6 +699,9 @@
 ;(= (checkclearupBDL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (- $B 1)) (checkclearupBDL $G $H $C $D $E))
 ;
 
+; replace_square
+;   input: X, Y, color, rank
+;   output:  new board which overwrites X and Y with new piece, or removes if NIL found for color.
 (= (replace_square $X1 $Y1 $color $rank $current_board) 
    (if (== (size-atom $current_board) 0)
         ()
