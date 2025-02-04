@@ -46,10 +46,13 @@
 ;*******************************************************
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
+; if index too high, returns NIL
 (= (nth $n $list) 
+  (if (> $n (size-atom $list))
+    NIL
     (if (== $n 1)
         (car-atom $list)
-        (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
+        (nth (- $n 1) (cdr-atom $list))))) ; Recursion: move to the next element (cdr-atom) and decrease n.
 
 ; Input a list and symbol, then return True if found, else False. Eg:  (contains_symbol (a b c) b) returns True.
 (= (contains_symbol $list $sym) 
@@ -391,9 +394,36 @@
    ) 
 )
 ;
-;(= (xy_box $A #( :: ($B $C) ) #(Cons $D $E)) (len $D 4) (nth1 3 $D $F) (nth1 4 $D $G) (== $B $F) (== $C $G) ;(nth1 1 $D $H) (nth1 2 $D $I) (concat_lists #( :: (#( :: ($H) ) #( :: ($I) )) ) $A))
-;(= (xy_box $A $B #(Cons $C $D))  
-;  (xy_box $A $B $D))
+; (xy_box)
+;     1. Searches the board for a square containing the specified piece.
+;     2. Returns the x/y coordinates of the square if a match is found.
+;
+; NOTE: This version of xy_box is only designed to return 1 piece deterministically 
+;       given 1 piece of specified type exists.
+;       For multiple pieces and backtracking action devise another means.
+(= (xy_box ($PieceColor $PieceRank) $Board)
+  (let*
+    (
+    ; assign variables for the next piece
+    ($next_square (car-atom $Board)  )
+    ($next_x (nth 1 $next_square) )
+    ($next_y (nth 2 $next_square) )
+    ($next_color (nth 3 $next_square) )
+    ($next_rank  (nth 4 $next_square) )
+    )
+    ; then examine next square
+    (if (== (size-atom $next_square) 2) 
+      ; empty square, skip
+      (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))
+      ; else check this piece
+      (if
+        (and (== $next_color $PieceColor)
+             (== $next_rank $PieceRank))
+          ; return x and y of the found piece
+          ($next_x $next_y)
+          ; else keep checking the board
+          (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))))))
+  
 ;
 ;
 ;(= (samecolor $A $B) (nth1 3 $A $C) (nth1 3 $B $D) (set-det) (== $C $D))
@@ -924,10 +954,14 @@
              (== (size-atom $i) 2)     
              ; OK to take another piece, check color is not the same...
              (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
-      (if (== (clear_route $h $i $starting_board) True)
+      (if (== (clear_route $h $i $starting_board) True)               ; Validate the path for the piece.
         ; Try moving piece provisionally
-        (let $provisional_board  (move_piece $h $i $starting_board) 
-            (println! (display_board $provisional_board)))
+        (let* ( 
+            ($provisional_board  (move_piece $h $i $starting_board))   ; Try the move and update the board state. 
+            ($king_square (xy_box (s k) $provisional_board))           ; locate human's king
+              )   
+            ;(println! (display_board $provisional_board)))            
+            (println! $king_square))
         ((py-atom print) "Can't move piece there."))
       ; else (moving to location with same piece or other problem)
       ((py-atom print) "Invalid move.")
