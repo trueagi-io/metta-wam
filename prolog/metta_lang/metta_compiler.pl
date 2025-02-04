@@ -1257,7 +1257,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %leash(-all),
       maplist(h2p(EagerArgList,LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
       append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
       %trace,

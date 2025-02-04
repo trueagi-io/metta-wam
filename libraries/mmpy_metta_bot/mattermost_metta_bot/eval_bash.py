@@ -22,53 +22,80 @@ logging.basicConfig(level=logging.DEBUG)
 # Map interpreter types to their respective BASH_BEFORE and BASH_AFTER values
 INTERPRETER_CONFIGS = {
     "swipl": {
-        "BASH_BEFORE": ["swipl", "-q", "-f"],
-        "BASH_AFTER": ["-t", "halt"]
+        "BASH_BEFORE": ["timeout", "10s", "swipl", "-q", "-f"],
+        "BASH_AFTER": ["-t", "halt"],
+        "FILE_SUFFIX": ".pl"  # Prolog files typically use .pl
     },
     "metta": {
-        "BASH_BEFORE": ["metta"],
-        "BASH_AFTER": []
+        "BASH_BEFORE": ["timeout", "10s", "metta"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".metta"  # Assuming .metta for Metta files
     },
     "mettalog": {
-        "BASH_BEFORE": ["mettalog"],
-        "BASH_AFTER": []
+        "BASH_BEFORE": ["timeout", "10s", "mettalog"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".metta"  # Assuming .metta for MettaLog files
+    },
+    "bash": {
+        "BASH_BEFORE": ["bash", "-c"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".sh"  # Shell scripts typically use .sh
+    },
+    "python": {
+        "BASH_BEFORE": ["timeout", "10s", "python3"],
+        "BASH_AFTER": [],
+        "FILE_SUFFIX": ".py"  # Python scripts use .py
     }
 }
+
 
 # Dictionary to maintain MeTTaLog instances keyed by friendly names
 friendly_name_to_metta = defaultdict(lambda: MeTTaLog())
 
-
-
-
-
-
-def get_metta_instance(
-    channel_id=None, user_id=None, is_private=False, is_mention=False):
+def get_friendly_name(user_id=None, username=None, channel_id=None, channel_name=None, is_private=False):
     """
-    Retrieves the appropriate MeTTaLog instance:
-    - One instance per channel for shared channel interpreters.
-    - One instance per user for private messages.
-    - One instance per user for public mentions in a channel.
+    Generates or retrieves a friendly name for a user or channel.
     """
     if is_private:
-        logging.debug(f"Fetching MeTTaLog instance for private message with user: {user_id}")
-        return metta_instances[f"user:{user_id}"]
-    elif is_mention and channel_id and user_id:
-        logging.debug(f"Fetching personal MeTTaLog instance for user {user_id} in public channel {channel_id}")
-        return metta_instances[f"user:{user_id}"]
-    elif channel_id:
-        logging.debug(f"Fetching shared MeTTaLog instance for channel: {channel_id}")
-        return metta_instances[f"channel:{channel_id}"]
-    else:
-        raise ValueError("Insufficient information to determine MeTTaLog instance.")
+        return f"Private-{username or user_id}"
+    if username:
+        return username
+    if channel_name:
+        return channel_name
+    return f"Channel-{channel_id}" if channel_id else f"User-{user_id}"
+
+def generate_friendly_name(base_name, unique_suffix):
+    """
+    Generates a friendly name by appending a unique suffix if the name already exists.
+    """
+    if base_name not in friendly_name_to_metta:
+        return base_name
+    return f"{base_name}_{unique_suffix}"
+    
+
+def get_metta_instance(
+    user_id=None, username=None, channel_id=None, channel_name=None, is_private=False, is_mention=False):
+    """
+    Retrieves or initializes the appropriate MeTTaLog instance based on friendly names.
+    """
+    friendly_name = get_friendly_name(
+        user_id=user_id, username=username, channel_id=channel_id, channel_name=channel_name, is_private=is_private
+    )
+    unique_suffix = f"{user_id or channel_id}"
+    key = generate_friendly_name(friendly_name, unique_suffix)
+
+    # If no instance exists, create one
+    if key not in friendly_name_to_metta:
+        logging.debug(f"Creating new MeTTaLog instance for key: {key}")
+        friendly_name_to_metta[key] = MeTTaLog(name=key)
+    return friendly_name_to_metta[key]
 
 class MeTTaLog:
-    def __init__(self, interp_type="metta", name=None):
+    def __init__(self, interp_type="mettalog", name=None):
         self.set_interpreter(interp_type)
         self.name = name or "Unnamed Interpreter"
 
-    def set_interpreter(self, interp_type):        
+    def set_interpreter(self, interp_type):
         """Sets the interpreter type and updates configurations."""
         interp_type = interp_type.strip()
         if interp_type not in INTERPRETER_CONFIGS:
@@ -76,6 +103,7 @@ class MeTTaLog:
         self.interp_type = interp_type
         self.BASH_BEFORE = INTERPRETER_CONFIGS[interp_type]["BASH_BEFORE"]
         self.BASH_AFTER = INTERPRETER_CONFIGS[interp_type]["BASH_AFTER"]
+        self.FILE_SUFFIX = INTERPRETER_CONFIGS[interp_type]["FILE_SUFFIX"]
 
     def format_output(self, label, content):
         """
@@ -83,7 +111,7 @@ class MeTTaLog:
         """
         content = content.strip()
         if '\n' in content or len(content) > 80:
-            return f"\n{label}```\n{content}\n```"
+            return f"\n{label}\n```\n{content}\n```\n"
         else:
             return f"\n{label}`{content}`\n"
 
@@ -92,7 +120,7 @@ class MeTTaLog:
         Executes a block of code by writing it to a temporary file and invoking the interpreter.
         Captures both stdout and stderr.
         """
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".metta", mode="w") as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=self.FILE_SUFFIX, mode="w") as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
 
@@ -135,7 +163,7 @@ class MeTTaLog:
         else:
             query_code = "!" + expression + "\n"
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".metta", mode="w") as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=self.FILE_SUFFIX, mode="w") as temp_file:
             temp_file.write(query_code)
             temp_file_path = temp_file.name
 
@@ -166,14 +194,13 @@ class MeTTaLog:
             except Exception as e:
                 logging.error(f"Failed to remove temporary file: {e}")
 
-
 class MeTTaBotReplPlugin(Plugin):
     """
     A plugin that logs all attributes of the Message object, evaluates commands,
     and handles edits by responding appropriately.
     """
 
-    @listen_to(".*use (swipl|metta|mettalog)$", re.IGNORECASE)
+    @listen_to("^use (\w+)$", re.IGNORECASE)
     async def switch_interpreter(self, message, interp_type):
         """Switches the interpreter type for the current user/channel."""
         try:
@@ -258,9 +285,11 @@ class MeTTaBotReplPlugin(Plugin):
             channel_name=message.channel_name,
             is_private=is_private
         )
+
         response, should_reply = self.evaluate_command(metta_instance, message.text.strip())
         if should_reply:
             await self.respond_or_edit(message, response, edited=edited)
+
 
     def evaluate_command(self, metta_instance, command: str) -> (str, bool):
         """
@@ -280,12 +309,12 @@ class MeTTaBotReplPlugin(Plugin):
 
             # Evaluate expressions starting with backticks
             if '`!' in command:
-                expression = command.split('`!')[1].strip().split('`')[0]                
+                expression = command.split('`!')[1].strip().split('`')[0]
                 result = metta_instance.eval(expression)
                 return result, True
 
             if '`(' in command:
-                expression = command.split('`(')[1].strip().split('`')[0]                
+                expression = command.split('`(')[1].strip().split('`')[0]
                 result = metta_instance.exec(expression)
                 return result, True
 
@@ -298,6 +327,11 @@ class MeTTaBotReplPlugin(Plugin):
             # Handle commands wrapped in parentheses
             if command.startswith('(') and command.endswith(')'):
                 result = metta_instance.exec(command)
+                return result, True
+
+            if command.startswith('`') and command.endswith('`'):
+                code_within_backticks = command[1:-1].strip()  # Slicing to remove the backticks
+                result = metta_instance.exec(code_within_backticks)
                 return result, True
 
         except Exception as e:

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 local TEST_NAME="$1"          # HTML output file
 local LOGFILE="$3"               # Test file

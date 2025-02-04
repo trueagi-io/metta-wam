@@ -1,6 +1,8 @@
 :- module(lsp_metta_colours, [
                         token_types/1,
-                        token_modifiers/1]).
+                        token_modifiers/1,
+                        metta_colours/2
+          ]).
 
 % these are LSP token types/modifiers.
 
@@ -50,8 +52,9 @@ token_modifiers([declaration,
 :- use_module(library(lists), [append/3, member/2, selectchk/4]).
 :- use_module(library(sgml), [load_html/3]).
 
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
+:- use_module(lsp_metta_parser, [ annotated_read_sexpr_list/4 ]).
 
 get_document_symbols(Path, S) :-
     lsp_metta_changes:doc_text_d4(Path,SplitText),
@@ -89,3 +92,7 @@ get_document_symbol_aux2(a(L,C0,C1,Sym),FlatList) :-
     (get_atom_kind_name(Sym,Type,Name),Type>0 -> FlatList=[x(L,C0,C1,Type,Name)] ; FlatList=[]).
 get_document_symbol_aux2(_,[]).
 
+
+metta_colours(_Path, Highlights) :- !,
+    % TODO
+    Highlights = [].

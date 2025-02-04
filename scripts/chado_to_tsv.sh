@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Replace these variables with your own values
 fb_remote_host="chado.flybase.org"

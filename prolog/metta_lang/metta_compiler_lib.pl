@@ -238,7 +238,7 @@ transpiler_predicate_store('stringToChars', 2, [x(doeval,eager,[])], x(doeval,ea
 transpiler_predicate_store('charsToString', 2, [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc_1__charsToString'(C,S) :- string_chars(S,C).
 
-transpiler_predicate_store('assertEqual', 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+transpiler_predicate_store('assertEqual', 3, [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
 'mc_2__assertEqual'(A,B,C) :-
    loonit_assert_source_tf_empty(
         ['assertEqual',A,B],AA,BB,

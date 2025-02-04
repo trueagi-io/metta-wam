@@ -141,8 +141,8 @@ check_file_exists_for_append(HistoryFile) :-
 check_file_exists_for_append(HistoryFile) :-
     % If the file cannot be created, print an error message and halt the program.
     write("Error opening history file: "),
-    writeln(HistoryFile),
-    halt(1).
+    writeln(HistoryFile),!.
+    %halt(1).
 
 %! save_history is det.
 %   Saves the current input history to a file if input is from a terminal (tty).
@@ -1032,7 +1032,7 @@ u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,VOutput,FOut):-
      reset_eval_num, % Reset evaluation counters for a fresh start
      inside_assert(Term,BaseEval))), % Convert the current term into a base evaluation
     (notrace(skip_do_metta_exec(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut))-> true;
-      u_do_metta_exec02(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut)).
+     u_do_metta_exec02(From,Self,TermV,BaseEval,Term,X,NamedVarsList,Was,VOutput,FOut)).
 
 % --exec=skip
 skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,_FOut):-
@@ -1072,7 +1072,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
      % Set options for maximum and initial result counts, infinite results if needed
      option_else('limit-result-count',MaxResults,inf),
-     option_else('initial-result-count',InitialResults,4),
+     option_else('initial-result-count',InitialResults,10),
 
      % Control variable initialized with max result count and leap control
      Control = contrl(InitialResults,MaxResults,Leap),

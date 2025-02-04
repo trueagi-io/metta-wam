@@ -1,4 +1,3 @@
-
 :- discontiguous(lsp_hooks:handle_msg_hook/3).
 :-     multifile(lsp_hooks:handle_msg_hook/3).
 :-       dynamic(lsp_hooks:handle_msg_hook/3).
@@ -29,5 +28,3 @@
 :- discontiguous(user:metta_file_buffer/7).
 :-     multifile(user:metta_file_buffer/7).
 :-       dynamic(user:metta_file_buffer/7).
-
-

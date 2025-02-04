@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if the script was sourced or executed
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

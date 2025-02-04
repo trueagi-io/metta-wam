@@ -1,3 +1,9 @@
+:- module(lsp_metta_hover, [ hover_at_position/4,
+                             is_documented/1,
+                             get_code_at_range_type/1,
+                             each_type_at_sorted/2,
+                             xref_call/1
+                           ]).
 /** <module> LSP Utils
 
 Module with a bunch of helper predicates for looking through prolog
@@ -10,6 +16,9 @@ source and stuff.
 */
 :- include(lsp_metta_include).
 
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_references, [ type_expand/2 ]).
+:- use_module(lsp_metta_code_actions, [ lsp_call_metta/2 ]).
 
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
@@ -249,7 +258,7 @@ term_info_string_resolved(Path, Loc, Term, Arity, Str):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 in_markdown(G):- setup_call_cleanup(format('~n```~n', []), G, format('~n```lisp~n')).
 banner_for(Type, Target):- in_markdown(format('---~n ## ~w: ~w', [Type, Target])).
-lsp_separator():- in_markdown(format('---',[])).
+lsp_separator :- in_markdown(format('---',[])).
 
 show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
@@ -290,18 +299,18 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
 % Vitaly's initial impl of Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
-    lsp_separator(),
-    xref_call(eval(['help!', Target], _)), lsp_separator().  % Evaluate the help command for the term.
+    lsp_separator,
+    xref_call(eval(['help!', Target], _)), lsp_separator.  % Evaluate the help command for the term.
 
 
 
 lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
-  lsp_separator(),
+  lsp_separator,
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
      true)))*->true; (Try=Term,Type='%Undefined%')),
-   in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvars(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
-   lsp_separator().
+   in_markdown( (numbervars(Try+Type,0,_,[singletons(true),attvar(skip)]),format("*Type* ~@ **~@**~n~n",  [write_src_xref(Try), write_src_xref(Type)]))),  % Format the output as a help string.
+   lsp_separator.
 
 %
 some_arities(Term,N,Try,return(N)):- integer(N),!,length(Args,N),Try=[Term|Args].
@@ -312,11 +321,11 @@ lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
   ArityDoc \== [],  % Ensure the documentation is not empty.
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
-  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator() .  % Output a message if there's an arity mismatch.
+  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator.  % Output a message if there's an arity mismatch.
 
 
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
-  lsp_separator(),
+  lsp_separator,
   each_type_at_sorted(Target, Term, AtPath, AtLoc, Type),
   write_src_xref(Term, Type, AtPath, AtLoc).  % Write the source cross-reference for the atom.
 
@@ -336,9 +345,9 @@ A1: whY
 </details>
 */
 lsp_hooks:hover_print(Path, Loc, Term, Arity):- debug_positions,
-  lsp_separator(),
+  lsp_separator,
   setup_call_cleanup(
-     lsp_separator(),
+     lsp_separator,
      debug_positions(Path, Loc, Term, Arity),
      in_markdown(format('~n</details>~n'))).
 
@@ -347,7 +356,7 @@ debug_positions(_Path, Loc, Term, Arity) :-
 
 debug_positions(_Path, _Loc, _Term, _Arity) :-
    lsp_state:last_range(Method,Range),
-   numbervars(Range,0,_,[singletons(true),attvars(skip)]),
+   numbervars(Range,0,_,[singletons(true),attvar(skip)]),
    in_markdown((format("*~w*: **~q**~n~n",  [Method,Range]))).   % Format the output as a help string.
 
 debug_positions(Path, Loc, _Term, _Arity) :-
@@ -478,7 +487,7 @@ position_line(Position, Line2):-
    into_line_char(Position, line_char(Line1, _)), succl(Line1, Line2).
 
 % Emacs does return a Client Configuration List
-is_in_emacs :- fail, \+ ( user:stored_json_value(client_configuration, List, _), is_list(List) ), !.
+is_in_emacs :- fail, \+ ( lsp_state:stored_json_value(client_configuration, List, _), is_list(List) ), !.
 
 
 end_of_file.

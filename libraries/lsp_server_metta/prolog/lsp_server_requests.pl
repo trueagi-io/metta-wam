@@ -54,6 +54,7 @@ Assumptions:
 
 :- include(lsp_metta_include).
 
+:- use_module(lsp_metta_workspace, [into_json_range/2]).
 
 receive_response(MsgId, MsgBody):-
   debug_lsp(requests,begin_receive_response(MsgId)),
@@ -245,6 +246,31 @@ sample_code_lens(Uri, SL0, CodeLens):-
         }
     }.
 
+
+% Utility for sending a custom LSP notification to the client
+% method "metta-lsp/showMessage"
+% with params { text: "...", type: <MessageTypeValue> }.
+
+metta_lsp_show_message(Message) :-
+  ignore((
+    Message \== null,
+    Message \== "",
+    Message \== "null",
+    into_message_string(Message, SMessage),
+    Msg = _{
+      method: "metta-lsp/showMessage",
+      params: _{
+        text: SMessage
+      }
+    },
+    send_client_message(Msg)
+  )).
+
+% The rest of your helper predicates (into_message_string/2, resolve_enum/3,
+% send_client_message/1, etc.) can remain the same as in your existing code.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Sample Predicate for Code Lens Action
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -332,7 +358,7 @@ sample_ws_edit :-
             ]
         },
     apply_workspace_edit(Label, Edit, Response),
-    lsp_debug(main, 'Workspace edit response: ~w', [Response]).
+    debug_lsp(main, 'Workspace edit response: ~w', [Response]).
 
 % Sample predicate for 'fetch_workspace_configuration/2'
 
@@ -344,12 +370,12 @@ fetch_workspace_configuration_unsafe :-
         _{section: "metta-lsp"}
     ],
     fetch_workspace_configuration(ConfigurationItems, Configurations),
-    lsp_debug(main, 'Configurations: ~w', [Configurations]),
+    debug_lsp(main, 'Configurations: ~w', [Configurations]),
     first_dict_key( result, Configurations, ClientConfig),
     save_json(client_configuration,ClientConfig),
     resync_debug_values.
 resync_debug_values:-
-   ignore((stored_json_value(client_configuration, [options], List),
+   ignore((lsp_state:stored_json_value(client_configuration, [options], List),
       resync_debug_values(List))).
 resync_debug_values(List):- is_list(List), !,
    nodebug(lsp(_)), % reset
@@ -362,7 +388,7 @@ resync_debug_values(Str):- ignore((string(Str), atom_concat("debug_", Atom, Str)
 % Sample predicate for 'fetch_workspace_folders/1'
 fetch_workspace_folders :-
     fetch_workspace_folders(Folders),
-    lsp_debug(main, 'Workspace folders: ~w', [Folders]),
+    debug_lsp(main, 'Workspace folders: ~w', [Folders]),
     send_feedback_message("Retrieved workspace folders.", info).
 
 
@@ -394,7 +420,7 @@ is_lsp_success(Success):-
 lsp_hooks:exec_code_action("system_call_zero_args", [_Uri, PredicateName], null) :-
     atom_string(PredicateAtom, PredicateName),
     (   catch(call(PredicateAtom), Error,
-          ( lsp_debug(errors, 'Error executing predicate ~w: ~q', [PredicateAtom, Error]),
+          ( debug_lsp(errors, 'Error executing predicate ~w: ~q', [PredicateAtom, Error]),
             send_feedback_message(format('Error executing predicate ~w: ~w', [PredicateAtom, Error]), error)))
     ->  true
     ;   send_feedback_message(format('Predicate execution failed: ~q',[PredicateAtom]), error)
@@ -903,6 +929,7 @@ save_json_value(Pred, Path, Value) :-
     retractall(lsp_state:stored_json_value(Pred, RevPath, _)),
     asserta(lsp_state:stored_json_value(Pred, RevPath, Value)).
 
+/*
 end_of_file.
 
 3 ?- listing(stored_json_value).
@@ -1138,3 +1165,4 @@ true.
 2 ?-
 
 
+*/

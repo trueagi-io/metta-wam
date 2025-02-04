@@ -1164,7 +1164,7 @@ all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], 
 % Resource Limits
 option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
 all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
-option_value_name_default_type_help('initial-result-count', 4, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
+option_value_name_default_type_help('initial-result-count', 10, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
 % Miscellaneous
 option_value_name_default_type_help('answer-format', 'show', ['rust', 'silent', 'detailed'], "Control how results are displayed", 'Output and Logging').
@@ -5447,7 +5447,7 @@ do_metta(From, call, Self, TermV, FOut) :- !,
     call_for_term_variables(TermV, Term, NamedVarsList, X),
     must_be(nonvar, Term),
     copy_term(NamedVarsList, Was),
-    Output = X,
+   Output = X,
     user:u_do_metta_exec(From, Self, call(TermV), Term, X, NamedVarsList, Was, Output, FOut).
 % Non Exec
 do_metta(_File, Load, Self, Src, Out) :-
@@ -5458,23 +5458,23 @@ do_metta(_File, Load, Self, Src, Out) :-
 % Doing Exec
 do_metta(file(Filename), exec, Self, TermV, Out) :-
     % Handle executable terms when processing files.
-    must_det_ll((inc_exec_num(Filename),
+   must_det_ll((inc_exec_num(Filename),
                  get_exec_num(Filename, Nth),
                  Nth > 0)),
     ((
-        is_synthing_unit_tests,
-        file_answers(Filename, Nth, Ans),
-        \+ is_transpiling,
+     is_synthing_unit_tests,
+     file_answers(Filename, Nth, Ans),
+     \+ is_transpiling,
         check_answers_for(TermV, Ans))), !,
     if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
-    must_det_ll((
-        ensure_increments((color_g_mesg_ok('#ffa509',
-                          (writeln(';; In file as:  '),
+     must_det_ll((
+      ensure_increments((color_g_mesg_ok('#ffa509',
+       (writeln(';; In file as:  '),
                            color_g_mesg([bold, fg('#FFEE58')], write_src(exec(TermV))),
                            write(';; To unit test case:'))), !,
                           call(do_metta_exec(file(Filename), Self,
                                              ['assertEqualToResult', TermV, Ans], Out)))))).
-%   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode. 
+%   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode.
 do_metta(From, exec, Self, TermV, Out) :- !,
     % Simplify the term into an operation (if possible) and register it.
     if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
@@ -5501,10 +5501,10 @@ do_metta(From, exec, Self, TermV, Out) :- !,
 %     Out = ResultOfExecution.
 %
 do_metta_exec(From, Self, TermV, FOut) :-
-    Output = X,
+  Output = X,
     % Debugging output for initial state.
     % format("########################X0 ~w ~w ~w\n", [Self, TermV, FOut]),
-    (catch(((
+ (catch(((
         % Show execution trace if the source is a file.
         if_t(From = file(_), output_language(metta, write_exec(TermV))),
         % Convert the term into a callable Prolog term.
@@ -5634,8 +5634,8 @@ call_for_term_variables(TermV, catch_red(show_failure(TermR)), NewNamedVarsList,
         TermR, NamedVarsList, NewNamedVarsList, X), !,
     % Debugging output for final processed result.
     wwdmsg(call_for_term_variables5(
-        orig = Term, all = DontCaresN, singles = CSingletonsN, 
-        shared = CNonSingletonsN, call = TermR, 
+        orig = Term, all = DontCaresN, singles = CSingletonsN,
+        shared = CNonSingletonsN, call = TermR,
         nvl = NamedVarsList, nvlo = NewNamedVarsList, output = X)).
 
 %!  wwdmsg(+Message) is det.
@@ -5750,8 +5750,8 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
 
 %!  eval_S(+Self, +Form) is det.
 %
-%   Evaluates a given form (`Form`) in the context of a specific `Self` if the current 
-%   context matches `Self`. This predicate ensures the form is executed in `exec` mode 
+%   Evaluates a given form (`Form`) in the context of a specific `Self` if the current
+%   context matches `Self`. This predicate ensures the form is executed in `exec` mode
 %   using the `do_metta/5` predicate.
 %
 %   @arg Self  The context or "space" in which the evaluation should occur.
@@ -5977,7 +5977,6 @@ not_in_eq(List, Element) :-
     % Iterate over the list and check for equality using `==`.
     member(V, List), V == Element.
 
-
 :- ensure_loaded(metta_repl).
 
 % Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
@@ -5986,7 +5985,7 @@ not_in_eq(List, Element) :-
 :- nodebug(metta(load)).
 :- nodebug(metta(prolog)).
 
-% 
+%
 % Below code measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
 %
@@ -6099,7 +6098,7 @@ give_time(What, Seconds) :-
         ; (Milliseconds >= 1
             -> format('~N; ~w took ~3f secs. (~2f milliseconds) ~n~n', [What, Seconds, Milliseconds])
             ; (Micro is Milliseconds * 1_000,
-               format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
+              format('~N; ~w took ~6f secs. (~2f microseconds) ~n~n', [What, Seconds, Micro])))).
 
 %!  timed_call(+Goal, -Seconds) is det.
 %
@@ -6271,7 +6270,7 @@ chkdet_call0(XX) :- !, call(XX).
 %
 dcall0000000000(XX) :-
     % Create a structure to track the solution (`USol`).
-    USol = sol(dead),
+   USol = sol(dead),
     % Create a copy of the goal (`XX`) to avoid unintended modifications.
     copy_term_g(XX, X),
     % Execute the goal and retrieve its solution number, determinism, and previous state.
@@ -6290,7 +6289,7 @@ dcall0000000000(XX) :-
             % If `Nth` is unbound, commit the result if `Prev` is not `dead`.
             (!, Prev \== dead)
         ;
-            true),
+      true),
         % If `Nth` equals 1, commit the result; otherwise, allow backtracking.
         (Nth == 1 -> ! ; true)))).
 
@@ -6306,7 +6305,7 @@ dcall0000000000(XX) :-
 %   @arg Prev  The previous solution for the goal.
 %
 call_nth(USol, XX, Nth, Det, Prev) :-
-    repeat,
+  repeat,
     (
         % Execute the goal, track its solution number and determinism, and update `USol`.
         (call_nth(XX, Nth), deterministic(Det), arg(1, USol, Prev)) *->
@@ -6485,12 +6484,12 @@ ggtrace0(G) :-
     % Suppress all Prolog debugger prompts.
     leash(-all),
     % Make all ports invisible by default.
-    visible(-all),
+  visible(-all),
     % Customize visibility for specific ports (e.g., call and exception).
     % debug,
     % visible(+redo),  % Uncomment to make redo ports visible.
-    visible(+call),
-    visible(+exception),
+  visible(+call),
+  visible(+exception),
     % Optionally allow leash on exceptions.
     maybe_leash(+exception),
     % Setup tracing for the goal, ensuring cleanup after execution.
@@ -6570,7 +6569,7 @@ loon(Why) :-
     % Otherwise, log the beginning of `loon`, record it, and start `do_loon`.
     fbugio(began_loon(Why)),
     assert(began_loon(Why)),
-    do_loon.
+  do_loon.
 
 %!  do_loon is det.
 %
@@ -6581,23 +6580,23 @@ loon(Why) :-
 %   - Safely ignoring errors for specific initialization steps.
 %
 do_loon :-
-    ignore((
+ ignore((
         % Avoid reloading context interference.
         \+ prolog_load_context(reloading, true),
         % Execute a sequence of initialization tasks, ignoring errors where needed.
         maplist(catch_red_ignore, [
             % Uncomment the following lines if needed during compilation:
             % if_t(is_compiled, ensure_mettalog_py),
-            install_readline_editline,
+          install_readline_editline,
             % nts1,
             % install_ontology,
-            metta_final,
-            % ensure_corelib_types,
-            set_output_stream,
+   metta_final,
+   % ensure_corelib_types,
+   set_output_stream,
             if_t(is_compiled, update_changed_files),
-            test_alarm,
-            run_cmd_args,
-            write_answer_output,
+   test_alarm,
+   run_cmd_args,
+   write_answer_output,
             not_compat_io(maybe_halt(7))
         ])
     )), !.
@@ -6721,7 +6720,7 @@ maybe_halt(H) :-
 
 % needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 
-% libswipl: ['./','-q',--home=/usr/local/lib/swipl]
+%  libswipl: ['./','-q',--home=/usr/local/lib/swipl]
 
 %
 %   Displays the operating system arguments (`os_argv`) during initialization.
@@ -6843,7 +6842,7 @@ next_save_name(Name) :-
     before_underscore(E, N),
     symbol_concat(N, '_', Stem),
     gensym(Stem, Name),
-    \+ exists_file(Name),
+  \+ exists_file(Name),
     Name \== E, !.
 next_save_name(SavMeTTaLog) :-
     % Use the `exeout` option if it is valid and sufficiently long.
@@ -6920,26 +6919,26 @@ nts :-
 %   disables further redefinition by cutting execution early. If redefinition
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
-nts1 :- 
+nts1 :-
     % Disable redefinition by cutting execution.
     !.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
-    %listing(system:notrace/1),
+  %listing(system:notrace/1),
     % Remove the existing definition of `system:notrace/1`.
-    abolish(system:notrace/1),
+  abolish(system:notrace/1),
     % Declare `system:notrace/1` as a dynamic predicate, allowing runtime modifications.
-    dynamic(system:notrace/1),
+  dynamic(system:notrace/1),
     % Define the meta-predicate behavior for `system:notrace/1`.
-    meta_predicate(system:notrace(0)),
+  meta_predicate(system:notrace(0)),
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
     asserta((
         system:notrace(G) :-
             (!, once(G)
     ))).
-nts1 :- 
+nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
@@ -6947,14 +6946,14 @@ nts1 :-
 
 %!  nts0 is det.
 %
-%   Configures or redefines the `system:notrace/0` predicate. 
+%   Configures or redefines the `system:notrace/0` predicate.
 %   The redefined version writes debug information to `write_src_uo/1` when called.
 %
 nts0 :-
     % Redefine the system predicate `system:notrace/0`.
     redefine_system_predicate(system:notrace/0),
     % Remove the existing definition of `system:notrace/0`.
-    abolish(system:notrace/0),
+  abolish(system:notrace/0),
     % Define the new behavior for `system:notrace/0`.
     % The redefined version writes debug output for tracing.
     asserta((
@@ -7003,9 +7002,9 @@ metta_message_hook(A, B, C) :-
     user:(
         % If the message kind is `error`, log it and fail.
         B == error,
-        fbug(metta_message_hook(A, B, C)),
-        fail
-    ).
+          fbug(metta_message_hook(A, B, C)),
+          fail
+      ).
 
 %!  override_message_hook is det.
 %
@@ -7019,7 +7018,7 @@ metta_message_hook(A, B, C) :-
 %
 override_message_hook :-
     % For each existing clause of `user:message_hook/3`:
-    forall(
+      forall(
         clause(user:message_hook(A, B, C), Where:Body, Cl),
         (
             % Backup the existing clause as a new version.
@@ -7179,7 +7178,7 @@ metta_runtime_write_answers(List) :-
 %     Output:
 %     answer1, answer2
 %
-write_answers_aux([]) :- 
+write_answers_aux([]) :-
     % Stop when the list is empty.
     !.
 write_answers_aux([H|T]) :-
@@ -7404,6 +7403,6 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
     { Likelihood2 = 0.5 * Likelihood3 },
     { Likelihood3 < 1.0 },
     { Likelihood3 > 0.0 }.
-    
+
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).

@@ -1,3 +1,7 @@
+:- module(lsp_metta_code_actions, [ metta_to_json/2,
+                                    lsp_call_metta/2
+                                  ]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Actions with ChatGPT Integration
 %
@@ -70,6 +74,15 @@
 
 :- include(lsp_metta_include).
 
+:- use_module(lsp_metta_workspace).
+:- use_module(lsp_metta_hover, [ get_code_at_range_type/1,
+                                 xref_call/1
+                               ]).
+
+:- use_module(lsp_metta_utils, [ get_code_at_range/4,
+                                 get_src_code_at_range/4
+                               ]).
+
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
     clause(handle_code_action_msg(Method, Msg, Result), Body), !,
@@ -86,14 +99,6 @@ lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
 :- use_module(library(http/http_open)).
 :- use_module(library(http/http_json)).
 :- use_module(library(readutil)).
-% General Helper Predicates
-% These helpers are used across different handlers.
-safe_clause_call(Head):- clause(Head,Body), catch(Body,_,true).
-
-must_succeed(G):- call(G)*->true;fail.
-
-must_succeed1((A,B)):- !, must_succeed1(A),must_succeed1(B),!.
-must_succeed1(G):- call(G)->true;(throw(failed_succeed(G)),fail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request
@@ -144,8 +149,8 @@ lsp_hooks:compute_code_action(Uri, Range, CodeAction) :-
 lsp_hooks:compute_typed_code_action(ObjectType, Uri, Range, Object, CodeAction):-
    lsp_call_metta_json(['compute-typed-code-action', ObjectType, Uri, Range, Object], CodeAction).
 
-lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)).
-lsp_call_metta_json(Eval,Ret):- catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))).
+lsp_call_metta([F|Args],MeTTaObj):-  maplist(json_to_metta,Args,List), notrace((xref_call(eval_args(500, '&lsp-server',[F|List], MeTTaObj)))).
+lsp_call_metta_json(Eval,Ret):- notrace((catch_with_backtrace(( lsp_call_metta(Eval,MeTTaObj), metta_to_json(MeTTaObj,Ret), is_dict(Ret))))).
 
 pretend_json(Obj):- var(Obj), !.
 pretend_json(Obj):- is_dict(Obj), !.
@@ -305,7 +310,7 @@ load_metta_code(For, Uri, Code, Result) :-
 % Helper Predicate: maybe_parse_sexpr_metta1/2
 maybe_parse_sexpr_metta1(Code, Parsed) :-
     string(Code),
-    catch(parse_sexpr_metta1(Code, Parsed), _, fail), !.
+    catch(read_metta(Code, Parsed), _, fail), !.
 maybe_parse_sexpr_metta1(PreParsed, PreParsed).
 
 % The report_diagnostics/3 predicate would be defined elsewhere.
@@ -707,4 +712,3 @@ symbol_reference_uri(Symbol, Location) :-
         uri: Uri,                      % Document URI for the symbol reference
         range: JRange                  % Range within the document
     }.
-

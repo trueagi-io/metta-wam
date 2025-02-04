@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 generate_junit_report=0
 junit_report_file=""
@@ -1146,8 +1146,8 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
-  export TIMEOUT
-  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+  export TIMEOUT # --signal=SIGTERM --kill-after=5s 
+  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground $TIMEOUT ${METTA_CMD}"
 fi
 
 function escape_quotes {
@@ -1243,7 +1243,7 @@ if [[ "$html_flag" == "enable" ]]; then
 
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS
-        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" -c \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
+        METTA_CMD="/usr/bin/script -q -a \"$TEE_FILE\" \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
     else # Assume Linux
         METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \\\"$(echo "${METTA_CMD}" | sed 's/"/\\"/g')\\\""
     fi
