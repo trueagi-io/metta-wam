@@ -1257,7 +1257,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %leash(-all),trace,
+      %leash(-all),
       maplist(h2p(EagerArgList,LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
       append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
       %trace,
@@ -1915,9 +1915,14 @@ h2p(EagerArgList,LazyVars,Convert,Converted,CodeOut,TotalNewLazyVars) :-
    Convert=[FnName|Args],atom(FnName),
    length(Args,LenArgs),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   get_operator_typedef_props(_,FnName,LenArgs,Types0,_RetType0),
-   maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
-   maplist(arg_eval_props,Types0,TypeProps),
+   LenArgsPlus1 is LenArgs+1,
+   (transpiler_predicate_store(FnName,LenArgsPlus1,TypeProps0,_) ->
+      TypeProps=TypeProps0
+   ;
+      get_operator_typedef_props(_,FnName,LenArgs,Types0,_RetType0),
+      maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
+      maplist(arg_eval_props,Types0,TypeProps)
+   ),
    maplist(combine_lazy_types_props,EagerLazyList,TypeProps,FinalLazyArgs),
    maplist(arrange_lazy_args,Args,FinalLazyArgs,ThisNewLazyVars),
    maplist(h2p(EagerArgList,LazyVars),Args,QuoteContentsOut,Code,NewLazyVars),
