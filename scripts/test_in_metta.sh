@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e
 
 SHOULD_EXIT=0
@@ -80,7 +80,7 @@ process_file() {
 
     local take_test=0
     local TEST_EXIT_CODE=0
-        set -e
+    # set -e
 
     should_regenerate=false
 
@@ -137,7 +137,7 @@ process_file() {
 	    # Record the start time
 	    start_time=$(date +%s)
             #set +x
-            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
+            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIG\KILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             TEST_EXIT_CODE=$?
             take_test=1
 	    # Record the current time
@@ -167,7 +167,7 @@ process_file() {
         stty sane
 	DEBUG ""        
 
-        set -e
+        #set -e
 
        trap - SIGKILL
     else
@@ -182,7 +182,7 @@ process_file() {
 
         failures_zero=$(grep -h -c "Failures: 0" "$file_html")
         if [ "$failures_zero" -eq 0 ]; then
-            DEBUG_WHY "Not taking test since Failures not 0."
+            DEBUG_WHY "Not taking test since Failures not 0. (only testing regressions from 100%)"
             return 7
         fi
         take_test=1
@@ -816,6 +816,7 @@ printf '%s\n' "${excluded_files[@]}"
 
 DEBUG "Excluded directories:"
 printf '%s\n' "${excluded_dirs[@]}"
+
 
 # DEBUG "All unique parent directories:"
 for dir in "${unique_directories[@]}"; do

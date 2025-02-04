@@ -1,3 +1,21 @@
+:- module(lsp_metta_workspace, [ doc_path/2,
+                                 into_json_range/2,
+                                 into_line_char/2,
+                                 into_line_char_range/2,
+                                 metta_atom_xref/1,
+                                 metta_atom_xref/3,
+                                 path_doc/2,
+                                 skip_xref_atom/1,
+                                 source_file_text/2,
+                                 succl/2,
+                                 xref_maybe/2,
+                                 xref_metta_source/1,
+                                 xref_metta_source/1,
+                                 xref_reload_source/1,
+                                 xref_source_expired/1,
+                                 maybe_doc_path/2
+                               ]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_metta_workspace.pl
 %
@@ -48,7 +66,9 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
+
+:- use_module(lsp_metta_outline, [line_col/2]).
 
 %:- module(lsp_metta_workspace, [
 %                        xref_metta_source/1]).
@@ -286,7 +306,7 @@ xref_enqueue_file(File) :- xref_file_queue(File),!.
 xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File),!.
 xref_enqueue_file(Path):- disable_thread_system, !, xref_source_now_maybe(Path).
 xref_enqueue_file(File) :-
-    xref_ensure_worker_thread_running(),
+    xref_ensure_worker_thread_running,
     xref_update_file_state(File, submitted),
     ( xref_file_queue(File) ->
         true  % File is already in the queue; do nothing
@@ -356,7 +376,7 @@ xref_update_file_state(File, State) :-
     assertz(xref_file_state(File, State)).
 
 % Worker thread for processing files
-xref_ensure_worker_thread_running() :-
+xref_ensure_worker_thread_running :-
     ( xref_thread_control(ThreadID) ->
         ( thread_property(ThreadID, status(running)) ->
             true  % The thread is running; do nothing

@@ -82,6 +82,7 @@ self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
+
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X), compound(X). % spaces and states are stored as compounds
 
@@ -279,9 +280,12 @@ var_pass(_Eq,_RetType,_Depth,_Self,_Y):-!.
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- Y=YO.
 % %  this next one at least causes no failures and 5x speedup
 
-subst_args_here(Eq,RetType,Depth,Self,H,BBB):-
-  must_det_lls(subst_args_there(Eq,RetType,Depth,Self,H,BBB)),
-  sanity_check_eval(subst_args_there,BBB).
+subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !,
+  (subst_args(Eq,RetType,Depth2,Self,Y,YO)*->true;Y=YO).
+
+subst_args_here(Eq,RetType,Depth,Self,H,BBBO):-
+  must_det_lls(if_or_else(subst_args_there(Eq,RetType,Depth,Self,H,BBB),H=BBB)),
+  sanity_check_eval(subst_args_there,BBB),BBBO=BBB.
 %subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- wont_need_subst(Y),!, Y=YO.
 
 trust_wont_need_substX.
@@ -301,9 +305,9 @@ subst_args_there(Eq,RetType,Depth2,Self,Y,YO):-
        if_t(Y=@=YO, (wdmsg(subst_args_there_real(Y,YO)),
            trace,rtrace(subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO)),break))))).
 
-subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO):- !, 
-  subst_args(Eq,RetType,Depth2,Self,Y,YO).
-  
+subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO):- !,
+  (subst_args(Eq,RetType,Depth2,Self,Y,YO)*->true;Y=YO).
+
 subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO):-
   subst_args(Eq,RetType,Depth2,Self,Y,YO),
   %Y =YO,
@@ -313,7 +317,6 @@ subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO):-
 
 wont_need_substX(List):- \+ is_list(List),!.
 wont_need_substX(X):- self_eval(X),!.
-
 wont_need_substX(V):- var(V),!.
 wont_need_substX([_,A|_]):- number(A),!,fail.
 wont_need_substX([F|_]):-atom(F), need_subst_f(F), !, fail.
@@ -469,6 +472,7 @@ eval_20(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- Eval == eval,!,
 eval_20(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
   eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
+
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,_RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
   maplist(eval_ret(Eq,_ArgRetType,Depth,Self),[V|VI],VOO),VO=VOO.
@@ -2723,7 +2727,6 @@ eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(Fn,PArgs).
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,Goal):-  Goal.
 
-
 suggest_type(_RetType,_Bool).
 
 naive_eval_args:-
@@ -3079,7 +3082,7 @@ eval_defn_choose_candidates(Eq,RetType,Depth,Self,X,Y):-
 multiple_typesigs(TypesSet):- is_list(TypesSet),
    length(TypesSet,Len),Len>1,maplist(is_list,TypesSet),!.
 
-eval_defn_bodies(Eq,RetType,Depth,Self,X,Res,[]):- !, 
+eval_defn_bodies(Eq,RetType,Depth,Self,X,Res,[]):- !,
    maybe_eval_subst(Eq,RetType,Depth,Self,X,Res).
 eval_defn_bodies(Eq,RetType,Depth,Self,X,Res,[]):- !,
    \+ \+ ignore((curried_arity(X,F,A),assert(is_metta_type_constructor(Self,F,A)))),!,
@@ -3098,7 +3101,7 @@ eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED):-
   X=XX, Y=B0, X\=@=B0,
   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(USED)))),
   light_eval(Eq,RetType,Depth,Self,B0,Y),!.
-eval_defn_failure(_Eq,_RetType,Depth,_Self,X,Res):-
+eval_defn_failure(Eq,RetType,Depth,Self,X,Res):-
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
   maybe_eval_subst(Eq,RetType,Depth,Self,X,Res).
   %!, \+ fail_missed_defn, X=Res.
@@ -3115,8 +3118,8 @@ get_defn_expansions(_Eq,_RetType,_Depth,Self,[[H|HArgs]|Args],XX,B0):- symbol(H)
    metta_atom(Self,[=,[[HH|NewHArgs]|NewArgs],B0]),H==HH,
    [[H|NewHArgs]|NewArgs]=XX,
    sanity_check_eval(curry0,B0).
-   
-get_defn_expansions(Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
+
+get_defn_expansions(_Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
    metta_atom(Self,[=,[HH|NewArgs],B0]),H==HH.
 
 get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),
@@ -3200,7 +3203,7 @@ eval_41(Eq,RetType,Depth,Self,X,Y):-
     eval_subst_args_here(Eq,RetType,Depth,Self,X,Y)),
   Y\=='Empty'.
 
-eval_rust(Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
+eval_rust(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
       is_rust_operation([H|PredDecl]),!, % run
       must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
       nop(write_src(res(Res))))).
@@ -3590,6 +3593,7 @@ end_of_file.
            maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
            XX = [H|NewArgs],Y=XX.
         eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.
+
 
 
 

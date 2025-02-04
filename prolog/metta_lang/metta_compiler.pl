@@ -1006,8 +1006,14 @@ compile_for_exec1(AsBodyFn, Converted) :-
 
 arrange_lazy_args(N,x(E,Y,T),N-x(E,Y,T)).
 
+get_operator_typedef_nocache(X,FnName,Largs,Types,RetType) :-
+   metta_type(X,FnName,['->'|Raw]),
+   Largs1 is Largs+1,
+   length(Raw,Largs1),
+   append(Types,[RetType],Raw).
+
 get_operator_typedef_props(X,FnName,Largs,Types,RetType) :-
-   get_operator_typedef(X,FnName,Largs,Types,RetType),!.
+   get_operator_typedef_nocache(X,FnName,Largs,Types,RetType).
 get_operator_typedef_props(_,_,Largs,Types,'Any') :-
     length(Types,Largs),
     maplist(=('Any'), Types).
@@ -1252,14 +1258,13 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
       %leash(-all),trace,
-      maplist(h2p(LazyArgsListAdj),Args,Args2,Code),
+      maplist(h2p(EagerArgList,LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
+      append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
       %trace,
-      f2p(HeadIs,LazyArgsListAdj,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
+      f2p(HeadIs,NewLazyVarsAggregate,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
-
-      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,
-                      args_list:Args2,lazyArgsList:LazyArgsListAdj,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
+      LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,args_list:Args2,lazyArgsList:NewLazyVarsAggregate,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
 
       output_prolog(LazyEagerInfo),
 
@@ -1900,34 +1905,47 @@ lazy_impedance_match(x(_,lazy,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,RetRe
 lazy_impedance_match(x(_,eager,_),x(doeval,lazy,_),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
 lazy_impedance_match(x(_,eager,_),x(noeval,lazy,_),ValE,CodeE,ValN,CodeN,RetResult,Code) :- create_p1(ValE,CodeE,ValN,CodeN,P1),Code=[[assign,RetResult,P1]].
 
-h2p(_LazyVars,Convert,Convert,[]) :- is_ftVar(Convert), !.
+h2p(_EagerArgList,_LazyVars,Convert,Convert,[],[]) :- is_ftVar(Convert), !.
 
-h2p(_LazyVars,Convert,Convert,[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
+h2p(_EagerArgList,_LazyVars,Convert,Convert,[],[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
 
-h2p(_LazyVars,'#\\'(Convert),Convert,[]) :- !.
+h2p(_EagerArgList,_LazyVars,'#\\'(Convert),Convert,[],[]) :- !.
 
-h2p(LazyVars,Convert,Converted,CodeOut) :-
-   Convert=[Fn|QuoteContents],atom(Fn),
+h2p(EagerArgList,LazyVars,Convert,Converted,CodeOut,TotalNewLazyVars) :-
+   Convert=[FnName|Args],atom(FnName),
+   length(Args,LenArgs),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   maplist(h2p(LazyVars),QuoteContents,QuoteContentsOut,Code),
-   Converted=[Fn|QuoteContentsOut],
+   get_operator_typedef_props(_,FnName,LenArgs,Types0,_RetType0),
+   maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
+   maplist(arg_eval_props,Types0,TypeProps),
+   maplist(combine_lazy_types_props,EagerLazyList,TypeProps,FinalLazyArgs),
+   maplist(arrange_lazy_args,Args,FinalLazyArgs,ThisNewLazyVars),
+   maplist(h2p(EagerArgList,LazyVars),Args,QuoteContentsOut,Code,NewLazyVars),
+   append(NewLazyVars,NewLazyVarsAggregate),
+   append(ThisNewLazyVars,NewLazyVarsAggregate,TotalNewLazyVars),
+   Converted=[FnName|QuoteContentsOut],
    append(Code,CodeOut).
 
-h2p(LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]]) :-
+h2p(_EagerArgList,LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]],[]) :-
    Convert=[Fn|_],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,lazy,_)),!.
 
-h2p(LazyVars,Convert,Converted,CodeOut) :-
+h2p(EagerArgList,LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    is_list(Convert),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   maplist(h2p(LazyVars),Convert,Converted,Code),
+   maplist(h2p(EagerArgList,LazyVars),Convert,Converted,Code,NewLazyVars),
+   append(NewLazyVars,NewLazyVarsAggregate),
    append(Code,CodeOut).
 
-h2p(_LazyVars,X,X,[]) :-
+h2p(_EagerArgList,_LazyVars,X,X,[],[]) :-
    format("Error in h2p: ~w",[X]),
    throw(0).
 
 :- discontiguous f2p/8.
+
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   nb_bound(Convert,X),!,
+   f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
 
 f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
    (is_ftVar(Convert)),!, % Check if Convert is a variable
@@ -2153,15 +2171,10 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       ),
       length(UpToDateArgsLazy, LArgs),
       maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
-      % NOTE: it seems to be important not to call get_operator_typedef_props for a predicate that has not been defined yet
-      (transpiler_predicate_store(Fn,LArgs1,_,_) ->
          % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
          get_operator_typedef_props(_,Fn,LArgs,Types0,_RetType0),
          maplist(arg_eval_props,Types0,EvalArgs0),
          maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
-      ;
-         EvalArgs=UpToDateArgsLazy
-      )
    ),
    % add transpiler_depends_on clause if not already there
    (((FnHead-ArgsHeadSz1)=(Fn-LArgs1) ; transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)) ->

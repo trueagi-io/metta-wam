@@ -115,6 +115,11 @@
 						L="1"/>
 				</Folder>
 			</Folder>
+			<F
+				N="../.vscode/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
 		</Folder>
 		<Folder Name="docs">
 			<F
