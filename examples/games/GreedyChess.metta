@@ -865,9 +865,8 @@
 
 ; (takingboxes)
 ;
-; Constructs a list of pieces belonging to a given color.
-; input:  color to look for, board
-; output: 
+; Input:  pieces color to look for, board
+; Output: a list of all pieces belonging to a given color w/ square coordinates.
 (= (takingboxes $OpponentColor $Board)
    (if (== (size-atom $Board) 0)
         ; end of the line, return empty list
