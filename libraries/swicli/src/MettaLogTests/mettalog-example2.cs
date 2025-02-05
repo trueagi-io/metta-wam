@@ -15,7 +15,7 @@ namespace MettaLogTests
         public static void Main(String[] args)
         {
 			ExecuteWithExceptionHandling(() => PrologCLR.ClientReady = true, "Set PrologCLR.ClientReady");
-			ExecuteWithExceptionHandling(PrologCLR.cliDynTest_1, nameof(PrologCLR.cliDynTest_1));
+			//ExecuteWithExceptionHandling(PrologCLR.cliDynTest_1, nameof(PrologCLR.cliDynTest_1));
             //ExecuteWithExceptionHandling(() => PrologCLR.cliDynTest_3<string>(), nameof(PrologCLR.cliDynTest_3));
             //ExecuteWithExceptionHandling(PrologCLR.cliDynTest_2, nameof(PrologCLR.cliDynTest_2));
             //ExecuteWithExceptionHandling(MettaLogTestsWindows.install, nameof(MettaLogTestsWindows.install));

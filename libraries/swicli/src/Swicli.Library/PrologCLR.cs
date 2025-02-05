@@ -150,16 +150,16 @@ namespace Swicli.Library
         }
         private static string ToString0(object o)
         {
-            if (o == null) return "null";
-            if (o is IConvertible || o is PlTerm || o is ValueType) return o.ToString();
+            if (o == null) return "null";            
             if (o is IEnumerable)
             {
+				if (o is IConvertible || o is PlTerm || o is ValueType) return o.ToString();
                 var oc = (IEnumerable)o;
                 int count = 0;
                 string ret = "[";
                 foreach (var o1 in oc)
                 {
-                    if (count > 1) ret += ",";
+                    if (count > 0) ret += ",";
                     count++;
                     ret += ToString0(o1);
                 }
@@ -167,6 +167,11 @@ namespace Swicli.Library
             }
             return o.ToString();
         }
+
+		[PrologVisible]
+        public static bool cliToString(PlTerm paramIn, PlTerm valueOut) {
+			return cliJavaToString( paramIn,  valueOut);
+		}
         /// <summary>
         /// 1 ?- cliToString(-1,X).
         /// X = "4294967295".
@@ -192,7 +197,7 @@ namespace Swicli.Library
             }
             catch (Exception e)
             {
-                Embedded.Warn("cliToString: {0}", e);
+                Embedded.Warn("cliToStrRaw: {0}", e);
                 object o = GetInstance(obj);
                 if (o == null) return str.FromObject("" + obj);
                 return str.FromObject(ToString(o));

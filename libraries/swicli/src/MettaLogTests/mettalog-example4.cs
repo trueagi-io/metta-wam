@@ -18,9 +18,10 @@ namespace MettaLogTests
 			ExecuteWithExceptionHandling(PrologCLR.cliDynTest_1, nameof(PrologCLR.cliDynTest_1));
             ExecuteWithExceptionHandling(() => PrologCLR.cliDynTest_3<string>(), nameof(PrologCLR.cliDynTest_3));
             ExecuteWithExceptionHandling(PrologCLR.cliDynTest_2, nameof(PrologCLR.cliDynTest_2));
-            ExecuteWithExceptionHandling(MettaLogTestsWindows.install, nameof(MettaLogTestsWindows.install));
-            ExecuteWithExceptionHandling(() => MettaLogTestsWindows.WinMain(args), nameof(MettaLogTestsWindows.WinMain));
-            ExecuteWithExceptionHandling(() => PrologCLR.Main(args), nameof(PrologCLR.Main));
+            //ExecuteWithExceptionHandling(MettaLogTestsWindows.install, nameof(MettaLogTestsWindows.install));
+            //ExecuteWithExceptionHandling(() => SWICFFITests.SWICFFITestsWindows.WinMain(args), nameof(MettaLogTestsWindows.WinMain));
+			ExecuteWithExceptionHandling(() => PrologCLR.When_Main_Was_Test(args), nameof(PrologCLR.When_Main_Was_Test));
+			ExecuteWithExceptionHandling(() => PrologCLR.Main(args), nameof(PrologCLR.Main));
         }
 
         private static void ExecuteWithExceptionHandling(Action action, string actionName)

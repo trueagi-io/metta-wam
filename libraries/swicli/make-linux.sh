@@ -83,12 +83,12 @@ echo Begining local C# build...
 mcs ${DMCS_OPTS} src/Swicli.Library/?*.cs -out:${ODIR}/PInvokeTest.exe
 mcs ${DMCS_OPTS} src/Swicli.Library/?*.cs -out:${ODIR}/Swicli.Library.dll
 mcs ${DMCS_OPTS} src/SWICLITestDLL/?*.cs -r:Swicli.Library -out:${ODIR}/SWICLITestDLL.dll
-mcs ${DMCS_OPTS}  src/SWICFFITests/?*.cs -r:Swicli.Library -out:${ODIR}/SWICFFITests.exe
 mcs ${DMCS_OPTS} src/SWICLITestEXE/?*.cs -r:Swicli.Library -out:${ODIR}/SWICLITestEXE.exe
+mcs ${DMCS_OPTS}  src/SWICFFITests/?*.cs -r:Swicli.Library -out:${ODIR}/SWICFFITests.exe
 mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example1.cs -r:Swicli.Library -out:${ODIR}/mettalog-example1.exe
 mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example2.cs -r:Swicli.Library -out:${ODIR}/mettalog-example2.exe
 mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example3.cs -r:Swicli.Library -out:${ODIR}/mettalog-example3.exe
-mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example3.cs -r:Swicli.Library -out:${ODIR}/mettalog-example4.exe
+mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example4.cs -r:Swicli.Library -out:${ODIR}/mettalog-example4.exe
 mcs -lib:/usr/lib/mono/2.0 -pkg:dotnet src/Example4SWICLI/?*.cs -out:${ODIR}/Example4SWICLI.dll
 #rm -rf ./src/?*/lib/ ./src/?*/obj/ ./src/?*/Debug/ ./src/?*/Release/ ./obj ./src/obj ./src/lib ./src/Debug
 echo Completed C# build!
