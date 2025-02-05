@@ -779,7 +779,7 @@ number_src_vars(Term,TermC,Goals):-
     must(PP = Term),
     materialize_vns(PP),
     nop(ignore(dont_numbervars(PP,260,_,[singleton(true),attvar(skip)]))),
-    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))).
+    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))),!.
 
 
 once_writeq_nl_now(P) :-
@@ -788,6 +788,8 @@ once_writeq_nl_now(P) :-
              write_w_attvars(P),
              format('~N')))).
 
+% for now, do not write goals (we only started very recently anyway)
+maybe_write_goals(_Goals):- !.
 maybe_write_goals(Goals):-
    exclude(is_f_nv,Goals,LGoals),
    if_t(LGoals\==[],format(' {~q} ', [LGoals])).
