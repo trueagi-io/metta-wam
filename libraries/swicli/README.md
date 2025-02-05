@@ -13,6 +13,14 @@ SwiCLI provides a seamless integration between **SWI-Prolog** and the **Common L
 - Available for **SWI-Prolog** and **YAP-Prolog**
 
 ---
+```
+# from https://github.com/dotnet/docs/blob/main/docs/core/install/linux-debian.md
+wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+sudo apt update -y
+sudo apt install -y dotnet-sdk-6.0
+```
+
 
 ## Downloads
 

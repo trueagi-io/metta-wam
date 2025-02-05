@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31515.178
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{315F2B7A-A3F8-4DA9-8116-9B057EB54272}"
 EndProject
@@ -39,6 +39,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{99790445-2691-4B05-937B-3826022529A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Debugger.Core.JDWP", "Debugger.Core.JDWP\Debugger.Core\Debugger.Core.JDWP.csproj", "{EB5797DF-423B-47E1-9ECD-C5DDBFD32A68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SWICLITestEXE", "SWICLITestEXE\SWICLITestEXE.csproj", "{41A877A8-471F-4A66-A31A-749DBFAA8B7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -133,6 +135,18 @@ Global
 		{EB5797DF-423B-47E1-9ECD-C5DDBFD32A68}.Release|Win32.ActiveCfg = Release|x64
 		{EB5797DF-423B-47E1-9ECD-C5DDBFD32A68}.Release|x64.ActiveCfg = Release|x64
 		{EB5797DF-423B-47E1-9ECD-C5DDBFD32A68}.Release|x64.Build.0 = Release|x64
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|Win32.Build.0 = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Debug|x64.Build.0 = Debug|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|Win32.ActiveCfg = Release|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|Win32.Build.0 = Release|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|x64.ActiveCfg = Release|Any CPU
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -148,6 +162,7 @@ Global
 		{F957BFA7-8955-450D-89BC-5F2AAA5A4664} = {99790445-2691-4B05-937B-3826022529A7}
 		{51337350-771B-484B-B3E9-07341981040E} = {99790445-2691-4B05-937B-3826022529A7}
 		{EB5797DF-423B-47E1-9ECD-C5DDBFD32A68} = {99790445-2691-4B05-937B-3826022529A7}
+		{41A877A8-471F-4A66-A31A-749DBFAA8B7B} = {315F2B7A-A3F8-4DA9-8116-9B057EB54272}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {87A9CC62-0743-4C9C-AEDF-BC07067A446D}

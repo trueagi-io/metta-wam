@@ -12,18 +12,32 @@ namespace PlConsole
     {
         static void Main(string[] args)
         {
-           // libpl.PL_initialise(args.Length, args);
             try
             {
-                Type.GetType("org.armedbear.lisp.Main").GetMethod("main").Invoke(null, args);
-                //org.armedbear.lisp.Main.main(args);
+                string className = args.Length > 0 ? args[0] : "org.armedbear.lisp.Main";
+                Type mainType = Type.GetType(className);
+
+                if (mainType == null)
+                {
+                    Console.WriteLine($"[ERROR] Could not find type: {className}");
+                    // return;
+                }
+
+                var mainMethod = mainType.GetMethod("main");
+
+                if (mainMethod == null)
+                {
+                    Console.WriteLine($"[ERROR] Could not find method 'main' in type: {className}");
+                    return;
+                }
+
+                Console.WriteLine($"[INFO] Invoking {className}.main()...");
+                mainMethod.Invoke(null, new object[] { args });
             }
-            catch (Exception exception )
+            catch (Exception exception)
             {
-                Embedded.WriteException( exception);
-                //throw;
+                Embedded.WriteException(exception);
             }
-            return;
         }
     }
 }
