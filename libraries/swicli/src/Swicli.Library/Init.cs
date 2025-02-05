@@ -63,8 +63,9 @@ namespace Swicli.Library
         {
             lock (PrologIsSetupLock)
             {
+				PrologCLR.RegisterCurrentThread();
                 if (PrologIsSetupBegan) return;
-                Embedded.ConsoleWriteLine(typeof(PrologCLR).Name + ".AssemblyResolve starting");
+                if(Embedded.VerboseStartup) Embedded.ConsoleWriteLine(typeof(PrologCLR).Name + ".AssemblyResolve starting");
                 AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                 PrologIsSetupBegan = true;
                 SafelyRun(SetupProlog0);               
@@ -75,7 +76,8 @@ namespace Swicli.Library
         }
         public static void SetupProlog0()
         {
-            Embedded.Debug("SetupProlog");
+			Embedded.Access();
+            if(Embedded.VerboseStartup) Embedded.Debug("SetupProlog");
             //  SafelyRun(SetupIKVM);
             if (!IsUseableSwiProlog(SwiHomeDir))
             {
@@ -128,7 +130,7 @@ namespace Swicli.Library
             {
                 Environment.SetEnvironmentVariable("SWI_HOME_DIR", SwiHomeDir);
             }
-            if (!ConfirmRCFile(SwiHomeDir)) ConsoleTrace("RC file missing from " + SwiHomeDir);
+            if (!ConfirmRCFile(SwiHomeDir)) if(Embedded.VerboseStartup)ConsoleTrace("RC file missing from " + SwiHomeDir);
             string platformSuffix = Embedded.Is64BitRuntime() ? "-x64" : "-x86";
             if (copyPlatFormVersions)
             {
@@ -387,7 +389,7 @@ namespace Swicli.Library
         //[MTAThread]
         public static void Main(string[] args0)
         {
-            while (false)
+            if (false)
             {
                 Process process = new Process();
                 ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -399,18 +401,19 @@ namespace Swicli.Library
                 process.StartInfo = startInfo;
                 process.Start();
                 process.WaitForExit();
-            }
-            PingThreadFactories();
-            //bool demo = false;
-            SetupProlog();
-            libpl.PL_initialise(args0.Length, args0);
-            //Main12(args0);
-            libpl.PL_toplevel();
+			} else {
+				PingThreadFactories();
+				//bool demo = false;
+				SetupProlog();
+				libpl.PL_initialise(args0.Length, args0);
+				//Main12(args0);
+				libpl.PL_toplevel();
+			}
         }
 
 
         //[MTAThread]
-        public static void Main_Was(string[] args0)
+        public static void When_Main_Was_Test(string[] args0)
         {
             PingThreadFactories();
             bool demo = true;
@@ -520,6 +523,7 @@ namespace Swicli.Library
         {
             CreatorThread = Thread.CurrentThread;
             RegisterMainThread();
+			PrologCLR.ClientReady = true;
             ShortNameType = new Dictionary<string, Type>();
             ShortNameType["string"] = typeof(String);
             ShortNameType["object"] = typeof(Object);

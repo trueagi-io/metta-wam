@@ -125,7 +125,7 @@ namespace Swicli.Library
                     }
                 } else
                 {
-                    Embedded.Debug("Not installing ThreadExit hook to System.Windows.Forms.Application");
+                    if(Embedded.VerboseStartup) Embedded.Debug("Not installing ThreadExit hook to System.Windows.Forms.Application");
                 }
                 var t = Thread.CurrentThread.ManagedThreadId;
                 //libpl.PL_thread_at_exit((DelegateParameter0)PrologThreadAtExitGlobal, IntPtr.Zero, 1);

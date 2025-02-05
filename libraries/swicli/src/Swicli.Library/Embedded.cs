@@ -145,6 +145,10 @@ namespace Swicli.Library
             ConsoleWriteLine(text);
         }
 
+		public static void Access() {
+			PrologCLR.RegisterCurrentThread();
+		}
+
         public static string PlStringFormat(string text, params object[] ps)
         {
             PrologCLR.RegisterCurrentThread();

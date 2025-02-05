@@ -232,9 +232,13 @@ namespace SbsSW.SwiPlCs
 	{
 
 		
-// .DLL is translated to .so by MONO
+// .DLL used to be translated to .so by MONO .. why no more?!
 #if PROLOG_SWI
-        public const string CONST_LIBSWIPL_DllFileName = @"libswipl.dll";
+	#if WINDOWS
+			public const string CONST_LIBSWIPL_DllFileName = @"libswipl.dll";
+	#else
+			public const string CONST_LIBSWIPL_DllFileName = @"libswipl.so";
+	#endif
 #else
 #if PROLOG_SWI_6
         private const string DllFileName = @"LibPl.dll";
@@ -242,7 +246,6 @@ namespace SbsSW.SwiPlCs
         public const string CONST_LIBSWIPL_DllFileName = @"/usr/local/lib/libYap.so";
 #endif
 #endif
-
         static SafeNativeMethods()
         {
             if (Embedded.IsLinux) return;

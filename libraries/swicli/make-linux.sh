@@ -50,8 +50,10 @@ fi
 
 if [ "$target" == "compile" ] || [ "$target" == "all" ]; then
 export LIBARCH=./lib/x86_64-linux
+echo Begining 64bit-C-Mono build...
 cp src/Swicli.Library/app.config ${LIBARCH}/swicli.dll.config
 swipl-ld -m64 src/swicli/swicli.c $EXTRA_C_FLAGS -shared -o ${LIBARCH}/swicli.so
+echo Completed 64bit-C-Mono build!
 fi
 
 if [ "$target" == "prepare" ] || [ "$target" == "all" ]; then
@@ -61,9 +63,10 @@ fi
 
 if [ "$target" == "compile" ] || [ "$target" == "all" ]; then
 export LIBARCH=./lib/i386-linux
+echo Begining 32bit-C-Mono build...
 cp src/Swicli.Library/app.config ${LIBARCH}/swicli.dll.config
 swipl-ld -m32 src/swicli/swicli.c $EXTRA_C_FLAGS -shared -o ${LIBARCH}/swicli.so
-echo local C build complete!
+echo Completed 32bit-C-Mono build!
 fi
 
 
@@ -76,7 +79,7 @@ cp src/Swicli.Library/app.config ${ODIR}/Swicli.Library.dll.config
 fi
 
 if [ "$target" == "compile" ] || [ "$target" == "csharp" ] || [ "$target" == "all" ]; then
-echo doing local C# build
+echo Begining local C# build...
 mcs ${DMCS_OPTS} src/Swicli.Library/?*.cs -out:${ODIR}/PInvokeTest.exe
 mcs ${DMCS_OPTS} src/Swicli.Library/?*.cs -out:${ODIR}/Swicli.Library.dll
 mcs ${DMCS_OPTS} src/SWICLITestDLL/?*.cs -r:Swicli.Library -out:${ODIR}/SWICLITestDLL.dll
@@ -88,7 +91,7 @@ mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example3.cs -r:Swicli.Library -out:
 mcs ${DMCS_OPTS}  src/MettaLogTests/mettalog-example3.cs -r:Swicli.Library -out:${ODIR}/mettalog-example4.exe
 mcs -lib:/usr/lib/mono/2.0 -pkg:dotnet src/Example4SWICLI/?*.cs -out:${ODIR}/Example4SWICLI.dll
 #rm -rf ./src/?*/lib/ ./src/?*/obj/ ./src/?*/Debug/ ./src/?*/Release/ ./obj ./src/obj ./src/lib ./src/Debug
-echo local C# build complete!
+echo Completed C# build!
 fi
 
 if [ "$target" == "install" ] || [ "$target" == "all" ]; then
