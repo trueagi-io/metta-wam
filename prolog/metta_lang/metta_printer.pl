@@ -788,6 +788,12 @@ once_writeq_nl_now(P) :-
              write_w_attvars(P),
              format('~N')))).
 
+:- nb_setval('$write_goals',[]).
+
+with_written_goals(Call):-
+   locally(nb_setval('$write_goals',true),Call).
+
+maybe_write_goals(_Goals):- \+ nb_current('$write_goals',true), !.
 maybe_write_goals(Goals):-
    exclude(is_f_nv,Goals,LGoals),
    if_t(LGoals\==[],format(' {~q} ', [LGoals])).
