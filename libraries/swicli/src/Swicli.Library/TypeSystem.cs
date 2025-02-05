@@ -75,7 +75,7 @@ namespace Swicli.Library
         [TypeConversion]
         public static JavaClass getFriendlyClassFromType(Type classObject)
         {
-            classObject.ToString();                
+            //classObject.ToString();                
             //getInstanceTypeFromClass(classObject);
             return ikvm.runtime.Util.getFriendlyClassFromType(classObject);
         }
@@ -253,7 +253,6 @@ namespace Swicli.Library
         {
             //            if (term1.IsAtom)
             {
-                string className = (string)clazzSpec;//.Name;
                 Type s1 = GetType(clazzSpec);
                 if (s1 != null)
                 {
@@ -266,6 +265,7 @@ namespace Swicli.Library
                     ConsoleTrace("cant getFriendlyClassFromType " + s1.FullName);
                     return false;
                 }
+				string className = (string)clazzSpec;//.Name;
                 ConsoleTrace("cant ResolveType " + className);
                 return false;
             }

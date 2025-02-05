@@ -84,7 +84,7 @@ namespace Swicli.Library
                     Type t = GetType(classOrInstance);
                     // we do this for static invokations like: cliGet('java.lang.Integer','MAX_VALUE',...)
                     // the arg1 denotes a type, then return null!
-                    if (t != null) return null;
+                    if (t != null) return t;
                     Embedded.Warn("GetInstance(atom) {0}", classOrInstance);
                     // possibly should always return null?!
                 }
@@ -256,7 +256,7 @@ namespace Swicli.Library
                 return AddTagged(TermRef, "null");
             }
 
-            if (o is Type || o is Type)
+            if (o is Type /*|| o is Type*/)
             {
                 if (true)
                 {

@@ -870,8 +870,9 @@ namespace Swicli.Library
                         if (!termToObjectPins.TryGetValue(ohandle, out oldValue))
                         {
                             Warn("no value for ohandle=" + ohandle);
-                        }
-                        return oldValue.Value;
+						} else {
+							return oldValue.Value;
+						}
                     }
                 }
             }
@@ -958,8 +959,12 @@ namespace Swicli.Library
                     object tagObj = findTaggedObject(pt, arg1, orig[arity]);
                     if (tagObj != null) return tagObj;
                 }
-                Embedded.WarnMissing(String.Format("Cant GetInstance from {0}", orig));
-                return orig;
+				{ 
+				  object tagObj = tag_to_object(arg1.Name);
+				  if (tagObj != null) return tagObj;
+				}
+                Embedded.WarnMissing(String.Format("Cant GetInstance from {0}", arg1.Name));
+                //return orig;
             }
             if (pt == null || pt.IsAssignableFrom(t))
             {
