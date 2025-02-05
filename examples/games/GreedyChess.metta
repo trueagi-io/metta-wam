@@ -199,7 +199,7 @@
     ((py-atom print) "- Your pieces are marked with an asterisk.")
     ((py-atom print) "- Please take note of the following simple commands:")
     ((py-atom print) "-------- C o m m a n d s -----------")
-    ((py-atom print) "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3")
+    ((py-atom print) "1 TO MOVE YOUR PIECE USE example   ->  M <ENTER> 1213 <ENTER>")
     ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
     ((py-atom print) "2 Move MeTTa Greedy Chess          ->  G")
     ((py-atom print) "3 Reset                            ->  R")
@@ -365,11 +365,21 @@
 ;(= (findgoldhigh #(Cons $A $B) $C $D $E)  
 ;  (findgoldhigh $B $C $D $E))
 ;
-;
-;(= (take_dest $A $B $C) (takingboxes $B $C $D) (set-det) (list_clear_route $C $A $D $E) (set-det) (\== $E Nil))
-;
-;
 
+;
+(= (take_dest $Square $OpponentColor $Board) 
+  (let* 
+    (
+    ;  Identify opponent pieces that can attack.
+    ($CanAttack (takingboxes $OpponentColor $Board))
+    ; Check if any route of pieces that can attack leads to the specified square.
+    ($OpenRouteToSquare (list_clear_route $Board $Square $CanAttack))
+    ;($OpenRouteToSquare ())
+    )
+    ; if the list is populated (size exceeds 0), that means the piece can be taken.
+    (if (not (== $OpenRouteToSquare () )) True False)))
+
+;
 ;   (return_entire_box)
 ;   Retrieve the full details of a square on the board based on its coordinates
 ;   using a sequential search.
@@ -852,14 +862,36 @@
 ;
 ;(= (cantakepiece $A $B $C $D $E) (takingboxes $D $A $F) (set-det) (xy_box $G #( :: ($B $C) ) $A) ;(list_clear_route $A $G $F $E))
 ;
+
+; (takingboxes)
 ;
-;#( = #(takingboxes $A () ()) True )
-;(= (takingboxes $A #(Cons $B $C) #(Cons $B $D)) (nth1 3 $B $A) (takingboxes $A $C $D))
-;(= (takingboxes $A #(Cons $B $C) $D)  
-;  (takingboxes $A $C $D))
+; Constructs a list of pieces belonging to a given color.
+; input:  color to look for, board
+; output: 
+(= (takingboxes $OpponentColor $Board)
+   (if (== (size-atom $Board) 0)
+        ; end of the line, return empty list
+        ()
+        ; examine next square for opponent piece
+        (let $next-sq (car-atom $Board)
+             ; if size = 2, square is empty
+             (if (== (size-atom $next-sq) 2) 
+                  (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) $rest)
+                  ;else check color
+                  (let $NextColor (nth 3 $next-sq)
+                      (if (== $NextColor $OpponentColor)
+                        ; if same, add this square to the list to return
+                        (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) (cons-atom $next-sq $rest))
+                        (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) $rest)))))))
+
 ;
+; (list_clear_route)
 ;
-;#( = #(list_clear_route $A $B () ()) True )
+; Input:  Board, square that might be compromised, all pieces available to attack square in question
+; Output: list of pieces that can take the piece in the square in question
+(= (list_clear_route $Board $Square $CanAttack)
+    ()
+)
 ;(= (list_clear_route $A $B #(Cons $C $D) #(Cons $C $E)) (clear_route $C $B $A) (list_clear_route $A $B $D $E))
 ;(= (list_clear_route $A $B #(Cons $C $D) $E)  
 ;  (list_clear_route $A $B $D $E))
@@ -946,22 +978,33 @@
   (if (not (== $f $g))                            
    ; check if destination is empty or destination has opponent's piece  
     (progn (
-    (let $h (return_entire_box $f  $starting_board) ())               ; Retrieve the source box details.
-    (let $i (return_entire_box $g  $starting_board) ())               ; Retrieve the destination box details.
-    (if (and (== (size-atom $h) 4)                                    ; Check there is a piece to move.
+    ; Retrieve the source box details.
+    (let $h (return_entire_box $f  $starting_board) ())               
+    ; Retrieve the destination box details.
+    (let $i (return_entire_box $g  $starting_board) ())               
+    ; Check there is a piece to move.
+    (if (and (== (size-atom $h) 4)                                    
              (xor  
              ; OK to move to open square size 2...
              (== (size-atom $i) 2)     
              ; OK to take another piece, check color is not the same...
              (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
-      (if (== (clear_route $h $i $starting_board) True)               ; Validate the path for the piece.
+      ; Validate the path for the piece.
+      (if (== (clear_route $h $i $starting_board) True)               
         ; Try moving piece provisionally
         (let* ( 
-            ($provisional_board  (move_piece $h $i $starting_board))   ; Try the move and update the board state. 
-            ($king_square (xy_box (s k) $provisional_board))           ; locate human's king
+            ; Try the move and update the board state. 
+            ($provisional_board  (move_piece $h $i $starting_board))   
+            ; locate human's king
+            ($king_square (xy_box (s k) $provisional_board))           
+            ; Ensure the player's king is not in check from gold (g) if moved.     
+            ($KingCompromised (take_dest $king_square g $provisional_board))
               )   
-            ;(println! (display_board $provisional_board)))            
-            (println! $king_square))
+            (if (== $KingCompromised False)
+                (println! "update board and print")
+                ((py-atom print) "Can't move there, your king would be in check.")
+            )
+        )
         ((py-atom print) "Can't move piece there."))
       ; else (moving to location with same piece or other problem)
       ((py-atom print) "Invalid move.")
@@ -1002,14 +1045,16 @@
   (progn
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) (format-args "-------- C o m m a n d s -----------" ()))
-    ((py-atom print) (format-args "1 TO MOVE YOUR PIECE USE example   ->  M 1 2 1 3" ()))
-    ((py-atom print) (format-args "  Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y."   ()))
-    ((py-atom print) (format-args "2 Move MeTTa Greedy Chess          ->  G" ()))
-    ((py-atom print) (format-args "3 Reset                            ->  R" ()))
-    ((py-atom print) (format-args "4 Commands List                    ->  C" ()))
-    ((py-atom print) (format-args "5 Display Board                    ->  D" ()))
-    ((py-atom print) (format-args "6 Quit                             ->  Q" ()))
-    ((py-atom print) (format-args "You may now enter your move M x1 y1 x2 y2 command." ()))))
+    ((py-atom print) "- Your pieces are marked with an asterisk.")
+    ((py-atom print) "- Please take note of the following simple commands:")
+    ((py-atom print) "-------- C o m m a n d s -----------")
+    ((py-atom print) "1 TO MOVE YOUR PIECE USE example   ->  M <ENTER> 1213 <ENTER>")
+    ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
+    ((py-atom print) "2 Move MeTTa Greedy Chess          ->  G")
+    ((py-atom print) "3 Reset                            ->  R")
+    ((py-atom print) "4 Commands List                    ->  C")
+    ((py-atom print) "5 Display Board                    ->  D")
+    ((py-atom print) "6 Quit                             ->  Q")))
 ;
 
 ; The display command shows the present board.
