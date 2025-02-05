@@ -81,10 +81,6 @@
 ; - moduleA itself, which is the same as &m
 ; - moduleC imported by moduleA and removed from A after its import to &self
 
-; Check whether atom is &m
-(: is-m (-> Atom Bool))
-(= (is-m $atom) (== $atom &m))
-
 ; Assert that the &self space contains the same space as &m, which we imported from moduleA
 ; TODO: Comparing spaces like this doesn't work because the source module is the same, but a specialized
 ;   clone of the dependent space without transitive-dependencies was created during the import process.
@@ -92,18 +88,22 @@
 ;   spaces will work again.  But, In my opinion comparing spaces is not a good way to check to see if a
 ;   module has been loaded.  I believe a better solution is accessor operations for loaded & imported modules
 ;
+; Check whether atom is &m
+;(: is-m (-> Atom Bool))
+;(= (is-m $atom) (== $atom &m))
 ;!(assertEqual
-;  (let $a (collapse (get-atoms &self)) (contains $a is-m))
+;  (let $a (collapse (get-deps &self)) (contains $a is-m))
 ;  True)
 
 ; Check that the &self space contains the corelib child space
 ; Note: corelib doesn't import any modules into itself, so no space copy is needed
-!(import! &corelib top:corelib)
-(: is-corelib (-> Atom Bool))
-(= (is-corelib $atom) (== $atom &corelib))
-!(assertEqual
-  (let $a (collapse (get-atoms &self)) (contains $a is-corelib))
-  True)
+; TODO: this should be possible after implementing get-deps
+;!(import! &corelib top:corelib)
+;(: is-corelib (-> Atom Bool))
+;(= (is-corelib $atom) (== $atom &corelib))
+;!(assertEqual
+  ;(let $a (collapse (get-deps &self)) (contains $a is-corelib))
+  ;True)
 
 ; Let's check that `if` from stdlib is not duplicated and gives only one result
 !(assertEqual
