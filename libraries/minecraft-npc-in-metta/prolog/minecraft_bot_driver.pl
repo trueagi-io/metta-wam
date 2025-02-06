@@ -28,6 +28,11 @@ login(Username, Password, Server, Port) :-
     jpl_call(Bot, 'login', [Username, Password, Server, Port], _).
 
 
+login0 :-
+    bot_controller(Bot),    % Retrieve Java object reference
+    jpl_call(Bot, 'login0', [], _).
+
+
 %% move(+X, +Y, +Z) is det.
 %  Queues a movement command for execution.
 move(X, Y, Z) :- enqueue_command(move(X, Y, Z)).

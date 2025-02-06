@@ -138,6 +138,18 @@ public class BotController {
         connectClient();
     }
 
+    public void login0() {        
+        this.username = username != null ? username : DEFAULT_USERNAME;
+        this.password = password != null ? password : DEFAULT_PASSWORD;
+        this.serverAddress = new InetSocketAddress(DEFAULT_SERVER, DEFAULT_PORT);
+        
+        // Set up client with login details
+        setupClient();
+        
+        // Connect the client
+        connectClient();
+    }
+
     /**
      * Initializes the client with login details and assigns event listeners.
      */
