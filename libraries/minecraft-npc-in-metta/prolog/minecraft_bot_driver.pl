@@ -7,23 +7,18 @@
 :- dynamic command_queue/1.
 :- dynamic voxel_data/4.
 
-command_queue([]).
-
 %% enqueue_command(+Command) is det.
 %  Adds a command to the command queue for Java to execute.
 %  @param Command The command to be added to the queue.
 enqueue_command(Command) :-
-    retract(command_queue(Q)),
-    append(Q, [Command], NewQ),
-    assert(command_queue(NewQ)),
+    assertz(command_queue(Command)),
     format("Queued command: ~w~n", [Command]).
 
 %% dequeue_command(-Command) is semidet.
 %  Retrieves and removes the next command from the queue.
 %  @param Command The next command from the queue.
 dequeue_command(Command) :-
-    retract(command_queue([Command | Rest])),
-    assert(command_queue(Rest)).
+    retract(command_queue(Command)),!.
 
 %% login(+Username, +Password, +Server, +Port) is det.
 %  Issues a login command to log in the bot.

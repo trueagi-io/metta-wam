@@ -19,13 +19,22 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.Serverbound
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosRotPacket;
 
+import org.jpl7.Atom;
+import org.jpl7.Compound;
 import org.jpl7.Query;
 import org.jpl7.Term;
+import org.jpl7.JRef;
 
+
+import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.BitSet;
 import java.util.UUID;
+import java.util.Scanner;
 
 public class BotController {
 
@@ -39,16 +48,31 @@ public class BotController {
     public static ProxyInfo PROXY = null;
     public static ProxyInfo AUTH_PROXY = null;
 
-    private ClientSession client;
+    public ClientSession client;
     private String username;
     private String password;
     private InetSocketAddress serverAddress;
     private double x = 0, y = 64, z = 0; // Bot's position
     private float yaw = 0f, pitch = 0f; // Bot's rotation
 
+    public volatile boolean shouldProcessQueue = false; // Flag to control queue processing
+    public int queueSleepTimeMs = 100; // Default sleep time: 100ms (1/10th of a second)
+
     public BotController() {
         log.info("BotController initialized. Waiting for login command...");
-        new Thread(this::executeQueuedCommands).start();
+
+        // Load Prolog files dynamically
+        loadPrologFiles();
+
+        if (new File(prologPathRunner).exists()) {
+            new Query("consult('" + prologPathRunner.replace("\\", "\\\\") + "')").hasSolution();
+        } else {
+            log.error("Prolog file missing: {}", prologPathRunner);
+        }
+
+        // Step 2: Assert a Prolog predicate with the client object
+        Term clientObjectTerm = makeTerm("client_controller", this);
+        invokeProlog("assert", clientObjectTerm);
     }
 
     public BotController(String username, String password, String server, int port) {
@@ -56,23 +80,80 @@ public class BotController {
         login(username, password, server, port);
     }
 
+    private String prologPathDriver;
+    private String prologPathRunner;
+    
+    /**
+     * Dynamically finds the Prolog files based on the class location and loads them.
+     */
+    private void loadPrologFiles() {
+        try {
+            // Get the directory containing this class
+            Path basePath = Paths.get(new File(BotController.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getParent());
+
+            // Construct paths to the Prolog files
+            prologPathDriver = basePath.resolve("prolog/minecraft_bot_driver.pl").toString();
+            prologPathRunner = basePath.resolve("prolog/minecraft_bot_hello.pl").toString();
+
+            log.info("Loading Prolog files: \n  - {}\n  - {}", prologPathDriver, prologPathRunner);
+
+            // Load Prolog files
+            if (new File(prologPathDriver).exists()) {
+                new Query("consult('" + prologPathDriver.replace("\\", "\\\\") + "')").hasSolution();
+            } else {
+                log.error("Prolog file missing: {}", prologPathDriver);
+            }
+
+            log.info("Prolog files successfully loaded.");
+
+        } catch (URISyntaxException e) {
+            log.error("Error locating Prolog files", e);
+        }
+    }
+    
+       public void startQueueProcessing() {
+        if (!shouldProcessQueue) {
+            shouldProcessQueue = true;
+            new Thread(this::executeQueuedCommands).start();
+            log.info("Queue processing started.");
+        }
+    }
+
+     public void stopQueueProcessing() {
+        shouldProcessQueue = false;
+        log.info("Queue processing stopped.");
+    }
+
+
     public void login(String username, String password, String server, int port) {        
         this.username = username != null ? username : DEFAULT_USERNAME;
         this.password = password != null ? password : DEFAULT_PASSWORD;
         this.serverAddress = new InetSocketAddress(server, port);
-        log.info("Attempting to log in as {}", this.username);
-        MinecraftProtocol protocol;
-        if (password == null || password.isEmpty()) {
-            protocol = new MinecraftProtocol(new GameProfile(UUID.randomUUID(), username), null);
-        } else {
-            protocol = new MinecraftProtocol(new GameProfile(UUID.randomUUID(), username), password);
-        }
+        
+        // Step 1: Set up client with login details
+        setupClient();
+    
+        // Step 2: Assert a Prolog predicate with the client object
+        Term clientObjectTerm = makeTerm("client_object", client);
+        invokeProlog("assert", clientObjectTerm);
+        
+        // Step 3: Connect the client
+        connectClient();
+    }
 
+    /**
+     * Initializes the client with login details and assigns event listeners.
+     */
+    private void setupClient() {
+        MinecraftProtocol protocol = (password == null || password.isEmpty())
+                ? new MinecraftProtocol(new GameProfile(UUID.randomUUID(), username), null)
+                : new MinecraftProtocol(new GameProfile(UUID.randomUUID(), username), password);
+    
         SessionService sessionService = new SessionService();
         sessionService.setProxy(AUTH_PROXY);
 
         client = ClientNetworkSessionFactory.factory()
-                .setRemoteSocketAddress(new InetSocketAddress(server, port))
+                .setRemoteSocketAddress(serverAddress)
                 .setProtocol(protocol)
                 .setProxy(PROXY)
                 .create();
@@ -103,7 +184,13 @@ public class BotController {
                 }
             }
         });
+    }
 
+    /**
+     * Connects the client after setup.
+     */
+    private void connectClient() {
+        log.info("Attempting to log in as {}", this.username);
         client.connect(true);
     }
 
@@ -113,21 +200,29 @@ public class BotController {
     }
     
     public void executeQueuedCommands() {
-        while (true) {
+        while (shouldProcessQueue) {
             Query query = new Query("dequeue_command(Command).");
+    
             if (query.hasSolution()) {
-                Term command = query.oneSolution().get("Command");
-                executeCommand(command);
+                // Safely retrieve the solution
+                java.util.Map<String, Term> solution = query.nextSolution();
+                if (solution != null && solution.containsKey("Command")) {
+                    Term command = solution.get("Command");
+                    executeCommand(command);
+                } else {
+                    log.warn("Prolog query returned null or missing 'Command'. Skipping execution.");
+                }
             }
-
+    
             try {
-                Thread.sleep(1000);
+                Thread.sleep(queueSleepTimeMs);
             } catch (InterruptedException e) {
                 log.error("Polling interrupted", e);
                 Thread.currentThread().interrupt();
             }
         }
     }
+
 
     public void executeCommand(Term command) {
         try {
@@ -191,26 +286,103 @@ public class BotController {
         }
     }
 
-    private void invokeProlog(String predicate, String... args) {
-        StringBuilder queryStr = new StringBuilder(predicate + "(");
-        for (int i = 0; i < args.length; i++) {
-            queryStr.append("'").append(args[i].replace("'", "\\'")).append("'");
-            if (i < args.length - 1) queryStr.append(", ");
-        }
-        queryStr.append(").");
 
-        Query q = new Query(queryStr.toString());
-        if (q.hasSolution()) {
-            log.info("Prolog executed: {}", queryStr);
+    public void invokeProlog(String predicate, Object... args) {
+        Query query;
+    
+        if (args.length == 0) {
+            // No arguments: Use an Atom query
+            query = new Query(new Atom(predicate));
         } else {
-            log.error("Prolog execution failed: {}", queryStr);
+            // Arguments exist: Use Compound query
+            Term[] terms = new Term[args.length];
+            for (int i = 0; i < args.length; i++) {
+                terms[i] = makeTerm(args[i]);
+            }
+            query = new Query(new Compound(predicate, terms));
+        }
+    
+        log.info("Prolog execute: {}", query.toString());
+    
+        if (query.hasSolution()) {
+            log.info("Prolog executed successfully: {}", query.toString());
+        } else {
+            log.error("Prolog execution failed: {}", query.toString());
+        }
+    }
+        
+    public Term makeTerm(Object obj) {
+        if (obj instanceof Term) {
+            return (Term) obj; // Already a JPL term, use as-is
+        } else if (obj instanceof String) {
+            return new Atom((String) obj); // Convert to Prolog Atom
+        } else if (obj instanceof Number) {
+            return Term.textToTerm(obj.toString()); // Convert to Prolog number
+        } else {
+            return new JRef(obj); // Pass as Java object reference
+        }
+    }
+
+    public Term makeTerm(String predicate, Object... args) {
+        if (args.length == 0) {
+            return new Atom(predicate); // No arguments ? return Atom
+        } else {
+            Term[] terms = new Term[args.length];
+            for (int i = 0; i < args.length; i++) {
+                terms[i] = makeTerm(args[i]); // Convert each argument
+            }
+            return new Compound(predicate, terms); // Arguments exist ? return Compound
         }
     }
 
 
     public static void main(String[] args) {
         log.info("Starting Metta-Minecraft bot. Waiting for login command...");
-        new BotController();
+        
+        BotController bc = new BotController();
+        bc.invokeProlog("on_main", args);
+        bc.startQueueProcessing(); // Starts queue processing thread
+    
+        // Start reading input and querying Prolog
+        bc.readInputAndQueryProlog();
     }
+    
+    public void readInputAndQueryProlog() {
+        Scanner scanner = new Scanner(System.in);
+        log.info("Enter Prolog queries (type 'exit' to quit):");
+    
+        jplQuery("listing(client_controller/1).");
+        while (true) {
+            System.out.print("> "); // User prompt
+            String input = scanner.nextLine().trim();
+    
+            if (input.equalsIgnoreCase("exit")) {
+                log.info("Exiting input mode...");
+                break;
+            }
+    
+            if (!input.isEmpty()) {
+                jplQuery(input);
+            }
+        }
+    
+        scanner.close();
+    }
+    
+    /**
+     * Executes a JPL Prolog query and logs the result.
+     */
+    private void jplQuery(String queryStr) {
+        log.info("Executing Prolog query: {}", queryStr);
+    
+        Query query = new Query(queryStr);
+        if (query.hasSolution()) {
+            log.info("Query successful: {}", queryStr);
+        } else {
+            log.info("Query failed: {}", queryStr);
+        }
+    }
+
 }
+
 
