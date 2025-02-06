@@ -22,24 +22,22 @@ The bot does **not provide a graphical interface**, so you must use a **Minecraf
 
 ## 📌 Project Structure  
 ```
-src/
-│── main/
-│   ├── metta/                     # MeTTa AI scripts
-│   │   ├── minecraft_bot_hello.metta
-│   │   ├── minecraft_bot_driver.metta
-│   ├── java/io/trueagi/mettalog/minecraft/
-│   │   ├── BotController.java      # Main bot logic
-│   │   ├── BotExample.java         # Example bot usage
-│   │   ├── VoxelGetter.java        # Handles voxel-based world interaction
-│   │   ├── SWIPrologBuilder.java   # Prolog integration utilities
-│   │   ├── WorldBuilder.java       # Builds world-related data
-│   ├── prolog/                     # Prolog scripts
-│   │   ├── minecraft_bot_hello.pl
-│   │   ├── minecraft_bot_driver.pl
-│── pom.xml                          # Maven project configuration
-│── README.md                        # Project documentation
-│── libs/                             # External JARs
-│   ├── jpl8.jar                      # JPL (Java-Prolog) integration library
+├── minecraft_bot_hello.metta           # MeTTa AI script
+├── minecraft_bot_driver.metta          # MeTTa AI Driver script
+├── prolog/                             # Prolog scripts directory
+│   ├── minecraft_bot_hello.pl          # Start logic
+│   ├── minecraft_bot_driver.pl         # Driver logic
+├── pom.xml                             # Maven project configuration
+├── README.md                           # Project documentation
+├── libs/                               # External libraries
+│   ├── jpl8.jar                        # JPL (Java-Prolog) integration library
+│── src/main/java/io/trueagi/mettalog/minecraft/
+│   ├── BotController.java              # Main bot logic
+│   ├── BotExample.java                 # Example bot usage
+│   ├── VoxelGetter.java                # Handles voxel-based world interaction
+│   ├── SWIPrologBuilder.java           # Prolog integration utilities
+│   ├── WorldBuilder.java               # Builds world-related data
+
 ```
 
 ---
@@ -57,6 +55,10 @@ Before running the bot, ensure you have:
 - **SWI-Prolog** installed:
   ```sh
   swipl --version
+  ```
+- **MeTTaLog** installed:
+  ```sh
+  mettalog --version
   ```
 - **A running Minecraft server** (e.g., `localhost:25565`).  
 - **A Minecraft game client** (e.g., **Minecraft Java Edition**) to connect and interact with the bot.
