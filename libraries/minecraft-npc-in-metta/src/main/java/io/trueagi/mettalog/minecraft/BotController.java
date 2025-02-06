@@ -16,7 +16,9 @@ import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundChatPacket;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.ServerboundMovePlayerPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosRotPacket;
+
 import org.jpl7.Query;
 import org.jpl7.Term;
 
@@ -41,7 +43,8 @@ public class BotController {
     private String username;
     private String password;
     private InetSocketAddress serverAddress;
-    private double x = 0, y = 64, z = 0; // Bot's initial position
+    private double x = 0, y = 64, z = 0; // Bot's position
+    private float yaw = 0f, pitch = 0f; // Bot's rotation
 
     public BotController() {
         log.info("BotController initialized. Waiting for login command...");
@@ -92,7 +95,7 @@ public class BotController {
             public void disconnected(DisconnectedEvent event) {
 				String plainTextReason = convertComponentToString(event.getReason());
 				Throwable cause = event.getCause();
-                log.info("Disconnected: {}", plainTextReason, cause);
+                log.info("Disconnected: {} - Cause: {}", plainTextReason, cause);
                 invokeProlog("on_bot_disconnected", plainTextReason);
                 if (!plainTextReason.contains("logged out")) {
                     log.warn("Unexpected disconnect! Attempting to respawn...");
@@ -133,6 +136,10 @@ public class BotController {
             int dy = Integer.parseInt(command.arg(2).toString());
             int dz = Integer.parseInt(command.arg(3).toString());
             move(dx, dy, dz);
+        } else if (command.hasFunctor("rotate", 2)) {
+            float newYaw = Float.parseFloat(command.arg(1).toString());
+            float newPitch = Float.parseFloat(command.arg(2).toString());
+            rotate(newYaw, newPitch);
         } else if (command.hasFunctor("chat", 1)) {
             String message = command.arg(1).toString();
             sendMessage(message);
@@ -150,20 +157,31 @@ public class BotController {
         }
     }
 
-
-
     public void move(int dx, int dy, int dz) {
         x += dx;
         y += dy;
         z += dz;
-        log.info("Moving to: {} {} {}", x, y, z);
+        log.info("Moving to: x={} y={} z={}", x, y, z);
 
         if (client != null && client.isConnected()) {
-            client.send(new ServerboundMovePlayerPacket.PosRot(true, x, y, z, 0f, 0f));
+            client.send(new ServerboundMovePlayerPosPacket(true, true, x, y, z));
         } else {
             log.warn("Bot is not connected. Cannot move.");
         }
     }
+
+    public void rotate(float newYaw, float newPitch) {
+        yaw = newYaw;
+        pitch = newPitch;
+        log.info("Rotating to yaw={} pitch={}", yaw, pitch);
+
+        if (client != null && client.isConnected()) {
+            client.send(new ServerboundMovePlayerPosRotPacket(true, true, x, y, z, yaw, pitch));
+        } else {
+            log.warn("Bot is not connected. Cannot rotate.");
+        }
+    }
+
     public void sendMessage(String message) {
         if (client != null && client.isConnected()) {
             client.send(new ServerboundChatPacket(message, Instant.now().toEpochMilli(), 0L, null, 0, new BitSet()));
