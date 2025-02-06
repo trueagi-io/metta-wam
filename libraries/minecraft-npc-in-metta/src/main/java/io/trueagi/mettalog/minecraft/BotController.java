@@ -64,15 +64,16 @@ public class BotController {
         // Load Prolog files dynamically
         loadPrologFiles();
 
+        
+        // Assert a Prolog predicate with the BotController object
+        invokeProlog("assert", makeTerm("bot_controller", this));
+
         if (new File(prologPathRunner).exists()) {
             new Query("consult('" + prologPathRunner.replace("\\", "\\\\") + "')").hasSolution();
         } else {
             log.error("Prolog file missing: {}", prologPathRunner);
         }
 
-        // Step 2: Assert a Prolog predicate with the client object
-        Term clientObjectTerm = makeTerm("client_controller", this);
-        invokeProlog("assert", clientObjectTerm);
     }
 
     public BotController(String username, String password, String server, int port) {
@@ -130,14 +131,10 @@ public class BotController {
         this.password = password != null ? password : DEFAULT_PASSWORD;
         this.serverAddress = new InetSocketAddress(server, port);
         
-        // Step 1: Set up client with login details
+        // Set up client with login details
         setupClient();
-    
-        // Step 2: Assert a Prolog predicate with the client object
-        Term clientObjectTerm = makeTerm("client_object", client);
-        invokeProlog("assert", clientObjectTerm);
         
-        // Step 3: Connect the client
+        // Connect the client
         connectClient();
     }
 
@@ -351,7 +348,7 @@ public class BotController {
         Scanner scanner = new Scanner(System.in);
         log.info("Enter Prolog queries (type 'exit' to quit):");
     
-        jplQuery("listing(client_controller/1).");
+        jplQuery("listing(bot_controller/1).");
         while (true) {
             System.out.print("> "); // User prompt
             String input = scanner.nextLine().trim();
@@ -384,5 +381,6 @@ public class BotController {
     }
 
 }
+
 
 

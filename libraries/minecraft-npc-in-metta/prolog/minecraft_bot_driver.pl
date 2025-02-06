@@ -5,6 +5,7 @@
 :- use_module(library(jpl)).
 
 :- dynamic command_queue/1.
+:- dynamic bot_controller/1.
 :- dynamic voxel_data/4.
 
 %% enqueue_command(+Command) is det.
@@ -21,9 +22,11 @@ dequeue_command(Command) :-
     retract(command_queue(Command)),!.
 
 %% login(+Username, +Password, +Server, +Port) is det.
-%  Issues a login command to log in the bot.
+% Call login method on the registered bot_controller object
 login(Username, Password, Server, Port) :-
-    enqueue_command(login(Username, Password, Server, Port)).
+    bot_controller(Bot),    % Retrieve Java object reference
+    jpl_call(Bot, 'login', [Username, Password, Server, Port], _).
+
 
 %% move(+X, +Y, +Z) is det.
 %  Queues a movement command for execution.
@@ -56,7 +59,7 @@ on_bot_killed(Reason) :-
 %% respawn_bot is det.
 %  Respawns the bot by issuing a login command.
 respawn_bot :-
-    login("PrologBot", "", "localhost", 25565),
+    login('MeTTaPrologBot', '', 'localhost', 25565),
     format("Respawn command issued~n").
 
 %% on_chat_message(+Message) is det.
@@ -94,4 +97,6 @@ print_voxel_data :-
     format("Voxel Data Stored in Prolog:~n"),
     forall(voxel_data(X, Y, Z, BlockID),
         format("Voxel: (~w, ~w, ~w) -> Block ~w~n", [X, Y, Z, BlockID])).
+
+
 
