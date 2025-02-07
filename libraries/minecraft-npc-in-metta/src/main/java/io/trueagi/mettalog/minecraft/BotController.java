@@ -49,7 +49,7 @@ public class BotController {
     static int DEFAULT_PORT = 25565;
 	static InetSocketAddress ADDRESS = new InetSocketAddress(DEFAULT_SERVER, DEFAULT_PORT);
 
-
+	public boolean needsLogin = true;
 
     public static ProxyInfo PROXY = null;
     public static ProxyInfo AUTH_PROXY = null;
@@ -132,8 +132,10 @@ public class BotController {
     }
 
 
-    public void login(String username, String password, String server, int port) {        
-        this.username = username != null ? username : DEFAULT_USERNAME;
+    public void login(String username, String password, String server, int port) { 
+		if (!needsLogin)  return;
+		needsLogin = false;
+		this.username = username != null ? username : DEFAULT_USERNAME;
         this.password = password != null ? password : DEFAULT_PASSWORD;
         this.serverAddress = new InetSocketAddress(server, port);
         
@@ -144,7 +146,9 @@ public class BotController {
         connectClient();
     }
 
-    public void login0() {        
+    public void login0() {       
+		if (!needsLogin)  return; 
+		needsLogin = false;
         this.username = username != null ? username : DEFAULT_USERNAME;
         this.password = password != null ? password : DEFAULT_PASSWORD;
         this.serverAddress = new InetSocketAddress(DEFAULT_SERVER, DEFAULT_PORT);
@@ -181,9 +185,11 @@ public class BotController {
                     log.info("Bot successfully logged in as {}", username);
                     invokeProlog("on_bot_connected");
                 } else if (packet instanceof ClientboundSystemChatPacket systemChatPacket) {
-					String plainTextContent = convertComponentToString(systemChatPacket.getContent());
-					log.info("Received Chat: {}", plainTextContent); 
-                    invokeProlog("on_chat_message", plainTextContent);
+					if(false) {
+						String plainTextContent = convertComponentToString(systemChatPacket.getContent());
+						log.info("Received Chat: {}", plainTextContent); 
+						invokeProlog("on_chat_message", plainTextContent);
+					}
                 }
             }
 
@@ -211,7 +217,10 @@ public class BotController {
 
     /** Converts Adventure Component to a String */
     static String convertComponentToString(Component component) {
-        return PlainTextComponentSerializer.plainText().serialize(component);
+		if (true) {
+			return ""+component;
+		}
+		return PlainTextComponentSerializer.plainText().serialize(component);
     }
     
     public void executeQueuedCommands() {
