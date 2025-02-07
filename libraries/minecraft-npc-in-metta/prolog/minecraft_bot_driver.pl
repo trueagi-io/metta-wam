@@ -8,6 +8,19 @@
 :- dynamic bot_controller/1.
 :- dynamic voxel_data/4.
 
+bot_contoller_class('io.trueagi.mettalog.minecraft.BotController').
+
+get_bot_controller(Bot):- bot_controller(Bot),!.
+get_bot_controller(Bot):- bot_contoller_class(Class),jpl_new(Class,[],Bot),!.
+%get_bot_controller(Bot):- trace, bot_contoller_class(Bot),!.
+
+status:- bot_call(status,[],_Return).
+
+bot_call(Method,Args,Return):-
+    get_bot_controller(Bot),    % Retrieve Java object reference
+    jpl_call(Bot, Method,Args, Return).
+
+
 %% enqueue_command(+Command) is det.
 %  Adds a command to the command queue for Java to execute.
 %  @param Command The command to be added to the queue.
@@ -24,8 +37,7 @@ dequeue_command(Command) :-
 %% login(+Username, +Password, +Server, +Port) is det.
 % Call login method on the registered bot_controller object
 login(Username, Password, Server, Port) :-
-    bot_controller(Bot),    % Retrieve Java object reference
-    jpl_call(Bot, 'login', [Username, Password, Server, Port], _).
+    bot_call('login', [Username, Password, Server, Port], _).
 
 
 login0 :-
@@ -104,4 +116,4 @@ print_voxel_data :-
         format("Voxel: (~w, ~w, ~w) -> Block ~w~n", [X, Y, Z, BlockID])).
 
 
-
+:- writeln(loaded(minecraft_bot_driver)).
