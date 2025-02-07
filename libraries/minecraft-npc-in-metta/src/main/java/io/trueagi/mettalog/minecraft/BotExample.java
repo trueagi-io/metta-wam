@@ -33,6 +33,7 @@ public class BotExample {
     private static final InetSocketAddress ADDRESS = new InetSocketAddress("127.0.0.1", 25565);
 
     public static void main(String[] args) {
+		System.out.println("starting main");
         status();
         login();
     }

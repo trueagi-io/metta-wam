@@ -356,7 +356,7 @@ public class BotController {
         
         BotController bc = new BotController();
         // bc.invokeProlog("on_main", args); make this work
-		bc.login_test();
+		bc.login0();
         bc.startQueueProcessing(); // Starts queue processing thread
     
         // Start reading input and querying Prolog
