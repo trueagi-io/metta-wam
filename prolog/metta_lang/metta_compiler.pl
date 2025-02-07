@@ -1260,7 +1260,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %leash(-all),
       maplist(h2p(EagerArgList,LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
       append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
-      %trace,
       f2p(HeadIs,NewLazyVarsAggregate,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
@@ -2357,44 +2356,6 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
     case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
     Out = ['if', [metta_unify, Var, Pattern], Result, Next].
 */
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then,Else],!,
-  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
-  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
-  append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN).
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then],!,
-  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
-  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
-  append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,'Empty',Converted, ConvertedN).
-
-compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN):-
-  f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
-  f2p(HeadIs,LazyVars,ElseResult,ElseResultN,ElseLazyEval,Else,ElseCode,ElseCodeN),
-  arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
-  %(Else=='Empty' -> LazyEval=ThenLazyEval ; arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval)),
-  %lazy_impedance_match(ThenLazyEval,LazyEval,ThenResult,ThenCode,ThenResultN,ThenCodeN,ThenResult1,ThenCode1),
-  %lazy_impedance_match(ElseLazyEval,LazyEval,ElseResult,ElseCode,ElseResultN,ElseCodeN,ElseResult1,ElseCode1),
-  % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult
-  append(ThenCode,[[assign,RetResult,ThenResult]],T),
-  append(ElseCode,[[assign,RetResult,ElseResult]],E),
-  Converted=[[prolog_if,If,T,E]],
-  append(ThenCodeN,[[assign,RetResultN,ThenResultN]],TN),
-  append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
-  ConvertedN=[[prolog_if,If,TN,EN]].
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
-  Convert = ['quote',Quoted],!,
-  f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
-  lazy_impedance_match(LazyRetQuoted,x(noeval,eager,[]),QuotedResult,QuotedCode,QuotedResultN,QuotedCodeN,QuotedResult1,QuotedCode1),
-  QuotedResult1a=['quote',QuotedResult1],
-  lazy_impedance_match(x(noeval,eager,[]),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
-  assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
-  assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
 % !(compile-body! (function 1))
 % !(compile-body! (function (throw 1)))
