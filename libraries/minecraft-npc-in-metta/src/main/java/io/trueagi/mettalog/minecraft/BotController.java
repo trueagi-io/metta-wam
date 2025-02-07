@@ -43,7 +43,7 @@ public class BotController {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BotController.class);
 
-    static String DEFAULT_USERNAME = "MeTTaNPC-1";
+    static String DEFAULT_USERNAME = "MeTTaNPC1";
     static String DEFAULT_PASSWORD = ""; // Empty for offline mode
     static String DEFAULT_SERVER = "127.0.0.1";
     static int DEFAULT_PORT = 25565;
