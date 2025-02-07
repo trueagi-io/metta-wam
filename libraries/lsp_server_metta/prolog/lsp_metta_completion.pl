@@ -20,6 +20,7 @@
 :- use_module(library(apply), [maplist/3]).
 :- use_module(library(lists), [numlist/3]).
 :- use_module(library(yall)).
+:- use_module(library(filesex)).
 %:- use_module(lsp_metta_utils, [linechar_offset/3]).
 :- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
 
@@ -62,25 +63,27 @@ prefix_at(File, Position, Prefix) :-
 %
 completions_at(File, Position, Completions) :-
     prefix_at(File, Position, Prefix),
-    findall(Defn,
-            ( metta_atom_xref(Atom, File, _Loc),
-              once(( Atom = [':>', Defn|_]
-                   ; Atom = [':', [Defn|_]|_]
-                   ; Atom = [':', Defn|_]
-                   ; Atom = ['=', [Defn|_]|_]
-                   ; Atom = ['=', Defn|_]
-                   ))
-            ),
-            Defns),
-    findall(
-        Result,
-        ( member(Name, Defns),
-          atom_concat(Prefix, _, Name),
-          Result = _{label: Name,
-                     insertText: Name,
-                     insertTextFormat: 1}),
-        Completions
-    ).
+    findall(Result,
+            % Use definitions from the current file, corelib, and stdlib
+            % TODO: also look at imported definitions?
+            ( ( metta_atom_xref(Atom, File, _Loc)
+              ; ( metta_atom_xref(Atom, Path, _),
+                  directory_file_path(_, F, Path),
+                  memberchk(F, ['corelib.metta', 'stdlib_mettalog.metta']) )
+              ),
+              (( Atom = [':>', Defn|_]
+               ; Atom = [':', [Defn|_]|_]
+               ; Atom = [':', Defn|_]
+               ; Atom = ['=', [Defn|_]|_]
+               ; Atom = ['=', Defn|_]
+               )),
+              atom(Defn),
+              atom_concat(Prefix, _, Defn),
+              Result = _{label: Defn,
+                         insertText: Defn,
+                         insertTextFormat: 1}),
+            Completions
+           ).
 %
 args_str(Arity, Str) :-
     numlist(1, Arity, Args),
