@@ -355,7 +355,8 @@ public class BotController {
         log.info("Starting Metta-Minecraft bot. Waiting for login command...");
         
         BotController bc = new BotController();
-        bc.invokeProlog("on_main", args);
+        // bc.invokeProlog("on_main", args); make this work
+		bc.login_test();
         bc.startQueueProcessing(); // Starts queue processing thread
     
         // Start reading input and querying Prolog
