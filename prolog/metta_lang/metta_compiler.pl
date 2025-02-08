@@ -74,6 +74,7 @@
 :- ensure_loaded(metta_space).
 :- dynamic(transpiler_clause_store/9).
 :- dynamic(transpiler_predicate_store/4).
+:- dynamic(transpiler_nary_predicate_store/5).
 :- discontiguous(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 
@@ -121,15 +122,19 @@ transpiler_stub_created(dummy).
 
 :- dynamic(transpiler_depends_on/4).
 % just so the transpiler_depends_on predicate always exists
-transpiler_depends_on(dummy1,0,dummy2,0).
+% transpiler_depends_on(dummy1,0,dummy2,0).
 
 % just so the transpiler_clause_store predicate always exists
 % transpiler_clause_store(f,arity,clause_number,types,rettype,lazy,retlazy,head,body)
-transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager,[]),dummy,dummy).
+% transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager,[]),dummy,dummy).
 
 % just so the transpiler_predicate_store predicate always exists
 % transpiler_predicate_store(f,arity,lazy,retlazy)
-transpiler_predicate_store(dummy,0,[],x(doeval,eager,[])).
+% transpiler_predicate_store(dummy,0,[],x(doeval,eager,[])).
+
+% just so the transpiler_predicate_store predicate always exists
+% transpiler_predicate_nary_store(f,arity,lazy_fixed,lazy_variable,retlazy)
+% transpiler_predicate_nary_store(dummy,0,[],x(doeval,eager,[]),x(doeval,eager,[])).
 
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
@@ -1076,6 +1081,14 @@ determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
    LenArgsPlus1 is LenArgs+1,
    (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
+      get_property_lazy(RetLazy0,RetLazy)
+   ; transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+      maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
+      VarCount is LenArgs-FixedLength,
+      length(VarArgsLazy, VarCount),
+      get_property_lazy(VarArgsLazy0,VarArgsLazy),
+      maplist(=(eVarArgsLazy, VarArgsLazyList)),
+      append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
       get_property_lazy(RetLazy0,RetLazy)
    ;
       RetLazy=eager,
@@ -2160,6 +2173,22 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
+
+%    (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
+%       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
+%       get_property_lazy(RetLazy0,RetLazy)
+%    transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+%       maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
+%       VarCount is LenArgs-FixedLength,
+%       length(VarArgsLazy, LenArgs),
+%       get_property_lazy(VarArgsLazy0,VarArgsLazy)
+%       maplist(=(eVarArgsLazy, VarArgsLazyList)),
+%       append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
+%       get_property_lazy(RetLazy0,RetLazy)
+
+
+%   ; transpiler_predicate_nary_store(Fn,LArgs1,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
+
    ; (FnHead=Fn, ArgsHeadSz1=LArgs1) ->
       EvalArgs=LazyVars,
       ResultLazy=x(noeval,eager,[]),

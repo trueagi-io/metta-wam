@@ -85,6 +85,14 @@ transpiler_predicate_store('*', 3, [x(doeval,eager,[number]), x(doeval,eager,[nu
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
+%transpiler_predicate_store('and', 3, [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
+%mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
+%mc_2__and(_,_,'False').
+
+%transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
+%mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
+%mc_2__or(_,_,'True').
+
 transpiler_predicate_store('and', 3, [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
 mc_2__and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
 mc_2__and(_,_,'False').
@@ -124,14 +132,6 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   maplist(f2p(HeadIs,LazyVars), _RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, _ConvertedParts, ConvertedNParts),
   f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
   assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
-
-%transpiler_predicate_store('and', 3, [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
-%mc_2__and(_,_,'False').
-
-%transpiler_predicate_store('or', 3, [x(doeval,eager), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
-%mc_2__or(_,_,'True').
 
 transpiler_predicate_store('not', 2, [x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
 mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0, !.
@@ -249,6 +249,11 @@ transpiler_predicate_store(unify, 4, [x(doeval,eager,[]), x(doeval,eager,[]), x(
 transpiler_predicate_store(unify, 5, [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc_4__unify'(Space,Pattern,Psuccess,PFailure,RetVal) :-
     (unify_pattern(Space,Pattern) -> as_p1_exec(Psuccess,RetVal) ; as_p1_exec(PFailure,RetVal)).
+
+%%%%%%%%%%%%%%%%%%%%% variable arity functions
+
+transpiler_predicate_nary_store(progn, 0, [], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_0__progn'(List,Ret) :- append(_,[Ret],List).
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
