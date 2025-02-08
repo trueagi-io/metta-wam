@@ -1,23 +1,27 @@
+// extension.js
 const vscode = require('vscode');
 const net = require('net');
+
+// IMPORTANT: Import from 'vscode-languageclient/node' instead of 'vscode-languageclient'.
 const {
   LanguageClient,
   RevealOutputChannelOn,
-  Trace
-} = require('vscode-languageclient');
+  Trace,
+  StreamMessageReader,
+  StreamMessageWriter
+} = require('vscode-languageclient/node');
 
 let client;
 
 function activate(context) {
-  // 1) Main channel for all client logs (unified with trace)
+  // 1) Main channel for all client logs
   const outputChannel = vscode.window.createOutputChannel("MeTTa Language Client");
   outputChannel.show(true);
 
   // 2) Separate channel for server-sent messages
   const serverMessageChannel = vscode.window.createOutputChannel("MeTTa LSP Messages");
-  // serverMessageChannel.show(false);
 
-  // Log current configuration in the main channel
+  // Show the current user settings in the output channel
   showMettaLSPSettings(outputChannel);
 
   // Read user settings
@@ -53,7 +57,7 @@ function activate(context) {
     }
   };
 
-  // Define server options for port-based, spawned process
+  // Define server options for port-based with spawning
   const serverOptions_portSpawn = {
     run: {
       command: "swipl",
@@ -79,7 +83,7 @@ function activate(context) {
     }
   };
 
-  // Decide which approach to use
+  // Decide serverOptions + clientOptions based on mode
   let serverOptions;
   let clientOptions;
 
@@ -89,23 +93,26 @@ function activate(context) {
     clientOptions = standardClientOptions(outputChannel);
   } else if (mode === "port" && spawnProcess) {
     outputChannel.appendLine(`Using 'port' mode (spawnProcess=true). Port ${port}.`);
+    // We'll spawn the SWI-Prolog process that listens on the port,
+    // then we also need a custom streamProvider to connect to it.
     serverOptions = serverOptions_portSpawn;
     clientOptions = withSocketStreamProvider(address, port, outputChannel);
   } else if (mode === "port" && !spawnProcess) {
     outputChannel.appendLine(
-      `Using 'port' mode (spawnProcess=false). Connecting to ${address}:${port} with retry logic if needed.`
+      `Using 'port' mode (spawnProcess=false). Connecting to ${address}:${port} with retry logic.`
     );
+    // We do not spawn the process, so we rely on an externally running server.
+    // We'll create serverOptions that returns a StreamInfo from a net socket.
     serverOptions = createServerOptions_ExternalPort(address, port, outputChannel);
     clientOptions = standardClientOptions(outputChannel);
   } else {
     outputChannel.appendLine(
-      `Unrecognized config (mode='${mode}' spawnProcess='${spawnProcess}'). Falling back to stdio.`
+      `Unrecognized config (mode='${mode}', spawnProcess='${spawnProcess}'). Falling back to stdio.`
     );
     serverOptions = serverOptions_stdio;
     clientOptions = standardClientOptions(outputChannel);
   }
 
-  // Create and start the Language Client
   outputChannel.appendLine("Starting MeTTa Language Client...");
   client = new LanguageClient(
     "metta-lsp",
@@ -122,18 +129,18 @@ function activate(context) {
     outputChannel.appendLine("MeTTa Language Client is ready!");
     outputChannel.show(false);
 
-    // Example of a custom notification: "metta-lsp/showMessage"
-    // The server can send { text: "...some message..." }
+    // Example: The server can send a custom notification "metta-lsp/showMessage"
     client.onNotification("metta-lsp/showMessage", (params) => {
-      if (params && typeof params.text === 'string') {
+      if (params && typeof params.text === "string") {
         serverMessageChannel.appendLine(params.text);
-        serverMessageChannel.show(false);
+        // Decide whether to pop up automatically or not
+        // serverMessageChannel.show(true);
       }
     });
 
   }).catch(err => {
     outputChannel.appendLine(`MeTTa Language Client failed to start: ${err}`);
-    outputChannel.show(false);
+    outputChannel.show(true);
   });
 }
 
@@ -143,28 +150,31 @@ function deactivate() {
   }
 }
 
-// Reusable client options that unify logs in "MeTTa Language Client"
+// -----------------------------------------------------------------------------
+// Standard client options (stdio or external server mode).
 function standardClientOptions(outputChannel) {
   return {
     documentSelector: [
       { scheme: "file", language: "metta" },
       { scheme: "file", language: "prolog" }
     ],
-    outputChannel: outputChannel,
+    outputChannel,
     traceOutputChannel: outputChannel,
     trace: Trace.Verbose,
     revealOutputChannelOn: RevealOutputChannelOn.Info
   };
 }
 
-// If we spawn a local server that ONLY communicates on a port, define a streamProvider
+// -----------------------------------------------------------------------------
+// If we spawn a local server that ONLY communicates on a port,
+// define clientOptions that attach a custom streamProvider
 function withSocketStreamProvider(address, port, outputChannel) {
   return {
     documentSelector: [
       { scheme: "file", language: "metta" },
       { scheme: "file", language: "prolog" }
     ],
-    outputChannel: outputChannel,
+    outputChannel,
     traceOutputChannel: outputChannel,
     trace: Trace.Verbose,
     revealOutputChannelOn: RevealOutputChannelOn.Info,
@@ -172,7 +182,9 @@ function withSocketStreamProvider(address, port, outputChannel) {
   };
 }
 
-// If connecting to an external server, define serverOptions as a function returning a Promise<StreamInfo>
+// -----------------------------------------------------------------------------
+// If connecting to an EXTERNAL server (spawned separately),
+// define a serverOptions function returning a Promise<StreamInfo>
 function createServerOptions_ExternalPort(address, port, outputChannel) {
   const serverOptionsFunction = () => connectSocketWithRetry(address, port, outputChannel);
   return {
@@ -181,7 +193,13 @@ function createServerOptions_ExternalPort(address, port, outputChannel) {
   };
 }
 
-// Attempts to connect, retries every 10s if the server is not up or closes
+// -----------------------------------------------------------------------------
+// Creates a net.Socket with retry logic. Returns StreamInfo suitable for LSP.
+//
+// - If the connection fails or closes, it waits 10s, then tries again
+// - Once resolved the first time, the LSP client is considered "started".
+//   If it closes later, we schedule a reconnect attempt, though the LSP client
+//   may or may not re-initialize fully. (Behavior can vary.)
 function connectSocketWithRetry(address, port, outputChannel) {
   return new Promise((resolve, reject) => {
     let socket;
@@ -189,20 +207,23 @@ function connectSocketWithRetry(address, port, outputChannel) {
 
     function tryConnect() {
       outputChannel.appendLine(`Trying to connect to ${address}:${port}...`);
+
       socket = net.connect({ host: address, port }, () => {
         outputChannel.appendLine(`Connected to server at ${address}:${port}.`);
+
+        // Create LSP-compatible StreamReaders/Writers
+        const reader = new StreamMessageReader(socket);
+        const writer = new StreamMessageWriter(socket);
+
         if (!resolved) {
           resolved = true;
-          resolve({ reader: socket, writer: socket });
+          resolve({ reader, writer });
         } else {
           outputChannel.appendLine(`Reconnected to server at ${address}:${port}.`);
         }
       });
 
-      socket.on("data", (chunk) => {
-        outputChannel.appendLine("Server -> Client:\n" + chunk.toString());
-      });
-
+      // If socket errors out before connecting
       socket.on("error", (err) => {
         outputChannel.appendLine(`Socket error: ${err.message}`);
         socket.destroy();
@@ -211,9 +232,12 @@ function connectSocketWithRetry(address, port, outputChannel) {
         }
       });
 
+      // If the server closes or drops the connection
       socket.on("close", () => {
-        outputChannel.appendLine(`Socket closed. Will attempt reconnect to ${address}:${port}.`);
+        outputChannel.appendLine(`Socket closed. Attempting reconnect to ${address}:${port}...`);
         socket.destroy();
+        // Even if we previously resolved, we can attempt to reconnect.
+        // The LSP client may or may not handle re-initialization gracefully, but we try.
         scheduleRetry();
       });
     }
@@ -227,6 +251,7 @@ function connectSocketWithRetry(address, port, outputChannel) {
   });
 }
 
+// -----------------------------------------------------------------------------
 // Logs out the current MeTTa LSP config properties at startup
 function showMettaLSPSettings(outputChannel) {
   const config = vscode.workspace.getConfiguration("metta-lsp");
@@ -247,6 +272,7 @@ function showMettaLSPSettings(outputChannel) {
     "server.address"
   ];
 
+  outputChannel.appendLine("-------------------------------------------");
   outputChannel.appendLine("Current MeTTa LSP Configuration:");
   allKeys.forEach(key => {
     const value = config.get(key);
