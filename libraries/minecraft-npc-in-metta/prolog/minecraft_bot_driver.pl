@@ -8,6 +8,7 @@
 :- dynamic bot_controller/1.
 :- dynamic voxel_data/4.
 
+
 bot_contoller_class('io.trueagi.mettalog.minecraft.BotController').
 
 get_bot_controller(Bot):- bot_controller(Bot),!.
@@ -18,7 +19,7 @@ status:- bot_call(status,[],_Return).
 
 bot_call(Method,Args,Return):-
     get_bot_controller(Bot),    % Retrieve Java object reference
-    jpl_call(Bot, Method,Args, Return).
+    jpl_call(Bot, Method, Args, Return).
 
 
 %% enqueue_command(+Command) is det.

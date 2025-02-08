@@ -42,7 +42,15 @@
         </repository>
     </repositories>
 
-<dependencies>
+	<dependencies>
+
+		<!-- JLine 3 for advanced terminal input handling -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>3.21.0</version>
+		</dependency>
+
 		<!-- MCProtocolLib (GeyserMC) -->
 		<dependency>
 			<groupId>org.geysermc.mcprotocollib</groupId>
@@ -57,27 +65,28 @@
 			<version>4.14.0</version>
 		</dependency>
 
-        <!-- SLF4J (Logging) -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.36</version>
-        </dependency>
+		<!-- SLF4J (Logging) -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.36</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.36</version>
+		</dependency>
 
 
-        <!-- Local JPL JAR (If official version doesn't work) -->
-        <dependency>
-            <groupId>com.local</groupId>
-            <artifactId>jpl8</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/jpl8.jar</systemPath>
-        </dependency>
+		<!-- Local JPL JAR (If official version doesn't work) -->
+		<dependency>
+			<groupId>com.local</groupId>
+			<artifactId>jpl8</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/libs/jpl8.jar</systemPath>
+		</dependency>
     </dependencies>
+
 </project>
 

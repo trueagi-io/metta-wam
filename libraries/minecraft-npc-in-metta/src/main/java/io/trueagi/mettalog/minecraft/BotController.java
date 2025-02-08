@@ -364,10 +364,12 @@ public class BotController {
         log.info("Starting Metta-Minecraft bot. Waiting for login command...");
         
         BotController bc = new BotController();
-        // bc.invokeProlog("on_main", args); make this work
-		bc.login0();
-        bc.startQueueProcessing(); // Starts queue processing thread
+        bc.invokeProlog("on_main", args); // make this work
+		//bc.login0();
+        //bc.startQueueProcessing(); // Starts queue processing thread
     
+
+        jplQuery("listing(bot_controller/1).");
         // Start reading input and querying Prolog
         bc.readInputAndQueryProlog();
     }
@@ -397,14 +399,19 @@ public class BotController {
     /**
      * Executes a JPL Prolog query and logs the result.
      */
-    private void jplQuery(String queryStr) {
+    private static void jplQuery(String queryStr) {
         log.info("Executing Prolog query: {}", queryStr);
-    
-        Query query = new Query(queryStr);
-        if (query.hasSolution()) {
-            log.info("Query successful: {}", queryStr);
-        } else {
-            log.info("Query failed: {}", queryStr);
+        try {
+            Query query = new Query(queryStr);
+            if (query.hasSolution()) {
+                log.info("Query successful: {}", queryStr);
+            } else {
+                log.info("Query failed: {}", queryStr);
+            }
+        } catch (Exception e) {
+            log.error("Error executing Prolog query: {}", queryStr, e);
+            e.printStackTrace();
+            System.out.println("An error occurred while processing the Prolog query. Check logs for details.");
         }
     }
 

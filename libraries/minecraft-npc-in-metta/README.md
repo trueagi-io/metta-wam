@@ -1,113 +1,151 @@
-# 🏗️ Metta-MCBot  
-A **Minecraft AI bot** powered by **MCProtocolLib, Prolog (JPL), and MeTTa**.  
+# 🏰️ Metta-MCBot
 
-This bot can:
-- Connect to a **Minecraft server**.
-- Process **chat messages** and send them to **MeTTa**.
-- Work with **MeTTa scripts** for decision-making.
-- Interact with the world using **Voxel space recognition**.
+A **Minecraft AI bot** powered by **MCProtocolLib, Prolog (JPL), and MeTTa**.
 
----
+## 🚀 Features
 
-## 🚀 Features  
-✔ **Connects to a Minecraft server**  
-✔ **Receives chat messages and processes them**  
-✔ **Uses MeTTa scripts to control bot behavior**  
-✔ **Voxel-based world interaction for automation**  
+✔ **Connects to a Minecraft server**\
+✔ **Receives chat messages and processes them**\
+✔ **Uses MeTTa scripts to control bot behavior**\
+✔ **Voxel-based world interaction for automation**
 
-⚠ **You will need a Minecraft client** to **connect and interact with the bot**.  
+⚠ **You will need a Minecraft client** to **connect and interact with the bot**.\
 The bot does **not provide a graphical interface**, so you must use a **Minecraft game client** to chat with and observe the bot in action.
 
 ---
 
-## 📌 Project Structure  
-```
-├── minecraft_bot_hello.metta           # MeTTa AI script
-├── minecraft_bot_driver.metta          # MeTTa AI Driver script
-├── prolog/                             # Prolog scripts directory
-│   ├── minecraft_bot_hello.pl          # Start logic
-│   ├── minecraft_bot_driver.pl         # Driver logic
-├── pom.xml                             # Maven project configuration
-├── README.md                           # Project documentation
-├── libs/                               # External libraries
-│   ├── jpl8.jar                        # JPL (Java-Prolog) integration library
-│── src/main/java/io/trueagi/mettalog/minecraft/
-│   ├── BotController.java              # Main bot logic
-│   ├── BotExample.java                 # Example bot usage
-│   ├── VoxelGetter.java                # Handles voxel-based world interaction
-│   ├── SWIPrologBuilder.java           # Prolog integration utilities
-│   ├── WorldBuilder.java               # Builds world-related data
+## 🛠 Prerequisites
 
-```
-
----
-
-## 🛠 Prerequisites  
 Before running the bot, ensure you have:
-- **Java 17+** installed:
+
+- **A running Minecraft server**: The bot requires a Minecraft server to connect to. You can download and set up a **Minecraft Java Edition server** from [Mojang's official site](https://www.minecraft.net/en-us/download/server) or use a custom server like **PaperMC** or **Spigot**.
+
+  - Ensure your server is running and accessible at `localhost:25565`.
+  - Configure your server properties (`server.properties`) to allow non-premium accounts if needed.
+
+- **A Minecraft client**: Since the bot has no graphical interface, you need **Minecraft Java Edition** to connect and interact with it.
+
+  - Open **Multiplayer** in Minecraft.
+  - Add a server with the address `localhost:25565`.
+  - Connect and use the in-game chat to interact with the bot.
+
+- **Java 21+** installed:
+
   ```sh
   java -version
   ```
-- **Apache Maven** installed:
+
+- **Apache Maven** installed: using Instructions from:
+  [Upgrade Maven Installation](https://lightspeed001.medium.com/upgrade-existing-maven-installation-to-latest-0c17074a866a)
+
   ```sh
   mvn -version
   ```
-- **SWI-Prolog** installed:
-  ```sh
-  swipl --version
+
+  Expected output:
+
   ```
-- **MeTTaLog** installed:
-  ```sh
-  mettalog --version
+  Apache Maven 3.9.6 (bc0240f3c744dd6b6ec2920b3cd08dcc295161ae)
+  Maven home: /opt/apache-maven-3.9.6
+  Java version: 21.0.5, vendor: Oracle Corporation, runtime: /usr/lib/jvm/jdk-21.0.5-oracle-x64
+  Default locale: en_US, platform encoding: UTF-8
+  OS name: "linux", version: "5.15.167.4-microsoft-standard-wsl2", arch: "amd64", family: "unix"
   ```
-- **A running Minecraft server** (e.g., `localhost:25565`).  
-- **A Minecraft game client** (e.g., **Minecraft Java Edition**) to connect and interact with the bot.
+
+### **🔎 Hiding Java 17 from JPL**
+
+JPL does not support Java 21+ when Java 17 is visible in the system. To prevent conflicts, ensure Java 17 is hidden:
+
+```sh
+sudo update-alternatives --config java
+```
+
+Select Java 21 as the default version.
+
+Ensure that `LD_LIBRARY_PATH` does not point to Java 17:
+
+```sh
+echo $LD_LIBRARY_PATH
+```
+
+If necessary, update `.bashrc` or `/etc/environment`:
+
+```sh
+export JAVA_HOME=/usr/lib/jvm/jdk-21.0.5-oracle-x64
+export PATH="$JAVA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$JAVA_HOME/lib/server/"
+```
+
+### **⚠️ Cannot use with Java 17**
+
+If you encounter the following error:
+
+```sh
+ERROR: Java exception: java.lang.UnsupportedClassVersionError: io/trueagi/mettalog/minecraft/BotController 
+  has been compiled by a more recent version of the Java Runtime (class file version 65.0), 
+  this version of the Java Runtime only recognizes class file versions up to 61.0
+```
+
+This likely means that **SWI-Prolog is still using Java 17** instead of Java 21. To resolve this:
+
+1. Verify which Java version SWI-Prolog is using:
+   ```sh
+   swipl
+   ?- jpl_get_default_jvm_version(V).
+   ```
+2. If it is using Java 17, update `LD_LIBRARY_PATH` and `JAVA_HOME` to point to Java 21.
+3. Restart your terminal or source your environment settings:
+   ```sh
+   source ~/.bashrc
+   ```
 
 ---
 
-## 🚀 Running the Minecraft Bot  
-### **1️⃣ Build the Project**  
-```sh
-mvn clean package
-```
-### **2️⃣ Generate Classpath for Dependencies**  
-Since the JAR requires dependencies, first generate the classpath:  
-```sh
-mvn dependency:build-classpath -Dmdep.outputFile=classpath.txt
-```
-### **3️⃣ Start the Minecraft Server**  
-Ensure you have a Minecraft **1.20+ server** running on `localhost:25565`.  
-You can use **PaperMC, Spigot, or a vanilla server**.
+## 🚀 Running the Minecraft Bot
 
-### **4️⃣ Run the Bot**  
-```sh
-java -cp "$(cat classpath.txt):target/mettalog.minecraft-1.0-SNAPSHOT.jar" io.trueagi.mettalog.minecraft.BotController
-```
-### **5️⃣ Connect with a Graphical Minecraft Client**  
-- **Launch your Minecraft Java Edition client**.  
-- Go to **Multiplayer** → **Direct Connect**.  
-- Connect to `localhost:25565`.  
-- **Interact with the bot in chat!** (e.g., type `hello bot`).
+You have **four methods** to run the bot:
 
-### **6️⃣ Test Prolog Integration**  
-Open SWI-Prolog and consult the Prolog scripts:
-```prolog
-?- consult('src/main/prolog/minecraft_bot_driver.pl').
-?- consult('src/main/prolog/minecraft_bot_hello.pl').
-```
+1. **Using Java Only** (to ensure basic connectivity)
+   ```sh
+   source hello_java_only.sh
+   ```
+2. **Using Java**
+   ```sh
+   source java_run.sh
+   ```
+3. **Using MeTTa**
+   ```sh
+   source metta_run.sh
+   ```
+4. **Using Prolog**
+   ```sh
+   source prolog_run.sh
+   ```
 
 ---
 
-## 🏗️ Developing the Bot  
-### **📝 Writing MeTTa AI Logic**  
-MeTTa scripts define bot behavior. Example (`minecraft_bot_hello.metta`):  
+## 🏗️ Developing the Bot
+
+### **📝 Writing MeTTa AI Logic**
+
+MeTTa scripts define bot behavior. Example (`minecraft_bot_hello.metta`):
+
 ```metta
-(: on_chat "hello bot" (say "Hello, human!"))
-(: on_chat "where are you?" (say "I'm exploring the world."))
+!(import! &self minecraft_bot_driver.metta )
+
+(event-trigger (on_chat "hello bot") (say "Hello, human!"))
+(event-trigger (on_chat "who are you?") (say "I am a MeTTa-powered bot!"))
+(event-trigger (on_chat "what can you do?") (say "I can move, chat, and explore using voxel data!"))
+(event-trigger (on_chat "move forward") (move 1 0 0))
+(event-trigger (on_chat "move up") (move 0 1 0))
+(event-trigger (on_chat "scan area") (enumerate_voxel_space))
+(event-trigger (on_chat "goodbye") (say "Goodbye, see you soon!"))
 ```
 
-### **🔹 Prolog Integration**  
+### **🔹 Prolog Integration**
+
 Prolog scripts (`minecraft_bot_hello.pl`) handle game logic:
+
 ```prolog
 on_chat_message("hello bot") :-
     writeln('Bot: Hello, player!').
@@ -115,70 +153,7 @@ on_chat_message("hello bot") :-
 
 ---
 
-## 📌 Useful Commands  
-### **➡️ Move the bot**  
-```prolog
-?- move(1, 0, 0).  % Move forward
-?- move(0, 1, 0).  % Jump
-```
+## 📞 Contact
 
-### **💬 Chat from Prolog**  
-```prolog
-?- chat("I am a MeTTa-powered bot!").
-```
-
-### **🧊 Voxel Space Querying**  
-```prolog
-?- get_voxel_data(X, Y, Z, BlockID).
-```
-
----
-
-## 🔧 Troubleshooting  
-### **"Bot not connecting to server"**  
-- Ensure **Minecraft server is running** (`localhost:25565`).  
-- Check **firewall settings** allowing connections.  
-
-### **"Prolog script not loading"**  
-- Ensure SWI-Prolog is installed and working:
-  ```sh
-  swipl --version
-  ```
-- Use **full file paths** when consulting:
-  ```prolog
-  ?- consult('/absolute/path/to/minecraft_bot_hello.pl').
-  ```
-
-### **"Maven build fails"**  
-- Try **forcing a dependency update**:
-  ```sh
-  mvn clean package -U
-  ```
-- Ensure **JPL is in `libs/`**:
-  ```sh
-  ls libs/jpl8.jar
-  ```
-
-### **"Bot does not respond to chat"**  
-- Ensure **you are using a Minecraft Java Edition client** to chat with the bot.  
-- Make sure **the bot is properly connected** to the Minecraft server (`localhost:25565`).  
-- Check the **Prolog script logic** to confirm responses are correctly defined.
-
----
-
-## 🤝 Contributing  
-We welcome contributions!  
-1. Fork the repo  
-2. Create a new branch: `feature-name`  
-3. Submit a PR 🎉  
-
----
-
-## 📝 License  
-This project is licensed under **MIT License**.
-
----
-
-## 📞 Contact  
 For support, open an issue on GitHub. 🚀
 

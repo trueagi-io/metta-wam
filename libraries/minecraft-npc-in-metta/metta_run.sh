@@ -35,7 +35,8 @@ mvn dependency:build-classpath -Dmdep.outputFile=classpath.txt || { echo "❌ Fa
 echo "✅ Resolved project dependencies."
 
 # Step 3: Set up environment variables
-export LD_LIBRARY_PATH=/usr/local/lib/swipl/lib/x86_64-linux/
+source /etc/environment
+#export LD_LIBRARY_PATH=/usr/local/lib/swipl/lib/x86_64-linux/
 export CLASSPATH="$(pwd)/target/mettalog.minecraft-1.0-SNAPSHOT.jar:$(cat classpath.txt)"
 
 # Debug Information
