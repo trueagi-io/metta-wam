@@ -26,43 +26,6 @@ class Char:
             return self.char == other.char
         return False
 
-@register_atoms
-def arithm_ops():
-    subAtom = OperationAtom('-', lambda a, b: a - b, ['Number', 'Number', 'Number'])
-    mulAtom = OperationAtom('*', lambda a, b: a * b, ['Number', 'Number', 'Number'])
-    addAtom = OperationAtom('+', lambda a, b: a + b, ['Number', 'Number', 'Number'])
-    divAtom = OperationAtom('/', lambda a, b: a / b, ['Number', 'Number', 'Number'])
-    modAtom = OperationAtom('%', lambda a, b: a % b, ['Number', 'Number', 'Number'])
-    return {
-        r"\+": addAtom,
-        r"-": subAtom,
-        r"\*": mulAtom,
-        r"/": divAtom,
-        r"%": modAtom
-    }
-
-@register_atoms
-def bool_ops():
-    equalAtom = OperationAtom('==', lambda a, b: [ValueAtom(a == b, 'Bool')],
-                              ['$t', '$t', 'Bool'], unwrap=False)
-    greaterAtom = OperationAtom('>', lambda a, b: a > b, ['Number', 'Number', 'Bool'])
-    lessAtom = OperationAtom('<', lambda a, b: a < b, ['Number', 'Number', 'Bool'])
-    greaterEqAtom = OperationAtom('>=', lambda a, b: a >= b, ['Number', 'Number', 'Bool'])
-    lessEqAtom = OperationAtom('<=', lambda a, b: a <= b, ['Number', 'Number', 'Bool'])
-    orAtom = OperationAtom('or', lambda a, b: a or b, ['Bool', 'Bool', 'Bool'])
-    andAtom = OperationAtom('and', lambda a, b: a and b, ['Bool', 'Bool', 'Bool'])
-    notAtom = OperationAtom('not', lambda a: not a, ['Bool', 'Bool'])
-    return {
-        r"==": equalAtom,
-        r"<": lessAtom,
-        r">": greaterAtom,
-        r"<=": lessEqAtom,
-        r">=": greaterEqAtom,
-        r"or": orAtom,
-        r"and": andAtom,
-        r"not": notAtom
-    }
-
 class RegexMatchableObject(MatchableObject):
     ''' To match atoms with regular expressions'''
 
@@ -85,6 +48,16 @@ class RegexMatchableObject(MatchableObject):
                 return [{"matched_pattern": S(pattern)}]
         return []
 
+def parseImpl(atom, run_context):
+    try:
+        s = atom.get_object().content
+        if type(s) != str:
+            raise IncorrectArgumentError()
+        return [SExprParser(repr(s)[1:-1]).parse(run_context.tokenizer())]
+    except Exception as e:
+        raise IncorrectArgumentError()
+
+
 @register_atoms(pass_metta=True)
 def text_ops(run_context):
     """Add text operators
@@ -98,10 +71,9 @@ def text_ops(run_context):
 
     """
 
-    reprAtom = OperationAtom('repr', lambda a: [ValueAtom(repr(a))],
+    reprAtom = OperationAtom('repr', lambda a: [ValueAtom(repr(a), 'String')],
                              ['Atom', 'String'], unwrap=False)
-    parseAtom = OperationAtom('parse', lambda s: [SExprParser(str(s)[1:-1]).parse(run_context.tokenizer())],
-                              ['String', 'Atom'], unwrap=False)
+    parseAtom = OperationAtom('parse', lambda s: parseImpl(s, run_context), ['String', 'Atom'], unwrap=False)
     stringToCharsAtom = OperationAtom('stringToChars', lambda s: [E(*[ValueAtom(Char(c)) for c in str(s)[1:-1]])],
                                       ['String', 'Atom'], unwrap=False)
     charsToStringAtom = OperationAtom('charsToString', lambda a: [ValueAtom("".join([str(c)[1:-1] for c in a.get_children()]))],
@@ -116,12 +88,8 @@ def text_ops(run_context):
 @register_tokens
 def type_tokens():
     return {
-        r"[-+]?\d+" : lambda token: ValueAtom(int(token), 'Number'),
-        r"[-+]?\d+\.\d+": lambda token: ValueAtom(float(token), 'Number'),
-        r"[-+]?\d+(\.\d+)?[eE][-+]?\d+": lambda token: ValueAtom(float(token), 'Number'),
         r"(?s)^\".*\"$": lambda token: ValueAtom(str(token[1:-1]), 'String'),
         "\'[^\']\'": lambda token: ValueAtom(Char(token[1]), 'Char'),
-        r"True|False": lambda token: ValueAtom(token == 'True', 'Bool'),
         r'regex:"[^"]*"': lambda token: G(RegexMatchableObject(token),  AtomType.UNDEFINED)
     }
 

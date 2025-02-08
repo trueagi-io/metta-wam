@@ -100,6 +100,13 @@
 				</Folder>
 			</Folder>
 		</Folder>
+		<Folder Name=".Attic">
+			<F
+				N=".Attic/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+		</Folder>
 		<Folder Name=".github">
 			<Folder Name="workflows">
 				<F N=".github/workflows/ci.yml"/>

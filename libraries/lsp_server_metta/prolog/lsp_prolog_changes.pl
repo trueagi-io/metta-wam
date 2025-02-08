@@ -10,8 +10,10 @@ the code as it is in the editor buffer, before saving.
 */
 
 :- use_module(library(readutil), [read_file_to_codes/3]).
+:- use_module(lsp_metta_workspace, [xref_maybe/2]).
 
 :- dynamic doc_text/2.
+:- dynamic lsp_state:full_text_next/2.
 
 %! handle_doc_changes(+File:atom, +Changes:list) is det.
 %
@@ -30,6 +32,10 @@ handle_doc_change(Path, Change) :-
     doc_text_fallback(Path, OrigCodes),
     replace_codes(OrigCodes, StartLine, StartChar, ReplaceLen, ChangeCodes,
                   NewText),
+    transaction(( retractall(lsp_state:full_text_next(Path, _)),
+                  assertz(lsp_state:full_text_next(Path, NewText))
+                )),
+    % TODO put the retractall/assertz in a transaction?
     retractall(doc_text(Path, _)),
     assertz(doc_text(Path, NewText)).
 handle_doc_change(Path, Change) :-

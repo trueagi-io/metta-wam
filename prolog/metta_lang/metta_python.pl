@@ -113,6 +113,17 @@ Prolog Extensions with Python:
 :- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
 
 
+py_call_warg(G):- py_c_c(G,GG), py_call(GG).
+py_call_warg(G,A):- py_c_c(G,GG), py_call(GG,A).
+py_call_warg(G,A,Opts):- py_c_c(G,GG), py_call(GG,A,Opts).
+
+py_c_c(G,GG):- \+ compound(G),!,GG=G.
+py_c_c(M:G,M:GG):- !, py_c_c(G,GG).
+py_c_c(identity(X),identity(X)):-!.
+py_c_c(G,GG):- is_list(G), maplist(py_arg,G,GG),!.
+py_c_c(G,GG):- compound_name_arguments(G,F,A), maplist(py_arg,A,AA), !, compound_name_arguments(GG,F,AA).
+
+
 % Declare the multifile and dynamic predicates for determining the type of logical space.
 % These predicates are used to determine whether the given space is Python-based or not.
 :- multifile(is_python_space/1).
@@ -224,7 +235,7 @@ py_dump:-
 %
 %   @arg Goal The Python goal to be executed.
 %
-py_call_c(G):- py_catch(py_call(G)).
+py_call_c(G):- py_catch(py_call_warg(G)).
 
 %!  py_call_c(:Goal, -Result) is det.
 %
@@ -235,7 +246,7 @@ py_call_c(G):- py_catch(py_call(G)).
 %   @arg Goal The Python goal to be executed.
 %   @arg Result The result of the Python goal execution.
 %
-py_call_c(G, R):- py_catch(py_call(G, R)).
+py_call_c(G, R):- py_catch(py_call_warg(G, R)).
 
 %!  py_is_module(+M) is semidet.
 %
@@ -256,7 +267,7 @@ py_is_module(M):- notrace((with_safe_argv(py_is_module_unsafe(M)))).
 %   @arg M The object to check if it is a Python module.
 %
 py_is_module_unsafe(M):- py_is_object(M),!,py_type(M, module).
-py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
+py_is_module_unsafe(M):- catch((py_call_warg(M, X),py_type(X, module)), _, fail).
 
 %!  py_is_py(+V) is semidet.
 %
@@ -432,6 +443,10 @@ def identity(s):
 
 def get_globals():
     return globals()
+
+def hello_plus(atom1, atom2):
+    print("hello",type(atom1),type(atom2))
+    return []
 
 def merge_modules_and_globals():
     # Get all currently loaded modules
@@ -659,7 +674,12 @@ def py_call_method_and_args(*method_and_args):
         # Call the method with the arguments
         return py_call_w_args( method, *method_args)
 
-    # Case 3: Class and method name as a string
+
+    # Case 3: Class + 1 Arg
+    if isinstance(callable_obj, type) and len(args) == 1:
+        return callable_obj(args[0])
+
+    # Case 3a: Class and method name as a string
     if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
         cls = callable_obj
         method_name = args[0]
@@ -1208,16 +1228,24 @@ lists_to_pairlist([[List|Args]],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key
 pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
 pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
 
+
+py_term(Term, PyObject):- py_obi(identity(prolog(Term)), PyObject).
+py_identity(Term, PyObject):- py_obi(identity((Term)), PyObject).
+
 % !((py-atom print) "Hello, World!" [ = end "\n\n\n" ])
 % py_arg(Var,Var):- var(Var),!.
 % Handle variable input
-py_arg(Variable, PyObject) :- var(Variable), py_obi(identity(prolog(Variable)), PyObject), !.
+py_arg(Variable, PyObject) :- var(Variable),!,py_term(Variable, PyObject).
 % Handle symbols (atoms)
-py_arg(Symbol, PyObject) :- symbol(Symbol), py_obi(identity(prolog(Symbol)), PyObject), !.
+py_arg(Symbol, PyObject) :- symbol(Symbol),!,py_term(Symbol, PyObject).
+% Handle numbers
+py_arg(Number, PyObject) :- number(Number),!,py_identity(Number, PyObject).
+% Handle strings
+py_arg(String, PyObject) :- string(String),!,py_identity(String, PyObject).
 % Handle lists
 py_arg(List, PyList) :- is_list(List), !, maplist(py_arg, List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
 % Handle Python objects
-py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall(tuple(Mapped),PyObject).
+py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall_direct(tuple(Mapped),PyObject).
 %py_arg(Tuple, PyObject) :- py_type(Tuple,'tuple'),!,map_tuple(py_arg,Tuple, Mapped),py_ocall(tuple(Mapped),PyObject),!. %py_tuple(Mapped,PyObject).
 py_arg(Dict, PyObject) :- is_dict(Dict), py_dict(Dict, PyObject), !.
 py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(_), py_dict(Dict, PyObject), !.
@@ -1227,13 +1255,9 @@ py_arg(PythonObject, PythonObject) :- py_is_object(PythonObject), !.
 py_arg(Compound, {Key: PyValue}) :- pair_arg(Compound, Key,PyValue).
 % Handle Python-native objects
 py_arg(PythonNativeObject, PythonNativeObject) :- py_is_py(PythonNativeObject), !.
-% Handle strings
-py_arg(String, PyObject) :- string(String), py_obi(identity(String), PyObject), !.
-% Handle numbers
-py_arg(Number, PyObject) :- number(Number), py_obi(identity(Number), PyObject), !.
 % Handle general terms by converting to Python objects
-py_arg(GeneralTerm, PyObject) :- py_obi(identity(prolog(GeneralTerm)), PyObject), !.
-%py_arg(Symbol,After):- symbol(Symbol),atom_string(Symbol,Str),load_hyperon_module,py_call(hyperon_module:rust_py_symbol(Str),After),!.
+py_arg(GeneralTerm, PyObject) :- py_term(GeneralTerm, PyObject), !.
+%py_arg(Symbol,After):- symbol(Symbol),atom_string(Symbol,Str),load_hyperon_module,py_call_warg(hyperon_module:rust_py_symbol(Str),After),!.
 % Default case
 py_arg(Final, Final).
 
@@ -1425,13 +1449,13 @@ def rust_deref(obj):
 
 %!  py_mcall(+I, -O) is semidet.
 %
-%   Calls a Python method (py_call/3) with the input term I and unifies the result with O.
+%   Calls a Python method (py_call_warg/3) with the input term I and unifies the result with O.
 %   This call converts Python objects to Prolog strings and dictionaries to Prolog terms.
 %
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call.
 %
-py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),E,py_error_fail(E)),!,O=M.
+py_mcall(I,O):- catch(py_call_warg(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),E,py_error_fail(E)),!,O=M.
 
 %!  py_scall(+I, -O) is semidet.
 %
@@ -1440,7 +1464,7 @@ py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dic
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),E,py_error_fail(E)),!,O=M.
+py_scall(I,O):- catch(py_call_warg(I,M,[py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_acall(+I, -O) is semidet.
 %
@@ -1449,7 +1473,7 @@ py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),E,py_error_fail(E)),!,
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as an atom.
 %
-py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),E,py_error_fail(E)),!,O=M.
+py_acall(I,O):- catch(py_call_warg(I,M,[py_string_as(atom)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_ocall(+I, -O) is semidet.
 %
@@ -1458,7 +1482,9 @@ py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),E,py_error_fail(E)),!,O=
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
+py_ocall(I,O):- catch(py_call_warg(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
+
+py_ocall_direct(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_bi(+I, -O, +Opts) is semidet.
 %
@@ -1469,7 +1495,7 @@ py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),E,py_e
 %   @arg O Output term that unifies with the result of the Python call.
 %   @arg Opts Options passed to the Python call.
 %
-py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),E,py_error_fail(E)),!,O=M.
+py_bi(I,O,Opts):- load_builtin_module,catch(py_call_warg(builtin_module:I,M,Opts),E,py_error_fail(E)),!,O=M.
 
 %!  py_obi(+I, -O) is semidet.
 %
@@ -1479,7 +1505,7 @@ py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),E,p
 %   @arg I Input term to call the Python built-in function.
 %   @arg O Output term that unifies with the result of the Python call.
 %
-py_obi(I,O):- load_builtin_module,py_ocall(builtin_module:I,O).
+py_obi(I,O):- load_builtin_module,py_ocall_direct(builtin_module:I,O).
 
 %!  py_mbi(+I, -O) is semidet.
 %
@@ -1491,7 +1517,7 @@ py_obi(I,O):- load_builtin_module,py_ocall(builtin_module:I,O).
 %
 py_mbi(I,O):- load_builtin_module,py_mcall(builtin_module:I,O).
 
-%?- py_call(type(hi-there), P),py_pp(P).
+%?- py_call_warg(type(hi-there), P),py_pp(P).
 
 %!  get_str_rep(+I, -O) is semidet.
 %
@@ -1514,7 +1540,7 @@ py_atom(I,O):- var(I),!,O=I.
 py_atom(A,Py):- atomic(A),!,catch(py_obi(make_py_atom(A),Py),E,py_error_fail(E)),!.
 py_atom([I|Is],O):- !,py_dot(I,II),py_dot_from(II,Is,O),!.
 py_atom(I,O):- atomic(I),!,py_atomic(I,O).
-py_atom(I,O):- py_ocall(I,O),!.
+py_atom(I,O):- py_ocall_direct(I,O),!.
 py_atom(I,O):- I=O.
 
 %!  py_atom_type(+I, +Type, -O) is det.
@@ -1725,12 +1751,12 @@ ensure_rust_metta(MeTTa):-
 %   @arg MeTTa The MeTTa instance that will be initialized.
 ensure_rust_metta0(MeTTa):-
     ensure_mettalog_py(MettaLearner),           % Ensure MettaLearner is available.
-    py_call(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
+    py_call_warg(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
     py_is_object(MeTTa).
 ensure_rust_metta0(MeTTa):-
-    py_call('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
+    py_call_warg('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
 ensure_rust_metta0(MeTTa):-
-    py_call(hyperon:runner:'MeTTa'(), MeTTa),!. % Fallback: Call MeTTa from hyperon.
+    py_call_warg(hyperon:runner:'MeTTa'(), MeTTa),!. % Fallback: Call MeTTa from hyperon.
 
 %!  ensure_rust_metta is det.
 %
@@ -1753,10 +1779,10 @@ ensure_mettalog_py(MettaLearner):-
 ensure_mettalog_py(MettaLearner):-
     with_safe_argv(  % Ensure safety for argument passing.
         (want_py_lib_dir,  % Ensure the Python library directory is available.
-            %py_call('mettalog',MettaLearner),
-            %py_call('motto',_),
-            %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
-            %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
+            %py_call_warg('mettalog',MettaLearner),
+            %py_call_warg('motto',_),
+            %py_call_warg('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
+            %py_call_warg('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
         pybug(is_mettalog(MettaLearner)),  % Log any issues.
         asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
         )).
@@ -1819,7 +1845,7 @@ ensure_primary_metta_space(GSpace):-
     is_primary_metta_space(GSpace),!.                % Check if the primary space is already known.
 ensure_primary_metta_space(GSpace):-
     ensure_rust_metta(MeTTa),               % Ensure that the Rust MeTTa environment is initialized.
-    with_safe_argv(py_call(MeTTa:space(), GSpace)),  % Call the space method on MeTTa.
+    with_safe_argv(py_call_warg(MeTTa:space(), GSpace)),  % Call the space method on MeTTa.
     asserta(is_primary_metta_space(GSpace)).         % Store the new space.
 ensure_primary_metta_space(GSpace):-
     new_rust_space(GSpace).                          % Fallback: initialize a new Rust space.
@@ -1839,7 +1865,7 @@ ensure_primary_metta_space:- ensure_primary_metta_space(_).
 :- if(\+ current_predicate(new_rust_space/1)).
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 new_rust_space(GSpace):-
-    with_safe_argv(py_call(hyperon:base:'GroundingSpace'(),GSpace)),  % Create a new GroundingSpace.
+    with_safe_argv(py_call_warg(hyperon:base:'GroundingSpace'(),GSpace)),  % Create a new GroundingSpace.
     asserta(is_python_space(GSpace)).  % Store the new space.
 :- endif.
 
@@ -1856,7 +1882,7 @@ new_rust_space(GSpace):-
 
 query_from_space(Space,QueryAtom,Result):-
     ensure_space(Space,GSpace),                % Ensure the space is valid.
-    py_call(GSpace:'query'(QueryAtom),Result). % Perform the query in the space.
+    py_call_warg(GSpace:'query'(QueryAtom),Result). % Perform the query in the space.
 
 %!  replace_in_space(+Space, +FromAtom, +ToAtom) is det.
 %
@@ -1868,7 +1894,7 @@ query_from_space(Space,QueryAtom,Result):-
 %   @arg ToAtom The new atom that will replace the `FromAtom`.
 replace_in_space(Space,FromAtom,ToAtom):-
     ensure_space(Space,GSpace),                     % Ensure the space is valid.
-    py_call(GSpace:'replace'(FromAtom,ToAtom), _).  % Perform the replacement.
+    py_call_warg(GSpace:'replace'(FromAtom,ToAtom), _).  % Perform the replacement.
 
 %!  atom_count_from_space(+Space, -Count) is det.
 %
@@ -1879,7 +1905,7 @@ replace_in_space(Space,FromAtom,ToAtom):-
 %   @arg Count The number of atoms in the space.
 atom_count_from_space(Space,Count):-
     ensure_space(Space,GSpace),            % Ensure the space is valid.
-    py_call(GSpace:'atom_count'(),Count).  % Retrieve the atom count.
+    py_call_warg(GSpace:'atom_count'(),Count).  % Retrieve the atom count.
 
 %!  atoms_from_space(+Space, -Atoms) is det.
 %
@@ -1889,7 +1915,7 @@ atom_count_from_space(Space,Count):-
 %   @arg Space The space from which the atoms will be retrieved.
 %   @arg Atoms The list of atoms present in the space.
 atoms_from_space(Space,Atoms):- ensure_space(Space, GSpace),  % Ensure the space is valid.
-    py_call(GSpace:'get_atoms'(),Atoms).                       % Retrieve all atoms.
+    py_call_warg(GSpace:'get_atoms'(),Atoms).                       % Retrieve all atoms.
 
 %!  atom_from_space(+Space, -Sym) is nondet.
 %
@@ -1913,9 +1939,9 @@ atoms_iter_from_space(Space,Atoms):-
     % Ensure the space is valid.
     ensure_space(Space,GSpace),
     % Retrieve the iterator.
-    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
+    with_safe_argv(py_call_warg(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
     % for debugging print the atoms
-    %py_call(GSpace:'atoms_iter'(), Atoms).
+    %py_call_warg(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
 
@@ -1998,9 +2024,9 @@ py_to_pl(VL,Par,Cir,CirO,[H|T]:B:C,[HH|TT]):- py_to_pl(VL,Par,Cir,CirM,H:B:C,HH)
 py_to_pl(VL,Par,Cir,CirO,[H|T]:B,[HH|TT]):- py_to_pl(VL,Par,Cir,CirM,H:B,HH),
     py_to_pl(VL,Par,CirM,CirO,T:B,TT).
 % Handle Python objects with callable methods A:B:C or A:B.
-py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):- py_is_object(A),callable(B),py_call(A:B,R),
+py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):- py_is_object(A),callable(B),py_call_warg(A:B,R),
     py_to_pl(VL,Par,Cir,CirO,R:C,AB).
-py_to_pl(VL,Par,Cir,CirO,A:B,AB):- py_is_object(A),callable(B),py_call(A:B,R),
+py_to_pl(VL,Par,Cir,CirO,A:B,AB):- py_is_object(A),callable(B),py_call_warg(A:B,R),
     py_to_pl(VL,Par,Cir,CirO,R,AB).
 % Convert compound terms like A:B or A-B.
 py_to_pl(VL,Par,Cir,CirO,A:B,AA:BB):- !,py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
@@ -2017,9 +2043,9 @@ py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pairs(L,F,NV),!,py_to_pl(VL,
 % If L is not callable, unify E with L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E = L.
 %next phase code
-%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!,
+%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call_warg(A:B,R),!,
 %    py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
-%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!,
+%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call_warg(A:B,R),!,
 %    py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R,AB).
 % Convert compound terms using `compound_name_arguments/3`.
 py_to_pl(VL,Par,Cir,CirO,A,AA):- compound(A),!,compound_name_arguments(A,F,L),
@@ -2118,7 +2144,7 @@ real_VL_var0(R,VL,E):- extend_container(VL,R=E),!. % If not found, extend the li
 %   @arg O The Python object to be converted.
 %   @arg E The resulting Prolog term after conversion.
 
-pyo_to_pl(VL,_Par,Cir,Cir,Cl,O,E):- Cl=='VariableAtom',!,py_call(O:get_name(),R),real_VL_var(R,VL,E),!.
+pyo_to_pl(VL,_Par,Cir,Cir,Cl,O,E):- Cl=='VariableAtom',!,py_call_warg(O:get_name(),R),real_VL_var(R,VL,E),!.
 pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):-
     class_to_pl1(Par,Cl,M),py_member_values(O,M,R),!, % Fetch Python object member values.
     py_to_pl(VL,[Cl | Par],Cir,CirO,R,E).             % Recursively convert member values.
@@ -2223,7 +2249,7 @@ py_chain(I, Py):-
     load_hyperon_module,
     % The actual call to the `hyperon_module:py_chain/2` function in Python. This likely passes
     % the argument `I` and returns a result `M`. The `py_ocall/2` mechanism calls the Python method.
-    py_ocall(hyperon_module:py_chain(I), M),
+    py_ocall_direct(hyperon_module:py_chain(I), M),
     % Finally, the result from the Python call, `M`, is returned via `rust_return/2` to `O`.
     % The `rust_return/2` might be a utility for handling MeTTaLog-Python interop and ensures
     % that `O` receives the final processed result from the chain.
@@ -2238,7 +2264,7 @@ py_chain(I, Py):-
 %   @arg Py The resulting Python dictionary.
 py_dict(O,Py):- catch(py_is_py_dict(O),_,fail),!, % Check if `O` is already a Python dictionary.
     O=Py.                                         % If it is,return it unchanged.
-py_dict(O,Py):- py_ocall(dict(O),Py),!.  % Otherwise, convert `O` to a Python dictionary.
+py_dict(O,Py):- py_ocall_direct(dict(O),Py),!.  % Otherwise, convert `O` to a Python dictionary.
 
 % ?- py_list([1,2.0,"string"],X),py_type(X,Y).
 % ?- py_list_index([1,2.0,"string"],X),py_type(X,Y).
@@ -2314,19 +2340,19 @@ pl_to_py(_VL,MeTTa,Python):- integer(MeTTa),!,py_obi(int_conversion(MeTTa),Pytho
 % Convert Prolog lists to Python lists.
 pl_to_py(VL,Sym,Py):- is_list(Sym),!,maplist(pl_to_py(VL),Sym,PyL),py_obi(py_list(PyL),Py).
 % Convert Prolog variables to Python variables.
-pl_to_py(VL,Var,Py):- var(Var),!,real_VL_var(Sym,VL,Var),py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_py(VL,Var,Py):- var(Var),!,real_VL_var(Sym,VL,Var),py_call_warg('hyperon.atoms':'V'(Sym),Py),!.
 % Convert Prolog `$VAR` variables to Python variables.
-pl_to_py(VL,'$VAR'(Sym),Py):- !,real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_py(VL,'$VAR'(Sym),Py):- !,real_VL_var(Sym,VL,_),py_call_warg('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(_VL,O,Py):-py_type(O,_),!,O=Py.
 % % %pl_to_py(_VL,O,Py):- py_is_dict(O),!,O=Py.
 %pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym),rinto_varname(VName,Sym),!,pl_to_py(VL,'$VAR'(Sym),Py).
-%pl_to_py(_VL,Sym,Py):- atom(Sym),!,py_call('hyperon.atoms':'S'(Sym),Py),!.
-%pl_to_py(_VL,Sym,Py):- string(Sym),!,py_call('hyperon.atoms':'S'(Sym),Py),!.
-%pl_to_py(VL,Sym,Py):- is_list(Sym),maplist(pl_to_py,Sym,PyL),py_call('hyperon.atoms':'E'(PyL),Py),!.
-%pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- atom(Sym),!,py_call_warg('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- string(Sym),!,py_call_warg('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_py(VL,Sym,Py):- is_list(Sym),maplist(pl_to_py,Sym,PyL),py_call_warg('hyperon.atoms':'E'(PyL),Py),!.
+%pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call_warg('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 % Default case: return the input term as-is if no other conversion applies.
 pl_to_py(_VL,MeTTa,MeTTa).
-%pl_to_py(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- py_call_warg('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 
 %!  py_key(+O, -I) is det.
 %
@@ -2381,10 +2407,10 @@ meets_dir(L,M):- compound(M),!,compound_name_arguments(M,F,[A | AL]),!,maplist(m
 %   @arg R The resulting member values.
 py_member_values(O,C,R):- is_list(O),!,maplist(py_member_values,O,C,R).
 py_member_values(O,C,R):- is_list(C),!,maplist(py_member_values(O),C,R).
-%py_member_values(O,C,R):- atom(C),!,compound_name_arity(CC,C,0),!,py_call(O:CC,R).
+%py_member_values(O,C,R):- atom(C),!,compound_name_arity(CC,C,0),!,py_call_warg(O:CC,R).
 py_member_values(O,f(F,AL),R):- !,py_member_values(O,[F | AL],[RF | RAL]),
     compound_name_arguments(R,RF,RAL).
-py_member_values(O,C,R):- py_call(O:C,R,[py_string_as(atom),py_object(false)]).
+py_member_values(O,C,R):- py_call_warg(O:C,R,[py_string_as(atom),py_object(false)]).
 
 %!  py_to_str(+PyObj, -Str) is det.
 %
@@ -2421,7 +2447,7 @@ tafs:-
 %
 %   @arg A The Python object.
 %   @arg AA The name of the class.
-py_class(A,AA):- py_call(A:'__class__',C),py_call(C:'__name__',AA,[py_string_as(atom)]),!.
+py_class(A,AA):- py_call_warg(A:'__class__',C),py_call_warg(C:'__name__',AA,[py_string_as(atom)]),!.
 
 %!  py_decomp(+M,+C) is det.
 %
@@ -2485,7 +2511,7 @@ py_decomp(f('__class__',['__str__'()])).
 %__class__
 %get_type()
 
-%atoms_from_space(Space,[Atoms]),py_pp(Atoms),py_call(Atoms:get_object(),A),atoms_from_space(A,Dir),member(E,Dir),py_obj_dir(E,C),py_call(E:get_children(),CH),py_pp(CH).
+%atoms_from_space(Space,[Atoms]),py_pp(Atoms),py_call_warg(Atoms:get_object(),A),atoms_from_space(A,Dir),member(E,Dir),py_obj_dir(E,C),py_call_warg(E:get_children(),CH),py_pp(CH).
 
 %!  remove_from_space(+Space, +Sym) is det.
 %
@@ -2495,7 +2521,7 @@ py_decomp(f('__class__',['__str__'()])).
 %   @arg Space The grounding space from which the atom will be removed.
 %   @arg Sym The atom to be removed from the space.
 :- if(\+ current_predicate(remove_from_space/2)).
-remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call(GSpace:'remove'(Sym),_).
+remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call_warg(GSpace:'remove'(Sym),_).
 :- endif.
 
 %!  add_to_space(+Space, +Sym) is det.
@@ -2506,7 +2532,7 @@ remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call(GSpace:'remove
 %   @arg Space The grounding space to which the atom will be added.
 %   @arg Sym The atom to be added to the space.
 :- if(\+ current_predicate(add_to_space/2)).
-add_to_space(Space,Sym):-  ensure_space(Space,GSpace),py_call(GSpace:'add'(Sym),_).
+add_to_space(Space,Sym):-  ensure_space(Space,GSpace),py_call_warg(GSpace:'add'(Sym),_).
 :- endif.
 
 %!  must_det_llp(+Goals) is det.
@@ -2635,7 +2661,7 @@ self_extend_py(Self,Module,File,R):-
         assert_new(is_pymod_in_space(Module,Self)),
         (nonvar(File) -> Use = File ; Use = Module),
         pybug('extend-py!'(Use)),
-        % py_call(mettalog:use_mettalog()),
+        % py_call_warg(mettalog:use_mettalog()),
         (Use == mettalog -> true ; py_load_modfile(Use)),
         % listing(ensure_rust_metta/1),
         % ensure_mettalog_py,
@@ -2646,7 +2672,7 @@ self_extend_py(Self,Module,File,R):-
         % sformat(S,'!(import! &self ~w)',[Use]),rust_metta_run(S,R),
         R = [],
         % py_module_exists(Module),
-        % py_call(MeTTa:load_py_module(ToPython),Result),
+        % py_call_warg(MeTTa:load_py_module(ToPython),Result),
         true)),!.
 
 %!  py_load_modfile(+Use) is det.
@@ -2720,7 +2746,7 @@ rust_metta_run1(I,O):- load_hyperon_module,!,py_ocall(hyperon_module:rust_metta_
 rust_metta_run1(R,Run):-
     with_safe_argv((((
         % ensure_rust_metta(MeTTa),
-        py_call(mettalog:rust_metta_run(R),Run)
+        py_call_warg(mettalog:rust_metta_run(R),Run)
     )))).
 
 %!  rust_return(+M, -O) is det.
@@ -2922,7 +2948,7 @@ load_functions_motto:- load_functions_motto(Def),pypp(Def).
 %       ?- load_functions_motto(Def).
 %
 load_functions_motto(Def):- load_functions_ext,
-    with_safe_argv(py_call(mettalog:load_functions_motto(),Def)).
+    with_safe_argv(py_call_warg(mettalog:load_functions_motto(),Def)).
 
 %!  load_functions_ext is det.
 %
@@ -2944,7 +2970,7 @@ load_functions_ext:- load_functions_ext(Def),pypp(Def).
 %   @example Load and retrieve external functions:
 %       ?- load_functions_ext(Def).
 %
-load_functions_ext(Def):- with_safe_argv(py_call(mettalog:load_functions_ext(),Def)).
+load_functions_ext(Def):- with_safe_argv(py_call_warg(mettalog:load_functions_ext(),Def)).
 
 %!  example_usage is det.
 %
@@ -3061,7 +3087,7 @@ sync_python_path:-
 %       ?- is_rust_operation([function_name,arg1,arg2]).
 %
 is_rust_operation([Fun | Args]):- get_list_arity(Args,Arity),
-    py_call(mettalog:get_operation_definition_with_arity(Fun,Arity),O),O \== '@'('none').
+    py_call_warg(mettalog:get_operation_definition_with_arity(Fun,Arity),O),O \== '@'('none').
 
 %!  get_list_arity(+Args,-Arity) is det.
 %

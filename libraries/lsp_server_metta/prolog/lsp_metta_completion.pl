@@ -20,15 +20,14 @@
 :- use_module(library(apply), [maplist/3]).
 :- use_module(library(lists), [numlist/3]).
 :- use_module(library(yall)).
+:- use_module(library(filesex)).
 %:- use_module(lsp_metta_utils, [linechar_offset/3]).
 :- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
 
-% James added
-:- use_module(library(prolog_xref), [xref_defined/3, xref_source/2]).
 
 :- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [source_file_text/2]).
+:- use_module(lsp_metta_workspace, [source_file_text/2, xref_metta_source/1]).
 
 :- discontiguous(handle_completions/3).
 
@@ -52,6 +51,7 @@ get_prefix_codes(_, _, Codes, Codes).
 %
 prefix_at(File, Position, Prefix) :-
     source_file_text(File, DocCodes),
+    xref_metta_source(File),
     setup_call_cleanup(
         open_string(DocCodes, Stream),
         ( linechar_offset(Stream, Position, _),
@@ -63,20 +63,27 @@ prefix_at(File, Position, Prefix) :-
 %
 completions_at(File, Position, Completions) :-
     prefix_at(File, Position, Prefix),
-    xref_source(File, [silent(true)]),
-    findall(
-        Result,
-        ( xref_defined(File, Goal, _),
-          functor(Goal, Name, Arity),
-          atom_concat(Prefix, _, Name),
-          args_str(Arity, Args),
-          format(string(Func), "~w(~w)$0", [Name, Args]),
-          format(string(Label), "~w/~w", [Name, Arity]),
-          Result = _{label: Label,
-                     insertText: Func,
-                     insertTextFormat: 2}),
-        Completions
-    ).
+    findall(Result,
+            % Use definitions from the current file, corelib, and stdlib
+            % TODO: also look at imported definitions?
+            ( ( metta_atom_xref(Atom, File, _Loc)
+              ; ( metta_atom_xref(Atom, Path, _),
+                  directory_file_path(_, F, Path),
+                  memberchk(F, ['corelib.metta', 'stdlib_mettalog.metta']) )
+              ),
+              (( Atom = [':>', Defn|_]
+               ; Atom = [':', [Defn|_]|_]
+               ; Atom = [':', Defn|_]
+               ; Atom = ['=', [Defn|_]|_]
+               ; Atom = ['=', Defn|_]
+               )),
+              atom(Defn),
+              atom_concat(Prefix, _, Defn),
+              Result = _{label: Defn,
+                         insertText: Defn,
+                         insertTextFormat: 1}),
+            Completions
+           ).
 %
 args_str(Arity, Str) :-
     numlist(1, Arity, Args),

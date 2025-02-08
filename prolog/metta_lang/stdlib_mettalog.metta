@@ -1432,7 +1432,9 @@ For example:
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
 (: get-doc (-> Atom Atom))
-(= (get-doc $atom)
+(= (get-doc $atom) (metta-get-doc $atom))
+(: metta-get-doc (-> Atom Atom))
+(= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1525,7 +1527,9 @@ For example:
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
 (: help! (-> Atom (->)))
-(= (help! $atom)
+(= (help! $atom) (metta-help! $atom))
+(: metta-help! (-> Atom (->)))
+(= (metta-help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)
