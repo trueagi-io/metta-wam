@@ -1,7 +1,7 @@
 package io.trueagi.mettalog.minecraft;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+//import net.kyori.adventure.text.Component;
+//import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.geysermc.mcprotocollib.auth.GameProfile;
 import org.geysermc.mcprotocollib.auth.SessionService;
 import org.geysermc.mcprotocollib.network.ClientSession;
@@ -216,11 +216,8 @@ public class BotController {
     }
 
     /** Converts Adventure Component to a String */
-    static String convertComponentToString(Component component) {
-		if (true) {
+    static String convertComponentToString(Object component) {
 			return ""+component;
-		}
-		return PlainTextComponentSerializer.plainText().serialize(component);
     }
     
     public void executeQueuedCommands() {
@@ -468,9 +465,9 @@ public class BotController {
                 if (packet instanceof ClientboundLoginPacket) {
                     session.send(new ServerboundChatPacket("Hello, this is a test of MCProtocolLib.", Instant.now().toEpochMilli(), 0L, null, 0, new BitSet()));
                 } else if (packet instanceof ClientboundSystemChatPacket systemChatPacket) {
-                    Component message = systemChatPacket.getContent();
+                    Object message = systemChatPacket.getContent();
                     log.info("Received Message: {}", message);
-                    session.disconnect(Component.text("Finished"));
+                    session.disconnect(("Finished"));
                 }
             }
 
