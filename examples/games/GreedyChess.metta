@@ -177,18 +177,18 @@
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
    (let $cmd (get-single-char!)
-      (progn (
+      (progn 
           ; if initial execution flush output
           (if (== (size-atom $input_list) 0) (flush-output!) ())
           (if (== $cmd 13) ; if user hit <ENTER>
             ;return all input
             $input_list    
             ;else gather more input
-            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))))
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list))))))
 
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
- (progn  ( 
+ (progn   
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
     ((py-atom print) " ")
@@ -207,7 +207,7 @@
     ((py-atom print) "5 Display Board                    ->  D")
     ((py-atom print) "6 Quit                             ->  Q")
     ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.") 
-    )))
+    ))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
@@ -909,7 +909,7 @@
   (match &self (console-messages $msg)
     ; if first invocation, just create board
     (if (==  (initializing)   $msg) ; then  
-      (progn (  
+      (progn   
         ; remove the 'initializing' message
         (remove-atom &self (console-messages $msg)) 
         ; create the board for the first time
@@ -926,10 +926,10 @@
         ; indicate game has passed the initializing state
         (add-atom &self (console-messages (started)))
         ; display welcome messages and board
-        (welcome)))
+        (welcome))
     ; elif there has already been one game played
     (if (==  (started)   $msg) ; then
-      (progn (
+      (progn 
         ; remove the old chess board
         (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
         ; re-create a new board 
@@ -946,7 +946,7 @@
         ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
         ;
         ; display welcome messages and board
-        (welcome)))
+        (welcome))
     (; else if
         empty))))) 
 
@@ -956,11 +956,11 @@
 
 ;(: M (-> command))
 (= (M)  
-  (progn (
+  (progn 
   ; prompt for x/y location
   ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
   ; add edit to make sure move within boundaries of 1 -> 8!
-  (py-atom print) "Enter coordinates.")
+  ((py-atom print) "Enter coordinates.")
   (let $coordinates ((py-atom input)) ())
   (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
   (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
@@ -973,7 +973,7 @@
   ; check if source location and destination are not the same
   (if (not (== $f $g))                            
    ; check if destination is empty or destination has opponent's piece  
-    (progn (
+    (progn 
     ; Retrieve the source box details.
     (let $h (return_entire_box $f  $starting_board) ())               
     ; Retrieve the destination box details.
@@ -1006,9 +1006,8 @@
       ((py-atom print) "Invalid move.")
     )
     )
-    )
     ;else (trying to move to same location)
-    ((py-atom print) "Can't move to same location."))
+    ((py-atom print) "Can't move to same location.")) 
   )
 )
 
@@ -1062,40 +1061,40 @@
 ;*******************************************************
 (= (command-loop)
   (progn 
-   (((py-atom print) "Please enter your command.")
+    ((py-atom print) "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
     ; case statement for commands
     (if (== $command "M") 
-        (progn (
+        (progn 
           (M)                          ; Move human piece 
-          (command-loop)))             ; Get next command, stay in loop.
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "G")
-        (progn (
+        (progn 
           (G)                          ; AI move
-          (command-loop)))             ; Get next command, stay in loop.
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "R")
-        (progn (
+        (progn 
           (R)                          ; Reset = "R"
-          (command-loop)))             ; Get next command, stay in loop.
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "C")
-        (progn (
+        (progn 
           (C)                          ; List valid commands = "C"
-          (command-loop)))             ; Get next command, stay in loop.
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "D")
-        (progn (
+        (progn 
           (D)                          ; Display board "D"
-          (command-loop)))             ; Get next command, stay in loop.
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "Q")              ; EXIT HERE
           ((py-atom print) "Quitting MeTTa Greedy Chess.")
     ; otherwise
-    (progn (
+    (progn 
         ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
-        (command-loop)))))))))))))
+        (command-loop)))))))))))
 
 ;-----------;
 (= (main_loop) 
   (progn
-   ((chess)           ; Start the chess game
-    (command-loop)))) ; Enter the recursive command-processing loop
+    (chess)           ; Start the chess game
+    (command-loop))) ; Enter the recursive command-processing loop
 !(main_loop)
 ;-----------;
