@@ -1,7 +1,7 @@
 package io.trueagi.mettalog.minecraft;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+//import net.kyori.adventure.text.Component;
+//import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.geysermc.mcprotocollib.auth.GameProfile;
 import org.geysermc.mcprotocollib.auth.SessionService;
 import org.geysermc.mcprotocollib.network.ClientSession;
@@ -216,11 +216,8 @@ public class BotController {
     }
 
     /** Converts Adventure Component to a String */
-    static String convertComponentToString(Component component) {
-		if (true) {
+    static String convertComponentToString(Object component) {
 			return ""+component;
-		}
-		return PlainTextComponentSerializer.plainText().serialize(component);
     }
     
     public void executeQueuedCommands() {
@@ -364,10 +361,12 @@ public class BotController {
         log.info("Starting Metta-Minecraft bot. Waiting for login command...");
         
         BotController bc = new BotController();
-        // bc.invokeProlog("on_main", args); make this work
-		bc.login0();
-        bc.startQueueProcessing(); // Starts queue processing thread
+        bc.invokeProlog("on_main", args); // make this work
+		//bc.login0();
+        //bc.startQueueProcessing(); // Starts queue processing thread
     
+
+        jplQuery("listing(bot_controller/1).");
         // Start reading input and querying Prolog
         bc.readInputAndQueryProlog();
     }
@@ -397,14 +396,19 @@ public class BotController {
     /**
      * Executes a JPL Prolog query and logs the result.
      */
-    private void jplQuery(String queryStr) {
+    private static void jplQuery(String queryStr) {
         log.info("Executing Prolog query: {}", queryStr);
-    
-        Query query = new Query(queryStr);
-        if (query.hasSolution()) {
-            log.info("Query successful: {}", queryStr);
-        } else {
-            log.info("Query failed: {}", queryStr);
+        try {
+            Query query = new Query(queryStr);
+            if (query.hasSolution()) {
+                log.info("Query successful: {}", queryStr);
+            } else {
+                log.info("Query failed: {}", queryStr);
+            }
+        } catch (Exception e) {
+            log.error("Error executing Prolog query: {}", queryStr, e);
+            e.printStackTrace();
+            System.out.println("An error occurred while processing the Prolog query. Check logs for details.");
         }
     }
 
@@ -461,9 +465,9 @@ public class BotController {
                 if (packet instanceof ClientboundLoginPacket) {
                     session.send(new ServerboundChatPacket("Hello, this is a test of MCProtocolLib.", Instant.now().toEpochMilli(), 0L, null, 0, new BitSet()));
                 } else if (packet instanceof ClientboundSystemChatPacket systemChatPacket) {
-                    Component message = systemChatPacket.getContent();
+                    Object message = systemChatPacket.getContent();
                     log.info("Received Message: {}", message);
-                    session.disconnect(Component.text("Finished"));
+                    session.disconnect(("Finished"));
                 }
             }
 

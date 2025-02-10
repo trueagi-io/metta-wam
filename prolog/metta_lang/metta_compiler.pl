@@ -74,6 +74,7 @@
 :- ensure_loaded(metta_space).
 :- dynamic(transpiler_clause_store/9).
 :- dynamic(transpiler_predicate_store/4).
+:- dynamic(transpiler_nary_predicate_store/5).
 :- discontiguous(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 
@@ -121,15 +122,19 @@ transpiler_stub_created(dummy).
 
 :- dynamic(transpiler_depends_on/4).
 % just so the transpiler_depends_on predicate always exists
-transpiler_depends_on(dummy1,0,dummy2,0).
+% transpiler_depends_on(dummy1,0,dummy2,0).
 
 % just so the transpiler_clause_store predicate always exists
 % transpiler_clause_store(f,arity,clause_number,types,rettype,lazy,retlazy,head,body)
-transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager,[]),dummy,dummy).
+% transpiler_clause_store(dummy,0,0,[],'Any',[],x(doeval,eager,[]),dummy,dummy).
 
 % just so the transpiler_predicate_store predicate always exists
 % transpiler_predicate_store(f,arity,lazy,retlazy)
-transpiler_predicate_store(dummy,0,[],x(doeval,eager,[])).
+% transpiler_predicate_store(dummy,0,[],x(doeval,eager,[])).
+
+% just so the transpiler_predicate_store predicate always exists
+% transpiler_predicate_nary_store(f,arity,lazy_fixed,lazy_variable,retlazy)
+% transpiler_predicate_nary_store(dummy,0,[],x(doeval,eager,[]),x(doeval,eager,[])).
 
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
@@ -1077,6 +1082,14 @@ determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
    (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
       get_property_lazy(RetLazy0,RetLazy)
+   ; transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+      maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
+      VarCount is LenArgs-FixedLength,
+      length(VarArgsLazy, VarCount),
+      get_property_lazy(VarArgsLazy0,VarArgsLazy),
+      maplist(=(eVarArgsLazy, VarArgsLazyList)),
+      append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
+      get_property_lazy(RetLazy0,RetLazy)
    ;
       RetLazy=eager,
       length(ArgsLazy, LenArgs),
@@ -1257,10 +1270,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       %output_prolog(magenta,TypeInfo),
       %print_ast( green, Ast),
-      %leash(-all),trace,
       maplist(h2p(EagerArgList,LazyArgsListAdj),Args,Args2,Code,NewLazyVars),
       append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
-      %trace,
       f2p(HeadIs,NewLazyVarsAggregate,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
@@ -1915,9 +1926,14 @@ h2p(EagerArgList,LazyVars,Convert,Converted,CodeOut,TotalNewLazyVars) :-
    Convert=[FnName|Args],atom(FnName),
    length(Args,LenArgs),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   get_operator_typedef_props(_,FnName,LenArgs,Types0,_RetType0),
-   maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
-   maplist(arg_eval_props,Types0,TypeProps),
+   LenArgsPlus1 is LenArgs+1,
+   (transpiler_predicate_store(FnName,LenArgsPlus1,TypeProps0,_) ->
+      TypeProps=TypeProps0
+   ;
+      get_operator_typedef_props(_,FnName,LenArgs,Types0,_RetType0),
+      maplist(set_eager_or_lazy(EagerArgList),Args,EagerLazyList),
+      maplist(arg_eval_props,Types0,TypeProps)
+   ),
    maplist(combine_lazy_types_props,EagerLazyList,TypeProps,FinalLazyArgs),
    maplist(arrange_lazy_args,Args,FinalLazyArgs,ThisNewLazyVars),
    maplist(h2p(EagerArgList,LazyVars),Args,QuoteContentsOut,Code,NewLazyVars),
@@ -1959,7 +1975,6 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), '#\\'(Convert), []
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- fail,
     once(number(Convert);atomic(Convert);\+compound(Convert);atomic(Convert)/*;data_term(Convert)*/),!. %CheckifConvertisanumberoranatom
-
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- % HeadIs\==Convert,
@@ -2132,6 +2147,18 @@ f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
    compile_flow_control2(HeadIs,LazyVars,RetResult,ResultLazy, Convert, Converted),!.
 */
 
+/*
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   Convert=[[py-atom Fn]|Args],
+   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
+   f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
+   f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
+   append(Args,[RetResult],Args1),
+   append(DoEvalCodeCollected,[[native(py_atom),Fn,FnPy]],Converted),
+   %assign_or_direct(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
+   assign_or_direct(NoEvalCodeCollected,RetResultN,list([[py-atom Fn]|NoEvalRetResults]),ConvertedN).
+*/
+
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :- HeadIs\==Convert,
    Convert=[Fn|Args],
    %(HeadIs=[FnC|_],transpiler_trace_compile(FnC),Fn='match-body' -> trace ; true),
@@ -2146,6 +2173,22 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
+
+%    (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
+%       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
+%       get_property_lazy(RetLazy0,RetLazy)
+%    transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+%       maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
+%       VarCount is LenArgs-FixedLength,
+%       length(VarArgsLazy, LenArgs),
+%       get_property_lazy(VarArgsLazy0,VarArgsLazy)
+%       maplist(=(eVarArgsLazy, VarArgsLazyList)),
+%       append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
+%       get_property_lazy(RetLazy0,RetLazy)
+
+
+%   ; transpiler_predicate_nary_store(Fn,LArgs1,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
+
    ; (FnHead=Fn, ArgsHeadSz1=LArgs1) ->
       EvalArgs=LazyVars,
       ResultLazy=x(noeval,eager,[]),
@@ -2172,10 +2215,10 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       ),
       length(UpToDateArgsLazy, LArgs),
       maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
-         % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
-         get_operator_typedef_props(_,Fn,LArgs,Types0,_RetType0),
-         maplist(arg_eval_props,Types0,EvalArgs0),
-         maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
+      % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
+      get_operator_typedef_props(_,Fn,LArgs,Types0,_RetType0),
+      maplist(arg_eval_props,Types0,EvalArgs0),
+      maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
    ),
    % add transpiler_depends_on clause if not already there
    (((FnHead-ArgsHeadSz1)=(Fn-LArgs1) ; transpiler_depends_on(FnHead,ArgsHeadSz1,Fn,LArgs1)) ->
@@ -2341,44 +2384,6 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
     case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
     Out = ['if', [metta_unify, Var, Pattern], Result, Next].
 */
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then,Else],!,
-  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
-  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
-  append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN).
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then],!,
-  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
-  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
-  append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,'Empty',Converted, ConvertedN).
-
-compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN):-
-  f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
-  f2p(HeadIs,LazyVars,ElseResult,ElseResultN,ElseLazyEval,Else,ElseCode,ElseCodeN),
-  arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval),
-  %(Else=='Empty' -> LazyEval=ThenLazyEval ; arg_properties_widen(ThenLazyEval,ElseLazyEval,LazyEval)),
-  %lazy_impedance_match(ThenLazyEval,LazyEval,ThenResult,ThenCode,ThenResultN,ThenCodeN,ThenResult1,ThenCode1),
-  %lazy_impedance_match(ElseLazyEval,LazyEval,ElseResult,ElseCode,ElseResultN,ElseCodeN,ElseResult1,ElseCode1),
-  % cannnot use add_assignment here as might not want to unify ThenResult and ElseResult
-  append(ThenCode,[[assign,RetResult,ThenResult]],T),
-  append(ElseCode,[[assign,RetResult,ElseResult]],E),
-  Converted=[[prolog_if,If,T,E]],
-  append(ThenCodeN,[[assign,RetResultN,ThenResultN]],TN),
-  append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
-  ConvertedN=[[prolog_if,If,TN,EN]].
-
-compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
-  Convert = ['quote',Quoted],!,
-  f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
-  lazy_impedance_match(LazyRetQuoted,x(noeval,eager,[]),QuotedResult,QuotedCode,QuotedResultN,QuotedCodeN,QuotedResult1,QuotedCode1),
-  QuotedResult1a=['quote',QuotedResult1],
-  lazy_impedance_match(x(noeval,eager,[]),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
-  assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
-  assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
 % !(compile-body! (function 1))
 % !(compile-body! (function (throw 1)))

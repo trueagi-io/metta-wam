@@ -1,5 +1,5 @@
 
-!(call-p use_module (@ library jpl))
+; !(call-p use_module [ library jpl ] )
 
 ; !(call-p use_module [ library jpl ] )
 
