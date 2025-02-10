@@ -1087,7 +1087,7 @@ determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
       VarCount is LenArgs-FixedLength,
       length(VarArgsLazy, VarCount),
       get_property_lazy(VarArgsLazy0,VarArgsLazy),
-      maplist(=(eVarArgsLazy, VarArgsLazyList)),
+      maplist(=(VarArgsLazy, VarArgsLazyList)),
       append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
       get_property_lazy(RetLazy0,RetLazy)
    ;
@@ -1636,6 +1636,29 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A
       true
    ; check_supporting_predicates('&self',F/LArgs1)),
    notice_callee(Caller,F/LArgs1))).
+ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
+ must_det_lls((
+   FIn=..[F|Pre], % allow compound natives
+   append(Pre,ArgsIn,Args00),
+   maybe_lazy_list(Caller,F,1,Args00,Args0),
+   %label_arg_types(F,1,Args0),
+   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
+   atomic_list_concat(['mc_n_',FixedArity,'__',F],Fp),
+   %label_arg_types(F,0,[A|Args1]),
+   % bundle the variable arguments into a list
+   length(FixedPart,FixedArity),
+   append(FixedPart,VariablePart,Args1),
+   append(FixedPart,[VariablePart],Args1a),
+   append(Args1a,[A],Args2),
+   R=..[Fp|Args2],
+   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
+      compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
+      (transpiler_show_debug_messages -> format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]) ; true)
+   ; true),
+   ((current_predicate(Fp/LArgs1);member(F/LArgs1,DontStub)) ->
+      true
+   ; check_supporting_predicates('&self',F/LArgs1)),
+   notice_callee(Caller,F/LArgs1))).
 %ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
@@ -2173,22 +2196,13 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
-
-%    (transpiler_predicate_store(Fn,LenArgsPlus1,ArgsLazy0,RetLazy0) ->
-%       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
-%       get_property_lazy(RetLazy0,RetLazy)
-%    transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
-%       maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
-%       VarCount is LenArgs-FixedLength,
-%       length(VarArgsLazy, LenArgs),
-%       get_property_lazy(VarArgsLazy0,VarArgsLazy)
-%       maplist(=(eVarArgsLazy, VarArgsLazyList)),
-%       append(FixedArgsLazy,VarArgsLazyList,ArgsLazy),
-%       get_property_lazy(RetLazy0,RetLazy)
-
-
-%   ; transpiler_predicate_nary_store(Fn,LArgs1,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
-
+   ; transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
+      VarCount is LArgs-FixedLength,
+      length(VarArgsLazyList, VarCount),
+      maplist(=(VarArgsLazy0), VarArgsLazyList),
+      append(FixedArgsLazy0,VarArgsLazyList,EvalArgs),
+      ResultLazy=RetLazy0,
+      Docall=varargs(FixedLength)
    ; (FnHead=Fn, ArgsHeadSz1=LArgs1) ->
       EvalArgs=LazyVars,
       ResultLazy=x(noeval,eager,[]),
@@ -2234,6 +2248,12 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       assign_only(Converteds2,RetResult,[call(Fn)|RetResults],Converted),
+      assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
+   ; Docall=varargs(FixedLength2) ->
+      maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
+      maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
+      append(Converteds,Converteds2),
+      assign_only(Converteds2,RetResult,[call_var(Fn,FixedLength2)|RetResults],Converted),
       assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
    ;
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
