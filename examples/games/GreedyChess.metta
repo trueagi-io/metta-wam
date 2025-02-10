@@ -377,12 +377,8 @@
     (
     ;  Identify opponent pieces that can attack.
     ($CanAttack (takingboxes $OpponentColor $Board))
-    ($1_ (println! "takingboxes completed..."))
-    ;(LoadPiecesAtomspace $CanAttack)
     ; Check if any route of pieces that can attack leads to the specified square.
     ($OpenRouteToSquare (list_clear_route $Board $Square $CanAttack))
-    ($2_ (println! "Openroutetoking completed..."))
-    ;($dummy (println! $OpenRouteToSquare))
     ;($OpenRouteToSquare () )
     )
     ; if the list is populated (size exceeds 0), that means the piece can be taken.
@@ -400,7 +396,11 @@
 ;   Returns:
 ;   $next-square The full contents of square.
 (= (return_entire_box $Coordinates $Board) 
-  (let*
+  (if (== (size-atom $Coordinates) 4) 
+   ; if you send this the full box already...
+    $Coordinates
+   ;else
+    (let*
     ;examine the next square on the board
     (($next-square (car-atom $Board)  )
     ($X (nth 1 $next-square) )
@@ -410,7 +410,8 @@
     (if (== $G $Coordinates) 
       $next-square
       (return_entire_box $Coordinates (cdr-atom $Board)))
-   ) 
+    )
+  ) 
 )
 ;
 ; (xy_box)
@@ -488,7 +489,7 @@
     ( 
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )
-      ($entire (return_entire_box ($X2 $Y2) $Board))
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
       ($passing_1 ($X2 6) )
       ($entire_box_down_one  (return_entire_box $passing_1  $Board))
       )
@@ -552,7 +553,7 @@
     ( 
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )      
-      ($entire (return_entire_box ($X2 $Y2)  $Board))
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
       ($passing_1 ($X1 3) )
       ($entire_box_up_one  (return_entire_box $passing_1  $Board))
       )
@@ -878,7 +879,6 @@
        (let* (
           ($next-sq (car-atom $CanAttack))
           ($AttackBool (clear_route $next-sq $Square $Board))
-          ($1_ (println! $next-sq))
              )
           (if (== $AttackBool True) 
               (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
@@ -916,10 +916,10 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6 s q) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
-                        (1 3) (2 3) (3 3 g q) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
@@ -992,12 +992,21 @@
             ; Try the move and update the board state. 
             ($provisional_board  (move_piece $h $i $starting_board))   
             ; locate human's king
-            ($king_square (xy_box (s k) $provisional_board))           
+            ($king_square (xy_box (s k) $provisional_board))     
+            ;
+            ($full_king_sq (return_entire_box $king_square  $provisional_board))  
             ; Ensure the player's king is not in check from gold (g) if moved.     
-            ($KingCompromised (take_dest $king_square g $provisional_board))
+            ($KingCompromised (take_dest $full_king_sq g $provisional_board))
               )   
             (if (== $KingCompromised False)
-                (println! $provisional_board)
+                ; remove the old chess board
+                (progn 
+                (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
+                ; re-create a new board 
+                (add-atom &self (board-state $provisional_board))
+                ; display
+                (D)
+                )
                 ((py-atom print) "Can't move there, your king would be in check.")
             )
         )
