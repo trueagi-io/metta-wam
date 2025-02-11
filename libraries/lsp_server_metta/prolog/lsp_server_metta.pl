@@ -933,9 +933,12 @@ handle_msg("textDocument/didChange", Msg, false) :-
 
 % Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
-    _{params: Params} :< Msg,
-    xref_source_expired(Params.textDocument.uri),
-    check_errors_resp(Params.textDocument.uri, Resp).
+    _{params: _{textDocument: TextDoc}} :< Msg,
+    _{uri: Uri} :< TextDoc,
+    doc_path(Uri, Path),
+    read_file_to_string(Path, String, [encoding(utf8)]),
+    xref_maybe(Path, String),
+    check_errors_resp(Uri, Resp).
 
 % Handle document close notifications
 handle_msg("textDocument/didClose", Msg, false) :-
