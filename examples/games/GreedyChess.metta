@@ -236,23 +236,23 @@
   (
    (let $a (display_filter     $board ) 
           ((py-atom print) (format-args "\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
+       ------------------------------------------------- \n
+      8| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      7| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      6| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      5| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      4| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      3| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      2| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ------------------------------------------------- \n
+      1| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
+       ---1-----2-----3-----4-----5-----6-----7-----8--- \n
       " 
       
           $a)))))
@@ -425,24 +425,27 @@
   (let*
     (
     ; assign variables for the next piece
+    ;($debug ((py-atom print) $PieceColor))
     ($next_square (car-atom $Board)  )
     ($next_x (nth 1 $next_square) )
     ($next_y (nth 2 $next_square) )
-    ($next_color (nth 3 $next_square) )
-    ($next_rank  (nth 4 $next_square) )
     )
     ; then examine next square
     (if (== (size-atom $next_square) 2) 
       ; empty square, skip
       (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))
       ; else check this piece
-      (if
-        (and (== $next_color $PieceColor)
-             (== $next_rank $PieceRank))
-          ; return x and y of the found piece
-          ($next_x $next_y)
-          ; else keep checking the board
-          (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))))))
+      (let* (
+            ($next_color (nth 3 $next_square) )
+            ($next_rank  (nth 4 $next_square) )
+            )
+            (if
+              (and (== $next_color $PieceColor)
+                   (== $next_rank $PieceRank))
+                ; return x and y of the found piece
+                ($next_x $next_y)
+                ; else keep checking the board
+                (xy_box ($PieceColor $PieceRank) (cdr-atom $Board)))))))
   
 ;
 ;
@@ -992,15 +995,16 @@
             ; Try the move and update the board state. 
             ($provisional_board  (move_piece $h $i $starting_board))   
             ; locate human's king
-            ($king_square (xy_box (s k) $provisional_board))     
-            ;
+            ($king_square (xy_box (s k) $provisional_board))    
+            ; 
             ($full_king_sq (return_entire_box $king_square  $provisional_board))  
             ; Ensure the player's king is not in check from gold (g) if moved.     
             ($KingCompromised (take_dest $full_king_sq g $provisional_board))
               )   
+            ; If move valid, proceed to create new board atom with move.
             (if (== $KingCompromised False)
-                ; remove the old chess board
                 (progn 
+                ; remove the old chess board
                 (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
                 (add-atom &self (board-state $provisional_board))
@@ -1075,25 +1079,25 @@
     ; case statement for commands
     (if (== $command "M") 
         (progn 
-          (M)                          ; Move human piece 
+          (M)                         ; Move human piece 
           (command-loop))             ; Get next command, stay in loop.
     (if (== $command "G")
         (progn 
-          (G)                          ; AI move
+          (G)                         ; AI move
           (command-loop))             ; Get next command, stay in loop.
     (if (== $command "R")
         (progn 
-          (R)                          ; Reset = "R"
+          (R)                         ; Reset = "R"
           (command-loop))             ; Get next command, stay in loop.
     (if (== $command "C")
         (progn 
-          (C)                          ; List valid commands = "C"
+          (C)                         ; List valid commands = "C"
           (command-loop))             ; Get next command, stay in loop.
     (if (== $command "D")
         (progn 
-          (D)                          ; Display board "D"
+          (D)                         ; Display board "D"
           (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "Q")              ; EXIT HERE
+    (if (== $command "Q")             ; EXIT HERE
           ((py-atom print) "Quitting MeTTa Greedy Chess.")
     ; otherwise
     (progn 
@@ -1105,5 +1109,5 @@
   (progn
     (chess)           ; Start the chess game
     (command-loop))) ; Enter the recursive command-processing loop
-!(main_loop)
+;!(main_loop)
 ;-----------;
