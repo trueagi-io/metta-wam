@@ -235,7 +235,6 @@ xref_source_path(Str) :- string(Str),atom_string(Path,Str),!,xref_source_path(Pa
 xref_source_path(Str) :- \+ atom(Str),!, debug_lsp(xref, 'not a xref_source_path: ~q', [Str]), !.
 xref_source_path(Doc) :- maybe_doc_path(Doc, Path), !, xref_source_path(Path).
 xref_source_path(Dirs) :- exists_directory(Dirs), !,nop( xref_source_dir(Dirs)).
-xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(lsp(xref), 'Skipping check for "~w" as 20 seconds have not passed.', [Path]), !.
 %xref_source_path(Path):- has_xref_info(Path), !, debug_lsp(xref, 'Has xref info: ~w.', [Path]), !.
 xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the file has a .metta extension.
 xref_source_path(Path) :- xref_enqueue_file(Path).
@@ -249,7 +248,7 @@ has_xref_info(Path):- lsp_state:made_metta_file_buffer(Path),!.
 :- dynamic
    xref_file_state/2,
    xref_thread_control/1,
-   xref_file_queue/1.
+   xref_file_queue/2.
 
 % Main predicate to submit a file and ensure it's processed
 xref_submit_and_wait(File) :- xref_file_state(File, done), !.
@@ -304,35 +303,25 @@ enumerate_files_in_directory(_, []).  % Handle non-directory paths by returning 
 % xref_enqueue_file(+File) is det.
 %
 %   Adds a file to the processing queue and ensures the worker thread is running.
-xref_enqueue_file(File) :- xref_file_queue(File),!.
-xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File),!.
+xref_enqueue_file(File) :-
+    xref_file_queue(File, _), !,
+    % Already enqueued, so just bump time
+    get_time(CurrentTime),
+    transaction(( retractall(xref_file_queue(File, _)),
+                  assertz(xref_file_queue(File, CurrentTime))
+                )),
+    xref_ensure_worker_thread_running.
+% TODO: why should we not proceed if we have the buffer?
+% xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File), !, debug_lsp(xref, "HAVE METTA FILE BUFFER", []).
 xref_enqueue_file(Path):- disable_thread_system, !, xref_source_now_maybe(Path).
 xref_enqueue_file(File) :-
     xref_ensure_worker_thread_running,
     xref_update_file_state(File, submitted),
-    ( xref_file_queue(File) ->
-        true  % File is already in the queue; do nothing
-    ;   assertz(xref_file_queue(File))
-    ).
-
-
-
-%!  check_time_elapsed(+Path) is semidet.
-%
-%   Checks if at least 20 seconds have passed since the last file check for the given path.
-%
-%   @arg Path The file path to check.
-:- dynamic(lsp_state:last_check_time/2).
-
-check_time_elapsed(Path) :-
-    get_time(CurrentTime),  % Get the current system time.
-    (   lsp_state:last_check_time(Path, LastCheck),  % Retrieve the last check time for the file.
-        ElapsedTime is CurrentTime - LastCheck,  % Calculate the time difference.
-        ElapsedTime > 20  % Ensure at least 20 seconds have passed.
-    ->  retractall(lsp_state:last_check_time(Path, _)),  % Remove the old time entry.
-        asserta(lsp_state:last_check_time(Path, CurrentTime))  % Update with the new time.
-    ;   \+ lsp_state:last_check_time(Path, _),  % If no previous time is recorded, store the current time.
-        asserta(lsp_state:last_check_time(Path, CurrentTime))
+    get_time(CurrentTime),
+    ( xref_file_queue(File, _) ->
+        transaction(( retractall(xref_file_queue(File, _)),
+                      assertz(xref_file_queue(File, CurrentTime) )))  % File is already in the queue; bump timestamp
+    ;   assertz(xref_file_queue(File, CurrentTime))
     ).
 
 %!  get_current_text(+Path, -NewText) is det.
@@ -393,13 +382,12 @@ xref_ensure_worker_thread_running :-
 % Worker thread that processes files from the queue
 xref_process_files :-
     repeat,
-    (xref_file_queue(File) ->
-        retract(xref_file_queue(File)),
-        once(xref_handle_file(File)),
-        fail  % Continue processing files
-    ; sleep(0.1),
-      fail
-    ).
+    get_time(Now),
+    ( ( xref_file_queue(File, Ts), Now >= Ts + 5 ) ->
+      retractall(xref_file_queue(File, _)),
+      once(xref_handle_file(File))
+    ; sleep(0.2) ),
+    fail.
 
 % Handle individual files and catch interruptions
 xref_handle_file(File) :-
@@ -695,4 +683,3 @@ Dict = _{
   }
 }.
 */
-
