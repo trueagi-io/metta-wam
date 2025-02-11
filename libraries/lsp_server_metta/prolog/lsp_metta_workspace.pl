@@ -264,6 +264,7 @@ xref_interrupt_worker(_File) :- disable_thread_system, !.
 xref_interrupt_worker(File) :-
     ignore((xref_update_file_state(File, processing),
             xref_thread_control(ThreadID),
+            thread_property(ThreadID, status(running)),
             thread_signal(ThreadID, throw(interrupted)))).
 
 % Wait for a specific file to be processed completely
