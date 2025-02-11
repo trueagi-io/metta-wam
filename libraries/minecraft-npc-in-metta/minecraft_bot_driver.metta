@@ -32,6 +32,6 @@
 (= (on_chat "scan area")
    (enumerate_voxel_space))
 
-(= (start-bot) (call-p logon0))
+(= (start-bot) (call-p login0))
 
 !(println! "loaded minecraft_bot_driver.metta")
