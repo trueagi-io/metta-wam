@@ -67,6 +67,8 @@
 
 :- include(lsp_metta_include).
 
+:- use_module(lsp_server_metta, [debug_lsp/3]).
+
 :- use_module(lsp_metta_outline, [line_col/2]).
 
 %:- module(lsp_metta_workspace, [
