@@ -257,7 +257,8 @@ xref_submit_and_wait(File) :-
     xref_enqueue_file(File),
     xref_wait_for_file(File).
 
-disable_thread_system.
+% enabled threads.
+disable_thread_system :- fail.
 
 % Send an interrupt to the worker thread
 xref_interrupt_worker(_File) :- disable_thread_system, !.
