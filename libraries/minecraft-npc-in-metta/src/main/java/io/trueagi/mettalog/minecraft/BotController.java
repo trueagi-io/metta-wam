@@ -24,7 +24,7 @@ import org.jpl7.Compound;
 import org.jpl7.Query;
 import org.jpl7.Term;
 import org.jpl7.JRef;
-
+import org.jpl7.Variable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -241,10 +241,12 @@ public class BotController {
 			return ""+component;
     }
     
+
     public void executeQueuedCommands() {
         while (shouldProcessQueue) {
-            Query query = new Query("dequeue_command(Command).");
-    
+            Variable commandVar = new Variable("Command");
+            Query query = new Query("dequeue_command", new Term[]{commandVar});
+
             if (query.hasSolution()) {
                 // Safely retrieve the solution
                 java.util.Map<String, Term> solution = query.nextSolution();
@@ -255,7 +257,7 @@ public class BotController {
                     log.warn("Prolog query returned null or missing 'Command'. Skipping execution.");
                 }
             }
-    
+
             try {
                 Thread.sleep(queueSleepTimeMs);
             } catch (InterruptedException e) {
@@ -264,6 +266,7 @@ public class BotController {
             }
         }
     }
+
 
 
     public void executeCommand(Term command) {
