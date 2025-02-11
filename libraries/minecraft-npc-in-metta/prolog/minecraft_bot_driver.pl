@@ -42,7 +42,7 @@ login(Username, Password, Server, Port) :-
 
 
 login0 :-
-    bot_controller(Bot),    % Retrieve Java object reference
+    get_bot_controller(Bot),    % Retrieve Java object reference
     jpl_call(Bot, 'login0', [], _).
 
 

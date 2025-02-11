@@ -1,8 +1,36 @@
 #!/bin/bash
 
+DEBUG=false
+
+# Detect if script is being sourced
+SOURCED=false
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+  SOURCED=true
+fi
+
+# Get the absolute path of the script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-(
+# Enclose execution in a subshell to ensure directory is restored
+
+  # Change to script directory
+  cd "$SCRIPT_DIR" || { echo "❌ Failed to change directory to script location."; [[ $SOURCED == false ]] && exit 1 || return 1; }
+
+  # Parse arguments for debug mode
+  while getopts "d" opt; do
+    case $opt in
+      d)
+        DEBUG=true
+        echo "🛠 Debug mode enabled."
+        ;;
+      \?)
+        echo "❌ Invalid option: -$OPTARG" >&2
+        [[ $SOURCED == false ]] && exit 1 || return 1
+        ;;
+    esac
+  done
+
+
     cd "$SCRIPT_DIR" || { echo "❌ Failed to change directory to script location."; [[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 1 || exit 1; }
 
     # Ensure environment variables are correctly loaded
@@ -20,22 +48,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
     # Ensure classpath.txt exists before reading it
     if [[ ! -f classpath.txt ]]; then
-        echo "❌ classpath.txt not found! Build process may have failed."
-        [[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 1 || exit 1
+	echo "❌ classpath.txt not found! Build process may have failed."
+	[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 1 || exit 1
     fi
 
     # Set CLASSPATH
     export CLASSPATH="$(pwd)/target/mettalog.minecraft-1.0-SNAPSHOT.jar:$(cat classpath.txt)"
     echo "🔹 CLASSPATH set."
 
-    # Display environment setup instructions
-    cat <<EOF
-📦 To verify the CLASSPATH in Metta, type: !(println! (call-fn getenv CLASSPATH))
-🔧 To start the bot in Metta, type: !(start-bot)
-EOF
+  # Debug Information
+  if $DEBUG; then
+    echo "🔎 Debug Info:"
+    echo "📁 Current Directory: $(pwd)"
+    echo "📜 CLASSPATH: $CLASSPATH"
+    echo "📜 Classpath File Contents:"
+    cat classpath.txt
+    echo "📜 Java Version:"
+    java -version
+    echo "📜 SWI-Prolog Version:"
+    swipl --version
+  fi
 
-    # Launch Metta
-    echo "🧠 Launching Metta..."
-    mettalog minecraft_bot_hello.metta --repl
-)
 
