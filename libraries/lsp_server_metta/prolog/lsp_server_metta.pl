@@ -927,9 +927,15 @@ handle_msg("textDocument/didChange", Msg, false) :-
                 contentChanges: Changes}} :< Msg,
     _{uri: Uri} :< TextDoc,
     doc_path(Uri, Path),
+    % this calculates the new text in the file from changes
+    % asserts doc_text/2 (not used anywhere?); changed to also assert lsp_state:full_text_next/2
     handle_doc_changes(Path, Changes),
-    source_file_text(Path, DocFullText), % Derive from lsp_metta_changes:doc_text_d4/2
-    xref_maybe(Path, DocFullText). % Check if changed and enqueue the reindexing
+    % "manually" calling xref_source_expired/1 and xref_metta_source/1
+    % instead of xref_maybe/1 because that checks
+    % lsp_state:full_text_next/2 to verify if updates are needed,
+    % handle_doc_changes has already made asserted the latest state
+    xref_source_expired(Path),
+    xref_metta_source(Path).
 
 % Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
