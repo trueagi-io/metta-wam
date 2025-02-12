@@ -1011,10 +1011,19 @@ oo_new(Type, Attributes, ObjectID) :-
     % Store the type of the object.
     assertz(o_f_v(ObjectID, type, Type)),
     % Store all provided attributes for the new object.
+    oo_set_attibutes(ObjectID,value,Attributes).
+
+
+oo_set_attibutes(ObjectID,FallbackTrait,Attributes):-
     forall(
-        member(FieldName:FieldValue, Attributes),
+        (member(NV, Attributes),
+         nv_name_value(FallbackTrait,NV,FieldName,FieldValue)),
         assertz(o_f_v(ObjectID, FieldName, FieldValue))
     ).
+
+nv_name_value(FallbackTrait,Compound,FallbackTrait,NonCompound):- \+ compound(NonCompound),!.
+nv_name_value(_FallbackTrait,Compound,FieldName,FieldValue):- compound_name_arguments(Compound,FieldName,[FieldValue]),!.
+nv_name_value(_FallbackTrait,Compound,FieldName,FieldValue):- compound_name_arguments(Compound,_,[FieldName,FieldValue]),!.
 
 %!  setup_default_fields(+Type, +ObjectID, +ProvidedFields) is det.
 %
