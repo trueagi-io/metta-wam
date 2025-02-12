@@ -4570,7 +4570,11 @@ is_metta_space(Space) :-  nonvar(Space),
 
 % metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-metta_eq_def(Eq, KB, H, B) :-
+metta_eq_def(Eq, KB, H, B):-
+  %if_t(var(H),trace),
+  no_repeats_var(NR),!,metta_eq_def1(Eq, KB, H, B), NR = hb(H, B).
+
+metta_eq_def1(Eq, KB, H, B) :-
     % Ensure `Eq` is unified with '='.
     ignore(Eq = '='),
     if_or_else(
@@ -5079,7 +5083,13 @@ asserted_do_metta2(Self, Load, PredDecl, Src) :-
 %
 %   @arg X The term to check.
 never_compile(_):- option_value('exec',interp),!.
-never_compile(X):- always_exec(X).
+%never_compile(X):- always_exec(X).
+toplevel_interp_only([S|_]):-  symbol(S), toplevel_interp_only_symbol(S).
+toplevel_interp_only_symbol('import!').
+toplevel_interp_only_symbol('extend-py!').
+toplevel_interp_only_symbol('include').
+toplevel_interp_only_symbol('include!').
+toplevel_interp_only_symbol(H):- symbol_concat('add-atom',_,H),!.
 
 %!  always_exec(+W) is nondet.
 %
@@ -5105,10 +5115,13 @@ always_exec(_):-!,fail. % everything else
 %
 %   @arg Sym The symbol to evaluate.
 always_exec_symbol(Sym):- \+ symbol(Sym),!,fail.
+always_exec_symbol(H):- always_exec_symbol_except(H),!.
 always_exec_symbol(H):- symbol_concat(_,'!',H),!. %pragma!/print!/transfer!/bind!/include! etc
 always_exec_symbol(H):- symbol_concat('add-atom',_,H),!.
 always_exec_symbol(H):- symbol_concat('remove-atom',_,H),!.
 always_exec_symbol(H):- symbol_concat('subst-',_,H),!.
+
+always_exec_symbol_except('die!').
 
 %!  file_hides_results(+List) is nondet.
 %
@@ -5705,7 +5718,9 @@ into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
 
 
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
- \+ never_compile(TermV),
+  \+ option_value('exec',interp),
+ % never_compile(TermV),
+ \+ toplevel_interp_only(TermV),
  is_transpiling, !,
   must_det_ll((((
 

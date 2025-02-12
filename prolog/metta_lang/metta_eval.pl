@@ -2134,8 +2134,25 @@ into_space_and_arg(_Depth,Self,[Arg],Self,Arg):-!.
 into_space_and_arg( Depth,Self,[Other,Arg],Space,Arg):-
   into_space(Depth,Self,Other,Space).
 
-eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):-
-  with_scope(Eq,RetType,Depth,Self, 'mi_2_bind!'(Other,Expression,RetVal)).
+%eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,  with_scope(Eq,RetType,Depth,Self, 'mi_2_bind!'(Other,Expression,RetVal)).
+
+eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,
+   must((into_name(Self,Other,Name),!,
+    eval(Eq,_,Depth,Self,Expression,Value),
+    %dmsg((Name = (Expr->Value))),
+    nb_bind(Name,Value), % oo_set(Value,bound_to,Name),
+    make_nop(RetType,Value,RetVal))),
+    check_returnval(Eq,RetType,RetVal).
+
+'mi_2_bind!'(Other,Expr,RetVal):-
+    peek_scope(Eq,RetType,Depth,Self),
+    must((into_name(Self,Other,Name),!,
+    eval(Expr,Value),
+    %dmsg((Name = (Expr->Value))),
+    nb_bind(Name,Value), % oo_set(Value,bound_to,Name),
+    make_nop(RetType,Value,RetVal))),
+    check_returnval(Eq,RetType,RetVal).
+
 
 with_scope(Eq,RetType,Depth,Self,Goal):-
    %grab_scope([eq=WEq,retType=WRetType,depth=WDepth,self=WSelf]),
@@ -2184,12 +2201,6 @@ pop_default_value(eq,=).
 pop_current_scope(N,_):- if_t(nb_current(N,[_|List]),nb_setval(N,List)).
 
 
-'mi_2_bind!'(Other,Expr,RetVal):-
-   peek_scope(Eq,RetType,Depth,Self),
-   must((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
-    nb_bind(Name,Value), set_oo_prop(Value,bound_to,Name),
-    make_nop(RetType,Value,RetVal))),
-   check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
    set_option_value_interp(Name,Value))),  make_nop(RetType,Value,RetVal),
