@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # Check if the script was sourced or executed
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # ANSI escape code for yellow foreground
@@ -95,3 +96,8 @@ fi
 # echo "PATH=$PATH"
 #echo "PYTHONPATH=$PYTHONPATH"
 source $METTALOG_DIR/scripts/mettalog_completion.sh
+
+alias ensure_venv="source $METTALOG_DIR/scripts/ensure_venv"
+
+
+
