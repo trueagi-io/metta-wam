@@ -397,8 +397,8 @@ eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,
 insanity_check_eval(_,_):- is_testing,!,fail.
 insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),wdmsg(insanity_check_eval(Which,X)),!,trace.
 insanity_check_eval(Which,X):-  X=@=[_|_],wdmsg(insanity_check_eval(Which,X)),!,trace.
-sanity_check_eval(Which,X):- tracing,!,notrace,nortrace,call_cleanup(\+ insanity_check_eval(Which,X), rtrace),!.
-sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X).
+sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), trace),!.
+sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
 eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
 
@@ -426,16 +426,115 @@ eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
        Y = Name)),
       sanity_check_eval(eval_20_atom,Y).
 
-eval_20(_Eq,_RetType,_Depth,_Self,[Sym|Args],Res):-
+eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):- 
+%fail,
     atomic(Sym), py_is_function(Sym), is_list(Args), !,
-    maplist(as_prolog, Args , Adjusted),
-    py_call_method_and_args([Sym|Adjusted],Ret),
-    py_metta_return_value(Ret,Res).
+    maplist(as_prolog, Args , Adjusted),!,
+    py_call_method_and_args(Sym,Adjusted,Ret),
+    py_metta_return_value(RetType, Ret,Res).
 
-py_metta_return_value(Ret,[]):- Ret=='@'(none),!.
-py_metta_return_value(Ret,'True'):- Ret=='@'(true),!.
-py_metta_return_value(Ret,'False'):- Ret=='@'(false),!.
-py_metta_return_value(IO,IO).
+
+eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):-
+    must_det_ll((py_atom(Arg,Res))).
+
+eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- 
+    must_det_ll((py_atom_type(Arg,Type,Res))).
+
+
+was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,PArgs,ParamList,RRetType):- 
+   atomic(PyAtom), py_is_function(PyAtom), !, Sym = PyAtom,
+   into_param_types(Eq,RetType,Depth,Self,Sym,PArgs,ParamList,RRetType).
+was_py_call(Eq,RetType,Depth,Self,[PyAtom|Args],Sym,PArgs,ParamList,RRetType):- fail, PyAtom == 'py-atom',!,
+  eval_py_atom(Eq,RetType,Depth,Self,[PyAtom|Args],Sym),
+  into_param_types(Eq,RetType,Depth,Self,Args,PArgs,ParamList,RRetType).
+
+into_param_types(_Eq,RetType,_Depth,_Self,_SymList,PArgs,ParamList,RetType):- length(PArgs,N),length(ParamList,N),!,
+   maplist(=('%Undefined%'),ParamList).
+
+apply_param_types_return(Depth,Self, Args,Res, ParamList,_RetType, Adjusted,Ret):-
+    apply_param_types(Depth, Self,ParamList, Args , Adjusted),
+    Res = Ret.
+
+
+apply_param_type(Depth, Self,T,M,Y):- into_typed_arg(Depth, Self, T, M, Y).
+
+apply_param_types(_Depth,_Self,_, Nil , O):- Nil == [] ,!, O = Nil.
+apply_param_types(_Depth,_Self,_, Var , O):- var(Var), !, O = Var.
+apply_param_types(Depth, Self,PT, [Y,A|Args] , [Z,Val|Adjusted]):-
+   var(Y),nonvar(A), de_pcons(PT,X,TPT),de_pcons(TPT,T,RTPT),
+   var(X),nonvar(T),!,
+   apply_param_type(Depth, Self,T,A,Val), apply_param_types(Depth, Self,[X|RTPT],[Y|Args],[Z|Adjusted]).
+
+apply_param_types(Depth, Self,PT, [A|Args] , [Val|Adjusted]):-
+    de_pcons(PT,T,ParamList),
+    apply_param_type(Depth, Self,T,A,Val), apply_param_types(Depth, Self,ParamList,Args,Adjusted).
+
+de_pcons(Var,Var,VarT):- var(Var),!,copy_term(Var,VarT).
+de_pcons([P|T],P,T):- T\==[], !.
+de_pcons([P],P,[P]):- !.
+de_pcons(Var,Var,VarT):-copy_term(Var,VarT).
+
+
+eval_20(Eq,RetType,Depth,Self,[PyAtom|Args],Res):-  fail,  is_list(Args), nonvar(PyAtom),
+    was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,Args,ParamList,DeclRetType),!,
+    narrow_types(RetType,DeclRetType,CombinedRetType),!,    
+    apply_param_types_return(Depth, Self,Args,Res,ParamList,CombinedRetType,Adjusted,Ret),
+    py_call_method_and_args(Sym,Adjusted,Ret),
+    py_metta_return_value(RetType,Ret,Res).
+
+
+eval_20(Eq,RetType,Depth,Self,[Op|Args],Res):- 
+   nonvar(Op), eval_202(Eq,RetType,Depth,Self,[Op|Args],Res).
+
+legal_op(X):- must_det_lls(nonvar(X)).
+
+is_py_atom(Var):- var(Var),!,fail.
+is_py_atom('py-atom').
+eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym,ArrowType]|Args],Res):- fail, 
+   is_py_atom(PyAtom),!,
+   Op = [PyAtom,Sym],
+   eval_202(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
+
+% !(invoke-ftype println! (-> Atom (->)) (+ 1 1))
+
+eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym]|Args],Res):- fail, 
+   is_py_atom(PyAtom),!,
+   Op = [PyAtom,Sym],
+   eval_202(Eq,RetType,Depth,Self,['invoke',Op|Args],Res).
+
+eval_202(Eq,RetType,Depth,Self,['invoke-for',Op,DeclRetType|Args],Res):- !, legal_op(Op),
+   narrow_types(RetType,DeclRetType,CombinedRetType),
+   eval_202(Eq,CombinedRetType,Depth,Self,['invoke',Op|Args],Res).
+
+eval_202(Eq,RetType,_Depth,Self,['invoke-ftype',Op,ArrowType|Args],Ret):- !, legal_op(Op),
+   arrow_type(ArrowType,ParamList,DeclRetType),
+   narrow_types(RetType,DeclRetType,CombinedRetType),
+   apply_param_types_return(Depth, Self,Args,Res,ParamList,CombinedRetType,Adjusted,Ret),
+   eval_202(Eq,CombinedRetType,Depth,Self,['invoke',Op|Adjusted],Res).
+
+eval_202(_Eq,RetType,_Depth,_Self,['invoke',Op|Args],Res):- !, legal_op(Op),
+   must_det_lls(op_to_pred_call_ret(Op,Pred2,Ret3)),
+   call(Pred2,Args, Ret),
+   call(Ret3,RetType,Ret,Res).
+
+op_to_pred_call_ret(PyAtom,Pred2,Ret3):- is_list(PyAtom),!, 
+   trace ,eval_py_atom(_Eq,_RetType,_Depth,_Self,PyAtom,Res),!,op_to_pred_call_ret(Res,Pred2,Ret3).
+op_to_pred_call_ret(PyAtom,Pred2,Ret3):-
+  py_is_function(PyAtom), !, Sym = PyAtom,
+  Pred2= py_call_method_and_args(Sym),
+  Ret3= py_metta_return_value().
+
+eval_20(_Eq,_RetType,Depth,Self, ['apply-param-types',Convert,Args],Res):- !, apply_param_types(Depth, Self, Convert, Args , Res).
+
+eval_20(_Eq,_RetType,Depth,Self, ['apply-param-type',Convert,Arg],Res):- !, apply_param_type(Depth, Self, Convert, Arg, Res).
+
+
+% ((py-atom type) "string")    <class 'str'>
+
+py_metta_return_value(_Suggest,Ret,[]):- Ret=='@'(none),!.
+py_metta_return_value(_Suggest,Ret,'True'):- Ret=='@'(true),!.
+py_metta_return_value(_Suggest,Ret,'False'):- Ret=='@'(false),!.
+py_metta_return_value(_Suggest,IO,IO).
 
 eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- no_eval(X),!,do_expander(Eq,RetType,X,Y).
 
@@ -1267,8 +1366,16 @@ subst_same(OldStructure, OldTerm, NewTerm, NewStructure) :-
 % =================================================================
 % =================================================================
 % =================================================================
+init_kb('new-space').
+init_kb('init-kb').
 
-eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
+is_make_new_kb([NEWKB|Props],KB,ExtraProps):- atom(NEWKB),init_kb(NEWKB),!,
+    oo_new('space',[],KB),
+    oo_set_attibutes(ObjectID,extra_props,Props),
+    oo_set_attibutes(ObjectID,extra_props,ExtraProps).
+
+
+eval_20(Eq,RetType,_Dpth,_Slf,[NEWKB|Props],Space):- is_make_new_kb([NEWKB|Props],Space,[]), !, check_returnval(Eq,RetType,Space).
 
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
@@ -2028,12 +2135,61 @@ into_space_and_arg(_Depth,Self,[Arg],Self,Arg):-!.
 into_space_and_arg( Depth,Self,[Other,Arg],Space,Arg):-
   into_space(Depth,Self,Other,Space).
 
-eval_20(Eq,RetType,_Depth,_Slf,['bind!',Other,['new-space']],RetVal):- atom(Other),!,
-  assert(was_asserted_space(Other)),
-  make_nop(RetType,[],RetVal), check_returnval(Eq,RetType,RetVal).
-eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expr],RetVal):- !,
+eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):-
+  with_scope(Eq,RetType,Depth,Self, 'mi_2_bind!'(Other,Expression,RetVal)).
+
+with_scope(Eq,RetType,Depth,Self,Goal):-
+   %grab_scope([eq=WEq,retType=WRetType,depth=WDepth,self=WSelf]),
+   setup_call_cleanup(push_scope([eq=Eq,retType=RetType,depth=Depth,self=Self]),
+       Goal,
+       pop_scope([eq=Eq,retType=RetType,depth=Depth,self=Self])).
+
+
+peek_scope(Eq,RetType,Depth,Self):- peek_scope([eq=Eq,retType=RetType,depth=Depth,self=Self]).
+peek_scope(List):- maplist(peek_scope_item,List).
+peek_scope_item(N=V):- peek_scope_item(N,V).
+peek_scope_item(N,V):- peek_current_scope(N,V),!.
+peek_scope_item(N,V):- peek_default_value(N,V),!.
+peek_default_value(self,V):- current_self(V).
+peek_default_value(depth,500).
+peek_default_value(retType,_).
+peek_default_value(eq,=).
+peek_current_scope(N,V):- nb_current(N,List),first_of(List,V).
+
+first_of(Nil,_):- Nil==[],!,fail.
+first_of(Nil,V):- var(Nil),!,V=Nil.
+first_of([V|_],V):-!.
+first_of(V,V).
+
+push_scope(Eq,RetType,Depth,Self):- must_det_lls(push_scope([eq=Eq,retType=RetType,depth=Depth,self=Self])).
+push_scope(List):- maplist(push_scope_item,List).
+push_scope_item(N=V):- push_scope_item(N,V),!.
+push_scope_item(N,V):- push_current_scope(N,V),!.
+push_scope_item(N,V):- peek_default_value(N,V),!.
+push_default_value(self,V):- current_self(V).
+push_default_value(depth,500).
+push_default_value(retType,_).
+push_default_value(eq,=).
+push_current_scope(N,V):- nb_current(N,List)->nb_setval(N,[V|List]),nb_setval(N,[V]).
+
+
+pop_scope(Eq,RetType,Depth,Self):- pop_scope([eq=Eq,retType=RetType,depth=Depth,self=Self]).
+pop_scope(List):- maplist(pop_scope_item,List).
+pop_scope_item(N=V):- pop_scope_item(N,V).
+pop_scope_item(N,V):- pop_current_scope(N,V),!.
+pop_scope_item(N,V):- peek_default_value(N,V),!.
+pop_default_value(self,V):- current_self(V).
+pop_default_value(depth,500).
+pop_default_value(retType,_).
+pop_default_value(eq,=).
+pop_current_scope(N,_):- if_t(nb_current(N,[_|List]),nb_setval(N,List)).
+
+
+'mi_2_bind!'(Other,Expr,RetVal):-
+   peek_scope(Eq,RetType,Depth,Self),
    must((into_name(Self,Other,Name),!,eval_args(Eq,RetType,Depth,Self,Expr,Value),
-    nb_bind(Name,Value),  make_nop(RetType,Value,RetVal))),
+    nb_bind(Name,Value), set_oo_prop(Value,bound_to,Name),
+    make_nop(RetType,Value,RetVal))),
    check_returnval(Eq,RetType,RetVal).
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_ll((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
@@ -2654,10 +2810,10 @@ eval_20(_Eq,_RetType,_Depth,_Self,['py-tuple',Arg],Res):- !,
 
 eval_40(_Eq,_RetType,_Depth,_Self,['py-chain',Arg],Res):- !,
   must_det_ll((py_chain(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- !,
-  must_det_ll((py_atom(Arg,Res))).
-eval_40(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- !,
-  must_det_ll((py_atom_type(Arg,Type,Res))).
+
+eval_40(Eq,RetType,Depth, Self,['py-atom'|Args],Res):- !,
+    eval_py_atom(Eq,RetType,Depth,Self,['py-atom'|Args],Res).
+
 eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2],Res):- !,
   make_py_dot(Arg1,Arg2,Res).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
@@ -3184,7 +3340,7 @@ cwtl_goal(AlarmID, Goal) :-
 eval_10(Eq,RetType,Depth,Self,X,Y):-
     as_prolog_x(0,Self,X,XX),
     eval_20(Eq,RetType,Depth,Self,XX,Y),
-    if_t( \+ sub_var(Y,X), sanity_check_eval(eval_20_last(XX),Y)).
+    notrace(if_t( \+ sub_var(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
@@ -3446,7 +3602,7 @@ maybe_type_check(_Eq,RetType,_ResIn,_ResOut,_Depth,Self,AE,More,Adjusted):-
 
 return_type_compat(_RetType,_XType).
 
-trace_if_debug(AE,_LenX):- if_t(debugging(metta(AE),true),trace).
+trace_if_debug(AE,_LenX):- if_t(debugging(metta(AE),true),trace),!.
 
 type_checks_out(Self,AE,LenX,Adjusted,RetType):-
    get_operator_typedef_R(Self,AE,LenX,XParamTypes,XType),
