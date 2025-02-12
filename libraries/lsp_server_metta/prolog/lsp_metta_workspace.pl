@@ -10,7 +10,6 @@
                                  succl/2,
                                  xref_maybe/2,
                                  xref_metta_source/1,
-                                 xref_metta_source/1,
                                  xref_reload_source/1,
                                  xref_source_expired/1,
                                  maybe_doc_path/2
@@ -67,6 +66,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- include(lsp_metta_include).
+
+:- use_module(lsp_server_metta, [debug_lsp/3]).
 
 :- use_module(lsp_metta_outline, [line_col/2]).
 
@@ -181,26 +182,26 @@ skip_xref_atom([Pred | _]):-
 
 xref_maybe(Doc, NewText) :- maybe_doc_path(Doc,Path), !, xref_maybe(Path, NewText).
 xref_maybe(Path, NewText) :- lsp_state:full_text_next(Path, OldText), OldText = NewText, !,
-    debug(lsp(xref), 'NewText for "~w" has not changed, skipping reload.', [Path]).
+    debug_lsp(xref, 'NewText for "~w" has not changed, skipping reload.', [Path]).
 xref_maybe(Path, NewText) :- lsp_state:full_text(Path, OldText), OldText = NewText, !,
-    debug(lsp(xref), 'FullText for "~w" has not changed, skipping reload.', [Path]).
+    debug_lsp(xref, 'FullText for "~w" has not changed, skipping reload.', [Path]).
 %xref_maybe(Path, NewText) :- retractall(lsp_state:full_text(Path, _)), assertz(lsp_state:full_text(Path, NewText)),!.
 xref_maybe(Path, NewText) :-
     lsp_state:full_text(Path, _), retractall(lsp_state:full_text(Path, _)),
-    debug(lsp(xref), 'Text for "~w" has changed, Maybe reprocessing buffer.', [Path]),
+    debug_lsp(xref, 'Text for "~w" has changed, Maybe reprocessing buffer.', [Path]),
     xref_source_expired(Path),
     retractall(lsp_state:full_text_next(Path, _)),
     asserta(lsp_state:full_text_next(Path, NewText)),
     xref_source_path(Path).
 xref_maybe(Path, NewText) :-
     \+ has_xref_info(Path),
-    debug(lsp(xref), 'No XRef Info for buffer: ~q', [Path]),
+    debug_lsp(xref, 'No XRef Info for buffer: ~q', [Path]),
     retractall(lsp_state:full_text_next(Path, _)),
     asserta(lsp_state:full_text_next(Path, NewText)),!,
     xref_source_path(Path).
 xref_maybe(Path, NewText) :-
     has_xref_info(Path),
-    debug(lsp(xref), 'HAVE XRef Info for buffer ~q', [Path]),
+    debug_lsp(xref, 'HAVE XRef Info for buffer ~q', [Path]),
     retractall(lsp_state:full_text_next(Path, _)),
     asserta(lsp_state:full_text_next(Path, NewText)),
     xref_source_path(Path).
@@ -231,11 +232,10 @@ xref_metta_source(Path) :- ignore(xref_source_path(Path)).
 xref_source_path(Doc) :- var(Doc),!.
 xref_source_path(List):- is_list(List),!,maplist(xref_source_path,List).
 xref_source_path(Str) :- string(Str),atom_string(Path,Str),!,xref_source_path(Path).
-xref_source_path(Str) :- \+ atom(Str),!, debug(lsp(xref), 'not a xref_source_path: ~q', [Str]), !.
+xref_source_path(Str) :- \+ atom(Str),!, debug_lsp(xref, 'not a xref_source_path: ~q', [Str]), !.
 xref_source_path(Doc) :- maybe_doc_path(Doc, Path), !, xref_source_path(Path).
 xref_source_path(Dirs) :- exists_directory(Dirs), !,nop( xref_source_dir(Dirs)).
-%xref_source_path(Path):- has_xref_info(Path), !, debug(lsp(xref), 'Has xref info: ~w.', [Path]), !.
-xref_source_path(Path):- \+ check_time_elapsed(Path), !, debug(lsp(xref), 'Skipping check for "~w" as 20 seconds have not passed.', [Path]), !.
+%xref_source_path(Path):- has_xref_info(Path), !, debug_lsp(xref, 'Has xref info: ~w.', [Path]), !.
 xref_source_path(Path):- \+ file_name_extension(_, metta, Path),!.  % Ensure the file has a .metta extension.
 xref_source_path(Path) :- xref_enqueue_file(Path).
 
@@ -248,7 +248,7 @@ has_xref_info(Path):- lsp_state:made_metta_file_buffer(Path),!.
 :- dynamic
    xref_file_state/2,
    xref_thread_control/1,
-   xref_file_queue/1.
+   xref_file_queue/2.
 
 % Main predicate to submit a file and ensure it's processed
 xref_submit_and_wait(File) :- xref_file_state(File, done), !.
@@ -256,13 +256,15 @@ xref_submit_and_wait(File) :-
     xref_enqueue_file(File),
     xref_wait_for_file(File).
 
-disable_thread_system.
+% enabled threads.
+disable_thread_system :- fail.
 
 % Send an interrupt to the worker thread
 xref_interrupt_worker(_File) :- disable_thread_system, !.
 xref_interrupt_worker(File) :-
     ignore((xref_update_file_state(File, processing),
             xref_thread_control(ThreadID),
+            thread_property(ThreadID, status(running)),
             thread_signal(ThreadID, throw(interrupted)))).
 
 % Wait for a specific file to be processed completely
@@ -274,7 +276,7 @@ xref_wait_for_file(File) :-
     fail.
 xref_wait_for_file(File) :-
     xref_file_state(File, State),
-    debug(lsp(xref), "File ~w has been processed and is now ~w.~n", [File, State]).
+    debug_lsp(xref, "File ~w has been processed and is now ~w.~n", [File, State]).
 
 
 % Predicate to recursively enumerate files in directories, resolving symlinks.
@@ -302,35 +304,25 @@ enumerate_files_in_directory(_, []).  % Handle non-directory paths by returning 
 % xref_enqueue_file(+File) is det.
 %
 %   Adds a file to the processing queue and ensures the worker thread is running.
-xref_enqueue_file(File) :- xref_file_queue(File),!.
-xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File),!.
+xref_enqueue_file(File) :-
+    xref_file_queue(File, _), !,
+    % Already enqueued, so just bump time
+    get_time(CurrentTime),
+    transaction(( retractall(xref_file_queue(File, _)),
+                  assertz(xref_file_queue(File, CurrentTime))
+                )),
+    xref_ensure_worker_thread_running.
+% TODO: why should we not proceed if we have the buffer?
+% xref_enqueue_file(File) :- lsp_state:made_metta_file_buffer(File), !, debug_lsp(xref, "HAVE METTA FILE BUFFER", []).
 xref_enqueue_file(Path):- disable_thread_system, !, xref_source_now_maybe(Path).
 xref_enqueue_file(File) :-
     xref_ensure_worker_thread_running,
     xref_update_file_state(File, submitted),
-    ( xref_file_queue(File) ->
-        true  % File is already in the queue; do nothing
-    ;   assertz(xref_file_queue(File))
-    ).
-
-
-
-%!  check_time_elapsed(+Path) is semidet.
-%
-%   Checks if at least 20 seconds have passed since the last file check for the given path.
-%
-%   @arg Path The file path to check.
-:- dynamic(lsp_state:last_check_time/2).
-
-check_time_elapsed(Path) :-
-    get_time(CurrentTime),  % Get the current system time.
-    (   lsp_state:last_check_time(Path, LastCheck),  % Retrieve the last check time for the file.
-        ElapsedTime is CurrentTime - LastCheck,  % Calculate the time difference.
-        ElapsedTime > 20  % Ensure at least 20 seconds have passed.
-    ->  retractall(lsp_state:last_check_time(Path, _)),  % Remove the old time entry.
-        asserta(lsp_state:last_check_time(Path, CurrentTime))  % Update with the new time.
-    ;   \+ lsp_state:last_check_time(Path, _),  % If no previous time is recorded, store the current time.
-        asserta(lsp_state:last_check_time(Path, CurrentTime))
+    get_time(CurrentTime),
+    ( xref_file_queue(File, _) ->
+        transaction(( retractall(xref_file_queue(File, _)),
+                      assertz(xref_file_queue(File, CurrentTime) )))  % File is already in the queue; bump timestamp
+    ;   assertz(xref_file_queue(File, CurrentTime))
     ).
 
 %!  get_current_text(+Path, -NewText) is det.
@@ -357,18 +349,14 @@ get_current_text(Path, NewText) :-
 compare_and_update_string(Path, NewText) :-
     (   lsp_state:full_text(Path, OldText),  % Retrieve the last known content.
         OldText \= NewText  % Check if the content has changed.
-    -> (debug(lsp(xref), 'Text for "~w" has changed, reprocessing buffer.', [Path]),  % Log the change.
+    -> (debug_lsp(xref, 'Text for "~w" has changed, reprocessing buffer.', [Path]),  % Log the change.
         retractall(lsp_state:full_text(Path, _)),  % Remove the old content entry.
         asserta(lsp_state:full_text(Path, NewText)),  % Update with the new content.
         xref_source_expired(Path),
         xref_metta_file_text('&xref', Path, NewText))   % Reprocess the file with the new content.
-    ;   (debug(lsp(xref), 'Text for "~w" has not changed, Still cross-reference the file for consistency.', [Path]),  % Log if no change is detected.
+    ;   (debug_lsp(xref, 'Text for "~w" has not changed, Still cross-reference the file for consistency.', [Path]),  % Log if no change is detected.
         xref_metta_file_text('&xref', Path, NewText))  % Still cross-reference the file for consistency.
     ).
-
-
-
-
 
 % Update the processing state of a file
 xref_update_file_state(File, State) :-
@@ -395,23 +383,22 @@ xref_ensure_worker_thread_running :-
 % Worker thread that processes files from the queue
 xref_process_files :-
     repeat,
-    (xref_file_queue(File) ->
-        retract(xref_file_queue(File)),
-        once(xref_handle_file(File)),
-        fail  % Continue processing files
-    ; sleep(0.1),
-      fail
-    ).
+    get_time(Now),
+    ( ( xref_file_queue(File, Ts), Now >= Ts + 5 ) ->
+      retractall(xref_file_queue(File, _)),
+      once(xref_handle_file(File))
+    ; sleep(0.2) ),
+    fail.
 
 % Handle individual files and catch interruptions
 xref_handle_file(File) :-
-    catch((debug(lsp(xref), "Processing file: ~w~n", [File]),
+    catch((debug_lsp(xref, "Processing file: ~w~n", [File]),
            setup_call_cleanup(xref_update_file_state(File, processing),
                               xref_source_now(File),
                               xref_update_file_state(File, done)),
-           debug(lsp(xref), "Processing complete: ~w~n", [File])),
+           debug_lsp(xref, "Processing complete: ~w~n", [File])),
           interrupted,
-          (debug(lsp(xref), "Processing of file ~w was interrupted, resuming...~n", [File]),
+          (debug_lsp(xref, "Processing of file ~w was interrupted, resuming...~n", [File]),
            xref_update_file_state(File, interrupted))).
 
 xref_reload_source(Uri):-
@@ -478,10 +465,10 @@ xref_metta_file_text(_Self, Path, _Text) :- lsp_state:made_metta_file_buffer(Pat
 xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, fail, % so we notice we are not using this clause
     % this one calls the compiler and makes sense to be the default for xref-ing
     % (var(Text); Text==""),!,
-    nop(debug(lsp(high), "xref_metta_file_text ~w", [Text])),
+    nop(debug_lsp(high, "xref_metta_file_text ~w", [Text])),
     absolute_file_name(Path, Filename),  % Convert the file path to an absolute path.
     directory_file_path(Directory, _, Filename),  % Extract the directory path from the file path.
-    debug(lsp(xref), "xref_metta_file_text Path ~w", [Path]),  % Log the cross-referencing process.
+    debug_lsp(xref, "xref_metta_file_text Path ~w", [Path]),  % Log the cross-referencing process.
     with_option(exec, skip,  % Use options for processing in the correct context.
   locally(nb_setval(may_use_fast_buffer,t),
    locally(nb_setval(suspend_answers,true),
@@ -493,7 +480,7 @@ xref_metta_file_text(Self, Path, Text):- fail, fail, fail, fail, fail, fail, fai
 %   reading.
 xref_metta_file_text(_Self, Path, Text) :-
     asserta(lsp_state:made_metta_file_buffer(Path)),!,
-    debug(lsp(xref), "lsp_state:made_metta_file_buffer ~w", [Path]),  % Log the file path being processed.
+    debug_lsp(xref, "lsp_state:made_metta_file_buffer ~w", [Path]),  % Log the file path being processed.
     must_det_ll((
         % Convert the file path to an absolute path
         absolute_file_name(Path, Filename),
@@ -697,4 +684,3 @@ Dict = _{
   }
 }.
 */
-
