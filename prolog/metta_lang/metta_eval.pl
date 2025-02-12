@@ -426,7 +426,7 @@ eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
        Y = Name)),
       sanity_check_eval(eval_20_atom,Y).
 
-eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):- 
+eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):-
 %fail,
     atomic(Sym), py_is_function(Sym), is_list(Args), !,
     maplist(as_prolog, Args , Adjusted),!,
@@ -437,11 +437,11 @@ eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):-
 eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):-
     must_det_ll((py_atom(Arg,Res))).
 
-eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):- 
+eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):-
     must_det_ll((py_atom_type(Arg,Type,Res))).
 
 
-was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,PArgs,ParamList,RRetType):- 
+was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,PArgs,ParamList,RRetType):-
    atomic(PyAtom), py_is_function(PyAtom), !, Sym = PyAtom,
    into_param_types(Eq,RetType,Depth,Self,Sym,PArgs,ParamList,RRetType).
 was_py_call(Eq,RetType,Depth,Self,[PyAtom|Args],Sym,PArgs,ParamList,RRetType):- fail, PyAtom == 'py-atom',!,
@@ -477,27 +477,27 @@ de_pcons(Var,Var,VarT):-copy_term(Var,VarT).
 
 eval_20(Eq,RetType,Depth,Self,[PyAtom|Args],Res):-  fail,  is_list(Args), nonvar(PyAtom),
     was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,Args,ParamList,DeclRetType),!,
-    narrow_types(RetType,DeclRetType,CombinedRetType),!,    
+    narrow_types(RetType,DeclRetType,CombinedRetType),!,
     apply_param_types_return(Depth, Self,Args,Res,ParamList,CombinedRetType,Adjusted,Ret),
     py_call_method_and_args(Sym,Adjusted,Ret),
     py_metta_return_value(RetType,Ret,Res).
 
 
-eval_20(Eq,RetType,Depth,Self,[Op|Args],Res):- 
+eval_20(Eq,RetType,Depth,Self,[Op|Args],Res):-
    nonvar(Op), eval_202(Eq,RetType,Depth,Self,[Op|Args],Res).
 
 legal_op(X):- must_det_lls(nonvar(X)).
 
 is_py_atom(Var):- var(Var),!,fail.
 is_py_atom('py-atom').
-eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym,ArrowType]|Args],Res):- fail, 
+eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym,ArrowType]|Args],Res):- fail,
    is_py_atom(PyAtom),!,
    Op = [PyAtom,Sym],
    eval_202(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
 
 % !(invoke-ftype println! (-> Atom (->)) (+ 1 1))
 
-eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym]|Args],Res):- fail, 
+eval_202(Eq,RetType,Depth,Self,[[PyAtom,Sym]|Args],Res):- fail,
    is_py_atom(PyAtom),!,
    Op = [PyAtom,Sym],
    eval_202(Eq,RetType,Depth,Self,['invoke',Op|Args],Res).
@@ -517,7 +517,7 @@ eval_202(_Eq,RetType,_Depth,_Self,['invoke',Op|Args],Res):- !, legal_op(Op),
    call(Pred2,Args, Ret),
    call(Ret3,RetType,Ret,Res).
 
-op_to_pred_call_ret(PyAtom,Pred2,Ret3):- is_list(PyAtom),!, 
+op_to_pred_call_ret(PyAtom,Pred2,Ret3):- is_list(PyAtom),!,
    trace ,eval_py_atom(_Eq,_RetType,_Depth,_Self,PyAtom,Res),!,op_to_pred_call_ret(Res,Pred2,Ret3).
 op_to_pred_call_ret(PyAtom,Pred2,Ret3):-
   py_is_function(PyAtom), !, Sym = PyAtom,
@@ -1366,10 +1366,9 @@ subst_same(OldStructure, OldTerm, NewTerm, NewStructure) :-
 % =================================================================
 % =================================================================
 % =================================================================
-init_kb('new-space').
-init_kb('init-kb').
+new_space_function_name('new-space').
 
-is_make_new_kb([NEWKB|Props],KB,ExtraProps):- atom(NEWKB),init_kb(NEWKB),!,
+is_make_new_kb([NEWKB|Props],KB,ExtraProps):- atom(NEWKB),new_space_function_name(NEWKB),!,
     oo_new('space',[],KB),
     oo_set_attibutes(ObjectID,extra_props,Props),
     oo_set_attibutes(ObjectID,extra_props,ExtraProps).
