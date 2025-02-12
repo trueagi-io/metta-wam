@@ -69,6 +69,47 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
+%%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
+
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
+   Convert=['case',Value,Cases],!,
+   f2p(HeadIs,LazyVars,ValueResult,ValueResultN,LazyRetValue,Value,ValueCode,ValueCodeN),
+   lazy_impedance_match(LazyRetValue,x(doeval,eager,[]),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
+   ValueCode1a=[[prolog_if,ValueCode1,[[assign,ValueResult1a,ValueResult1]],[[assign,ValueResult1a,'Empty']]]],
+   compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1a,Cases,Converted0,Converted0N),
+   append(ValueCode1a,Converted0,Converted),
+   append(ValueCode1a,Converted0N,ConvertedN).
+
+compile_flow_control_case(_,_,RetResult,RetResultN,_,_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
+compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
+   f2p(HeadIs,LazyVars,MatchResult,MatchResultN,LazyRetMatch,Match,MatchCode,MatchCodeN),
+   lazy_impedance_match(LazyRetMatch,x(doeval,eager,[]),MatchResult,MatchCode,MatchResultN,MatchCodeN,MatchResult1,MatchCode1),
+   f2p(HeadIs,LazyVars,TargetResult,TargetResultN,LazyEval0,Target,TargetCode,TargetCodeN),
+   compile_flow_control_case(HeadIs,LazyVars,RestResult,RestResultN,LazyEval1,ValueResult,Rest,RestCode,RestCodeN),
+   arg_properties_widen(LazyEval0,LazyEval1,LazyEval),
+   append(TargetCode,[[assign,RetResult,TargetResult]],T),
+   append(RestCode,[[assign,RetResult,RestResult]],R),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],T,R]],Converted),
+   append(TargetCodeN,[[assign,RetResultN,TargetResultN]],TN),
+   append(RestCodeN,[[assign,RetResultN,RestResultN]],RN),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],TN,RN]],ConvertedN).
+
+/*
+compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
+  Convert = ['case', Eval, CaseList],!,
+  f2p(HeadIs, LazyVars, Var, x(doeval,eager,[]), Eval, CodeCanFail),
+  case_list_to_if_list(Var, CaseList, IfList, [empty], IfEvalFails),
+  compile_test_then_else(RetResult, LazyVars, LazyEval, CodeCanFail, IfList, IfEvalFails, Converted).
+
+case_list_to_if_list(_Var, [], [empty], EvalFailed, EvalFailed) :-!.
+case_list_to_if_list(Var, [[Pattern, Result] | Tail], Next, _Empty, EvalFailed) :-
+    (Pattern=='Empty'; Pattern=='%void%'), !, % if the case Failed
+    case_list_to_if_list(Var, Tail, Next, Result, EvalFailed).
+case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
+    case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
+    Out = ['if', [metta_unify, Var, Pattern], Result, Next].
+*/
+
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 transpiler_predicate_store('+', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
@@ -179,10 +220,23 @@ transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager,[list])], x(noeval
 lazy_member(P,R2) :- as_p1_exec(R2,P).
 
 transpiler_predicate_store(subtraction, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__subtraction'(P1,P2,S) :- as_p1_exec(P1,S), \+ lazy_member(S,P2).
+% QUESTION: which one of these to use?
+% * The first is more time efficient (calculates the set for S2 and stores in Avoid)
+%'mc_2__subtraction'(S1,S2,R) :- 'mc_1__collapse'(S2,Avoid),as_p1_exec(S1,R), \+ member(R,Avoid).
+% the second is more memory efficient (steps through S2 every time, but does not need to store anything)
+'mc_2__subtraction'(S1,S2,R) :- as_p1_exec(S1,R), \+ lazy_member(R,S2).
 
 transpiler_predicate_store(union, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__union'(U1,U2,R) :- 'mc_2__subtraction'(U1,U2,R) ; as_p1_exec(U2,R).
+'mc_2__union'(S1,S2,R) :- as_p1_exec(S1,R) ; 'mc_2__subtraction'(S2,S1,R).
+
+%transpiler_predicate_store(intersection, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+%'mc_2__intersection'(S1,S2,R)
+
+transpiler_predicate_store(limit, 3, [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc_2__limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+
+transpiler_predicate_store('limit!', 3, [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc_2__limit!'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
@@ -202,12 +256,6 @@ transpiler_predicate_store(collapse, 2, [x(doeval,lazy,[])], x(doeval,eager,[]))
 'mc_1__collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
 'mc_1__collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
 'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
-%'mc_1__collapse'(is_p1(_Type,_Expr,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(_Type,_Expr,true,X),[X]) :- !.
-%'mc_1__collapse'(is_p1(_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(_,true,X),[X]).
-%'mc_1__collapse'(is_p1(Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(true,X),[X]).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 

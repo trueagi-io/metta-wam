@@ -4098,6 +4098,34 @@ fake_impl(F/A) :-
 :- fake_impl(xlisting_web:find_http_session/1).
 :- fake_impl(xlisting_web:is_cgi_stream/0).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Higher arity maplists
+
+% maplist/6 applies Pred to the elements of List1, List2, ..., List5 in parallel
+maplist(_, [], [], [], [], []).
+maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5]) :-
+    call(Pred, X1, X2, X3, X4, X5),
+    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5).
+
+% maplist/7 applies Pred to the elements of List1, List2, ..., List6 in parallel
+maplist(_, [], [], [], [], [], []).
+maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6]) :-
+    call(Pred, X1, X2, X3, X4, X5, X6),
+    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6).
+
+% maplist/8 applies Pred to the elements of List1, List2, ..., List8 in parallel
+maplist(_, [], [], [], [], [], [], []).
+maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7]) :-
+    call(Pred, X1, X2, X3, X4, X5, X6, X7),
+    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Xs7).
+
+% maplist/9 applies Pred to the elements of List1, List2, ..., List8 in parallel
+maplist(_, [], [], [], [], [], [], [], []).
+maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], [X8|Xs8]) :-
+    call(Pred, X1, X2, X3, X4, X5, X6, X7, X8),
+    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Xs7, Xs8).
+
+map_fold1(_,[],[],A,A).
+map_fold1(Pred,[X|Xt],[Y|Yt],A1,A3) :- call(Pred,X,Y,A1,A2),map_fold1(Pred,Xt,Yt,A2,A3).
 
 end_of_file.
 
