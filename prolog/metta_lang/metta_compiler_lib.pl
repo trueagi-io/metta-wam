@@ -220,10 +220,23 @@ transpiler_predicate_store('decons-atom', 2,  [x(noeval,eager,[list])], x(noeval
 lazy_member(P,R2) :- as_p1_exec(R2,P).
 
 transpiler_predicate_store(subtraction, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__subtraction'(P1,P2,S) :- as_p1_exec(P1,S), \+ lazy_member(S,P2).
+% QUESTION: which one of these to use?
+% * The first is more time efficient (calculates the set for S2 and stores in Avoid)
+%'mc_2__subtraction'(S1,S2,R) :- 'mc_1__collapse'(S2,Avoid),as_p1_exec(S1,R), \+ member(R,Avoid).
+% the second is more memory efficient (steps through S2 every time, but does not need to store anything)
+'mc_2__subtraction'(S1,S2,R) :- as_p1_exec(S1,R), \+ lazy_member(R,S2).
 
 transpiler_predicate_store(union, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__union'(U1,U2,R) :- 'mc_2__subtraction'(U1,U2,R) ; as_p1_exec(U2,R).
+'mc_2__union'(S1,S2,R) :- as_p1_exec(S1,R) ; 'mc_2__subtraction'(S2,S1,R).
+
+%transpiler_predicate_store(intersection, 3, [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+%'mc_2__intersection'(S1,S2,R)
+
+transpiler_predicate_store(limit, 3, [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc_2__limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+
+transpiler_predicate_store('limit!', 3, [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc_2__limit!'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
@@ -243,12 +256,6 @@ transpiler_predicate_store(collapse, 2, [x(doeval,lazy,[])], x(doeval,eager,[]))
 'mc_1__collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
 'mc_1__collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
 'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
-%'mc_1__collapse'(is_p1(_Type,_Expr,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(_Type,_Expr,true,X),[X]) :- !.
-%'mc_1__collapse'(is_p1(_,Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(_,true,X),[X]).
-%'mc_1__collapse'(is_p1(Code,Ret),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-%'mc_1__collapse'(is_p1(true,X),[X]).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
