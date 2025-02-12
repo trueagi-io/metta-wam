@@ -24,7 +24,7 @@ import org.jpl7.Compound;
 import org.jpl7.Query;
 import org.jpl7.Term;
 import org.jpl7.JRef;
-
+import org.jpl7.Variable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +47,27 @@ public class BotController {
     static String DEFAULT_PASSWORD = ""; // Empty for offline mode
     static String DEFAULT_SERVER = "127.0.0.1";
     static int DEFAULT_PORT = 25565;
+
+    static {
+        // Get the MINECRAFT_SERVER environment variable
+        String serverEnv = System.getenv("MINECRAFT_SERVER");
+
+        if (serverEnv != null && serverEnv.contains(":")) {
+            try {
+                // Split into host and port
+                String[] parts = serverEnv.split(":");
+                DEFAULT_SERVER = parts[0];
+                DEFAULT_PORT = Integer.parseInt(parts[1]); // Convert port to integer
+
+                log.info("✅ MINECRAFT_SERVER set from environment: {}:{}", DEFAULT_SERVER, DEFAULT_PORT);
+            } catch (NumberFormatException e) {
+                log.error("❌ Invalid port format in MINECRAFT_SERVER: '{}'. Using default port {}.", serverEnv, DEFAULT_PORT);
+            }
+        } else {
+            log.warn("⚠️ MINECRAFT_SERVER environment variable is not set or invalid. Using default: {}:{}", DEFAULT_SERVER, DEFAULT_PORT);
+        }
+    }
+
 	static InetSocketAddress ADDRESS = new InetSocketAddress(DEFAULT_SERVER, DEFAULT_PORT);
 
 	public boolean needsLogin = true;
@@ -220,10 +241,12 @@ public class BotController {
 			return ""+component;
     }
     
+
     public void executeQueuedCommands() {
         while (shouldProcessQueue) {
-            Query query = new Query("dequeue_command(Command).");
-    
+            Variable commandVar = new Variable("Command");
+            Query query = new Query("dequeue_command", new Term[]{commandVar});
+
             if (query.hasSolution()) {
                 // Safely retrieve the solution
                 java.util.Map<String, Term> solution = query.nextSolution();
@@ -234,7 +257,7 @@ public class BotController {
                     log.warn("Prolog query returned null or missing 'Command'. Skipping execution.");
                 }
             }
-    
+
             try {
                 Thread.sleep(queueSleepTimeMs);
             } catch (InterruptedException e) {
@@ -243,6 +266,7 @@ public class BotController {
             }
         }
     }
+
 
 
     public void executeCommand(Term command) {

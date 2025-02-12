@@ -177,18 +177,18 @@
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
    (let $cmd (get-single-char!)
-      (progn (
+      (progn 
           ; if initial execution flush output
           (if (== (size-atom $input_list) 0) (flush-output!) ())
           (if (== $cmd 13) ; if user hit <ENTER>
             ;return all input
             $input_list    
             ;else gather more input
-            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list)))))))
+            (let $new_list (cons-atom $cmd $input_list) (get-player-command $new_list))))))
 
 ; write welcome banner to console and call display_board to print the pieces
 (= (welcome)  
- (progn  ( 
+ (progn   
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
     ((py-atom print) " ")
@@ -207,7 +207,7 @@
     ((py-atom print) "5 Display Board                    ->  D")
     ((py-atom print) "6 Quit                             ->  Q")
     ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.") 
-    )))
+    ))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
@@ -236,23 +236,23 @@
   (
    (let $a (display_filter     $board ) 
           ((py-atom print) (format-args "\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
-      | {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |\n
-      ------------------------------------------------- \n
+        --1-----2-----3-----4-----5-----6-----7-----8-- \n
+      8| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |8\n
+       |-----------------------------------------------| \n
+      7| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |7\n
+       |-----------------------------------------------| \n
+      6| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |6\n
+       |-----------------------------------------------| \n
+      5| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |5\n
+       |-----------------------------------------------| \n
+      4| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |4\n
+       |-----------------------------------------------| \n
+      3| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |3\n
+       |-----------------------------------------------| \n
+      2| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |2\n
+       |-----------------------------------------------| \n
+      1| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |1\n
+        --1-----2-----3-----4-----5-----6-----7-----8-- \n
       " 
       
           $a)))))
@@ -366,6 +366,11 @@
 ;  (findgoldhigh $B $C $D $E))
 ;
 
+;(= (LoadPiecesAtomspace $CanAttack)
+;   (if (> (size-atom $CanAttack) 0)
+;       create atom
+;       (LoadPiecesAtomspace (cdr-atom $CanAttack))
+;)
 ;
 (= (take_dest $Square $OpponentColor $Board) 
   (let* 
@@ -374,7 +379,7 @@
     ($CanAttack (takingboxes $OpponentColor $Board))
     ; Check if any route of pieces that can attack leads to the specified square.
     ($OpenRouteToSquare (list_clear_route $Board $Square $CanAttack))
-    ;($OpenRouteToSquare ())
+    ;($OpenRouteToSquare () )
     )
     ; if the list is populated (size exceeds 0), that means the piece can be taken.
     (if (not (== $OpenRouteToSquare () )) True False)))
@@ -391,7 +396,11 @@
 ;   Returns:
 ;   $next-square The full contents of square.
 (= (return_entire_box $Coordinates $Board) 
-  (let*
+  (if (== (size-atom $Coordinates) 4) 
+   ; if you send this the full box already...
+    $Coordinates
+   ;else
+    (let*
     ;examine the next square on the board
     (($next-square (car-atom $Board)  )
     ($X (nth 1 $next-square) )
@@ -401,7 +410,8 @@
     (if (== $G $Coordinates) 
       $next-square
       (return_entire_box $Coordinates (cdr-atom $Board)))
-   ) 
+    )
+  ) 
 )
 ;
 ; (xy_box)
@@ -415,24 +425,27 @@
   (let*
     (
     ; assign variables for the next piece
+    ;($debug ((py-atom print) $PieceColor))
     ($next_square (car-atom $Board)  )
     ($next_x (nth 1 $next_square) )
     ($next_y (nth 2 $next_square) )
-    ($next_color (nth 3 $next_square) )
-    ($next_rank  (nth 4 $next_square) )
     )
     ; then examine next square
     (if (== (size-atom $next_square) 2) 
       ; empty square, skip
       (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))
       ; else check this piece
-      (if
-        (and (== $next_color $PieceColor)
-             (== $next_rank $PieceRank))
-          ; return x and y of the found piece
-          ($next_x $next_y)
-          ; else keep checking the board
-          (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))))))
+      (let* (
+            ($next_color (nth 3 $next_square) )
+            ($next_rank  (nth 4 $next_square) )
+            )
+            (if
+              (and (== $next_color $PieceColor)
+                   (== $next_rank $PieceRank))
+                ; return x and y of the found piece
+                ($next_x $next_y)
+                ; else keep checking the board
+                (xy_box ($PieceColor $PieceRank) (cdr-atom $Board)))))))
   
 ;
 ;
@@ -444,6 +457,13 @@
 
 (: (clear_route) (-> Expression Expression Expression Bool))
 
+; TEST ONLY
+;(= (clear_route ($X1 $Y1 $COLOR p) $destination $Board) True)
+(= (clear_route ($X1 $Y1 $COLOR r) $destination $Board) False)
+(= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
+(= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
+(= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
+(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
 
 ;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
 
@@ -464,167 +484,133 @@
 ;    #(Cons $D 
 ;      #(Cons $E $F)) $G))
 
-; Move gold AI pawn 2 spaces straight down the board 
-; This version can only succeed if starting in row 7 and destination is row 5 
-(= (clear_route ($X1 $Y1 g p) $destination $Board) 
+
+
+; Move gold AI pawn 
+(= (clear_route ($X1 $Y1 g p) $destination $Board)
   (let*
-    ( ($entiredest (return_entire_box $destination  $Board))
-      ($X2 (nth 1 $destination) )
+    ( 
+      ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )
-      ; we need to take a look at the next box down which must be empty to allow passage.
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
       ($passing_1 ($X2 6) )
       ($entire_box_down_one  (return_entire_box $passing_1  $Board))
-    )
-    ; clear if moving to empty box 1 row down...
-    (if (and 
-        ; moving down in same column  
-        (== $X1 $X2)
-        (and 
-        ; moving from row 7
-        (== $Y1 7)
-        (and 
-        ; definitely moving down 2 
-        (== $Y2 5)
-        (and 
-        ; destination box down 2 is clear
-        (== (size-atom $entiredest) 2)       
-        ; first box down 1 is clear
-        (== (size-atom $entire_box_down_one) 2))
-        )))        
+      )
+    
+    (if (xor 
+        
+          ; clear if moving to empty box 1 row down...
+          (and  
+          (== $X1 $X2)
+          (and 
+          (== $Y2 (- $Y1  1))
+          ; check empty box to move in to
+          (== (size-atom $entire) 2)
+          ))
+
+          (xor
+            ; clear if moving to empty box 2 rows down from staring position
+            (and 
+            ; moving down in same column  
+            (== $X1 $X2)
+            (and 
+            ; moving from row 7
+            (== $Y1 7)
+            (and 
+            ; definitely moving down 2 
+            (== $Y2 5)
+            (and 
+            ; destination box down 2 is clear
+            (== (size-atom $entire) 2)       
+            ; first box down 1 is clear
+            (== (size-atom $entire_box_down_one) 2))
+            )))
+    
+            (xor
+              ; clear if taking piece one box down and to the right
+              (and  
+              (== $X2 (+ $X1 1))
+              (and 
+              (== $Y2 (- $Y1 1))
+              ; make sure there is a piece to take, must have 4 symbols in the target box
+              (== (size-atom $destination) 4)
+              )) 
+      
+              ; clear if taking piece one box down and to the left
+              (and  
+              (== $X2 (- $X1 1))
+              (and 
+              (== $Y2 (- $Y1 1))
+              ; make sure there is a piece to take, must have 4 symbols in the target box
+              (== (size-atom $destination) 4)
+              ))
+            )
+          )
+        )
         True
         False)))
 
-; Move gold AI pawn 1 space straight down the board 
-(= (clear_route ($X1 $Y1 g p) $destination $Board) 
-  (let*
-    ( ($entire (return_entire_box $destination  $Board))
-      ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $X1 $X2)
-        (and 
-        (== $Y2 (- $Y1  1))
-        ; check empty box to move in to
-        (== (size-atom $entire) 2)
-        ))
-        True
-        False)))
-
-; Move gold AI pawn 1 space diagonally down to right and take piece
-(= (clear_route ($X1 $Y1 g p) $destination $Board)
-  (let*
-    ( 
-      ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $X2 (+ $X1 1))
-        (and 
-        (== $Y2 (- $Y1 1))
-        ; make sure there is a piece to take, must have 4 symbols in the target box
-        (== (size-atom $destination) 4)
-        )) 
-        True
-        False)))
-
-; Move gold AI pawn 1 space diagonally down to left and take piece
-(= (clear_route ($X1 $Y1 g p) $destination $Board)
-  (let*
-    ( 
-      ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $X2 (- $X1 1))
-        (and 
-        (== $Y2 (- $Y1 1))
-        ; make sure there is a piece to take, must have 4 symbols in the target box
-        (== (size-atom $destination) 4)
-        )) 
-        True
-        False)))
-
-; Move silver human pawn 2 spaces straight up the board 
-; This version can only succeed if starting in row 2 and destination is row 4
-(= (clear_route ($X1 $Y1 s p) $destination $Board) 
-  (let*
-    ( ($entiredest (return_entire_box $destination  $Board))
-      ($X2 (nth 1 $destination) )
-      ($Y2 (nth 2 $destination) )
-      ; we need to take a look at the next box up which must be empty to allow passage.
-      ($passing_1 ($X2 3) )
-      ($entire_box_down_one  (return_entire_box $passing_1  $Board))
-    )
-    (if (and 
-        ; moving up in same column  
-        (== $X1 $X2)
-        (and 
-        ; moving from row 2
-        (== $Y1 2)
-        (and 
-        ; definitely moving up 2
-        (== $Y2 4)
-        (and 
-        ; destination box up 2 is clear
-        (== (size-atom $entiredest) 2)       
-        ; first box up 1 is clear
-        (== (size-atom $entire_box_down_one) 2))
-        )))        
-        True
-        False)))
-
-; Move silver human pawn 1 space straight up the board 
-(= (clear_route ($X1 $Y1 s p) $destination $Board) 
-  (let*
-    ( ($entire (return_entire_box $destination  $Board))
-      ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $X1 $X2)
-        (and 
-        (== $Y2 (+ $Y1  1))
-        ; check empty box to move in to
-        (== (size-atom $entire) 2)
-        ))
-        True
-        False)))
-
-; Move silver human pawn 1 space diagonally up to right and take piece
+; Move silver human pawn 
 (= (clear_route ($X1 $Y1 s p) $destination $Board)
   (let*
     ( 
       ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row up...
-    (if (and  
-        (== $X2 (+ $X1 1))
-        (and 
-        (== $Y2 (+ $Y1 1))
-        ; make sure there is a piece to take, must have 4 symbols in the target box
-        (== (size-atom $destination) 4)
-        )) 
+      ($Y2 (nth 2 $destination) )      
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
+      ($passing_1 ($X1 3) )
+      ($entire_box_up_one  (return_entire_box $passing_1  $Board))
+      )
+    
+    (if (xor 
+         (xor      
+          ; clear if taking piece one box up and to the right
+          (and  
+          (== $X2 (+ $X1 1))
+          (and 
+          (== $Y2 (+ $Y1 1))
+          ; make sure there is a piece to take, must have 4 symbols in the target box
+          (== (size-atom $destination) 4)
+          )) 
+  
+          ; clear if taking piece one box up and to the left
+          (and  
+          (== $X2 (- $X1 1))
+          (and 
+          (== $Y2 (+ $Y1 1))
+          ; make sure there is a piece to take, must have 4 symbols in the target box
+          (== (size-atom $destination) 4)
+          ))
+         ) 
+         (xor
+          ; clear if moving to empty box 1 row up
+          (and  
+          (== $X1 $X2)
+          (and 
+          (== $Y2 (+ $Y1  1))
+          ; check empty box to move in to
+          (== (size-atom $entire) 2)
+          ))
+
+          ; clear if moving to empty box 2 rows up from staring position
+          (and 
+          ; moving up in same column  
+          (== $X1 $X2)
+          (and 
+          ; moving from row 2
+          (== $Y1 2)
+          (and 
+          ; definitely moving up 2 
+          (== $Y2 4)
+          (and 
+          ; destination box up 2 is clear
+          (== (size-atom $entire) 2)       
+          ; first box up 1 is clear
+          (== (size-atom $entire_box_up_one) 2))
+          )))
+         )
+        )
         True
         False)))
-
-; Move gold AI pawn 1 space diagonally up to left and take piece
-(= (clear_route ($X1 $Y1 s p) $destination $Board)
-  (let*
-    ( 
-      ($X2 (nth 1 $destination) )  
-      ($Y2 (nth 2 $destination) ))
-    ; clear if moving to empty box 1 row down...
-    (if (and  
-        (== $X2 (- $X1 1))
-        (and 
-        (== $Y2 (+ $Y1 1))
-        ; make sure there is a piece to take, must have 4 symbols in the target box
-        (== (size-atom $destination) 4)
-        )) 
-        True
-        False)))
-
 
 
 ;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (= $A  $D) (> $E $B) (is $H (- $E 1)) (is $I ;(+ $B 1)) (checkclearup $A $I $H $G))
@@ -886,11 +872,25 @@
 ;
 ; (list_clear_route)
 ;
-; Input:  Board, square that might be compromised, all pieces available to attack square in question
+; Input:  $Board, $Square that might be compromised, all pieces available to attack square in question $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
 (= (list_clear_route $Board $Square $CanAttack)
-    ()
+   (if (== (size-atom $CanAttack) 0)
+       ; end of the line
+       ()
+       ; check if next piece in $CanAttack can capture $Square, if so add to return list.
+       (let* (
+          ($next-sq (car-atom $CanAttack))
+          ($AttackBool (clear_route $next-sq $Square $Board))
+             )
+          (if (== $AttackBool True) 
+              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
+              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) $rest)
+          )
+       )
+   ) 
 )
+
 ;(= (list_clear_route $A $B #(Cons $C $D) #(Cons $C $E)) (clear_route $C $B $A) (list_clear_route $A $B $D $E))
 ;(= (list_clear_route $A $B #(Cons $C $D) $E)  
 ;  (list_clear_route $A $B $D $E))
@@ -912,7 +912,7 @@
   (match &self (console-messages $msg)
     ; if first invocation, just create board
     (if (==  (initializing)   $msg) ; then  
-      (progn (  
+      (progn   
         ; remove the 'initializing' message
         (remove-atom &self (console-messages $msg)) 
         ; create the board for the first time
@@ -929,10 +929,10 @@
         ; indicate game has passed the initializing state
         (add-atom &self (console-messages (started)))
         ; display welcome messages and board
-        (welcome)))
+        (welcome))
     ; elif there has already been one game played
     (if (==  (started)   $msg) ; then
-      (progn (
+      (progn 
         ; remove the old chess board
         (match &self (board-state $old_board) (remove-atom &self (board-state $old_board)))
         ; re-create a new board 
@@ -949,7 +949,7 @@
         ; LATER ON, REMOVE THE OLD CONSOLE-MESSAGES!
         ;
         ; display welcome messages and board
-        (welcome)))
+        (welcome))
     (; else if
         empty))))) 
 
@@ -959,11 +959,11 @@
 
 ;(: M (-> command))
 (= (M)  
-  (progn (
+  (progn 
   ; prompt for x/y location
   ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
   ; add edit to make sure move within boundaries of 1 -> 8!
-  (py-atom print) "Enter coordinates.")
+  ((py-atom print) "Enter coordinates.")
   (let $coordinates ((py-atom input)) ())
   (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
   (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
@@ -976,7 +976,7 @@
   ; check if source location and destination are not the same
   (if (not (== $f $g))                            
    ; check if destination is empty or destination has opponent's piece  
-    (progn (
+    (progn 
     ; Retrieve the source box details.
     (let $h (return_entire_box $f  $starting_board) ())               
     ; Retrieve the destination box details.
@@ -995,12 +995,22 @@
             ; Try the move and update the board state. 
             ($provisional_board  (move_piece $h $i $starting_board))   
             ; locate human's king
-            ($king_square (xy_box (s k) $provisional_board))           
+            ($king_square (xy_box (s k) $provisional_board))    
+            ; 
+            ($full_king_sq (return_entire_box $king_square  $provisional_board))  
             ; Ensure the player's king is not in check from gold (g) if moved.     
-            ($KingCompromised (take_dest $king_square g $provisional_board))
+            ($KingCompromised (take_dest $full_king_sq g $provisional_board))
               )   
+            ; If move valid, proceed to create new board atom with move.
             (if (== $KingCompromised False)
-                (println! "update board and print")
+                (progn 
+                ; remove the old chess board
+                (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
+                ; re-create a new board 
+                (add-atom &self (board-state $provisional_board))
+                ; display
+                (D)
+                )
                 ((py-atom print) "Can't move there, your king would be in check.")
             )
         )
@@ -1009,9 +1019,8 @@
       ((py-atom print) "Invalid move.")
     )
     )
-    )
     ;else (trying to move to same location)
-    ((py-atom print) "Can't move to same location."))
+    ((py-atom print) "Can't move to same location.")) 
   )
 )
 
@@ -1065,40 +1074,40 @@
 ;*******************************************************
 (= (command-loop)
   (progn 
-   (((py-atom print) "Please enter your command.")
+    ((py-atom print) "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
     ; case statement for commands
     (if (== $command "M") 
-        (progn (
-          (M)                          ; Move human piece 
-          (command-loop)))             ; Get next command, stay in loop.
+        (progn 
+          (M)                         ; Move human piece 
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "G")
-        (progn (
-          (G)                          ; AI move
-          (command-loop)))             ; Get next command, stay in loop.
+        (progn 
+          (G)                         ; AI move
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "R")
-        (progn (
-          (R)                          ; Reset = "R"
-          (command-loop)))             ; Get next command, stay in loop.
+        (progn 
+          (R)                         ; Reset = "R"
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "C")
-        (progn (
-          (C)                          ; List valid commands = "C"
-          (command-loop)))             ; Get next command, stay in loop.
+        (progn 
+          (C)                         ; List valid commands = "C"
+          (command-loop))             ; Get next command, stay in loop.
     (if (== $command "D")
-        (progn (
-          (D)                          ; Display board "D"
-          (command-loop)))             ; Get next command, stay in loop.
-    (if (== $command "Q")              ; EXIT HERE
+        (progn 
+          (D)                         ; Display board "D"
+          (command-loop))             ; Get next command, stay in loop.
+    (if (== $command "Q")             ; EXIT HERE
           ((py-atom print) "Quitting MeTTa Greedy Chess.")
     ; otherwise
-    (progn (
+    (progn 
         ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
-        (command-loop)))))))))))))
+        (command-loop)))))))))))
 
 ;-----------;
 (= (main_loop) 
   (progn
-   ((chess)           ; Start the chess game
-    (command-loop)))) ; Enter the recursive command-processing loop
+    (chess)           ; Start the chess game
+    (command-loop))) ; Enter the recursive command-processing loop
 !(main_loop)
 ;-----------;

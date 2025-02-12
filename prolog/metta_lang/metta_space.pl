@@ -705,6 +705,8 @@ was_asserted_space('&corelib').
 was_asserted_space('&flybase').
 was_asserted_space('&top').
 was_asserted_space('&catalog').
+was_asserted_space(ObjectID):- o_f_v(ObjectID, type, 'space').
+
 /*
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').

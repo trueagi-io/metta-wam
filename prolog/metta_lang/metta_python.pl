@@ -1201,11 +1201,13 @@ the_modules_and_globals = merge_modules_and_globals()
 %
 %   @arg O The input list to be converted toi call.
 %   @arg Py The result.
-py_call_method_and_args([F|List], Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
+py_call_method_and_args([F|List], Py):- py_call_method_and_args(F,List, Py).
+
+py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
    maplist(py_arg,NewList,PyArgs),
    py_list([F|PyArgs],PyList),
    py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
-py_call_method_and_args([F|List], Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
+py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
 
 pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
 % Handle compound terms like (key=value)
