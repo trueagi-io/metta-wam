@@ -1403,9 +1403,35 @@ args_conform(Depth, Self, [A | Args], [L | List]) :-
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
-arg_conform(_Depth, Self, A, ParamType):- non_arg_violation_each(Self,ParamType, A).
-% arg_conform(_Dpth, _Slf, _, _).
-% arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+
+%arg_conform(_Depth, Self, A, ParamType):- !, non_arg_violation_each(Self,ParamType, A).
+arg_conform(_Dpth, _Slf, _A, L) :-
+    % Succeed if the expected type is a non-specific type.
+    nonvar(L), is_nonspecific_type(L), !.
+arg_conform(Depth, Self, A, L) :-
+    % Check the argument type and verify it conforms to the expected type.
+    get_type_each(Depth, Self, A, T), T \== 'Var',
+    type_conform(T, L), !.
+arg_conform(_Dpth, _Slf, _, _).
+arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+
+%!  type_conform(+Type, +Expected) is nondet.
+%
+%   Checks if a type (Type) conforms to the expected type (Expected).
+%
+%   @arg Type     The type to be checked.
+%   @arg Expected The expected type.
+%
+type_conform(T, L) :-
+    % Succeed if the types are equal.
+    T = L, !.
+type_conform(T, L) :- \+ is_nonspecific_type(T), \+ is_nonspecific_type(L), !, can_assign(T, L).
+type_conform(T, L) :- fail,
+    % Succeed if either type is non-specific.
+    \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), !.
+type_conform(T, L) :-
+    % Succeed if the type can be assigned.
+    can_assign(T, L).
 
 
 % Declare `thrown_metta_return/1` as dynamic to allow runtime modifications.
