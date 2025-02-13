@@ -132,6 +132,8 @@ ppc1(Msg, Term) :-
         write_src(Term), nl  % Display source representation.
     ).
 
+dont_numbervars(_,_,_,_).
+
 %!  ppct(+Msg, +Term) is det.
 %
 %   Specific pretty-print handler for terms that are lists, clauses, or equations.
@@ -148,7 +150,7 @@ ppct(Msg, Term) :-
     % If Term is a list, apply list-specific formatting.
     is_list(Term), !,
     writeln('---------------------'),
-    numbervars(Term, 666, _, [attvar(skip)]),  % Bind variables for display.
+    dont_numbervars(Term, 666, _, [attvar(skip)]),  % Bind variables for display.
     write((Msg)), write(':'), nl,
     write_src(Term), nl.
 ppct(Msg, Term) :-
@@ -162,14 +164,14 @@ ppct(Msg, Term) :-
     Term = (_ = _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 444, _, [attvar(skip)]),
+    dont_numbervars(Term, 444, _, [attvar(skip)]),
     write_src(Term), nl.
 ppct(Msg, Term) :-
     % For clauses with specific formatting needs, include variable numbering and tree display.
     Term = (_ :- _), !,
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
-    numbervars(Term, 222, _, [attvar(skip)]),
+    dont_numbervars(Term, 222, _, [attvar(skip)]),
     print_tree(Term), nl.
 
 %!  pp_metta(+P) is det.
@@ -239,7 +241,8 @@ print_pl_source(P) :-
     % Run the primary source-printing predicate within `run_pl_source/1`.
     run_pl_source(print_pl_source0(P)).
 
-pnotrace(G):- quietly(G).
+pnotrace(G):- notrace(G).
+%pnotrace(G):- quietly(G).
 
 %!  run_pl_source(+G) is det.
 %
@@ -274,12 +277,18 @@ run_pl_source(G) :-
 %
 %   @arg P The Prolog term to be printed.
 %
-print_pl_source0(_) :-
+print_pl_source0(_) :- fail,
     % Do not print if compatibility mode is enabled.
     pnotrace(is_compatio), !.
 print_pl_source0(_) :-
     % Do not print if silent loading mode is enabled.
     pnotrace(silent_loading), !.
+
+print_pl_source0(P) :- fail,!,
+    format('~N'),
+    print_tree(P),
+    format('~N'), !.
+
 print_pl_source0(P) :-
     % Check if P was just printed (avoid redundant printing).
     pnotrace((just_printed(PP), PP =@= P)), !.
@@ -526,7 +535,7 @@ is_final_write('#\\'(S)) :-
     !, format("'~w'", [S]).
 is_final_write(V) :-
     % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
-    py_is_enabled, py_is_py(V), !, py_ppp(V), !.
+    py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
 is_final_write([VAR, V | T]) :-
     % For lists like ['$VAR', Value], write the variable if the tail is empty.
     '$VAR' == VAR, T == [], !, write_dvar(V).
@@ -734,19 +743,90 @@ write_src_wi(V) :-
 %
 write_src(V) :-
     % Guess variables in V and pretty-print using `pp_sex/1`.
-    \+ \+ pnotrace((src_vars(V, I), pp_sex(I))), !.
+    \+ \+ pnotrace((number_src_vars(V, I, Goals),
+               copy_term_nat(I+Goals,Nat+NatGoals), pp_sex(Nat),
+               maybe_write_goals(NatGoals))), !.
 
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-              pre_guess_varnames(V,II),ignore(II=V),
+             must_det_lls((
+              pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
-              nop(ignore(numbervars(I,10000,_,[singleton(true),attvar(skip)]))).
+              nop(ignore(dont_numbervars(I,400,_,[singleton(true),attvar(skip)]))),
+              nop(materialize_vns(I)))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
-pre_guess_varnames(V,I):- functor(V,F,A),functor(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], I=@=II, I=II, V=I,maybe_name_vars(Vs),!.
+pre_guess_varnames(V,I):- ground(V),!,I=V.
+pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
 pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
+
+write_w_attvars(Term):- \+ \+ write_w_attvars0(Term).
+
+write_w_attvars0(Term):-
+   number_src_vars(Term,PP,Goals),
+   copy_term_nat(PP+Goals,Nat+NatGoals),
+   writeq(Nat),
+   maybe_write_goals(NatGoals), !.
+
+number_src_vars(Term,TermC,Goals):-
+  must_det_lls((
+    src_vars(Term,PP),
+    copy_term(Term,TermC,Goals),
+    % copy_term(Goals,CGoals,GoalsGoals),
+    PP = TermC,
+    must(PP = Term),
+    materialize_vns(PP),
+    nop(ignore(dont_numbervars(PP,260,_,[singleton(true),attvar(skip)]))),
+    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))).
+
+
+once_writeq_nl_now(P) :-
+    \+ \+ (pnotrace((
+             format('~N'),
+             write_w_attvars(P),
+             format('~N')))).
+
+:- nb_setval('$write_goals',[]).
+
+with_written_goals(Call):-
+   locally(nb_setval('$write_goals',true),Call).
+
+maybe_write_goals(_Goals):- \+ nb_current('$write_goals',true), !.
+maybe_write_goals(Goals):-
+   exclude(is_f_nv,Goals,LGoals),
+   if_t(LGoals\==[],format(' {~q} ', [LGoals])).
+   %if_t(LGoals\==[],with_output_to(user_error,ansi_format([fg(yellow)], ' {~q} ', [LGoals]))).
+is_f_nv(F):- compound(F), functor(F,name_variable,2,_).
+
+% Standardize variable names in `P` and print it using `ansi_format`.
+% Use `nb_setval` to store the printed term in `$once_writeq_ln`.
+once_writeq_nl_now(Color,P) :- w_color(Color,once_writeq_nl_now(P)).
+
+%!  write_src_nl(+Src) is det.
+%
+%   Prints a source line followed by a newline.
+%
+%   @arg Src The source line to print.
+%
+write_src_nl(Src) :-
+    % Print a newline, the source line, and another newline.
+    \+ \+ (must_det_ll((
+               (format('~N'), write_src(Src),
+                format('~N'))))).
+
+
+w_color(Color,Goal):-
+    \+ \+ (must_det_ll((
+           wots(Text,Goal),
+           with_output_to(user_error,ansi_format([fg(Color)], '~w', [Text]))))).
+
+materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
+materialize_vn(Var):- \+ attvar(Var),!.
+materialize_vn(Var):- get_attr(Var,vn,NN),ignore((Var = '$VAR'(NN))),!.
+materialize_vn(_).
+
 %!  write_src_woi(+Term) is det.
 %
 %   Writes the source of a term `Term` with indentation disabled.
@@ -817,7 +897,7 @@ pp_sexi((USER:Body)) :- fail,
 pp_sexi(V) :-
     % If concepts are allowed, disable concept formatting and print `V`.
     allow_concepts, !, with_concepts('False', pp_sex(V)), flush_output.
-pp_sexi('Empty') :-
+pp_sexi('Empty') :- fail,
     % If `V` is the atom 'Empty', do not print anything.
     !.
 pp_sexi('') :-
@@ -943,11 +1023,11 @@ pp_sexi_l([F | V]) :-
     % If `F` is a symbol and `V` is a list, format using `write_mobj/2`.
     symbol(F), is_list(V), write_mobj(F, V), !.
 pp_sexi_l([H | T]) :- T == [], !,  % If `T` is an empty list, print `H` in parentheses.
-    portray_compound_type(list,L,_M,R),
+    compound_type_s_m_e(list,L,_M,R),
     write(L), pp_sex_nc(H), write(R).
 pp_sexi_l([H, H2| T]) :- T ==[], !,
     % If `V` has two elements, print `H` followed by `H2` in S-expression format.
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     write(L), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(M,[H2])),
     write(R), !.
 pp_sexi_l([H, S]) :-
@@ -964,9 +1044,14 @@ pp_sexi_l([=, H, B]) :-
 
 pp_sexi_l([H | T]):- pp_sexi_lc([H | T]).
 
+
+pp_sexi_lc([H | T]) :- \+ is_list(T),!,
+    %write('#{'), writeq([H|T]), write('}.').
+    print_compound_type(0, cmpd, [H|T]).
+
 pp_sexi_lc([H | T]) :-
     % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M, T), write(R), !.
 pp_sexi_lc([H | T]) :-
     % If `H` is a control structure and indents are enabled, apply proper indentation.
@@ -976,10 +1061,12 @@ pp_sexi_lc([H | T]) :-
 pp_sexi_lc([H | T]) :-
     % If `T` has 2 or fewer elements, format as S-expression or apply indentation based on length.
     is_list(T), length(T, Args), Args =< 2, fail,
-    portray_compound_type(list,L,M,R),
+    compound_type_s_m_e(list,L,M,R),
     wots(SS, ((with_indents(false, (write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M,T), write(R)))))),
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
+
+
 /*
 
 pp_sexi_l([H|T]) :- is_list(T),symbol(H),upcase_atom(H,U),downcase_atom(H,U),!,
@@ -1060,12 +1147,12 @@ pp_sexi_c(V) :-
 pp_sexi_c((USER:Body)) :- fail,
     % If `V` is in the format `user:Body`, process `Body` directly.
     USER == user, !, pp_sex(Body).
-pp_sexi_c(exec([H | T])) :-
+pp_sexi_c(exec(S)) :-
     % For `exec([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
-    is_list(T), !, write('!'), pp_sex_l([H | T]).
-pp_sexi_c('!'([H | T])) :-
+     !, write('!'), pp_sex(S).
+pp_sexi_c('!'(S)) :-
     % For `!([H | T])` with a list `T`, print as `!` followed by `H` and `T`.
-    is_list(T), !, write('!'), pp_sex_l([H | T]).
+     !, write('!'), pp_sex(S).
 %pp_sexi_c([H|T]) :- is_list(T),!,unlooped_fbug(pp_sexi_c,pp_sex_l([H|T])).
 pp_sexi_c([H | T]) :-
     % If `V` is a list starting with `H`, print it as an S-expression list.
@@ -1100,7 +1187,7 @@ pp_sexi_c('='(N, V)) :-
     % For `N = V`, print in concept format if allowed.
     allow_concepts, !, format("~N;; ~w == ~n", [N]), !, pp_sex(V).
 %pp_sex_c(V):- writeq(V).
-pp_sexi_c(Term) :-
+pp_sexi_c(Term) :- fail,
     % For `Term` with zero arity, format as a single symbol.
     compound_name_arity(Term, F, 0), !, pp_sex_c([F]).
 
@@ -1111,7 +1198,7 @@ pp_sexi_c(V) :- print_compounds_special,
     !, compound_name_arguments(V,Functor,Args),
     always_dash_functor(Functor, DFunctor),
     (symbol_glyph(Functor) -> ExtraSpace = ' ' ; ExtraSpace = ''),
-    portray_compound_type(cmpd,L,M,R),
+    compound_type_s_m_e(cmpd,L,M,R),
     write(L), write(ExtraSpace), write_args_as_sexpression(M, [DFunctor|Args]), write(ExtraSpace), write(R), !.
     %maybe_indent_in(Lvl),write('{'), write_args_as_sexpression([F|Args]), write('}'),maybe_indent_out(Lvl).
 
@@ -1637,24 +1724,16 @@ print_sexpr(Expr, Indent) :- is_ftVar(Expr), !,
     pp_sex(Expr).
 
 % Handling for cons lists
-print_sexpr(Expr, Indent) :- is_lcons(Expr), Expr = [H|T],
+print_sexpr(Expr, Indent) :- is_lcons(Expr),
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent), write('('),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    print_rest_elements(T, NextIndent),
-    write(')'),
+    print_compound_type(Indent, list, Expr),
     (Indent == 0 -> nl; true).
+
 % If Expr is non cons compound
 print_sexpr(Expr, Indent) :- compound(Expr),
     once(conjuncts_to_list(Expr,List)), [Expr]\=@=List, is_list(List),
-    List = [H|T],
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent), write('{, '),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    print_rest_elements(T, NextIndent),
-    write('}'),
+    print_compound_type(Indent, cmpd, List),
     (Indent == 0 -> nl; true).
 
 print_sexpr((IF->THEN;ELSE), Indent):- !,
@@ -1667,6 +1746,7 @@ print_sexpr((IF*->THEN), Indent):- !,
   print_sexpr(if_then(IF,THEN), Indent).
 print_sexpr((THEN;ELSE), Indent):- !,
     print_sexpr('or'(THEN,ELSE), Indent).
+
 print_sexpr((Expr :- Body), Indent):- Body==true, !,
   print_sexpr((Expr), Indent).
 print_sexpr((M:Expr :- Body), Indent):- atom(M), \+ number(Expr), print_module(M,Indent),!, print_sexpr((Expr :- Body), Indent).
@@ -1681,19 +1761,11 @@ print_sexpr((Expr :- Body), Indent):-
 
 % If Expr is non cons compound
 print_sexpr(Expr, Indent) :- compound(Expr),
-    compound_name_arguments(Expr,H,T),
     (Indent > 0 -> nl, print_indent(Indent); true),
-    print_indent(Indent),
-    portray_compound_type(cmpd,L,M,R),
-    write(L),
-    (symbol_glyph(H)->write(" ");true),
-    NextIndent is Indent + 1,
-    print_sexpr(H, 0),
-    write(M),
-    print_rest_elements(T, NextIndent),
-    (symbol_glyph(H)->write(" ");true),
-    write(R),
+    compound_name_arguments(Expr, H, T),
+    print_compound_type(Indent, cmpd, [H|T]),
     (Indent == 0 -> nl; true).
+
 % If Expr is not a cons cell (Print a single element)
 print_sexpr(Expr, Indent) :-
     print_indent(Indent),
@@ -1702,23 +1774,46 @@ print_sexpr(Expr, Indent) :-
 print_module(M, _Indent):- M == user,!,nl.
 print_module(M, _Indent):- write('&'), print_sexpr(M, 0),write(' :\n'),!.
 
+last_item(Item,Item):- \+ is_lcons(Item),!.
+last_item([_|T],Last):- T \== [], !, last_item(T,Last).
+last_item([Item],Item).
 
+print_compound_type(Indent, Type, [H|T] ):-
+    last_item([H|T],Last),
+    compound_type_s_m_e(Type,L,M,R),
+    write(L),
+    (symbol_glyph(H)->write(" ");true),
+    NextIndent is Indent + 1,
+    print_sexpr(H, 0),
+    print_rest_elements(M, T, NextIndent),
+    (symbol_glyph(Last)->write(" ");true),
+    write(R),!.
 
 symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
-portray_compound_type(list,'(','@',')').
-portray_compound_type(cmpd,"#(","|",")").
-%portray_compound_type(cmpd,"{","|","}").
-%portray_compound_type(cmpd,"(","@",")").
+
+compound_type_s_m_e(list,'(','.',')').
+compound_type_s_m_e(cmpd,S,E,M):- prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
+compound_type_s_m_e(ocmpd,'#(','.',')').
+compound_type_s_m_e(ocmpd,'[','|',']').
+compound_type_s_m_e(ocmpd,'{','|','}').
+compound_type_s_m_e(ocmpd,'(','@',')').
+
+prolog_term_start('[').
+
+paren_pair_functor('(',')',_).
+paren_pair_functor('{','}','{...}').
+paren_pair_functor('[',']','[...]').
+
 
 % Print the rest of the elements in the list, ensuring spacing
-print_rest_elements(T, _) :- T==[], !.
-print_rest_elements(T, Indent) :- \+ is_lcons(T), !, write(' | '), print_sexpr(T, Indent).
-print_rest_elements([H|T], Indent) :-
+print_rest_elements(_,T, _) :- T==[], !.
+print_rest_elements(M, T, Indent) :- \+ is_lcons(T), !, write(' '), write(M), write(' '), print_sexpr(T, Indent).
+print_rest_elements(M, [H|T], Indent) :-
     write(' '),  % Space before each element after the first
     print_sexpr(H, Indent),
     (is_lcons(H) -> NextIndent is Indent + 0 ; NextIndent is Indent + 0),
-    print_rest_elements(T, NextIndent).
+    print_rest_elements(M, T, NextIndent).
 
 % Helper predicate to print indentation spaces
 
@@ -1747,14 +1842,14 @@ print_indent_now(_).
             min_indent(Indent), write("("),
             NextIndent is Indent + 4,
             print_sexpr(Lvl2, H, NextIndent),
-            print_rest_elements(Lvl2, T, 0),
+            print_rest_elements(M, Lvl2, T, 0),
             write("("),
             (Indent == 0 -> nl; true)))).
 %:- halt.
 */
 
 :- abolish(xlisting_console:portray_hbr/3).
-xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src(H).
-xlisting_console:portray_hbr(H, B, _R):- print_tree(H:-B).
+xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src_nl(H).
+xlisting_console:portray_hbr(H, B, _R):- print_tree_w_nl(H:-B).
 
 

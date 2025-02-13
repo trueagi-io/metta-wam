@@ -2,10 +2,6 @@
 :- flush_output.
 :- setenv('RUST_BACKTRACE',full).
 %:- '$set_source_module'('user').
-:- set_prolog_flag(py_backtrace_depth,10).
-:- set_prolog_flag(py_backtrace, true).
-:- set_prolog_flag(py_argv,[]).
-%:- set_prolog_flag(argv,[]).
 /*
 # Core in Rust
 In the original version, the core logic and functionalities of the MeTTa system are implemented in Rust. Rust is known for its performance and safety features, making it a suitable choice for building robust, high-performance systems.
@@ -17,13 +13,10 @@ Python is used to extend or customize MeTTa. Typically, Python interacts with th
 Just like the Rust core allowed for Python extensions, the Prolog code also permits Python and Rust developers (thru python right now) to extend or customize parts of MeTTa. This maintains the system?s extensibility and allows users who are more comfortable with Python to continue working with the system effectively.
 
 */
-:- use_module(library(filesex)).
 
-:- if(exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')).
-:- janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl').
-:- else.
-:- janus:ensure_loaded(library(janus)).
-:- endif.
+
+:- use_module(library(janus)).
+:- use_module(library(filesex)).
 
 :- multifile(is_python_space/1).
 :- dynamic(is_python_space/1).
@@ -36,21 +29,7 @@ is_not_prolog_space(GSpace):-  \+ is_asserted_space(GSpace), \+ is_nb_space(GSpa
 
 with_safe_argv(Goal):-
   current_prolog_flag(argv,Was),
-  setup_call_cleanup(set_prolog_flag(argv,[]), 
-	py_catch(Goal),
-  set_prolog_flag(argv,Was)).
-with_safe_argv(G1,G2):- with_safe_argv((G1,G2)).
-py_catch((G1,G2)):-!,py_catch(G1),py_catch(G2).
-py_catch(Goal):- catch(Goal,E,(pybug(E=py_catch(Goal)),py_dump,trace,Goal)).
-%py_catch(Goal):- trace,catch(Goal,E,(pybug(E),py_dump)),!.
-py_dump:- py_call(traceback:print_exc()).
-
-py_is_module(M):- with_safe_argv(catch((py_call(M,X),py_type(X,module)),_,fail)).
-
-%import_metta(_Self,Module):- \+ py_is_module(Module), writeln( \+ py_is_module(Module)),fail.
-import_metta(Self,Module):- py_is_module(Module),!,self_extend_py(Self,Module).
-import_metta(Self,Filename):- include_metta(Self,Filename).
-
+  setup_call_cleanup(set_prolog_flag(argv,[]),Goal,set_prolog_flag(argv,Was)).
 
 ensure_space_py(Space,GSpace):- py_is_object(Space),!,GSpace=Space.
 ensure_space_py(Space,GSpace):- var(Space),ensure_primary_metta_space(GSpace), Space=GSpace.
@@ -58,32 +37,19 @@ ensure_space_py(metta_self,GSpace):- ensure_primary_metta_space(GSpace),!.
 
 :- dynamic(is_metta/1).
 :- volatile(is_metta/1).
-ensure_rust_metta(MeTTa):- is_metta(MeTTa),py_is_object(MeTTa),!.
-ensure_rust_metta(MeTTa):- with_safe_argv(ensure_rust_metta0(MeTTa)),asserta(is_metta(MeTTa)).
-
-ensure_rust_metta0(MeTTa):- ensure_mettalog_py(MettaLearner), py_call(MettaLearner:'get_metta'(),MeTTa),
-  py_is_object(MeTTa).
-ensure_rust_metta0(MeTTa):- py_call('mettalog':'MeTTaLog'(),MeTTa).
-ensure_rust_metta0(MeTTa):- py_call(hyperon:runner:'MeTTa'(),MeTTa),!.
+ensure_rust_metta(MeTTa):- is_metta(MeTTa),!.
+ensure_rust_metta(MeTTa):-
+   with_safe_argv(py_call(hyperon:'MeTTa'(),MeTTa)),
+   asserta(is_metta(MeTTa)).
 
 ensure_rust_metta:- ensure_rust_metta(_).
 
-:- dynamic(is_mettalog/1).
-:- volatile(is_mettalog/1).
-ensure_mettalog_py(MettaLearner):- is_mettalog(MettaLearner),!.
-ensure_mettalog_py(MettaLearner):- 
-   with_safe_argv(
-   (want_py_lib_dir,   
-	py_call('mettalog',MettaLearner),
-	%py_call('motto',_),
-	%py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
-	%py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
-
-   pybug(is_mettalog(MettaLearner)),
-   asserta(is_mettalog(MettaLearner)))).
-
-ensure_mettalog_py:- with_safe_argv(ensure_mettalog_py(_)),!.  
-
+:- dynamic(is_metta_learner/1).
+:- volatile(is_metta_learner/1).
+ensure_metta_learner(Metta_Learner):- is_metta_learner(Metta_Learner),!.
+ensure_metta_learner(Metta_Learner):-
+   with_safe_argv(py_call(metta_vspace:'metta_learner':'MettaLearner'(),Metta_Learner)),
+   asserta(is_metta_learner(Metta_Learner)).
 
 
 :- multifile(space_type_method/3).
@@ -142,7 +108,7 @@ atom_from_space(Space, Sym):-
 % Get the atom iterator from hyperon.base.GroundingSpace
 atoms_iter_from_space(Space, Atoms) :-
     ensure_space(Space,GSpace),
-    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
+    with_safe_argv(py_call(metta_vspace:'metta_learner':get_atoms_iter_from_space(GSpace),Atoms)),
     %py_call(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
@@ -151,14 +117,13 @@ py_to_pl(I,O):- py_to_pl(_,I,O).
 py_to_pl(VL,I,O):- ignore(VL=[vars]), py_to_pl(VL,[],[],_,I,O),!.
 is_var_or_nil(I):- var(I),!.
 is_var_or_nil([]).
-%py_to_pl(VL,Par,_Cir,_,L,_):- pybug(py_to_pl(VL,Par,L)),fail.
+%py_to_pl(VL,Par,_Cir,_,L,_):- wdmsg(py_to_pl(VL,Par,L)),fail.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- var(L),!,E=L.
-py_to_pl(VL,Par,Cir,CirO,O,E):- py_is_object(O),py_class(O,Cl),!,pyo_to_pl(VL,Par,[O=E|Cir],CirO,Cl,O,E).
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- L ==[],!,E=L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- member(N-NE,Cir), N==L, !, (E=L;NE=E), !.
-py_to_pl(_VL,_Par,Cir,Cir, LORV:B,LORV:B):- is_var_or_nil(LORV),  !.
 py_to_pl(_VL,_Par,Cir,Cir, LORV:_B:_C,LORV):- is_var_or_nil(LORV),  !.
 py_to_pl(VL,Par,Cir,CirO,[H|T]:B:C,[HH|TT]):-  py_to_pl(VL,Par,Cir,CirM,H:B:C,HH), py_to_pl(VL,Par,CirM,CirO,T:B:C,TT).
+py_to_pl(_VL,_Par,Cir,Cir, LORV:_B,LORV):- is_var_or_nil(LORV),  !.
 py_to_pl(VL,Par,Cir,CirO,[H|T]:B,[HH|TT]):-  py_to_pl(VL,Par,Cir,CirM,H:B,HH), py_to_pl(VL,Par,CirM,CirO,T:B,TT).
 py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),py_to_pl(VL,Par,Cir,CirO,R:C,AB).
 py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),py_to_pl(VL,Par,Cir,CirO,R,AB).
@@ -166,7 +131,8 @@ py_to_pl(VL,Par,Cir,CirO,A:B,AA:BB):-  !, py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_p
 py_to_pl(VL,Par,Cir,CirO,A-B,AA-BB):- !, py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- atom(L),!,E=L.
 py_to_pl(VL,Par,Cir,CirO,[H|T],[HH|TT]):- !, py_to_pl(VL,Par,Cir,CirM,H,HH), py_to_pl(VL,Par,CirM,CirO,T,TT).
-py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pairs(L,F,NV),!,py_to_pl(VL,Par,Cir,CirO,NV,NVL),dict_pairs(E,F,NVL).
+py_to_pl(VL,Par,Cir,CirO,O,E):- py_is_object(O),py_class(O,Cl),!,pyo_to_pl(VL,Par,[O=E|Cir],CirO,Cl,O,E).
+py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pair(L,F,NV),!,py_to_pl(VL,Par,Cir,CirO,NV,NVL),dict_pair(E,F,NVL).
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E=L.
 %py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
 %py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!, py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R,AB).
@@ -196,14 +162,14 @@ real_VL_var0(R,VL,E):- extend_container(VL,R=E),!. % ,E='$VAR'(R).
 
 pyo_to_pl(VL,_Par,Cir,Cir,Cl,O,E):- Cl=='VariableAtom', !, py_call(O:get_name(),R), real_VL_var(R,VL,E),!.
 pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- class_to_pl1(Par,Cl,M),py_member_values(O,M,R), !, py_to_pl(VL,[Cl|Par],Cir,CirO,R,E).
-pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- class_to_pl(Par,Cl,M), % pybug(class_to_pl(Par,Cl,M)),
+pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- class_to_pl(Par,Cl,M), % wdmsg(class_to_pl(Par,Cl,M)),
    py_member_values(O,M,R), !, py_to_pl(VL,[Cl|Par],Cir,CirO,R,E).
-pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),pybug(py_obj_dir(O,L)),py_decomp(M),meets_dir(L,M),pybug(py_decomp(M)),
+pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):- catch(py_obj_dir(O,L),_,fail),wdmsg(py_obj_dir(O,L)),py_decomp(M),meets_dir(L,M),wdmsg(py_decomp(M)),
   py_member_values(O,M,R), member(N-_,Cir), R\==N, !, py_to_pl(VL,[Cl|Par],Cir,CirO,R,E),!.
 
 pl_to_py(Var,Py):- pl_to_py(_VL,Var,Py).
 pl_to_py(VL,Var,Py):- var(VL),!,ignore(VL=[vars]),pl_to_py(VL,Var,Py).
-pl_to_py(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py,Sym,PyL), py_call(src:'mettalog':'MkExpr'(PyL),Py),!.
+pl_to_py(_VL,Sym,Py):- is_list(Sym),!, maplist(pl_to_py,Sym,PyL), py_call(metta_vspace:'metta_learner':'MkExpr'(PyL),Py),!.
 pl_to_py(VL,Var,Py):- var(Var), !, real_VL_var(Sym,VL,Var), py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(VL,'$VAR'(Sym),Py):- !, real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym), rinto_varname(VName,Sym),!, pl_to_py(VL,'$VAR'(Sym),Py).
@@ -287,76 +253,20 @@ add_to_space(Space, Sym) :-
     py_call(GSpace:'add'(Sym), _).
 :- endif.
 
-must_det_llp((A,B)):-!, must_det_llp(A), must_det_llp(B).
-must_det_llp(B):- pybug(B),!,once(ignore(must_det_ll(B))).
 
-:- dynamic(is_pymod_in_space/2).
-:- dynamic(is_pymod_loaded/2).
-
-py_ready:- nb_current('$py_ready','true'),!.
-py_ready:- \+ is_mettalog(_),!,fail.
-%py_ready:- is_metta(_),!.
-py_ready.
-
-%pybug(P):- py_pp(P),!.
-pybug(P):- \+ py_ready,!, fbug(P).
-pybug(P):- fbug(P).
-pypp(P):- py_to_pl(P,PL),!,fbug(PL),!.
-pypp(P):- fbug(P),!.
-
-'extend-py!'(Module,R):- (notrace((extend_py(Module,R)))).
-extend_py(Module,R):-
-  current_self(Self),
-  self_extend_py(Self,Module,_Base,R).
-self_extend_py(Self,Module):-
-  self_extend_py(Self,Module,_Base,_).
-
-self_extend_py(Self,Module,File,R):-
- with_safe_argv((
-  assert_new(is_pymod_in_space(Module,Self)),
-  (nonvar(File)-> Use=File ; Use=Module),
-  pybug('extend-py!'(Use)),
-   %py_call(mettalog:use_mettalog()),
-  (Use==mettalog->true;(py_call(mettalog:load_functions(Use),R),pybug(R))),  
+'extend-py!'(Module,_):-
+  with_safe_argv((
   %listing(ensure_rust_metta/1),
-  %ensure_mettalog_py,
-  nb_setval('$py_ready','true'),
-  %working_directory(PWD,PWD), py_add_lib_dir(PWD),
-  %replace_in_string(["/"="."],Module,ToPython),
-  %py_call(mettalog:import_module_to_rust(ToPython)),
-  %sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S),
-  %py_module_exists(Module),
-  %py_call(MeTTa:load_py_module(ToPython),Result),
-  true)),!.
+  ensure_metta_learner,
+  wdmsg('extend-py!'(Module)),
+  ensure_rust_metta(MeTTa),
+  replace_in_string(["/"="."],Module,ToPython),
+  py_call(MeTTa:load_py_module(ToPython),Result),
+  wdmsg(result(MeTTa->Result)))),!.
 
-%import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S).
-
-
-rust_metta_run(S,Run):- % run
-  with_safe_argv((((
-  %ensure_rust_metta(MeTTa),
-  s_to_run(S,R),
-  py_call(mettalog:rust_metta_run(R),Run))))).
-
-rust_metta_run(S):- 
-  rust_metta_run(S,Py),
-  print_py(Py).
-
-print_py(Py):- 
-  py_to_pl(Py,R), print(R),nl.
-
-s_to_run(S,R):- atom(S), sformat(R,'~w',[S]),!.
-s_to_run(S,R):- string(S),!,S=R.
-s_to_run(S,R):- with_output_to(string(R),write_src(S)),!.
-
-load_functions_motto:- load_functions_motto(Def),pypp(Def).
-load_functions_motto(Def):-
- load_functions_ext,
- with_safe_argv(py_call(mettalog:load_functions_motto(),Def)).
-
-load_functions_ext:- load_functions_ext(Def),pypp(Def).
-load_functions_ext(Def):-
- with_safe_argv(py_call(mettalog:load_functions_ext(),Def)).
+ensure_metta_learner:-
+  with_safe_argv(ensure_metta_learner(Learner)),
+  wdmsg(ensure_metta_learner(Learner)).
 
 % Example usage
 example_usage :-
@@ -389,7 +299,7 @@ To integrate VSpace with the existing Python and Rust components, similar interf
 */
 
 %:- ensure_loaded(metta_interp).
-on_restore1:- ensure_mettalog_py.
+on_restore1:- ensure_metta_learner.
 
 :- dynamic(want_py_lib_dir/1).
 :- prolog_load_context(directory, ChildDir),
@@ -398,37 +308,7 @@ on_restore1:- ensure_mettalog_py.
    assert(want_py_lib_dir(GParentDir)).
 
 want_py_lib_dir:-
-   with_safe_argv((forall(want_py_lib_dir(GParentDir),  
-                         py_add_lib_dir(GParentDir)),
-    sync_python_path)).
+   with_safe_argv(forall(want_py_lib_dir(GParentDir),  py_add_lib_dir(GParentDir))).
 
-sync_python_path:-
-  working_directory(PWD,PWD), py_add_lib_dir(PWD),
-   ignore(( getenv('PYTHONPATH', CurrentPythonPath),
-    symbolic_list_concat(List, ':', CurrentPythonPath),
-    list_to_set(List,Set),
-    py_lib_dirs(DirsA),
-    forall(member(E,Set),if_t( \+member(E,DirsA), if_t( \+ atom_length(E,0), py_add_lib_dir(E)))))),
-    py_lib_dirs(DirsL),
-    list_to_set(DirsL,Dirs),
-    fbug(py_lib_dirs(Dirs)),
-    symbolic_list_concat(Dirs, ':',NewPythonPath),
-    setenv('PYTHONPATH', NewPythonPath).
-
-is_rust_operation([Fun|Args]):-
-  get_list_arity(Args,Arity),
-  py_call(mettalog:get_operation_definition_with_arity(Fun,Arity),O),O\=='@'('none').
-
-get_list_arity(Args,Arity):- is_list(Args),!,length(Args,Arity).
-get_list_arity(_Args,-1).
-
-:- set_prolog_flag(py_backtrace_depth,10).
-:- set_prolog_flag(py_backtrace, true).
-:- set_prolog_flag(py_argv , []).
 %:- initialization(on_restore1,restore).
 %:- initialization(on_restore2,restore).
-
-
-
-% py_initialize(, +Argv, +Options)
-

@@ -208,13 +208,14 @@ really_compile_src(KB,F,Len,Args,BodyFn),
 
 :- endif.
 */
-
+:- if(false).
 a==>b.
 b==>bb.
 
 a.
 :- b.
 :- bb.
+:- endif.
 
 %:- pfcWhy1(a).
 %:- pfcWhy1(b).

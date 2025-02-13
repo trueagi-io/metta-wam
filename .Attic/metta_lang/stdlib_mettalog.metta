@@ -81,21 +81,27 @@
 (: switch (-> %Undefined% Expression Atom))
 (: unify (-> Atom Atom Atom Atom %Undefined%))
 
-(: get-type (-> Atom Type)) ; get all type declarations for Atom
-(: get-type0 (-> Atom Atom)) ; get-type now returns multiple return values.. this act like the old one that reutrns a sngle value
+;(: current-predicate-arity (-> Predicate Number)) ; returns only the first type of a symbol
+
+(: get-vtype (-> Atom Atom)) ; returns only the first type of a symbol
+(: get-vtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+
+(: get-types (-> Atom Atom)) ; returns only the first type of a symbol
+(: get-types (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+
+(: get-dtype (-> Atom Atom)) ; returns only the data value types of a symbol
+(: get-dtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the data value types of a symbol
+
 (: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
+(: get-ftype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the function types of a symbol
 
 (: pragma! (-> Atom Atom (->)))
-(: = (-> Atom Atom %Undefined%))
+;(: = (-> Atom Atom %Undefined%))
 (: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
-(: case (-> Expression Atom Atom))
+;(: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
 (: import! (-> hyperon::space::DynSpace Atom (->)))
-(: If (-> Bool Atom Atom Atom))
-(: If (-> Bool Atom Atom))
-(= (If True $then) $then)
-(= (If False $then) (let $n 0 (let $n 1 $n)))
-(= (If $cond $then $else) (if $cond $then $else))
+
 
 (@doc type-check
   (@desc "The value of type-check determines MeTTa's type-checking behavior. Set via pragma!. When set to auto (i.e. !(pragma! type-check auto)), types are checked immediately on adding an expression to the space. By default, when unset (or set to anything other than auto), types are checked only on evaluation. For example !(+ 1 \"2\") would trigger a type violation, but (= (foo $x) (+ $x \"2\")) would not, unless type-check is set to auto, in which case both would trigger type violations."))
@@ -183,28 +189,27 @@ For example:
 (predicate-arity function-arity 2)
 (function-arity function-arity 1)
 
+;; MettaMorph-If Function
 
-;; If Function
-
-(iz If MeTTa)
-(@doc If
+(iz MettaMorph-If MeTTaMorph)
+(@doc MettaMorph-If
   (@desc "Conditional function that evaluates and returns one of the provided atoms based on a boolean condition.")
   (@params (
     (@param "Boolean condition")
     (@param "Atom to return if condition is True")
     (@param "Atom to return if condition is False (optional)")))
   (@return "Either the second or third argument depending on the condition"))
-(: If (-> Bool Atom Atom Atom))
-(: If (-> Bool Atom Atom))
-(= (If True $then) $then)
-(= (If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
-(= (If $cond $then $else) (if $cond $then $else))
+(: MettaMorph-If (-> Bool Atom Atom Atom))
+(: MettaMorph-If (-> Bool Atom Atom))
+(= (MettaMorph-If True $then) $then)
+(= (MettaMorph-If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
+(= (MettaMorph-If $cond $then $else) (if $cond $then $else))
 
 ;; Arity Assignments
 
 (predicate-arity predicate-arity 2)
-(predicate-arity : 2)
-(= (: $F P1) (predicate-arity $F 1))
+;(predicate-arity : 3)
+; (= (: $F P1) (predicate-arity $F 1))
 
 ;; Source Predicate and Function Types
 
@@ -311,7 +316,7 @@ For example:
     (@param "Result of reduction or transformation of the first pattern")))
   (@return "Not reduced itself unless custom equalities over equalities are added") )
 (: = (-> $t $t Atom))
-(: = (-> Atom Atom Atom))
+;(: = (-> Atom Atom Atom))
 
 (iz ErrorType MeTTa)
 (@doc ErrorType (@desc "Type of the atom which contains error"))
@@ -375,7 +380,7 @@ For example:
 (@doc unify
   (@desc "Like Match but allows any sort of container for the first argument. (Match only allows MeTTa spaces.)")
   (@params (
-	(@param "The collection or space to match")
+	(@param "The collection or space to match or the first atom to unify with")
 	(@param "Second atom to unify with")
 	(@param "Result if two atoms unified successfully")
 	(@param "Result otherwise")))
@@ -457,7 +462,7 @@ For example:
 
 (iz index-atom MeTTa)
 (@doc index-atom
-  (@desc "Returns atom from an expression (first argument) using index (second argument) or error if index is out of bounds.")
+  (@desc "Returns atom from an expression (first argument) using index (second argument) or error if index is out of bounds")
   (@params (
     (@param "Expression")
     (@param "Index")))
@@ -470,15 +475,16 @@ For example:
 
 
 
-(iz powi MeTTa)
-(@doc powi
-  (@desc "Takes base (first argument) and power (second argument) and returns the result of raising the base to the power.")
+(iz pow-math MeTTa)
+(@doc pow-math
+  (@desc "Takes base (first argument) and power (second argument) and returns result of a power function (base ^ power)")
   (@params (
     (@param "Base. Could be a float.")
     (@param "Power. Must be an integer.")))
   (@return "Result of base raised to the power"))
-;(is-op-2 powi pow)
-(= (powi $B $P) (call-fn! pow $B $P))
+
+
+(= (pow-math $B $P) (call-fn! pow $B $P))
 
 (==> (is-op-1 $m $p) (is-fn-1 $m $p))
 (==> (is-op-1 $m $_) (: $m (-> Number Number)))
@@ -496,67 +502,57 @@ For example:
 
 (is-fn-1 py-list py_list)
 
-(iz powf MeTTa)
-(@doc powf
-  (@desc "Takes base (first argument) and power (second argument) and returns the result of raising the base to the power.")
-  (@params (
-    (@param "Base. Could be afloat.")
-    (@param "Power. Could be afloat.")))
-  (@return "Result of base raisedtothepower "))
-(is-op-2 powf pow)
-(is-op-2 pow pow)
-
-(iz sqrt MeTTa)
-(@doc sqrt
+(iz sqrt-math MeTTa)
+(@doc sqrt-math
   (@desc "Returns square root for input number (first argument) which should be >= 0")
   (@params (
     (@param "Input number")))
   (@return "Result of a square root function"))
-(is-op-1 sqrt sqrt)
+(is-op-1 sqrt-math sqrt)
 
-(iz abs MeTTa)
-(@doc abs
+(iz abs-math MeTTa)
+(@doc abs-math
   (@desc "Returns absolute value of input number (first argument)")
   (@params (
     (@param "Input number")))
   (@return "Absolute value"))
-(is-op-1 abs abs)
+(is-op-1 abs-math abs)
 
-(iz log MeTTa)
-(@doc log
+(iz log-math MeTTa)
+(@doc log-math
   (@desc "Returns result of a logarithm function given base (first argument) and input number (second argument)")
   (@params (
     (@param "Base")
     (@param "Input number")))
   (@return "Result of log function"))
-(is-op-2 log log2)
+(is-op-2 log-math log2)
 
-(iz trunc MeTTa)
-(@doc trunc
+(iz trunc-math MeTTa)
+(@doc trunc-math
   (@desc "Returns integer part of the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer part of float"))
-(is-op-1 trunc trunc)
+(is-op-1 trunc-math trunc)
 
 (iz ceil MeTTa)
-(@doc ceil
+(@doc ceil-math
   (@desc "Returns the smallest integer greater than or equal to the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer value greater than or equal to the input"))
-(is-op-1 ceil ceil)
+(is-op-1 ceil-math ceil)
 
 (iz floor MeTTa)
-(@doc floor
+(@doc floor-math
   (@desc "Returns the smallest integer less than or equal to the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer value less than or equal to the input"))
-(is-op-1 floor floor)
+(is-op-1 floor-math floor)
 
 (iz round MeTTa)
-(@doc round
+(@doc round-math
   (@desc "Returns the nearest integer to the input float value (first argument)")
   (@params (
     (@param "Float value")))
@@ -564,69 +560,69 @@ For example:
 (is-op-1 round round)
 
 (iz sin MeTTa)
-(@doc sin
+(@doc sin-math
   (@desc "Returns result of the sine function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the sine function"))
-(is-op-1 sin sin)
+(is-op-1 sin-math sin)
 
-(iz asin MeTTa)
-(@doc asin
+(iz asin-math MeTTa)
+(@doc asin-math
   (@desc "Returns result of the arcsine function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the arcsine function"))
-(is-op-1 asin asin)
+(is-op-1 asin-math asin)
 
-(iz cos MeTTa)
-(@doc cos
+(iz cos-math MeTTa)
+(@doc cos-math
   (@desc "Returns result of the cosine function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the cosine function"))
-(is-op-1 cos cos)
+(is-op-1 cos-math cos)
 
-(iz acos MeTTa)
-(@doc acos
+(iz acos-math MeTTa)
+(@doc acos-math
   (@desc "Returns result of the arccosine function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the arccosine function"))
-(is-op-1 acos acos)
+(is-op-1 acos-math acos)
 
-(iz tan MeTTa)
-(@doc tan
+(iz tan-math MeTTa)
+(@doc tan-math
   (@desc "Returns result of the tangent function for an input value in radians (first argument)")
   (@params (
     (@param "Angle in radians")))
   (@return "Result of the tangent function"))
-(is-op-1 tan tan)
+(is-op-1 tan-math tan)
 
-(iz atan MeTTa)
-(@doc atan
+(iz atan-math MeTTa)
+(@doc atan-math
   (@desc "Returns result of the arctangent function for an input value (first argument)")
   (@params (
     (@param "Float number")))
   (@return "Result of the tangent function"))
-(is-op-1 atan atan)
+(is-op-1 atan-math atan)
 
-(iz isnan MeTTa)
-(@doc isnan
+(iz isnan-math MeTTa)
+(@doc isnan-math
   (@desc "Returns True if input value is NaN. False - otherwise")
   (@params (
     (@param "Number")))
   (@return "True/False")) 
-(is-pred isnan is_NaN)
+(is-pred isnan-math is_NaN)
 
-(iz isinf MeTTa)
-(@doc isinf
+(iz isinf-math MeTTa)
+(@doc isinf-math
   (@desc "Returns True if input value is positive or negative infinity. False - otherwise")
   (@params (
     (@param "Number")))
   (@return "True/False"))
 ; this is deduced: (: isinf (-> Number Bool))
-(is-pred isinf is_Inf)
+(is-pred isinf-math is_Inf)
 
 (iz random-int MeTTa)
 (@doc random-int
@@ -650,7 +646,7 @@ For example:
 (@doc collapse-bind
   (@desc "Evaluates the Atom (first argument) and returns an expression which contains all alternative evaluations in a form (Atom Bindings). Bindings are represented in a form of a grounded atom { <var> <- <binding>, ... }. See also the complement superpose-bind. Note that, like chain, collapse-bind only evaluates Minimal Metta expressions. Evaluation of non-Minimal MeTTa atoms can be controlled by wrapping in a call to eval (for one evaluation step) or metta (for full evaluation).")
   (@params (
-    (@param "Atom to be evaluated")))
+    (@param "Minimal MeTTa operation to be evaluated")))
   (@return "All alternative evaluations"))
 ;; collapse-bind because `collapse` doesnt guarantee shared bindings
 (: collapse-bind (-> Atom Expression))
@@ -1436,8 +1432,7 @@ For example:
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
 (: get-doc (-> Atom Atom))
-(: metta-get-doc (-> Atom Atom))
-(= (metta-get-doc $atom)
+(= (get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1525,13 +1520,12 @@ For example:
 
 (iz help! MeTTa)
 (@doc help!
-  (@desc "Function prints documentation for the input atom.")
+  (@desc "Function prints documentation for the input atom. Without parameters prints the list of the stdlib functions.")
   (@params (
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
 (: help! (-> Atom (->)))
-(: metta-help! (-> Atom (->)))
-(= (metta-help! $atom)
+(= (help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)
@@ -1548,6 +1542,22 @@ For example:
       (let () (println! (format-args "Atom {}: {} {}" ($item $type $descr)))
       () ))
     ($other (Error $other "Cannot match @doc-formal structure") ))))
+ 
+(@doc help!
+  (@desc "Without parameters prints the list of the stdlib functions.")
+  (@params ())
+  (@return "Unit atom"))
+
+(: help! (-> (->)))
+(= (help!) (let $top-space (mod-space! top)
+    (unify $top-space (@doc $name (@desc $desc) $params $ret)
+      (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
+      Empty)))
+(= (help!) (let $top-space (mod-space! top)
+    (unify $top-space (@doc $name (@desc $desc))
+      (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
+      Empty)))
+
 
 (iz help-param! PrivateRelation)
 (@doc help-param!
@@ -1606,7 +1616,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom"))
 (: get-type (-> Atom Atom))
-(: get-type (-> Atom Atom Atom))
+(: get-type (-> Atom hyperon::space::DynSpace Atom))
 
 (iz get-type-space MeTTa)
 (@doc get-type-space
@@ -1616,7 +1626,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
 (iz get-type-space MeTTa)
-(: get-type-space (-> Atom Atom Atom))
+(: get-type-space (-> hyperon::space::DynSpace Atom Atom))
 (= (get-type-space $space $atom)
 	(get-type $atom $space))
 
@@ -1743,6 +1753,12 @@ For example:
   (@return "Unit atom"))
 (: print-mods! (-> (->)))
 
+(@doc =alpha
+  (@desc "Checks alpha equality of two expressions")
+  (@params (
+    (@param "First expression")
+    (@param "Second expression")))
+  (@return "True if both expressions are alpha equal, False - otherwise"))
 
 (iz assertEqual MeTTa)
 (@doc assertEqual
@@ -1772,6 +1788,13 @@ For example:
   (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
 (: assertEqualToResult (-> Atom Atom Atom))
 
+(iz assertAlphaEqual MeTTa)
+(@doc assertAlphaEqual
+  (@desc "Compares (sets of) results of evaluation of two expressions using alpha equality")
+  (@params (
+    (@param "First expression")
+    (@param "Second expression")))
+  (@return "Unit atom if both expressions after evaluation are alpha equal, error - otherwise"))
 
 (iz assertNotEqualToResult MeTTaLog)
 (@doc assertNotEqualToResult
@@ -1781,6 +1804,13 @@ For example:
     (@param "Second expression (it won't be evaluated)")))
   (@return "Unit atom if both expressions after evaluation are not equal, error - otherwise"))
 (: assertNotEqualToResult (-> Atom Atom Atom))
+
+(@doc assertAlphaEqualToResult
+  (@desc "Same as assertAlphaEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
+  (@params (
+    (@param "First expression (it will be evaluated)")
+    (@param "Second expression (it won't be evaluated)")))
+  (@return "Unit atom if both expressions after evaluation of the first argument are alpha equal, error - otherwise"))
 
 
 (iz superpose MeTTa)
@@ -2050,7 +2080,7 @@ For example:
 (@doc flip
   (@desc "Produces random boolean value")
   (@params ())
-  (@return "Random boolean value"))
+  (@return "Returns uniformly distributed random boolean value"))
 
 
 (@doc unique-atom

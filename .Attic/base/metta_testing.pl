@@ -27,8 +27,8 @@ loonit_number(FS) :-
 
 
 string_replace(Original, Search, Replace, Replaced) :-
-    symbolic_list_concat(Split, Search, Original),
-    symbolic_list_concat(Split, Replace, Replaced),!.
+    atomic_list_concat(Split, Search, Original),
+    atomic_list_concat(Split, Replace, Replaced),!.
 
 get_test_name(Number,TestName) :-
    ((nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST'),
@@ -58,12 +58,8 @@ make_test_name(FilePath0, Number, TestName) :-
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
 
-%color_g_mesg(_,_):- is_compatio,!.
-%color_g_mesg(_,_):- silent_loading,!.
-color_g_mesg(C,G):- 
-  notrace((nop(check_silent_loading),
-    color_g_mesg_ok(C,G))).
-color_g_mesg_ok(_,G):- is_compatio,!,call(G).
+%color_g_mesg(C,G):- silent_loading,!.
+color_g_mesg(C,G):- notrace((nop(check_silent_loading),color_g_mesg_ok(C,G))).
 color_g_mesg_ok(C,G):-
  quietly((
    wots(S,must_det_ll(user:G)),
@@ -104,7 +100,7 @@ write_pass_fail([P,C,_],PASS_FAIL,G):-
 write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
     ignore(((
    (nb_current(loading_file,FilePath),FilePath\==[])->true; FilePath='SOME/UNIT-TEST.metta'),
-    symbolic_list_concat([_,R],'tests/',FilePath),
+    atomic_list_concat([_,R],'examples/',FilePath),
     file_name_extension(Base, _, R))),
       nop(format('<h3 id="~w">;; ~w</h3>',[TestName,TestName])),
 
@@ -112,7 +108,7 @@ write_pass_fail(TestName,P,C,PASS_FAIL,G1,G2):-
       (%atom_concat(TEE_FILE,'.UNITS',UNITS),
       UNITS = '/tmp/SHARED.UNITS',
       open(UNITS, append, Stream,[encoding(utf8)]),
-      format(Stream,'| ~w | [~w](https://logicmoo.org/public/metta/reports/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
+      format(Stream,'| ~w | [~w](https://htmlpreview.github.io/?https://raw.githubusercontent.com/logicmoo/vspace-metta/main/reports/cuRRent/~w.metta.html#~w) | ~@ | ~@ | ~@ |~n',
       [PASS_FAIL,TestName,Base,TestName,trim_gstring(with_indents(false,write_src([P,C])),200),
         trim_gstring(with_indents(false,write_src(G1)),100),with_indents(false,write_src(G2))]),!,
       close(Stream))).
@@ -148,7 +144,6 @@ loonit_asserts1(TestSrc,Pre,G) :-
     color_g_mesg(red,write_src(loonit_failureR(G))),!,
      %itrace, G.
     ignore(((
-      % repl
        option_value('on-fail','trace'),
        setup_call_cleanup(debug(metta(eval)),call((Pre,G)),nodebug(metta(eval)))))).
     %(thread_self(main)->trace;sleep(0.3))
@@ -333,7 +328,7 @@ parse_answer_str(Inner,[C|Metta]):-
     parse_sexpr_metta(Str,CMettaC), CMettaC=[C|MettaC],
    ((remove_m_commas(MettaC,Metta),
      \+ sub_var(',',rc(Metta)))).
-parse_answer_str(Inner0,Metta):- symbolic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
+parse_answer_str(Inner0,Metta):- atomic_list_concat(InnerL,' , ',Inner0), maplist(atom_string,InnerL,Inner), maplist(parse_sexpr_metta,Inner,Metta),skip((must_det_ll(( \+ sub_var(',',rc2(Metta)))))),!.
 parse_answer_str(Inner0,Metta):-
    (( replace_in_string([' , '=' '],Inner0,Inner),
    atomics_to_string(["(",Inner,")"],Str),!,
@@ -390,7 +385,7 @@ quick_test:-
 
 */
 % :- debug(term_expansion).
-:- if(( false, debugging(term_expansion))).
+:- if(debugging(term_expansion)).
 :- enable_arc_expansion.
 :- style_check(-singleton).
 dte:- set(_X.local) = val.
@@ -722,9 +717,9 @@ mf('./examples/VRUN_tests0.metta').
 mf('./examples/VRUN_tests1.metta').
 mf('./examples/VRUN_tests2.metta').
 mf('./examples/VRUN_tests3.metta').
-mf('./src/nm_test.metta').
-mf('./src/r.metta').
-mf('./src/test_nspace.metta').
+mf('./metta_vspace/nm_test.metta').
+mf('./metta_vspace/r.metta').
+mf('./metta_vspace/test_nspace.metta').
 :- forall(mf(H),add_history1(load_metta(H))).
 %:- load_metta
 
@@ -1176,5 +1171,4 @@ fn test_types_in_metta() {
         ("has-color" object color)));
         assert_eq!(result, bind_set![{object: expr!("baloon"), color: expr!("blue")}]);
     }
-
 
