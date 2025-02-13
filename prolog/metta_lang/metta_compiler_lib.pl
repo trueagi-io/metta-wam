@@ -260,10 +260,10 @@ transpiler_predicate_store(collapse, 2, [x(doeval,lazy,[])], x(doeval,eager,[]))
 %%%%%%%%%%%%%%%%%%%%% spaces
 
 transpiler_predicate_store('add-atom', 3, [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__add-atom'(Space,PredDecl,[]) :- 'add-atom'(Space,PredDecl).
+'mc_2__add-atom'(Space,PredDecl,[]). % :- 'add-atom'(Space,PredDecl).
 
 transpiler_predicate_store('remove-atom', 3, [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__remove-atom'(Space,PredDecl,[]) :- 'remove-atom'(Space,PredDecl).
+'mc_2__remove-atom'(Space,PredDecl,[]). % :- trace,retractall(metta_atom_asserted(Space,PredDecl)). % 'remove-atom'(Space,PredDecl).
 
 transpiler_predicate_store('get-atoms', 2, [x(noeval,eager,[])], x(noeval,eager,[])).
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
