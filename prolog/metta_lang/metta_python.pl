@@ -1326,6 +1326,12 @@ py_pp_str(V,String):-
 %     ?- load_hyperon_module.
 %     true.
 %
+
+:- dynamic(did_load_hyperon_module_loaded/0).
+:- dynamic(metta_python_hyperon_in_memory/1).
+:- read_file_to_string('./metta_python_hyperon.py', String, []),
+   asserta(metta_python_hyperon_in_memory(String)), !.
+
 load_hyperon_module:-
     % If the module is already loaded, do nothing.
     did_load_hyperon_module, !,
@@ -1334,9 +1340,14 @@ load_hyperon_module:-
     % Mark the module as loaded.
     assert(did_load_hyperon_module),
     % Load the Python Hyperon module using py_module/2 (complete the call as necessary).
-    with_safe_argv(py_module(hyperon_module,
-'
+    hyperon_module_src(Src),
+    with_safe_argv(py_module(hyperon_module,Src)),assert(did_load_hyperon_module_loaded).
 
+hyperon_module_src(Src):- metta_python_hyperon_in_memory(Src),!.
+hyperon_module_src(Src):- metta_python_hyperon_on_disk(Src),!.
+
+hyperon_module_on_disk(
+'from hyperon import *
 from hyperon.base import Atom
 from hyperon.atoms import OperationAtom, E, GroundedAtom, GroundedObject
 from hyperon.ext import register_tokens
@@ -1445,8 +1456,7 @@ def rust_deref(obj):
     if undone is obj: return obj
     if undone is None: return obj
     obj = undone
-
-')),assert(did_load_hyperon_module_loaded).
+').
 
 
 %!  py_mcall(+I, -O) is semidet.
@@ -1780,7 +1790,7 @@ ensure_mettalog_py(MettaLearner):-
     is_mettalog(MettaLearner), !.  % Check if MettaLearner is already known.
 ensure_mettalog_py(MettaLearner):-
     with_safe_argv(  % Ensure safety for argument passing.
-        (want_py_lib_dir,  % Ensure the Python library directory is available.
+        (add_wanted_py_lib_dirs,  % Ensure the Python library directory is available.
             %py_call_warg('mettalog',MettaLearner),
             %py_call_warg('motto',_),
             %py_call_warg('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
@@ -2668,7 +2678,7 @@ self_extend_py(Self,Module,File,R):-
         % listing(ensure_rust_metta/1),
         % ensure_mettalog_py,
         nb_setval('$py_ready','true'),
-        % working_directory(PWD,PWD),py_add_lib_dir(PWD),
+        % working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
         % replace_in_string(["/"="."],Module,ToPython),
         % py_mcall(mettalog:import_module_to_rust(ToPython)),
         % sformat(S,'!(import! &self ~w)',[Use]),rust_metta_run(S,R),
@@ -3002,11 +3012,11 @@ example_usage:-
 
 atom_count_from_space(Count):- atom_count_from_space(metta_self,Count).
 
-:-dynamic(want_py_lib_dir/1).
+:-dynamic(wanted_py_lib_dir/1).
 :-prolog_load_context(directory,ChildDir),
     file_directory_name(ChildDir,ParentDir),
     file_directory_name(ParentDir,GParentDir),
-    pfcAdd_Now(want_py_lib_dir(GParentDir)).
+    pfcAdd_Now(wanted_py_lib_dir(GParentDir)).
 
 %:- .
 %:- ensure_rust_metta.
@@ -3034,20 +3044,40 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 % when using this file alone uncomment the next line
 %:- ensure_loaded(metta_interp).
 
-%!  want_py_lib_dir is det.
+%!  add_wanted_py_lib_dirs is det.
 %
 %   Ensures that Python library directories are added to the Python path.
-%   It retrieves all directories from want_py_lib_dir/1 facts and adds them
-%   using py_add_lib_dir/1. After that, it synchronizes the Python path.
+%   It retrieves all directories from wanted_py_lib_dir/1 facts and adds them
+%   using maybe_py_add_lib_dir/1. After that, it synchronizes the Python path.
 %
 %   @example Ensure Python library directories are added:
-%       ?- want_py_lib_dir.
+%       ?- add_wanted_py_lib_dirs.
 %
-want_py_lib_dir:-
+add_wanted_py_lib_dirs:-
     with_safe_argv((
-        forall(want_py_lib_dir(GParentDir),py_add_lib_dir(GParentDir)),
+        forall(wanted_py_lib_dir(GParentDir),maybe_py_add_lib_dir(GParentDir)),
         sync_python_path
     )).
+
+
+maybe_py_add_lib_dir(Path):- is_list(Path),!,maplist(maybe_py_add_lib_dir,Path).
+maybe_py_add_lib_dir(Path):- atom_length(Path,0),!.
+maybe_py_add_lib_dir(Path):-
+  absolute_file_name(Path,ABS2),
+  py_lib_dirs(Dirs),member(Dir,Dirs),
+  absolute_file_name(Dir,ABS1),
+  ABS1=ABS2,!.
+maybe_py_add_lib_dir(Path):- py_add_lib_dir(Path,first),!.
+
+
+
+find_mettalog_relative_path(RelDir, AbsPath) :-
+    % Get the environment variable METTALOG_DIR
+    metta_root_dir(Dir),
+    absolute_file_name(RelDir, AbsPath, [relative_to(Dir),file_type(directory), access(exist)]).
+
+maybe_py_add_relative_lib_dir(RelDir):-
+ ignore((find_mettalog_relative_path(RelDir, AbsPath),maybe_py_add_lib_dir(AbsPath))).
 
 %!  sync_python_path is det.
 %
@@ -3060,22 +3090,28 @@ want_py_lib_dir:-
 %       ?- sync_python_path.
 %
 sync_python_path:-
-    working_directory(PWD,PWD),py_add_lib_dir(PWD),
+    working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
     ignore((
         getenv('PYTHONPATH',CurrentPythonPath),
         symbolic_list_concat(List,':',CurrentPythonPath),
         list_to_set(List,Set),
-        py_lib_dirs(DirsA),
-        forall(
-            member(E,Set),
-            if_t(\+ member(E,DirsA),if_t(\+ atom_length(E,0),py_add_lib_dir(E)))
-        )
-    )),
-    py_lib_dirs(DirsL),
-    list_to_set(DirsL,Dirs),
-    fbug(py_lib_dirs(Dirs)),
+        maybe_py_add_lib_dir(Set))),
+    maybe_py_add_relative_lib_dir('./python/'),
+    maybe_py_add_relative_lib_dir('../hyperon-experimental/python'),
+    %py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)),
+    py_lib_dirs(DirsL),list_to_set(DirsL,Dirs),
     symbolic_list_concat(Dirs,':',NewPythonPath),
-    setenv('PYTHONPATH',NewPythonPath).
+    setenv('PYTHONPATH',NewPythonPath),
+    catch(try_resolve_python_modules,E,(show_python_path,write_src_nl(E))).
+    %write_src_nl(py_lib_dirs(NewPythonPath)),
+
+try_resolve_python_modules:-
+    py_call(hyperon,_),
+    py_call(hyperonpy,_),
+    py_call(mettalog,_).
+
+show_python_path:-
+  py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)).
 
 %!  is_rust_operation(+List) is semidet.
 %
