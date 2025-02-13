@@ -250,6 +250,9 @@ lazy_load_python.
 %   @see getenv/2
 %   @see absolute_file_name/3
 metta_root_dir(Dir) :-
+    % Use METTALOG_DIR environment variable if set.
+    getenv('METTALOG_DIR', Dir), !.
+metta_root_dir(Dir) :-
     % Attempt to resolve the root directory relative to the source directory.
     is_metta_src_dir(Value),
     absolute_file_name('../../', Dir, [relative_to(Value)]).
@@ -429,6 +432,9 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 % TODO: Uncomment the following line if the `pfcAdd` predicate is stable and
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
+
+pfcAdd_Now(Cl):- \+ nb_current(allow_dupes,t),clause_asserted(Cl),!.
+
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
     current_predicate(pfcAdd/1),!,
@@ -2697,10 +2703,8 @@ get_flag_value(_, true).
 %   @note The commented-out version avoids `fail/0` and skips loading `metta_python`.
 %
 
-%process_option_value_def :- \+ option_value('python', false), skip(ensure_loaded(metta_python)).
+%process_option_value_def :- option_value('python', false), !, skip(ensure_loaded(metta_python)).
 process_option_value_def :-
-    % The predicate fails immediately due to this `fail/0`.
-    fail,
     % If the `python` option is not explicitly set to `false`, load the `metta_python` module.
     \+ option_value('python', false),
     ensure_loaded(mettalog(metta_python)),
@@ -4440,7 +4444,7 @@ metta_atom_asserted_last(Top, '&corelib') :-
 metta_atom_asserted_last(Top, '&stdlib') :-
     % Assert `&stdlib` for the top-level context.
     top_self(Top).
-metta_atom_asserted_last('&stdlib', '&corelib').
+%metta_atom_asserted_last('&stdlib', '&corelib').
 metta_atom_asserted_last('&flybase', '&corelib').
 metta_atom_asserted_last('&flybase', '&stdlib').
 metta_atom_asserted_last('&catalog', '&corelib').
@@ -4570,11 +4574,7 @@ is_metta_space(Space) :-  nonvar(Space),
 
 % metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-metta_eq_def(Eq, KB, H, B):-
-  %if_t(var(H),trace),
-  no_repeats_var(NR),!,metta_eq_def1(Eq, KB, H, B), NR = hb(H, B).
-
-metta_eq_def1(Eq, KB, H, B) :-
+metta_eq_def(Eq, KB, H, B) :-
     % Ensure `Eq` is unified with '='.
     ignore(Eq = '='),
     if_or_else(
@@ -4670,18 +4670,18 @@ metta_anew1(Load, _OBO) :-
 % Resolve the mode for `Ch` using `metta_interp_mode/2`, then recurse with the resolved mode.
 metta_anew1(Ch, OBO) :-
     metta_interp_mode(Ch, Mode), % Determine the mode for `Ch`.
-    !,
+    Ch\=@=Mode, !,
     metta_anew1(Mode, OBO).      % Recurse with the resolved mode.
 % Attempt to transform `OBO` using `maybe_xform/2`, then recurse with the transformed form.
 metta_anew1(Load, OBO) :-
     maybe_xform(OBO, XForm),     % Transform `OBO` if possible.
-    !,
+    OBO \=@= XForm, !,
     metta_anew1(Load, XForm).    % Recurse with the transformed form.
 % Handle `load` operation for `metta_atom`.
 metta_anew1(load, OBO) :-
     OBO = metta_atom(Space, Atom), % Match the structure of `OBO`.
     !,
-    'add-atom'(Space, Atom).       % Add the atom to the specified space.
+    'add-atom'(Space, Atom), !.       % Add the atom to the specified space.
 % Handle `unload` operation for `metta_atom`.
 metta_anew1(unload, OBO) :-
     OBO = metta_atom(Space, Atom), % Match the structure of `OBO`.
@@ -4690,22 +4690,14 @@ metta_anew1(unload, OBO) :-
 % Handle `unload_all` for all `metta_atom` objects.
 metta_anew1(unload_all, OBO) :-
     OBO = forall(metta_atom(Space, Atom), ignore('remove-atom'(Space, Atom))). % Remove all atoms.
-% Default `load` operation with hooks and PFC integration.
-metta_anew1(load, OBO) :-
-    !,
-    must_det_ll((
+
+% Default `load` operation with hooks and PFC integration and error handling.
+metta_anew1(load, OBO) :-  !,
+    must_det_lls((
         load_hook(load, OBO),         % Execute the load hook.
         subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
-        pfcAdd_Now(Cl)                % Add the clause using PFC.
-    )).
-% Alternative `load` operation with error handling.
-metta_anew1(load, OBO) :-
-    !,
-    must_det_ll((
-        load_hook(load, OBO),         % Execute the load hook.
-        subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
-        show_failure(pfcAdd_Now(Cl))  % Add the clause and show errors if any.
-    )).
+        pfcAdd_Now(Cl)  % Add the clause and show errors if any.
+    )),!.
 % Handle `unload` by erasing matching clauses.
 metta_anew1(unload, OBO) :-
     subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
@@ -4717,7 +4709,7 @@ metta_anew1(unload, OBO) :-
         clause(Head2, Body2, Ref), % Retrieve the clause again for validation.
         (Head + Body) =@= (Head2 + Body2), % Check if the clauses are equivalent.
         erase(Ref),               % Erase the clause.
-        pp_m(unload(Cl))          % Log the unload operation.
+        if_verbose(load,pp_m(unload(Cl)))          % Log the unload operation.
     )).
 % Handle `unload_all` by retracting all matching clauses.
 metta_anew1(unload_all, OBO) :-
@@ -4725,7 +4717,7 @@ metta_anew1(unload_all, OBO) :-
     must_det_ll((
         load_hook(unload_all, OBO),  % Execute the unload_all hook.
         subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
-        once_writeq_nl_now(yellow, retractall(Cl)), % Log and retract all matching clauses.
+        if_verbose(load, once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
         retractall(Cl)      %to_metta(Cl).
     )).
 % Alternative `unload_all` operation with detailed clause handling.
@@ -4740,7 +4732,7 @@ metta_anew1(unload_all, OBO) :-
             ((Head + Body) =@= (Head2 + Body2)) -> % Check if the clauses are equivalent.
                 (erase(Ref), nop(pp_m(unload_all(Ref, Cl)))) % Erase and log equivalent clauses.
             ;
-                (pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2)))) % Log differences.
+                if_verbose(load,(pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2))))) % Log differences.
         ))
     ).
 
