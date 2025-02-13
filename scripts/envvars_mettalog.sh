@@ -80,9 +80,9 @@ add_py_dirs_to_pythonpath() {
 #add_py_dirs_to_pythonpath "$(realpath "$METTALOG_DIR/tests/")"
 
 
-# Prepend METTALOG_DIR/src to PYTHONPATH if it's not already included
-if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/src:"* ]]; then
-    PYTHONPATH="${METTALOG_DIR}/src${PYTHONPATH:+:$PYTHONPATH}"
+# Prepend METTALOG_DIR/python to PYTHONPATH if it's not already included
+if [[ ":$PYTHONPATH:" != *":${METTALOG_DIR}/python:"* ]]; then
+    PYTHONPATH="${METTALOG_DIR}/python${PYTHONPATH:+:$PYTHONPATH}"
 fi
 
 # Prepend METTALOG_DIR/tests/python_compat/metta-motto to PYTHONPATH if it's not already included
