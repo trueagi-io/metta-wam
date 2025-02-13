@@ -69,6 +69,47 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
+%%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
+
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
+   Convert=['case',Value,Cases],!,
+   f2p(HeadIs,LazyVars,ValueResult,ValueResultN,LazyRetValue,Value,ValueCode,ValueCodeN),
+   lazy_impedance_match(LazyRetValue,x(doeval,eager,[]),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
+   ValueCode1a=[[prolog_if,ValueCode1,[[assign,ValueResult1a,ValueResult1]],[[assign,ValueResult1a,'Empty']]]],
+   compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1a,Cases,Converted0,Converted0N),
+   append(ValueCode1a,Converted0,Converted),
+   append(ValueCode1a,Converted0N,ConvertedN).
+
+compile_flow_control_case(_,_,RetResult,RetResultN,_,_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
+compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
+   f2p(HeadIs,LazyVars,MatchResult,MatchResultN,LazyRetMatch,Match,MatchCode,MatchCodeN),
+   lazy_impedance_match(LazyRetMatch,x(doeval,eager,[]),MatchResult,MatchCode,MatchResultN,MatchCodeN,MatchResult1,MatchCode1),
+   f2p(HeadIs,LazyVars,TargetResult,TargetResultN,LazyEval0,Target,TargetCode,TargetCodeN),
+   compile_flow_control_case(HeadIs,LazyVars,RestResult,RestResultN,LazyEval1,ValueResult,Rest,RestCode,RestCodeN),
+   arg_properties_widen(LazyEval0,LazyEval1,LazyEval),
+   append(TargetCode,[[assign,RetResult,TargetResult]],T),
+   append(RestCode,[[assign,RetResult,RestResult]],R),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],T,R]],Converted),
+   append(TargetCodeN,[[assign,RetResultN,TargetResultN]],TN),
+   append(RestCodeN,[[assign,RetResultN,RestResultN]],RN),
+   append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],TN,RN]],ConvertedN).
+
+/*
+compile_flow_control(HeadIs,LazyVars,RetResult,LazyEval,Convert, Converted) :-
+  Convert = ['case', Eval, CaseList],!,
+  f2p(HeadIs, LazyVars, Var, x(doeval,eager,[]), Eval, CodeCanFail),
+  case_list_to_if_list(Var, CaseList, IfList, [empty], IfEvalFails),
+  compile_test_then_else(RetResult, LazyVars, LazyEval, CodeCanFail, IfList, IfEvalFails, Converted).
+
+case_list_to_if_list(_Var, [], [empty], EvalFailed, EvalFailed) :-!.
+case_list_to_if_list(Var, [[Pattern, Result] | Tail], Next, _Empty, EvalFailed) :-
+    (Pattern=='Empty'; Pattern=='%void%'), !, % if the case Failed
+    case_list_to_if_list(Var, Tail, Next, Result, EvalFailed).
+case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
+    case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
+    Out = ['if', [metta_unify, Var, Pattern], Result, Next].
+*/
+
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 transpiler_predicate_store('+', 3, [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).

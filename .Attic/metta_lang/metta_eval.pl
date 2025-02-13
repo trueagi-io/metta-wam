@@ -3184,7 +3184,7 @@ cwtl_goal(AlarmID, Goal) :-
 eval_10(Eq,RetType,Depth,Self,X,Y):-
     as_prolog_x(0,Self,X,XX),
     eval_20(Eq,RetType,Depth,Self,XX,Y),
-    if_t( \+ sub_var(Y,X), sanity_check_eval(eval_20_last(XX),Y)).
+    notrace(if_t( \+ sub_var(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
