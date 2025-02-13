@@ -197,6 +197,17 @@
       ; now add the present board's squares to atomspace.
       (add-pieces $board)))
 
+; (delete-pieces)
+; input:    present board of form ( (piece-1) (piece-2) (empty-square-1)... etc )
+; output:   removes all pieces   
+(= (delete-pieces)
+    (progn
+      ; remove prior occupied square atoms from atomspace
+      (remove-atom &self (square $x $y $s $p))  
+      ; remove empty squares too
+      (remove-atom &self (square $x $y))  
+      ))
+
 ; Invoke with empty list, will return characters input from console until ENTER.
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
@@ -404,8 +415,8 @@
     (if (not (== $OpenRouteToSquare () )) True False)))
 
 (= (return_entire_box $Coordinates)
-    (if (== (size-atom $Coordinates) 4) 
-      $Coordinates
+;    (if (== (size-atom $Coordinates) 4) 
+;      $Coordinates
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -415,10 +426,10 @@
               ($a $b))))
          )
          (if (== (size-atom $z) 2) $z)
-      )))
+      )) ;)
 (= (return_entire_box $Coordinates)
-    (if (== (size-atom $Coordinates) 4) 
-      $Coordinates
+;    (if (== (size-atom $Coordinates) 4) 
+;      $Coordinates
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -428,7 +439,7 @@
               ($a $b $c $d))))
          )
          (if (== (size-atom $z) 4) $z)
-      )))
+      )) ;)
 ;
 ;   (return_entire_box_sequential)
 ;   Retrieve the full details of a square on the board based on its coordinates
@@ -1025,7 +1036,7 @@
     ; Retrieve the source box details.
     (let $h (return_entire_box $f) ())               
     ; Retrieve the destination box details.
-    (let $i (return_entire_box $g) ())               
+    (let $i (return_entire_box $g) ()) ;backtracking here.
     ; Check there is a piece to move.
     (if (and (== (size-atom $h) 4)                                    
              (xor  
@@ -1055,6 +1066,8 @@
                 (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
                 (add-atom &self (board-state $provisional_board))
+                ; since move complete, delete individual square atoms which only live for a single move.
+                (delete-pieces)
                 ; display
                 (D)
                 )
