@@ -4098,6 +4098,44 @@ fake_impl(F/A) :-
 :- fake_impl(xlisting_web:find_http_session/1).
 :- fake_impl(xlisting_web:is_cgi_stream/0).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Higher arity maplists
+
+% maplist/6 applies Pred to the elements of List1, List2, ..., List5 in parallel
+maplist(Goal, List1, List2, List3, List4, List5) :-
+    maplist_(List1, List2, List3, List4, List5, Goal).
+maplist_([], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Goal).
+
+% maplist/7 applies Pred to the elements of List1, List2, ..., List6 in parallel
+maplist(Goal, List1, List2, List3, List4, List5, List6) :-
+    maplist_(List1, List2, List3, List4, List5, List6, Goal).
+maplist_([], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Goal).
+
+% maplist/8 applies Pred to the elements of List1, List2, ..., List8 in parallel
+maplist(Goal, List1, List2, List3, List4, List5, List6, List7) :-
+    maplist_(List1, List2, List3, List4, List5, List6, List7, Goal).
+maplist_([], [], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], [Elem7|Tail7], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6, Elem7),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Goal).
+
+% maplist/9 applies Pred to the elements of List1, List2, ..., List8 in parallel
+maplist(Goal, List1, List2, List3, List4, List5, List6, List7, List8) :-
+    maplist_(List1, List2, List3, List4, List5, List6, List7, List8, Goal).
+maplist_([], [], [], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], [Elem7|Tail7], [Elem8|Tail8], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6, Elem7, Elem8),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Tail8, Goal).
+
+
+
+map_fold1(_,[],[],A,A).
+map_fold1(Pred,[X|Xt],[Y|Yt],A1,A3) :- call(Pred,X,Y,A1,A2),map_fold1(Pred,Xt,Yt,A2,A3).
 
 end_of_file.
 
