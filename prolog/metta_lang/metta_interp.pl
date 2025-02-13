@@ -5089,7 +5089,7 @@ toplevel_interp_only_symbol('import!').
 toplevel_interp_only_symbol('extend-py!').
 toplevel_interp_only_symbol('include').
 toplevel_interp_only_symbol('include!').
-toplevel_interp_only_symbol(H):- symbol_concat('add-atom',_,H),!.
+%toplevel_interp_only_symbol(H):- symbol_concat('add-atom',_,H),!.
 
 %!  always_exec(+W) is nondet.
 %
