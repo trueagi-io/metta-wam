@@ -172,7 +172,7 @@ eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
-  show_failure_when(argtypes,catch_metta_return(eval_args(Eq,RetType,Depth,Self,X,Y),Y)).
+  catch_metta_return(eval_args(Eq,RetType,Depth,Self,X,Y),Y).
 
 %:- set_prolog_flag(gc,false).
 /*
