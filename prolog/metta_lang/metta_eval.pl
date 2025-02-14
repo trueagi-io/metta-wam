@@ -172,7 +172,7 @@ eval_true(X):- eval_args(X,Y), once(var(Y) ; \+ is_False(Y)).
 
 eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
-  catch_metta_return(eval_args(Eq,RetType,Depth,Self,X,Y),Y).
+  show_failure_when(argtypes,catch_metta_return(eval_args(Eq,RetType,Depth,Self,X,Y),Y)).
 
 %:- set_prolog_flag(gc,false).
 /*
@@ -363,7 +363,7 @@ eval_to_name(X,x(X)).
 eval_09(Eq,RetType,Depth,Self,X,Y):- !,  eval_10(Eq,RetType,Depth,Self,X,Y).
 
 eval_09(Eq,RetType,Depth,Self,X,Y):-!,
-     no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
+     show_failure_when(argtypes,no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y))).
 
 eval_09(Eq,RetType,Depth,Self,X,Y):-!,
      no_repeats_var(YY),
@@ -2150,7 +2150,7 @@ eval_20(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,
     check_returnval(Eq,RetType,RetVal).
 
 'mi_2_bind!'(Other,Expr,RetVal):-
-    peek_scope(Eq,RetType,Depth,Self),
+    peek_scope(Eq,RetType,_Depth,Self),
     must((into_name(Self,Other,Name),!,
     eval(Expr,Value),
     %dmsg((Name = (Expr->Value))),
@@ -2910,7 +2910,7 @@ fail_on_constructor:- true_flag.
 eval_adjust_args(_Eq,_RetType,ResIn,ResOut,_Depth,_Self,AEMore,AEAdjusted):-
    \+ iz_conz(AEMore),!,AEMore=AEAdjusted,ResIn=ResOut,!.
 eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
- eval(AIn,AE),
+ show_failure_when(argtypes,eval(AIn,AE)),
  adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
     adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
@@ -3362,12 +3362,17 @@ eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   if_trace((e;args),
      (AEMore\==AEAdjusted -> color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted))
        ; nop(indentq2(Depth,same(AEMore))))),
-  eval_40(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
+  eval_24(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
   \+ \+ check_returnval(Eq,RetType,ResOut).
 
+eval_24(Eq,RetType,Depth,Self,X,Y):-
+    if_or_else( eval_40(Eq,RetType,Depth,Self,X,Y),
+                  eval_subst_args_here(Eq,RetType,Depth,Self,X,Y)),Y\=='Empty'.
+
+
 eval_40(Eq,RetType,Depth,Self,X,Y):-
-  if_or_else(  (maybe_eval_defn(Eq,RetType,Depth,Self,X,Y)),
-                eval_41(Eq,RetType,Depth,Self,X,Y)),Y\=='Empty'.
+    if_or_else(  (maybe_eval_defn(Eq,RetType,Depth,Self,X,Y)),
+                  eval_41(Eq,RetType,Depth,Self,X,Y)),Y\=='Empty'.
 
 eval_41(Eq,RetType,Depth,Self,X,Y):-
  if_or_else(    eval_rust(Eq,RetType,Depth,Self,X,Y),
