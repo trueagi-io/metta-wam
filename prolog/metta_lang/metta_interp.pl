@@ -68,40 +68,41 @@
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
 % This likely enables detailed error backtraces when using Rust-based components.
 % Rust will now output full stack traces when errors occur, which aids in debugging.
-:- setenv('RUST_BACKTRACE', full).
+:- initialization(setenv('RUST_BACKTRACE', full)).
 
 % Set the Prolog flag for encoding to UTF-8 (overrides other default encodings).
 % This ensures that the Prolog interpreter treats all input/output as UTF-8 encoded.
 :- set_prolog_flag(encoding, utf8).
+:- initialization(set_prolog_flag(encoding, utf8)).
 
 % Set a global non-backtrackable variable 'cmt_override' with a specific string pattern.
 % This could be used for customizing the way comments or other formatting behaviors are handled.
-:- nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')).
+:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
 
 % Set the flag to make the source search relative to the working directory.
 % This helps locate Prolog files from the current working directory.
-:- set_prolog_flag(source_search_working_directory, true).
+:- initialization(set_prolog_flag(source_search_working_directory, true)).
 
 % Enable backtracing, which allows tracking the sequence of goals that led to an error.
 % This is useful for debugging as it shows the call stack at the time of an error.
-:- set_prolog_flag(backtrace, true).
+:- initialization(set_prolog_flag(backtrace, true)).
 
 % Set the maximum depth for the backtrace to 100, meaning up to 100 frames of the call stack will be shown.
-:- set_prolog_flag(backtrace_depth, 100).
+:- initialization(set_prolog_flag(backtrace_depth, 100)).
 
 % Set the maximum goal depth for backtraces, limiting the display of deeply nested goal calls.
-:- set_prolog_flag(backtrace_goal_dept, 100).
+:- initialization(set_prolog_flag(backtrace_goal_dept, 100)).
 
 % Enable showing line numbers in the backtrace, which can help pinpoint where in the source code an error occurred.
-:- set_prolog_flag(backtrace_show_lines, true).
+:- initialization(set_prolog_flag(backtrace_show_lines, true)).
 
 % Configure the flag to customize how Prolog writes out attributes (such as variables and terms).
 % Using 'portray' ensures that the output is human-readable and properly formatted.
-:- set_prolog_flag(write_attributes, portray).
+:- initialization(set_prolog_flag(write_attributes, portray)).
 
 % Enable debugging on errors.
 % When an error occurs, this setting will automatically start the Prolog debugger, providing detailed information about the error.
-:- set_prolog_flag(debug_on_error, true).
+:- initialization(set_prolog_flag(debug_on_error, true)).
 
 % !(set-prolog-flag debug-on-error True)
 
@@ -116,34 +117,35 @@
 /*
 % Set the encoding of the `current_input` stream to UTF-8.
 % This ensures that any input read from `current_input` (which is typically `user_input`) is interpreted as UTF-8.
-:- set_stream(current_input, encoding(utf8)).
+:- initialization(set_stream(current_input, encoding(utf8)).
 
 % Set the encoding for the `user_input` stream to UTF-8.
 % This makes sure that all input read from `user_input` is correctly handled as UTF-8 encoded text.
-:- set_stream(user_input, encoding(utf8)).
+:- initialization(set_stream(user_input, encoding(utf8)).
 
 % Treat `user_output` as a terminal (TTY).
 % This ensures that output to the terminal behaves properly, recognizing that it's interacting with a terminal (e.g., for handling special characters).
-:- set_stream(user_output, tty(true)).
+:- initialization(set_stream(user_output, tty(true)).
 
 % Set the encoding for the `user_output` stream to UTF-8.
 % This ensures that all output sent to `user_output` is encoded in UTF-8, allowing the display of Unicode characters.
-:- set_stream(user_output, encoding(utf8)).
+:- initialization(set_stream(user_output, encoding(utf8)).
 
 % Treat `user_error` as a terminal (TTY).
 % This ensures that error messages are handled as terminal output, allowing for proper interaction when the user sees error messages.
-:- set_stream(user_error, tty(true)).
+:- initialization(set_stream(user_error, tty(true)).
 
 % Set the encoding for the `user_error` stream to UTF-8.
 % This ensures that error messages and other output sent to `user_error` are encoded in UTF-8, preventing issues with special characters in error messages.
-:- set_stream(user_error, encoding(utf8)).
+:- initialization(set_stream(user_error, encoding(utf8)).
 
 % Flush any pending output to ensure that anything waiting to be written to output is immediately written.
 % Useful to make sure output is synchronized and nothing is left in the buffer.
 :- flush_output.
 */
-%:- set_prolog_flag(debug_on_interrupt,true).
-%:- set_prolog_flag(compile_meta_arguments,control).
+
+%:- initialization(set_prolog_flag(debug_on_interrupt,true).
+%:- initialization(set_prolog_flag(compile_meta_arguments,control).
 
 %   Load required Prolog packs and set up their paths dynamically.
 %
@@ -152,7 +154,7 @@
 %   - Facilitates maintainability and portability of the codebase.
 %   - Supports dynamic pack management during runtime without requiring manual adjustments.
 %
-:- (prolog_load_context(directory, Value); Value='.'),
+attach_mettalog_packs:- (prolog_load_context(directory, Value); Value='.'),
    % Resolve the absolute path to the '../../libraries/' directory.
    absolute_file_name('../../libraries/', Dir, [relative_to(Value)]),
    % Build paths for specific libraries/packs.
@@ -163,6 +165,9 @@
       % Attach the `predicate_streams` and `logicmoo_utils` packs.
    pack_attach(PS, [duplicate(replace), search(first)]),
    pack_attach(LU, [duplicate(replace), search(first)]).
+
+:- attach_mettalog_packs.
+%:- initialization(attach_mettalog_packs).
 
 %   :- attach_packs.
 %:- ensure_loaded(metta_interp).
@@ -228,9 +233,10 @@ lazy_load_python.
 % Ensure the `user:is_metta_src_dir/1` predicate is updated with the current directory.
 % This retrieves the current loading directory, clears any previous assertions,
 % and asserts the new directory dynamically.
-:- prolog_load_context(directory,Dir),
+save_metta_src_dir:- prolog_load_context(directory,Dir),
   retractall(user:is_metta_src_dir(_)),
   asserta(user:is_metta_src_dir(Dir)).
+:- save_metta_src_dir.
 
 %!  metta_root_dir(-Dir) is det.
 %
@@ -339,6 +345,7 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   is detected as Windows 64-bit. If the platform is not Windows 64-bit, the
 %   directive does nothing.
 %
+
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
 
 %   :- initialization(attach_packs).
@@ -350,10 +357,12 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   This reduces console output noise and improves runtime performance in
 %   non-debugging environments.
 %
-:- nodebug(metta(eval)).
-:- nodebug(metta(exec)).
-:- nodebug(metta(load)).
-:- nodebug(metta(prolog)).
+:- initialization(nodebug(metta(eval))).
+:- initialization(nodebug(metta(exec))).
+:- initialization(nodebug(metta(load))).
+:- initialization(nodebug(metta(prolog))).
+% Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
+
 
 %
 %   This section declares several dynamic and multifile predicates used in the
@@ -686,7 +695,7 @@ is_html :- is_metta_flag('html').
 
 %   This directive ensures that debugging messages or tracing for
 %   `'trace-on-eval'` are suppressed, reducing console output during evaluation.
-:- nodebug(metta('trace-on-eval')).
+:- initialization(nodebug(metta('trace-on-eval'))).
 
 %!  is_compatio is nondet.
 %
@@ -779,7 +788,9 @@ original_user_output(X) :- stream_property(X, file_no(1)).
 original_user_error(X) :- stream_property(X, file_no(2)).
 
 % Ensure that the original output stream is set if not already defined.
-:- original_user_output(_)->true;(current_output(Out),asserta(original_user_output(Out))).
+save_original_user_output:- original_user_output(_)->true;(current_output(Out),asserta(original_user_output(Out))).
+
+:- initialization(save_original_user_output).
 
 %!  unnullify_output is det.
 %
@@ -823,7 +834,7 @@ null_output(MFS) :- use_module(library(memfile)),new_memory_file(MF),open_memory
 :- dynamic(null_user_output/1).
 
 % Initialize `null_user_output/1` with a memory file stream if it is not already defined.
-:- null_user_output(_) -> true ; (null_output(MFS), asserta(null_user_output(MFS))).
+:- initialization(((null_user_output(_) -> true ; (null_output(MFS), asserta(null_user_output(MFS)))))).
 
 %!  nullify_output is det.
 %
@@ -866,7 +877,7 @@ set_output_stream :- dont_change_streams, !.
 set_output_stream :- \+ keep_output -> nullify_output; unnullify_output.
 
 % Initialize the output stream configuration at startup.
-:- set_output_stream.
+:- initialization(set_output_stream).
 % :- nullify_output.
 
 %!  switch_to_mettalog is det.
@@ -1041,7 +1052,7 @@ current_self(Self) :-
 %
 %   The non-backtrackable global variable `repl_mode` is initialized with `'+'`,
 %   indicating a default REPL mode behavior.
-:- nb_setval(repl_mode, '+').
+:- initialization(nb_setval(repl_mode, '+')).
 
 % Define the option and call help documentation
 
@@ -2181,7 +2192,7 @@ show_options_values :-
 %     ?- interpreter_source_file(File).
 %     File = 'your_prolog_file.pl'.
 %
-:- prolog_load_context(source, File), assert(interpreter_source_file(File)).
+ :- ignore((prolog_load_context(source, File), assert(interpreter_source_file(File)))).
 
 
 % If the file is not already loaded, ensure_loaded is equivalent to consult/1. Otherwise, if the file defines a module,
@@ -2197,7 +2208,7 @@ show_options_values :-
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
-:- nb_setval(self_space, '&top').
+:- initialization(nb_setval(self_space, '&top')).
 
 %!  set_is_unit_test(+Flag) is det.
 %
@@ -2212,7 +2223,7 @@ show_options_values :-
 %     % Disable unit testing mode:
 %     ?- set_is_unit_test(false).
 %
-:- set_is_unit_test(false).
+:- initialization(set_is_unit_test(false)).
 
 %!  extract_prolog_arity(+TypesList, -PrologArity) is nondet.
 %
@@ -2691,12 +2702,14 @@ get_flag_value(_, true).
 
 % Ensure default options are set when not reloading.
 % This block is ignored during reloading to prevent resetting options unnecessarily.
-:- ignore(((
+set_default_flags:- ignore(((
        % Check if the current context is not in reload mode.
        \+ prolog_load_context(reloading, true),
        % Set default option values for all defined options.
        nop((forall(option_value_def(Opt, Default), set_option_value_interp(Opt, Default))))
 ))).
+
+:- initialization(set_default_flags).
 
 %!  process_option_value_def is nondet.
 %
@@ -3136,7 +3149,7 @@ m_opt0(M, Opt) :-
 %     ?- current_prolog_flag(occurs_check, true).
 %     true.
 %
-:- set_prolog_flag(occurs_check, true).
+:- initialization(set_prolog_flag(occurs_check, true)).
 
 %!  start_html_of(+Filename) is det.
 %
@@ -6000,12 +6013,6 @@ not_in_eq(List, Element) :-
 
 :- ensure_loaded(metta_repl).
 
-% Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
-:- nodebug(metta(eval)).
-:- nodebug(metta(exec)).
-:- nodebug(metta(load)).
-:- nodebug(metta(prolog)).
-
 %
 % Below code measures the execution time of a Prolog goal and displays the duration in seconds,
 % milliseconds, or microseconds, depending on the execution time.
@@ -6205,7 +6212,7 @@ rtrace_this(_Call) :-
 
 %:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
-:- abolish(fbug/1).  % Removes any existing definition of `fbug/1` to ensure a clean slate.
+:- ignore(abolish(fbug/1)).  % Removes any existing definition of `fbug/1` to ensure a clean slate.
 
 %!  fbug(+Info) is det.
 %
@@ -6969,8 +6976,8 @@ nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
-:-nts1.
-
+ :-nts1.
+:- initialization(nts1).
 %!  nts0 is det.
 %
 %   Configures or redefines the `system:notrace/0` predicate.
@@ -7080,7 +7087,7 @@ fix_message_hook :-
     % Erase the identified clause.
     erase(Cl).
 
-:- unnullify_output.
+:- initialization(unnullify_output).
 
 %:- ensure_loaded(metta_python).
 
@@ -7090,7 +7097,7 @@ fix_message_hook :-
 :- ensure_loaded(metta_corelib).
 %:- ensure_loaded(metta_help).
 
-:- enter_comment.
+%:- initialization( enter_comment).
 
 %!  stack_times_16 is det.
 %
@@ -7401,9 +7408,9 @@ findall_or_skip(Var, Call, List) :-
     % Execute the query using `findall/3` to collect results into `List`.
     findall(Var, Call, List).
 
-:- set_prolog_flag(metta_interp,ready).
+:- initialization(set_prolog_flag(metta_interp,ready)).
 %:- ensure_loaded(metta_runtime).
-%:- set_prolog_flag(gc,false).
+%:- initialization(set_prolog_flag(gc,false).
 
 %:- initialization(trace, now).
 :- use_module(library(clpr)). % Import the CLP(R) library
