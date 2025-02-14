@@ -928,8 +928,7 @@ show_os_argv :-
 show_os_argv :-
     % Retrieve and print the command-line arguments using the 'os_argv' Prolog flag.
     current_prolog_flag(os_argv, ArgV),
-    write('; libswipl: '),
-    writeln(ArgV).
+    if_verbose(main,(write('; libswipl: '), writeln(ArgV))).
 
 %!  is_pyswip is det.
 %
@@ -1194,7 +1193,7 @@ option_value_name_default_type_help('log', unset, [false, unset, true], "Act lik
 all_option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
 all_option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
 option_value_name_default_type_help('output', './', ['./'], "Set the output directory", 'Output and Logging').
-option_value_name_default_type_help('exeout', './Sav.gitlab.MeTTaLog', [_], "Output executable location", 'Miscellaneous').
+option_value_name_default_type_help('exeout', './Sav.BADNAME.MeTTaLog', [_], "Output executable location", 'Miscellaneous').
 option_value_name_default_type_help('halt', false, [false, true], "Halts execution after the current operation", 'Miscellaneous').
 
 % Debugging and Tracing
@@ -1674,6 +1673,7 @@ real_notrace(Goal) :-
         '$restore_trace'(Flags, SkipLevel)
     ).
 
+:- volatile(is_answer_output_stream/2).
 :- dynamic(is_answer_output_stream/2).
 
 %!  answer_output(-Stream) is det.
@@ -2533,6 +2533,19 @@ read_argv(AArg, Arg) :-
     atom_string(AArg, S),
     read_sexpr(S, Arg), !.
 
+cmdline_flag_option_value(What, Value):-
+  symbolic_list_concat(['--', What,'='],FWhat),
+  metta_cmd_args(Args),!,member(FWhatQValue,Args),
+  symbol_concat(FWhat,QValue,FWhatQValue),
+  unquote_value(QValue,Value),!.
+cmdline_flag_option_value(What, Value):- option_value(What, Value),!.
+
+unquote_value(Atom, New) :- concat_atom_safe(['',New,''], '"', Atom),!.
+unquote_value(Atom, New) :- concat_atom_safe(['',New,''], "'", Atom),!.
+unquote_value(Atom, New) :- Atom=New,!.
+
+
+
 %!  metta_cmd_args(-Args) is det.
 %
 %   Retrieves command-line arguments passed to Metta, prioritizing different sources.
@@ -2709,6 +2722,7 @@ process_option_value_def :-
     \+ option_value('python', false),
     ensure_loaded(mettalog(metta_python)),
     % Initialize Python integration.
+    setenv('METTALOG_VERBOSE','0'),
     real_notrace((ensure_mettalog_py)).
 process_option_value_def.
 
@@ -6760,6 +6774,7 @@ ensure_mettalog_system_compilable:-
 %     ?- ensure_mettalog_system.
 %
 ensure_mettalog_system:-
+ must_det_lls((
     abolish(began_loon/1),
     dynamic(began_loon/1),
     system:use_module(library(quasi_quotations)),
@@ -6789,7 +6804,7 @@ ensure_mettalog_system:-
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
     %pack_install(dictoo, [upgrade(true),global(true)]),
-    !.
+    true)),!.
 
 %!  file_save_name(+File, -SaveName) is nondet.
 %
@@ -6843,20 +6858,20 @@ save_name(Name) :-
 %
 %   @arg Name The resulting save name.
 %
-next_save_name(Name) :-
-    % Derive the name from the current save name and append a unique suffix.
-    save_name(E),
-    before_underscore(E, N),
-    symbol_concat(N, '_', Stem),
-    gensym(Stem, Name),
-  \+ exists_file(Name),
-    Name \== E, !.
 next_save_name(SavMeTTaLog) :-
     % Use the `exeout` option if it is valid and sufficiently long.
     option_value(exeout, SavMeTTaLog),
     symbolic(SavMeTTaLog),
     atom_length(SavMeTTaLog, Len),
     Len > 1, !.
+next_save_name(Name) :-
+    % Derive the name from the current save name and append a unique suffix.
+    save_name(E),
+    before_underscore(E, N),
+    symbol_concat(N, '_', Stem),
+    gensym(Stem, Name),
+   \+ exists_file(Name),
+    Name \== E, !.
 next_save_name('Sav.MeTTaLog').
 
 %!  qcompile_mettalog is det.
@@ -6866,39 +6881,44 @@ next_save_name('Sav.MeTTaLog').
 %   it is caught and displayed.
 %
 qcompile_mettalog :-
+ must_det_lls((
     % Ensure the system is initialized.
     ensure_mettalog_system,
     % Retrieve the target executable name from the `exeout` option.
-    option_value(exeout, Named),
+    cmdline_flag_option_value(exeout, Name),
     % Attempt to save the program as an executable.
-    catch_err(qsave_program(Named, [
-        class(development),
-        autoload(true),
-        goal(loon(goal)),
-        toplevel(loon(toplevel)),
-        stand_alone(true)
-    ]), E, writeln(E)),
+    qsave_program(Name), nonvar(Name),
     % Exit the program with success status.
-    halt(0).
+    halt(0))).
 
 %!  qsave_program is det.
 %
 %   Saves the current Prolog program to a file as a non-standalone executable.
 %   The save name is generated using `next_save_name/1`.
 %
-qsave_program :-
+
+qsave_program:-
+ must_det_lls((
     % Ensure the system is initialized.
     ensure_mettalog_system,
     % Generate the next save name.
-    next_save_name(Name),
+    next_save_name(Name), nonvar(Name),
+    % Attempt to save the program as an executable.
+    qsave_program(Name),
+    % Exit the program with success status.
+    halt(0))).
+
+qsave_program(Name) :-
     % Attempt to save the program.
+    if_verbose(main,write_src_nl(start(qsave_program(Name)))),
     catch_err(qsave_program(Name, [
         class(development),
         autoload(true),
         goal(loon(goal)),
         toplevel(loon(toplevel)),
         stand_alone(false)
-    ]), E, writeln(E)), !.
+    ]), E, writeln(E)), !,
+    if_verbose(main,write_src_nl(done(qsave_program(Name)))).
 
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).

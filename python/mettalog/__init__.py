@@ -1232,11 +1232,11 @@ def timeFrom(w, t0):
     elapsed_us = elapsed_ns / 1e3
 
     if elapsed_s >= 1:
-        print_cmt(f"{w} took {elapsed_s:.5f} seconds")
+        print_l_cmt(1,f"{w} took {elapsed_s:.5f} seconds")
     elif elapsed_ms >= 1:
-        print_cmt(f"{w} took {elapsed_ms:.5f} milliseconds")
+        print_l_cmt(2,f"{w} took {elapsed_ms:.5f} milliseconds")
     else:
-        print_cmt(f"{w} took {elapsed_us:.5f} microseconds")
+        print_l_cmt(2,f"{w} took {elapsed_us:.5f} microseconds")
 
 
 
@@ -1288,7 +1288,7 @@ def vspace_init():
 
     t0 = monotonic_ns()
     #os.system('clear')
-    print_l_cmt(1, underline(f"Version-Space Init: {__file__}\n"))
+    print_l_cmt(2, underline(f"Version-Space Init: {__file__}\n"))
     #import site
     #print_cmt ("Site Packages: ",site.getsitepackages())
     #test_nondeterministic_foreign()
@@ -1571,7 +1571,7 @@ def load_module(name_or_path):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
     else:
-        print_l_cmt(1, f"Assuming {name_or_path} is a module name.")
+        print_l_cmt(2, f"Assuming {name_or_path} is a module name.")
         module = importlib.import_module(name_or_path)
 
     after = set(sys.modules.keys())
@@ -1946,7 +1946,7 @@ def load_functions_ext():
     global did_load_functions_ext
     if did_load_functions_ext is not None: return did_load_functions_ext
     did_load_functions_ext = {}
-    print_l_cmt(1, f"Load Ext functions")
+    print_l_cmt(2, f"Load Ext functions")
     #did_load_functions_ext = load_functions0("hyperon.stdlib", did_load_functions_ext)
     did_load_functions_ext = load_functions0("mettalog", did_load_functions_ext)
     #did_load_functions_ext = load_functions0(f"{__file__}", did_load_functions_ext)
@@ -1963,7 +1963,7 @@ def load_functions_motto():
     global did_load_functions_motto
     if did_load_functions_motto is not None: return did_load_functions_motto
     did_load_functions_motto = {}
-    print_l_cmt(1, "Loading functions for metta-motto")
+    print_l_cmt(2, "Loading functions for metta-motto")
     the_python_runner = get_metta()
     print_l_cmt(2, f"the_python_runner={the_python_runner}")
     dict1 = sql_space_atoms_for_ra()
@@ -2129,7 +2129,7 @@ if the_python_runner is None:  #MakeInteractiveMeTTa() #def MakeInteractiveMeTTa
         the_python_runner.cwd = [os.path.dirname(os.path.dirname(__file__))]
         the_old_runner_space = get_metta().space()
         the_new_runner_space = get_metta().space()
-        print_l_cmt(1, f"; The sys.argv list is: {sys.argv}")
+        print_l_cmt(2, f"; The sys.argv list is: {sys.argv}")
         vspace_init()
         load_functions_ext()
         #get_metta().rust_metta_run("!(extend-py! metta_space/mettalog)")
