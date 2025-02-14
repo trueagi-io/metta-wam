@@ -397,6 +397,9 @@ eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,
 insanity_check_eval(_,_):- is_testing,!,fail.
 insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),wdmsg(insanity_check_eval(Which,X)),!,trace.
 insanity_check_eval(Which,X):-  X=@=[_|_],wdmsg(insanity_check_eval(Which,X)),!,trace.
+
+sanity_check_eval(_,_):- is_testing,!.
+sanity_check_eval(_,_):- !.
 sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), trace),!.
 sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
@@ -776,7 +779,7 @@ eval_until_eq(_Flags,Eq,_XType, YType,Depth,Self,X,Y,TF):- \+is_list(X),!,eval_a
 
 eval_until_eq([Fn|Flags],Eq,XType,YType,Depth,Self,X,Y,TF):-
  if_or_else(eval_args_down(Eq,XType,YType,Depth,Self,X,Y,TF),
- if_or_else(eval_until_eq_l(_FX,_FY,0,Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
+ if_or_else(eval_until_eq_l(Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
  if_or_else(eval_args_slow_down(Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
             TF=[Fn,X,Y]))).
 
@@ -785,7 +788,9 @@ eval_until_eq([Fn|Flags],Eq,XType,YType,Depth,Self,X,Y,TF):-
 eval_arg_maybe_steps(Eq,YType,Depth,Self,Y,YY):- eval_args(Eq,YType,Depth,Self,Y,YY).
 
 eval_args_down(Eq,XType,YType,Depth,Self,X,Y,TF):-
-  eval_args(Eq,XType,Depth,Self,X,XX),eval_args(Eq,YType,Depth,Self,Y,YY),as_tf_unify(XX,YY,TF).
+  eval_args(Eq,XType,Depth,Self,X,XX),
+  eval_args(Eq,YType,Depth,Self,Y,YY),
+  as_tf_unify(XX,YY,TF).
 
 as_tf_unify(XX,YY,TF):- as_tf_traceable(XX=YY,TF).
 

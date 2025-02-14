@@ -65,13 +65,13 @@
 %:- '$set_source_module'('user').
 
 % Set the depth of Python backtrace to 10 for debugging Python errors in Prolog.
-:- set_prolog_flag(py_backtrace_depth,10).
+:- initialization(set_prolog_flag(py_backtrace_depth,10)).
 
 % Enable Python backtracing in case of errors when calling Python from Prolog.
-:- set_prolog_flag(py_backtrace,true).
+:- initialization(set_prolog_flag(py_backtrace,true)).
 
 % Set an empty list for Python argument values.
-:- set_prolog_flag(py_argv,[]).
+:- initialization(set_prolog_flag(py_argv,[])).
 
 /*
 Core in Rust:
@@ -88,11 +88,11 @@ Prolog Extensions with Python:
    functionality through Python (and Rust via Python). This allows Python and Rust
    developers to continue working with the system easily.
 */
-:- use_module(library(filesex)).
+ :- use_module(library(filesex)).
 
 % Ensure that the `metta_interp` library is loaded,
 % That loads all the predicates called from this file
-:- ensure_loaded(metta_interp).
+ :- ensure_loaded(metta_interp).
 
 %!  janus_initialization is det.
 %
@@ -110,7 +110,7 @@ Prolog Extensions with Python:
 %     ?- janus_initialization.
 %     false.
 %
-:- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
+ :- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
 
 
 py_call_warg(G):- py_c_c(G,GG), py_call(GG).
@@ -388,35 +388,7 @@ py_is_list(X):- py_resolve(X,V),py_is_object(V),py_type(V,list).
 %py_is_list(V):- py_is_tuple(V).
 
 % Evaluations and Iterations
-%
-% This section contains logic for loading and checking if the built-in Python module
-% has been loaded in the Prolog environment. It uses thread-local, volatile, and dynamic
-% predicates to manage the state of module loading.
-% Declare the predicate `did_load_builtin_module/0` as thread-local to ensure that
-% its state is specific to each thread. It is also marked as volatile so that it is
-% not saved across restarts, and dynamic to allow modifications during runtime.
-:- volatile(did_load_builtin_module/0).
-:- dynamic(did_load_builtin_module/0).
-
-%!  load_builtin_module is det.
-%
-%   Ensures that the built-in Python module is loaded. If the module has already been
-%   loaded (indicated by `did_load_builtin_module/0` being true), this predicate succeeds
-%   without reloading. Otherwise, it loads the built-in Python module and asserts
-%   that it has been loaded.
-%
-%   @example
-%     % Ensure the built-in Python module is loaded:
-%     ?- load_builtin_module.
-%     true.
-%
-load_builtin_module:-
-    % If the module is already loaded, do nothing.
-    did_load_builtin_module, !.
-load_builtin_module:-
-    % Mark the module as loaded and proceed to load the Python module.
-    % Call py_module/2 to load the Python built-in module (complete the predicate as needed).
-    with_safe_argv(py_module(builtin_module,
+is_metta_python_module_src(builtin_module,
 '
 import sys
 #import numpy
@@ -1189,10 +1161,10 @@ def py_to_str(arg):
 
 the_modules_and_globals = merge_modules_and_globals()
 
-')),
-    assert(did_load_builtin_module).
+').
 
 
+load_builtin_module:- ensure_py_loaded(builtin_module).
 
 
 %!  py_call_method_and_args(+List, -Py) is det.
@@ -1301,52 +1273,152 @@ py_pp_str(V,String):-
 %py_ppp(V):-once((py_is_object(V),py_to_pl(V,PL))),V\=@=PL,!,print(PL).
 %py_ppp(V):-metta_py_pp(V).
 
-% Evaluations and Iterations
+
+% `is_metta_python_module_src/2` is declared as dynamic because it stores the
+% source code of a loaded Python module. Since module contents can be modified
+% at runtime (e.g., reloading or updating a module), this predicate needs to be
+% dynamically asserted and retracted.
+:- dynamic(is_metta_python_module_src/2).
+
+% `did_ensure_py_loaded/1` is declared as dynamic because it keeps track of
+% whether a Python module has already been loaded. This prevents redundant
+% reloading and ensures that initialization happens only once per module.
+:- dynamic(did_ensure_py_loaded/1).
+
+% `did_ensure_py_loaded/1` is also declared as volatile. The volatile declaration
+% ensures that the predicate does not persist when saving and restoring the Prolog
+% state. Since this predicate only tracks runtime state (i.e., which modules have
+% been loaded in the current session), it does not make sense to retain it across
+% different Prolog executions.
+:- volatile(did_ensure_py_loaded/1).
+
+%!  get_metta_python_module_src(+Module, -String) is det.
 %
-% This section contains logic for loading and checking if the Hyperon module has been
-% loaded in the Prolog environment. It uses thread-local, volatile, and dynamic
-% predicates to manage the state of the module loading.
-
-% Declare the predicate `did_load_hyperon_module/0` as thread-local to ensure that
-% its state might later be required in each separate thread. It is also marked as volatile so that it is
-% not saved across restarts, and dynamic to allow modifications during runtime.
-%:- thread_local(did_load_hyperon_module/0).
-:- volatile(did_load_hyperon_module/0).
-:- dynamic(did_load_hyperon_module/0).
-
-%!  load_hyperon_module is det.
+%   Retrieves the Python source code for a given `Module`. If the content has
+%   already been loaded, it retrieves the cached version; otherwise, it reads
+%   the module file and asserts it for future use.
 %
-%   Ensures that the Hyperon Python module is loaded. If the module has already been
-%   loaded (indicated by `did_load_hyperon_module/0` being true), this predicate succeeds
-%   without reloading. Otherwise, it loads the Hyperon Python module and asserts
-%   that it has been loaded.
+%   @param Module The name of the Python module.
+%   @param String The source code of the Python module as a string.
 %
-%   @example
-%     % Ensure the Hyperon Python module is loaded:
-%     ?- load_hyperon_module.
-%     true.
+get_metta_python_module_src(Module, String) :-
+    is_metta_python_module_src(Module, String), !.
+get_metta_python_module_src(Module, String) :-
+    guess_py_module_file(Module, AbsFile),
+    read_file_to_string(AbsFile, String, [encoding(utf8)]),
+    asserta(is_metta_python_module_src(Module, String)), !.
+
+%!  split_py_module_name(+Module, -FileSpec) is det.
 %
+%   Splits a Metta Python module name into a corresponding file specification.
+%   Currently, it returns the module name as the file specification without modification.
+%
+%   @param Module The name of the Python module.
+%   @param FileSpec The resulting file name (same as `Module` for now).
+%
+split_py_module_name(Module, Module).
 
-:- dynamic(did_load_hyperon_module_loaded/0).
-:- dynamic(metta_python_hyperon_in_memory/1).
-:- read_file_to_string('./metta_python_hyperon.py', String, []),
-   asserta(metta_python_hyperon_in_memory(String)), !.
+%!  guess_py_module_file(+Module, -AbsFile) is semidet.
+%
+%   Determines the absolute file path for a given `Module`. It searches in
+%   known source directories and resolves the file path using `absolute_file_name/3`.
+%
+%   @param Module The name of the Python module.
+%   @param AbsFile The absolute path of the module file.
+%
+guess_py_module_file(Module, AbsFile) :-
+    split_py_module_name(Module, FileSpec),
+    search_py_module_src_dir(Dir),
+    absolute_file_name(FileSpec, AbsFile, [
+        relative_to(Dir),
+        access(exists),
+        access(read),
+        file_errors(fail),
+        file_type(python),
+        extensions(['py'])
+    ]), !.
 
-load_hyperon_module:-
-    % If the module is already loaded, do nothing.
-    did_load_hyperon_module, !,
-    did_load_hyperon_module_loaded.
-load_hyperon_module:-
-    % Mark the module as loaded.
-    assert(did_load_hyperon_module),
-    % Load the Python Hyperon module using py_module/2 (complete the call as necessary).
-    hyperon_module_src(Src),
-    with_safe_argv(py_module(hyperon_module,Src)),assert(did_load_hyperon_module_loaded).
+%!  search_py_module_src_dir(-Dir) is nondet.
+%
+%   Finds a directory that contains Metta Python source files.
+%   It searches in various predefined locations, including:
+%   - User-defined Metta source directories.
+%   - The Metta root directory.
+%   - The current working directory.
+%   - The `PYTHONPATH` environment variable.
+%   - Common relative paths.
+%   - Python's system path (`sys.path`).
+%
+%   @param Dir A valid directory containing Python source files.
+%
+search_py_module_src_dir(Dir) :-
+    findall(D, search_py_module_src_dir0(D), AList),
+    malist(any_to_atom, AList, List),!,
+    list_to_set_member(List, Dir).
 
-hyperon_module_src(Src):- metta_python_hyperon_in_memory(Src),!.
-hyperon_module_src(Src):- metta_python_hyperon_on_disk(Src),!.
+list_to_set_member(List, Dir) :-
+    list_to_set(List, Set),
+    member(Dir, Set).
 
-hyperon_module_on_disk(
+
+search_py_module_src_dir0(Dir) :- user:is_metta_src_dir(Dir).
+search_py_module_src_dir0(Dir) :- metta_root_dir(Dir).
+search_py_module_src_dir0(Dir) :- working_directory(Dir, Dir).
+search_py_module_src_dir0(Dir) :-
+    getenv('PYTHONPATH', CurrentPythonPath),
+    symbolic_list_concat(List, ':', CurrentPythonPath),
+    list_to_set_member(List, Dir).
+search_py_module_src_dir0(Dir) :- find_mettalog_relative_path('./python/', Dir).
+search_py_module_src_dir0(Dir) :- find_mettalog_relative_path('../hyperon-experimental/', Dir).
+search_py_module_src_dir0(Dir) :- py_call(sys:path, PyList), list_to_set_member(PyList, Dir).
+search_py_module_src_dir0(Dir) :- py_lib_dirs(List), list_to_set_member(List, Dir).
+
+%!  ensure_py_loaded(+Module) is det.
+%
+%   Ensures that the Metta Python module is loaded into the system.
+%   If the module has already been loaded, it succeeds immediately.
+%   Otherwise, it:
+%   1. Retrieves the Python module as a string.
+%   2. Calls `py_module/2` to initialize the module in the Python runtime.
+%   3. Asserts that the module has been loaded to prevent duplicate loads.
+%
+%   @param Module The name of the Metta Python module.
+%
+ensure_py_loaded(Module) :- did_ensure_py_loaded(Module, _), !.
+ensure_py_loaded(Module) :-
+    get_metta_python_module_src(Module, String),
+    catch(
+        (
+            ignore(notrace(with_safe_argv(py_module(Module, String)))),
+            assertz(did_ensure_py_loaded(Module, String))
+        ),
+        E,
+        (show_python_path, write_src_nl([E = Module, src = String]))
+    ),
+    !.
+
+%!  ensure_py_loaded_early_maybe(+Module) is det.
+%
+%   Attempts to ensure that the Python integration for Metta is loaded.
+%   It first tries to lazily load the Python interface (`lazy_load_python/0`).
+%   If that fails, it proceeds to manually load the Metta Python module.
+%
+%   @param Module The name of the Metta Python module.
+%
+%
+%   Ensures that `ensure_py_loaded_early_maybe/1` is executed:
+%   - When the system starts.
+%   - When a saved state is restored.
+%
+ensure_py_loaded_early_maybe(_Module) :-
+    lazy_load_python, !.
+ensure_py_loaded_early_maybe(Module) :-
+    ensure_py_loaded(Module).
+
+
+:- initialization(ensure_py_loaded_early_maybe(metta_python_proxy)).
+
+is_metta_python_mdule_src(metta_python_hyperon,
 'from hyperon import *
 from hyperon.base import Atom
 from hyperon.atoms import OperationAtom, E, GroundedAtom, GroundedObject
@@ -1457,6 +1529,8 @@ def rust_deref(obj):
     if undone is None: return obj
     obj = undone
 ').
+
+:- initialization(ensure_py_loaded_early_maybe(metta_python_hyperon)).
 
 
 %!  py_mcall(+I, -O) is semidet.
@@ -1874,12 +1948,12 @@ ensure_primary_metta_space:- ensure_primary_metta_space(_).
 %   This predicate ensures that the space is available by calling the appropriate Python bindings.
 %
 %   @arg GSpace The `GroundingSpace` instance that will be initialized.
-:- if(\+ current_predicate(new_rust_space/1)).
+ :- if(\+ current_predicate(new_rust_space/1)).
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 new_rust_space(GSpace):-
     with_safe_argv(py_call_warg(hyperon:base:'GroundingSpace'(),GSpace)),  % Create a new GroundingSpace.
     asserta(is_python_space(GSpace)).  % Store the new space.
-:- endif.
+ :- endif.
 
 %!  query_from_space(+Space, +QueryAtom, -Result) is det.
 %
@@ -1890,7 +1964,7 @@ new_rust_space(GSpace):-
 %   @arg Space The space from which the query is made.
 %   @arg QueryAtom The atom used to query the space.
 %   @arg Result The result of the query, which will unify with the output.
-:- if(\+ current_predicate(query_from_space/3)).
+ :- if(\+ current_predicate(query_from_space/3)).
 
 query_from_space(Space,QueryAtom,Result):-
     ensure_space(Space,GSpace),                % Ensure the space is valid.
@@ -1955,7 +2029,7 @@ atoms_iter_from_space(Space,Atoms):-
     % for debugging print the atoms
     %py_call_warg(GSpace:'atoms_iter'(), Atoms).
     true.
-:- endif.
+ :- endif.
 
 %!  metta_py_pp(+V) is det.
 %
@@ -2532,9 +2606,9 @@ py_decomp(f('__class__',['__str__'()])).
 %
 %   @arg Space The grounding space from which the atom will be removed.
 %   @arg Sym The atom to be removed from the space.
-:- if(\+ current_predicate(remove_from_space/2)).
+ :- if(\+ current_predicate(remove_from_space/2)).
 remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call_warg(GSpace:'remove'(Sym),_).
-:- endif.
+ :- endif.
 
 %!  add_to_space(+Space, +Sym) is det.
 %
@@ -2543,9 +2617,9 @@ remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call_warg(GSpace:'r
 %
 %   @arg Space The grounding space to which the atom will be added.
 %   @arg Sym The atom to be added to the space.
-:- if(\+ current_predicate(add_to_space/2)).
+ :- if(\+ current_predicate(add_to_space/2)).
 add_to_space(Space,Sym):-  ensure_space(Space,GSpace),py_call_warg(GSpace:'add'(Sym),_).
-:- endif.
+ :- endif.
 
 %!  must_det_llp(+Goals) is det.
 %
@@ -2753,7 +2827,7 @@ rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
 %   @example Run a command in Rust and retrieve the result:
 %       ?- rust_metta_run1('some_command',Result).
 %
-rust_metta_run1(I,O):- load_hyperon_module,!,py_ocall(hyperon_module:rust_metta_run(I),M),!,
+rust_metta_run1(I,O):- ensure_py_loaded(hyperon_module),!,py_ocall(hyperon_module:rust_metta_run(I),M),!,
     rust_return(M,O).
 rust_metta_run1(R,Run):-
     with_safe_argv((((
@@ -2863,7 +2937,7 @@ as_var(N,'$VAR'(S)):- sformat(S,'_~w',[N]),!.
 %
 rust_metta_run(S):-rust_metta_run(S,Py),print_py(Py).
 
-:-volatile(cached_py_op/2).
+ :-volatile(cached_py_op/2).
 
 %!  cache_op(+N, +R) is det.
 %
@@ -2875,7 +2949,7 @@ rust_metta_run(S):-rust_metta_run(S,Py),print_py(Py).
 %
 cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),fbug(cached_py_op(N,R)).
 
-:-volatile(cached_py_type/2).
+ :-volatile(cached_py_type/2).
 
 %!  cache_type(+N,+R) is det.
 %
@@ -3013,10 +3087,10 @@ example_usage:-
 atom_count_from_space(Count):- atom_count_from_space(metta_self,Count).
 
 :-dynamic(wanted_py_lib_dir/1).
-:-prolog_load_context(directory,ChildDir),
-    file_directory_name(ChildDir,ParentDir),
-    file_directory_name(ParentDir,GParentDir),
-    pfcAdd_Now(wanted_py_lib_dir(GParentDir)).
+% :-prolog_load_context(directory,ChildDir),
+%    file_directory_name(ChildDir,ParentDir),
+%    file_directory_name(ParentDir,GParentDir),
+%    pfcAdd_Now(wanted_py_lib_dir(GParentDir)).
 
 %:- .
 %:- ensure_rust_metta.
@@ -3147,113 +3221,32 @@ get_list_arity(_Args,-1).
 % These options include displaying terms with quotes, using portray/1 to show terms,
 % and limiting the output depth to 60. Additionally, attributes of variables are
 % portrayed, and spacing is set to show the next argument on the same line.
-:- set_prolog_flag(debugger_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
+:- initialization(set_prolog_flag(debugger_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
     spacing(next_argument)
-]).
+])).
 
 % Set the answer write options.
 % These options are similar to the debugger write options and control how answers
 % are printed in the REPL. Answers are quoted, portrayed, limited to 60 levels of depth,
 % and attributes of variables are portrayed, with spacing between arguments.
-:- set_prolog_flag(answer_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
+:- initialization(set_prolog_flag(answer_write_options,[quoted(true),portray(true),max_depth(60),attributes(portray),
     spacing(next_argument)
-]).
+])).
 
 % Set a flag to limit the depth of Python backtraces to 50 levels.
-:- set_prolog_flag(py_backtrace_depth,50).
+:- initialization(set_prolog_flag(py_backtrace_depth,50)).
 
 % Enable Python backtrace support.
-:- set_prolog_flag(py_backtrace,true).
+:- initialization(set_prolog_flag(py_backtrace,true)).
 
 % Set the default Python argument vector to an empty list.
-:- set_prolog_flag(py_argv,[]).
+:- initialization(set_prolog_flag(py_argv,[])).
 
 % Register initialization hooks that will be called during system after_load /**/.
 % These predicates will be invoked when the system is restored from a saved state.
-:- initialization(on_restore1, after_load /**/).
-:- initialization(on_restore2, after_load /**/).
+:- initialization(on_restore1).
+:- initialization(on_restore2).
 
-% Declare `metta_python_proxy/1` as dynamic so it can be modified at runtime.
-%!  metta_python_proxy/1 is dynamic.
-%
-%   Declares `metta_python_proxy/1` as a dynamic predicate, allowing the content
-%   of the Python proxy to be asserted and modified at runtime.
-%
-:- dynamic(metta_python_proxy/1).
-
-
-% Read the content of the file './metta_python_proxy.py' into the variable `String`.
-% Then, assert the content of the file as a fact `metta_python_proxy/1`.
-%!  Read the content of './metta_python_proxy.py' into the `String` and assert it as a fact.
-%
-%   This snippet reads the entire content of the file `metta_python_proxy.py` into
-%   the string `String`. Once read, the content is asserted as a fact `metta_python_proxy/1`.
-%   The cut (`!`) ensures that no backtracking occurs beyond this point.
-%
-:- read_file_to_string('./metta_python_proxy.py',String,[]),
-   assertz(metta_python_proxy(String)),!.
-
-% Declare `did_load_metta_python_proxy/0` as volatile, meaning it will not be saved to a saved state.
-% This is useful when you do not want this predicate to persist across sessions or save states.
-%!  did_load_metta_python_proxy/0 is dynamic and volatile.
-%
-%   Declares `did_load_metta_python_proxy/0` as a dynamic and volatile predicate.
-%   The dynamic declaration allows this predicate to be asserted and retracted at runtime.
-%   The volatile declaration ensures that this predicate will not be saved across saved states
-%   (i.e., it will not persist across sessions).
-%
-:- dynamic(did_load_metta_python_proxy/0).
-:- volatile(did_load_metta_python_proxy/0).
-
-% If `did_load_metta_python_proxy/0` is not already asserted, it asserts the fact to indicate that the proxy has been loaded.
-% It retrieves the `metta_python_proxy/1` fact (which contains the content of the file).
-% Then, it calls `py_module/2` with the module name and the Python code as arguments.
-% The cut (`!`) ensures no backtracking occurs once this is executed.
-
-%!  load_metta_python_proxy is det.
-%
-%   Ensures that the Metta Python proxy is loaded. This predicate first checks if
-%   the proxy has already been loaded (by asserting the fact `did_load_metta_python_proxy`).
-%   If it has not been loaded, the predicate asserts this fact, retrieves the Python
-%   proxy as a string,and initializes the Python module using the proxy.
-%
-%   This predicate is deterministic and succeeds if the proxy is loaded or was already loaded.
-%
-%   @example
-%   ?- load_metta_python_proxy.
-%   % Ensures that the Metta Python proxy is loaded and available for use.
-%
-load_metta_python_proxy:- !.
-load_metta_python_proxy:- did_load_metta_python_proxy, !.  % Check if the proxy was already loaded.
-load_metta_python_proxy:-
-    % Retrieve the Python proxy string.
-    metta_python_proxy(String),
-    % Initialize the Python module with the proxy string.
-    ignore(notrace(with_safe_argv(py_module(metta_python_proxy,String)))),
-    % Assert that the proxy has now been loaded.
-    assert(did_load_metta_python_proxy),
-    !.
-
-%!  maybe_load_metta_python_proxy is det.
-%
-%   This predicate ensures that the Python integration for Metta is loaded.
-%   It tries to load the Python interface lazily by calling `lazy_load_python/0`.
-%   If the lazy loading succeeds (determined by the cut `!`), it does nothing more.
-%   If lazy loading fails, it proceeds to load the Metta Python proxy using
-%   `load_metta_python_proxy/0`.
-%
-maybe_load_metta_python_proxy :-
-    % Attempt lazy loading of the Python interface.
-    lazy_load_python, !.
-maybe_load_metta_python_proxy :-
-    % If lazy loading fails, load the Metta Python proxy manually.
-    load_metta_python_proxy.
-
-% The following directives ensure that `maybe_load_metta_python_proxy/0` is called
-% during system initialization. The first initialization runs when the program
-% starts, and the second runs when the system is restored from a saved state.
-:- initialization(maybe_load_metta_python_proxy).
-:- initialization(maybe_load_metta_python_proxy, after_load /**/).
 
 
 %!  on_restore1 is det.
