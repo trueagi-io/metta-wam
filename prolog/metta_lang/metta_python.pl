@@ -1280,17 +1280,17 @@ py_pp_str(V,String):-
 % dynamically asserted and retracted.
 :- dynamic(is_metta_python_module_src/2).
 
-% `did_ensure_py_loaded/1` is declared as dynamic because it keeps track of
+% `did_ensure_py_loaded/2` is declared as dynamic because it keeps track of
 % whether a Python module has already been loaded. This prevents redundant
 % reloading and ensures that initialization happens only once per module.
-:- dynamic(did_ensure_py_loaded/1).
+:- dynamic(did_ensure_py_loaded/2).
 
-% `did_ensure_py_loaded/1` is also declared as volatile. The volatile declaration
+% `did_ensure_py_loaded/2` is also declared as volatile. The volatile declaration
 % ensures that the predicate does not persist when saving and restoring the Prolog
 % state. Since this predicate only tracks runtime state (i.e., which modules have
 % been loaded in the current session), it does not make sense to retain it across
 % different Prolog executions.
-:- volatile(did_ensure_py_loaded/1).
+:- volatile(did_ensure_py_loaded/2).
 
 %!  get_metta_python_module_src(+Module, -String) is det.
 %
@@ -1397,7 +1397,7 @@ ensure_py_loaded(Module) :-
     ),
     !.
 
-%!  ensure_py_loaded_early_maybe(+Module) is det.
+    %!  ensure_py_loaded_early_maybe(+Module) is det.
 %
 %   Attempts to ensure that the Python integration for Metta is loaded.
 %   It first tries to lazily load the Python interface (`lazy_load_python/0`).
