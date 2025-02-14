@@ -1185,6 +1185,7 @@ option_value_name_default_type_help('tabling', auto, [auto, true, false], "When 
 
 % Output and Logging
 option_value_name_default_type_help('log', unset, [false, unset, true], "Act like MeTTaLog more so than H-E (also does generate more logging)", 'Output and Logging').
+option_value_name_default_type_help('debuglevel', 0, [0, 1, 2], "Select the verbosity of debug messages. Higher means more verbose", 'Output and Logging').
 all_option_value_name_default_type_help('html', false, [false, true], "Generate HTML output", 'Output and Logging').
 all_option_value_name_default_type_help('python', true, [true, false], "Enable Python functions", 'Output and Logging').
 option_value_name_default_type_help('output', './', ['./'], "Set the output directory", 'Output and Logging').
