@@ -1075,10 +1075,10 @@ if [[ -f "$reference_file" ]]; then
 fi
 
 if [[ -f "$reference_file" ]]; then
-  MLOG="$reference_file"
+  #MLOG="$reference_file"
 
   #if [[ "${#SWI_OPTIONS[@]}" -gt 0 ]]; then
-       MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
+       #MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
   #fi
   if [[ "$never_compile" -eq 1 ]]; then
        MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
@@ -1103,7 +1103,7 @@ if [[ $should_compile -eq 1 ]]; then
 	DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
 	eval "$MAKE_REF_FILE" 
 	if [[ -f "$reference_file" ]]; then
-	    MLOG="$reference_file"
+	    #MLOG="$reference_file"
 	    DEBUG "CREATED $reference_file"
 	else
 	    DEBUG "Missing $reference_file !?!?!"
@@ -1118,9 +1118,16 @@ fi
 STDIO_OPTIONS=()
 set_io_flags STDIO_OPTIONS
 
+
 if [[ -f "$reference_file" ]]; then
-    MLOG="$reference_file"
+    :
+    #MLOG="$reference_file"
+    #ALT_MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"    
 fi
+
+MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"    
+MLOG="$reference_file"
 
 # Generate the final command
 METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"

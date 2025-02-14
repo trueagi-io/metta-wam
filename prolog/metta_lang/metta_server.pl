@@ -409,9 +409,11 @@ our_address(Host:Port):-
 %
 %   @arg Addr is the address to check (Host:Port).
 % Check if this service instance exists at a given address
-we_exist(Addr):-
+
+:- dynamic(we_exist/1).
+%we_exist(Addr):-
     % Get the current address and unify it with Addr
-  our_address(Addr).
+ % our_address(Addr).
 
 % Check if another service exists at the specified address
 %!  they_exist(+Addr) is det.
@@ -421,9 +423,9 @@ we_exist(Addr):-
 %   @arg Addr is the address to check (Host:Port).
 they_exist(Addr):-
     % Get the current service address
-   our_address(Ours),
+   % our_address(Ours),
     % Ensure Addr is different from the current service address
-   diff(Addr,Ours),
+   % dif(Addr,Ours),
    execute_goal(we_exist(Addr)), \+ our_address(Addr).
 
 % Inform services that have taken over about our presence.
@@ -1050,7 +1052,7 @@ cleanup_results(Tag) :-
     retractall(result(Tag, _, _, _)).
 
 % Previously included directive to initialize the virtual space service.
-% :- initialization(start_vspace_service).
+:- initialization(start_vspace_service, after_load /**/).
 
 
 
@@ -1175,6 +1177,6 @@ start_dbg_telnet :-
     start_dbg_telnet(44440).
 
 % Automatically start the server at initialization, ensuring only one server is started
-:- initialization(start_dbg_telnet).
+:- initialization(start_dbg_telnet, after_load /**/).
 
 

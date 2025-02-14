@@ -3168,10 +3168,10 @@ get_list_arity(_Args,-1).
 % Set the default Python argument vector to an empty list.
 :- set_prolog_flag(py_argv,[]).
 
-% Register initialization hooks that will be called during system restore.
+% Register initialization hooks that will be called during system after_load /**/.
 % These predicates will be invoked when the system is restored from a saved state.
-:- initialization(on_restore1,restore).
-:- initialization(on_restore2,restore).
+:- initialization(on_restore1, after_load /**/).
+:- initialization(on_restore2, after_load /**/).
 
 % Declare `metta_python_proxy/1` as dynamic so it can be modified at runtime.
 %!  metta_python_proxy/1 is dynamic.
@@ -3253,7 +3253,7 @@ maybe_load_metta_python_proxy :-
 % during system initialization. The first initialization runs when the program
 % starts, and the second runs when the system is restored from a saved state.
 :- initialization(maybe_load_metta_python_proxy).
-:- initialization(maybe_load_metta_python_proxy, restore).
+:- initialization(maybe_load_metta_python_proxy, after_load /**/).
 
 
 %!  on_restore1 is det.

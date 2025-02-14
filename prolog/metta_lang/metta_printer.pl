@@ -1849,7 +1849,8 @@ print_indent_now(_).
 */
 
 :- abolish(xlisting_console:portray_hbr/3).
+xlisting_console:portray_hbr(H, B, _R):- !, writeq(H:-B),!,nl.
 xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src_nl(H).
-xlisting_console:portray_hbr(H, B, _R):- print_tree_w_nl(H:-B).
+xlisting_console:portray_hbr(H, B, _R):- write_src_nl(H:-B).
 
 

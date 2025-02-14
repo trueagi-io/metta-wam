@@ -1953,7 +1953,7 @@ set_output_to_memfile(State,CurrentEncoding):-
 %   This also handles freeing up memory resources and transcodes content if necessary.
 %
 %   @arg State The current state holding the memory file and write stream.
-%   @arg CurrentOut The original output stream to restore after processing.
+%   @arg CurrentOut The original output stream to after_load /**/ after processing.
 %   @arg AnswerOut The stream to write the captured output to.
 %   @arg StdOutStream The standard output stream.
 %   @arg CurrentEncoding The encoding used for reading and writing the output.
@@ -6737,7 +6737,7 @@ maybe_halt(H) :-
 %   Runs initialization steps when the program is loaded. These include setting
 %   the `cmt_override` variable and restoring the system state.
 %
-:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')), restore).
+:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')), after_load /**/).
 
 % needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 
@@ -6746,7 +6746,7 @@ maybe_halt(H) :-
 %
 %   Displays the operating system arguments (`os_argv`) during initialization.
 %
-:- initialization(show_os_argv).
+:- initialization(show_os_argv, after_load /**/).
 
 %!  ensure_mettalog_system_compilable is det.
 %
@@ -6928,10 +6928,10 @@ qsave_program(Name) :-
 %   This directive performs two actions:
 %   1. `update_changed_files`: Checks and updates any files that have been modified
 %      since the last program run, ensuring the system is synchronized.
-%   2. `restore`: Restores the system to a prepared state, likely reinitializing any
+%   2. `after_load /**/`: Restores the system to a prepared state, likely reinitializing any
 %      essential components.
 %
-:- initialization(update_changed_files,restore).
+:- initialization(update_changed_files,after_load /**/).
 
 %!  nts is det.
 %
@@ -7110,9 +7110,9 @@ stack_times_16 :-
     % Set the new stack limit.
     set_prolog_flag(stack_limit, X_16).
 
-:- initialization(stack_times_16).
-:- initialization(use_corelib_file).
-:- initialization(use_metta_ontology).
+:- initialization(stack_times_16,after_load /**/).
+:- initialization(use_corelib_file,after_load /**/).
+:- initialization(use_metta_ontology,after_load /**/).
 
 %!  immediate_ignore is det.
 %
@@ -7131,7 +7131,7 @@ immediate_ignore:- ignore(((
    set_is_unit_test(UNIT_TEST),
    %trace,
    \+ prolog_load_context(reloading,true),
-   initialization(loon(restore),restore),
+   initialization(loon(after_load /**/),after_load /**/),
    % should fail (if tested from here https://swi-prolog.discourse.group/t/call-with-time-limit-2-not-enforcing-time-limit-as-expected/7755)
    %test_alarm,
    % nts1,
@@ -7405,6 +7405,7 @@ findall_or_skip(Var, Call, List) :-
 %:- ensure_loaded(metta_runtime).
 %:- set_prolog_flag(gc,false).
 
+%:- initialization(trace, now).
 :- use_module(library(clpr)). % Import the CLP(R) library
 %:- initialization(loon_main, main).
 :- initialization(loon(main), main).
