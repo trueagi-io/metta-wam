@@ -415,8 +415,6 @@
     (if (not (== $OpenRouteToSquare () )) True False)))
 
 (= (return_entire_box $Coordinates)
-;    (if (== (size-atom $Coordinates) 4) 
-;      $Coordinates
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -428,8 +426,6 @@
          (if (== (size-atom $z) 2) $z)
       )) ;)
 (= (return_entire_box $Coordinates)
-;    (if (== (size-atom $Coordinates) 4) 
-;      $Coordinates
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -508,7 +504,8 @@
 ;
 
 ; Return True if there is a clear route for piece else False
-
+; Note: prior to calling clear_route verify that the piece is moving to a different square and
+; if the square is occupied it is occupied by the opponent's color. These tests are not duplicated by clear_route!
 (: (clear_route) (-> Expression Expression Expression Bool))
 
 ; TEST ONLY
@@ -517,9 +514,33 @@
 (= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
 
 ;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
+
+; King: Moves one square in any direction.
+(= (clear_route ($X1 $Y1 $Color k) $destination $Board)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )          
+             )
+      (if (and 
+         (xor      
+          (== $X2 $X1)
+          (xor 
+          (== $X2 (- $X1 1))
+          (== $X2 (+ $X1 1))
+          )) 
+         (xor
+          (== $Y2 $Y1)
+          (xor 
+          (== $Y2 (- $Y1 1))
+          (== $Y2 (+ $Y1 1))
+          )) 
+          )
+        True
+        False)))
+
 
 ;(= (clear_route ($X1 $Y1 $Color1 k) $destination $Board) False)
 
@@ -558,7 +579,7 @@
           (== $X1 $X2)
           (and 
           (== $Y2 (- $Y1  1))
-          ; check empty box to move in to
+          ; check empty box to move into
           (== (size-atom $entire) 2)
           ))
 
