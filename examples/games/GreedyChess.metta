@@ -173,6 +173,41 @@
 ; Code invoked by the basic commands 
 ;*******************************************************
 
+; (add-pieces)
+; input the board as a list and create atoms of form '(square x y color piece)'
+(= (add-pieces $board)
+  (if (== $board ())
+      True
+      (let* (
+            ($next-square (car-atom $board))
+            ($next-square-atom (cons-atom square $next-square))
+            ($_ (add-atom &self $next_square-atom))
+            )
+      (add-pieces (cdr-atom $board)))))
+
+; (reset-pieces)
+; input:    present board of form ( (piece-1) (piece-2) (empty-square-1)... etc )
+; output:   individual atoms of the form (square x1 y1 color rank)  
+(= (reset-pieces $board)
+    (progn
+      ; remove prior occupied square atoms from atomspace
+      (remove-atom &self (square $x $y $s $p))  
+      ; remove empty squares too
+      (remove-atom &self (square $x $y))  
+      ; now add the present board's squares to atomspace.
+      (add-pieces $board)))
+
+; (delete-pieces)
+; input:    present board of form ( (piece-1) (piece-2) (empty-square-1)... etc )
+; output:   removes all pieces   
+(= (delete-pieces)
+    (progn
+      ; remove prior occupied square atoms from atomspace
+      (remove-atom &self (square $x $y $s $p))  
+      ; remove empty squares too
+      (remove-atom &self (square $x $y))  
+      ))
+
 ; Invoke with empty list, will return characters input from console until ENTER.
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
@@ -191,13 +226,9 @@
  (progn   
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
     ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
-    ((py-atom print) " ")
     ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.") 
     (display_board (match &self (board-state $board) $board)) 
-    ((py-atom print) "******* I N S T R U C T I O N S ********" )
-    ((py-atom print) " ")
     ((py-atom print) "- Your pieces are marked with an asterisk.")
-    ((py-atom print) "- Please take note of the following simple commands:")
     ((py-atom print) "-------- C o m m a n d s -----------")
     ((py-atom print) "1 TO MOVE YOUR PIECE USE example   ->  M <ENTER> 1213 <ENTER>")
     ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
@@ -206,7 +237,6 @@
     ((py-atom print) "4 Commands List                    ->  C")
     ((py-atom print) "5 Display Board                    ->  D")
     ((py-atom print) "6 Quit                             ->  Q")
-    ((py-atom print) "You may now enter your move M x1 y1 x2 y2 command.") 
     ))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
@@ -384,8 +414,30 @@
     ; if the list is populated (size exceeds 0), that means the piece can be taken.
     (if (not (== $OpenRouteToSquare () )) True False)))
 
+(= (return_entire_box $Coordinates)
+      (let*  
+         (($x (nth 1 $Coordinates) )
+          ($y (nth 2 $Coordinates) )
+          ($z (match &self (square $a $b) 
+            (if 
+              (and (== $a $x) (== $b $y)) 
+              ($a $b))))
+         )
+         (if (== (size-atom $z) 2) $z)
+      )) ;)
+(= (return_entire_box $Coordinates)
+      (let*  
+         (($x (nth 1 $Coordinates) )
+          ($y (nth 2 $Coordinates) )
+          ($z (match &self (square $a $b $c $d) 
+            (if 
+              (and (== $a $x) (== $b $y)) 
+              ($a $b $c $d))))
+         )
+         (if (== (size-atom $z) 4) $z)
+      )) ;)
 ;
-;   (return_entire_box)
+;   (return_entire_box_sequential)
 ;   Retrieve the full details of a square on the board based on its coordinates
 ;   using a sequential search.
 ;   
@@ -395,9 +447,9 @@
 ;
 ;   Returns:
 ;   $next-square The full contents of square.
-(= (return_entire_box $Coordinates $Board) 
+(= (return_entire_box_sequential $Coordinates $Board) 
   (if (== (size-atom $Coordinates) 4) 
-   ; if you send this the full box already...
+   ; if you send this the full box just output the input, no need for further evaluation.
     $Coordinates
    ;else
     (let*
@@ -405,14 +457,12 @@
     (($next-square (car-atom $Board)  )
     ($X (nth 1 $next-square) )
     ($Y (nth 2 $next-square) )
-    ($G (concat_lists (($X) ($Y))) ))
-    ; then execute
-    (if (== $G $Coordinates) 
-      $next-square
-      (return_entire_box $Coordinates (cdr-atom $Board)))
+    ;($G (concat_lists (($X) ($Y))) )) 
     )
-  ) 
-)
+    ; then execute
+    (if (== ($X $Y) $Coordinates) 
+      $next-square
+      (return_entire_box_sequential $Coordinates (cdr-atom $Board))))))
 ;
 ; (xy_box)
 ;     1. Searches the board for a square containing the specified piece.
@@ -454,7 +504,8 @@
 ;
 
 ; Return True if there is a clear route for piece else False
-
+; Note: prior to calling clear_route verify that the piece is moving to a different square and
+; if the square is occupied it is occupied by the opponent's color. These tests are not duplicated by clear_route!
 (: (clear_route) (-> Expression Expression Expression Bool))
 
 ; TEST ONLY
@@ -463,9 +514,33 @@
 (= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
 
 ;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
+
+; King: Moves one square in any direction.
+(= (clear_route ($X1 $Y1 $Color k) $destination $Board)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )          
+             )
+      (if (and 
+         (xor      
+          (== $X2 $X1)
+          (xor 
+          (== $X2 (- $X1 1))
+          (== $X2 (+ $X1 1))
+          )) 
+         (xor
+          (== $Y2 $Y1)
+          (xor 
+          (== $Y2 (- $Y1 1))
+          (== $Y2 (+ $Y1 1))
+          )) 
+          )
+        True
+        False)))
+
 
 ;(= (clear_route ($X1 $Y1 $Color1 k) $destination $Board) False)
 
@@ -492,9 +567,9 @@
     ( 
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )
-      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2)) $destination))
       ($passing_1 ($X2 6) )
-      ($entire_box_down_one  (return_entire_box $passing_1  $Board))
+      ($entire_box_down_one  (return_entire_box $passing_1))
       )
     
     (if (xor 
@@ -504,7 +579,7 @@
           (== $X1 $X2)
           (and 
           (== $Y2 (- $Y1  1))
-          ; check empty box to move in to
+          ; check empty box to move into
           (== (size-atom $entire) 2)
           ))
 
@@ -556,9 +631,9 @@
     ( 
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )      
-      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2) $Board) $destination))
+      ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2)) $destination))
       ($passing_1 ($X1 3) )
-      ($entire_box_up_one  (return_entire_box $passing_1  $Board))
+      ($entire_box_up_one  (return_entire_box $passing_1))
       )
     
     (if (xor 
@@ -973,14 +1048,16 @@
   (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
   ; get the current board
   (match &self (board-state $starting_board) $starting_board)
+  ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
+  (reset-pieces $starting_board)
   ; check if source location and destination are not the same
   (if (not (== $f $g))                            
    ; check if destination is empty or destination has opponent's piece  
     (progn 
     ; Retrieve the source box details.
-    (let $h (return_entire_box $f  $starting_board) ())               
+    (let $h (return_entire_box $f) ())               
     ; Retrieve the destination box details.
-    (let $i (return_entire_box $g  $starting_board) ())               
+    (let $i (return_entire_box $g) ()) ;backtracking here.
     ; Check there is a piece to move.
     (if (and (== (size-atom $h) 4)                                    
              (xor  
@@ -994,10 +1071,12 @@
         (let* ( 
             ; Try the move and update the board state. 
             ($provisional_board  (move_piece $h $i $starting_board))   
+            ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
+            ($_NIL (reset-pieces $provisional_board))
             ; locate human's king
             ($king_square (xy_box (s k) $provisional_board))    
             ; 
-            ($full_king_sq (return_entire_box $king_square  $provisional_board))  
+            ($full_king_sq (return_entire_box $king_square))  
             ; Ensure the player's king is not in check from gold (g) if moved.     
             ($KingCompromised (take_dest $full_king_sq g $provisional_board))
               )   
@@ -1008,6 +1087,8 @@
                 (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
                 (add-atom &self (board-state $provisional_board))
+                ; since move complete, delete individual square atoms which only live for a single move.
+                (delete-pieces)
                 ; display
                 (D)
                 )
