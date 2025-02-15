@@ -723,14 +723,15 @@
                (clearcheckup $X1 (+ 1 $Y1) $Y2) 
            ;elif down
            (if (and (== $X2 $X1) (< $Y2  $Y1))
-                (clearcheckdown)
+               (clearcheckdown $X1 (- $Y1 1) $Y2)
            ;elif right
            (if (and (> $X2 $X1) (== $Y2  $Y1))
-                (clearcheckright)
+                (clearcheckright (+ $X1 1) $X2 $Y1)
            ;elif left
            (if (and (< $X2 $X1) (== $Y2  $Y1))
-               (clearcheckleft) False)))))
-            ; otherwise bad move
+               (clearcheckleft (- $X1 1) $X2 $Y1) 
+            ; otherwise rook bad move
+               False)))))
       )
       (if (and 
           (== $RouteClearBool True)
@@ -752,18 +753,15 @@
         )))
 
 (: clearcheckup (-> Atom Atom Atom Bool))
+(: clearcheckdown (-> Atom Atom Atom Bool))
+(: clearcheckleft (-> Atom Atom Atom Bool))
+(: clearcheckright (-> Atom Atom Atom Bool))
 
-;(= (clearcheckup  $a $b $c) True)
-(= (clearcheckdown) True)
-(= (clearcheckright) True)
-(= (clearcheckleft) True)
 
-;(= (clearcheckup $X $Y1 $Y2) 
-    ; if we reach the upper Y destination, all good...
-;    (if (== $Y1 $Y2) True))
 (= (clearcheckup $X $Y1 $Y2) 
-   (let
+   (let* (
         ($next_box (return_entire_box ($X $Y1)))
+          )
         (if (== $Y1 $Y2) 
           True
               ; Not on destination, check for empty passing square
@@ -771,6 +769,43 @@
               (clearcheckup $X (+ $Y1 1) $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
+
+(= (clearcheckdown $X $Y1 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X $Y1)))
+          )
+        (if (== $Y1 $Y2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckdown $X (- $Y1 1) $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckright $X1 $X2 $Y) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y)))
+          )
+        (if (== $X1 $X2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckright (+ $X1 1) $X2 $Y)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckleft $X1 $X2 $Y) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y)))
+          )
+        (if (== $X1 $X2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckleft (- $X1 1) $X2 $Y)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
 
 ;    B > C.  % Stop when the current rank exceeds the ending rank.
 ;checkclearup(A, B, C, D) :-
@@ -1176,8 +1211,6 @@
                 (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
                 (add-atom &self (board-state $provisional_board))
-                ; since move complete, delete individual square atoms which only live for a single move.
-                (delete-pieces)
                 ; display
                 (D)
                 )
@@ -1191,6 +1224,8 @@
     )
     ;else (trying to move to same location)
     ((py-atom print) "Can't move to same location.")) 
+  ; since move complete, delete any individual square atoms which only live for a single move.
+  (delete-pieces)
   )
 )
 
