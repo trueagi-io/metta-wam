@@ -1481,10 +1481,13 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
     show_failure_when(argtypes,into_typed_arg(Depth, Self, T, M, Y)),
     into_typed_args(Depth, Self, TT, MM, YY).
 
-:- initialization(debug(metta(argtypes))).
+:- nodebug(metta(argtypes)).
+:- initialization(nodebug(metta(argtypes))).
 
-show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),trace,!,fail)).
-show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
+show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
+   if_t(debugging(metta(failures)),trace),!,fail)).
+show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
+%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 
 %!  into_typed_arg(+Depth, +Self, +Type, +Value, -TypedValue) is det.
 %
@@ -1513,6 +1516,7 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 %   @arg Value       The value to be evaluated.
 %   @arg TypedValue  The resulting typed value.
 %
+into_typed_arg0(Depth, Self, T, M, Y) :- T=='Atom',!,M=Y.
 into_typed_arg0(Depth, Self, T, M, Y) :-
     % If the type is a variable, determine the value type and evaluate if needed.
     var(T),
@@ -1576,7 +1580,8 @@ can_assign_value_typelist_4(_Self, _NewValue, Was, TypeList):-
     member(Type,TypeList),can_assign(Was,Type),!.
 can_assign_value_typelist_4(Self, NewValue, _Was, TypeList):-
     with_output_to(user_error,(nl,display(var(NewValue)),nl)),
-    trace,  var(NewValue), trace, dont_put_attr(NewValue, cns, Self = TypeList).
+    if_t(debugging(metta(argtypes)),trace),
+    var(NewValue), dont_put_attr(NewValue, cns, Self = TypeList).
 
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.

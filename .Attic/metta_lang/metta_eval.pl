@@ -397,8 +397,11 @@ eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,
 insanity_check_eval(_,_):- is_testing,!,fail.
 insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),wdmsg(insanity_check_eval(Which,X)),!,trace.
 insanity_check_eval(Which,X):-  X=@=[_|_],wdmsg(insanity_check_eval(Which,X)),!,trace.
-sanity_check_eval(Which,X):- tracing,!,notrace,nortrace,call_cleanup(\+ insanity_check_eval(Which,X), rtrace),!.
-sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X).
+
+sanity_check_eval(_,_):- is_testing,!.
+sanity_check_eval(_,_):- !.
+sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), trace),!.
+sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
 eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
 
@@ -677,7 +680,7 @@ eval_until_eq(_Flags,Eq,_XType, YType,Depth,Self,X,Y,TF):- \+is_list(X),!,eval_a
 
 eval_until_eq([Fn|Flags],Eq,XType,YType,Depth,Self,X,Y,TF):-
  if_or_else(eval_args_down(Eq,XType,YType,Depth,Self,X,Y,TF),
- if_or_else(eval_until_eq_l(_FX,_FY,0,Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
+ if_or_else(eval_until_eq_l(Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
  if_or_else(eval_args_slow_down(Flags,Eq,XType,YType,Depth,Self,X,Y,TF),
             TF=[Fn,X,Y]))).
 
@@ -1267,8 +1270,15 @@ subst_same(OldStructure, OldTerm, NewTerm, NewStructure) :-
 % =================================================================
 % =================================================================
 % =================================================================
+new_space_function_name('new-space').
 
-eval_20(Eq,RetType,_Dpth,_Slf,['new-space'],Space):- !, 'new-space'(Space),check_returnval(Eq,RetType,Space).
+is_make_new_kb([NEWKB|Props],KB,ExtraProps):- atom(NEWKB),new_space_function_name(NEWKB),!,
+    oo_new('space',[],KB),
+    oo_set_attibutes(ObjectID,extra_props,Props),
+    oo_set_attibutes(ObjectID,extra_props,ExtraProps).
+
+
+eval_20(Eq,RetType,_Dpth,_Slf,[NEWKB|Props],Space):- is_make_new_kb([NEWKB|Props],Space,[]), !, check_returnval(Eq,RetType,Space).
 
 eval_20(Eq,RetType,Depth,Self,[Op,Space|Args],Res):- is_space_op(Op),!,
   eval_space_start(Eq,RetType,Depth,Self,[Op,Space|Args],Res).
@@ -2739,7 +2749,7 @@ fail_on_constructor:- true_flag.
 eval_adjust_args(_Eq,_RetType,ResIn,ResOut,_Depth,_Self,AEMore,AEAdjusted):-
    \+ iz_conz(AEMore),!,AEMore=AEAdjusted,ResIn=ResOut,!.
 eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
- eval(AIn,AE),
+ show_failure_when(argtypes,eval(AIn,AE)),
  adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
     adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
@@ -3191,8 +3201,13 @@ eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   if_trace((e;args),
      (AEMore\==AEAdjusted -> color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted))
        ; nop(indentq2(Depth,same(AEMore))))),
-  eval_40(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
+  eval_24(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
   \+ \+ check_returnval(Eq,RetType,ResOut).
+
+eval_24(Eq,RetType,Depth,Self,X,Y):-
+    if_or_else( eval_40(Eq,RetType,Depth,Self,X,Y),
+                  eval_subst_args_here(Eq,RetType,Depth,Self,X,Y)),Y\=='Empty'.
+
 
 eval_40(Eq,RetType,Depth,Self,X,Y):-
   if_or_else(  (maybe_eval_defn(Eq,RetType,Depth,Self,X,Y)),

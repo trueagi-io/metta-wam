@@ -357,10 +357,16 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   This reduces console output noise and improves runtime performance in
 %   non-debugging environments.
 %
+:- (nodebug(metta(eval))).
+:- (nodebug(metta(exec))).
+:- (nodebug(metta(load))).
+:- (nodebug(metta(prolog))).
+/*
 :- initialization(nodebug(metta(eval))).
 :- initialization(nodebug(metta(exec))).
 :- initialization(nodebug(metta(load))).
 :- initialization(nodebug(metta(prolog))).
+*/
 % Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
 
 
