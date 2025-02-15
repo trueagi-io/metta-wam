@@ -1329,6 +1329,7 @@ split_py_module_name(Module, Module).
 guess_py_module_file(Module, AbsFile) :-
     split_py_module_name(Module, FileSpec),
     search_py_module_src_dir(Dir),
+    exists_directory(Dir),
     absolute_file_name(FileSpec, AbsFile, [
         relative_to(Dir),
         access(exists),
@@ -1428,7 +1429,7 @@ from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
 from hyperon.atoms import *
 from hyperon.stdlib import *
-import hyperonpy as hp
+# import hyperonpy as hp
 
 
 import sys
@@ -3129,7 +3130,7 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 %
 add_wanted_py_lib_dirs:-
     with_safe_argv((
-        forall(wanted_py_lib_dir(GParentDir),maybe_py_add_lib_dir(GParentDir)),
+        forall(wanted_py_lib_dir(GParentDir),ignore(catch(maybe_py_add_lib_dir(GParentDir),_,true))),
         sync_python_path
     )).
 
@@ -3141,6 +3142,9 @@ maybe_py_add_lib_dir(Path):-
   py_lib_dirs(Dirs),member(Dir,Dirs),
   absolute_file_name(Dir,ABS1),
   ABS1=ABS2,!.
+maybe_py_add_lib_dir(Path):- string(Path),atom_string(APath,Path),!,maybe_py_add_lib_dir(APath).
+maybe_py_add_lib_dir(Path):- \+ atom(Path),!.
+maybe_py_add_lib_dir(Path):- \+ exists_directory(Path),!.
 maybe_py_add_lib_dir(Path):- py_add_lib_dir(Path,first),!.
 
 
@@ -3171,7 +3175,7 @@ sync_python_path:-
         list_to_set(List,Set),
         maybe_py_add_lib_dir(Set))),
     maybe_py_add_relative_lib_dir('./python/'),
-    maybe_py_add_relative_lib_dir('../hyperon-experimental/python'),
+    %maybe_py_add_relative_lib_dir('../hyperon-experimental/python'),
     %py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)),
     py_lib_dirs(DirsL),list_to_set(DirsL,Dirs),
     symbolic_list_concat(Dirs,':',NewPythonPath),
@@ -3181,8 +3185,9 @@ sync_python_path:-
 
 try_resolve_python_modules:-
     py_call(hyperon,_),
-    py_call(hyperonpy,_),
-    py_call(mettalog,_).
+    %py_call(hyperonpy,_),
+    %py_call(mettalog,_),
+    !.
 
 show_python_path:-
   py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)).
