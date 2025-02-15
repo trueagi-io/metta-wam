@@ -3184,7 +3184,7 @@ sync_python_path:-
     %write_src_nl(py_lib_dirs(NewPythonPath)),
 
 try_resolve_python_modules:-
-    py_call(hyperon,_),
+    %py_call(hyperon,_),
     %py_call(hyperonpy,_),
     %py_call(mettalog,_),
     !.
