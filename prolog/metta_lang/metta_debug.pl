@@ -720,10 +720,16 @@ flag_to_var(Flag,Var):-Flag=Var.
 %
 set_debug(metta(Flag), TF) :- nonvar(Flag), !, set_debug(Flag, TF).
 %set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
-set_debug(Flag, TF) :- TF == 'True', !, set_debug(Flag, true).
+set_debug(Flag, Val) :- atom(Flag), atom_concat('trace-on-', Var, Flag),!,set_debug(Var,Val).
+set_debug(Flag, Var) :- debugging(metta(Flag), Var),!.
 set_debug(Flag, TF) :- TF == 'False', !, set_debug(Flag, false).
-set_debug(Flag, true) :- !, debug(metta(Flag)). %, flag_to_var(Flag, Var), set_fast_option_value(Var, true).
-set_debug(Flag, false) :- nodebug(metta(Flag)). %, flag_to_var(Flag, Var), set_fast_option_value(Var, false).
+set_debug(Flag, TF) :- TF == 'silent', !, set_debug(Flag, false).
+set_debug(Flag, TF) :- atomic(TF), symbol_concat('h',_,TF),!, set_debug(Flag, false). % hide, hid, hidden, ..
+set_debug(Flag, TF) :- atomic(TF), symbol_concat('n',_,TF),!, set_debug(Flag, false). % notrace, no, ..
+set_debug(Flag, TF) :- atomic(TF), symbol_concat(_,'f',TF),!, set_debug(Flag, false). % traceoff, off, ..
+set_debug(Flag, false) :- !, nodebug(metta(Flag)),!. %, flag_to_var(Flag, Var), set_fast_option_value(Var, false).
+set_debug(Flag, _) :- !, debug(metta(Flag)),!. %, flag_to_var(Flag, Var), set_fast_option_value(Var, true).
+
 
 %!  if_trace(+Flag, :Goal) is nondet.
 %
@@ -915,6 +921,7 @@ is_debugging(Flag) :- Flag == true, !.
 is_debugging(Flag) :- fast_option_value(Flag, 'debug'), !.
 is_debugging(Flag) :- fast_option_value(Flag, 'trace'), !.
 is_debugging(Flag) :- debugging(metta(Flag), TF), !, TF == true.
+is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
 %is_debugging(Flag):- once(flag_to_var(Flag,Var)),
 %  (fast_option_value(Var,true)->true;(Flag\==Var -> is_debugging(Var))).
