@@ -166,7 +166,7 @@ attach_mettalog_packs:- (prolog_load_context(directory, Value); Value='.'),
    pack_attach(PS, [duplicate(replace), search(first)]),
    pack_attach(LU, [duplicate(replace), search(first)]).
 
-:- attach_mettalog_packs.
+:- initialization(attach_mettalog_packs, now).
 %:- initialization(attach_mettalog_packs).
 
 %   :- attach_packs.
@@ -357,10 +357,16 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   This reduces console output noise and improves runtime performance in
 %   non-debugging environments.
 %
-:- (nodebug(metta(eval))).
-:- (nodebug(metta(exec))).
-:- (nodebug(metta(load))).
-:- (nodebug(metta(prolog))).
+:- nodebug(metta(errors)).
+:- nodebug(metta(eval)).
+:- nodebug(metta(exec)).
+:- nodebug(metta(load)).
+:- nodebug(metta(prolog)).
+:- nodebug(metta(argtypes)).
+:- nodebug(metta(main)).
+:- nodebug(metta(todo)).
+
+
 /*
 :- initialization(nodebug(metta(eval))).
 :- initialization(nodebug(metta(exec))).
@@ -701,21 +707,9 @@ is_html :- is_metta_flag('html').
 
 %   This directive ensures that debugging messages or tracing for
 %   `'trace-on-eval'` are suppressed, reducing console output during evaluation.
-:- initialization(nodebug(metta('trace-on-eval'))).
+:- nodebug(metta('trace-on-eval')).
 
 %!  is_compatio is nondet.
-%
-%   Succeeds if `is_compatio0/0` succeeds, executed without tracing.
-%
-%   This predicate wraps around `is_compatio0/0`, using `notrace/1`
-%   to suppress tracing during its execution.
-%
-%   @example
-%     ?- is_compatio.
-%     true.
-is_compatio :- notrace(is_compatio0).
-
-%!  is_compatio0 is nondet.
 %
 %   Base predicate for determining compatibility conditions.
 %
@@ -723,15 +717,16 @@ is_compatio :- notrace(is_compatio0).
 %   succeeding or failing based on system flags or runtime conditions.
 %
 %   @example
-%     ?- is_compatio0.
+%     ?- is_compatio.
 %     true.
+is_compatio :- notrace(fis_compatio0).
 
-%is_compatio0 :- is_win64,!,fail.
-is_compatio0 :- is_testing, !, fail.
-is_compatio0 :- is_flag0('compatio').
-is_compatio0 :- is_mettalog, !, fail.
+%fis_compatio0 :- is_win64,!,fail.
+fis_compatio0 :- is_testing, !, fail.
+fis_compatio0 :- is_flag0('compatio').
+fis_compatio0 :- is_mettalog, !, fail.
 %is_compatio0 :- is_html,!,fail.
-is_compatio0 :- !.
+fis_compatio0 :- !.
 
 %!  keep_output is nondet.
 %
@@ -1220,7 +1215,7 @@ option_value_name_default_type_help('trace-on-overflow', 1000, [inf], "Trace on 
 option_value_name_default_type_help('trace-on-eval', false, [false, true], "Trace during normal evaluation", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-load', silent, [silent, verbose], "Verbosity on file loading", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-exec', false, [silent, verbose], "Trace on execution during loading", 'Debugging and Tracing').
-option_value_name_default_type_help('trace-on-error', 'non-type', [false, 'non-type', true], "Trace on all or none or non-type errors", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-errors', 'non-type', [false, 'non-type', true], "Trace on all or none or non-type errors", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-fail', false, [false, true], "Trace on failure", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-test', true, [silent, false, verbose], "Trace on success as well", 'Debugging and Tracing').
 option_value_name_default_type_help('repl-on-error', true, [false, true], "Drop to REPL on error", 'Debugging and Tracing').
@@ -1498,7 +1493,7 @@ set_option_value_interp(N,V):-
     %(different_from(N,V)->Note=true;Note=false),
     Note = true,
     %fbugio(Note,set_option_value(N,V)), % Uncomment for debugging.
-    set_option_value(N,V), % Set the value for the option.
+    ignore(set_option_value(N,V)), % Set the value for the option.
     ignore(forall(on_set_value(Note,N,V), true)). % Trigger callbacks if any.
 
 %!  on_set_value(+Note, +N, +V) is det.
@@ -1581,6 +1576,10 @@ is_debug_like(debug, true).
 is_debug_like(nodebug, false).
 % 'silent' indicates no debugging output.
 is_debug_like(silent, false).
+is_debug_like(hide, false).
+is_debug_like(quiet, false).
+is_debug_like(verbose, true).
+
 
 %!  'is-symbol'(+X) is nondet.
 %
@@ -4045,7 +4044,8 @@ option_switch_pred(F) :-
     interpreter_source_file(File),
     source_file(F, File),
     % Ensure the predicate name matches one of the prefixes.
-    \+ \+ (member(Prefix, [is_, show_, trace_on_]), symbol_concat(Prefix, _, F)),
+    \+ \+ (member(Prefix, ['is_', 'show_', 'trace_on_']), symbol_concat(Prefix, _, F)),
+    \+  symbol_concat(_, '0', F), \+  symbol_concat(_, '_', F),
     % Exclude `show_help_options` from the results.
     F \== show_help_options.
 
@@ -4101,13 +4101,19 @@ do_show_options_values :-
 %     @debug_topic=trace
 %
 display_metta_debug_topics :-
+    writeln(user_error,' Tracing...'),
     % Iterate over all distinct debugging topics.
-    distinct(Sub, debugging(metta(Sub), _)),
+    distinct(Sub=TF, debugging(metta(Sub), TF)),
     % Print each debugging topic to the error stream.
-    format(user_error, '~N@~w=trace~n', [Sub]),
+    once(tf_to_trace(TF,Tracing)),
+    format(user_error, '~N  @~w~n', [Sub=Tracing]),
     fail.
 % Ensure the predicate always succeeds, even if no debugging topics are active.
 display_metta_debug_topics :- !.
+tf_to_trace(true,trace).
+tf_to_trace(false,silent).
+tf_to_trace(X,X).
+
 
 % Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across
 % multiple files.
@@ -6231,9 +6237,8 @@ rtrace_this(_Call) :-
 fbug(_) :-
     % If compatibility mode (`is_compatio`) is active, do nothing.
     is_compatio, !.
-fbug(_) :-
-    % If the 'log' option is not set to 'true', do nothing.
-    \+ option_value('log', 'true'), !.
+fbug(_) :- % If the 'log' option is not set to 'true', do nothing.
+    option_value('log', 'false'), !.
 fbug(Info) :-
     % Otherwise, log the debug information using `write_src/1` with formatting.
     real_notrace(in_cmt(color_g_mesg('#2f2f2f', write_src(Info)))).
@@ -6750,7 +6755,7 @@ maybe_halt(H) :-
 %   Runs initialization steps when the program is loaded. These include setting
 %   the `cmt_override` variable and restoring the system state.
 %
-:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") ')), after_load /**/).
+:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
 
 % needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 
@@ -6759,7 +6764,7 @@ maybe_halt(H) :-
 %
 %   Displays the operating system arguments (`os_argv`) during initialization.
 %
-:- initialization(show_os_argv, after_load /**/).
+:- initialization(show_os_argv).
 
 %!  ensure_mettalog_system_compilable is det.
 %

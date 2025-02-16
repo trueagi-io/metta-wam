@@ -976,6 +976,8 @@ compound_name_arg(G, MD, Goal) :-
 %   % This would log the error using fbug/1 and then fail.
 %
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
+
+user:message_hook(debug_no_topic(metta(_)), warning, _):-!.
 user:message_hook(Term, Kind, Lines) :-
     % Always fail initially to ensure no action is taken before processing.
     fail,
