@@ -75,7 +75,7 @@ simple_first(R,AA,BB):-!, compare(R,AA,BB).
 prefix_key([O|_],Kee,Key):- atom(O), !,
   prefix_key(O,Kee,Key).
 prefix_key(O,Kee,Key) :- atom(O),
-  O\==Kee, O\==data,symbolic_list_concat([O,'_',Kee],Key),!.
+  O\==Kee, O\==data,atomic_list_concat([O,'_',Kee],Key),!.
 prefix_key(_,Key,Key).
 
 
@@ -629,12 +629,11 @@ err
 }').
 
 
-json1:- process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/ncRNA_genes_fb_2023_04.json').
+json1:- process_json('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/genes/ncRNA_genes_fb_2023_04.json').
 % 51,290,751 inferences, 8.285 CPU in 8.289 seconds (100% CPU, 6190948 Lips)
 
-json2:- process_json('/opt/logicmoo_opencog/hyperon-wam/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json').
+json2:- process_json('/opt/logicmoo_workspace/packs_sys/logicmoo_opencog/MeTTa/vspace-metta/data/ftp.flybase.org/releases/FB2023_04/precomputed_files/insertions/fu_gal4_table_fb_2023_04.json').
 % 27,108,104 inferences, 4.454 CPU in 4.456 seconds (100% CPU, 6085908 Lips)
-
 
 
 

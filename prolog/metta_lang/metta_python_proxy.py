@@ -170,10 +170,9 @@ def load_file(file):
         if METTALOG_VERBOSE >= DEBUG:
             traceback.print_exc()
 
-import hyperonpy as hp
 from hyperon.atoms import Atom, AtomType, OperationAtom
 from hyperon.base import GroundingSpaceRef, Tokenizer, SExprParser
-from hyperonpy import EnvBuilder, ModuleId
+
 
 # Global variables
 suspend_trace = False
@@ -201,6 +200,8 @@ def into_repr(r):
     Recursively converts the input into its repr equivalent, while handling special types like lists, tuples, 
     dicts, sets, and hp.CAtom (with trace suspension).
     """
+    import hyperonpy as hp
+    from hyperonpy import EnvBuilder, ModuleId
 
     if isinstance(r, (str, int, float, bool)): return r
 
@@ -243,6 +244,9 @@ def into_repr(r):
     return repr(r)
     
 def processed_directive(line):
+    import hyperonpy as hp
+    from hyperonpy import EnvBuilder, ModuleId
+
     """Process REPL directives by converting dot-prefixed commands to hyphenated arguments."""
     
     global norepl_mode, rust_mode, catom_mode
@@ -381,6 +385,9 @@ class REPL:
 
     def main_loop(self):
         install_history()
+        import hyperonpy as hp
+        from hyperonpy import EnvBuilder, ModuleId
+
         while True:
             try:
                 line = input("metta> ")  # Use input function for user input

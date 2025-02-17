@@ -1094,7 +1094,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
    (
     forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
-      timed_call(GgGgGgGgGgG,Seconds),
+      timed_call((GgGgGgGgGgG),Seconds),
 
 
          (((

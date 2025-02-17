@@ -298,8 +298,11 @@ load_metta_code(For, Uri, Code, Result) :-
 load_metta_code(For, Path, Code, Result) :-
     catch_with_backtrace((
         ignore(current_self(Self)),
-        wots(Out, ignore(do_metta(file(lsp(Path)), For, Self, Code, _LastAnswer))),
-        sformat(Result, "; ~w", [Out])
+        wots(Out, ignore(do_metta(file(Path), For, Self, Code, LastAnswer))),
+        ( Out == ""
+        -> sformat(Result, "~w", [LastAnswer])
+        ;  sformat(Result, "~w ; ~w", [LastAnswer, Out])
+        )
     ), Error, (
         sformat(Result, "~w ; Error: ~q", [Code, Error])
     )), !.

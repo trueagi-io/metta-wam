@@ -742,19 +742,21 @@ write_src_wi(V) :-
 %   @arg V The term to be written as source.
 %
 write_src(V) :-
+ no_type_unification((
     % Guess variables in V and pretty-print using `pp_sex/1`.
     \+ \+ pnotrace((number_src_vars(V, I, Goals),
                copy_term_nat(I+Goals,Nat+NatGoals), pp_sex(Nat),
-               maybe_write_goals(NatGoals))), !.
+               maybe_write_goals(NatGoals))))), !.
 
 print_compounds_special:- true.
 src_vars(V,I):- var(V),!,I=V.
+src_vars(V,I):- nb_current(suspend_type_unificaton, true),!,V=I.
 src_vars(V,I):- %ignore(guess_metta_vars(V)),
-             must_det_lls((
+             no_type_unification((((must_det_lls((
               pre_guess_varnames(V,II),call(II=V),
               guess_varnames(II,I),
               nop(ignore(dont_numbervars(I,400,_,[singleton(true),attvar(skip)]))),
-              nop(materialize_vns(I)))).
+              nop(materialize_vns(I)))))))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
 pre_guess_varnames(V,I):- ground(V),!,I=V.
 pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
@@ -762,7 +764,7 @@ pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
 pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
 
-write_w_attvars(Term):- \+ \+ write_w_attvars0(Term).
+write_w_attvars(Term):- \+ \+ no_type_unification((write_w_attvars0(Term))).
 
 write_w_attvars0(Term):-
    number_src_vars(Term,PP,Goals),
@@ -771,22 +773,26 @@ write_w_attvars0(Term):-
    maybe_write_goals(NatGoals), !.
 
 number_src_vars(Term,TermC,Goals):-
+ no_type_unification((
   must_det_lls((
     src_vars(Term,PP),
     copy_term(Term,TermC,Goals),
     % copy_term(Goals,CGoals,GoalsGoals),
     PP = TermC,
     must(PP = Term),
-    materialize_vns(PP),
+    nop(materialize_vns(PP)),
     nop(ignore(dont_numbervars(PP,260,_,[singleton(true),attvar(skip)]))),
-    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))).
+    nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))))).
 
 
 once_writeq_nl_now(P) :-
-    \+ \+ (pnotrace((
+    \+ \+ (pnotrace((no_type_unification((
              format('~N'),
              write_w_attvars(P),
-             format('~N')))).
+             format('~N')))))).
+
+no_type_unification(G):-
+  locally(nb_setval(suspend_type_unificaton, true),G).
 
 :- nb_setval('$write_goals',[]).
 
@@ -1849,7 +1855,8 @@ print_indent_now(_).
 */
 
 :- abolish(xlisting_console:portray_hbr/3).
-xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src(H).
-xlisting_console:portray_hbr(H, B, _R):- print_tree(H:-B).
+xlisting_console:portray_hbr(H, B, _R):- !, writeq(H:-B),!,nl.
+xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src_nl(H).
+xlisting_console:portray_hbr(H, B, _R):- write_src_nl(H:-B).
 
 

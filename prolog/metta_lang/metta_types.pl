@@ -201,12 +201,14 @@ mnotrace(G) :-
 %   @arg NewValue  The value to be unified, which must be numeric.
 %
 %   @example
-%     ?- put_attr(X, 'Number', _), X = 42.
+%     ?- dont_put_attr(X, 'Number', _), X = 42.
 %     X = 42.
 %
 'Number':attr_unify_hook(_, NewValue) :-
     % Ensure the new value is numeric.
     numeric(NewValue).
+
+dont_put_attr(V,M,T):- nop(put_attr(V,M,T)),!.
 
 %is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 
@@ -1368,13 +1370,15 @@ ignored_args_conform(Depth, Self, A, L) :-
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
-ignored_arg_conform(Depth, Self, A, L) :-
+ignored_arg_conform_1(Depth, Self, A, L) :-
     % Succeed if the expected type is a non-specific type.
     nonvar(L), is_nonspecific_type(L), !.
-ignored_arg_conform(Depth, Self, A, L) :-
+ignored_arg_conform_1(Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
     get_type(Depth, Self, A, T),
     can_assign(T, L), !.
+
+ignored_arg_conform(Depth, Self, A, L):- show_failure_when(argtypes,ignored_arg_conform_1(Depth, Self, A, L)),!.
 ignored_arg_conform(Depth, Self, _, _) :- !.
 
 %!  args_conform(+Depth, +Self, +Args, +List) is det.
@@ -1386,14 +1390,15 @@ ignored_arg_conform(Depth, Self, _, _) :- !.
 %   @arg Args  The list of arguments.
 %   @arg List  The list of expected types or values.
 %
+args_conform(_Depth, _Self, _, Nil):- Nil==[],!.
+args_conform(_Depth, _Self, Nil, _):- Nil==[],!.
 args_conform(_Dpth, _Slf, Args, List) :-
     % If either Args or List is not a conz structure, succeed without further checks.
     (\+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth, Self, [A | Args], [L | List]) :-
+args_conform(Depth, Self, [A | Args], [L | List]) :- !,
     % Check if the argument conforms and proceed with the rest of the list.
-    arg_conform(Depth, Self, A, L),
+    show_failure_when(argtypes,arg_conform(Depth, Self, A, L)),
     args_conform(Depth, Self, Args, List).
-
 %!  arg_conform(+Depth, +Self, +Arg, +Expected) is det.
 %
 %   Checks if a single argument (Arg) conforms to the expected type (Expected).
@@ -1403,9 +1408,37 @@ args_conform(Depth, Self, [A | Args], [L | List]) :-
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
-arg_conform(_Depth, Self, A, ParamType):- non_arg_violation_each(Self,ParamType, A).
-% arg_conform(_Dpth, _Slf, _, _).
-% arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+
+%arg_conform(_Depth, Self, A, ParamType):- !, non_arg_violation_each(Self,ParamType, A).
+arg_conform(_Dpth, _Slf, A, _L) :- var(A), !.
+arg_conform(_Dpth, _Slf, _A, L) :- var(L), !.
+arg_conform(_Dpth, _Slf, _A, L) :-
+    % Succeed if the expected type is a non-specific type.
+    nonvar(L), is_nonspecific_type(L), !.
+arg_conform(Depth, Self, A, L) :-
+    % Check the argument type and verify it conforms to the expected type.
+    get_type_each(Depth, Self, A, T), T \== 'Var',
+    type_conform(T, L), !.
+arg_conform(_Dpth, _Slf, _, _):- !.
+arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+
+%!  type_conform(+Type, +Expected) is nondet.
+%
+%   Checks if a type (Type) conforms to the expected type (Expected).
+%
+%   @arg Type     The type to be checked.
+%   @arg Expected The expected type.
+%
+type_conform(T, L) :-
+    % Succeed if the types are equal.
+    T = L, !.
+type_conform(T, L) :- \+ is_nonspecific_type(T), \+ is_nonspecific_type(L), !, show_failure_when(argtypes,can_assign(T, L)).
+type_conform(T, L) :- fail,
+    % Succeed if either type is non-specific.
+    \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), !.
+type_conform(T, L) :-
+    % Succeed if the type can be assigned.
+    show_failure_when(argtypes,can_assign(T, L)).
 
 
 % Declare `thrown_metta_return/1` as dynamic to allow runtime modifications.
@@ -1441,11 +1474,20 @@ throw_metta_return(L) :-
 %
 into_typed_args(_Dpth, _Slf, T, M, Y) :-
     % If either list is not a conz structure, unify the values directly.
-    (\+ iz_conz(T); \+ iz_conz(M)), !, M = Y.
+    (\+ iz_conz(T); \+ iz_conz(M)), !, show_failure_when(argtypes,M = Y).
+
 into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
     % Process each type-value pair.
-    into_typed_arg(Depth, Self, T, M, Y),
+    show_failure_when(argtypes,into_typed_arg(Depth, Self, T, M, Y)),
     into_typed_args(Depth, Self, TT, MM, YY).
+
+:- nodebug(metta(argtypes)).
+:- initialization(nodebug(metta(argtypes))).
+
+show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
+   if_t(debugging(metta(failures)),trace),!,fail)).
+show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
+%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 
 %!  into_typed_arg(+Depth, +Self, +Type, +Value, -TypedValue) is det.
 %
@@ -1459,10 +1501,10 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M), !, Y = M, nop(put_attr(M, cns, Self = T)).
+    var(M),  show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))), !.
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
-    into_typed_arg0(Depth, Self, T, M, Y) *-> true ; M = Y.
+    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)), show_failure_when(argtypes,(M = Y))),!.
 
 %!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is nondet.
 %
@@ -1474,9 +1516,10 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 %   @arg Value       The value to be evaluated.
 %   @arg TypedValue  The resulting typed value.
 %
+into_typed_arg0(Depth, Self, T, M, Y) :- T=='Atom',!,M=Y.
 into_typed_arg0(Depth, Self, T, M, Y) :-
     % If the type is a variable, determine the value type and evaluate if needed.
-    var(T), !,
+    var(T),
     ((
         get_type(Depth, Self, M, T),
         (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
@@ -1511,16 +1554,35 @@ wants_eval_kind(_) :- true.
 %   @arg Input     The context or structure being evaluated.
 %   @arg NewValue  The value being unified with the attribute.
 %
-prevent_type_violations(BecomingValue,RequireType):- non_arg_violation(_Self, RequireType, BecomingValue).
+prevent_type_violations(Self, BecomingValue,RequireType):- non_arg_violation(Self, RequireType, BecomingValue).
+%type_list_violations(BecomingValue,RequireType):- (RType,RequireType),non_arg_violation(_Self, RequireType, BecomingValue).
+
 % TODO make sure it is inclusive rather than exclusive
-cns:attr_unify_hook(_=TypeRequirements,BecomingValue):- \+ maplist(prevent_type_violations(BecomingValue),TypeRequirements), !, fail.
-cns:attr_unify_hook(Self = TypeList, NewValue) :-
+
+cns:attr_unify_hook(Self=TypeList, NewValue):- nb_current(suspend_type_unificaton, true),!.
+cns:attr_unify_hook(Self=TypeList, NewValue) :-
+  show_failure_when(argtypes,maplist(prevent_type_violations(Self,BecomingValue),TypeRequirements)),
+  show_failure_when(argtypes,cns_attr_unify_hook(Self,TypeList, NewValue)).
+
+cns_attr_unify_hook(Self,TypeList,NewValue) :-
     % If the new value is an attributed variable, assign the same attribute.
-    attvar(NewValue), !, put_attr(NewValue, cns, Self = TypeList).
-cns:attr_unify_hook(Self = TypeList, NewValue) :-
+    attvar(NewValue), !, dont_put_attr(NewValue, cns, Self = TypeList).
+cns_attr_unify_hook(Self , TypeList, NewValue) :-
     % Retrieve the type of the new value and check if it can be assigned.
+    show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
+
+can_assign_value_typelist(Self, NewValue, TypeList):-
     get_type(20, Self, NewValue, Was),
-    can_assign(Was, Type).
+    must_det_lls(can_assign_value_typelist_4(Self, NewValue, Was, TypeList)).
+
+can_assign_value_typelist_4(_Self, _NewValue, _Was, Nil):- Nil==[],!.
+can_assign_value_typelist_4(_Self, _NewValue, Was, TypeList):-
+    member(Type,TypeList),can_assign(Was,Type),!.
+can_assign_value_typelist_4(Self, NewValue, _Was, TypeList):-
+    with_output_to(user_error,(nl,display(var(NewValue)),nl)),
+    if_t(debugging(metta(argtypes)),trace),
+    var(NewValue), dont_put_attr(NewValue, cns, Self = TypeList).
+
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.
 %
@@ -1564,7 +1626,7 @@ add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
     is_list(TypeL),
     append([Type], TypeL, TypeList),
-    put_attr(Var, cns, Self = TypeList).
+    dont_put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-
     ignore(append(_,[Type|_], TypeL)),!.
     % If the variable is not bound, do nothing.

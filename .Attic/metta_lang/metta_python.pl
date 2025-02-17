@@ -110,16 +110,19 @@ Prolog Extensions with Python:
 %     ?- janus_initialization.
 %     false.
 %
-:-
-  (module_property(janus,file(File)) ->
-      % If Janus module is already loaded,ensure it is reloaded from the same file.
-      janus:ensure_loaded(File);
-      % If not loaded, try loading from a default location.
-      (exists_file('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Fallback to a specific path if it exists.
-          -> janus:ensure_loaded('/usr/local/lib/swipl/library/ext/swipy/janus.pl')
-          % Otherwise, try loading from the default Janus library.
-          ; janus:ensure_loaded(library(janus)))).
+:- module_property(janus,file(_)) -> true; janus:ensure_loaded(library(janus)).
+
+
+py_call_warg(G):- py_c_c(G,GG), py_call(GG).
+py_call_warg(G,A):- py_c_c(G,GG), py_call(GG,A).
+py_call_warg(G,A,Opts):- py_c_c(G,GG), py_call(GG,A,Opts).
+
+py_c_c(G,GG):- \+ compound(G),!,GG=G.
+py_c_c(M:G,M:GG):- !, py_c_c(G,GG).
+py_c_c(identity(X),identity(X)):-!.
+py_c_c(G,GG):- is_list(G), maplist(py_arg,G,GG),!.
+py_c_c(G,GG):- compound_name_arguments(G,F,A), maplist(py_arg,A,AA), !, compound_name_arguments(GG,F,AA).
+
 
 % Declare the multifile and dynamic predicates for determining the type of logical space.
 % These predicates are used to determine whether the given space is Python-based or not.
@@ -148,7 +151,7 @@ is_rust_space(GSpace):- is_python_space(GSpace).
 is_not_prolog_space(GSpace):-
     % Check if it is a Rust space (which includes Python spaces).
     is_rust_space(GSpace),!.
-is_not_prolog_space(GSpace):-
+is_not_prolog_space(GSpace):- fail,
     % Check if the space is neither an asserted space nor an nb space.
     \+ is_asserted_space(GSpace), \+ is_nb_space(GSpace),!.
 
@@ -232,7 +235,7 @@ py_dump:-
 %
 %   @arg Goal The Python goal to be executed.
 %
-py_call_c(G):- py_catch(py_call(G)).
+py_call_c(G):- py_catch(py_call_warg(G)).
 
 %!  py_call_c(:Goal, -Result) is det.
 %
@@ -243,7 +246,7 @@ py_call_c(G):- py_catch(py_call(G)).
 %   @arg Goal The Python goal to be executed.
 %   @arg Result The result of the Python goal execution.
 %
-py_call_c(G, R):- py_catch(py_call(G, R)).
+py_call_c(G, R):- py_catch(py_call_warg(G, R)).
 
 %!  py_is_module(+M) is semidet.
 %
@@ -264,7 +267,7 @@ py_is_module(M):- notrace((with_safe_argv(py_is_module_unsafe(M)))).
 %   @arg M The object to check if it is a Python module.
 %
 py_is_module_unsafe(M):- py_is_object(M),!,py_type(M, module).
-py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
+py_is_module_unsafe(M):- catch((py_call_warg(M, X),py_type(X, module)), _, fail).
 
 %!  py_is_py(+V) is semidet.
 %
@@ -277,13 +280,34 @@ py_is_module_unsafe(M):- catch((py_call(M, X),py_type(X, module)), _, fail).
 
 %py_is_py(_):- \+ py_is_enabled,!,fail.
 py_is_py(V):- var(V),!,get_attr(V, pyobj, _),!.
-py_is_py(V):- py_is_tuple(V),!.
-py_is_py(V):- py_is_py_dict(V),!.
 py_is_py(V):- atomic(V),!,\+ atom(V),py_is_object(V),!.
 py_is_py(V):- \+ callable(V),!,fail.
-py_is_py(V):- compound(V),!,fail.
+py_is_py(V):- \+ compound(V),!,fail.
+py_is_py('@'(S)) :-
+    % Succeeds if S is a non-variable and recognized as a Python constant.
+    !, nonvar(S), is_py_const(S,_).
 py_is_py(V):- is_list(V),!,fail.
 py_is_py(V):- py_is_list(V),!.
+py_is_py(V):- py_is_tuple(V),!.
+py_is_py(V):- py_is_py_dict(V),!.
+
+
+%!  is_py_const(+Const) is nondet.
+%
+%   Succeeds if the given Const is a recognized Python constant.
+%
+%   @arg Const The constant to be evaluated.
+%
+%   @example
+%     ?- is_py_const('True').
+%     true.
+%
+%     ?- is_py_const('Unknown').
+%     false.
+%
+is_py_const(none,'None').
+is_py_const(false,'False').
+is_py_const(true,'True').
 
 %!  py_resolve(+V, -Py) is det.
 %
@@ -360,7 +384,7 @@ py_is_py_dict(X):- atomic(X),py_is_object(X),py_type(X,dict).
 %
 %   @arg X The term to check if it is a Python list.
 %
-py_is_list(X):- py_resolve(X,V),py_type(V,list).
+py_is_list(X):- py_resolve(X,V),py_is_object(V),py_type(V,list).
 %py_is_list(V):- py_is_tuple(V).
 
 % Evaluations and Iterations
@@ -419,6 +443,10 @@ def identity(s):
 
 def get_globals():
     return globals()
+
+def hello_plus(atom1, atom2):
+    print("hello",type(atom1),type(atom2))
+    return []
 
 def merge_modules_and_globals():
     # Get all currently loaded modules
@@ -587,10 +615,653 @@ def get_str_rep(func):
         return func.__name__
     return f"{func.__module__}.{func.__name__}"
 
+DEBUG_MODE = False  # Set this to True to enable debug output
+
+import importlib
+import types
+
+def py_call_method_and_args(*method_and_args):
+    """
+    Calls a Python callable (function, method, or constructor) with the provided arguments.
+
+    Handles various cases including:
+    - Bound methods.
+    - Function or method name as a string with an instance.
+    - Class and method name as a string.
+    - Object and method name as a string.
+    - Unbound methods with an instance.
+    - Other callable objects.
+
+    Args:
+        *method_and_args: Variable length argument list.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If no callable is provided.
+        TypeError: If the callable cannot be invoked.
+        AttributeError: If the method does not exist on the given class or instance.
+    """
+    # Check if a single argument is provided and if it is a list or tuple
+    if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
+        # Unpack the single list or tuple argument
+        method_and_args = method_and_args[0]
+
+    # Ensure there is at least one element to extract the callable
+    if not method_and_args:
+        raise ValueError("No callable provided to invoke.")
+
+    # Extract the first element as the potential callable
+    callable_obj, *args = method_and_args
+
+    # Case 1: Bound method
+    if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
+        # Call the bound method with the arguments
+        return py_call_w_args( callable_obj, *args)
+
+    # Case 2: Function or method name as a string with an instance
+    if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
+        method_name = callable_obj
+        instance = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the instance
+        method = getattr(instance, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_w_args( method, *method_args)
+
+
+    # Case 3: Class + 1 Arg
+    if isinstance(callable_obj, type) and len(args) == 1:
+        return callable_obj(args[0])
+
+    # Case 3a: Class and method name as a string
+    if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
+        cls = callable_obj
+        method_name = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the class
+        method = getattr(cls, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_w_args(method, *method_args)
+
+    # Case 4: Object and method name as a string
+    if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
+        obj = method_and_args[0]
+        method_name = method_and_args[1]
+        args = method_and_args[2:]
+
+        # Retrieve the method from the object
+        method = getattr(obj, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The object has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_w_args(method, *args)
+
+    # Case 5: Unbound method (function) with an instance
+    if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
+        instance = args[0]
+        method_args = args[1:]
+
+        # Bind the method to the instance and call it
+        return py_call_w_args(callable_obj, *method_args)
+
+    # Case 6: Other callable objects
+    if callable(callable_obj):
+        return py_call_w_args(callable_obj, *args)
+
+    # If none of the above, raise an error
+    raise TypeError("The provided arguments do not form a callable invocation.")
+
+def py_call_w_args(callable_obj, *w_args):
+    """
+    Calls a Python callable with the provided arguments, handling both positional and keyword arguments.
+
+    This function dynamically adjusts arguments based on the signature of the callable,
+    consuming positional arguments and extracting keyword arguments from various formats provided in *w_args.
+
+    Args:
+        callable_obj: A callable (function, method, or other callable object) to be invoked.
+        *w_args: Variable length argument list, which may include positional arguments, dictionaries, lists, or tuples for keyword arguments.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If the first argument is not callable.
+        TypeError: If required arguments are missing or if unexpected arguments are provided.
+    """
+
+    if not callable(callable_obj):
+        raise ValueError("First argument must be callable.")
+
+    args = list(w_args)
+    kwargs = {}
+    sig = inspect.signature(callable_obj)
+    kwarg_names = {param.name for param in sig.parameters.values()
+                   if param.kind in [param.KEYWORD_ONLY, param.VAR_KEYWORD]}
+
+    method_args = []
+    keyword_order_index = 0
+    keyword_order = [name for name in sig.parameters if sig.parameters[name].kind == inspect.Parameter.KEYWORD_ONLY]
+
+    for param in sig.parameters.values():
+        if param.kind in [param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD]:
+            if args and not isinstance(args[0], (dict, list, tuple)):
+                method_args.append(args.pop(0))
+            elif param.default is inspect.Parameter.empty:
+                raise TypeError(f"Missing required positional argument: ''{param.name}''")
+        elif param.kind == param.VAR_POSITIONAL:
+            while args and not isinstance(args[0], (dict, list, tuple)):
+                method_args.append(args.pop(0))
+            break
+        elif param.kind == param.KEYWORD_ONLY:
+            if args and isinstance(args[0], (list, tuple)) and all(isinstance(x, (list, tuple)) for x in args[0]):
+                # Handle a list or tuple of key-value pairs
+                while args and isinstance(args[0], (list, tuple)):
+                    pair = args.pop(0)
+                    if pair[0] in kwarg_names:
+                        kwargs[pair[0]] = pair[1]
+                    else:
+                        raise TypeError(f"Unexpected keyword argument: ''{pair[0]}''")
+            elif args and keyword_order_index < len(keyword_order):
+                # Assume the next argument corresponds to the next keyword-only parameter by order
+                kwargs[keyword_order[keyword_order_index]] = args.pop(0)
+                keyword_order_index += 1
+            else:
+                raise TypeError(f"Expected keyword argument for ''{keyword_order[keyword_order_index]}'' not provided")
+
+    # Handle remaining variadic keyword arguments
+    if args:
+        for arg in args:
+            if isinstance(arg, dict):
+                kwargs.update(arg)
+            else:
+                raise TypeError("Non-keyword arguments found after processing all parameters")
+
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {kwargs}")
+
+    try:
+        return callable_obj(*method_args, **kwargs)
+    finally:
+        flush_stdout_stderr()
+
+
+
+# Example usage
+def wild_test_function(a, b, c=3, *args, d, **kwargs):
+    print(f"a={a}, b={b}, c={c}, args={args}, d={d}, kwargs={kwargs}")
+
+# Correct usage
+def test_wild_test_function():
+    py_call_method_and_args(test_function, 1, 2, 4, 5, d=6, e=7)
+
+
+def py_call_method_and_args_kw(kwa, *method_and_args):
+    """
+    Calls a Python callable (function, method, or constructor) with the provided arguments.
+
+    Handles various cases including:
+    - Bound methods.
+    - Function or method name as a string with an instance.
+    - Class and method name as a string.
+    - Object and method name as a string.
+    - Unbound methods with an instance.
+    - Other callable objects.
+
+    Args:
+        method_and_args: Variable length argument list.
+
+    Returns:
+        The result of the callable invocation.
+
+    Raises:
+        ValueError: If no callable is provided.
+        TypeError: If the callable cannot be invoked.
+        AttributeError: If the method does not exist on the given class or instance.
+    """
+
+    if DEBUG_MODE:
+        print("Debug: Initial method_and_args =", method_and_args)
+        print("Debug: Initial kwa =", kwa)
+
+    # Check if a single argument is provided and if it is a list or tuple
+    if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
+        method_and_args = method_and_args[0]
+        if DEBUG_MODE:
+            print("Debug: Unpacked method_and_args =", method_and_args)
+
+    kwargs = kwa
+
+
+    # Ensure there is at least one element to extract the callable
+    if not method_and_args:
+        raise ValueError("No callable provided to invoke.")
+
+    callable_obj, *args = list(method_and_args)
+
+    # Debug after extracting callable and args
+    if DEBUG_MODE:
+        print("Debug: Callable object =", callable_obj)
+        print("Debug: Positional arguments =", args)
+
+    # Case 1: Bound method
+    if callable(callable_obj) and hasattr(callable_obj, ''__self__'') and callable_obj.__self__ is not None:
+        # Call the bound method with the arguments
+        return py_call_kw_args(kwargs,  callable_obj, *args)
+
+    # Case 2: Function or method name as a string with an instance
+    if isinstance(callable_obj, str) and len(args) > 0 and isinstance(args[0], object):
+        method_name = callable_obj
+        instance = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the instance
+        method = getattr(instance, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The instance has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs,  method, *method_args)
+
+    # Case 3: Class and method name as a string
+    if isinstance(callable_obj, type) and len(args) > 0 and isinstance(args[0], str):
+        cls = callable_obj
+        method_name = args[0]
+        method_args = args[1:]
+
+        # Attempt to retrieve the method from the class
+        method = getattr(cls, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The class ''{cls.__name__}'' has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *method_args)
+
+    # Case 4: Object and method name as a string
+    if len(method_and_args) > 1 and isinstance(method_and_args[0], object) and isinstance(method_and_args[1], str):
+        obj = method_and_args[0]
+        method_name = method_and_args[1]
+        args = method_and_args[2:]
+
+        # Retrieve the method from the object
+        method = getattr(obj, method_name, None)
+        if method is None or not callable(method):
+            raise AttributeError(f"The object has no callable method named ''{method_name}''.")
+
+        # Call the method with the arguments
+        return py_call_kw_args(kwargs, method, *args)
+
+    # Case 5: Unbound method (function) with an instance
+    if len(args) > 0 and callable(callable_obj) and isinstance(args[0], object):
+        instance = args[0]
+        method_args = args[1:]
+
+        # Bind the method to the instance and call it
+        return py_call_kw_args(kwargs, callable_obj, *method_args)
+
+    # Case 6: Other callable objects
+    if callable(callable_obj):
+        return py_call_kw_args(kwargs, callable_obj, *args)
+
+    # If none of the above, raise an error
+    raise TypeError("The provided arguments do not form a callable invocation.")
+
+import inspect
+
+
+def py_call_kw_args(kwargs, callable_obj, *w_args):
+    """
+    Calls a callable object with positional and keyword arguments,
+    ensuring compatibility with its signature.
+
+    :param kwargs: Dictionary of keyword arguments.
+    :param callable_obj: The callable object to be invoked.
+    :param w_args: Additional positional arguments.
+    :return: The result of invoking the callable object.
+    :raises ValueError: If the first argument is not callable.
+    """
+    if not callable(callable_obj):
+        raise ValueError("First argument must be callable.")
+
+    args = list(w_args)  # Positional arguments
+    sig = inspect.signature(callable_obj)
+
+    # Separate the expected keyword arguments from the function signature
+    kwarg_names = {param.name for param in sig.parameters.values()
+                   if param.kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.VAR_KEYWORD]}
+
+    # Prepare arguments for the callable
+    method_args = []
+    method_kwargs = {}
+
+    # Positional arguments from the signature
+    for i, (name, param) in enumerate(sig.parameters.items()):
+        if param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
+            if i < len(args):
+                method_args.append(args[i])
+            elif name in kwargs:
+                method_args.append(kwargs.pop(name))
+            elif param.default is not param.empty:
+                method_args.append(param.default)
+            else:
+                raise TypeError(f"Missing required positional argument: \'{name}\'")
+
+    # Handle *args (VAR_POSITIONAL)
+    for param in sig.parameters.values():
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            remaining_args = args[len(method_args):]  # Extract remaining arguments
+            method_args.extend(remaining_args)
+            break
+
+    # Handle keyword-only arguments
+    for name, param in sig.parameters.items():
+        if param.kind == inspect.Parameter.KEYWORD_ONLY:
+            if name in kwargs:
+                method_kwargs[name] = kwargs.pop(name)
+            elif param.default is not param.empty:
+                method_kwargs[name] = param.default
+            else:
+                raise TypeError(f"Missing required keyword-only argument: \'{name}\'")
+
+    # Handle **kwargs if present in the signature
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values()):
+        method_kwargs.update(kwargs)
+    elif kwargs:
+        # If the function does not accept **kwargs and extras are provided
+        raise TypeError(f"Got unexpected keyword arguments: {\', \'.join(kwargs.keys())}")
+
+    # Debugging output
+    if DEBUG_MODE:
+        print("Debug Information:")
+        print(f"Callable object: {callable_obj}")
+        print(f"Positional arguments: {method_args}")
+        print(f"Keyword arguments: {method_kwargs}")
+
+    # Call the function with the prepared arguments
+    try:
+        return callable_obj(*method_args, **method_kwargs)
+    finally:
+        flush_stdout_stderr()
+
+
+
+import importlib
+import types
+from types import MethodType
+
+def make_py_dot_callable(target, method):
+    return make_py_dot_bool(target, method, alwaysReturnAsCallable=True)
+
+def make_py_dot(target, method):
+    return make_py_dot_bool(target, method, alwaysReturnAsCallable=False)
+
+def make_py_dot_bool(target, method, alwaysReturnAsCallable=False):
+    """
+    Returns a callable that dynamically invokes a method or function based on the provided target and method.
+
+    Args:
+        target (str or module or type or object): The module name, module object, class name, class object, or instance.
+        method (str or callable): The method name as a string (supports dot-separated paths) or an already resolved callable.
+        alwaysReturnAsCallable (bool): If True, wraps non-callable attributes into a callable that returns the attribute.
+
+    Returns:
+        callable: A function that takes any arguments and keyword arguments, and calls the specified method or function.
+        If alwaysReturnAsCallable is True, non-callable attributes are wrapped in a callable.
+
+    Raises:
+        ImportError: If the specified module cannot be imported.
+        AttributeError: If the specified method does not exist.
+        TypeError: If the specified method is not callable and alwaysReturnAsCallable is False.
+    """
+    # If the method is already a callable, bind it to the target if required
+    if callable(method):
+        # Check if the target is required for the callable (e.g., unbound instance method)
+        if isinstance(method, MethodType) and method.__self__ is None and isinstance(target, object):
+            # Bind the method to the target
+            return MethodType(method, target)
+        # Otherwise, return the method as-is
+        return method
+
+    # If the method is not a string or callable, raise an error
+    if not isinstance(method, str):
+        raise TypeError(f"The method should be a string or callable, got {type(method)} instead.")
+
+   # Resolve the target if it is a string (assumed to be a module or class name)
+    if isinstance(target, str):
+        # search the string type for the method name
+        str_callable = getattr(target, method, None)
+        if str_callable is not None:
+          return str_callable
+        try:
+            resolved_target = make_py_atom(target)
+            if resolved_target is not None:
+                target = resolved_target
+        except ValueError:
+            resolved_target = None
+
+        # If not resolved by make_py_atom, try importing it as a module
+        if resolved_target is None:
+            try:
+                target = importlib.import_module(target)
+            except ImportError:
+                try:
+                    # Attempt to import the class from the module path
+                    module_name, class_name = target.rsplit(".", 1)
+                    module = importlib.import_module(module_name)
+                    target = getattr(module, class_name)
+                except (ImportError, ValueError, AttributeError) as e:
+                    raise ImportError(f"Could not import ''{target}''. Ensure it is a valid module or class name.") from e
+
+    attr = getattr(target, method, None)
+    if attr is not None:
+      return attr
+
+    # If the target is a module, class, or instance, resolve the method
+    if isinstance(target, (types.ModuleType, type, object)):
+
+        try:
+            # Resolve dot-separated method paths
+            for attr in method.split("."):
+                target = getattr(target, attr)
+        except AttributeError as e:
+            raise AttributeError(f"''{target}'' has no attribute ''{method}'' or part of the method path could not be resolved.") from e
+
+        # If the resolved attribute is not callable and alwaysReturnAsCallable is True, wrap it
+        if not callable(target):
+            if alwaysReturnAsCallable:
+                def callable_function(*args, **kwargs):
+                    return target
+                return callable_function
+            else:
+                raise TypeError(f"The attribute ''{method}'' of ''{target}'' is not callable.")
+
+        # If the target is an instance and the resolved method requires self, bind it
+        if isinstance(target, MethodType) and hasattr(target, "__self__") and target.__self__ is None:
+            # Bind the method to the instance
+            bound_method = MethodType(target, target.__self__)
+            def callable_function(*args, **kwargs):
+                return bound_method(*args, **kwargs)
+            return callable_function
+
+        # Return a callable that invokes the resolved function with provided arguments
+        def callable_function(*args, **kwargs):
+            return target(*args, **kwargs)
+
+        return callable_function
+
+    raise TypeError(f"Unsupported target type: {type(target)}. Expected module, class, or instance.")
+
+
+import importlib
+
+def make_py_atom(target):
+    """
+    Resolves and returns a dynamic object, module, or expression result based on the provided target.
+    Supports multi-dot paths for resolving nested attributes or methods.
+
+    Args:
+        target (str or object): The object, module name, fully qualified name, or expression to resolve.
+
+    Returns:
+        object: The resolved object, module, or expression result.
+
+    Raises:
+        ValueError: If the string cannot be evaluated, resolved, or imported.
+    """
+    # If the target is not a string, return it as is
+    if not isinstance(target, str):
+        return target
+
+    # First, attempt to evaluate the string as a Python expression
+    try:
+        result = eval_string(target)
+        return result
+    except Exception:
+        result = target # pass  # Ignore eval failure, proceed to other cases
+
+    # If eval fails, try to resolve it as a module or a multi-dot attribute path
+    try:
+        # Split the target by dots and attempt to resolve recursively
+        parts = target.split(".")
+        module_name = parts[0]
+        resolved = importlib.import_module(module_name)  # Start with the first part as a module
+        for attr in parts[1:]:
+            resolved = getattr(resolved, attr)  # Resolve nested attributes
+        return resolved
+    except (ImportError, AttributeError) as e:
+        pass  # Not a fully qualified name, proceed to eval fallback
+
+    # If all else fails, raise an error
+    raise ValueError(f"Could not resolve ''{target}''. Ensure it is a valid object, module, or expression.")
+
+import sys
+
+def flush_stdout_stderr():
+    """
+    Flushes both stdout and stderr to ensure all pending output is written immediately.
+
+    This function checks if stdout and stderr are not None before attempting to flush them,
+    and safely ignores any errors that occur during flushing. This provides a robust
+    flushing operation in various environments where these streams might be redirected or
+    could potentially raise exceptions when being flushed (e.g., if they have been closed).
+    """
+    try:
+        if sys.stdout is not None:
+            sys.stdout.flush()
+    except Exception as e:
+        # Optionally log or handle the specific exception here if needed
+        pass  # Ignoring any error occurred during stdout flush
+
+    try:
+        if sys.stderr is not None:
+            sys.stderr.flush()
+    except Exception as e:
+        # Optionally log or handle the specific exception here if needed
+        pass  # Ignoring any error occurred during stderr flush
+
+import io
+import sys
+
+def py_to_str(arg):
+    captured_output = io.StringIO()  # Create a StringIO object to capture output
+    sys.stdout = captured_output    # Redirect standard output to StringIO
+    try:
+        print(arg, end='''')                  # Call print with the argument
+    finally:
+        sys.stdout = sys.__stdout__  # Restore standard output
+    return captured_output.getvalue()  # Get the captured output as a string
+
+
 the_modules_and_globals = merge_modules_and_globals()
 
 ')),
     assert(did_load_builtin_module).
+
+
+
+
+%!  py_call_method_and_args(+List, -Py) is det.
+%
+%   Converts a list `List` into a Python call, returning the result as `Py`.
+%
+%   @arg O The input list to be converted toi call.
+%   @arg Py The result.
+py_call_method_and_args([F|List], Py):- py_call_method_and_args(F,List, Py).
+
+py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
+   maplist(py_arg,NewList,PyArgs),
+   py_list([F|PyArgs],PyList),
+   py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
+py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
+
+pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
+% Handle compound terms like (key=value)
+pair_arg(Compound, Key,PyValue) :- compound(Compound), Compound = (Key=Value), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key, ':', value]
+pair_arg([Key, Delimiter, Value], Key,PyValue) :- Delimiter == ':', !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key=value]
+pair_arg([KeyEquals, Value], Key,PyValue) :- symbol(KeyEquals), atom_concat(Key, '=', KeyEquals), !, py_arg(Value, PyValue).
+% Handle list with key-value pair represented as [key:value]
+pair_arg([KeyColon, Value], Key,PyValue) :- symbol(KeyColon),atom_concat(Key, ':', KeyColon), !, py_arg(Value, PyValue).
+
+make_kw_args(KwArgs,KeyWordArgs):- lists_to_pairlist(KwArgs,Pairs),py_dict(Pairs,KeyWordArgs).
+lists_to_pairlist(L,L):- \+ compound(L),!.
+lists_to_pairlist([Kw,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([Kw,Eq,Val|Args],[[Key,Value]|KeyWordArgs]):- symbol(Kw),pair_arg_s([Kw,Eq,Val],Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([List|Args],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+lists_to_pairlist([[List|Args]],[[Key,Value]|KeyWordArgs]):- pair_arg_s(List,Key,Value),!, lists_to_pairlist(Args,KeyWordArgs).
+%lists_to_pairlist([],[]).
+
+pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
+pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
+
+
+py_term(Term, PyObject):- py_obi(identity(prolog(Term)), PyObject).
+py_identity(Term, PyObject):- py_obi(identity((Term)), PyObject).
+
+% !((py-atom print) "Hello, World!" [ = end "\n\n\n" ])
+% py_arg(Var,Var):- var(Var),!.
+% Handle variable input
+py_arg(Variable, PyObject) :- var(Variable),!,py_term(Variable, PyObject).
+% Handle symbols (atoms)
+py_arg(Symbol, PyObject) :- symbol(Symbol),!,py_term(Symbol, PyObject).
+% Handle numbers
+py_arg(Number, PyObject) :- number(Number),!,py_identity(Number, PyObject).
+% Handle strings
+py_arg(String, PyObject) :- string(String),!,py_identity(String, PyObject).
+% Handle lists
+py_arg(List, PyList) :- is_list(List), !, maplist(py_arg, List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
+% Handle Python objects
+py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall_direct(tuple(Mapped),PyObject).
+%py_arg(Tuple, PyObject) :- py_type(Tuple,'tuple'),!,map_tuple(py_arg,Tuple, Mapped),py_ocall(tuple(Mapped),PyObject),!. %py_tuple(Mapped,PyObject).
+py_arg(Dict, PyObject) :- is_dict(Dict), py_dict(Dict, PyObject), !.
+py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(_), py_dict(Dict, PyObject), !.
+%py_arg(Dict, PyObject) :- compound(Dict),Dict='{}'(KVL),conjuncts_to_list(KVL,List),is_dict(Number), py_dict(Dict, PyObject), !.
+py_arg(PythonObject, PythonObject) :- py_is_object(PythonObject), !.
+% Handle compound terms like (key=value)
+py_arg(Compound, {Key: PyValue}) :- pair_arg(Compound, Key,PyValue).
+% Handle Python-native objects
+py_arg(PythonNativeObject, PythonNativeObject) :- py_is_py(PythonNativeObject), !.
+% Handle general terms by converting to Python objects
+py_arg(GeneralTerm, PyObject) :- py_term(GeneralTerm, PyObject), !.
+%py_arg(Symbol,After):- symbol(Symbol),atom_string(Symbol,Str),load_hyperon_module,py_call_warg(hyperon_module:rust_py_symbol(Str),After),!.
+% Default case
+py_arg(Final, Final).
 
 
 %!  py_ppp(+V) is det.
@@ -607,12 +1278,17 @@ the_modules_and_globals = merge_modules_and_globals()
 %     ?- py_ppp(my_python_object).
 %     my_python_object_cleaned_output
 %
+py_ppp(V):- py_is_object(V), py_type(V,'Term'),py_call(repr(V),String),!,write(String).
+
+py_ppp(V):- py_is_object(V), py_type(V,'SymbolAtom'),py_call(repr(V),String),!,write(String).
 py_ppp(V):-
     % Ensure all buffered output is flushed before printing.
     flush_output, py_pp_str(V,String),!,write(String),
     % Ensure the output is fully flushed after printing.
     !, flush_output.
 
+py_pp_str(V,String):- py_is_object(V), py_type(V,'SymbolAtom'),!,py_call(repr(V),String).
+py_pp_str(V,String):- string(V), !, sformat(String,'~q',[V]).
 py_pp_str(V,String):-
    janus:opts_kws([], Kws),
     PFormat=..[pformat, V|Kws],    % Format and print the cleaned output.
@@ -650,16 +1326,28 @@ py_pp_str(V,String):-
 %     ?- load_hyperon_module.
 %     true.
 %
+
+:- dynamic(did_load_hyperon_module_loaded/0).
+:- dynamic(metta_python_hyperon_in_memory/1).
+:- read_file_to_string('./metta_python_hyperon.py', String, []),
+   asserta(metta_python_hyperon_in_memory(String)), !.
+
 load_hyperon_module:-
     % If the module is already loaded, do nothing.
-    did_load_hyperon_module, !.
+    did_load_hyperon_module, !,
+    did_load_hyperon_module_loaded.
 load_hyperon_module:-
     % Mark the module as loaded.
     assert(did_load_hyperon_module),
     % Load the Python Hyperon module using py_module/2 (complete the call as necessary).
-    with_safe_argv(py_module(hyperon_module,
-'
+    hyperon_module_src(Src),
+    with_safe_argv(py_module(hyperon_module,Src)),assert(did_load_hyperon_module_loaded).
 
+hyperon_module_src(Src):- metta_python_hyperon_in_memory(Src),!.
+hyperon_module_src(Src):- metta_python_hyperon_on_disk(Src),!.
+
+hyperon_module_on_disk(
+'from hyperon import *
 from hyperon.base import Atom
 from hyperon.atoms import OperationAtom, E, GroundedAtom, GroundedObject
 from hyperon.ext import register_tokens
@@ -669,6 +1357,7 @@ from hyperon.runner import MeTTa
 from hyperon.atoms import *
 from hyperon.stdlib import *
 import hyperonpy as hp
+
 
 import sys
 import readline
@@ -691,13 +1380,20 @@ def get_children(metta_iterable):
             raise ValueError("Provided object cannot be iterated or converted to an iterable.")
 
 # chain python objects with |  (syntactic sugar for langchain)
-def py_chain(metta_tuple):
+def py_chain_metta(metta_tuple):
     unwrap1 = rust_deref(metta_tuple)
     objects = [rust_deref(a) for a in get_children(unwrap1)]
     result = objects[0]
     for obj in objects[1:]:
         result = result | obj
     return result
+
+def py_chain(objects):
+    result = objects[0]
+    for obj in objects[1:]:
+        result = result | obj
+    return result
+
 
 def rust_metta_run(obj):
     return runner.run(obj)
@@ -710,11 +1406,28 @@ def rust_py_char(ch):
   from hyperon.stdlib import Char
   return Char(ch)
 
+def rust_py_symbol(ch):
+  return SymbolAtom(str(ch))
+
+import io
+import sys
+
+def rust_symbol_atom(arg):
+    captured_output = io.StringIO()  # Create a StringIO object to capture output
+    sys.stdout = captured_output    # Redirect standard output to StringIO
+    try:
+        print(arg, end='''')                  # Call print with the argument
+    finally:
+        sys.stdout = sys.__stdout__  # Restore standard output
+    return captured_output.getvalue()  # Get the captured output as a string
+
+import janus
+# from janus import *
+
 def rust_unwrap(obj):
     if obj is None:
         return obj
-    if isinstance(obj, janus.Term):
-        return obj
+
     if isinstance(obj,SymbolAtom):
         return obj.get_name()
     if isinstance(obj,ExpressionAtom):
@@ -727,6 +1440,10 @@ def rust_unwrap(obj):
     # if isinstance(obj,GroundedAtom): return obj.get_object()
     if isinstance(obj,GroundedObject):
         return obj.content
+
+    if isinstance(obj, janus.Term):
+        return obj
+
     # Check if obj is a list or a tuple, but not a string
     if isinstance(obj, (list, tuple)) and not isinstance(obj, str):
         return type(obj)(rust_deref(element) for element in obj)
@@ -739,19 +1456,18 @@ def rust_deref(obj):
     if undone is obj: return obj
     if undone is None: return obj
     obj = undone
-
-')).
+').
 
 
 %!  py_mcall(+I, -O) is semidet.
 %
-%   Calls a Python method (py_call/3) with the input term I and unifies the result with O.
+%   Calls a Python method (py_call_warg/3) with the input term I and unifies the result with O.
 %   This call converts Python objects to Prolog strings and dictionaries to Prolog terms.
 %
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call.
 %
-py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),error(_,_), fail),!,O=M.
+py_mcall(I,O):- catch(py_call_warg(I,M,[py_object(false), py_string_as(string),py_dict_as({})]),E,py_error_fail(E)),!,O=M.
 
 %!  py_scall(+I, -O) is semidet.
 %
@@ -760,7 +1476,7 @@ py_mcall(I,O):- catch(py_call(I,M,[py_object(false), py_string_as(string),py_dic
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M.
+py_scall(I,O):- catch(py_call_warg(I,M,[py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_acall(+I, -O) is semidet.
 %
@@ -769,7 +1485,7 @@ py_scall(I,O):- catch(py_call(I,M,[py_string_as(string)]),error(_,_),fail),!,O=M
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as an atom.
 %
-py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
+py_acall(I,O):- catch(py_call_warg(I,M,[py_string_as(atom)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_ocall(+I, -O) is semidet.
 %
@@ -778,7 +1494,9 @@ py_acall(I,O):- catch(py_call(I,M,[py_string_as(atom)]),error(_,_),fail),!,O=M.
 %   @arg I Input term to call the Python function.
 %   @arg O Output term that unifies with the result of the Python call as a string.
 %
-py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(_,_),fail),!,O=M.
+py_ocall(I,O):- catch(py_call_warg(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
+
+py_ocall_direct(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),E,py_error_fail(E)),!,O=M.
 
 %!  py_bi(+I, -O, +Opts) is semidet.
 %
@@ -789,7 +1507,7 @@ py_ocall(I,O):- catch(py_call(I,M,[py_object(true),py_string_as(string)]),error(
 %   @arg O Output term that unifies with the result of the Python call.
 %   @arg Opts Options passed to the Python call.
 %
-py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),error(_,_),fail),!,O=M.
+py_bi(I,O,Opts):- load_builtin_module,catch(py_call_warg(builtin_module:I,M,Opts),E,py_error_fail(E)),!,O=M.
 
 %!  py_obi(+I, -O) is semidet.
 %
@@ -799,7 +1517,7 @@ py_bi(I,O,Opts):- load_builtin_module,catch(py_call(builtin_module:I,M,Opts),err
 %   @arg I Input term to call the Python built-in function.
 %   @arg O Output term that unifies with the result of the Python call.
 %
-py_obi(I,O):- load_builtin_module,py_ocall(builtin_module:I,O).
+py_obi(I,O):- load_builtin_module,py_ocall_direct(builtin_module:I,O).
 
 %!  py_mbi(+I, -O) is semidet.
 %
@@ -811,7 +1529,7 @@ py_obi(I,O):- load_builtin_module,py_ocall(builtin_module:I,O).
 %
 py_mbi(I,O):- load_builtin_module,py_mcall(builtin_module:I,O).
 
-%?- py_call(type(hi-there), P),py_pp(P).
+%?- py_call_warg(type(hi-there), P),py_pp(P).
 
 %!  get_str_rep(+I, -O) is semidet.
 %
@@ -831,9 +1549,10 @@ get_str_rep(I,O):- py_mbi(get_str_rep(I),O),!.
 %   @arg O Output term that unifies with the Python atom or its Prolog equivalent.
 %
 py_atom(I,O):- var(I),!,O=I.
+py_atom(A,Py):- atomic(A),!,catch(py_obi(make_py_atom(A),Py),E,py_error_fail(E)),!.
 py_atom([I|Is],O):- !,py_dot(I,II),py_dot_from(II,Is,O),!.
 py_atom(I,O):- atomic(I),!,py_atomic(I,O).
-py_atom(I,O):- py_ocall(I,O),!.
+py_atom(I,O):- py_ocall_direct(I,O),!.
 py_atom(I,O):- I=O.
 
 %!  py_atom_type(+I, +Type, -O) is det.
@@ -862,6 +1581,7 @@ py_atom_type(I,_Type,O):- I=O.
 py_atomic([],O):- py_ocall("[]",O),!.
 py_atomic(I,O):- py_is_object(I),!,O=I.
 py_atomic(I,O):- string(I),py_eval(I,O),!.
+py_atomic(I,O):- symbol(I),py_eval(I,O),!.
 py_atomic(I,O):- py_ocall(I,O),!.
 py_atomic(I,O):- py_eval(I,O),!.
 py_atomic(I,O):- \+ symbol_contains(I,'('), atomic_list_concat([A,B|C],'.',I), py_dot([A,B|C],O),!.
@@ -933,7 +1653,7 @@ py_exec(I):- py_exec(I, O),pybug(O).
 %
 %   @arg I The input string or atom representing a Python object.
 %   @arg O The output which will unify with the Python object.
-py_dot(I,O):- string(I),atom_string(A, I),py_atom(A, O),A\==O,!.
+py_dot(I,O):- string(I),py_obi(eval_string(I),O),!.
 py_dot(I,O):- py_atom(I,O).
 
 %!  py_dot_from(+From, +I, -O) is det.
@@ -947,7 +1667,13 @@ py_dot(I,O):- py_atom(I,O).
 py_dot_from(From,I,O):- I==[],!,O=From.
 py_dot_from(From,[I|Is],O):- !,py_dot_from(From, I, M),py_dot_from(M, Is, O).
 py_dot_from(From,I,O):- atomic_list_concat([A,B|C],'.',I),!,py_dot_from(From,[A,B|C],O).
-py_dot_from(From,I,O):- py_dot(From,I,O).
+py_dot_from(From,I,O):- make_py_dot(From,I,O).
+
+make_py_dot(A,B,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
+make_py_dot(A,B,Py):- py_dot([A,B],Py),!.
+
+
+py_error_fail(E):- bt,wdmsg(E),!,trace,fail.
 
 %!  py_eval_object(+Var, -VO) is det.
 %
@@ -967,9 +1693,15 @@ py_eval_object(VO,VO).
 %
 %   @arg O The input object to check.
 py_is_function(O):- \+ py_is_object(O),!,fail.
-py_is_function(O):- py_type(O,function),!.
-% we might need to include methods soon
-%py_is_function(O):- py_type(O, method),!.
+py_is_function(PyObject) :-
+    py_type(PyObject, Type),
+    py_is_method_type(Type).
+py_is_method_type(type).
+py_is_method_type(builtin_function_or_method).
+py_is_method_type(function).
+py_is_method_type(method).
+py_is_method_type('method-wrapper').
+
 
 %!  py_eval_from(+From, +I, -O) is det.
 %
@@ -1031,12 +1763,12 @@ ensure_rust_metta(MeTTa):-
 %   @arg MeTTa The MeTTa instance that will be initialized.
 ensure_rust_metta0(MeTTa):-
     ensure_mettalog_py(MettaLearner),           % Ensure MettaLearner is available.
-    py_call(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
+    py_call_warg(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
     py_is_object(MeTTa).
 ensure_rust_metta0(MeTTa):-
-    py_call('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
+    py_call_warg('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
 ensure_rust_metta0(MeTTa):-
-    py_call(hyperon:runner:'MeTTa'(), MeTTa),!. % Fallback: Call MeTTa from hyperon.
+    py_call_warg(hyperon:runner:'MeTTa'(), MeTTa),!. % Fallback: Call MeTTa from hyperon.
 
 %!  ensure_rust_metta is det.
 %
@@ -1058,11 +1790,11 @@ ensure_mettalog_py(MettaLearner):-
     is_mettalog(MettaLearner), !.  % Check if MettaLearner is already known.
 ensure_mettalog_py(MettaLearner):-
     with_safe_argv(  % Ensure safety for argument passing.
-        (want_py_lib_dir,  % Ensure the Python library directory is available.
-            %py_call('mettalog',MettaLearner),
-            %py_call('motto',_),
-            %py_call('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
-            %py_call('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
+        (add_wanted_py_lib_dirs,  % Ensure the Python library directory is available.
+            %py_call_warg('mettalog',MettaLearner),
+            %py_call_warg('motto',_),
+            %py_call_warg('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
+            %py_call_warg('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
         pybug(is_mettalog(MettaLearner)),  % Log any issues.
         asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
         )).
@@ -1125,7 +1857,7 @@ ensure_primary_metta_space(GSpace):-
     is_primary_metta_space(GSpace),!.                % Check if the primary space is already known.
 ensure_primary_metta_space(GSpace):-
     ensure_rust_metta(MeTTa),               % Ensure that the Rust MeTTa environment is initialized.
-    with_safe_argv(py_call(MeTTa:space(), GSpace)),  % Call the space method on MeTTa.
+    with_safe_argv(py_call_warg(MeTTa:space(), GSpace)),  % Call the space method on MeTTa.
     asserta(is_primary_metta_space(GSpace)).         % Store the new space.
 ensure_primary_metta_space(GSpace):-
     new_rust_space(GSpace).                          % Fallback: initialize a new Rust space.
@@ -1145,7 +1877,7 @@ ensure_primary_metta_space:- ensure_primary_metta_space(_).
 :- if(\+ current_predicate(new_rust_space/1)).
 % Initialize a new hyperon.base.GroundingSpace and get a reference
 new_rust_space(GSpace):-
-    with_safe_argv(py_call(hyperon:base:'GroundingSpace'(),GSpace)),  % Create a new GroundingSpace.
+    with_safe_argv(py_call_warg(hyperon:base:'GroundingSpace'(),GSpace)),  % Create a new GroundingSpace.
     asserta(is_python_space(GSpace)).  % Store the new space.
 :- endif.
 
@@ -1162,7 +1894,7 @@ new_rust_space(GSpace):-
 
 query_from_space(Space,QueryAtom,Result):-
     ensure_space(Space,GSpace),                % Ensure the space is valid.
-    py_call(GSpace:'query'(QueryAtom),Result). % Perform the query in the space.
+    py_call_warg(GSpace:'query'(QueryAtom),Result). % Perform the query in the space.
 
 %!  replace_in_space(+Space, +FromAtom, +ToAtom) is det.
 %
@@ -1174,7 +1906,7 @@ query_from_space(Space,QueryAtom,Result):-
 %   @arg ToAtom The new atom that will replace the `FromAtom`.
 replace_in_space(Space,FromAtom,ToAtom):-
     ensure_space(Space,GSpace),                     % Ensure the space is valid.
-    py_call(GSpace:'replace'(FromAtom,ToAtom), _).  % Perform the replacement.
+    py_call_warg(GSpace:'replace'(FromAtom,ToAtom), _).  % Perform the replacement.
 
 %!  atom_count_from_space(+Space, -Count) is det.
 %
@@ -1185,7 +1917,7 @@ replace_in_space(Space,FromAtom,ToAtom):-
 %   @arg Count The number of atoms in the space.
 atom_count_from_space(Space,Count):-
     ensure_space(Space,GSpace),            % Ensure the space is valid.
-    py_call(GSpace:'atom_count'(),Count).  % Retrieve the atom count.
+    py_call_warg(GSpace:'atom_count'(),Count).  % Retrieve the atom count.
 
 %!  atoms_from_space(+Space, -Atoms) is det.
 %
@@ -1195,7 +1927,7 @@ atom_count_from_space(Space,Count):-
 %   @arg Space The space from which the atoms will be retrieved.
 %   @arg Atoms The list of atoms present in the space.
 atoms_from_space(Space,Atoms):- ensure_space(Space, GSpace),  % Ensure the space is valid.
-    py_call(GSpace:'get_atoms'(),Atoms).                       % Retrieve all atoms.
+    py_call_warg(GSpace:'get_atoms'(),Atoms).                       % Retrieve all atoms.
 
 %!  atom_from_space(+Space, -Sym) is nondet.
 %
@@ -1219,9 +1951,9 @@ atoms_iter_from_space(Space,Atoms):-
     % Ensure the space is valid.
     ensure_space(Space,GSpace),
     % Retrieve the iterator.
-    with_safe_argv(py_call(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
+    with_safe_argv(py_call_warg(src:'mettalog':get_atoms_iter_from_space(GSpace),Atoms)),
     % for debugging print the atoms
-    %py_call(GSpace:'atoms_iter'(), Atoms).
+    %py_call_warg(GSpace:'atoms_iter'(), Atoms).
     true.
 :- endif.
 
@@ -1304,9 +2036,9 @@ py_to_pl(VL,Par,Cir,CirO,[H|T]:B:C,[HH|TT]):- py_to_pl(VL,Par,Cir,CirM,H:B:C,HH)
 py_to_pl(VL,Par,Cir,CirO,[H|T]:B,[HH|TT]):- py_to_pl(VL,Par,Cir,CirM,H:B,HH),
     py_to_pl(VL,Par,CirM,CirO,T:B,TT).
 % Handle Python objects with callable methods A:B:C or A:B.
-py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):- py_is_object(A),callable(B),py_call(A:B,R),
+py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):- py_is_object(A),callable(B),py_call_warg(A:B,R),
     py_to_pl(VL,Par,Cir,CirO,R:C,AB).
-py_to_pl(VL,Par,Cir,CirO,A:B,AB):- py_is_object(A),callable(B),py_call(A:B,R),
+py_to_pl(VL,Par,Cir,CirO,A:B,AB):- py_is_object(A),callable(B),py_call_warg(A:B,R),
     py_to_pl(VL,Par,Cir,CirO,R,AB).
 % Convert compound terms like A:B or A-B.
 py_to_pl(VL,Par,Cir,CirO,A:B,AA:BB):- !,py_to_pl(VL,Par,Cir,CirM,A,AA),py_to_pl(VL,Par,CirM,CirO,B,BB).
@@ -1323,9 +2055,9 @@ py_to_pl(VL,Par,Cir,CirO,L,E):- is_dict(L,F),!,dict_pairs(L,F,NV),!,py_to_pl(VL,
 % If L is not callable, unify E with L.
 py_to_pl(_VL,_Par,Cir,Cir,L,E):- \+ callable(L),!,E = L.
 %next phase code
-%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!,
+%py_to_pl(VL,Par,Cir,CirO,A:B:C,AB):-  py_is_object(A),callable(B),py_call_warg(A:B,R),!,
 %    py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R:C,AB).
-%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call(A:B,R),!,
+%py_to_pl(VL,Par,Cir,CirO,A:B,AB):-  py_is_object(A),callable(B),py_call_warg(A:B,R),!,
 %    py_to_pl(VL,Par,[A:B-AB|Cir],CirO,R,AB).
 % Convert compound terms using `compound_name_arguments/3`.
 py_to_pl(VL,Par,Cir,CirO,A,AA):- compound(A),!,compound_name_arguments(A,F,L),
@@ -1424,7 +2156,7 @@ real_VL_var0(R,VL,E):- extend_container(VL,R=E),!. % If not found, extend the li
 %   @arg O The Python object to be converted.
 %   @arg E The resulting Prolog term after conversion.
 
-pyo_to_pl(VL,_Par,Cir,Cir,Cl,O,E):- Cl=='VariableAtom',!,py_call(O:get_name(),R),real_VL_var(R,VL,E),!.
+pyo_to_pl(VL,_Par,Cir,Cir,Cl,O,E):- Cl=='VariableAtom',!,py_call_warg(O:get_name(),R),real_VL_var(R,VL,E),!.
 pyo_to_pl(VL,Par,Cir,CirO,Cl,O,E):-
     class_to_pl1(Par,Cl,M),py_member_values(O,M,R),!, % Fetch Python object member values.
     py_to_pl(VL,[Cl | Par],Cir,CirO,R,E).             % Recursively convert member values.
@@ -1500,7 +2232,9 @@ pl_to_rust(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 %
 %   @arg MeTTa The Prolog term to be converted.
 %   @arg PyList The resulting Python list.
-py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
+
+py_list(MeTTa,PyList):- py_arg(MeTTa,PyList),!. %,
+%py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 
 %!  py_tuple(+O, -Py) is det.
 %
@@ -1509,7 +2243,8 @@ py_list(MeTTa,PyList):- pl_to_py(MeTTa,PyList).
 %   @arg O The input list to be converted.
 %   @arg Py The resulting Python tuple.
 
-py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
+py_tuple(O,Py):- py_arg(O,Arg),!,py_obi(py_tuple(Arg),Py),!.
+%py_tuple(O,Py):- py_obi(py_tuple(O),Py),!. % Alternative method to create a Python tuple.
 % py_tuple(O,Py):- py_ocall(tuple(O),Py),!.  % Call Python tuple function.
 
 
@@ -1526,7 +2261,7 @@ py_chain(I, Py):-
     load_hyperon_module,
     % The actual call to the `hyperon_module:py_chain/2` function in Python. This likely passes
     % the argument `I` and returns a result `M`. The `py_ocall/2` mechanism calls the Python method.
-    py_ocall(hyperon_module:py_chain(I), M),
+    py_ocall_direct(hyperon_module:py_chain(I), M),
     % Finally, the result from the Python call, `M`, is returned via `rust_return/2` to `O`.
     % The `rust_return/2` might be a utility for handling MeTTaLog-Python interop and ensures
     % that `O` receives the final processed result from the chain.
@@ -1541,7 +2276,7 @@ py_chain(I, Py):-
 %   @arg Py The resulting Python dictionary.
 py_dict(O,Py):- catch(py_is_py_dict(O),_,fail),!, % Check if `O` is already a Python dictionary.
     O=Py.                                         % If it is,return it unchanged.
-py_dict(O,Py):- py_ocall(dict(O),Py),!.  % Otherwise, convert `O` to a Python dictionary.
+py_dict(O,Py):- py_ocall_direct(dict(O),Py),!.  % Otherwise, convert `O` to a Python dictionary.
 
 % ?- py_list([1,2.0,"string"],X),py_type(X,Y).
 % ?- py_list_index([1,2.0,"string"],X),py_type(X,Y).
@@ -1553,7 +2288,13 @@ py_dict(O,Py):- py_ocall(dict(O),Py),!.  % Otherwise, convert `O` to a Python di
 %   @arg L The Python list.
 %   @arg Nth The index of the element to retrieve.
 %   @arg E The resulting element at the specified index.
-py_nth(L,Nth,E):- py_mbi(py_nth(L,Nth),E).
+
+py_nth(L,Nth,E):- is_list(L),!,nth0(Nth,L,E).
+py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
+
+py_nth0(Nth,L,E):- is_list(L),!,nth0(Nth,L,E).
+py_nth0(Nth,L,E):- py_obi(py_nth(L,Nth),E).
+%py_nth0(Nth,L,E):- py_obi(py_nth(L,Nth),E).
 % py_nth(L,Nth,E):- py_obi(py_nth(L,Nth),E).
 
 %!  py_len(+L, -E) is det.
@@ -1611,19 +2352,19 @@ pl_to_py(_VL,MeTTa,Python):- integer(MeTTa),!,py_obi(int_conversion(MeTTa),Pytho
 % Convert Prolog lists to Python lists.
 pl_to_py(VL,Sym,Py):- is_list(Sym),!,maplist(pl_to_py(VL),Sym,PyL),py_obi(py_list(PyL),Py).
 % Convert Prolog variables to Python variables.
-pl_to_py(VL,Var,Py):- var(Var),!,real_VL_var(Sym,VL,Var),py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_py(VL,Var,Py):- var(Var),!,real_VL_var(Sym,VL,Var),py_call_warg('hyperon.atoms':'V'(Sym),Py),!.
 % Convert Prolog `$VAR` variables to Python variables.
-pl_to_py(VL,'$VAR'(Sym),Py):- !,real_VL_var(Sym,VL,_),py_call('hyperon.atoms':'V'(Sym),Py),!.
+pl_to_py(VL,'$VAR'(Sym),Py):- !,real_VL_var(Sym,VL,_),py_call_warg('hyperon.atoms':'V'(Sym),Py),!.
 pl_to_py(_VL,O,Py):-py_type(O,_),!,O=Py.
 % % %pl_to_py(_VL,O,Py):- py_is_dict(O),!,O=Py.
 %pl_to_py(VL,DSym,Py):- atom(DSym),atom_concat('$',VName,DSym),rinto_varname(VName,Sym),!,pl_to_py(VL,'$VAR'(Sym),Py).
-%pl_to_py(_VL,Sym,Py):- atom(Sym),!,py_call('hyperon.atoms':'S'(Sym),Py),!.
-%pl_to_py(_VL,Sym,Py):- string(Sym),!,py_call('hyperon.atoms':'S'(Sym),Py),!.
-%pl_to_py(VL,Sym,Py):- is_list(Sym),maplist(pl_to_py,Sym,PyL),py_call('hyperon.atoms':'E'(PyL),Py),!.
-%pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- atom(Sym),!,py_call_warg('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- string(Sym),!,py_call_warg('hyperon.atoms':'S'(Sym),Py),!.
+%pl_to_py(VL,Sym,Py):- is_list(Sym),maplist(pl_to_py,Sym,PyL),py_call_warg('hyperon.atoms':'E'(PyL),Py),!.
+%pl_to_py(_VL,Sym,Py):- py_is_object(Sym),py_call_warg('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 % Default case: return the input term as-is if no other conversion applies.
 pl_to_py(_VL,MeTTa,MeTTa).
-%pl_to_py(_VL,Sym,Py):- py_call('hyperon.atoms':'ValueAtom'(Sym),Py),!.
+%pl_to_py(_VL,Sym,Py):- py_call_warg('hyperon.atoms':'ValueAtom'(Sym),Py),!.
 
 %!  py_key(+O, -I) is det.
 %
@@ -1678,10 +2419,10 @@ meets_dir(L,M):- compound(M),!,compound_name_arguments(M,F,[A | AL]),!,maplist(m
 %   @arg R The resulting member values.
 py_member_values(O,C,R):- is_list(O),!,maplist(py_member_values,O,C,R).
 py_member_values(O,C,R):- is_list(C),!,maplist(py_member_values(O),C,R).
-%py_member_values(O,C,R):- atom(C),!,compound_name_arity(CC,C,0),!,py_call(O:CC,R).
+%py_member_values(O,C,R):- atom(C),!,compound_name_arity(CC,C,0),!,py_call_warg(O:CC,R).
 py_member_values(O,f(F,AL),R):- !,py_member_values(O,[F | AL],[RF | RAL]),
     compound_name_arguments(R,RF,RAL).
-py_member_values(O,C,R):- py_call(O:C,R,[py_string_as(atom),py_object(false)]).
+py_member_values(O,C,R):- py_call_warg(O:C,R,[py_string_as(atom),py_object(false)]).
 
 %!  py_to_str(+PyObj, -Str) is det.
 %
@@ -1718,7 +2459,7 @@ tafs:-
 %
 %   @arg A The Python object.
 %   @arg AA The name of the class.
-py_class(A,AA):- py_call(A:'__class__',C),py_call(C:'__name__',AA,[py_string_as(atom)]),!.
+py_class(A,AA):- py_call_warg(A:'__class__',C),py_call_warg(C:'__name__',AA,[py_string_as(atom)]),!.
 
 %!  py_decomp(+M,+C) is det.
 %
@@ -1782,7 +2523,7 @@ py_decomp(f('__class__',['__str__'()])).
 %__class__
 %get_type()
 
-%atoms_from_space(Space,[Atoms]),py_pp(Atoms),py_call(Atoms:get_object(),A),atoms_from_space(A,Dir),member(E,Dir),py_obj_dir(E,C),py_call(E:get_children(),CH),py_pp(CH).
+%atoms_from_space(Space,[Atoms]),py_pp(Atoms),py_call_warg(Atoms:get_object(),A),atoms_from_space(A,Dir),member(E,Dir),py_obj_dir(E,C),py_call_warg(E:get_children(),CH),py_pp(CH).
 
 %!  remove_from_space(+Space, +Sym) is det.
 %
@@ -1792,7 +2533,7 @@ py_decomp(f('__class__',['__str__'()])).
 %   @arg Space The grounding space from which the atom will be removed.
 %   @arg Sym The atom to be removed from the space.
 :- if(\+ current_predicate(remove_from_space/2)).
-remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call(GSpace:'remove'(Sym),_).
+remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call_warg(GSpace:'remove'(Sym),_).
 :- endif.
 
 %!  add_to_space(+Space, +Sym) is det.
@@ -1803,7 +2544,7 @@ remove_from_space(Space,Sym):- ensure_space(Space,GSpace),py_call(GSpace:'remove
 %   @arg Space The grounding space to which the atom will be added.
 %   @arg Sym The atom to be added to the space.
 :- if(\+ current_predicate(add_to_space/2)).
-add_to_space(Space,Sym):-  ensure_space(Space,GSpace),py_call(GSpace:'add'(Sym),_).
+add_to_space(Space,Sym):-  ensure_space(Space,GSpace),py_call_warg(GSpace:'add'(Sym),_).
 :- endif.
 
 %!  must_det_llp(+Goals) is det.
@@ -1932,18 +2673,18 @@ self_extend_py(Self,Module,File,R):-
         assert_new(is_pymod_in_space(Module,Self)),
         (nonvar(File) -> Use = File ; Use = Module),
         pybug('extend-py!'(Use)),
-        % py_call(mettalog:use_mettalog()),
+        % py_call_warg(mettalog:use_mettalog()),
         (Use == mettalog -> true ; py_load_modfile(Use)),
         % listing(ensure_rust_metta/1),
         % ensure_mettalog_py,
         nb_setval('$py_ready','true'),
-        % working_directory(PWD,PWD),py_add_lib_dir(PWD),
+        % working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
         % replace_in_string(["/"="."],Module,ToPython),
         % py_mcall(mettalog:import_module_to_rust(ToPython)),
         % sformat(S,'!(import! &self ~w)',[Use]),rust_metta_run(S,R),
         R = [],
         % py_module_exists(Module),
-        % py_call(MeTTa:load_py_module(ToPython),Result),
+        % py_call_warg(MeTTa:load_py_module(ToPython),Result),
         true)),!.
 
 %!  py_load_modfile(+Use) is det.
@@ -2017,7 +2758,7 @@ rust_metta_run1(I,O):- load_hyperon_module,!,py_ocall(hyperon_module:rust_metta_
 rust_metta_run1(R,Run):-
     with_safe_argv((((
         % ensure_rust_metta(MeTTa),
-        py_call(mettalog:rust_metta_run(R),Run)
+        py_call_warg(mettalog:rust_metta_run(R),Run)
     )))).
 
 %!  rust_return(+M, -O) is det.
@@ -2219,7 +2960,7 @@ load_functions_motto:- load_functions_motto(Def),pypp(Def).
 %       ?- load_functions_motto(Def).
 %
 load_functions_motto(Def):- load_functions_ext,
-    with_safe_argv(py_call(mettalog:load_functions_motto(),Def)).
+    with_safe_argv(py_call_warg(mettalog:load_functions_motto(),Def)).
 
 %!  load_functions_ext is det.
 %
@@ -2241,7 +2982,7 @@ load_functions_ext:- load_functions_ext(Def),pypp(Def).
 %   @example Load and retrieve external functions:
 %       ?- load_functions_ext(Def).
 %
-load_functions_ext(Def):- with_safe_argv(py_call(mettalog:load_functions_ext(),Def)).
+load_functions_ext(Def):- with_safe_argv(py_call_warg(mettalog:load_functions_ext(),Def)).
 
 %!  example_usage is det.
 %
@@ -2271,11 +3012,11 @@ example_usage:-
 
 atom_count_from_space(Count):- atom_count_from_space(metta_self,Count).
 
-:-dynamic(want_py_lib_dir/1).
+:-dynamic(wanted_py_lib_dir/1).
 :-prolog_load_context(directory,ChildDir),
     file_directory_name(ChildDir,ParentDir),
     file_directory_name(ParentDir,GParentDir),
-    pfcAdd_Now(want_py_lib_dir(GParentDir)).
+    pfcAdd_Now(wanted_py_lib_dir(GParentDir)).
 
 %:- .
 %:- ensure_rust_metta.
@@ -2303,20 +3044,40 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 % when using this file alone uncomment the next line
 %:- ensure_loaded(metta_interp).
 
-%!  want_py_lib_dir is det.
+%!  add_wanted_py_lib_dirs is det.
 %
 %   Ensures that Python library directories are added to the Python path.
-%   It retrieves all directories from want_py_lib_dir/1 facts and adds them
-%   using py_add_lib_dir/1. After that, it synchronizes the Python path.
+%   It retrieves all directories from wanted_py_lib_dir/1 facts and adds them
+%   using maybe_py_add_lib_dir/1. After that, it synchronizes the Python path.
 %
 %   @example Ensure Python library directories are added:
-%       ?- want_py_lib_dir.
+%       ?- add_wanted_py_lib_dirs.
 %
-want_py_lib_dir:-
+add_wanted_py_lib_dirs:-
     with_safe_argv((
-        forall(want_py_lib_dir(GParentDir),py_add_lib_dir(GParentDir)),
+        forall(wanted_py_lib_dir(GParentDir),maybe_py_add_lib_dir(GParentDir)),
         sync_python_path
     )).
+
+
+maybe_py_add_lib_dir(Path):- is_list(Path),!,maplist(maybe_py_add_lib_dir,Path).
+maybe_py_add_lib_dir(Path):- atom_length(Path,0),!.
+maybe_py_add_lib_dir(Path):-
+  absolute_file_name(Path,ABS2),
+  py_lib_dirs(Dirs),member(Dir,Dirs),
+  absolute_file_name(Dir,ABS1),
+  ABS1=ABS2,!.
+maybe_py_add_lib_dir(Path):- py_add_lib_dir(Path,first),!.
+
+
+
+find_mettalog_relative_path(RelDir, AbsPath) :-
+    % Get the environment variable METTALOG_DIR
+    metta_root_dir(Dir),
+    absolute_file_name(RelDir, AbsPath, [relative_to(Dir),file_type(directory), access(exist)]).
+
+maybe_py_add_relative_lib_dir(RelDir):-
+ ignore((find_mettalog_relative_path(RelDir, AbsPath),maybe_py_add_lib_dir(AbsPath))).
 
 %!  sync_python_path is det.
 %
@@ -2329,22 +3090,28 @@ want_py_lib_dir:-
 %       ?- sync_python_path.
 %
 sync_python_path:-
-    working_directory(PWD,PWD),py_add_lib_dir(PWD),
+    working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
     ignore((
         getenv('PYTHONPATH',CurrentPythonPath),
         symbolic_list_concat(List,':',CurrentPythonPath),
         list_to_set(List,Set),
-        py_lib_dirs(DirsA),
-        forall(
-            member(E,Set),
-            if_t(\+ member(E,DirsA),if_t(\+ atom_length(E,0),py_add_lib_dir(E)))
-        )
-    )),
-    py_lib_dirs(DirsL),
-    list_to_set(DirsL,Dirs),
-    fbug(py_lib_dirs(Dirs)),
+        maybe_py_add_lib_dir(Set))),
+    maybe_py_add_relative_lib_dir('./python/'),
+    maybe_py_add_relative_lib_dir('../hyperon-experimental/python'),
+    %py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)),
+    py_lib_dirs(DirsL),list_to_set(DirsL,Dirs),
     symbolic_list_concat(Dirs,':',NewPythonPath),
-    setenv('PYTHONPATH',NewPythonPath).
+    setenv('PYTHONPATH',NewPythonPath),
+    catch(try_resolve_python_modules,E,(show_python_path,write_src_nl(E))).
+    %write_src_nl(py_lib_dirs(NewPythonPath)),
+
+try_resolve_python_modules:-
+    py_call(hyperon,_),
+    py_call(hyperonpy,_),
+    py_call(mettalog,_).
+
+show_python_path:-
+  py_call(sys:path,SP), write_src_nl(py_call('sys.path',SP)).
 
 %!  is_rust_operation(+List) is semidet.
 %
@@ -2358,7 +3125,7 @@ sync_python_path:-
 %       ?- is_rust_operation([function_name,arg1,arg2]).
 %
 is_rust_operation([Fun | Args]):- get_list_arity(Args,Arity),
-    py_call(mettalog:get_operation_definition_with_arity(Fun,Arity),O),O \== '@'('none').
+    py_call_warg(mettalog:get_operation_definition_with_arity(Fun,Arity),O),O \== '@'('none').
 
 %!  get_list_arity(+Args,-Arity) is det.
 %
@@ -2529,4 +3296,11 @@ subst_each_var([Var|RestOfVars],Term,Output):- !,
 % no more vars left to replace
 subst_each_var(_,TermIO,TermIO).
 
+py_portray(O):- py_is_object(O),write(' '),py_ppp(O),!.
+% py_portray(O):- is_list(O),write(' '),write_src(O),!.
+py_portray(O):- py_is_py(O),write(' '),py_ppp(O),!.
+
+:- dynamic(user:portray/1).
+:- multifile(user:portray/1).
+%user:portray(O):- nonvar(O), py_portray(O),!,write(' ').
 

@@ -105,7 +105,7 @@ querymaker2(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
 
-   symbolic_list_concat(Sorted1,'-',QPD),
+   atomic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -147,7 +147,7 @@ querymaker(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    reverse(Sorted,SortedR),
    maplist(arg(1),SortedR,Sorted1),
    maplist(arg(2),SortedR,Sorted2),
-   symbolic_list_concat(Sorted1,'-',QPD),
+   atomic_list_concat(Sorted1,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -184,7 +184,7 @@ querymaker3(CrossType,Inst,[Type1,V1],[Type2,V2],Query):-
    table_colnum_type(T2,Nth2,Type2),Type2\==CrossType,Type1\==Type2,
    sort([Type1,CrossType,Type2],Sorted),
    reverse(Sorted,SortedR),
-   symbolic_list_concat(SortedR,'-',QPD),
+   atomic_list_concat(SortedR,'-',QPD),
    into_hyphens(QPD,QP),
 
    Self = '&self',
@@ -463,9 +463,9 @@ fbgn_exons2affy1_overlaps_start_end(Gene,Start,End):-
 into_start_end(s_e(S,E),S,E):- nonvar(S),!.
 into_start_end('..'(S,E),S,E):- nonvar(S),!.
 into_start_end(at(S,E),S,E):- nonvar(S),!.
-into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'..',At),
+into_start_end(At,S,E):- atomic_list_concat([SS,EE],'..',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
-into_start_end(At,S,E):- symbolic_list_concat([SS,EE],'_at_',At),
+into_start_end(At,S,E):- atomic_list_concat([SS,EE],'_at_',At),
    into_number_or_symbol(SS,S), into_number_or_symbol(EE,E).
 
 
@@ -476,7 +476,7 @@ into_fb_term(Atom,Term):- into_number_or_symbol(Atom,Term),!.
 
 fb_member(E,L):- as_list([],L,LL),member(E,LL).
 
-into_number_or_symbol(Atom,Term):- symbolic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
+into_number_or_symbol(Atom,Term):- atomic_list_concat(List,'|',Atom),List\=[_],!,maplist(into_fb_term,List,Term).
 %into_number_or_symbol(Atom,Term):- atom_number(Atom, Term),!,Term= Term.
 into_number_or_symbol(Atom,Term):- catch(atom_to_term(Atom,Term,Vars),_,fail),maplist(a2t_assign_var,Vars).
 into_number_or_symbol(Atom,Term):- Term=Atom.
@@ -2280,4 +2280,3 @@ fb_tsv_pred_stats('most-frequent', transposon_sequence_set, [9, [#, [#, 'Ontolog
 fb_tsv_pred_stats('less-frequent', transposon_sequence_set, [9, [#, [#, 'ID=FBte0001033;name=Dmel\\mariner2;source=?;type=DNA;subtype=Tc1-Mariner', 1], [#, 'ID=FBte0000773;name=Dana\\Tom;source=Z24451;type=?;subtype=?', 1], [#, 'ID=FBte0000591;name=Dmel\\invader6;source=NT_033778;type=LTR;subtype=Gypsy', 1], [#, 'Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\pol;translation=KKCKASLDYISSIPTGPRDPRPFLPMRLLNCLVYGLLDSGASISCIGGGVVQAAMENEKFKSLIGEAATADGNSQRIVGLLKIEVEYGDIKKLLKLYVVPSLKQDLYLGIDFWKLYDLLPANLKIAEILSPEPNQQTVVDQHELCEGDKAKLANVINCFPSFSQEGLGKTNLVSHSIDVGTARPVKQRHFPVSPAVEKAMYAEIDRMLRLGVIGESESAWSSPIVMVTKPGKVRICLECRKVNSFTEMDAYPLPQINGILSRLPRAEYISSLDLKDAYWQVPLDPKSRDKTAFTVPGRPLYQFKVMPFGLCNATSTMSRLMDKVVPAHLRNEVFIYLDDLLIVSSCFESHLNVLRELALQIKRAGLTLNVAKSHFCMRRVRYLGHIIGDGGIRTDPEKVSAITDFPLPKSLKSLRSFMGLCGWYRKFVANFATLSAPLTDLMTTKRKFLLTKEAIEAFSKLKECLSKAPVLCSPDFAKPFAIHCDASKSGVGAVLVQVSEEGDERPIAFVSKKLNKAQRNYTVTEQECLAAIVALKNFRAYVEGLPFKIITDHASLKWLMSNHDLNSRLARWALALQRFKFEIEHRKGSLNVVPDTLSRVNEEIVAAMDLQEDLIVDFDSEFFQSGDYVKLVETVKENTSNFSDLKVESGFLYRKAEHLTGERMHDEYAWKLWVPKELVSKILARAHDSPLAAHGGIHKTLERIRRYYFWPGLVSDVRAYISACEVCKSTKSQNFTLRPPLGKAPESQRFFQRLFIDFLGPYPRSRSGNIGIFIVLDHFSKYVFLKPVKKIDSSVVIKYLEDELFMTFGVPEVILSDNGSQFRARTFQRLIRYGVKHTLTAVHSPQANASERVNRSVIAAIRAYLRLDQKDWDEFLSRICCALRSAVHSSIGTSPYYMVFGQHMITSGSTYSLIRRLNLLDDRSLKFDRHESFEIMRKQAVDQMRNKHNENEKRCNIRSRVVSFVEGQEVYREISSQAVSKPVTTPSLDRRS', 1], [#, 'Ontology_term=SO:0000316;db_xref=FLYBASE:FBgnXXXXXXX;name=Dmel\\gypsy12\\gag;translation=MGLDRSPTRKSPSVSNPVCKLCAAEISTQDLYVTTCHHEFYRECIGNHFKKSEICSRCKLTCRPPAEATERVGRETRSKTKNRRNSRRGSFDISQRCGEKLAVKLKIAATVDGGPSTSASGANANEASSSAVSANAALLAMERRLLATLSEKMADLVQNAITSSMQRIMPTPSPAVVVTASEMSADHPNAYERQYLASPNPVPSPRSASSDLFDRPDKVVHILNGWKIKYSGVGVSVDNFIYRVEAVTRQTLNGNFNLLCRNISVLFEGKANDFFWRYHKFDRVATMGTERFCTALRLQFRQSRDDGDIEELIRNTKQKPNETFDSFYDTVSELVDQLEQPWTANKLVRVLRNNLRPEIRHEILNLDVRTVSELREICKRREAFLADVRRCSSYAKDTPFKREISEVCHESEDEVRSTYEAENDIESFSLVCWNCRIEGHRYQECIAERRVFCYGCGAANTYKPSCRKCSKNFKVGMSKLPVKPKTSNAARNQSTMTDQ', 1], [#, 'ID=FBte0001136;name=Dmel\\gypsy12;source=AE003789;type=LTR;subtype=Gypsy', 1], [#, 'ID=FBte0001041;name=Dmel\\gypsy11;source=?;type=LTR;subtype=Gypsy', 1]]]).
 
 :- forall(fb_tsv_pred_stats(P,A1,Rest),  (G=..[P,A1|Rest],assert(G))).
-

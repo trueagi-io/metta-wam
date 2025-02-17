@@ -976,6 +976,8 @@ compound_name_arg(G, MD, Goal) :-
 %   % This would log the error using fbug/1 and then fail.
 %
 %user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
+
+user:message_hook(debug_no_topic(metta(_)), warning, _):-!.
 user:message_hook(Term, Kind, Lines) :-
     % Always fail initially to ensure no action is taken before processing.
     fail,
@@ -4101,28 +4103,36 @@ fake_impl(F/A) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Higher arity maplists
 
 % maplist/6 applies Pred to the elements of List1, List2, ..., List5 in parallel
-maplist(_, [], [], [], [], []).
-maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5]) :-
-    call(Pred, X1, X2, X3, X4, X5),
-    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5).
+maplist(Goal, List1, List2, List3, List4, List5) :-
+    maplist_(List1, List2, List3, List4, List5, Goal).
+maplist_([], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Goal).
 
 % maplist/7 applies Pred to the elements of List1, List2, ..., List6 in parallel
-maplist(_, [], [], [], [], [], []).
-maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6]) :-
-    call(Pred, X1, X2, X3, X4, X5, X6),
-    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6).
+maplist(Goal, List1, List2, List3, List4, List5, List6) :-
+    maplist_(List1, List2, List3, List4, List5, List6, Goal).
+maplist_([], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Goal).
 
 % maplist/8 applies Pred to the elements of List1, List2, ..., List8 in parallel
-maplist(_, [], [], [], [], [], [], []).
-maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7]) :-
-    call(Pred, X1, X2, X3, X4, X5, X6, X7),
-    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Xs7).
+maplist(Goal, List1, List2, List3, List4, List5, List6, List7) :-
+    maplist_(List1, List2, List3, List4, List5, List6, List7, Goal).
+maplist_([], [], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], [Elem7|Tail7], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6, Elem7),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Goal).
 
 % maplist/9 applies Pred to the elements of List1, List2, ..., List8 in parallel
-maplist(_, [], [], [], [], [], [], [], []).
-maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], [X8|Xs8]) :-
-    call(Pred, X1, X2, X3, X4, X5, X6, X7, X8),
-    maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6, Xs7, Xs8).
+maplist(Goal, List1, List2, List3, List4, List5, List6, List7, List8) :-
+    maplist_(List1, List2, List3, List4, List5, List6, List7, List8, Goal).
+maplist_([], [], [], [], [], [], [], [], _).
+maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail5], [Elem6|Tail6], [Elem7|Tail7], [Elem8|Tail8], Goal) :-
+    call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6, Elem7, Elem8),
+    maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Tail8, Goal).
 
 map_fold1(_,[],[],A,A).
 map_fold1(Pred,[X|Xt],[Y|Yt],A1,A3) :- call(Pred,X,Y,A1,A2),map_fold1(Pred,Xt,Yt,A2,A3).

@@ -568,7 +568,7 @@ est_size(      1_611_349, ontology_info).
 est_size(      1_316_132, fbgn_NAseq_Uniprot).
 est_size(      1_045_549, property_value).
 est_size(      1_001_254, synonym).
-est_size(        722_570, cDNA_clone_data).
+est_size(        722_570, cDNA_clone).
 est_size(        384_206, genotype_phenotype).
 est_size(        363_453, allele_genetic_interactions).
 est_size(        288_469, fbal_to_fbgn).
@@ -889,26 +889,14 @@ pad_number(Number, N) :-
   sformat(S,"~t~D~*|", [Number,N]),symbolic_list_concat(L,',',S),
   symbolic_list_concat(L,'_',SS),write(SS).
 
-exists_virtually(corlib).
 
 % Process a file or directory path with a given predicate.
 with_wild_path(Fnicate, Dir) :- extreme_debug(fbug(with_wild_path(Fnicate, Dir))),fail.
 with_wild_path(_Fnicate, []) :- !.
-with_wild_path(_Fnicate, corelib) :- !.
-
-with_wild_path(_Fnicate, Virtual) :- exists_virtually(Virtual),!.
-with_wild_path(Fnicate, Virtual) :- var(Virtual),!,throw(var_with_wild_path(Fnicate, Virtual)).
 with_wild_path(Fnicate, Dir) :-  is_scryer, symbol(Dir), !, must_det_ll((path_chars(Dir,Chars), with_wild_path(Fnicate, Chars))).
 with_wild_path(Fnicate, Chars) :-  \+ is_scryer, \+ symbol(Chars), !, must_det_ll((name(Atom,Chars), with_wild_path(Fnicate, Atom))).
-
 with_wild_path(Fnicate, File) :- exists_file(File), !, must_det_ll(( call(Fnicate, File))).
-
-with_wild_path(Fnicate, Dir) :-  exists_directory(Dir),
-  absolute_file_name('__init__.py', PyFile, [access(read), file_errors(fail), relative_to(Dir)]),
-  with_wild_path(Fnicate, PyFile).
-
 with_wild_path(Fnicate, File) :- !, with_wild_path_swi(Fnicate, File).
-
 with_wild_path(Fnicate, Dir) :-  exists_directory(Dir), !,
   must_det_ll((directory_files(Dir, Files),
   maplist(directory_file_path(Dir,Files),Paths),
@@ -933,20 +921,12 @@ with_wild_path_swi(Fnicate, File) :-
   symbol_contains(File, '*'),
   expand_file_name(File, List), !,
   maplist(with_wild_path(Fnicate), List).
-with_wild_path_swi(Fnicate, File) :- 
-  \+ exists_directory(File), \+ exists_file(File), \+ symbol_contains(File,'.'),
-  extension_search_order(Ext),
-  symbolic_list_concat([File|Ext],MeTTafile),
-  exists_file(MeTTafile),
-  call(Fnicate, MeTTafile).
 with_wild_path_swi(Fnicate, File) :-
   exists_directory(File),
   directory_file_path(File, '*.*sv', Wildcard),
   expand_file_name(Wildcard, List), !,
   maplist(Fnicate, List).
 
-extension_search_order(['.metta']).
-extension_search_order(['.py']).
 
 :- dynamic(fix_columns_nth/2).
 needs_fixed(X,Y):- (var(X)->fb_arg(X);true),fix_concept(X,L),(L\=@=[X],L\=@=X),(L=[Y]->true;Y=L).
@@ -1001,8 +981,8 @@ track_load_into_file0(Filename,Goal):-
 rename_tmp_files(_Filename):- \+ is_converting,!.
 rename_tmp_files(Filename):- rename_tmp_files(Filename,'.metta'),rename_tmp_files(Filename,'.metta.datalog').
 
-rename_tmp_files(Filename,NonTmp):- symbolic_list_concat([Filename,NonTmp,'.tmp'],From),
-   symbolic_list_concat([Filename,NonTmp],To),
+rename_tmp_files(Filename,NonTmp):- atomic_list_concat([Filename,NonTmp,'.tmp'],From),
+   atomic_list_concat([Filename,NonTmp],To),
    fbug(rename_file(From,To)),
    ignore((exists_file(From),rename_file(From,To))).
 
@@ -1096,7 +1076,7 @@ load_fb_fa(Fn,Filename):-
     assert_OBO(pathname(Id,Filename)),!,
     assert_OBO(basename(Id,BaseName)),!,
     assert_OBO(directory(Id,Directory)),!,
-    setup_call_cleanup(open(Filename,read,In,[encoding(utf8)]), load_fb_fa_read(Id,In,_,0), close(In))))).
+    setup_call_cleanup(open(Filename,read,In), load_fb_fa_read(Id,In,_,0), close(In))))).
 load_fb_fa_read(_Fn,In, _, _):- (at_end_of_stream(In);reached_file_max),!.
 load_fb_fa_read(Fn,In,FBTe,At):- read_line_to_string(In,Str), load_fb_fa_read_str(Fn,In,FBTe,Str,At).
 
@@ -1498,7 +1478,7 @@ as_list("",[]). as_list(' ',[]). as_list(" ",[]).
 %as_list(N,[N]):- !.
 as_list(_,S,O):- as_list(S,O),!.
 as_list(SepL,A,List):-  member(Sep,SepL),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!.
-as_list([],A,ListO):-  member(Sep,['|',',',';']),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
+%as_list(_,A,ListO):-  member(Sep,['|',',',';']),catch_ignore(symbolic_list_concat(List,Sep,A)),List\=[_],!,maplist(fix_concept,List,ListO).
 as_list(_Sep,A,[A]).
 has_list(Header):- is_list(Header),member(listOf(_),Header).
 
@@ -1626,7 +1606,7 @@ process_metta_x_file(MXFile):-
     ((repeat,
        read_line_to_string(In,Chars),
        (In == end_of_file -> ! ;
-        once((symbolic_list_concat(Row0,'\t', Chars),
+        once((atomic_list_concat(Row0,'\t', Chars),
           maplist(fast_column,Row0,Row),
           assert_MeTTa([Fn|Row])))))),
      close(In)).
@@ -2135,7 +2115,7 @@ column_names(genotype_phenotype_data, [listOf(genotype_symbols, [/, ' ']), listO
 %                                        #genotype_symbols           	genotype_FBids	phenotype_name	phenotype_id	qualifier_names	qualifier_ids	reference
 column_names(automated_gene_summaries, [primary_FBgn, summary_text]).
 column_names(best_gene_summary, ['FBgn', 'Gene_Symbol', 'Summary_Source', 'Summary']).
-column_names(cDNA_clone_data, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
+column_names(cDNA_clone, ['FBcl', organism_abbreviation, clone_name, dataset_metadata_name, listOf(cDNA_accession), listOf('EST_accession')]).
 column_names(dataset_metadata, ['Dataset_Metadata_ID', 'Dataset_Metadata_Name', 'Item_ID', 'Item_Name']).
 column_names(disease_model_annotations, ['FBgn', 'Gene_symbol', 'HGNC', 'DO_qualifier', 'DO', 'DO_term', 'Allele_used_in_model_(FBal)', 'Allele_used_in_model_(symbol)', 'Based_on_orthology_with_(HGNC_ID)', 'Based_on_orthology_with_(symbol)', 'Evidence/interacting_alleles', 'Reference_(FBrf)']).
 column_names(dmel_gene_sequence_ontology_annotations, [gene_primary_id, gene_symbol, so_term_name, so_term_id]).
@@ -2309,12 +2289,12 @@ table_n_type(fbal_to_fbgn, 1, 'AlleleID', 'FBal').
 table_n_type(fbal_to_fbgn, 2, 'AlleleSymbol', _).
 table_n_type(fbal_to_fbgn, 3, 'GeneID', 'FBgn').
 table_n_type(fbal_to_fbgn, 4, 'GeneSymbol', _).
-table_n_type(cDNA_clone_data, 1, 'FBcl', 'FBcl').
-table_n_type(cDNA_clone_data, 2, organism_abbreviation, _).
-table_n_type(cDNA_clone_data, 3, clone_name, _).
-table_n_type(cDNA_clone_data, 4, dataset_metadata_name, _).
-table_n_type(cDNA_clone_data, 5, cDNA_accession, _).
-table_n_type(cDNA_clone_data, 6, 'EST_accession', _).
+table_n_type(cDNA_clone, 1, 'FBcl', 'FBcl').
+table_n_type(cDNA_clone, 2, organism_abbreviation, _).
+table_n_type(cDNA_clone, 3, clone_name, _).
+table_n_type(cDNA_clone, 4, dataset_metadata_name, _).
+table_n_type(cDNA_clone, 5, cDNA_accession, _).
+table_n_type(cDNA_clone, 6, 'EST_accession', _).
 table_n_type(genomic_clone, 1, 'FBcl', 'FBcl').
 table_n_type(genomic_clone, 2, organism_abbreviation, _).
 table_n_type(genomic_clone, 3, clone_name, _).
@@ -2878,7 +2858,7 @@ ucn('scRNA-Seq_gene_expression',[]).
 
 ucn(dmel_unique_protein_isoforms, 3). % ,a-PA,))
 ucn(best_gene_summary, 1). % ,FBgn0031081,) (2 ,Nep3,))
-ucn(cDNA_clone_data, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
+ucn(cDNA_clone, 1). % ,FBcl0000001,) (3 ,UUGC0315,))
 ucn(fb_synonym, 1). % ,FBal0000001,))
 ucn(fbal_to_fbgn, 1). % ,FBal0137236,))
 ucn(fbgn_annotation_ID.tsv, 1). % ,7SLRNA:CR32864,) (3 ,FBgn0000003,) (5 ,CR32864,))
@@ -2926,7 +2906,7 @@ fb_pred('allele_genetic_interactions',4).
 fb_pred('automated_gene_summaries',2).
 fb_pred('automated_gene_summaries',3).
 fb_pred('best_gene_summary',4).
-fb_pred('cDNA_clone_data',6).
+fb_pred('cDNA_clone',6).
 fb_pred('cDNA_clone_data',5).
 fb_pred('cDNA_clone_data',6).
 fb_pred('cyto_genetic_seq',4).
@@ -3218,9 +3198,7 @@ datalog_to_termlog(File):-
    atom_concat(File,'2',File2),
    fbug(datalog_to_termlog(File)),
   if_m2(atom_concat(File,'.metta',M)),
-   setup_call_cleanup((open(File,read,In,[encoding(utf8)]),
-					   open(File2,write,Out,[encoding(utf8)]), 
-					   if_m2(open(M,write,OutM,[encoding(utf8)]))),
+   setup_call_cleanup((open(File,read,In), open(File2,write,Out), if_m2(open(M,write,OutM))),
   (repeat,
    read_term(In,Term,[]),
    (Term==end_of_file -> ! ; (process_datalog(Out,OutM,Term),fail))),
@@ -3243,7 +3221,7 @@ process_datalog(Out,OutM,F,Args):-
 
    % Split a string or atom by a specified delimiter.
 split_by_delimiter(Input, Delimiter, Parts) :-
-    symbolic_list_concat(Parts, Delimiter, Input),
+    atomic_list_concat(Parts, Delimiter, Input),
     Parts = [_,_|_].  % Ensure that there's more than one part.
 
 always_delistify(A,A):- \+ compound(A),!.
@@ -3252,7 +3230,7 @@ always_delistify(A,A):- \+ is_list(A),!.
 always_delistify([A],A):-!.
 always_delistify(A,A).
 
-better_arg(S,A):- string(S),string_to_syms,atom_string(A,S),!.
+better_arg(S,A):- string(S),atom_string(A,S),!.
 %better_arg1(A,B):- fix_concept(A,B),!.
 better_arg(A,A):- !.
 
@@ -3261,7 +3239,7 @@ better_arg(A,B):- better_arg1(A,AA),always_delistify(AA,B).
 better_arg1(Input,s(A,Mid,E)) :- fail, (string(Input);atom(Input)),
   once(to_case_breaks(Input,CB)), CB=[_,_,_|_],  once(cb_better_args(CB,[A|ABCParts])),
    ABCParts=[_,_|_], append(Mid,[E],ABCParts),!.
-better_arg1(S,A):- string(S),string_to_syms,tom_string(A,S),!.
+better_arg1(S,A):- string(S),atom_string(A,S),!.
 %better_arg1(A,B):- fix_concept(A,B),!.
 better_arg1(A,A).
 
@@ -3270,8 +3248,8 @@ is_FB_input([xti("FB", upper), xti(_,lower), xti(_, digit)]):-!.
 cb_better_args([_],_):-!,fail.
 cb_better_args(X,_):- is_FB_input(X),!,fail.
 cb_better_args(CB,Parts):-cb_better_args_ni(CB,Parts),!.
-cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),symbolic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
-cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),string_to_syms,!,atom_string(I,S),cb_better_args_ni(L,Parts).
+cb_better_args_ni([A,B,C|L],[I|Parts]):- is_FB_input([A,B,C]),maplist(arg(1),[A,B,C],ABC),atomic_list_concat(ABC,I),cb_better_args_ni(L,Parts).
+cb_better_args_ni([XTI|L],[I|Parts]):-arg(1,XTI,S),!,atom_string(I,S),cb_better_args_ni(L,Parts).
 cb_better_args_ni([],[]):-!.
 datalog_to_termlog:-
   datalog_to_termlog('./data/*/*.datalog'),
@@ -3282,5 +3260,4 @@ datalog_to_termlog:-
   datalog_to_termlog('./data/*/*/*/*/*/*/*.datalog').
 
 %datalog_to_termlog:- datalog_to_termlog('whole_flybase.datalog').
-
 

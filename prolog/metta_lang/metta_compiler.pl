@@ -99,6 +99,11 @@ non_arg_violation(_,_,_).
 %:- set_option_value(encoding,utf8).
 
 :- initialization(mutex_create(transpiler_mutex_lock)).
+%:- initialization(mutex_create(writeln(now)),now).
+%:- initialization(writeln(after_load /**/),after_load /**/).
+%:- initialization(writeln(now),now).
+%:- initialization(writeln(restore),restore).
+%:- initialization(writeln(restore_state),restore_state).
 :- at_halt(mutex_destroy(transpiler_mutex_lock)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,6 +115,10 @@ transpiler_enable_interpreter_calls :- fail.
 
 transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Level -> call(Code) ; true).
 %transpiler_debug(_Level,Code) :- call(Code).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% Debugging only: Flags to allow tracing of particular functions (may not be currently working)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Debugging only: Flags to allow tracing of particular functions (may not be currently working)

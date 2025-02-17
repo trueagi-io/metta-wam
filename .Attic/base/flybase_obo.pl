@@ -34,7 +34,7 @@ process_obo_file(File):- atom_concat(File,'.metta_x',MXFile),process_obo_file(Fi
 process_obo_file(_File,MXFile):- exists_file(MXFile),!,process_metta_x_file(MXFile).
 process_obo_file(File, MXFile):- exists_file(File),!,
           setup_call_cleanup(
-             open(MXFile,write,Strm,[encoding(utf8)]),
+             open(MXFile,write,Strm,[]),
              setup_call_cleanup(
                     set_stream(Strm,alias(metta_x_output)),
                     with_option(make_metta_x,'False',
@@ -150,7 +150,7 @@ process_obo_rest_line(_Type,Id,Ref,Chars,_):-
     assert_OBO(Ref,Id,S),!.
 
 process_obo_rest_line(_Type,Id,is_a,Chars,Str):-
-    member('!',Chars), symbolic_list_concat([L,R],' ! ',Str),
+    member('!',Chars), atomic_list_concat([L,R],' ! ',Str),
     normalize_space(atom(T),L),normalize_space(string(N),R),
     assert_OBO(is_a,Id,T), assert_OBO(name,T,N),!.
 
@@ -279,8 +279,8 @@ into_obofn(Fn,OboFn):- atom_concat('obo-',Fn,OboF_),!,use_dashes(OboF_,OboFn).
 
 
 use_dashes(OboF_,OboFn):-
-  symbolic_list_concat(List,'_',OboF_),
-  symbolic_list_concat(List,'-',OboFn),!.
+  atomic_list_concat(List,'_',OboF_),
+  atomic_list_concat(List,'-',OboFn),!.
 
 
 simplify_obo_arg(I,_O):- \+ string(I), \+ atom(I),!,fail.
@@ -290,6 +290,5 @@ simplify_obo_arg(I,O):- atom_concat('http://purl.obolibrary.org/obo/chebi/',O,I)
 simplify_obo_arg(I,O):- atom_concat(' ',O,I),!.
 simplify_obo_arg(I,O):- atom_concat(O,' ',I),!.
 simplify_obo_arg(I,O):- atom_number(I,O),!.
-
 
 

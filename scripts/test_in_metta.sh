@@ -137,7 +137,7 @@ process_file() {
 	    # Record the start time
 	    start_time=$(date +%s)
             #set +x
-            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIG\KILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
+            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             TEST_EXIT_CODE=$?
             take_test=1
 	    # Record the current time
@@ -755,7 +755,7 @@ sort_directories_by_depth() {
 PYSWIP_VERSION="main"
 
 # Check if the file exists and Read the first line from the file
-VERSION_FILE="$METTALOG_DIR/src/version-config"
+VERSION_FILE="$METTALOG_DIR/version-config"
 if [ -f "$VERSION_FILE" ]; then    
     read -r FIRST_LINE < "$VERSION_FILE"
     FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
