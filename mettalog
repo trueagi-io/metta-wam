@@ -25,7 +25,6 @@ OUTPUT_DIR="${METTALOG_OUTPUT}"
 # verbose=9
 
 cd "$METTALOG_DIR"
-echo "${BLUE}METTALOG_DIR=$METTALOG_DIR${NC}"
 # source ./scripts/ensure_venv
 cd "$RPWD"
 
