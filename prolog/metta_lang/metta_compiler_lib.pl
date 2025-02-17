@@ -327,7 +327,7 @@ transpiler_predicate_store(builtin, 'eval', 1, '@doc', '@doc', [x(noeval,eager,[
 transpiler_predicate_store(builtin, 'get-metatype', 1, '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
 'mc_1__get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
 
-transpiler_predicate_store(builtin, 'println!', '@doc', '@doc', 1, [x(doeval,eager,[])], x(doeval,eager,[])).
+transpiler_predicate_store(builtin, 'println!', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc_1__println!'(X,[]) :- println_impl(X).
 
 transpiler_predicate_store(builtin, 'stringToChars', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).

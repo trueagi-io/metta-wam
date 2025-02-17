@@ -127,11 +127,11 @@ transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Leve
 
 :-dynamic(transpiler_stub_created/3).
 % just so the transpiler_stub_created predicate always exists
-% ranspiler_stub_created(space,dummy,0).
+% transpiler_stub_created(space,dummy,0).
 
-:- dynamic(transpiler_stub_created/1).
+:- dynamic(transpiler_stub_created/2).
 % just so the transpiler_stub_created predicate always exists
-% transpiler_stub_created(dummy).
+% transpiler_stub_created(dummy,0).
 
 :- dynamic(transpiler_depends_on/4).
 % just so the transpiler_depends_on predicate always exists
@@ -320,7 +320,7 @@ recompile_from_depends0(Fn/Arity) :-
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
    atomic_list_concat(['mc_',Arity,'__',Fn],FnWPrefix),
    abolish(FnWPrefix/ArityP1),
-   % retract(transpiler_stub_created(Fn/Arity)),
+   % retract(transpiler_stub_created(Fn,Arity)),
    % create an ordered list of integers to make sure to do them in order
    findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
    sort(ClauseIdList,SortedClauseIdList),
@@ -351,8 +351,8 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    ensure_callee_site(Space,FnName,LenArgs),
    remove_stub(Space,FnName,LenArgs),
    % retract any stubs
-   (transpiler_stub_created(FnName/LenArgs) ->
-      retract(transpiler_stub_created(FnName/LenArgs)),
+   (transpiler_stub_created(FnName,LenArgs) ->
+      retract(transpiler_stub_created(FnName,LenArgs)),
       LenArgsPlus1 is LenArgs+1,
       findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
       H=..[FnNameWPrefix|AtomList0],
@@ -865,7 +865,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
             H=..[Fp|AtomList0],
             findall(Atom1, (between(1, LArgs, I1), Atom1='$VAR'(I1)), AtomList1),
             B=..[u_assign,[F|AtomList1],'$VAR'(LArgs1)],
-            compiler_assertz(transpiler_stub_created(F/LArgs)),
+            compiler_assertz(transpiler_stub_created(F,LArgs)),
             transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
             create_and_consult_temp_file('&self',Fp/LArgs1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
          ),
@@ -884,7 +884,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
    ),
    % add transpiler_depends_on clause if not already there
-   (((FnHead-ArgsHeadSz)=(Fn-LArgs) ; transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LArgs)) ->
+   (((FnHead-ArgsHeadSz)=(Fn-LArgs) ; FnHead='' ; transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LArgs)) ->
       true
    ;
       compiler_assertz(transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LArgs)),
@@ -2053,11 +2053,11 @@ check_supporting_predicates(Space,F/A) :- % already exists
          findall(Atom1, (between(1, Am1, I1), Atom1='$VAR'(I1)), AtomList1),
          B=..[u_assign,[F|AtomList1],'$VAR'(A)],
 %         (transpiler_enable_interpreter_calls -> G=true;G=fail),
-%         compiler_assertz(transpiler_stub_created(F/A)),
+%         compiler_assertz(transpiler_stub_created(F,A)),
 %         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
-         compiler_assertz(transpiler_stub_created(F/A)),
+%         compiler_assertz(transpiler_stub_created(F,A)),
 
-         transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
+%         transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
          (transpiler_enable_interpreter_calls ->
             create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
          ;
