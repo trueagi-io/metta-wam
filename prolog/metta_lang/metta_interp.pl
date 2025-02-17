@@ -166,7 +166,7 @@ attach_mettalog_packs:- (prolog_load_context(directory, Value); Value='.'),
    pack_attach(PS, [duplicate(replace), search(first)]),
    pack_attach(LU, [duplicate(replace), search(first)]).
 
-:- initialization(attach_mettalog_packs, now).
+:- attach_mettalog_packs.
 %:- initialization(attach_mettalog_packs).
 
 %   :- attach_packs.
@@ -4264,6 +4264,40 @@ metta_atom(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
 
+
+% Direct type association case
+transform_about([Colon, Pred, Super],             inst_type(Pred, Super), true) :-  Colon == ':', !.
+% Type association inside an equality assertion
+transform_about([Eq, [Colon, Pred, Super], Cond], inst_type(Pred, Super), Cond) :-  Eq == '=', Colon == ':', !.
+% Subtype relationship
+transform_about([Smile, Pred, Super],             type_type(Pred, Super), true) :-  Smile == ':>', !.
+% Subtype relationship inside an equality assertion
+transform_about([Eq, [Smile, Pred, Super], Cond], type_type(Pred, Super), Cond) :-  Eq == '=',  Smile == ':>',!.
+
+% Proven fact with arguments inside an equality assertion
+transform_about([Eq, [Pred | Args], Cond],        pred_head(Pred, Args), Cond) :-  Eq == '=', !.
+% General proven fact
+transform_about([Pred | Args],                    pred_head(Pred, Args), true):- !.
+transform_about(PredArgs,                    pred_head(Pred, Args), true):- PredArgs=..[Pred | Args],!.
+
+add_indexed_fact(OBO):- arg(1,OBO,KB), arg(2,OBO,Fact), add_fact(KB, Fact),!.
+
+add_fact(KB, Fact):-
+   transform_about(Fact, Rule, Cond),
+   assertz(fact_store(KB, Rule, Fact, Cond)).
+
+query_fact(KB, Fact, Cond) :-
+   transform_about(Fact, Rule, Cond),
+   fact_store(KB, Rule, Fact, Cond).
+
+query_type_of(KB, Pred, Type, Cond) :-
+   fact_store(KB, inst_type(Pred, Type), _, Cond).
+query_super_type(KB, Pred, Type, Cond) :-
+   fact_store(KB, type_type(Pred, Type), _, Cond).
+
+
+
+
 :- dynamic(no_space_inheritance_to/1).
 
 %!  wo_inheritance_to(+Where, :Goal) is det.
@@ -4735,6 +4769,7 @@ metta_anew1(load, OBO) :-  !,
     must_det_lls((
         load_hook(load, OBO),         % Execute the load hook.
         subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+        add_indexed_fact(Cl),
         pfcAdd_Now(Cl)  % Add the clause and show errors if any.
     )),!.
 % Handle `unload` by erasing matching clauses.
