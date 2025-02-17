@@ -1533,7 +1533,7 @@ on_set_value(Note,N,V):-
     % Extract trace-specific flag.
     symbol_concat('trace-on-',F,N),
      % Debugging output.
-    fbugio(Note,set_debug(F,V)),
+    if_trace(main,not_compatio(fbugio(Note,set_debug(F,V)))),
     % Enable or disable trace based on value.
     set_debug(F,V).
 on_set_value(Note,N,V):-
@@ -1542,7 +1542,7 @@ on_set_value(Note,N,V):-
     % Check if the value is debug-like.
     is_debug_like(V,TF),
     % Debugging output.
-    fbugio(Note,set_debug(N,TF)),
+    if_trace(main,not_compatio(fbugio(Note,set_debug(N,TF)))),
     % Enable or disable debug mode based on value.
     set_debug(N,TF).
 
@@ -6408,9 +6408,9 @@ catch_red(Term) :-
 %   @arg Color The color used for formatting the log.
 %   @arg Term  The exception or term to be logged.
 %
-pp_m_m_red(_, T) :-
+pp_m_m_red(_, T) :- compound(T),
     % Skip logging for specific error terms.
-    T =@= in(not_compat_io(maybe_halt(7)), unwind(halt(7))), !.
+    T = in(not_compat_io(maybe_halt(Seven)), unwind(halt(Seven))), number(Seven),!.
 pp_m_m_red(C, T) :-
     % Log the term with the given color.
     pp_m(C, T).
@@ -6942,7 +6942,7 @@ qcompile_mettalog :-
     % Attempt to save the program as an executable.
     qsave_program(Name), nonvar(Name),
     % Exit the program with success status.
-    halt(0))).
+    true)),halt(0).
 
 %!  qsave_program is det.
 %
@@ -6959,7 +6959,7 @@ qsave_program:-
     % Attempt to save the program as an executable.
     qsave_program(Name),
     % Exit the program with success status.
-    halt(0))).
+    true)),halt(0).
 
 qsave_program(Name) :-
     % Attempt to save the program.

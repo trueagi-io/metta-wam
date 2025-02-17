@@ -186,7 +186,7 @@ run_vspace_service_unsafe(MSpace,Port) :-
     % Open the socket for listening
     tcp_open_socket(Socket, ListenFd),
     % Perform any compatibility checks (not_compatio is assumed to be a custom predicate)
-    not_compatio(fbugio(run_vspace_service(MSpace,Port))),
+    if_trace(main,not_compatio(fbugio(run_vspace_service(MSpace,Port)))),
     % Remove any existing vspace_port facts
     retractall(vspace_port(_)),
     % Assert the current port as the vspace_port
