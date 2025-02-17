@@ -34,6 +34,7 @@ use_rc_file=~/.mettalogrc
 debug_this_script=false
 contains_halt=false
 dry_run=0
+REQUEST_PYSWIP_VERSION=
 
 # Step 1: Capture variables before argument parsing
 # This ensures only variables explicitly defined in the script are considered for overriding.
@@ -652,23 +653,6 @@ LIST_OF_FILE_ARGS=()
 wants_print_help=0
 
 
-PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
-
-# Check if the file exists and Read the first line from the file
-VERSION_FILE="$METTALOG_DIR/version-config"
-if [ -f "$VERSION_FILE" ]; then    
-    read -r FIRST_LINE < "$VERSION_FILE"
-    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
-    if [ ! -z "$FIRST_LINE" ]; then
-	if [ -d "$METTALOG_DIR/.Attic/$FIRST_LINE/" ]; then
-	    PYSWIP_VERSION="$FIRST_LINE"
-	fi
-    fi
-fi
-
-
-DefaultSav="Sav.$(hostname).MeTTaLog"
-
 
 function handle_args {
     SWI_FLAG_WITH_ARG=false
@@ -853,11 +837,7 @@ function handle_args {
                 ;;
 
 
-           --v=*) PYSWIP_VERSION="${arg#*=}"
-	        if [ -f "${DefaultSav}" ]; then
-		   : # rm -f "${DefaultSav}"
-		fi
-		#EXE=1
+           --v=*) REQUEST_PYSWIP_VERSION="${arg#*=}"
                 continue
                 ;;
 
@@ -914,17 +894,17 @@ done
 
 
 #DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
-DIRNAME="${LIST_OF_FILE_ARGS[0]}"
-if [[ -f "$DIRNAME" ]]; then
-  HTML_OUT_MAYBE="${DIRNAME}.html"
-  DIRNAME=$(dirname "${DIRNAME}")
-elif [[ -d "$DIRNAME" ]]; then
-  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
+FARG_DIRNAME="${LIST_OF_FILE_ARGS[0]}"
+if [[ -f "$FARG_DIRNAME" ]]; then
+  HTML_OUT_MAYBE="${FARG_DIRNAME}.html"
+  FARG_DIRNAME=$(dirname "${FARG_DIRNAME}")
+elif [[ -d "$FARG_DIRNAME" ]]; then
+  HTML_OUT_MAYBE="${FARG_DIRNAME}/Result.html"
 else
-  DIRNAME="${PWD}"
-  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
+  FARG_DIRNAME="${PWD}"
+  HTML_OUT_MAYBE="${FARG_DIRNAME}/Result.html"
 fi
-DIR_RC="$DIRNAME/.mettalogrc"
+DIR_RC="$FARG_DIRNAME/.mettalogrc"
 #DEBUG "DIR_RC=$DIR_RC"
 
 if [[ -f "$DIR_RC" ]]; then
@@ -937,11 +917,6 @@ fi
 #load_rc_file "~/.mettalogrc"
 # process actual command-line arguments
 handle_args "$@"
-
-# process specific RC file
-if [[ -f "${use_rc_file}" ]]; then
-   load_rc_file "${use_rc_file}"
-fi
 
 
 # Decide on enabling the REPL
@@ -1025,19 +1000,135 @@ fi
 fi
 
 
-set -e
+# set -e
 
 DEBUG "SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 DEBUG "PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
 DEBUG "LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
 DEBUG "METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
+
+
+
+# ===========================================================
+# MettaLog Prolog Interpreter Version and Path Configuration
+# ===========================================================
+# This script configures the version and source directory for the MettaLog Prolog interpreter,
+# determines the appropriate version by checking a version-config file and any requested overrides,
+# searches for the interpreter source across various directories, and updates paths based on the found source.
+# It checks for 'unlikely' METTALOG_DIR locations such as the root or home directories.
+# Variables:
+# - REQUEST_PYSWIP_VERSION: Stores the requested version directory of the Prolog interpreter.
+# - PYSWIP_VERSION: Stores the current version directory of the Prolog interpreter.
+# - VERSION_FILE: Path to the file containing version configuration if not specified by user.
+# - FIRST_LINE: The first line of the VERSION_FILE, used to determine version overrides.
+# - METTALOG_DIR: if this is being run outside of the METTALOG_DIR, this will bring the search back inside if nothing is found.
+# Variables Out:
+# - INTERP_SRC_DIR: The resolved directory path where the Prolog interpreter source is located.
+# - PYSWIP_VERSION: Shall become fully qualified non-relative INTERP_SRC_DIR.
+# - METTALOG_DIR: Shall become fully qualified non-relative path two dirs below INTERP_SRC_DIR.
+# ===========================================================
+resolve_full_path() {
+    local path="$1"
+    if command -v greadlink > /dev/null; then
+        greadlink -f "$path"
+    elif command -v readlink > /dev/null; then
+        readlink -f "$path" || echo "$(cd "$(dirname "$path")"; pwd -P)/$(basename "$path")"
+    else
+        echo "$(cd "$(dirname "$path")"; pwd -P)/$(basename "$path")"
+    fi
+}
+# Initial Debugging
+DEBUG "Starting interpreter configuration."
+DEBUG "Requested PYSWIP_VERSION: ${REQUEST_PYSWIP_VERSION:-None specified}"
+DEBUG "Initial METTALOG_DIR: ${METTALOG_DIR:-Not set}"
+
+# Checking the version file and setting PYSWIP_VERSION
+if [[ -n "$REQUEST_PYSWIP_VERSION" ]]; then
+    PYSWIP_VERSION="$REQUEST_PYSWIP_VERSION"
+    DEBUG "Using requested PYSWIP_VERSION: $PYSWIP_VERSION"
+else
+    VERSION_FILE="$METTALOG_DIR/version-config"
+    if [ -f "$VERSION_FILE" ]; then
+        read -r FIRST_LINE < "$VERSION_FILE"
+        FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}"  # Trim trailing whitespace
+        if [[ -n "$FIRST_LINE" ]]; then
+            PYSWIP_VERSION="$FIRST_LINE"
+            DEBUG "Version from file: $PYSWIP_VERSION"
+        else
+            DEBUG "No version override found in $VERSION_FILE"
+        fi
+    else
+        DEBUG "No version file found at $VERSION_FILE"
+    fi
+fi
+
+# Setting a default value for PYSWIP_VERSION if it has not been set
+if [[ -z "$PYSWIP_VERSION" ]]; then
+    PYSWIP_VERSION="prolog/metta_lang"  # Ensure this default path is correct based on your directory structure
+    DEBUG "No version specified, using default PYSWIP_VERSION: $PYSWIP_VERSION"
+fi
+
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+paths=(
+    "$PYSWIP_VERSION"
+    "$PYSWIP_VERSION/prolog"
+    "$PYSWIP_VERSION/src"
+    "$PYSWIP_VERSION/prolog/metta_interp"
+    ".Attic/$PYSWIP_VERSION"
+    "$METTALOG_DIR/$PYSWIP_VERSION"
+    "$METTALOG_DIR/$PYSWIP_VERSION/prolog"
+    "$METTALOG_DIR/$PYSWIP_VERSION/src"
+    "$METTALOG_DIR/$PYSWIP_VERSION/prolog/metta_interp"
+    "$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
+)
+
+# Debugging path search
+DEBUG "Starting search for interpreter source."
+for path in "${paths[@]}"; do
+    DEBUG "Checking path: $path"
+    if [ -f "$path/metta_interp.pl" ]; then
+        DEBUG "Found interpreter at $path"
+        INTERP_SRC_DIR=$(resolve_full_path "$path")
+        PYSWIP_VERSION=$(resolve_full_path "$INTERP_SRC_DIR")
+        NEW_METTALOG_DIR=$(dirname "$(dirname "$PYSWIP_VERSION")")
+        
+        # Handling unlikely METTALOG_DIR locations with debug
+        if [[ "$NEW_METTALOG_DIR" == "/" || "$NEW_METTALOG_DIR" == "$HOME" || "$NEW_METTALOG_DIR" == "/home" || "$NEW_METTALOG_DIR" == "/usr" ]]; then
+            DEBUG "Unlikely METTALOG_DIR detected at $NEW_METTALOG_DIR, not updating."
+        else
+            if [[ -z "$METTALOG_DIR" || "$METTALOG_DIR" != "$NEW_METTALOG_DIR" ]]; then
+                DEBUG "Updating METTALOG_DIR from ${METTALOG_DIR:-unset} to $NEW_METTALOG_DIR"
+                METTALOG_DIR="$NEW_METTALOG_DIR"
+            fi
+        fi
+        found=true
+        break
+    fi
+done
+
+# Finalizing debug statements
+if [ "$found" = false ]; then
+    DEBUG "${RED}Error: Interpreter source directory not found after checking all paths.${NC}"
+    [[ "${BASH_SOURCE[0]}" != "$0" ]] && return 1 || exit 1
+fi
+
+DEBUG "Final INTERP_SRC_DIR: $INTERP_SRC_DIR"
+DEBUG "Final METTALOG_DIR: $METTALOG_DIR"
+
+
+# process specific RC file
+if [[ -f "${use_rc_file}" ]]; then
+   load_rc_file "${use_rc_file}"
+fi
+
+
 # Store the initial PYTHONPATH for later comparison
 initial_pythonpath="$PYTHONPATH"
 
-# Add DIRNAME to PYTHONPATH if it's a valid path and not already present
-if [[ -d "$DIRNAME" && ":$PYTHONPATH:" != *":$DIRNAME:"* ]]; then
-    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$DIRNAME"
+# Add FARG_DIRNAME to PYTHONPATH if it's a valid path and not already present
+if [[ -d "$FARG_DIRNAME" && ":$PYTHONPATH:" != *":$FARG_DIRNAME:"* ]]; then
+    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$FARG_DIRNAME"
 fi
 
 # Add src to PYTHONPATH if not already present
@@ -1051,23 +1142,9 @@ fi
 export RUST_BACKTRACE=full
 
 
-PYSWIP_VERSION="${PYSWIP_VERSION%/}"
-# Directory containing the .pl files
-if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
-  INTERP_SRC_DIR="$PYSWIP_VERSION"
-else 
-    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
-      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
-    else 
-      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
-    fi
-fi
-
-INTERP_SRC_DIR="$(readlink -m "${INTERP_SRC_DIR}")"
-
-DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
 
 
+DefaultSav="Sav.$(hostname).MeTTaLog"
 # Initialize a flag to check if any file is newer or if reference file is missing
 
 if [[ $EXE -eq 1 ]]; then
@@ -1157,7 +1234,8 @@ if [[ $should_compile -eq 1 ]]; then
 	rm -rf "$reference_file"
 	MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
 	DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
-	eval "$MAKE_REF_FILE" 
+	set +e
+	( ( eval "$MAKE_REF_FILE" ) )
         
 	if [[ -f "$reference_file" ]]; then
 	    #MLOG="$reference_file"
@@ -1166,6 +1244,7 @@ if [[ $should_compile -eq 1 ]]; then
 	    MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"    
 	else
 	    DEBUG "Missing $reference_file !?!?!"
+	    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 	fi
     fi
 fi
@@ -1181,6 +1260,9 @@ set_io_flags STDIO_OPTIONS
 if [[ -f "$reference_file" ]]; then    
     MLOG="$reference_file"    
     MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
+else
+    unset reference_file
+    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 fi
 
 if [[ "$EXE" -eq 0 ]]; then

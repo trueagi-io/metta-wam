@@ -1080,9 +1080,11 @@ into_blocktype(InfoType, Goal) :- enter_markdown(InfoType), !, call(Goal).
 %output_language( comment, Goal ) :- log_file_type(prolog), !, format('~N:- q.~n', [output_language( comment, Goal)]).
 %output_language( comment, Goal ) :- log_file_type(metta), !, in_cmt(Goal).
 output_language( InfoType, Goal ) :- notrace((output_language_impl( InfoType, Goal ))).
+
+output_language_impl( InfoType,_Goal ) :- atom(InfoType), flag(InfoType,X,X+1), X>1000,!. % on ly priont out the first 1000
 output_language_impl( InfoType, Goal ) :- log_file_type(Lang), !, % (Lang==prolog; Lang==metta),!,
   in_file_output(((InfoType == Lang -> (must_det_ll((enter_markdown(Lang),leave_comment)),call(Goal)) ; (must_det_ll(enter_comment),into_blocktype(InfoType,Goal))))).
-
+output_language_impl(_InfoType,_Goal ) :-!.
 %! log_file_type(-Type) is det.
 %  Determines the current log file type or language based on options.
 %
