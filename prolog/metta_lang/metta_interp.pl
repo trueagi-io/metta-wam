@@ -1787,6 +1787,9 @@ user_io(G) :-
 %   @arg Goal The Prolog goal to execute with appropriate output redirection.
 %
 user_io_0(G) :-
+    nb_current('$dont_redirect_output', true), !,
+    call(G).
+user_io_0(G) :-
     % If in MettaLog runtime mode, output to the error stream.
     current_prolog_flag(mettalog_rt, true), !,
     original_user_error(Out),
