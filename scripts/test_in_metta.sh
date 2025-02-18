@@ -907,6 +907,3 @@ else
     DEBUG "Skipping report generation."
 fi
 
-
-
-

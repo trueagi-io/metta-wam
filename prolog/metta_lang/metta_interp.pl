@@ -6627,21 +6627,21 @@ catch_red_ignore(G) :-
 loon(Why) :-
     % If in compilation mode, log the event and succeed.
     is_compiling, !,
-    fbug(compiling_loon(Why)), !.
+    if_trace(main,not_compatio(fbug(compiling_loon(Why)))), !.
 % loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
 loon(Why) :-
     % If the program is already compiled and not in the `toplevel` phase,
     % log the event and succeed.
     is_compiled, Why \== toplevel, !,
-    fbugio(compiled_loon(Why)), !.
+    if_trace(main,not_compatio(fbugio(compiled_loon(Why)))), !.
 loon(Why) :-
     % If `loon` has already begun for any reason, log the event and skip further processing.
     began_loon(_), !,
-    fbugio(skip_loon(Why)).
+    if_trace(main,not_compatio(fbugio(skip_loon(Why)))).
 loon(Why) :-
     % Otherwise, log the beginning of `loon`, record it, and start `do_loon`.
-    fbugio(began_loon(Why)),
+    if_trace(main,not_compatio(fbugio(began_loon(Why)))),
     assert(began_loon(Why)),
   do_loon.
 
@@ -6778,7 +6778,7 @@ maybe_halt(_) :-
     once(pre_halt2), fail.
 maybe_halt(Seven) :-
     % Log the halting attempt and fail.
-    fbugio(maybe_halt(Seven)), fail.
+    if_trace(main,not_compatio(fbugio(maybe_halt(Seven)))), fail.
 maybe_halt(_) :-
     % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
     current_prolog_flag(mettalog_rt, true), !.
@@ -6942,7 +6942,11 @@ qcompile_mettalog :-
     % Attempt to save the program as an executable.
     qsave_program(Name), nonvar(Name),
     % Exit the program with success status.
-    true)),halt(0).
+    true)),
+    inform_compiler_success,
+    halt(0).
+
+inform_compiler_success:- ignore((catch((getenv('METTALOG_COMPILE_SUCCESS',STAMP),tell(STAMP),told),_,true))).
 
 %!  qsave_program is det.
 %
