@@ -6942,7 +6942,11 @@ qcompile_mettalog :-
     % Attempt to save the program as an executable.
     qsave_program(Name), nonvar(Name),
     % Exit the program with success status.
-    true)),halt(0).
+    true)),
+    inform_compiler_success,
+    halt(0).
+
+inform_compiler_success:- ignore((catch((getenv('METTALOG_COMPILE_SUCCESS',STAMP),tell(STAMP),told),_,true))).
 
 %!  qsave_program is det.
 %

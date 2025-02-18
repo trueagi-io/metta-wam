@@ -15,7 +15,7 @@ export METTALOG_DIR=$(dirname "$SCRIPT")
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
 need_compile=0
-exe=force
+exe=true
 compatio=false
 # compatio=false
 RC_OPTIONS=()
@@ -31,7 +31,7 @@ cd "$RPWD"
 use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
-debug_this_script=false
+debug_this_script=true
 contains_halt=false
 dry_run=0
 REQUEST_PYSWIP_VERSION=
@@ -840,10 +840,10 @@ function handle_args {
                 continue
                 ;;
 
-           --exe=*) exe="${arg#*=}"	
+           --exe=*) exe=${arg#*=}
                 continue
 		;;
-           --EXE=*) exe="${arg#*=}"	
+           --EXE=*) exe=${arg#*=}
                 continue
 		;;
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
@@ -1154,7 +1154,7 @@ DefaultSav="Sav.$(hostname).MeTTaLog"
 need_compile=0  # Ensure this is initialized
 
 if [[ "$exe" == "force" ]]; then
-    export exe=true
+    exe=true
     need_compile=1
 fi
 
@@ -1213,6 +1213,7 @@ fi
 export OLD_DISPLAY=$DISPLAY
 
 NEED_CLEANUP=0
+STYLE=EXE
 
 # Function to cleanup compiled file if execution is interrupted or unsuccessful
 compiler_cleanup() {
@@ -1225,7 +1226,7 @@ compiler_cleanup() {
 
 	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
 	    DEBUG "{$GREEN}CREATED $reference_file"
-	    MLOG="swipl -x $reference_file ${SWI_OPTIONS[*]}"    
+	    STYLE=EXE
 	else
 	    
 	    
@@ -1271,8 +1272,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
     # Remove any previous success files (clean up before new compilation)
     rm -f "$TEMP_DIR/create_on_successful_compile_*"
 
-    # Construct the compilation command
-    touch $METTALOG_COMPILE_SUCCESS
+    # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS
     MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
     DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
@@ -1283,6 +1283,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
     set +e
     DEBUG "${BOLD}Compiling $reference_file..."
     eval "$MAKE_REF_FILE" 
+    # trap reset_settings  compiler_cleanup SIGINT SIGTERM EXIT
 
 fi
 
@@ -1294,22 +1295,20 @@ fi
 # If exe is explicitly set to false, enforce the non-executable mode
 if [[ "$exe" == "false" ]]; then
     unset reference_file
-    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+    STYLE=INTERP    
+fi
+
+DEBUG STYLE="$STYLE"
+
+if [[ "$STYLE" == "EXE" ]]; then
+  MLOG="swipl -x $reference_file ${SWI_OPTIONS[*]}"
+else
+  MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 fi
 
 # Generate the final command for execution, incorporating all options
 METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"
 DEBUG "exec $METTA_CMD"
-
-
-
-
-
-
-
-
-
-
 
 
 
