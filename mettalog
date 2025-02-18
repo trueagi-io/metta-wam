@@ -31,7 +31,7 @@ cd "$RPWD"
 use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
-debug_this_script=true
+debug_this_script=false
 contains_halt=false
 dry_run=0
 REQUEST_PYSWIP_VERSION=
