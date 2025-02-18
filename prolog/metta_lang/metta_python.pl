@@ -1870,7 +1870,7 @@ ensure_mettalog_py(MettaLearner):-
             %py_call_warg('motto',_),
             %py_call_warg('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
             %py_call_warg('motto.llm_gate':'llmgate_atoms'(MeTTa),Res2),pybug(Res2),
-        pybug(is_mettalog(MettaLearner)),  % Log any issues.
+        if_trace(python,not_compatio(pybug(is_mettalog(MettaLearner)))),  % Log any issues.
         asserta(is_mettalog(MettaLearner))  % Store the MettaLearner instance.
         )).
 
