@@ -6627,14 +6627,14 @@ catch_red_ignore(G) :-
 loon(Why) :-
     % If in compilation mode, log the event and succeed.
     is_compiling, !,
-    if_trace(main,not_compatio(fbug(compiling_loon(Why))), !.
+    if_trace(main,not_compatio(fbug(compiling_loon(Why)))), !.
 % loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
 loon(Why) :-
     % If the program is already compiled and not in the `toplevel` phase,
     % log the event and succeed.
     is_compiled, Why \== toplevel, !,
-    if_trace(main,not_compatio,fbugio(compiled_loon(Why))), !.
+    if_trace(main,not_compatio(fbugio(compiled_loon(Why)))), !.
 loon(Why) :-
     % If `loon` has already begun for any reason, log the event and skip further processing.
     began_loon(_), !,
