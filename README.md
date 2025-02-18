@@ -1,10 +1,11 @@
 # :rocket: An Implementation of MeTTa designed to run on the Warren Abstract Machine (WAM)
 
 ## Quick Links
+- [https://github.com/trueagi-io/metta-wam/issues](https://github.com/trueagi-io/metta-wam/issues) MeTTaLog ISSUES
 - [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install MeTTaLog
 - [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter Devel
 - [https://github.com/logicmoo/metta-testsuite/tree/master](https://github.com/logicmoo/metta-testsuite/tree/master) Compiler Devel
-- [https://github.com/logicmoo/metta-testsuite/test/development](https://github.com/logicmoo/metta-testsuite/test/development) Testing Suite
+- [https://github.com/logicmoo/metta-testsuite/tree/development](https://github.com/logicmoo/metta-testsuite/tree/development) Testing Suite
 - [Getting Started](#getting-started)
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
