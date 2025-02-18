@@ -100,6 +100,8 @@ lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
 :- use_module(library(http/http_json)).
 :- use_module(library(readutil)).
 
+:- use_module(library(streams), [ with_output_to/3 ]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -298,7 +300,9 @@ load_metta_code(For, Uri, Code, Result) :-
 load_metta_code(For, Path, Code, Result) :-
     catch_with_backtrace((
         ignore(current_self(Self)),
-        wots(Out, ignore(do_metta(file(Path), For, Self, Code, LastAnswer))),
+        wots(Out,
+             locally(nb_setval('$dont_redirect_output', true),
+                     ignore(do_metta(file(Path), For, Self, Code, LastAnswer)))),
         ( Out == ""
         -> sformat(Result, "~w", [LastAnswer])
         ;  sformat(Result, "~w ; ~w", [LastAnswer, Out])
