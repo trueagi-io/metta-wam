@@ -2,8 +2,9 @@
 
 ## Quick Links
 - [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/) Install MeTTaLog
-- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter/Compiler Devel
-- [https://github.com/logicmoo/metta-testsuite/](https://github.com/logicmoo/metta-testsuite/) Testing Suite
+- [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/) Interpeter Devel
+- [https://github.com/logicmoo/metta-testsuite/tree/master](https://github.com/logicmoo/metta-testsuite/tree/master) Compiler Devel
+- [https://github.com/logicmoo/metta-testsuite/test/development](https://github.com/logicmoo/metta-testsuite/test/development) Testing Suite
 - [Getting Started](#getting-started)
   - [Installation](#installation)
 - [Running MeTTaLog](#neckbeard-running-mettalog)
@@ -46,10 +47,10 @@ source ./INSTALL.sh --allow-system-modifications # Follow the default prompts
 
 ### Windows Installation
 
-If you’re on **Windows**, follow these steps to install MeTTaLog and create `.metta` file associations:
+If youâ€™re on **Windows**, follow these steps to install MeTTaLog and create `.metta` file associations:
 
 1. **Install SWI-Prolog (with Janus support)**  
-   - You need a version of [SWI-Prolog](https://www.swi-prolog.org/) that includes **Janus** functionality. If you’re compiling from source, see the [SWI-Prolog docs](https://www.swi-prolog.org/build/) for details on building with additional packages.
+   - You need a version of [SWI-Prolog](https://www.swi-prolog.org/) that includes **Janus** functionality. If youâ€™re compiling from source, see the [SWI-Prolog docs](https://www.swi-prolog.org/build/) for details on building with additional packages.
    
 2. **Clone the `metta-wam` repository**  
    ```bash
