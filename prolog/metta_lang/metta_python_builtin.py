@@ -251,11 +251,15 @@ def py_call_method_and_args(*method_and_args):
     if not method_and_args:
         raise ValueError("No callable provided to invoke.")
 
+    # handle case like py_call_method_and_args([time.time])
+    if len(method_and_args) == 1 and callable(method_and_args[0]):
+        return method_and_args[0]()  # Call the single callable without arguments
+
     # --------------------------------------------------
     # Extract the first element from method_and_args,
     # which should be our potential callable or something
     # that leads us to a callable.
-    # --------------------------------------------------
+    # --------------------------------------------------   
     callable_obj, *args = method_and_args
 
     # ==================================================
