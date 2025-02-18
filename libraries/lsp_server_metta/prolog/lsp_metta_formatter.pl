@@ -52,7 +52,7 @@ format_lisp_lines([], _, _, []).  % Base case: no more lines
 format_lisp_lines([Line | Rest], IndentLevel, OpenParens, [FormattedLine | FormattedRest]) :-
     trim_line(Line, TrimmedLine),  % Remove trailing whitespace from the current line
     calculate_new_indent(TrimmedLine, IndentLevel, OpenParens, NewIndentLevel, NewOpenParens),  % Determine the new indent level and open parentheses count
-    indent_line(TrimmedLine, NewIndentLevel, FormattedLine),  % Indent the line based on the new indent level
+    indent_line(TrimmedLine, IndentLevel, FormattedLine),  % Indent this line based on the old indent level
     format_lisp_lines(Rest, NewIndentLevel, NewOpenParens, FormattedRest).  % Format the rest of the lines
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,31 +80,37 @@ count_open_close_parens(Line, Opens, Closes) :-
 indent_line(Line, IndentLevel, IndentedLine) :-
     IndentSpaces is IndentLevel,  % Indentation level determines the number of spaces
     generate_spaces(IndentSpaces, Spaces),  % Create the indent string
-    atom_concat(Spaces, Line, IndentedLine).  % Prepend the spaces to the line
+    string_concat(Spaces, Line, IndentedLine).  % Prepend the spaces to the line
 
-generate_spaces(0, "").
+generate_spaces(0, "") :- !.
 generate_spaces(N, Spaces) :-
     N > 0,
     N1 is N - 1,
     generate_spaces(N1, SubSpaces),
-    atom_concat(' ', SubSpaces, Spaces).
+    string_concat(' ', SubSpaces, Spaces).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create a List of Edits from the Original and Formatted Lines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-create_edit_list([], [], []).
-create_edit_list([OrigLine | OrigRest], [FormattedLine | FormattedRest], [Edit | EditRest]) :-
+create_edit_list(Orig, Formatted, Edits) :-
+    create_edit_list(0, Orig, Formatted, Edits).
+
+create_edit_list(_, [], [], []).
+create_edit_list(LineNum, [OrigLine | OrigRest], [FormattedLine | FormattedRest], Edits) :-
     (   OrigLine \= FormattedLine  % Only create an edit if the line has changed
-    ->  Edit = _{
-            range: _{
-                start: _{line: LineNum, character: 0},
-                end: _{line: LineNum, character: _}
-            },
-            newText: FormattedLine
-        }
-    ;   Edit = []
+    -> string_length(OrigLine, LineLen), %TODO: what should this be?
+       Edit = _{
+                  range: _{
+                             start: _{line: LineNum, character: 0},
+                             end: _{line: LineNum, character: LineLen}
+                         },
+                  newText: FormattedLine
+              },
+       Edits = [Edit|EditRest]
+    ; EditRest = Edits
     ),
-    create_edit_list(OrigRest, FormattedRest, EditRest).
+    succ(LineNum, LineNum1),
+    create_edit_list(LineNum1, OrigRest, FormattedRest, EditRest).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper to count the number of specific characters (e.g., '(' or ')')
@@ -113,5 +119,3 @@ sub_atom_count(Line, Char, Count) :-
     atom_chars(Line, Chars),
     include(=(Char), Chars, CharList),
     length(CharList, Count).
-
-
