@@ -14,8 +14,8 @@ export METTALOG_DIR=$(dirname "$SCRIPT")
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
-should_compile=0
-EXE=1
+need_compile=0
+exe=force
 compatio=false
 # compatio=false
 RC_OPTIONS=()
@@ -635,7 +635,6 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 EOF
 }
 
-
 # Initialize variables
 SWI_OPTIONS=()
 METTALOG_OPTIONS=()
@@ -841,6 +840,12 @@ function handle_args {
                 continue
                 ;;
 
+           --exe=*) exe="${arg#*=}"	
+                continue
+		;;
+           --EXE=*) exe="${arg#*=}"	
+                continue
+		;;
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
@@ -921,7 +926,7 @@ handle_args "$@"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" != "false" ]]; then
-  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
+  [[ ${#LIST_OF_FILE_ARGS[@]}=="false" ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
@@ -1144,136 +1149,175 @@ export RUST_BACKTRACE=full
 
 
 
+# Set default reference file name based on hostname
 DefaultSav="Sav.$(hostname).MeTTaLog"
-# Initialize a flag to check if any file is newer or if reference file is missing
+need_compile=0  # Ensure this is initialized
 
-if [[ $EXE -eq 1 ]]; then
-# Reference file
-    reference_file=$(find $INTERP_SRC_DIR -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+if [[ "$exe" == "force" ]]; then
+    export exe=true
+    need_compile=1
+fi
+
+if [[ "$exe" == "true" ]]; then
+    # Find the most recent reference file based on modification time
+    reference_file=$(find "$INTERP_SRC_DIR" -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+
+    # If no reference file is found, set a default one
     if [[ -z "$reference_file" ]]; then      
-      reference_file="$INTERP_SRC_DIR/${DefaultSav}"
-      DEBUG "setting EXE based on $reference_file"
+        reference_file="$INTERP_SRC_DIR/${DefaultSav}"
+        DEBUG "Setting exe based on $reference_file"	
     fi
 
-    # Check if ${DefaultSav} exists
+    # If the reference file does not exist, compilation is required
     if [[ ! -e "$reference_file" ]]; then
-	DEBUG "Reference file $reference_file does not exist. Compiler will be called."
-	should_compile=1
+        DEBUG "${ORANGE}Reference file $reference_file does not exist. Compiler will be called."
+        need_compile=1
     else
-	# Iterate over each .pl file to check if it's newer
-	for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
-	    if [[ ! -e "$pl_file" ]]; then
-		DEBUG "No matching .pl files found in $INTERP_SRC_DIR."
-		#exit 1
-	    fi
-
-	    # Check if this .pl file is newer than the reference file
-	    if [[ "$pl_file" -nt "$reference_file" ]]; then
-		DEBUG "$pl_file is newer than $reference_file."
-		should_compile=1
-		break  # No need to check further, exit loop
-	    fi
-	done
+        # Check if any .pl file is newer than the reference file
+        for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
+            if [[ ! -e "$pl_file" ]]; then
+                DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
+            # If a .pl file is newer than the reference file, trigger recompilation
+            elif [[ "$pl_file" -nt "$reference_file" ]]; then
+                DEBUG "${ORANGE}$pl_file is newer than $reference_file."
+                need_compile=1
+                break  # Exit loop early as compilation is already needed
+            fi
+        done
     fi
 fi
 
-# If any newer file found or reference file missing, call the compiler
-if [[ $should_compile -eq 1 ]]; then
-    #if [[ -f "$reference_file" ]]; then
-    #    DEBUG "Calling compiler from $reference_file..."
-    #	swipl -x $reference_file -g qcompile_mettalog -g halt
-    #else
-    rm -f $reference_file
-    if [[ "$EXE" -eq 1 ]]; then
-        :
-	#do_DEBUG "Compiling $reference_file" 
-	#swipl -l $INTERP_SRC_DIR/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
-	#echo "swipl -l $INTERP_SRC_DIR/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file"
-	#swipl -l $INTERP_SRC_DIR/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+if [[ $need_compile -eq 1 ]]; then
+
+    if [[ -f "$reference_file" ]]; then
+        # was "should" (therefore requested)
+	rm -f "$reference_file"
     fi
+
+    # Detect TMPDIR only if we are going to compile
+    if [[ -n "$TMPDIR" && -d "$TMPDIR" ]]; then
+        TEMP_DIR="$TMPDIR"
+    elif [[ -d "/tmp" ]]; then
+        TEMP_DIR="/tmp"
+    elif [[ -d "/var/tmp" ]]; then
+        TEMP_DIR="/var/tmp"
+    else
+        do_DEBUG "${RED}ERROR: No valid temporary directory found!${NC}" >&2
+        exe=false
+    fi
+    # Generate a unique success file name inside the detected temporary directory
+    export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
 fi
 
-reference_file=$(find $INTERP_SRC_DIR -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
-if [[ -z"$reference_file" ]]; then
-  reference_file="$INTERP_SRC_DIR/${DefaultSav}"
-fi
+# Save and unset DISPLAY to avoid GUI dependency issues during compilation
+export OLD_DISPLAY=$DISPLAY
 
-if [[ -f "$reference_file" ]]; then
-   : # Placeholder in case something needs to be done here
-   # rm -f $reference_file
-fi
+NEED_CLEANUP=0
 
-if [[ -f "$reference_file" ]]; then
-  #MLOG="$reference_file"
+# Function to cleanup compiled file if execution is interrupted or unsuccessful
+compiler_cleanup() {
+    if [[ $NEED_CLEANUP -eq 1 ]]; then
+	NEED_CLEANUP=0
+	# Restore DISPLAY before exiting
+	export DISPLAY=$OLD_DISPLAY
 
-  #if [[ "${#SWI_OPTIONS[@]}" -gt 0 ]]; then
-       #MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
-  #fi
-  if [[ "$EXE" -eq 0 ]]; then
-       MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-  fi
+	# If the success file is missing, remove the binary
 
-else
-  MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-fi
-
-
-MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-
-if [[ "$EXE" -eq 1 ]]; then
-# If any newer file found or reference file missing, call the compiler
-if [[ $should_compile -eq 1 ]]; then
-    #if [[ -f "$reference_file" ]]; then
-    #    DEBUG "Calling compiler from $reference_file..."
-    #	swipl -x $reference_file -g qcompile_mettalog -g halt
-    #else
-    rm -f "$reference_file"
-    if [[ "$EXE" -eq 1 ]]; then
-        :
-	DEBUG "Compiling $reference_file" 
-	rm -rf "$reference_file"
-	MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
-	DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
-	set +e
-	( ( eval "$MAKE_REF_FILE" ) )
-        
-	if [[ -f "$reference_file" ]]; then
-	    #MLOG="$reference_file"
-	    DEBUG "CREATED $reference_file"
-	    MLOG="$reference_file"
-	    MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"    
+	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
+	    DEBUG "{$GREEN}CREATED $reference_file"
+	    MLOG="swipl -x $reference_file ${SWI_OPTIONS[*]}"    
 	else
-	    DEBUG "Missing $reference_file !?!?!"
-	    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+	    
+	    
+	    do_DEBUG "${ORANGE}Missing $reference_file OR $METTALOG_COMPILE_SUCCESS!${NC}"
+	    
+	    DEFSAVE="$INTERP_SRC_DIR/${DefaultSav}"
+
+	    # Ensure DEFSAVE is not empty and does not point to a directory
+	    if [[ -n "$DEFSAVE" && ! -d "$DEFSAVE" ]]; then
+		do_DEBUG "${YELLOW}Checking for failed compilation files to remove...${NC}"
+		
+		# Find and remove only relevant files
+		for file in "$DEFSAVE"*; do
+		    if [[ -f "$file" ]]; then
+			do_DEBUG "${YELLOW}Removing: $file${NC}"
+			rm -f "$file"
+		    else
+			do_DEBUG "${YELLOW}Skipping: $file (not a regular file)${NC}"
+		    fi
+		done
+	    else
+		do_DEBUG "${YELLOW}Skipping removal: $DEFSAVE is a directory or unset.${NC}"
+	    fi
+
+	    do_DEBUG "${RED}Fallback: Using interpreter instead of compiled image.${NC}"
+	    unset reference_file
+	    exe=false
+
 	fi
     fi
-fi
+
+}
+
+if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
+
+    NEED_CLEANUP=1
+    # Register cleanup before starting compilation
+    trap compiler_cleanup SIGINT SIGTERM EXIT
+
+    # Set LC_ALL to UTF-8 to prevent encoding-related errors
+    export LC_ALL=C.UTF-8  
+
+    # Remove any previous success files (clean up before new compilation)
+    rm -f "$TEMP_DIR/create_on_successful_compile_*"
+
+    # Construct the compilation command
+    touch $METTALOG_COMPILE_SUCCESS
+    #--successfile=$METTALOG_COMPILE_SUCCESS
+    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
+    DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
+
+    unset DISPLAY
+
+    # Execute the compilation command
+    set +e
+    DEBUG "${BOLD}Compiling $reference_file..."
+    eval "$MAKE_REF_FILE" 
+
 fi
 
-#add_to_list "--log" METTALOG_OPTIONS
-#html_flag=enable
-#add_to_list "--html" METTALOG_OPTIONS
+# Maybe call cleanup function (It also checks if compilation was successfull and if not, it might toggle exe=false)
+if [[ "$exe" == "true" ]]; then
+    compiler_cleanup 
+fi
+
+# If exe is explicitly set to false, enforce the non-executable mode
+if [[ "$exe" == "false" ]]; then
+    unset reference_file
+    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
+fi
+
+# Generate the final command for execution, incorporating all options
+METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"
+DEBUG "exec $METTA_CMD"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 STDIO_OPTIONS=()
 set_io_flags STDIO_OPTIONS
-
-if [[ -f "$reference_file" ]]; then    
-    MLOG="$reference_file"    
-    MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
-else
-    unset reference_file
-    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-fi
-
-if [[ "$EXE" -eq 0 ]]; then
-    unset reference_file
-    MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-fi
-
-# Generate the final command
-METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"
-DEBUG "exec $METTA_CMD" 
-
 OS=$(uname)
 TIMEOUT_CMD="timeout"
 

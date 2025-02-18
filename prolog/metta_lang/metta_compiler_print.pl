@@ -180,8 +180,7 @@ dfs_tree_deps_list([mfa(CSpace,CName,CArity)|Rest], Visited, All) :-
 
 output_prolog(Converted):- output_prolog(cyan,Converted).
 output_prolog(Color,Converted):-
-   inotrace(
-    (printable_vars(Converted,ConvertedC),
+   inotrace((printable_vars(Converted,ConvertedC),
                          color_g_mesg(Color, output_language(prolog, output_prolog0(ConvertedC))))).
 
 output_prolog0(Converted):- is_list(Converted), maplist(output_prolog0,Converted).
