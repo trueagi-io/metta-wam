@@ -1080,11 +1080,11 @@ paths=(
     "$PYSWIP_VERSION/prolog"
     "$PYSWIP_VERSION/src"
     "$PYSWIP_VERSION/prolog/metta_interp"
-    ".Attic/$PYSWIP_VERSION"
     "$METTALOG_DIR/$PYSWIP_VERSION"
-    "$METTALOG_DIR/$PYSWIP_VERSION/prolog"
-    "$METTALOG_DIR/$PYSWIP_VERSION/src"
+    "$METTALOG_DIR/prolog/$PYSWIP_VERSION"
+    "$METTALOG_DIR/src/$PYSWIP_VERSION"
     "$METTALOG_DIR/$PYSWIP_VERSION/prolog/metta_interp"
+    ".Attic/$PYSWIP_VERSION"
     "$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
 )
 
