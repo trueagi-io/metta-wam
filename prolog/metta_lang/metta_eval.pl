@@ -434,7 +434,7 @@ eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):-
     py_metta_return_value(RetType, Ret,Res).
 
 
-eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):-
+eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg],Res):- trace,
     must_det_ll((py_atom(Arg,Res))).
 
 eval_py_atom(_Eq,_RetType,_Depth,_Self,['py-atom',Arg,Type],Res):-

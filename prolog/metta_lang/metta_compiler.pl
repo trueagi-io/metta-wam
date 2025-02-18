@@ -146,7 +146,7 @@ transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Leve
 % transpiler_predicate_store(dummy,0,[],'Any',[],x(doeval,eager,[])).
 
 % just so the transpiler_predicate_nary_store predicate always exists
-% transpiler_predicate_nary_store(f,arity,lazy_fixed,lazy_variable,retlazy)
+% transpiler_predicate_nary_store(source,f,arity,types_fixed,type_variable,lazy_fixed,lazy_variable,retlazy)
 % transpiler_predicate_nary_store(dummy,0,[],x(doeval,eager,[]),x(doeval,eager,[])).
 
 :- dynamic(transpiler_stored_eval/3).
@@ -540,7 +540,7 @@ determine_eager_vars(_,RetLazy,[Fn|Args],EagerVars) :- atom(Fn),!,
    (transpiler_predicate_store(_,Fn,LenArgs,_,_,ArgsLazy0,RetLazy0) ->
       maplist(get_property_lazy,ArgsLazy0,ArgsLazy),
       get_property_lazy(RetLazy0,RetLazy)
-   ; transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
       maplist(get_property_lazy,FixedArgsLazy0,FixedArgsLazy),
       VarCount is LenArgs-FixedLength,
       length(VarArgsLazy, VarCount),
@@ -844,7 +844,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
-   ; transpiler_predicate_nary_store(Fn,FixedLength,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
+   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
       VarCount is LArgs-FixedLength,
       length(VarArgsLazyList, VarCount),
       maplist(=(VarArgsLazy0), VarArgsLazyList),
@@ -1800,6 +1800,14 @@ transpile_eval(Convert0,LiConverted,PrologCode) :-
       ast_to_prolog(no_caller,[],Code,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted))
    ).
+
+transpile_eval_nocache(Convert0,LiConverted,PrologCode) :-
+   %leash(-all),trace,
+   subst_varnames(Convert0,Convert),
+   f2p([],[],Converted,_,LE,Convert,Code1,_),
+   lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
+   ast_to_prolog(no_caller,[],Code,PrologCode),
+   compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted)).
 
 arg_properties_widen(L,L,L) :- !.
 arg_properties_widen(x(_,eager,T),x(_,eager,_),x(doeval,eager,T)).

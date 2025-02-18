@@ -310,7 +310,7 @@ transpiler_predicate_store(builtin, unify, 4, '@doc', '@doc', [x(doeval,eager,[]
 
 %%%%%%%%%%%%%%%%%%%%% variable arity functions
 
-transpiler_predicate_nary_store(progn, 0, [], x(doeval,eager,[]), x(doeval,eager,[])).
+transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_0__progn'(List,Ret) :- append(_,[Ret],List).
 
 %%%%%%%%%%%%%%%%%%%%% misc
@@ -354,9 +354,6 @@ transpiler_predicate_store(builtin, 'assertEqualToResult', 2, '@doc', '@doc', [x
 %transpiler_predicate_store(builtin, 'assertEqualToResult', 2, '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,eager,[])], x(doeval,eager,[])).
 %'mc_2__assertEqualToResult'(A,B,C) :- 'mc_1__collapse'(A,A2),u_assign([assertEqualToResult,A2,[B]],C).
 
-transpiler_predicate_store(builtin, 'prolog-trace', 0, [], '', [], x(doeval,eager,[])).
-'mc_0__prolog-trace'([]) :- trace.
-
 transpiler_predicate_store(builtin, 'quote', 1, '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
 'mc_1__quote'(A,['quote',A]).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
@@ -367,3 +364,24 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   lazy_impedance_match(x(noeval,eager,[]),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
+
+%%%%%%%%%%%%%%%%%%%%% transpiler specific (non standard MeTTa)
+
+transpiler_predicate_store(builtin, 'prolog-trace', 0, [], '', [], x(doeval,eager,[])).
+'mc_0__prolog-trace'([]) :- trace.
+
+listing_order(Order, [Origin1, Fn1, Arity1, _], [Origin2, Fn2, Arity2, _]) :-
+    ( Origin1 \= Origin2 -> compare(Order, Origin1, Origin2)   % Compare first element
+    ; Fn1 \= Fn2 -> compare(Order, Fn1, Fn2)                   % Compare second if first is equal
+    ; compare(Order, Arity1, Arity2)                           % Compare third if first two are equal
+    ).
+
+transpiler_predicate_store(builtin, 'transpiler-listing', 0, [], '', [], x(doeval,eager,[])).
+'mc_0__transpiler-listing'(Sorted) :-
+  findall([Origin,Fn,Arity,[]],transpiler_predicate_store(Origin,Fn,Arity,_,_,_,_),Unsorted1),
+  findall([Origin,Fn,Arity,['variable arity']],transpiler_predicate_nary_store(Origin,Fn,Arity,_,_,_,_,_,_),Unsorted2),
+  append(Unsorted1,Unsorted2,Unsorted),
+  predsort(listing_order,Unsorted,Sorted).
+
+
+
