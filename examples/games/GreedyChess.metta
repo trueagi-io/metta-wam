@@ -511,9 +511,9 @@
 ; TEST ONLY
 ;(= (clear_route ($X1 $Y1 $COLOR p) $destination $Board) True)
 ;(= (clear_route ($X1 $Y1 $COLOR r) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
 ;(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
 
 ; King: Moves one square in any direction.
@@ -538,6 +538,11 @@
           )
         True
         False)))
+
+; Queen:  Either rook or bishop move works.
+(= (clear_route ($X1 $Y1 $Color q) $destination $Board)
+      (xor (clear_route ($X1 $Y1 $Color b) $destination $Board)
+           (clear_route ($X1 $Y1 $Color r) $destination $Board)))
 
 ; Knight: Moves in an "L" shape (2 steps in one direction, 1 step perpendicular).
 (= (clear_route ($X1 $Y1 $Color n) $destination $Board)
@@ -570,20 +575,6 @@
           ))
         True
         False)))
-
-;(= (clear_route #( :: ($A $B $C q) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (clear_route 
-;    #( :: 
-;      ($A $B $C r) ) 
-;    #(Cons $D 
-;      #(Cons $E $F)) $G))
-;(= (clear_route #( :: ($A $B $C q) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (clear_route 
-;    #( :: 
-;      ($A $B $C b) ) 
-;    #(Cons $D 
-;      #(Cons $E $F)) $G))
-
 
 
 ; Move gold AI pawn 
@@ -714,7 +705,7 @@
 
 ; Rook: Moves horizontally or vertically.
 (= (clear_route ($X1 $Y1 $Color r) $destination $Board)
-      (let*  (
+      (let*  (   
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )    
       ($RouteClearBool 
@@ -806,6 +797,86 @@
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
+; Bishop: Moves diagonally
+(= (clear_route ($X1 $Y1 $Color b) $destination $Board)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )    
+      ($RouteClearBool 
+           ; if northeast
+           (if (and (> $X2 $X1) (> $Y2  $Y1))
+               (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2) 
+           ;elif southeast
+           (if (and (> $X2 $X1) (< $Y2  $Y1))
+               (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+           ;elif northwest
+           (if (and (< $X2 $X1) (> $Y2  $Y1))
+               (clearcheckNW (- $X1 1) (+ $Y1 1) $X2 $Y2)
+           ;elif left
+           (if (and (< $X2 $X1) (< $Y2  $Y1))
+               (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
+            ; otherwise bishop bad move
+               False))))
+      ))
+      (if  
+          (== $RouteClearBool True)
+        True
+        False
+        )))
+
+(: clearcheckNE (-> Atom Atom Atom Atom Bool))
+(: clearcheckSE (-> Atom Atom Atom Atom Bool))
+(: clearcheckNW (-> Atom Atom Atom Atom Bool))
+(: clearcheckSW (-> Atom Atom Atom Atom Bool))
+
+
+(= (clearcheckNE $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckSE $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckNW $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckNW (- $X1 1) (+ $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckSW $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
 
 ;    B > C.  % Stop when the current rank exceeds the ending rank.
 ;checkclearup(A, B, C, D) :-
