@@ -812,7 +812,7 @@
            ;elif northwest
            (if (and (< $X2 $X1) (> $Y2  $Y1))
                (clearcheckNW (- $X1 1) (+ $Y1 1) $X2 $Y2)
-           ;elif left
+           ;elif southwest
            (if (and (< $X2 $X1) (< $Y2  $Y1))
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
@@ -878,122 +878,6 @@
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
-;    B > C.  % Stop when the current rank exceeds the ending rank.
-;checkclearup(A, B, C, D) :-
-;    return_entire_box([A, B], E, D),  % Get the box details at (A, B).
-;    len(E, 2),                        % Ensure the box is empty.
-;    F is B + 1,                       % Move one rank up.
-;    checkclearup(A, F, C, D).         % Recursively check the next rank.
-
-
-
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (+ $A 1)) 
-;      (is $E 
-;        (+ $B 1))) 
-;    (, 
-;      (> $D $A) 
-;      (> $E $B) 
-;      (is $H 
-;        (+ $A 1)) 
-;      (is $I 
-;        (- $D 1)) 
-;      (is $J 
-;        (+ $B 1)) 
-;      (is $K 
-;        (- $E 1)) 
-;      (checkclearupBUR $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (+ $A 1)) 
-;      (is $E 
-;        (- $B 1))) 
-;    (, 
-;      (> $D $A) 
-;      (< $E $B) 
-;      (is $H 
-;        (+ $A 1)) 
-;      (is $I 
-;        (- $D 1)) 
-;      (is $J 
-;        (- $B 1)) 
-;      (is $K 
-;        (+ $E 1)) 
-;      (checkclearupBDR $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (- $A 1)) 
-;      (is $E 
-;        (+ $B 1))) 
-;    (, 
-;      (< $D $A) 
-;      (> $E $B) 
-;      (is $H 
-;        (- $A 1)) 
-;      (is $I 
-;        (+ $D 1)) 
-;      (is $J 
-;        (+ $B 1)) 
-;      (is $K 
-;        (- $E 1)) 
-;      (checkclearupBUL $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (- $A 1)) 
-;      (is $E 
-;        (- $B 1))) 
-;    (, 
-;      (< $D $A) 
-;      (< $E $B) 
-;      (is $H 
-;        (- $A 1)) 
-;      (is $I 
-;        (+ $D 1)) 
-;      (is $J 
-;        (- $B 1)) 
-;      (is $K 
-;        (+ $E 1)) 
-;      (checkclearupBDL $H $J $I $K $G))))
-;
-;
-;(= (checkclearup $A $B $C $D)  
-;  (> $B $C))
-;(= (checkclearup $A $B $C $D) (return_entire_box #( :: ($A $B) ) $E $D) (len $E 2) (is $F (+ $B 1)) ;(checkclearup $A $F $C $D))
-;
-;(= (checkclearleft $A $B $C $D)  
-;  (< $B $C))
-;(= (checkclearleft $A $B $C $D) (return_entire_box #( :: ($B $A) ) $E $D) (len $E 2) (is $F (- $B 1)) ;(checkclearleft $A $F $C $D))
-;
-;(= (checkclearright $A $B $C $D)  
-;  (> $B $C))
-;(= (checkclearright $A $B $C $D) (return_entire_box #( :: ($B $A) ) $E $D) (len $E 2) (is $F (+ $B 1)) ;(checkclearright $A $F $C $D))
-;
-;(= (checkcleardown $A $B $C $D)  
-;  (< $B $C))
-;(= (checkcleardown $A $B $C $D) (return_entire_box #( :: ($A $B) ) $E $D) (len $E 2) (is $F (- $B 1)) ;(checkcleardown $A $F $C $D))
-;
-;
-;(= (checkclearupBUR $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBUR $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (+ $A 1)) (is ;$H (+ $B 1)) (checkclearupBUR $G $H $C $D $E))
-;
-;(= (checkclearupBDR $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBDR $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (+ $A 1)) (is ;$H (- $B 1)) (checkclearupBDR $G $H $C $D $E))
-;
-;(= (checkclearupBUL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBUL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (+ $B 1)) (checkclearupBUL $G $H $C $D $E))
-;
-;(= (checkclearupBDL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBDL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (- $B 1)) (checkclearupBDL $G $H $C $D $E))
-;
 
 ; replace_square
 ;   input: X, Y, color, rank
@@ -1161,10 +1045,6 @@
    ) 
 )
 
-;(= (list_clear_route $A $B #(Cons $C $D) #(Cons $C $E)) (clear_route $C $B $A) (list_clear_route $A $B $D $E))
-;(= (list_clear_route $A $B #(Cons $C $D) $E)  
-;  (list_clear_route $A $B $D $E))
-;
 ;
 ;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
 ;  #( :: 
