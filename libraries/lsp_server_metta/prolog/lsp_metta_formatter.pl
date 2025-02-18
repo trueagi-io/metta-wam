@@ -59,38 +59,7 @@ format_lisp_lines([Line | Rest], IndentLevel, OpenParens, [FormattedLine | Forma
 % Helper: Trim Leading and Trailing Whitespace from a Line
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 trim_line(Line, TrimmedLine) :-
-    strip_leading_whitespace(Line, TempLine),
-    remove_trailing_whitespace(TempLine, TrimmedLine).
-
-strip_leading_whitespace(Line, Trimmed) :-
-    split_string(Line, " \t", "", Words),  % Split the line by whitespace
-    atomic_list_concat(Words, " ", Trimmed).  % Join them back together
-
-remove_trailing_whitespace(Line, CleanLine) :-
-    split_string(Line, "\n", "", Lines),
-    maplist(strip_line_trailing_spaces, Lines, CleanLines),
-    atomic_list_concat(CleanLines, "\n", CleanLine).
-
-strip_line_trailing_spaces(Line, CleanLine) :-
-    reverse(Line, Reversed),
-    drop_leading_whitespace(Reversed, CleanReversed),
-    reverse(CleanReversed, CleanLine).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% drop_leading_whitespace(+Codes, -CleanCodes)
-%
-% Removes leading whitespace (spaces and tabs) from the input list of character codes.
-%
-% Codes: A list of character codes (representing a string).
-% CleanCodes: The resulting list of character codes with leading whitespace removed.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-drop_leading_whitespace([], []).  % Base case: empty list
-drop_leading_whitespace([32 | Rest], CleanCodes) :-  % If the first character is a space (ASCII 32)
-    drop_leading_whitespace(Rest, CleanCodes).
-drop_leading_whitespace([9 | Rest], CleanCodes) :-  % If the first character is a tab (ASCII 9)
-    drop_leading_whitespace(Rest, CleanCodes).
-drop_leading_whitespace(Codes, Codes).  % If no leading whitespace, return the list as is
+    split_string(Line, "", "\t\s\n", [TrimmedLine]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculate New Indentation Level and Open Parentheses Count
