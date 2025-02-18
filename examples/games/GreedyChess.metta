@@ -198,7 +198,6 @@
       (add-pieces $board)))
 
 ; (delete-pieces)
-; input:    present board of form ( (piece-1) (piece-2) (empty-square-1)... etc )
 ; output:   removes all pieces   
 (= (delete-pieces)
     (progn
@@ -503,20 +502,19 @@
 ;
 ;
 
-; Return True if there is a clear route for piece else False
+
+(: (clear_route) (-> Expression Expression Expression Bool))
+; Return True if there is a clear route for piece else False.
 ; Note: prior to calling clear_route verify that the piece is moving to a different square and
 ; if the square is occupied it is occupied by the opponent's color. These tests are not duplicated by clear_route!
-(: (clear_route) (-> Expression Expression Expression Bool))
 
 ; TEST ONLY
 ;(= (clear_route ($X1 $Y1 $COLOR p) $destination $Board) True)
-(= (clear_route ($X1 $Y1 $COLOR r) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR r) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
 (= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
 ;(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
-
-;(= (clear_route #( :: ($A $B $C k) ) #(Cons $D #(Cons $E $F)) $G) (or (= $D  $A) (or (is $D (+ $A 1)) (is $D ;(- $A 1)))) (or (= $E  $B) (or (is $E (+ $B 1)) (is $E (- $B 1)))))
 
 ; King: Moves one square in any direction.
 (= (clear_route ($X1 $Y1 $Color k) $destination $Board)
@@ -541,11 +539,38 @@
         True
         False)))
 
+; Knight: Moves in an "L" shape (2 steps in one direction, 1 step perpendicular).
+(= (clear_route ($X1 $Y1 $Color n) $destination $Board)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )          
+             )
+      (if (xor 
+          ; vertical 'L'
+         (and
+          (xor 
+          (== $X2 (- $X1 1))
+          (== $X2 (+ $X1 1))
+          )
+          (xor
+          (== $Y2 (- $Y1 2))
+          (== $Y2 (+ $Y1 2))
+          )
+         ) 
+          ; sideways 'L'
+         (and
+          (xor
+          (== $X2 (- $X1 2))
+          (== $X2 (+ $X1 2))
+          )
+          (xor
+          (== $Y2 (- $Y1 1))
+          (== $Y2 (+ $Y1 1))
+          )
+          ))
+        True
+        False)))
 
-;(= (clear_route ($X1 $Y1 $Color1 k) $destination $Board) False)
-
-;(= (clear_route #( :: ($A $B $C n) ) #(Cons $D #(Cons $E $F)) $G) (or (is $E (+ $B 2)) (is $E (- $B 2))) (or ;(is $D (+ $A 1)) (is $D (- $A 1))))
-;(= (clear_route #( :: ($A $B $C n) ) #(Cons $D #(Cons $E $F)) $G) (or (is $E (+ $B 1)) (is $E (- $B 1))) (or ;(is $D (+ $A 2)) (is $D (- $A 2))))
 ;(= (clear_route #( :: ($A $B $C q) ) #(Cons $D #(Cons $E $F)) $G)  
 ;  (clear_route 
 ;    #( :: 
@@ -687,11 +712,110 @@
         True
         False)))
 
+; Rook: Moves horizontally or vertically.
+(= (clear_route ($X1 $Y1 $Color r) $destination $Board)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )    
+      ($RouteClearBool 
+           ; if up
+           (if (and (== $X2 $X1) (> $Y2  $Y1))
+               (clearcheckup $X1 (+ 1 $Y1) $Y2) 
+           ;elif down
+           (if (and (== $X2 $X1) (< $Y2  $Y1))
+               (clearcheckdown $X1 (- $Y1 1) $Y2)
+           ;elif right
+           (if (and (> $X2 $X1) (== $Y2  $Y1))
+                (clearcheckright (+ $X1 1) $X2 $Y1)
+           ;elif left
+           (if (and (< $X2 $X1) (== $Y2  $Y1))
+               (clearcheckleft (- $X1 1) $X2 $Y1) 
+            ; otherwise rook bad move
+               False)))))
+      )
+      (if (and 
+          (== $RouteClearBool True)
+          ; straight vertical 
+          (xor 
+            (and
+              (== $X2 $X1)
+              (xor
+              (> $Y2 $Y1)
+              (< $Y2 $Y1)))
+          ; straight sideways 
+            (and
+              (== $Y2 $Y1)
+              (xor
+              (> $X2 $X1)
+              (< $X2 $X1)))))
+        True
+        False
+        )))
 
-;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (= $A  $D) (> $E $B) (is $H (- $E 1)) (is $I ;(+ $B 1)) (checkclearup $A $I $H $G))
-;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (= $A  $D) (< $E $B) (is $H (+ $E 1)) (is $I ;(- $B 1)) (checkcleardown $A $I $H $G))
-;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (< $A $D) (= $E  $B) (is $H (- $D 1)) (is $I ;(+ $A 1)) (checkclearright $B $I $H $G))
-;(= (clear_route #( :: ($A $B $C r) ) #(Cons $D #(Cons $E $F)) $G) (> $A $D) (= $E  $B) (is $H (+ $D 1)) (is $I ;(- $A 1)) (checkclearleft $B $I $H $G))
+(: clearcheckup (-> Atom Atom Atom Bool))
+(: clearcheckdown (-> Atom Atom Atom Bool))
+(: clearcheckleft (-> Atom Atom Atom Bool))
+(: clearcheckright (-> Atom Atom Atom Bool))
+
+
+(= (clearcheckup $X $Y1 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X $Y1)))
+          )
+        (if (== $Y1 $Y2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckup $X (+ $Y1 1) $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckdown $X $Y1 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X $Y1)))
+          )
+        (if (== $Y1 $Y2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckdown $X (- $Y1 1) $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckright $X1 $X2 $Y) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y)))
+          )
+        (if (== $X1 $X2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckright (+ $X1 1) $X2 $Y)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckleft $X1 $X2 $Y) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y)))
+          )
+        (if (== $X1 $X2) 
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckleft (- $X1 1) $X2 $Y)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+
+;    B > C.  % Stop when the current rank exceeds the ending rank.
+;checkclearup(A, B, C, D) :-
+;    return_entire_box([A, B], E, D),  % Get the box details at (A, B).
+;    len(E, 2),                        % Ensure the box is empty.
+;    F is B + 1,                       % Move one rank up.
+;    checkclearup(A, F, C, D).         % Recursively check the next rank.
+
+
+
 ;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
 ;  (or 
 ;    (, 
@@ -1087,8 +1211,6 @@
                 (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
                 (add-atom &self (board-state $provisional_board))
-                ; since move complete, delete individual square atoms which only live for a single move.
-                (delete-pieces)
                 ; display
                 (D)
                 )
@@ -1102,6 +1224,8 @@
     )
     ;else (trying to move to same location)
     ((py-atom print) "Can't move to same location.")) 
+  ; since move complete, delete any individual square atoms which only live for a single move.
+  (delete-pieces)
   )
 )
 

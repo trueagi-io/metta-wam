@@ -258,22 +258,12 @@ transpiler_predicate_store(collapse, 2, [x(doeval,lazy,[])], x(doeval,eager,[]))
 'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
-:- debug.
-
-transpiler_predicate_store('bind!', 3, [x(noeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_2__bind!'(Name,Expression,[]) :- nb_bind(Name,Expression).
-
-transpiler_predicate_store('new-space', 1, [], x(doeval,eager,[])).
-'mc_0__new-space'(Space) :- is_make_new_kb(['new-space'],Space,[]).
-
-convert_space('&self','&top') :- !.
-convert_space(S,S).
 
 transpiler_predicate_store('add-atom', 3, [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+'mc_2__add-atom'(Space,PredDecl,[]) :- 'add-atom'(Space,PredDecl).
 
 transpiler_predicate_store('remove-atom', 3, [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),retractall(metta_atom_asserted(Space1,PredDecl)).
+'mc_2__remove-atom'(Space,PredDecl,[]) :- 'remove-atom'(Space,PredDecl).
 
 transpiler_predicate_store('get-atoms', 2, [x(noeval,eager,[])], x(noeval,eager,[])).
 'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
@@ -285,7 +275,7 @@ match_pattern(Space, Pattern):-
     metta_atom(Space, Atom), Atom=Pattern.
 
 transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_3__match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
+'mc_3__match'(Space,[','|Patterns],P1,Ret) :- !,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
 'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 %'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
 %transpiler_predicate_store(match, 4, [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).

@@ -113,12 +113,8 @@ non_arg_violation(_,_,_).
 %transpiler_enable_interpreter_calls.
 transpiler_enable_interpreter_calls :- fail.
 
-transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Level -> call(Code) ; true).
-%transpiler_debug(_Level,Code) :- call(Code).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%% Debugging only: Flags to allow tracing of particular functions (may not be currently working)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+transpiler_show_debug_messages.
+%transpiler_show_debug_messages :- fail.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Debugging only: Flags to allow tracing of particular functions (may not be currently working)
@@ -335,7 +331,7 @@ recompile_from_depends0(Fn/Arity) :-
    sort(ClauseIdList,SortedClauseIdList),
    maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Clause),
    %leash(-all),trace,
-   %format("X: ~w\n",[Clause]),flush_output(user_output),
+   format("X: ~w\n",[Clause]),flush_output(user_output),
    number_vars_wo_conficts(Clause,Clause2),
    maplist(compile_for_assert_with_add,Clause2).
 
@@ -345,7 +341,7 @@ compile_for_assert_with_add(Head-Body) :-
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
-   %format("Extracted clause: ~w:-~w\n",[Head,Body]),
+   format("Extracted clause: ~w:-~w\n",[Head,Body]),
    retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
@@ -422,7 +418,6 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       LazyEagerInfo=[resultEager:ResultEager,retProps:RetProps,finalLazyRet:FinalLazyRetAdj,finalLazyOnlyRet:FinalLazyRetAdj,args_list:Args2,lazyArgsList:NewLazyVarsAggregate,eagerLazyList:EagerLazyList,typeProps:TypeProps,finalLazyArgs:FinalLazyArgsAdj],
 
       transpiler_debug(2,output_prolog(LazyEagerInfo)),
-
       %format("HeadIs:~q HResult:~q AsBodyFn:~q FullCode:~q\n",[HeadIs,HResult,AsBodyFn,FullCode]),
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
@@ -451,9 +446,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       if_t(Optimized\=@=Converted,
              output_prolog(green,Optimized)),
 
-        transpiler_debug(2,tree_deps(Space,FnName,LenArgsPlus1)),
+        tree_deps(Space,FnName,LenArgsPlus1),
 
-        transpiler_debug(2,show_recompile(Space,FnName,LenArgsPlus1)),
+        show_recompile(Space,FnName,LenArgsPlus1),
       true
    ))))
    .
@@ -1295,7 +1290,7 @@ strip_m(BB,BB).
 
 compiler_assertz(Info):-
   unnumbervars_clause(Info,Assert),
-  assertz(Assert),transpiler_debug(2,output_prolog(Info)).
+  assertz(Assert),output_prolog(Info).
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
@@ -1741,9 +1736,9 @@ notice_callee(CallerInt,CallerSz,F,LArgs1):-
         CallerInt  \== exec0,
         \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LArgs1U), CallerSzU=@=CallerSz, LArgs1U=@=LArgs1),
          compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1])),
+         (transpiler_show_debug_messages -> format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) -> true),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
-         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) ))),
+         output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) )),
     ignore((
          current_self(Space),ensure_callee_site(Space,F,LArgs1))).
 
@@ -2025,9 +2020,9 @@ notice_callee(CallerInt,CallerSz,F,LArgs1):-
         CallerInt  \== exec0,
         \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LArgs1U), CallerSzU=@=CallerSz, LArgs1U=@=LArgs1),
          compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1])),
+         (transpiler_show_debug_messages -> format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1]) -> true),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
-         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) ))),
+         output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) )),
     ignore((
          current_self(Space),ensure_callee_site(Space,F,LArgs1))).
 
@@ -2070,7 +2065,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
 %         create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
          compiler_assertz(transpiler_stub_created(F/A)),
 
-         transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
+         (transpiler_show_debug_messages -> format("; % ######### warning: creating stub for:~q\n",[F]) ; true),
          (transpiler_enable_interpreter_calls ->
             create_and_consult_temp_file(Space,Fp/A,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
          ;
@@ -2893,7 +2888,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*tr
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
-   %format("~q ~q ~q\n",[HeadIs, AsBodyFn, Converted]),
+   format("~q ~q ~q\n",[HeadIs, AsBodyFn, Converted]),
    AsFunction = HeadIs,
    must_det_lls((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
