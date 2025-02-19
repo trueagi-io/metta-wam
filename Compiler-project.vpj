@@ -75,6 +75,15 @@
 	<List Name="RTE">
 	</List>
 	<Files AutoFolders="DirectoryView">
+		<Folder Name=".Attic">
+			<Folder Name="metta_lang">
+				<F
+					N=".Attic/metta_lang/*"
+					Recurse="1"
+					Excludes="*.tiff;*.tbz;*.pdb;*.avi;*.msi;*.cpgz;*.rpm;*.class;*.a;*.gif;*.taz;*.bin;*.jpg;*.svgz;*.exe;*.mp3;*.jar;*.ico;*.tif;*.txz;*.sl;*.png;*.jpeg;*.tar;*.Z;*.sta;*.xslx;*.gz;*.bz2;*.xz;*.mpeg;*.vpb;*.chm;*.dll;*.7z;*.lib;*.so;*.ex;*.tgz;*.war;*.vtg;*.docx;*.rar;*.o;*.wmv;*.cpio;*.zip;*.bmp;*.suo;*.xlsx;*.7zip;*.winmd;*.pdf;*.obj;*.z;*.tbz2;.svn/;.CVS/;SSCS/;.DS_Store;*.vpw;*.vpj;*.vpwhist;*.vpwhistu;*.vpwwildcardcache"
+					D="1"/>
+			</Folder>
+		</Folder>
 		<Folder Name="../.local">
 			<Folder Name="share">
 				<Folder Name="swi-prolog">
@@ -918,10 +927,5 @@
 					L="1"/>
 			</Folder>
 		</Folder>
-		<F
-			N=".Attic/metta_lang/*"
-			Recurse="1"
-			Excludes="*.tiff;*.tbz;*.pdb;*.avi;*.msi;*.cpgz;*.rpm;*.class;*.a;*.gif;*.taz;*.bin;*.jpg;*.svgz;*.exe;*.mp3;*.jar;*.ico;*.tif;*.txz;*.sl;*.png;*.jpeg;*.tar;*.Z;*.sta;*.xslx;*.gz;*.bz2;*.xz;*.mpeg;*.vpb;*.chm;*.dll;*.7z;*.lib;*.so;*.ex;*.tgz;*.war;*.vtg;*.docx;*.rar;*.o;*.wmv;*.cpio;*.zip;*.bmp;*.suo;*.xlsx;*.7zip;*.winmd;*.pdf;*.obj;*.z;*.tbz2;.svn/;.CVS/;SSCS/;.DS_Store;*.vpw;*.vpj;*.vpwhist;*.vpwhistu;*.vpwwildcardcache"
-			D="1"/>
 	</Files>
 </Project>
