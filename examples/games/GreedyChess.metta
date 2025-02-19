@@ -428,16 +428,19 @@
     )
     ; if the list is populated (size exceeds 0), that means the piece can be taken.
     (if (not (== $OpenRouteToSquare () )) True False)))
-
+    
 
 (= (take_dest $Square $OpponentColor)
-    (let $AttackingPiece (takingboxes $OpenRouteToSquare) 
-        ; if a piece can attack
-        (if (== (clear_route $AttackingPiece $Square) True) 
-          True
-          False)))
-
-
+    (let*
+        (
+        ;  Identify opponent pieces that can attack.
+        ($CanAttack (collapse (takingboxes $OpponentColor)))
+        ; Check if any route of pieces that can attack leads to the specified square.
+        ($OpenRouteToSquare (list_clear_route $Square $CanAttack))
+        )
+        ; if the list is populated (size exceeds 0), that means the piece can be taken.
+        (if (not (== $OpenRouteToSquare () )) True False)))
+    
 (= (return_entire_box $Coordinates)
       (let*  
          (($x (nth 1 $Coordinates) )
@@ -1078,8 +1081,9 @@
 ;
 ; Input:  pieces color to look for, board
 ; Output: a piece of a color
-(= (takingboxes $Color)
-   (match &self (square $x $y $Color $p) (square $x $y $Color $p)))
+(= (takingboxes $OpponentColor)
+  (match &self (square $x $y $OpponentColor $p) 
+      ($x $y $OpponentColor $p)))
 
 ; (takingboxes_recursive)
 ;
@@ -1106,7 +1110,7 @@
 ;
 ; Input:  $Board, $Square that might be compromised, all pieces available to attack square in question $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
-(= (list_clear_route $Board $Square $CanAttack)
+(= (list_clear_route $Square $CanAttack)
    (if (== (size-atom $CanAttack) 0)
        ; end of the line
        ()
@@ -1116,8 +1120,8 @@
           ($AttackBool (clear_route $next-sq $Square))
              )
           (if (== $AttackBool True) 
-              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
-              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) $rest)
+              (let $rest (list_clear_route $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
+              (let $rest (list_clear_route $Square (cdr-atom $CanAttack)) $rest)
           )
        )
    ) 
@@ -1147,12 +1151,12 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6 s k) (6 6) (7 6) (8 6) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
-                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s f) (6 1 s b) (7 1 s n) (8 1 s r)))
+                        (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
         ; indicate game has passed the initializing state
         (add-atom &self (console-messages (started)))
@@ -1225,12 +1229,12 @@
             ; Try the move and update the board state.   
             ($MoveBool  (move_piece $h $i))   
             ; locate human's king
-            ($king_square (xy_box (g k)))    
+            ($king_square (xy_box (s k)))    
             ; 
             ($full_king_sq (return_entire_box $king_square))  
             ; Ensure the player's king is not in check from gold (g) if moved.  
             ($KingCompromised (take_dest $full_king_sq g))
-              )   
+                ) 
             ; If move valid, proceed to create new board atom with move.
             (if (== $KingCompromised True)
                 ((py-atom print) "Can't move there, your king would be in check.")
