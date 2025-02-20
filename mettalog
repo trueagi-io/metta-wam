@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+debug_this_script=false
+
 generate_junit_report=0
 junit_report_file=""
 start_time=0
@@ -25,13 +27,12 @@ OUTPUT_DIR="${METTALOG_OUTPUT}"
 # verbose=9
 
 cd "$METTALOG_DIR"
-# source ./scripts/ensure_venv
+source ./scripts/ensure_venv
 cd "$RPWD"
 
 use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
-debug_this_script=false
 contains_halt=false
 dry_run=0
 REQUEST_PYSWIP_VERSION=
@@ -99,6 +100,9 @@ if [ -z "${LC_ALL+x}" ]; then
 else
     ORIGINAL_LC_ALL="$LC_ALL"
 fi
+
+export LANG=en_US.utf8
+export LC_ALL=en_US.utf8
 
 # Function to restore original values on exit
 restore_original_values() {
@@ -926,7 +930,7 @@ handle_args "$@"
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" != "false" ]]; then
-  [[ ${#LIST_OF_FILE_ARGS[@]}=="false" ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
+  : #[[ ${#LIST_OF_FILE_ARGS[@]}=="false" ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
@@ -1209,8 +1213,6 @@ if [[ $need_compile -eq 1 ]]; then
     export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
 fi
 
-# Save and unset DISPLAY to avoid GUI dependency issues during compilation
-export OLD_DISPLAY=$DISPLAY
 
 NEED_CLEANUP=0
 STYLE=EXE
@@ -1219,8 +1221,6 @@ STYLE=EXE
 compiler_cleanup() {
     if [[ $NEED_CLEANUP -eq 1 ]]; then
 	NEED_CLEANUP=0
-	# Restore DISPLAY before exiting
-	export DISPLAY=$OLD_DISPLAY
 
 	# If the success file is missing, remove the binary
 
@@ -1264,7 +1264,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     NEED_CLEANUP=1
     # Register cleanup before starting compilation
-    trap compiler_cleanup SIGINT SIGTERM EXIT
+    (
 
     # Set LC_ALL to UTF-8 to prevent encoding-related errors
     export LC_ALL=C.UTF-8  
@@ -1284,7 +1284,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
     DEBUG "${BOLD}Compiling $reference_file..."
     eval "$MAKE_REF_FILE" 
     # trap reset_settings  compiler_cleanup SIGINT SIGTERM EXIT
-
+    )
 fi
 
 # Maybe call cleanup function (It also checks if compilation was successfull and if not, it might toggle exe=false)
@@ -1351,7 +1351,7 @@ cleanup() {
 
     if [ ! -z "$TEE_FILE" ];then
 
-        if [ ! -z "$HTML_FILE" ];then
+        if [ ! -z "$HTML_FILE" ];then	    
             IF_REALLY_DO "ansi2html -u < '$TEE_FILE' > '$HTML_OUT'"
             export HTML_FILE=""
         fi
@@ -1369,8 +1369,15 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
-  export TIMEOUT # --signal=SIGTERM --kill-after=5s 
-  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground $TIMEOUT ${METTA_CMD}"
+    export TIMEOUT # --signal=SIGTERM --kill-after=5s 
+    
+    if [[ "$repl_flag" == "true" ]]; then
+        do_DEBUG "${GREEN} UNSET TIMEOUT=$TIMEOUT${NC} (TIMEOUT_CMD=$TIMEOUT_CMD)"
+        unset TIMEOUT
+    else    
+        METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground $TIMEOUT ${METTA_CMD}"
+        do_DEBUG "${YELLOW}TIMEOUT=$TIMEOUT${NC} (TIMEOUT_CMD=$TIMEOUT_CMD)"
+    fi
 fi
 
 function escape_quotes {
@@ -1434,19 +1441,21 @@ execute_with_pipes() {
 }
 
 if [ -z "$HTML_OUT" ];then
-    HTML_OUT=HTML_OUT_MAYBE
+    HTML_OUT="$HTML_OUT_MAYBE"
 fi
 
 if [ ! -z "$file_html" ];then
     HTML_OUT="$file_html"
 fi
 
+random_suffix=$(date +"%Y%m%d_%H%M")_$$
+TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
+export TEE_FILE
+touch $TEE_FILE
+
 # Conditional to check if html_flag is enabled
-if [[ "$html_flag" == "enable" ]]; then
+if [[ "$html_flag" == "enable" ]]; then    
     # Generate a random filename for TEE_FILE with date,time,PID
-    random_suffix=$(date +"%Y%m%d_%H%M")_$$
-    TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
-    export TEE_FILE
 
     if [ ! -z "$HTML_OUT" ];then
         #HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
@@ -1459,7 +1468,7 @@ if [[ "$html_flag" == "enable" ]]; then
     fi
 
     if [ ! -z "$file_html" ];then
-	HTML_OUT="$file_html"
+	    HTML_OUT="$file_html"
     fi
 
     export HTML_FILE="${HTML_OUT}"
@@ -1478,11 +1487,14 @@ if [[ "$html_flag" == "enable" ]]; then
 	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 	
 	IF_REALLY_DO "touch '$TEE_FILE'"
+	
 	IF_REALLY_DO "chmod 777 '$TEE_FILE'"
 	IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
 	if [[ "$contains_halt" == "true" ]]; then
 		do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi
+    # do_DEBUG "HTML_FILE=${HTML_FILE}"
+    #do_DEBUG "TEE_FILE=${TEE_FILE}"
 	execute_with_pipes
 	echo $? > "$TEMP_EXIT_CODE_FILE"
 else
@@ -1494,6 +1506,8 @@ else
 	if [[ "$contains_halt" == "true" ]]; then
 		do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi
+    #do_DEBUG "HTML_FILE=${HTML_FILE}"
+    #do_DEBUG "TEE_FILE=${TEE_FILE}"
 	execute_with_pipes
 	IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
 fi
