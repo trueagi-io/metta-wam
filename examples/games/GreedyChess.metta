@@ -207,6 +207,22 @@
       (remove-atom &self (square $x $y))  
       ))
 
+(= (display_squares_atoms_debug_4)
+    (match &self (square $x $y $s $p) 
+        (progn 
+            (println! "square")
+            (println! $x)
+            (println! $y)
+            (println! $s)
+            (println! $p))))
+(= (display_squares_atoms_debug_2)
+    (match &self (square $x $y) 
+        (progn 
+            (println! "square")
+            (println! $x)
+            (println! $y))))
+
+
 ; Invoke with empty list, will return characters input from console until ENTER.
 (: (get-player-command (-> list list)))
 (= (get-player-command $input_list)  
@@ -401,18 +417,30 @@
 ;       (LoadPiecesAtomspace (cdr-atom $CanAttack))
 ;)
 ;
-(= (take_dest $Square $OpponentColor $Board) 
+(= (take_dest_recursive $Square $OpponentColor $Board) 
   (let* 
     (
     ;  Identify opponent pieces that can attack.
-    ($CanAttack (takingboxes $OpponentColor $Board))
+    ($CanAttack (takingboxes_recursive $OpponentColor $Board))
     ; Check if any route of pieces that can attack leads to the specified square.
     ($OpenRouteToSquare (list_clear_route $Board $Square $CanAttack))
     ;($OpenRouteToSquare () )
     )
     ; if the list is populated (size exceeds 0), that means the piece can be taken.
     (if (not (== $OpenRouteToSquare () )) True False)))
+    
 
+(= (take_dest $Square $OpponentColor)
+    (let*
+        (
+        ;  Identify opponent pieces that can attack.
+        ($CanAttack (collapse (takingboxes $OpponentColor)))
+        ; Check if any route of pieces that can attack leads to the specified square.
+        ($OpenRouteToSquare (list_clear_route $Square $CanAttack))
+        )
+        ; if the list is populated (size exceeds 0), that means the piece can be taken.
+        (if (not (== $OpenRouteToSquare () )) True False)))
+    
 (= (return_entire_box $Coordinates)
       (let*  
          (($x (nth 1 $Coordinates) )
@@ -462,15 +490,24 @@
     (if (== ($X $Y) $Coordinates) 
       $next-square
       (return_entire_box_sequential $Coordinates (cdr-atom $Board))))))
+
 ;
 ; (xy_box)
+;     1. Match the board for a square containing the specified piece.
+;     2. Returns the x/y coordinates of the square(s) if a match is found.
+;
+(= (xy_box ($PieceColor $PieceRank))
+       (match &self (square $x $y $PieceColor $PieceRank) ($x $y))) 
+
+;
+; (xy_box_recursive)
 ;     1. Searches the board for a square containing the specified piece.
 ;     2. Returns the x/y coordinates of the square if a match is found.
 ;
 ; NOTE: This version of xy_box is only designed to return 1 piece deterministically 
 ;       given 1 piece of specified type exists.
 ;       For multiple pieces and backtracking action devise another means.
-(= (xy_box ($PieceColor $PieceRank) $Board)
+(= (xy_box_recursive ($PieceColor $PieceRank) $Board)
   (let*
     (
     ; assign variables for the next piece
@@ -482,7 +519,7 @@
     ; then examine next square
     (if (== (size-atom $next_square) 2) 
       ; empty square, skip
-      (xy_box ($PieceColor $PieceRank) (cdr-atom $Board))
+      (xy_box_recursive ($PieceColor $PieceRank) (cdr-atom $Board))
       ; else check this piece
       (let* (
             ($next_color (nth 3 $next_square) )
@@ -494,7 +531,7 @@
                 ; return x and y of the found piece
                 ($next_x $next_y)
                 ; else keep checking the board
-                (xy_box ($PieceColor $PieceRank) (cdr-atom $Board)))))))
+                (xy_box_recursive ($PieceColor $PieceRank) (cdr-atom $Board)))))))
   
 ;
 ;
@@ -503,21 +540,21 @@
 ;
 
 
-(: (clear_route) (-> Expression Expression Expression Bool))
-; Return True if there is a clear route for piece else False.
+(: (clear_route) (-> Expression Expression  Bool))
+; Return True if there is a clear route for piece else False. The first parm is starting square, 2nd parm destination, returns BOOL.
 ; Note: prior to calling clear_route verify that the piece is moving to a different square and
 ; if the square is occupied it is occupied by the opponent's color. These tests are not duplicated by clear_route!
 
 ; TEST ONLY
-;(= (clear_route ($X1 $Y1 $COLOR p) $destination $Board) True)
-;(= (clear_route ($X1 $Y1 $COLOR r) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR n) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR b) $destination $Board) False)
-(= (clear_route ($X1 $Y1 $COLOR q) $destination $Board) False)
-;(= (clear_route ($X1 $Y1 $COLOR k) $destination $Board) False)
+;(= (clear_route ($X1 $Y1 $COLOR p) $destination) True)
+;(= (clear_route ($X1 $Y1 $COLOR r) $destination) False)
+;(= (clear_route ($X1 $Y1 $COLOR n) $destination) False)
+;(= (clear_route ($X1 $Y1 $COLOR b) $destination) False)
+;(= (clear_route ($X1 $Y1 $COLOR q) $destination) False)
+;(= (clear_route ($X1 $Y1 $COLOR k) $destination) False)
 
 ; King: Moves one square in any direction.
-(= (clear_route ($X1 $Y1 $Color k) $destination $Board)
+(= (clear_route ($X1 $Y1 $Color k) $destination)
       (let*  (
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )          
@@ -539,8 +576,13 @@
         True
         False)))
 
+; Queen:  Either rook or bishop move works.
+(= (clear_route ($X1 $Y1 $Color q) $destination)
+      (xor (clear_route ($X1 $Y1 $Color b) $destination)
+           (clear_route ($X1 $Y1 $Color r) $destination)))
+
 ; Knight: Moves in an "L" shape (2 steps in one direction, 1 step perpendicular).
-(= (clear_route ($X1 $Y1 $Color n) $destination $Board)
+(= (clear_route ($X1 $Y1 $Color n) $destination)
       (let*  (
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )          
@@ -571,23 +613,9 @@
         True
         False)))
 
-;(= (clear_route #( :: ($A $B $C q) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (clear_route 
-;    #( :: 
-;      ($A $B $C r) ) 
-;    #(Cons $D 
-;      #(Cons $E $F)) $G))
-;(= (clear_route #( :: ($A $B $C q) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (clear_route 
-;    #( :: 
-;      ($A $B $C b) ) 
-;    #(Cons $D 
-;      #(Cons $E $F)) $G))
-
-
 
 ; Move gold AI pawn 
-(= (clear_route ($X1 $Y1 g p) $destination $Board)
+(= (clear_route ($X1 $Y1 g p) $destination)
   (let*
     ( 
       ($X2 (nth 1 $destination) )  
@@ -651,7 +679,7 @@
         False)))
 
 ; Move silver human pawn 
-(= (clear_route ($X1 $Y1 s p) $destination $Board)
+(= (clear_route ($X1 $Y1 s p) $destination)
   (let*
     ( 
       ($X2 (nth 1 $destination) )  
@@ -713,8 +741,8 @@
         False)))
 
 ; Rook: Moves horizontally or vertically.
-(= (clear_route ($X1 $Y1 $Color r) $destination $Board)
-      (let*  (
+(= (clear_route ($X1 $Y1 $Color r) $destination)
+      (let*  (   
       ($X2 (nth 1 $destination) )  
       ($Y2 (nth 2 $destination) )    
       ($RouteClearBool 
@@ -806,128 +834,92 @@
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
+; Bishop: Moves diagonally
+(= (clear_route ($X1 $Y1 $Color b) $destination)
+      (let*  (
+      ($X2 (nth 1 $destination) )  
+      ($Y2 (nth 2 $destination) )    
+      ($RouteClearBool 
+           ; if northeast
+           (if (and (> $X2 $X1) (> $Y2  $Y1))
+               (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2) 
+           ;elif southeast
+           (if (and (> $X2 $X1) (< $Y2  $Y1))
+               (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+           ;elif northwest
+           (if (and (< $X2 $X1) (> $Y2  $Y1))
+               (clearcheckNW (- $X1 1) (+ $Y1 1) $X2 $Y2)
+           ;elif southwest
+           (if (and (< $X2 $X1) (< $Y2  $Y1))
+               (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
+            ; otherwise bishop bad move
+               False))))
+      ))
+      (if  
+          (== $RouteClearBool True)
+        True
+        False
+        )))
 
-;    B > C.  % Stop when the current rank exceeds the ending rank.
-;checkclearup(A, B, C, D) :-
-;    return_entire_box([A, B], E, D),  % Get the box details at (A, B).
-;    len(E, 2),                        % Ensure the box is empty.
-;    F is B + 1,                       % Move one rank up.
-;    checkclearup(A, F, C, D).         % Recursively check the next rank.
+(: clearcheckNE (-> Atom Atom Atom Atom Bool))
+(: clearcheckSE (-> Atom Atom Atom Atom Bool))
+(: clearcheckNW (-> Atom Atom Atom Atom Bool))
+(: clearcheckSW (-> Atom Atom Atom Atom Bool))
 
 
+(= (clearcheckNE $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
 
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (+ $A 1)) 
-;      (is $E 
-;        (+ $B 1))) 
-;    (, 
-;      (> $D $A) 
-;      (> $E $B) 
-;      (is $H 
-;        (+ $A 1)) 
-;      (is $I 
-;        (- $D 1)) 
-;      (is $J 
-;        (+ $B 1)) 
-;      (is $K 
-;        (- $E 1)) 
-;      (checkclearupBUR $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (+ $A 1)) 
-;      (is $E 
-;        (- $B 1))) 
-;    (, 
-;      (> $D $A) 
-;      (< $E $B) 
-;      (is $H 
-;        (+ $A 1)) 
-;      (is $I 
-;        (- $D 1)) 
-;      (is $J 
-;        (- $B 1)) 
-;      (is $K 
-;        (+ $E 1)) 
-;      (checkclearupBDR $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (- $A 1)) 
-;      (is $E 
-;        (+ $B 1))) 
-;    (, 
-;      (< $D $A) 
-;      (> $E $B) 
-;      (is $H 
-;        (- $A 1)) 
-;      (is $I 
-;        (+ $D 1)) 
-;      (is $J 
-;        (+ $B 1)) 
-;      (is $K 
-;        (- $E 1)) 
-;      (checkclearupBUL $H $J $I $K $G))))
-;(= (clear_route #( :: ($A $B $C b) ) #(Cons $D #(Cons $E $F)) $G)  
-;  (or 
-;    (, 
-;      (is $D 
-;        (- $A 1)) 
-;      (is $E 
-;        (- $B 1))) 
-;    (, 
-;      (< $D $A) 
-;      (< $E $B) 
-;      (is $H 
-;        (- $A 1)) 
-;      (is $I 
-;        (+ $D 1)) 
-;      (is $J 
-;        (- $B 1)) 
-;      (is $K 
-;        (+ $E 1)) 
-;      (checkclearupBDL $H $J $I $K $G))))
-;
-;
-;(= (checkclearup $A $B $C $D)  
-;  (> $B $C))
-;(= (checkclearup $A $B $C $D) (return_entire_box #( :: ($A $B) ) $E $D) (len $E 2) (is $F (+ $B 1)) ;(checkclearup $A $F $C $D))
-;
-;(= (checkclearleft $A $B $C $D)  
-;  (< $B $C))
-;(= (checkclearleft $A $B $C $D) (return_entire_box #( :: ($B $A) ) $E $D) (len $E 2) (is $F (- $B 1)) ;(checkclearleft $A $F $C $D))
-;
-;(= (checkclearright $A $B $C $D)  
-;  (> $B $C))
-;(= (checkclearright $A $B $C $D) (return_entire_box #( :: ($B $A) ) $E $D) (len $E 2) (is $F (+ $B 1)) ;(checkclearright $A $F $C $D))
-;
-;(= (checkcleardown $A $B $C $D)  
-;  (< $B $C))
-;(= (checkcleardown $A $B $C $D) (return_entire_box #( :: ($A $B) ) $E $D) (len $E 2) (is $F (- $B 1)) ;(checkcleardown $A $F $C $D))
-;
-;
-;(= (checkclearupBUR $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBUR $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (+ $A 1)) (is ;$H (+ $B 1)) (checkclearupBUR $G $H $C $D $E))
-;
-;(= (checkclearupBDR $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBDR $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (+ $A 1)) (is ;$H (- $B 1)) (checkclearupBDR $G $H $C $D $E))
-;
-;(= (checkclearupBUL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBUL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (+ $B 1)) (checkclearupBUL $G $H $C $D $E))
-;
-;(= (checkclearupBDL $A $B $C $D $E) (== $A $C) (== $B $D) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2))
-;(= (checkclearupBDL $A $B $C $D $E) (return_entire_box #( :: ($A $B) ) $F $E) (len $F 2) (is $G (- $A 1)) (is ;$H (- $B 1)) (checkclearupBDL $G $H $C $D $E))
-;
+(= (clearcheckSE $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
 
-; replace_square
-;   input: X, Y, color, rank
+(= (clearcheckNW $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckNW (- $X1 1) (+ $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+(= (clearcheckSW $X1 $Y1 $X2 $Y2) 
+   (let* (
+        ($next_box (return_entire_box ($X1 $Y1)))
+          )
+        (if (and (== $Y1 $Y2) (== $X1 $X2))
+          True
+              ; Not on destination, check for empty passing square
+          (if (== (size-atom $next_box) 2)
+              (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
+              ; if there is a piece in box we cannot move through this square (size 4 is occupied)
+              False))))
+
+
+; replace_square_recursive
+;   input: X, Y, color, rank, board
 ;   output:  new board which overwrites X and Y with new piece, or removes if NIL found for color.
-(= (replace_square $X1 $Y1 $color $rank $current_board) 
+(= (replace_square_recursive $X1 $Y1 $color $rank $current_board) 
    (if (== (size-atom $current_board) 0)
         ()
         (let* (
@@ -940,29 +932,66 @@
             (if (== $color NIL)
               (cons-atom ($X1 $Y1) $rest)   
               (cons-atom ($X1 $Y1 $color $rank) $rest)))
-          (let $rest (replace_square $X1 $Y1 $color $rank (cdr-atom $current_board)) 
+          (let $rest (replace_square_recursive $X1 $Y1 $color $rank (cdr-atom $current_board)) 
             (cons-atom $next-sq $rest))
         ))))
+
 ;
-; move_piece
+; (move_piece_on_board)
 ;   Input   starting square, target square, current board
 ;   Output: new board
-(= (move_piece $starting_square $target_square $current_board) 
+(= (move_piece_on_board $starting_square $target_square $current_board) 
   (let* (
     ; move to new square
     ($X1  (nth 1 $target_square))
     ($Y1  (nth 2 $target_square))
     ($color1 (nth 3 $starting_square))
     ($rank1  (nth 4 $starting_square))
-    ($new_board1 (replace_square $X1 $Y1 $color1 $rank1 $current_board))
+    ($new_board1 (replace_square_recursive $X1 $Y1 $color1 $rank1 $current_board))
     ; delete piece from old square
     ($X2  (nth 1 $starting_square))
     ($Y2  (nth 2 $starting_square))
     ($color NIL)
     ($rank  NIL)
-    ($new_board2 (replace_square $X2 $Y2 $color $rank $new_board1))
+    ($new_board2 (replace_square_recursive $X2 $Y2 $color $rank $new_board1))
         ) 
     $new_board2))
+
+   
+; (reset_square)
+; Input:  X and Y
+; Output: Removes atom for this square occupied or not
+(= (reset_square $X $Y)
+    (let $remove_box (return_entire_box ($X $Y)) 
+       (if (== (size-atom $remove_box) 4)
+          (remove-atom &self (square $X $Y $anycolor $anyrank))  ; piece captured!
+          (remove-atom &self (square $X $Y)))))
+    
+;
+; move_piece
+;   Input   starting square, target square, current board
+;   Output: new board
+(= (move_piece $starting_square $target_square) 
+  (let* (
+    ; delete piece from starting square
+    ($X1  (nth 1 $starting_square))
+    ($Y1  (nth 2 $starting_square))
+    ($color (nth 3 $starting_square))
+    ($rank  (nth 4 $starting_square))
+    ($starting_square_complete_atom (square $X1 $Y1 $color $rank))
+    ($_1 (remove-atom &self $starting_square_complete_atom))
+    ; create atom for empty starting square
+    ($old_square_complete (square $X1 $Y1))
+    ($_2 (add-atom &self $old_square_complete))
+    ; delete atom for whatever occupies the new square, if anything
+    ($X2  (nth 1 $target_square))
+    ($Y2  (nth 2 $target_square))
+    ($_3 (reset_square $X2 $Y2))
+    ; add piece at new square
+    ($new_square_complete (square $X2 $Y2 $color $rank))
+    ($_4 (add-atom &self $new_square_complete))    
+        ) 
+    True))
 ;
 ;
 ;(= (printmove $A $B $C) (nth1 1 $A $D) (nth1 2 $A $E) (nth1 3 $A $F) (nth1 4 $A $G) (nth1 1 $B $H) (nth1 2 $B ;$I) (or (, (len $B 4) (return_entire_box #( :: ($H $I) ) $J $C) (nth1 4 $J $K)) (= $K  nil)) (or (, (== $F g) ;(write 'DBD moves from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) (write and2) (write ;$I)) (, (== $F s) (write 'YOU move from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) ;(write and2) (write $I))) #(add-atom &self #(guimessage move $A $B $K)) (or (, (\= $K nil) (nl) (write 'Piece ;captured!! -> ') (write $K) (nl)) nl) (write 'Type c. for commands you can use.'))
@@ -1051,8 +1080,16 @@
 ; (takingboxes)
 ;
 ; Input:  pieces color to look for, board
+; Output: a piece of a color
+(= (takingboxes $OpponentColor)
+  (match &self (square $x $y $OpponentColor $p) 
+      ($x $y $OpponentColor $p)))
+
+; (takingboxes_recursive)
+;
+; Input:  pieces color to look for, board
 ; Output: a list of all pieces belonging to a given color w/ square coordinates.
-(= (takingboxes $OpponentColor $Board)
+(= (takingboxes_recursive $OpponentColor $Board)
    (if (== (size-atom $Board) 0)
         ; end of the line, return empty list
         ()
@@ -1060,40 +1097,36 @@
         (let $next-sq (car-atom $Board)
              ; if size = 2, square is empty
              (if (== (size-atom $next-sq) 2) 
-                  (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) $rest)
+                  (let $rest (takingboxes_recursive $OpponentColor (cdr-atom $Board)) $rest)
                   ;else check color
                   (let $NextColor (nth 3 $next-sq)
                       (if (== $NextColor $OpponentColor)
                         ; if same, add this square to the list to return
-                        (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) (cons-atom $next-sq $rest))
-                        (let $rest (takingboxes $OpponentColor (cdr-atom $Board)) $rest)))))))
+                        (let $rest (takingboxes_recursive $OpponentColor (cdr-atom $Board)) (cons-atom $next-sq $rest))
+                        (let $rest (takingboxes_recursive $OpponentColor (cdr-atom $Board)) $rest)))))))
 
 ;
 ; (list_clear_route)
 ;
 ; Input:  $Board, $Square that might be compromised, all pieces available to attack square in question $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
-(= (list_clear_route $Board $Square $CanAttack)
+(= (list_clear_route $Square $CanAttack)
    (if (== (size-atom $CanAttack) 0)
        ; end of the line
        ()
        ; check if next piece in $CanAttack can capture $Square, if so add to return list.
        (let* (
           ($next-sq (car-atom $CanAttack))
-          ($AttackBool (clear_route $next-sq $Square $Board))
+          ($AttackBool (clear_route $next-sq $Square))
              )
           (if (== $AttackBool True) 
-              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
-              (let $rest (list_clear_route $Board $Square (cdr-atom $CanAttack)) $rest)
+              (let $rest (list_clear_route $Square (cdr-atom $CanAttack)) (cons-atom $next-sq $rest))
+              (let $rest (list_clear_route $Square (cdr-atom $CanAttack)) $rest)
           )
        )
    ) 
 )
 
-;(= (list_clear_route $A $B #(Cons $C $D) #(Cons $C $E)) (clear_route $C $B $A) (list_clear_route $A $B $D $E))
-;(= (list_clear_route $A $B #(Cons $C $D) $E)  
-;  (list_clear_route $A $B $D $E))
-;
 ;
 ;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
 ;  #( :: 
@@ -1190,31 +1223,33 @@
              ; OK to take another piece, check color is not the same...
              (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
       ; Validate the path for the piece.
-      (if (== (clear_route $h $i $starting_board) True)               
+      (if (== (clear_route $h $i) True)               
         ; Try moving piece provisionally
         (let* ( 
-            ; Try the move and update the board state. 
-            ($provisional_board  (move_piece $h $i $starting_board))   
-            ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
-            ($_NIL (reset-pieces $provisional_board))
+            ; Try the move and update the board state.   
+            ($MoveBool  (move_piece $h $i))   
             ; locate human's king
-            ($king_square (xy_box (s k) $provisional_board))    
+            ($king_square (xy_box (s k)))    
             ; 
             ($full_king_sq (return_entire_box $king_square))  
-            ; Ensure the player's king is not in check from gold (g) if moved.     
-            ($KingCompromised (take_dest $full_king_sq g $provisional_board))
-              )   
+            ; Ensure the player's king is not in check from gold (g) if moved.  
+            ($KingCompromised (take_dest $full_king_sq g))
+                ) 
             ; If move valid, proceed to create new board atom with move.
-            (if (== $KingCompromised False)
+            (if (== $KingCompromised True)
+                ((py-atom print) "Can't move there, your king would be in check.")
+                ;else
                 (progn 
                 ; remove the old chess board
-                (match &self (board-state $starting_board) (remove-atom &self (board-state $starting_board)))
+                (match &self (board-state $starting_board) 
+                (remove-atom &self (board-state $starting_board)))
                 ; re-create a new board 
-                (add-atom &self (board-state $provisional_board))
+                ((py-atom print) "Moving piece...")
+                ;(println! $starting_board)
+                (let $provisional_board (move_piece_on_board $h $i $starting_board) (add-atom &self (board-state $provisional_board)))
                 ; display
                 (D)
                 )
-                ((py-atom print) "Can't move there, your king would be in check.")
             )
         )
         ((py-atom print) "Can't move piece there."))
