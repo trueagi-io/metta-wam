@@ -26,7 +26,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     :- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [source_file_text/2]).
+:- use_module(library(dcg/basics), [string_without//2]).
+
+:- use_module(lsp_metta_workspace, [source_file_text/2, maybe_doc_path/2]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the 'textDocument/formatting' Request and Format the Lisp Document
@@ -41,8 +43,11 @@ lsp_hooks:handle_msg_hook("textDocument/formatting", Msg, _{id: Id, result: Edit
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 format_lisp_document(Uri, Edits) :-
     source_file_text(Uri, Text),      % Retrieve the document text
-    split_string(Text, "\n", "", Lines),  % Split the text into lines
-    format_lisp_lines(Lines, 0, 0, FormattedLines),  % Format each line, starting with indent level 0 and open parentheses 0
+    split_string(Text, "\n", "", Lines),
+    string_codes(Text, Codes),
+    phrase(metta_lines(ParsedLines), Codes),
+    process_lines(0, ParsedLines, ProcessedLines),
+    lines_to_strings(ProcessedLines, FormattedLines),
     create_edit_list(Lines, FormattedLines, Edits).  % Create a list of edits based on the differences
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,6 +61,126 @@ format_lisp_lines([Line | Rest], IndentLevel, OpenParens, [FormattedLine | Forma
     format_lisp_lines(Rest, NewIndentLevel, NewOpenParens, FormattedRest).  % Format the rest of the lines
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parsing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+whitespace(N) -->
+    [C], { nonvar(C), code_type(C, white) },
+    whitespace(1, N).
+whitespace(N0, N) -->
+    [C],
+    { nonvar(C), code_type(C, white), !,
+      N1 is N0 + 1
+    },
+    whitespace(N1, N).
+whitespace(N, N) --> [].
+
+open_paren -->  "(".
+close_paren --> ")".
+
+comment(Comment) -->
+    ";", string_without("\n", Comment).
+
+metta_string(Content) -->
+    [0'"],
+    metta_string_content(Content, Content).
+
+metta_string_content(Content, Tail0) -->
+    [0'\\, C], !,
+    { Tail0 = [0'\\, C|Tail1] },
+    metta_string_content(Content, Tail1).
+metta_string_content(_, []) --> [0'"], !.
+metta_string_content(Content, Tail0) -->
+    [C],
+    { Tail0 = [C|Tail1] },
+    metta_string_content(Content, Tail1).
+
+text(Text) --> string_without(" \t\n()", Text), { Text \= [] }.
+
+metta_line([]) --> "\n", !.
+metta_line([white(N)|Rest]) --> whitespace(N), !, metta_line(Rest).
+metta_line([comment(Cs)|Rest]) -->
+    comment(C), !, { string_codes(Cs, C) },
+    metta_line(Rest).
+metta_line([string(S)|Rest]) -->
+    metta_string(C), !, { string_codes(S, C) },
+    metta_line(Rest).
+metta_line([open|Rest]) --> open_paren, !, metta_line(Rest).
+metta_line([close|Rest]) --> close_paren, !, metta_line(Rest).
+metta_line([atom(Text)|Rest]) -->
+    text(Codes), !, { string_codes(Text, Codes) },
+    metta_line(Rest).
+
+metta_lines([Line|Lines]) -->
+    metta_line(Line), !, metta_lines(Lines).
+metta_lines([]) --> [].
+
+% Process parsed lines
+
+drop_leading_white([white(_)|Rest], Rest) :- !.
+drop_leading_white(L, L).
+
+drop_trailing_white([], []) :- !.
+drop_trailing_white([white(_)], []) :- !.
+drop_trailing_white([X|Rest], [X|Rest0]) :- drop_trailing_white(Rest, Rest0).
+
+trim_whites(Line0, Line) :-
+    drop_leading_white(Line0, Line1),
+    drop_trailing_white(Line1, Line).
+
+line_net_parens(N, N, []) :- !.
+line_net_parens(N0, N, [open|Rest]) :- !,
+    N1 is N0 + 1,
+    line_net_parens(N1, N, Rest).
+line_net_parens(N0, N, [close|Rest]) :- !,
+    N1 is N0 - 1,
+    line_net_parens(N1, N, Rest).
+line_net_parens(N0, N, [_|Rest]) :-
+    line_net_parens(N0, N, Rest).
+
+
+process_line(Parens0, Parens1, Line0, Line) :-
+    trim_whites(Line0, Line1),
+    line_net_parens(Parens0, Parens1, Line1),
+    ( Parens0 > 0
+    -> Indent is Parens0 * 2,
+       Line = [white(Indent)|Line1]
+    ;  Line = Line1).
+
+process_lines(_Indent, [], []) :- !.
+process_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
+    process_line(Indent0, Indent1, Line0, Line1),
+    process_lines(Indent1, OldLines, NewLines).
+
+emit_line(_To, []) => true. % format(To, "~n", []).
+emit_line(To, [white(N)|Rest]) =>
+    length(Whites, N),
+    maplist(=(0' ), Whites),
+    format(To, "~s", [Whites]),
+    emit_line(To, Rest).
+emit_line(To, [comment(Comment)|Rest]) =>
+    format(To, ";~s", [Comment]),
+    emit_line(To, Rest).
+emit_line(To, [string(String)|Rest]) =>
+    format(To, "\"~s\"", [String]),
+    emit_line(To, Rest).
+emit_line(To, [open|Rest]) => format(To, "(", []), emit_line(To, Rest).
+emit_line(To, [close|Rest]) => format(To, ")", []), emit_line(To, Rest).
+emit_line(To, [atom(Atom)|Rest]) =>
+    format(To, "~w", [Atom]),
+    emit_line(To, Rest).
+
+emit_lines(To, [Line|Lines]) :-
+    emit_line(To, Line),
+    emit_lines(To, Lines).
+emit_lines(_, []).
+
+lines_to_strings([Line|Lines], [FormattedLine|FormattedLines]) :-
+    with_output_to(string(FormattedLine), emit_line(current_output, Line)),
+    lines_to_strings(Lines, FormattedLines).
+lines_to_strings([], []).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Trim Leading and Trailing Whitespace from a Line
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 trim_line(Line, TrimmedLine) :-
@@ -67,12 +192,16 @@ trim_line(Line, TrimmedLine) :-
 calculate_new_indent(Line, IndentLevel, OpenParens, NewIndentLevel, NewOpenParens) :-
     count_open_close_parens(Line, Opens, Closes),  % Count open and close parentheses
     NewOpenParens is OpenParens + Opens - Closes,  % Update the number of open parentheses
-    (NewOpenParens > OpenParens -> NewIndentLevel is IndentLevel + 2 ; NewIndentLevel is IndentLevel).
+    ParensDifference is NewOpenParens - OpenParens,
+    NewIndentLevel is IndentLevel + ParensDifference * 2.
+   % (NewOpenParens > OpenParens -> NewIndentLevel is IndentLevel + 2 ; NewIndentLevel is IndentLevel).
 
 % Helper to count open and close parentheses in a line
 count_open_close_parens(Line, Opens, Closes) :-
-    sub_atom_count(Line, '(', Opens),
-    sub_atom_count(Line, ')', Closes).
+    % TODO: don't count parens in comments! or strings! need to parse, really...
+    split_string(Line, ";", "", [NonCommented|_]),
+    sub_atom_count(NonCommented, '(', Opens),
+    sub_atom_count(NonCommented, ')', Closes).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Indent a Line Based on the Current Indentation Level
@@ -96,6 +225,20 @@ create_edit_list(Orig, Formatted, Edits) :-
     create_edit_list(0, Orig, Formatted, Edits).
 
 create_edit_list(_, [], [], []).
+create_edit_list(LineNum, [Line|Lines], [], [Edit|Edits]) :-
+    string_length(Line, LenLen),
+    Edit = _{range: _{start: _{line: LineNum, character: 0},
+                      end: _{line: LineNum, character: LenLen}},
+            newText: ""},
+    succ(LineNum, LineNum1),
+    create_edit_list(LineNum1, Lines, [], Edits).
+create_edit_list(LineNum, [], [NewLine|NewLines], [Edit|Edits]) :-
+    string_length(NewLine, LenLen),
+    Edit = _{range: _{start: _{line: LineNum, character: 0},
+                      end: _{line: LineNum, character: LenLen}},
+            newText: NewLine},
+    succ(LineNum, LineNum1),
+    create_edit_list(LineNum1, [], NewLines, Edits).
 create_edit_list(LineNum, [OrigLine | OrigRest], [FormattedLine | FormattedRest], Edits) :-
     (   OrigLine \= FormattedLine  % Only create an edit if the line has changed
     -> string_length(OrigLine, LineLen), %TODO: what should this be?

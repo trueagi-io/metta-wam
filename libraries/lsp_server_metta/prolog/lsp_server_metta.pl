@@ -74,6 +74,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- use_module(lsp_prolog_colours).
 :- use_module(lsp_metta_colours, [ metta_colours/2 ]).
 :- use_module(lsp_prolog_utils).
+:- use_module(lsp_metta_formatter).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 
@@ -689,7 +690,7 @@ server_capabilities(
         % semanticTokensProvider: false,  % Semantic tokens provider disabled as not fully implemented
 
         % Formatting
-        documentFormattingProvider: false,  % [TODO] Formatting provider is almost finished
+        documentFormattingProvider: true,
         documentOnTypeFormattingProvider: false,  % Disabled as it is not yet implemented
         foldingRangeProvider: false  % Folding support is disabled as it is not required currently
     }
