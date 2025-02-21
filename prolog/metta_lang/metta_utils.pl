@@ -4134,8 +4134,6 @@ maplist_([Elem1|Tail1], [Elem2|Tail2], [Elem3|Tail3], [Elem4|Tail4], [Elem5|Tail
     call(Goal, Elem1, Elem2, Elem3, Elem4, Elem5, Elem6, Elem7, Elem8),
     maplist_(Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Tail8, Goal).
 
-
-
 map_fold1(_,[],[],A,A).
 map_fold1(Pred,[X|Xt],[Y|Yt],A1,A3) :- call(Pred,X,Y,A1,A2),map_fold1(Pred,Xt,Yt,A2,A3).
 
