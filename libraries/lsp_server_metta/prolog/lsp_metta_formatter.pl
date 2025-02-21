@@ -51,16 +51,6 @@ format_lisp_document(Uri, Edits) :-
     create_edit_list(Lines, FormattedLines, Edits).  % Create a list of edits based on the differences
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Format Each Line According to Lisp Syntax and Indentation Rules
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-format_lisp_lines([], _, _, []).  % Base case: no more lines
-format_lisp_lines([Line | Rest], IndentLevel, OpenParens, [FormattedLine | FormattedRest]) :-
-    trim_line(Line, TrimmedLine),  % Remove trailing whitespace from the current line
-    calculate_new_indent(TrimmedLine, IndentLevel, OpenParens, NewIndentLevel, NewOpenParens),  % Determine the new indent level and open parentheses count
-    indent_line(TrimmedLine, IndentLevel, FormattedLine),  % Indent this line based on the old indent level
-    format_lisp_lines(Rest, NewIndentLevel, NewOpenParens, FormattedRest).  % Format the rest of the lines
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parsing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -115,7 +105,9 @@ metta_lines([Line|Lines]) -->
     metta_line(Line), !, metta_lines(Lines).
 metta_lines([]) --> [].
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process parsed lines
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 drop_leading_white([white(_)|Rest], Rest) :- !.
 drop_leading_white(L, L).
@@ -152,6 +144,9 @@ process_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
     process_line(Indent0, Indent1, Line0, Line1),
     process_lines(Indent1, OldLines, NewLines).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Emitting parsed lines back to strings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 emit_line(_To, []) => true. % format(To, "~n", []).
 emit_line(To, [white(N)|Rest]) =>
     length(Whites, N),
@@ -179,44 +174,6 @@ lines_to_strings([Line|Lines], [FormattedLine|FormattedLines]) :-
     with_output_to(string(FormattedLine), emit_line(current_output, Line)),
     lines_to_strings(Lines, FormattedLines).
 lines_to_strings([], []).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Helper: Trim Leading and Trailing Whitespace from a Line
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-trim_line(Line, TrimmedLine) :-
-    split_string(Line, "", "\t\s\n", [TrimmedLine]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Calculate New Indentation Level and Open Parentheses Count
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-calculate_new_indent(Line, IndentLevel, OpenParens, NewIndentLevel, NewOpenParens) :-
-    count_open_close_parens(Line, Opens, Closes),  % Count open and close parentheses
-    NewOpenParens is OpenParens + Opens - Closes,  % Update the number of open parentheses
-    ParensDifference is NewOpenParens - OpenParens,
-    NewIndentLevel is IndentLevel + ParensDifference * 2.
-   % (NewOpenParens > OpenParens -> NewIndentLevel is IndentLevel + 2 ; NewIndentLevel is IndentLevel).
-
-% Helper to count open and close parentheses in a line
-count_open_close_parens(Line, Opens, Closes) :-
-    % TODO: don't count parens in comments! or strings! need to parse, really...
-    split_string(Line, ";", "", [NonCommented|_]),
-    sub_atom_count(NonCommented, '(', Opens),
-    sub_atom_count(NonCommented, ')', Closes).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Helper: Indent a Line Based on the Current Indentation Level
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-indent_line(Line, IndentLevel, IndentedLine) :-
-    IndentSpaces is IndentLevel,  % Indentation level determines the number of spaces
-    generate_spaces(IndentSpaces, Spaces),  % Create the indent string
-    string_concat(Spaces, Line, IndentedLine).  % Prepend the spaces to the line
-
-generate_spaces(0, "") :- !.
-generate_spaces(N, Spaces) :-
-    N > 0,
-    N1 is N - 1,
-    generate_spaces(N1, SubSpaces),
-    string_concat(' ', SubSpaces, Spaces).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create a List of Edits from the Original and Formatted Lines
@@ -254,11 +211,3 @@ create_edit_list(LineNum, [OrigLine | OrigRest], [FormattedLine | FormattedRest]
     ),
     succ(LineNum, LineNum1),
     create_edit_list(LineNum1, OrigRest, FormattedRest, EditRest).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Helper to count the number of specific characters (e.g., '(' or ')')
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sub_atom_count(Line, Char, Count) :-
-    atom_chars(Line, Chars),
-    include(=(Char), Chars, CharList),
-    length(CharList, Count).
