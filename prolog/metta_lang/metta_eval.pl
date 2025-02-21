@@ -349,6 +349,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 :- discontiguous eval_20/6.
 :- discontiguous eval_21/6.
 %:- discontiguous eval_30/6.
+:- discontiguous eval_202/6.
 :- discontiguous eval_41/6.
 :- discontiguous eval_40/6.
 :- discontiguous eval_70/6.
@@ -438,7 +439,10 @@ eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
        Y = Name)),
       sanity_check_eval(eval_20_atom,Y).
 
-eval_20(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):-
+eval_20(Eq,RetType,Depth,Self,[Op|Args],Res):-
+       nonvar(Op), eval_202(Eq,RetType,Depth,Self,[Op|Args],Res).
+
+eval_202(_Eq,RetType,_Depth,_Self,[Sym|Args],Res):-
 %fail,
     atomic(Sym), py_is_function(Sym), is_list(Args), !,
     maplist(as_prolog, Args , Adjusted),!,
@@ -487,16 +491,13 @@ de_pcons([P],P,[P]):- !.
 de_pcons(Var,Var,VarT):-copy_term(Var,VarT).
 
 
-eval_20(Eq,RetType,Depth,Self,[PyAtom|Args],Res):-  fail,  is_list(Args), nonvar(PyAtom),
+eval_202(Eq,RetType,Depth,Self,[PyAtom|Args],Res):-  fail,  is_list(Args), nonvar(PyAtom),
     was_py_call(Eq,RetType,Depth,Self,PyAtom,Sym,Args,ParamList,DeclRetType),!,
     narrow_types(RetType,DeclRetType,CombinedRetType),!,
     apply_param_types_return(Depth, Self,Args,Res,ParamList,CombinedRetType,Adjusted,Ret),
     py_call_method_and_args(Sym,Adjusted,Ret),
     py_metta_return_value(RetType,Ret,Res).
 
-
-eval_20(Eq,RetType,Depth,Self,[Op|Args],Res):-
-   nonvar(Op), eval_202(Eq,RetType,Depth,Self,[Op|Args],Res).
 
 legal_op(X):- must_det_lls(nonvar(X)).
 
@@ -536,9 +537,9 @@ op_to_pred_call_ret(PyAtom,Pred2,Ret3):-
   Pred2= py_call_method_and_args(Sym),
   Ret3= py_metta_return_value().
 
-eval_20(_Eq,_RetType,Depth,Self, ['apply-param-types',Convert,Args],Res):- !, apply_param_types(Depth, Self, Convert, Args , Res).
+eval_202(_Eq,_RetType,Depth,Self, ['apply-param-types',Convert,Args],Res):- !, apply_param_types(Depth, Self, Convert, Args , Res).
 
-eval_20(_Eq,_RetType,Depth,Self, ['apply-param-type',Convert,Arg],Res):- !, apply_param_type(Depth, Self, Convert, Arg, Res).
+eval_202(_Eq,_RetType,Depth,Self, ['apply-param-type',Convert,Arg],Res):- !, apply_param_type(Depth, Self, Convert, Arg, Res).
 
 
 % ((py-atom type) "string")    <class 'str'>
@@ -990,7 +991,7 @@ eval_20(Eq,RetType,Depth,Self,['trace',Cond],Res):- !, with_debug(eval_args,eval
 eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond),profile(eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
-eval_20(Eq,RetType,Depth,Self,['time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
 eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(print! $1)
 eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
@@ -1088,6 +1089,12 @@ tf_to_empty(TF,Else,RetVal):-
 
 val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
 val_sort(Y,[Y]).
+
+'broken-unique-atom'(I,O):- unique_by_unify(I,[],O).
+unique_by_unify(L,M,O):- \+ iz_conz(L),!,M=O.
+unique_by_unify([H|T],M,O):- \+ member(H,M),!,unique_by_unify(T,[H|M],O).
+unique_by_unify(_,M,O):- reverse(M,O).
+
 
 loonit_assert_source_tf(_Src,Goal,Check,TF):- fail, \+ is_testing,!,
     reset_eval_num,
@@ -1212,13 +1219,53 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
-'mx_2__=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
-'mx_2__=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
+'mi_2__=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
+'mi_2__=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
+/*
+    % ============================
+    %  Theoretical Equivalence & Unification (Check Possibility Only)
+    % ============================
+
+    % =alpha: Checks if two terms are structurally equivalent, allowing variable renaming.
+    'mi_2__=alpha'(X0, Y0, TF) :-
+        as_tf('=@='(X0, Y0), TF).
+
+*/
+% =will: Checks if unification *could* succeed without actually binding variables.
+'mi_2__=will'(X0, Y0, TF) :-
+    as_tf(\+ \+ (X0 = Y0), TF).
+
 alpha_equ(X,Y):- X=@=Y->wdmsg(alpha_equ(X,Y));wdmsg(not_alpha_equ(X,Y)).
 not_alpha_equ(X,Y):- X\=@=Y->wdmsg(not_alpha_equ(X,Y));wdmsg(alpha_equ(X,Y)).
 
 remove_attr(Attr,Var):- del_attr(Var, Attr).
 with_attr(Attr,Var,Value):- get_attr(Var, Attr, Value).
+
+% ============================
+%  Unification Predicates (Perform Binding)
+% ============================
+
+% =unify: Actually unifies two terms, modifying variable bindings.
+'mi_2__=unify'(X0, Y0, TF) :-
+    as_tf(X0 = Y0, TF).
+
+% =alpha-unify: Unifies two terms while considering alpha-equivalence.
+%'mi_2__=alpha-unify'(X0, Y0, TF) :-
+%    '=@='(X0, Y0),
+%    as_tf(X0 = Y0, TF).
+
+% ============================
+%  Strict Identity & Reference Predicates
+% ============================
+
+% =identical: Checks if two terms are *strictly* identical, including variables & bindings.
+'mi_2__=identical'(X0, Y0, TF) :-
+    as_tf(X0 == Y0, TF).
+
+% =references: Checks if two terms reference the *exact same* memory object.
+'mi_2__=references'(X0, Y0, TF) :-
+    as_tf(same_terms(X0, Y0), TF).  % SWI-Prolog only
+
 
 %make_some( $foo,  (made $some $foo))
 %make_some( $bar,  (made $some $bar))
@@ -1271,15 +1318,20 @@ get_attrs_or_nil(Var, Attributes) :-
 %  Adds attributes to the attributed variable Var.
 %  AttributesToAdd is a term of the form att(Module, Value, MoreAttributes).
 %  If the module and value already exist, they are skipped.
+push_attributes(Var,Attrs):-
+  push_attributes_onto_var(Attrs,Var), ! .
 
-push_attributes([], _Var) :- !.
-push_attributes(att(Mod, Val, Rest), Var) :-
+push_attributes_onto_var(Attrs,_):- var(Attrs),!,trace,break. % var(Var)
+%push_attributes_onto_var(Attrs,Var):- var(Attrs),var(Var),!.
+push_attributes_onto_var(_,Var):- nonvar(Var),!,trace,break. % var(Var)
+push_attributes_onto_var([], _Var) :- !.
+push_attributes_onto_var(att(Mod, Val, Rest), Var) :-
     get_attr(Var, Mod, Existing), !,
     (Existing == Val -> true ; (get_attrs(Var,Att3Before), put_attrs(Var,att(Mod, Val, Att3Before)))),
-    push_attributes(Rest, Var).
-push_attributes(att(Mod, Val, Rest), Var) :-
+    push_attributes_onto_var(Rest, Var).
+push_attributes_onto_var(att(Mod, Val, Rest), Var) :-
     put_attr(Var, Mod, Val),
-    push_attributes(Rest, Var).
+    push_attributes_onto_var(Rest, Var).
 
 equal_renumbered(X0,Y0,XX,YY):-
    copy_term(X0+Y0,X+Y),
@@ -2678,13 +2730,18 @@ lazy_union(P2, E1^Call1, E2^Call2, E) :-
 variant_by_type(X,Y):- var(X),!,X==Y.
 variant_by_type(X,Y):- X=@=Y.
 
+call_as_p2(P2,X,Y):-
+   once(eval([P2,X,Y],TF)),
+   TF = 'True'.
+
+
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
-eval_20(Eq,RetType,Depth,Self,['pred-unique',P2,Eval],RetVal):- !,
-   no_repeats_var(P2,YY),
+eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
+   no_repeats_var(call_as_p2(P2),YY),
    eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 
@@ -2693,8 +2750,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['pred-subtraction',P2,Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['subtraction-by',P2,Eval1,Eval2],RetVal):- !,
+    lazy_subtraction(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -2703,8 +2760,8 @@ eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['pred-union',P2,Eval1,Eval2],RetVal):- !,
-    lazy_union(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
+    lazy_union(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -2716,8 +2773,8 @@ eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['pred-intersection',P2,Eval1,Eval2],RetVal):- !,
-    lazy_intersection(P2,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['intersection-by',P2,Eval1,Eval2],RetVal):- !,
+    lazy_intersection(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -2920,12 +2977,26 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
     apply(Fn,PArgs).
 */
 
-eval_20(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
-    length(Args,Len),succ(Len,LenP1),
-    symbolic_list_concat(['mx_',Len,'__',Sym],Fn),
-    current_predicate(Fn/LenP1),!,
-    append(Args,[Res],PArgs),
-    with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
+:- dynamic mi_predicate_cache/4.  % Cache (Symbol, Arity, PredicateName, Exists)
+
+% Lookup predicate with full caching (symbol, arity, predicate name, existence)
+cached_predicate_lookup(Sym, Arity, Fn, Exists) :-
+    mi_predicate_cache(Sym, Arity, Fn, Exists), !.  % Cached result found, return it
+cached_predicate_lookup(Sym, Arity, Fn, Exists) :-
+    symbolic_list_concat(['mi_', Arity, '__', Sym], Fn),  % Compute predicate name
+    (current_predicate(Fn/Arity) -> Exists = true ; Exists = false),
+    asserta(mi_predicate_cache(Sym, Arity, Fn, Exists)).  % Cache symbol, arity, predicate name, and existence
+
+% Main evaluation predicate with full caching
+eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
+    symbol(Sym), is_list(Args),
+    length(Args, Len), succ(Len, LenP1),
+    cached_predicate_lookup(Sym, LenP1, Fn, Exists),
+    Exists == true, !,  % If cached as non-existent, fail early
+    append(Args, [Res], PArgs),
+    with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
+
+
 
 eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     length(Args,Len),succ(Len,LenP1),

@@ -372,7 +372,7 @@ check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).
 check_has_directive(call(N=V)) :- nonvar(N), !, set_directive(N, V).
 % Enable rtrace debugging and restart reading.
-check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !, rtrace, notrace(throw(restart_reading)).
+% check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !. % rtrace, notrace(throw(restart_reading)).
 % Handle expressions in the form of N=V.
 check_has_directive(NEV) :- symbol(NEV), symbolic_list_concat([N, V], '=', NEV), set_directive(N, V).
 % Handle directive in the form [@Name, Value].
@@ -569,7 +569,7 @@ repl_read_next(NewAccumulated, Expr) :-
 
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
-    if_t(flag(need_prompt,1,0),(nl,set_metta_prompt)),
+    if_t(flag(need_prompt,1,0),(format('~N'),set_metta_prompt)),
         % On windows we need to output the prompt again
     (is_win64-> (ttyflush,prompt(P, P),write(P), ttyflush) ; true),
     % Read a line from the current input stream.

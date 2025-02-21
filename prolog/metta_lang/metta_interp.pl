@@ -1787,6 +1787,9 @@ user_io(G) :-
 %   @arg Goal The Prolog goal to execute with appropriate output redirection.
 %
 user_io_0(G) :-
+    nb_current('$dont_redirect_output', true), !,
+    call(G).
+user_io_0(G) :-
     % If in MettaLog runtime mode, output to the error stream.
     current_prolog_flag(mettalog_rt, true), !,
     original_user_error(Out),
@@ -2609,7 +2612,8 @@ run_cmd_args :-
     % Enable debugging on interrupt signals.
     set_prolog_flag(debug_on_interrupt, true),
     % Execute the remaining command-line processing.
-    do_cmdline_load_metta(execute).
+    do_cmdline_load_metta(execute),
+    maybe_do_repl(run_cmd_args).
 
 %!  metta_make_hook is det.
 %
@@ -2934,9 +2938,13 @@ before_arfer_dash_dash(Rest, Args, NewRest) :-
 %     ?- cmdline_load_metta(execute, '&self', ['--args', '--file=example.metta']).
 %
 
+maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
+
+
 % Base case: succeed when the argument list is empty.
 cmdline_load_metta(_, _, Nil) :-
     Nil == [], !.
+
 % Handle double-dash (`--`) by skipping it and continuing with the rest of the arguments.
 cmdline_load_metta(Phase, Self, ['--' | Rest]) :-
     !,
@@ -3037,6 +3045,7 @@ load_ontology.
 
 %cmdline_load_file(Self, Filemask):- is_converting, !,
 cmdline_load_file(Self, Filemask) :-
+    flag(cmdline_load_file,X,X+1),
     % Construct the source for file loading.
     Src = (user:load_metta_file(Self, Filemask)),
     % Use `catch_abort/2` to handle exceptions during file loading.
@@ -6709,11 +6718,9 @@ need_interaction :-
 %     % Perform pre-halt checks:
 %     ?- pre_halt1.
 %
-pre_halt1 :-
-    % Skip halting if the system is compiling.
+pre_halt1 :- % Skip halting if the system is compiling.
     is_compiling, !, fail.
-pre_halt1 :-
-    % Generate a `loonit_report` and fail.
+pre_halt1 :- % Generate a `loonit_report` and fail.
     loonit_report, fail.
 
 %!  pre_halt2 is nondet.
@@ -6770,9 +6777,11 @@ maybe_halt(_) :-
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
     option_value('repl', false), !, halt(Seven).
+
 maybe_halt(Seven) :-
     % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
     option_value('halt', true), !, halt(Seven).
+
 maybe_halt(_) :-
     % Perform extended halting checks (`pre_halt2`) and fail.
     once(pre_halt2), fail.
@@ -7003,9 +7012,8 @@ nts :-
 %   disables further redefinition by cutting execution early. If redefinition
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
-nts1 :-
-    % Disable redefinition by cutting execution.
-    !.
+
+% nts1 :- !. % Disable redefinition by cutting execution.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
@@ -7026,7 +7034,7 @@ nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
- :-nts1.
+:-nts1.
 :- initialization(nts1).
 %!  nts0 is det.
 %

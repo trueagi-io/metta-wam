@@ -1,5 +1,7 @@
 ;; Type Declarations with Documentation
 
+(is-mettalog)
+
 (@doc Any
   (@desc "The universal type; any value belongs to this type."))
 (: Any Type)
@@ -1287,41 +1289,6 @@ For example:
 ; TODO: MINIMAL added for compatibility, remove after migration
 ;(= (empty-minimal) Empty)
 
-(iz unique MeTTa)
-(@doc unique
-  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
-  (@params (
-    (@param "Non-deterministic set of values")))
-  (@return "Unique non-deterministic values from input set"))
-(: unique (-> Atom Atom))
-
-(iz union MeTTa)
-(@doc union
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Union of sets"))
-(: union (-> Atom Atom Atom))
-
-(iz intersection MeTTa)
-(@doc intersection
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Intersection of sets"))
-(: intersection (-> Atom Atom Atom))
-
-(iz subtraction MeTTa)
-(@doc subtraction
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
-  (@params (
-    (@param "Non-deterministic set of values")
-    (@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Subtraction of sets"))
-(: subtraction (-> Atom Atom Atom))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2083,10 +2050,323 @@ For example:
   (@return "Returns uniformly distributed random boolean value"))
 
 
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                     NON-DETERMINISTIC SET OPERATIONS                  ;;
+;;                                                                        ;;
+;; These functions operate on non-deterministic sets (represented using   ;;
+;; `superpose`). They perform basic set operations without the need for a ;;
+;; comparator predicate.                                                  ;;
+;;                                                                        ;;
+;; Functions:                                                             ;;
+;;   - `unique`        : Removes duplicate values                         ;;
+;;   - `union`         : Merges two sets, preserving duplicates           ;;
+;;   - `intersection`  : Returns values present in both sets              ;;
+;;   - `subtraction`   : Removes elements found in the second set         ;;
+;;                                                                        ;;
+;; These functions assume elements are compared strictly for equality.    ;;
+;; They do not account for variable unification or alpha equivalence.     ;;
+;;                                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(iz unique MeTTa)
+(@doc unique
+  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
+  (@params (
+	(@param "Non-deterministic set of values")))
+  (@return "Unique non-deterministic values from input set"))
+(: unique (-> Atom Atom))
+
+(iz union MeTTa)
+(@doc union
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Union of sets"))
+(: union (-> Atom Atom Atom))
+
+(iz intersection MeTTa)
+(@doc intersection
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Intersection of sets"))
+(: intersection (-> Atom Atom Atom))
+
+(iz subtraction MeTTa)
+(@doc subtraction
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Subtraction of sets"))
+(: subtraction (-> Atom Atom Atom))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;              NON-DETERMINISTIC SET OPERATIONS WITH PREDICATES          ;;
+;;                                                                        ;;
+;; These functions extend basic set operations by introducing a comparator;;
+;; predicate as the first argument. The predicate determines how          ;;
+;; elements are compared for equality, unification, or identity.          ;;
+;;                                                                        ;;
+;; A few examples of comparator predicates:                              ;;
+;;   - =alpha       : Structural equivalence, allowing variable renaming  ;;
+;;   - =identical   : Strict structural identity, including bindings       ;;
+;;   - =will   : Checks if unification is possible in any way         ;;
+;;   - =unify       : Standard unification with side effects               ;;
+;;   - =references  : Ensures atoms refer to the same memory object        ;;
+;;                                                                        ;;
+;; Functions:                                                             ;;
+;;   - `unique-by`       : Removes duplicates using a custom predicate  ;;
+;;   - `union-by`        : Merges two sets with predicate-based checks  ;;
+;;   - `intersection-by` : Computes intersection using a predicate      ;;
+;;   - `subtraction-by`  : Subtracts elements based on a predicate      ;;
+;;                                                                        ;;
+;; These functions handle **non-deterministic data**, using `superpose`.  ;;
+;;                                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(iz unique-by MeTTaLog)
+(@doc unique-by
+  (@desc "Function takes a comparator predicate and a non-deterministic input (second argument) and returns only unique entities according to the predicate. 
+  E.g. (unique-by =alpha (superpose (a b c d d))) -> [a, b, c, d]")
+  (@params (
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Non-deterministic set of values")))
+  (@return "Unique non-deterministic values from input set based on predicate"))
+(: unique-by (-> Atom Atom Atom))
+
+(iz union-by MeTTaLog)
+(@doc union-by
+  (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their union. 
+  E.g. (union-by =unify (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
+  (@params (
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Union of sets based on predicate"))
+(: union-by (-> Atom Atom Atom Atom))
+
+(iz intersection-by MeTTaLog)
+(@doc intersection-by
+  (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their intersection. 
+  E.g. (intersection-by =will (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
+  (@params (
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Intersection of sets based on predicate"))
+(: intersection-by (-> Atom Atom Atom Atom))
+
+(iz subtraction-by MeTTaLog)
+(@doc subtraction-by
+  (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their subtraction. 
+  E.g. !(subtraction-by =identical (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
+  (@params (
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Subtraction of sets based on predicate"))
+(: subtraction-by (-> Atom Atom Atom Atom))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                    UNIFICATION AND EQUIVALENCE PREDICATES              ;;
+;;                                                                        ;;
+;; These predicates determine whether two atoms can unify or are          ;;
+;; structurally equivalent. Some predicates actively perform unification, ;;
+;; while others only check whether unification *could* occur.             ;;
+;;                                                                        ;;
+;; **Theoretical Equivalence & Unification Predicates (Check Possibility Only):** ;;
+;;   - `=alpha`        : Checks if two atoms are structurally equivalent, ;;
+;;                       allowing renaming, but does **not** unify them.  ;;
+;;   - `=will`         : Checks if two atoms *could* unify in theory, but ;;
+;;                       does **not** modify bindings or unify variables. ;;
+;;                                                                        ;;
+;; **Unification Predicates (Perform Binding):**                          ;;
+;;   - `=unify`        : **Performs** unification and binds variables.    ;;
+;;   - `=alpha-unify`  : **Performs** unification with variable renaming. ;;
+;;                                                                        ;;
+;; **Strict Identity & Reference Predicates:**                            ;;
+;;   - `=identical`    : Checks if two atoms are strictly identical,      ;;
+;;                       including variable names and bindings.           ;;
+;;   - `=references`   : Checks if two atoms reference the **same**       ;;
+;;                       underlying entity in memory.                     ;;
+;;                                                                        ;;
+;; Predicates in the "Perform Binding" category actively modify variable  ;;
+;; bindings when successful. The "Check Possibility Only" predicates do   ;;
+;; **not** modify bindings; they merely verify whether equivalence or     ;;
+;; unification might be possible.                                         ;;
+;;                                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(iz =alpha MeTTa)
+(@doc =alpha
+  (@desc "Predicate that **checks** if two atoms are structurally equivalent, allowing variable renaming.
+  Unlike `=alpha-unify`, this predicate does **not** perform unification or modify variables—it only verifies whether the two atoms *could* be equivalent with renaming.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if the atoms are structurally equivalent with renaming, false otherwise."))
+(: =alpha (-> Atom Atom Bool))
+
+(iz =will MeTTaLog)
+(@doc =will
+  (@desc "Predicate that **checks** if two atoms *could* unify in theory but does **not** perform unification.
+  Unlike `=unify`, this only verifies whether unification is **possible** without actually binding variables.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if unification is theoretically possible, false otherwise."))
+(: =will (-> Atom Atom Bool))
+
+(iz =unify MeTTaLog)
+(@doc =unify
+  (@desc "Predicate that determines if two atoms can be unified under standard unification rules, meaning they can be made identical by substituting variables appropriately. 
+  We do **not** use `==` because `(== $x $y)` would be untrue and have **no side effects**, whereas `=unify` performs unification where possible.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if the atoms can be unified, false otherwise."))
+(: =unify (-> Atom Atom Bool))
+
+(iz =alpha-unify MeTTaLog)
+(@doc =alpha-unify
+  (@desc "Predicate that **performs** unification while considering alpha-equivalence. 
+  It allows variable renaming where necessary to achieve successful unification.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if the atoms unify successfully, considering alpha-equivalence."))
+(: =alpha-unify (-> Atom Atom Bool))
+
+(iz =identical MeTTaLog)
+(@doc =identical
+  (@desc "Predicate that determines if two atoms are completely identical in structure, including variable names and their bindings. 
+  This is a stricter comparison than `=alpha` or `=unify`, ensuring that variables and their values match exactly.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if the atoms are strictly identical, false otherwise."))
+(: =identical (-> Atom Atom Bool))
+
+(iz =references MeTTaLog)
+(@doc =references
+  (@desc "Predicate that determines if two atoms reference the **same** underlying entity in memory. 
+  This is the strictest form of equality, ensuring the atoms are not just identical in structure but are literally the **same instance**.")
+  (@params (
+	(@param "First atom")
+	(@param "Second atom")))
+  (@return "True if the atoms reference the same object, false otherwise."))
+(: =references (-> Atom Atom Bool))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                   TUPLE-BASED SET OPERATIONS WITH PREDICATES           ;;
+;;                                                                        ;;
+;; These functions extend tuple-based set operations by introducing a     ;;
+;; comparator predicate as the first argument. This allows elements to be ;;
+;; compared using unification, alpha equivalence, or strict identity.     ;;
+;;                                                                        ;;
+;; A few examples of comparator predicates:                              ;;
+;;   - =alpha       : Structural equivalence, allowing variable renaming  ;;
+;;   - =identical   : Strict structural identity, including bindings       ;;
+;;   - =will   : Checks if unification is possible in any way         ;;
+;;   - =unify       : Standard unification with side effects               ;;
+;;   - =references  : Ensures atoms refer to the same memory object        ;;
+;;                                                                        ;;
+;; Functions:                                                             ;;
+;;   - `unique-atom-by`       : Removes duplicates using a predicate    ;;
+;;   - `union-atom-by`        : Merges two tuples with predicate-based  ;;
+;;   - `intersection-atom-by` : Computes intersection using a predicate ;;
+;;   - `subtraction-atom-by`  : Subtracts elements based on a predicate ;;
+;;                                                                        ;;
+;; These functions handle **tuple-based data**, using `superpose` where   ;;
+;; necessary to ensure compatibility with non-deterministic operations.   ;;
+;;                                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(iz unique-atom-by MeTTaLog)
+(@doc unique-atom-by
+  (@desc "Function takes a comparator predicate and a tuple and returns only unique entities according to the predicate. 
+  E.g. (unique-atom-by =alpha (a b c d d)) -> (a b c d)")
+  (@params (
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "List of values")))
+  (@return "Unique values from input set based on predicate"))
+(: unique-atom-by (-> Atom Expression Expression))
+(= (unique-atom-by $Pred $L1)
+  (collapse (unique-by $Pred (superpose $L1))))
+
+
+(iz union-atom-by MeTTaLog)
+(@doc union-atom-by
+  (@desc "Function takes a comparator predicate and two tuples and returns their union. 
+  E.g. (union-atom-by =unify (a b b c) (b c c d)) -> (a b b c b c c d)")
+  (@params (
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Union of sets based on predicate"))
+(= (union-atom-by $Pred $L1 $L2)
+  (collapse (union-by $Pred (superpose $L1) (superpose $L2))))
+(: union-atom-by (-> Atom Expression Expression Expression))
+
+(iz intersection-atom-by MeTTaLog)
+(@doc intersection-atom-by
+  (@desc "Function takes a comparator predicate and two tuples and returns their intersection. 
+  E.g. (intersection-atom-by =will (a b c c) (b c c c d)) -> (b c c)")
+  (@params (
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Intersection of sets based on predicate"))
+(= (intersection-atom-by $Pred $L1 $L2)
+  (collapse (intersection-by $Pred (superpose $L1) (superpose $L2))))
+(: intersection-atom-by (-> Atom Expression Expression Expression))
+
+(iz subtraction-atom-by MeTTaLog)
+(@doc subtraction-atom-by
+  (@desc "Function takes a comparator predicate and two tuples and returns their subtraction. 
+  E.g. (subtraction-atom-by =identical (a b b c) (b c c d)) -> (a b)")
+  (@params (
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "List of values")
+    (@param "List of values")))
+  (@return "Subtraction of sets based on predicate"))
+(= (subtraction-atom-by $Pred $L1 $L2)
+  (collapse (subtraction-by $Pred (superpose $L1) (superpose $L2))))
+(: subtraction-atom-by (-> Atom Expression Expression Expression))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                        TUPLE-BASED SET OPERATIONS                      ;;
+;;                                                                        ;;
+;; These functions operate on **tuples** instead of non-deterministic     ;;
+;; sets. They provide the same core operations but assume that inputs     ;;
+;; are lists of values rather than `superpose` expressions.               ;;
+;;                                                                        ;;
+;; Functions:                                                             ;;
+;;   - `unique-atom`        : Removes duplicate values in a tuple         ;;
+;;   - `union-atom`         : Merges two tuples, preserving duplicates    ;;
+;;   - `intersection-atom`  : Returns values found in both tuples         ;;
+;;   - `subtraction-atom`   : Removes elements found in the second tuple  ;;
+;;                                                                        ;;
+;; These functions assume strict equality comparisons.                    ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (@doc unique-atom
   (@desc "Function takes tuple and returns only unique entities. E.g. (unique-atom (a b c d d)) -> (a b c d)")
   (@params (
-    (@param "List of values")))
+	(@param "List of values")))
   (@return "Unique values from input set"))
 (= (unique-atom $L1)
   (collapse (unique (superpose $L1))))
@@ -2095,8 +2375,8 @@ For example:
 (@doc union-atom
   (@desc "Function takes two tuples and returns their union. E.g. (union-atom (a b b c) (b c c d)) -> (a b b c b c c d)")
   (@params (
-    (@param "List of values")
-    (@param "List of values")))
+	(@param "List of values")
+	(@param "List of values")))
   (@return "Union of sets"))
 (= (union-atom $L1 $L2)
   (collapse (union (superpose $L1) (superpose $L2))))
@@ -2105,8 +2385,8 @@ For example:
 (@doc intersection-atom
   (@desc "Function takes two tuples and returns their intersection. E.g. (intersection-atom (a b c c) (b c c c d)) -> (b c c)")
   (@params (
-    (@param "List of values")
-    (@param "List of values")))
+	(@param "List of values")
+	(@param "List of values")))
   (@return "Intersection of sets"))
 (= (intersection-atom $L1 $L2)
   (collapse (intersection (superpose $L1) (superpose $L2))))
@@ -2115,12 +2395,20 @@ For example:
 (@doc subtraction-atom
   (@desc "Function takes two tuples and returns their subtraction. E.g. !(subtraction-atom (a b b c) (b c c d)) -> (a b)")
   (@params (
-    (@param "List of values")
-    (@param "List of values")))
+	(@param "List of values")
+	(@param "List of values")))
   (@return "Subtraction of sets"))
 (= (subtraction-atom $L1 $L2)
   (collapse (subtraction (superpose $L1) (superpose $L2))))
 (: subtraction-atom (-> Expression Expression Expression))
+
+
+
+
+
+
+
+
 
 (iz git-module! MeTTa)
 (@doc git-module!
