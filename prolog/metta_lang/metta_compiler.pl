@@ -343,7 +343,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
  must_det_lls((
    current_self(Space),
-  subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
+   subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    HeadIs=[FnName|Args],
    length(Args,LenArgs),
@@ -455,16 +455,16 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
 arrange_lazy_args(N,x(E,Y,T),N-x(E,Y,T)).
 
-get_operator_typedef_nocache(X,FnName,Largs,Types,RetType) :-
+get_operator_typedef_nocache(X,FnName,LenArgs,Types,RetType) :-
    metta_type(X,FnName,['->'|Raw]),
-   Largs1 is Largs+1,
-   length(Raw,Largs1),
+   LenArgs1 is LenArgs+1,
+   length(Raw,LenArgs1),
    append(Types,[RetType],Raw).
 
-get_operator_typedef_props(X,FnName,Largs,Types,RetType) :-
-   get_operator_typedef_nocache(X,FnName,Largs,Types,RetType).
-get_operator_typedef_props(_,_,Largs,Types,'Any') :-
-    length(Types,Largs),
+get_operator_typedef_props(X,FnName,LenArgs,Types,RetType) :-
+   get_operator_typedef_nocache(X,FnName,LenArgs,Types,RetType).
+get_operator_typedef_props(_,_,LenArgs,Types,'Any') :-
+    length(Types,LenArgs),
     maplist(=('Any'), Types).
 
 set_eager_or_lazy(_,V,eager) :- \+ fullvar(V), !.
@@ -676,16 +676,16 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    Convert=[Fn|Args],
    fullvar(Fn),
    var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
-   length(Args,LArgs),
+   length(Args,LenArgs),
    ResultLazy=x(noeval,eager,[]),
-   length(UpToDateArgsLazy, LArgs),
+   length(UpToDateArgsLazy, LenArgs),
    maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
    EvalArgs=UpToDateArgsLazy,
    maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
    maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
    append(Converteds,Converteds2),
    append(RetResults,[RetResult],RetResults2),
-   atomic_list_concat(['mc_',LArgs,'__'],Prefix),
+   atomic_list_concat(['mc_',LenArgs,'__'],Prefix),
    append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
    assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
 
@@ -836,38 +836,38 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    Convert=[Fn|Args],
    %(HeadIs=[FnC|_],transpiler_trace_compile(FnC),Fn='match-body' -> trace ; true),
    atom(Fn),!,
-   length(Args,LArgs),
+   length(Args,LenArgs),
    (HeadIs=[FnHead|ArgsHead] ; (HeadIs=[],FnHead='',ArgsHead=[])),
    length(ArgsHead,ArgsHeadSz),
-   (transpiler_predicate_store(_,Fn,LArgs,_,_,ArgsLazy0,RetLazy0) ->
+   (transpiler_predicate_store(_,Fn,LenArgs,_,_,ArgsLazy0,RetLazy0) ->
       % use whatever signature is defined from the library or compiled code rather than get_operator_typedef_props
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
-   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LArgs>=FixedLength ->
-      VarCount is LArgs-FixedLength,
+   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
+      VarCount is LenArgs-FixedLength,
       length(VarArgsLazyList, VarCount),
       maplist(=(VarArgsLazy0), VarArgsLazyList),
       append(FixedArgsLazy0,VarArgsLazyList,EvalArgs),
       ResultLazy=RetLazy0,
       Docall=varargs(FixedLength)
-   ; (FnHead=Fn, ArgsHeadSz=LArgs) ->
+   ; (FnHead=Fn, ArgsHeadSz=LenArgs) ->
       EvalArgs=LazyVars,
       ResultLazy=x(noeval,eager,[]),
       Docall=yes
    ;
       (transpiler_enable_interpreter_calls ->
          % create a stub to call the interpreter
-         (atomic_list_concat(['mc_',LArgs,'__',Fn],Fp),
-         (current_predicate(Fp/LArgs) -> true ;
-            LArgs1 is LArgs+1,
-            findall(Atom0, (between(1, LArgs1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+         (atomic_list_concat(['mc_',LenArgs,'__',Fn],Fp),
+         (current_predicate(Fp/LenArgs) -> true ;
+            LenArgs1 is LenArgs+1,
+            findall(Atom0, (between(1, LenArgs1, I0) ,Atom0='$VAR'(I0)), AtomList0),
             H=..[Fp|AtomList0],
-            findall(Atom1, (between(1, LArgs, I1), Atom1='$VAR'(I1)), AtomList1),
-            B=..[u_assign,[F|AtomList1],'$VAR'(LArgs1)],
-            compiler_assertz(transpiler_stub_created(F,LArgs)),
+            findall(Atom1, (between(1, LenArgs, I1), Atom1='$VAR'(I1)), AtomList1),
+            B=..[u_assign,[F|AtomList1],'$VAR'(LenArgs1)],
+            compiler_assertz(transpiler_stub_created(F,LenArgs)),
             transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
-            create_and_consult_temp_file('&self',Fp/LArgs1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
+            create_and_consult_temp_file('&self',Fp/LenArgs1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
          ),
          ResultLazy=x(noeval,eager,[]),
          Docall=yes)
@@ -876,19 +876,19 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
          ResultLazy=x(noeval,eager,[]),
          Docall=no
       ),
-      length(UpToDateArgsLazy, LArgs),
+      length(UpToDateArgsLazy, LenArgs),
       maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
       % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
-      get_operator_typedef_props(_,Fn,LArgs,Types0,_RetType0),
+      get_operator_typedef_props(_,Fn,LenArgs,Types0,_RetType0),
       maplist(arg_eval_props,Types0,EvalArgs0),
       maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
    ),
    % add transpiler_depends_on clause if not already there
-   (((FnHead-ArgsHeadSz)=(Fn-LArgs) ; FnHead='' ; transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LArgs)) ->
+   (((FnHead-ArgsHeadSz)=(Fn-LenArgs) ; FnHead='' ; transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LenArgs)) ->
       true
    ;
-      compiler_assertz(transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHead,ArgsHeadSz,Fn,LArgs]))
+      compiler_assertz(transpiler_depends_on(FnHead,ArgsHeadSz,Fn,LenArgs)),
+      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHead,ArgsHeadSz,Fn,LenArgs]))
    ),
    %maplist(do_arg_eval(HeadIs,LazyVars),Args,EvalArgs,NewArgs,NewCodes),
    %append(NewCodes,CombinedNewCode),
@@ -1019,20 +1019,20 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A
    maybe_lazy_list(Caller,F,1,Args00,Args0),
    %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   length(Args0,LArgs),
-   atomic_list_concat(['mc_',LArgs,'__',F],Fp),
+   length(Args0,LenArgs),
+   atomic_list_concat(['mc_',LenArgs,'__',F],Fp),
    %label_arg_types(F,0,[A|Args1]),
-   %LArgs1 is LArgs+1,
+   %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
    R=..[Fp|Args2],
-   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LArgs) ->
-      compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs]))
+   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
+      compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
+      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
    ; true),
-   ((current_predicate(Fp/LArgs);member(F/LArgs,DontStub)) ->
+   ((current_predicate(Fp/LenArgs);member(F/LenArgs,DontStub)) ->
       true
-   ; check_supporting_predicates('&self',F/LArgs)),
-   notice_callee(Caller,F/LArgs))).
+   ; check_supporting_predicates('&self',F/LenArgs)),
+   notice_callee(Caller,F/LenArgs))).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
@@ -1052,10 +1052,10 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
       transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
    ; true),
-   ((current_predicate(Fp/LArgs);member(F/LArgs,DontStub)) ->
+   ((current_predicate(Fp/LenArgs);member(F/LenArgs,DontStub)) ->
       true
-   ; check_supporting_predicates('&self',F/LArgs)),
-   notice_callee(Caller,F/LArgs))).
+   ; check_supporting_predicates('&self',F/LenArgs)),
+   notice_callee(Caller,F/LenArgs))).
 %ast_to_prolog_aux(Caller,DontStub,[native(F)|Args0],A) :- !,
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
@@ -1069,10 +1069,10 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   maybe_lazy_list(Caller,F,1,Args00,Args0),
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-%   length(Args0,LArgs),
-%   atomic_list_concat(['mc_',LArgs,'__',F],Fp),
+%   length(Args0,LenArgs),
+%   atomic_list_concat(['mc_',LenArgs,'__',F],Fp),
 %   label_arg_types(F,0,[A|Args1]),
-%   %LArgs1 is LArgs+1,
+%   %LenArgs1 is LenArgs+1,
 %   append(Args1,[A],Args2),
 %   R=..[Fp|Args2].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
@@ -1718,21 +1718,21 @@ maplist_and_conj(P2,A,B):- call(P2,A,B), !.
 notice_callee(Caller,Callee):-
    ignore((
      extract_caller(Caller,CallerInt,CallerSz),
-     extract_caller(Callee,F,LArgs),!,
-     notice_callee(CallerInt,CallerSz,F,LArgs))).
+     extract_caller(Callee,F,LenArgs),!,
+     notice_callee(CallerInt,CallerSz,F,LenArgs))).
 
-notice_callee(CallerInt,CallerSz,F,LArgs1):-
+notice_callee(CallerInt,CallerSz,F,LenArgs1):-
     ignore((
         CallerInt \== no_caller,
         F \== exec0,
         CallerInt  \== exec0,
-        \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LArgs1U), CallerSzU=@=CallerSz, LArgs1U=@=LArgs1),
-         compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1])),
+        \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LenArgs1U), CallerSzU=@=CallerSz, LenArgs1U=@=LenArgs1),
+         compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)),
+         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
-         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) ))),
+         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)) ))),
     ignore((
-         current_self(Space),ensure_callee_site(Space,F,LArgs1))).
+         current_self(Space),ensure_callee_site(Space,F,LenArgs1))).
 
 extract_caller(Var,_,_):- fullvar(Var),!,fail.
 extract_caller([H|Args],F,CallerSz):- !, extract_caller(fn_eval(H,Args,_),F,CallerSz).
@@ -2010,21 +2010,21 @@ maplist_and_conj(P2,A,B):- call(P2,A,B), !.
 notice_callee(Caller,Callee):-
    ignore((
      extract_caller(Caller,CallerInt,CallerSz),
-     extract_caller(Callee,F,LArgs1),!,
-     notice_callee(CallerInt,CallerSz,F,LArgs1))).
+     extract_caller(Callee,F,LenArgs1),!,
+     notice_callee(CallerInt,CallerSz,F,LenArgs1))).
 
-notice_callee(CallerInt,CallerSz,F,LArgs1):-
+notice_callee(CallerInt,CallerSz,F,LenArgs1):-
     ignore((
         CallerInt \== no_caller,
         F \== exec0,
         CallerInt  \== exec0,
-        \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LArgs1U), CallerSzU=@=CallerSz, LArgs1U=@=LArgs1),
-         compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LArgs1])),
+        \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LenArgs1U), CallerSzU=@=CallerSz, LenArgs1U=@=LenArgs1),
+         compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)),
+         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
-         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LArgs1)) ))),
+         transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)) ))),
     ignore((
-         current_self(Space),ensure_callee_site(Space,F,LArgs1))).
+         current_self(Space),ensure_callee_site(Space,F,LenArgs1))).
 
 extract_caller(Var,_,_):- fullvar(Var),!,fail.
 extract_caller([H|Args],F,CallerSz):- !, extract_caller(fn_eval(H,Args,_),F,CallerSz).
