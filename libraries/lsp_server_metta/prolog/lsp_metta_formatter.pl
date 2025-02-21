@@ -120,6 +120,18 @@ trim_whites(Line0, Line) :-
     drop_leading_white(Line0, Line1),
     drop_trailing_white(Line1, Line).
 
+normalize_whitespaces([open, white(_), X|Rest], [open, X|Rest1]) :-
+    \+ \+ ( X = atom(_) ; X = close ; X = open), !,
+    normalize_whitespaces(Rest, Rest1).
+normalize_whitespaces([white(_), close|Rest], [close|Rest1]) :- !,
+    normalize_whitespaces(Rest, Rest1).
+% Is this too aggressive?
+normalize_whitespaces([atom(A), white(_), atom(B)|Rest], [atom(A), white(1), atom(B)|Rest1]) :-
+    normalize_whitespaces(Rest, Rest1).
+normalize_whitespaces([X|Rest0], [X|Rest1]) :-
+    normalize_whitespaces(Rest0, Rest1).
+normalize_whitespaces([], []).
+
 line_net_parens(N, N, []) :- !.
 line_net_parens(N0, N, [open|Rest]) :- !,
     N1 is N0 + 1,
@@ -130,14 +142,14 @@ line_net_parens(N0, N, [close|Rest]) :- !,
 line_net_parens(N0, N, [_|Rest]) :-
     line_net_parens(N0, N, Rest).
 
-
 process_line(Parens0, Parens1, Line0, Line) :-
     trim_whites(Line0, Line1),
-    line_net_parens(Parens0, Parens1, Line1),
+    normalize_whitespaces(Line1, Line2),
+    line_net_parens(Parens0, Parens1, Line2),
     ( Parens0 > 0
     -> Indent is Parens0 * 2,
-       Line = [white(Indent)|Line1]
-    ;  Line = Line1).
+       Line = [white(Indent)|Line2]
+    ;  Line = Line2).
 
 process_lines(_Indent, [], []) :- !.
 process_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
@@ -167,6 +179,7 @@ emit_line(To, [atom(Atom)|Rest]) =>
 
 emit_lines(To, [Line|Lines]) :-
     emit_line(To, Line),
+    format(To, "~n", []),
     emit_lines(To, Lines).
 emit_lines(_, []).
 
