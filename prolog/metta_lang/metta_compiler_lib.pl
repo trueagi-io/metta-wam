@@ -258,7 +258,6 @@ transpiler_predicate_store(builtin, collapse, 1, '@doc', '@doc', [x(doeval,lazy,
 'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
-:- debug.
 
 transpiler_predicate_store(builtin, 'bind!', 2, '@doc', '@doc', [x(noeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[])).
 'mc_2__bind!'(Name,Expression,[]) :- nb_bind(Name,Expression).
