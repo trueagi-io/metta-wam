@@ -81,8 +81,24 @@ process_file() {
     # Decide which is the hyperon_results (answers file)
     # gets any other names as well 
     export hyperon_results=(${file}.*)
-    # List of excluded extensions
-    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" "mettalogrc" "bat" "c"  "java" )
+    # List of excluded extensions 
+    # (because now that any file can be an answer file we need to still be able to use test directories for test that 
+    #   use things besides metta files    such as    
+    #    buffer_test.metta.md   uses_config_test.metta.mettalogrc  )
+    #  We really need a naming convertion for those generate file names that doenst already conflict with the test framework names  
+    #      current conflicts are
+    # 
+    #     transpile_test.metta.pl (the prolog version of the translation)
+    #     test.metta.bak (files i keep of backups)
+    #     test.metta.html (created on test output for web results)
+    #     large_file.metta.datalog  (currently created for large file that load slowly)
+    #     uses_config_test.metta.mettalogrc (currently used for configs)
+    #
+    #     Perhaps a predicatable nmewing convention that can be filtered out
+    #         test_error  -> result_test_error
+    #         unknown_error -> result_unknown_error
+    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" 
+             "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" "mettalogrc" "bat" "c" "java" "datalog" "in" "out" )
     
     file_found=false  # Flag to track if a file has been found
     base_name="$absfile"
