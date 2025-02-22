@@ -686,7 +686,7 @@ is_synthing_unit_tests0 :- is_testing.
 %   @example
 %     ?- is_testing.
 %     true.
-is_testing :- is_metta_flag('test').
+is_testing :- quietly(is_metta_flag('test')).
 
 %!  is_html is nondet.
 %
@@ -4207,6 +4207,9 @@ get_metta_atom_from(KB, Atom) :-
 %   @arg Atom  The retrieved atom.
 %
 get_metta_atom(Eq, Space, Atom) :-
+   quietly(get_metta_atom0(Eq, Space, Atom)).
+
+get_metta_atom0(Eq, Space, Atom) :-
     metta_atom(Space, Atom),
     \+ (Atom = [EQ, _, _], EQ == Eq).
 
@@ -4216,7 +4219,8 @@ get_metta_atom(Eq, Space, Atom) :-
 %
 %   @arg Atom The atom associated with the current knowledge base.
 %
-metta_atom(Atom) :-
+metta_atom(Atom) :- quietly(metta_atom0(Atom)).
+metta_atom0(Atom) :-
     current_self(KB),
     metta_atom(KB, Atom).
 
@@ -4252,27 +4256,31 @@ metta_atom_added(X, Y) :-
 %   @arg Atom  The atom associated with the given space.
 %
 
+metta_atom(KB, Atom):-
+  quietly(metta_atom0(KB, Atom)).
+
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
-metta_atom(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
-metta_atom(KB, [F, A | List]) :-
+metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
+metta_atom0(KB, [F, A | List]) :-
     KB == '&flybase', fb_pred_nr(F, Len), current_predicate(F/Len),
     length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
-metta_atom(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
-metta_atom(KB, Atom) :- metta_atom_added(KB, Atom).
+metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
 
-metta_atom(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
+metta_atom0(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
 
+'same-index'(X,Y):- copy_term(X,Y).
 
 % Direct type association case
 transform_about([Colon, Pred, Super],             inst_type(Pred, Super), true) :-  Colon == ':', !.
@@ -4632,8 +4640,8 @@ not_metta_atom_corelib(A, N) :-
 %     ?- is_metta_space('&unknown_space').
 %     false.
 %
-is_metta_space(Space) :-  nonvar(Space),
-    \+ \+ is_space_type(Space, _Test).  % Enforce deterministic behavior using double negation.
+is_metta_space(Space) :-  quietly((nonvar(Space),
+    \+ \+ is_space_type(Space, _Type))).  % Enforce deterministic behavior using double negation.
 
 %!  metta_eq_def(+Eq, +KB, +H, +B) is det.
 %
@@ -4656,7 +4664,10 @@ is_metta_space(Space) :-  nonvar(Space),
 
 % metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-metta_eq_def(Eq, KB, H, B) :-
+
+metta_eq_def(Eq, KB, H, B):- quietly(metta_eq_def0(Eq, KB, H, B)).
+
+metta_eq_def0(Eq, KB, H, B) :-
     % Ensure `Eq` is unified with '='.
     ignore(Eq = '='),
     if_or_else(
@@ -4681,7 +4692,7 @@ metta_eq_def(Eq, KB, H, B) :-
 %   @arg B  The body of the definition.
 metta_defn(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    metta_eq_def('=', KB, H, B).
+    quietly(metta_eq_def0('=', KB, H, B)).
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -4695,7 +4706,7 @@ metta_defn(KB, H, B) :-
 % metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB, H, B) :-
     % Use `:` to associate the head with a type in the given knowledge base.
-    metta_eq_def(':', KB, H, B).
+    quietly(metta_eq_def0(':', KB, H, B)).
 % metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 
 % typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -4866,15 +4877,27 @@ metta_anew(Load, Src, OBO) :-
             if_show(load, color_g_mesg('#ffa500', ((
                 format('~N '),  % Newline for separation.
                   % format('~N'),
-                write_src(Src)  % Display source information.
+                nop(copy_term(Src,OSrc,Names)),
+                materialize_vns(Src,SrcVns),
+                write_src(SrcVns),  % Display source information.
+                format('~N '),  % Newline for separation.
+                nop((ignore(Src=OSrc),
+                writeq(Load = Names),  % Display the operation and object.
+                format('~N ')))  % Newline for separation.
             ))))
         )),
         % Output information about the operation and object.
         output_language(Load, (
             if_verbose(load, color_g_mesg('#4f4f0f', (((
                 write('; Action: '),  % Indicate the action being performed.
-                writeq(Load = OBO),  % Display the operation and object.
-                nl  % Newline for clarity.
+                copy_term(OBO,OBOS,VarNames),
+                materialize_vns(OBO,OBOVns),
+                writeq(Load = OBOVns),  % Display the operation and object.
+                %nl  % Newline for clarity.
+                format('~N '),  % Newline for separation.
+                nop((ignore(OBO=OBOS),
+                writeq(cr = VarNames),  % Display the operation and object.
+                format('~N ')))  % Newline for separation.
             )))
         )))),
         true  % Ensure successful execution of all output steps.
