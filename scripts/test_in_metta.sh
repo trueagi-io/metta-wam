@@ -82,10 +82,11 @@ process_file() {
     # gets any other names as well 
     export hyperon_results=(${file}.*)
     # List of excluded extensions
-    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "py" )
+    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" "mettalogrc" "bat" "c"  "java" )
     
     file_found=false  # Flag to track if a file has been found
-    
+    base_name="$absfile"
+
     # Loop over all potential files matching the base pattern
     for potential_file in "${base_name}".*; do
         # Extract the extension of the file
