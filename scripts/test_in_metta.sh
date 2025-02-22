@@ -408,11 +408,11 @@ process_file() {
 
     elif [[ ! -f "$file_html" ]]; then
         take_mettalog_test=1
-        DEBUG_WHY "Taking MeTTaLog test since HTML file does not exist."
+        DEBUG_WHY "Probably should take MeTTaLog test since HTML file does not exist?"
     fi
     if [ "$clean" -eq 1 ]; then
 	take_mettalog_test=1
-	DEBUG_WHY "Taking test since --clean."
+	DEBUG_WHY "Probably Taking test since --clean."
     fi
     if [ "$if_failures" -eq 1 ]; then
 	if [[ -f "$file_html" ]]; then
@@ -425,7 +425,7 @@ process_file() {
 		fi
 
 		if [ "$success_missing" -eq 1 ]; then
-		    DEBUG_WHY "(--failure) Retaking Test since the word 'Success' is missing from $file_html."
+		    DEBUG_WHY "(--failure) Probably retaking Test since the word 'Success' is missing from $file_html."
 		    take_mettalog_test=1
 		else
 		    DEBUG_WHY "(--failure) The word 'Success' is present in $file_html."
@@ -433,7 +433,7 @@ process_file() {
 	    fi
 	    if [ "$failures_not_zero" -gt 0 ]; then
 		take_mettalog_test=1
-		DEBUG_WHY "(--failure) Retaking test since failures are present."
+		DEBUG_WHY "(--failure) Probably Retaking test since failures are present."
 		IF_REALLY_DO rm -f "$file_html"
 	    else
 		if [ "$take_mettalog_test" -eq 0 ]; then
@@ -452,7 +452,10 @@ process_file() {
         fi
     fi
 
-    if [ "$take_mettalog_test" -eq 1 ]; then
+    if [ "$take_mettalog_test" -eq 0 ]; then
+	DEBUG_WHY "Skipping: ${file}"
+	echo ""
+    else
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
