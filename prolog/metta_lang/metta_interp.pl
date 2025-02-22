@@ -7013,7 +7013,7 @@ nts :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-% nts1 :- !. % Disable redefinition by cutting execution.
+% nts1 :- !. % Dont Disable redefinition by cutting execution.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
