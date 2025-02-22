@@ -2123,7 +2123,7 @@ For example:
 ;;   - =alpha       : Structural equivalence, allowing variable renaming  ;;
 ;;   - =identical   : Strict structural identity, including bindings       ;;
 ;;   - =will   : Checks if unification is possible in any way         ;;
-;;   - =unify       : Standard unification with side effects               ;;
+;;   - =u=       : Standard unification with side effects               ;;
 ;;   - =references  : Ensures atoms refer to the same memory object        ;;
 ;;                                                                        ;;
 ;; Functions:                                                             ;;
@@ -2141,7 +2141,7 @@ For example:
   (@desc "Function takes a comparator predicate and a non-deterministic input (second argument) and returns only unique entities according to the predicate. 
   E.g. (unique-by =alpha (superpose (a b c d d))) -> [a, b, c, d]")
   (@params (
-	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
 	(@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set based on predicate"))
 (: unique-by (-> Atom Atom Atom))
@@ -2149,9 +2149,9 @@ For example:
 (iz union-by MeTTaLog)
 (@doc union-by
   (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their union. 
-  E.g. (union-by =unify (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
+  E.g. (union-by =u= (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
   (@params (
-	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets based on predicate"))
@@ -2162,7 +2162,7 @@ For example:
   (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their intersection. 
   E.g. (intersection-by =will (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
   (@params (
-	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets based on predicate"))
@@ -2173,7 +2173,7 @@ For example:
   (@desc "Function takes a comparator predicate and two non-deterministic inputs (second and third arguments) and returns their subtraction. 
   E.g. !(subtraction-by =identical (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
   (@params (
-	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets based on predicate"))
@@ -2194,7 +2194,7 @@ For example:
 ;;                       does **not** modify bindings or unify variables. ;;
 ;;                                                                        ;;
 ;; **Unification Predicates (Perform Binding):**                          ;;
-;;   - `=unify`        : **Performs** unification and binds variables.    ;;
+;;   - `=u=`        : **Performs** unification and binds variables.    ;;
 ;;   - `=alpha-unify`  : **Performs** unification with variable renaming. ;;
 ;;                                                                        ;;
 ;; **Strict Identity & Reference Predicates:**                            ;;
@@ -2223,22 +2223,22 @@ For example:
 (iz =will MeTTaLog)
 (@doc =will
   (@desc "Predicate that **checks** if two atoms *could* unify in theory but does **not** perform unification.
-  Unlike `=unify`, this only verifies whether unification is **possible** without actually binding variables.")
+  Unlike `=u=`, this only verifies whether unification is **possible** without actually binding variables.")
   (@params (
 	(@param "First atom")
 	(@param "Second atom")))
   (@return "True if unification is theoretically possible, false otherwise."))
 (: =will (-> Atom Atom Bool))
 
-(iz =unify MeTTaLog)
-(@doc =unify
+(iz =u= MeTTaLog)
+(@doc =u=
   (@desc "Predicate that determines if two atoms can be unified under standard unification rules, meaning they can be made identical by substituting variables appropriately. 
-  We do **not** use `==` because `(== $x $y)` would be untrue and have **no side effects**, whereas `=unify` performs unification where possible.")
+  We do **not** use `==` because `(== $x $y)` would be untrue and have **no side effects**, whereas `=u=` performs unification where possible.")
   (@params (
 	(@param "First atom")
 	(@param "Second atom")))
   (@return "True if the atoms can be unified, false otherwise."))
-(: =unify (-> Atom Atom Bool))
+(: =u= (-> Atom Atom Bool))
 
 (iz =alpha-unify MeTTaLog)
 (@doc =alpha-unify
@@ -2253,7 +2253,7 @@ For example:
 (iz =identical MeTTaLog)
 (@doc =identical
   (@desc "Predicate that determines if two atoms are completely identical in structure, including variable names and their bindings. 
-  This is a stricter comparison than `=alpha` or `=unify`, ensuring that variables and their values match exactly.")
+  This is a stricter comparison than `=alpha` or `=u=`, ensuring that variables and their values match exactly.")
   (@params (
 	(@param "First atom")
 	(@param "Second atom")))
@@ -2281,7 +2281,7 @@ For example:
 ;;   - =alpha       : Structural equivalence, allowing variable renaming  ;;
 ;;   - =identical   : Strict structural identity, including bindings       ;;
 ;;   - =will   : Checks if unification is possible in any way         ;;
-;;   - =unify       : Standard unification with side effects               ;;
+;;   - =u=       : Standard unification with side effects               ;;
 ;;   - =references  : Ensures atoms refer to the same memory object        ;;
 ;;                                                                        ;;
 ;; Functions:                                                             ;;
@@ -2300,7 +2300,7 @@ For example:
   (@desc "Function takes a comparator predicate and a tuple and returns only unique entities according to the predicate. 
   E.g. (unique-atom-by =alpha (a b c d d)) -> (a b c d)")
   (@params (
-    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
     (@param "List of values")))
   (@return "Unique values from input set based on predicate"))
 (: unique-atom-by (-> Atom Expression Expression))
@@ -2311,9 +2311,9 @@ For example:
 (iz union-atom-by MeTTaLog)
 (@doc union-atom-by
   (@desc "Function takes a comparator predicate and two tuples and returns their union. 
-  E.g. (union-atom-by =unify (a b b c) (b c c d)) -> (a b b c b c c d)")
+  E.g. (union-atom-by =u= (a b b c) (b c c d)) -> (a b b c b c c d)")
   (@params (
-    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
     (@param "List of values")
     (@param "List of values")))
   (@return "Union of sets based on predicate"))
@@ -2326,7 +2326,7 @@ For example:
   (@desc "Function takes a comparator predicate and two tuples and returns their intersection. 
   E.g. (intersection-atom-by =will (a b c c) (b c c c d)) -> (b c c)")
   (@params (
-    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
     (@param "List of values")
     (@param "List of values")))
   (@return "Intersection of sets based on predicate"))
@@ -2339,7 +2339,7 @@ For example:
   (@desc "Function takes a comparator predicate and two tuples and returns their subtraction. 
   E.g. (subtraction-atom-by =identical (a b b c) (b c c d)) -> (a b)")
   (@params (
-    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =unify, =references)")
+    (@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
     (@param "List of values")
     (@param "List of values")))
   (@return "Subtraction of sets based on predicate"))

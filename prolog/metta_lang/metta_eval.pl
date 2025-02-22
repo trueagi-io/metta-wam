@@ -1185,7 +1185,7 @@ equal_enouf(_2,R,V):- (var(R);var(V)),!,fail.
 equal_enouf(P2,R,V):- is_ftVar(R), is_ftVar(V), call(P2,R,V), !.
 equal_enouf(_,X,Y):- is_blank(X),!,is_blank(Y).
 equal_enouf(_TODO,R,V):- py_is_py(R),py_is_py(V),py_pp_str(R,RR),py_pp_str(V,VV),!,RR=VV.
-equal_enouf(_,X,Y):- symbol(X),symbol(Y),atom_concat('&',_,X),atom_concat('Grounding',_,Y).
+equal_enouf(_,X,Y):- symbol(X),symbol(Y),atom_concat('space_',_,X),atom_concat('Grounding',_,Y).
 equal_enouf(_2,R,V):- number(R),number(V),!, RV is abs(R-V), RV < 0.03 .
 equal_enouf(P2,C,L):- \+ compound(C),!,call(P2,L,C).
 equal_enouf(P2,L,C):- \+ compound(C),!,call(P2,L,C).
@@ -1233,7 +1233,15 @@ set_last_error(_).
 */
 % =will: Checks if unification *could* succeed without actually binding variables.
 'mi_2__=will'(X0, Y0, TF) :-
-    as_tf(\+ \+ (X0 = Y0), TF).
+    as_tf('=will'(X0,Y0), TF).
+
+'=u='(X0,Y0) :- (X0 = Y0).
+'=will'(X0,Y0) :- \+ \+ (X0 = Y0).
+% alpha equivelant
+'=alpha'(X0,Y0) :- (X0 =@= Y0).
+% like =alpha, however it actualyl also unifies (if they were alpha)
+'=alpha-unify'(X0,Y0) :- X0 =@= Y0, X0 = Y0.
+
 
 alpha_equ(X,Y):- X=@=Y->wdmsg(alpha_equ(X,Y));wdmsg(not_alpha_equ(X,Y)).
 not_alpha_equ(X,Y):- X\=@=Y->wdmsg(not_alpha_equ(X,Y));wdmsg(alpha_equ(X,Y)).
@@ -1245,8 +1253,8 @@ with_attr(Attr,Var,Value):- get_attr(Var, Attr, Value).
 %  Unification Predicates (Perform Binding)
 % ============================
 
-% =unify: Actually unifies two terms, modifying variable bindings.
-'mi_2__=unify'(X0, Y0, TF) :-
+% =u=: Actually unifies two terms, modifying variable bindings.
+'mi_2__=u='(X0, Y0, TF) :-
     as_tf(X0 = Y0, TF).
 
 % =alpha-unify: Unifies two terms while considering alpha-equivalence.
@@ -1562,7 +1570,7 @@ eval_10(Eq,RetType,Depth,Self,['with-debug',E,X],Y):- !,
 :- nodebug(metta(case)).
 
 eval_10(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
-  eval_20(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
+  eval_10(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
 
 eval_10(Eq,RetType,Depth,Self,[P,X|More],YY):- fail, is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
@@ -2738,11 +2746,11 @@ call_as_p2(P2,X,Y):-
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
-   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
+   eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
 eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
    no_repeats_var(call_as_p2(P2),YY),
-   eval_20(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
+   eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 
 eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
