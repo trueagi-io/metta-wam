@@ -2,10 +2,10 @@
 
 ## Quick Links
 
- - [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/)   MeTTaLog Official   
- - [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/)   Compiler Development   
- - [https://github.com/logicmoo/metta-testsuite/tree/master/](https://github.com/logicmoo/metta-testsuite/tree/master/)   Interpreter Development  
- - [https://github.com/logicmoo/metta-testsuite/tree/development/](https://github.com/logicmoo/metta-testsuite/tree/development/)   Testing Suite  
+ - [https://github.com/trueagi-io/metta-wam/](https://github.com/trueagi-io/metta-wam/)   MeTTaLog Official
+ - [https://github.com/logicmoo/metta-wam/](https://github.com/logicmoo/metta-wam/)   Compiler/Interpreter/LSP/Examples Development   
+ - [https://github.com/logicmoo/metta-testsuite/tree/master/](https://github.com/logicmoo/metta-testsuite/tree/master/) Runs tests for previous
+ - [https://github.com/logicmoo/metta-testsuite/tree/development/](https://github.com/logicmoo/metta-testsuite/tree/development/)  Testing Suite 
  - [https://github.com/trueagi-io/metta-wam/issues](https://github.com/trueagi-io/metta-wam/issues)   ISSUES
 - [Getting Started](#getting-started)
   - [Installation](#installation)
