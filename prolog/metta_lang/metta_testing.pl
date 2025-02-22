@@ -883,8 +883,12 @@ loonit_asserts1(TestSrc, Pre, G) :-
         if_t(option_value('on-fail', 'trace'),
             setup_call_cleanup(debug(metta(eval)), call((Pre, G)), nodebug(metta(eval)))
         )
-    )).
+    )),
+    devel_trace(loonit_failureR,G).
     % (thread_self(main)->trace;sleep(0.3)
+
+devel_trace(_,Why):- ignore(( fail, gethostname(X),X=='HOSTAGE',!,
+  copy_term(Why,Cp,Goals),Cp=Why, trace, Goals=_,Cp=_, call(Why))).
 
 % Generate loonit report with colorized output
 :- dynamic(gave_loonit_report/0).
@@ -1186,8 +1190,15 @@ calc_answer_file(AnsFile,AnsFile):- \+ atom_concat(_, metta, AnsFile),!.
 calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
 % Finds a file using expand_file_name for wildcard matching.
 calc_answer_file(MeTTaFile,AnsFile):-  atom_concat(MeTTaFile, '.?*', Pattern),
-        expand_file_name(Pattern, Matches), Matches = [AnsFile|_], !. % Select the first match
+        expand_file_name(Pattern, Matches), member(AnsFile,Matches), ok_ansfile_name(AnsFile),  !. % Select the first match
 calc_answer_file(Base,AnsFile):- ensure_extension(Base, answers, AnsFile),!.
+
+ok_ansfile_name(AnsFile):- \+ symbol(AnsFile),!,fail.
+ok_ansfile_name(AnsFile):- skip_ans_ext(Htm),symbol_concat(_,Htm,AnsFile),!,fail.
+ok_ansfile_name(_).
+skip_ans_ext('.bak').  skip_ans_ext('.tmp'). skip_ans_ext('.htm'). skip_ans_ext('.py').
+skip_ans_ext('.html').  skip_ans_ext('o'). skip_ans_ext('md'). skip_ans_ext('pl').  skip_ans_ext('txt').  skip_ans_ext('ansi'). skip_ans_ext('tee').
+
 
 %!  load_answer_file_now(+File) is det.
 %
