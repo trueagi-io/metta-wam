@@ -3,9 +3,14 @@ set +e
 
 SHOULD_EXIT=0
 
+# Use extended 256-color code #208 for orange
+BRIGHT_ORANGE='\033[38;5;208m'
+DEBUG_H_E() {
+   DEBUG "${BRIGHT_ORANGE}HYPERON: ${BOLD}${*}${NC}"
+}
 BRIGHT_GREEN='\033[1;32m'
 DEBUG_WHY() {
-   DEBUG "${BRIGHT_GREEN}WHY: ${BOLD}${*}${NC}"
+   DEBUG "${BRIGHT_GREEN}METTALOG: ${BOLD}${*}${NC}"
 }
 
 # Function to resolve the full absolute path, handling symlinks & '..'
@@ -15,8 +20,8 @@ resolve_full_path() {
 
     # Check if file exists
     if [ ! -e "$file" ]; then
-        echo "$file"
-        return
+        #echo "$file"
+        : #return
     fi
 
     # Try GNU and BSD-compatible commands first
@@ -124,29 +129,37 @@ process_file() {
     shift
     
     absfile=$(resolve_full_path "$file")
-    relfile=$(relative_path_from "${METTALOG_DIR}" "$absfile")
+    #relfile=$(relative_path_from "${METTALOG_DIR}" "$absfile")
+    #file="$relfile"
+    file="${file#./}"
     #path_after_output=$(path_join "${METTALOG_OUTPUT}" "$relfile")
     path_after_output=$(path_join "${METTALOG_OUTPUT}" "$file")    
     export file_html="${path_after_output}.html"
     
 
     # Extract the directory path from file_html
-    dir_path=$(dirname "$file_html")
+    html_dir=$(dirname "$file_html")
 
     # Create the directory if it doesn't exist
-    ( mkdir -p "$dir_path" )
+    ( mkdir -p "$html_dir" )
 
     export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
     export HTML_OUT="$file_html"
 
+    echo ""
+    echo ""
+    echo ""
     DEBUG "==========================================================================="
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
     DEBUG "${BOLD}"
     DEBUG ""
-    DEBUG "Testing: $file"
+    DEBUG "METTALOG_DIR: $METTALOG_DIR"
+    DEBUG "     Testing: $file"
     cd "$METTALOG_DIR"
-    DEBUG "Output: $file_html"
+    DEBUG "      Output: $METTALOG_OUTPUT"
+    rel_html=$(relative_path_from "${METTALOG_OUTPUT}" "$file_html")
+    DEBUG "        Html: $rel_html"
     # Check if the file path contains a tilde
     if [[ "$absfile" == *"~"* ]]; then
        DEBUG "${RED}Warn on tilda'd path?${NC}"
@@ -156,9 +169,10 @@ process_file() {
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
     DEBUG "==========================================================================="
 
+    ##########################################################
     # Decide which is the hyperon_results (answers file)
-    # gets any other names as well 
-    export hyperon_results=(${file}.*)
+    ##########################################################
+    export hyperon_results=(${file}\..*)     # gets any other names as well 
     # List of excluded extensions 
     # (because now that any file can be an answer file we need to still be able to use test directories for test that 
     #   use things besides metta files    such as    
@@ -181,174 +195,223 @@ process_file() {
              "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" 
             "mettalogrc" "bat" "c" "java" "datalog" "in" "out" "xml" "obo" )
     
-    file_found=false  # Flag to track if a file has been found
-    base_name="$absfile"
+    local base_name="$absfile"
+    test_local_dir=$(dirname "$base_name")
+    rcfile="$test_local_dir/.mettalogrc"
 
-    # Loop over all potential files matching the base pattern
-    for potential_file in "${base_name}\.".*; do
-        # Extract the extension of the file
-        extension="${potential_file##*.}"
-        skip=false
+    THIS_METTALOG_TIMEOUT=$METTALOG_TIMEOUT
+    THIS_RUST_TIMEOUT=$METTALOG_TIMEOUT
+
+    if [[ -f "$rcfile" ]]; then
+	# Read each line in the config file
+	while IFS= read -r line; do
+	    case "$line" in
+		--timeout=*)
+		    THIS_METTALOG_TIMEOUT="${line#*=}"
+		    ;;
+		--rust-timeout=*)
+		    THIS_RUST_TIMEOUT="${line#*=}"
+		    ;;
+		*) ;; # Unknown or unhandled directive
+		    
+	    esac
+	done < "$rcfile"
+    fi
+
+    ##########################################################
+    # Decide whether or not to run hyperon test
+    ##########################################################
+    local take_hyperon_test=false
+    if [[ "$no_regen" -eq 1 ]]; then
+        take_hyperon_test=false
+        DEBUG_H_E "--no-regen flag is set. Disabling generation of $file.answers"
+    else
+        local file_found=false
+        # Loop over all potential files matching the base pattern
+        for potential_file in "${base_name}\.".*; do
+            # Extract the extension of the file
+            extension="${potential_file##*.}"
+            exclude_item=false
     
-        # Check if the extracted extension is in the excluded list
-        for excluded in "${excluded_extensions[@]}"; do
-            if [[ "$extension" == "$excluded" ]]; then
-                skip=true
+            # Check if the extracted extension is in the excluded list
+            for excluded in "${excluded_extensions[@]}"; do
+                if [[ "$extension" == "$excluded" ]]; then
+                    exclude_item=true
+                    break
+                fi
+            done
+    
+            # If the extension is not in the excluded list, use the file
+            if [ -f "$potential_file" ]; then
+                if [[ "$exclude_item" == true ]]; then
+                    DEBUG_H_E "Skipped $potential_file"
+                else
+                    DEBUG_H_E "Found $potential_file"
+                    export hyperon_results=$potential_file
+                    file_found=true
+                    break  # break if you only need the first match
+                fi
+            fi
+            if [[ "$file_found" == true ]]; then
                 break
             fi
         done
     
-        # If the extension is not in the excluded list, use the file
-        if [[ "$skip" == false && -f "$potential_file" ]]; then
-            DEBUG "Found: $potential_file"
-            export hyperon_results=$potential_file
-            file_found=true
-            break  # Optionally break if you only need the first match
+        # Check if no file was found
+        if [[ "$file_found" == false ]]; then
+            export hyperon_results="${base_name}.answers"
+            DEBUG_H_E "No alternate answer file extension: defaulting to ${hyperon_results} file."
+            take_hyperon_test=true
+        else
+            DEBUG_H_E "Answer file extension: ${hyperon_results}"
+            take_hyperon_test=false
         fi
-    done
     
-    # Check if no file was found
-    if [[ "$file_found" == false ]]; then
-        DEBUG "No valid file found, defaulting to .answers file."
-        export hyperon_results="${base_name}.answers"
-    else
-        DEBUG "Results are saved to $hyperon_results"    
-    fi
-
-
-    # Add unique absolute paths to PYTHONPATH
-    pp1=$(readlink -m "$(dirname "${file}")")
-    pp2=$(readlink -m "$(dirname "${pp1}")")
-    for pp in $pp1 $pp2; do
-        if [[ ":$PYTHONPATH:" != *":$pp:"* ]]; then
-            export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$pp"
+        # Add unique absolute paths to PYTHONPATH
+        pp1=$(readlink -f "$(dirname "${file}")")
+        pp2=$(readlink -f "$(dirname "${pp1}")")
+        for pp in $pp1 $pp2; do
+            if [[ ":$PYTHONPATH:" != *":$pp:"* ]]; then
+                export PYTHONPATH="${PYTHONPATH:+"$PYTHONPATH:"}$pp"
+            fi
+        done
+    
+        # Set OPENAI_API_KEY only if it's not already set
+        if [ -z "$OPENAI_API_KEY" ]; then
+            export OPENAI_API_KEY=freeve
         fi
-    done
-
-    # Set OPENAI_API_KEY only if it's not already set
-    if [ -z "$OPENAI_API_KEY" ]; then
-        export OPENAI_API_KEY=freeve
-    fi
-
-    local take_test=0
-    local TEST_EXIT_CODE=0
-    # set -e
-
-    # Decide whether or not to run hyperon test
-    should_regenerate=false
-
-    # Perform the checks and set the boolean
-    if [ -f "${hyperon_results}" ]; then
-    	if grep -q "Got" "${hyperon_results}"; then
-    	    # should_regenerate=true
-    	    DEBUG_WHY "Failures found in ${hyperon_results}"
-    	else
-    	    DEBUG_WHY "No failures are found in ${hyperon_results}"
-    	fi
-    else
-    	DEBUG_WHY "Missing ${hyperon_results}"
+    
+        local take_mettalog_test=0
+        local TEST_EXIT_CODE=0
+    	    # set -e
+    
+        # Perform the checks and set the boolean
+        if [ -f "${hyperon_results}" ]; then
+            if grep -q "Got" "${hyperon_results}"; then
+                # take_hyperon_test=true
+                DEBUG_H_E "Failures found in ${hyperon_results}"
+            else
+                DEBUG_H_E "No failures are found in ${hyperon_results}"
+                take_hyperon_test=false
+            fi
+        else
+            DEBUG_H_E "Missing ${hyperon_results}"
+            take_hyperon_test=true
+        fi
+    
+        if [ ! -f "${hyperon_results}" ]; then
+            take_hyperon_test=true
+            DEBUG_H_E "Should regenerate: Answers file does not exist."
+        elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
+            take_hyperon_test=true
+            DEBUG_H_E "Should regenerate: Original file is newer than results file and results file is not empty."
+            take_mettalog_test=1
+        fi
     fi
     
-    if [ ! -f "${hyperon_results}" ]; then
-    	should_regenerate=true
-    	DEBUG_WHY "Should regenerate: Answers file does not exist."
-    elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
-    	#should_regenerate=true
-    	DEBUG_WHY "Should regenerate: Original file is newer than results file and results file is not empty."
-    fi
-
     if [[ "$fresh" -eq 1 ]]; then
-    	should_regenerate=true
-    	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
+        take_hyperon_test=true
+        DEBUG_H_E "Fresh flag is set. Forcing regeneration."
     fi
-        
-    if $should_regenerate; then
-    	if [[ "$no_regen" -eq 1 ]]; then
-    	    should_regenerate=false
-    	    DEBUG_WHY "--no-regen flag is set. Disabling generation of .answers"
-    	fi
-    fi
-
-    # Use the boolean to drive the decision
-    if $should_regenerate; then
-        DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
-        #IF_REALLY_DO cat /dev/null > "${hyperon_results}"
-        #IF_REALLY_DO rm -f "${hyperon_results}"
-        # git checkout "${hyperon_results}"
-
-        # Function to handle SIGKILL
-        handle_sigkill() {
-            do_DEBUG "${RED}SIGKILL received, stopping metta but continuing script...${NC}"
+    
+    ##########################################################
+    # now maybe take hyperon test
+    ##########################################################
+    if $take_hyperon_test; then
+        DEBUG_H_E "${YELLOW}Regenerating answers: $file.answers${NC}"
+    
+        # Function to handle SIGTERM
+        handle_sigterm() {
+            DEBUG_H_E "${RED}SIGTERM received, stopping metta but continuing script...${NC}"
             stty sane
+            trap - SIGTERM
+            trap - SIGINT
         }
-
-        # Trap SIGKILL
-        trap 'handle_sigkill' SIGKILL
-
-        (cd "$(dirname "${file}")" || true
-
-	    # Record the start time
-	    start_time=$(date +%s)
-            #set +x
-            IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
+        # Function to handle SIGINT
+        handle_sigint() {
+            DEBUG_H_E "${RED}SIGINT received, stopping metta but continuing script...${NC}"
+            stty sane
+            trap - SIGTERM
+            trap - SIGINT
+        }
+        # Trap SIGTERM and SIGINT (cannot trap SIGKILL)
+        trap 'handle_sigterm' SIGTERM
+        trap 'handle_sigint' SIGINT
+    
+        set +x
+        (
+            cd "$(dirname "${file}")" || true
+            # Record the start time
+            start_time=$(date +%s)
+            set +x
+            (
+                set +x
+                IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($THIS_RUST_TIMEOUT + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
+            )
             TEST_EXIT_CODE=$?
-            take_test=1
-	    # Record the current time
-	    end_time=$(date +%s)
-	    # Calculate elapsed time
-	    elapsed_time=$((end_time - start_time))
-            #set +x
+    
+            # Record the current time
+            end_time=$(date +%s)
+            # Calculate elapsed time
+            elapsed_time=$((end_time - start_time))
+    
             if [ $TEST_EXIT_CODE -eq 124 ]; then
-	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Killed (definitely due to timeout) after $RUST_METTA_MAX_TIME seconds: ${TEST_CMD}"
-                DEBUG "${RED}${INFO}${NC}"
+                INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Killed (definitely due to timeout) after $RUST_TIMEOUT seconds: ${TEST_CMD}"
+                DEBUG_H_E "${RED}${INFO}${NC}"
                 [ "$if_failures" -eq 1 ] && rm -f "$file_html"
             elif [ $TEST_EXIT_CODE -ne 0 ]; then
-	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Completed with error under $RUST_METTA_MAX_TIME seconds"
-                DEBUG "${RED}${INFO}${NC}"
+                INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Completed with error under $RUST_TIMEOUT seconds"
+                DEBUG_H_E "${RED}${INFO}${NC}"
             else
-	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_METTA_MAX_TIME seconds"
-                DEBUG "${GREEN}$INFO${NC}"		
-            fi	    
-	    if [ -f "${hyperon_results}" ]; then
-		if grep -q "Got" "${hyperon_results}"; then
-		    DEBUG "${RED}Failures in Rust Answers${NC}"
-		fi
-		echo INFO >> "${hyperon_results}"
-	    fi
-
+                INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_TIMEOUT seconds"
+                DEBUG_H_E "${GREEN}$INFO${NC}"
+            fi
+    
+            if [ -f "${hyperon_results}" ]; then
+                if grep -q "Got" "${hyperon_results}"; then
+                    DEBUG_H_E "${RED}Failures in Rust Answers  ${hyperon_results} ${NC}"
+                    mv "${hyperon_results}" "${hyperon_results}.test_error"
+                    export hyperon_results="${hyperon_results}.test_error"
+                fi
+                echo INFO >> "${hyperon_results}"
+            fi
+    
         ) || true
         stty sane
-	DEBUG ""        
-
-        #set -e
-
-       trap - SIGKILL
+    
+        # Remove traps if you only need them once
+        trap - SIGTERM
+        trap - SIGINT
+    
+        DEBUG_H_E ""
     else
-        DEBUG "Kept: $hyperon_results"
+        DEBUG_H_E "Kept: ${hyperon_results}"
     fi
 
+    ##########################################################
     # Decide to run mettalog test
     #   (Based on the existence or contents of the HTML file)
+    ##########################################################
     if [ "$if_regressions" -eq 1 ]; then
         if [[ ! -f "$file_html" ]]; then
-            DEBUG_WHY "Not retaking test since HTML file does not exist."
+            DEBUG_WHY "(--regressions) Not retaking MeTTaLog test since HTML file does not exist."
 	    return 7
         fi
 
         failures_zero=$(grep -h -c "Failures: 0" "$file_html")
         if [ "$failures_zero" -eq 0 ]; then
-            DEBUG_WHY "Not taking test since Failures not 0. (only testing regressions from 100%)"
+            DEBUG_WHY "(--regressions) Not taking MeTTaLog test since Failures not 0. (only testing regressions from 100%)"
             return 7
         fi
-        take_test=1
-        DEBUG_WHY "Taking test since Failures: 0 and looking for regressions."
+        take_mettalog_test=1
+        DEBUG_WHY "(--regressions) Taking MeTTaLog test since Failures: 0 and looking for regressions."
 
     elif [[ ! -f "$file_html" ]]; then
-        take_test=1
-        DEBUG_WHY "Taking test since HTML file does not exist."
+        take_mettalog_test=1
+        DEBUG_WHY "Taking MeTTaLog test since HTML file does not exist."
     fi
     if [ "$clean" -eq 1 ]; then
-	take_test=1
+	take_mettalog_test=1
 	DEBUG_WHY "Taking test since --clean."
     fi
     if [ "$if_failures" -eq 1 ]; then
@@ -362,41 +425,41 @@ process_file() {
 		fi
 
 		if [ "$success_missing" -eq 1 ]; then
-		    DEBUG_WHY "Retaking Test since the word 'Success' is missing from $file_html."
-		    take_test=1
+		    DEBUG_WHY "(--failure) Retaking Test since the word 'Success' is missing from $file_html."
+		    take_mettalog_test=1
 		else
-		    DEBUG_WHY "The word 'Success' is present in $file_html."
+		    DEBUG_WHY "(--failure) The word 'Success' is present in $file_html."
 		fi
 	    fi
 	    if [ "$failures_not_zero" -gt 0 ]; then
-		take_test=1
-		DEBUG_WHY "Retaking test since failures are present."
+		take_mettalog_test=1
+		DEBUG_WHY "(--failure) Retaking test since failures are present."
 		IF_REALLY_DO rm -f "$file_html"
 	    else
-		if [ "$take_test" -eq 0 ]; then
-		    DEBUG_WHY "Not retaking since Failures: 0."
+		if [ "$take_mettalog_test" -eq 0 ]; then
+		    DEBUG_WHY "(--failure) Not retaking since Failures: 0."
 		fi
 	    fi
 	else
-	    DEBUG_WHY "Results present, not taking test."
+	    DEBUG_WHY "(--failure) Results present, not taking test."
 	fi
     fi
     set +e
-    if [ "$take_test" -eq 1 ]; then
+    if [ "$take_mettalog_test" -eq 1 ]; then
         if [[ "$skip_tests" -eq 1 ]]; then
-            take_test=0
+            take_mettalog_test=0
             DEBUG_WHY "--skip-tests flag is set. Disabled taking test"
         fi
     fi
 
-    if [ "$take_test" -eq 1 ]; then
+    if [ "$take_mettalog_test" -eq 1 ]; then
         sleep 0.1
         IF_REALLY_DO touch "$file_html"
 
-        TEST_CMD="$METTALOG_DIR/mettalog '--output=$METTALOG_OUTPUT' --timeout=$METTALOG_MAX_TIME --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
+        TEST_CMD="$METTALOG_DIR/mettalog '--output=$METTALOG_OUTPUT' --timeout=$THIS_METTALOG_TIMEOUT --html --repl=false ${extra_args[@]} ${passed_along_to_mettalog[@]} \"$file\" --halt=true"
         # DEBUG "${BOLD}$TEST_CMD${NC}"
 	    
-            EXTRA_INFO="Under $METTALOG_MAX_TIME seconds"
+            EXTRA_INFO="Under $THIS_METTALOG_TIMEOUT seconds"
 
 	    DEBUG "HTML_OUT=$HTML_OUT"
 
@@ -502,8 +565,8 @@ METTALOG_DIR="$(readlink -m "$METTALOG_DIR")"
 SCRIPT_NAME=$(basename "$0")
 
 passed_along_to_mettalog=()
-METTALOG_MAX_TIME=45
-RUST_METTA_MAX_TIME=60
+METTALOG_TIMEOUT=45
+RUST_TIMEOUT=60
 
 run_tests_auto_reply=""
 generate_report_auto_reply=""
@@ -695,17 +758,17 @@ function add_test_units_dir() {
           local -n array1=$1
           local -n array2=$2
           local temp_array=()
-          local skip
+          local exclude_item
 
           for item1 in "${array1[@]}"; do
-              skip=0
+              exclude_item=0
               for item2 in "${array2[@]}"; do
                   if [[ "$item1" == "$item2" ]]; then
-                      skip=1
+                      exclude_item=1
                       break
                   fi
               done
-              if [[ skip -eq 0 ]]; then
+              if [[ exclude_item -eq 0 ]]; then
                   temp_array+=("$item1")
               fi
           done
@@ -839,8 +902,8 @@ show_help() {
     echo "  --continue                 The default. Continue running tests (Generating any missing html files)"
     echo "  --failures                 Rerun Unsuccessful tests"
     echo "  --regress                  Rerun Successful tests (files where score was 100%)"
-    echo "  --timeout=SECONDS          Specify a timeout value in seconds (current: $METTALOG_MAX_TIME)"
-    echo "  --rust-timeout=SECONDS     Specify a timeout value in seconds (current: $RUST_METTA_MAX_TIME)"
+    echo "  --timeout=SECONDS          Specify a timeout value in seconds (current: $METTALOG_TIMEOUT)"
+    echo "  --rust-timeout=SECONDS     Specify a timeout value in seconds (current: $RUST_TIMEOUT)"
     echo "  --report=(Y/N)             Generate a report (if not supplied, will be asked at the end)"
     echo "  --output=DIR               Specify the output directory (current: $METTALOG_OUTPUT)"
     echo "  --[in|ex]clude=PATTERN     Include or exclude tests based on pattern"
@@ -928,15 +991,15 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         -y|--yes) run_tests_auto_reply="y" ;;
         -n|--no) run_tests_auto_reply="n" ;;
-        --timeout=*) METTALOG_MAX_TIME="${1#*=}" ;;
-	--rust-timeout=*) RUST_METTA_MAX_TIME="${1#*=}" ;;
+        --timeout=*) METTALOG_TIMEOUT="${1#*=}" ;;
+	--rust-timeout=*) RUST_TIMEOUT="${1#*=}" ;;
 	--output=*) METTALOG_OUTPUT="${1#*=}"  ;;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
         --regression*) clean=0; if_failures=0; if_regressions=1 ;;
         --continu*) clean=0; if_failures=0 ;;
         --fail*) clean=0; if_failures=1 ;;
-	--skip) skip_tests=1 ;;
+	--skip-tests) skip_tests=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
