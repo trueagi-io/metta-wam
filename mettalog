@@ -29,9 +29,9 @@ OUTPUT_DIR="${METTALOG_OUTPUT}"
 # Function to check if inside a virtual environment
 check_venv() {
     if [ -z "$VIRTUAL_ENV" ]; then
-        echo -e "\033[1;33mWARNING: You are not inside a Python virtual environment!\033[0m"
-        echo -e "\033[1;33m         It's recommended to activate a venv before running this.\033[0m"
-        echo -e "\033[1;33m         Proceeding anyway...\033[0m\n"
+        DEBUG -e "\033[1;33mWARNING: You are not inside a Python virtual environment!\033[0m"
+        DEBUG -e "\033[1;33m         It's recommended to activate a venv before running this.\033[0m"
+        DEBUG -e "\033[1;33m         Proceeding anyway...\033[0m\n"
         # Proceed with the expected commands
         cd "$METTALOG_DIR"
         source ./scripts/ensure_venv
