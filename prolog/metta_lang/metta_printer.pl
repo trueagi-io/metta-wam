@@ -528,7 +528,7 @@ write_val(V) :-
 %
 is_final_write(V) :-
     % If V is an unbound variable, write it with `write_dvar/1`.
-    var(V), !, write_dvar(V), !.
+    var(V), !,  write_dvar(V), !.
 is_final_write('$VAR'(S)) :-
     % For '$VAR' structures, write the variable name S.
     !,  write_dvar(S), !.
@@ -566,31 +566,32 @@ is_final_write([]) :-
 %     ?- write_dvar('__').
 %     $
 %
-write_dvar(S) :- % If S is an underscore, output the name directly.
-    S == '_', !, write('$_').
-write_dvar(S) :- % If S is a double underscore, write `$` to represent it.
-    S == '__', !, write('$').
-write_dvar(S) :- % For an unbound variable, get its name and write it.
-   var(S), get_var_name(S, N), write_dvar(N), !.
-write_dvar(S) :- % For an unbound variable without a name, format it as `$<variable>`.
-   attvar(S), get_attr(S,vn,Name),!, write_dvar(Name).
-write_dvar(S) :- % For an unbound variable without a name, format it as `$<variable>`.
+write_dvar(S):- mvar_str(S,N),write_dname(N) ,!.
+
+mvar_str(S,N) :- % If S is an underscore, output the name directly.
+    S == '_', !, sformat(N,'~w',['_']).
+mvar_str(S,N) :- % If S is a double underscore, write `$` to represent it.
+    S == '__', !, sformat(N,'~w',['']).
+mvar_str(S,N) :- % If S is an atom prefixed with an underscore, write its name.
+    atom(S), symbol_concat('_', NS, S), sformat(N,'~w',[NS]).
+mvar_str(S,N) :- % If S is a string prefixed with an underscore, write its name.
+    string(S), symbol_concat('_', NS, S), sformat(N,'~w',[NS]).
+mvar_str(S,N) :- % For an unbound variable, get its name and write it.
+   var(S), get_snamed(S, Name), nonvar(Name), !, mvar_str(Name,N).
+mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<variable>`.
+   attvar(S), get_attr(S,vn,Name),!, mvar_str(Name,N).
+mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<variable>`.
    attvar(S), notrace,ignore(nortrace),
    with_output_to(string(SS),ignore((get_attrs(S,Attrs),display(Attrs)))),
    trace,
-   format('$a-~w~w', [SS,S]). % bou
-write_dvar(S) :- % For an unbound variable without a name, format it as `$<variable>`.
-    var(S), !, format('$~p', [S]).
-write_dvar('$VAR'(S)) :- number(S), !, format('$~p', ['$VAR'(S)]).
-write_dvar('$VAR'(S)) :- !, write_dvar(S).
-write_dvar(S) :- % If S is an atom prefixed with an underscore, write its name.
-    atom(S), symbol_concat('_', N, S), write_dname(N).
-write_dvar(S) :- % If S is a string prefixed with an underscore, write its name.
-    string(S), symbol_concat('_', N, S), write_dname(N).
-%write_dvar(S):- number(S), write_dname(S).
-write_dvar(S) :-
-    % Default case: write the name directly.
-    write_dname(S).
+   sformat(N,'a-~w-~w', [SS,S]). % bou
+mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<variable>`.
+    var(S), !, sformat(N,'~p', [S]).
+mvar_str('$VAR'(S),N) :- number(S), !, sformat(N,'~p', ['$VAR'(S)]).
+mvar_str('$VAR'(S),N) :- !, mvar_str(S,N).
+%mvar_str(S,N):- number(S,N), sformat(N,S,N).
+mvar_str(S,N) :- % Default case: write the name directly.
+    sformat(N,'~w',[S]).
 
 %!  write_dname(+S) is det.
 %
@@ -768,22 +769,22 @@ break_on_unify(GG,G):-
 print_compounds_special:- true.
 src_vars(V,I):- nb_current(suspend_type_unificaton, true),!,V=I.
 %src_vars(V,I):- var(V),!,I=V.
-src_vars(V,I):- %ignore(guess_metta_vars(V)),
+src_vars(V,O):- %ignore(guess_metta_vars(V)),
              no_type_unification((((must_det_lls((
-              pre_guess_varnames(V,II),call(II=V),
-              guess_varnames(II,I),
+              guess_varnames(V,I),
               nop(ignore(dont_numbervars(I,400,_,[singleton(true),attvar(skip)]))),
-              materialize_vns(I))))))).
+              materialize_vns(I,IO),
+             pre_guess_varnames(IO,O),call(IO=O))))))).
 pre_guess_varnames(V,I):- \+ compound(V),!,I=V.
 pre_guess_varnames(V,I):- ground(V),!,I=V.
-pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
-pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
-pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
+%pre_guess_varnames(V,I):- copy_term_nat(V,VC),compound_name_arity(V,F,A),compound_name_arity(II,F,A), metta_file_buffer(_, _, _, II, Vs, _,_), Vs\==[], copy_term_nat(II,IIC), VC=@=IIC, II=I,maybe_name_vars(Vs),!.
+%pre_guess_varnames(V,I):- is_list(V),!,maplist(pre_guess_varnames,V,I).
+%pre_guess_varnames(C,I):- compound_name_arguments(C,F,V),!,maplist(pre_guess_varnames,V,VV),compound_name_arguments(I,F,VV),!.
 pre_guess_varnames(V,V).
 
 wsv:- cls, parse_sexpr("!($X)",P),rtrace(write_src(P)).
 
-
+gather_src_and_goal(V,Nat,NatGoals):- ground(V),!,Nat= V, NatGoals=[].
 gather_src_and_goal(V,Nat,NatGoals):-
     number_src_vars(V, I, Goals),
     copy_term_nat(I+Goals,Nat+NatGoals),
@@ -797,6 +798,7 @@ write_w_attvars0(Term):-
    writeq(Nat),
    maybe_write_goals(NatGoals), !.
 
+number_src_vars(V, I, Goals):- ground(V),!, I= V, Goals=[].
 number_src_vars(Term,TermC,Goals):-
  no_type_unification((
   must_det_lls((
@@ -807,8 +809,8 @@ number_src_vars(Term,TermC,Goals):-
     PP = TermC,
     must(PP = Term),
     maplist(transfer_varname,TermVars,TermVarsC),
-    materialize_vns(PP),
-    materialize_vns(TermVarsC),
+    %materialize_vns(PP),
+    %materialize_vns(TermVarsC),
     nop(ignore(dont_numbervars(PP,260,_,[singleton(true),attvar(skip)]))),
 
     nop(ignore(dont_numbervars(PP,26,_,[singleton(true),attvar(bind)]))))))).
@@ -862,10 +864,22 @@ w_color(Color,Goal):-
            wots(Text,Goal),
            with_output_to(user_error,ansi_format([fg(Color)], '~w', [Text]))))).
 
-materialize_vns(Term):- term_variables(Term,List), maplist(materialize_vn,List).
-materialize_vn(Var):- \+ attvar(Var),!.
-materialize_vn(Var):- get_attr(Var,vn,NN),ignore((Var = '$VAR'(NN))),!.
-materialize_vn(_).
+materialize_vns(Term,NewTerm):- term_attvars(Term,List), materialize_vnl(List,Term,MidTerm),!,term_variables(MidTerm,MList),materialize_vnl(MList,MidTerm,NewTerm),!.
+materialize_vnl([],IO,IO):-!.
+materialize_vnl([Var|List],Term,NewTerm):- get_vnamed(Var,VNamed), subst001(Term,Var,VNamed,MidTerm),!,materialize_vnl(List,MidTerm,NewTerm).
+materialize_vnl([_|List],Term,NewTerm):- materialize_vnl(List,Term,NewTerm).
+
+get_snamed(Var, SNamed):- attvar(Var), get_attr(Var,vn,NN), atom_string(NN,SNamed),!.
+get_snamed(Var, SNamed):- var(Var), get_var_name(Var, N), atom_string(N,SNamed),!.
+get_snamed(Var, SNamed):- var(Var), variable_name(Var, N), atom_string(N,SNamed),!.
+get_snamed(Var, SNamed):- var(Var), sformat(N,'~q',[Var]), atom_string(N,SNamed),!.
+
+get_vnamed(Var, VNamed):- get_snamed(Var, Name), into_vnamed(Name,VNamed),!.
+get_vnamed(Var, _Named):- \+ compound(Var),!,fail.
+get_vnamed('$VAR'(N), VNamed):- into_vnamed(N,VNamed),!.
+get_vnamed('$'(N), VNamed):- into_vnamed(N,VNamed),!.
+
+into_vnamed(S,'$VAR'(NS)):- mvar_str(S,N),sformat(NS,'_~w',[N]).
 
 %!  write_src_woi(+Term) is det.
 %

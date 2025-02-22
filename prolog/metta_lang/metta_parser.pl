@@ -144,14 +144,17 @@ subst_vars(TermWDV, NewTerm, NamedVarsList) :-
 
 subst_varnames(Convert,Converted):-
   subst_vars(Convert,Converted,[], NVL),
-  memorize_varnames(NVL).
+  memorize_varnames(NVL),maybe_set_var_names(NVL).
+
 
 memorize_varnames(NamedVarsList):- \+ compound(NamedVarsList),!.
 memorize_varnames([NamedVar|NamedVarsList]):- !,
   memorize_varname(NamedVar),
   memorize_varnames(NamedVarsList).
 memorize_varnames(_).
+
 memorize_varname(NamedVar):-  \+ compound(NamedVar),!.
+memorize_varname(Name=Var):- var(Var),atomic(Name),Var = '$'(Name), !.
 memorize_varname(Name=Var):- var(Var),atomic(Name),put_attr(Var,vn,Name).
 memorize_varname(_).
 
@@ -170,26 +173,36 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList) :-
      % Base case: return variable terms directly.
      var(Term), !.
 subst_vars([], [], NamedVarsList, NamedVarsList):- !.
+subst_vars('$VAR'(Anon), _AnonVar, NamedVarsList, NamedVarsList) :- '_' == Anon, !.
+subst_vars('$'(Anon), _AnonVar, NamedVarsList, NamedVarsList) :- '' == Anon, !.
+subst_vars(TermI, TermO, Acc, NamedVarsList) :-
+    sub_term(Sub,TermI),denotes_var(Sub,DName), DName \== '_',
+    subst001(TermI,Sub,Var,MidTerm),
+    subst_vars(MidTerm, TermO, [DName=Var|Acc],NamedVarsList).
 subst_vars([TermWDV | RestWDV], [Term | Rest], Acc, NamedVarsList) :- !,
      subst_vars(TermWDV, Term, Acc, IntermediateNamedVarsList),
      subst_vars(RestWDV, Rest, IntermediateNamedVarsList, NamedVarsList).
-subst_vars('$VAR'('_'), _, NamedVarsList, NamedVarsList) :- !.
-subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :-
+subst_vars('$VAR'(VName), Var, Acc, NamedVarsList) :- trace,
      % Substitute variables with `VName`, applying fixes if necessary.
      nonvar(VName), svar_fixvarname_dont_capitalize(VName, Name), !,
      (memberchk(Name = Var, Acc) -> NamedVarsList = Acc ; (!, Var = _, NamedVarsList = [Name = Var | Acc])).
-subst_vars(Term, Var, Acc, NamedVarsList) :-
+subst_vars(Term, Var, Acc, NamedVarsList) :- atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name), !,
+     trace, throw(cant_be_var(Term)),
      % Substitute variables with names starting with `$`.
-     atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name), !,
      subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
-
 subst_vars(TermWDV, NewTerm, Acc, NamedVarsList) :-
      % Recursively handle compound terms.
      compound(TermWDV), !,
      compound_name_arguments(TermWDV, Functor, ArgsWDV),
-     subst_vars(ArgsWDV, Args, Acc, NamedVarsList),
+     subst_vars(ArgsWDV, Args, Acc, NamedVarsList),!,
      compound_name_arguments(NewTerm, Functor, Args).
 subst_vars(Term, Term, NamedVarsList, NamedVarsList).
+
+
+denotes_var(Var,_Name):- var(Var),!,fail.
+denotes_var('$VAR'(U),Name):- !, U \== '__', dvar_name(U, Name).
+denotes_var(Term, Name):- atom(Term), symbol_concat('$', DName, Term), dvar_name(DName, Name),!.
+denotes_var('$'(U), Name):- !, U \== '_', dvar_name(U, Name).
 
 
 %!  extract_lvars(?A, ?B, ?After) is det.

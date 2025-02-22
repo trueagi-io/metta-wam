@@ -1619,6 +1619,7 @@ maybe_set_var_names(List):-
 maybe_set_var_names(List):-
     % If the list is non-empty, set the list of variable names.
     is_list(List),!,
+    nb_linkval('$variable_names',List),
     nb_linkval(variable_names,List).
 maybe_set_var_names(_).
 
