@@ -8,30 +8,104 @@ DEBUG_WHY() {
    DEBUG "${BRIGHT_GREEN}WHY: ${BOLD}${*}${NC}"
 }
 
+# Function to resolve the full absolute path, handling symlinks & '..'
 resolve_full_path() {
     local file="$1"
     local absfile=""
 
-    # Check if 'readlink' or 'greadlink' is available
+    # Check if file exists
+    if [ ! -e "$file" ]; then
+        echo "$file"
+        return
+    fi
+
+    # Try GNU and BSD-compatible commands first
     if command -v readlink >/dev/null 2>&1; then
-        absfile=$(resolve_full_path  "$file" 2>/dev/null) || absfile=$(realpath "$file" 2>/dev/null)
+        absfile=$(readlink -f "$file" 2>/dev/null) || absfile=$(realpath "$file" 2>/dev/null)
     elif command -v greadlink >/dev/null 2>&1; then
-        absfile=$(gresolve_full_path  "$file")
+        absfile=$(greadlink -f "$file")
     else
-        # Fallback if neither 'readlink' nor 'greadlink' is available
+        # Fallback if neither 'readlink' nor 'realpath' is available
         if [[ -d "$file" ]]; then
-            absfile="$(cd "$file" && pwd)"
+            absfile="$(cd "$file" && pwd -P)"
         else
-            local dir
+            local dir base
             dir=$(dirname "$file")
-            local base
             base=$(basename "$file")
-            absfile="$(cd "$dir" && pwd)/$base"
+            
+            # macOS: Use stat -f "%N" if available, otherwise fallback
+            if [[ "$(uname -s)" == "Darwin" ]] && command -v stat >/dev/null 2>&1; then
+                absfile=$(stat -f "%N" "$file" 2>/dev/null)
+            fi
+
+            # If stat didn't work, use manual path resolution
+            if [[ -z "$absfile" ]]; then
+                absfile="$(cd "$dir" && pwd -P)/$base"
+            fi
         fi
     fi
 
     echo "$absfile"
 }
+
+# Function to compute relative path from base directory to a target file
+relative_path_from() {
+    local base="$1"
+    local target="$2"
+
+    # Ensure paths are absolute before processing
+    base=$(resolve_full_path "$base")
+    target=$(resolve_full_path "$target")
+
+    # If base and target are the same, return '.'
+    if [ "$base" = "$target" ]; then
+        echo "."
+        return
+    fi
+
+    # Try native realpath first, fallback to Python if unavailable
+    if command -v realpath >/dev/null 2>&1; then
+        realpath --relative-to="$base" "$target" 2>/dev/null && return
+    elif command -v grealpath >/dev/null 2>&1; then
+        grealpath --relative-to="$base" "$target" 2>/dev/null && return
+    fi
+
+    # If realpath is unavailable, use Python for better cross-platform support
+    python3 -c "import os.path; print(os.path.relpath('$target', '$base'))" 2>/dev/null && return
+
+    # If everything fails, just return the absolute path (fallback)
+    echo "$target"
+}
+
+# Function to correctly join two paths, handling '..' & removing redundant slashes
+path_join() {
+    local base="$1"
+    local append="$2"
+
+    # Ensure base does not end with '/', and append does not start with '/'
+    base="${base%/}"
+    append="${append#/}"
+
+    # If base is empty (meaning root path), don't add extra '/'
+    local full_path
+    if [ -z "$base" ]; then
+        full_path="/$append"
+    else
+        full_path="$base/$append"
+    fi
+
+    # Normalize path by resolving '..' and redundant slashes
+    case "$(uname -s)" in
+        Darwin)
+            realpath "$full_path" 2>/dev/null || python3 -c "import os.path; print(os.path.normpath('$full_path'))"
+            ;;
+        *)
+            realpath "$full_path" 2>/dev/null || python3 -c "import os.path; print(os.path.normpath('$full_path'))"
+            ;;
+    esac
+}
+
+
 
 process_file() {
 
@@ -45,12 +119,16 @@ process_file() {
        return 7
     fi
 
-    local absfile=$(resolve_full_path  "$file")
 
     local extra_args="${@:2}"
     shift
-
-    export file_html="${METTALOG_OUTPUT}/${file}.html"
+    
+    absfile=$(resolve_full_path "$file")
+    relfile=$(relative_path_from "${METTALOG_DIR}" "$absfile")
+    #path_after_output=$(path_join "${METTALOG_OUTPUT}" "$relfile")
+    path_after_output=$(path_join "${METTALOG_OUTPUT}" "$file")    
+    export file_html="${path_after_output}.html"
+    
 
     # Extract the directory path from file_html
     dir_path=$(dirname "$file_html")
@@ -93,18 +171,21 @@ process_file() {
     #     test.metta.html (created on test output for web results)
     #     large_file.metta.datalog  (currently created for large file that load slowly)
     #     uses_config_test.metta.mettalogrc (currently used for configs)
+    #     a_mork_test.metta.xml (XML translated metta files)
+    #     a_jetta_test.metta.js (...etc...)
     #
     #     Perhaps a predicatable nmewing convention that can be filtered out
     #         test_error  -> result_test_error
     #         unknown_error -> result_unknown_error
-    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" 
-             "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" "mettalogrc" "bat" "c" "java" "datalog" "in" "out" )
+    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "metta" 
+             "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" 
+            "mettalogrc" "bat" "c" "java" "datalog" "in" "out" "xml" "obo" )
     
     file_found=false  # Flag to track if a file has been found
     base_name="$absfile"
 
     # Loop over all potential files matching the base pattern
-    for potential_file in "${base_name}".*; do
+    for potential_file in "${base_name}\.".*; do
         # Extract the extension of the file
         extension="${potential_file##*.}"
         skip=false
