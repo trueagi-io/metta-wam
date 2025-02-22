@@ -26,6 +26,8 @@ source and stuff.
 :- use_module(library(lists), [append/3, member/2, selectchk/4]).
 :- use_module(library(sgml), [load_html/3]).
 
+:- use_module(lsp_metta_workspace).
+
 :- if(current_predicate(xref_called/5)).
 %! prolog_called_at(+Path:atom, +Clause:term, -By:term, -Location:term) is nondet.
 %  Find the callers and locations of the goal =Clause=, starting from

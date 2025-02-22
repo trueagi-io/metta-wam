@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set +e
 
 SHOULD_EXIT=0
 
@@ -7,6 +8,30 @@ DEBUG_WHY() {
    DEBUG "${BRIGHT_GREEN}WHY: ${BOLD}${*}${NC}"
 }
 
+resolve_full_path() {
+    local file="$1"
+    local absfile=""
+
+    # Check if 'readlink' or 'greadlink' is available
+    if command -v readlink >/dev/null 2>&1; then
+        absfile=$(resolve_full_path  "$file" 2>/dev/null) || absfile=$(realpath "$file" 2>/dev/null)
+    elif command -v greadlink >/dev/null 2>&1; then
+        absfile=$(gresolve_full_path  "$file")
+    else
+        # Fallback if neither 'readlink' nor 'greadlink' is available
+        if [[ -d "$file" ]]; then
+            absfile="$(cd "$file" && pwd)"
+        else
+            local dir
+            dir=$(dirname "$file")
+            local base
+            base=$(basename "$file")
+            absfile="$(cd "$dir" && pwd)/$base"
+        fi
+    fi
+
+    echo "$absfile"
+}
 
 process_file() {
 
@@ -20,12 +45,18 @@ process_file() {
        return 7
     fi
 
-    local absfile=$(readlink -f "$file")
+    local absfile=$(resolve_full_path  "$file")
 
     local extra_args="${@:2}"
     shift
 
     export file_html="${METTALOG_OUTPUT}/${file}.html"
+
+    # Extract the directory path from file_html
+    dir_path=$(dirname "$file_html")
+
+    # Create the directory if it doesn't exist
+    ( mkdir -p "$dir_path" )
 
     export METTALOG_OUTPUT="${METTALOG_OUTPUT}"
 
@@ -47,6 +78,46 @@ process_file() {
     DEBUG "${BLUE}${BOLD}===========================================================================${NC}"
     DEBUG "==========================================================================="
 
+    # Decide which is the hyperon_results (answers file)
+    # gets any other names as well 
+    export hyperon_results=(${file}.*)
+    # List of excluded extensions
+    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "py" )
+    
+    file_found=false  # Flag to track if a file has been found
+    
+    # Loop over all potential files matching the base pattern
+    for potential_file in "${base_name}".*; do
+        # Extract the extension of the file
+        extension="${potential_file##*.}"
+        skip=false
+    
+        # Check if the extracted extension is in the excluded list
+        for excluded in "${excluded_extensions[@]}"; do
+            if [[ "$extension" == "$excluded" ]]; then
+                skip=true
+                break
+            fi
+        done
+    
+        # If the extension is not in the excluded list, use the file
+        if [[ "$skip" == false && -f "$potential_file" ]]; then
+            DEBUG "Found: $potential_file"
+            export hyperon_results=$potential_file
+            file_found=true
+            break  # Optionally break if you only need the first match
+        fi
+    done
+    
+    # Check if no file was found
+    if [[ "$file_found" == false ]]; then
+        DEBUG "No valid file found, defaulting to .answers file."
+        export hyperon_results="${base_name}.answers"
+    else
+        DEBUG "Results are saved to $hyperon_results"    
+    fi
+
+
     # Add unique absolute paths to PYTHONPATH
     pp1=$(readlink -m "$(dirname "${file}")")
     pp2=$(readlink -m "$(dirname "${pp1}")")
@@ -63,48 +134,49 @@ process_file() {
 
     local take_test=0
     local TEST_EXIT_CODE=0
-        set -e
+    # set -e
 
+    # Decide whether or not to run hyperon test
     should_regenerate=false
 
-    if [ -f "${file}.answers" ]; then
-	if grep -q "Got" "${file}.answers"; then
-	    should_regenerate=true
-	    DEBUG_WHY "Failures are found if the .answers file"
-	else
-	    DEBUG_WHY "No failures are found if the .answers file"
-	fi
-    else
-	DEBUG_WHY "Missing .answers file"
-    fi
-
     # Perform the checks and set the boolean
+    if [ -f "${hyperon_results}" ]; then
+    	if grep -q "Got" "${hyperon_results}"; then
+    	    # should_regenerate=true
+    	    DEBUG_WHY "Failures found in ${hyperon_results}"
+    	else
+    	    DEBUG_WHY "No failures are found in ${hyperon_results}"
+    	fi
+    else
+    	DEBUG_WHY "Missing ${hyperon_results}"
+    fi
+    
+    if [ ! -f "${hyperon_results}" ]; then
+    	should_regenerate=true
+    	DEBUG_WHY "Should regenerate: Answers file does not exist."
+    elif [ "${file}" -nt "${hyperon_results}" ] && [ -s "${hyperon_results}" ]; then
+    	#should_regenerate=true
+    	DEBUG_WHY "Should regenerate: Original file is newer than results file and results file is not empty."
+    fi
+
     if [[ "$fresh" -eq 1 ]]; then
-	should_regenerate=true
-	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
+    	should_regenerate=true
+    	DEBUG_WHY "Fresh flag is set. Forcing regeneration."
     fi
-
-    if [ ! -f "${file}.answers" ]; then
-	should_regenerate=true
-	DEBUG_WHY "Should regenerate: Answers file does not exist."
-    elif [ "${file}" -nt "${file}.answers" ] && [ -s "${file}.answers" ]; then
-	should_regenerate=true
-	DEBUG_WHY "Should regenerate: Original file is newer than answers file and answers file is not empty."
-    fi
-
+        
     if $should_regenerate; then
-	if [[ "$no_regen" -eq 1 ]]; then
-	    should_regenerate=false
-	    DEBUG_WHY "--no-regen flag is set. Disabling generation of .answers"
-	fi
+    	if [[ "$no_regen" -eq 1 ]]; then
+    	    should_regenerate=false
+    	    DEBUG_WHY "--no-regen flag is set. Disabling generation of .answers"
+    	fi
     fi
 
     # Use the boolean to drive the decision
     if $should_regenerate; then
         DEBUG_WHY "${YELLOW}Regenerating answers: $file.answers${NC}"
-        #IF_REALLY_DO cat /dev/null > "${file}.answers"
-        IF_REALLY_DO rm -f "${file}.answers"
-        # git checkout "${file}.answers"
+        #IF_REALLY_DO cat /dev/null > "${hyperon_results}"
+        #IF_REALLY_DO rm -f "${hyperon_results}"
+        # git checkout "${hyperon_results}"
 
         # Function to handle SIGKILL
         handle_sigkill() {
@@ -119,7 +191,7 @@ process_file() {
 
 	    # Record the start time
 	    start_time=$(date +%s)
-            set +x
+            #set +x
             IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($RUST_METTA_MAX_TIME + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             TEST_EXIT_CODE=$?
             take_test=1
@@ -139,74 +211,78 @@ process_file() {
 	        INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_METTA_MAX_TIME seconds"
                 DEBUG "${GREEN}$INFO${NC}"		
             fi	    
-
-	    if grep -q "Got" "${file}.answers"; then
-		      DEBUG "${RED}Failures in Rust Answers${NC}"
+	    if [ -f "${hyperon_results}" ]; then
+		if grep -q "Got" "${hyperon_results}"; then
+		    DEBUG "${RED}Failures in Rust Answers${NC}"
+		fi
+		echo INFO >> "${hyperon_results}"
 	    fi
-
-	    echo INFO >> "${file}.answers"
 
         ) || true
         stty sane
 	DEBUG ""        
 
-        set -e
+        #set -e
 
        trap - SIGKILL
     else
-        DEBUG "Kept: $file.answers"
+        DEBUG "Kept: $hyperon_results"
     fi
 
+    # Decide to run mettalog test
+    #   (Based on the existence or contents of the HTML file)
     if [ "$if_regressions" -eq 1 ]; then
         if [[ ! -f "$file_html" ]]; then
-            DEBUG_WHY "Not taking test since HTML file does not exist."
-            return
+            DEBUG_WHY "Not retaking test since HTML file does not exist."
+	    return 7
         fi
 
         failures_zero=$(grep -h -c "Failures: 0" "$file_html")
         if [ "$failures_zero" -eq 0 ]; then
-            DEBUG_WHY "Not taking test since Failures not 0."
-            return
+            DEBUG_WHY "Not taking test since Failures not 0. (only testing regressions from 100%)"
+            return 7
         fi
         take_test=1
         DEBUG_WHY "Taking test since Failures: 0 and looking for regressions."
+
     elif [[ ! -f "$file_html" ]]; then
         take_test=1
         DEBUG_WHY "Taking test since HTML file does not exist."
-    else
-        if [ "$clean" -eq 1 ]; then
-            take_test=1
-            DEBUG_WHY "Taking test since --clean."
-        elif [ "$if_failures" -eq 1 ]; then
-            failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
-            if [ "$failures_not_zero" -eq 0 ]; then
-                success_missing=0
-
-                if ! grep -q "Successes: " "$file_html"; then
-                    success_missing=1
-                fi
-
-                if [ "$success_missing" -eq 1 ]; then
-                    DEBUG_WHY "Retaking Test since the word 'Success' is missing from $file_html."
-                    take_test=1
-                else
-                    DEBUG_WHY "The word 'Success' is present in $file_html."
-                fi
-            fi
-            if [ "$failures_not_zero" -gt 0 ]; then
-                take_test=1
-                DEBUG_WHY "Retaking test since failures are present."
-                IF_REALLY_DO rm -f "$file_html"
-            else
-                if [ "$take_test" -eq 0 ]; then
-                    DEBUG_WHY "Not retaking since Failures: 0."
-                fi
-            fi
-        else
-            DEBUG_WHY "Results present, not taking test."
-        fi
     fi
+    if [ "$clean" -eq 1 ]; then
+	take_test=1
+	DEBUG_WHY "Taking test since --clean."
+    fi
+    if [ "$if_failures" -eq 1 ]; then
+	if [[ -f "$file_html" ]]; then
+	    failures_not_zero=$(grep -h -c "Failures: [^0]" "$file_html")
+	    if [ "$failures_not_zero" -eq 0 ]; then
+		success_missing=0
 
+		if ! grep -q "Successes: " "$file_html"; then
+		    success_missing=1
+		fi
+
+		if [ "$success_missing" -eq 1 ]; then
+		    DEBUG_WHY "Retaking Test since the word 'Success' is missing from $file_html."
+		    take_test=1
+		else
+		    DEBUG_WHY "The word 'Success' is present in $file_html."
+		fi
+	    fi
+	    if [ "$failures_not_zero" -gt 0 ]; then
+		take_test=1
+		DEBUG_WHY "Retaking test since failures are present."
+		IF_REALLY_DO rm -f "$file_html"
+	    else
+		if [ "$take_test" -eq 0 ]; then
+		    DEBUG_WHY "Not retaking since Failures: 0."
+		fi
+	    fi
+	else
+	    DEBUG_WHY "Results present, not taking test."
+	fi
+    fi
     set +e
     if [ "$take_test" -eq 1 ]; then
         if [[ "$skip_tests" -eq 1 ]]; then
@@ -497,7 +573,7 @@ function add_test_units_dir() {
     local BASE_DIR="${1}"
     DEBUG "Running tests in $BASE_DIR"
 
-      set +v
+      #set +v
          DEBUG "Finding files with 'test' in their name and apply $EXTRA_FIND_ARGS ..."
          mapfile -t test_files < <(find "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -iname "*test*.metta")
          DEBUG "'Test' files found: ${#test_files[@]}"
@@ -736,7 +812,7 @@ sort_directories_by_depth() {
 PYSWIP_VERSION="main"
 
 # Check if the file exists and Read the first line from the file
-VERSION_FILE="$METTALOG_DIR/src/version-config"
+VERSION_FILE="$METTALOG_DIR/version-config"
 if [ -f "$VERSION_FILE" ]; then    
     read -r FIRST_LINE < "$VERSION_FILE"
     FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
@@ -761,7 +837,7 @@ while [ "$#" -gt 0 ]; do
         --clean) clean=1; if_failures=0 ;;
         --regression*) clean=0; if_failures=0; if_regressions=1 ;;
         --continu*) clean=0; if_failures=0 ;;
-        --failure*) clean=0; if_failures=1 ;;
+        --fail*) clean=0; if_failures=1 ;;
 	--skip) skip_tests=1 ;;
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
@@ -798,6 +874,7 @@ printf '%s\n' "${excluded_files[@]}"
 DEBUG "Excluded directories:"
 printf '%s\n' "${excluded_dirs[@]}"
 
+
 # DEBUG "All unique parent directories:"
 for dir in "${unique_directories[@]}"; do
    IF_REALLY_DO mkdir -p "${METTALOG_OUTPUT}/$dir"
@@ -829,16 +906,21 @@ else
 fi
 
 # Directory containing the .pl files
-PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
-PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+if [ -z "$INTERP_SRC_DIR" ]; then
 
-if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
+    if [ -z "$PYSWIP_VERSION" ]; then
+	   PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
+    fi 
+
+    PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+    if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
   INTERP_SRC_DIR="$PYSWIP_VERSION"
-else 
+    else 
     if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
       INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
     else 
       INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
+    fi
     fi
 fi
 
@@ -886,6 +968,4 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
     DEBUG "Skipping report generation."
 fi
-
-
 

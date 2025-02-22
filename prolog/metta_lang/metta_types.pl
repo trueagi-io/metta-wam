@@ -201,12 +201,14 @@ mnotrace(G) :-
 %   @arg NewValue  The value to be unified, which must be numeric.
 %
 %   @example
-%     ?- put_attr(X, 'Number', _), X = 42.
+%     ?- dont_put_attr(X, 'Number', _), X = 42.
 %     X = 42.
 %
 'Number':attr_unify_hook(_, NewValue) :-
     % Ensure the new value is numeric.
     numeric(NewValue).
+
+dont_put_attr(V,M,T):- nop(put_attr(V,M,T)),!.
 
 %is_decl_type(ST):- metta_type(_,_,[_|Type]),is_list(Type),sub_sterm(T,Type),nonvar(T),T=@=ST, \+ nontype(ST).
 
@@ -447,7 +449,7 @@ get_type(Depth, Self, Val, TypeO) :-
     call_nth(get_type_each(Depth, Self, Val, Type),Nth), Type\=='',
     ((Nth > 1) -> Type\== 'Atom' ; true),
     % Ensure the type matches the expected no-repeat type.
-    NoRepeatType = Type,
+    \+ \+ (NoRepeatType = Type),
     Type = TypeO,
     % If only the first type should be returned, cut; otherwise, proceed.
     (return_only_first_type -> !; true).
@@ -543,29 +545,6 @@ is_dynaspace(S) :-
 is_PyObject(S) :-
     % Succeeds if S is recognized as a Python object.
     py_is_py(S).
-is_PyObject(S) :-
-    % Fail if S is an unbound variable.
-    var(S), !, fail.
-is_PyObject('@'(S)) :-
-    % Succeeds if S is a non-variable and recognized as a Python constant.
-    !, nonvar(S), is_py_const(S).
-
-%!  is_py_const(+Const) is nondet.
-%
-%   Succeeds if the given Const is a recognized Python constant.
-%
-%   @arg Const The constant to be evaluated.
-%
-%   @example
-%     ?- is_py_const('True').
-%     true.
-%
-%     ?- is_py_const('Unknown').
-%     false.
-%
-is_py_const('None').
-is_py_const('False').
-is_py_const('True').
 
 %!  get_type_each(+Depth, +Self, +Val, -Type) is nondet.
 %
@@ -597,7 +576,7 @@ get_type_each(Depth, _Slf, _Type, _) :-
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
-get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),member(Type,Set).
+get_type_each(Depth, Self, Var, Type) :- var(Var), get_attr(Var,cns, _ = Set),is_list(Set),member(Type,Set).
 
 get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
@@ -608,7 +587,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
     var(Var), !,
-    get_attr(Var, cns, Self = TypeList),
+    get_attr(Var, cns, Self = TypeList),is_list(TypeList),
     member(Type, TypeList).
 get_type_each(_Dpth, _Slf, Expr, 'hyperon::space::DynSpace') :-
     % Check if the expression is a dynamic space.
@@ -690,7 +669,7 @@ typed_expression(Depth, Self, [Op | Args], ArgTypes, RType) :-
     % Get the length of arguments or determine if unbound.
     len_or_unbound(Args, Len),
     % Retrieve the operator type definition.
-    get_operator_typedef1(Self, Op, Len, ArgTypes, RType).
+    get_operator_typedef_R(Self, Op, Len, ArgTypes, RType).
 
 %!  badly_typed_expression(+Depth, +Self, +Expr) is nondet.
 %
@@ -883,13 +862,16 @@ get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  last(Type1,Type).
 get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
   len_or_unbound(Args,Len),
-  get_operator_typedef1(Self,Op,Len,[P|Arams],RetType),
+  get_operator_typedef(Self,Op,Len,[P|Arams],RetType),
   % Fills in type variables when possible
   args_conform(Depth,Self,Args,[P|Arams]),
   % \+ maplist(var,Arams),
   % unitests:  arg violations should return ()
   (\+ args_violation(Depth,Self,Args,[P|Arams])),
   Type=RetType.
+
+get_type_cmpd(Depth,Self,ArTypeDecl,Type,arrow_type(ParamTypes,RetType)):- arrow_type(ArTypeDecl,ParamTypes,RetType), Type='%Undefined%',!.
+
 get_type_cmpd(_Dpth,_Slf,Cmpd,Type,typed_list):-
   typed_list(Cmpd,Type,_List).
 % commenting this fails two tests
@@ -1043,14 +1025,10 @@ as_prolog(I, O) :-
 %
 
 :- dynamic(dont_de_Cons/0).
+dont_de_Cons.
 
 as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
-as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
-as_prolog(_, Self, quote(O), O) :- !.
-as_prolog(_Dpth, _Slf, I, O) :-
-    % If I is not a 'conz' structure, unify it directly with O.
-    \+ iz_conz(I), !, I = O.
 as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
@@ -1060,16 +1038,25 @@ as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
 as_prolog(0, Self, [CC | List], O) :-
     % Handle '::' operator by mapping elements to Prolog terms.
     CC =='::',
-    is_list(List), !,
+    is_list(List), \+ dont_de_Cons, !,
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
-as_prolog(0, Self, [At| List], O) :-
+
+as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, quote(O), O) :- !.
+as_prolog(_Dpth, _Slf, I, O) :-
+    % If I is not a 'conz' structure, unify it directly with O.
+    \+ iz_conz(I), !, I = O.
+
+as_prolog(N, Self, [At| List], O) :-
     % Handle '@' symbol by constructing compound terms.
-    At=='@',
-    is_list(List),
-    maplist(as_prolog(0, Self), List, [HH | L]),
+    At=='@', \+ dont_de_Cons,
+    is_list(List), \+ dont_de_Cons,
+    maplist(as_prolog(N, Self), List, [HH | L]),
     atom(HH), !,
     compound_name_arguments(O, HH, L).
+
+
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
@@ -1077,7 +1064,7 @@ as_prolog(Depth, Self, I, O) :-
 as_prolog(Depth, Self, [H|T], [HH|TT]) :-
     % If is a list, map each element to Prolog terms.
     as_prolog(Depth, Self, H, HH),
-    as_prolog(1, Self, T, TT).
+    as_prolog(1, Self, T, TT), !.
 as_prolog(_Dpth, _Slf, I, I).
 
 %!  try_adjust_arg_types(+Eq, +RetType, +Depth, +Self, +Params, +X, -Y) is nondet.
@@ -1171,11 +1158,24 @@ adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
 %   @arg X         The input arguments.
 %   @arg Y         The final adjusted arguments.
 %
-adjust_argsA(_Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y):-
+   if_or_else(adjust_argsA1(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y),
+              adjust_argsA2(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y)).
+
+adjust_argsA1(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
     RRetType = RetType,
+    args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
+    trace_if_debug(Op,Len),
+    into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
+adjust_argsA2(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+    len_or_unbound(X, Len),
+    get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
+    (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
+    RRetType = RetType,
+    trace_if_debug(Op,Len),
     args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 
@@ -1263,15 +1263,39 @@ reset_cache :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator.
 %
-get_operator_typedef(Self, Op, Len, ParamTypes, RetType) :-
+
+get_operator_typedef(Self, Op, Len, ParamTypes, RetType):-
+    no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType)).
+
+get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Ensure the length matches the parameter types or is unbound.
     len_or_unbound(ParamTypes, Len),
     % Try to retrieve the type definition from cache, or fallback to other strategies.
     if_or_else(
         get_operator_typedef0(Self, Op, Len, ParamTypes, RetType),
-        if_or_else(
-            get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
-            get_operator_typedef2(Self, Op, Len, ParamTypes, RetType))).
+        get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
+        get_operator_typedef2(Self, Op, Len, ParamTypes, RetType)).
+
+%!  get_operator_typedef_R(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
+%
+%   _REALLY_ Retrieves the operator type definition based on the `'->'` type structure
+%   and caches the result in `get_operator_typedef0/5`.
+%
+%   @arg Self        The context or structure being evaluated.
+%   @arg Op          The operator whose type is being retrieved.
+%   @arg Len         The arity of the operator.
+%   @arg ParamTypes  The list of parameter types.
+%   @arg RetType     The return type of the operator.
+%
+get_operator_typedef_R(Self, Op, Len, ParamTypes, RetType) :-
+    % Ensure the length matches the parameter types or is unbound.
+    len_or_unbound(ParamTypes, Len),
+    % Build the type list for metta_type lookup.
+    if_t(nonvar(ParamTypes), append(ParamTypes, [RetType], List)),
+    % Check the type definition in metta_type/3.
+    metta_type(Self, Op, ['->' | List]),
+    % Cache the result for future lookups.
+    if_t(var(ParamTypes), append(ParamTypes, [RetType], List)).
 
 %!  get_operator_typedef1(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
@@ -1284,15 +1308,9 @@ get_operator_typedef(Self, Op, Len, ParamTypes, RetType) :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator.
 %
+
 get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
-    % Ensure the length matches the parameter types or is unbound.
-    len_or_unbound(ParamTypes, Len),
-    % Build the type list for metta_type lookup.
-    if_t(nonvar(ParamTypes), append(ParamTypes, [RetType], List)),
-    % Check the type definition in metta_type/3.
-    metta_type(Self, Op, ['->' | List]),
-    % Cache the result for future lookups.
-    if_t(var(ParamTypes), append(ParamTypes, [RetType], List)),
+    get_operator_typedef_R(Self, Op, Len, ParamTypes, RetType),
     assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
 
 %!  get_operator_typedef2(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
@@ -1307,6 +1325,15 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
 %   @arg ParamTypes  The list of parameter types.
 %   @arg RetType     The return type of the operator (default is `'AnyRet'`).
 %
+get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_concat(_,'!',Op);symbol_concat(_,'@',Op)),!,
+    % Default return type is 'AnyRet'.
+    ignore('Atom' = RetType),
+    % Ensure all parameter types are valid evaluation kinds.
+    maplist(=('Atom'), ParamTypes),
+    % Cache the result for future lookups.
+    assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
+    % nop(wdmsg(missing(get_operator_typedef2(Self, Op, ParamTypes, RetType)))), !, fail.
+
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     % Default return type is 'AnyRet'.
     ignore('AnyRet' = RetType),
@@ -1343,13 +1370,15 @@ ignored_args_conform(Depth, Self, A, L) :-
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
-ignored_arg_conform(Depth, Self, A, L) :-
+ignored_arg_conform_1(Depth, Self, A, L) :-
     % Succeed if the expected type is a non-specific type.
     nonvar(L), is_nonspecific_type(L), !.
-ignored_arg_conform(Depth, Self, A, L) :-
+ignored_arg_conform_1(Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
     get_type(Depth, Self, A, T),
-    type_conform(T, L), !.
+    can_assign(T, L), !.
+
+ignored_arg_conform(Depth, Self, A, L):- show_failure_when(argtypes,ignored_arg_conform_1(Depth, Self, A, L)),!.
 ignored_arg_conform(Depth, Self, _, _) :- !.
 
 %!  args_conform(+Depth, +Self, +Args, +List) is det.
@@ -1361,14 +1390,15 @@ ignored_arg_conform(Depth, Self, _, _) :- !.
 %   @arg Args  The list of arguments.
 %   @arg List  The list of expected types or values.
 %
+args_conform(_Depth, _Self, _, Nil):- Nil==[],!.
+args_conform(_Depth, _Self, Nil, _):- Nil==[],!.
 args_conform(_Dpth, _Slf, Args, List) :-
     % If either Args or List is not a conz structure, succeed without further checks.
     (\+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth, Self, [A | Args], [L | List]) :-
+args_conform(Depth, Self, [A | Args], [L | List]) :- !,
     % Check if the argument conforms and proceed with the rest of the list.
-    arg_conform(Depth, Self, A, L),
+    show_failure_when(argtypes,arg_conform(Depth, Self, A, L)),
     args_conform(Depth, Self, Args, List).
-
 %!  arg_conform(+Depth, +Self, +Arg, +Expected) is det.
 %
 %   Checks if a single argument (Arg) conforms to the expected type (Expected).
@@ -1378,6 +1408,10 @@ args_conform(Depth, Self, [A | Args], [L | List]) :-
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
+
+%arg_conform(_Depth, Self, A, ParamType):- !, non_arg_violation_each(Self,ParamType, A).
+arg_conform(_Dpth, _Slf, A, _L) :- var(A), !.
+arg_conform(_Dpth, _Slf, _A, L) :- var(L), !.
 arg_conform(_Dpth, _Slf, _A, L) :-
     % Succeed if the expected type is a non-specific type.
     nonvar(L), is_nonspecific_type(L), !.
@@ -1385,8 +1419,8 @@ arg_conform(Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
     get_type_each(Depth, Self, A, T), T \== 'Var',
     type_conform(T, L), !.
-% arg_conform(_Dpth, _Slf, _, _).
-% arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+arg_conform(_Dpth, _Slf, _, _):- !.
+arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
 
 %!  type_conform(+Type, +Expected) is nondet.
 %
@@ -1398,13 +1432,14 @@ arg_conform(Depth, Self, A, L) :-
 type_conform(T, L) :-
     % Succeed if the types are equal.
     T = L, !.
-type_conform(T, L) :- \+ is_nonspecific_type(T), \+ is_nonspecific_type(L), !, can_assign(T, L).
+type_conform(T, L) :- \+ is_nonspecific_type(T), \+ is_nonspecific_type(L), !, show_failure_when(argtypes,can_assign(T, L)).
 type_conform(T, L) :- fail,
     % Succeed if either type is non-specific.
     \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), !.
 type_conform(T, L) :-
     % Succeed if the type can be assigned.
-    can_assign(T, L).
+    show_failure_when(argtypes,can_assign(T, L)).
+
 
 % Declare `thrown_metta_return/1` as dynamic to allow runtime modifications.
 :- dynamic(thrown_metta_return/1).
@@ -1439,11 +1474,20 @@ throw_metta_return(L) :-
 %
 into_typed_args(_Dpth, _Slf, T, M, Y) :-
     % If either list is not a conz structure, unify the values directly.
-    (\+ iz_conz(T); \+ iz_conz(M)), !, M = Y.
+    (\+ iz_conz(T); \+ iz_conz(M)), !, show_failure_when(argtypes,M = Y).
+
 into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
     % Process each type-value pair.
-    into_typed_arg(Depth, Self, T, M, Y),
+    show_failure_when(argtypes,into_typed_arg(Depth, Self, T, M, Y)),
     into_typed_args(Depth, Self, TT, MM, YY).
+
+:- nodebug(metta(argtypes)).
+:- initialization(nodebug(metta(argtypes))).
+
+show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
+   if_t(debugging(metta(failures)),trace),!,fail)).
+show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
+%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 
 %!  into_typed_arg(+Depth, +Self, +Type, +Value, -TypedValue) is det.
 %
@@ -1457,10 +1501,10 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M), !, Y = M, nop(put_attr(M, cns, Self = T)).
+    var(M),  show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))), !.
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
-    into_typed_arg0(Depth, Self, T, M, Y) *-> true ; M = Y.
+    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)), show_failure_when(argtypes,(M = Y))),!.
 
 %!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is nondet.
 %
@@ -1472,9 +1516,10 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 %   @arg Value       The value to be evaluated.
 %   @arg TypedValue  The resulting typed value.
 %
+into_typed_arg0(Depth, Self, T, M, Y) :- T=='Atom',!,M=Y.
 into_typed_arg0(Depth, Self, T, M, Y) :-
     % If the type is a variable, determine the value type and evaluate if needed.
-    var(T), !,
+    var(T),
     ((
         get_type(Depth, Self, M, T),
         (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
@@ -1509,18 +1554,34 @@ wants_eval_kind(_) :- true.
 %   @arg Input     The context or structure being evaluated.
 %   @arg NewValue  The value being unified with the attribute.
 %
-prevent_type_violations(BecomingValue,RequireType):- non_arg_violation(_Self, RequireType, BecomingValue).
+prevent_type_violations(Self, BecomingValue,RequireType):- non_arg_violation(Self, RequireType, BecomingValue).
+%type_list_violations(BecomingValue,RequireType):- (RType,RequireType),non_arg_violation(_Self, RequireType, BecomingValue).
+
 % TODO make sure it is inclusive rather than exclusive
-cns:attr_unify_hook(_=TypeRequirements,BecomingValue):- \+ maplist(prevent_type_violations(BecomingValue),TypeRequirements), !, fail.
-cns:attr_unify_hook(Self = TypeList, NewValue) :-
+
+cns:attr_unify_hook(Self=TypeList, NewValue):- nb_current(suspend_type_unificaton, true),!.
+cns:attr_unify_hook(Self=TypeList, NewValue) :-
+  show_failure_when(argtypes,maplist(prevent_type_violations(Self,BecomingValue),TypeRequirements)),
+  show_failure_when(argtypes,cns_attr_unify_hook(Self,TypeList, NewValue)).
+
+cns_attr_unify_hook(Self,TypeList,NewValue) :-
     % If the new value is an attributed variable, assign the same attribute.
-    attvar(NewValue), !, put_attr(NewValue, cns, Self = TypeList).
-cns:attr_unify_hook(Self = TypeList, NewValue) :-
+    attvar(NewValue), !, dont_put_attr(NewValue, cns, Self = TypeList).
+cns_attr_unify_hook(Self , TypeList, NewValue) :-
     % Retrieve the type of the new value and check if it can be assigned.
+    show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
+
+can_assign_value_typelist(Self, NewValue, TypeList):-
     get_type(20, Self, NewValue, Was),
-    can_assign(Was, Type).
+    must_det_lls(can_assign_value_typelist_4(Self, NewValue, Was, TypeList)).
 
-
+can_assign_value_typelist_4(_Self, _NewValue, _Was, Nil):- Nil==[],!.
+can_assign_value_typelist_4(_Self, _NewValue, Was, TypeList):-
+    member(Type,TypeList),can_assign(Was,Type),!.
+can_assign_value_typelist_4(Self, NewValue, _Was, TypeList):-
+    with_output_to(user_error,(nl,display(var(NewValue)),nl)),
+    if_t(debugging(metta(argtypes)),trace),
+    var(NewValue), dont_put_attr(NewValue, cns, Self = TypeList).
 
 
 %!  set_type(+Depth, +Self, +Var, +Type) is det.
@@ -1558,12 +1619,14 @@ set_type(Depth, Self, Var, Type) :-
 %   @arg Type     The new type to add.
 %
 add_type(_Depth, _Self, _Var, TypeL, Type) :-
+    is_list(TypeL),
     % If the type is already in the list, do nothing.
     \+ \+ (member(E, TypeL), E == Type), !.
 add_type(_Depth, Self, Var, TypeL, Type) :- var(Var), !,
     % Add the new type to the list and set it as an attribute.
+    is_list(TypeL),
     append([Type], TypeL, TypeList),
-    put_attr(Var, cns, Self = TypeList).
+    dont_put_attr(Var, cns, Self = TypeList).
 add_type(_Depth, _Self, Var, TypeL, Type) :-
     ignore(append(_,[Type|_], TypeL)),!.
     % If the variable is not bound, do nothing.
@@ -1582,10 +1645,14 @@ add_type(_Depth, _Self, Var, TypeL, Type) :-
 %     ?- can_assign('Number', 'Number').
 %     true.
 %
-
+can_assign(T, L) :-
+    % Succeed if the types are equal.
+    T == L, !.
+can_assign(T, L) :- fail,
+    % Succeed if either type is non-specific.
+    \+ \+ (is_nonspecific_type(T); is_nonspecific_type(L)), !.
 % If the types are identical, assignment is allowed.
-can_assign(Was, Type) :- nonvar(Was),nonvar(Type),
-   formated_data_type(Was),formated_data_type(Type),!,Type==Was.
+can_assign(Was, Type) :- nonvar(Was),nonvar(Type), formated_data_type(Was),formated_data_type(Type),!,Type==Was.
 % If the types are identical, assignment is allowed.
 can_assign(Was, Type) :- Was = Type, !.
 % If either type is non-specific, assignment is allowed.
@@ -1616,6 +1683,7 @@ is_non_eval_kind(Type) :-
     % If the type is non-variable, not 'Any', and non-specific, succeed.
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
 is_non_eval_kind('Atom').
+is_non_eval_kind('Expression').
 
 %!  is_nonspecific_type(+Type) is nondet.
 %
@@ -1769,17 +1837,17 @@ narrow_types([A], A).
 is_pro_eval_kind(Var) :-
     % If the input is a variable, succeed.
     var(Var), !.
-is_pro_eval_kind(SDT) :-
-    % Check if the type is a formatted data type.
-    formated_data_type(SDT).
-is_pro_eval_kind(A) :-
-    % Fail for certain types.
+is_pro_eval_kind(A) :- is_non_eval_kind(A),!,fail.
+is_pro_eval_kind(SDT) :- % Check if the type is a formatted data type.
+    formated_data_type(SDT), !.
+is_pro_eval_kind(A) :- % Fail for certain types.
     A == 'Atom', !, fail.
 is_pro_eval_kind(A) :-
-    A == '%Undefined%', !, fail.
+    A == '%Undefined%', !.
 is_pro_eval_kind(A) :-
     % Check for non-specific "any" types.
     is_nonspecific_any(A), !.
+is_pro_eval_kind(_A) :- !.
 
 %!  is_feo_f(+F) is nondet.
 %

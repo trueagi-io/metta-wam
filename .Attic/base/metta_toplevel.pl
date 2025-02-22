@@ -148,7 +148,7 @@ load_init_file(_, _).
     Base \== none,
     current_prolog_flag(home, Home),
     file_name_extension(Base, rc, Name),
-    symbolic_list_concat([Home, '/', Name], File),
+    atomic_list_concat([Home, '/', Name], File),
     absolute_file_name(File, Path,
                        [ file_type(prolog),
                          access(read),
@@ -437,7 +437,7 @@ set_window_title([File|More]) :-
     ->  Extra = []
     ;   Extra = ['...']
     ),
-    symbolic_list_concat(['SWI-Prolog --', File | Extra], ' ', Title),
+    atomic_list_concat(['SWI-Prolog --', File | Extra], ' ', Title),
     system:window_title(_, Title).
 set_window_title(_).
 
@@ -2152,5 +2152,4 @@ matching_event(String, Event) :-
     atom_chars(AtomEvent, Event),
     '$append'(String, _, Event),
     !.
-
 

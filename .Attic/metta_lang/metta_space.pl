@@ -705,6 +705,8 @@ was_asserted_space('&corelib').
 was_asserted_space('&flybase').
 was_asserted_space('&top').
 was_asserted_space('&catalog').
+was_asserted_space(ObjectID):- o_f_v(ObjectID, type, 'space').
+
 /*
 was_asserted_space('&attentional_focus').
 was_asserted_space('&belief_events').
@@ -728,6 +730,7 @@ was_asserted_space('&belief_events').
 %     true.
 %
 is_asserted_space(X) :- was_asserted_space(X).
+
 /*
 is_asserted_space(X) :-
     \+ is_as_nb_space(X),
@@ -747,7 +750,7 @@ is_asserted_space(X) :-
 %     ?- is_python_space_not_prolog('unknown_space').
 %     true.
 %
-is_python_space_not_prolog(X) :-
+is_python_space_not_prolog(X) :- is_python_space(X),
     \+ is_as_nb_space(X),
     \+ is_asserted_space(X).
 
@@ -1664,15 +1667,6 @@ cmpd_to_pyswip(PS, "and", Uery, Call) :-
     % Print each line of the source code.
     maplist(write_src_nl, SrcL).
 
-%!  write_src_nl(+Src) is det.
-%
-%   Prints a source line followed by a newline.
-%
-%   @arg Src The source line to print.
-%
-write_src_nl(Src) :-
-    % Print a newline, the source line, and another newline.
-    format('~N'), write_src(Src), format('~N').
 
 %'get-metta-src'(Pred,[Len|SrcL]):-
 %    findall(['AtomDef',Src], 'get-metta-src1'(Pred,Src), SrcL),

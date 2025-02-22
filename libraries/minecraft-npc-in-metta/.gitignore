@@ -1,0 +1,6 @@
+*.bak
+MCProtocolLib/
+./target
+*.*_i
+classpath.txt
+

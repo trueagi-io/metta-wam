@@ -11,15 +11,9 @@
 :- ensure_loaded(library(logicmoo_utils)).
 :- endif.
 :- if(exists_source(library(dictoo))).
-%:- ensure_loaded(library(dictoo)).
+:- ensure_loaded(library(dictoo)).
 :- endif.
 
-cleanup_debug:-
-  forall(
-    (clause(prolog_debug:debugging(A1,B,C),Body,Cl1), 
-     clause(prolog_debug:debugging(A2,B,C),Body,Cl2),
-     A1=@=A2,Cl1\==Cl2),
-     erase(Cl2)).
 
 :- export(plain_var/1).
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
@@ -30,13 +24,13 @@ catch_log(G):- ignore(catch(notrace(G),E,((u_dmsg(E=G),ugtrace(G))))).
 get_user_error(UE):- stream_property(UE,file_no(2)),!.
 get_user_error(UE):- stream_property(UE,alias(user_error)),!.
 
-ufmt(G):- notrace((fbug(G)->true;ufmt0(G))).
+ufmt(G):- fbug(G)->true;ufmt0(G).
 ufmt0(G):- fmt(G)->true;writeln(G).
 u_dmsg(G):- is_list(G),!,my_maplist(u_dmsg,G).
 u_dmsg(M):- get_user_error(UE), \+ current_predicate(with_toplevel_pp/2),!, with_output_to(UE,ufmt(M)).
 u_dmsg(M):- get_user_error(UE),!, with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))).
 u_dmsg(M):- get_user_error(UE),  stream_property(UO,file_no(1)), current_output(CO),!,
-  (UO==CO ->  fbug(M) ;
+  (UO==CO ->  dmsg(M) ;
    (with_toplevel_pp(ansi, with_output_to(UE,ufmt(M))), with_output_to(CO,pp(M)))).
 u_dmsg(G):-ufmt(G),!.
 
@@ -137,8 +131,8 @@ if_thread_main(G):- main_thread->call(G);true.
 
 
 
-:- if(\+ current_predicate(fbug/1)).
-%fbug(P):- format(user_error,'~N~p~n',[P]).
+:- if(\+ current_predicate(wdmsg/1)).
+%wdmsg(P):- format(user_error,'~N~p~n',[P]).
 :- endif.
 
 
@@ -159,8 +153,8 @@ pp_q(Cl):-
 
 ncatch(G,E,F):- catch(G,E,F).
 mcatch(G,E,F):- catch(G,E,F).
-%mcatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),ignore(call(F)),throw(E))).
-%ncatch(G,E,F):- catch(G,E,(fbug(G=E),catch(bt,_,fail),fbug(G=E),call(G))).
+%mcatch(G,E,F):- catch(G,E,(wdmsg(G=E),catch(bt,_,fail),wdmsg(G=E),ignore(call(F)),throw(E))).
+%ncatch(G,E,F):- catch(G,E,(wdmsg(G=E),catch(bt,_,fail),wdmsg(G=E),call(G))).
 %ncatch(G,E,(F)).
 
 
@@ -207,7 +201,7 @@ ibreak:- if_thread_main(((trace,break))).
 
 %tc_arg(N,C,E):- compound(C),!,arg(N,C,E).
 tc_arg(N,C,E):- catch(arg(N,C,E),Err,
-  /*unrepress_output*/((bt,fbug(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
+  /*unrepress_output*/((bt,wdmsg(tc_arg(N,C,E)=Err),((tracing->true;trace),break,arg(N,C,E))))).
 
 
 
@@ -220,10 +214,8 @@ compound_name_arg(G,MD,Goal):- compound(G),!, compound_name_arguments(G,MD,[Goal
 
 :- multifile(user:message_hook/3).
 :- dynamic(user:message_hook/3).
-%user:message_hook(Term, Kind, Lines):- error==Kind, itrace,fbug(user:message_hook(Term, Kind, Lines)),trace,fail.
-user:message_hook(Term, Kind, Lines):- 
-   fail, error==Kind,  
-   fbug(message_hook(Term, Kind, Lines)),fail.
+%user:message_hook(Term, Kind, Lines):- error==Kind, itrace,wdmsg(user:message_hook(Term, Kind, Lines)),trace,fail.
+user:message_hook(Term, Kind, Lines):- error==Kind,  wdmsg(user:message_hook(Term, Kind, Lines)),fail.
 
 :- meta_predicate(must_det_ll(0)).
 :- meta_predicate(must_det_ll1(1,0)).
@@ -296,8 +288,8 @@ must_det_ll1(P1,X):-
   strip_module(X,M,P),functor(P,F,A),setup_call_cleanup(nop(trace(M:F/A,+fail)),(must_not_error(call(P1,X))*->true;md_failed(P1,X)),
     nop(trace(M:F/A,-fail))),!.
 
-ugtrace(_):-  is_testing, !, ignore(give_up(5)), throw('$aborted').
-ugtrace(G):-  notrace,trace,rtrace(G).
+ugtrace(_):-  option_value(testing,true),!, halt(5).
+ugtrace(G):- rtrace(G).
 %ugtrace(G):- ggtrace(G).
 
 %must_not_error(G):- must(once(G)).
@@ -306,7 +298,7 @@ must_not_error(G):- (tracing;never_rrtrace),!,call(G).
 must_not_error(G):- notrace(is_cgi),!, ncatch((G),E,((u_dmsg(E=G)))).
 %must_not_error(X):- is_guitracer,!, call(X).
 %must_not_error(G):- !, call(G).
-must_not_error(X):- !,ncatch(X,E,(fbug(E=X),ugtrace(X))).
+must_not_error(X):- !,ncatch(X,E,(wdmsg(E=X),ugtrace(X))).
 must_not_error(X):- ncatch(X,E,(rethrow_abort(E);(/*arcST,*/writeq(E=X),pp(etrace=X),
   trace,
   rrtrace(visible_rtrace([-all,+exception]),X)))).
@@ -330,7 +322,7 @@ cant_rrtrace:- nb_setval(cant_rrtrace,t).
 can_rrtrace:- nb_setval(cant_rrtrace,f).
 %md_failed(P1,X):- predicate_property(X,number_of_clauses(1)),clause(X,(A,B,C,Body)), (B\==!),!,must_det_ll(A),must_det_ll((B,C,Body)).
 md_failed(P1,G):- never_rrtrace,!,notrace,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
-md_failed(_P1,_G):- option_value(testing,true),!,give_up(6).
+md_failed(_P1,_G):- option_value(testing,true),!,halt(6).
 md_failed(_,_):- never_rrtrace,!,fail.
 md_failed(P1,G):- tracing,/*notrace*/(u_dmsg(md_failed(P1,G))),!,fail.
 md_failed(P1,G):- main_debug,/*notrace*/(u_dmsg(md_failed(P1,G))),!,throw(md_failed(P1,G,2)).
@@ -342,7 +334,6 @@ md_failed(P1,X):-  u_dmsg(failed(P1,X))/*,arcST*/,nortrace,atrace,
 
 :- meta_predicate(rrtrace(0)).
 rrtrace(X):- rrtrace(etrace,X).
-give_up(_):- throw('$aborted').
 
 is_guitracer:- getenv('DISPLAY',_), current_prolog_flag(gui_tracer,true).
 :- meta_predicate(rrtrace(1,0)).
@@ -675,11 +666,11 @@ goal_expansion(G,I,GG,O):- nonvar(I),source_location(_,_),
 plain_var(V):- notrace((var(V), \+ attvar(V), \+ get_attr(V,ci,_))).
 
 my_assertion(G):- call(G),!.
-my_assertion(G):- fbug(my_assertion(G)),writeq(goal(G)),nl,!,break.
+my_assertion(G):- wdmsg(my_assertion(G)),writeq(goal(G)),nl,!,break.
 must_be_free(AllNew):- plain_var(AllNew),!.
-must_be_free(AllNew):- arcST,fbug(must_be_free(AllNew)),break,fail.
+must_be_free(AllNew):- arcST,wdmsg(must_be_free(AllNew)),break,fail.
 must_be_nonvar(AllNew):- nonvar_or_ci(AllNew),!.
-must_be_nonvar(AllNew):- arcST,fbug(must_be_nonvar(AllNew)),break,fail.
+must_be_nonvar(AllNew):- arcST,wdmsg(must_be_nonvar(AllNew)),break,fail.
 
 my_len(X,Y):- var(X),!,length(X,Y).
 my_len(X,Y):- is_list(X),!,length(X,Y).
@@ -1272,7 +1263,6 @@ end_of_file.
 %:- autoload(library(http/html_write),[html/3,print_html/1]).
 
 is_debugging(M):- \+ \+ debugging(M),!.
-is_debugging(_):- is_testing,!.
 %is_debugging(_):- menu_or_upper('B').
 
 debug_m(_,Tiny):- display_length(Tiny,Len),Len<30,!,pp(Tiny).
@@ -2481,17 +2471,17 @@ to_prop_name(Name,UName):- compound(Name),compound_name_arity(Name,F,_),!,to_pro
 to_prop_name(Name,UName):- to_case_breaks(Name,Breaks),xtis_to_atomic(Breaks,UName).
 
 xtis_to_atomic([xti(Str,upper),xti(StrL,lower)|Breaks],StrO):- string_upper(Str,Str),
-   symbol_chars(Str,CharsList),append(Left,[U],CharsList),
-   name(S1,Left),symbolic_list_concat([S1,'_',U,StrL],'',StrUL),!,
+   atom_chars(Str,CharsList),append(Left,[U],CharsList),
+   name(S1,Left),atomic_list_concat([S1,'_',U,StrL],'',StrUL),!,
    xtis_to_atomic([xti(StrUL,lower)|Breaks],StrO).
 xtis_to_atomic([],'').
 xtis_to_atomic([xti(Str,_)],Lower):- downcase_atom(Str,Lower).
 xtis_to_atomic([XTI|Breaks],Atomic):-
-  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,symbolic_list_concat([S1,S2],'_',Atomic).
+  xtis_to_atomic([XTI],S1),xtis_to_atomic(Breaks,S2),!,atomic_list_concat([S1,S2],'_',Atomic).
 
 share_vars(Vs,Name=Value):- member(VName=VValue,Vs),VName==Name,!,(Value=VValue->true;trace_or_throw(cant(share_vars(Vs,Name=Value)))).
 share_vars(_,Name=_):- string_concat('_',_,Name),!. % Hide some vars
-share_vars(V,Name=Value):- fbug(missing(share_vars(V,Name=Value))),!.
+share_vars(V,Name=Value):- dmsg(missing(share_vars(V,Name=Value))),!.
 
 
 
@@ -2517,6 +2507,5 @@ print_prop_val(N=V):- to_prop_name(N,P),format('~N\t\t'),print(P=V),nl.
 
 
 ignore_numvars(Name='$VAR'(Name)).
-
 
 

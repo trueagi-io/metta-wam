@@ -1,6 +1,4 @@
-:- module(lsp_changes, [handle_doc_changes/2,
-                        doc_text_fallback/2,
-                        doc_text/2]).
+:- module(lsp_changes, [handle_doc_changes/2]).
 /** <module> LSP changes
 
 Module for tracking edits to the source, in order to be able to act on
@@ -10,8 +8,9 @@ the code as it is in the editor buffer, before saving.
 */
 
 :- use_module(library(readutil), [read_file_to_codes/3]).
+:- use_module(lsp_metta_workspace, [xref_maybe/2, source_file_text/2]).
 
-:- dynamic doc_text/2.
+:- dynamic lsp_state:full_text_next/2.
 
 %! handle_doc_changes(+File:atom, +Changes:list) is det.
 %
@@ -27,26 +26,18 @@ handle_doc_change(Path, Change) :-
       rangeLength: ReplaceLen, text: Text} :< Change,
     !,
     atom_codes(Text, ChangeCodes),
-    doc_text_fallback(Path, OrigCodes),
+    source_file_text(Path, OrigString),
+    string_codes(OrigString, OrigCodes),
     replace_codes(OrigCodes, StartLine, StartChar, ReplaceLen, ChangeCodes,
                   NewText),
-    retractall(doc_text(Path, _)),
-    assertz(doc_text(Path, NewText)).
+    transaction(( retractall(lsp_state:full_text_next(Path, _)),
+                  assertz(lsp_state:full_text_next(Path, NewText))
+                )).
 handle_doc_change(Path, Change) :-
-    retractall(doc_text(Path, _)),
-    atom_codes(Change.text, TextCodes),
-    assertz(doc_text(Path, TextCodes)).
-
-%! doc_text_fallback(+Path:atom, -Text:text) is det.
-%
-%  Get the contents of the file at =Path=, either with the edits we've
-%  been tracking in memory, or from the file on disc if no edits have
-%  occured.
-doc_text_fallback(Path, Text) :-
-    doc_text(Path, Text), !.
-doc_text_fallback(Path, Text) :-
-    read_file_to_codes(Path, Text, []),
-    assertz(doc_text(Path, Text)).
+    _{text: Text} :< Change,
+    transaction(( retractall(lsp_state:full_text_next(Path, _)),
+                  assertz(lsp_state:full_text_next(Path, Text))
+                )).
 
 %! replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, -NewText) is det.
 replace_codes(Text, StartLine, StartChar, ReplaceLen, ReplaceText, NewText) :-

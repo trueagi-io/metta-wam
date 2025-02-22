@@ -47,7 +47,7 @@ shutdown_persistency:-
     rdf_current_db(_) -> rdf_detach_db ; true.
 
 % Ensure that the persistency system is shut down on halt.
-%:- initialization(start_persistency).
+%:- initialization(start_persistency, after_load /**/).
 :- at_halt(shutdown_persistency).
 
 %!  query_example(-S, -P, -O, -G) is nondet.

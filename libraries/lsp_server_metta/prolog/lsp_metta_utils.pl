@@ -1,7 +1,8 @@
-not_mod_lsp_metta_utils
-:- module(lsp_metta_utils, [
-                        clause_with_arity_in_file_at_position/4
-                        ]).
+:- module(lsp_metta_utils, [ clause_with_arity_in_file_at_position/4,
+                             get_code_at_range/4,
+                             get_src_code_at_range/4
+                           ]).
+
 :- use_module(library(debug), [debug/3]).
 :- use_module(lsp_metta_xref).
 :- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
@@ -9,8 +10,15 @@ not_mod_lsp_metta_utils
 :- use_module(lsp_metta_split, [
         split_document_get_section_only/4
 ]).
+:- use_module(lsp_metta_workspace, [ maybe_doc_path/2,
+                                     into_json_range/2,
+                                     into_line_char_range/2,
+                                     source_file_text/2
+                                   ]).
 
 :- include(lsp_metta_include).
+
+:- use_module(lsp_metta_workspace, [succl/2]).
 
 :- dynamic lsp_metta_changes:doc_text_d4/2.
 

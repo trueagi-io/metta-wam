@@ -141,8 +141,8 @@ check_file_exists_for_append(HistoryFile) :-
 check_file_exists_for_append(HistoryFile) :-
     % If the file cannot be created, print an error message and halt the program.
     write("Error opening history file: "),
-    writeln(HistoryFile),
-    halt(1).
+    writeln(HistoryFile),!.
+    %halt(1).
 
 %! save_history is det.
 %   Saves the current input history to a file if input is from a terminal (tty).
@@ -372,7 +372,7 @@ check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).
 check_has_directive(call(N=V)) :- nonvar(N), !, set_directive(N, V).
 % Enable rtrace debugging and restart reading.
-check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !, rtrace, notrace(throw(restart_reading)).
+% check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !. % rtrace, notrace(throw(restart_reading)).
 % Handle expressions in the form of N=V.
 check_has_directive(NEV) :- symbol(NEV), symbolic_list_concat([N, V], '=', NEV), set_directive(N, V).
 % Handle directive in the form [@Name, Value].
@@ -569,7 +569,7 @@ repl_read_next(NewAccumulated, Expr) :-
 
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
-    if_t(flag(need_prompt,1,0),(nl,set_metta_prompt)),
+    if_t(flag(need_prompt,1,0),(format('~N'),set_metta_prompt)),
         % On windows we need to output the prompt again
     (is_win64-> (ttyflush,prompt(P, P),write(P), ttyflush) ; true),
     % Read a line from the current input stream.
@@ -1094,7 +1094,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
    (
     forall_interactive(
     From, WasInteractive,Complete, %may_rtrace
-      timed_call(GgGgGgGgGgG,Seconds),
+      timed_call((GgGgGgGgGgG),Seconds),
 
 
          (((
@@ -1158,8 +1158,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
 print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Result,Seconds,Was,Output,Stepping):-
          set_option_value(interactive,WasInteractive),
-         Control = contrl(LeashResults,Max,DoLeap),
-    assertion(LeashResults==inf;number(LeashResults)),
+         Control = contrl(InitialResultLeash,Max,DoLeap),
+    assertion(InitialResultLeash==inf;number(InitialResultLeash)),
     assertion(Max==inf;number(Max)),
          nb_setarg(1,Result,Output),
          current_input(CI), read_pending_codes(CI,_,[]),
@@ -1194,7 +1194,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
 
 
          ((Complete \== true, WasInteractive, DoLeap \== leap,
-                  LeashResults =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
+                  InitialResultLeash =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
          %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
            if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),

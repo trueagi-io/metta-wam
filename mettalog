@@ -1,35 +1,90 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+debug_this_script=false
 
 generate_junit_report=0
 junit_report_file=""
 start_time=0
 export RPWD=$PWD
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+
 # Function to exit the script properly
 if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(readlink -f "${BASH_SOURCE[0]}"); fi
 export MeTTa=$(readlink -m "$SCRIPT")
 export METTALOG_DIR=$(dirname "$SCRIPT")
+
 # echo "METTALOG_DIR=$METTALOG_DIR"
-#cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
-should_compile=0
-never_compile=0
+# cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
+
+need_compile=0
+exe=true
 compatio=false
-#compatio=false
+# compatio=false
 RC_OPTIONS=()
 TIMEOUT=0
 verbose="${VERBOSE:-0}"  # Use the VERBOSE environment variable or default to '0' (not verbose)
 OUTPUT_DIR="${METTALOG_OUTPUT}"
+# verbose=9
 
-cd $METTALOG_DIR
-#source ./scripts/ensure_venv
-cd $RPWD
+cd "$METTALOG_DIR"
+source ./scripts/ensure_venv
+cd "$RPWD"
 
 use_docker=auto
 repl_flag=auto
 use_rc_file=~/.mettalogrc
-debug_this_script=false
 contains_halt=false
 dry_run=0
+REQUEST_PYSWIP_VERSION=
+
+# Step 1: Capture variables before argument parsing
+# This ensures only variables explicitly defined in the script are considered for overriding.
+declare -A local_vars
+while IFS= read -r var_name; do
+    local_vars["$var_name"]=1
+done < <(compgen -v)
+
+# Step 2: Print Initial Variable Values & Check for Command-Line Args
+# echo "=== Initial Variables ==="
+for var_name in "${!local_vars[@]}"; do
+    initial_value="${!var_name}"
+    cmd_value="(not provided)"
+
+    # Check if this variable has a command-line argument
+    for arg in "$@"; do
+        if [[ "$arg" =~ ^--$var_name=(.*)$ ]]; then
+            cmd_value="${BASH_REMATCH[1]}"
+            was_value="${!var_name}"
+            eval "$var_name='$cmd_value'"                 
+            initial_value="${!var_name}"      
+            : # echo "$var_name = $initial_value  (Was Arg: $was_value)"
+            continue
+        fi
+    done
+
+    : # echo "$var_name = $initial_value  (Cmd Arg: $cmd_value)"
+done
+: # echo "========================="
+
+# Step 3: Process Command-Line Arguments
+extra_args=()
+for arg in "$@"; do
+    if [[ "$arg" =~ ^--([^=]+)=(.*)$ ]]; then
+        var_name="${BASH_REMATCH[1]}"
+        var_value="${BASH_REMATCH[2]}"
+
+        if [[ -n "${local_vars[$var_name]}" ]]; then
+            # ? Assign the value to the variable dynamically
+            eval "$var_name='$var_value'"
+        else
+            # Pass it along
+            extra_args+=("$arg")
+        fi
+    else
+        # Not an assignment, pass it along
+        extra_args+=("$arg")
+    fi
+done
 
 #!/bin/bash
 
@@ -45,6 +100,9 @@ if [ -z "${LC_ALL+x}" ]; then
 else
     ORIGINAL_LC_ALL="$LC_ALL"
 fi
+
+export LANG=en_US.utf8
+export LC_ALL=en_US.utf8
 
 # Function to restore original values on exit
 restore_original_values() {
@@ -68,18 +126,18 @@ trap restore_original_values EXIT
 
 # Check and set LANG to en_US.UTF-8 if unset or empty
 if [ -z "$LANG" ]; then
-    #echo "LANG is unset or empty. Setting LANG to en_US.UTF-8."
+    # echo "LANG is unset or empty. Setting LANG to en_US.UTF-8."
     export LANG="en_US.UTF-8"
 else
-    : #echo "LANG is set to: $LANG"
+    : # echo "LANG is set to: $LANG"
 fi
 
 # Check and set LC_ALL to en_US.UTF-8 if unset or empty
 if [ -z "$LC_ALL" ]; then
-    #echo "LC_ALL is unset or empty. Setting LC_ALL to en_US.UTF-8."
+    # echo "LC_ALL is unset or empty. Setting LC_ALL to en_US.UTF-8."
     export LC_ALL="en_US.UTF-8"
 else
-    : #echo "LC_ALL is set to: $LC_ALL"
+    : # echo "LC_ALL is set to: $LC_ALL"
 fi
 
 
@@ -581,7 +639,6 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
 EOF
 }
 
-
 # Initialize variables
 SWI_OPTIONS=()
 METTALOG_OPTIONS=()
@@ -598,23 +655,6 @@ LIST_OF_FILE_ARGS=()
 
 wants_print_help=0
 
-
-PYSWIP_VERSION="$METTALOG_DIR/prolog/metta_lang"
-
-# Check if the file exists and Read the first line from the file
-VERSION_FILE="$METTALOG_DIR/src/version-config"
-if [ -f "$VERSION_FILE" ]; then    
-    read -r FIRST_LINE < "$VERSION_FILE"
-    FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}" 
-    if [ ! -z "$FIRST_LINE" ]; then
-	if [ -d "$METTALOG_DIR/.Attic/$FIRST_LINE/" ]; then
-	    PYSWIP_VERSION="$FIRST_LINE"
-	fi
-    fi
-fi
-
-
-DefaultSav="Sav.$(hostname).MeTTaLog"
 
 
 function handle_args {
@@ -800,14 +840,16 @@ function handle_args {
                 ;;
 
 
-           --v=*) PYSWIP_VERSION="${arg#*=}"
-	        if [ -f "${DefaultSav}" ]; then
-		    rm -f "${DefaultSav}"
-		fi
-		never_compile=1
+           --v=*) REQUEST_PYSWIP_VERSION="${arg#*=}"
                 continue
                 ;;
 
+           --exe=*) exe=${arg#*=}
+                continue
+		;;
+           --EXE=*) exe=${arg#*=}
+                continue
+		;;
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
@@ -861,17 +903,17 @@ done
 
 
 #DEBUG "LIST_OF_FILE_ARGS[0]=${LIST_OF_FILE_ARGS[0]}"
-DIRNAME="${LIST_OF_FILE_ARGS[0]}"
-if [[ -f "$DIRNAME" ]]; then
-  HTML_OUT_MAYBE="${DIRNAME}.html"
-  DIRNAME=$(dirname "${DIRNAME}")
-elif [[ -d "$DIRNAME" ]]; then
-  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
+FARG_DIRNAME="${LIST_OF_FILE_ARGS[0]}"
+if [[ -f "$FARG_DIRNAME" ]]; then
+  HTML_OUT_MAYBE="${FARG_DIRNAME}.html"
+  FARG_DIRNAME=$(dirname "${FARG_DIRNAME}")
+elif [[ -d "$FARG_DIRNAME" ]]; then
+  HTML_OUT_MAYBE="${FARG_DIRNAME}/Result.html"
 else
-  DIRNAME="${PWD}"
-  HTML_OUT_MAYBE="${DIRNAME}/Result.html"
+  FARG_DIRNAME="${PWD}"
+  HTML_OUT_MAYBE="${FARG_DIRNAME}/Result.html"
 fi
-DIR_RC="$DIRNAME/.mettalogrc"
+DIR_RC="$FARG_DIRNAME/.mettalogrc"
 #DEBUG "DIR_RC=$DIR_RC"
 
 if [[ -f "$DIR_RC" ]]; then
@@ -885,15 +927,10 @@ fi
 # process actual command-line arguments
 handle_args "$@"
 
-# process specific RC file
-if [[ -f "${use_rc_file}" ]]; then
-   load_rc_file "${use_rc_file}"
-fi
-
 
 # Decide on enabling the REPL
 if [[ "$repl_flag" != "false" ]]; then
-  [[ ${#LIST_OF_FILE_ARGS[@]} -eq 0 ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
+  : #[[ ${#LIST_OF_FILE_ARGS[@]}=="false" ]] && repl_flag=true && add_to_list "--repl" METTALOG_OPTIONS_LAST ||  true
 fi
 
 if [[ "$repl_flag" == "true" ]]; then
@@ -972,23 +1009,139 @@ fi
 fi
 
 
-set -e
+# set -e
 
 DEBUG "SWI_OPTIONS: ${SWI_OPTIONS[@]}"
 DEBUG "PRE_METTALOG_OPTIONS: ${PRE_METTALOG_OPTIONS[@]}"
 DEBUG "LIST_OF_FILE_ARGS: ${LIST_OF_FILE_ARGS[@]}"
 DEBUG "METTALOG_OPTIONS: ${METTALOG_OPTIONS[@]}"
 
+
+
+
+# ===========================================================
+# MettaLog Prolog Interpreter Version and Path Configuration
+# ===========================================================
+# This script configures the version and source directory for the MettaLog Prolog interpreter,
+# determines the appropriate version by checking a version-config file and any requested overrides,
+# searches for the interpreter source across various directories, and updates paths based on the found source.
+# It checks for 'unlikely' METTALOG_DIR locations such as the root or home directories.
+# Variables:
+# - REQUEST_PYSWIP_VERSION: Stores the requested version directory of the Prolog interpreter.
+# - PYSWIP_VERSION: Stores the current version directory of the Prolog interpreter.
+# - VERSION_FILE: Path to the file containing version configuration if not specified by user.
+# - FIRST_LINE: The first line of the VERSION_FILE, used to determine version overrides.
+# - METTALOG_DIR: if this is being run outside of the METTALOG_DIR, this will bring the search back inside if nothing is found.
+# Variables Out:
+# - INTERP_SRC_DIR: The resolved directory path where the Prolog interpreter source is located.
+# - PYSWIP_VERSION: Shall become fully qualified non-relative INTERP_SRC_DIR.
+# - METTALOG_DIR: Shall become fully qualified non-relative path two dirs below INTERP_SRC_DIR.
+# ===========================================================
+resolve_full_path() {
+    local path="$1"
+    if command -v greadlink > /dev/null; then
+        greadlink -f "$path"
+    elif command -v readlink > /dev/null; then
+        readlink -f "$path" || echo "$(cd "$(dirname "$path")"; pwd -P)/$(basename "$path")"
+    else
+        echo "$(cd "$(dirname "$path")"; pwd -P)/$(basename "$path")"
+    fi
+}
+# Initial Debugging
+DEBUG "Starting interpreter configuration."
+DEBUG "Requested PYSWIP_VERSION: ${REQUEST_PYSWIP_VERSION:-None specified}"
+DEBUG "Initial METTALOG_DIR: ${METTALOG_DIR:-Not set}"
+
+# Checking the version file and setting PYSWIP_VERSION
+if [[ -n "$REQUEST_PYSWIP_VERSION" ]]; then
+    PYSWIP_VERSION="$REQUEST_PYSWIP_VERSION"
+    DEBUG "Using requested PYSWIP_VERSION: $PYSWIP_VERSION"
+else
+    VERSION_FILE="$METTALOG_DIR/version-config"
+    if [ -f "$VERSION_FILE" ]; then
+        read -r FIRST_LINE < "$VERSION_FILE"
+        FIRST_LINE="${FIRST_LINE%"${FIRST_LINE##*[![:space:]]}"}"  # Trim trailing whitespace
+        if [[ -n "$FIRST_LINE" ]]; then
+            PYSWIP_VERSION="$FIRST_LINE"
+            DEBUG "Version from file: $PYSWIP_VERSION"
+        else
+            DEBUG "No version override found in $VERSION_FILE"
+        fi
+    else
+        DEBUG "No version file found at $VERSION_FILE"
+    fi
+fi
+
+# Setting a default value for PYSWIP_VERSION if it has not been set
+if [[ -z "$PYSWIP_VERSION" ]]; then
+    PYSWIP_VERSION="prolog/metta_lang"  # Ensure this default path is correct based on your directory structure
+    DEBUG "No version specified, using default PYSWIP_VERSION: $PYSWIP_VERSION"
+fi
+
+PYSWIP_VERSION="${PYSWIP_VERSION%/}"
+paths=(
+    "$PYSWIP_VERSION"
+    "$PYSWIP_VERSION/prolog"
+    "$PYSWIP_VERSION/src"
+    "$PYSWIP_VERSION/prolog/metta_interp"
+    "$METTALOG_DIR/$PYSWIP_VERSION"
+    "$METTALOG_DIR/prolog/$PYSWIP_VERSION"
+    "$METTALOG_DIR/src/$PYSWIP_VERSION"
+    "$METTALOG_DIR/$PYSWIP_VERSION/prolog/metta_interp"
+    ".Attic/$PYSWIP_VERSION"
+    "$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
+)
+
+# Debugging path search
+DEBUG "Starting search for interpreter source."
+for path in "${paths[@]}"; do
+    DEBUG "Checking path: $path"
+    if [ -f "$path/metta_interp.pl" ]; then
+        DEBUG "Found interpreter at $path"
+        INTERP_SRC_DIR=$(resolve_full_path "$path")
+        PYSWIP_VERSION=$(resolve_full_path "$INTERP_SRC_DIR")
+        NEW_METTALOG_DIR=$(dirname "$(dirname "$PYSWIP_VERSION")")
+        
+        # Handling unlikely METTALOG_DIR locations with debug
+        if [[ "$NEW_METTALOG_DIR" == "/" || "$NEW_METTALOG_DIR" == "$HOME" || "$NEW_METTALOG_DIR" == "/home" || "$NEW_METTALOG_DIR" == "/usr" ]]; then
+            DEBUG "Unlikely METTALOG_DIR detected at $NEW_METTALOG_DIR, not updating."
+        else
+            if [[ -z "$METTALOG_DIR" || "$METTALOG_DIR" != "$NEW_METTALOG_DIR" ]]; then
+                DEBUG "Updating METTALOG_DIR from ${METTALOG_DIR:-unset} to $NEW_METTALOG_DIR"
+                METTALOG_DIR="$NEW_METTALOG_DIR"
+            fi
+        fi
+        found=true
+        break
+    fi
+done
+
+# Finalizing debug statements
+if [ "$found" = false ]; then
+    DEBUG "${RED}Error: Interpreter source directory not found after checking all paths.${NC}"
+    [[ "${BASH_SOURCE[0]}" != "$0" ]] && return 1 || exit 1
+fi
+
+DEBUG "Final INTERP_SRC_DIR: $INTERP_SRC_DIR"
+DEBUG "Final METTALOG_DIR: $METTALOG_DIR"
+
+
+# process specific RC file
+if [[ -f "${use_rc_file}" ]]; then
+   load_rc_file "${use_rc_file}"
+fi
+
+
 # Store the initial PYTHONPATH for later comparison
 initial_pythonpath="$PYTHONPATH"
 
-# Add DIRNAME to PYTHONPATH if it's a valid path and not already present
-if [[ -d "$DIRNAME" && ":$PYTHONPATH:" != *":$DIRNAME:"* ]]; then
-    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$DIRNAME"
+# Add FARG_DIRNAME to PYTHONPATH if it's a valid path and not already present
+if [[ -d "$FARG_DIRNAME" && ":$PYTHONPATH:" != *":$FARG_DIRNAME:"* ]]; then
+    export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$FARG_DIRNAME"
 fi
 
 # Add src to PYTHONPATH if not already present
-[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/src:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/src"
+[[ ":$PYTHONPATH:" != *":$METTALOG_DIR/python:"* ]] && export PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}$METTALOG_DIR/python"
 
 # If PYTHONPATH has changed, echo the new value
 if [[ "$PYTHONPATH" != "$initial_pythonpath" ]]; then
@@ -998,102 +1151,172 @@ fi
 export RUST_BACKTRACE=full
 
 
-PYSWIP_VERSION="${PYSWIP_VERSION%/}"
-# Directory containing the .pl files
-if [ -f "$PYSWIP_VERSION/metta_interp.pl" ]; then
-  INTERP_SRC_DIR="$PYSWIP_VERSION"
-else 
-    if [ -f "$PYSWIP_VERSION/prolog/metta_interp.pl" ]; then
-      INTERP_SRC_DIR="$PYSWIP_VERSION/prolog"
-    else 
-      INTERP_SRC_DIR="$METTALOG_DIR/.Attic/$PYSWIP_VERSION"
-    fi
+
+
+# Set default reference file name based on hostname
+DefaultSav="Sav.$(hostname).MeTTaLog"
+need_compile=0  # Ensure this is initialized
+
+if [[ "$exe" == "force" ]]; then
+    exe=true
+    need_compile=1
 fi
 
-INTERP_SRC_DIR="$(readlink -m "${INTERP_SRC_DIR}")"
+if [[ "$exe" == "true" ]]; then
+    # Find the most recent reference file based on modification time
+    reference_file=$(find "$INTERP_SRC_DIR" -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 
-DEBUG "INTERP_SRC_DIR=$INTERP_SRC_DIR"
-
-
-# Initialize a flag to check if any file is newer or if reference file is missing
-
-if [[ $never_compile -eq 0 ]]; then
-# Reference file
-    reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
-    if [[ -z "$reference_file" ]]; then
-      reference_file="$METTALOG_DIR/${DefaultSav}"
+    # If no reference file is found, set a default one
+    if [[ -z "$reference_file" ]]; then      
+        reference_file="$INTERP_SRC_DIR/${DefaultSav}"
+        DEBUG "Setting exe based on $reference_file"	
     fi
 
-    # Check if ${DefaultSav} exists
+    # If the reference file does not exist, compilation is required
     if [[ ! -e "$reference_file" ]]; then
-	DEBUG "Reference file $reference_file does not exist. Compiler will be called."
-	should_compile=1
+        DEBUG "${ORANGE}Reference file $reference_file does not exist. Compiler will be called."
+        need_compile=1
     else
-	# Iterate over each .pl file to check if it's newer
-	for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
-	    if [[ ! -e "$pl_file" ]]; then
-		DEBUG "No matching .pl files found in $INTERP_SRC_DIR."
-		#exit 1
-	    fi
-
-	    # Check if this .pl file is newer than the reference file
-	    if [[ "$pl_file" -nt "$reference_file" ]]; then
-		DEBUG "$pl_file is newer than $reference_file."
-		should_compile=1
-		break  # No need to check further, exit loop
-	    fi
-	done
+        # Check if any .pl file is newer than the reference file
+        for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
+            if [[ ! -e "$pl_file" ]]; then
+                DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
+            # If a .pl file is newer than the reference file, trigger recompilation
+            elif [[ "$pl_file" -nt "$reference_file" ]]; then
+                DEBUG "${ORANGE}$pl_file is newer than $reference_file."
+                need_compile=1
+                break  # Exit loop early as compilation is already needed
+            fi
+        done
     fi
 fi
 
-# If any newer file found or reference file missing, call the compiler
-if [[ $should_compile -eq 1 ]]; then
-    #if [[ -f "$reference_file" ]]; then
-    #    DEBUG "Calling compiler from $reference_file..."
-    #	swipl -x $reference_file -g qsave_program -g halt
-    #else
-    rm -f $reference_file
-    if [[ "$never_compile" -eq 0 ]]; then
-        :
-	#DEBUG "Compiling $reference_file" 
-	#swipl -l src/$PYSWIP_VERSION/metta_interp.pl -g qcompile_mettalog -- --exeout=$reference_file
+if [[ $need_compile -eq 1 ]]; then
+
+    if [[ -f "$reference_file" ]]; then
+        # was "should" (therefore requested)
+	rm -f "$reference_file"
     fi
+
+    # Detect TMPDIR only if we are going to compile
+    if [[ -n "$TMPDIR" && -d "$TMPDIR" ]]; then
+        TEMP_DIR="$TMPDIR"
+    elif [[ -d "/tmp" ]]; then
+        TEMP_DIR="/tmp"
+    elif [[ -d "/var/tmp" ]]; then
+        TEMP_DIR="/var/tmp"
+    else
+        do_DEBUG "${RED}ERROR: No valid temporary directory found!${NC}" >&2
+        exe=false
+    fi
+    # Generate a unique success file name inside the detected temporary directory
+    export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
 fi
 
-reference_file=$(find . -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
-if [[ -z "$reference_file" ]]; then
-  reference_file="$METTALOG_DIR/${DefaultSav}"
+
+NEED_CLEANUP=0
+STYLE=EXE
+
+# Function to cleanup compiled file if execution is interrupted or unsuccessful
+compiler_cleanup() {
+    if [[ $NEED_CLEANUP -eq 1 ]]; then
+	NEED_CLEANUP=0
+
+	# If the success file is missing, remove the binary
+
+	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
+	    DEBUG "{$GREEN}CREATED $reference_file"
+	    STYLE=EXE
+	else
+	    
+	    
+	    do_DEBUG "${ORANGE}Missing $reference_file OR $METTALOG_COMPILE_SUCCESS!${NC}"
+	    
+	    DEFSAVE="$INTERP_SRC_DIR/${DefaultSav}"
+
+	    # Ensure DEFSAVE is not empty and does not point to a directory
+	    if [[ -n "$DEFSAVE" && ! -d "$DEFSAVE" ]]; then
+		do_DEBUG "${YELLOW}Checking for failed compilation files to remove...${NC}"
+		
+		# Find and remove only relevant files
+		for file in "$DEFSAVE"*; do
+		    if [[ -f "$file" ]]; then
+			do_DEBUG "${YELLOW}Removing: $file${NC}"
+			rm -f "$file"
+		    else
+			do_DEBUG "${YELLOW}Skipping: $file (not a regular file)${NC}"
+		    fi
+		done
+	    else
+		do_DEBUG "${YELLOW}Skipping removal: $DEFSAVE is a directory or unset.${NC}"
+	    fi
+
+	    do_DEBUG "${RED}Fallback: Using interpreter instead of compiled image.${NC}"
+	    unset reference_file
+	    exe=false
+
+	fi
+    fi
+
+}
+
+if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
+
+    NEED_CLEANUP=1
+    # Register cleanup before starting compilation
+    (
+
+    # Set LC_ALL to UTF-8 to prevent encoding-related errors
+    export LC_ALL=C.UTF-8  
+
+    # Remove any previous success files (clean up before new compilation)
+    rm -f "$TEMP_DIR/create_on_successful_compile_*"
+
+    # Construct the compilation command    
+    #--successfile=$METTALOG_COMPILE_SUCCESS
+    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
+    DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
+
+    unset DISPLAY
+
+    # Execute the compilation command
+    set +e
+    DEBUG "${BOLD}Compiling $reference_file..."
+    eval "$MAKE_REF_FILE" 
+    # trap reset_settings  compiler_cleanup SIGINT SIGTERM EXIT
+    )
 fi
 
-if [[ -f "$reference_file" ]]; then
-   : # Placeholder in case something needs to be done here
-   # rm -f $reference_file
+# Maybe call cleanup function (It also checks if compilation was successfull and if not, it might toggle exe=false)
+if [[ "$exe" == "true" ]]; then
+    compiler_cleanup 
 fi
 
-if [[ -f "$reference_file" ]]; then
-  MLOG="$reference_file"
+# If exe is explicitly set to false, enforce the non-executable mode
+if [[ "$exe" == "false" ]]; then
+    unset reference_file
+    STYLE=INTERP    
+fi
 
-  if [[ "${#SWI_OPTIONS[@]}" -gt 0 ]]; then
-       MLOG="swipl -x $reference_file  ${SWI_OPTIONS[*]}"
-  fi
-  if [[ "$never_compile" -eq 1 ]]; then
-       MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
-  fi
+DEBUG STYLE="$STYLE"
+
+if [[ "$STYLE" == "EXE" ]]; then
+  MLOG="swipl -x $reference_file ${SWI_OPTIONS[*]}"
 else
   MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 fi
 
-#add_to_list "--log" METTALOG_OPTIONS
-#html_flag=enable
-#add_to_list "--html" METTALOG_OPTIONS
+# Generate the final command for execution, incorporating all options
+METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"
+DEBUG "exec $METTA_CMD"
+
+
+
+
+
 
 STDIO_OPTIONS=()
 set_io_flags STDIO_OPTIONS
-
-# Generate the final command
-METTA_CMD="$MLOG -- --python=$python_flag -- ${PRE_METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS[@]} ${METTALOG_OPTIONS_LAST[@]} ${STDIO_OPTIONS[@]}"
-
-
 OS=$(uname)
 TIMEOUT_CMD="timeout"
 
@@ -1128,7 +1351,7 @@ cleanup() {
 
     if [ ! -z "$TEE_FILE" ];then
 
-        if [ ! -z "$HTML_FILE" ];then
+        if [ ! -z "$HTML_FILE" ];then	    
             IF_REALLY_DO "ansi2html -u < '$TEE_FILE' > '$HTML_OUT'"
             export HTML_FILE=""
         fi
@@ -1146,8 +1369,15 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ -n "$TIMEOUT" && "$TIMEOUT" -gt 0 ]]; then  
-  export TIMEOUT
-  METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground --signal=SIGTERM --kill-after=5s $TIMEOUT ${METTA_CMD}"
+    export TIMEOUT # --signal=SIGTERM --kill-after=5s 
+    
+    if [[ "$repl_flag" == "true" ]]; then
+        do_DEBUG "${GREEN} UNSET TIMEOUT=$TIMEOUT${NC} (TIMEOUT_CMD=$TIMEOUT_CMD)"
+        unset TIMEOUT
+    else    
+        METTA_CMD="$TIMEOUT_CMD --preserve-status --foreground $TIMEOUT ${METTA_CMD}"
+        do_DEBUG "${YELLOW}TIMEOUT=$TIMEOUT${NC} (TIMEOUT_CMD=$TIMEOUT_CMD)"
+    fi
 fi
 
 function escape_quotes {
@@ -1211,19 +1441,21 @@ execute_with_pipes() {
 }
 
 if [ -z "$HTML_OUT" ];then
-    HTML_OUT=HTML_OUT_MAYBE
+    HTML_OUT="$HTML_OUT_MAYBE"
 fi
 
 if [ ! -z "$file_html" ];then
     HTML_OUT="$file_html"
 fi
 
+random_suffix=$(date +"%Y%m%d_%H%M")_$$
+TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
+export TEE_FILE
+touch $TEE_FILE
+
 # Conditional to check if html_flag is enabled
-if [[ "$html_flag" == "enable" ]]; then
+if [[ "$html_flag" == "enable" ]]; then    
     # Generate a random filename for TEE_FILE with date,time,PID
-    random_suffix=$(date +"%Y%m%d_%H%M")_$$
-    TEE_FILE="$METTALOG_DIR/TEE_$random_suffix.ansi"
-    export TEE_FILE
 
     if [ ! -z "$HTML_OUT" ];then
         #HTML_OUT=$(realpath --relative-to="$(pwd)" "$HTML_OUT")
@@ -1236,14 +1468,14 @@ if [[ "$html_flag" == "enable" ]]; then
     fi
 
     if [ ! -z "$file_html" ];then
-	HTML_OUT="$file_html"
+	    HTML_OUT="$file_html"
     fi
 
     export HTML_FILE="${HTML_OUT}"
 
     export TYPESCRIPT=1
     if [[ "$OS" == "Darwin" ]]; then # macOS
-        METTA_CMD="/usr/bin/script -q -f -a \"$TEE_FILE\" -c \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
+        METTA_CMD="/usr/bin/script -q -a \"$TEE_FILE\" \\\"$(printf '%q ' ${METTA_CMD[@]})\\\""
     else # Assume Linux
         METTA_CMD="/usr/bin/script -q -f --force -e -a \"$TEE_FILE\" -c \\\"$(echo "${METTA_CMD}" | sed 's/"/\\"/g')\\\""
     fi
@@ -1255,11 +1487,14 @@ if [[ "$html_flag" == "enable" ]]; then
 	[[ -n "${EXIT_SCRIPT+x}" ]] && { [[ "$IS_SOURCED" == "1" ]] && return "$EXIT_SCRIPT" || exit "$EXIT_SCRIPT"; }
 	
 	IF_REALLY_DO "touch '$TEE_FILE'"
+	
 	IF_REALLY_DO "chmod 777 '$TEE_FILE'"
 	IF_REALLY_DO "cat /dev/null > '$TEE_FILE'"
 	if [[ "$contains_halt" == "true" ]]; then
 		do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi
+    # do_DEBUG "HTML_FILE=${HTML_FILE}"
+    #do_DEBUG "TEE_FILE=${TEE_FILE}"
 	execute_with_pipes
 	echo $? > "$TEMP_EXIT_CODE_FILE"
 else
@@ -1271,6 +1506,8 @@ else
 	if [[ "$contains_halt" == "true" ]]; then
 		do_DEBUG "METTA_CMD: $METTA_CMD"
 	fi
+    #do_DEBUG "HTML_FILE=${HTML_FILE}"
+    #do_DEBUG "TEE_FILE=${TEE_FILE}"
 	execute_with_pipes
 	IF_REALLY_DO "echo $? > '$TEMP_EXIT_CODE_FILE'"
 fi

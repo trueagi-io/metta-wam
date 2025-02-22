@@ -21,8 +21,8 @@
 :- set_prolog_flag(encoding,utf8).
 %:- set_prolog_flag(encoding,octet).
 /*
-Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip\metta_interp.pl
-C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\hyperon-wam\src\pyswip1\metta_interp.pl
+Now PASSING NARS.TEC:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip\metta_interp.pl
+C:\opt\logicmoo_workspace\packs_sys\logicmoo_opencog\MeTTa\vspace-metta\metta_vspace\pyswip1\metta_interp.pl
 STS1.01)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.08)
 Now PASSING TEST-SCRIPTS.B5-TYPES-PRELIM.14)
@@ -261,7 +261,7 @@ get_flag_value(_,true).
    forall(option_value_def(Opt,Default),set_option_value(Opt,Default))))).
 
 %process_option_value_def:- \+ option_value('python',false), skip(ensure_loaded(metta_python)).
-process_option_value_def:- option_value('python',load), ensure_loaded(src/main/metta_python).
+process_option_value_def:- option_value('python',load), ensure_loaded(metta_vspace/pyswip/metta_python).
 process_option_value_def.
 
 
@@ -345,7 +345,7 @@ save_html_of(Filename):-
   file_name_extension(Base,'metta.html',HtmlFilename),
   loonit_reset,
   tee_file(TEE_FILE),
-  writeln('<br/><a href="https://github.com/logicmoo/hyperon-wam/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
+  writeln('<br/><a href="https://github.com/logicmoo/vspace-metta/blob/main/MeTTaLog.md">Return to Summaries</a><br/>'),
   sformat(S,'ansi2html -u < "~w" > "~w" ',[TEE_FILE,HtmlFilename]),
   writeln(doing(S)),
   ignore(shell(S)))).
@@ -405,7 +405,7 @@ clear_spaces:- clear_space(_).
 clear_space(S):-
    %retractall(metta_defn(_,S,_,_)),
    nop(retractall(metta_type(S,_,_))),
-   retractall(metta_atom_asserted(S,_)).
+   retractall(asserted_metta_atom(S,_)).
 
 
 lsm:- lsm(_).
@@ -438,7 +438,7 @@ debug_only(_What,G):- ignore((fail,notrace(catch_warn(G)))).
 'False':- fail.
 
 
-'mettalog::vspace-main':- repl.
+'metta_learner::vspace-main':- repl.
 
 into_underscores(D,U):- atom(D),!,atomic_list_concat(L,'-',D),atomic_list_concat(L,'_',U).
 into_underscores(D,U):- descend_and_transform(into_underscores,D,U),!.
@@ -856,7 +856,7 @@ type_decl('%Undefined%').
 type_decl('Variable').
 
 :- dynamic(get_metta_atom/2).
-:- dynamic(metta_atom_asserted/2).
+:- dynamic(asserted_metta_atom/2).
 metta_atom_stdlib([:, Type, 'Type']):- type_decl(Type).
 metta_atom_stdlib([:, Op, [->|List]]):- op_decl(Op,Params,ReturnType),append(Params,[ReturnType],List).
 
@@ -869,10 +869,10 @@ get_metta_atom_from(KB, [F, A| List]):- KB='&flybase',fb_pred(F, Len), length([A
 get_metta_atom_from([Superpose,ListOf], Atom):- Superpose == 'superpose',is_list(ListOf),!,member(KB,ListOf),get_metta_atom_from(KB,Atom).
 get_metta_atom_from(Space, Atom):- typed_list(Space,_,L),!, member(Atom,L).
 get_metta_atom_from(KB,Atom):- (KB=='&self'; KB='&stdlib'), metta_atom_stdlib(Atom).
-get_metta_atom_from(KB,Atom):- if_or_else(metta_atom_asserted( KB,Atom),metta_atom_asserted_fallback( KB,Atom)).
+get_metta_atom_from(KB,Atom):- if_or_else(asserted_metta_atom( KB,Atom),asserted_metta_atom_fallback( KB,Atom)).
 
-metta_atom_asserted_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
-%metta_atom_asserted_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
+asserted_metta_atom_fallback( KB,Atom):- fail, is_list(KB),!, member(Atom,KB).
+%asserted_metta_atom_fallback( KB,Atom):- get_metta_atom_from(KB,Atom)
 
 %metta_atom(KB,[F,A|List]):- metta_atom(KB,F,A,List), F \== '=',!.
 metta_defn(Eq,KB,Head,Body):- ignore(Eq = '='), get_metta_atom_from(KB,[Eq,Head,Body]).
@@ -883,7 +883,7 @@ metta_type(S,H,B):- get_metta_atom_from(S,[':',H,B]).
 %maybe_xform(metta_atom(KB,[F,A|List]),metta_atom(KB,F,A,List)):- is_list(List),!.
 maybe_xform(metta_defn(Eq,KB,Head,Body),metta_atom(KB,[Eq,Head,Body])).
 maybe_xform(metta_type(KB,Head,Body),metta_atom(KB,[':',Head,Body])).
-maybe_xform(metta_atom(KB,HeadBody),metta_atom_asserted(KB,HeadBody)).
+maybe_xform(metta_atom(KB,HeadBody),asserted_metta_atom(KB,HeadBody)).
 maybe_xform(_OBO,_XForm):- !, fail.
 
 metta_anew1(Load,_OBO):- var(Load),trace,!.
@@ -1139,7 +1139,6 @@ is_unit_test_exec(Exec):- sformat(S,'~q',[Exec]),sub_atom(S,_,_,_,"!',").
 
 return_empty('Empty').
 return_empty(_,Empty):- return_empty(Empty).
-return_empty(_RetType,_,Empty):- return_empty(Empty).
 
 convert_tax(_How,Self,Tax,Expr,NewHow):-
   metta_interp_mode(Ch,Mode),
@@ -1877,8 +1876,8 @@ ensure_mettalog_system:-
     system:use_module(library(pairs)),
     user:use_module(library(swi_ide)),
     user:use_module(library(prolog_profile)),
-    ensure_loaded('./src/main/flybase_convert'),
-    ensure_loaded('./src/main/flybase_main'),
+    ensure_loaded('./metta_vspace/pyswip/flybase_convert'),
+    ensure_loaded('./metta_vspace/pyswip/flybase_main'),
     autoload_all,
     make,
     autoload_all,

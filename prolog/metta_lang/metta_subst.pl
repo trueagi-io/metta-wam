@@ -383,24 +383,24 @@ subst_args1(Eq,RetType,Depth,Self,PredDecl,Res):-
    deterministic(TF), (TF==true -> ! ; true)).
 
 
-subst_args1(Eq,RetType,Depth,Self,['if',Cond,Then,Else],Res):- !,
+subst_args1(Eq,RetType,Depth,Self,['if',Cond,Then,Else],Res):- fail, !,
    subst_args(Eq,'Bool',Depth,Self,Cond,TF),
    (is_True(TF)
      -> subst_args(Eq,RetType,Depth,Self,Then,Res)
      ;  subst_args(Eq,RetType,Depth,Self,Else,Res)).
 
-subst_args1(Eq,RetType,Depth,Self,['If',Cond,Then,Else],Res):- !,
+subst_args1(Eq,RetType,Depth,Self,['If',Cond,Then,Else],Res):- fail, !,
    subst_args(Eq,'Bool',Depth,Self,Cond,TF),
    (is_True(TF)
      -> subst_args(Eq,RetType,Depth,Self,Then,Res)
      ;  subst_args(Eq,RetType,Depth,Self,Else,Res)).
 
-subst_args1(Eq,RetType,Depth,Self,['If',Cond,Then],Res):- !,
+subst_args1(Eq,RetType,Depth,Self,['If',Cond,Then],Res):- fail, !,
    subst_args(Eq,'Bool',Depth,Self,Cond,TF),
    (is_True(TF) -> subst_args(Eq,RetType,Depth,Self,Then,Res) ;
       (!, fail,Res = [],!)).
 
-subst_args1(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- !,
+subst_args1(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- fail, !,
    subst_args(Eq,'Bool',Depth,Self,Cond,TF),
    (is_True(TF) -> subst_args(Eq,RetType,Depth,Self,Then,Res) ;
       (!, fail,Res = [],!)).

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Make sure you're in the Git repository
 if [ ! -d ".git" ]; then

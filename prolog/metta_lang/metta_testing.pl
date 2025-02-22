@@ -405,11 +405,12 @@ give_pass_credit(TestSrc, _Pre, _G) :-
     always_exec(BaseEval), !.
 give_pass_credit(TestSrc, _Pre, G) :-
     % Logs the test as passed with 'PASS' status.
-    must_det_lls((ignore(write_pass_fail(TestSrc, 'PASS', G)),
+    must_det_lls((
+    ignore(write_pass_fail(TestSrc, 'PASS', G)),
     % Increments the success counter.
-    flag(loonit_success, X, X + 1), !,
+    flag(loonit_success, X, X + 1),
     % Displays a success message in cyan color.
-    color_g_mesg(cyan, write_src_wi(loonit_success(G))))), !.
+    color_g_mesg(cyan, ignore(write_src_wi(loonit_success(G)))))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -468,9 +469,6 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
         must_det_ll((
             (tee_file(TEE_FILE) -> true ; 'TEE.ansi' = TEE_FILE),
             ((
-                % Optional shared units for organized logging.
-                shared_units(UNITS),
-                open(UNITS, append, Stream, [encoding(utf8)]),
                 % Retrieve or create HTML file name.
                 once(getenv('HTML_FILE', HTML_OUT) ; sformat(HTML_OUT, '~w.metta.html', [Base])),
                 % Compute and store a per-test HTML output.
@@ -479,15 +477,19 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
                 get_last_call_duration(Duration),
                 DurationX1000 is Duration * 1000,
                 % Write the detailed formatted log entry.
+                % Optional shared units for organized logging.
+             ignore((   shared_units(UNITS),
+             catch(setup_call_cleanup(
+                open(UNITS, append, Stream, [encoding(utf8)]),
                 format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
                     [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
                     trim_gstring_bar_I(write_src_woi([P,C]),600),
                     trim_gstring_bar_I(write_src_woi(G1),600),
                     trim_gstring_bar_I(write_src_woi(G2),600),
                     DurationX1000,
-                    HTML_OUT_PerTest]),!,
+                    HTML_OUT_PerTest]),
                 % Close the log stream
-                close(Stream))))).
+                close(Stream)),_,true))))))).
 
 % Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
 
@@ -517,14 +519,21 @@ output_directory(OUTPUT_DIR) :- getenv('OUTPUT_DIR', OUTPUT_DIR), !.
 %     % Get the shared units file path:
 %     ?- shared_units(Units).
 %     Units = '/path/to/SHARED.UNITS'.
-shared_units(UNITS) :-
+shared_units(UNITS):- shared_units0(UNITS), exists_file(UNITS),!.
+
+shared_units0(UNITS) :-
     % Needs not to be relative to CWD
-    getenv('SHARED_UNITS', UNITS), !.
-shared_units(UNITS) :-
-    output_directory(OUTPUT_DIR),  !,
-    directory_file_path(OUTPUT_DIR, 'SHARED.UNITS', UNITS).
-shared_units(UNITS) :-
+    getenv('SHARED_UNITS', UNITS).
+shared_units0(UNITS) :-
+    metta_root_dir(ROOT_DIR),
+    getenv('SHARED_UNITS', VAR_UNITS),
+    absolute_file_name(VAR_UNITS, UNITS, [relative_to(ROOT_DIR)]).
+shared_units0(UNITS) :-
+    output_directory(OUTPUT_DIR),
+    absolute_file_name('SHARED.UNITS', UNITS, [relative_to(OUTPUT_DIR)]).
+shared_units0(UNITS) :-
     UNITS = '/tmp/SHARED.UNITS'.
+
 
 % currently in a shared file per TestCase class..
 %   but we might make each test dump its stuff to its own HTML file for easier spotting why test failed
@@ -867,6 +876,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
     must_det_ll((
         color_g_mesg(red, write_src_wi(loonit_failureR(G))),
         write_pass_fail(TestSrc, 'FAIL', G),
+        display(G),
         flag(loonit_failure, X, X + 1),
         % Optional trace or REPL on failure based on settings.
         if_t(option_value('on-fail', 'repl'), repl),
@@ -1161,15 +1171,23 @@ inc_exec_num(FileName) :-
 %   @example
 %     % Load an answer file with automatic path resolution:
 %     ?- load_answer_file('answers_file.ans').
-load_answer_file(File) :-
-    % Resolve to an absolute file path if necessary.
-    (   \+ atom(File); \+ is_absolute_file_name(File); \+ exists_file(File)),
-    absolute_file_name(File, AbsFile), File\=@=AbsFile,
-    load_answer_file_now(AbsFile),
-    !.
-load_answer_file(File) :-
+load_answer_file(Base) :-
+    calc_answer_file(Base,File),
     load_answer_file_now(File),
     !.
+
+
+
+calc_answer_file(RelFile,AnsFile):- \+ atom_concat(_, metta, RelFile),
+    (   \+ atom(RelFile); \+ is_absolute_file_name(RelFile); \+ exists_file(RelFile)),
+    % Resolve to an absolute file path if necessary.
+    absolute_file_name(RelFile, AnsFile), RelFile\=@=AnsFile.
+calc_answer_file(AnsFile,AnsFile):- \+ atom_concat(_, metta, AnsFile),!.
+calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
+% Finds a file using expand_file_name for wildcard matching.
+calc_answer_file(MeTTaFile,AnsFile):-  atom_concat(MeTTaFile, '.?*', Pattern),
+        expand_file_name(Pattern, Matches), Matches = [AnsFile|_], !. % Select the first match
+calc_answer_file(Base,AnsFile):- ensure_extension(Base, answers, AnsFile),!.
 
 %!  load_answer_file_now(+File) is det.
 %
@@ -1181,11 +1199,12 @@ load_answer_file(File) :-
 %   @example
 %     % Begin loading an answer file, initializing execution tracking:
 %     ?- load_answer_file_now('/path/to/answers_file.ans').
-load_answer_file_now(File) :-
+
+load_answer_file_now(Base) :-
+    calc_answer_file(Base, AnsFile),
     ignore((
-        % Ensure correct file extension for answer files.
-        ensure_extension(File, answers, AnsFile),
-        remove_specific_extension(AnsFile, answers, StoredAs),
+        % Ensure correct file extension for result storage files.
+        file_name_extension(StoredAs, _, AnsFile),
         % Initialize execution count and start loading.
         set_exec_num(StoredAs, 1),
         fbug(load_answer_file(AnsFile, StoredAs)),

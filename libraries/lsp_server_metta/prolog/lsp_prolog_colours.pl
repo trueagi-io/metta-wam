@@ -19,9 +19,10 @@ Module with predicates for colourizing Prolog code, via library(prolog_colour).
 :- use_module(library(prolog_source), [read_source_term_at_location/3]).
 :- use_module(library(yall)).
 
-:- use_module(lsp_prolog_changes, [doc_text/2]).
 :- use_module(lsp_prolog_utils, [seek_to_line/2,
                           linechar_offset/3]).
+
+:- use_module(lsp_metta_workspace, [source_file_text/2]).
 
 token_types([namespace,
              type,

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if a command is passed
 if [ $# -eq 0 ]; then
