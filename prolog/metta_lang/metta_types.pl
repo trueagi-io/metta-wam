@@ -412,7 +412,7 @@ not_arg_violation(Depth, Self, Arg, Type) :-
 %
 get_types(Depth, Self, Var, TypeSet) :-
     % Collect all types for the variable using setof/3.
-    setof(Type, get_type_each(Depth, Self, Var, Type), TypeSet).
+    quietly(setof(Type, get_type_each(Depth, Self, Var, Type), TypeSet)).
 
 %!  get_type_equals(+Depth, +Self, +Var, -Type) is nondet.
 %
@@ -442,7 +442,8 @@ get_type_equals(Depth, Self, Var, TypeO) :-
 %   @arg Val   The value for which the type is being retrieved.
 %   @arg Type  The determined type of the value.
 %
-get_type(Depth, Self, Val, TypeO) :-
+get_type(Depth, Self, Val, TypeO):- quietly(get_type0(Depth, Self, Val, TypeO)).
+get_type0(Depth, Self, Val, TypeO) :-
     % Ensure no repeated types using no_repeats_var/1.
     no_repeats_var(NoRepeatType),
     % Retrieve the type of the value.
@@ -669,7 +670,7 @@ typed_expression(Depth, Self, [Op | Args], ArgTypes, RType) :-
     % Get the length of arguments or determine if unbound.
     len_or_unbound(Args, Len),
     % Retrieve the operator type definition.
-    get_operator_typedef_R(Self, Op, Len, ArgTypes, RType).
+    quietly(get_operator_typedef_R(Self, Op, Len, ArgTypes, RType)).
 
 %!  badly_typed_expression(+Depth, +Self, +Expr) is nondet.
 %
@@ -1678,12 +1679,13 @@ cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==
 %
 is_non_eval_kind(Var) :-
     % If the input is a variable, succeed.
-    var(Var), !.
+    var(Var), !, fail.
+is_non_eval_kind('Atom').
+is_non_eval_kind('Expression').
+% is_non_eval_kind('Variable').
 is_non_eval_kind(Type) :-
     % If the type is non-variable, not 'Any', and non-specific, succeed.
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
-is_non_eval_kind('Atom').
-is_non_eval_kind('Expression').
 
 %!  is_nonspecific_type(+Type) is nondet.
 %
