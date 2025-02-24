@@ -2938,6 +2938,7 @@ before_arfer_dash_dash(Rest, Args, NewRest) :-
 %     ?- cmdline_load_metta(execute, '&self', ['--args', '--file=example.metta']).
 %
 
+maybe_do_repl(_Why) :- current_prolog_flag(mettalog_rt, true), !.
 maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
 
 
