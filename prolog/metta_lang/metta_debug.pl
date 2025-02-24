@@ -1156,4 +1156,68 @@ pick_quote(String, '`') :- \+ string_contains(String, '`'), !.              % Us
 :- at_halt(in_file_output(leave_comment)).      % Ensure comment mode is exited at halt
 
 
+print_last_choicepoint_upwards :-
+    prolog_current_choice(ChI0),         % Choice in print_last_choicepoint_info/0
+    prolog_choice_attribute(ChI0, parent, ChI1), !,
+    print_last_choicepoint_upwards(ChI1).
+print_last_choicepoint_upwards.
+
+print_last_choicepoint_upwards(ChI0):-
+  once(print_last_choicepoint_info(ChI0, [])),
+  prolog_choice_attribute(ChI0, parent, ChI1), !,
+  print_last_choicepoint_upwards(ChI1).
+print_last_choicepoint_upwards(_).
+
+print_last_choicepoint_info(ChI1, Options) :-
+    real_choice_info(ChI1, ChI),
+    prolog_choice_attribute(ChI, frame, F),
+    prolog_frame_attribute(F, goal, Goal),
+    %Goal \= '$execute_goal2'(_,_,_),     % Toplevel REPL choicepoint
+    %!,
+    Goal \='$runtoplevel', !,
+    option(message_level(Level), Options, warning),
+    get_prolog_backtrace(2, [_|Stack], [frame(F)]),
+    (   predicate_property(Goal, foreign)
+    ->  print_message(Level, choicepoint(foreign(Goal), Stack))
+    ;   prolog_frame_attribute(F, clause, Clause),
+        (   prolog_choice_attribute(ChI, pc, PC)
+        ->  Ctx = jump(PC)
+        ;   prolog_choice_attribute(ChI, clause, Next)
+        ->  Ctx = clause(Next)
+        ),
+        print_message(Level, choicepoint_info(clause(Goal, Clause, Ctx), Stack))
+    ).
+print_last_choicepoint_info(_, _).
+
+real_choice_info(Ch0, Ch) :-
+    prolog_choice_attribute(Ch0, type, Type),
+    nop(((dummy_type_info(Type), !))),
+    prolog_choice_attribute(Ch0, parent, Ch1),
+    real_choice_info(Ch1, Ch).
+real_choice_info(Ch, Ch).
+
+dummy_type_info(debug).
+dummy_type_info(none).
+
+:- multifile(prolog:message/1).
+prolog:message(choicepoint_info(Choice, Stack)) -->
+    user:choice_info(Choice),
+    [ nl, 'Called from', nl ],
+    message(Stack).
+
+user:choice_info(foreign(Goal)) -->
+    prolog_stack:success_goal(Goal, 'a foreign choice_info point').
+user:choice_info(clause(Goal, ClauseRef, clause(Next))) -->
+    prolog_stack:success_goal(Goal, 'a choice_info point in alternate clause'),
+    [ nl ],
+    [ '  ' ], prolog_stack:clause_descr(ClauseRef), [': clause succeeded', nl],
+    [ '  ' ], prolog_stack:clause_descr(Next),      [': next candidate clause' ].
+user:choice_info(clause(Goal, ClauseRef, jump(PC))) -->
+    { prolog_stack:clause_where(false, ClauseRef, PC, Where,
+                   [subgoal_positions(true)])
+    },
+    prolog_stack:success_goal(Goal, 'an in-clause choice_info point'),
+    [ nl, '  ' ],
+    prolog_stack:where_no_goal(Where).
+
 
