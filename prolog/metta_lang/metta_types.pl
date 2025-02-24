@@ -201,7 +201,7 @@ mnotrace(G) :-
 %   @arg NewValue  The value to be unified, which must be numeric.
 %
 %   @example
-%     ?- dont_put_attr(X, 'Number', _), X = 42.
+%     ?- put_attr(X, 'Number', _), X = 42.
 %     X = 42.
 %
 'Number':attr_unify_hook(_, NewValue) :-
@@ -627,7 +627,6 @@ get_type_cmpd_2nd_non_nil(Depth, Self, Val, Type, How) :-
     % If this is a second or later occurrence, ensure Type is not an empty list.
     (Nth > 1 -> Type \== [] ; true).
 
-/*
 have_some_defs(Depth,Self,Val):-
   \+ \+
  ([H|Args] = Val,
@@ -652,7 +651,6 @@ check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
    (args_violation(Depth,Self,Args,ArgTypes) ->
     (trace_get_type(bad_type,args_violation(Args,ArgTypes),check),fail);
     (trace_get_type(conformed,no_args_violation(Args,ArgTypes),check),true)).
-*/
 
 %!  typed_expression(+Depth, +Self, +Expr, -ArgTypes, -RType) is nondet.
 %
@@ -1266,7 +1264,7 @@ reset_cache :-
 %
 
 get_operator_typedef(Self, Op, Len, ParamTypes, RetType):-
-    no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType)).
+    quietly(no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType))).
 
 get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Ensure the length matches the parameter types or is unbound.
@@ -2069,7 +2067,7 @@ is_metta_data_functor(Eq, F) :-
 :- if(\+ current_predicate(get_operator_typedef/4)).
 get_operator_typedef(Self, Op, ParamTypes, RetType) :-
     % Retrieve the operator type definition.
-    get_operator_typedef(Self, Op, _, ParamTypes, RetType).
+    quietly(get_operator_typedef(Self, Op, _, ParamTypes, RetType)).
 :- endif.
 
 %!  get_operator_typedef1(+Self, +Op, +ParamTypes, -RetType) is det.
@@ -2102,7 +2100,7 @@ get_operator_typedef1(Self, Op, ParamTypes, RetType) :-
 :- if(\+ current_predicate(get_operator_typedef/5)).
 get_operator_typedef(Self, Op, _, ParamTypes, RetType) :-
     % Retrieve the full operator type definition.
-    get_operator_typedef(Self, Op, ParamTypes, RetType).
+    quietly(get_operator_typedef(Self, Op, ParamTypes, RetType)).
 :- endif.
 
 %!  is_special_builtin(+Builtin) is nondet.
