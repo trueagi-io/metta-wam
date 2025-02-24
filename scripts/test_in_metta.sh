@@ -170,7 +170,7 @@ process_file() {
     DEBUG "==========================================================================="
 
     ##########################################################
-    # Decide which is the hyperon_results (answers file)
+    # Decide (Well try to Guess) which is the hyperon_results (.answers file)
     ##########################################################
     export hyperon_results=(${file}\..*)     # gets any other names as well 
     # List of excluded extensions 
@@ -180,18 +180,18 @@ process_file() {
     #  We really need a naming convertion for those generate file names that doenst already conflict with the test framework names  
     #      current conflicts are
     # 
-    #     transpile_test.metta.pl (the prolog version of the translation)
-    #     test.metta.bak (files i keep of backups)
-    #     test.metta.html (created on test output for web results)
-    #     large_file.metta.datalog  (currently created for large file that load slowly)
-    #     uses_config_test.metta.mettalogrc (currently used for configs)
-    #     a_mork_test.metta.xml (XML translated metta files)
-    #     a_jetta_test.metta.js (...etc...)
+    #     transpile_test.metta.pl (the prolog version of the transpilation)
+    #     test.metta.html (created on test output for web results . (stored elsewhere most of the time))
+    #     large_file.metta.datalog - Created for test files larger than 20mb
+    #     uses_config_test.metta.mettalogrc  currently used for configs
+    #     a_mork_test.metta.xml ( XML translated metta files )
+    #     a_jetta_test.metta.js ( Tests created by Adam )
+    #     test.metta.bak (file backups)
     #
-    #     Perhaps a predicatable nmewing convention that can be filtered out
+    #     Perhaps Stassa might use a predicatable naming convention that can be filtered 
     #         test_error  -> result_test_error
     #         unknown_error -> result_unknown_error
-    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "metta" 
+    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "csv" 
              "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" 
             "mettalogrc" "bat" "c" "java" "datalog" "in" "out" "xml" "obo" )
     
@@ -338,18 +338,20 @@ process_file() {
         trap 'handle_sigterm' SIGTERM
         trap 'handle_sigint' SIGINT
     
-        set +x
+        #set +x
         (
             cd "$(dirname "${file}")" || true
             # Record the start time
             start_time=$(date +%s)
-            set +x
+            #set +x
             (
-                set +x
+                #set +x
                 IF_REALLY_DO "timeout --foreground --kill-after=5 --signal=SIGKILL $(($THIS_RUST_TIMEOUT + 1)) time metta '$absfile' 2>&1 | tee '${absfile}.answers'"
             )
             TEST_EXIT_CODE=$?
     
+	    rename_on_error=false
+
             # Record the current time
             end_time=$(date +%s)
             # Calculate elapsed time
@@ -358,27 +360,38 @@ process_file() {
             if [ $TEST_EXIT_CODE -eq 124 ]; then
                 INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Killed (definitely due to timeout) after $RUST_TIMEOUT seconds: ${TEST_CMD}"
                 DEBUG_H_E "${RED}${INFO}${NC}"
+		if [[ "$rename_on_error" == true ]]; then
+		    mv "${hyperon_results}" "${file}.timeout"
+		    export hyperon_results="${file}.timeout"
+		fi
                 [ "$if_failures" -eq 1 ] && rm -f "$file_html"
             elif [ $TEST_EXIT_CODE -ne 0 ]; then
                 INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Got Completed with error under $RUST_TIMEOUT seconds"
                 DEBUG_H_E "${RED}${INFO}${NC}"
+		if [[ "$rename_on_error" == true ]]; then
+		    mv "${hyperon_results}" "${file}.unknown_error"
+		    export hyperon_results="${file}.unknown_error"
+		fi 
             else
                 INFO="INFO: ${elapsed_time} seconds (EXITCODE=$TEST_EXIT_CODE) Rust MeTTa Completed successfully under $RUST_TIMEOUT seconds"
                 DEBUG_H_E "${GREEN}$INFO${NC}"
             fi
-    
-            if [ -f "${hyperon_results}" ]; then
-                if grep -q "Got" "${hyperon_results}"; then
-                    DEBUG_H_E "${RED}Failures in Rust Answers  ${hyperon_results} ${NC}"
-                    mv "${hyperon_results}" "${hyperon_results}.test_error"
-                    export hyperon_results="${hyperon_results}.test_error"
-                fi
-                echo INFO >> "${hyperon_results}"
-            fi
-    
+        
         ) || true
         stty sane
     
+	if [ -f "${hyperon_results}" ]; then
+	    if grep -q "Got" "${hyperon_results}"; then
+		DEBUG_H_E "${RED}Failures in Rust Answers  ${hyperon_results} assumed should be ${file}.test_error ${NC}"
+		if [[ "${hyperon_results}" != "${file}.test_error" ]]; then
+		    cat "${hyperon_results}" > "${file}.test_error"
+		    export hyperon_results="${file}.test_error"
+		fi 
+	    fi
+	    echo INFO >> "${hyperon_results}"
+	fi
+
+
         # Remove traps if you only need them once
         trap - SIGTERM
         trap - SIGINT
@@ -625,7 +638,7 @@ do_DEBUG() {
 }
 
 DEBUG() {
-  if [ "$debug_this_script" == "true" ]; then
+  if [ "$debug_this_script" == true ]; then
      do_DEBUG "$@"
   else 
      if [ "$dry_run" -eq 1 ]; then
@@ -1048,10 +1061,13 @@ if [ $show_help -eq 1 ]; then
   show_help
 fi
 
+
 if [ -z "$SHARED_UNITS" ]; then
-    if [ -d "$METTALOG_OUTPUT" ]; then
-	export SHARED_UNITS=$(readlink -m $METTALOG_OUTPUT)/SHARED.UNITS
-    fi
+  export SHARED_UNITS=$(resolve_full_path $METTALOG_OUTPUT)/SHARED.UNITS
+fi
+
+if [ ! -d "$METTALOG_OUTPUT" ]; then
+    mkdir -p "$METTALOG_OUTPUT"
 fi
 touch $SHARED_UNITS
 
