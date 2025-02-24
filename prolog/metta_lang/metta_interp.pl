@@ -4259,6 +4259,12 @@ metta_atom_added(X, Y) :-
 metta_atom(KB, Atom):-
   quietly(metta_atom0(KB, Atom)).
 
+
+metta_atom0(KB, Fact) :-
+   transform_about(Fact, Rule, Cond), Cond=='True',!,
+   fact_store(KB, Rule, Fact, Cond).
+
+
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
 metta_atom0(KB, [F, A | List]) :-
@@ -4280,27 +4286,31 @@ metta_atom0(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
 
+'same-index'(X,Y):-
+  transform_about(X, t(Inst,Type,Pred, Super), Cond), \+ \+ (nonvar(Pred);nonvar(Super)),
+  transform_about(Y, t(Inst,Type,Pred, Super), Cond), !.
 'same-index'(X,Y):- copy_term(X,Y).
 
 % Direct type association case
-transform_about([Colon, Pred, Super],             inst_type(Pred, Super), true) :-  Colon == ':', !.
+transform_about([Colon, Pred, Super],             t(inst,type,Pred, Super), 'True') :-  Colon == ':', !.
 % Type association inside an equality assertion
-transform_about([Eq, [Colon, Pred, Super], Cond], inst_type(Pred, Super), Cond) :-  Eq == '=', Colon == ':', !.
+transform_about([Eq, [Colon, Pred, Super], Cond], t(inst,type,Pred, Super), Cond) :-  Eq == '=', Colon == ':', !.
 % Subtype relationship
-transform_about([Smile, Pred, Super],             type_type(Pred, Super), true) :-  Smile == ':>', !.
+transform_about([Smile, Pred, Super],             t(type,type,Pred, Super), 'True') :-  Smile == ':>', !.
 % Subtype relationship inside an equality assertion
-transform_about([Eq, [Smile, Pred, Super], Cond], type_type(Pred, Super), Cond) :-  Eq == '=',  Smile == ':>',!.
+transform_about([Eq, [Smile, Pred, Super], Cond], t(type,type,Pred, Super), Cond) :-  Eq == '=',  Smile == ':>',!.
 
 % Proven fact with arguments inside an equality assertion
-transform_about([Eq, [Pred | Args], Cond],        pred_head(Pred, Args), Cond) :-  Eq == '=', !.
+transform_about([Eq, [Pred | Args], Cond],        t(pred,head,Pred, Args), Cond) :-  Eq == '=', !.
 % General proven fact
-transform_about([Pred | Args],                    pred_head(Pred, Args), true):- !.
-transform_about(PredArgs,                    pred_head(Pred, Args), true):- PredArgs=..[Pred | Args],!.
+transform_about([Pred | Args],                    t(pred,fact,Pred, Args), true):- !.
+transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, PredArgs=..[Pred | Args],!.
+transform_about(Pred,                             t(pred,fact,Pred,_Args), true).
 
 add_indexed_fact(OBO):- arg(1,OBO,KB), arg(2,OBO,Fact), add_fact(KB, Fact),!.
 
 add_fact(KB, Fact):-
-   transform_about(Fact, Rule, Cond),
+   must_det_lls(transform_about(Fact, Rule, Cond)),
    assertz(fact_store(KB, Rule, Fact, Cond)).
 
 query_fact(KB, Fact, Cond) :-
@@ -6870,6 +6880,7 @@ ensure_mettalog_system:-
     system:use_module(library(rbtrees)),
     system:use_module(library(dicts)),
     system:use_module(library(shell)),
+    use_module(library(date)),
     system:use_module(library(edinburgh)),
   %  system:use_module(library(lists)),
     system:use_module(library(statistics)),
