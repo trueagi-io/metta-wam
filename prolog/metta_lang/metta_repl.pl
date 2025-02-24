@@ -1056,7 +1056,6 @@ maybe_add_history(Self, BaseEval, NamedVarsList) :-
    prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
 
 
-
 u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
@@ -1123,6 +1122,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='t' -> (nop(set_debug(eval,true)),rtrace,Next=true) ;
          (C=='T' -> (set_debug(eval,true),Next=true);
          (C=='?' -> (print_debug_help,fail)) ;
+         (C=='*' -> (print_last_choicepoint_upwards,fail)) ;
+
          (C==';' -> Next=true ;
          (C==esc('[A',[27,91,65]) -> (Cut=true,Next=false) ;
          (C==esc('[B',[27,91,66]) -> (nb_setarg(3, Control, leap),Cut=false,Next=true) ;
