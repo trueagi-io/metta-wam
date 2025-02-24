@@ -326,10 +326,10 @@ nearest_src_object(SrcObject, _, SrcObjectList):- last(_ - SrcObject, SrcObjectL
 
 
 
-heads_of_op(Op,Head):- metta_type(Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType),arrow_type(RetType,LT,_LR),
+heads_of_op(Op,Head):- metta_type(_Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType),arrow_type(RetType,LT,_LR),
    same_len_copy(ParamTypes,PTL),same_len_copy(LT,LTL),
    Head=[[Op|PTL]|LTL].
-heads_of_op(Op,Head):- metta_type(Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType), \+ arrow_type(RetType,_LT,_LR),
+heads_of_op(Op,Head):- metta_type(_Self,Op,ArTypeDecl),arrow_type(ArTypeDecl,ParamTypes,RetType), \+ arrow_type(RetType,_LT,_LR),
    same_len_copy(ParamTypes,PTL),
    Head=[Op|PTL].
 
@@ -382,7 +382,7 @@ call_showing(SHOWP, Template):-
     no_repeats_var(TemplateNR),
     findall(Template, (SHOWP, TemplateNR=Template), ScoredBodies),
     maplist(output_showing, ScoredBodies),
-    ignore((ScoredBodies==[], functor(Template,F,A),output_showing(missing(F/A)))).
+    ignore((ScoredBodies==[], functor(Template,F,A),output_showing(Template=missing(F/A)))).
 
 output_showing(List):- is_list(List),!,write_src_nl(List).
 output_showing(Info):- w_color(white,write_w_attvars(Info)),nl, !.
