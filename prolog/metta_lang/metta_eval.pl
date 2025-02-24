@@ -370,7 +370,7 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, X=Y, fail.
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
-eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- if_tracing(e, (Depth<1, bt)), fail.
+eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- if_trace(e, (Depth<1, bt)), fail.
 
 eval_09(Eq,RetType,Depth,Self,X,Y):- !, eval_10(Eq,RetType,Depth,Self,X,Y).
 eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
@@ -3446,7 +3446,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 % get a guarded definition
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
-    if_tracing(e, (curried_arity(X,F,A),finfo(F,A,X))),
+    if_trace(e, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L),XXB0L\=[],!,
     (XXB0L==[] ->  eval_constructor(Eq,RetType,Depth,Self,X,Y);  % no definition therefore treat it like a data constructor
