@@ -3153,19 +3153,6 @@ m_opt0(M, Opt) :-
 m_opt0(M, Opt) :-
     symbol_concat('-', Opt, M), !.
 
-%
-%   Ensures that Prolog's `occurs_check` flag is set to `true`, enabling
-%   strict unification checking to prevent infinite terms.
-%
-%   This directive is applied globally during the compilation of the program.
-%
-%   @example
-%     % Verify that `occurs_check` is enabled:
-%     ?- current_prolog_flag(occurs_check, true).
-%     true.
-%
-:- initialization(set_prolog_flag(occurs_check, true)).
-
 %!  start_html_of(+Filename) is det.
 %
 %   Prepares the environment for HTML output generation.
