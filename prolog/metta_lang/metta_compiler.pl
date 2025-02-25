@@ -358,7 +358,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    %leash(-all),trace,
    get_curried_name_structure(HeadIs,FnName,Args,LenArgs),
    create_mc_name(LenArgs,FnName,FnNameWPrefix),
-   ensure_callee_site(Space,FnName,LenArgs),
+   %ensure_callee_site(Space,FnName,LenArgs),
    remove_stub(Space,FnName,LenArgs),
    sum_list(LenArgs,LenArgsTotal),
    LenArgsTotalPlus1 is LenArgsTotal+1,
@@ -849,13 +849,14 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    get_curried_name_structure(Convert,Fn,Args,LenArgs),
    atom(Fn),!,
    get_curried_name_structure(HeadIs,FnHead,_,LenArgsHead),
+   sum_list(LenArgs,LenArgsTotal),
    (transpiler_predicate_store(_,Fn,LenArgs,_,_,ArgsLazy0,RetLazy0) ->
       % use whatever signature is defined from the library or compiled code rather than get_operator_typedef_props
       EvalArgs=ArgsLazy0,
       ResultLazy=RetLazy0,
       Docall=yes
-   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgs>=FixedLength ->
-      VarCount is LenArgs-FixedLength,
+   ; transpiler_predicate_nary_store(_,Fn,FixedLength,_,_,_,FixedArgsLazy0,VarArgsLazy0,RetLazy0),LenArgsTotal>=FixedLength ->
+      VarCount is LenArgsTotal-FixedLength,
       length(VarArgsLazyList, VarCount),
       maplist(=(VarArgsLazy0), VarArgsLazyList),
       append(FixedArgsLazy0,VarArgsLazyList,EvalArgs),
@@ -886,10 +887,10 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
          ResultLazy=x(noeval,eager,[]),
          Docall=no
       ),
-      length(UpToDateArgsLazy, LenArgs),
+      length(UpToDateArgsLazy, LenArgsTotal),
       maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
       % get the evaluation/laziness based on the types, but then update from the actual signature using 'update_laziness'
-      get_operator_typedef_props(_,Fn,LenArgs,Types0,_RetType0),
+      get_operator_typedef_props(_,Fn,LenArgsTotal,Types0,_RetType0),
       maplist(arg_eval_props,Types0,EvalArgs0),
       maplist(update_laziness,EvalArgs0,UpToDateArgsLazy,EvalArgs)
    ),
@@ -1007,8 +1008,9 @@ ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
    %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    %label_arg_types(F,1,Args1),
-   A=..[F|Args1],
-   notice_callee(Caller,A))).
+   A=..[F|Args1]
+   %notice_callee(Caller,A)
+   )).
 ast_to_prolog_aux(_,_,[ispu,R],ispu(R)) :- !.
 ast_to_prolog_aux(Caller,DontStub,[ispuU,R,Code0],ispuU(R,Code1)) :- !,
    ast_to_prolog(Caller,DontStub,Code0,Code1).
@@ -1036,12 +1038,12 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn),LenArgs|ArgsIn]],R) :- (
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
       transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
-   ; true),
-   sum_list(LenArgs,LenArgsTotal),
-   LenArgsTotalPlus1 is LenArgsTotal+1,
-   ((current_predicate(Fp/LenArgsTotalPlus1);member(F/LenArgs,DontStub)) ->
-      true
-   ; check_supporting_predicates('&self',F/LenArgs))
+   ; true)
+   %sum_list(LenArgs,LenArgsTotal),
+   %LenArgsTotalPlus1 is LenArgsTotal+1,
+   %((current_predicate(Fp/LenArgsTotalPlus1);member(F/LenArgs,DontStub)) ->
+   %   true
+   %; check_supporting_predicates('&self',F/LenArgs))
    %notice_callee(Caller,F/LenArgs)
    )).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
@@ -2062,6 +2064,7 @@ maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,Arg,ArgO).
 */
 
 check_supporting_predicates(Space,F/A) :- % already exists
+%trace,
    create_mc_name(A,F,Fp),
    with_mutex(transpiler_mutex_lock,
       (sum_list(A,ATot),ATot1 is ATot+1,
