@@ -352,7 +352,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
- must_det_lls((
+ %must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
@@ -371,7 +371,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       retractall(H)
    ; true),
    %AsFunction = HeadIs,
-   must_det_lls((
+   %must_det_lls((
       %leash(-all),trace(f2p/8),
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgsTotal,Types0,RetType0),
@@ -457,7 +457,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
         transpiler_debug(2,show_recompile(Space,FnName,LenArgsPlus1)),
       true
-   ))))
+   %))))
    .
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2204,12 +2204,14 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :- %dif_functors(HeadIs,Convert),
   Convert = ['let*',Bindings,Body],!,
-  must_det_lls((
+  %must_det_lls((
     maplist(compile_let_star(HeadIs,LazyVars),Bindings,CodeList),
     append(CodeList,Code),
    f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
    append(Code,BodyCode,Converted),
-   append(Code,BodyCodeN,ConvertedN))).
+   append(Code,BodyCodeN,ConvertedN)
+   %))
+   .
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
   f2p(HeadIs,LazyVars,ResValue1,ResValueN,LazyRet,Value1,CodeForValue1,CodeForValueN),
