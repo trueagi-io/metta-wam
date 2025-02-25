@@ -27,6 +27,7 @@
     :- include(lsp_metta_include).
 
 :- use_module(library(dcg/basics), [string_without//2]).
+:- use_module(library(lists)).
 
 :- use_module(lsp_metta_workspace, [source_file_text/2, maybe_doc_path/2]).
 
@@ -109,6 +110,7 @@ metta_lines([]) --> [].
 % Process parsed lines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% single-line cleanups
 drop_leading_white([white(_)|Rest], Rest) :- !.
 drop_leading_white(L, L).
 
@@ -151,10 +153,38 @@ process_line(Parens0, Parens1, Line0, Line) :-
        Line = [white(Indent)|Line2]
     ;  Line = Line2).
 
-process_lines(_Indent, [], []) :- !.
-process_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
+% multi-line cleanups
+
+line_ending_comment(Line, Tail, Rest) :-
+    append(Rest, Tail, Line),
+    ( Tail = [white(_), comment(_)] ; Tail = [comment(_)] ),
+    Rest = [_|_], !.
+
+not_just_comment_line(Line) :-
+    member(E, Line), E \= comment(_), E \= white(_), !.
+
+no_orphaned_close_parens([Line1,Line2|Rest], OutRest) :-
+    forall(member(E, Line2), once(( E = close ; E = white(_) ))),
+    trim_whites(Line2, TrimLine2), TrimLine2 \= [],
+    not_just_comment_line(Line1), !,
+    ( line_ending_comment(Line1, Comment, Line1Rest)
+    -> append(Line1Rest, TrimLine2, OutLine0),
+       append(OutLine0, Comment, OutLine1)
+    ;  append(Line1, TrimLine2, OutLine1)
+    ),
+    no_orphaned_close_parens([OutLine1|Rest], OutRest).
+no_orphaned_close_parens([L|Rs], [L|ORs]) :-
+    no_orphaned_close_parens(Rs, ORs).
+no_orphaned_close_parens([], []).
+
+process_individual_lines(_Indent, [], []) :- !.
+process_individual_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
     process_line(Indent0, Indent1, Line0, Line1),
-    process_lines(Indent1, OldLines, NewLines).
+    process_individual_lines(Indent1, OldLines, NewLines).
+
+process_lines(Indent, Lines, ProcessedLines) :-
+    process_individual_lines(Indent, Lines, Lines1),
+    no_orphaned_close_parens(Lines1, ProcessedLines).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Emitting parsed lines back to strings
