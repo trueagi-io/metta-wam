@@ -127,8 +127,8 @@ normalize_whitespaces([white(_), close|Rest], [close|Rest1]) :- !,
     normalize_whitespaces(Rest, Rest1).
 % Is this too aggressive?
 normalize_whitespaces([atom(A), white(_), atom(B)|Rest], [atom(A), white(1), atom(B)|Rest1]) :-
-    normalize_whitespaces(Rest, Rest1).
-normalize_whitespaces([X|Rest0], [X|Rest1]) :-
+    !, normalize_whitespaces(Rest, Rest1).
+normalize_whitespaces([X|Rest0], [X|Rest1]) :- !,
     normalize_whitespaces(Rest0, Rest1).
 normalize_whitespaces([], []).
 
@@ -194,15 +194,15 @@ lines_to_strings([], []).
 create_edit_list(Orig, Formatted, Edits) :-
     create_edit_list(0, Orig, Formatted, Edits).
 
-create_edit_list(_, [], [], []).
-create_edit_list(LineNum, [Line|Lines], [], [Edit|Edits]) :-
+create_edit_list(_, [], [], []) :- !.
+create_edit_list(LineNum, [Line|Lines], [], [Edit|Edits]) :- !,
     string_length(Line, LenLen),
     Edit = _{range: _{start: _{line: LineNum, character: 0},
                       end: _{line: LineNum, character: LenLen}},
             newText: ""},
     succ(LineNum, LineNum1),
     create_edit_list(LineNum1, Lines, [], Edits).
-create_edit_list(LineNum, [], [NewLine|NewLines], [Edit|Edits]) :-
+create_edit_list(LineNum, [], [NewLine|NewLines], [Edit|Edits]) :- !,
     string_length(NewLine, LenLen),
     Edit = _{range: _{start: _{line: LineNum, character: 0},
                       end: _{line: LineNum, character: LenLen}},
