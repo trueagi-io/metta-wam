@@ -127,7 +127,7 @@ normalize_whitespaces([open, white(_), X|Rest], [open, X|Rest1]) :-
     normalize_whitespaces(Rest, Rest1).
 normalize_whitespaces([white(_), close|Rest], [close|Rest1]) :- !,
     normalize_whitespaces(Rest, Rest1).
-% Is this too aggressive?
+% Is this too aggressive? Only one space between atoms in parentheses?
 normalize_whitespaces([atom(A), white(_), atom(B)|Rest], [atom(A), white(1), atom(B)|Rest1]) :-
     !, normalize_whitespaces(Rest, Rest1).
 normalize_whitespaces([X|Rest0], [X|Rest1]) :- !,
