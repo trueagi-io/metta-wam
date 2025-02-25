@@ -297,10 +297,10 @@ create_mc_name(LenArgs,FnName,String) :-
    atomic_list_concat(Parts,'_',String).
 
 get_curried_name_structure(null,'',[],[]). % special null case
-get_curried_name_structure([Fn|Args],Fn,[Args],[LenArgs]) :- atom(Fn),!,length(Args,LenArgs).
 get_curried_name_structure([FnList|Args],Fn,[Args|SplitArgs],[L|LenArgs]) :- is_list(FnList),!,
    get_curried_name_structure(FnList,Fn,SplitArgs,LenArgs),
    length(Args,L).
+get_curried_name_structure([Fn|Args],Fn,[Args],[LenArgs]) :- length(Args,LenArgs).
 
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format("recompile_from_depends ~w/~w\n",[FnName,LenArgs]),flush_output(user_output))),
@@ -352,7 +352,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
- %must_det_lls((
+ must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
@@ -371,7 +371,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       retractall(H)
    ; true),
    %AsFunction = HeadIs,
-   %must_det_lls((
+   must_det_lls((
       %leash(-all),trace(f2p/8),
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgsTotal,Types0,RetType0),
@@ -457,7 +457,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
         transpiler_debug(2,show_recompile(Space,FnName,LenArgsPlus1)),
       true
-%   ))))
+   ))))
    .
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -686,12 +686,12 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
 
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
-   Convert=[Fn|Args],
+   get_curried_name_structure(Convert,Fn,Args,LenArgs),
    fullvar(Fn),
+   sum_list(LenArgs,LenArgsTotal),
    var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
-   length(Args,LenArgs),
    ResultLazy=x(noeval,eager,[]),
-   length(UpToDateArgsLazy, LenArgs),
+   length(UpToDateArgsLazy, LenArgsTotal),
    maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
    EvalArgs=UpToDateArgsLazy,
    maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
@@ -1047,6 +1047,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn),LenArgs|ArgsIn]],R) :- (
    %notice_callee(Caller,F/LenArgs)
    )).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
+   trace,
  must_det_lls((
    FIn=..[F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args00),
