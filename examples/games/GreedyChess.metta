@@ -351,6 +351,25 @@
 ;  (checkeachgold $B $C $D $E $F))
 ;
 ;
+(= (random_move_empty_sq)
+  (if (== 1 2)
+    (let $move ( (fuck) (it) ) 
+          (empty))
+    (let $move ( (4 7 g p) (4 5) ) $move)))
+
+(= (decide_greedy_move) 
+    ; make sure each move search call can either 
+    ;     1) succeed and return the move, or 
+    ;     2) fail and return Empty
+    (let $random_move (random_move_empty_sq)
+      (if (not (==  $random_move Empty)) 
+        $random_move 
+
+    ; next move searches   
+    (println! "failed!") )))
+
+    ;(let $move (random_move_empty_sq) $move))
+
 ;(= (random_move_empty_sq $A $B $C $D)  
 ;  (or 
 ;    (, 
@@ -1274,9 +1293,12 @@
    ; check if destination is empty or destination has opponent's piece  
     (progn 
     ; Retrieve the source box details.
-    (let $h (return_entire_box $f) ())               
+    (let $h (return_entire_box $f) ())
+          ;does not return here!
     ; Retrieve the destination box details.
-    (let $i (return_entire_box $g) ()) ;backtracking here.
+    (let $i (return_entire_box $g) ()) 
+          (let $d1 (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))) (println! $d1))
+          (let $d2 (collapse (match &self (square $x $y) (square $x $y))) (println! $d2))
     ; Check there is a piece to move.
     (if (and (== (size-atom $h) 4)                                    
              (xor  
@@ -1295,7 +1317,7 @@
             ; 
             ($full_king_sq (return_entire_box $king_square))  
             ; Ensure the player's king is not in check from gold (g) if moved.  
-            ($KingCompromised (take_dest $full_king_sq g))
+            ($KingCompromised (take_dest $full_king_sq g))   ; <-- dies here 
                 ) 
             ; If move valid, proceed to create new board atom with move.
             (if (== $KingCompromised True)
@@ -1340,17 +1362,26 @@
           ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
           (reset-pieces $starting_board)
 
-           ;(random_move_empty_sq $B $A $C $D) 
-          (println! "greedy moved")
-          (let $h (4 7 g p) ())
-          (let $i (4 5) ())
 
-          (let $provisional_board (move_piece_on_board $h $i $starting_board)
+          (let $move (decide_greedy_move) () )
+          (let $start (nth 1 $move) ())
+          (let $destination (nth 2 $move) ())
+
+          (println! "Greedy Chess moving...")
+
+          ; create atom for the updated complete chess board...
+          (let $provisional_board (move_piece_on_board $start $destination $starting_board)
                 (add-atom &self (board-state $provisional_board)))
           ; remove the old chess board
           (remove-atom &self (board-state $starting_board))
+          ; since move complete, delete any individual square atoms which only live for a single move.
+          (delete-pieces)
+          (println! (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
+          (println! (collapse (match &self (square $x $y) (square $x $y))))
           ; display
           (D)
+          ; check to see if human player's king is in check
+          ;     "
       ))))
 
 ;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
