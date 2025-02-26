@@ -748,6 +748,20 @@ set_debug(Flag, _) :- !, debug(metta(Flag)),!. %, flag_to_var(Flag, Var), set_fa
 %
 if_trace(Flag, Goal) :- notrace(real_notrace((catch_err(ignore((is_debugging(Flag), Goal)),E,fbug(E --> if_trace(Flag, Goal)))))).
 
+if_tracemsg(Flag, Message):- if_trace(Flag, wdmsg(Message)).
+
+rtrace_when(Why,Goal):- is_debugging(Why)->rtrace(Goal);call(Goal).
+show_failure_when(Why, Goal):- is_debugging(Why),!,
+  if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
+   if_t(is_debugging(failures),trace),!,fail)).
+show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
+%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
+check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
+
+trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
+maybe_trace(_Why):- !.
+maybe_trace:- !.
+
 %!  is_showing(+Flag) is nondet.
 %
 %   Check if showing is enabled for a flag.
@@ -951,6 +965,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   % Perform a trace evaluation on a goal:
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
+trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
 trace_eval(P4, TNT, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
@@ -974,23 +989,25 @@ trace_eval(P4, TNT, D1, Self, X, Y) :-
 
         Ret = retval(fail), !,
 
-        (Display = ( \+ \+ (flag(eval_num, EX1, EX1 + 1),
+        (Display = call(((( \+ \+ (flag(eval_num, EX1, EX1 + 1),
                 ((Ret \=@= retval(fail), nonvar(Y))
                 -> indentq(DR, EX1, '<--', [TN, Y])
-                ; indentq(DR, EX1, '<--', [TN, Ret]))))),
+                ; indentq(DR, EX1, '<--', [TN, Ret])))))))),
 
         call_cleanup((
-            (call(P4, D1, Self, X, Y) *-> nb_setarg(1, Ret, Y);
-            (fail, trace, (call(P4, D1, Self, X, Y)))),
-            ignore((notrace(( \+ (Y \= NoRepeats), nb_setarg(1, Ret, Y)))))),
+            (call(P4, D1, Self, X, Y)
+                 *-> (setarg(1, Ret, Y),one_shot(Display))
+                 ; (fail, trace, (call(P4, D1, Self, X, Y)))),
+
+     ignore((notrace(( \+ (Y \= NoRepeats), setarg(1, Ret, Y)))))),
     % cleanup
-        ignore((PrintRet == 1 -> ignore(Display) ;
+        ignore((PrintRet == 1 -> (one_shot(Display)) ;
        (notrace(ignore((( % Y\=@=X,
-         if_t(DR<DMax,if_trace((eval;TN),ignore(Display))))))))))),
+         if_t(DR<DMax,if_trace((eval;TN),one_shot(Display))))))))))),
         Ret \=@= retval(fail).
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
-
+one_shot(Display):- ignore(once(Display)),setarg(1,Display,true).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1174,7 +1191,8 @@ print_last_choicepoint_info(ChI1, Options) :-
     prolog_frame_attribute(F, goal, Goal),
     %Goal \= '$execute_goal2'(_,_,_),     % Toplevel REPL choicepoint
     %!,
-    Goal \='$runtoplevel', !,
+    Goal \='$c_call_prolog',!,
+    % Goal \='$runtoplevel', !,
     option(message_level(Level), Options, warning),
     get_prolog_backtrace(2, [_|Stack], [frame(F)]),
     (   predicate_property(Goal, foreign)

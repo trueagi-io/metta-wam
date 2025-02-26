@@ -126,7 +126,7 @@ is_self_eval_l_fa('Error',_).
 is_self_eval_l_fa('{...}',_).
 is_self_eval_l_fa('[...]',_).
 
-self_eval(X):- notrace(self_eval0(X)).
+self_eval(X):- quietly(notrace(self_eval0(X))).
 
 :-  set_prolog_flag(access_level,system).
 hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/A).
@@ -254,7 +254,7 @@ eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,!,X=YO.
 eval_01(Eq,RetType,Depth,Self,X,YO):-
     % X\==[empty], % speed up n-queens x60 but breaks other things
     if_t((Depth<1, trace_on_overflow),
-      debug(metta(eval_args))),
+      debug(metta(e))),
    notrace((Depth2 is Depth-1,    copy_term(X, XX))),
    trace_eval(eval_09(Eq,RetType),e,Depth2,Self,X,M),
    (self_eval(M)-> YO=M ;
@@ -295,14 +295,14 @@ subst_args_there(Eq,RetType,Depth2,Self,Y,YO):-
   wont_need_substX(Y),!,
   subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO),
     use_breakpoints(if_t(Y\=@=YO,
-       (wdmsg(wont_need_substX(Y)),
+       (if_tracemsg(unknown,wont_need_substX(Y)),
             rtrace(subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO)),break))).
 
 subst_args_there(Eq,RetType,Depth2,Self,Y,YO):-
    subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO),
     use_breakpoints((if_t( \+ trust_wont_need_substX,
-       if_t(Y=@=YO, (wdmsg(subst_args_there_real(Y,YO)),
-           trace,rtrace(subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO)),break))))).
+       if_t(Y=@=YO, (if_tracemsg(unknown,subst_args_there_real(Y,YO)),
+           maybe_trace(unknown),rtrace(subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO)),break))))).
 
 subst_args_there_real(Eq,RetType,Depth2,Self,Y,YO):- !,
   (subst_args(Eq,RetType,Depth2,Self,Y,YO)*->true;Y=YO).
@@ -404,12 +404,12 @@ eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,
   eval_20(Eq,RetType,Depth,Self,X,Y).
 
 insanity_check_eval(_,_):- is_testing,!,fail.
-insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),wdmsg(insanity_check_eval(Which,X)),!,trace.
-insanity_check_eval(Which,X):-  X=@=[_|_],wdmsg(insanity_check_eval(Which,X)),!,trace.
+insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),if_tracemsg(unknown,insanity_check_eval(Which,X)),!,maybe_trace(unknown).
+insanity_check_eval(Which,X):-  X=@=[_|_],if_tracemsg(unknown,insanity_check_eval(Which,X)),!,maybe_trace(unknown).
 
 sanity_check_eval(_,_):- is_testing,!.
 sanity_check_eval(_,_):- !.
-sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), trace),!.
+sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), maybe_trace(unknown)),!.
 sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
 eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
@@ -529,7 +529,7 @@ eval_10(_Eq,RetType,_Depth,_Self,['invoke',Op|Args],Res):- !, legal_op(Op),
    call(Ret3,RetType,Ret,Res).
 
 op_to_pred_call_ret(PyAtom,Pred2,Ret3):- is_list(PyAtom),!,
-   trace ,eval_py_atom(_Eq,_RetType,_Depth,_Self,PyAtom,Res),!,op_to_pred_call_ret(Res,Pred2,Ret3).
+   maybe_trace(unknown) ,eval_py_atom(_Eq,_RetType,_Depth,_Self,PyAtom,Res),!,op_to_pred_call_ret(Res,Pred2,Ret3).
 op_to_pred_call_ret(PyAtom,Pred2,Ret3):-
   py_is_function(PyAtom), !, Sym = PyAtom,
   Pred2= py_call_method_and_args(Sym),
@@ -1109,7 +1109,7 @@ loonit_assert_source_tf(Src,Goal,Check,TF):-
    (as_tf(notrace(Check),TF),!,
   ignore((
           once((TF='True', trace_on_pass);(TF='False', trace_on_fail)),
-     with_debug((eval_args),time_eval('Trace',OrigGoal)))))).
+     with_debug((e),time_eval('Trace',OrigGoal)))))).
 
 sort_result(Res,Res):- \+ compound(Res),!.
 sort_result([And|Res1],Res):- is_and(And),!,sort_result(Res1,Res).
@@ -1244,8 +1244,8 @@ set_last_error(_).
 '=alpha-unify'(X0,Y0) :- X0 =@= Y0, X0 = Y0.
 
 
-alpha_equ(X,Y):- X=@=Y->wdmsg(alpha_equ(X,Y));wdmsg(not_alpha_equ(X,Y)).
-not_alpha_equ(X,Y):- X\=@=Y->wdmsg(not_alpha_equ(X,Y));wdmsg(alpha_equ(X,Y)).
+alpha_equ(X,Y):- X=@=Y->if_tracemsg(unknown,alpha_equ(X,Y));if_tracemsg(unknown,not_alpha_equ(X,Y)).
+not_alpha_equ(X,Y):- X\=@=Y->if_tracemsg(unknown,not_alpha_equ(X,Y));if_tracemsg(unknown,alpha_equ(X,Y)).
 
 remove_attr(Attr,Var):- del_attr(Var, Attr).
 with_attr(Attr,Var,Value):- get_attr(Var, Attr, Value).
@@ -1330,9 +1330,9 @@ get_attrs_or_nil(Var, Attributes) :-
 push_attributes(Var,Attrs):-
   push_attributes_onto_var(Attrs,Var), ! .
 
-push_attributes_onto_var(Attrs,_):- var(Attrs),!,trace,break. % var(Var)
+push_attributes_onto_var(Attrs,_):- var(Attrs),!,maybe_trace(unknown),break. % var(Var)
 %push_attributes_onto_var(Attrs,Var):- var(Attrs),var(Var),!.
-push_attributes_onto_var(_,Var):- nonvar(Var),!,trace,break. % var(Var)
+push_attributes_onto_var(_,Var):- nonvar(Var),!,maybe_trace(unknown),break. % var(Var)
 push_attributes_onto_var([], _Var) :- !.
 push_attributes_onto_var(att(Mod, Val, Rest), Var) :-
     get_attr(Var, Mod, Existing), !,
@@ -1353,7 +1353,7 @@ equal_renumbered(X0,Y0,XX,YY):-
    %numbervars(_Merges,N3,_,[attvar(skip)]),
    renumber_vars_wo_confict_tu(X,XX),
    renumber_vars_wo_confict_tu(Y,YY),!.
-   %wdmsg(equal_enough_for_test(P2,XX,YY)),
+   %if_tracemsg(unknown,equal_enough_for_test(P2,XX,YY)),
 
 
 renumber_vars_wo_confict_tu(X,XXX):-
@@ -1497,11 +1497,11 @@ eval_space(Eq,RetType,Depth,Self,['match',Other,Goal,Template],Res):- !,
    eval_args(Eq,RetType,Depth,Self,Template,Res).
 */
 
-%metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
+%metta_atom_iter(Eq,_Depth,_Slf,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % maybe_trace(unknown),
 %   metta_eq_def(Eq,Other,[F|H],B).
 
 /*
-metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % trace,
+metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % maybe_trace(unknown),
    metta_eq_def(Eq,Other,[F|H],BB),
    eval_sometimes(Eq,_RetType,Depth,Self,B,BB).
 */
@@ -1691,7 +1691,8 @@ eval_10(Eq,RetType,Depth,Self,['sequential',List],Res):- !,
 get_sa_p1(P3,E,Cmpd,SA):-  compound(Cmpd), get_sa_p2(P3,E,Cmpd,SA).
 get_sa_p2(P3,E,Cmpd,call(P3,N1,Cmpd)):- arg(N1,Cmpd,E).
 get_sa_p2(P3,E,Cmpd,SA):- arg(_,Cmpd,Arg),get_sa_p1(P3,E,Arg,SA).
-eval20_failed(Eq,RetType,Depth,Self, Term, Res):-
+
+eval_20(Eq,RetType,Depth,Self, Term, Res):- fail,
   notrace(( get_sa_p1(setarg,ST,Term,P1), % ST\==Term,
    compound(ST), ST = [F,List],F=='superpose',nonvar(List), %maplist(atomic,List),
    call(P1,Var))), !,
@@ -1863,8 +1864,8 @@ eval_10(Eq,RetType,Depth,Self,['if',Cond,Then],Res):-
       (!, fail,Res = [],!)).
 
 
-eval_20(Eq,RetType,Depth,Self,[X|Args],Res):-
-  findall(metta_defn(Self,[Y|Args],Body),(metta_defn(Self,[Y|Args],Body),X==Y),L),
+eval_20_failed(Eq,RetType,Depth,Self,[X|Args],Res):-
+  quietly((findall(metta_defn(Self,[Y|Args],Body),(metta_defn(Self,[Y|Args],Body),X==Y),L))),
   L = [metta_defn(Self,[Y|Args],Body)], X==Y, !,
   eval_10(Eq,RetType,Depth,Self,Body,Res).
 
@@ -1911,10 +1912,8 @@ typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_argumen
 %eval_20(Eq,RetType,Depth,Self,['flatten'|List], Flat):- !, maplist(eval_args(Eq,RetType,Depth,Self),List,Res),flatten(Res,Flat).
 
 throw_metta_error(Term):- % (nb_current(previous_nths,NthL)->true;NthL=[]),notrace, nop(NthL=_),
-  check_trace(metta(errors)), throw_metta_return(Term).
+  check_trace(errors), throw_metta_return(Term).
 
-
-check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),trace) ; true).
 
 eval_20(Eq,RetType,_Dpth,_Slf,['car-atom',Atom],CAR_Y):- !, Atom=[CAR|_],!,do_expander(Eq,RetType,CAR,CAR_Y).
 eval_20(Eq,RetType,_Dpth,_Slf,['cdr-atom',Atom],CDR_Y):- !, Atom=[_|CDR],!,do_expander(Eq,RetType,CDR,CDR_Y).
@@ -2271,7 +2270,7 @@ eval_10(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,
 
 eval_10(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,
    must((
-    must_det_lls(into_name(Self,Other,Name)),!,trace,
+    must_det_lls(into_name(Self,Other,Name)),!,maybe_trace(unknown),
     must(eval_args(Eq,_,Depth,Self,Expression,Value)),
     %dmsg((Name = (Expr->Value))),
     nb_bind(Name,Value), % oo_set(Value,bound_to,Name),
@@ -2666,7 +2665,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['compile!',Space],Res):- !,
        compile_metta_defn(KB,X,Len,Args,BodyFn,_Clause))),
     if_t( \+ current_predicate(X/_),
        (ignore(nortrace),forall(metta_defn(KB,[X | Args] ,BodyFn),
-       (trace,compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
+       (maybe_trace(unknown),compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
     % pfcNoWatch,
     true,!,
      notrace(catch((write_src_uo(?-listing(X)),listing(X)),E,
@@ -3064,13 +3063,13 @@ eval_adjust_args(_Eq,_RetType,ResIn,ResOut,_Depth,_Self,AEMore,AEAdjusted):-
 eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
  show_failure_when(argtypes,eval(AIn,AE)),
  adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
-adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(eval_args),!,
+adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(argtypes),!,
     adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):-
    if_or_else(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted),
       if_or_else(with_debug(eval_args,adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted),
              if_or_else(More=Adjusted,
-                if_or_else((trace, throw(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted)))))))).
+                if_or_else((maybe_trace(unknown), throw(adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted)))))))).
 
 
 
@@ -3079,14 +3078,14 @@ eval_adjust_args2(Eq,_RetType,ResIn,ResOut,Depth,Self,[AE|More],[AE|Adjusted]):-
    ResIn = ResOut.
 
 
-must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):- \+ is_debugging(eval_args),!, eval_args(Eq,RetType,Depth,Self,More,Adjusted).
+must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):- \+ is_debugging(e),!, eval_args(Eq,RetType,Depth,Self,More,Adjusted).
 must_eval_args(Eq,RetType,Depth,Self,More,Adjusted):-
    (eval_args(Eq,RetType,Depth,Self,More,Adjusted)*->true;
       (with_debug(eval_args,eval_args(Eq,RetType,Depth,Self,More,Adjusted))*-> true;
          (
            %nl,writeq(eval_args(Eq,RetType,Depth,Self,More,Adjusted)),writeln('.'),
              (More=Adjusted -> true ;
-                (trace, throw(must_eval_args(Eq,RetType,Depth,Self,More,Adjusted))))))).
+                (maybe_trace(unknown), throw(must_eval_args(Eq,RetType,Depth,Self,More,Adjusted))))))).
 
 
 maybe_eval_subst(Eq,RetType,Depth,Self,PredDecl,Res):- !,
@@ -3288,7 +3287,7 @@ as_nop(G,NoResult):-  G\=[_|_], rtrace_on_failure(G),!,
 
 as_tf(G,TF):-  G\=[_|_], catch_warn((call(G)*->TF='True';TF='False')).
 as_tf_nowarn(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
-as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((trace,writeln(E),rtrace(G),!,throw(E))))*->TF='True';TF='False')).
+as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((maybe_trace(unknown),writeln(E),rtrace(G),!,throw(E))))*->TF='True';TF='False')).
 as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
@@ -3446,32 +3445,33 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 % get a guarded definition
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
-    if_trace(e, (curried_arity(X,F,A),finfo(F,A,X))),
+    quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
-           get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L),
+           get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
     XXB0L \==[], \+ sub_var('Any', XXB0L),!,
 
     (XXB0L==[] ->  eval_constructor(Eq,RetType,Depth,Self,X,Y);  % no definition therefore treat it like a data constructor
          catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y)).
 
 eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
-  if_trace(e,show_bodies('GUARDS ', Depth, XXB0L)),
+  if_trace((defn;metta_defn;eval_args;e),show_bodies('GUARDS ', Depth, XXB0L)),
   if_or_else((member(guarded_defn(XX,ParamTypes,FRetType,B0),XXB0L), copy_term(guarded_defn(XX,ParamTypes,FRetType,B0),USED),
               eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,USED)),
             eval_defn_failure_guarded(Eq,RetType,Depth,Self,ParamTypes,X,Y)).
 
 
 
-true_or_log_fail(Goal,LogFail):- (call(Goal)
-          -> true ; (if_trace(e,color_g_mesg('#713700',indentq2(Depth,LogFail))),!)).
+true_or_log_fail(Depth,Goal,LogFail):- (call(Goal)
+          -> true ; ((if_trace(e,color_g_mesg('#713700',indentq2(Depth,failure(LogFail)))),!),!,fail)).
 
 
 eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,USED):-
-  true_or_log_fail(X=XX,unify_head(X=XX)),
+  true_or_log_fail(Depth,X=XX,unify_head(X=XX)),
   XX = [_|Args], %ignore(FRetType=RetType),
-  true_or_log_fail(\+ \+ (maplist(non_arg_violation(Self),ParamTypes,Args)), non_arg_violation(ParamTypes,Args)),
+  true_or_log_fail(Depth, \+ \+ (maplist(non_arg_violation(Self),ParamTypes,Args)), non_arg_violation(ParamTypes,Args)),
   Y=B0, X\=@=B0,
-  if_trace(e,color_g_mesg('#773700',indentq2(RDepth,defs_used(XX-->B0,def(USED))))),
+  if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(XX-->B0,def(USED))))),
+  maybe_trace(unknown),
   light_eval(Eq,RetType,Depth,Self,B0,Y),
   nop(non_arg_violation(Self,FRetType,Y)).
 
@@ -3486,9 +3486,9 @@ eval_defn_failure_guarded(_Eq,_RetType,Depth,_Self,_ParamTypes,X,Res):-
 :- nodebug(metta('defn')).
 
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(maybe_eval_defn,X),
-        findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L),
+       quietly( findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L) ),
         XXB0L \==[], !,
-        % trace,
+        % maybe_trace(unknown),
         catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
 
 show_bodies(Why, Depth, XXB0L):-
@@ -3501,24 +3501,26 @@ show_bodies(Why, Depth, XXB0L):-
        color_g_mesg('#A7370A',once(print_templates(Depth,WhyNth,Item))))),!.
 
 
-eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L):-
-  if_trace(e,show_bodies('RULE ', Depth, XXB0L)),
+eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0LU):-
+  must_det_lls((subst_varnames(XXB0LU,XXB0L),
+  if_trace((defn;metta_defn;eval_args;e),show_bodies('RULE ', Depth, XXB0L)))),
   if_or_else(
      (member(rule(XX,B0,Nth,Typs),XXB0L), copy_term(rule(XX,B0,Nth,Typs),USED),
       eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED)),
   eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
 
-eval_defn_success(Eq,RetType,RDepth,Self,X,Y,XX,B0,USED):-
-  Depth is RDepth,
-  true_or_log_fail(X=XX,unify_head(X=XX)),
-  X\=@=B0,
-  if_trace(e,color_g_mesg('#773700',indentq2(RDepth,defs_used(XX-->B0,def(USED))))),
+eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED):-
+  true_or_log_fail(Depth, X=XX,unify_head(X=XX)),
+  X\=@=B0,Y=B0,
+  if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(XX-->B0,def(USED))))),
+  maybe_trace(unknown).
+/*
   nop(light_eval(Eq,RetType,Depth,Self,B0,Y)),
   if_t(between(401,420,Depth),writeq(a(B0))),
   if_t(between(397,400,Depth),(writeq(b(B0)),trace)),
-  if_t(between(392,397,Depth),(writeq(c(B0)),trace,fail)),
-  if_t(Depth<380,(writeq(f(B0)),fail)),!,
-  Y=B0.
+  if_t(between(392,397,Depth),(writeq(c(B0)),maybe_trace(unknown),fail)),
+  if_t(Depth<380,(writeq(f(B0)),fail)).
+*/
 
 eval_defn_failure(Eq,RetType,Depth,Self,X,Res):-
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
@@ -3531,15 +3533,18 @@ pl_clause_num(Head,Body,Ref,Index):-
     nth_clause(Head,Index,Ref).
 
 same_len_copy(Args,NewArgs):- length(Args,N),length(NewArgs,N).
+
+
 get_defn_expansions(_Eq,_RetType,_Depth,Self,[[H|HArgs]|Args],XX,B0):- symbol(H),
    is_list(HArgs),is_list(Args),
    same_len_copy(Args,NewArgs), same_len_copy(HArgs,NewHArgs),
-   metta_atom(Self,[=,[[HH|NewHArgs]|NewArgs],B0]),H==HH,
+   quietly((metta_atom(Self,[=,[[HH|NewHArgs]|NewArgs],B0]),H==HH)),
    [[H|NewHArgs]|NewArgs]=XX,
    sanity_check_eval(curry0,B0).
 
 get_defn_expansions(_Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
-   metta_atom(Self,[=,[HH|NewArgs],B0]),H==HH.
+    quietly((metta_atom(Self,[=,[HH|NewArgs],B0]),H==HH)),
+    metta_defn(Self,[H|NewArgs],B0).
 
 get_defn_expansions(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),
     same_len_copy(Start,NewStart),
@@ -3614,15 +3619,13 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
-  if_trace((e;args),
-     (AEMore\==AEAdjusted -> color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted))
-       ; nop(indentq2(Depth,same(AEMore))))),
+  (AEMore\==AEAdjusted
+     -> if_trace((e;argtypes),color_g_mesg('#773733',indentq2(Depth,AEMore -> AEAdjusted)))
+     ;  if_trace((  argtypes),color_g_mesg('#773733',indentq2(Depth,same(AEMore))))),
   eval_40(Eq,RetType,Depth,Self,AEAdjusted,ResIn),
   \+ \+ check_returnval(Eq,RetType,ResOut).
 
-
 % functs_to_preds([Eq, H, B], Preds)
-
 eval_40(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
       is_rust_operation([H|PredDecl]),!, % run
       must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
@@ -3706,14 +3709,14 @@ eval_for(RetType,X,Y):-
 
 %if_debugging(G):- ignore(call(G)).
 if_debugging(_).
-bcc:- trace,
+bcc:- maybe_trace(unknown),
   bc_fn([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
      ['S',['S',['S',['S','Z']]]],
      OUT),
     write_src(prf=Prf), write_src(OUT).
 
 
-bci:- trace,
+bci:- maybe_trace(unknown),
   bc_impl([:,Prf,[in_tad_with,[sequence_variant,rs15],[gene,d]]],
      ['S',['S',['S',['S','Z']]]],
      OUT),
@@ -3721,14 +3724,14 @@ bci:- trace,
 
 
 
-bcm:- % trace,
+bcm:- % maybe_trace(unknown),
   bc_impl([:,Prf,[member,_A,_B,_C]],
      ['S',['S',['S','Z']]],
      OUT),
     write_src(prf=Prf), write_src(OUT).
 
 
-bc_fn(A,B,C):- %trace,
+bc_fn(A,B,C):- %maybe_trace(unknown),
   same_types(A,C,_,A1,C1),
   as_type(B,'Nat',B1),
   bc_impl(A1,B1,C1).
@@ -3867,8 +3870,6 @@ maybe_type_check(_Eq,RetType,_ResIn,_ResOut,_Depth,Self,AE,More,Adjusted):-
 
 return_type_compat(_RetType,_XType).
 
-trace_if_debug(AE,_LenX):- if_t(debugging(metta(AE),true),trace),!.
-
 type_checks_out(Self,AE,LenX,Adjusted,RetType):-
    get_operator_typedef_R(Self,AE,LenX,XParamTypes,XType),
    return_type_compat(RetType,XType),
@@ -3885,8 +3886,8 @@ throw_violation_each(Self,ParamType,Arg):-
   (non_arg_violation_each(Self,ParamType,Arg)-> true ; throw_type_error(Arg,ParamType)).
 
 throw_type_error(Arg,ParamType):-
-   wdmsg(throw_type_error(Arg,ParamType)),
-   is_douglas(trace),throw_metta_error(['Error',Arg,'BadType']).
+   if_tracemsg(unknown,throw_type_error(Arg,ParamType)),
+   maybe_trace(unknown),throw_metta_error(['Error',Arg,'BadType']).
 
 assignable_to_param_type(_Arg, ActualType, ParamType):- ActualType==ParamType,!.
 assignable_to_param_type(Arg, ActualType, ParamType):- assignable_to_param_type1(Arg, ActualType, ParamType).
@@ -3953,7 +3954,7 @@ end_of_file.
         type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- symbolic(X),!,Y=X.
         type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,X,Y):- compound_non_cons(X),!,
            into_list_args(X,XX),!,type_fit_childs(Eq,Depth,Self,RetType,CodeForArg,XX,Y).
-        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- \+ is_list(X),iz_conz(X), trace, !,Y=X.
+        type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- \+ is_list(X),iz_conz(X), maybe_trace(unknown), !,Y=X.
         type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):- self_eval(X),!,Y=X.
 
         type_fit_childs(_Eq,_Depth,_Self,_RetType,true,[H|Args],[H|Args]):- (H=='eval_args';H=='eval_args-for'),!.

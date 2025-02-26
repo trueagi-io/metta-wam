@@ -1112,7 +1112,8 @@ try_adjust_arg_types(_Eq, RetType, Depth, Self, Params, X, Y) :-
 %   @arg Adjusted  The final adjusted arguments.
 %
 adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
-    adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted).
+    rtrace_when(argtypes,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted)).
+
 
 %!  adjust_args(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is det.
 %
@@ -1483,11 +1484,6 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 :- nodebug(metta(argtypes)).
 :- initialization(nodebug(metta(argtypes))).
 
-show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
-   if_t(debugging(metta(failures)),trace),!,fail)).
-show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
-%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
-
 %!  into_typed_arg(+Depth, +Self, +Type, +Value, -TypedValue) is det.
 %
 %   Converts a single value into a typed argument based on the given type.
@@ -1500,10 +1496,11 @@ show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M),  show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))), !.
+    var(M),  !, show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))).
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
-    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)), show_failure_when(argtypes,(M = Y))),!.
+    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)),
+               show_failure_when(argtypes,(M = Y))).
 
 %!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is nondet.
 %

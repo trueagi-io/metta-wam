@@ -1107,8 +1107,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
         Cut = _,
         Next = _,
-        ((Stepping==true) ->
-         (repeat,
+        once((((Stepping==true) ->
+         ( repeat, % Q
           old_not_compatio(format("~npress ';' for more solutions ")),get_single_char_key(C),
           old_not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
@@ -1134,7 +1134,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='G' -> (bt, Next=false);
          (C=='s' -> (Cut=true,Next=false);
          (true -> (write('Unknown Char'),fail))))))))))))))))))))), % should consume 'b's paren
-         (nonvar(Next);nonvar(Cut))) ; true),
+         (nonvar(Next);nonvar(Cut))) ; true))),
 
             ((Complete==true;Cut==true) ->! ; true),
             (nonvar(Next)->Next==true; true),

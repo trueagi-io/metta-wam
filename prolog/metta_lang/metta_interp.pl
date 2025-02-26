@@ -462,11 +462,11 @@ pfcAdd_Now(P) :-
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
     current_predicate(pfcAdd/1),!,
     once_writeq_nl(pfcAdd(P)),
-    pfcAdd(P).
+    must_det_lls(pfcAdd(P)).
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
     once_writeq_nl(assssssssssssssert(P)),
-    assert(P).
+    must_det_lls(assert(P)).
 %:- endif.
 
 %!  system:copy_term_g(+I, -O) is det.
@@ -4804,6 +4804,7 @@ metta_anew1(load, OBO) :-  !,
     must_det_lls((
         load_hook(load, OBO),         % Execute the load hook.
         subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+        % display(obo(OBO)), display(cl(Cl)),
         add_indexed_fact(Cl),
         pfcAdd_Now(Cl)  % Add the clause and show errors if any.
     )),!.

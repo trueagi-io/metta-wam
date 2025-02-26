@@ -264,7 +264,7 @@ function_declaration_impl(Self, Op, Len, Parameters, ParamTypes, RetType, Body, 
              function_declaration_impl2(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal)).
 
 function_declaration_impl2(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal):-
-  wdmsg(failed(function_declaration_impl(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal))),fail.
+  if_trace(guards,wdmg(failed(function_declaration_impl(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal)))),fail.
 
 function_declaration_impl1(Self, Op, Len, Parameters, ParamTypes, RetType, Body, WrappedBody, ReturnVal) :-
    call((
