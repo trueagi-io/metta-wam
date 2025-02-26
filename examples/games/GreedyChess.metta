@@ -353,7 +353,7 @@
 ;
 (= (random_move_empty_sq)
   (if (== 1 2)
-    (let $move ( (fuck) (it) ) 
+    (let $move ( (heck) (it) ) 
           (empty))
     (let $move ( (4 7 g p) (4 5) ) $move)))
 
