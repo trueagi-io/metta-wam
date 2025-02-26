@@ -3496,27 +3496,30 @@ show_bodies(Why, Depth, XXB0L):-
     if_t(Len==0,
       (sformat(WhyEquals,'~w = ',[Why]),
        color_g_mesg('#A7370A',indentq_d(Depth,WhyEquals,Len)))),
-    forall(nth1(Nth,Item,XXB0L),
+    forall(nth1(Nth,XXB0L,Item),
       (sformat(WhyNth,'~w   ~w/~w   ',[Why,Nth,Len]),
-       color_g_mesg('#A7370A',maplist(print_templates(Depth,WhyNth),XXB0L)))).
+       color_g_mesg('#A7370A',once(print_templates(Depth,WhyNth,Item))))),!.
 
 
 eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L):-
   if_trace(e,show_bodies('RULE ', Depth, XXB0L)),
-  if_or_else((member(rule(XX,B0,Nth,Typs),XXB0L), copy_term(rule(XX,B0,Nth,Typs),USED),
-    eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED)),
-    eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
+  if_or_else(
+     (member(rule(XX,B0,Nth,Typs),XXB0L), copy_term(rule(XX,B0,Nth,Typs),USED),
+      eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED)),
+  eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
 
 eval_defn_success(Eq,RetType,RDepth,Self,X,Y,XX,B0,USED):-
   Depth is RDepth,
   true_or_log_fail(X=XX,unify_head(X=XX)),
-  Y=B0, X\=@=B0,
+  X\=@=B0,
   if_trace(e,color_g_mesg('#773700',indentq2(RDepth,defs_used(XX-->B0,def(USED))))),
   nop(light_eval(Eq,RetType,Depth,Self,B0,Y)),
   if_t(between(401,420,Depth),writeq(a(B0))),
   if_t(between(397,400,Depth),(writeq(b(B0)),trace)),
   if_t(between(392,397,Depth),(writeq(c(B0)),trace,fail)),
-  if_t(Depth<380,(writeq(f(B0)),fail)).
+  if_t(Depth<380,(writeq(f(B0)),fail)),!,
+  Y=B0.
+
 eval_defn_failure(Eq,RetType,Depth,Self,X,Res):-
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
   maybe_eval_subst(Eq,RetType,Depth,Self,X,Res).
