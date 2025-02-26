@@ -352,7 +352,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
- %must_det_lls((
+ must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
@@ -371,7 +371,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       retractall(H)
    ; true),
    %AsFunction = HeadIs,
-   %must_det_lls((
+   must_det_lls((
       %leash(-all),trace(f2p/8),
       Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn
       get_operator_typedef_props(_,FnName,LenArgsTotal,Types0,RetType0),
@@ -457,7 +457,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
         transpiler_debug(2,show_recompile(Space,FnName,LenArgsPlus1)),
       true
-   %))))
+   ))))
    .
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -685,23 +685,6 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- % HeadIs\==Convert,
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
 
-f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
-   get_curried_name_structure(Convert,Fn,Args,LenArgs),
-   fullvar(Fn),
-   sum_list(LenArgs,LenArgsTotal),
-   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
-   ResultLazy=x(noeval,eager,[]),
-   length(UpToDateArgsLazy, LenArgsTotal),
-   maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
-   EvalArgs=UpToDateArgsLazy,
-   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
-   maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
-   append(Converteds,Converteds2),
-   append(RetResults,[RetResult],RetResults2),
-   create_mc_name(LenArgs,'',Prefix),
-   append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
-   assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
-
 /*
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
    is_ftVar(Convert),!, % Check if Convert is a variable
@@ -811,14 +794,6 @@ f2p_do_group(LE, LazyResultParts, Convert, EvalRetResults, EvalCode, EvalCodeCol
     maplist(lazy_impedance_match, LazyResultParts, EvalArgs, Convert, EvalCode, Convert, EvalCode, EvalRetResults, Code),
     append(Code,EvalCodeCollected).
 
-f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Converted, ConvertedN) :- HeadIs\==Convert,
-    Convert=[Fn|_], \+ atom(Fn),
-    maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
-    f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
-    f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
-    assign_or_direct_var_only(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
-    assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
-
 /*
 % prememptive flow contols
 f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted):- fail,
@@ -922,6 +897,32 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       assign_or_direct_var_only(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
       assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN)
    ).
+
+f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+   get_curried_name_structure(Convert,Fn,Args,LenArgs),
+   fullvar(Fn),
+   sum_list(LenArgs,LenArgsTotal),
+   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
+   ResultLazy=x(noeval,eager,[]),
+   length(UpToDateArgsLazy, LenArgsTotal),
+   maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
+   EvalArgs=UpToDateArgsLazy,
+   append(Args,ArgsFlattened),
+   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
+   maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
+   append(Converteds,Converteds2),
+   append(RetResults,[RetResult],RetResults2),
+   create_mc_name(LenArgs,'',Prefix),
+   append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
+   assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
+
+f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Converted, ConvertedN) :- HeadIs\==Convert,
+    Convert=[Fn|_], \+ atom(Fn),
+    maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
+    f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
+    f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
+    assign_or_direct_var_only(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
+    assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
 /*
 f2p(HeadIs,LazyVars,RetResult,ResultLazy,Convert,Converted):-fail,
@@ -2204,13 +2205,13 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :- %dif_functors(HeadIs,Convert),
   Convert = ['let*',Bindings,Body],!,
-  %must_det_lls((
+  must_det_lls((
     maplist(compile_let_star(HeadIs,LazyVars),Bindings,CodeList),
     append(CodeList,Code),
    f2p(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Body,BodyCode,BodyCodeN),
    append(Code,BodyCode,Converted),
    append(Code,BodyCodeN,ConvertedN)
-   %))
+   ))
    .
 
 compile_let_star(HeadIs,LazyVars,[Var,Value1],Code) :-
