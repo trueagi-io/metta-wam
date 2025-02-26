@@ -7033,17 +7033,9 @@ qsave_program(Name) :-
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
 
-%
-%   Specifies an initialization goal to be executed when the program is loaded.
-%   This directive performs two actions:
-%   1. `update_changed_files`: Checks and updates any files that have been modified
-%      since the last program run, ensuring the system is synchronized.
-%   2. `after_load /**/`: Restores the system to a prepared state, likely reinitializing any
-%      essential components.
-%
 
-:- set_prolog_flag(occurs_check,error).
-% :- initialization(update_changed_files,after_load).
+:- initialization(update_changed_files).
+
 
 %!  nts is det.
 %
