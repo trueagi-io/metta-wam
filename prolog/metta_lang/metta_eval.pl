@@ -3448,22 +3448,30 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
     if_trace(e, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
-           get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L),XXB0L\=[],!,
+           get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L),
+    XXB0L \==[], \+ sub_var('Any', XXB0L),!,
+
     (XXB0L==[] ->  eval_constructor(Eq,RetType,Depth,Self,X,Y);  % no definition therefore treat it like a data constructor
          catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y)).
 
 eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
-  if_trace(e,maplist(print_templates(Depth,'   '),XXB0L)),!,
+  if_trace(e,show_bodies('GUARDS ', Depth, XXB0L)),
   if_or_else((member(guarded_defn(XX,ParamTypes,FRetType,B0),XXB0L), copy_term(guarded_defn(XX,ParamTypes,FRetType,B0),USED),
               eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,USED)),
             eval_defn_failure_guarded(Eq,RetType,Depth,Self,ParamTypes,X,Y)).
 
+
+
+true_or_log_fail(Goal,LogFail):- (call(Goal)
+          -> true ; (if_trace(e,color_g_mesg('#713700',indentq2(Depth,LogFail))),!)).
+
+
 eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,USED):-
-  X=XX, Y=B0, X\=@=B0,
-  XX = [_|Args],
-  %ignore(FRetType=RetType),
-  \+ \+ (maplist(non_arg_violation(Self),ParamTypes,Args)),
-  if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(USED)))),
+  true_or_log_fail(X=XX,unify_head(X=XX)),
+  XX = [_|Args], %ignore(FRetType=RetType),
+  true_or_log_fail(\+ \+ (maplist(non_arg_violation(Self),ParamTypes,Args)), non_arg_violation(ParamTypes,Args)),
+  Y=B0, X\=@=B0,
+  if_trace(e,color_g_mesg('#773700',indentq2(RDepth,defs_used(XX-->B0,def(USED))))),
   light_eval(Eq,RetType,Depth,Self,B0,Y),
   nop(non_arg_violation(Self,FRetType,Y)).
 
@@ -3478,21 +3486,31 @@ eval_defn_failure_guarded(_Eq,_RetType,Depth,_Self,_ParamTypes,X,Res):-
 :- nodebug(metta('defn')).
 
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(maybe_eval_defn,X),
-        findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L), XXB0L \== [], !,
+        findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L),
+        XXB0L \==[], !,
         % trace,
         catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
 
+show_bodies(Why, Depth, XXB0L):-
+    length(XXB0L,Len),
+    if_t(Len==0,
+      (sformat(WhyEquals,'~w = ',[Why]),
+       color_g_mesg('#A7370A',indentq_d(Depth,WhyEquals,Len)))),
+    forall(nth1(Nth,Item,XXB0L),
+      (sformat(WhyNth,'~w   ~w/~w   ',[Why,Nth,Len]),
+       color_g_mesg('#A7370A',maplist(print_templates(Depth,WhyNth),XXB0L)))).
+
+
 eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L):-
-  length(XXB0L,Len),
-  if_trace(e,color_g_mesg('#A7370A',indentq_d(Depth,'eval_defn_bodies = ',Len))),
-  if_trace(e,color_g_mesg('#A7370A',maplist(print_templates(Depth,'RULE:     '),XXB0L))),
+  if_trace(e,show_bodies('RULE ', Depth, XXB0L)),
   if_or_else((member(rule(XX,B0,Nth,Typs),XXB0L), copy_term(rule(XX,B0,Nth,Typs),USED),
     eval_defn_success(Eq,RetType,Depth,Self,X,Y,XX,B0,USED)),
     eval_defn_failure(Eq,RetType,Depth,Self,X,Y)).
 
 eval_defn_success(Eq,RetType,RDepth,Self,X,Y,XX,B0,USED):-
   Depth is RDepth,
-  X=XX, Y=B0, X\=@=B0,
+  true_or_log_fail(X=XX,unify_head(X=XX)),
+  Y=B0, X\=@=B0,
   if_trace(e,color_g_mesg('#773700',indentq2(RDepth,defs_used(XX-->B0,def(USED))))),
   nop(light_eval(Eq,RetType,Depth,Self,B0,Y)),
   if_t(between(401,420,Depth),writeq(a(B0))),

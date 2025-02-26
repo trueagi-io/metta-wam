@@ -1216,6 +1216,12 @@ if [[ "$exe" == "true" ]]; then
     fi
 fi
 
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+ exe=false
+ need_compile=0
+ STYLE=INTERP
+fi
+
 if [[ $need_compile -eq 1 ]]; then
 
     if [[ -f "$reference_file" ]]; then
@@ -1277,6 +1283,7 @@ compiler_cleanup() {
 	    fi
 
 	    do_DEBUG "${RED}Fallback: Using interpreter instead of compiled image.${NC}"
+	    touch "$INTERP_SRC_DIR/skip_compile"
 	    unset reference_file
 	    exe=false
 
