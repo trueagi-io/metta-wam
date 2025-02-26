@@ -312,7 +312,7 @@ nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
        DistanceOther<0, DistanceOther>Distance), !.
 
 nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):-
-    wdmsg(failing(nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList))),fail.
+    if_trace(nearest_src_object,wdmsg(failing(nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList)))),fail.
 
 nearest_src_object(SrcObject, ClauseOrdinal, SrcObjectList):- ClauseOrdinal > 0,
     select(TypeDeclLoc-SrcObject, SrcObjectList, Rest),
