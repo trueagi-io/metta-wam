@@ -356,7 +356,7 @@ finish_eval_here(Eq,RetType,Depth2,Self,Y,YO):-
 %:- discontiguous eval_31/5.
 %:- discontiguous maybe_eval_defn/5.
 %:- discontiguous eval_40/5.
-eval_to_name(X,Named):- sub_term(Named,X),atomic(Named),Named\==[],!.
+eval_to_name(X,Named):- sub_term_safely(Named,X),atomic(Named),Named\==[],!.
 eval_to_name(X,x(X)).
 
 
@@ -404,7 +404,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,
   eval_20(Eq,RetType,Depth,Self,X,Y).
 
 insanity_check_eval(_,_):- is_testing,!,fail.
-insanity_check_eval(Which,X):- var(X),!, \+ sub_var(X,Which),if_tracemsg(unknown,insanity_check_eval(Which,X)),!,maybe_trace(unknown).
+insanity_check_eval(Which,X):- var(X),!, \+ sub_var_safely(X,Which),if_tracemsg(unknown,insanity_check_eval(Which,X)),!,maybe_trace(unknown).
 insanity_check_eval(Which,X):-  X=@=[_|_],if_tracemsg(unknown,insanity_check_eval(Which,X)),!,maybe_trace(unknown).
 
 sanity_check_eval(_,_):- is_testing,!.
@@ -966,7 +966,7 @@ gen_eval_20_stubs([F|Args],Res,ParamTypes,RetType,Body):-
     Head=..[E20,Eq,RetType,Depth,Self,[F|Args],Res],
     is_like_eval_20(E20),
     clause(Head, Body),
-    ignore(once((sub_term(FF==Sym, Body), atom(Sym), FF == F,F=Sym))),
+    ignore(once((sub_term_safely(FF==Sym, Body), atom(Sym), FF == F,F=Sym))),
     %min_max_args(Args,Startl,Ends),
     (is_list(Args)->true;between(1,5,Len)),
     once(len_or_unbound(Args,Len)),
@@ -1133,7 +1133,7 @@ is_blank(X):- var(X),!,fail.
 is_blank(E):- is_empty(E),!.
 is_blank([]).
 is_blank([X]):-!,is_blank(X).
-has_let_star(Y):- sub_var('let*',Y).
+has_let_star(Y):- sub_var_safely('let*',Y).
 
 sort_univ(L,S):- cl_list_to_set(L,E),sort(E,S).
 % !(pragma! unit-tests tollerant) ; tollerant or exact
@@ -1364,7 +1364,7 @@ renumber_vars_wo_confict_tu(X,XXX):-
    unnumbervars_wco123(XX,XXX).
 
 unnumbervars_wco123(X,XXX):- compound(X),
-   sub_term(E, X), compound(E), E = '$VAR'(_),!,
+   sub_term_safely(E, X), compound(E), E = '$VAR'(_),!,
    subst001(X,E,_,XX),unnumbervars_wco123(XX,XXX).
 unnumbervars_wco123(X,X).
 
@@ -3351,15 +3351,15 @@ compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
 compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
 compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
 
-args_to_mathlib(XY,Lib):- sub_term(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
-args_to_mathlib(XY,clpr):- once((sub_term(T,XY), float(T))). % Reals
-args_to_mathlib(XY,clpq):- once((sub_term(Rat,XY),compound(Rat),Rat='/'(_,_))).
+args_to_mathlib(XY,Lib):- sub_term_safely(T,XY), var(T),get_attrs(T,XX),get_attrlib(XX,Lib).
+args_to_mathlib(XY,clpr):- once((sub_term_safely(T,XY), float(T))). % Reals
+args_to_mathlib(XY,clpq):- once((sub_term_safely(Rat,XY),compound(Rat),Rat='/'(_,_))).
 args_to_mathlib(_,clpfd).
 
 
-get_attrlib(XX,clpfd):- sub_var(clpfd,XX),!.
-get_attrlib(XX,clpq):- sub_var(clpq,XX),!.
-get_attrlib(XX,clpr):- sub_var(clpr,XX),!.
+get_attrlib(XX,clpfd):- sub_var_safely(clpfd,XX),!.
+get_attrlib(XX,clpq):- sub_var_safely(clpq,XX),!.
+get_attrlib(XX,clpr):- sub_var_safely(clpr,XX),!.
 
 % =================================================================
 % =================================================================
@@ -3448,7 +3448,7 @@ eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
-    XXB0L \==[], \+ sub_var('Any', XXB0L),!,
+    XXB0L \==[], \+ sub_var_safely('Any', XXB0L),!,
 
     (XXB0L==[] ->  eval_constructor(Eq,RetType,Depth,Self,X,Y);  % no definition therefore treat it like a data constructor
          catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y)).
@@ -3615,7 +3615,7 @@ cwtl_goal(AlarmID, Goal) :-
 eval_10(Eq,RetType,Depth,Self,X,Y):-
     as_prolog_x(Depth,Self,X,XX),
     eval_20(Eq,RetType,Depth,Self,XX,Y),
-    notrace(if_t( \+ sub_var(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
+    notrace(if_t( \+ sub_var_safely(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
@@ -3666,7 +3666,7 @@ eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
     *-> is_returned(E);(fail,E=Funcall)).
 
 is_returned(E):- notrace( \+ is_empty(E)).
-is_empty(E):- notrace(( nonvar(E), sub_var('Empty',E))),!.
+is_empty(E):- notrace(( nonvar(E), sub_var_safely('Empty',E))),!.
 
 
 :- ensure_loaded(metta_subst).
@@ -3774,7 +3774,7 @@ update_peer(Attribute, ParamType, NewInterfaces) :-
 not_violate_type_simularity(Space, ParamType, ObjList, NewObj) :-
     ObjList == [], !,
     get_dtypes(Space, NewObj, NewInterfaces),
-    put_attr(ParamType, peer_objects, [NewObj-NewInterfaces]),
+    dont_put_attr(ParamType, peer_objects, [NewObj-NewInterfaces]),
     update_peer(peer_interfaces, ParamType, NewInterfaces).
 
 not_violate_type_simularity(_Space,_ParamType, ObjList, NewObj) :-
@@ -3788,7 +3788,7 @@ not_violate_type_simularity(Space, ParamType, ObjList, NewObj) :-
     once((
         can_be_same_types(PrevInterfaces, NewInterfaces)
     )), !,
-    put_attr(ParamType, peer_objects, [NewObj-NewInterfaces | ObjList]),
+    dont_put_attr(ParamType, peer_objects, [NewObj-NewInterfaces | ObjList]),
     update_peer(peer_interfaces, ParamType, NewInterfaces).
 
 % Check type compatibility
@@ -3819,8 +3819,8 @@ check_non_arg_violation(_Space,ParamType,Arg):- ParamType == 'Variable',!,is_ftV
 check_non_arg_violation(_Space,ParamType,Arg):-  attvar(Arg), get_attr(Arg, cns, S = [L|IST] ), is_list(IST),
   ((member(ActualType,[L|IST]), ActualType == ParamType) -> true ;
   (actual_violation(ParamType,[L|IST])-> (!,fail);
-   put_attr(Arg, cns, S = [ParamType,L|IST] ))),!.
-check_non_arg_violation(Space,ParamType,Arg):-  var(Arg), put_attr(Arg, cns, Space = [ParamType]),!.
+   dont_put_attr(Arg, cns, S = [ParamType,L|IST] ))),!.
+check_non_arg_violation(Space,ParamType,Arg):-  var(Arg), dont_put_attr(Arg, cns, Space = [ParamType]),!.
 %check_non_arg_violation(Space, ParamType, Var) :- var(Var), !, freeze(Var, non_arg_violation_each(Space, ParamType, Var)).
 
 % Ensure non-argument violations are checked

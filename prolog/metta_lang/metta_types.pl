@@ -856,8 +856,8 @@ get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  Depth2 is Depth-1,
  get_type_cmpd(Depth2,Self,[Op|Args],Type1,W),
  get_type(Depth2,Self,Arg,ArgType),
- ignore(sub_var(ArgType,Type1)->true;
-   (sub_term(ST,Type1),var(ST),ST=ArgType)),
+ ignore(sub_var_safely(ArgType,Type1)->true;
+   (sub_term_safely(ST,Type1),var(ST),ST=ArgType)),
  last(Type1,Type).
 get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
   len_or_unbound(Args,Len),
@@ -1112,7 +1112,8 @@ try_adjust_arg_types(_Eq, RetType, Depth, Self, Params, X, Y) :-
 %   @arg Adjusted  The final adjusted arguments.
 %
 adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
-    rtrace_when(argtypes,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted)).
+    show_failure_when(argtypes,
+       rtrace_when(argtypes,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted))).
 
 
 %!  adjust_args(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is det.
@@ -1884,7 +1885,7 @@ is_seo_f(N) :-
 %
 is_absorbed_return_type(Params, Var) :-
     % If Var is a variable, succeed if it is not a sub-variable of Params.
-    var(Var), !, \+ sub_var(Var, Params).
+    var(Var), !, \+ sub_var_safely(Var, Params).
 is_absorbed_return_type(_, 'Bool').
 is_absorbed_return_type(_, [Ar]) :-
     % Succeed if the type is a single-element list containing '->'.

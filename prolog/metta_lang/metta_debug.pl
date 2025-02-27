@@ -751,7 +751,8 @@ if_trace(Flag, Goal) :- notrace(real_notrace((catch_err(ignore((is_debugging(Fla
 if_tracemsg(Flag, Message):- if_trace(Flag, wdmsg(Message)).
 
 rtrace_when(Why,Goal):- is_debugging(Why)->rtrace(Goal);call(Goal).
-show_failure_when(Why, Goal):- is_debugging(Why),!,
+show_failure_when(Why, Goal):-
+ is_debugging(Why),!,
   if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
    if_t(is_debugging(failures),trace),!,fail)).
 show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
@@ -759,8 +760,20 @@ show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
 check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
 
 trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
-maybe_trace(_Why):- !.
+maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
 maybe_trace:- !.
+
+
+sub_var_safely(Var,Source):-
+  locally(set_prolog_flag(occurs_check,true),
+         sub_var(Var,Source)).
+
+sub_term_safely(Sub,Source):-
+  locally(set_prolog_flag(occurs_check,true),
+        sub_term(Sub,Source)).
+
+woc(Goal):-
+  locally(set_prolog_flag(occurs_check,true), Goal).
 
 %!  is_showing(+Flag) is nondet.
 %
@@ -965,7 +978,8 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   % Perform a trace evaluation on a goal:
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
-trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
+
+%trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
 trace_eval(P4, TNT, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
@@ -982,7 +996,7 @@ trace_eval(P4, TNT, D1, Self, X, Y) :-
             nop((start_rtrace, rtrace)))))),
         nop(notrace(no_repeats_var(NoRepeats))))),
 
-        ((sub_term(TN, TNT), TNT \= TN) -> true ; TNT = TN), % Ensure proper subterm handling.
+        ((sub_term_safely(TN, TNT), TNT \= TN) -> true ; TNT = TN), % Ensure proper subterm handling.
    %if_t(DR<DMax, )
         ( \+ \+ if_trace((eval; TNT), (PrintRet = 1,
             indentq(DR, EX, '-->', [TN, X]))) ),

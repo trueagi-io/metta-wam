@@ -1555,7 +1555,7 @@ into_named_vars(Vars,L):-
 %
 has_sub_var(AllVars,_=V):-
     % Check if V is a sub-variable of any variable in AllVars.
-    sub_var(V,AllVars).
+    sub_var_safely(V,AllVars).
 
 
 %!  underscore_vars(+Var) is nondet.

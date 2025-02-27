@@ -332,7 +332,7 @@ assertable_head(Head,Head).
 label_body_singles(Head,Body):-
    term_singletons(Body+Head,BodyS),
    maplist(label_body_singles_2(Head),BodyS).
-label_body_singles_2(Head,Var):- sub_var(Var,Head),!.
+label_body_singles_2(Head,Var):- sub_var_safely(Var,Head),!.
 label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
 
 
@@ -411,7 +411,7 @@ number_wang(A,B,C):-
 
 p2s(P,S):- into_list_args(P,S).
 
-get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),symbol(DT).
+get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term_safely(DT,AV),symbol(DT).
 
 numeric(N):- number(N),!.
 numeric(N):- get_attr(N,'Number','Number').

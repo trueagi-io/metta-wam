@@ -367,7 +367,7 @@ finfo(Op, Len, Head):-
     if_t(\+ function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, __RetType, Body, ReturnVal,_),
         call_showing(function_declaration_impl(_, Op, Len, Parameters, ParamTypes, ___RetType, Body, __WrappedBody, ReturnVal))),
     if_t(\+ metta_defn(Self, [Op | Parameters], Body), call_showing(metta_defn_return(Self, [Op | Parameters], Body, _, ReturnVal),[=,[Op | Parameters],Body])),
-    call_showing((metta_atom(KB, [A, B|Out]), sub_var(Op, [A, B])), [ist,KB, [A, B|Out]]),
+    call_showing((metta_atom(KB, [A, B|Out]), sub_var_safely(Op, [A, B])), [ist,KB, [A, B|Out]]),
     true.
 
 call_showing(Var):- \+ callable(Var), !, write_src_nl(not(callable(Var))).
