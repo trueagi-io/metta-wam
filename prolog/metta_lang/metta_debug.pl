@@ -748,6 +748,20 @@ set_debug(Flag, _) :- !, debug(metta(Flag)),!. %, flag_to_var(Flag, Var), set_fa
 %
 if_trace(Flag, Goal) :- notrace(real_notrace((catch_err(ignore((is_debugging(Flag), Goal)),E,fbug(E --> if_trace(Flag, Goal)))))).
 
+if_tracemsg(Flag, Message):- if_trace(Flag, wdmsg(Message)).
+
+rtrace_when(Why,Goal):- is_debugging(Why)->rtrace(Goal);call(Goal).
+show_failure_when(Why, Goal):- is_debugging(Why),!,
+  if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
+   if_t(is_debugging(failures),trace),!,fail)).
+show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
+%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
+check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
+
+trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
+maybe_trace(_Why):- !.
+maybe_trace:- !.
+
 %!  is_showing(+Flag) is nondet.
 %
 %   Check if showing is enabled for a flag.
@@ -951,6 +965,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   % Perform a trace evaluation on a goal:
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
+trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
 trace_eval(P4, TNT, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
@@ -974,23 +989,25 @@ trace_eval(P4, TNT, D1, Self, X, Y) :-
 
         Ret = retval(fail), !,
 
-        (Display = ( \+ \+ (flag(eval_num, EX1, EX1 + 1),
+        (Display = call(((( \+ \+ (flag(eval_num, EX1, EX1 + 1),
                 ((Ret \=@= retval(fail), nonvar(Y))
                 -> indentq(DR, EX1, '<--', [TN, Y])
-                ; indentq(DR, EX1, '<--', [TN, Ret]))))),
+                ; indentq(DR, EX1, '<--', [TN, Ret])))))))),
 
         call_cleanup((
-            (call(P4, D1, Self, X, Y) *-> nb_setarg(1, Ret, Y);
-            (fail, trace, (call(P4, D1, Self, X, Y)))),
-            ignore((notrace(( \+ (Y \= NoRepeats), nb_setarg(1, Ret, Y)))))),
+            (call(P4, D1, Self, X, Y)
+                 *-> (setarg(1, Ret, Y),one_shot(Display))
+                 ; (fail, trace, (call(P4, D1, Self, X, Y)))),
+
+     ignore((notrace(( \+ (Y \= NoRepeats), setarg(1, Ret, Y)))))),
     % cleanup
-        ignore((PrintRet == 1 -> ignore(Display) ;
+        ignore((PrintRet == 1 -> (one_shot(Display)) ;
        (notrace(ignore((( % Y\=@=X,
-         if_t(DR<DMax,if_trace((eval;TN),ignore(Display))))))))))),
+         if_t(DR<DMax,if_trace((eval;TN),one_shot(Display))))))))))),
         Ret \=@= retval(fail).
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
-
+one_shot(Display):- ignore(once(Display)),setarg(1,Display,true).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1155,5 +1172,70 @@ pick_quote(String, '`') :- \+ string_contains(String, '`'), !.              % Us
 :- at_halt(in_file_output(leave_markdown(_))).  % Ensure markdown mode is exited at halt
 :- at_halt(in_file_output(leave_comment)).      % Ensure comment mode is exited at halt
 
+
+print_last_choicepoint_upwards :-
+    prolog_current_choice(ChI0),         % Choice in print_last_choicepoint_info/0
+    prolog_choice_attribute(ChI0, parent, ChI1), !,
+    print_last_choicepoint_upwards(ChI1).
+print_last_choicepoint_upwards.
+
+print_last_choicepoint_upwards(ChI0):-
+  once(print_last_choicepoint_info(ChI0, [])),
+  prolog_choice_attribute(ChI0, parent, ChI1), !,
+  print_last_choicepoint_upwards(ChI1).
+print_last_choicepoint_upwards(_).
+
+print_last_choicepoint_info(ChI1, Options) :-
+    real_choice_info(ChI1, ChI),
+    prolog_choice_attribute(ChI, frame, F),
+    prolog_frame_attribute(F, goal, Goal),
+    %Goal \= '$execute_goal2'(_,_,_),     % Toplevel REPL choicepoint
+    %!,
+    Goal \='$c_call_prolog',!,
+    % Goal \='$runtoplevel', !,
+    option(message_level(Level), Options, warning),
+    get_prolog_backtrace(2, [_|Stack], [frame(F)]),
+    (   predicate_property(Goal, foreign)
+    ->  print_message(Level, choicepoint(foreign(Goal), Stack))
+    ;   prolog_frame_attribute(F, clause, Clause),
+        (   prolog_choice_attribute(ChI, pc, PC)
+        ->  Ctx = jump(PC)
+        ;   prolog_choice_attribute(ChI, clause, Next)
+        ->  Ctx = clause(Next)
+        ),
+        print_message(Level, choicepoint_info(clause(Goal, Clause, Ctx), Stack))
+    ).
+print_last_choicepoint_info(_, _).
+
+real_choice_info(Ch0, Ch) :-
+    prolog_choice_attribute(Ch0, type, Type),
+    nop(((dummy_type_info(Type), !))),
+    prolog_choice_attribute(Ch0, parent, Ch1),
+    real_choice_info(Ch1, Ch).
+real_choice_info(Ch, Ch).
+
+dummy_type_info(debug).
+dummy_type_info(none).
+
+:- multifile(prolog:message/1).
+prolog:message(choicepoint_info(Choice, Stack)) -->
+    user:choice_info(Choice),
+    [ nl, 'Called from', nl ],
+    message(Stack).
+
+user:choice_info(foreign(Goal)) -->
+    prolog_stack:success_goal(Goal, 'a foreign choice_info point').
+user:choice_info(clause(Goal, ClauseRef, clause(Next))) -->
+    prolog_stack:success_goal(Goal, 'a choice_info point in alternate clause'),
+    [ nl ],
+    [ '  ' ], prolog_stack:clause_descr(ClauseRef), [': clause succeeded', nl],
+    [ '  ' ], prolog_stack:clause_descr(Next),      [': next candidate clause' ].
+user:choice_info(clause(Goal, ClauseRef, jump(PC))) -->
+    { prolog_stack:clause_where(false, ClauseRef, PC, Where,
+                   [subgoal_positions(true)])
+    },
+    prolog_stack:success_goal(Goal, 'an in-clause choice_info point'),
+    [ nl, '  ' ],
+    prolog_stack:where_no_goal(Where).
 
 

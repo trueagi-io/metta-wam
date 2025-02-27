@@ -367,20 +367,20 @@ check_has_directive(V) :- var(V), !, fail.
 check_has_directive('@log') :- switch_to_mettalog, !, write_src_uo(switch_to_mettalog),notrace(throw(restart_reading)).
 % Directive to switch to mettarust.
 check_has_directive('@rust') :- switch_to_mettarust, !, write_src_uo(switch_to_mettarust), notrace(throw(restart_reading)).
+% Displays options when '@' is input and restarts reading.
+check_has_directive('@') :- do_show_options_values, !, notrace(throw(restart_reading)).
 % Checks if the symbol contains a '.' (common for directives).
 check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).
 check_has_directive(call(N=V)) :- nonvar(N), !, set_directive(N, V).
+% Handle directive in the form [@Name, Value].
+check_has_directive([AtEq, Value]) :- symbol(AtEq), symbol_concat('@', Name, AtEq), set_directive(Name, Value).
 % Enable rtrace debugging and restart reading.
 % check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !. % rtrace, notrace(throw(restart_reading)).
 % Handle expressions in the form of N=V.
 check_has_directive(NEV) :- symbol(NEV), symbolic_list_concat([N, V], '=', NEV), set_directive(N, V).
-% Handle directive in the form [@Name, Value].
-check_has_directive([AtEq, Value]) :- symbol(AtEq), symbol_concat('@', Name, AtEq), set_directive(Name, Value).
 % Handle mode changes in the REPL.
 check_has_directive(ModeChar) :- symbol(ModeChar), metta_interp_mode(ModeChar, _Mode), !, set_directive(repl_mode, ModeChar).
-% Displays options when '@' is input and restarts reading.
-check_has_directive('@') :- do_show_options_values, !, notrace(throw(restart_reading)).
 % Process expressions like @NEV=Value.
 check_has_directive(AtEq) :- symbol(AtEq), symbol_concat('@', NEV, AtEq), option_value(NEV, Foo), fbug(NEV = Foo), !, notrace(throw(restart_reading)).
 % No directive found.
@@ -402,11 +402,11 @@ check_has_directive(_).
 %     % Assign a general option value:
 %     ?- set_directive('timeout', 100).
 %
-set_directive(N, V) :- symbol_concat('@', NN, N), !, set_directive(NN, V).
+set_directive(N, V) :- symbol(N), symbol_concat('@', NN, N), !, set_directive(NN, V).
 % Special case for setting the REPL mode.
 set_directive(N, V) :- N == 'mode', !, set_directive(repl_mode, V).
 % Set a general directive using `set_option_value_interp/2`.
-set_directive(N, V) :- show_call(set_option_value_interp(N, V)), !, notrace(throw(restart_reading)).
+set_directive(N, V) :- nonvar(N), show_call(set_option_value_interp(N, V)), !, notrace(throw(restart_reading)).
 
 %!  read_pending_white_codes(+In) is det.
 %   Reads the pending codes (whitespace characters) from the input stream `In`.
@@ -1056,7 +1056,6 @@ maybe_add_history(Self, BaseEval, NamedVarsList) :-
    prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
 
 
-
 u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
@@ -1108,8 +1107,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
 
         Cut = _,
         Next = _,
-        ((Stepping==true) ->
-         (repeat,
+        once((((Stepping==true) ->
+         ( repeat, % Q
           old_not_compatio(format("~npress ';' for more solutions ")),get_single_char_key(C),
           old_not_compatio((writeq(key=C),nl)),
          (C=='b' -> (once(repl),fail) ;
@@ -1123,6 +1122,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='t' -> (nop(set_debug(eval,true)),rtrace,Next=true) ;
          (C=='T' -> (set_debug(eval,true),Next=true);
          (C=='?' -> (print_debug_help,fail)) ;
+         (C=='*' -> (print_last_choicepoint_upwards,fail)) ;
+
          (C==';' -> Next=true ;
          (C==esc('[A',[27,91,65]) -> (Cut=true,Next=false) ;
          (C==esc('[B',[27,91,66]) -> (nb_setarg(3, Control, leap),Cut=false,Next=true) ;
@@ -1133,7 +1134,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
          (C=='G' -> (bt, Next=false);
          (C=='s' -> (Cut=true,Next=false);
          (true -> (write('Unknown Char'),fail))))))))))))))))))))), % should consume 'b's paren
-         (nonvar(Next);nonvar(Cut))) ; true),
+         (nonvar(Next);nonvar(Cut))) ; true))),
 
             ((Complete==true;Cut==true) ->! ; true),
             (nonvar(Next)->Next==true; true),

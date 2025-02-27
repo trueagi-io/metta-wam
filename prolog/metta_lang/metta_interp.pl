@@ -226,7 +226,9 @@ dont_change_streams:- true.
 %   the Python environment or integration.
 %
 :- dynamic(lazy_load_python/0).
+
 lazy_load_python.
+
 
 % 'dynamic' enables runtime modification
 :- dynamic(user:is_metta_src_dir/1).
@@ -460,11 +462,11 @@ pfcAdd_Now(P) :-
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
     current_predicate(pfcAdd/1),!,
     once_writeq_nl(pfcAdd(P)),
-    pfcAdd(P).
+    must_det_lls(pfcAdd(P)).
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
     once_writeq_nl(assssssssssssssert(P)),
-    assert(P).
+    must_det_lls(assert(P)).
 %:- endif.
 
 %!  system:copy_term_g(+I, -O) is det.
@@ -1073,7 +1075,8 @@ current_self(Self) :-
 %     Default = false.
 option_value_def(Name, DefaultValue) :-
     % Fetch the default value for the given option.
-    all_option_value_name_default_type_help(Name, DefaultValue, _, _, _).
+    all_option_value_name_default_type_help(Name, DefaultValueR, _, _, _),
+    DefaultValueR = DefaultValue.
 
 %!  rust_option_value_def(+Name, -DefaultValue) is nondet.
 %
@@ -1624,7 +1627,7 @@ is_debug_like(verbose, true).
 % Disable unit testing and reset runtime options to defaults.
 set_is_unit_test(false):-
     % Reset all options to their default values.
-    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    reset_default_flags,
     % Explicitly disable trace and test-related settings.
     set_option_value_interp('trace-on-test', false),
     set_option_value_interp('trace-on-fail', false),
@@ -1634,7 +1637,7 @@ set_is_unit_test(false):-
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
     % Reset all options to their default values.
-    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    reset_default_flags,
     % Disable specific trace settings during unit testing.
     set_option_value_interp('trace-on-test', false),
     set_option_value_interp('trace-on-fail', false),
@@ -2715,7 +2718,7 @@ set_default_flags:- ignore(((
        % Check if the current context is not in reload mode.
        \+ prolog_load_context(reloading, true),
        % Set default option values for all defined options.
-       nop((forall(option_value_def(Opt, Default), set_option_value_interp(Opt, Default))))
+       nop((reset_default_flags))
 ))).
 
 :- initialization(set_default_flags).
@@ -2938,6 +2941,7 @@ before_arfer_dash_dash(Rest, Args, NewRest) :-
 %     ?- cmdline_load_metta(execute, '&self', ['--args', '--file=example.metta']).
 %
 
+maybe_do_repl(_Why) :- current_prolog_flag(mettalog_rt, true), !.
 maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
 
 
@@ -2999,6 +3003,19 @@ cmdline_load_metta(Phase, Self, [M | Rest]) :-
     fbug(unused_cmdline_option(Phase, M)),
     !,
     cmdline_load_metta(Phase, Self, Rest).
+
+
+reset_default_flags:-
+   forall(option_value_def(A,B), set_option_value_interp(A,B)),
+   metta_cmd_args(Rest),
+   forall(member(Flag,Rest),process_flag(Flag)).
+
+process_flag(M) :- ignore((symbol(M),
+    m_opt(M, Opt),
+    is_cmd_option(Opt, M, TF),
+    set_option_value_interp(Opt, TF))),!.
+
+
 
 %!  install_ontology is det.
 %
@@ -3152,18 +3169,6 @@ m_opt0(M, Opt) :-
 m_opt0(M, Opt) :-
     symbol_concat('-', Opt, M), !.
 
-%
-%   Ensures that Prolog's `occurs_check` flag is set to `true`, enabling
-%   strict unification checking to prevent infinite terms.
-%
-%   This directive is applied globally during the compilation of the program.
-%
-%   @example
-%     % Verify that `occurs_check` is enabled:
-%     ?- current_prolog_flag(occurs_check, true).
-%     true.
-%
-:- initialization(set_prolog_flag(occurs_check, true)).
 
 %!  start_html_of(+Filename) is det.
 %
@@ -4259,6 +4264,12 @@ metta_atom_added(X, Y) :-
 metta_atom(KB, Atom):-
   quietly(metta_atom0(KB, Atom)).
 
+
+metta_atom0(KB, Fact) :-
+   transform_about(Fact, Rule, Cond), Cond=='True',!,
+   fact_store(KB, Rule, Fact, Cond).
+
+
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
 metta_atom0(KB, [F, A | List]) :-
@@ -4280,27 +4291,31 @@ metta_atom0(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
 
+'same-index'(X,Y):-
+  transform_about(X, t(Inst,Type,Pred, Super), Cond), \+ \+ (nonvar(Pred);nonvar(Super)),
+  transform_about(Y, t(Inst,Type,Pred, Super), Cond), !.
 'same-index'(X,Y):- copy_term(X,Y).
 
 % Direct type association case
-transform_about([Colon, Pred, Super],             inst_type(Pred, Super), true) :-  Colon == ':', !.
+transform_about([Colon, Pred, Super],             t(inst,type,Pred, Super), 'True') :-  Colon == ':', !.
 % Type association inside an equality assertion
-transform_about([Eq, [Colon, Pred, Super], Cond], inst_type(Pred, Super), Cond) :-  Eq == '=', Colon == ':', !.
+transform_about([Eq, [Colon, Pred, Super], Cond], t(inst,type,Pred, Super), Cond) :-  Eq == '=', Colon == ':', !.
 % Subtype relationship
-transform_about([Smile, Pred, Super],             type_type(Pred, Super), true) :-  Smile == ':>', !.
+transform_about([Smile, Pred, Super],             t(type,type,Pred, Super), 'True') :-  Smile == ':>', !.
 % Subtype relationship inside an equality assertion
-transform_about([Eq, [Smile, Pred, Super], Cond], type_type(Pred, Super), Cond) :-  Eq == '=',  Smile == ':>',!.
+transform_about([Eq, [Smile, Pred, Super], Cond], t(type,type,Pred, Super), Cond) :-  Eq == '=',  Smile == ':>',!.
 
 % Proven fact with arguments inside an equality assertion
-transform_about([Eq, [Pred | Args], Cond],        pred_head(Pred, Args), Cond) :-  Eq == '=', !.
+transform_about([Eq, [Pred | Args], Cond],        t(pred,head,Pred, Args), Cond) :-  Eq == '=', !.
 % General proven fact
-transform_about([Pred | Args],                    pred_head(Pred, Args), true):- !.
-transform_about(PredArgs,                    pred_head(Pred, Args), true):- PredArgs=..[Pred | Args],!.
+transform_about([Pred | Args],                    t(pred,fact,Pred, Args), true):- !.
+transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, PredArgs=..[Pred | Args],!.
+transform_about(Pred,                             t(pred,fact,Pred,_Args), true).
 
 add_indexed_fact(OBO):- arg(1,OBO,KB), arg(2,OBO,Fact), add_fact(KB, Fact),!.
 
 add_fact(KB, Fact):-
-   transform_about(Fact, Rule, Cond),
+   must_det_lls(transform_about(Fact, Rule, Cond)),
    assertz(fact_store(KB, Rule, Fact, Cond)).
 
 query_fact(KB, Fact, Cond) :-
@@ -4789,6 +4804,7 @@ metta_anew1(load, OBO) :-  !,
     must_det_lls((
         load_hook(load, OBO),         % Execute the load hook.
         subst_vars(OBO, Cl),          % Substitute variables in `OBO`.
+        % display(obo(OBO)), display(cl(Cl)),
         add_indexed_fact(Cl),
         pfcAdd_Now(Cl)  % Add the clause and show errors if any.
     )),!.
@@ -5612,22 +5628,25 @@ do_metta(From, exec, Self, TermV, Out) :- !,
 %     Out = ResultOfExecution.
 %
 do_metta_exec(From, Self, TermV, FOut) :-
-  Output = X,
+
     % Debugging output for initial state.
     % format("########################X0 ~w ~w ~w\n", [Self, TermV, FOut]),
  (catch(((
         % Show execution trace if the source is a file.
         if_t(From = file(_), output_language(metta, write_exec(TermV))),
+        Output = X,
         % Convert the term into a callable Prolog term.
         notrace(into_metta_callable(Self, TermV, Term, X, NamedVarsList, Was)), !,
         % Debugging output for intermediate state.
         % format("########################X1 ~w ~w ~w ~w\n", [Term, X, NamedVarsList, Output]),
         % Perform the execution using the user-defined handler.
         user:u_do_metta_exec(From, Self, TermV, Term, X, NamedVarsList, Was, Output, FOut))),
+                give_up(Why), pp_m(red, gave_up(Why)))).
         % Catch errors during execution and log them.
-        give_up(Why), pp_m(red, gave_up(Why)))).
     % Debugging output for final state.
     % format("########################X2 ~w ~w ~w\n", [Self, TermV, FOut]).
+
+
 
 %!  a_e(+Assertion) is nondet.
 %
@@ -5860,6 +5879,8 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
   %nl,print(subst_vars(TermV,Term,NamedVarsList,Vars)),nl)))),
   %nop(maplist(verbose_unify,Vars)))))),!.
   )))),!.
+
+
 
 %!  eval_S(+Self, +Form) is det.
 %
@@ -6870,6 +6891,7 @@ ensure_mettalog_system:-
     system:use_module(library(rbtrees)),
     system:use_module(library(dicts)),
     system:use_module(library(shell)),
+    use_module(library(date)),
     system:use_module(library(edinburgh)),
   %  system:use_module(library(lists)),
     system:use_module(library(statistics)),
@@ -7012,15 +7034,9 @@ qsave_program(Name) :-
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
 
-%
-%   Specifies an initialization goal to be executed when the program is loaded.
-%   This directive performs two actions:
-%   1. `update_changed_files`: Checks and updates any files that have been modified
-%      since the last program run, ensuring the system is synchronized.
-%   2. `after_load /**/`: Restores the system to a prepared state, likely reinitializing any
-%      essential components.
-%
-:- initialization(update_changed_files,after_load /**/).
+
+:- initialization(update_changed_files).
+
 
 %!  nts is det.
 %

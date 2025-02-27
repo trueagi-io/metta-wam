@@ -639,7 +639,7 @@ ensure_py_loaded(Module) :-
 %   - When a saved state is restored.
 %
 ensure_py_loaded_early_maybe(_Module) :-
-    lazy_load_python, !.
+    clause(lazy_load_python,true), !.
 ensure_py_loaded_early_maybe(Module) :-
     ensure_py_loaded(Module).
 

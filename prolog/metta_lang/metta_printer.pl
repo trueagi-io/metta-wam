@@ -132,7 +132,7 @@ ppc1(Msg, Term) :-
         write_src(Term), nl  % Display source representation.
     )).
 
-undo_bindings(G):- \+ \+ call(G).
+undo_bindings(G):- \+ \+ locally(set_prolog_flag(occurs_check,true),call(G)).
 
 dont_numbervars(_,_,_,_).
 

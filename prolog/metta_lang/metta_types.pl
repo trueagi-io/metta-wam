@@ -201,7 +201,7 @@ mnotrace(G) :-
 %   @arg NewValue  The value to be unified, which must be numeric.
 %
 %   @example
-%     ?- dont_put_attr(X, 'Number', _), X = 42.
+%     ?- put_attr(X, 'Number', _), X = 42.
 %     X = 42.
 %
 'Number':attr_unify_hook(_, NewValue) :-
@@ -627,7 +627,6 @@ get_type_cmpd_2nd_non_nil(Depth, Self, Val, Type, How) :-
     % If this is a second or later occurrence, ensure Type is not an empty list.
     (Nth > 1 -> Type \== [] ; true).
 
-/*
 have_some_defs(Depth,Self,Val):-
   \+ \+
  ([H|Args] = Val,
@@ -652,7 +651,6 @@ check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
    (args_violation(Depth,Self,Args,ArgTypes) ->
     (trace_get_type(bad_type,args_violation(Args,ArgTypes),check),fail);
     (trace_get_type(conformed,no_args_violation(Args,ArgTypes),check),true)).
-*/
 
 %!  typed_expression(+Depth, +Self, +Expr, -ArgTypes, -RType) is nondet.
 %
@@ -1114,7 +1112,8 @@ try_adjust_arg_types(_Eq, RetType, Depth, Self, Params, X, Y) :-
 %   @arg Adjusted  The final adjusted arguments.
 %
 adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
-    adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted).
+    rtrace_when(argtypes,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted)).
+
 
 %!  adjust_args(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is det.
 %
@@ -1266,7 +1265,7 @@ reset_cache :-
 %
 
 get_operator_typedef(Self, Op, Len, ParamTypes, RetType):-
-    no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType)).
+    quietly(no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType))).
 
 get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
     % Ensure the length matches the parameter types or is unbound.
@@ -1485,11 +1484,6 @@ into_typed_args(Depth, Self, [T | TT], [M | MM], [Y | YY]) :-
 :- nodebug(metta(argtypes)).
 :- initialization(nodebug(metta(argtypes))).
 
-show_failure_when(Why, Goal):- debugging(metta(Why)),!,if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
-   if_t(debugging(metta(failures)),trace),!,fail)).
-show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
-%show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
-
 %!  into_typed_arg(+Depth, +Self, +Type, +Value, -TypedValue) is det.
 %
 %   Converts a single value into a typed argument based on the given type.
@@ -1502,10 +1496,11 @@ show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
 %
 into_typed_arg(_Dpth, Self, T, M, Y) :-
     % If the value is a variable, assign the type attribute and unify it.
-    var(M),  show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))), !.
+    var(M),  !, show_failure_when(argtypes,(Y = M, dont_put_attr(M, cns, Self = [T]))).
 into_typed_arg(Depth, Self, T, M, Y) :-
     % Use into_typed_arg0 for further evaluation or fallback to direct unification.
-    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)), show_failure_when(argtypes,(M = Y))),!.
+    if_or_else(show_failure_when(argtypes,into_typed_arg0(Depth, Self, T, M, Y)),
+               show_failure_when(argtypes,(M = Y))).
 
 %!  into_typed_arg0(+Depth, +Self, +Type, +Value, -TypedValue) is nondet.
 %
@@ -2069,7 +2064,7 @@ is_metta_data_functor(Eq, F) :-
 :- if(\+ current_predicate(get_operator_typedef/4)).
 get_operator_typedef(Self, Op, ParamTypes, RetType) :-
     % Retrieve the operator type definition.
-    get_operator_typedef(Self, Op, _, ParamTypes, RetType).
+    quietly(get_operator_typedef(Self, Op, _, ParamTypes, RetType)).
 :- endif.
 
 %!  get_operator_typedef1(+Self, +Op, +ParamTypes, -RetType) is det.
@@ -2102,7 +2097,7 @@ get_operator_typedef1(Self, Op, ParamTypes, RetType) :-
 :- if(\+ current_predicate(get_operator_typedef/5)).
 get_operator_typedef(Self, Op, _, ParamTypes, RetType) :-
     % Retrieve the full operator type definition.
-    get_operator_typedef(Self, Op, ParamTypes, RetType).
+    quietly(get_operator_typedef(Self, Op, ParamTypes, RetType)).
 :- endif.
 
 %!  is_special_builtin(+Builtin) is nondet.

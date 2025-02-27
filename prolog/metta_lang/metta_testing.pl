@@ -1182,12 +1182,14 @@ load_answer_file(Base) :-
 
 
 
-calc_answer_file(RelFile,AnsFile):- \+ atom_concat(_, metta, RelFile),
+calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
+calc_answer_file(RelFile,AnsFile):- nonvar(RelFile),
     (   \+ atom(RelFile); \+ is_absolute_file_name(RelFile); \+ exists_file(RelFile)),
     % Resolve to an absolute file path if necessary.
-    absolute_file_name(RelFile, AnsFile), RelFile\=@=AnsFile.
+    absolute_file_name(RelFile, MidFile), RelFile\=@=MidFile,
+    exists_file(MidFile),
+    calc_answer_file(MidFile,AnsFile),!.
 calc_answer_file(AnsFile,AnsFile):- \+ atom_concat(_, metta, AnsFile),!.
-calc_answer_file(_Base,AnsFile):- getenv(hyperon_results,AnsFile),exists_file(AnsFile),!.
 % Finds a file using expand_file_name for wildcard matching.
 calc_answer_file(MeTTaFile,AnsFile):-  atom_concat(MeTTaFile, '.?*', Pattern),
         expand_file_name(Pattern, Matches), member(AnsFile,Matches), ok_ansfile_name(AnsFile),  !. % Select the first match
@@ -1196,8 +1198,9 @@ calc_answer_file(Base,AnsFile):- ensure_extension(Base, answers, AnsFile),!.
 ok_ansfile_name(AnsFile):- \+ symbol(AnsFile),!,fail.
 ok_ansfile_name(AnsFile):- skip_ans_ext(Htm),symbol_concat(_,Htm,AnsFile),!,fail.
 ok_ansfile_name(_).
-skip_ans_ext('.bak').  skip_ans_ext('.tmp'). skip_ans_ext('.htm'). skip_ans_ext('.py').
-skip_ans_ext('.html').  skip_ans_ext('o'). skip_ans_ext('md'). skip_ans_ext('pl').  skip_ans_ext('txt').  skip_ans_ext('ansi'). skip_ans_ext('tee').
+skip_ans_ext(Htm):- arg(_, v('tmp', 'bak', 'html', '~', 'sav', 'ansi', 'pl', 'metta',
+             'py', 'txt', 'md', 'tee', 'o', 'dll', 'so', 'exe', 'sh', 'text', 'rc',
+            'mettalogrc', 'bat', 'c', 'java', 'datalog', 'in', 'out', 'xml', 'obo'), Htm).
 
 
 %!  load_answer_file_now(+File) is det.
