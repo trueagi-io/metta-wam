@@ -104,24 +104,50 @@
 ;; MeTTa-Compatible Queries (Stored as Expressions)
 ;; ===============================
 
-(test-query brca2  metta-rdf 
-!(m 
-    (rdf! $Gene ex:gene_name  [literal [type $_ "BRCA2"]])
-    (rdf! $Gene ex:transcribed_to $Transcript)
-    (rdf! $Transcript ex:translates_to $Protein)
-    (rdf! $Interactor ex:interacts_with $Protein)
-    (rdf! $Gene ex:genes_pathways $Pathway)
-))
+!(test-query brca2 metta-rdf
+    (m
+        (rdf! $Gene ex:gene_name  [literal [type $_ \"BRCA2\"]])
+        (rdf! $Gene ex:transcribed_to $Transcript)
+        (rdf! $Transcript ex:translates_to $Protein)
+        (rdf! $Interactor ex:interacts_with $Protein)
+        (rdf! $Gene ex:genes_pathways $Pathway)
+    ))
 
-(test-query igf2  metta-rdf 
-!(m 
-    (rdf! $Gene ex:gene_name  [literal [type $_ "IGF2"]])
-    (rdf! $Promoter ex:associated_with $Gene)
-    (rdf! $Enhancer ex:associated_with $Gene)
-    (rdf! $Gene ex:genes_pathways $Pathway)
-    (rdf! $ChildPathway ex:child_pathway_of $Pathway)
-))
+!(test-query igf2 metta-rdf
+    (m
+        ;; Find the IGF2 gene by name
+        (rdf! $Gene ex:gene_name  [literal [type $_ \"IGF2\"]])
 
+        ;; Get its associated promoters
+        (rdf! $Promoter ex:associated_with $Gene)
+
+        ;; Get its associated enhancers
+        (rdf! $Enhancer ex:associated_with $Gene)
+
+        ;; Find the pathways the gene is involved in
+        (rdf! $Gene ex:genes_pathways $Pathway)
+
+        ;; Get any sub-pathways of these pathways
+        (rdf! $ChildPathway ex:child_pathway_of $Pathway)
+    ))
+
+!(test-query general_gene metta-rdf
+    (m
+        ;; Find genes and their transcripts
+        (rdf! $Gene ex:transcribed_to $Transcript)
+
+        ;; Find the exons included in the transcript
+        (rdf! $Transcript ex:includes $Exon)
+
+        ;; Find the proteins translated from this transcript
+        (rdf! $Protein ex:translation_of $Transcript)
+
+        ;; Find other proteins that interact with this protein
+        (rdf! $Protein ex:interacts_with $Interactor)
+
+        ;; Get associated Gene Ontology (GO) terms
+        (rdf! $GoTerm ex:go_gene_product $Protein)
+    ))
 ;; ===============================
 ;; Performance Optimizations (Indexing)
 ;; ===============================
@@ -137,7 +163,7 @@
 !(ensure-indexed ex:associated_with)
 
 ;; ===============================
-;; 6️⃣ How to Use This Code
+;; How to Use This Code
 ;; ===============================
 
 ; 1️⃣ Load This Code into MeTTaLog
