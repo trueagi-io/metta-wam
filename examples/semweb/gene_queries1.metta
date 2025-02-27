@@ -132,7 +132,7 @@
         (rdf! $ChildPathway ex:child_pathway_of $Pathway)
     ))
 
-!(test-query general_gene metta-rdf
+(test-query general_gene metta-rdf
     (m
         ;; Find genes and their transcripts
         (rdf! $Gene ex:transcribed_to $Transcript)
@@ -171,8 +171,7 @@
 ;    !(import! metta_queries)
 
 ; 2️⃣ Start the Internal SPARQL Server:
-; ✅ Server will run on: http://localhost:3050/sparql
-!(start_sparql_server)
+!(start_sparql_server)  ; ✅ Server will run on: http://localhost:3050/sparql
 
 ; 3️⃣ Retrieve a $query by Name & Type:
 !(m (test-query brca2  sparql $query))
