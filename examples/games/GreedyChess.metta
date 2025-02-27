@@ -362,10 +362,10 @@
     ;($gold_pieces (collapse (buildgold)))
     ; Identify gold pieces under threat.
     ($debug (println! "start"))
-    ($gold_under_threat (collapse (checkgold)))
-    ($debug2 (println! "end"))
+    ;($gold_under_threat (collapse (checkgold)))
+    ;($debug2 (println! "end"))
     )
-    (println! $gold_under_threat)
+    ( (1 7 g p) (1 6))
   )
 )
 
@@ -628,7 +628,9 @@
 ; Queen:  Either rook or bishop move works.
 (= (clear_route ($X1 $Y1 $Color q) $destination)
       (xor (clear_route ($X1 $Y1 $Color b) $destination)
-           (clear_route ($X1 $Y1 $Color r) $destination)))
+           (clear_route ($X1 $Y1 $Color r) $destination))
+           True
+           False)
 
 ; Knight: Moves in an "L" shape (2 steps in one direction, 1 step perpendicular).
 (= (clear_route ($X1 $Y1 $Color n) $destination)
@@ -1052,7 +1054,7 @@
     ($X1  (nth 1 $starting_square))
     ($Y1  (nth 2 $starting_square))
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
-    ;($debug0 (println! $current_board))
+    ($debug0 (println! $current_board))
     ;($debug1 (println! $new_board1))
     ;($debug2 (println! $new_board2))
         ) 
@@ -1316,8 +1318,6 @@
           ;does not return here!
     ; Retrieve the destination box details.
     (let $i (return_entire_box $g) ()) 
-          (let $d1 (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))) (println! $d1))
-          (let $d2 (collapse (match &self (square $x $y) (square $x $y))) (println! $d2))
     ; Check there is a piece to move.
     (if (and (== (size-atom $h) 4)                                    
              (xor  
@@ -1449,34 +1449,49 @@
   (progn 
     ((py-atom print) "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
+        (case $command
+          (
+          ("M"  (M))                         ; Move human piece 
+          ("G"  (G))                         ; AI move ("G" = gold)
+          ("R"  (R))                         ; Reset = "R"
+          ("C"  (C))                         ; List valid commands = "C"
+          ("D"  (D))                         ; Display board "D"
+          ("Q"  ((py-atom print) "Quitting MeTTa Greedy Chess."))
+          ($_   ((py-atom print) "Invalid command, please try again or enter C for a list of commands."))
+          )))
+    (if (== $command "Q") 
+      (empty)
+      (command-loop))
+      ))
+
+    ;(let $command ((py-atom input))   ; get user command
     ; case statement for commands
-    (if (== $command "M") 
-        (progn 
-          (M)                         ; Move human piece 
-          (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "G")
-        (progn 
-          (G)                         ; AI move
-          (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "R")
-        (progn 
-          (R)                         ; Reset = "R"
-          (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "C")
-        (progn 
-          (C)                         ; List valid commands = "C"
-          (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "D")
-        (progn 
-          (D)                         ; Display board "D"
-          (command-loop))             ; Get next command, stay in loop.
-    (if (== $command "Q")             ; EXIT HERE
-        (progn
-          ((py-atom print) "Quitting MeTTa Greedy Chess."))
+    ;(if (== $command "M") 
+    ;    (progn 
+    ;      (M)                         ; Move human piece 
+    ;      (command-loop))             ; Get next command, stay in loop.
+    ;(if (== $command "G")
+    ;    (progn 
+    ;      (G)                         ; AI move
+    ;      (command-loop))             ; Get next command, stay in loop.
+    ;(if (== $command "R")
+    ;    (progn 
+    ;      (R)                         ; Reset = "R"
+    ;      (command-loop))             ; Get next command, stay in loop.
+    ;(if (== $command "C")
+    ;    (progn 
+    ;      (C)                         ; List valid commands = "C"
+    ;      (command-loop))             ; Get next command, stay in loop.
+    ;(if (== $command "D")
+    ;    (progn 
+    ;      (D)                         ; Display board "D"
+    ;      (command-loop))             ; Get next command, stay in loop.
+    ;(if (== $command "Q")             ; EXIT HERE
+    ;      ((py-atom print) "Quitting MeTTa Greedy Chess.")
     ; otherwise
-        (progn 
-            ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
-            (command-loop)))))))))))
+    ;    (progn 
+    ;        ((py-atom print) "Invalid command, please try again or enter C for a list of commands.") 
+    ;        (command-loop)))))))))))
 
 ;-----------;
 (= (main_loop) 
