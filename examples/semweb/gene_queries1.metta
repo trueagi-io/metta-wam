@@ -102,9 +102,10 @@
 
 ;; ===============================
 ;; MeTTa-Compatible Queries (Stored as Expressions)
+;;    - these are only declared from this section -
 ;; ===============================
 
-!(test-query brca2 metta-rdf
+(test-query brca2 metta-rdf
     (m
         (rdf! $Gene ex:gene_name  [literal [type $_ \"BRCA2\"]])
         (rdf! $Gene ex:transcribed_to $Transcript)
@@ -113,7 +114,7 @@
         (rdf! $Gene ex:genes_pathways $Pathway)
     ))
 
-!(test-query igf2 metta-rdf
+(test-query igf2 metta-rdf
     (m
         ;; Find the IGF2 gene by name
         (rdf! $Gene ex:gene_name  [literal [type $_ \"IGF2\"]])
