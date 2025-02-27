@@ -349,13 +349,26 @@
 ;(= (checkeachgold #(Cons $A $B) $C $D $A $E) (piece $F) (xy_box $G #( :: (s $F) ) $D) (positiontotake $G $A $E ;$D) (move_piece $A $E $D $C) (not (take_dest $E s $C)) (kingnotincheck $C))
 ;(= (checkeachgold #(Cons $A $B) $C $D $E $F)  
 ;  (checkeachgold $B $C $D $E $F))
+
+;  (random_move_empty_sq)
+;  Make a random legal move to an empty square.
 ;
+;  Outputs a list of ( (starting piece) (destination)) if successful or Empty
 ;
 (= (random_move_empty_sq)
-  (if (== 1 2)
-    (let $move ( (heck) (it) ) 
-          (empty))
-    (let $move ( (4 7 g p) (4 5) ) $move)))
+  (let*
+    (
+    ; Build a list of all gold pieces on the board.
+    ;($gold_pieces (collapse (buildgold)))
+    ; Identify gold pieces under threat.
+    ($debug (println! "start"))
+    ($gold_under_threat (collapse (checkgold)))
+    ($debug2 (println! "end"))
+    )
+    (println! $gold_under_threat)
+  )
+)
+
 
 (= (decide_greedy_move) 
     ; make sure each move search call can either 
@@ -400,10 +413,12 @@
 ;  #( :: 
 ;    ($J $K g p) )) (return_entire_box $I $D $B) (move_piece $C $D $B $A) (kingnotincheck $A))
 ;
+; (checkgold)
 ;
-;(= (checkgold Nil $A Nil)  
-;  (set-det))
-;; /* takehighestopenpawn(A, B, C, D) :- write('?????'). */
+(= (checkgold)  
+   (match &self (square $x $y g $rank)
+        (if (== (take_dest ($x $y) s) True) ($x $y) (empty))))
+
 ;(= (checkgold #(Cons $A $B) $C #(Cons $A $D)) (take_dest $A s $C) (checkgold $B $C $D) (set-det))
 ;(= (checkgold #(Cons $A $B) $C $D) (not (take_dest $A s $C)) (checkgold $B $C $D) (set-det))
 ;
@@ -420,11 +435,15 @@
 ;  (buildrandomgold $B $C))
 ;
 ;
-;(= (buildgold Nil Nil)  
-;  (set-det))
-;(= (buildgold #(Cons $A $B) #(Cons $A $C)) (len $A 4) (nth1 3 $A g) (buildgold $B $C) (set-det))
-;(= (buildgold #(Cons $A $B) $C) (buildgold $B $C) (set-det))
+
+; (buildgold)
 ;
+; Input:  None
+; Output: all gold (AI) pieces on board
+(= (buildgold)
+  (match &self (square $x $y g $p) 
+      ($x $y g $p)))
+
 ;
 ;(= (findgoldmove #(Cons $A $B) $C $D $E $F) (= #( :: ($G $E) )  $A) (returnrandominteger $H 8) (is $I $H) ;(returnrandominteger $J 8) (is $K $J) (set-det) (findgolddest $E $D $C $F $I $K))
 ;
@@ -952,8 +971,8 @@
 ;   Function:  Move one piece to new location  on board, return the new board. 
 ;   input: X1, Y1, color, rank, X2, Y2, board
 ;   output:  new board which overwrites X2 and Y2 with new piece and removes color  and rank from X1 and Y1
-(: (replace_square_recursiveWORKS!) (-> Atom Atom Atom Atom Atom Atom Expression Expression))
-(= (replace_square_recursiveWORKS! $X1 $Y1 $color $rank $X2 $Y2 $current_board) 
+(: (replace_square_recursiveWORKS) (-> Atom Atom Atom Atom Atom Atom Expression Expression))
+(= (replace_square_recursiveWORKS $X1 $Y1 $color $rank $X2 $Y2 $current_board) 
    (if (== (size-atom $current_board) 0)
         ()
         (let* (
@@ -1190,7 +1209,7 @@
 ;
 ; (list_clear_route)
 ;
-; Input:  $Board, $Square that might be compromised, all pieces available to attack square in question $CanAttack
+; Input:  $Square that might be compromised, all pieces available to attack square in question, $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
 (= (list_clear_route $Square $CanAttack)
    (if (== (size-atom $CanAttack) 0)
