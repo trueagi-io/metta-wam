@@ -31,25 +31,31 @@
 
 :- use_module(lsp_metta_workspace, [source_file_text/2, maybe_doc_path/2]).
 
+:- dynamic(lsp_state:full_text_next/2).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the 'textDocument/formatting' Request and Format the Lisp Document
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:handle_msg_hook("textDocument/formatting", Msg, _{id: Id, result: Edits}) :-
     _{id: Id, params: Params} :< Msg,
     _{textDocument: _{uri: Uri}} :< Params,
-    format_lisp_document(Uri, Edits).  % Perform the document formatting
+    % Perform the document formatting
+    format_lisp_document(Uri, Edits, NewText),
+    maybe_doc_path(Uri, Path),
+    assertz(lsp_state:full_next_text(Path, NewText)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Format the Lisp Document by Applying Formatting Rules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-format_lisp_document(Uri, Edits) :-
+format_lisp_document(Uri, Edits, FullNewText) :-
     source_file_text(Uri, Text),      % Retrieve the document text
     split_string(Text, "\n", "", Lines),
     string_codes(Text, Codes),
     phrase(metta_lines(ParsedLines), Codes),
-    process_lines(0, ParsedLines, ProcessedLines),
+    process_lines([0], ParsedLines, ProcessedLines),
     lines_to_strings(ProcessedLines, FormattedLines),
-    create_edit_list(Lines, FormattedLines, Edits).  % Create a list of edits based on the differences
+    create_edit_list(Lines, FormattedLines, Edits),  % Create a list of edits based on the differences
+    atomics_to_string(FormattedLines, "\n", FullNewText).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parsing
