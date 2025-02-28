@@ -1733,6 +1733,7 @@ should_quote_symbol_chars(Atom, [Digit | _]) :-
 % ensure_loaded is a built-in Prolog directive that loads a source file if it hasn't been loaded already.
 % Its main purpose is to prevent multiple loadings of the same file, which helps avoid duplicate definitions
 % and wasted resources.
+/*
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_compiler).
 :- ensure_loaded(metta_convert).
@@ -1741,8 +1742,8 @@ should_quote_symbol_chars(Atom, [Digit | _]) :-
 :- ensure_loaded(metta_testing).
 :- ensure_loaded(metta_utils).
 :- ensure_loaded(metta_printer).
-:- ensure_loaded(metta_eval).
-
+%:- ensure_loaded(metta_eval).
+*/
 
 
 
@@ -1905,10 +1906,10 @@ print_indent_now(_).
             (Indent == 0 -> nl; true)))).
 %:- halt.
 */
-
+/*
+:- ensure_loaded(library(xlisting)).
 :- abolish(xlisting_console:portray_hbr/3).
 xlisting_console:portray_hbr(H, B, _R):- !, writeq(H:-B),!,nl.
 xlisting_console:portray_hbr(H, B, _R):- B==true, !, write_src_nl(H).
 xlisting_console:portray_hbr(H, B, _R):- write_src_nl(H:-B).
-
-
+*/
