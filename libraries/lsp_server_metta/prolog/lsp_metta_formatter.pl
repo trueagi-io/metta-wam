@@ -26,6 +26,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     :- include(lsp_metta_include).
 
+:- use_module(library(apply), [foldl/4]).
 :- use_module(library(dcg/basics), [string_without//2]).
 :- use_module(library(lists)).
 
@@ -140,26 +141,58 @@ normalize_whitespaces([X|Rest0], [X|Rest1]) :- !,
     normalize_whitespaces(Rest0, Rest1).
 normalize_whitespaces([], []).
 
+push_paren([N0|R], [N1|R]) :-
+    integer(N0), !,
+    N1 is N0 + 1.
+push_paren(R, [1|R]).
+
+pop_paren([N0|R], Out) :-
+    integer(N0), !,
+    N1 is N0 - 1,
+    pop_paren_(N1, R, Out).
+pop_paren([_|R], R).
+
+pop_paren_(N, R, Out) :- N > 0, !, Out = [N|R].
+pop_paren_(N, [], [N]) :- N =< 0, !.
+pop_paren_(_, R, R).
+
 line_net_parens(N, N, []) :- !.
+line_net_parens(N0, N, [open, atom("let*")|Rest]) :- !,
+    N1 = [letstar|N0],
+    line_net_parens(N1, N, Rest).
 line_net_parens(N0, N, [open|Rest]) :- !,
-    N1 is N0 + 1,
+    push_paren(N0, N1),
     line_net_parens(N1, N, Rest).
 line_net_parens(N0, N, [close|Rest]) :- !,
-    N1 is N0 - 1,
+    pop_paren(N0, N1),
     line_net_parens(N1, N, Rest).
 line_net_parens(N0, N, [_|Rest]) :-
     line_net_parens(N0, N, Rest).
+
+increment_parens_indent(letstar, N0, N) =>
+    N is N0 + 5.
+increment_parens_indent(P, N0, N), integer(P) =>
+    N is N0 + (P * 2).
+
+parens_indent(Parens, Indent) :-
+    foldl(increment_parens_indent, Parens, 0, Indent).
 
 process_line(Parens0, Parens1, Line0, Line) :-
     trim_whites(Line0, Line1),
     normalize_whitespaces(Line1, Line2),
     line_net_parens(Parens0, Parens1, Line2),
-    ( Parens0 > 0
-    -> Indent is Parens0 * 2,
-       Line = [white(Indent)|Line2]
+    parens_indent(Parens0, Indent),
+    emit_line(user_error, Line2),
+    ( Indent > 0
+    -> Line = [white(Indent)|Line2]
     ;  Line = Line2).
 
 % multi-line cleanups
+
+process_individual_lines(_Indent, [], []) :- !.
+process_individual_lines(Parens0, [Line0|OldLines], [Line1|NewLines]) :-
+    process_line(Parens0, Parens1, Line0, Line1),
+    process_individual_lines(Parens1, OldLines, NewLines).
 
 line_ending_comment(Line, Tail, Rest) :-
     append(Rest, Tail, Line),
@@ -183,13 +216,17 @@ no_orphaned_close_parens([L|Rs], [L|ORs]) :-
     no_orphaned_close_parens(Rs, ORs).
 no_orphaned_close_parens([], []).
 
-process_individual_lines(_Indent, [], []) :- !.
-process_individual_lines(Indent0, [Line0|OldLines], [Line1|NewLines]) :-
-    process_line(Indent0, Indent1, Line0, Line1),
-    process_individual_lines(Indent1, OldLines, NewLines).
+join_trailing_open([Line1, Line2|Rest], OutRest) :-
+    append(_Line1Rest, [open], Line1), !,
+    append(Line1, Line2, OutLine1),
+    join_trailing_open([OutLine1|Rest], OutRest).
+join_trailing_open([L|Rs], [L|ORs]) :-
+    join_trailing_open(Rs, ORs).
+join_trailing_open([], []).
 
-process_lines(Indent, Lines, ProcessedLines) :-
-    process_individual_lines(Indent, Lines, Lines1),
+process_lines(Parens, Lines, ProcessedLines) :-
+    join_trailing_open(Lines, Lines0),
+    process_individual_lines(Parens, Lines0, Lines1),
     no_orphaned_close_parens(Lines1, ProcessedLines).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
