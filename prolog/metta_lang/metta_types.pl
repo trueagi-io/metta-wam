@@ -631,7 +631,7 @@ have_some_defs(Depth,Self,Val):-
   \+ \+
  ([H|Args] = Val,
   metta_type(Eq,H,[Ar|ArgTypes]),Ar=='->',
-  append(ParamTypes,[RType],ArgTypes),
+  append(ParamTypes,[_RType],ArgTypes),
   length(ParamTypes,Len),
   len_or_unbound(Args,ALen),
   Len = ALen).
@@ -684,7 +684,7 @@ badly_typed_expression(Depth, Self, [Op | Args]) :-
     % Check if the expression is typed and consistent.
     typed_expression(Depth, Self, [Op | Args], ArgTypes, RType),
     % Verify if the return type can be assigned.
-    can_assign(RetType, RType),
+    % can_assign(RetType, RType),
     % Check for argument violations.
     args_violation(Depth, Self, Args, ArgTypes),
     !.
@@ -1132,11 +1132,12 @@ adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
 %   @arg X        The input arguments.
 %   @arg Y        The final adjusted arguments.
 %
-adjust_args(Else, _Eq, _RetType, Res, Res, _Dpth, Self, F, X, Y) :-
+
+adjust_args(_Else, _Eq, _RetType, Res, Res, _Dpth, Self, F, X, Y) :-
     % If the input is empty, or if it uses a special operator, or if X is not a conz structure.
     (X == [] ; is_special_op(Self, F) ; \+ iz_conz(X)), !,
     Y = X.
-adjust_args(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_args( Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     % Attempt primary adjustment, and fall back if necessary.
     if_or_else(
         adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y),
@@ -1163,7 +1164,7 @@ adjust_argsA(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y):-
    if_or_else(adjust_argsA1(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y),
               adjust_argsA2(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y)).
 
-adjust_argsA1(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_argsA1(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
@@ -1171,7 +1172,7 @@ adjust_argsA1(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     trace_if_debug(Op,Len),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
-adjust_argsA2(Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
+adjust_argsA2(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
@@ -1234,6 +1235,7 @@ get_operator_typedef(Self, Op, ParamTypes, RetType) :-
     len_or_unbound(ParamTypes, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RetType).
 
+
 %!  reset_cache is det.
 %
 %   Clears the cached operator type definitions by retracting all facts
@@ -1266,16 +1268,18 @@ reset_cache :-
 %
 
 get_operator_typedef(Self, Op, Len, ParamTypes, RetType):-
-    quietly(no_repeats(ParamTypes+RetType,get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType))).
+    quietly(get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType)).
 
 get_operator_typedef_NR(Self, Op, Len, ParamTypes, RetType) :-
+    no_repeats_var(NoRepeatType),
     % Ensure the length matches the parameter types or is unbound.
     len_or_unbound(ParamTypes, Len),
     % Try to retrieve the type definition from cache, or fallback to other strategies.
     if_or_else(
         get_operator_typedef0(Self, Op, Len, ParamTypes, RetType),
         get_operator_typedef1(Self, Op, Len, ParamTypes, RetType),
-        get_operator_typedef2(Self, Op, Len, ParamTypes, RetType)).
+        get_operator_typedef2(Self, Op, Len, ParamTypes, RetType)),
+    NoRepeatType = ParamTypes+RetType.
 
 %!  get_operator_typedef_R(+Self, +Op, +Len, -ParamTypes, -RetType) is nondet.
 %
@@ -1513,23 +1517,37 @@ into_typed_arg(Depth, Self, T, M, Y) :-
 %   @arg Value       The value to be evaluated.
 %   @arg TypedValue  The resulting typed value.
 %
+
 into_typed_arg0(Depth, Self, T, M, Y) :- T=='Atom',!,M=Y.
-into_typed_arg0(Depth, Self, T, M, Y) :-
-    % If the type is a variable, determine the value type and evaluate if needed.
-    var(T),
-    ((
-        get_type(Depth, Self, M, T),
-        (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
-into_typed_arg0(Depth, Self, T, M, Y) :-
-    % If the type requires evaluation, evaluate the value.
-    is_pro_eval_kind(T), !, eval_args(Depth, Self, M, Y).
-into_typed_arg0(Depth, Self, T, M, Y) :-
-    % If the value is ground and conforms to the type, use it directly.
-    ground(M), !, \+ arg_violation(Depth, Self, M, T), Y = M.
 into_typed_arg0(_Dpth, _Slf, T, M, Y) :-
     % If the type does not require evaluation, use the value directly.
     nonvar(T), is_non_eval_kind(T), !, M = Y.
-into_typed_arg0(Depth, Self, _, M, Y) :-
+
+
+into_typed_arg0(Depth, Self, T, M, Y):-
+    if_or_else(into_typed_argA(Depth, Self, T, M, Y),
+               into_typed_argB(Depth, Self, T, M, Y)).
+
+
+into_typed_argA(Depth, Self, T, M, Y) :-
+    % If the type is a variable, determine the value type and evaluate if needed.
+    var(T),
+    %no_repeats_var(NoRepeatY),
+        ((  get_type(Depth, Self, M, T),
+            (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
+    %NoRepeatY = Y.
+
+
+into_typed_argB(Depth, Self, T, M, Y) :- nonvar(T),
+    % If the type requires evaluation, evaluate the value.
+    is_pro_eval_kind(T), !, eval_args(Depth, Self, M, Y),
+    nop(( \+ arg_violation(Depth, Self, Y, T) )).
+
+into_typed_argB(Depth, Self, T, M, Y) :- nonvar(T),
+    % If the value is ground and conforms to the type, use it directly.
+    ground(M), !, \+ arg_violation(Depth, Self, M, T), Y = M.
+
+into_typed_argB(Depth, Self, _, M, Y) :-
     % Default case: evaluate the value.
     eval_args(Depth, Self, M, Y).
 
@@ -1556,9 +1574,9 @@ prevent_type_violations(Self, BecomingValue,RequireType):- non_arg_violation(Sel
 
 % TODO make sure it is inclusive rather than exclusive
 
-cns:attr_unify_hook(Self=TypeList, NewValue):- nb_current(suspend_type_unificaton, true),!.
-cns:attr_unify_hook(Self=TypeList, NewValue) :-
-  show_failure_when(argtypes,maplist(prevent_type_violations(Self,BecomingValue),TypeRequirements)),
+cns:attr_unify_hook(_Slf=_TypeList,_NewValue):- nb_current(suspend_type_unificaton, true),!.
+cns:attr_unify_hook(Self= TypeList, NewValue) :-
+  show_failure_when(argtypes,maplist(prevent_type_violations(Self,NewValue),TypeList)),
   show_failure_when(argtypes,cns_attr_unify_hook(Self,TypeList, NewValue)).
 
 cns_attr_unify_hook(Self,TypeList,NewValue) :-
@@ -2315,3 +2333,6 @@ is_math_op('zerop', 1, exists).     % Test for Zero
 % :- load_pfc_file('metta_ontology.pl.pfc').
 
 :- ensure_loaded(metta_typed_functions).
+
+:- find_missing_cuts.
+

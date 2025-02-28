@@ -699,7 +699,7 @@ space_query_vars(SpaceNameOrInstance, Query, Vars) :- is_as_nb_space(SpaceNameOr
 %     ?- was_asserted_space('&self').
 %     true.
 %
-was_asserted_space('&self'):- current_self(X), (X=='&self'->true;was_asserted_space(X)).
+was_asserted_space('&self'):- current_self(X), nocut, (X=='&self'->true;was_asserted_space(X)).
 was_asserted_space('&stdlib').
 was_asserted_space('&corelib').
 was_asserted_space('&flybase').
@@ -1372,7 +1372,7 @@ atom_count_provider(SpaceNameOrInstance, Count) :-
     % Retrieve the number of rules for the predicate.
     predicate_property(Data, number_of_rules(RC)),
     % Calculate the atom count as the difference between clauses and rules.
-    Count is CC - RC.
+    Count is CC - RC, !.
 atom_count_provider(SpaceNameOrInstance, Count) :-
     must_det_ll((
         into_top_self(SpaceNameOrInstance, KB),
@@ -1602,7 +1602,7 @@ merge_named(N, V, [N | VarNames], [V | Vars]) :-
 %
 call_metta(KB, Query, _Vars) :-
     % Execute the query directly if it matches an asserted atom.
-    metta_atom(KB, Query).
+    metta_atom(KB, Query), nocut.
 call_metta(_KB, Query, _Vars) :-
     % Convert the query to a PySWIP-compatible call.
     metta_to_pyswip([], Query, Call), !,
@@ -1644,7 +1644,7 @@ metta_to_pyswip(PS, Query, Call) :-
 %
 cmpd_to_pyswip(PS, Q, Uery, Call) :-
     % Handle atom-based queries by mapping their arguments recursively.
-    atom(Q), maplist(metta_to_pyswip([Q | PS]), Uery, Cery), Call =.. [Q | Cery].
+    atom(Q), maplist(metta_to_pyswip([Q | PS]), Uery, Cery), Call =.. [Q | Cery],!.
 cmpd_to_pyswip(PS, "and", Uery, Call) :-
     % Handle "and" conjunctions by converting the list to conjuncts.
     maplist(metta_to_pyswip(PS), Uery, Args),list_to_conjuncts(Args, Call).
@@ -2131,7 +2131,7 @@ format_value(Value) :-
     !, format("~2f", [Value]), !.
 format_value(Bytes) :-
     integer(Bytes),  % If it's an integer, format it as bytes.
-    format_bytes(Bytes, Formatted), write(Formatted).
+    format_bytes(Bytes, Formatted), !, write(Formatted).
 format_value(Term) :-
     % Format any other term as a string.
     format("~w", [Term]).
@@ -2150,7 +2150,7 @@ format_value(Term) :-
 %
 format_bytes(Bytes, Formatted) :-
     Bytes >= 1073741824,  % If it's 1G or more, format as gigabytes.
-    GB is Bytes / 1073741824, format(string(Formatted), '~2fG', [GB]).
+    GB is Bytes / 1073741824, format(string(Formatted), '~2fG', [GB]), !.
 format_bytes(Bytes, Formatted) :-
     Bytes >= 104857600, Bytes < 1073741824,  % Format as megabytes if < 1G.
     !, MB is Bytes / 1048576, D is floor(MB), format(string(Formatted), '~DM', [D]).
@@ -2340,3 +2340,5 @@ alpha_unify(What, What0) :-
     % If the terms are non-variable, unify them.
     (nonvar(What) -> What = What0; What == What0).
 
+
+:- find_missing_cuts.

@@ -725,7 +725,7 @@ is_compatio :- notrace(fis_compatio0).
 
 %fis_compatio0 :- is_win64,!,fail.
 fis_compatio0 :- is_testing, !, fail.
-fis_compatio0 :- is_flag0('compatio').
+fis_compatio0 :- is_flag0('compatio'), !.
 fis_compatio0 :- is_mettalog, !, fail.
 %is_compatio0 :- is_html,!,fail.
 fis_compatio0 :- !.
@@ -1143,7 +1143,7 @@ mettalog_option_value_def(Name, MettaLogDV) :-
 %     Topic = 'Compatibility and Modes'.
 all_option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic) :-
     % Delegate to the core predicate for retrieving option details.
-    option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic).
+    option_value_name_default_type_help(Name, DefaultValue, Type, Cmt, Topic), nocut.
 
 % Compatibility and Modes
 
@@ -1394,7 +1394,7 @@ print_group_options(Group, [[Name, DefaultValue, Type, Help, Group] | Rest], Max
          ->  format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m|~w> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CleanRest, CommentColumn, Help])
          ;   format("     --~w~*t=<\033[1;37m~w\033[0m|\033[38;5;94m~w\033[0m> \033[~dG ~w\n", [Name, MaxLen, DefaultValue, RustSpecificValue, CommentColumn, Help])
          ))
-    ),
+    ),!,
     print_group_options(Group, Rest, MaxLen).
 % Skip options that don't match the current group and continue processing the rest.
 print_group_options(Group, [_ | Rest], MaxLen) :-
@@ -1520,21 +1520,21 @@ set_option_value_interp(N,V):-
 %
 
 % Map string logical values ('True', 'False') to their atom equivalents.
-on_set_value(Note,N,'True'):-
+on_set_value(Note,N,'True'):- nocut,
     on_set_value(Note,N,true).    % true
-on_set_value(Note,N,'False'):-
+on_set_value(Note,N,'False'):- nocut,
     on_set_value(Note,N,false).   % false
 on_set_value(_Note,log,true):-
     % Switch to mettalog mode if 'log' is set to true.
-    switch_to_mettalog.
+    switch_to_mettalog,!.
 on_set_value(_Note,compatio,true):-
     % Switch to mettarust mode if 'compatio' is set to true.
-    switch_to_mettarust.
+    switch_to_mettarust,!.
 on_set_value(Note,N,V):-
     % Handle trace-specific options by extracting the trace flag from the option name.
     symbol(N),
     % Extract trace-specific flag.
-    symbol_concat('trace-on-',F,N),
+    symbol_concat('trace-on-',F,N),nocut,
      % Debugging output.
     if_trace(main,not_compatio(fbugio(Note,set_debug(F,V)))),
     % Enable or disable trace based on value.
@@ -2206,10 +2206,67 @@ show_options_values :-
  :- ignore((prolog_load_context(source, File), assert(interpreter_source_file(File)))).
 
 
+
+
+find_missing_cuts :-
+    once(prolog_load_context(source, File);prolog_load_context(file, File)),!,
+    find_missing_cuts(File).
+
+find_missing_cuts(File) :-
+    findall(Predicate, source_file(Predicate, File), Predicates),
+    sort(Predicates, UniquePredicates),
+    maplist(check_predicate_for_missing_cuts(File), UniquePredicates).
+
+
+
+skip_checking(file_search_path,2).
+skip_checking('$pldoc',4).
+skip_checking('$mode',2).
+skip_checking('reset_cache',0).
+skip_checking(_,0).
+
+check_predicate_for_missing_cuts(_File, P):- functor(P,F,A), skip_checking(F,A),!.
+check_predicate_for_missing_cuts(File, Predicate) :-
+    predicate_property(Predicate, number_of_clauses(TotalClauses)),
+    predicate_property(Predicate, number_of_rules(RuleClauses)), RuleClauses>0,
+    functor(Predicate, Functor, Arity),
+    %format('Checking predicate ~w/~w:\n', [Functor, Arity]),
+    forall(
+        (nth_clause(Predicate, ClauseNumber, Ref),
+         clause(Predicate, Body, Ref),
+         clause_property(Ref, line_count(LineNumber))),
+        check_clause_for_cut(Functor/Arity, Body, File, LineNumber, ClauseNumber, TotalClauses)
+    ),!.
+check_predicate_for_missing_cuts(_File, _Predicate).
+
+% Do not warn about missing cuts on the last clause
+check_clause_for_cut(_, _, _, _, ClauseNumber, TotalClauses) :-
+    ClauseNumber =:= TotalClauses, !.
+
+check_clause_for_cut(PredicateIndicator, Body, File, Line, ClauseNum, TotalClauses) :-
+    ( deterministic_body(Body) ->
+        true
+    ;
+        is_extreme_debug(( atomic_list_concat(L,'/',File),atomic_list_concat(L,'\\',WFile),
+          format(' H:~w(~w): (clause ~w of ~w for ~w)\n',
+               [WFile, Line, ClauseNum, TotalClauses, PredicateIndicator])))
+
+    ).
+
+% Simplistic deterministic check heuristic:
+deterministic_body(Body) :- sub_var(!, Body),!.
+deterministic_body(Body) :- sub_var(nocut, Body),!.
+%deterministic_body(Body) :- sub_var(fail, Body),!.
+deterministic_body(Body) :- Body == fail,!.
+deterministic_body(Body) :- Body == true.
+nocut.
+
+
 % If the file is not already loaded, ensure_loaded is equivalent to consult/1. Otherwise, if the file defines a module,
 % import all public predicates. Finally, if the file is already loaded, is not a module file,
 % and the context module is not the global user module, ensure_loaded/1 will call consult/1.
 :- ensure_loaded(metta_utils).
+:- ensure_loaded(metta_proof).
 %:- ensure_loaded(mettalog('metta_ontology.pfc.pl')).
 :- ensure_loaded(metta_pfc_debug).
 :- ensure_loaded(metta_pfc_base).
@@ -2219,6 +2276,7 @@ show_options_values :-
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+
 :- initialization(nb_setval(self_space, '&top')).
 
 %!  set_is_unit_test(+Flag) is det.
@@ -2723,7 +2781,7 @@ set_default_flags:- ignore(((
 
 :- initialization(set_default_flags).
 
-%!  process_option_value_def is nondet.
+%!  process_python_option is nondet.
 %
 %   Processes the value of specific options and ensures the required modules are loaded.
 %   If the `python` option is not set to `false`, it attempts to load the `metta_python` module
@@ -2735,21 +2793,21 @@ set_default_flags:- ignore(((
 %
 %   @example
 %     % This predicate always fails:
-%     ?- process_option_value_def.
+%     ?- process_python_option.
 %     false.
 %
 %   @note The commented-out version avoids `fail/0` and skips loading `metta_python`.
 %
 
-%process_option_value_def :- option_value('python', false), !, skip(ensure_loaded(metta_python)).
-process_option_value_def :-
+process_python_option :- option_value('python', false),!.
+%process_python_option :- option_value('python', false), !, skip(ensure_loaded(metta_python)).
     % If the `python` option is not explicitly set to `false`, load the `metta_python` module.
-    \+ option_value('python', false),
+process_python_option :-
     ensure_loaded(mettalog(metta_python)),
     % Initialize Python integration.
     setenv('METTALOG_VERBOSE','0'),
     real_notrace((ensure_mettalog_py)).
-process_option_value_def.
+
 
 %!  process_late_opts is det.
 %
@@ -2761,19 +2819,22 @@ process_option_value_def.
 %   3. Additional behaviors, including interaction with the REPL or halting, are present
 %      in commented-out lines.
 %
-%   @see process_option_value_def/0
+%   @see process_python_option/0
 %
-process_late_opts :-
-    % Process all option definitions by calling `process_option_value_def/0`.
-    forall(process_option_value_def, true).
-process_late_opts :-
+
+process_late_opts:- forall(process_each_late_opt, true).
+
+process_each_late_opt :- nocut,
+    % Process all option definitions by calling `process_python_option/0`.
+    forall(process_python_option, true).
+process_each_late_opt :-
     % If the `html` option is set to `true`, enable unit testing mode.
     once(option_value('html', true)),
     set_is_unit_test(true).
 %process_late_opts :- current_prolog_flag(os_argv, [_]), !, ignore(repl).
 %process_late_opts :- halt(7).
 % Ensure the predicate always succeeds, even if no other clause matches.
-process_late_opts.
+%process_late_opts.
 
 %!  do_cmdline_load_metta(+Phase) is det.
 %
@@ -2808,12 +2869,12 @@ do_cmdline_load_metta(Phase) :-
 do_cmdline_load_metta(Phase, Self, Rest) :-
     % Store the remaining arguments in the `late_metta_opts` Prolog flag.
     set_prolog_flag(late_metta_opts, Rest),
-    % Process all defined options using `process_option_value_def/0`.
-    forall(process_option_value_def, true),
+    % Process all defined options using `process_python_option/0`.
+    forall(process_python_option, true), !,
     % Execute the Metta command-line loading logic for the specified Phase and context.
     cmdline_load_metta(Phase, Self, Rest), !,
     % Process any late options, such as enabling specific features.
-    forall(process_late_opts, true).
+    process_late_opts.
 
 :- if( \+ current_predicate(load_metta_file/2)).
 
@@ -2946,62 +3007,53 @@ maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
 
 
 % Base case: succeed when the argument list is empty.
-cmdline_load_metta(_, _, Nil) :-
-    Nil == [], !.
-
+cmdline_load_metta(_, _, Nil) :- Nil == [], !.
 % Handle double-dash (`--`) by skipping it and continuing with the rest of the arguments.
-cmdline_load_metta(Phase, Self, ['--' | Rest]) :-
-    !,
+cmdline_load_metta(Phase, Self, ['--' | Rest]) :- !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle `--args` by extracting arguments before `--` and setting them for Metta.
-cmdline_load_metta(Phase, Self, ['--args' | Rest]) :-
-    !,
-    before_arfer_dash_dash(Rest, Before, NewRest),
-    !,
-    set_metta_argv(Before),
+cmdline_load_metta(Phase, Self, ['--args' | Rest]) :- !,
+    before_arfer_dash_dash(Rest, Before, NewRest), !,
+    set_metta_argv(Before), !,
     cmdline_load_metta(Phase, Self, NewRest).
 % Handle `--repl` by entering the REPL during the execution phase.
-cmdline_load_metta(Phase, Self, ['--repl' | Rest]) :-
-    !,
-    if_phase(Phase, execute, repl),
+cmdline_load_metta(Phase, Self, ['--repl' | Rest]) :- !,
+    if_phase(Phase, execute, repl), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle `--log` by switching to MettaLog mode during the execution phase.
-cmdline_load_metta(Phase, Self, ['--log' | Rest]) :-
-    !,
-    if_phase(Phase, execute, switch_to_mettalog),
-    cmdline_load_metta(Phase, Self, Rest).
-% Handle file loading when the argument does not start with `-`.
-cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
-    symbol(Filemask),
-    \+ symbol_concat('-', _, Filemask),
-    if_phase(Phase, execute, cmdline_load_file(Self, Filemask)),
+cmdline_load_metta(Phase, Self, ['--log' | Rest]) :- !,
+    if_phase(Phase, execute, switch_to_mettalog), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle `-g` by executing the given Prolog term.
-cmdline_load_metta(Phase, Self, ['-g', M | Rest]) :-
-    !,
+cmdline_load_metta(Phase, Self, ['-g', M | Rest]) :- !,
     if_phase(Phase, execute, catch_abort(['-g', M], ((
         read_term_from_atom(M, Term, []),
         ignore(call(Term)))
-    ))),
+    ))), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle `-G` by evaluating a Metta expression within the current context.
-cmdline_load_metta(Phase, Self, ['-G', Str | Rest]) :-
-    !,
+cmdline_load_metta(Phase, Self, ['-G', Str | Rest]) :- !,
     current_self(Self),
-    if_phase(Phase, execute, catch_abort(['-G', Str], ignore(call_sexpr('!', Self, Str, _S, _Out)))),
+    if_phase(Phase, execute, catch_abort(['-G', Str], ignore(call_sexpr('!', Self, Str, _S, _Out)))), !,
     cmdline_load_metta(Phase, Self, Rest).
+
+% Handle file loading when the argument does not start with `-`.
+cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
+    symbol(Filemask),
+    \+ symbol_concat('-', _, Filemask), !,
+    if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
+    cmdline_load_metta(Phase, Self, Rest).
+
 % Handle command-line options by setting their corresponding values.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
     m_opt(M, Opt),
     is_cmd_option(Opt, M, TF),
-    set_option_value_interp(Opt, TF),
-    !,
+    set_option_value_interp(Opt, TF), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle unrecognized command-line options by logging a warning.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
     format('~N'),
-    fbug(unused_cmdline_option(Phase, M)),
-    !,
+    fbug(unused_cmdline_option(Phase, M)), !,
     cmdline_load_metta(Phase, Self, Rest).
 
 
@@ -3064,7 +3116,7 @@ load_ontology.
 cmdline_load_file(Self, Filemask) :-
     flag(cmdline_load_file,X,X+1),
     % Construct the source for file loading.
-    Src = (user:load_metta_file(Self, Filemask)),
+    Src = (user:load_metta_file(Self, Filemask)), !,
     % Use `catch_abort/2` to handle exceptions during file loading.
     catch_abort(Src,
         (
@@ -3096,7 +3148,7 @@ cmdline_load_file(Self, Filemask) :-
 %     Executing...
 %
 if_phase(Current, Phase, Goal) :-
-    ignore((sub_var_safely(Current, Phase), !, Goal)).
+    sub_var_safely(Current, Phase) -> call(Goal) ; true.
 
 %!  set_tty_color_term(+TF) is det.
 %
@@ -3660,7 +3712,7 @@ into_fp(ListX, CallAB) :-
     =(Term, CTerm),
     substM(ListX, CTerm, Var, CallB),
     fn_append1(Term, Var, CallA),
-    into_fp((CallA, CallB), CallAB).
+    into_fp((CallA, CallB), CallAB), !.
 into_fp(A, A).
 
 %!  needs_expand(+Expand) is nondet.
@@ -4237,17 +4289,17 @@ metta_atom0(Atom) :-
 %   @arg X The context or space.
 %   @arg Y The atom to check.
 %
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was explicitly asserted.
     metta_atom_asserted(X, Y).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom is associated with a file.
     metta_atom_in_file(X, Y).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was deduced and not explicitly asserted.
     metta_atom_deduced(X, Y),
     \+ clause(metta_atom_asserted(X, Y), true).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was recently asserted.
     metta_atom_asserted_last(X, Y).
 
@@ -4273,7 +4325,7 @@ metta_atom0(KB, Fact) :-
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
 metta_atom0(KB, [F, A | List]) :-
-    KB == '&flybase', fb_pred_nr(F, Len), current_predicate(F/Len),
+    KB == '&flybase', !, fb_pred_nr(F, Len), current_predicate(F/Len),
     length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
@@ -4281,7 +4333,7 @@ metta_atom0(KB, [F, A | List]) :-
 metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
-metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom).
+metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
@@ -4442,7 +4494,7 @@ should_inhert_from_now(KB, Atom) :-
 %
 should_not_inherit_from(_, _, S) :-
     % Exclude symbols from inheritance.
-    symbol(S).
+    symbol(S),!.
 should_not_inherit_from(KB, Sub, _S) :- should_not_inherit_from_corelib(KB),should_not_inherit_from_corelib(Sub),!.
 
 should_not_inherit_from_corelib('&corelib').
@@ -4541,19 +4593,13 @@ should_inherit_op_from_corelib('@doc').
 %     Atom = '&corelib'.
 
 
-%metta_atom_asserted('&self','&corelib').
-%metta_atom_asserted('&self','&stdlib').
-metta_atom_asserted_last(Top, '&corelib') :-
-    % Assert `&corelib` for the top-level context.
-    top_self(Top).
-metta_atom_asserted_last(Top, '&stdlib') :-
-    % Assert `&stdlib` for the top-level context.
-    top_self(Top).
+the_libs('&corelib').
+the_libs('&stdlib').
+% Assert `&corelib` for the top-level context.
+metta_atom_asserted_last(Top, Lib) :- top_self(Top), nocut, the_libs(Lib).
 %metta_atom_asserted_last('&stdlib', '&corelib').
-metta_atom_asserted_last('&flybase', '&corelib').
-metta_atom_asserted_last('&flybase', '&stdlib').
-metta_atom_asserted_last('&catalog', '&corelib').
-metta_atom_asserted_last('&catalog', '&stdlib').
+metta_atom_asserted_last('&flybase', Lib):- nocut, the_libs(Lib).
+metta_atom_asserted_last('&catalog', Lib):- nocut, the_libs(Lib).
 
 %!  maybe_resolve_space_dag(+Var, +XX) is det.
 %
@@ -4820,7 +4866,7 @@ metta_anew1(unload, OBO) :-
         (Head + Body) =@= (Head2 + Body2), % Check if the clauses are equivalent.
         erase(Ref),               % Erase the clause.
         if_verbose(load,pp_m(unload(Cl)))          % Log the unload operation.
-    )).
+    )), !.
 % Handle `unload_all` by retracting all matching clauses.
 metta_anew1(unload_all, OBO) :-
     !,
@@ -4829,7 +4875,7 @@ metta_anew1(unload_all, OBO) :-
         subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
         if_verbose(load, once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
         retractall(Cl)      %to_metta(Cl).
-    )).
+    )), !.
 % Alternative `unload_all` operation with detailed clause handling.
 metta_anew1(unload_all, OBO) :-
     subst_vars(OBO, Cl),           % Substitute variables in `OBO`.
@@ -4844,7 +4890,7 @@ metta_anew1(unload_all, OBO) :-
             ;
                 if_verbose(load,(pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2))))) % Log differences.
         ))
-    ).
+    ), !.
 
 /*
 metta_anew2(Load,_OBO):- var(Load),trace,!.
@@ -5687,7 +5733,7 @@ a_e('assertNotEqualToResult').
 o_s([AE | O], S) :-
     % If the first element is a valid assertion and there are other arguments,
     % simplify the remaining list to the last argument.
-    nonvar(AE), a_e(AE), nonvar(O), o_s(O, S).
+    nonvar(AE), a_e(AE), nonvar(O), !, o_s(O, S).
 o_s([O | _], S) :-
     % If the first element is non-variable and not an assertion, simplify directly.
     nonvar(O), !, o_s(O, S).
@@ -6706,11 +6752,28 @@ loon(Why) :-
 %   - Running commands and handling results.
 %   - Safely ignoring errors for specific initialization steps.
 %
+
+% Avoid reloading context interference.
+do_loon :- prolog_load_context(reloading, true),!.
+% Execute a sequence of initialization tasks, ignoring errors where needed.
 do_loon :-
+   % install_readline_editline,
+   % nts1,
+   % install_ontology,
+   metta_final, !, % saves statistics for comparison
+   % ensure_corelib_types,
+   % set_output_stream,
+   % test_alarm,!,
+   run_cmd_args,!,
+   write_answer_output,!,
+   not_compat_io(maybe_halt(7)),!.
+
+
+
+do_loon_prev :-
  ignore((
-        % Avoid reloading context interference.
+
         \+ prolog_load_context(reloading, true),
-        % Execute a sequence of initialization tasks, ignoring errors where needed.
         maplist(catch_red_ignore, [
             % Uncomment the following lines if needed during compilation:
             % if_t(is_compiled, ensure_mettalog_py),
@@ -6720,7 +6783,7 @@ do_loon :-
    metta_final,
    % ensure_corelib_types,
    set_output_stream,
-            if_t(is_compiled, update_changed_files),
+   if_t(is_compiled, update_changed_files),
    test_alarm,
    run_cmd_args,
    write_answer_output,
@@ -7228,6 +7291,7 @@ stack_times_16 :-
 %     % Perform immediate initialization while ignoring errors:
 %     ?- immediate_ignore.
 %
+
 immediate_ignore:- ignore(((
    %write_src_uo(init_prog),
    use_corelib_file,
@@ -7538,3 +7602,6 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 % Example query to find the likelihoods that satisfy the constraints
 %?- complex_relationship(L1, L2, L3).
+
+:- find_missing_cuts.
+
