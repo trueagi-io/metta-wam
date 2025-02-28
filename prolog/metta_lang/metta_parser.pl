@@ -189,7 +189,7 @@ subst_vars(Term, Var, Acc, NamedVarsList) :-
      subst_vars('$VAR'(Name), Var, Acc, NamedVarsList).
 subst_vars(TermI, TermO, Acc, NamedVarsListNew) :-
      % Substitute variables with `VName`, applying fixes if necessary.
-     sub_term(Sub,TermI),compound(Sub), Sub='$'(VName),
+     sub_term_safely(Sub,TermI),compound(Sub), Sub='$'(VName),
      must_det_lls((nonvar(VName), svar_fixvarname_dont_capitalize(VName, Name),
      Var = _,
      (memberchk(Name = Var, Acc) -> NamedVarsList = Acc ; (!, Var = _, NamedVarsList = [Name = Var | Acc])),
@@ -212,7 +212,7 @@ subst_vars(Term, Term, NamedVarsList, NamedVarsList) :-
      var(Term), !.
 subst_vars([], [], NamedVarsList, NamedVarsList):- !.
 subst_vars(TermI, TermO, Acc, NamedVarsList) :-
-    sub_term(Sub,TermI),denotes_var(Sub,DName), % DName \== '_', !,
+    sub_term_safely(Sub,TermI),denotes_var(Sub,DName), % DName \== '_', !,
     must_det_lls((subst001(TermI,Sub,Var,MidTerm),
     MidTerm \=@= TermI,
     subst_vars(MidTerm, TermO, [DName=Var|Acc],NamedVarsList))).
@@ -1259,12 +1259,12 @@ promiscuous_symbol('->').
 promiscuous_symbol(Atom):- atom_concat(_,'=',Atom),!.
 promiscuous_symbol(Atom):- atom_concat('@',_,Atom),!.
 
-sub_symbol(Symbol,Head):- ground(Symbol),!,sub_var(Symbol,Head),!.
-sub_symbol(Symbol,Head):- \+ var(Symbol), once(sub_term(Symbol,Head)),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atom(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),string(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),atomic(Symbol),!.
-sub_symbol(Symbol,Head):- sub_term(Symbol,Head),!.
+sub_symbol(Symbol,Head):- ground(Symbol),!,sub_var_safely(Symbol,Head),!.
+sub_symbol(Symbol,Head):- \+ var(Symbol), once(sub_term_safely(Symbol,Head)),!.
+sub_symbol(Symbol,Head):- sub_term_safely(Symbol,Head),atom(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term_safely(Symbol,Head),string(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term_safely(Symbol,Head),atomic(Symbol),!.
+sub_symbol(Symbol,Head):- sub_term_safely(Symbol,Head),!.
 
 xrefed_outline_type(Val,Val,variable):- is_ftVar(Val),!.
 xrefed_outline_type(Val,Val,number):- number(Val),!.

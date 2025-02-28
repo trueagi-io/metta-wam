@@ -1374,10 +1374,10 @@ alt_filter_to_pattern_call(P, P, true).
 %       ?- sub_functor(my_functor/2, my_term).
 %
 sub_functor(F-UnF, Term) :- !, sub_functor(F, Term), \+ sub_functor(UnF, Term).
-sub_functor(F, Term) :- var(F), !, sub_var(F, Term), !.
-sub_functor(F/A, Term) :- !, sub_term(E, Term), compound(E), compound_name_arity(E, F, A).
-sub_functor(F, Term) :- sub_term(E, Term), E =@= F, !.
-sub_functor(F, Term) :- sub_term(E, Term), compound(E), compound_name_arity(E, FF, AA), (AA == F ; FF == F).
+sub_functor(F, Term) :- var(F), !, sub_var_safely(F, Term), !.
+sub_functor(F/A, Term) :- !, sub_term_safely(E, Term), compound(E), compound_name_arity(E, F, A).
+sub_functor(F, Term) :- sub_term_safely(E, Term), E =@= F, !.
+sub_functor(F, Term) :- sub_term_safely(E, Term), compound(E), compound_name_arity(E, FF, AA), (AA == F ; FF == F).
 
 %!  pp_items(+Type, +Items) is nondet.
 %

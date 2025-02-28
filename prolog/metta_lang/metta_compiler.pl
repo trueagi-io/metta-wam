@@ -304,7 +304,7 @@ recompile_from_depends(FnName,LenArgs) :-
    maplist(recompile_from_depends0,List).
 
 unnumbervars_wco(X,XXX):- compound(X),
-   sub_term(E, X), compound(E), E = '$VAR'(_),!,
+   sub_term_safely(E, X), compound(E), E = '$VAR'(_),!,
    subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
 unnumbervars_wco(X,X).
 
@@ -1398,7 +1398,7 @@ precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,Result) :-
          become `'$VAR'('temp_N')` with an assignment `'temp_N' = eval([Fn|...])`.
          The top-level call is preserved.
       2) Collect underscore variables in the *final expression* by
-         enumerating all subterms with sub_term/2. Whenever we see a call
+         enumerating all subterms with sub_term_safely/2. Whenever we see a call
          (either `[Fn|Args]` or a compound `Fn(...)`), we look for underscore
          variables in the arguments and note them as `arg(Fn,Pos)`.
 
@@ -1460,7 +1460,7 @@ transform_subcall(List, ListOut, A, C0, C2) :-
 /** var_call_refs(+Expression, -VarMappings) is det
 
     After transformation, we gather references to "underscore variables."
-    We do this by enumerating all subterms with sub_term/2, checking for
+    We do this by enumerating all subterms with sub_term_safely/2, checking for
     calls that are either:
       - `[Fn|Args]` (a Prolog list with an atom head), or
       - A compound with an atom functor.
@@ -1474,7 +1474,7 @@ var_call_refs(Expression, VarMappings) :-
     numbervars(Expression, 0, _, [attvar(skip)]),
 
     % collect all subterms
-    findall(Sub, sub_term(Sub, Expression), SubTerms),
+    findall(Sub, sub_term_safely(Sub, Expression), SubTerms),
 
     % for each subterm that is a "function call", gather references
     gather_all_function_calls(SubTerms, RawPairs),
@@ -1815,7 +1815,7 @@ arg_properties_widen(_,_,x(noeval,lazy,[])).
 
 
 no_conflict_numbervars(Term):-
-    findall(N,(sub_term(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
+    findall(N,(sub_term_safely(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
     max_list([-1|NL],Max),Start is Max + 1,!,
     numbervars(Term,Start,_,[attvar(skip),singletons(true)]).
 
@@ -1871,7 +1871,7 @@ assertable_head(Head,Head).
 label_body_singles(Head,Body):-
    term_singletons(Body+Head,BodyS),
    maplist(label_body_singles_2(Head),BodyS).
-label_body_singles_2(Head,Var):- sub_var(Var,Head),!.
+label_body_singles_2(Head,Var):- sub_var_safely(Var,Head),!.
 label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
 
 must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
@@ -1972,7 +1972,7 @@ numeric_or_var(N):- numeric(N),!.
 numeric_or_var(N):- \+ compound(N),!,fail.
 numeric_or_var('$VAR'(_)).
 
-get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
+get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term_safely(DT,AV),atom(DT).
 
 fullvar(V) :- var(V), !.
 fullvar('$VAR'(_)).
@@ -3099,7 +3099,7 @@ f2p(HeadIs,RetResultL, ConvertL, Converted) :- fail,
 % If any sub-term of Convert is a function, convert that sub-term and then proceed with the conversion.
 f2p(HeadIs,RetResult,Convert, Converted) :-
     rev_sub_sterm(AsFunction, Convert),  % Get the deepest sub-term AsFunction of Convert
-  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
+  %  sub_term_safely(AsFunction, Convert), AsFunction\==Convert,
     callable(AsFunction),  % Check if AsFunction is callable
     compile_flow_control(HeadIs,Result,AsFunction, AsPred),
     HeadIs\=@=AsFunction,!,
@@ -3310,7 +3310,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
    %ignore(Result = '$VAR'('HeadRes')),
    conjuncts_to_list(Body,List),
    reverse(List,RevList),append(Left,[BE|Right],RevList),
-   compound(BE),arg(Nth,BE,ArgRes),sub_var(Result,ArgRes),
+   compound(BE),arg(Nth,BE,ArgRes),sub_var_safely(Result,ArgRes),
    remove_funct_arg(BE, Nth, AsBodyFunction),
    append(Left,[eval_args(AsBodyFunction,Result)|Right],NewRevList),
    reverse(NewRevList,NewList),
@@ -3324,7 +3324,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
 preds_to_functs0((AsPred, Convert), Converted) :-
     \+ not_function(AsPred),
     pred_to_funct(AsPred, AsFunction, Result),
-    sub_var(Result, Convert), !,
+    sub_var_safely(Result, Convert), !,
     % The function equivalent of AsPred _xs Result in Convert
     subst(Convert, Result, AsFunction, Converting),
     preds_to_functs0(Converting, Converted).

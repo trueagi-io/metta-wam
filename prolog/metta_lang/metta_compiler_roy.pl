@@ -579,7 +579,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
 
 no_conflict_numbervars(Term):-
-    findall(N,(sub_term(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
+    findall(N,(sub_term_safely(E,Term),compound(E), '$VAR'(N)=E, integer(N)),NL),!,
     max_list([-1|NL],Max),Start is Max + 1,!,
     numbervars(Term,Start,_,[attvar(skip),singletons(true)]).
 
@@ -660,7 +660,7 @@ assertable_head(Head,Head).
 label_body_singles(Head,Body):-
    term_singletons(Body+Head,BodyS),
    maplist(label_body_singles_2(Head),BodyS).
-label_body_singles_2(Head,Var):- sub_var(Var,Head),!.
+label_body_singles_2(Head,Var):- sub_var_safely(Var,Head),!.
 label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
 
 must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
@@ -758,7 +758,7 @@ numeric_or_var(N):- numeric(N),!.
 numeric_or_var(N):- \+ compound(N),!,fail.
 numeric_or_var('$VAR'(_)).
 
-get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term(DT,AV),atom(DT).
+get_decl_type(N,DT):- attvar(N),get_atts(N,AV),sub_term_safely(DT,AV),atom(DT).
 
 fullvar(V) :- var(V), !.
 fullvar('$VAR'(_)).
@@ -3214,7 +3214,7 @@ f2p(HeadIs, LazyVars, RetResultL, ResultLazy,  ConvertL, Converted) :- fail,
 % If any sub-term of Convert is a function, convert that sub-term and then proceed with the conversion.
 f2p(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
     rev_sub_sterm(AsFunction, Convert),  % Get the deepest sub-term AsFunction of Convert
-  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
+  %  sub_term_safely(AsFunction, Convert), AsFunction\==Convert,
     callable(AsFunction),  % Check if AsFunction is callable
     compile_flow_control(HeadIs, LazyVars, Result, ResultLazy, AsFunction, AsPred),
     HeadIs\=@=AsFunction,!,
@@ -3441,7 +3441,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
    %ignore(Result = '$VAR'('HeadRes')),
    conjuncts_to_list(Body,List),
    reverse(List,RevList),append(Left,[BE|Right],RevList),
-   compound(BE),arg(Nth,BE,ArgRes),sub_var(Result,ArgRes),
+   compound(BE),arg(Nth,BE,ArgRes),sub_var_safely(Result,ArgRes),
    remove_funct_arg(BE, Nth, AsBodyFunction),
    append(Left,[eval_args(AsBodyFunction,Result)|Right],NewRevList),
    reverse(NewRevList,NewList),
@@ -3455,7 +3455,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
 preds_to_functs0((AsPred, Convert), Converted) :-
     \+ not_function(AsPred),
     pred_to_funct(AsPred, AsFunction, Result),
-    sub_var(Result, Convert), !,
+    sub_var_safely(Result, Convert), !,
     % The function equivalent of AsPred _xs Result in Convert
     subst(Convert, Result, AsFunction, Converting),
     preds_to_functs0(Converting, Converted).

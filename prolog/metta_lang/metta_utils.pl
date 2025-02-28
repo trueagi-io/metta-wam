@@ -841,7 +841,7 @@ remove_must_det(_) :- !,fail.
 %remove_mds(MD,G,GGG):- compound(G), G = must_det_l(GG),!,expand_goal(GG,GGG),!.
 remove_mds(MD, GG, GO) :-
     % Traverse the term `GG` and check for sub-terms that match the pattern `MD(...)`.
-    sub_term(G, GG),
+    sub_term_safely(G, GG),
     % Check if the term is compound and matches the structure `MD(...)`.
     compound(G),
     compound_name_arg(G, MD, GGGG),
@@ -1956,10 +1956,10 @@ maybe_expand_md(MD, maplist(P1, GoalL), GoalLO) :- P1 == MD, !, expand_md(MD, Go
 % Handle further maplist expansion with MD.
 maybe_expand_md(MD, maplist(P1, GoalL), GoalLO) :- P1 == MD, !, expand_md(MD, GoalL, GoalLO).
 % Expand a subterm in I where the compound contains MD as the functor and has a conjunction.
-maybe_expand_md(MD, I, O) :- sub_term(C, I), compound(C), compound_name_arg(C, MD, Goal),
+maybe_expand_md(MD, I, O) :- sub_term_safely(C, I), compound(C), compound_name_arg(C, MD, Goal),
    compound(Goal), Goal = (_, _),
    once((expand_md(MD, Goal, GoalO), substM(I, C, GoalO, O))), I \=@= O.
-%maybe_expand_md(MD,I,O):- sub_term(S,I),compound(S),S=must_det_ll(G),
+%maybe_expand_md(MD,I,O):- sub_term_safely(S,I),compound(S),S=must_det_ll(G),
 %  once(expand_md(MD,S,M)),M\=S,
 
 %!  expand_md(+MD, +A, -AA) is det.
@@ -2246,7 +2246,7 @@ goal_expansion_setter(Goal, _) :- \+ compound(Goal), !, fail.
 goal_expansion_setter(I, O) :- md_like(MD), maybe_expand_md(MD, I, O), I \=@= O, !.
 % Remove must_det_ll from the goal and attempt further expansion.
 goal_expansion_setter(G, GO) :- remove_must_det(MD), !, remove_mds(MD, G, GG), goal_expansion_setter(GG, GO).
-%goal_expansion_setter(GG,GO):- remove_must_det(MD), sub_term(G,GG),compound(G),G = must_det_ll(GGGG),subst001(GG,G,GGGG,GGG),!,goal_expansion_setter(GGG,GO).
+%goal_expansion_setter(GG,GO):- remove_must_det(MD), sub_term_safely(G,GG),compound(G),G = must_det_ll(GGGG),subst001(GG,G,GGGG,GGG),!,goal_expansion_setter(GGG,GO).
 %goal_expansion_setter((G1,G2),(O1,O2)):- !, expand_goal(G1,O1), expand_goal(G2,O2),!.
 % Handle `set_omember/4` goals as pass-through.
 goal_expansion_setter(set_omember(A, B, C, D), set_omember(A, B, C, D)) :- !.
@@ -2927,7 +2927,7 @@ show_rules :-
 %   @arg TestID The term to be searched for sub-terms.
 %   @arg A      A sub-term of `TestID` that is either an atom or a string.
 %
-sub_atom_value(TestID, A) :- sub_term(A, TestID),(atom(A) ; string(A)).
+sub_atom_value(TestID, A) :- sub_term_safely(A, TestID),(atom(A) ; string(A)).
 
 %!  my_list_to_set(+List, -Set) is det.
 %
@@ -2989,7 +2989,7 @@ my_list_to_set_cmp([], _, []).
 %   @arg N    The value to match with non-variable sub-terms of `Info`.
 %   @arg Info The term to be searched for matching sub-terms.
 %
-contains_nonvar(N, Info) :- sub_term(E, Info),nonvar_or_ci(E),E = N,!.
+contains_nonvar(N, Info) :- sub_term_safely(E, Info),nonvar_or_ci(E),E = N,!.
 
 %!  max_min(+A, +B, -C, -D) is det.
 %
@@ -3519,7 +3519,7 @@ p1_arg(N, P1, E) :- tc_arg(N, E, Arg), p1_call(P1, Arg).
 %   @arg P1 The predicate to apply to subterms.
 %   @arg E The term containing subterms.
 % Apply P1 to each subterm of E.
-p1_subterm(P1, E) :- sub_term(Arg, E), p1_call(P1, Arg).
+p1_subterm(P1, E) :- sub_term_safely(Arg, E), p1_call(P1, Arg).
 
 :- meta_predicate my_partition(-, ?, ?, ?).
 
@@ -4722,7 +4722,7 @@ upcase_atom_var_l(IntL,NameL):- upcase_atom_var(IntL,NameL).
 upcase_atom_var_l(IntL,NameL):- is_list(IntL),!,my_maplist(upcase_atom_var_l,IntL,NameL).
 
 pt_guess_pretty_1(P,O):- copy_term(P,O,_),
-  ignore((sub_term(Body,O), compound(Body), Body=was_once(InSet,InVars),upcase_atom_var_l(InSet,InVars))),
+  ignore((sub_term_safely(Body,O), compound(Body), Body=was_once(InSet,InVars),upcase_atom_var_l(InSet,InVars))),
   ignore(pretty1(O)),ignore(pretty_two(O)),ignore(pretty_three(O)),ignore(pretty_final(O)),!,
   ((term_singletons(O,SS),numbervars(SS,999999999999,_,[attvar(skip),singletons(true)]))).
 
@@ -4805,7 +4805,7 @@ pp_hook_g1(S):-  term_is_ansi(S), !, write_nbsp, write_keeping_ansi_mb(S).
 pp_hook_g1(rhs(O)):- write_nbsp,nl,bold_print(print(r_h_s(O))),!.
 
 pp_hook_g1(iz(O)):- compound(O), O = info(_),underline_print(print(izz(O))),!.
-pp_hook_g1(O):-  is_grid(O), /* \+ (sub_term(E,O),compound(E),E='$VAR'(_)), */ pretty_grid(O).
+pp_hook_g1(O):-  is_grid(O), /* \+ (sub_term_safely(E,O),compound(E),E='$VAR'(_)), */ pretty_grid(O).
 
 
 pp_hook_g1(O):- is_object(O), into_solid_grid(O,G), wots(SS,pretty_grid(G)),write(og(SS)),!.
@@ -4870,10 +4870,10 @@ maybe_term_goals(Term,TermC,Goals):-
 
 maybe_replace_vars([],SGoals,TermC,SGoals,TermC):-!.
 maybe_replace_vars([V|VarsC],SGoals,TermC,RSGoals,RTermC):-
-   my_partition(sub_var(V),SGoals,Withvar,WithoutVar),
+   my_partition(sub_var_safely(V),SGoals,Withvar,WithoutVar),
    Withvar=[OneGoal],
    freeze(OneGoal,(OneGoal\==null,OneGoal \== @(null))),
-   findall(_,sub_var(V,TermC),LL),LL=[_],!,
+   findall(_,sub_var_safely(V,TermC),LL),LL=[_],!,
    subst([WithoutVar,TermC],V,{OneGoal},[SGoalsM,TermCM]),
    maybe_replace_vars(VarsC,SGoalsM,TermCM,RSGoals,RTermC).
 maybe_replace_vars([_|VarsC],SGoals,TermC,RSGoals,RTermC):-
@@ -5322,7 +5322,7 @@ banner_lines(Color,N):-
   n_times(N,color_print(Color,'=================================================')),nl_now,
   n_times(N,color_print(Color,'-------------------------------------------------')),nl_now)),!.
 
-print_sso(A):- ( \+ compound(A) ; \+ (sub_term(E,A), is_gridoid(E))),!, u_dmsg(print_sso(A)),!.
+print_sso(A):- ( \+ compound(A) ; \+ (sub_term_safely(E,A), is_gridoid(E))),!, u_dmsg(print_sso(A)),!.
 print_sso(A):- grid_footer(A,G,W),writeln(print_sso(W)), print_grid(W,G),!.
 print_sso(A):- must_det_ll(( nl_if_needed, into_ss_string(A,SS),!,
   SS = ss(L,Lst),

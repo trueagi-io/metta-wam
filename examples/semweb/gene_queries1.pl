@@ -1,8 +1,3 @@
-:- module(metta_queries, [
-    query_system_named/3,
-    start_sparql_server/0,
-    run_sparql_internal/2
-]).
 
 %% ===============================
 %% Load Required SWI-Prolog Libraries
@@ -11,7 +6,7 @@
 :- use_module(library(semweb/rdf_db)).          % RDF store
 :- use_module(library(semweb/rdf_persistency)). % RDF persistence
 :- use_module(library(semweb/sparql_client)).   % SPARQL querying
-:- use_module(library(semweb/rdf_sparql_server)). % Internal SPARQL server
+%:- use_module(library(semweb/rdf_sparql_server)).% Internal SPARQL server
 
 % Set SPARQL endpoint for external queries
 sparql_endpoint("http://your-sparql-endpoint.com/sparql").
@@ -21,10 +16,15 @@ sparql_endpoint("http://your-sparql-endpoint.com/sparql").
 %% ===============================
 
 start_sparql_server :-
-    rdf_attach_db('rdf_data', []), % Persist RDF data
-    rdf_load('your_rdf_data.ttl', [format(turtle)]), % Load RDF dataset
+    rdf_attach_db('neo4j_out_v3_rdf_data', []), % Persist RDF data
+    rdf_load('neo4j_out_v3.rdf', []), % Load RDF dataset
     http_server(sparql_server, [port(3050)]), % Start SPARQL server on port 3050
     format("SPARQL server started on http://localhost:3050/sparql~n").
+
+:- start_sparql_server.
+
+end_of_file.
+
 
 %% ===============================
 %% 2️⃣ SPARQL Queries (Remote & Internal)

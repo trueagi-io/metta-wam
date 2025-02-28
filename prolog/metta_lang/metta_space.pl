@@ -144,7 +144,7 @@ post_statistic(N, V) :-
 %     N = 1 ;
 %     N = 2.
 %
-term_number(T, N) :- sub_term(N, T), number(N).
+term_number(T, N) :- sub_term_safely(N, T), number(N).
 
 %!  call_match(+Goals) is det.
 %
@@ -1701,8 +1701,8 @@ cmpd_to_pyswip(PS, "and", Uery, Call) :-
     metta_atom(Space, F, A, List),
     % Check if the predicate matches the arguments or the functor.
     once((
-        sub_var(Pred, A) -> Src = [F, A, List]
-    ;   sub_var(Pred, F) -> Src = [F, A | List]
+        sub_var_safely(Pred, A) -> Src = [F, A, List]
+    ;   sub_var_safely(Pred, F) -> Src = [F, A | List]
     )).
 
 %!  'AtomDef'(+X, -Def) is det.

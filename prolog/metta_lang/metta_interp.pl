@@ -3096,7 +3096,7 @@ cmdline_load_file(Self, Filemask) :-
 %     Executing...
 %
 if_phase(Current, Phase, Goal) :-
-    ignore((sub_var(Current, Phase), !, Goal)).
+    ignore((sub_var_safely(Current, Phase), !, Goal)).
 
 %!  set_tty_color_term(+TF) is det.
 %
@@ -3395,7 +3395,7 @@ write_f_src(H, B) :-
 %     ?- hb_f(foo(bar, baz), ST).
 %     ST = bar.
 %
-hb_f(HB,ST):- sub_term(ST,HB),(symbol(ST),ST\==(=),ST\==(:)),!.
+hb_f(HB,ST):- sub_term_safely(ST,HB),(symbol(ST),ST\==(=),ST\==(:)),!.
 
 %!  write_f_src(+HB) is det.
 %
@@ -3654,7 +3654,7 @@ into_fp(D, D) :-
     \+ \+ dont_x(D),
     !.
 into_fp(ListX, CallAB) :-
-    sub_term(STerm, ListX),
+    sub_term_safely(STerm, ListX),
     needs_expanded(STerm, Term),
     % copy_term_g(Term, CTerm),  % Original commented-out line
     =(Term, CTerm),
@@ -3690,7 +3690,7 @@ needs_expand(Expand) :-
 %
 needs_expanded(eval_H(Term, _), Expand) :-
     !,
-    sub_term(Expand, Term),
+    sub_term_safely(Expand, Term),
     compound(Expand),
     Expand\=@=Term,
     compound(Expand),
@@ -3698,7 +3698,7 @@ needs_expanded(eval_H(Term, _), Expand) :-
     \+ is_ftVar(Expand),
     needs_expand(Expand).
 needs_expanded([A|B], Expand) :-
-    sub_term(Expand, [A|B]),
+    sub_term_safely(Expand, [A|B]),
     compound(Expand),
     \+ is_conz(Expand),
     \+ is_ftVar(Expand),
