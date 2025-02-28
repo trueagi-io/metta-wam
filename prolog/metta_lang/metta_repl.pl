@@ -1056,7 +1056,7 @@ maybe_add_history(Self, BaseEval, NamedVarsList) :-
    prolog_only((color_g_mesg('#da70d6', (write('% DEBUG:   '), writeq(PL), writeln('.'))))).
 
 
-u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):-
+u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOut):- !,
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
      % Was --exec=skip but this is the type of directive we'd do anyways
@@ -2093,135 +2093,6 @@ install_readline_editline1 :-
 %    catch(setup_colors, E4, print_message(warning, E4))), % Setup color scheme, catching any errors.
 %   install_readline(Input). % Main installation of readline for Input stream.
 
-%!  command(+KeyCode, -Command) is det.
-%
-%   Maps key codes to corresponding commands for the debugger and terminal interactions.
-%   This predicate associates specific key codes with debugger commands, providing an easy interface for users.
-%
-%   @arg KeyCode The ASCII code of the key pressed.
-%   @arg Command The debugger command associated with that key press.
-%
-%   @example Example of usage:
-%
-%       ?- command(59, Command).
-%       Command = retry.
-%
-command(59, retry).    % ';' to retry the previous goal
-command(115, skip).    % 's' to skip to the next solution
-command(108, leap).    % 'l' to leap (end the debugging session)
-command(103, goals).   % 'g' to show the current goals
-command(102, fail).    % 'f' to force the current goal to fail
-command(116, trace).   % 't' to toggle tracing on or off
-command(117, up).      % 'u' to continue execution without interruption
-command(101, exit).    % 'e' to exit the debugger
-command(97, abort).    % 'a' to abort execution
-command(98, break).    % 'b' to set a breakpoint
-command(99, creep).    % 'c' to proceed step by step
-command(104, help).    % 'h' for help with debugger commands
-command(65, alternatives).    % 'A' to show alternatives for the current goal
-command(109, make).       % 'm' to recompile and reload code (make/0)
-command(67, compile).     % 'C' to compile new code into an executable
-
-:- style_check(-singleton).
-
-% Command implementations
-
-%!  handle_command(+Command, +Variables, +Goal, +Tracing) is det.
-%
-%   Handles debugger commands such as retry, make, compile, and trace.
-%   Each command has specific behavior related to goal tracing, code compilation, or debugging interaction.
-%
-%   @arg Command is the command to be executed.
-%   @arg Variables are the current variables in scope during debugging.
-%   @arg Goal is the current goal being debugged.
-%   @arg Tracing is the tracing mode (e.g., trace_on, trace_off).
-%
-%   This command dispatcher defines custom behavior for interacting with debugging and recompilation processes.
-%
-%   @example Handling the 'make' command:
-%
-%       ?- handle_command(make, Vars, Goal, Tracing).
-%       Recompiling...
-%       true.
-%
-
-% Handle the 'make' command by recompiling the code.
-handle_command(make, Variables, Goal, Tracing) :-
-    writeln('Recompiling...'),
-    % Recompiles the entire code base. This assumes `make/0` is defined in your Prolog system.
-    make,  % Triggers the recompilation process.
-    fail. % Fails to continue interacting after recompilation.
-% Handle the 'compile' command by compiling a new executable.
-handle_command(compile, Variables, Goal, Tracing) :-
-    writeln('Compiling new executable...'),
-    % Compilation logic should go here. For example, using qsave_program/2 to create an executable.
-    % Pseudocode: compile_executable(ExecutableName)
-    fail. % Fails to continue interacting after compilation.
-% Handle the 'alternatives' command by showing alternative clauses for the current goal.
-handle_command(alternatives, Variables, Goal, Tracing) :-
-    writeln('Showing alternatives...'),
-    writeln('Alternatives for current goal:'),
-    writeln(Goal),
-    % Pseudocode for finding and displaying alternatives: find_alternatives(Goal, Alternatives)
-    % Pseudocode for printing alternatives: print_alternatives(Alternatives)
-    fail. % Fails to continue interacting after showing alternatives.
-% Handle the 'help' command by printing help information.
-handle_command(help, Variables, Goal, Tracing) :-
-    print_help,  % A helper predicate to print command help information.
-    fail. % Fails to continue interacting after showing help.
-% Handle the 'abort' command by aborting the execution.
-handle_command(abort, _, _, _) :-
-    writeln('Aborting...'),
-    abort.
-% Handle the 'break' command by setting a breakpoint.
-handle_command(break, Variables, Goal, Tracing) :-
-    writeln('Breakpoint set.'),
-    fail. % Fails to continue interacting after setting a breakpoint.
-% Handle the 'creep' command by entering step-by-step execution mode.
-handle_command(creep, Variables, Goal, Tracing) :-
-    writeln('Creeping...'),  % Step-by-step execution starts here.
-    trace.  % Enables tracing (creep mode).
-% Handle the 'retry' command by retrying the current goal.
-handle_command(retry, Variables, Goal, Tracing) :-
-    writeln('Continuing...'),!.
-% Handle the 'skip' command by skipping the current goal.
-handle_command(skip, Variables, Goal, Tracing) :-
-    writeln('Skipping...').
-% Handle the 'leap' command by exiting trace mode and continuing execution.
-handle_command(leap, _, _, _) :-
-    writeln('Leaping...'), nontrace.  % Exits trace mode and continues execution.
-% Handle the 'goals' command by showing the current goal and variables.
-handle_command(goals, Variables, Goal, Tracing) :-
-    writeln('Current goal:'),
-    writeln(Goal),
-    writeln('Current variables:'),
-    writeln(Variables),
-    bt, fail.  % Displays the current backtrace and fails to continue interacting.
-% Handle the 'fail' command by forcing the current goal to fail.
-handle_command(fail, _, _, _) :-
-    writeln('Forcing failure...'),
-    fail.
-% Handle the 'trace' command by toggling tracing on and off.
-handle_command(trace, Variables, Goal, Tracing) :-
-    (Tracing == trace_on ->
-        NewTracing = trace_off,
-        writeln('Tracing disabled.')
-    ;   NewTracing = trace_on,
-        writeln('Tracing enabled.')
-    ),
-    interact(Variables, Goal, NewTracing).  % Continue interacting with the updated tracing state.
-% Handle the 'up' command by continuing execution until the next traceable goal.
-handle_command(up, Variables, Goal, Tracing) :-
-    writeln('Continuing up...'),
-    repeat,
-    ( trace_goal(Goal, Tracing) -> true ; !, fail ).
-% Handle the 'exit' command by exiting the debugger.
-handle_command(exit, _, _, _) :-
-    writeln('Exiting debugger...'), !.  % Cuts to ensure we exit the debugger.
-
-% Directive to disable singleton variable warnings, which may occur often in dynamic code.
-:- style_check(+singleton).
-
 
 %!  print_help is det.
 %
@@ -2257,4 +2128,5 @@ print_debug_help :-
     %writeln('(I)  info             - Show information about the current state.'),
     !.
 
+:- find_missing_cuts.
 
