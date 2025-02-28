@@ -213,10 +213,19 @@ emit_lines(To, [Line|Lines]) :-
     emit_lines(To, Lines).
 emit_lines(_, []).
 
-lines_to_strings([Line|Lines], [FormattedLine|FormattedLines]) :-
+lines_to_strings_([Line|Lines], [FormattedLine|FormattedLines]) :-
     with_output_to(string(FormattedLine), emit_line(current_output, Line)),
     lines_to_strings(Lines, FormattedLines).
-lines_to_strings([], []).
+lines_to_strings_([], []).
+
+lines_to_strings(InLines, OutLines) :-
+    lines_to_strings_(InLines, OutLines0),
+    % seemingly redundant, but because strings can contain embedded
+    % newlines, the "lines" of OutLines0 may actually be more than one
+    % line, which then causes create_edit_list/3 to generate spurious
+    % edits
+    atomics_to_string(OutLines0, "\n", OutLines1),
+    split_string(OutLines1, "\n", "", OutLines).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create a List of Edits from the Original and Formatted Lines
