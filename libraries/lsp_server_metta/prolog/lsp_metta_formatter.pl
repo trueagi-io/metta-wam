@@ -249,7 +249,7 @@ create_edit_list(LineNum, [], [NewLine|NewLines], [Edit|Edits]) :- !,
             newText: NewLine},
     succ(LineNum, LineNum1),
     create_edit_list(LineNum1, [], NewLines, Edits).
-create_edit_list(LineNum, [OrigLine | OrigRest], [FormattedLine | FormattedRest], Edits) :-
+create_edit_list(LineNum, [OrigLine|OrigRest], [FormattedLine|FormattedRest], Edits) :-
     (   OrigLine \= FormattedLine  % Only create an edit if the line has changed
     -> string_length(OrigLine, LineLen), %TODO: what should this be?
        Edit = _{
