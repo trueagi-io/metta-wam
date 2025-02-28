@@ -267,6 +267,7 @@ py_is_module(M):- notrace((with_safe_argv(py_is_module_unsafe(M)))).
 %   @arg M The object to check if it is a Python module.
 %
 py_is_module_unsafe(M):- py_is_object(M),!,py_type(M, module).
+py_is_module_unsafe(M):- atom(M), atom_concat(_,'.metta',M),!,fail.
 py_is_module_unsafe(M):- catch((py_call_warg(M, X),py_type(X, module)), _, fail).
 
 %!  py_is_py(+V) is semidet.
@@ -883,9 +884,12 @@ py_eval_object(VO,VO).
 py_is_function(O):- \+ py_is_object(O),!,fail.
 py_is_function(PyObject) :-
     py_type(PyObject, Type),
-    py_is_method_type(Type).
+    py_is_method_type(Type),!.
+py_is_function(PyObject):- py_call(callable(PyObject),C),!,C= @(true).
 py_is_method_type(type).
 py_is_method_type(builtin_function_or_method).
+py_is_method_type(ufunc).
+%py_is_method_type('OperatorAtom').
 py_is_method_type(function).
 py_is_method_type(method).
 py_is_method_type('method-wrapper').
