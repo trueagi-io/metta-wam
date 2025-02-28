@@ -932,4 +932,4 @@ setof_subst(Depth,Self,X,S):- !,findall(E,subst_args(Eq,RetType,Depth,Self,X,E),
 %setof_subst(Depth,Self,X,S):- setof(E,subst_args(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
 
 
-
+:- find_missing_cuts.
