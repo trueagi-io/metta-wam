@@ -1739,6 +1739,6 @@ write_pl_metta_0(STerm):-
 :- ensure_loaded(metta_printer).
 
 % Ensure that the MeTTa evaluation logic is loaded.
-:- ensure_loaded(metta_eval).
+%:- ensure_loaded(metta_eval).
 
 
