@@ -751,18 +751,20 @@ if_trace(Flag, Goal) :- notrace(real_notrace((catch_err(ignore((is_debugging(Fla
 if_tracemsg(Flag, Message):- if_trace(Flag, wdmsg(Message)).
 
 rtrace_when(Why,Goal):- is_debugging(Why)->rtrace(Goal);call(Goal).
+show_failure_when(Why,Goal):- \+ is_debugging(Why), !, call(Goal).
 show_failure_when(Why, Goal):-
  is_debugging(Why),!,
   if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
    if_t(is_debugging(failures),trace),!,fail)).
-show_failure_when(_Why,Goal):- !, (call(Goal)*->true;fail).
 %show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
 
 trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
 maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
-maybe_trace:- !.
+maybe_trace:- is_extreme_debug(trace).
 
+%is_extreme_debug(G):- (( fail, gethostname(X),X=='HOSTAGE')), !, call(G).
+is_extreme_debug(_).
 
 sub_var_safely(Var,Source):-
   locally(set_prolog_flag(occurs_check,true),
@@ -774,6 +776,13 @@ sub_term_safely(Sub,Source):-
 
 woc(Goal):-
   locally(set_prolog_flag(occurs_check,true), Goal).
+wocf(Goal):-
+  locally(set_prolog_flag(occurs_check,false), Goal).
+
+%:- initialization(set_prolog_flag(occurs_check,error)).
+%:- initialization(set_prolog_flag(occurs_check,true)).
+%:- initialization(set_prolog_flag(occurs_check,false)).
+%:- initialization(set_prolog_flag(gc,false)).
 
 %!  is_showing(+Flag) is nondet.
 %
@@ -979,7 +988,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
 
-%trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
+trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
 trace_eval(P4, TNT, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
@@ -1186,7 +1195,7 @@ pick_quote(String, '`') :- \+ string_contains(String, '`'), !.              % Us
 :- at_halt(in_file_output(leave_markdown(_))).  % Ensure markdown mode is exited at halt
 :- at_halt(in_file_output(leave_comment)).      % Ensure comment mode is exited at halt
 
-
+pcp:- print_last_choicepoint_upwards.
 print_last_choicepoint_upwards :-
     prolog_current_choice(ChI0),         % Choice in print_last_choicepoint_info/0
     prolog_choice_attribute(ChI0, parent, ChI1), !,
@@ -1217,7 +1226,7 @@ print_last_choicepoint_info(ChI1, Options) :-
         ;   prolog_choice_attribute(ChI, clause, Next)
         ->  Ctx = clause(Next)
         ),
-        print_message(Level, choicepoint_info(clause(Goal, Clause, Ctx), Stack))
+        print_message(Level, choicepoint(clause(Goal, Clause, Ctx), Stack))
     ).
 print_last_choicepoint_info(_, _).
 
@@ -1231,11 +1240,11 @@ real_choice_info(Ch, Ch).
 dummy_type_info(debug).
 dummy_type_info(none).
 
-:- multifile(prolog:message/1).
+:- multifile(prolog:message//1).
 prolog:message(choicepoint_info(Choice, Stack)) -->
     user:choice_info(Choice),
     [ nl, 'Called from', nl ],
-    message(Stack).
+    prolog:message(Stack).
 
 user:choice_info(foreign(Goal)) -->
     prolog_stack:success_goal(Goal, 'a foreign choice_info point').
