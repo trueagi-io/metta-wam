@@ -1,12 +1,12 @@
 ﻿% Load necessary libraries
 :- use_module(library(http/json)).
 
-% Entry point: save_nodes_to_prolog(+InputJsonFile)
+% Entry point: save_nodes_to_prolog(+SaveToDirectory, +InputJsonFile)
 save_nodes_to_prolog(Directory,InputJsonFile) :-
-    open(InputJsonFile, read, InStream, [encoding(utf8)]),
-    skip_to_first_node(InStream),
-    process_nodes_stream(Directory,InStream, 1, 0, _OutStream),
-    close(InStream).
+   setup_call_cleanup(open(InputJsonFile, read, InStream, [encoding(utf8)]),
+    (skip_to_first_node(InStream),
+     process_nodes_stream(Directory,InStream, 1, 0, _OutStream)),
+     close(InStream)).
 
 % Skip characters until reaching the "nodes":{ part
 skip_to_first_node(Stream) :-

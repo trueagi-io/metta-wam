@@ -33,19 +33,36 @@ rdf_load_if_needed(Shared, File) :-
       format("✅ Already loaded: ~w~n", [File])
     ;
       ( format("📂 Loading RDF file: ~w~n", [File]),
-        rdf_load(File, [graph(Shared), multifile(true)]),
+        rdf_load_needed(Shared, File),
         format("📥 Loaded RDF file: ~w~n", [File])
       )).
+
+
+rdf_load_needed(Shared, File) :-
+    % findall(X-Y,rdf_current_prefix(X,Y),Prefixes),
+    rdf_load(File, [graph(Shared),register_namespaces(true),concurrent(4), multifile(true)]).
+
 
 rdf_load_splits(Stem) :-
     format(atom(WildCard), '~w_split_rdf/~w_part_*.rdf', [Stem, Stem]),
     expand_file_name(WildCard, Files),
     maplist(rdf_load_if_needed(Stem), Files).
 
+%rdf_name_space(File, List):- rdf_load(File, [graph(Shared),register_namespaces(true),prefixes(List), multifile(true)]).
+
 mount_rdf_db_directory :-
     rdf_db_directory(DBDir),
     format("🚀 Mounting persistence at ~w ~n", [DBDir]),
-    rdf_attach_db(DBDir, [access(read_write), cache_size(4096)]),
+    rdf_attach_db(DBDir, [access(read_write), concurrency(4), cache_size(4096)]).
+
+:- initialization(mount_rdf_db_directory).
+
+load_rdf_db_directory:-
+   /*rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000001.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000002.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000003.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000004.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000005.rdf'),*/
     % use this since it has all the prefix decls
     %rdf_load_if_needed(neo4j_out_v3, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_0001.rdf').
     % right now lets load the smallest file
@@ -53,6 +70,8 @@ mount_rdf_db_directory :-
     % Load splits, skipping already loaded
     rdf_load_splits('neo4j_out_v3'),
     !.
+
+:- initialization(writeln(?- load_rdf_db_directory)).
 
 %% ===============================
 %% 🛰️ Internal SPARQL Server Setup
