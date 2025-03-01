@@ -1,27 +1,135 @@
-
-%% ===============================
-%% Load Required SWI-Prolog Libraries
-%% ===============================
-
-:- use_module(library(semweb/rdf_db)).          % RDF store
-:- use_module(library(semweb/rdf_persistency)). % RDF persistence
-:- use_module(library(semweb/sparql_client)).   % SPARQL querying
-%:- use_module(library(semweb/rdf_sparql_server)).% Internal SPARQL server
-
-% Set SPARQL endpoint for external queries
-sparql_endpoint("http://your-sparql-endpoint.com/sparql").
-
-%% ===============================
-%% 1️⃣ Start SWI-Prolog SPARQL Server (Internal)
+﻿%% ===============================
+%% 📚 Load Required Libraries
 %% ===============================
 
-start_sparql_server :-
-    rdf_attach_db('neo4j_out_v3_rdf_data', []), % Persist RDF data
-    rdf_load('neo4j_out_v3.rdf', []), % Load RDF dataset
-    http_server(sparql_server, [port(3050)]), % Start SPARQL server on port 3050
-    format("SPARQL server started on http://localhost:3050/sparql~n").
+:- use_module(library(semweb/rdf_db)).
+:- use_module(library(semweb/rdf_persistency)).
+:- use_module(library(semweb/rdf_http_plugin)).
+:- use_module(library(semweb/sparql_client)).
+:- use_module(library(http/http_server)).
+:- use_module(library(http/http_dispatch)).
+:- use_module(library(filesex)).
+:- use_module(library(apply)).
 
-:- start_sparql_server.
+%:- use_module(library(semweb/rdf11)).  will switch back to this later
+%:- use_module(library(semweb/sparql_http)). % this never existed .. use thje right one isntead
+
+%% ===============================
+%% ⚙️ Configuration
+%% ===============================
+
+sparql_endpoint("http://localhost:3050/sparql").
+rdf_db_directory('datastore_neo4j_out_v3'). % Persistent DB directory
+
+%% ===============================
+%% 📂 Load RDF Data from Splits (only if not already loaded)
+%% ===============================
+
+rdf_already_loaded(Shared, File) :-
+    rdf_graph_property(Shared, source(File)), !.
+
+rdf_load_if_needed(Shared, File) :-
+    ( rdf_already_loaded(Shared, File) ->
+      format("✅ Already loaded: ~w~n", [File])
+    ;
+      ( format("📂 Loading RDF file: ~w~n", [File]),
+        rdf_load_needed(Shared, File),
+        format("📥 Loaded RDF file: ~w~n", [File])
+      )).
+
+
+rdf_load_needed(Shared, File) :-
+    % findall(X-Y,rdf_current_prefix(X,Y),Prefixes),
+    rdf_load(File, [graph(Shared),register_namespaces(true),concurrent(4), multifile(true)]).
+
+
+rdf_load_splits(Stem) :-
+    format(atom(WildCard), '~w_split_rdf/~w_part_*.rdf', [Stem, Stem]),
+    expand_file_name(WildCard, Files),
+    maplist(rdf_load_if_needed(Stem), Files).
+
+%rdf_name_space(File, List):- rdf_load(File, [graph(Shared),register_namespaces(true),prefixes(List), multifile(true)]).
+
+mount_rdf_db_directory :-
+    rdf_db_directory(DBDir),
+    format("🚀 Mounting persistence at ~w ~n", [DBDir]),
+    rdf_attach_db(DBDir, [access(read_write), concurrency(4), cache_size(4096)]).
+
+:- initialization(mount_rdf_db_directory).
+
+load_rdf_db_directory:-
+   /*rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000001.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000002.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000003.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000004.rdf'),
+    rdf_load_needed(DBDir, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_000005.rdf'),*/
+    % use this since it has all the prefix decls
+    %rdf_load_if_needed(neo4j_out_v3, 'neo4j_out_v3_split_rdf/neo4j_out_v3_part_0001.rdf').
+    % right now lets load the smallest file
+    % rdf_load('neo4j_out_v3_split_rdf/neo4j_out_v3_part_26.rdf'),
+    % Load splits, skipping already loaded
+    rdf_load_splits('neo4j_out_v3'),
+    !.
+
+:- initialization(writeln(?- load_rdf_db_directory)).
+
+%% ===============================
+%% 🛰️ Internal SPARQL Server Setup
+%% ===============================
+
+skip_op(_).
+sparql_server_port(3050).
+
+% SPARQL endpoint HTTP handler
+:- http_handler('/sparql', sparql_query, []).
+
+start_sparql_server(Port) :-
+    mount_rdf_db_directory,
+    sparql_endpoint(Endpoint),
+    skip_op(http_server(http_dispatch, [port(Port)])),
+    skip_op(format("🚀 SPARQL server started on port ~w at ~w~n", [Port, Endpoint])),
+    !.
+
+start_sparql_server:- sparql_server_port(Port), start_sparql_server(Port).
+
+%% ===============================
+%% 🎯 SPARQL Client Query
+%% ===============================
+
+fetch_first_40_triples(Triples) :-
+    sparql_endpoint(URL),
+    sparql_query('SELECT ?s ?p ?o WHERE {?s ?p ?o} LIMIT 40', RowList,
+                 [ endpoint(URL), result_format(prolog) ]),
+    maplist(row_to_triple, RowList, Triples).
+
+row_to_triple(row(S,P,O), rdf(S,P,O)).
+
+%% ===============================
+%% 🖥️ Display Results
+%% ===============================
+
+print_triples([]).
+print_triples([rdf(S,P,O)|Rest]) :-
+    format('~w ~w ~w.~n', [S,P,O]),
+    print_triples(Rest).
+
+%% ===============================
+%% 🚩 Initialization and Test Run
+%% ===============================
+
+:- initialization(main, main).
+
+main :-
+    start_sparql_server,
+    sleep(2), % ensure server has fully initialized
+    fetch_40_triples.
+
+fetch_40_triples:-
+    format("🔎 Fetching first 40 triples via SPARQL client...~n"),
+    fetch_first_40_triples(Triples),
+    print_triples(Triples),
+    !.
+
 
 end_of_file.
 
@@ -152,4 +260,3 @@ This module allows Prolog to:
 ✔ Store and retrieve MeTTa queries as structured strings.
 ✔ Optimize query execution with indexing.
 */
-
