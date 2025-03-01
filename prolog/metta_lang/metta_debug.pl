@@ -1001,7 +1001,8 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
             DR is 99 - (D1 mod 100),         % Calculate DR based on depth.
             PrintRet = _,                    % Initialize PrintRet.
             option_else('trace-length', MaxTraceLen, 500), % Get trace-length option.
-            option_else('trace-depth', MaxTraceDepth, 30)   % Get trace-depth option.
+            %option_else('trace-depth', MaxTraceDepth, 30),   % Get trace-depth option.
+            !
         )),
 
         TraceTooLong = _,
