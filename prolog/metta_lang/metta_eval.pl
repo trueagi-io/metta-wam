@@ -453,7 +453,7 @@ eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
        Y = Name)),
       sanity_check_eval(eval_20_atom,Y).
 
-eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):- fail,
+eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
     atomic(Sym), py_is_function(Sym), is_list(Args), !,
     maplist(as_prolog_x(Depth,Self), Args , Adjusted),!,
     py_call_method_and_args(Sym,Adjusted,Ret),

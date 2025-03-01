@@ -4865,7 +4865,7 @@ metta_anew1(unload, OBO) :-
         clause(Head2, Body2, Ref), % Retrieve the clause again for validation.
         (Head + Body) =@= (Head2 + Body2), % Check if the clauses are equivalent.
         erase(Ref),               % Erase the clause.
-        if_verbose(load,pp_m(unload(Cl)))          % Log the unload operation.
+        if_trace(atomspace,pp_m(unload(Cl)))          % Log the unload operation.
     )), !.
 % Handle `unload_all` by retracting all matching clauses.
 metta_anew1(unload_all, OBO) :-
@@ -4873,7 +4873,7 @@ metta_anew1(unload_all, OBO) :-
     must_det_ll((
         load_hook(unload_all, OBO),  % Execute the unload_all hook.
         subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
-        if_verbose(load, once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
+        if_trace(atomspace, once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
         retractall(Cl)      %to_metta(Cl).
     )), !.
 % Alternative `unload_all` operation with detailed clause handling.
@@ -4936,7 +4936,7 @@ metta_anew(Load, Src, OBO) :-
     not_compat_io((
         % Output information about the source if in Metta language.
         output_language(metta, (
-            if_show(load, color_g_mesg('#ffa500', ((
+            if_trace((atomspace;loading), color_g_mesg('#ffa500', ((
                 format('~N '),  % Newline for separation.
                   % format('~N'),
                 nop(copy_term(Src,OSrc,Names)),
@@ -4949,8 +4949,8 @@ metta_anew(Load, Src, OBO) :-
             ))))
         )),
         % Output information about the operation and object.
-        output_language(Load, (
-            if_verbose(load, color_g_mesg('#4f4f0f', (((
+        output_language(prolog, (
+            if_trace((atomspace;loading), color_g_mesg('#4f4f0f', (((
                 write('; Action: '),  % Indicate the action being performed.
                 copy_term(OBO,OBOS,VarNames),
                 materialize_vns(OBO,OBOVns),
@@ -5587,7 +5587,7 @@ do_metta(From, comment(Load), Self, [Expr], Out) :- !,
     do_metta(From, comment(Load), Self, Expr, Out).
 do_metta(From, comment(Load), Self, Cmt, Out) :-
     % Write the comment and handle specific cases of MettaLog comments.
-    write_comment(Cmt), !,
+    if_trace(loading;load,write_comment(Cmt)), !,
     ignore((symbolic(Cmt),
             symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
             !,
