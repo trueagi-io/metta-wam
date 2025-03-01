@@ -219,16 +219,16 @@ indentq2(Depth, Term) :-
 indentq2(_Depth, Term) :-
     format('~q', [Term]). % Fallback printing without indentation.
 
-%!  print_padded(+EX, +DR, +AR) is det.
+%!  print_padded(+TraceLen, +DR, +AR) is det.
 %
 %   Print a padded line with extra formatting, if certain conditions are met.
 %
-%   This predicate prints a formatted line based on the values of `EX`, `DR`, and `AR`, with padding and
+%   This predicate prints a formatted line based on the values of `TraceLen`, `DR`, and `AR`, with padding and
 %   additional formatting. If `is_fast_mode/0` is enabled, the printing is skipped. The padding is computed
 %   using modulo operations on the `DR` value, and extra formatting is applied. The `AR` component is printed
 %   after the padding.
 %
-%   @arg EX The first component used for padding, expected to be an integer.
+%   @arg TraceLen The first component used for padding, expected to be an integer.
 %   @arg DR The second component used for padding, expected to be an integer.
 %   @arg AR The component to print after padding.
 %
@@ -239,17 +239,17 @@ indentq2(_Depth, Term) :-
 %
 print_padded(_DR, _EX, _AR) :-
     is_fast_mode, !. % Skip printing in fast mode.
-print_padded(EX, DR, AR) :-
-    integer(EX), integer(DR), EX > 0, DR > 0,
-    nb_current('$print_padded', print_padded(EX, DR, _)), % Check if padding is active.
+print_padded(TraceLen, DR, AR) :-
+    integer(TraceLen), integer(DR), TraceLen > 0, DR > 0,
+    nb_current('$print_padded', print_padded(TraceLen, DR, _)), % Check if padding is active.
     !,
     format("~|          |", []), % Print the initial padding.
     DRA is abs(round(DR) mod 24), % Calculate padding size.
     forall(between(2, DRA, _), write('   |')), % Write additional padding.
     write('    '), write(' '), write(AR). % Write the AR value.
-print_padded(EX, DR, AR) :-
-    format("~|~` t~d~5+:~d~5+|", [EX, DR]), % Print padded EX and DR values.
-    nb_setval('$print_padded', print_padded(EX, DR, AR)), % Set the current padding.
+print_padded(TraceLen, DR, AR) :-
+    format("~|~` t~d~5+:~d~5+|", [TraceLen, DR]), % Print padded TraceLen and DR values.
+    nb_setval('$print_padded', print_padded(TraceLen, DR, AR)), % Set the current padding.
     DRA is abs(round(DR) mod 24), % Calculate padding size.
     forall(between(1, DRA, _), write('   |')), % Write additional padding.
     write('-'), write(AR). % Write the AR value.
@@ -279,21 +279,21 @@ indentq_d(_DR, _EX, _AR) :-
     is_fast_mode, !. % Skip printing in fast mode.
 indentq_d(Depth, Prefix4, Message) :-
     flag(eval_num, EX0, EX0), % Get the current evaluation number.
-    EX is EX0 mod 500, % Compute EX using modulo 500.
+    TraceLen is EX0 mod 500, % Compute TraceLen using modulo 500.
     DR is 99 - (Depth mod 100), % Compute DR using depth and modulo 100.
-    indentq(DR, EX, Prefix4, Message). % Call indentq with the formatted values.
+    indentq(DR, TraceLen, Prefix4, Message). % Call indentq with the formatted values.
 
-%!  indentq(+DR, +EX, +AR, +Term) is det.
+%!  indentq(+DR, +TraceLen, +AR, +Term) is det.
 %
-%   Print a term with depth-based and EX-based indentation.
+%   Print a term with depth-based and TraceLen-based indentation.
 %
 %   This predicate prints a `Term` with indentation based on the values of `DR` (depth)
-%   and `EX` (a component used for formatting). The `AR` component is included in the
+%   and `TraceLen` (a component used for formatting). The `AR` component is included in the
 %   formatting as well. Special cases are handled for return values, list elements, and
 %   structured terms. If `is_fast_mode/0` is enabled, the predicate skips printing.
 %
 %   @arg DR   The depth used to determine the indentation.
-%   @arg EX   The EX component for additional formatting control.
+%   @arg TraceLen   The TraceLen component for additional formatting control.
 %   @arg AR   The AR component for formatting or additional text.
 %   @arg Term The term to print, which could be a return value, a list element, or a structured term.
 %
@@ -308,30 +308,30 @@ indentq_d(Depth, Prefix4, Message) :-
 %
 indentq(_DR, _EX, _AR, _Term) :-
     is_fast_mode, !. % Skip printing in fast mode.
-indentq(DR, EX, AR, retval(Term)) :-
+indentq(DR, TraceLen, AR, retval(Term)) :-
     nonvar(Term), !,
-    indentq(DR, EX, AR, Term). % Handle return values specially.
-indentq(DR, EX, AR, [E, Term]) :-
+    indentq(DR, TraceLen, AR, Term). % Handle return values specially.
+indentq(DR, TraceLen, AR, [E, Term]) :-
     E == e, !,
-    indentq(DR, EX, AR, Term). % Special case for list elements.
+    indentq(DR, TraceLen, AR, Term). % Special case for list elements.
 %indentq(_DR,_EX,_AR,_Term):- flag(trace_output_len,X,X+1), XX is (X mod 1000), XX>100,!.
-indentq(DR, EX, AR, ste(S, Term, E)) :- !,
-    indentq(DR, EX, AR, S, Term, E). % Special case for structured terms.
-indentq(DR, EX, AR, Term) :-
-    indentq(DR, EX, AR, '', Term, ''). % Default case with empty prefix/suffix.
+indentq(DR, TraceLen, AR, ste(S, Term, E)) :- !,
+    indentq(DR, TraceLen, AR, S, Term, E). % Special case for structured terms.
+indentq(DR, TraceLen, AR, Term) :-
+    indentq(DR, TraceLen, AR, '', Term, ''). % Default case with empty prefix/suffix.
 
-%!  indentq(+DR, +EX, +AR, +S, +Term, +E) is det.
+%!  indentq(+DR, +TraceLen, +AR, +S, +Term, +E) is det.
 %
 %   Print a term with depth-based indentation, including start and end strings.
 %
 %   This predicate prints a `Term` with indentation based on the depth `DR` and formatting components
-%   `EX` and `AR`. The `S` argument provides a start string to print before the term, and `E` provides
+%   `TraceLen` and `AR`. The `S` argument provides a start string to print before the term, and `E` provides
 %   an end string to print after the term. The predicate formats the term, converts any newlines to
 %   spaces, and then prints the formatted string. The output is managed within a `setup_call_cleanup/3`
 %   block to ensure clean execution.
 %
 %   @arg DR   The depth used to determine the indentation.
-%   @arg EX   The EX component for additional formatting control.
+%   @arg TraceLen   The TraceLen component for additional formatting control.
 %   @arg AR   The AR component for formatting or additional text.
 %   @arg S    A string to print before the term.
 %   @arg Term The term to print.
@@ -342,11 +342,11 @@ indentq(DR, EX, AR, Term) :-
 %   ?- indentq(10, 5, 'INFO:', 'Start:', 'processing', 'End.').
 %   'INFO: Start: processing End.'  % Printed with depth-based indentation.
 %
-indentq(DR, EX, AR, S, Term, E) :-
+indentq(DR, TraceLen, AR, S, Term, E) :-
     setup_call_cleanup(
         notrace(format('~N;')), % Start with a newline and suppress trace.
         (
-            wots(Str, indentq0(DR, EX, AR, S, Term, E)), % Format the term.
+            wots(Str, indentq0(DR, TraceLen, AR, S, Term, E)), % Format the term.
             newlines_to_spaces(Str, SStr), % Convert newlines to spaces.
             write(SStr) % Write the formatted string.
         ),
@@ -373,18 +373,18 @@ newlines_to_spaces(Str, SStr) :-
     atomics_to_string(L, '\n', Str), % Split the string by newlines.
     atomics_to_string(L, ' ', SStr). % Join the parts with spaces.
 
-%!  indentq0(+DR, +EX, +AR, +S, +Term, +E) is det.
+%!  indentq0(+DR, +TraceLen, +AR, +S, +Term, +E) is det.
 %
 %   Print a term with padding and depth-based indentation.
 %
 %   This predicate prints a `Term` with depth-based indentation determined by `DR` and
-%   includes padding and formatting based on `EX` and `AR`. The `S` argument specifies
+%   includes padding and formatting based on `TraceLen` and `AR`. The `S` argument specifies
 %   a start string to print before the term, and `E` specifies an end string to print
 %   after the term. The term is printed using `write_src/1`, and the indentation is
 %   controlled by `with_indents/2`.
 %
 %   @arg DR   The depth used to determine the indentation.
-%   @arg EX   The EX component for formatting and padding control.
+%   @arg TraceLen   The TraceLen component for formatting and padding control.
 %   @arg AR   The AR component for additional formatting or padding.
 %   @arg S    A string to print before the term.
 %   @arg Term The term to print with padding and indentation.
@@ -395,9 +395,9 @@ newlines_to_spaces(Str, SStr) :-
 %   ?- indentq0(5, 10, 'INFO:', 'Start:', some_term(foo, bar), 'End.').
 %   'INFO: Start: some_term(foo, bar) End.'  % Printed with depth-based indentation.
 %
-indentq0(DR, EX, AR, S, Term, E) :-
+indentq0(DR, TraceLen, AR, S, Term, E) :-
     as_trace((
-        print_padded(EX, DR, AR), % Print the padded line.
+        print_padded(TraceLen, DR, AR), % Print the padded line.
         format(S, []), % Print the start string.
         with_indents(false, write_src(Term)), % Print the term.
         format(E, []) % Print the end string.
@@ -967,7 +967,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 % overflow = continue
 % overflow = debug
 
-%!  trace_eval(:P4, +TNT, +D1, +Self, +X, +Y) is det.
+%!  trace_eval(:P4, +ReasonsToTrace, +D1, +Self, +X, +Y) is det.
 %
 %   Perform trace evaluation of a goal, managing trace output and depth.
 %
@@ -977,7 +977,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   for both entering and exiting the goal, while managing repeated evaluations and specific trace conditions.
 %
 %   @arg P4   The goal or predicate to evaluate.
-%   @arg TNT  The trace name/type, used for managing trace output and ensuring proper subterm handling.
+%   @arg ReasonsToTrace  The trace name/type, used for managing trace output and ensuring proper subterm handling.
 %   @arg D1   The current depth of the evaluation.
 %   @arg Self A self-referential term passed during evaluation.
 %   @arg X    The input term for the evaluation.
@@ -988,34 +988,97 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
 
-trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
-trace_eval(P4, TNT, D1, Self, X, Y) :-
+%trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
+
+
+trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
+
+
+    must_det_ll((
+        notrace((
+            flag(eval_num, EX0, EX0 + 1),     % Increment eval_num flag.
+            TraceLen is EX0 mod 500,               % Calculate TraceLen modulo 500.
+            DR is 99 - (D1 mod 100),         % Calculate DR based on depth.
+            PrintRet = _,                    % Initialize PrintRet.
+            option_else('trace-length', MaxTraceLen, 500), % Get trace-length option.
+            option_else('trace-depth', MaxTraceDepth, 30)   % Get trace-depth option.
+        )),
+
+        TraceTooLong = _,
+
+        quietly((
+            if_t((nop(stop_rtrace), TraceLen > MaxTraceLen), (
+                set_debug(eval, false),
+                MaxP1 is MaxTraceLen + 1,
+                nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)', [MaxP1])),
+                TraceTooLong = 1,
+                nop((start_rtrace, rtrace))
+            ))
+        ))
+
+    )),
+
+    ((sub_term_safely(Why, ReasonsToTrace), ReasonsToTrace \= Why) -> true ; ReasonsToTrace = Why), % Ensure proper Why handling.
+
+    if_t(D1<0, (set_debug(deval,true))),
+
+    (\+ \+ if_trace((eval; ReasonsToTrace), (
+        PrintRet = 1,
+        if_t( TraceTooLong \== 1, indentq(DR, TraceLen, '-->', [Why, X]))
+    ))),
+
+    Ret = retval(fail),
+    !,
+
+    Display = ignore((
+        \+ \+ (
+           flag(eval_num, EX1, EX1 + 1),
+           PrintRet == 1,
+           TraceTooLong \== 1,
+           ((Ret \=@= retval(fail), nonvar(Y))
+                -> indentq(DR, EX1, '<--', [Why, Y])
+                ; indentq(DR, EX1, '<--', [Why, Ret])
+            )
+        )
+    )),
+
+    call_cleanup(
+        (call(P4, D1, Self, X, Y)
+            *-> (setarg(1, Ret, Y), one_shot(Display))
+            ;  (fail, trace, call(P4, D1, Self, X, Y))
+        ),
+        one_shot(Display)),
+
+    Ret \=@= retval(fail).
+
+
+trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
             flag(eval_num, EX0, EX0 + 1), % Increment eval_num flag.
-            EX is EX0 mod 500, % Calculate EX modulo 500.
+            TraceLen is EX0 mod 500, % Calculate TraceLen modulo 500.
             DR is 99 - (D1 mod 100), % Calculate DR based on depth.
             PrintRet = _, % Initialize PrintRet.
-            option_else('trace-length', Max, 500), % Get trace-length option.
-            option_else('trace-depth', DMax, 30) % Get trace-depth option.
+            option_else('trace-length', MaxTraceLen, 500), % Get trace-length option.
+            option_else('trace-depth', MaxTraceDepth, 30) % Get trace-depth option.
         )),
-        quietly((if_t((nop(stop_rtrace), EX > Max), (set_debug(eval, false), MaxP1 is Max + 1,
+        quietly((if_t((nop(stop_rtrace), TraceLen > MaxTraceLen), (set_debug(eval, false), MaxP1 is MaxTraceLen + 1,
          %set_debug(overflow,false),
             nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)', [MaxP1])),
             nop((start_rtrace, rtrace)))))),
         nop(notrace(no_repeats_var(NoRepeats))))),
 
-        ((sub_term_safely(TN, TNT), TNT \= TN) -> true ; TNT = TN), % Ensure proper subterm handling.
-   %if_t(DR<DMax, )
-        ( \+ \+ if_trace((eval; TNT), (PrintRet = 1,
-            indentq(DR, EX, '-->', [TN, X]))) ),
+        ((sub_term_safely(Why, ReasonsToTrace), ReasonsToTrace \= Why) -> true ; ReasonsToTrace = Why), % Ensure proper subterm handling.
+   %if_t(DR<MaxTraceDepth, )
+        ( \+ \+ if_trace((eval; ReasonsToTrace), (PrintRet = 1,
+            indentq(DR, TraceLen, '-->', [Why, X]))) ),
 
         Ret = retval(fail), !,
 
         (Display = call(((( \+ \+ (flag(eval_num, EX1, EX1 + 1),
                 ((Ret \=@= retval(fail), nonvar(Y))
-                -> indentq(DR, EX1, '<--', [TN, Y])
-                ; indentq(DR, EX1, '<--', [TN, Ret])))))))),
+                -> indentq(DR, EX1, '<--', [Why, Y])
+                ; indentq(DR, EX1, '<--', [Why, Ret])))))))),
 
         call_cleanup((
             (call(P4, D1, Self, X, Y)
@@ -1026,7 +1089,7 @@ trace_eval(P4, TNT, D1, Self, X, Y) :-
     % cleanup
         ignore((PrintRet == 1 -> (one_shot(Display)) ;
        (notrace(ignore((( % Y\=@=X,
-         if_t(DR<DMax,if_trace((eval;TN),one_shot(Display))))))))))),
+         if_t(DR<MaxTraceDepth,if_trace((eval;Why),one_shot(Display))))))))))),
         Ret \=@= retval(fail).
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
