@@ -940,7 +940,8 @@ handle_msg("textDocument/didChange", Msg, false) :-
 
 % Handle document save notifications
 handle_msg("textDocument/didSave", Msg, Resp) :-
-    _{params: _{textDocument: TextDoc}} :< Msg,
+    _{params: Params} :< Msg,
+    _{textDocument: TextDoc} :< Params,
     _{uri: Uri} :< TextDoc,
     doc_path(Uri, Path),
     read_file_to_string(Path, String, [encoding(utf8)]),
