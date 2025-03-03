@@ -100,8 +100,6 @@ lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
 :- use_module(library(http/http_json)).
 :- use_module(library(readutil)).
 
-:- use_module(library(streams), [ with_output_to/3 ]).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Handle the textDocument/codeAction Request
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
