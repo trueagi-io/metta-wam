@@ -59,26 +59,41 @@ def invert_quotes(input_str):
         return input_str
 
 
-def local_repr(value):
+def local_repr_slow(value):
     """Return a Prolog-friendly representation. Use repr() unless it's a string starting with '['."""
+    
     if isinstance(value, str):
         if value.startswith("[") and value.endswith("]"):
             return invert_quotes(value)  # Print lists directly
         return repr(value)
     if isinstance(value, list):
         return repr(value)
-    #if (value < 100000):
-    #    return repr(value)
     if (value > 100000):
         if not isinstance(value, float):
             return f"{value:_}"
     return repr(value)
-    #return f"{repr(value)}/*{type(value)}*/"  # Otherwise, use standard repr()
+
+
+def format_prolog_fact_slow(predicate, args):
+    """Formats a Prolog fact with the given predicate and arguments using local_repr."""
+    args_str = ", ".join(map(local_repr_slow, args))  # Ensure strings/lists are properly formatted
+    return f"{predicate}({args_str}).\n"
+
+
+def local_repr_fast(value):
+    """Return a Prolog-friendly representation. Use repr() unless it's a string starting with '['."""
+    if isinstance(value, str):
+        if value.startswith("[") and value.endswith("]"):
+            return invert_quotes(value)  # Print lists directly
+    return repr(value)
+
 
 def format_prolog_fact(predicate, args):
     """Formats a Prolog fact with the given predicate and arguments using local_repr."""
-    args_str = ", ".join(map(local_repr, args))  # Ensure strings/lists are properly formatted
+    args_str = ", ".join(map(local_repr_fast, args))  # Ensure strings/lists are properly formatted
     return f"{predicate}({args_str}).\n"
+
+
 
 def simplify_dtype(dtype):
     """Convert Pandas dtype to a simplified Prolog-friendly type."""
@@ -97,7 +112,7 @@ def sanitize_predicate_name(name):
     name = re.sub(r"[^a-zA-Z0-9_]", "", name)  # Remove invalid characters
     return name
 
-def compute_predicate_name(input_path, common_path, df):
+def compute_predicate_name(input_path, common_path):
     """Compute a unique Prolog predicate name based on file path, directory, and label column."""
     rel_path = os.path.relpath(input_path, start=common_path)  # Get relative path
     rel_path_parts = os.path.normpath(rel_path).split(os.sep)  # Split directories
@@ -110,15 +125,6 @@ def compute_predicate_name(input_path, common_path, df):
         part_clean = sanitize_predicate_name(part)
         if part_clean and part_clean not in predicate_name:
             predicate_name = f"{part_clean}_{predicate_name}"
-
-    # Append label value if it exists and is missing from the predicate name
-    label_column = "label" if "label" in df.columns else None
-    if label_column:
-        unique_labels = df[label_column].dropna().unique()
-        if len(unique_labels) == 1:
-            label_name = sanitize_predicate_name(unique_labels[0])
-            if label_name and label_name not in predicate_name:
-                predicate_name = f"{predicate_name}_{label_name}"
 
     return predicate_name
 
@@ -177,20 +183,20 @@ def log_column_analysis(log_file, predicate_name, input_file, total_rows, column
     analysis_intro = f"% Analysis for {input_file}"
     analysis_lines.append(analysis_intro)
 
-    source_file_fact = format_prolog_fact("analysis_source_file", [predicate_name, input_file, total_rows]).strip()
+    source_file_fact = format_prolog_fact_slow("analysis_source_file", [predicate_name, input_file, total_rows]).strip()
     analysis_lines.append(source_file_fact)
 
-    original_columns_fact = format_prolog_fact("original_columns", [predicate_name, original_columns]).strip()
+    original_columns_fact = format_prolog_fact_slow("original_columns", [predicate_name, original_columns]).strip()
     analysis_lines.append(original_columns_fact)
 
-    removed_columns_fact = format_prolog_fact("removed_columns", [predicate_name, removed_columns]).strip()
+    removed_columns_fact = format_prolog_fact_slow("removed_columns", [predicate_name, removed_columns]).strip()
     analysis_lines.append(removed_columns_fact)
 
-    final_columns_fact = format_prolog_fact("final_columns", [predicate_name, final_columns]).strip()
+    final_columns_fact = format_prolog_fact_slow("final_columns", [predicate_name, final_columns]).strip()
     analysis_lines.append(final_columns_fact)
 
     for col, num_unique, type_info, min_value, max_value in column_info:
-        column_fact = format_prolog_fact("analysis_column", [predicate_name, col, num_unique, type_info, min_value, max_value]).strip()
+        column_fact = format_prolog_fact_slow("analysis_column", [predicate_name, col, num_unique, type_info, min_value, max_value]).strip()
         analysis_lines.append(column_fact)
 
     # Return the analysis lines
@@ -213,6 +219,24 @@ def process_directory(input_directory):
 import shutil    
 def export_csv_to_prolog(input_csv, output_base_dir, log_file, common_path, clobber=False):
     print(f"\n\n\n----------------------------------------------------------------------")
+
+    # Compute Prolog predicate name
+    predicate_name = compute_predicate_name(input_csv, common_path)
+
+    # Preserve directory structure
+    relative_path = os.path.relpath(input_csv, common_path)
+    relative_dir = os.path.dirname(relative_path)
+    output_dir = os.path.join(output_base_dir, relative_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_pl = os.path.join(output_dir, os.path.splitext(os.path.basename(input_csv))[0] + "_mw.pl")
+
+    print(f"📊 Starting '{input_csv}'\n\t -> '{predicate_name}'\n\t  -> '{output_pl}'\n\n\n")
+
+    if not clobber and os.path.exists(output_pl):
+        print(f"⚠️  Skipping existing file (use --clobber to overwrite): {output_pl}")
+        return
+
     overall_start_time = time.time()
 
     # Timing file read
@@ -243,35 +267,17 @@ def export_csv_to_prolog(input_csv, output_base_dir, log_file, common_path, clob
 
     total_rows = len(df)
 
-    # Compute Prolog predicate name
-    predicate_name = compute_predicate_name(input_csv, common_path, df)
-
-    # Preserve directory structure
-    relative_path = os.path.relpath(input_csv, common_path)
-    relative_dir = os.path.dirname(relative_path)
-    output_dir = os.path.join(output_base_dir, relative_dir)
-    os.makedirs(output_dir, exist_ok=True)
-
-    output_pl = os.path.join(output_dir, os.path.splitext(os.path.basename(input_csv))[0] + ".pl")
-
-    if not clobber and os.path.exists(output_pl):
-        print(f"⚠️  Skipping existing file (use --clobber to overwrite): {output_pl}")
-        return
-
-    print(f"📊 Starting '{input_csv}'\n\t -> '{predicate_name}'\n\t  -> '{output_pl}'\n\n\n")
-
-
     # Timing log writing separately
     log_start = time.time()
 
     column_names_before = df.columns.tolist()
-    previous_schema_fact = format_prolog_fact("previous_predicate_schema", [predicate_name, f"[{', '.join(column_names_before)}]"])
+    previous_schema_fact = format_prolog_fact_slow("previous_predicate_schema", [predicate_name, f"[{', '.join(column_names_before)}]"])
 
     single_value_columns = [col for col, num_unique, *_ in column_info if num_unique == 1]
     df.drop(columns=single_value_columns, inplace=True)
 
     column_names_after = df.columns.tolist()
-    schema_fact = format_prolog_fact("predicate_schema", [predicate_name, f"[{', '.join(column_names_after)}]"])
+    schema_fact = format_prolog_fact_slow("predicate_schema", [predicate_name, f"[{', '.join(column_names_after)}]"])
 
     analysis_lines = log_column_analysis(log_file, predicate_name, input_csv, total_rows, column_info, original_columns, removed_columns, final_columns)
 
