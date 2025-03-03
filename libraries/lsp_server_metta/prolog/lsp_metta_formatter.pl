@@ -27,7 +27,7 @@
     :- include(lsp_metta_include).
 
 :- use_module(library(apply), [foldl/4]).
-:- use_module(library(dcg/basics), [string_without//2]).
+:- use_module(library(dcg/basics), [string_without//2, eol//0, eos//0]).
 :- use_module(library(lists)).
 
 :- use_module(lsp_metta_workspace, [source_file_text/2, maybe_doc_path/2]).
@@ -95,7 +95,7 @@ metta_string_content(Content, Tail0) -->
 
 text(Text) --> string_without(" \t\n()", Text), { Text \= [] }.
 
-metta_line([]) --> "\n", !.
+metta_line([]) --> eol, !.
 metta_line([white(N)|Rest]) --> whitespace(N), !, metta_line(Rest).
 metta_line([comment(Cs)|Rest]) -->
     comment(C), !, { string_codes(Cs, C) },
@@ -109,9 +109,9 @@ metta_line([atom(Text)|Rest]) -->
     text(Codes), !, { string_codes(Text, Codes) },
     metta_line(Rest).
 
+metta_lines([]) --> eos, !.
 metta_lines([Line|Lines]) -->
     metta_line(Line), !, metta_lines(Lines).
-metta_lines([]) --> [].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process parsed lines
