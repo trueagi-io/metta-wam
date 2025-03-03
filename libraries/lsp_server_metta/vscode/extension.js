@@ -104,7 +104,7 @@ function activate(context) {
     );
     // We do not spawn the process, so we rely on an externally running server.
     // We'll create serverOptions that returns a StreamInfo from a net socket.
-    serverOptions = createServerOptions_ExternalPort(address, port, outputChannel);
+    serverOptions = () => createServerOptions_ExternalPort(address, port, outputChannel);
     clientOptions = standardClientOptions(outputChannel);
   } else {
     outputChannel.appendLine(
@@ -187,11 +187,7 @@ function withSocketStreamProvider(address, port, outputChannel) {
 // If connecting to an EXTERNAL server (spawned separately),
 // define a serverOptions function returning a Promise<StreamInfo>
 function createServerOptions_ExternalPort(address, port, outputChannel) {
-  const serverOptionsFunction = () => connectSocketWithRetry(address, port, outputChannel);
-  return {
-    run: serverOptionsFunction,
-    debug: serverOptionsFunction
-  };
+  return connectSocketWithRetry(address, port, outputChannel);
 }
 
 // -----------------------------------------------------------------------------
