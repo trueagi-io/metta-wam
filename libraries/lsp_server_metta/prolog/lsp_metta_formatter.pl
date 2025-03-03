@@ -41,9 +41,12 @@ lsp_hooks:handle_msg_hook("textDocument/formatting", Msg, _{id: Id, result: Edit
     _{id: Id, params: Params} :< Msg,
     _{textDocument: _{uri: Uri}} :< Params,
     % Perform the document formatting
-    format_lisp_document(Uri, Edits, NewText),
+    format_lisp_document(Uri, Edits, NewText), !,
     maybe_doc_path(Uri, Path),
     assertz(lsp_state:full_next_text(Path, NewText)).
+lsp_hooks:handle_msg_hook("textDocument/formatting", Msg, _{id: Id, result: []}) :-
+    _{id: Id} :< Msg,
+    debug_lsp(formatting, "Failed to format file", []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Format the Lisp Document by Applying Formatting Rules
