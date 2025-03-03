@@ -30,11 +30,12 @@ function activate(context) {
   const spawnProcess = config.get("server.spawnProcess", true);
   const port = config.get("server.port", 40222);
   const address = config.get("server.address", "127.0.0.1");
+  const swiplPath = config.get("server.swiplPath", "swipl");
 
   // Define server options for stdio
   const serverOptions_stdio = {
     run: {
-      command: "swipl",
+      command: swiplPath,
       args: [
         "-g", "use_module(library(metta_lsp)).",
         "-g", "lsp_server_metta:main",
@@ -43,7 +44,7 @@ function activate(context) {
       ]
     },
     debug: {
-      command: "swipl",
+      command: swiplPath,
       args: [
         "-g", "use_module(library(syslog)).",
         "-g", "openlog(metta_lsp, [], user).",
@@ -60,7 +61,7 @@ function activate(context) {
   // Define server options for port-based with spawning
   const serverOptions_portSpawn = {
     run: {
-      command: "swipl",
+      command: swiplPath,
       args: [
         "-g", "use_module(library(metta_lsp)).",
         "-g", "lsp_server_metta:main",
@@ -69,7 +70,7 @@ function activate(context) {
       ]
     },
     debug: {
-      command: "swipl",
+      command: swiplPath,
       args: [
         "-g", "use_module(library(syslog)).",
         "-g", "openlog(metta_lsp, [], user).",
