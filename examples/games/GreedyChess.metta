@@ -356,32 +356,41 @@
 ;  Outputs a list of ( (starting piece) (destination)) if successful or Empty
 ;
 (= (random_move_empty_sq)
-  (let*
-    (
-    ; Build a list of all gold pieces on the board.
-    ;($gold_pieces (collapse (buildgold)))
-    ; Identify gold pieces under threat.
-    ($debug (println! "start"))
-    ;($gold_under_threat (collapse (checkgold)))
-    ;($debug2 (println! "end"))
+    (let*
+      (
+        ($random_moves (collapse (match &self (square $x1 $y1 g $rank)
+          (match &self (square $x2 $y2)
+              (if (== (clear_route ($x1 $y1 g $rank) ($x2 $y2)) True) 
+                  ; needs commands to move piece provisionally then undo if can be taken I think
+                  (if (== (take_dest ($x2 $y2) s) False) 
+                      (($x1 $y1 g $rank) ($x2 $y2)) 
+                      (empty))
+                  (empty))))))
+        ($move_count (size-atom $random_moves))
+        ($rand-int (random-int 1 $move_count))
+      ) 
+      ;return move
+      (nth $rand-int $random_moves)
     )
-    ( (1 7 g p) (1 6))
-  )
 )
 
+    ;open squares
+    ;clear move to open square
+    ;not take-able 
+    ;not king in check
 
-(= (decide_greedy_move) 
-    ; make sure each move search call can either 
-    ;     1) succeed and return the move, or 
-    ;     2) fail and return Empty
-    (let $random_move (random_move_empty_sq)
-      (if (not (==  $random_move Empty)) 
-        $random_move 
-
-    ; next move searches   
-    (println! "failed!") )))
-
-    ;(let $move (random_move_empty_sq) $move))
+  ;(let*
+  ;  (
+    ; Build a list of all gold pieces on the board.
+  ;  ($gold_pieces (collapse (buildgold)))
+    ; Identify gold pieces under threat.
+  ;  ($debug (println! "start"))
+    ;($gold_under_threat (collapse (checkgold)))
+    ;($debug2 (println! "end"))
+  ;  )
+  ;  ( (1 7 g p) (1 6))
+  ;)
+;)
 
 ;(= (random_move_empty_sq $A $B $C $D)  
 ;  (or 
@@ -405,6 +414,19 @@
 ;      (=< $P $L)) 
 ;    (guimessage check g s)))
 ;
+
+(= (decide_greedy_move) 
+    ; make sure each move search call can either 
+    ;     1) succeed and return the move, or 
+    ;     2) fail and return Empty
+    (let $random_move (random_move_empty_sq)
+      (if (not (==  $random_move Empty)) 
+        $random_move 
+        ; next move searches   
+        (println! "failed!") )))
+
+    ;(let $move (random_move_empty_sq) $move))
+
 ;
 ;(= (takehighestopen $A $B $C $D) (buildgold $B $E) (checkgold $E $B $F) (set-det) (piece $G) (xy_box $H #( :: ;(s $G) ) $B) (findgoldhigh $E $B $C $H) (return_entire_box $H $D $B) (move_piece $C $D $B $A) (not (take_dest ;$H s $A)) (kingnotincheck $A))
 ;
@@ -627,10 +649,10 @@
 
 ; Queen:  Either rook or bishop move works.
 (= (clear_route ($X1 $Y1 $Color q) $destination)
-      (xor (clear_route ($X1 $Y1 $Color b) $destination)
-           (clear_route ($X1 $Y1 $Color r) $destination))
+      (if (xor (clear_route ($X1 $Y1 $Color b) $destination)
+               (clear_route ($X1 $Y1 $Color r) $destination))
            True
-           False)
+           False))
 
 ; Knight: Moves in an "L" shape (2 steps in one direction, 1 step perpendicular).
 (= (clear_route ($X1 $Y1 $Color n) $destination)
@@ -738,6 +760,7 @@
       ($entire (if (== (size-atom $destination) 2) (return_entire_box ($X2 $Y2)) $destination))
       ($passing_1 ($X1 3) )
       ($entire_box_up_one  (return_entire_box $passing_1))
+
       )
     
     (if (xor 
@@ -1054,7 +1077,7 @@
     ($X1  (nth 1 $starting_square))
     ($Y1  (nth 2 $starting_square))
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
-    ($debug0 (println! $new_board2))
+    ;($debug0 (println! $new_board2))
     ;($debug1 (println! $new_board1))
     ;($debug2 (println! $new_board2))
         ) 
