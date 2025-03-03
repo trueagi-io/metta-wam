@@ -1,48 +1,41 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 
 import sys
 import argparse
-import subprocess
-import shutil
-import threading
-import time
 import os
 import pandas as pd
-import csv
+import numpy as np
+import time
+import re
 import glob
-from rdflib import Graph, plugin
-from rdflib.serializer import Serializer
-from rdflib.parser import Parser
 
-EXTENSION_TO_SERIALIZER = {
-    '.rdf': 'rdfxml',
-    '.xml': 'rdfxml',
-    '.ttl': 'turtle',
-    '.nt': 'ntriples',
-    '.n3': 'n3',
-    '.jsonld': 'jsonld',
-    '.json': 'jsonld',
-    '.nq': 'nquads',
-    '.trig': 'trig',
-    '.trix': 'trix',
-    '.hext': 'hext'
-}
+# 🚨 IMPORTANT: DO NOT REMOVE ANY FUNCTION FROM THIS SCRIPT 🚨
+# The following **20 key features** must always be retained:
+# 1️⃣ Preserve list-like values (`[ ]`).
+# 2️⃣ Save **original** column list before filtering and log it.
+# 3️⃣ Remove **columns with only one unique value** and log them separately.
+# 4️⃣ Log min/max values for each column.
+# 5️⃣ Save **final** column list after filtering and log it separately.
+# 6️⃣ Ensure mixed-type columns are treated as strings and log it.
+# 7️⃣ Process all CSV files in directories.
+# 8️⃣ Generate unique predicate names based on file paths and log them.
+# 9️⃣ Save and log Prolog facts and column metadata.
+# 🔟 Save and log output to a user-defined directory (`--tree`).
+# 1️⃣1️⃣ Track and log separate times for file reading, type analysis, and file saving.
+# 1️⃣2️⃣ Ensure `log_file` is always used.
+# 1️⃣3️⃣ Retain `export_csv_to_prolog()` for full file processing.
+# 1️⃣4️⃣ Keep `__main__` intact for CLI execution.
+# 1️⃣5️⃣ **Sort files by size before processing.**
+# 1️⃣6️⃣ **Detect and handle file read errors**.
+# 1️⃣7️⃣ **Skip empty CSV files**.
+# 1️⃣8️⃣ **Ensure non-existing directories are created**.
+# 1️⃣9️⃣ **Use `low_memory=False` in Pandas to prevent incorrect column detection**.
+# 2️⃣0️⃣ **Log original, removed, and final columns properly**.
 
-def list_formats():
-    input_formats = sorted(set(plugin.plugins(None, Parser)), key=lambda x: x.name.lower())
-    output_formats = sorted(set(plugin.plugins(None, Serializer)), key=lambda x: x.name.lower())
-
-    print("Available input formats:")
-    for fmt in input_formats:
-        print(f"  - {fmt.name}")
-
-    print("\nAvailable output formats:")
-    for fmt in output_formats:
-        print(f"  - {fmt.name}")
 
 def format_time(seconds):
     if seconds < 90:
-        return f"{seconds:.1f}s"
+        return f"{seconds:.2f}s"
     elif seconds < 3600:
         return f"{seconds / 60:.1f} min"
     else:
@@ -50,180 +43,319 @@ def format_time(seconds):
         m, s = divmod(rem, 60)
         return f"{int(h):02d}:{int(m):02d}:{int(s):02d}"
 
-def monitor_output(stop_event, output_file, input_size_mb, start_time):
-    while not stop_event.is_set():
-        if os.path.exists(output_file):
-            output_size_mb = os.path.getsize(output_file) / (1024 * 1024)
-            percent_complete = min(100, (output_size_mb / input_size_mb) * 100)
-            elapsed = time.time() - start_time
-            print(f"Elapsed: {format_time(elapsed)} | Output size: {output_size_mb:.2f} MB ({percent_complete:.1f}%)", end='\r')
-        time.sleep(2)
+def invert_quotes(input_str):
+    import ast
 
-def convert_with_rapper(input_file, output_file, input_format, output_format):
-    rapper_cmd = shutil.which('rapper')
-    if not rapper_cmd:
-        print("Error: 'rapper' tool is not installed or not found in PATH.")
-        sys.exit(1)
+    try:
+        # Parse the input string safely into a Python list
+        parsed_list = ast.literal_eval(input_str)
 
-    print("Using rapper (streaming) for conversion...")
+        # Convert the Python list to a string representation with single quotes
+        single_quote_str = str(parsed_list)
 
-    actual_output_format = 'turtle' if output_format == 'n3' else output_format
+        return single_quote_str
+    except (SyntaxError, ValueError):
+        # Return the original string if there is a syntax error
+        return input_str
 
-    cmd = [rapper_cmd, '-i', input_format, '-o', actual_output_format, input_file]
 
-    start_time = time.time()
-    stop_event = threading.Event()
-    monitor_thread = threading.Thread(target=monitor_output, args=(stop_event, output_file, os.path.getsize(input_file) / (1024 * 1024), start_time))
-    monitor_thread.start()
+def local_repr(value):
+    """Return a Prolog-friendly representation. Use repr() unless it's a string starting with '['."""
+    if isinstance(value, str):
+        if value.startswith("[") and value.endswith("]"):
+            return invert_quotes(value)  # Print lists directly
+        return repr(value)
+    if isinstance(value, list):
+        return repr(value)
+    #if (value < 100000):
+    #    return repr(value)
+    if (value > 100000):
+        if not isinstance(value, float):
+            return f"{value:_}"
+    return repr(value)
+    #return f"{repr(value)}/*{type(value)}*/"  # Otherwise, use standard repr()
 
-    with open(output_file, 'w') as out_file:
-        subprocess.run(cmd, stdout=out_file, check=True)
+def format_prolog_fact(predicate, args):
+    """Formats a Prolog fact with the given predicate and arguments using local_repr."""
+    args_str = ", ".join(map(local_repr, args))  # Ensure strings/lists are properly formatted
+    return f"{predicate}({args_str}).\n"
 
-    stop_event.set()
-    monitor_thread.join()
+def simplify_dtype(dtype):
+    """Convert Pandas dtype to a simplified Prolog-friendly type."""
+    if np.issubdtype(dtype, np.integer):
+        return "int"
+    elif np.issubdtype(dtype, np.floating):
+        return "float"
+    elif np.issubdtype(dtype, np.object_) or np.issubdtype(dtype, str):
+        return "str"
+    else:
+        return "unknown"
 
-    elapsed = time.time() - start_time
-    print(f"\nConversion completed using rapper in {format_time(elapsed)}.")
+def sanitize_predicate_name(name):
+    """Sanitize a string to make it a valid Prolog predicate name."""
+    name = name.lower().replace("-", "_").replace(" ", "_")  # Normalize dashes/spaces
+    name = re.sub(r"[^a-zA-Z0-9_]", "", name)  # Remove invalid characters
+    return name
 
-def convert_rdf(input_file, output_file, input_format=None, output_format=None, use_rapper=False):
-    input_size_mb = os.path.getsize(input_file) / (1024 * 1024)
+def compute_predicate_name(input_path, common_path, df):
+    """Compute a unique Prolog predicate name based on file path, directory, and label column."""
+    rel_path = os.path.relpath(input_path, start=common_path)  # Get relative path
+    rel_path_parts = os.path.normpath(rel_path).split(os.sep)  # Split directories
+    base_name = os.path.splitext(rel_path_parts[-1])[0]  # Get file base name
 
-    if input_format is None:
-        input_format = EXTENSION_TO_SERIALIZER.get(input_file[input_file.rfind('.'):].lower(), 'rdfxml')
+    predicate_name = sanitize_predicate_name(base_name)  # Start with sanitized base name
 
-    if output_format is None:
-        output_format = EXTENSION_TO_SERIALIZER.get(output_file[output_file.rfind('.'):].lower(), 'n3')
+    # Prepend missing directory names if not already part of base name
+    for part in reversed(rel_path_parts[:-1]):  # Ignore the file itself
+        part_clean = sanitize_predicate_name(part)
+        if part_clean and part_clean not in predicate_name:
+            predicate_name = f"{part_clean}_{predicate_name}"
 
-    print(f"Input format: {input_format}")
-    print(f"Output format: {output_format}")
+    # Append label value if it exists and is missing from the predicate name
+    label_column = "label" if "label" in df.columns else None
+    if label_column:
+        unique_labels = df[label_column].dropna().unique()
+        if len(unique_labels) == 1:
+            label_name = sanitize_predicate_name(unique_labels[0])
+            if label_name and label_name not in predicate_name:
+                predicate_name = f"{predicate_name}_{label_name}"
 
-    if use_rapper:
-        convert_with_rapper(input_file, output_file, input_format, output_format)
+    return predicate_name
+
+def analyze_columns(df):  # 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 1️⃣1️⃣
+    """Analyze columns, compute min/max values, remove redundant columns, and log results."""
+    
+    start_time = time.time()  # 1️⃣1️⃣ Start timing for type analysis
+    original_columns = df.columns.tolist()  # 2️⃣ Save original column list
+    unique_counts = df.nunique(dropna=True)
+    dtypes = df.dtypes
+
+    column_info = []
+    removed_columns = [col for col in df.columns if df[col].nunique(dropna=True) == 1]
+
+    for col in df.columns:
+        if col in removed_columns:
+            single_value = df[col].dropna().iloc[0] if not df[col].dropna().empty else None
+            type_info = type(single_value).__name__ if single_value is not None else "unknown"
+            column_info.append((col, 1, type_info, single_value, single_value))
+            continue
+
+        numeric_values = pd.to_numeric(df[col], errors="coerce")
+
+        if numeric_values.notna().all():
+            if np.all(numeric_values % 1 == 0):
+                df[col] = numeric_values.astype(int)
+                type_info = "int"
+            else:
+                df[col] = numeric_values.astype(float)
+                type_info = "float"
+            min_value, max_value = df[col].min(), df[col].max()
+        else:
+            # Cache string conversion once
+            string_values = df[col].dropna().astype(str)
+
+            if string_values.str.match(r"^\[.*\]$").any():
+                type_info = "list"
+            else:
+                type_info = "str"
+
+            min_value = string_values.min()
+            max_value = string_values.max()
+
+        column_info.append((col, unique_counts[col], type_info, min_value, max_value))
+
+
+    final_columns = [col for col in original_columns if col not in removed_columns]  # 5️⃣ Save final column list
+    elapsed_time = time.time() - start_time  # 1️⃣1️⃣ End timing for type analysis
+    return column_info, elapsed_time, original_columns, removed_columns, final_columns
+
+def log_column_analysis(log_file, predicate_name, input_file, total_rows, column_info, original_columns, removed_columns, final_columns):
+    """Writes column analysis as Prolog facts to the log file, prints to the console, and returns the complete analysis as a string."""
+
+    analysis_lines = []
+
+    analysis_intro = f"% Analysis for {input_file}"
+    analysis_lines.append(analysis_intro)
+
+    source_file_fact = format_prolog_fact("analysis_source_file", [predicate_name, input_file, total_rows]).strip()
+    analysis_lines.append(source_file_fact)
+
+    original_columns_fact = format_prolog_fact("original_columns", [predicate_name, original_columns]).strip()
+    analysis_lines.append(original_columns_fact)
+
+    removed_columns_fact = format_prolog_fact("removed_columns", [predicate_name, removed_columns]).strip()
+    analysis_lines.append(removed_columns_fact)
+
+    final_columns_fact = format_prolog_fact("final_columns", [predicate_name, final_columns]).strip()
+    analysis_lines.append(final_columns_fact)
+
+    for col, num_unique, type_info, min_value, max_value in column_info:
+        column_fact = format_prolog_fact("analysis_column", [predicate_name, col, num_unique, type_info, min_value, max_value]).strip()
+        analysis_lines.append(column_fact)
+
+    # Return the analysis lines
+    return analysis_lines
+
+
+def process_directory(input_directory):
+    """Recursively find all CSV files in the directory and sort them by size."""
+    csv_files = []
+    for root, _, files in os.walk(input_directory):
+        for file in files:
+            if file.endswith(".csv"):
+                full_path = os.path.join(root, file)
+                csv_files.append(full_path)
+
+    # Sort CSV files by size (smallest first)
+    csv_files.sort(key=os.path.getsize)
+    return csv_files
+    
+import shutil    
+def export_csv_to_prolog(input_csv, output_base_dir, log_file, common_path, clobber=False):
+    print(f"\n\n\n----------------------------------------------------------------------")
+    overall_start_time = time.time()
+
+    # Timing file read
+    read_start = time.time()
+    try:
+        df = pd.read_csv(
+            input_csv,
+            sep="|",
+            on_bad_lines="warn",
+            encoding="utf-8",
+            dtype=str,
+            low_memory=False
+        )
+    except Exception as e:
+        print(f"⚠️  Skipping file '{input_csv}' due to read error: {e}")
         return
 
-    g = Graph()
-    start_time = time.time()
+    read_time = time.time() - read_start
 
-    print("Parsing...")
-    g.parse(input_file, format=input_format)
-    print("Serializing...")
-    g.serialize(destination=output_file, format=output_format)
+    if df.empty:
+        print(f"⚠️  Skipping empty file: {input_csv}")
+        return
 
-    elapsed = time.time() - start_time
-    output_size_mb = os.path.getsize(output_file) / (1024 * 1024)
+    # Timing column analysis
+    analysis_start = time.time()
+    column_info, analysis_elapsed, original_columns, removed_columns, final_columns = analyze_columns(df)
+    analysis_time = time.time() - analysis_start
 
-    print(f"Conversion completed in {format_time(elapsed)}.")
-    print(f"Input file size: {input_size_mb:.2f} MB")
-    print(f"Output file size: {output_size_mb:.2f} MB")
+    total_rows = len(df)
 
-def export_csv_stream(input_csv, output_csv, delimiter='|', output_delimiter='|'):
-    with open(input_csv, 'r', newline='', encoding='utf-8') as infile, \
-         open(output_csv, 'w', newline='', encoding='utf-8') as outfile:
-        reader = csv.reader(infile, delimiter=delimiter)
-        writer = csv.writer(outfile, delimiter=output_delimiter)
-        for row in reader:
-            writer.writerow(row)
-    print(f"Exported CSV to '{output_csv}' via streaming.")
+    # Compute Prolog predicate name
+    predicate_name = compute_predicate_name(input_csv, common_path, df)
 
-def export_csv_without_repeats(input_csv, output_csv, delimiter='|', output_delimiter='|'):
-    df = pd.read_csv(input_csv, delimiter=delimiter, header=None)
-    header_row = df.iloc[0]
-    data_row = df.iloc[1]
+    # Preserve directory structure
+    relative_path = os.path.relpath(input_csv, common_path)
+    relative_dir = os.path.dirname(relative_path)
+    output_dir = os.path.join(output_base_dir, relative_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
-    if not header_row.equals(data_row):
-        df.columns = header_row
-        df = df[1:]
+    output_pl = os.path.join(output_dir, os.path.splitext(os.path.basename(input_csv))[0] + ".pl")
 
-    repeated_columns = [col for col in df.columns if df[col].nunique() == 1]
-    if repeated_columns:
-        print(f"Omitting columns with repeated values: {', '.join(repeated_columns)}")
-    df.drop(columns=repeated_columns, inplace=True)
-    df.to_csv(output_csv, index=False, sep=output_delimiter)
-    print(f"Exported cleaned CSV to '{output_csv}'.")
+    if not clobber and os.path.exists(output_pl):
+        print(f"⚠️  Skipping existing file (use --clobber to overwrite): {output_pl}")
+        return
+
+    print(f"📊 Starting '{input_csv}'\n\t -> '{predicate_name}'\n\t  -> '{output_pl}'\n\n\n")
+
+
+    # Timing log writing separately
+    log_start = time.time()
+
+    column_names_before = df.columns.tolist()
+    previous_schema_fact = format_prolog_fact("previous_predicate_schema", [predicate_name, f"[{', '.join(column_names_before)}]"])
+
+    single_value_columns = [col for col, num_unique, *_ in column_info if num_unique == 1]
+    df.drop(columns=single_value_columns, inplace=True)
+
+    column_names_after = df.columns.tolist()
+    schema_fact = format_prolog_fact("predicate_schema", [predicate_name, f"[{', '.join(column_names_after)}]"])
+
+    analysis_lines = log_column_analysis(log_file, predicate_name, input_csv, total_rows, column_info, original_columns, removed_columns, final_columns)
+
+    with open(log_file, "a", encoding="utf-8") as log:
+        log.write(previous_schema_fact)
+        # Join the lines into a single string block
+        log.write("\n".join(analysis_lines) + "\n")
+        log.write(schema_fact)
+
+    print(f"Column heuristics logged in '{log_file}'.")
+
+    log_time = time.time() - log_start
+
+
+    print(f"% {previous_schema_fact}")
+    print("\n% ".join(analysis_lines)+"\n")
+    print(f"% {schema_fact}")
+
+
+    # Timing Prolog file saving (excluding logging)
+    save_start = time.time()
+
+    total_rowsM1 = total_rows - 1
+    tmp_output = output_pl + ".tmp"
+
+    with open(tmp_output, "w", encoding="utf-8") as pl_file:
+        pl_file.write(f"% {previous_schema_fact}\n")
+        pl_file.write("/*" + "\n".join(analysis_lines) + "*/\n")
+        pl_file.write(f"% {schema_fact}\n")
+
+        for i, (_, row) in enumerate(df.iterrows()):
+            fact = format_prolog_fact(predicate_name, row.tolist())
+            pl_file.write(fact)
+            if i < 3 or i == total_rowsM1:
+                print(fact.strip())
+            elif i == 3:
+                print(f"...{(total_rows - 4):_} more...")
+
+    # Atomically move temporary file to final destination
+    shutil.move(tmp_output, output_pl)
+
+    save_time = time.time() - save_start
+
+
+    total_time = time.time() - overall_start_time
+
+    # Detailed Timing Statistics
+    print("\n📊 Detailed Timing Statistics:")
+    print(f"- File Reading Time:\t {format_time(read_time)}")
+    print(f"- Column Analysis Time:\t {format_time(analysis_time)}")
+    print(f"- Drop+Log Time:\t {format_time(log_time)}")
+    print(f"- Output Saving Time:\t {format_time(save_time)}")
+    print(f"- Total Processing Time:\t {format_time(total_time)}\n")
+
+    print(f"✅ Processed '{input_csv}' -> '{output_pl}'")
+    print(f"📄 Exported Prolog facts to '{output_pl}' (Columns omitted: {len(single_value_columns)})")
+
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-            description='Convert RDF or CSV files, supporting wildcards, structured outputs, and CSV cleaning.',
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-    epilog='''Examples:
-
-  Single file conversion:
-    rdf-convert.py input.rdf output.ttl
-
-  Using specific formats:
-    rdf-convert.py input.jsonld output.xml --input-format jsonld --output-format rdfxml
-
-  Wildcard batch conversion (Preserving directory structure):  
-    rdf-convert.py 'data/**/*.rdf' _output.n3
-
-  The same but don't omit existing files:
-    rdf-convert.py 'data/**/*.rdf' _output.n3 --clobber
-
-  Prepend a directory name:
-    rdf-convert.py 'data/**/*.rdf' _as_turtle.ttl --tree converted_files/
-
-  All files just one level below data:
-    rdf-convert.py 'data/*.rdf' _output.n3
-
-  Listing available formats:
-    rdf-convert.py --formats
-
-  CSV file cleaning (omit columns with repeated values):
-    rdf-convert.py 'data/**/*.csv' _cleaned.csv --clean --tree /tmp/cleaned_files/
-'''
-)
-
-    parser.add_argument('input_file', help='Input file path or glob pattern.')
-    parser.add_argument('output_suffix', help='Output file path or suffix.')
-    parser.add_argument('--tree', type=str, help='Output base directory (preserves input structure).')
-    parser.add_argument('--clobber', action='store_true', help='Overwrite existing files.')
-    parser.add_argument('--input-format', type=str, help='Specify input format explicitly.')
-    parser.add_argument('--output-format', type=str, help='Specify output format explicitly.')
-    parser.add_argument('--clean', action='store_true', help='Omit columns with repeated values in CSV files.')
-    parser.add_argument('--rapper', action='store_true', help='Use rapper for streaming RDF conversion.')
-    parser.add_argument('--csv', action='store_true', help='Process CSV files.')
+    parser = argparse.ArgumentParser(description="Convert CSV files in a directory to Prolog facts.")
+    parser.add_argument("input_path", help="Input directory or CSV file.")
+    parser.add_argument("--tree", help="Output base directory.")
+    parser.add_argument("--clobber", action="store_true", help="Overwrite existing files.")
 
     args = parser.parse_args()
 
-    if args.formats:
-        list_formats()
-        sys.exit()
+    if os.path.isdir(args.input_path):
+        input_files = sorted(
+            glob.glob(os.path.join(args.input_path, "**", "*.csv"), recursive=True),
+            key=os.path.getsize  # 1️⃣5️⃣ Sort files by size before processing
+        )
+        common_path = args.input_path
+    else:
+        input_files = [args.input_path]
+        common_path = os.path.dirname(args.input_path)
 
-     if not args.input_file or not args.output_suffix:
-            parser.print_help()
-            sys.exit(1)
-    input_files = glob.glob(args.input_file, recursive=True)
-    if not input_files:
-        print(f"No files matched the pattern: {args.input_file}")
-        sys.exit(1)
+    output_dir = args.tree if args.tree else common_path
+    os.makedirs(output_dir, exist_ok=True)  #  1️⃣8️⃣ Ensure directory exists
 
+    log_file = os.path.join(output_dir, "column_analysis_log.pl")
+    if args.clobber and os.path.exists(log_file):
+        os.remove(log_file)
 
-    common_path = os.path.commonpath(input_files)
+    for input_csv in input_files:
+        export_csv_to_prolog(input_csv, output_dir, log_file, common_path, args.clobber)
 
-    for input_path in input_files:
-        rel_path = os.path.relpath(input_path, start=common_path)
-        base_name, input_ext = os.path.splitext(rel_path)
-
-        output_path = os.path.join(args.tree, base_name) if args.tree else base_name
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        if not args.clobber and os.path.exists(output_path):
-            print(f"Skipping existing file '{output_path}' (use --clobber to overwrite).")
-            continue
-
-        print(f"\nProcessing '{input_path}' ? '{output_path}'")
-    
-        if args.csv or input_path.lower().endswith('.csv'):
-            if args.clean:
-                export_csv_without_repeats(input_path, output_path)
-            else:
-                export_csv_stream(input_path, output_path)
-
-        else:
-            convert_rdf(
-                input_file=input_path, 
-                output_file=output_path,
-                input_format=args.input_format,
-                output_format=args.output_format,
-                use_rapper=args.rapper
-            )
