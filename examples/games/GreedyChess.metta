@@ -1054,7 +1054,7 @@
     ($X1  (nth 1 $starting_square))
     ($Y1  (nth 2 $starting_square))
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
-    ($debug0 (println! $current_board))
+    ($debug0 (println! $new_board2))
     ;($debug1 (println! $new_board1))
     ;($debug2 (println! $new_board2))
         ) 
