@@ -162,7 +162,7 @@
             "stdio",
             "port"
           ],
-          "default": "stdio",
+          "default": "port",
           "description": "Determines how the LSP server is launched: using standard I/O (stdio) or a TCP port."
         },
         "metta-lsp.server.spawnProcess": {
