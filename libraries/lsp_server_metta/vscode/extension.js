@@ -32,6 +32,15 @@ function activate(context) {
   const port = config.get("server.port", 40222);
   const address = config.get("server.address", "127.0.0.1");
   const swiplPath = config.get("server.swiplPath", "swipl");
+  const debugLsp = config.get("server.debugLsp", false);
+  const mettalogPath = config.get("server.mettalogPath", "");
+
+  const loadLspSrc = debugLsp && mettalogPath !== '';
+  const lspSrcPath = mettalogPath + "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl";
+  const env = process.env;
+  const envAdditions = {"METTALOG_DIR": "/Users/james/Work/metta/metta-wam",
+                        "SWIPL_PACK_PATH": "/Users/james/Work/metta/metta-wam/libraries"};
+  Object.keys(envAdditions).forEach(key => env[key] = envAdditions[key]);
 
   // Define server options for stdio
   const serverOptions_stdio = {
@@ -58,6 +67,14 @@ function activate(context) {
       ]
     }
   };
+  if (loadLspSrc) {
+    serverOptions_stdio.run.args[0] = "-l";
+    serverOptions_stdio.run.args[1] = lspSrcPath;
+    serverOptions_stdio.debug.args[4] = "-l";
+    serverOptions_stdio.debug.args[5] = lspSrcPath;
+    serverOptions_stdio.run.options = {cwd: mettalogPath, env: env};
+    serverOptions_stdio.debug.options = {cwd: mettalogPath, env: env};
+  }
 
   // Define server options for port-based with spawning
   const serverOptions_portSpawn = {
@@ -88,6 +105,15 @@ function activate(context) {
       ]
     }
   };
+  if (loadLspSrc) {
+    serverOptions_portSpawn.run.args[0] = "-l";
+    serverOptions_portSpawn.run.args[1] = lspSrcPath;
+    serverOptions_portSpawn.debug.args[8] = "-l";
+    serverOptions_portSpawn.debug.args[9] = lspSrcPath;
+    serverOptions_portSpawn.run.options = {cwd: mettalogPath, env: env};
+    serverOptions_portSpawn.debug.options = {cwd: mettalogPath, env: env};
+  }
+
 
   // Decide serverOptions + clientOptions based on mode
   let serverOptions;
@@ -271,7 +297,10 @@ function showMettaLSPSettings(outputChannel) {
     "server.mode",
     "server.spawnProcess",
     "server.port",
-    "server.address"
+    "server.address",
+    "server.swiplPath",
+    "server.debugLsp",
+    "server.mettalogPath"
   ];
 
   outputChannel.appendLine("-------------------------------------------");
@@ -287,4 +316,3 @@ module.exports = {
   activate,
   deactivate
 };
-
