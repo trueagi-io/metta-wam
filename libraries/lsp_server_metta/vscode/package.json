@@ -188,6 +188,18 @@
           "type": "string",
           "default": "swipl",
           "description": "Path to swipl binary to run"
+        },
+        "metta-lsp.server.debugLsp": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "When true, load the LSP from `mettalogPath` instead of the installed pack."
+        },
+        "metta-lsp.server.mettalogPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Path to Mettalog installation. Used when 'debugLsp' is true."
         }
       }
     },
