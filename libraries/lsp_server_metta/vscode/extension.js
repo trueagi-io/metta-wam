@@ -8,7 +8,8 @@ const {
   RevealOutputChannelOn,
   Trace,
   StreamMessageReader,
-  StreamMessageWriter
+  StreamMessageWriter,
+  TransportKind
 } = require('vscode-languageclient/node');
 
 let client;
@@ -61,15 +62,18 @@ function activate(context) {
   // Define server options for port-based with spawning
   const serverOptions_portSpawn = {
     run: {
+      transport: {kind: TransportKind.socket, port: port},
       command: swiplPath,
       args: [
         "-g", "use_module(library(lsp_server_metta)).",
         "-g", "lsp_server_metta:main",
         "-t", "halt",
-        "--", "port", port.toString()
+        "--"
+        // setting transport above automatically appends "--socket=$port"
       ]
     },
     debug: {
+      transport: {kind: TransportKind.socket, port: port},
       command: swiplPath,
       args: [
         "-g", "use_module(library(syslog)).",
@@ -79,7 +83,8 @@ function activate(context) {
         "-g", "use_module(library(lsp_server_metta)).",
         "-g", "lsp_server_metta:main",
         "-t", "halt",
-        "--", "port", port.toString()
+        "--"
+        // setting transport above automatically appends "--socket=$port"
       ]
     }
   };
