@@ -1,9 +1,68 @@
 ﻿
+
+
+```no-wrap
+
+86 ?- time(findall(X,sample_query(X),L)),length(L,R).
+% 3,492,804 inferences, 0.165 CPU in 0.165 seconds (100% CPU, 21213366 Lips)
+L = [[chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-194441'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-428359'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-429914'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-450531'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72086'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72203'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72306'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72312'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-75067'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-75072'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-927802'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-9836573'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-194441'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-428359'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-429914'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-450531'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72086'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72203'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72306'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72312'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-75067'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-75072'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-927802'], [chr3_185821121_185821180_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-9836573'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-194441'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-428359'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-429914'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-450531'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72086'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72203'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72306'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-72312'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-75067'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-75072'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-927802'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185821121_185821180_grch38, 'r-hsa-8953854', 'r-hsa-9836573'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-194441'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-428359'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-429914'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-450531'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72086'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72203'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72306'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-72312'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-75067'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-75072'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-927802'], [chr3_185825028_185825087_grch38, ensg00000073792, chr3_185825028_185825087_grch38, 'r-hsa-8953854', 'r-hsa-9836573'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-1222556'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-166658'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-168643'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-168898'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-168928'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249', 'r-hsa-1834949'], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38, 'r-hsa-168249'|...], [chr6_159969036_159969095_grch38, ensg00000197081, chr6_159969036_159969095_grch38|...], [chr6_159969036_159969095_grch38, ensg00000197081|...], [chr6_159969036_159969095_grch38|...], [...|...]|...],
+R = 7547.
+
+87 ?- listing(sample_query).
+sample_query([Promoter, Gene, Enhancer, Pathway, ChildPathway]) :-
+    neo(Gene, gene_name, fnL(atom_contains, _, "IGF2")),
+    neo(Promoter, associated_with, Gene),
+    neo(Enhancer, associated_with, Gene),
+    neo(Gene, genes_pathways, Pathway),
+    neo(ChildPathway, child_pathway_of, Pathway).
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```no-wrap
+time python ./metta_python_convert.py neo4j_out_v3/ --tree neo4j_out_v3_mw/
+find neo4j_out_v3_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
+    qlf_file="${file%.pl}.qlf";
+    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
+        echo "Compiling: $file";
+        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
+    fi
+done
+```
+
+```no-wrap
+time python ./metta_python_convert.py neo4j_out_v4/ --tree neo4j_out_v4_mw/
+find neo4j_out_v4_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
+    qlf_file="${file%.pl}.qlf";
+    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
+        echo "Compiling: $file";
+        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
+    fi
+done
+```
+
+```no-wrap
+
+```
+
+```no-wrap
 root@HOSTAGE:~/metta-wam/libraries/bioAS# ./prepare.sh neo4j_out_v3.rdf 100M
 ./prepare.sh2: line 1: #!/bin/bash: No such file or directory
 🚀 Splitting 'neo4j_out_v3.rdf' (~25 GB) into ~100M chunks in 'neo4j_out_v3_split_rdf/'...
 🎉 Total files created: 258 in 3m 51s.4j_out_v3_part_000258.rdf 🦅 (elapsed: 3m 51s)                       ✅
+```
 
+```no-wrap
 
 root@HOSTAGE:~/metta-wam/libraries/bioAS# swipl -l gene_queries1.pl
 \U0001F680 Mounting persistence at datastore_neo4j_out_v3
@@ -1057,10 +1116,11 @@ Y = hash('5617e3db40e363dd9e916d1aefc81299') ;
 Y = modified(false) ;
 Y = source('file:///root/metta-wam/libraries/bioAS/neo4j_out_v3_split_rdf/neo4j_out_v3_part_000258.rdf') ;
 Y = source_last_modified(1740796112.9243655) ;
-Y = triples(440318102) ;
+Y = triples(440_318_102) ;
 Y = persistent(true).
+```
 
-
+```no-wrap
 root@HOSTAGE:~/metta-wam/libraries/bioAS# swipl -l gene_queries1.pl
 \U0001F680 Mounting persistence at datastore_neo4j_out_v3
 % Restoring 2 snapshots using 2 concurrent workers
@@ -1079,7 +1139,9 @@ For built-in help, use ?- help(Topic). or ?- apropos(Word).
     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
  132458 root      20   0   67.4g  61.3g   6540 S   0.0  48.8  69:00.65 swipl
 
-?-  rdf(X,Y,Z).
+?- rdf(X,Y,Z), rdf(X,A,B).
+
+
 X = 'neo4j://graph.individuals#13441',
 Y = 'neo4j://graph.schema#start',
 Z = literal('25120014') ;
@@ -1103,44 +1165,10 @@ Y = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
 Z = 'neo4j://graph.schema#gene' .
 
 ?-
+```
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-time python ./metta_python_convert.py neo4j_out_v3/ --tree neo4j_out_v3_mw/
-find neo4j_out_v3_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
-    qlf_file="${file%.pl}.qlf";
-    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
-        echo "Compiling: $file";
-        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
-    fi
-done
-
-
-time python ./metta_python_convert.py neo4j_out_v4/ --tree neo4j_out_v4_mw/
-find neo4j_out_v4_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
-    qlf_file="${file%.pl}.qlf";
-    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
-        echo "Compiling: $file";
-        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
-    fi
-done
