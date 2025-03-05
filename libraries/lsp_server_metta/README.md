@@ -183,3 +183,53 @@ If you want to load directly from the source:
     :server-id 'metta-lsp)))
 
 ```
+
+## Installing with Neovim
+
+It currently isn't straightforward to have an automatically started server over a TCP port with neovim.
+
+To have an automatically started server over stdio, add the following to your `~/.config/nvim/init.lua`.
+
+If you've installed the `lsp_server_metta` pack:
+
+```
+vim.api.nvim_create_autocmd(
+   'FileType', {
+      pattern = 'metta',
+      callback = function(ev)
+         vim.lsp.start({
+               name = 'metta_lsp',
+               cmd = {'swipl',
+                     '-g', 'use_module(library(lsp_server_metta)).',
+                     '-g', 'lsp_server_metta:main',
+                     '-t', 'halt',
+                     '--', 'stdio'},
+               root_dir = vim.fs.root(ev.buf, {'README.md'}),
+         })
+      end,
+})
+```
+
+To run from the `metta_wam` directory
+
+```
+vim.api.nvim_create_autocmd(
+   'FileType', {
+      pattern = 'metta',
+      callback = function(ev)
+         local mettalogDir = '/path/to/metta-wam'
+         vim.lsp.start({
+               name = 'metta_lsp',
+               cmd = { 'swipl',
+                       '-l', mettalogDir .. '/libraries/lsp_server_metta/prolog/lsp_server_metta.pl',
+                       '-g', 'lsp_server_metta:main',
+                       '-t', 'halt',
+                       '--', 'stdio' },
+               cmd_cwd = mettalogDir,
+               cmd_env = { METTALOG_DIR = mettalogDir;
+                           SWIPL_PACK_PATH = mettalogDir .. '/libraries'; },
+               root_dir = vim.fs.root(ev.buf, {'README.md'}),
+         })
+      end,
+})
+```
