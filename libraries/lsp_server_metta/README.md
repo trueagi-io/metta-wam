@@ -104,7 +104,7 @@ If you've installed the `lsp_server_metta` pack:
               (cons 'metta-mode
                     (list
                      "swipl"
-                     "-g" "use_module(library(lsp_server))."
+                     "-g" "use_module(library(lsp_server_metta))."
                      "-g" "lsp_server_metta:main"
                      "-t" "halt"
                      "--"
@@ -150,7 +150,7 @@ If you've installed the `lsp_server_metta` pack:
   :new-connection (lsp-tcp-connection (lambda (port)
                                         (list
                                          "swipl"
-                                         "-g" "use_module(library(lsp_server))."
+                                         "-g" "use_module(library(lsp_server_metta))."
                                          "-g" "lsp_server_metta:main"
                                          "-t" "halt"
                                          "--"
