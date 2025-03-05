@@ -6,6 +6,7 @@
 
 mwnv(PB) :-  numbervars(PB,0,_,[singletons(true),attvar(bind)]).
 mw_writeq(PB):- ignore( \+  ( mwnv(PB),format('~N~q.~n',[PB]))).
+mw_write_src(S):- p2m(S,X),!,write_src_wi(X), nl.
 mw_note(Note):- ignore(format(user_error,'~N% MW-NOTE: ~q. ~N',[Note])).
 %cmd_note(Cmd):- write_src_nl(time(Cmd)).
 cmd_note(Cmd):- mw_note(time(Cmd)).
@@ -231,6 +232,7 @@ link_mw_term(KB, predicate_schema(Table, List)):-
 
 neo2p(Q,A):- string(Q),atom_string(A,Q).
 neo2p(Q,A):- \+ compound(Q),!,Q=A.
+neo2p(startsWith(A),Q):- neo2p(fnL(atom_contains,Q,A),Q).
 neo2p([FnR,P,Q,A],A):- FnR==fnR,!,neo2p(fnR(P,Q,A),A).
 neo2p([FnL,P,Q,A],A):- FnL==fnL,!,neo2p(fnL(P,Q,A),A).
 neo2p(fnR(P,Q,A),A):- !, freeze(P,freeze(Q,freeze(A,call(P,Q,A)))).
@@ -239,6 +241,7 @@ neo2p(Q,A):- arg(2,Q,M),nonvar(M),neo2p(M,A),!.
 neo2p(Q,A):- arg(1,Q,M),nonvar(M),neo2p(M,A),!.
 
 neo(S,P,O):- neo2p(S,S2),neo2p(P,P2),neo2p(O,O2),neo3(S2,P2,O2).
+
 neo3(S2,P2,O2):- neo_triple(S2,P2,O2).
 neo3(S2,P2,O2):- neo_triple_l1(S2,P2,O2).
 
@@ -259,13 +262,14 @@ mw_stats('metta-triples', Total):-
   findall(Triples,(analysis_source_file(S,_,X),predicate_schema(S,Fs),length(Fs,Len), Triples is ((Len-1)*X)),Each),
   sumlist(Each,Total).
 
-    mw_stats('metta-symbols', Total):- statistics(atoms, Total).
+mw_stats('metta-symbols', Total):- statistics(atoms, Total).
 
 %mw_stats('metta-memory', Total):- statistics(memory, Total).
 
 :- cmd_note(mw_stats).
 mw_stats:-
-  forall(mw_stats(X,Y), format('~N(= ~w ~3I)~n',[X,Y])).
+  forall(mw_stats(X,Y),
+     mw_write_src(X=Y)).
 
 
 analysis_source_file(S,F,X):- mw_scheme_info(_,analysis_source_file(S,F,X)).
@@ -273,11 +277,11 @@ predicate_schema(S,F):- mw_scheme_info(_,predicate_schema(S,F)).
 analysis_column(Table, F, S, T, VL, VH):- mw_scheme_info(_, analysis_column(Table, F, S, T, VL, VH)).
 different(X,Y):- dif(X,Y).
 
-
 sample_query("1. Find Interactions of BRCA2 Gene",
     "Find all interactions involving the BRCA2 gene, including transcripts, proteins, and pathways.",
+    ['Gene', 'Transcript', 'Protein1', 'Protein2', 'Pathway'],
     [Gene, Transcript, Protein1, Protein2, Pathway]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "BRCA2")),
+    neo(Gene, gene_name, startsWith("BRCA2")),
     neo(Gene, transcribed_to, Transcript),
     neo(Transcript, translates_to, Protein1),
     neo(Protein1, interacts_with, Protein2),
@@ -285,8 +289,9 @@ sample_query("1. Find Interactions of BRCA2 Gene",
 
 sample_query("2. Find Components Associated with IGF2",
     "Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene.",
+    ['Promoter', 'Gene', 'Enhancer', 'Pathway', 'ChildPathway'],
     [Promoter, Gene, Enhancer, Pathway, ChildPathway]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF2")),
+    neo(Gene, gene_name, startsWith("IGF2")),
     neo(Promoter, associated_with, Gene),
     neo(Enhancer, associated_with, Gene),
     neo(Gene, genes_pathways, Pathway),
@@ -294,6 +299,7 @@ sample_query("2. Find Components Associated with IGF2",
 
 sample_query("3. Gene Interactions and GO Terms",
     "Find gene interactions and associated GO terms including proteins and transcripts.",
+    ['Gene', 'Transcript', 'Exon', 'Protein1', 'Protein2', 'GOTerm'],
     [Gene, Transcript, Exon, Protein1, Protein2, GOTerm]) :-
     neo(Gene, transcribed_to, Transcript),
     neo(Transcript, includes, Exon),
@@ -303,8 +309,9 @@ sample_query("3. Gene Interactions and GO Terms",
 
 sample_query("4. Interactions Involving 1433B Protein",
     "Find interactions involving 1433B protein including transcripts, exons, and GO terms.",
+    ['Gene', 'Transcript', 'Exon', 'Protein1', 'Protein2', 'GOTerm'],
     [Gene, Transcript, Exon, Protein1, Protein2, GOTerm]) :-
-    neo(Protein1, protein_name, fnL(atom_contains, _, "1433B")),
+    neo(Protein1, protein_name, startsWith("1433B")),
     neo(Gene, transcribed_to, Transcript),
     neo(Transcript, includes, Exon),
     neo(Protein1, translation_of, Transcript),
@@ -313,8 +320,9 @@ sample_query("4. Interactions Involving 1433B Protein",
 
 sample_query("5. Components Associated with IGF1",
     "Find enhancers, pathways, and transcripts associated with the IGF1 gene.",
+    ['Gene', 'Pathway', 'Enhancer', 'Transcript', 'Protein'],
     [Gene, Pathway, Enhancer, Transcript, Protein]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(Gene, genes_pathways, Pathway),
     neo(Enhancer, associated_with, Gene),
     neo(Transcript, transcribed_from, Gene),
@@ -322,8 +330,9 @@ sample_query("5. Components Associated with IGF1",
 
 sample_query("6. Pathways and Protein Interactions for IGF1",
     "Find pathways and interacting proteins for the IGF1 gene including all associated components.",
+    ['Gene', 'Pathway', 'Enhancer', 'Transcript', 'Protein1', 'Protein2'],
     [Gene, Pathway, Enhancer, Transcript, Protein1, Protein2]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(Gene, genes_pathways, Pathway),
     neo(Enhancer, associated_with, Gene),
     neo(Transcript, transcribed_from, Gene),
@@ -332,27 +341,31 @@ sample_query("6. Pathways and Protein Interactions for IGF1",
 
 sample_query("7. Transcripts and Exons for TP73-AS1",
     "Find transcripts and exons associated with the TP73-AS1 gene.",
+    ['Transcript', 'Exon', 'Gene'],
     [Transcript, Exon, Gene]) :-
     neo(Transcript, includes, Exon),
     neo(Transcript, transcribed_from, Gene),
-    neo(Gene, gene_name, fnL(atom_contains, _, "TP73-AS1")).
+    neo(Gene, gene_name, startsWith("TP73-AS1")).
 
 sample_query("8. Interactions Involving 1433S Protein",
     "Find proteins interacting with 1433S and associated GO terms.",
+    ['GOTerm', 'Protein1', 'Protein2'],
     [GOTerm, Protein1, Protein2]) :-
-    neo(Protein1, protein_name, fnL(atom_contains, _, "1433S")),
+    neo(Protein1, protein_name, startsWith("1433S")),
     neo(GOTerm, go_gene_product, Protein1),
     neo(Protein1, interacts_with, Protein2).
 
 sample_query("9. IGF1 Expression in Tissues and Transcripts",
     "Find IGF1 expression in tissues and related transcripts.",
+    ['Gene', 'Uberon', 'Transcript'],
     [Gene, Uberon, Transcript]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(Gene, expressed_in, Uberon),
     neo(Gene, transcribed_to, Transcript).
 
 sample_query("10. Transcripts and Exons on Chromosome 1",
     "Find transcripts, exons, and interacting proteins located on chromosome 1.",
+    ['Transcript', 'Exon', 'Protein1', 'Protein2'],
     [Transcript, Exon, Protein1, Protein2]) :-
     neo(Transcript, includes, Exon),
     neo(Exon, chr, "1"),
@@ -361,21 +374,24 @@ sample_query("10. Transcripts and Exons on Chromosome 1",
 
 sample_query("11. IGF1 Gene Expression in Cell Lines",
     "Find IGF1 gene expression in cell lines and related subclass relationships.",
+    ['Gene', 'CellLine1', 'CellLine2'],
     [Gene, CellLine1, CellLine2]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(Gene, expressed_in, CellLine1),
     neo(CellLine2, subclass_of, CellLine1).
 
 sample_query("12. IGF1 Gene Regulation by SNP Activity",
     "Find regulation of the IGF1 gene by SNP activity.",
+    ['SNP', 'Gene'],
     [SNP, Gene]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(SNP, activity_by_contact, Gene).
 
 sample_query("13. IGF1 Gene Interactions and Regulations",
     "Find IGF1 gene interactions, regulations, and pathways including transcripts and proteins.",
+    ['Gene', 'CellLine1', 'CellLine2', 'RegulatingGene', 'Transcript', 'Protein1', 'Protein2'],
     [Gene, CellLine1, CellLine2, RegulatingGene, Transcript, Protein1, Protein2]) :-
-    neo(Gene, gene_name, fnL(atom_contains, _, "IGF1")),
+    neo(Gene, gene_name, startsWith("IGF1")),
     neo(Gene, expressed_in, CellLine1),
     neo(CellLine2, subclass_of, CellLine1),
     neo(RegulatingGene, regulates, Gene),
@@ -384,38 +400,57 @@ sample_query("13. IGF1 Gene Interactions and Regulations",
     neo(Protein2, interacts_with, Protein1).
 
 sample_query("14. Pathway Associations for SNAP25",
-    "Locate SNAP25 in pathways with other genes, ensuring that SNAP25 and other genes are distinct.",
+    "Locate SNAP25 in pathways with other genes, including cases where the other gene may be SNAP25 itself.",
+    ['Gene1', 'Pathway', 'Gene2'],
     [Gene1, Pathway, Gene2]) :-
-    neo(Gene1, gene_name, fnL(atom_contains, _, "SNAP25")),
+    neo(Gene1, gene_name, startsWith("SNAP25")),
+    neo(Gene1, genes_pathways, Pathway),
+    neo(Gene2, genes_pathways, Pathway).
+
+sample_query("14a. Pathway Associations for SNAP25 - Distinct Genes",
+    "Locate SNAP25 in pathways with other genes, ensuring that SNAP25 and other genes are distinct.",
+    ['Gene1', 'Pathway', 'Gene2'],
+    [Gene1, Pathway, Gene2]) :-
+    neo(Gene1, gene_name, startsWith("SNAP25")),
     neo(Gene1, genes_pathways, Pathway),
     neo(Gene2, genes_pathways, Pathway),
     different(Gene1, Gene2).
 
+
 :- cmd_note(run_sample_queries).
 % Predicate to run all sample queries using the defined sample_query predicates
 run_sample_queries:-
-    forall(clause(sample_query(Name, Desc, Vars), Body),
-           run_sample_query(Name, Desc, Vars, Body)).
+    forall(clause(sample_query(Name, Desc, VNs, Vars), Body),
+           run_sample_query(Name, Desc, VNs, Vars, Body)).
+
+mw_set_varname(V,N):- ignore('$VAR'(N)=V).
 
 % Predicate to execute and print results of a single sample query with a time limit
-run_sample_query(Name, Desc, Vars, Body):-
+run_sample_query(Name, Desc, VNs, Vars, Body):- nl,nl,nl,nl,
+    write('================================================================='),
     format('~n~w~n\t~w~n', [Name, Desc]), % Prints the name and description of the query
+
+    \+ \+
+    ( maplist(mw_set_varname, Vars, VNs),
+      Result =.. [result|Vars], nl,
+      mw_write_src(match('&neo4j_out_v3',Body,Result)), nl),
+
     (   % Attempt to execute the query within a 30-second time limit
-        catch(call_with_time_limit(30, execute_query(Body, Vars)),
+        catch(call_with_time_limit(30, execute_query(Body, VNs, Vars)),
               time_limit_exceeded,
               format('Time limit exceeded for ~w~n', [Name]))
     ;   % If no more results or after handling time limit exceeded
         true
-    ).
+    ),
+    write('=================================================================').
 
 % Helper predicate to execute the query, record and print execution time and number of results
-execute_query(Body, Vars):-
+execute_query(Body, _VNs, Vars):-
     statistics(cputime, StartTime), % Start timing
     findall(Vars, call(Body), Results), % Execute the query and collect all results
     statistics(cputime, EndTime), % End timing
     TimeTaken is EndTime - StartTime, % Calculate time taken
     length(Results, Length), % Get the number of results
-    format('Execution time: ~2f seconds~n', [TimeTaken]),
-    format('Number of answers: ~D~n', [Length]).
-
+    format(' MeTTaLog Execution time: ~2f seconds~n', [TimeTaken]),
+    format(' Number of answers: ~D~n', [Length]), !.
 
