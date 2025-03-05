@@ -548,10 +548,10 @@
         ;  Identify opponent pieces that can attack.
         ($CanAttack (collapse (takingboxes $OpponentColor)))
         ; Check if any route of pieces that can attack leads to the specified square.
-        ($OpenRouteToSquare (list_clear_route $Square $CanAttack))
+        ($OpenRouteToSquare (collapse (list_clear_route $Square $CanAttack)))
         )
-        ; if the list is populated (size exceeds 0), that means the piece can be taken.
-        (if (not (== $OpenRouteToSquare () )) True False)))
+        ; if the list is populated (size exceeds 0), that means the piece can be taken, return False
+        (if (== $OpenRouteToSquare ()) False True)))
     
 (= (return_entire_box $Coordinates)
       (let*  
@@ -1270,7 +1270,7 @@
 ;
 ; Input:  $Square that might be compromised, all pieces available to attack square in question, $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
-(= (list_clear_route $Square $CanAttack)
+(= (list_clear_route_recursion $Square $CanAttack)
    (if (== (size-atom $CanAttack) 0)
        ; end of the line
        ()
@@ -1286,6 +1286,14 @@
        )
    ) 
 )
+
+(= (list_clear_route $Square $CanAttack)
+    (let*
+      (
+      ($next-sq (superpose $CanAttack))
+      ($AttackBool (clear_route $next-sq $Square))
+      )
+      (if (== $AttackBool True) $next-sq (empty))))
 
 ;
 ;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
