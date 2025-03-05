@@ -119,7 +119,9 @@ If you want to load directly from the source:
    (add-to-list 'eglot-server-programs
                 (cons 'metta-mode
                       (list
-                       "env" (concat "METTALOG_DIR=" mettalog-dir)
+                       "env"
+                       (concat "METTALOG_DIR=" mettalog-dir)
+                       (concat "SWIPL_PACK_PATH=" mettalog-dir "/libraries")
                        "swipl"
                        "-l" (concat mettalog-dir "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl")
                        "-g" "lsp_server_metta:main"
@@ -137,3 +139,47 @@ swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_met
 ```
 
 Run `C-u M-x eglot` and enter `localhost:40222` (or whatever port you started the server on).
+
+### lsp-mode
+
+If you've installed the `lsp_server_metta` pack:
+
+```
+(lsp-register-client
+ (make-lsp-client
+  :new-connection (lsp-tcp-connection (lambda (port)
+                                        (list
+                                         "swipl"
+                                         "-g" "use_module(library(lsp_server))."
+                                         "-g" "lsp_server_metta:main"
+                                         "-t" "halt"
+                                         "--"
+                                         "port" port)))
+  :major-modes '(metta-mode)
+  :activation-fn (lsp-activate-on "metta")
+  :server-id 'metta-lsp))
+```
+
+If you want to load directly from the source:
+
+```
+;; Replace this with the path to your metta-wam directory
+(let ((mettalog-dir "/path/to/metta-wam"))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-tcp-connection (lambda (port)
+                                          (list
+                                           "swipl"
+                                           "-l" (concat mettalog-dir "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl")
+                                           "-g" "lsp_server_metta:main"
+                                           "-t" "halt"
+                                           "--"
+                                           "port" port)))
+     :environment-fn (lambda ()
+                       (list ("METTALOG_DIR" . mettalog-dir)
+                             ("SWIPL_PACK_PATH". (concat mettalog-dir "/libraries"))))
+    :major-modes '(metta-mode)
+    :activation-fn (lsp-activate-on "metta")
+    :server-id 'metta-lsp)))
+
+```
