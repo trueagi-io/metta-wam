@@ -92,3 +92,48 @@ swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_met
 
 Then, go to the extension settings, uncheck `Metta-lsp › Server: Spawn Process` and make sure that `Metta-lsp › Server: Port` matches the argument used to start the server (e.g. `40222` in the example above).
 This will make VSCode connect to the running server instead of trying to start the process itself.
+
+## Installing with Emacs
+
+### Eglot
+
+If you've installed the `lsp_server_metta` pack:
+
+```
+(add-to-list 'eglot-server-programs
+              (cons 'metta-mode
+                    (list
+                     "swipl"
+                     "-g" "use_module(library(lsp_server))."
+                     "-g" "lsp_server_metta:main"
+                     "-t" "halt"
+                     "--"
+                     "port" :autoport)))
+```
+
+If you want to load directly from the source:
+
+```
+;; Replace this with the path to your metta-wam directory
+(let ((mettalog-dir "/path/to/metta-wam"))
+   (add-to-list 'eglot-server-programs
+                (cons 'metta-mode
+                      (list
+                       "env" (concat "METTALOG_DIR=" mettalog-dir)
+                       "swipl"
+                       "-l" (concat mettalog-dir "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl")
+                       "-g" "lsp_server_metta:main"
+                       "-t" "halt"
+                       "--"
+                       "port" :autoport))))
+```
+
+Note that the server can take a while to start up, so if you have issues with eglot timing out trying to connect, it may be preferable to use the below method.
+
+To connect to a running server, started like this:
+
+```
+swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
+```
+
+Run `C-u M-x eglot` and enter `localhost:40222` (or whatever port you started the server on).
