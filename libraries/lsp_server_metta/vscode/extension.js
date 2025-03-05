@@ -38,8 +38,8 @@ function activate(context) {
   const loadLspSrc = debugLsp && mettalogPath !== '';
   const lspSrcPath = mettalogPath + "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl";
   const env = process.env;
-  const envAdditions = {"METTALOG_DIR": "/Users/james/Work/metta/metta-wam",
-                        "SWIPL_PACK_PATH": "/Users/james/Work/metta/metta-wam/libraries"};
+  const envAdditions = {"METTALOG_DIR": mettalogPath,
+                        "SWIPL_PACK_PATH": mettalogPath + "/libraries"};
   Object.keys(envAdditions).forEach(key => env[key] = envAdditions[key]);
 
   // Define server options for stdio
