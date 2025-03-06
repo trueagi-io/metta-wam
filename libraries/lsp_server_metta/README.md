@@ -92,7 +92,7 @@ From the settings page, check `metta-lsp > server: Debug Lsp` to true and set `M
 
 Alternatively, you can start the LSP server yourself, by running the following command in the metta-wam directory:
 
-```
+```bash
 swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
 ```
 
@@ -105,7 +105,7 @@ This will make VSCode connect to the running server instead of trying to start t
 
 If you've installed the `lsp_server_metta` pack:
 
-```
+```emacs-lisp
 (add-to-list 'eglot-server-programs
               (cons 'metta-mode
                     (list
@@ -119,7 +119,7 @@ If you've installed the `lsp_server_metta` pack:
 
 If you want to load directly from the source:
 
-```
+```emacs-lisp
 ;; Replace this with the path to your metta-wam directory
 (let ((mettalog-dir "/path/to/metta-wam"))
    (add-to-list 'eglot-server-programs
@@ -140,7 +140,7 @@ Note that the server can take a while to start up, so if you have issues with eg
 
 To connect to a running server, started like this:
 
-```
+```bash
 swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
 ```
 
@@ -150,7 +150,7 @@ Run `C-u M-x eglot` and enter `localhost:40222` (or whatever port you started th
 
 If you've installed the `lsp_server_metta` pack:
 
-```
+```emacs-lisp
 (lsp-register-client
  (make-lsp-client
   :new-connection (lsp-tcp-connection (lambda (port)
@@ -168,7 +168,7 @@ If you've installed the `lsp_server_metta` pack:
 
 If you want to load directly from the source:
 
-```
+```emacs-lisp
 ;; Replace this with the path to your metta-wam directory
 (let ((mettalog-dir "/path/to/metta-wam"))
   (lsp-register-client
@@ -198,7 +198,7 @@ To have an automatically started server over stdio, add the following to your `~
 
 If you've installed the `lsp_server_metta` pack:
 
-```
+```lua
 vim.api.nvim_create_autocmd(
    'FileType', {
       pattern = 'metta',
@@ -218,7 +218,7 @@ vim.api.nvim_create_autocmd(
 
 To run from the `metta_wam` directory
 
-```
+```lua
 vim.api.nvim_create_autocmd(
    'FileType', {
       pattern = 'metta',
@@ -242,13 +242,13 @@ vim.api.nvim_create_autocmd(
 
 Alternatively, you can start the LSP server manually by running the following command in the metta-wam directory:
 
-```
+```bash
 swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
 ```
 
 And then configure neovim to connect to it with the below configuration, where the port argument to `vim.lsp.rpc.connect` matches that used to start the server above (40222 in this case):
 
-```
+```lua
 vim.api.nvim_create_autocmd(
    'FileType', {
       pattern = 'metta',
