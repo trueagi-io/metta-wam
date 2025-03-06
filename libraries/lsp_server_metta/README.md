@@ -233,3 +233,25 @@ vim.api.nvim_create_autocmd(
       end,
 })
 ```
+
+Alternatively, you can start the LSP server manually by running the following command in the metta-wam directory:
+
+```
+swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
+```
+
+And then configure neovim to connect to it with the below configuration, where the port argument to `vim.lsp.rpc.connect` matches that used to start the server above (40222 in this case):
+
+```
+vim.api.nvim_create_autocmd(
+   'FileType', {
+      pattern = 'metta',
+      callback = function(ev)
+         vim.lsp.start({
+               name = 'metta_lsp',
+               cmd = vim.lsp.rpc.connect('127.0.0.1', 40222),
+               root_dir = vim.fs.root(ev.buf, {'README.md'}),
+         })
+      end,
+})
+```
