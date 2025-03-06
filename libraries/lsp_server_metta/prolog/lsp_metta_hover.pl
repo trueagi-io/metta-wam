@@ -64,9 +64,8 @@ combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
 
 string_replace_each(S1,[],S1):-!.
 string_replace_each(S1,[F=R|List],S):-
-      string_replace(S1,F,R,S2),
-      string_replace(S2,F,R,S3),
- string_replace_each(S3,List,S).
+    string_replace(S1,F,R,S2),
+    string_replace_each(S2,List,S).
 
 
 into_markdown(Ans, S):- \+ is_dict(Ans), sformat(Str, '~w', [Ans]),
