@@ -292,12 +292,15 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :- fail, % (for debugging) commenti
 % Douglas' initial impl of Hover Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
+    % links currently don't actually do anything, removing until that's remedied
   in_markdown((
+                     /*
   show_checked("show_docs", "(-)", "Show Docs "),
   show_checked("show_refs", "(+)", "Show Refs "),
   show_checked("show_pdbg", "(-)", "Debug Pos "),
   show_checked("show_menu", "(+)", "Show Menu: "),
-  format("**~q**", [Target]))).
+                     */
+  format("~N**~q**~n", [Target]))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Vitaly's initial impl of Help
