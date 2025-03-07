@@ -466,14 +466,11 @@
                         (empty))))))))))))
 
 (= (takehighestopen_with_pawn)
+  ;(let $all (collapse (takehighestopen_with_pawn_rank (superpose (q r b n p))))
+  ;  (println! $all)))
+  (println! (takehighestopen_with_pawn_rank (superpose (q r b n p)))))
   ; try to capture queen
-  (let* 
-      (
-        ($ranks (match &self (rank $rank) $rank))
-        ($take (collapse (takehighestopen_with_pawn_rank $ranks)))
-      )
-      (println! $take)))
-
+  
 (= (takehighestopen_with_pawn_rank $rank)
     (let $take 
         (collapse (match &self 
