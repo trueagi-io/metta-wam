@@ -260,9 +260,9 @@ term_info_string_resolved(Path, Loc, Term, Arity, Str):-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-banner_for(Type, Target):- in_markdown(format('---~n ## ~w: ~w', [Type, Target])).
-lsp_separator :- in_markdown(format('---',[])).
 in_markdown(G) :- format("~N", []), call(G).
+banner_for(Type, Target):- in_markdown(format('***~n ## ~w: ~w', [Type, Target])).
+lsp_separator :- in_markdown(format('~N***~n',[])).
 
 show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
