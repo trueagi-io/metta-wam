@@ -62,8 +62,10 @@ string_replace_each(S1,[F=R|List],S):-
     string_replace_each(S2,List,S).
 
 
-into_markdown(Ans, S):- \+ is_dict(Ans), !, sformat(Str, '~w', [Ans]),
-  into_markdown_s(Str, S).
+into_markdown(Ans, S):-
+    \+ is_dict(Ans), !,
+    % Assume plain strings are already in markdown
+    sformat(S, '~w', [Ans]).
 into_markdown(Ans, S):-
    _{contents: _{kind: plaintext, value: Help}} :< Ans, !,
    into_markdown_s(Help, S).
