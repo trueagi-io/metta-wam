@@ -20,6 +20,8 @@ source and stuff.
 :- use_module(lsp_metta_references, [ type_expand/2 ]).
 :- use_module(lsp_metta_code_actions, [ lsp_call_metta/2 ]).
 
+:- use_module(library(pcre), [re_replace/5]).
+
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
 %  =Help= is the documentation for the term under the cursor at line
@@ -51,16 +53,8 @@ combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
   list_to_set(SS, Set),
   maplist(into_markdown, Set, Strings),
   atomics_to_string(Strings, S1),
-  string_replace_each(S1,
- ["```lisp\n\n"="```lisp\n",
-  "\\r\\n"="\r\n",
-  "```\n\n"="```\n",
-  "\n\n```"="\n```",
-  %"```lisp\n```\n```lisp\n```\n"="```lisp\n```\n",
-  "```lisp\n```\n"="\n",
-  %"```lisp\n```\n--\n```lisp\n```\n"="--\n",
-  % "\n\n\n"="\n\n",
-  "fooooo"="barrrrrr"],S), !.
+  re_replace("\\n+([*]{3}\\n)+"/g, "\n***\n", S1, S2, []),
+  re_replace("\\n{3,}"/g, "\n\n", S2, S, []).
 
 string_replace_each(S1,[],S1):-!.
 string_replace_each(S1,[F=R|List],S):-
