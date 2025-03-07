@@ -46,13 +46,12 @@
 ;*******************************************************
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
-; if index too high, returns NIL
 (= (nth $n $list) 
-  (if (> $n (size-atom $list))
-    NIL
+  ;(if (> $n (size-atom $list))
+  ;  NIL
     (if (== $n 1)
         (car-atom $list)
-        (nth (- $n 1) (cdr-atom $list))))) ; Recursion: move to the next element (cdr-atom) and decrease n.
+        (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
 
 ; Input a list and symbol, then return True if found, else False. Eg:  (contains_symbol (a b c) b) returns True.
 (= (contains_symbol $list $sym) 
@@ -143,6 +142,14 @@
 (medrank b) 
 (medrank n) 
 (lowrank p) 
+
+(rank k) 
+(rank q) 
+(rank r) 
+(rank b) 
+(rank n) 
+(rank p) 
+
 
 !(add-atom &self (game-state initializing))
 
@@ -386,6 +393,7 @@
 ; 
 (= (random_recursion_by_rank)
     (let* (
+      ($debug (println! "Trying level random move (may repeat)..."))
       ($random_level (random-int 1 4)) 
       ($ranklevel (case $random_level
                     (
@@ -412,67 +420,75 @@
         ($random_moves (random_recursion_by_rank))
         ($move_count (size-atom $random_moves))
         ($rand-int (random-int 1 $move_count))
-        ($debug (println! $random_moves))
       ) 
       ;return move
       (nth $rand-int $random_moves)
     ))
 
-    ;open squares
-    ;clear move to open square
-    ;not take-able 
-    ;not king in check
-
-  ;(let*
-  ;  (
-    ; Build a list of all gold pieces on the board.
-  ;  ($gold_pieces (collapse (buildgold)))
-    ; Identify gold pieces under threat.
-  ;  ($debug (println! "start"))
-    ;($gold_under_threat (collapse (checkgold)))
-    ;($debug2 (println! "end"))
-  ;  )
-  ;  ( (1 7 g p) (1 6))
-  ;)
-;)
-
-;(= (random_move_empty_sq $A $B $C $D)  
-;  (or 
-;    (, 
-;      (buildgold $B $E) 
-;      (checkgold $E $B $F) 
-;      (lookforempty $B $G) 
-;      (buildrandomgold $B $H) 
-;      (sort $H $I) 
-;      (findgoldmove $I $G $B $C $D) 
-;      (move_piece $C $D $B $A) 
-;      (kingnotincheck $A) 
-;      (not (take_dest $D s $A)) 
-;      (buildgold $A $J) 
-;      (checkgold $J $A $K) 
-;      (length $F $L) 
-;      (delete $K 
-;        #( :: 
-;          ($M $N g p) ) $O) 
-;      (length $O $P) 
-;      (=< $P $L)) 
-;    (guimessage check g s)))
-;
-
 (= (decide_greedy_move) 
     ; make sure each move search call can either 
     ;     1) succeed and return the move, or 
     ;     2) fail and return Empty
-    (let $random_move (random_move_empty_sq)
-      (if (not (==  $random_move Empty)) 
-        $random_move 
-        ; next move searches   
-        (println! "failed!") )))
 
-    ;(let $move (random_move_empty_sq) $move))
+    ; try to take highest open piece
+    (let $highest_open (takehighestopen_with_pawn) 
+      (if (not (== $highest_open Empty)) 
+        $highest_open
+        ; else try random move
+        (let $random_move (random_move_empty_sq)
+          (if (not (==  $random_move Empty)) 
+            $random_move 
+            (empty))))))
 
 ;
-;(= (takehighestopen $A $B $C $D) (buildgold $B $E) (checkgold $E $B $F) (set-det) (piece $G) (xy_box $H #( :: ;(s $G) ) $B) (findgoldhigh $E $B $C $H) (return_entire_box $H $D $B) (move_piece $C $D $B $A) (not (take_dest ;$H s $A)) (kingnotincheck $A))
+(= (takehighestopen_with_pawn_test)
+  ; try to capture queen
+  (let $take1 (takehighestopen_with_pawn_rank q)
+      (if (not (== $take1 Empty))
+        $take1
+        ; else try to capture rook
+        (let $take2 (takehighestopen_with_pawn_rank r) 
+          (if (not (== $take2 Empty))
+            $take2
+            ; else try to capture bishop
+            (let $take3 (takehighestopen_with_pawn_rank b) 
+              (if (not (== $take3 Empty))
+                $take3
+                ; else try to capture knight
+                (let $take4 (takehighestopen_with_pawn_rank n) 
+                  (if (not (== $take4 Empty))
+                    $take4
+                    ; else try to capture pawn
+                    (let $take5 (takehighestopen_with_pawn_rank p) 
+                      (if (not (== $take5 Empty))
+                        $take5
+                        ; otherwise give up
+                        (empty))))))))))))
+
+(= (takehighestopen_with_pawn)
+  ; try to capture queen
+  (let* 
+      (
+        ($ranks (match &self (rank $rank) $rank))
+        ($take (collapse (takehighestopen_with_pawn_rank $ranks)))
+      )
+      (println! $take)))
+
+(= (takehighestopen_with_pawn_rank $rank)
+    (let $take 
+        (collapse (match &self 
+              (,
+             (square $x2 $y2 s $rank)
+             (square $x1 $y1 g p) 
+              )
+                ; the gold pawn always has a clear route to capture if moving southwest or southeast.
+                (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
+                  (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
+                  (empty)))) 
+        (if (not (== $take () )) ; !! collapse will return () not Empty if nothing found
+          ; this should be randomized
+          (car-atom $take)
+          (empty))))
 ;
 ;
 ;(= (takehighestopenpawn $A $B $C $D) (returnrandominteger $E 3) (set-det) (or (== $E 1) (== $E 2)) (buildgold ;$B $F) (checkgold $F $B $G) (set-det) (piece $H) (\= $H p) (xy_box $I #( :: (s $H) ) $B) (findgoldhigh $F $B #;( :: ($J $K g p) ) $I) (= $C  
@@ -1335,7 +1351,7 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 6 s q) (2 6 s r) (3 6 s b) (4 6 s n) (5 6 s p) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
@@ -1464,6 +1480,7 @@
 
 
           (let $move (decide_greedy_move) () )
+          ; NEED TO HANDLE EMPTY IF NO MOVE IS POSSIBLE HERE, USE IF STATEMENT
           (let $start (nth 1 $move) ())
           (let $destination (nth 2 $move) ())
 
