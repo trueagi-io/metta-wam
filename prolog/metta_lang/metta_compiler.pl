@@ -932,7 +932,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    get_curried_name_structure(Convert,Fn,Args,LenArgs),
    fullvar(Fn),
    sum_list(LenArgs,LenArgsTotal),
-   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
+   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call|_]])),!,
    ResultLazy=x(noeval,eager,[]),
    length(UpToDateArgsLazy, LenArgsTotal),
    maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
@@ -945,6 +945,23 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    create_mc_name(LenArgs,'',Prefix),
    append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
    assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
+
+%-f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
+%-   Convert=[Fn|Args],
+%-   fullvar(Fn),
+%-   var_prop_lookup(Fn,LazyVars,x(_,_,[[predicate_call]])),!,
+%-   length(Args,LenArgs),
+%-   ResultLazy=x(noeval,eager,[]),
+%-   length(UpToDateArgsLazy, LenArgs),
+%-   maplist(=(x(noeval,eager,[])), UpToDateArgsLazy),
+%-   EvalArgs=UpToDateArgsLazy,
+%-   maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Args, ConvertedParts, ConvertedNParts),
+%-   maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
+%-   append(Converteds,Converteds2),
+%-   append(RetResults,[RetResult],RetResults2),
+%-   atomic_list_concat(['mc_',LenArgs,'__'],Prefix),
+%-   append(Converteds2,[[native(atom_concat),Prefix,Fn,Fn2],[native(apply),Fn2,RetResults2]],Converted),
+%-   assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN).
 
 f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Converted, ConvertedN) :- HeadIs\==Convert,
     Convert=[Fn|_], \+ atom(Fn),
