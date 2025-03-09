@@ -119,6 +119,12 @@ start([port, Port]) :- !,
     debug_lsp(main, "Starting socket client on port ~w", [Port]),
     atom_number(Port, PortN),
     socket_server(PortN).
+start([VsCodeSocketEquals]) :-
+    atom_concat('--socket=', PortNumberAtom, VsCodeSocketEquals),
+    atom_number(PortNumberAtom, PortN), !,
+    working_directory(Here, Here),
+    debug_lsp(main, "Connecting to VSCode Socket on port ~w from ~w", [PortN, Here]),
+    socket_client(PortN).
 start(Args) :-
     debug_lsp(main, "Unknown args ~w", [Args]),
     stdio_server.
@@ -161,6 +167,15 @@ dispatch_socket_client(AcceptFd) :-
         time_limit_exceeded,
         true),
     ( shutdown_request_recieved -> true ; dispatch_socket_client(AcceptFd) ).
+
+socket_client(Port) :-
+    setup_call_cleanup(
+        tcp_connect(localhost:Port, StreamPair, []),
+        ( configure_client_streams(StreamPair),
+          stream_pair(StreamPair, In, Out),
+          client_handler(A-A, In, Out)
+        ),
+        close(StreamPair)).
 
 process_client(Socket, Peer) :-
     setup_call_cleanup(

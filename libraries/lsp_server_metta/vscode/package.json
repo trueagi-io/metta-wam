@@ -5,7 +5,7 @@
   "author": "Roy Ward",
   "license": "LGPL-3.0",
   "publisher": "RoyWard",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "categories": [
     "Other"
   ],
@@ -162,7 +162,7 @@
             "stdio",
             "port"
           ],
-          "default": "stdio",
+          "default": "port",
           "description": "Determines how the LSP server is launched: using standard I/O (stdio) or a TCP port."
         },
         "metta-lsp.server.spawnProcess": {
@@ -182,6 +182,24 @@
           "type": "string",
           "default": "127.0.0.1",
           "description": "If using 'port' mode with spawnProcess=false, the hostname or IP address to connect to. Defaults to localhost (127.0.0.1)."
+        },
+        "metta-lsp.server.swiplPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "swipl",
+          "description": "Path to swipl binary to run"
+        },
+        "metta-lsp.server.debugLsp": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "When true, load the LSP from `mettalogPath` instead of the installed pack."
+        },
+        "metta-lsp.server.mettalogPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Path to Mettalog installation. Used when 'debugLsp' is true."
         }
       }
     },
