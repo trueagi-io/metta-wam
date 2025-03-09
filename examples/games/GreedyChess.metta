@@ -337,7 +337,7 @@
 ; Output: a list of ( (starting piece) (destination)) if successful or Empty
 ;         So, we just output the input if the move is good
 ; Updates: Atomspace "square" atoms which are temporarily moved around for envisioning the move.
-(= (try_move_and_verify $x1 $y1 g $rank   $x2 $y2)
+(= (try_move_and_verify ($x1 $y1 g $rank)   ($x2 $y2))
   (let*
     (
     ($start ($x1 $y1 g $rank))
@@ -362,38 +362,40 @@
             ; exit with Empty if AI king can be taken reversing move in atomspace
             (let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (empty))
             ; if we make it this far the move is good -- return the input.
-            (($x1 $y1 g $rank) ($x2 $y2)))
+            ; still need to reverse move in atomspace since we are testing a lot of moves at once!
+            (let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (($x1 $y1 g $rank) ($x2 $y2))))
       )
     )
   )
 )
 
 ; Input rank level
-; Return moves lisst or Empty
+; Return moves list or Empty
 (= (find_by_rank_move_empty_sq $ranklevel)
-    (collapse 
-            (match &self ($ranklevel $rank)
-              (match &self (square $x1 $y1 g $rank)
-                (match &self (square $x2 $y2)
-                  (if (== (clear_route ($x1 $y1 g $rank) ($x2 $y2)) True) 
-                      (try_move_and_verify $x1 $y1 g $rank   $x2 $y2)
-                      (empty)))))))
+        (match &self 
+              (,
+             ($ranklevel $rank)
+             (square $x1 $y1 g $rank)
+             (square $x2 $y2)
+              )
+                (if (== (clear_route ($x1 $y1 g $rank) ($x2 $y2)) True) 
+                  (try_move_and_verify ($x1 $y1 g $rank) ($x2 $y2))
+                  (empty)))) 
 
 ; (random_recursion_by_rank)
 ; 
 (= (random_recursion_by_rank)
     (let* (
-      ($random_level (random-int 1 5)) 
+      ($random_level (random-int 1 4)) 
       ($ranklevel (case $random_level
                     (
                     (1 lowrank)
                     (2 medrank)
-                    (3 medrank)
-                    (4 highrank)
-                    (5 highestrank)
+                    (3 highrank)
+                    (4 highestrank)
                     ($_ (empty))
                     )))
-      ($somemoves   (find_by_rank_move_empty_sq $ranklevel))
+      ($somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel)))
         )
       (if (== $somemoves ())
         (random_recursion_by_rank)
@@ -410,6 +412,7 @@
         ($random_moves (random_recursion_by_rank))
         ($move_count (size-atom $random_moves))
         ($rand-int (random-int 1 $move_count))
+        ($debug (println! $random_moves))
       ) 
       ;return move
       (nth $rand-int $random_moves)
@@ -548,12 +551,19 @@
         ;  Identify opponent pieces that can attack.
         ($CanAttack (collapse (takingboxes $OpponentColor)))
         ; Check if any route of pieces that can attack leads to the specified square.
-        ($OpenRouteToSquare (list_clear_route $Square $CanAttack))
+        ($OpenRouteToSquare (collapse (list_clear_route $Square $CanAttack)))
         )
-        ; if the list is populated (size exceeds 0), that means the piece can be taken.
-        (if (not (== $OpenRouteToSquare () )) True False)))
-    
-(= (return_entire_box $Coordinates)
+        ; if the list is populated (size exceeds 0), that means the piece can be taken, return False
+        (if (== $OpenRouteToSquare ()) False True)))
+
+;   Retrieve the full details of a square on the board based on its coordinates
+(= (return_entire_box ($x $y))
+    (match &self (square $x $y) ($x $y)))
+(= (return_entire_box ($x $y))
+    (match &self (square $x $y $c $d) ($x $y $c $d)))
+
+
+(= (return_entire_box_old $Coordinates)
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -561,7 +571,7 @@
          )
          $z))
 
-(= (return_entire_box $Coordinates)
+(= (return_entire_box_old $Coordinates)
       (let*  
          (($x (nth 1 $Coordinates) )
           ($y (nth 2 $Coordinates) )
@@ -1122,6 +1132,11 @@
 ; Input:  X and Y
 ; Output: Removes atom for this square occupied or not
 (= (reset_square $X $Y)
+    (remove-atom &self (square $X $Y $anycolor $anyrank)))  ; piece captured!
+(= (reset_square $X $Y)
+    (remove-atom &self (square $X $Y)))  ; empty square
+
+(= (reset_square_old $X $Y)
     (let $remove_box (return_entire_box ($X $Y)) 
        (if (== (size-atom $remove_box) 4)
           (remove-atom &self (square $X $Y $anycolor $anyrank))  ; piece captured!
@@ -1131,22 +1146,23 @@
 ; move_piece
 ;   Input   starting square, target square, current board
 ;   Output: new board
-(= (move_piece $starting_square $target_square) 
+;(= (move_piece $starting_square $target_square) 
+(= (move_piece ($X1 $Y1 $color $rank) ($X2 $Y2)) 
   (let* (
     ; delete piece from starting square
-    ($X1  (nth 1 $starting_square))
-    ($Y1  (nth 2 $starting_square))
-    ($color (nth 3 $starting_square))
-    ($rank  (nth 4 $starting_square))
+    ;($X1  (nth 1 $starting_square))
+    ;($Y1  (nth 2 $starting_square))
+    ;($color (nth 3 $starting_square))
+    ;($rank  (nth 4 $starting_square))
     ($starting_square_complete_atom (square $X1 $Y1 $color $rank))
     ($_1 (remove-atom &self $starting_square_complete_atom))
     ; create atom for empty starting square
     ($old_square_complete (square $X1 $Y1))
     ($_2 (add-atom &self $old_square_complete))
     ; delete atom for whatever occupies the new square, if anything
-    ($X2  (nth 1 $target_square))
-    ($Y2  (nth 2 $target_square))
-    ($_3 (reset_square $X2 $Y2))
+    ;($X2  (nth 1 $target_square))
+    ;($Y2  (nth 2 $target_square))
+    ($_3 (collapse (reset_square $X2 $Y2)))  ; "collapse" needed since will return "()" if fail, not Empty
     ; add piece at new square
     ($new_square_complete (square $X2 $Y2 $color $rank))
     ($_4 (add-atom &self $new_square_complete))    
@@ -1270,7 +1286,7 @@
 ;
 ; Input:  $Square that might be compromised, all pieces available to attack square in question, $CanAttack
 ; Output: list of pieces that can take the piece in the square in question
-(= (list_clear_route $Square $CanAttack)
+(= (list_clear_route_recursion $Square $CanAttack)
    (if (== (size-atom $CanAttack) 0)
        ; end of the line
        ()
@@ -1286,6 +1302,14 @@
        )
    ) 
 )
+
+(= (list_clear_route $Square $CanAttack)
+    (let*
+      (
+      ($next-sq (superpose $CanAttack))
+      ($AttackBool (clear_route $next-sq $Square))
+      )
+      (if (== $AttackBool True) $next-sq (empty))))
 
 ;
 ;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
