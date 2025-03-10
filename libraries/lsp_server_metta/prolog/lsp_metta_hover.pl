@@ -40,7 +40,7 @@ combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
 combine_hover(SS, _{contents: _{kind: markdown, value: S}}):- !,
   list_to_set(SS, Set),
   maplist(into_markdown, Set, Strings),
-  atomics_to_string(Strings, S1),
+  atomics_to_string(Strings, "\n", S1),
   re_replace("\\n+([*]{3}\\n)+"/g, "\n***\n", S1, S2, []),
   re_replace("\\n{3,}"/g, "\n\n", S2, S, []).
 
