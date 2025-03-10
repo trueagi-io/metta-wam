@@ -287,7 +287,10 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
     lsp_separator,
-    xref_call(eval(['help!', Target], _)), lsp_separator.  % Evaluate the help command for the term.
+    % Don't redirect so we can capture output of this predicate
+    locally(nb_setval('$dont_redirect_output', true),
+            xref_call(eval(['help!', Target], _))),
+    lsp_separator.  % Evaluate the help command for the term.
 
 
 
