@@ -192,19 +192,9 @@
       ))
 
 (= (display_squares_atoms_debug_4)
-    (match &self (square $x $y $s $p) 
-        (progn 
-            (println! "square")
-            (println! $x)
-            (println! $y)
-            (println! $s)
-            (println! $p))))
+   (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
 (= (display_squares_atoms_debug_2)
-    (match &self (square $x $y) 
-        (progn 
-            (println! "square")
-            (println! $x)
-            (println! $y))))
+    (collapse (match &self (square $x $y) (square $x $y) )))
 
 ; display game-state for debugging
 (= (display-game-state)
@@ -339,7 +329,7 @@
 ;
 ; Try the AI move, make sure not exposing moved piece and AI king to attack.
 ;
-; Input:  starting square with piece, destination square
+; Input:  starting square with piece, destination square which may or may not be occupied by human player
 ;
 ; Output: a list of ( (starting piece) (destination)) if successful or Empty
 ;         So, we just output the input if the move is good
@@ -349,6 +339,7 @@
     (
     ($start ($x1 $y1 g $rank))
     ($dest ($x2 $y2))
+    ($dest_full (return_entire_box $dest))
     ; provisionally move the piece
     ($MoveBool  (move_piece $start $dest))  
     ; see if moving piece exposes to human player, "s" = silver color
@@ -356,7 +347,8 @@
     )
     (if (== $Exposed True)
       ; exit with Empty if the piece can be taken but after moving pieces back in atomspace
-      (let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (empty))
+      ;(let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (empty))
+      (let $MoveBool  (reset_pieces $start $dest_full) (empty))
       ; else see if king exposed
       (let*
         (
@@ -367,10 +359,10 @@
         )
         (if (== $KingCompromised True)
             ; exit with Empty if AI king can be taken reversing move in atomspace
-            (let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (empty))
+            (let $MoveBool  (reset_pieces $start $dest_full) (empty))
             ; if we make it this far the move is good -- return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
-            (let $MoveBool  (move_piece ($x2 $y2 g $rank)  ($x1 $y1)) (($x1 $y1 g $rank) ($x2 $y2))))
+            (let $MoveBool  (reset_pieces $start $dest_full) (($x1 $y1 g $rank) ($x2 $y2))))
       )
     )
   )
@@ -393,7 +385,6 @@
 ; 
 (= (random_recursion_by_rank)
     (let* (
-      ($debug (println! "Trying level random move (may repeat)..."))
       ($random_level (random-int 1 4)) 
       ($ranklevel (case $random_level
                     (
@@ -403,6 +394,8 @@
                     (4 highestrank)
                     ($_ (empty))
                     )))
+      ($debug (println! "Trying random move (may repeat)"))
+      ($debug (println! $ranklevel))
       ($somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel)))
         )
       (if (== $somemoves ())
@@ -419,10 +412,12 @@
       ( 
         ($random_moves (random_recursion_by_rank))
         ($move_count (size-atom $random_moves))
-        ($rand-int (random-int 1 $move_count))
+        ($select-int (if (== $move_count 1) 
+                    1
+                    (random-int 1 $move_count)))
       ) 
       ;return move
-      (nth $rand-int $random_moves)
+      (nth $select-int $random_moves)
     ))
 
 (= (decide_greedy_move) 
@@ -431,9 +426,9 @@
     ;     2) fail and return Empty
 
     ; try to take highest open piece
-    (let $highest_open (takehighestopen_with_pawn) 
+    (let $highest_open (collapse (takehighestopen_with_pawn_rank_test (superpose (b r n q))))
       (if (not (== $highest_open Empty)) 
-        $highest_open
+        (println! $highest_open) ; $highest_open
         ; else try random move
         (let $random_move (random_move_empty_sq)
           (if (not (==  $random_move Empty)) 
@@ -441,40 +436,33 @@
             (empty))))))
 
 ;
-(= (takehighestopen_with_pawn_test)
-  ; try to capture queen
-  (let $take1 (takehighestopen_with_pawn_rank q)
-      (if (not (== $take1 Empty))
-        $take1
-        ; else try to capture rook
-        (let $take2 (takehighestopen_with_pawn_rank r) 
-          (if (not (== $take2 Empty))
-            $take2
-            ; else try to capture bishop
-            (let $take3 (takehighestopen_with_pawn_rank b) 
-              (if (not (== $take3 Empty))
-                $take3
-                ; else try to capture knight
-                (let $take4 (takehighestopen_with_pawn_rank n) 
-                  (if (not (== $take4 Empty))
-                    $take4
-                    ; else try to capture pawn
-                    (let $take5 (takehighestopen_with_pawn_rank p) 
-                      (if (not (== $take5 Empty))
-                        $take5
-                        ; otherwise give up
-                        (empty))))))))))))
+(= (takehighestopen_with_pawn_all $ranks)
+  (if (== $ranks ())
+      (empty)
+      (let* 
+        ( 
+          ($rank (car-atom $ranks))
+          ($debug0 (println! $rank))
+          ($take (takehighestopen_with_pawn_rank $rank))
+          ($debug (println! $take))
+        )
+       (if (not (== $take Empty)) 
+          $take
+          (takehighestopen_with_pawn (cdr-atom $ranks))))))
 
-(= (takehighestopen_with_pawn)
-  ;(let $all (collapse (takehighestopen_with_pawn_rank (superpose (q r b n p))))
-  ;  (println! $all)))
-  (println! (takehighestopen_with_pawn_rank (superpose (q r b n p)))))
-  ; try to capture queen
+(= (takehighestopen_with_pawn_rank_test $rank)
+    (match &self (square $x2 $y2 s $rank)
+       (match &self (square $x1 $y1 g p) 
+          ; the gold pawn always has a clear route to capture if moving southwest or southeast.
+          (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
+            (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
+            (empty)))))
   
-(= (takehighestopen_with_pawn_rank $rank)
+(= (takehighestopen_with_pawn_rank)
     (let $take 
         (collapse (match &self 
               (,
+             (rank $rank)
              (square $x2 $y2 s $rank)
              (square $x1 $y1 g p) 
               )
@@ -565,6 +553,9 @@
         ($CanAttack (collapse (takingboxes $OpponentColor)))
         ; Check if any route of pieces that can attack leads to the specified square.
         ($OpenRouteToSquare (collapse (list_clear_route $Square $CanAttack)))
+          ;($debug1 (println! $Square))
+          ;($debug0 (println! $OpenRouteToSquare))
+          ;($debug2 (println! (return_entire_box (1 6))))
         )
         ; if the list is populated (size exceeds 0), that means the piece can be taken, return False
         (if (== $OpenRouteToSquare ()) False True)))
@@ -1136,7 +1127,7 @@
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
     ;($debug0 (println! $new_board2))
     ;($debug1 (println! $new_board1))
-    ($debug2 (println! $new_board2))
+    ;($debug2 (println! $new_board2))
         ) 
     $new_board2))
 
@@ -1149,11 +1140,11 @@
 (= (reset_square $X $Y)
     (remove-atom &self (square $X $Y)))  ; empty square
 
-(= (reset_square_old $X $Y)
-    (let $remove_box (return_entire_box ($X $Y)) 
-       (if (== (size-atom $remove_box) 4)
-          (remove-atom &self (square $X $Y $anycolor $anyrank))  ; piece captured!
-          (remove-atom &self (square $X $Y)))))
+;(= (reset_square_old $X $Y)
+;    (let $remove_box (return_entire_box ($X $Y)) 
+;       (if (== (size-atom $remove_box) 4)
+;          (remove-atom &self (square $X $Y $anycolor $anyrank))  ; piece captured!
+;          (remove-atom &self (square $X $Y)))))
     
 ;
 ; move_piece
@@ -1162,25 +1153,33 @@
 ;(= (move_piece $starting_square $target_square) 
 (= (move_piece ($X1 $Y1 $color $rank) ($X2 $Y2)) 
   (let* (
-    ; delete piece from starting square
-    ;($X1  (nth 1 $starting_square))
-    ;($Y1  (nth 2 $starting_square))
-    ;($color (nth 3 $starting_square))
-    ;($rank  (nth 4 $starting_square))
     ($starting_square_complete_atom (square $X1 $Y1 $color $rank))
     ($_1 (remove-atom &self $starting_square_complete_atom))
     ; create atom for empty starting square
     ($old_square_complete (square $X1 $Y1))
     ($_2 (add-atom &self $old_square_complete))
     ; delete atom for whatever occupies the new square, if anything
-    ;($X2  (nth 1 $target_square))
-    ;($Y2  (nth 2 $target_square))
     ($_3 (collapse (reset_square $X2 $Y2)))  ; "collapse" needed since will return "()" if fail, not Empty
     ; add piece at new square
     ($new_square_complete (square $X2 $Y2 $color $rank))
-    ($_4 (add-atom &self $new_square_complete))    
+    ($_4 (add-atom &self $new_square_complete))      
         ) 
     True))
+
+; To reset, pass the original start and destination. Make sure destination is the full argument,
+; so if there was a piece originally it is restored.
+; if piece was moved to empty square just reverse:
+(= (reset_pieces ($X1 $Y1 $color $rank) ($X2 $Y2))
+   (move_piece ($X2 $Y2 $color $rank) ($X1 $Y1)))         ;restore original complete start
+; if piece was to capture an opponent's piece
+(= (reset_pieces ($X1 $Y1 $color1 $rank1) ($X2 $Y2 $color2 $rank2))
+  (progn
+   (move_piece ($X2 $Y2 $color1 $rank1) ($X1 $Y1))       ; restore original starting piece
+   (remove-atom  &self  (square $X2 $Y2))                  
+   (add-atom &self (square $X2 $Y2 $color2 $rank2)) )    ; restore original destination piece
+)
+
+    
 ;
 ;
 ;(= (printmove $A $B $C) (nth1 1 $A $D) (nth1 2 $A $E) (nth1 3 $A $F) (nth1 4 $A $G) (nth1 1 $B $H) (nth1 2 $B ;$I) (or (, (len $B 4) (return_entire_box #( :: ($H $I) ) $J $C) (nth1 4 $J $K)) (= $K  nil)) (or (, (== $F g) ;(write 'DBD moves from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) (write and2) (write ;$I)) (, (== $F s) (write 'YOU move from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) ;(write and2) (write $I))) #(add-atom &self #(guimessage move $A $B $K)) (or (, (\= $K nil) (nl) (write 'Piece ;captured!! -> ') (write $K) (nl)) nl) (write 'Type c. for commands you can use.'))
@@ -1348,7 +1347,7 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6 s q) (2 6 s r) (3 6 s b) (4 6 s n) (5 6 s p) (6 6) (7 6) (8 6) 
+                        (1 6 s r) (2 6) (3 6) (4 6) (5 6) (6 6 ) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
