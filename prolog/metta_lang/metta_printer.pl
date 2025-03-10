@@ -526,28 +526,29 @@ write_val(V) :-
 %     % Final formatting for a Prolog variable.
 %     ?- is_final_write('$VAR'(example_variable)).
 %
-is_final_write(V) :-
-    % If V is an unbound variable, write it with `write_dvar/1`.
-    var(V), !,  write_dvar(V), !.
-is_final_write('$VAR'(S)) :-
-    % For '$VAR' structures, write the variable name S.
-    !,  write_dvar(S), !.
-is_final_write('#\\'(S)) :-
-    % For special character format `#\S`, write S in single quotes.
-    !, format("'~w'", [S]).
-is_final_write(V) :-
-    % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
-    py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
-is_final_write([VAR, V | T]) :-
-    % For lists like ['$VAR', Value], write the variable if the tail is empty.
-    '$VAR' == VAR, T == [], !, write_dvar(V).
-is_final_write('[|]') :-
-    % For '[|]' (empty list), represent it as 'Cons'.
-    write('Cons'), !.
-is_final_write([]) :-
-    % For an empty list, write it as '()'.
-    !, write('()').
+
+is_final_write(V) :- nb_current(printer_override,P1), catch(call(P1, V),_,fail),!.
+% If V is an unbound variable, write it with `write_dvar/1`.
+is_final_write(V) :- var(V), !,  write_dvar(V), !.
+% For '$VAR' structures, write the variable name S.
+is_final_write('$VAR'(S)) :- !,  write_dvar(S), !.
+% For special character format `#\S`, write S in single quotes.
+is_final_write('#\\'(S)) :- !, format("'~w'", [S]).
+% Big number use underscores betten them
+is_final_write(V) :- integer(V), V>10_000, catch(format('~I',[V]),_,fail),!.
+% If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
+is_final_write(V) :- py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
+% For lists like ['$VAR', Value], write the variable if the tail is empty.
+is_final_write([VAR, V | T]) :- '$VAR' == VAR, T == [], !, write_dvar(V).
+% For '[|]' (empty list), represent it as 'Cons'.
+is_final_write('[|]') :- write('Cons'), !.
+% For an empty list, write it as '()'.
+is_final_write([]) :- !, write('()').
 %is_final_write([]):- write('Nil'),!.
+
+with_write_override(P1, Goal):-
+  locally(nb_setval(printer_override,P1), Goal).
+
 
 %!  write_dvar(+S) is det.
 %
@@ -1077,13 +1078,11 @@ pp_sexi_l([F | V]) :-
     % If `F` is a symbol and `V` is a list, format using `write_mobj/2`.
     symbol(F), is_list(V), write_mobj(F, V), !.
 pp_sexi_l([H | T]) :- T == [], !,  % If `T` is an empty list, print `H` in parentheses.
-    compound_type_s_m_e(list,L,_M,R),
-    write(L), pp_sex_nc(H), write(R).
+    write_start(list), pp_sex_nc(H), write_end(list).
 pp_sexi_l([H, H2| T]) :- T ==[], !,
     % If `V` has two elements, print `H` followed by `H2` in S-expression format.
-    compound_type_s_m_e(list,L,M,R),
-    write(L), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(M,[H2])),
-    write(R), !.
+    write_start(list), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(list,[H2])),
+    write_end(list), !.
 
 pp_sexi_l([H| T]) :- \+ is_list(T),!, pp_sexi_lc([H | T]).
 
@@ -1109,8 +1108,7 @@ pp_sexi_lc([H | T]) :- \+ is_list(T),!,
 
 pp_sexi_lc([H | T]) :-
     % If `V` has more than two elements, print `H` followed by `T` in S-expression format.
-    compound_type_s_m_e(list,L,M,R),
-    write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M, T), write(R), !.
+    write_start(list), pp_sex_nc(H), write(' '), write_args_as_sexpression(list, T), write_end(list), !.
 pp_sexi_lc([H | T]) :-
     % If `H` is a control structure and indents are enabled, apply proper indentation.
     \+ no_src_indents, symbol(H), member(H, ['If', 'cond', 'let', 'let*']), !,
@@ -1119,8 +1117,7 @@ pp_sexi_lc([H | T]) :-
 pp_sexi_lc([H | T]) :-
     % If `T` has 2 or fewer elements, format as S-expression or apply indentation based on length.
     is_list(T), length(T, Args), Args =< 2, fail,
-    compound_type_s_m_e(list,L,M,R),
-    wots(SS, ((with_indents(false, (write(L), pp_sex_nc(H), write(' '), write_args_as_sexpression(M,T), write(R)))))),
+    wots(SS, ((with_indents(false, (write_start(list), pp_sex_nc(H), write(' '), write_args_as_sexpression(list,T), write_end(list)))))),
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
 
@@ -1256,8 +1253,7 @@ pp_sexi_c(V) :- print_compounds_special,
     !, compound_name_arguments(V,Functor,Args),
     always_dash_functor(Functor, DFunctor),
     (symbol_glyph(Functor) -> ExtraSpace = ' ' ; ExtraSpace = ''),
-    compound_type_s_m_e(cmpd,L,M,R),
-    write(L), write(ExtraSpace), write_args_as_sexpression(M, [DFunctor|Args]), write(ExtraSpace), write(R), !.
+    write_start(cmpd), write(ExtraSpace), write_args_as_sexpression(cmpd, [DFunctor|Args]), write(ExtraSpace), write_end(cmpd), !.
     %maybe_indent_in(Lvl),write('{'), write_args_as_sexpression([F|Args]), write('}'),maybe_indent_out(Lvl).
 
 pp_sexi_c(Term) :-
@@ -1494,7 +1490,7 @@ write_args_as_sexpression(Args):- write_args_as_sexpression('|',Args).
 
 write_args_as_sexpression(_,Nil):- Nil == [], !.
 %write_args_as_sexpression(H):- w_proper_indent(pp_sex(H)),!.
-write_args_as_sexpression(M,Var):- \+ compound(Var),!, write(M),write(' '),pp_sex(Var).
+write_args_as_sexpression(M,Var):- \+ compound(Var),!, write_middle(M),write(' '),pp_sex(Var).
 % Print a single-element list directly.
 write_args_as_sexpression(_,[H|T]):- T==[], !, pp_sex(H).
 % For multi-element lists, print each element separated by a space.
@@ -1837,16 +1833,25 @@ last_item(Item,Item):- \+ is_lcons(Item),!.
 last_item([_|T],Last):- T \== [], !, last_item(T,Last).
 last_item([Item],Item).
 
+write_start(Type):- nb_current(printer_override,P1),call(P1,'$write_start'(Type)),!.
+write_start(Char):- atom_length(Char, 1),write(Char),!.
+write_start(Type):- compound_type_s_m_e(Type,L,_,_),write(L),!.
+write_middle(Type):- nb_current(printer_override,P1),call(P1,'$write_middle'(Type)),!.
+write_middle(Char):- atom_length(Char, 1),write(Char),!.
+write_middle(Type):- compound_type_s_m_e(Type,_,M,_),write(M),!.
+write_end(Type):- nb_current(printer_override,P1),call(P1,'$write_end'(Type)),!.
+write_end(Char):- atom_length(Char, 1),write(Char),!.
+write_end(Type):- compound_type_s_m_e(Type,_,_,R),write(R),!.
+
 print_compound_type(Indent, Type, [H|T] ):-
     last_item([H|T],Last),
-    compound_type_s_m_e(Type,L,M,R),
-    write(L),
+    write_start(Type),
     (symbol_glyph(H)->write(" ");true),
     NextIndent is Indent + 1,
     print_sexpr(H, 0),
-    print_rest_elements(M, T, NextIndent),
+    print_rest_elements(Type, T, NextIndent),
     (symbol_glyph(Last)->write(" ");true),
-    write(R),!.
+    write_end(Type),!.
 
 symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
