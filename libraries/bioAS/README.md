@@ -1,4 +1,1355 @@
 ﻿
+```no-wrap
+Line Count       File Path
+-------------    --------------------------------------------------------
+        7,199    ./neo4j_out_v3/cell_ontology/edges_cl_subclass_of.csv
+        4,087    ./neo4j_out_v3/cell_ontology/edges_cl_part_of.csv
+        1,301    ./neo4j_out_v3/cell_ontology/edges_cl_capable_of.csv
+        4,873    ./neo4j_out_v3/cell_ontology/nodes_cl.csv
+   37,302,979    ./neo4j_out_v3/dbsnp/nodes_snp.csv
+      827,037    ./neo4j_out_v3/dgv/nodes_structural_variant.csv
+    3,554,858    ./neo4j_out_v3/roadmap/chromatin_state/edges_chromatin_state.csv
+       26,681    ./neo4j_out_v3/roadmap/dhs/edges_in_dnase_i_hotspot.csv
+    1,124,719    ./neo4j_out_v3/roadmap/h3_mark/edges_histone_modification.csv
+      635,269    ./neo4j_out_v3/gaf/edges_go_gene_product.csv
+      329,075    ./neo4j_out_v3/brenda_tissue_ontology/edges_bto_subclass_of.csv
+      239,869    ./neo4j_out_v3/brenda_tissue_ontology/nodes_bto.csv
+   36,495,831    ./neo4j_out_v3/bgee/edges_expressed_in.csv
+           59    ./neo4j_out_v3/graph_info.json
+       20,429    ./neo4j_out_v3/uniprot/nodes_protein.csv
+       50,073    ./neo4j_out_v3/uniprot/edges_translation_of.csv
+       50,073    ./neo4j_out_v3/uniprot/edges_translates_to.csv
+  257,746,971    ./neo4j_out_v3/coxpressdb/edges_coexpressed_with.csv
+   20,140,695    ./neo4j_out_v3/peregrine/edges_enhancer_gene.csv
+    1,085,539    ./neo4j_out_v3/peregrine/nodes_enhancer.csv
+      144,395    ./neo4j_out_v3/uberon/edges_uberon_subclass_of.csv
+       72,554    ./neo4j_out_v3/uberon/nodes_uberon.csv
+   67,561,010    ./neo4j_out_v3/gtex/expression/edges_expressed_in.csv
+   67,561,010    ./neo4j_out_v3/gtex/eqtl/edges_gtex_variant_gene.csv
+   23,396,248    ./neo4j_out_v3/refseq/edges_closest_gene.csv
+      211,389    ./neo4j_out_v3/cell_line_ontology/edges_clo_subclass_of.csv
+      114,245    ./neo4j_out_v3/cell_line_ontology/nodes_clo.csv
+   13,356,025    ./neo4j_out_v3/string/edges_interacts_with.csv
+   35,856,052    ./neo4j_out_v3/abc/edges_activity_by_contact.csv
+    6,398,916    ./neo4j_out_v3/tflink/edges_tf_gene.csv
+      233,376    ./neo4j_out_v3/experimental_factor_ontology/nodes_efo.csv
+      321,433    ./neo4j_out_v3/experimental_factor_ontology/edges_efo_subclass_of.csv
+      327,933    ./neo4j_out_v3/fabian/edges_tfbs_snp.csv
+       62,701    ./neo4j_out_v3/gencode/gene/nodes_gene.csv
+    1,649,477    ./neo4j_out_v3/gencode/exon/nodes_exon.csv
+    1,649,477    ./neo4j_out_v3/gencode/exon/edges_includes.csv
+      252,836    ./neo4j_out_v3/gencode/transcript/nodes_transcript.csv
+      252,836    ./neo4j_out_v3/gencode/transcript/edges_transcribed_to.csv
+      252,836    ./neo4j_out_v3/gencode/transcript/edges_transcribed_from.csv
+      991,805    ./neo4j_out_v3/reactome/edges_genes_pathways.csv
+        2,674    ./neo4j_out_v3/reactome/nodes_pathway.csv
+        2,692    ./neo4j_out_v3/reactome/edges_child_pathway_of.csv
+        2,692    ./neo4j_out_v3/reactome/edges_parent_pathway_of.csv
+       29,599    ./neo4j_out_v3/epd/nodes_promoter.csv
+       28,134    ./neo4j_out_v3/epd/edges_promoter_gene.csv
+    7,578,823    ./neo4j_out_v3/enhancer_atlas/edges_enhancer_gene.csv
+      193,219    ./neo4j_out_v3/enhancer_atlas/nodes_enhancer.csv
+       81,757    ./neo4j_out_v3/gene_ontology/edges_go_subclass_of.csv
+       51,767    ./neo4j_out_v3/gene_ontology/nodes_go.csv
+   24,296,266    ./neo4j_out_v3/dbvar/nodes_structural_variant.csv
+        3,037    ./neo4j_out_v3/tadmap/nodes_tad.csv
+       18,957    ./neo4j_out_v3/tadmap/edges_in_tad_region.csv
+    2,268,769    ./neo4j_out_v3/cadd/nodes_snp.csv
+       46,413    ./neo4j_out_v3/rna_central/edges_go_rna.csv
+      662,841    ./neo4j_out_v3/rna_central/nodes_non_coding_rna.csv
+      385,656    ./neo4j_out_v3/gwas/ingene/edges_snp_in_gene.csv
+      188,113    ./neo4j_out_v3/gwas/downstream/edges_snp_downstream_gene.csv
+      188,120    ./neo4j_out_v3/gwas/upstream/edges_snp_upstream_gene.csv
+       62,284    ./neo4j_out_v3/dbsuper/edges_super_enhancer_gene.csv
+       69,071    ./neo4j_out_v3/dbsuper/nodes_super_enhancer.csv
+   10,565,631    ./neo4j_out_v3/tfbs/nodes_tfbs.csv
+   10,489,066    ./neo4j_out_v3/tfbs/edges_gene_tfbs.csv
+-------------    --------------------------------------------------------
+  637,529,752    Total
+
+
+```
+
+
+
+
+```no-wrap
+=================================================================
+1. Find Interactions of BRCA2 Gene
+        Find all interactions involving the BRCA2 gene, including transcripts, proteins, and pathways.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "BRCA2"))
+      (neo $Gene transcribed_to $Transcript)
+      (neo $Transcript translates_to $Protein1)
+      (neo $Protein1 interacts_with $Protein2)
+      (neo $Gene genes_pathways $Pathway))
+    (result $Gene $Transcript $Protein1 $Protein2 $Pathway))
+
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q7z407 protein ]              [ : r-hsa-1474165 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q7z407 protein ]              [ : r-hsa-1500620 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q7z407 protein ]              [ : r-hsa-1640170 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q92887 protein ]              [ : r-hsa-9701192 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q92887 protein ]              [ : r-hsa-9701193 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q92887 protein ]              [ : r-hsa-9704646 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : p78369 protein ]              [ : r-hsa-5693568 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : p24043 protein ]              [ : r-hsa-1643685 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : o95171 protein ]              [ : r-hsa-9704646 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : p09661 protein ]              [ : r-hsa-73894 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : p38159 protein ]              [ : r-hsa-1500620 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q03252 protein ]              [ : r-hsa-1640170 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q8iw75 protein ]              [ : r-hsa-1643685 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : b1ak53 protein ]              [ : r-hsa-5685939 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : q99972 protein ]              [ : r-hsa-5685942 pathway ]
+[ : ensg00000139618 gene ]        [ : enst00000544455 transcript ]  [ : p51587 protein ]              [ : p07949 protein ]              [ : r-hsa-5693567 pathway ]
+ MeTTaLog Execution time: 0.47 seconds
+% 12,054,355 inferences, 0.471 CPU in 0.473 seconds (100% CPU, 25587938 Lips)
+ Last answer found: 0.35 seconds
+ Number of answers: 152,442
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+1. Find Interactions of BRCA2 Gene (With Properties)
+        Find all interactions involving the BRCA2 gene, including transcripts, proteins, and pathways. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "BRCA2") $PropList1)
+      (neo_P $Gene transcribed_to $Transcript $PropList2)
+      (neo_P $Transcript translates_to $Protein1 $PropList3)
+      (neo_P $Protein1 interacts_with $Protein2 $PropList4)
+      (neo_P $Gene genes_pathways $Pathway $PropList5))
+    (result $Gene $Transcript $Protein1 $Protein2 $Pathway $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
+
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q7z407 protein ][ : r-hsa-1474165 pathway ]()               ()               ()               ([ = score 0.403 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q7z407 protein ][ : r-hsa-1500620 pathway ]()               ()               ()               ([ = score 0.403 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q7z407 protein ][ : r-hsa-1640170 pathway ]()               ()               ()               ([ = score 0.403 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q92887 protein ][ : r-hsa-9701192 pathway ]()               ()               ()               ([ = score 0.165 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q92887 protein ][ : r-hsa-9701193 pathway ]()               ()               ()               ([ = score 0.165 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q92887 protein ][ : r-hsa-9704646 pathway ]()               ()               ()               ([ = score 0.165 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : p78369 protein ][ : r-hsa-5693568 pathway ]()               ()               ()               ([ = score 0.183 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : p24043 protein ][ : r-hsa-1643685 pathway ]()               ()               ()               ([ = score 0.326 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : o95171 protein ][ : r-hsa-9704646 pathway ]()               ()               ()               ([ = score 0.156 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : p09661 protein ][ : r-hsa-73894 pathway ]()               ()               ()               ([ = score 0.432 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : p38159 protein ][ : r-hsa-1500620 pathway ]()               ()               ()               ([ = score 0.283 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q03252 protein ][ : r-hsa-1640170 pathway ]()               ()               ()               ([ = score 0.237 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q8iw75 protein ][ : r-hsa-1643685 pathway ]()               ()               ()               ([ = score 0.173 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : b1ak53 protein ][ : r-hsa-5685939 pathway ]()               ()               ()               ([ = score 0.254 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : q99972 protein ][ : r-hsa-5685942 pathway ]()               ()               ()               ([ = score 0.363 ])()
+[ : ensg00000139618 gene ][ : enst00000544455 transcript ][ : p51587 protein ][ : p07949 protein ][ : r-hsa-5693567 pathway ]()               ()               ()               ([ = score 0.705 ])()
+ MeTTaLog Execution time: 0.52 seconds
+% 15,134,510 inferences, 0.515 CPU in 0.518 seconds (99% CPU, 29382931 Lips)
+ Last answer found: 0.40 seconds
+ Number of answers: 152,442
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+2. Find Components Associated with IGF2
+        Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene.
+
+  (match &neo4j_out_v3
+    (,
+      (neo
+        [scoped $Gene
+          (gene)] gene_name
+        (startsWith "IGF2"))
+      (neo
+        [scoped $Promoter
+          (promoter)] associated_with
+        [scoped $Gene
+          (gene)])
+      (neo
+        [scoped $Enhancer
+          (enhancer)] associated_with
+        [scoped $Gene
+          (gene)])
+      (neo
+        [scoped $Gene
+          (gene)] genes_pathways
+        [scoped $Pathway
+          (pathway)])
+      (neo
+        [scoped $ChildPathway
+          (pathway)] child_pathway_of
+        [scoped $Pathway
+          (pathway)]))
+    (result $Promoter $Gene $Enhancer $Pathway $ChildPathway))
+
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185644521_185644840_grch38   r-hsa-8953854                     r-hsa-194441
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185644521_185644840_grch38   r-hsa-8953854                     r-hsa-428359
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185644521_185644840_grch38   r-hsa-8953854                     r-hsa-429914
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185049221_185051590_grch38   r-hsa-8953854                     r-hsa-72086
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185049221_185051590_grch38   r-hsa-8953854                     r-hsa-72203
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185049221_185051590_grch38   r-hsa-8953854                     r-hsa-72312
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185404981_185407140_grch38   r-hsa-8953854                     r-hsa-75067
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185560781_185562500_grch38   r-hsa-8953854                     r-hsa-194441
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185373071_185375070_grch38   r-hsa-8953854                     r-hsa-72086
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185404981_185407140_grch38   r-hsa-8953854                     r-hsa-75067
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185404981_185407140_grch38   r-hsa-8953854                     r-hsa-72086
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185264161_185266240_grch38   r-hsa-8953854                     r-hsa-75067
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185745441_185745763_grch38   r-hsa-8953854                     r-hsa-194441
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185734733_185735099_grch38   r-hsa-8953854                     r-hsa-72086
+chr3_185821121_185821180_grch38   ensg00000073792                   chr3_185737070_185737405_grch38   r-hsa-8953854                     r-hsa-75067
+chr3_185825028_185825087_grch38   ensg00000073792                   chr3_185266321_185268330_grch38   r-hsa-8953854                     r-hsa-72086
+chr11_2138632_2138691_grch38      ensg00000167244                   chr11_2024289_2024603_grch38      r-hsa-109582                      r-hsa-202733
+ MeTTaLog Execution time: 8.34 seconds
+% 90,484,982 inferences, 8.336 CPU in 8.373 seconds (100% CPU, 10854240 Lips)
+ Last answer found: 8.33 seconds
+ Number of answers: 664,061
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+2. Find Components Associated with IGF2 (With Properties)
+        Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P
+        [scoped $Gene
+          (gene)] gene_name
+        (startsWith "IGF2") $PropList1)
+      (neo_P
+        [scoped $Promoter
+          (promoter)] associated_with
+        [scoped $Gene
+          (gene)] $PropList2)
+      (neo_P
+        [scoped $Enhancer
+          (enhancer)] associated_with
+        [scoped $Gene
+          (gene)] $PropList3)
+      (neo_P
+        [scoped $Gene
+          (gene)] genes_pathways
+        [scoped $Pathway
+          (pathway)] $PropList4)
+      (neo_P
+        [scoped $ChildPathway
+          (pathway)] child_pathway_of
+        [scoped $Pathway
+          (pathway)] $PropList5))
+    (result $Promoter $Gene $Enhancer $Pathway $ChildPathway $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
+
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185644521_185644840_grch38r-hsa-8953854    r-hsa-194441     ()               ()               ([ = biological_context UBERON_0000006 ] [ = score 0.845829 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185644521_185644840_grch38r-hsa-8953854    r-hsa-428359     ()               ()               ([ = biological_context UBERON_0000006 ] [ = score 0.845829 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185644521_185644840_grch38r-hsa-8953854    r-hsa-429914     ()               ()               ([ = biological_context UBERON_0000006 ] [ = score 0.845829 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185049221_185051590_grch38r-hsa-8953854    r-hsa-72086      ()               ()               ([ = biological_context CLO_0007599 ] [ = score 2.086826 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185049221_185051590_grch38r-hsa-8953854    r-hsa-72203      ()               ()               ([ = biological_context CLO_0007599 ] [ = score 2.086826 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185049221_185051590_grch38r-hsa-8953854    r-hsa-72312      ()               ()               ([ = biological_context CLO_0007599 ] [ = score 2.086826 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185404981_185407140_grch38r-hsa-8953854    r-hsa-75067      ()               ()               ([ = biological_context CLO_0007599 ] [ = score 2.653411 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185560781_185562500_grch38r-hsa-8953854    r-hsa-194441     ()               ()               ([ = biological_context CLO_0007599 ] [ = score 0.756128 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185373071_185375070_grch38r-hsa-8953854    r-hsa-72086      ()               ()               ([ = biological_context CLO_0001582 ] [ = score 1.529057 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185404981_185407140_grch38r-hsa-8953854    r-hsa-75067      ()               ()               ([ = biological_context CL_0000515 ] [ = score 0.505124 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185404981_185407140_grch38r-hsa-8953854    r-hsa-72086      ()               ()               ([ = biological_context BTO_0000764 ] [ = score 0.765 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185264161_185266240_grch38r-hsa-8953854    r-hsa-75067      ()               ()               ([ = biological_context CLO_0004283 ] [ = score 0.748479 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185745441_185745763_grch38r-hsa-8953854    r-hsa-194441     ()               ()               ([ = biological_context CLO_0009058 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185734733_185735099_grch38r-hsa-8953854    r-hsa-72086      ()               ()               ([ = biological_context CLO_0008381 ])()               ()
+chr3_185821121_185821180_grch38ensg00000073792  chr3_185737070_185737405_grch38r-hsa-8953854    r-hsa-75067      ()               ()               ([ = biological_context CLO_0001601 ])()               ()
+chr3_185825028_185825087_grch38ensg00000073792  chr3_185266321_185268330_grch38r-hsa-8953854    r-hsa-72086      ()               ()               ([ = biological_context CLO_0009258 ] [ = score 1.753719 ])()               ()
+chr11_2138632_2138691_grch38ensg00000167244  chr11_2024289_2024603_grch38r-hsa-109582     r-hsa-202733     ()               ()               ([ = biological_context CL_2000043 ])()               ()
+ MeTTaLog Execution time: 8.67 seconds
+% 104,550,777 inferences, 8.674 CPU in 8.715 seconds (100% CPU, 12053650 Lips)
+ Last answer found: 8.66 seconds
+ Number of answers: 664,061
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+3. Gene Interactions and GO Terms
+        Find gene interactions and associated GO terms including proteins and transcripts.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene transcribed_to $Transcript)
+      (neo $Transcript includes $Exon)
+      (neo $Protein1 translation_of $Transcript)
+      (neo $Protein1 interacts_with $Protein2)
+      (neo $GOTerm go_gene_product $Protein1))
+    (result $Gene $Transcript $Exon $Protein1 $Protein2 $GOTerm))
+
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p35626 protein ]        [ : go_0004930 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p35626 protein ]        [ : go_0005515 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p35626 protein ]        [ : go_0007186 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p32121 protein ]        [ : go_0005886 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p32121 protein ]        [ : go_0004984 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p17612 protein ]        [ : go_0005515 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : q01851 protein ]        [ : go_0007186 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : a4d1e1 protein ]        [ : go_0004930 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : q9np85 protein ]        [ : go_0005886 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : q9p1a6 protein ]        [ : go_0007186 go ]
+[ : ensg00000284733 gene ]  [ : enst00000426406 transcript ][ : ense00003989331 exon ]  [ : q6iey1 protein ]        [ : p62805 protein ]        [ : go_0005886 go ]
+[ : ensg00000284662 gene ]  [ : enst00000332831 transcript ][ : ense00004001351 exon ]  [ : q6iey1 protein ]        [ : q8wud4 protein ]        [ : go_0007186 go ]
+[ : ensg00000284662 gene ]  [ : enst00000332831 transcript ][ : ense00004001351 exon ]  [ : q6iey1 protein ]        [ : q3sy84 protein ]        [ : go_0004930 go ]
+[ : ensg00000187634 gene ]  [ : enst00000342066 transcript ][ : ense00001864899 exon ]  [ : q96nu1 protein ]        [ : q9y2b5 protein ]        [ : go_0005515 go ]
+[ : ensg00000187634 gene ]  [ : enst00000342066 transcript ][ : ense00001864899 exon ]  [ : q96nu1 protein ]        [ : q0vdd8 protein ]        [ : go_0005515 go ]
+[ : ensg00000187634 gene ]  [ : enst00000342066 transcript ][ : ense00003902988 exon ]  [ : q96nu1 protein ]        [ : p08100 protein ]        [ : go_0005515 go ]
+[ : ensg00000188976 gene ]  [ : enst00000327044 transcript ][ : ense00001380352 exon ]  [ : q9y3t9 protein ]        [ : q8nbu5 protein ]        [ : go_0005730 go ]
+[ : ensg00000188976 gene ]  [ : enst00000327044 transcript ][ : ense00003554589 exon ]  [ : q9y3t9 protein ]        [ : q969t9 protein ]        [ : go_0005654 go ]
+[ : ensg00000188157 gene ]  [ : enst00000379370 transcript ][ : ense00001650172 exon ]  [ : o00468 protein ]        [ : q5t1h1 protein ]        [ : go_0005604 go ]
+Time limit 60 exceeded for 3. Gene Interactions and GO Terms
+% 1,462,189,274 inferences, 59.717 CPU in 60.000 seconds (100% CPU, 24485260 Lips)
+ Last answer found: 59.72 seconds
+ Number of answers: 26,787,534
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+3. Gene Interactions and GO Terms (With Properties)
+        Find gene interactions and associated GO terms including proteins and transcripts. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene transcribed_to $Transcript $PropList1)
+      (neo_P $Transcript includes $Exon $PropList2)
+      (neo_P $Protein1 translation_of $Transcript $PropList3)
+      (neo_P $Protein1 interacts_with $Protein2 $PropList4)
+      (neo_P $GOTerm go_gene_product $Protein1 $PropList5))
+    (result $Gene $Transcript $Exon $Protein1 $Protein2 $GOTerm $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
+
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p35626 protein ][ : go_0004930 go ]()             ()             ()             ([ = score 0.67 ])([ = qualifier (enables) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p35626 protein ][ : go_0005515 go ]()             ()             ()             ([ = score 0.67 ])([ = qualifier (enables) ] [ = db_reference (PMID:32296183) ] [ = evidence IPI ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p35626 protein ][ : go_0007186 go ]()             ()             ()             ([ = score 0.67 ])([ = qualifier (involved_in) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p32121 protein ][ : go_0005886 go ]()             ()             ()             ([ = score 0.679 ])([ = qualifier (located_in) ] [ = db_reference (GO_REF:0000044) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p32121 protein ][ : go_0004984 go ]()             ()             ()             ([ = score 0.679 ])([ = qualifier (enables) ] [ = db_reference (GOREF:0000033) ] [ = evidence IBA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p17612 protein ][ : go_0005515 go ]()             ()             ()             ([ = score 0.65 ])([ = qualifier (enables) ] [ = db_reference (PMID:32296183) ] [ = evidence IPI ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : q01851 protein ][ : go_0007186 go ]()             ()             ()             ([ = score 0.15 ])([ = qualifier (involved_in) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : a4d1e1 protein ][ : go_0004930 go ]()             ()             ()             ([ = score 0.379 ])([ = qualifier (enables) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : q9np85 protein ][ : go_0005886 go ]()             ()             ()             ([ = score 0.175 ])([ = qualifier (located_in) ] [ = db_reference (GO_REF:0000044) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : q9p1a6 protein ][ : go_0007186 go ]()             ()             ()             ([ = score 0.248 ])([ = qualifier (involved_in) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284733 gene ][ : enst00000426406 transcript ][ : ense00003989331 exon ][ : q6iey1 protein ][ : p62805 protein ][ : go_0005886 go ]()             ()             ()             ([ = score 0.214 ])([ = qualifier (located_in) ] [ = db_reference (GO_REF:0000044) ] [ = evidence IEA ])
+[ : ensg00000284662 gene ][ : enst00000332831 transcript ][ : ense00004001351 exon ][ : q6iey1 protein ][ : q8wud4 protein ][ : go_0007186 go ]()             ()             ()             ([ = score 0.374 ])([ = qualifier (involved_in) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000284662 gene ][ : enst00000332831 transcript ][ : ense00004001351 exon ][ : q6iey1 protein ][ : q3sy84 protein ][ : go_0004930 go ]()             ()             ()             ([ = score 0.297 ])([ = qualifier (enables) ] [ = db_reference (GO_REF:0000043) ] [ = evidence IEA ])
+[ : ensg00000187634 gene ][ : enst00000342066 transcript ][ : ense00001864899 exon ][ : q96nu1 protein ][ : q9y2b5 protein ][ : go_0005515 go ]()             ()             ()             ([ = score 0.347 ])([ = qualifier (enables) ] [ = db_reference (PMID:32296183) ] [ = evidence IPI ])
+[ : ensg00000187634 gene ][ : enst00000342066 transcript ][ : ense00001864899 exon ][ : q96nu1 protein ][ : q0vdd8 protein ][ : go_0005515 go ]()             ()             ()             ([ = score 0.203 ])([ = qualifier (enables) ] [ = db_reference (PMID:32296183) ] [ = evidence IPI ])
+[ : ensg00000187634 gene ][ : enst00000342066 transcript ][ : ense00003902988 exon ][ : q96nu1 protein ][ : p08100 protein ][ : go_0005515 go ]()             ()             ()             ([ = score 0.173 ])([ = qualifier (enables) ] [ = db_reference (PMID:32296183) ] [ = evidence IPI ])
+[ : ensg00000188976 gene ][ : enst00000327044 transcript ][ : ense00001380352 exon ][ : q9y3t9 protein ][ : q8nbu5 protein ][ : go_0005730 go ]()             ()             ()             ([ = score 0.176 ])([ = qualifier (is_active_in) ] [ = db_reference (GOREF:0000033) ] [ = evidence IBA ])
+[ : ensg00000188976 gene ][ : enst00000327044 transcript ][ : ense00003554589 exon ][ : q9y3t9 protein ][ : q969t9 protein ][ : go_0005654 go ]()             ()             ()             ([ = score 0.228 ])([ = qualifier (located_in) ] [ = db_reference (PMID:20123734) ] [ = evidence IDA ])
+[ : ensg00000188157 gene ][ : enst00000379370 transcript ][ : ense00001650172 exon ][ : o00468 protein ][ : q5t1h1 protein ][ : go_0005604 go ]()             ()             ()             ([ = score 0.179 ])([ = qualifier (located_in) ] [ = db_reference (PMID:9405491) ] [ = evidence IDA ])
+Time limit 60 exceeded for 3. Gene Interactions and GO Terms (With Properties)
+% 1,710,274,780 inferences, 59.715 CPU in 60.000 seconds (100% CPU, 28640485 Lips)
+ Last answer found: 59.72 seconds
+ Number of answers: 23,351,270
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+4. Interactions Involving 1433B Protein
+        Find interactions involving 1433B protein including transcripts, exons, and GO terms.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Protein1 protein_name
+        (startsWith "1433B"))
+      (neo $Gene transcribed_to $Transcript)
+      (neo $Transcript includes $Exon)
+      (neo $Protein1 translation_of $Transcript)
+      (neo $Protein1 interacts_with $Protein2)
+      (neo $GOTerm go_gene_product $Protein1))
+    (result $Gene $Transcript $Exon $Protein1 $Protein2 $GOTerm))
+
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0004860 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20290 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : q9h0u4 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : q9h0u4 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p30044 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p63151 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p20823 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p07737 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : q09028 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : p49685 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : q16576 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00001891800 exon ]  [ : p31946 protein ]        [ : q13363 protein ]        [ : go_0005515 go ]
+[ : ensg00000166913 gene ]  [ : enst00000353703 transcript ][ : ense00003798043 exon ]  [ : p31946 protein ]        [ : q8wum4 protein ]        [ : go_0005829 go ]
+[ : ensg00000166913 gene ]  [ : enst00000372839 transcript ][ : ense00003798043 exon ]  [ : p31946 protein ]        [ : o14810 protein ]        [ : go_0005515 go ]
+ MeTTaLog Execution time: 18.68 seconds
+% 410,370,615 inferences, 18.676 CPU in 18.770 seconds (100% CPU, 21972698 Lips)
+ Last answer found: 18.18 seconds
+ Number of answers: 7,441,850
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+4. Interactions Involving 1433B Protein (With Properties)
+        Find interactions involving 1433B protein including transcripts, exons, and GO terms. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Protein1 protein_name
+        (startsWith "1433B") $PropList1)
+      (neo_P $Gene transcribed_to $Transcript $PropList2)
+      (neo_P $Transcript includes $Exon $PropList3)
+      (neo_P $Protein1 translation_of $Transcript $PropList4)
+      (neo_P $Protein1 interacts_with $Protein2 $PropList5)
+      (neo_P $GOTerm go_gene_product $Protein1 $PropList6))
+    (result $Gene $Transcript $Exon $Protein1 $Protein2 $GOTerm $PropList1 $PropList2 $PropList3 $PropList4 $PropList5 $PropList6))
+
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0004860 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:11555644) ] [ = evidence IDA ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:10713667) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:10958686) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:31980649) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:32707033) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (enables) ] [ = db_reference (PMID:32707033) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20290 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.39 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-9657608) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : q9h0u4 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.199 ])([ = qualifier (enables) ] [ = db_reference (PMID:25959826) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : q9h0u4 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.199 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-9610154) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p30044 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.187 ])([ = qualifier (enables) ] [ = db_reference (PMID:24255178) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p63151 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.18 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-5632738) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p20823 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.292 ])([ = qualifier (enables) ] [ = db_reference (PMID:24255178) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p07737 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.391 ])([ = qualifier (enables) ] [ = db_reference (PMID:11555644) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : q09028 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.384 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-5672951) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : p49685 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.489 ])([ = qualifier (enables) ] [ = db_reference (PMID:24255178) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : q16576 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.322 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-5672972) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00001891800 exon ][ : p31946 protein ][ : q13363 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.165 ])([ = qualifier (enables) ] [ = db_reference (PMID:30833792) ] [ = evidence IPI ])
+[ : ensg00000166913 gene ][ : enst00000353703 transcript ][ : ense00003798043 exon ][ : p31946 protein ][ : q8wum4 protein ][ : go_0005829 go ]()            ()            ()            ()            ([ = score 0.179 ])([ = qualifier (located_in) ] [ = db_reference (Reactome:R-HSA-9656211) ] [ = evidence TAS ])
+[ : ensg00000166913 gene ][ : enst00000372839 transcript ][ : ense00003798043 exon ][ : p31946 protein ][ : o14810 protein ][ : go_0005515 go ]()            ()            ()            ()            ([ = score 0.182 ])([ = qualifier (enables) ] [ = db_reference (PMID:32707033) ] [ = evidence IPI ])
+ MeTTaLog Execution time: 21.98 seconds
+% 598,403,617 inferences, 21.982 CPU in 22.088 seconds (100% CPU, 27222365 Lips)
+ Last answer found: 21.45 seconds
+ Number of answers: 7,441,850
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+5. Components Associated with IGF1
+        Find enhancers, pathways, and transcripts associated with the IGF1 gene.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $Gene genes_pathways $Pathway)
+      (neo $Enhancer associated_with $Gene)
+      (neo $Transcript transcribed_from $Gene)
+      (neo $Transcript translates_to $Protein))
+    (result $Gene $Pathway $Enhancer $Transcript $Protein))
+
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000644491 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392905 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000307046 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392904 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102427022_102427223_grch38 enhancer ][ : enst00000644491 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102427022_102427223_grch38 enhancer ][ : enst00000337514 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102407709_102408725_grch38 enhancer ][ : enst00000392905 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102410004_102410767_grch38 enhancer ][ : enst00000644491 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102418398_102418675_grch38 enhancer ][ : enst00000392905 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102425157_102425246_grch38 enhancer ][ : enst00000644491 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102431759_102432282_grch38 enhancer ][ : enst00000337514 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102439364_102440248_grch38 enhancer ][ : enst00000392905 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-109582 pathway ]        [ : chr12_102486207_102486549_grch38 enhancer ][ : enst00000644491 transcript ]  [ : p05019 protein ]    
+[ : ensg00000017427 gene ]        [ : r-hsa-114608 pathway ]        [ : chr12_102452575_102452904_grch38 enhancer ][ : enst00000392905 transcript ]  [ : p05019 protein ]    
+Time limit 60 exceeded for 5. Components Associated with IGF1
+% 116,058,537 inferences, 59.590 CPU in 60.001 seconds (99% CPU, 1947605 Lips)
+ Last answer found: 59.59 seconds
+ Number of answers: 90,235
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+5. Components Associated with IGF1 (With Properties)
+        Find enhancers, pathways, and transcripts associated with the IGF1 gene. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $Gene genes_pathways $Pathway $PropList2)
+      (neo_P $Enhancer associated_with $Gene $PropList3)
+      (neo_P $Transcript transcribed_from $Gene $PropList4)
+      (neo_P $Transcript translates_to $Protein $PropList5))
+    (result $Gene $Pathway $Enhancer $Transcript $Protein $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
+
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]()               ()               ()               ()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ][ : p05019 protein ]()               ()               ()               ()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000644491 transcript ][ : p05019 protein ]()               ()               ()               ()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0009047 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000307046 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0009047 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392904 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0009054 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102427022_102427223_grch38 enhancer ][ : enst00000644491 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0007366 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102427022_102427223_grch38 enhancer ][ : enst00000337514 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0003665 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102407709_102408725_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CL_0002603 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102410004_102410767_grch38 enhancer ][ : enst00000644491 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0009054 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102418398_102418675_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0008089 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102425157_102425246_grch38 enhancer ][ : enst00000644491 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CL_2000091 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102431759_102432282_grch38 enhancer ][ : enst00000337514 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0009047 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102439364_102440248_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0002785 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102486207_102486549_grch38 enhancer ][ : enst00000644491 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0007606 ])()               ()
+[ : ensg00000017427 gene ][ : r-hsa-114608 pathway ][ : chr12_102452575_102452904_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]()               ()               ([ = biological_context CLO_0002177 ])()               ()
+Time limit 60 exceeded for 5. Components Associated with IGF1 (With Properties)
+% 115,465,506 inferences, 59.563 CPU in 60.001 seconds (99% CPU, 1938542 Lips)
+ Last answer found: 59.56 seconds
+ Number of answers: 89,776
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+6. Pathways and Protein Interactions for IGF1
+        Find pathways and interacting proteins for the IGF1 gene including all associated components.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $Gene genes_pathways $Pathway)
+      (neo $Enhancer associated_with $Gene)
+      (neo $Transcript transcribed_from $Gene)
+      (neo $Transcript translates_to $Protein1)
+      (neo $Protein1 interacts_with $Protein2))
+    (result $Gene $Pathway $Enhancer $Transcript $Protein1 $Protein2))
+
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : o43541 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : p04141 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : q12879 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : p46939 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : q16656 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : o43741 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : p08236 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : p56545 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : p01567 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : q9bxn2 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : o75173 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : q8wv24 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ]        [ : o60907 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ][ : p05019 protein ]        [ : q9npg1 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ][ : p05019 protein ]        [ : q07890 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102478548_102478607_grch38 promoter ][ : enst00000424202 transcript ][ : p05019 protein ]        [ : q05086 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ]        [ : q8tf66 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102407709_102408725_grch38 enhancer ][ : enst00000424202 transcript ][ : p05019 protein ]        [ : p14317 protein ]
+[ : ensg00000017427 gene ]  [ : r-hsa-109582 pathway ]  [ : chr12_102421772_102422722_grch38 enhancer ][ : enst00000424202 transcript ][ : p05019 protein ]        [ : p05362 protein ]
+Time limit 60 exceeded for 6. Pathways and Protein Interactions for IGF1
+% 1,620,006,400 inferences, 59.736 CPU in 60.000 seconds (100% CPU, 27119350 Lips)
+ Last answer found: 59.74 seconds
+ Number of answers: 22,383,369
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+6. Pathways and Protein Interactions for IGF1 (With Properties)
+        Find pathways and interacting proteins for the IGF1 gene including all associated components. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $Gene genes_pathways $Pathway $PropList2)
+      (neo_P $Enhancer associated_with $Gene $PropList3)
+      (neo_P $Transcript transcribed_from $Gene $PropList4)
+      (neo_P $Transcript translates_to $Protein1 $PropList5)
+      (neo_P $Protein1 interacts_with $Protein2 $PropList6))
+    (result $Gene $Pathway $Enhancer $Transcript $Protein1 $Protein2 $PropList1 $PropList2 $PropList3 $PropList4 $PropList5 $PropList6))
+
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : o43541 protein ]()            ()            ()            ()            ()            ([ = score 0.225 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : p04141 protein ]()            ()            ()            ()            ()            ([ = score 0.541 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : q12879 protein ]()            ()            ()            ()            ()            ([ = score 0.25 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : p46939 protein ]()            ()            ()            ()            ()            ([ = score 0.282 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : q16656 protein ]()            ()            ()            ()            ()            ([ = score 0.271 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : o43741 protein ]()            ()            ()            ()            ()            ([ = score 0.167 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : p08236 protein ]()            ()            ()            ()            ()            ([ = score 0.27 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : p56545 protein ]()            ()            ()            ()            ()            ([ = score 0.187 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : p01567 protein ]()            ()            ()            ()            ()            ([ = score 0.248 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : q9bxn2 protein ]()            ()            ()            ()            ()            ([ = score 0.227 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : o75173 protein ]()            ()            ()            ()            ()            ([ = score 0.373 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : q8wv24 protein ]()            ()            ()            ()            ()            ([ = score 0.181 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000337514 transcript ][ : p05019 protein ][ : o60907 protein ]()            ()            ()            ()            ()            ([ = score 0.227 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ][ : p05019 protein ][ : q9npg1 protein ]()            ()            ()            ()            ()            ([ = score 0.171 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000392904 transcript ][ : p05019 protein ][ : q07890 protein ]()            ()            ()            ()            ()            ([ = score 0.321 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102478548_102478607_grch38 promoter ][ : enst00000424202 transcript ][ : p05019 protein ][ : q05086 protein ]()            ()            ()            ()            ()            ([ = score 0.2 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102498523_102498856_grch38 enhancer ][ : enst00000392905 transcript ][ : p05019 protein ][ : q8tf66 protein ]()            ()            ([ = biological_context CLO_0050119 ])()            ()            ([ = score 0.185 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102407709_102408725_grch38 enhancer ][ : enst00000424202 transcript ][ : p05019 protein ][ : p14317 protein ]()            ()            ([ = biological_context CLO_0007366 ])()            ()            ([ = score 0.195 ])
+[ : ensg00000017427 gene ][ : r-hsa-109582 pathway ][ : chr12_102421772_102422722_grch38 enhancer ][ : enst00000424202 transcript ][ : p05019 protein ][ : p05362 protein ]()            ()            ([ = biological_context CLO_0008381 ])()            ()            ([ = score 0.694 ])
+Time limit 60 exceeded for 6. Pathways and Protein Interactions for IGF1 (With Properties)
+% 1,832,447,826 inferences, 59.728 CPU in 60.000 seconds (100% CPU, 30679849 Lips)
+ Last answer found: 59.73 seconds
+ Number of answers: 19,011,988
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+7. Transcripts and Exons for TP73-AS1
+        Find transcripts and exons associated with the TP73-AS1 gene.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Transcript includes $Exon)
+      (neo $Transcript transcribed_from $Gene)
+      (neo $Gene gene_name
+        (endsWith "TP73-AS1")))
+    (result $Transcript $Exon $Gene))
+
+[ : enst00000648526 transcript ]                         [ : ense00003836919 exon ]                               [ : ensg00000227372 gene ]
+[ : enst00000648526 transcript ]                         [ : ense00001787305 exon ]                               [ : ensg00000227372 gene ]
+[ : enst00000648526 transcript ]                         [ : ense00001734384 exon ]                               [ : ensg00000227372 gene ]
+[ : enst00000636630 transcript ]                         [ : ense00003798426 exon ]                               [ : ensg00000227372 gene ]
+[ : enst00000636630 transcript ]                         [ : ense00003791729 exon ]                               [ : ensg00000227372 gene ]
+[ : enst00000636630 transcript ]                         [ : ense00003798500 exon ]                               [ : ensg00000227372 gene ]
+ MeTTaLog Execution time: 23.30 seconds
+% 531,142,852 inferences, 23.304 CPU in 23.402 seconds (100% CPU, 22791982 Lips)
+ Last answer found: 0.11 seconds
+ Number of answers: 142
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+7. Transcripts and Exons for TP73-AS1 (With Properties)
+        Find transcripts and exons associated with the TP73-AS1 gene. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Transcript includes $Exon $PropList1)
+      (neo_P $Transcript transcribed_from $Gene $PropList2)
+      (neo_P $Gene gene_name
+        (endsWith "TP73-AS1") $PropList3))
+    (result $Transcript $Exon $Gene $PropList1 $PropList2 $PropList3))
+
+[ : enst00000648526 transcript ][ : ense00003836919 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+[ : enst00000648526 transcript ][ : ense00001787305 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+[ : enst00000648526 transcript ][ : ense00001734384 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+[ : enst00000636630 transcript ][ : ense00003798426 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+[ : enst00000636630 transcript ][ : ense00003791729 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+[ : enst00000636630 transcript ][ : ense00003798500 exon ]  [ : ensg00000227372 gene ]  ()                          ()                          ()
+ MeTTaLog Execution time: 25.01 seconds
+% 534,446,642 inferences, 25.013 CPU in 25.122 seconds (100% CPU, 21366571 Lips)
+ Last answer found: 0.10 seconds
+ Number of answers: 142
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+8. Interactions Involving 1433S Protein
+        Find proteins interacting with 1433S and associated GO terms.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Protein1 protein_name
+        (stringEqual "1433S"))
+      (neo $GOTerm go_gene_product $Protein1)
+      (neo $Protein1 interacts_with $Protein2))
+    (result $GOTerm $Protein1 $Protein2))
+
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p68032 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : o43278 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p08922 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p15407 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p19838 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p37023 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p10809 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p07947 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p38936 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : q8ivw1 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : q96nj6 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p07332 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p21333 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : q92630 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : p47929 protein ]
+[ : go_0005515 go ]                                      [ : p31947 protein ]                                     [ : o95382 protein ]
+ MeTTaLog Execution time: 0.55 seconds
+% 14,905,865 inferences, 0.548 CPU in 0.552 seconds (99% CPU, 27199545 Lips)
+ Last answer found: 0.52 seconds
+ Number of answers: 243,331
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+8. Interactions Involving 1433S Protein (With Properties)
+        Find proteins interacting with 1433S and associated GO terms. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Protein1 protein_name
+        (stringEqual "1433S") $PropList1)
+      (neo_P $GOTerm go_gene_product $Protein1 $PropList2)
+      (neo_P $Protein1 interacts_with $Protein2 $PropList3))
+    (result $GOTerm $Protein1 $Protein2 $PropList1 $PropList2 $PropList3))
+
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p68032 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.386 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : o43278 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.238 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p08922 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.198 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p15407 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.218 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p19838 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.273 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p37023 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.181 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p10809 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.3 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p07947 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.183 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p38936 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.531 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : q8ivw1 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.347 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : q96nj6 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.156 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p07332 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.181 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p21333 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.216 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : q92630 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11574543) ] [ = evidence IPI ])([ = score 0.151 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : p47929 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:11697890) ] [ = evidence IPI ])([ = score 0.543 ])
+[ : go_0005515 go ]         [ : p31947 protein ]        [ : o95382 protein ]        ()                          ([ = qualifier (enables) ] [ = db_reference (PMID:15657067) ] [ = evidence IPI ])([ = score 0.198 ])
+ MeTTaLog Execution time: 0.58 seconds
+% 17,849,273 inferences, 0.581 CPU in 0.583 seconds (100% CPU, 30715566 Lips)
+ Last answer found: 0.56 seconds
+ Number of answers: 243,331
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+9. IGF1 Expression in Tissues and Transcripts
+        Find IGF1 expression in tissues and related transcripts.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $Gene expressed_in $Uberon)
+      (neo $Gene transcribed_to $Transcript))
+    (result $Gene $Uberon $Transcript))
+
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : enst00000337514 transcript ]
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : enst00000481539 transcript ]
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : enst00000392904 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000002 uberon ]                              [ : enst00000392904 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000002 uberon ]                              [ : enst00000644491 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000002 uberon ]                              [ : enst00000392905 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000007 uberon ]                              [ : enst00000424202 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000014 uberon ]                              [ : enst00000307046 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000029 uberon ]                              [ : enst00000481539 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000057 uberon ]                              [ : enst00000644491 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000451 uberon ]                              [ : enst00000307046 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0001044 uberon ]                              [ : enst00000392905 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0001234 uberon ]                              [ : enst00000424202 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0001496 uberon ]                              [ : enst00000644491 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0001876 uberon ]                              [ : enst00000392904 transcript ]
+[ : ensg00000017427 gene ]                               [ : uberon_0010414 uberon ]                              [ : enst00000424202 transcript ]
+ MeTTaLog Execution time: 1.79 seconds
+% 6,782,899 inferences, 1.789 CPU in 1.798 seconds (100% CPU, 3790698 Lips)
+ Last answer found: 1.57 seconds
+ Number of answers: 49,357
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+9. IGF1 Expression in Tissues and Transcripts (With Properties)
+        Find IGF1 expression in tissues and related transcripts. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $Gene expressed_in $Uberon $PropList2)
+      (neo_P $Gene transcribed_to $Transcript $PropList3))
+    (result $Gene $Uberon $Transcript $PropList1 $PropList2 $PropList3))
+
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : enst00000337514 transcript ]()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()   
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : enst00000481539 transcript ]()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()   
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : enst00000392904 transcript ]()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()   
+[ : ensg00000017427 gene ]  [ : uberon_0000002 uberon ] [ : enst00000392904 transcript ]()                          ([ = score 89.21 ] [ = p_value 5.212849615285199e-12 ])()
+[ : ensg00000017427 gene ]  [ : uberon_0000002 uberon ] [ : enst00000644491 transcript ]()                          ([ = score 89.21 ] [ = p_value 5.212849615285199e-12 ])()
+[ : ensg00000017427 gene ]  [ : uberon_0000002 uberon ] [ : enst00000392905 transcript ]()                          ([ = score 89.21 ] [ = p_value 5.212849615285199e-12 ])()
+[ : ensg00000017427 gene ]  [ : uberon_0000007 uberon ] [ : enst00000424202 transcript ]()                          ([ = score 59.37 ] [ = p_value 0.003380106147085 ])()    
+[ : ensg00000017427 gene ]  [ : uberon_0000014 uberon ] [ : enst00000307046 transcript ]()                          ([ = score 75.81 ] [ = p_value 0.0033457544413306 ])()   
+[ : ensg00000017427 gene ]  [ : uberon_0000029 uberon ] [ : enst00000481539 transcript ]()                          ([ = score 87.81 ] [ = p_value 4.96495664282868e-09 ])() 
+[ : ensg00000017427 gene ]  [ : uberon_0000057 uberon ] [ : enst00000644491 transcript ]()                          ([ = score 94.68 ] [ = p_value 0.0016728772206653 ])()   
+[ : ensg00000017427 gene ]  [ : uberon_0000451 uberon ] [ : enst00000307046 transcript ]()                          ([ = score 64.76 ] [ = p_value 0.0029235940742491 ])()   
+[ : ensg00000017427 gene ]  [ : uberon_0001044 uberon ] [ : enst00000392905 transcript ]()                          ([ = score 76.26 ] [ = p_value 2.129002410037364e-10 ])()
+[ : ensg00000017427 gene ]  [ : uberon_0001234 uberon ] [ : enst00000424202 transcript ]()                          ([ = score 74.26 ] [ = p_value 2.20062734374866e-10 ])() 
+[ : ensg00000017427 gene ]  [ : uberon_0001496 uberon ] [ : enst00000644491 transcript ]()                          ([ = score 75.31 ] [ = p_value 1.0e-14 ])()              
+[ : ensg00000017427 gene ]  [ : uberon_0001876 uberon ] [ : enst00000392904 transcript ]()                          ([ = score 76.53 ] [ = p_value 0.0016728772206653 ])()   
+[ : ensg00000017427 gene ]  [ : uberon_0010414 uberon ] [ : enst00000424202 transcript ]()                          ([ = score 96.52 ] [ = p_value 1.0e-14 ])()              
+ MeTTaLog Execution time: 1.63 seconds
+% 7,401,540 inferences, 1.631 CPU in 1.640 seconds (99% CPU, 4538864 Lips)
+ Last answer found: 1.52 seconds
+ Number of answers: 49,357
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+10. Transcripts and Exons on Chromosome 1
+        Find transcripts, exons, and interacting proteins located on chromosome 1.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Transcript includes $Exon)
+      (neo $Exon chr chr1)
+      (neo $Transcript translates_to $Protein1)
+      (neo $Protein2 interacts_with $Protein1))
+    (result $Transcript $Exon $Protein1 $Protein2))
+
+ MeTTaLog Execution time: 0.73 seconds
+% 26,392,137 inferences, 0.733 CPU in 0.739 seconds (99% CPU, 36015318 Lips)
+ Last answer found: 5041.10 seconds
+ Number of answers: 0
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+10. Transcripts and Exons on Chromosome 1 (With Properties)
+        Find transcripts, exons, and interacting proteins located on chromosome 1. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Transcript includes $Exon $PropList1)
+      (neo_P $Exon chr chr1 $PropList2)
+      (neo_P $Transcript translates_to $Protein1 $PropList3)
+      (neo_P $Protein2 interacts_with $Protein1 $PropList4))
+    (result $Transcript $Exon $Protein1 $Protein2 $PropList1 $PropList2 $PropList3 $PropList4))
+
+ MeTTaLog Execution time: 0.69 seconds
+% 24,742,790 inferences, 0.688 CPU in 0.690 seconds (100% CPU, 35949657 Lips)
+ Last answer found: 5041.83 seconds
+ Number of answers: 0
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+11. IGF1 Gene Expression in Cell Lines
+        Find IGF1 gene expression in cell lines and related subclass relationships.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $Gene expressed_in $CellLine1)
+      (neo $CellLine2 subclass_of $CellLine1))
+    (result $Gene $CellLine1 $CellLine2))
+
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : cl_0000018 cl ]
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : cl_0000020 cl ]
+[ : ensg00000017427 gene ]                               [ : cl_0000015 cl ]                                      [ : cl_0000017 cl ]
+[ : ensg00000017427 gene ]                               [ : cl_0002328 cl ]                                      [ : cl_1000312 cl ]
+[ : ensg00000017427 gene ]                               [ : cl_0002328 cl ]                                      [ : cl_1000349 cl ]
+[ : ensg00000017427 gene ]                               [ : cl_0002328 cl ]                                      [ : cl_4033010 cl ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000014 uberon ]                              [ : uberon_0014481 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000014 uberon ]                              [ : uberon_0001483 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000029 uberon ]                              [ : uberon_0016399 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000043 uberon ]                              [ : uberon_0003701 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000996 uberon ]                              [ : uberon_0013524 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0001765 uberon ]                              [ : uberon_0011844 uberon ]
+[ : ensg00000017427 gene ]                               [ : uberon_0000473 uberon ]                              [ : uberon_0004533 uberon ]
+[ : ensg00000140443 gene ]                               [ : uberon_0000044 uberon ]                              [ : uberon_0002837 uberon ]
+[ : ensg00000140443 gene ]                               [ : uberon_0001134 uberon ]                              [ : uberon_0004830 uberon ]
+[ : ensg00000140443 gene ]                               [ : efo_0002009 efo ]                                    [ : clo_0022107 efo ]
+ MeTTaLog Execution time: 0.21 seconds
+% 6,188,200 inferences, 0.212 CPU in 0.213 seconds (100% CPU, 29180057 Lips)
+ Last answer found: 0.10 seconds
+ Number of answers: 11,832
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+11. IGF1 Gene Expression in Cell Lines (With Properties)
+        Find IGF1 gene expression in cell lines and related subclass relationships. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $Gene expressed_in $CellLine1 $PropList2)
+      (neo_P $CellLine2 subclass_of $CellLine1 $PropList3))
+    (result $Gene $CellLine1 $CellLine2 $PropList1 $PropList2 $PropList3))
+
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : cl_0000018 cl ]         ()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()       
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : cl_0000020 cl ]         ()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()       
+[ : ensg00000017427 gene ]  [ : cl_0000015 cl ]         [ : cl_0000017 cl ]         ()                          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()       
+[ : ensg00000017427 gene ]  [ : cl_0002328 cl ]         [ : cl_1000312 cl ]         ()                          ([ = score 57.27 ] [ = p_value 0.024552789258141 ])()        
+[ : ensg00000017427 gene ]  [ : cl_0002328 cl ]         [ : cl_1000349 cl ]         ()                          ([ = score 57.27 ] [ = p_value 0.024552789258141 ])()        
+[ : ensg00000017427 gene ]  [ : cl_0002328 cl ]         [ : cl_4033010 cl ]         ()                          ([ = score 57.27 ] [ = p_value 0.024552789258141 ])()        
+[ : ensg00000017427 gene ]  [ : uberon_0000014 uberon ] [ : uberon_0014481 uberon ] ()                          ([ = score 82.73 ] [ = p_value 0.0016728772206653 ])()       
+[ : ensg00000017427 gene ]  [ : uberon_0000014 uberon ] [ : uberon_0001483 uberon ] ()                          ([ = score 71.89 ] [ = p_value 1.0e-14 ])()                  
+[ : ensg00000017427 gene ]  [ : uberon_0000029 uberon ] [ : uberon_0016399 uberon ] ()                          ([ = score 76.28 ] [ = p_value 0.0033457544413306 ])()       
+[ : ensg00000017427 gene ]  [ : uberon_0000043 uberon ] [ : uberon_0003701 uberon ] ()                          ([ = score 92.51 ] [ = p_value 0.0016728772206653 ])()       
+[ : ensg00000017427 gene ]  [ : uberon_0000996 uberon ] [ : uberon_0013524 uberon ] ()                          ([ = score 71.39 ] [ = p_value 0.0022196102432029 ])()       
+[ : ensg00000017427 gene ]  [ : uberon_0001765 uberon ] [ : uberon_0011844 uberon ] ()                          ([ = score 94.43 ] [ = p_value 0.0016849995193658 ])()       
+[ : ensg00000017427 gene ]  [ : uberon_0000473 uberon ] [ : uberon_0004533 uberon ] ()                          ([ = p_value 5.51931e-05 ]) ()
+[ : ensg00000140443 gene ]  [ : uberon_0000044 uberon ] [ : uberon_0002837 uberon ] ()                          ([ = score 85.51 ] [ = p_value 0.0016728772206653 ])()       
+[ : ensg00000140443 gene ]  [ : uberon_0001134 uberon ] [ : uberon_0004830 uberon ] ()                          ([ = score 74.71 ] [ = p_value 7.67442790587342e-06 ])()     
+[ : ensg00000140443 gene ]  [ : efo_0002009 efo ]       [ : clo_0022107 efo ]       ()                          ([ = p_value 2.28954e-05 ]) ()
+ MeTTaLog Execution time: 0.21 seconds
+% 6,356,085 inferences, 0.209 CPU in 0.212 seconds (99% CPU, 30391082 Lips)
+ Last answer found: 0.09 seconds
+ Number of answers: 11,832
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+12. IGF1 Gene Regulation by SNP Activity
+        Find regulation of the IGF1 gene by SNP activity.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $SNP activity_by_contact $Gene))
+    (result $SNP $Gene))
+
+[ : rs1019731 snp ]                                                                   [ : ensg00000017427 gene ]
+[ : rs10507135 snp ]                                                                  [ : ensg00000017427 gene ]
+[ : rs10507135 snp ]                                                                  [ : ensg00000017427 gene ]
+[ : rs114119866 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs114119866 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs114160584 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs12826453 snp ]                                                                  [ : ensg00000017427 gene ]
+[ : rs142908202 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs148263241 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs184405224 snp ]                                                                 [ : ensg00000017427 gene ]
+[ : rs10163105 snp ]                                                                  [ : ensg00000140443 gene ]
+[ : rs149212599 snp ]                                                                 [ : ensg00000140443 gene ]
+[ : rs2684777 snp ]                                                                   [ : ensg00000140443 gene ]
+[ : rs76860920 snp ]                                                                  [ : ensg00000140443 gene ]
+ MeTTaLog Execution time: 0.18 seconds
+% 4,519,138 inferences, 0.177 CPU in 0.178 seconds (99% CPU, 25595741 Lips)
+ Last answer found: 0.06 seconds
+ Number of answers: 4,285
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+12. IGF1 Gene Regulation by SNP Activity (With Properties)
+        Find regulation of the IGF1 gene by SNP activity. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $SNP activity_by_contact $Gene $PropList2))
+    (result $SNP $Gene $PropList1 $PropList2))
+
+[ : rs1019731 snp ]                        [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.01959 ] [ = biological_context CL_0000103 ])
+[ : rs10507135 snp ]                       [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.027607 ] [ = biological_context UBERON_0000992 ])
+[ : rs10507135 snp ]                       [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.030463 ] [ = biological_context CLO_0007599 ])
+[ : rs114119866 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.085288 ] [ = biological_context CL_0001070 ])
+[ : rs114119866 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.056618 ] [ = biological_context CL_0000448 ])
+[ : rs114160584 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.020362 ] [ = biological_context CLO_0037116 ])
+[ : rs12826453 snp ]                       [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.032926 ] [ = biological_context CLO_0037281 ])
+[ : rs142908202 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.023975 ] [ = biological_context BTO_0005101 ])
+[ : rs148263241 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.037056 ] [ = biological_context BTO_0006414 ])
+[ : rs184405224 snp ]                      [ : ensg00000017427 gene ]                 ()                                         ([ = score 0.020066 ] [ = biological_context CLO_0001605 ])
+[ : rs10163105 snp ]                       [ : ensg00000140443 gene ]                 ()                                         ([ = score 0.022901 ] [ = biological_context CLO_0037281 ])
+[ : rs149212599 snp ]                      [ : ensg00000140443 gene ]                 ()                                         ([ = score 0.017063 ] [ = biological_context CL_0002404 ])
+[ : rs2684777 snp ]                        [ : ensg00000140443 gene ]                 ()                                         ([ = score 0.030019 ] [ = biological_context CLO_0001601 ])
+[ : rs76860920 snp ]                       [ : ensg00000140443 gene ]                 ()                                         ([ = score 0.046365 ] [ = biological_context BTO_0003933 ])
+ MeTTaLog Execution time: 0.15 seconds
+% 4,563,699 inferences, 0.147 CPU in 0.148 seconds (99% CPU, 31022147 Lips)
+ Last answer found: 0.03 seconds
+ Number of answers: 4,285
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+13. IGF1 Gene Interactions and Regulations
+        Find IGF1 gene interactions, regulations, and pathways including transcripts and proteins.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene gene_name
+        (startsWith "IGF1"))
+      (neo $Gene expressed_in $CellLine1)
+      (neo $CellLine2 subclass_of $CellLine1)
+      (neo $RegulatingGene regulates $Gene)
+      (neo $RegulatingGene transcribed_to $Transcript)
+      (neo $Transcript translates_to $Protein1)
+      (neo $Protein2 interacts_with $Protein1))
+    (result $Gene $CellLine1 $CellLine2 $RegulatingGene $Transcript $Protein1 $Protein2))
+
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q96ru2 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q16654 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : p11233 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : p18146 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q13207 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : p15173 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q9bvw5 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : p29590 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q7z3z4 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q8n302 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ]    [ : q92841 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000221869 gene ][ : enst00000408965 transcript ][ : p49716 protein ]    [ : q99592 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ]    [ : o95274 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ]    [ : q14114 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ]    [ : q99496 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000091831 gene ][ : enst00000338799 transcript ][ : p03372 protein ]    [ : p21754 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000100888 gene ][ : enst00000645929 transcript ][ : q9hck8 protein ]    [ : p49459 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000018 cl ]     [ : ensg00000120948 gene ][ : enst00000240185 transcript ][ : q13148 protein ]    [ : p02766 protein ]
+[ : ensg00000017427 gene ][ : cl_0000015 cl ]     [ : cl_0000408 cl ]     [ : ensg00000068305 gene ][ : enst00000558812 transcript ][ : q02078 protein ]    [ : q9c0f3 protein ]
+Time limit 60 exceeded for 13. IGF1 Gene Interactions and Regulations
+% 1,415,390,634 inferences, 59.562 CPU in 60.000 seconds (99% CPU, 23763365 Lips)
+ Last answer found: 59.56 seconds
+ Number of answers: 18,203,437
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+13. IGF1 Gene Interactions and Regulations (With Properties)
+        Find IGF1 gene interactions, regulations, and pathways including transcripts and proteins. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene gene_name
+        (startsWith "IGF1") $PropList1)
+      (neo_P $Gene expressed_in $CellLine1 $PropList2)
+      (neo_P $CellLine2 subclass_of $CellLine1 $PropList3)
+      (neo_P $RegulatingGene regulates $Gene $PropList4)
+      (neo_P $RegulatingGene transcribed_to $Transcript $PropList5)
+      (neo_P $Transcript translates_to $Protein1 $PropList6)
+      (neo_P $Protein2 interacts_with $Protein1 $PropList7))
+    (result $Gene $CellLine1 $CellLine2 $RegulatingGene $Transcript $Protein1 $Protein2 $PropList1 $PropList2 $PropList3 $PropList4 $PropList5 $PropList6 $PropList7))
+
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q96ru2 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.177 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q16654 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.157 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : p11233 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.178 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : p18146 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.22 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q13207 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.161 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : p15173 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.189 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q9bvw5 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.229 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : p29590 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.571 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q7z3z4 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.165 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q8n302 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.157 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000139687 gene ][ : enst00000267163 transcript ][ : p06400 protein ][ : q92841 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:18281476 pubmed:29087512) ] [ = databases (TRRUST) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'inferred by curator' ])()          ()          ([ = score 0.173 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000221869 gene ][ : enst00000408965 transcript ][ : p49716 protein ][ : q99592 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285 pubmed:27924024 pubmed:19103645 pubmed:22900683) ] [ = databases (GTRD HTRI ReMap) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay electrophoretic mobility shift assay inferred by curator' ])()          ()          ([ = score 0.159 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ][ : o95274 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285 pubmed:27924024 pubmed:17202159) ] [ = databases (GTRD ReMap TRED) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay inferred by curator' ])()          ()          ([ = score 0.51 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ][ : q14114 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285 pubmed:27924024 pubmed:17202159) ] [ = databases (GTRD ReMap TRED) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay inferred by curator' ])()          ()          ([ = score 0.195 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000091831 gene ][ : enst00000440973 transcript ][ : p03372 protein ][ : q99496 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285 pubmed:27924024 pubmed:17202159) ] [ = databases (GTRD ReMap TRED) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay inferred by curator' ])()          ()          ([ = score 0.224 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000091831 gene ][ : enst00000338799 transcript ][ : p03372 protein ][ : p21754 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285 pubmed:27924024 pubmed:17202159) ] [ = databases (GTRD ReMap TRED) ] [ = evidence_type small_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay inferred by curator' ])()          ()          ([ = score 0.215 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000100888 gene ][ : enst00000645929 transcript ][ : q9hck8 protein ][ : p49459 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285) ] [ = databases (ReMap) ] [ = evidence_type large_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay' ])()          ()          ([ = score 0.25 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000018 cl ][ : ensg00000120948 gene ][ : enst00000240185 transcript ][ : q13148 protein ][ : p02766 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285) ] [ = databases (ReMap) ] [ = evidence_type large_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay' ])()          ()          ([ = score 0.272 ])
+[ : ensg00000017427 gene ][ : cl_0000015 cl ][ : cl_0000408 cl ][ : ensg00000068305 gene ][ : enst00000558812 transcript ][ : q02078 protein ][ : q9c0f3 protein ]()          ([ = score 79.15 ] [ = p_value 0.0033457544413306 ])()          ([ = evidence (pubmed:29126285) ] [ = databases (ReMap) ] [ = evidence_type large_scale_evidence ] [ = detection_method 'chromatin immunoprecipitation assay' ])()          ()          ([ = score 0.159 ])
+Time limit 60 exceeded for 13. IGF1 Gene Interactions and Regulations (With Properties)
+% 1,783,775,958 inferences, 59.715 CPU in 60.000 seconds (100% CPU, 29871678 Lips)
+ Last answer found: 59.71 seconds
+ Number of answers: 16,864,441
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+14. Pathway Associations for SNAP25
+        Locate SNAP25 in pathways with other genes, including cases where the other gene may be SNAP25 itself.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene1 gene_name
+        (startsWith "SNAP25"))
+      (neo $Gene1 genes_pathways $Pathway)
+      (neo $Gene2 genes_pathways $Pathway))
+    (result $Gene1 $Pathway $Gene2))
+
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000005379 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000008056 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000010379 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000355920 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000355930 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000360549 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000496697 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : enst00000445055 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensg00000022355 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensg00000117676 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensp00000335592 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : enst00000292807 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensg00000026559 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensp00000353611 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensp00000498662 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-1280215 pathway ]                              [ : ensp00000445409 gene ]
+ MeTTaLog Execution time: 0.64 seconds
+% 10,317,457 inferences, 0.643 CPU in 0.645 seconds (100% CPU, 16056367 Lips)
+ Last answer found: 0.53 seconds
+ Number of answers: 97,865
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+14. Pathway Associations for SNAP25 (With Properties)
+        Locate SNAP25 in pathways with other genes, including cases where the other gene may be SNAP25 itself. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene1 gene_name
+        (startsWith "SNAP25") $PropList1)
+      (neo_P $Gene1 genes_pathways $Pathway $PropList2)
+      (neo_P $Gene2 genes_pathways $Pathway $PropList3))
+    (result $Gene1 $Pathway $Gene2 $PropList1 $PropList2 $PropList3))
+
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000005379 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000008056 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000010379 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000355920 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000355930 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000360549 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000496697 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : enst00000445055 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensg00000022355 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensg00000117676 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensp00000335592 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : enst00000292807 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensg00000026559 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensp00000353611 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensp00000498662 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-1280215 pathway ] [ : ensp00000445409 gene ]  ()                          ()                          ()
+ MeTTaLog Execution time: 0.38 seconds
+% 11,495,226 inferences, 0.383 CPU in 0.386 seconds (99% CPU, 30041867 Lips)
+ Last answer found: 0.27 seconds
+ Number of answers: 97,865
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+14a. Pathway Associations for SNAP25 - Distinct Genes
+        Locate SNAP25 in pathways with other genes, ensuring that SNAP25 and other genes are distinct.
+
+  (match &neo4j_out_v3
+    (,
+      (neo $Gene1 gene_name
+        (startsWith "SNAP25"))
+      (neo $Gene1 genes_pathways $Pathway)
+      (neo $Gene2 genes_pathways $Pathway)
+      (different $Gene1 $Gene2))
+    (result $Gene1 $Pathway $Gene2))
+
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000005379 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000008056 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensg00000010379 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000355920 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000355930 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000360549 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : ensp00000496697 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112310 pathway ]                               [ : enst00000445055 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensg00000022355 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensg00000117676 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : ensp00000335592 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112315 pathway ]                               [ : enst00000292807 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensg00000026559 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensp00000353611 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-112316 pathway ]                               [ : ensp00000498662 gene ]
+[ : ensg00000132639 gene ]                               [ : r-hsa-1280215 pathway ]                              [ : ensp00000445409 gene ]
+ MeTTaLog Execution time: 0.38 seconds
+% 11,002,580 inferences, 0.385 CPU in 0.386 seconds (100% CPU, 28611319 Lips)
+ Last answer found: 0.27 seconds
+ Number of answers: 97,865
+=================================================================
+```
+
+
+
+
+
+```no-wrap
+=================================================================
+14a. Pathway Associations for SNAP25 - Distinct Genes (With Properties)
+        Locate SNAP25 in pathways with other genes, ensuring that SNAP25 and other genes are distinct. (With Properties)
+
+  (match &neo4j_out_v3
+    (,
+      (neo_P $Gene1 gene_name
+        (startsWith "SNAP25") $PropList1)
+      (neo_P $Gene1 genes_pathways $Pathway $PropList2)
+      (neo_P $Gene2 genes_pathways $Pathway $PropList3)
+      (different $Gene1 $Gene2))
+    (result $Gene1 $Pathway $Gene2 $PropList1 $PropList2 $PropList3))
+
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000005379 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000008056 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensg00000010379 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000355920 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000355930 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000360549 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : ensp00000496697 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112310 pathway ]  [ : enst00000445055 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensg00000022355 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensg00000117676 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : ensp00000335592 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112315 pathway ]  [ : enst00000292807 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensg00000026559 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensp00000353611 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-112316 pathway ]  [ : ensp00000498662 gene ]  ()                          ()                          ()
+[ : ensg00000132639 gene ]  [ : r-hsa-1280215 pathway ] [ : ensp00000445409 gene ]  ()                          ()                          ()
+ MeTTaLog Execution time: 0.43 seconds
+% 12,180,349 inferences, 0.428 CPU in 0.431 seconds (99% CPU, 28470640 Lips)
+ Last answer found: 0.31 seconds
+ Number of answers: 97,865
+=================================================================
+```
+% 12,516,987,965 inferences, 592.868 CPU in 596.085 seconds (99% CPU, 21112603 Lips)
+
+
+```no-wrap
+root@HOSTAGE:~/metta-wam/libraries/bioAS# wc -l neo4j_out_v3_mw/global_links/*.pl
+    8335666 neo4j_out_v3_mw/global_links/activity_by_contact.pl
+    3121079 neo4j_out_v3_mw/global_links/associated_with.pl
+      46413 neo4j_out_v3_mw/global_links/belongs_to.pl
+   10489066 neo4j_out_v3_mw/global_links/binds_to.pl
+        359 neo4j_out_v3_mw/global_links/capable_of.pl
+       2692 neo4j_out_v3_mw/global_links/child_pathway_of.pl
+    2407227 neo4j_out_v3_mw/global_links/chromatin_state.pl
+   23396248 neo4j_out_v3_mw/global_links/closest_gene.pl
+  257586456 neo4j_out_v3_mw/global_links/coexpressed_with.pl
+     107700 neo4j_out_v3_mw/global_links/downstream_of.pl
+   13117246 neo4j_out_v3_mw/global_links/eqtl_association.pl
+    7326858 neo4j_out_v3_mw/global_links/expressed_in.pl
+     889906 neo4j_out_v3_mw/global_links/genes_pathways.pl
+     288639 neo4j_out_v3_mw/global_links/go_gene_product.pl
+     618298 neo4j_out_v3_mw/global_links/histone_modification.pl
+      23760 neo4j_out_v3_mw/global_links/in_dnase_i_hotspot.pl
+      18957 neo4j_out_v3_mw/global_links/in_tad_region.pl
+    1649477 neo4j_out_v3_mw/global_links/includes.pl
+   13247695 neo4j_out_v3_mw/global_links/interacts_with.pl
+     177707 neo4j_out_v3_mw/global_links/located_in.pl
+       2692 neo4j_out_v3_mw/global_links/parent_pathway_of.pl
+       1304 neo4j_out_v3_mw/global_links/part_of.pl
+    6394608 neo4j_out_v3_mw/global_links/regulates.pl
+     329233 neo4j_out_v3_mw/global_links/subclass_of.pl
+      96375 neo4j_out_v3_mw/global_links/tfbs_snp.pl
+     252836 neo4j_out_v3_mw/global_links/transcribed_from.pl
+     252836 neo4j_out_v3_mw/global_links/transcribed_to.pl
+      50073 neo4j_out_v3_mw/global_links/translates_to.pl
+      50073 neo4j_out_v3_mw/global_links/translation_of.pl
+     107707 neo4j_out_v3_mw/global_links/upstream_of.pl
+  350,89,186 total
+root@HOSTAGE:~/metta-wam/libraries/bioAS#
+
+
+```
+
+
 
 
 ```no-wrap
@@ -17,52 +1368,26 @@ sample_query([Promoter, Gene, Enhancer, Pathway, ChildPathway]) :-
     neo(ChildPathway, child_pathway_of, Pathway).
 
 
-```
-
-
-
-
-
-
-
-
-
-
-
-```no-wrap
-time python ./metta_python_convert.py neo4j_out_v3/ --tree neo4j_out_v3_mw/
-find neo4j_out_v3_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
-    qlf_file="${file%.pl}.qlf";
-    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
-        echo "Compiling: $file";
-        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
-    fi
-done
-```
-
-```no-wrap
-time python ./metta_python_convert.py neo4j_out_v4/ --tree neo4j_out_v4_mw/
-find neo4j_out_v4_mw/ -name "*_mw.pl" -printf "%s %p\n" | sort -n | awk '{print $2}' | while read file; do
-    qlf_file="${file%.pl}.qlf";
-    if [ ! -f "$qlf_file" ] || [ "$file" -nt "$qlf_file" ]; then
-        echo "Compiling: $file";
-        swipl -q -g "set_prolog_flag(encoding, utf8), qcompile(\"$file\"), halt.";
-    fi
-done
-```
-
-```no-wrap
 
 ```
+
+
 
 ```no-wrap
 root@HOSTAGE:~/metta-wam/libraries/bioAS# ./prepare.sh neo4j_out_v3.rdf 100M
 ./prepare.sh2: line 1: #!/bin/bash: No such file or directory
 🚀 Splitting 'neo4j_out_v3.rdf' (~25 GB) into ~100M chunks in 'neo4j_out_v3_split_rdf/'...
 🎉 Total files created: 258 in 3m 51s.4j_out_v3_part_000258.rdf 🦅 (elapsed: 3m 51s)                       ✅
+
 ```
 
+
 ```no-wrap
+
+╒═════════╤═════════╕
+│nodeCount│relCount │
+╞═════════╪═════════╡
+│72801737 │110427747
 
 root@HOSTAGE:~/metta-wam/libraries/bioAS# swipl -l gene_queries1.pl
 \U0001F680 Mounting persistence at datastore_neo4j_out_v3
@@ -1118,7 +2443,9 @@ Y = source('file:///root/metta-wam/libraries/bioAS/neo4j_out_v3_split_rdf/neo4j_
 Y = source_last_modified(1740796112.9243655) ;
 Y = triples(440_318_102) ;
 Y = persistent(true).
+
 ```
+
 
 ```no-wrap
 root@HOSTAGE:~/metta-wam/libraries/bioAS# swipl -l gene_queries1.pl
@@ -1165,10 +2492,89 @@ Y = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
 Z = 'neo4j://graph.schema#gene' .
 
 ?-
+
 ```
 
 
 
 
+```no-wrap
+
+        62,284  neo4j_out_v4/dbsuper/edges_super_enhancer_gene.csv
+        69,071  neo4j_out_v4/dbsuper/nodes_super_enhancer.csv
+         1,088  neo4j_out_v4/cell_ontology/edges_cl_part_of.csv
+         2,811  neo4j_out_v4/cell_ontology/nodes_cl.csv
+           368  neo4j_out_v4/cell_ontology/edges_cl_capable_of.csv
+         3,945  neo4j_out_v4/cell_ontology/edges_cl_subclass_of.csv
+    14,096,202  neo4j_out_v4/top_ld/EUR/edges_in_ld_with.csv
+       188,120  neo4j_out_v4/gwas/upstream/edges_snp_upstream_gene.csv
+       385,656  neo4j_out_v4/gwas/ingene/edges_snp_in_gene.csv
+       188,113  neo4j_out_v4/gwas/downstream/edges_snp_downstream_gene.csv
+   257,746,971  neo4j_out_v4/coxpressdb/edges_coexpressed_with.csv
+    13,356,025  neo4j_out_v4/string/edges_interacts_with.csv
+        12,622  neo4j_out_v4/gene_ontology/molecular_function/edges_molecular_function_subclass_of.csv
+        10,147  neo4j_out_v4/gene_ontology/molecular_function/nodes_molecular_function.csv
+        46,512  neo4j_out_v4/gene_ontology/biological_process/edges_biological_process_subclass_of.csv
+        26,468  neo4j_out_v4/gene_ontology/biological_process/nodes_biological_process.csv
+         4,618  neo4j_out_v4/gene_ontology/cellular_component/edges_cellular_component_subclass_of.csv
+         4,023  neo4j_out_v4/gene_ontology/cellular_component/nodes_cellular_component.csv
+           400  neo4j_out_v4/hocomoco/nodes_motif.csv
+       991,805  neo4j_out_v4/reactome/edges_genes_pathways.csv
+         2,692  neo4j_out_v4/reactome/edges_parent_pathway_of.csv
+         2,692  neo4j_out_v4/reactome/edges_child_pathway_of.csv
+         2,674  neo4j_out_v4/reactome/nodes_pathway.csv
+    67,561,010  neo4j_out_v4/gtex/eqtl/edges_gtex_variant_gene.csv
+    67,561,010  neo4j_out_v4/gtex/expression/edges_expressed_in.csv
+        38,090  neo4j_out_v4/uberon/edges_uberon_subclass_of.csv
+        26,997  neo4j_out_v4/uberon/nodes_uberon.csv
+ 3,152,174,545  neo4j_out_v4/roadmap/chromatin_state/edges_chromatin_state.csv
+   832,811,103  neo4j_out_v4/roadmap/h3_mark/edges_histone_modification.csv
+    26,821,418  neo4j_out_v4/roadmap/dhs/edges_in_dnase_i_hotspot.csv
+       662,841  neo4j_out_v4/rna_central/nodes_non_coding_rna.csv
+        18,898  neo4j_out_v4/rna_central/edges_cellular_component_rna.csv
+        10,359  neo4j_out_v4/rna_central/edges_molecular_function_rna.csv
+        17,035  neo4j_out_v4/rna_central/edges_biological_process_rna.csv
+    37,302,979  neo4j_out_v4/dbsnp/nodes_snp.csv
+     7,177,505  neo4j_out_v4/bgee/edges_expressed_in.csv
+    23,396,248  neo4j_out_v4/refseq/edges_closest_gene.csv
+       134,098  neo4j_out_v4/gaf/edges_biological_process_gene_product.csv
+        62,235  neo4j_out_v4/gaf/edges_cellular_component_gene_product_located_in.csv
+        70,800  neo4j_out_v4/gaf/edges_molecular_function_gene_product.csv
+        10,265  neo4j_out_v4/gaf/edges_cellular_component_gene_product_part_of.csv
+    29,184,677  neo4j_out_v4/polyphen-2/nodes_snp.csv
+        50,073  neo4j_out_v4/uniprot/edges_translation_of.csv
+        20,429  neo4j_out_v4/uniprot/nodes_protein.csv
+        50,073  neo4j_out_v4/uniprot/edges_translates_to.csv
+    10,489,066  neo4j_out_v4/tfbs/edges_gene_tfbs.csv
+    10,565,631  neo4j_out_v4/tfbs/nodes_tfbs.csv
+       827,037  neo4j_out_v4/dgv/nodes_structural_variant.csv
+    24,296,266  neo4j_out_v4/dbvar/nodes_structural_variant.csv
+     7,578,823  neo4j_out_v4/enhancer_atlas/edges_enhancer_gene.csv
+       193,219  neo4j_out_v4/enhancer_atlas/nodes_enhancer.csv
+     6,398,916  neo4j_out_v4/tflink/edges_tf_gene.csv
+        62,701  neo4j_out_v4/gencode/gene/nodes_gene.csv
+       565,117  neo4j_out_v4/gencode/exon/edges_includes.csv
+     1,649,477  neo4j_out_v4/gencode/exon/nodes_exon.csv
+       191,211  neo4j_out_v4/gencode/transcript/edges_transcribed_to.csv
+       191,211  neo4j_out_v4/gencode/transcript/edges_transcribed_from.csv
+       191,211  neo4j_out_v4/gencode/transcript/nodes_transcript.csv
+    20,140,695  neo4j_out_v4/peregrine/edges_enhancer_gene.csv
+     1,085,539  neo4j_out_v4/peregrine/nodes_enhancer.csv
+    35,856,052  neo4j_out_v4/abc/edges_activity_by_contact.csv
+        74,257  neo4j_out_v4/experimental_factor_ontology/edges_efo_subclass_of.csv
+       118,736  neo4j_out_v4/experimental_factor_ontology/nodes_efo.csv
+         6,558  neo4j_out_v4/brenda_tissue_ontology/nodes_bto.csv
+         4,600  neo4j_out_v4/brenda_tissue_ontology/edges_bto_subclass_of.csv
+        29,599  neo4j_out_v4/epd/nodes_promoter.csv
+        28,134  neo4j_out_v4/epd/edges_promoter_gene.csv
+        45,673  neo4j_out_v4/cell_line_ontology/edges_clo_subclass_of.csv
+        45,502  neo4j_out_v4/cell_line_ontology/nodes_clo.csv
+            47  neo4j_out_v4/graph_info.json
+         3,037  neo4j_out_v4/tadmap/nodes_tad.csv
+        18,957  neo4j_out_v4/tadmap/edges_in_tad_region.csv
+    74,460,817  neo4j_out_v4/cadd/nodes_snp.csv
+       327,933  neo4j_out_v4/fabian/edges_tfbs_snp.csv
+ 4,727,814,017  total
 
 
+```

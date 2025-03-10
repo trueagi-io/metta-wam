@@ -235,7 +235,6 @@ def export_csv_to_prolog(input_csv, output_base_dir, log_file, common_path, clob
 
     if not clobber and os.path.exists(output_pl):
         print(f"⚠️  Skipping existing file (use --clobber to overwrite): {output_pl}")
-        return
 
     overall_start_time = time.time()
 
@@ -335,7 +334,173 @@ def export_csv_to_prolog(input_csv, output_base_dir, log_file, common_path, clob
     print(f"✅ Processed '{input_csv}' -> '{output_pl}'")
     print(f"📄 Exported Prolog facts to '{output_pl}' (Columns omitted: {len(single_value_columns)})")
 
+import os
+import time
+import pandas as pd
+import shutil
 
+def track_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        print(f"⏱️ Time spent in {func.__name__}: {elapsed_time:.2f}s")
+        return result
+    return wrapper
+
+@track_time
+def export_csv_to_edge_files(input_csv, output_base_dir, common_path):
+    print(f"\n\n\n----------------------------------------------------------------------")
+    print(f"📊 Processing '{input_csv}'")
+    
+    if "nodes" in input_csv.lower():
+       print(f"⚠️  Skipping file '{input_csv}' as it appears to be a node file.")
+       return
+
+    # Read CSV file
+    try:
+        df = pd.read_csv(
+            input_csv,
+            sep="|",
+            on_bad_lines="warn",
+            encoding="utf-8",
+            dtype=str,
+            low_memory=False
+        )
+        print(f"✅ Read file '{input_csv}'")
+    except Exception as e:
+        print(f"⚠️  Skipping file '{input_csv}' due to read error: {e}")
+        return
+    
+    if df.empty or "source_id" not in df.columns or "target_id" not in df.columns:
+        print(f"⚠️  Skipping file '{input_csv}' due to missing 'source_id' or 'target_id' columns.")
+        return
+    
+    link_name = df["label"].iloc[0] if "label" in df.columns and not df["label"].empty else "unknown"
+    df = df.filter(items=["source_id", "target_id"], axis=1)
+    
+    if df.empty:
+        print(f"⚠️  Skipping file '{input_csv}' after filtering.")
+        return
+    
+    output_links_dir = os.path.join(output_base_dir, "global_links")
+    os.makedirs(output_links_dir, exist_ok=True)
+    
+    output_file = os.path.join(output_links_dir, f"{link_name}.csv")
+    df.to_csv(output_file, sep="|", index=False, header=False, mode='a')
+    print(f"✅ Appended edges to '{output_file}'")
+
+#⏱️ Time spent in deduplicate_edge_files: 302.18s
+import os
+import time
+import numpy as np
+import pandas as pd
+@track_time
+def deduplicate_edge_files(output_base_dir, write_prolog=True):
+    """
+    Deduplicates CSV files, analyzes them, and optionally writes Prolog files.
+
+    Parameters:
+    - output_base_dir (str): Base directory containing 'global_links'.
+    - write_prolog (bool): Whether to write Prolog files.
+    """
+    output_links_dir = os.path.join(output_base_dir, "global_links")
+    analysis_lines = []
+
+    for file in os.listdir(output_links_dir):
+        if file.endswith(".csv"):
+            file_path = os.path.join(output_links_dir, file)
+            prolog_file_path = file_path.replace(".csv", ".pl")  # Create Prolog filename
+            predicate_name = os.path.splitext(file)[0]  # Use file name without extension as predicate
+
+            try:
+                # Track time for reading CSV
+                start_time = time.time()
+                df = pd.read_csv(file_path, sep="|", names=["source_id", "target_id"], dtype=str, on_bad_lines="warn")
+                load_time = time.time() - start_time
+                print(f"⏱️ Loaded '{file_path}' in {load_time:.2f}s")
+
+                # Track time for deduplication
+                start_time = time.time()
+                df.drop_duplicates(inplace=True)
+                df = df.dropna()
+                df = df[df.apply(lambda row: len(row) == 2, axis=1)]  # Ensure exactly two columns
+                dedupe_time = time.time() - start_time
+                print(f"⏱️ Deduplicated '{file_path}' in {dedupe_time:.2f}s")
+
+                # Track time for writing deduplicated CSV
+                start_time = time.time()
+                df.to_csv(file_path, sep="|", index=False, header=False)  # No header
+                csv_write_time = time.time() - start_time
+                print(f"⏱️ Wrote deduplicated CSV '{file_path}' in {csv_write_time:.2f}s")
+
+                # Count unique values
+                start_time = time.time()
+                unique_counts = df.nunique(dropna=True)
+
+                column_info = []
+                for col in df.columns:
+                    numeric_values = pd.to_numeric(df[col], errors="coerce")
+
+                    if numeric_values.notna().all():
+                        if np.all(numeric_values % 1 == 0):
+                            df[col] = numeric_values.astype(int)
+                            type_info = "int"
+                        else:
+                            df[col] = numeric_values.astype(float)
+                            type_info = "float"
+                        min_value, max_value = df[col].min(), df[col].max()
+                    else:
+                        # Convert to string for analysis
+                        string_values = df[col].dropna().astype(str)
+
+                        if string_values.str.match(r"^\[.*\]$").any():
+                            type_info = "list"
+                        else:
+                            type_info = "str"
+
+                        min_value = string_values.min()
+                        max_value = string_values.max()
+
+                    column_info.append((col, unique_counts[col], type_info, min_value, max_value))
+
+                # Create analysis facts
+                analysis_lines.append(f"/* Analysis for {file_path} */")
+                analysis_lines.append(f"analysis_source_file('{predicate_name}', '{file_path}', {len(df)}).")
+                for col, num_unique, type_info, min_value, max_value in column_info:
+                    column_fact = format_prolog_fact_slow("analysis_column", 
+                        [predicate_name, col, num_unique, type_info, min_value, max_value]).strip()
+                    analysis_lines.append(column_fact)
+                
+                analysis_time = time.time() - start_time
+                print(f"⏱️ Analyzed '{file_path}' in {analysis_time:.2f}s")
+
+                if write_prolog:
+                    # Track time for writing Prolog file
+                    start_time = time.time()
+                    with open(prolog_file_path, "w", encoding="utf-8") as prolog_file:
+                        prolog_file.write(f"/* Unique source IDs: {unique_counts['source_id']}, Unique target IDs: {unique_counts['target_id']} */\n")
+                        for _, row in df.iterrows():
+                            prolog_file.write(f"{predicate_name}('{row['source_id']}', '{row['target_id']}').\n")
+                    prolog_write_time = time.time() - start_time
+                    print(f"⏱️ Wrote Prolog file '{prolog_file_path}' in {prolog_write_time:.2f}s")
+
+                print(f"✅ Processing completed for '{file_path}'\n")
+
+            except Exception as e:
+                print(f"⚠️  Failed to process '{file_path}': {e}")
+
+    # Save the analysis file if Prolog writing is enabled
+    if write_prolog:
+        try:
+            analysis_file_path = os.path.join(output_base_dir, "links_analysis.pl")
+            start_time = time.time()
+            with open(analysis_file_path, "w", encoding="utf-8") as analysis_file:
+                analysis_file.write("\n".join(analysis_lines) + "\n")
+            analysis_write_time = time.time() - start_time
+            print(f"⏱️ Wrote analysis file '{analysis_file_path}' in {analysis_write_time:.2f}s")
+        except Exception as e:
+            print(f"⚠️  Failed to write analysis file '{analysis_file_path}': {e}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert CSV files in a directory to Prolog facts.")
@@ -359,9 +524,21 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)  #  1️⃣8️⃣ Ensure directory exists
 
     log_file = os.path.join(output_dir, "column_analysis_log.pl")
-    if args.clobber and os.path.exists(log_file):
-        os.remove(log_file)
+    #if args.clobber and os.path.exists(log_file):
+    #    os.remove(log_file)
+
+    output_links_dir = os.path.join(output_dir, "global_links")
+    if args.clobber and os.path.exists(output_links_dir):
+        shutil.rmtree(output_links_dir)
+
+    os.makedirs(output_links_dir, exist_ok=True)
+
+
+    #for input_csv in input_files:
+    #    export_csv_to_prolog(input_csv, output_dir, log_file, common_path, args.clobber)
 
     for input_csv in input_files:
-        export_csv_to_prolog(input_csv, output_dir, log_file, common_path, args.clobber)
+        if "edges" in input_csv.lower():
+            export_csv_to_edge_files(input_csv, output_dir, common_path)
 
+    deduplicate_edge_files(output_dir)
