@@ -29,21 +29,9 @@ source and stuff.
 
 hover_at_position(Doc, Line0, Char0, S) :- maybe_doc_path(Doc, Path), !, hover_at_position(Path, Line0, Char0, S).
 hover_at_position(Path, Line0, Char0, S) :-
-  Loc = line_char(Line0, Char0),
-  %debug(lsp(low), "hover_at_position", []),
-  clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
-  % TODO - add this in when I can import eval_args
-  %debug(lsp(low), "Term=~w", [Term]),
-  % can't retract prolog_flags, so locally/2 errors when trying to undo nonexistant flag
-  ( current_prolog_flag(debug_level, _) -> true ; set_prolog_flag(debug_level, 0) ),
-  % locally disable wdmsg/1 to suppress warnings about failures in
-  % metta code called from hooks
-  locally(
-      set_prolog_flag(debug_level, 0),
-      locally(
-          set_prolog_flag(dmsg_level, never),
-          findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS)
-      )),
+    Loc = line_char(Line0, Char0),
+    clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
+    findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS),
     combine_hover(SS, S).
 
 combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
