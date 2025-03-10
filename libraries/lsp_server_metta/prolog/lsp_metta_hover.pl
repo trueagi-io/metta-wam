@@ -293,8 +293,7 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
     lsp_separator.  % Evaluate the help command for the term.
 
 
-
-lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
+lsp_hooks:hover_print(_Path,_Loc, Term, Arity):- fail, % this isn't very helpful
   lsp_separator,
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
