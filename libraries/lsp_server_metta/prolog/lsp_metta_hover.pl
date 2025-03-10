@@ -44,12 +44,12 @@ hover_at_position(Path, Line0, Char0, S) :-
           set_prolog_flag(dmsg_level, never),
           findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS)
       )),
-  combine_hover(Term, SS, S).
+    combine_hover(SS, S).
 
 combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
    format(string(S), "Unknown: ~w", [Term]).
 
-combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
+combine_hover(SS, _{contents: _{kind: markdown, value: S}}):- !,
   list_to_set(SS, Set),
   maplist(into_markdown, Set, Strings),
   atomics_to_string(Strings, S1),
