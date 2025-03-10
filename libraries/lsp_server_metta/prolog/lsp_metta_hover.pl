@@ -91,9 +91,9 @@ lsp_hooks:hover_string(Path, Loc, Term, Arity, S):-
        lsp_call_metta(['hook-hover-string', Path, Loc, Term, Arity], Out), string(Out),  S = Out, !. % wots(S, write_src(Out)).
 
 lsp_hooks:hover_print(Path, Loc, Term, Arity):-
-       lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
-       nop((Res\= ['hook-hover-print' |_ ])).
-       % write_src(Out).
+    lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
+    nop((Res\= ['hook-hover-print' |_ ])).
+%   write_src(Out).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -229,13 +229,13 @@ term_info_string_resolved(_Path,_Loc, Term, _Arity, _Str):- var(Term),!.
 term_info_string_resolved( Path, Loc, resolved(Term), Arity, Str):- !,
   term_info_string_resolved(Path, Loc, Term, Arity, Str).
 term_info_string_resolved(Path, Loc, Term, Arity, Str):-
-  wots(S0, lsp_hooks:hover_print(Path, Loc, Term, Arity)),  % Generate a string output for the term's arity help.
-  string(S0),  % Ensure that the output is a valid string.
-  trim_white_lines(S0, S),
-  S \= "",  % Ensure that the string is not empty.
-  atom_length(S, Len),
-  Len > 1, % Ensure the string has a minimum length.
-  format(string(Str), "~w", [S]).
+    wots(S0, lsp_hooks:hover_print(Path, Loc, Term, Arity)),
+    string(S0),
+    trim_white_lines(S0, S),
+    S \= "",  % Ensure that the string is not empty.
+    string_length(S, Len),
+    Len > 1, % Ensure the string has a minimum length.
+    format(string(Str), "~w", [S]).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -311,7 +311,8 @@ lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
   ArityDoc \== [],  % Ensure the documentation is not empty.
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
-  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator.  % Output a message if there's an arity mismatch.
+  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), % Output a message if there's an arity mismatch.
+  lsp_separator.
 
 
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
@@ -334,12 +335,13 @@ debug_positions :- debugging(lsp(position)).
 A1: whY
 </details>
 */
-lsp_hooks:hover_print(Path, Loc, Term, Arity):- debug_positions,
-  lsp_separator,
-  setup_call_cleanup(
-     lsp_separator,
-     debug_positions(Path, Loc, Term, Arity),
-     in_markdown(format('~n</details>~n'))).
+lsp_hooks:hover_print(Path, Loc, Term, Arity):-
+    debug_positions,
+    lsp_separator,
+    setup_call_cleanup(
+        lsp_separator,
+        debug_positions(Path, Loc, Term, Arity),
+        in_markdown(format('~n</details>~n'))).
 
 debug_positions(_Path, Loc, Term, Arity) :-
    in_markdown((format("*Debug Positions*:\t\t<details><summary>(this and below is normally hidden)</summary>~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.
