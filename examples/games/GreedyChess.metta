@@ -427,8 +427,8 @@
 
     ; try to take highest open piece
     (let $highest_open (collapse (takehighestopen_with_pawn_rank_test (superpose (b r n q))))
-      (if (not (== $highest_open Empty)) 
-        (println! $highest_open) ; $highest_open
+      (if (not (== $highest_open ())) ; collapse returns empty parens if Empty results!
+        (car-atom $highest_open)
         ; else try random move
         (let $random_move (random_move_empty_sq)
           (if (not (==  $random_move Empty)) 
@@ -1170,13 +1170,17 @@
 ; so if there was a piece originally it is restored.
 ; if piece was moved to empty square just reverse:
 (= (reset_pieces ($X1 $Y1 $color $rank) ($X2 $Y2))
-   (move_piece ($X2 $Y2 $color $rank) ($X1 $Y1)))         ;restore original complete start
+  (let $_1
+   (move_piece ($X2 $Y2 $color $rank) ($X1 $Y1)) True))         ;restore original complete start
 ; if piece was to capture an opponent's piece
 (= (reset_pieces ($X1 $Y1 $color1 $rank1) ($X2 $Y2 $color2 $rank2))
-  (progn
-   (move_piece ($X2 $Y2 $color1 $rank1) ($X1 $Y1))       ; restore original starting piece
-   (remove-atom  &self  (square $X2 $Y2))                  
-   (add-atom &self (square $X2 $Y2 $color2 $rank2)) )    ; restore original destination piece
+  (let*
+    (
+   ($_1 (move_piece ($X2 $Y2 $color1 $rank1) ($X1 $Y1)))       ; restore original starting piece
+   ($_2 (remove-atom  &self  (square $X2 $Y2)))                  
+   ($_3 (add-atom &self (square $X2 $Y2 $color2 $rank2)))    ; restore original destination piece
+    )
+    True)
 )
 
     
@@ -1347,7 +1351,7 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6 s r) (2 6) (3 6) (4 6) (5 6) (6 6 ) (7 6) (8 6) 
+                        (1 6 s r) (2 6) (3 6) (4 6) (5 6 s n) (6 6) (7 6) (8 6 s b) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
