@@ -672,7 +672,7 @@ with_no_debug(Goal) :-
     % Otherwise, call the goal while modifying several debugging and execution options.
     with_option(nodebug, true,
         with_option(time, false,
-            with_option(debug, silent,
+            with_option(debug, false,
                 with_option(e, silent,
                     with_option(eval, true,
                         with_option(exec, noskip, call(Goal))))))).
