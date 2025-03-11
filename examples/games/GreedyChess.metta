@@ -370,8 +370,9 @@
             ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
             (let* 
-              (
-                ($scored (score_move $x1 $y1 g $rank $x2 $y2))  ; write score to Atomspace
+              ( ;(println! (collapse (human_player_attacking)))
+                ;($scored (score_move $x1 $y1 g $rank $x2 $y2))  ; write score to Atomspace
+                ; PROBABLY TAKE LOWEST TOTAL SCORE OF TWO NUMBERS
                 ($MoveBool  (reset_pieces $start $dest_full)) 
               )
               (($x1 $y1 g $rank) ($x2 $y2)))) ; return the input move. 
@@ -1219,6 +1220,15 @@
                     (q 9)
                     ))))
 
+; return vulnerable AI pieces 
+(= (human_player_attacking)
+       (match &self (square $x $y g $AI_rank) 
+          ; check all non-pawn pieces for attack
+          (let ($BoolVulnerable (take_dest ($x $y) s))
+              (if (== $BoolVulnerable True)
+                  $AI_rank
+                  (empty)))))
+
 ; return hypothetical score of opponent's pieces if move undertaken and
 ;   also the AI worst case hypothetical score.
 (= (score_move $X1 $Y1 $color $rank $X2 $Y2)
@@ -1226,13 +1236,14 @@
       (
       ($all_opponent_piece_values (collapse (get_score s)))
       ($Opponent_hypothetical_score (addit_list $all_opponent_piece_values))
-      ($AI_worst_cast_score 0)
+      ;($all_vulnerable_AI_pieces (collapse (human_player_attacking)))
+      ($AI_worst_case_score 0)
       ; compute AI worst case score
       )
-      (progn (println! $all_opponent_piece_values)
-      (println! $Opponent_hypothetical_score))))
+      (println! $all_vulnerable_AI_pieces)))
+      
       ;(add-atom &self 
-      ;  (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_cast_score))))
+      ;  (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score))))
     
 ;
 ;
@@ -1400,10 +1411,10 @@
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6 g p) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5 s n) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4) (4 4 s q) (5 4) (6 4) (7 4) (8 4) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6 s r) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4 s q) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
