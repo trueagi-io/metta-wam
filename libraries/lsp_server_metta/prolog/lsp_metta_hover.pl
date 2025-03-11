@@ -221,6 +221,8 @@ term_info_string_resolved(Path, Loc, Term, Arity, Str):-
     string(S0),
     trim_white_lines(S0, S),
     S \= "",  % Ensure that the string is not empty.
+    format(string(NoSuchDoc), "***\nAtom ~w: %Undefined% No documentation\n***", [Term]),
+    S \= NoSuchDoc,
     string_length(S, Len),
     Len > 1, % Ensure the string has a minimum length.
     format(string(Str), "~w", [S]).
