@@ -1090,12 +1090,96 @@ def metta_to_swip_wrapper(metta_obj, swip_obj):
     #return True
 
 
+import os
+
+def find_metta_interp_file(filename="metta_interp.pl"):
+    """Finds the metta_interp.pl file by checking:
+    1. METTALOG_INTERP environment variable
+    2. METTALOG_DIR environment variable (inside prolog/metta_lang/)
+    3. Current working directory (ONLY if METTALOG_DIR is NOT set)
+    4. One level up from the module's directory, then into prolog/metta_lang/
+    
+    Sets METTALOG_INTERP to the directory containing the file once found.
+    If METTALOG_DIR wasn't originally set, it assigns it to the location
+    two directories above where metta_interp.pl was found.
+
+    Returns the full absolute path if found, otherwise provides setup advice.
+    """
+    mettalog_dir_was_unset = "METTALOG_DIR" not in os.environ  # Track if METTALOG_DIR was missing
+
+    # Check METTALOG_INTERP environment variable
+    interp_dir = os.environ.get("METTALOG_INTERP")
+    if interp_dir:
+        interp_path = os.path.abspath(os.path.join(interp_dir, filename))
+        if os.path.isfile(interp_path):
+            os.environ["METTALOG_INTERP"] = os.path.abspath(interp_dir)
+            return interp_path
+
+    # Check METTALOG_DIR environment variable inside prolog/metta_lang/
+    mettalog_dir = os.environ.get("METTALOG_DIR")
+    if mettalog_dir:
+        env_path = os.path.abspath(os.path.join(mettalog_dir, "prolog", "metta_lang", filename))
+        if os.path.isfile(env_path):
+            os.environ["METTALOG_INTERP"] = os.path.abspath(os.path.join(mettalog_dir, "prolog", "metta_lang"))
+            return env_path
+    else:
+        # Only check current working directory if METTALOG_DIR was not set
+        cwd_path = os.path.abspath(os.path.join(os.getcwd(), filename))
+        if os.path.isfile(cwd_path):
+            os.environ["METTALOG_INTERP"] = os.path.abspath(os.getcwd())
+            if mettalog_dir_was_unset:
+                os.environ["METTALOG_DIR"] = os.path.abspath(os.path.join(os.getcwd(), "..", ".."))
+            return cwd_path
+
+    # Check one level up from the module's directory, then into prolog/metta_lang/
+    module_dir = os.path.dirname(os.path.abspath(__file__))  # Get module's directory
+    parent_dir = os.path.dirname(module_dir)  # Move one level up
+    module_path = os.path.abspath(os.path.join(parent_dir, "prolog", "metta_lang", filename))
+    if os.path.isfile(module_path):
+        os.environ["METTALOG_INTERP"] = os.path.abspath(os.path.join(parent_dir, "prolog", "metta_lang"))
+        if mettalog_dir_was_unset:
+            os.environ["METTALOG_DIR"] = os.path.abspath(os.path.join(parent_dir, ".."))
+        return module_path
+
+    # If file not found, provide advice
+    if verbose >= 0:
+        print(
+            f"ERROR: Could not find {filename}.\n\n"
+            "Try setting one of the following environment variables:\n"
+            "  1. METTALOG_INTERP: Set this to the directory containing metta_interp.pl.\n"
+            "     Example (Linux/macOS): export METTALOG_INTERP=/path/to/\n"
+            "     Example (Windows): set METTALOG_INTERP=C:\\path\\to\\\n\n"
+            "  2. METTALOG_DIR: Set this to the base directory that contains 'prolog/metta_lang/'.\n"
+            "     Example (Linux/macOS): export METTALOG_DIR=/path/to/base\n"
+            "     Example (Windows): set METTALOG_DIR=C:\\path\\to\\base\n\n"
+            "Note: If METTALOG_DIR is set, the file must be located at:\n"
+            "      $METTALOG_DIR/prolog/metta_lang/metta_interp.pl\n"
+        )
+    return None
+
+# Example usage
+if verbose >= 2:
+    metta_interp_path = find_metta_interp_file()
+    if metta_interp_path:
+        print(f"metta_interp.pl found at: {metta_interp_path}")
+        print(f"METTALOG_INTERP is now set to: {os.environ['METTALOG_INTERP']}")
+        if "METTALOG_DIR" in os.environ:
+            print(f"METTALOG_DIR is now set to: {os.environ['METTALOG_DIR']}")
+
+# Example usage
+metta_interp_path = find_metta_interp_file()
+if metta_interp_path:
+    print(f"metta_interp.pl found at: {metta_interp_path}")
+else:
+    print("metta_interp.pl not found.")
+
+
 NeedNameSpaceInSWIP = True
 @export_flags(MeTTa=True, unwrap=True)
 def load_vspace():
     global NeedNameSpaceInSWIP
     #os.path.dirname(__file__)}/canary/metta_interp
-    metta_interp_file = "/opt/hyperon/metta-wam/src/canary/metta_interp"
+    metta_interp_file = find_metta_interp_file()
     load_metta_interp = f"user:ensure_loaded('{metta_interp_file}')"
     swip_exec(load_metta_interp)
     if NeedNameSpaceInSWIP:

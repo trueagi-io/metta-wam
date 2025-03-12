@@ -5930,26 +5930,31 @@ into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
 
 
 
-%!  eval_S(+Self, +Form) is det.
+%!  eval_S(+Form) is det.
 %
 %   Evaluates a given form (`Form`) in the context of a specific `Self` if the current
-%   context matches `Self`. This predicate ensures the form is executed in `exec` mode
+%   context matches the form is executed in `exec` mode
 %   using the `do_metta/5` predicate.
 %
 %   @arg Self  The context or "space" in which the evaluation should occur.
 %   @arg Form  The form or term to be evaluated.
 %
-%   @example
-%     % Evaluate a form when the current self matches:
-%     ?- current_self('&self'), eval_S('&self', some_term).
-%
 eval_S(Self, Form) :-
     % Ensure the `Form` is instantiated (not a variable).
     nonvar(Form),
     % Check if the current self matches the provided `Self`.
-    current_self(SelfS), SelfS == Self, !,
+    current_self(Self),
     % Execute the form in `exec` mode.
     do_metta(true, exec, Self, Form, _Out).
+
+
+% Read the form in `+` mode.
+eval_string(String):- user_io((eval_string(String, _Out))).
+eval_string(String, Out):-
+    current_self(Self),
+    read_metta(String, Metta),
+    do_metta(true, +, Self, Metta, Out).
+
 
 %!  eval_H(+Term, -Result) is det.
 %
@@ -5989,10 +5994,6 @@ eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
     catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
 
-eval_string(String,Out):-
-    current_self(Self),
-    read_metta(String, Metta),
-    eval(Metta,Out).
 
 /*
 eval_H(StackMax,Self,Term,X).
