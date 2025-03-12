@@ -364,6 +364,86 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
+
+%%%%%%%%%%%%%%%%%%%%% random number generation
+
+transpiler_predicate_store(builtin, 'random-int', 3, '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,eager,[])], x(doeval,eager,[])).
+
+'mc_3__random-int'(RNG,Min,Max,N):-
+    maplist(must_be(integer),[Min,Max]),
+    with_random_generator(RNG, random_between(Min,Max,N)).
+
+
+transpiler_predicate_store(builtin, 'random-float', 3, '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,eager,[])], x(doeval,eager,[])).
+
+'mc_3__random-float'(RNG,Min,Max,N):-
+    with_random_generator(RNG, random_float_between(Min,Max,N)).
+
+
+transpiler_predicate_store(builtin, 'set-random-seed', 2, '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[])], x(noeval,eager,[])).
+
+'mc_2__set-random-seed'(RNG, Seed, RetVal):-
+     RNG = rng(_Id,_Init,Current),
+     getrand(OLD),
+     setrand(Current),
+     set_random(seed(Seed)),
+     getrand(NewCurrent),
+     nb_setarg(3, RNG, NewCurrent),
+     setrand(OLD),
+     RetVal = [].
+
+
+transpiler_predicate_store(builtin, 'new-random-generator', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+
+'mc_1__new-random-generator'(Seed,rng(Id,New,New)) :-
+    S = getrand(Old),
+    G = (set_random(seed(Seed)),
+         getrand(New)
+        ),
+    C = setrand(Old)
+    ,setup_call_cleanup(S,G,C)
+    ,gensym(rng_,Id).
+
+
+transpiler_predicate_store(builtin, 'new-random-generator', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+
+% Not tested.
+'mc_1__reset-random-generator'( rng(Id,StateOld,_StateNew), rng(Id,StateOld,StateOld) ).
+%reset_random_generator( rng(Id,StateOld,_StateNew), rng(Id,StateOld,StateOld) ).
+
+
+%!	random_float_between(+Min,+Max,-Random) is det.
+%
+%	Get a Random float in the open interval (Min,Max).
+%
+%	This uses random/1 to generate a random R in the open interval
+%	(0.0,1.0) then multiplies R by the distance from Min to Max and
+%	shifts the value of R by Min:
+%	==
+%	random(R)
+%	,Random is (Max - Min) * R + Min
+%	==
+%
+random_float_between(Min,Max,R_):-
+         maplist(must_be(float),[Min,Max]),
+         random(R),
+         R_ is (Max-Min) * R + Min.
+
+
+%!    with_random_generator(+RNG,?Goal) is det.
+%
+%     Execute a Goal in the context of an RNG.
+%
+%     keep RNG changes local to the term being passed about.
+%
+with_random_generator(rng(_Id,_Initial,Current),Call):-
+    Setup = (getrand(OLD),
+             setrand(Current)
+            ),
+    Cleanup = setrand(OLD),
+    setup_call_cleanup(Setup, Call, Cleanup).
+
+
 %%%%%%%%%%%%%%%%%%%%% transpiler specific (non standard MeTTa)
 
 transpiler_predicate_store(builtin, 'prolog-trace', 0, [], '', [], x(doeval,eager,[])).
