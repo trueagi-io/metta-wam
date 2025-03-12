@@ -25,5 +25,5 @@ setup(
     url="https://github.com/trueagi-io/metta-wam",
     use_scm_version={'root': '..',
                      'version_scheme': version_scheme,
-                     'write_to': 'python/hyperon/_version.py'},
+                     'write_to': 'python/hyperon-ref/_version.py'},
  )
