@@ -902,6 +902,8 @@ eval_in_steps_or_same(Eq,XType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,XType,Y)
   % (fail,make_nop(RetType,[],Template))).
 
 
+eval_20(Eq,RetType,Depth,Self,['freeze-fn',Var,Body],OO):-
+   freeze(Var,eval_20(Eq,RetType,Depth,Self,Body,OO)).
 possible_type(_Self,_Var,_RetTypeV).
 
 eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,

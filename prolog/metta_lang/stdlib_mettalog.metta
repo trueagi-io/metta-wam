@@ -499,6 +499,7 @@ For example:
 (==> (is-fn-r $m $p) (= ($m $a) (call-fn-r! $p $a)))
 (==> (is-fn-2 $m $p) (= ($m $a $b) (call-fn! $p $a $b)))
 (==> (is-fn-21 $m $p) (= ($m $L $N) (call-fn! $p $N $L)))
+(==> (is-fn-3 $m $p) (= ($m $a $b $c) (call-fn! $p $a $b $c)))
 (==> (is-pred-1 $m $p) (= ($m $a) (call-p! $p $a)))
 (==> (is-pred-2 $m $p) (= ($m $a $b) (call-p! $p $a $b)))
 
