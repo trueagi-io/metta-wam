@@ -1512,6 +1512,7 @@ def vspace_main(*args):
     if verbose > 1: timeFrom("main", t0)
     flush_console()
 
+
 def vspace_main_from_python(sysargv1toN=sys.argv[1:]):
     vspace_main(sysargv1toN)
 

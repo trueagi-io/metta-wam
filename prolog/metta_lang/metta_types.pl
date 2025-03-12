@@ -334,7 +334,7 @@ nontype(N) :-
 %     ?- needs_eval([1, 2, 3]).
 %     true.
 %
-needs_eval(EvalMe) :-
+needs_eval(EvalMe) :- fail,
     % Check if EvalMe is a list.
     is_list(EvalMe).
 
@@ -801,7 +801,7 @@ get_type_symb(_Dpth, _Slf, Val, Type) :-
 get_type_symb(Depth, Self, Op, Type) :-
     % Evaluate arguments if the operator is defined.
     Depth2 is Depth - 1,
-    eval_args(Depth2, Self, Op, Val),
+    eval_args_for_type(Depth2, Self, Op, Val),
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
 
@@ -895,9 +895,19 @@ get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):-
 get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):-
     needs_eval(EvalMe),
     Depth2 is Depth-1,
-    eval_args(Depth2,Self,EvalMe,Val),
+    eval_args_for_type(Depth2,Self,EvalMe,Val),
     get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,Eval_First).
 get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
+
+
+eval_args_for_type(_Depth2,Self,EvalMe,Val):-
+      EvalMe=Val.
+      %trace, break,
+      %eval_args(3,Self,EvalMe,Val).
+eval_args_carefully(Depth2,Self,EvalMe,Val):-
+     % trace,
+     eval_args(Depth2,Self,EvalMe,Val).
+
 
 %!  get_type_cmpd_eval(+Depth, +Self, +EvalMe, +Val, -Type, -How) is nondet.
 %
@@ -960,7 +970,7 @@ get_value_type(_Dpth,_Slf,Val,T):- 'get-metatype'(Val,T).
 /*
 
 get_value_type(Depth,Self,EvalMe,Type):- needs_eval(EvalMe),
-     eval_args(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
+     eval_args_for_type(Depth,Self,EvalMe,Val), \+ needs_eval(Val),!,
    get_value_type(Depth,Self,Val,Type).
 
 get_value_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),last_element(List,Type), nonvar(Type),
@@ -1539,13 +1549,13 @@ into_typed_argA(Depth, Self, T, M, Y) :-
     var(T),
     %no_repeats_var(NoRepeatY),
         ((  get_type(Depth, Self, M, T),
-            (wants_eval_kind(T) -> eval_args(Depth, Self, M, Y) ; Y = M))).
+            (wants_eval_kind(T) -> eval_args_carefully(Depth, Self, M, Y) ; Y = M))).
     %NoRepeatY = Y.
 
 
 into_typed_argB(Depth, Self, T, M, Y) :- nonvar(T),
     % If the type requires evaluation, evaluate the value.
-    is_pro_eval_kind(T), !, eval_args(Depth, Self, M, Y),
+    is_pro_eval_kind(T), !, eval_args_carefully(Depth, Self, M, Y),
     nop(( \+ arg_violation(Depth, Self, Y, T) )).
 
 into_typed_argB(Depth, Self, T, M, Y) :- nonvar(T),
@@ -1554,7 +1564,7 @@ into_typed_argB(Depth, Self, T, M, Y) :- nonvar(T),
 
 into_typed_argB(Depth, Self, _, M, Y) :-
     % Default case: evaluate the value.
-    eval_args(Depth, Self, M, Y).
+    eval_args_carefully(Depth, Self, M, Y).
 
 %!  wants_eval_kind(+Type) is nondet.
 %

@@ -86,7 +86,7 @@ self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X),!. % spaces and states are stored as compounds
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  call_in_shared_space(Name, X),!. % spaces and states are stored as compounds
+  call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
 
 call_in_shared_space(G):- call_in_thread(main,G).
 
@@ -1169,8 +1169,12 @@ strict_equals_allow_vn(X,Y):- X=@=Y,!.
 
 %equal_enough_for_test_renumbered_l(P2,X,Y):- call(P2,X,Y), !.
 equal_enough_for_test_renumbered_l(_P2,X,Y):- is_blank(X),is_blank(Y),!.
-equal_enough_for_test_renumbered_l(P2,X,Y):- must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
-    maplist(equal_enough_for_test_renumbered(P2),X0,Y0).
+equal_enough_for_test_renumbered_l(P2,X,Y):-  must_be(proper_list,X), must_be(proper_list,Y),
+    sort(X,X0),sort(Y,Y0),(X\==X0;Y\==Y0),!,
+    equal_enough_for_test_renumbered_l(P2,X0,Y0).
+equal_enough_for_test_renumbered_l(P2,[X0],[Y0]):- is_list(X0),is_list(Y0),!,equal_enough_for_test_renumbered_l(P2,X0,Y0).
+equal_enough_for_test_renumbered_l(P2,X0,Y0):- maplist(equal_enough_for_test_renumbered(P2),X0,Y0).
+
 
 equal_enough_for_test_l(P2,X,Y):-            must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
     maplist(equal_enough_for_test(P2),X0,Y0).
@@ -1880,6 +1884,8 @@ eval_10(Eq,RetType,Depth,Self,['If',Cond,Then],Res):- fail, !,
    (is_True(TF) -> eval_args(Eq,RetType,Depth,Self,Then,Res) ;
       (!, fail,Res = [],!)).
 */
+
+
 eval_10_later(Eq,RetType,Depth,Self,['if',Cond,Then],Res):- !, %var(Cond),  !,
    eval_args_bool(Eq, Depth,Self,Cond, TF),
     (is_True(TF)  -> eval_args(Eq,RetType,Depth,Self,Then,Res) ;
@@ -1968,6 +1974,8 @@ eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
   call_in_shared_space(((eval_args(Eq,RetType,Depth,Self,UpdatedValue,Value),  'new-state'(Depth,Self,Value,StateMonad)))).
 eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
   call_in_shared_space((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value))).
+
+% X=bar(baz), nb_setval(foo,X), nb_current(foo,Y), nb_linkval(foo,Y), nb_current(foo,Z), nb_setarg(1,Z,[1,2]), nb_current(foo,B).
 
 
 % eval_20(Eq,RetType,Depth,Self,['get-state',Expr],Value):- !, eval_args(Eq,RetType,Depth,Self,Expr,State), arg(1,State,Value).
@@ -2997,7 +3005,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2| _Specialize],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
   must_det_ll((py_type(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
-  must_det_ll((py_eval(Arg,Res))).
+  must_det_ll((py_eval_string(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
@@ -3080,14 +3088,17 @@ naive_eval_args:-
     false.
 
 eval_all_args:- false, true_flag.
-fail_missed_defn:- true_flag.
+fail_missed_defn:- false, true_flag.
 fail_on_constructor:- true_flag.
 
 eval_adjust_args(_Eq,_RetType,ResIn,ResOut,_Depth,_Self,AEMore,AEAdjusted):-
    \+ iz_conz(AEMore),!,AEMore=AEAdjusted,ResIn=ResOut,!.
+
 eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
- show_failure_when(argtypes,eval(AIn,AE)),
+ %show_failure_when(argtypes,eval(AIn,AE)),
+ AIn = AE,
  adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
+
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):- \+ is_debugging(argtypes),!,
     adjust_args_9(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted):-
@@ -3505,8 +3516,8 @@ eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,US
   light_eval(Eq,RetType,Depth,Self,B0,Y),
   nop(non_arg_violation(Self,FRetType,Y)).
 
-eval_defn_failure_guarded(_Eq,_RetType,_Depth,_Self,_ParamTypes,X,X):- !.
-eval_defn_failure_guarded(_Eq,_RetType,_Depth,_Self,_ParamTypes,_X,Res):- !, Res='Empty',!,fail.
+%eval_defn_failure_guarded(_Eq,_RetType,_Depth,_Self,_ParamTypes,X,X):- !.
+%eval_defn_failure_guarded(_Eq,_RetType,_Depth,_Self,_ParamTypes,_X,Res):- !, Res='Empty',!,fail.
 eval_defn_failure_guarded(_Eq,_RetType,Depth,_Self,_ParamTypes,X,Res):-
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
   !, \+ fail_missed_defn, X=Res.
@@ -3515,11 +3526,14 @@ eval_defn_failure_guarded(_Eq,_RetType,Depth,_Self,_ParamTypes,X,Res):-
 
 :- nodebug(metta('defn')).
 
+%eval_40(Eq,RetType,Depth,Self,['If2',Cond,Then,_],Res):- trace,fail.
+
 eval_40(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(maybe_eval_defn,X),
        quietly( findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L) ),
         XXB0L \==[], !,
         % maybe_trace(unknown),
         catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
+% eval_40(Eq,RetType,Depth,Self,['If2',Cond,Then,_],Res):- trace,fail.
 
 show_bodies(Why, Depth, XXB0L):-
     length(XXB0L,Len),
@@ -3552,10 +3566,11 @@ eval_defn_success(_Eq,_RetType,Depth,_Self,X,Y,XX,B0,USED):-
   if_t(Depth<380,(writeq(f(B0)),fail)).
 */
 
-eval_defn_failure(Eq,RetType,Depth,Self,X,Res):-
+%eval_defn_failure(_Eq,_RetType,_Depth,_Self,X,X):- !.
+%eval_defn_failure(_Eq,_RetType,_Depth,_Self,_X,Res):- !, Res='Empty',!,fail.
+eval_defn_failure(_Eq,_RetType,Depth,_Self,X,Res):- % trace,
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
-  maybe_eval_subst(Eq,RetType,Depth,Self,X,Res).
-  %!, \+ fail_missed_defn, X=Res.
+  !, \+ fail_missed_defn, X=Res.
 
 
 pl_clause_num(Head,Body,Ref,Index):-
@@ -3654,6 +3669,8 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-
     as_prolog_x(Depth,Self,X,XX),
     eval_20(Eq,RetType,Depth,Self,XX,Y),
     notrace(if_t( \+ sub_var_safely(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
+
+
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
