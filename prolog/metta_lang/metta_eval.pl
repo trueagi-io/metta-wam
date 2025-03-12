@@ -84,7 +84,15 @@ self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
 
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  nb_current(Name, X), compound(X). % spaces and states are stored as compounds
+  nb_current(Name, X),!. % spaces and states are stored as compounds
+nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
+  call_in_shared_space(Name, X),!. % spaces and states are stored as compounds
+
+call_in_shared_space(G):- call_in_thread(main,G).
+
+nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 
 
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
@@ -902,8 +910,6 @@ eval_in_steps_or_same(Eq,XType,_Dpth,_Slf,X,Y):- X=Y,check_returnval(Eq,XType,Y)
   % (fail,make_nop(RetType,[],Template))).
 
 
-eval_20(Eq,RetType,Depth,Self,['freeze-fn',Var,Body],OO):-
-   freeze(Var,eval_20(Eq,RetType,Depth,Self,Body,OO)).
 possible_type(_Self,_Var,_RetTypeV).
 
 eval_20(Eq,RetType,Depth,Self,['let',E,V,Body],OO):- var(V), nonvar(E), !,
@@ -1963,7 +1969,6 @@ eval_20(Eq,RetType,Depth,Self,['new-state',UpdatedValue],StateMonad):- !,
 eval_20(Eq,RetType,Depth,Self,['get-state',StateExpr],Value):- !,
   call_in_shared_space((eval_args(Eq,RetType,Depth,Self,StateExpr,StateMonad), 'get-state'(StateMonad,Value))).
 
-call_in_shared_space(G):- call_in_thread(main,G).
 
 % eval_20(Eq,RetType,Depth,Self,['get-state',Expr],Value):- !, eval_args(Eq,RetType,Depth,Self,Expr,State), arg(1,State,Value).
 
@@ -2237,8 +2242,6 @@ eval_20( Eq, RetType, Depth, Self, [ 'output-to-string' , L ] , Sxx ):- !,
 % =================================================================
 % =================================================================
 % =================================================================
-nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
-nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
 eval_20(_Eq,_RetType,_Dpth,_Slf,['extend-py!',Module],Res):-  !, 'extend-py!'(Module,Res).
 eval_20(Eq,RetType,Depth,Self,['register-module!',Dir],RetVal):- !,
      eval_args(Eq,'Directory',Depth,Self,Dir,Folder),
