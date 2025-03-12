@@ -33,11 +33,12 @@ mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
 dev = [
     "build==0.10.0",
     "pytest==7.3.2",
+    "janus_swi"
 ]
 
 [tool.setuptools]
-packages = ["hyperon", "mettalog", "mettalog_sandbox"]
-package-dir = { "hyperon" = "hyperon", "mettalog" = "../src/mettalog", "mettalog_sandbox" = "sandbox"  }
+packages = ["mettalog", "hyperon_ref", "mettalog_sandbox"]
+package-dir = { "hyperon_ref" = "hyperon_ref", "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox"  }
 # Specify hyperonpy.py as a py_modules entry
 #py-modules = ["hyperonpy","mettalogpy"]
 py-modules = ["mettalogpy"]

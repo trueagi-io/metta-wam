@@ -769,10 +769,10 @@ py_atom_type(I,_Type,O):- I=O.
 %
 py_atomic([],O):- py_ocall("[]",O),!.
 py_atomic(I,O):- py_is_object(I),!,O=I.
-py_atomic(I,O):- string(I),py_eval(I,O),!.
-py_atomic(I,O):- symbol(I),py_eval(I,O),!.
+py_atomic(I,O):- string(I),py_eval_string(I,O),!.
+py_atomic(I,O):- symbol(I),py_eval_string(I,O),!.
 py_atomic(I,O):- py_ocall(I,O),!.
-py_atomic(I,O):- py_eval(I,O),!.
+py_atomic(I,O):- py_eval_string(I,O),!.
 py_atomic(I,O):- \+ symbol_contains(I,'('), atomic_list_concat([A,B|C],'.',I), py_dot([A,B|C],O),!.
 py_atomic(I,O):- string(I),py_dot(I,O),!.
 py_atomic(I,O):- I=O.
@@ -801,22 +801,22 @@ get_locals(O):- py_mbi(get_locals(),O).
 %   @arg O The output which will unify with the merged modules and globals.
 merge_modules_and_globals(O):- py_mbi(merge_modules_and_globals(), O).
 
-%!  py_eval(+I, -O) is det.
+%!  py_eval_string(+I, -O) is det.
 %
 %   Evaluates the Python expression given by the input string I and unifies the result
 %   with the output O.
 %
 %   @arg I The input string representing a Python expression.
 %   @arg O The output which will unify with the evaluation result.
-py_eval(I, O):- py_obi(eval_string(I),O).
+py_eval_string(I, O):- py_obi(eval_string(I),O).
 
-%!  py_eval(+I) is det.
+%!  py_eval_string(+I) is det.
 %
 %   Evaluates the Python expression given by the input string I and outputs any errors
 %   or results using the predicate pybug/1.
 %
 %   @arg I The input string representing a Python expression.
-py_eval(I):- py_eval(I, O),pybug(O).
+py_eval_string(I):- py_eval_string(I, O),pybug(O).
 
 %!  py_exec(+I, -O) is det.
 %
@@ -943,7 +943,7 @@ ensure_rust_metta(MeTTa):-
     is_metta(MeTTa),                            % Check if MeTTa is already known and valid.
     py_is_object(MeTTa),!.                      % Ensure that MeTTa is a valid Python object.
 ensure_rust_metta(MeTTa):-
-    with_safe_argv(ensure_rust_metta0(MeTTa)),  % Initialize MeTTa with safe arguments.
+    with_safe_argv(ensure_rust_metta1(MeTTa)),  % Initialize MeTTa with safe arguments.
     asserta(is_metta(MeTTa)).                   % Store the MeTTa instance for future use.
 
 %!  ensure_rust_metta0(-MeTTa) is det.
@@ -959,7 +959,9 @@ ensure_rust_metta0(MeTTa):-
     py_is_object(MeTTa).
 ensure_rust_metta0(MeTTa):-
     py_call_warg('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
-ensure_rust_metta0(MeTTa):-
+ensure_rust_metta0(MeTTa):- ensure_rust_metta1(MeTTa).
+
+ensure_rust_metta1(MeTTa):-
     py_call_warg(hyperon:runner:'MeTTa'(), MeTTa),!. % Fallback: Call MeTTa from hyperon.
 
 %!  ensure_rust_metta is det.
@@ -2284,7 +2286,8 @@ maybe_py_add_relative_lib_dir(RelDir):-
 %   @example Synchronize the Python path:
 %       ?- sync_python_path.
 %
-sync_python_path:-
+sync_python_path:- !.
+really_sync_python_path:-
     working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
     ignore((
         getenv('PYTHONPATH',CurrentPythonPath),

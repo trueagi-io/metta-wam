@@ -8,7 +8,7 @@ from hyperon.atoms import G, AtomType
 from hyperon.runner import MeTTa
 from hyperon.atoms import *
 from hyperon.stdlib import *
-import hyperonpy as hp
+#import hyperonpy as hp
 
 
 import sys

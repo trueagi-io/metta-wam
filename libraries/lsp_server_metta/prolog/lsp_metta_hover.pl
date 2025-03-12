@@ -20,6 +20,8 @@ source and stuff.
 :- use_module(lsp_metta_references, [ type_expand/2 ]).
 :- use_module(lsp_metta_code_actions, [ lsp_call_metta/2 ]).
 
+:- use_module(library(pcre), [re_replace/5]).
+
 %! hover_at_position(+Path:atom, +Line:integer, +Char:integer, -Help:term) is det.
 %
 %  =Help= is the documentation for the term under the cursor at line
@@ -27,50 +29,31 @@ source and stuff.
 
 hover_at_position(Doc, Line0, Char0, S) :- maybe_doc_path(Doc, Path), !, hover_at_position(Path, Line0, Char0, S).
 hover_at_position(Path, Line0, Char0, S) :-
-  Loc = line_char(Line0, Char0),
-  %debug(lsp(low), "hover_at_position", []),
-  clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
-  % TODO - add this in when I can import eval_args
-  %debug(lsp(low), "Term=~w", [Term]),
-  % can't retract prolog_flags, so locally/2 errors when trying to undo nonexistant flag
-  ( current_prolog_flag(debug_level, _) -> true ; set_prolog_flag(debug_level, 0) ),
-  % locally disable wdmsg/1 to suppress warnings about failures in
-  % metta code called from hooks
-  locally(
-      set_prolog_flag(debug_level, 0),
-      locally(
-          set_prolog_flag(dmsg_level, never),
-          findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS)
-      )),
-  combine_hover(Term, SS, S).
+    Loc = line_char(Line0, Char0),
+    clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
+    findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS),
+    combine_hover(SS, S).
 
 combine_hover(Term, [], _{contents: _{kind: plaintext, value: S}}):- !,
    format(string(S), "Unknown: ~w", [Term]).
 
-combine_hover(_Term, SS, _{contents: _{kind: markdown, value: S}}):- !,
+combine_hover(SS, _{contents: _{kind: markdown, value: S}}):- !,
   list_to_set(SS, Set),
   maplist(into_markdown, Set, Strings),
-  atomics_to_string(Strings, S1),
-  string_replace_each(S1,
- ["```lisp\n\n"="```lisp\n",
-  "\\r\\n"="\r\n",
-  "```\n\n"="```\n",
-  "\n\n```"="\n```",
-  %"```lisp\n```\n```lisp\n```\n"="```lisp\n```\n",
-  "```lisp\n```\n"="\n",
-  %"```lisp\n```\n--\n```lisp\n```\n"="--\n",
-  % "\n\n\n"="\n\n",
-  "fooooo"="barrrrrr"],S), !.
+  atomics_to_string(Strings, "\n", S1),
+  re_replace("\\n+([*]{3}\\n)+"/g, "\n***\n", S1, S2, []),
+  re_replace("\\n{3,}"/g, "\n\n", S2, S, []).
 
 string_replace_each(S1,[],S1):-!.
 string_replace_each(S1,[F=R|List],S):-
-      string_replace(S1,F,R,S2),
-      string_replace(S2,F,R,S3),
- string_replace_each(S3,List,S).
+    string_replace(S1,F,R,S2),
+    string_replace_each(S2,List,S).
 
 
-into_markdown(Ans, S):- \+ is_dict(Ans), sformat(Str, '~w', [Ans]),
-  into_markdown_s(Str, S).
+into_markdown(Ans, S):-
+    \+ is_dict(Ans), !,
+    % Assume plain strings are already in markdown
+    sformat(S, '~w', [Ans]).
 into_markdown(Ans, S):-
    _{contents: _{kind: plaintext, value: Help}} :< Ans, !,
    into_markdown_s(Help, S).
@@ -88,37 +71,17 @@ trim_white_lines(Input, Trimmed) :-
   % Convert Input to a string if it’s an atom
   (atom(Input) -> atom_string(Input, Str); Str = Input),
   % Trim leading and trailing whitespace, newlines, and carriage returns
-  trim_leading(Str, TrimmedStr1),
-  trim_trailing(TrimmedStr1, TrimmedStr),
+  split_string(Str, "", "\n\r\s\t", [TrimmedStr]),
   % Convert back to atom if original input was an atom
   (atom(Input) -> atom_string(Trimmed, TrimmedStr); Trimmed = TrimmedStr).
 
-% Helper predicate to trim leading whitespace, newlines, and carriage returns
-trim_leading(Str, TrimmedStr) :- sub_string(Str, 0, 1, _, Start), memberchk(Start, ["\n", "\r"]), !,
-  sub_string(Str, 1, _, 0, Str1), !, trim_leading(Str1, TrimmedStr).
-trim_leading(Str, Str).  % Base case: no leading newline, return unchanged
-
-% Helper predicate to trim trailing whitespace, newlines, and carriage returns
-trim_trailing(Str, TrimmedStr) :-
-  sub_string(Str, _, 1, 0, LastChar),
-  ( LastChar = '\n' ; LastChar = '\r' ; LastChar = ' ' ), !,
-  sub_string(Str, 0, _, 1, Str1),
-  trim_trailing(Str1, TrimmedStr).
-trim_trailing(Str, Str).  % Base case: no trailing newline, return unchanged
-
-
-% string_contains(String, Substring): true if Substring is contained within String
-string_contains(String, Substring) :-
-  sub_string(String, _, _, _, Substring).
-
-
 lsp_hooks:hover_string(Path, Loc, Term, Arity, S):-
-       lsp_call_metta(['hook-hover-string', Path, Loc, Term, Arity], Out), string(Out),  S = Out, !. % wots(S, write_src(Out)).
+    lsp_call_metta(['hook-hover-string', Path, Loc, Term, Arity], Out), string(Out),  S = Out, !. % wots(S, write_src(Out)).
 
 lsp_hooks:hover_print(Path, Loc, Term, Arity):-
-       lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
-       nop((Res\= ['hook-hover-print' |_ ])).
-       % write_src(Out).
+    lsp_call_metta(['hook-hover-print', Path, Loc, Term, Arity], Res),
+    nop((Res\= ['hook-hover-print' |_ ])).
+%   write_src(Out).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -254,20 +217,22 @@ term_info_string_resolved(_Path,_Loc, Term, _Arity, _Str):- var(Term),!.
 term_info_string_resolved( Path, Loc, resolved(Term), Arity, Str):- !,
   term_info_string_resolved(Path, Loc, Term, Arity, Str).
 term_info_string_resolved(Path, Loc, Term, Arity, Str):-
-  wots(S0, lsp_hooks:hover_print(Path, Loc, Term, Arity)),  % Generate a string output for the term's arity help.
-  string(S0),  % Ensure that the output is a valid string.
-  trim_white_lines(S0, S),
-  S \= "",  % Ensure that the string is not empty.
-  atom_length(S, Len),
-  Len > 1, % Ensure the string has a minimum length.
-  format(string(Str), "~w", [S]).
+    wots(S0, lsp_hooks:hover_print(Path, Loc, Term, Arity)),
+    string(S0),
+    trim_white_lines(S0, S),
+    S \= "",  % Ensure that the string is not empty.
+    format(string(NoSuchDoc), "***\nAtom ~w: %Undefined% No documentation\n***", [Term]),
+    S \= NoSuchDoc,
+    string_length(S, Len),
+    Len > 1, % Ensure the string has a minimum length.
+    format(string(Str), "~w", [S]).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-in_markdown(G):- setup_call_cleanup(format('~n```~n', []), G, format('~n```lisp~n')).
-banner_for(Type, Target):- in_markdown(format('---~n ## ~w: ~w', [Type, Target])).
-lsp_separator :- in_markdown(format('---',[])).
+in_markdown(G) :- format("~N", []), call(G).
+banner_for(Type, Target):- in_markdown(format('***~n ## ~w: ~w', [Type, Target])).
+lsp_separator :- in_markdown(format('~N***~n',[])).
 
 show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
@@ -297,23 +262,28 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :- fail, % (for debugging) commenti
 % Douglas' initial impl of Hover Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
+    % links currently don't actually do anything, removing until that's remedied
   in_markdown((
+                     /*
   show_checked("show_docs", "(-)", "Show Docs "),
   show_checked("show_refs", "(+)", "Show Refs "),
   show_checked("show_pdbg", "(-)", "Debug Pos "),
   show_checked("show_menu", "(+)", "Show Menu: "),
-  format("**~q**", [Target]))).
+                     */
+  format("~N**~q**~n", [Target]))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Vitaly's initial impl of Help
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
     lsp_separator,
-    xref_call(eval(['help!', Target], _)), lsp_separator.  % Evaluate the help command for the term.
+    % Don't redirect so we can capture output of this predicate
+    locally(nb_setval('$dont_redirect_output', true),
+            xref_call(eval(['help!', Target], _))),
+    lsp_separator.  % Evaluate the help command for the term.
 
 
-
-lsp_hooks:hover_print(_Path,_Loc, Term, Arity):-
+lsp_hooks:hover_print(_Path,_Loc, Term, Arity):- fail, % this isn't very helpful
   lsp_separator,
    (((some_arities(Term,Arity, Try, _TryArity),
      get_type(Try,  Type), (Type \=='%Undefined%', Type \==[], % Get the type of the term or default to 'unknownType'.
@@ -330,7 +300,8 @@ lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
   findall(A, is_documented_arity(Target, A), ArityDoc),  % Retrieve documented arities for the term.
   ArityDoc \== [],  % Ensure the documentation is not empty.
   \+ memberchk(Arity, ArityDoc),  % Verify if the term's arity DOES NOT matches the documented arity.
-  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), lsp_separator.  % Output a message if there's an arity mismatch.
+  format('Arity expected: ~w vs ~w~n', [ArityDoc, Arity]), % Output a message if there's an arity mismatch.
+  lsp_separator.
 
 
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
@@ -353,12 +324,13 @@ debug_positions :- debugging(lsp(position)).
 A1: whY
 </details>
 */
-lsp_hooks:hover_print(Path, Loc, Term, Arity):- debug_positions,
-  lsp_separator,
-  setup_call_cleanup(
-     lsp_separator,
-     debug_positions(Path, Loc, Term, Arity),
-     in_markdown(format('~n</details>~n'))).
+lsp_hooks:hover_print(Path, Loc, Term, Arity):-
+    debug_positions,
+    lsp_separator,
+    setup_call_cleanup(
+        lsp_separator,
+        debug_positions(Path, Loc, Term, Arity),
+        in_markdown(format('~n</details>~n'))).
 
 debug_positions(_Path, Loc, Term, Arity) :-
    in_markdown((format("*Debug Positions*:\t\t<details><summary>(this and below is normally hidden)</summary>~n~n\t\t**~q**~n~n",  [[Loc, Term, Arity]]))).   % Format the output as a help string.

@@ -1028,6 +1028,11 @@ dont_de_Cons.
 
 as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
+
+
+as_prolog(0, Self, [Eval, Metta], Prolog) :- Eval == 'eval', !,
+    Prolog = (eval(Metta,TF),is_true(TF)).
+
 as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-
     % Handle 'Cons' structures as lists.
     Cons=='Cons',
