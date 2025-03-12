@@ -442,6 +442,10 @@
     ;     2) fail and return Empty
 
     ; try to take highest open piece
+  ;TEST
+ (let $highest (takehighestopen_scored)
+   (if (not (==  $highest Empty))
+    $highest
     (let $checkmate (attemptcheckmate)
       (if (not (==  $checkmate Empty))
         $checkmate 
@@ -454,9 +458,37 @@
             (let $random_move (random_move_empty_sq)
               (if (not (==  $random_move Empty)) 
                 $random_move 
-                (empty))))))))
+                (empty))))))))))
                 
 (= (attemptcheckmate) (empty))
+
+(= (takehighestopen_scored)
+    (let*
+        (
+      ($highest_open (collapse (takehighestopen (superpose (b r n q p)))))
+      ($_1 (add-atom &self (winner 999 0 0 color rank 0 0))) ;initialize a 'winner' atom for best score on move
+      ($_2 (collapse (check_all_scored_moves)))            ; update the 'winner' atom
+          
+      ;($_3 (remove-atom &self (winner $highest_score $x1 $y1 $color $rank $x2 $y2))) ; now delete
+        )
+        (get-atom &self (winner $score $x1 $y1 $color $rank $x2 $y2)
+            (if (> $score 0)
+                ( ($x1 $y1 $color $rank) ($x2 $y2))
+                (empty)))))
+    
+(= (check_all_scored_moves)
+  (match &self (winner $win_score $win_x1 $win_y1 $win_color $win_rank $win_x2 $win_y2)
+    (match &self 
+      (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)            
+      (let
+            ($move_score (+ $Opponent_hypothetical_score $AI_hypothetical_score))
+            (if (< $move_score $win_score) ; take move with lowest score
+              (progn
+                (println! "OK!")
+                (remove-atom &self 
+                    (winner $win_score $win_x1 $win_y1 $win_color $win_rank $win_x2 $win_y2))
+                (add-atom &self (winner $move_score $x1 $y1 $color $rank $x2 $y2)))
+              (empty))))))
 
 
 ; pick from lowest combined score from the scored atoms
