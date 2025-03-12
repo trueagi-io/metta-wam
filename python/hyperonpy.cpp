@@ -7,6 +7,9 @@
 
 #include <hyperon/hyperon.h>
 
+// required by MSVC compiler
+#define ssize_t ptrdiff_t
+
 namespace py = pybind11;
 
 namespace PYBIND11_NAMESPACE { namespace detail {
@@ -583,10 +586,10 @@ void free_mod_fmt_context(void* callback_context) {
 
 // Module Format API Declaration for a module implementation in C
 static mod_file_fmt_api_t const C_FMT_API= {
-    .path_for_name = &path_for_name_mod_fmt_callback,
-    .try_path = &try_path_mod_fmt_callback,
-    .load = &load_mod_fmt_callback,
-    .free_callback_context = &free_mod_fmt_context,
+    &path_for_name_mod_fmt_callback,
+    &try_path_mod_fmt_callback,
+    &load_mod_fmt_callback,
+    &free_mod_fmt_context,
 };
 
 struct CConstr {
@@ -607,36 +610,57 @@ struct CConstr {
     }
 };
 
-static token_api_t TOKEN_API = { .construct_atom = &CConstr::apply, .free_context = &CConstr::free };
+static token_api_t TOKEN_API = { &CConstr::apply, &CConstr::free };
 
 struct CSExprParser {
 
+    bool empty;
     std::string text;
     sexpr_parser_t parser;
 
-    CSExprParser(std::string text) : text(text) {
+    CSExprParser(std::string text) : empty(false), text(text) {
         parser = sexpr_parser_new(this->text.c_str());
     }
 
     virtual ~CSExprParser() {
+        if (!empty) {
         sexpr_parser_free(parser);
     }
+    }
 
-    sexpr_parser_t* ptr () { return &(this->parser); }
+    sexpr_parser_t* ptr() {
+        empty_guard();
+        return &(this->parser);
+    }
 
     py::object parse(CTokenizer tokenizer) {
+        empty_guard();
         atom_t atom = sexpr_parser_parse(&this->parser, tokenizer.ptr());
         return !atom_is_null(&atom) ? py::cast(CAtom(atom)) : py::none();
     }
 
     py::object err_str() {
+        empty_guard();
         const char* err_str = sexpr_parser_err_str(&this->parser);
         return err_str != NULL ? py::cast(std::string(err_str)) : py::none();
     }
 
     py::object parse_to_syntax_tree() {
+        empty_guard();
         syntax_node_t root_node = sexpr_parser_parse_to_syntax_tree(&this->parser);
         return !syntax_node_is_null(&root_node) ? py::cast(CSyntaxNode(root_node)) : py::none();
+    }
+
+    void empty_guard() {
+        if (empty) {
+            throw std::runtime_error("CSExprParser: object is empty or moved out");
+        }
+    }
+
+    sexpr_parser_t into_parser() {
+        empty = true;
+        // TODO: here parser is moved out separately of this->text
+        return std::move(parser);
     }
 };
 
@@ -664,31 +688,15 @@ PYBIND11_MODULE(hyperonpy, m) {
     m.def("atom_var_parse_name", [](char const* name) { return CAtom(atom_var_parse_name(name)); }, "Create variable atom parsing name in format <name>#<id>");
     m.def("atom_expr", [](py::list _children) {
             size_t size = py::len(_children);
-            atom_t children[size];
-            int idx = 0;
+            auto children = std::unique_ptr<atom_t[]>(new atom_t[size]);
+            size_t idx = 0;
             for (py::handle atom : _children) {
                 // Copying atom is required because atom_expr() moves children
                 // catoms inside new expression atom.
                 children[idx++] = atom_clone(atom.cast<CAtom&>().ptr());
             }
-            return CAtom(atom_expr(children, size));
+            return CAtom(atom_expr(children.get(), size));
         }, "Create expression atom");
-    m.def("atom_gnd", [](py::object object, CAtom ctyp) {
-            if (py::hasattr(object, "cspace")) {
-                //TODO: We should make static constant type atoms, so we don't need to allocate and then
-                // free them, just to test a constant
-                atom_t undefined = ATOM_TYPE_UNDEFINED();
-                if (!atom_eq(ctyp.ptr(), &undefined)) {
-                    throw std::runtime_error("Grounded Space Atoms can't have a custom type");
-                }
-                atom_free(undefined);
-                space_t* space = object.attr("cspace").cast<CSpace&>().ptr();
-                return CAtom(atom_gnd_for_space(space));
-            } else {
-                atom_t typ = atom_clone(ctyp.ptr());
-                return CAtom(atom_gnd(new GroundedObject(object, typ)));
-            }
-            }, "Create grounded atom");
     m.def("atom_space", [](CSpace& atom) {
             return CAtom(atom_gnd_for_space(atom.ptr()));
         }, "Create Space grounded atom");
@@ -1029,8 +1037,7 @@ PYBIND11_MODULE(hyperonpy, m) {
     }, "Loads a module into a runner from a file system resource");
     m.def("metta_run", [](CMetta& metta, CSExprParser& parser) {
             py::list lists_of_atom;
-            sexpr_parser_t cloned_parser = sexpr_parser_clone(&parser.parser);
-            metta_run(metta.ptr(), cloned_parser, copy_lists_of_atom, &lists_of_atom);
+            metta_run(metta.ptr(), parser.into_parser(), copy_lists_of_atom, &lists_of_atom);
             return lists_of_atom;
         }, "Run MeTTa interpreter on an input");
     m.def("metta_evaluate_atom", [](CMetta& metta, CAtom atom) {
@@ -1044,8 +1051,7 @@ PYBIND11_MODULE(hyperonpy, m) {
             return func_to_string((write_to_buf_func_t)&runner_state_to_str, state.ptr());
         }, "Render a RunnerState as a human readable string");
     m.def("runner_state_new_with_parser", [](CMetta& metta, CSExprParser& parser) {
-        sexpr_parser_t cloned_parser = sexpr_parser_clone(&parser.parser);
-        return CRunnerState(runner_state_new_with_parser(metta.ptr(), cloned_parser));
+        return CRunnerState(runner_state_new_with_parser(metta.ptr(), parser.into_parser()));
     }, "Initializes the MeTTa runner state for incremental execution");
     m.def("runner_state_new_with_atoms", [](CMetta& metta, CVecAtom& atoms) {
         return CRunnerState(runner_state_new_with_atoms(metta.ptr(), atoms.ptr()));
@@ -1124,14 +1130,14 @@ PYBIND11_MODULE(hyperonpy, m) {
                 isescape = false;
                 continue;
             }
-            if((isspace or c == '(' or c == ')')) {
-                if(c == ')' and depth == 0) {
+            if ((isspace || c == '(' || c == ')')) {
+                if (c == ')' && depth == 0) {
                     // ignore for now --> exception
                     continue;
                 }
                 if(str.size() > 0) {
                     atom_t atom;
-                    if(str[0] >= '0' and str[0] <= '9' or str[0] == '-') {
+                    if (str[0] >= '0' && str[0] <= '9' || str[0] == '-') {
                         try {
                             long double ld = std::stold(str);
                             long long ll = std::stoll(str);
@@ -1142,8 +1148,6 @@ PYBIND11_MODULE(hyperonpy, m) {
                             } else {
                                 atom = atom_float(ld);
                             }
-                            atom = atom_gnd(new GroundedObject(obj,
-                                            atom_sym("Number")));
                         }
                         catch(...) {
                             atom = atom_sym(str.c_str());

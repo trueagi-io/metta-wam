@@ -1,9 +1,12 @@
 
-!(extend-py! mettalog)
+;!(extend-py! mettalog)
 
-%!(mettalog::vspace-main)
+!(import! &self mettalog)
 
-%;!(mettalog::vspace-main (superpose ( 1 2)))
+
+!(mettalog::vspace-main)
+
+;!(mettalog::vspace-main (superpose ( 1 2)))
 
 ;!(mettalog)
 
