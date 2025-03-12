@@ -2286,7 +2286,8 @@ maybe_py_add_relative_lib_dir(RelDir):-
 %   @example Synchronize the Python path:
 %       ?- sync_python_path.
 %
-sync_python_path:-
+sync_python_path:- !.
+really_sync_python_path:-
     working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
     ignore((
         getenv('PYTHONPATH',CurrentPythonPath),
