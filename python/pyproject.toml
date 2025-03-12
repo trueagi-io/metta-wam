@@ -33,6 +33,7 @@ mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
 dev = [
     "build==0.10.0",
     "pytest==7.3.2",
+    "janus_swi"
 ]
 
 [tool.setuptools]

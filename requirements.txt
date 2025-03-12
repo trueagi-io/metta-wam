@@ -26,6 +26,7 @@ pandas
 #torchvision
 #readline
 pyreadline3
+janus-swi
 pyswip @ git+https://github.com/logicmoo/pyswip
 ##-e reqs/pyswip
 #-e /opt/hyperon/hyperon-experimental/python[dev]

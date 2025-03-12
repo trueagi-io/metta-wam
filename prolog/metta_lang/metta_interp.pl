@@ -2799,10 +2799,11 @@ set_default_flags:- ignore(((
 %   @note The commented-out version avoids `fail/0` and skips loading `metta_python`.
 %
 
-process_python_option :- option_value('python', false),!.
 %process_python_option :- option_value('python', false), !, skip(ensure_loaded(metta_python)).
     % If the `python` option is not explicitly set to `false`, load the `metta_python` module.
-process_python_option :-
+process_python_option :- process_python_option_now, !.
+process_python_option_now :- option_value('python', false),!.
+process_python_option_now :-
     ensure_loaded(mettalog(metta_python)),
     % Initialize Python integration.
     setenv('METTALOG_VERBOSE','0'),
@@ -4337,8 +4338,9 @@ metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
+metta_atom0(KB, Atom) :- nonvar(KB),clause(metta_atomspace(KB,Atom),Body), call(Body).
 
-metta_atom0(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
+metta_atom0(KB, Atom) :-  KB \== '&corelib',  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
@@ -5986,6 +5988,12 @@ eval_H(_StackMax, _Self, Term, Term) :-
 eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
     catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
+
+eval_string(String,Out):-
+    current_self(Self),
+    read_metta(String, Metta),
+    eval(Metta,Out).
+
 /*
 eval_H(StackMax,Self,Term,X).
 
