@@ -201,6 +201,10 @@
    (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
 (= (display_squares_atoms_debug_2)
     (collapse (match &self (square $x $y) (square $x $y) )))
+(= (display_scores_debug)
+  (collapse (match &self 
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score)
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score))))
 
 ; display game-state for debugging
 (= (display-game-state)
@@ -370,9 +374,8 @@
             ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
             (let* 
-              ( ;(println! (collapse (human_player_attacking)))
-                ;($scored (score_move $x1 $y1 g $rank $x2 $y2))  ; write score to Atomspace
-                ; PROBABLY TAKE LOWEST TOTAL SCORE OF TWO NUMBERS
+              ( ; score the move for both players and reset pieces
+                ($scored (score_move ($x1 $y1 g $rank) ($x2 $y2)))  ; write score to Atomspace
                 ($MoveBool  (reset_pieces $start $dest_full)) 
               )
               (($x1 $y1 g $rank) ($x2 $y2)))) ; return the input move. 
@@ -444,9 +447,9 @@
         $checkmate 
         ; REWRITE NEXT SO IT FILTERS BY HIGHEST PIECE AND ALSO RETURNS AN EMPTY LIST IF (empty)
         ; Also, check to make sure no high value pieces exposed. Move this to first couple of tests.
-        (let $highest_open_by_pawn (collapse (takehighestopen (superpose (b r n q p))))
-          (if (not (== $highest_open_by_pawn ())) ; collapse returns empty parens if Empty results!  
-            (car-atom $highest_open_by_pawn)
+        (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
+          (if (not (== $highest_open ())) ; collapse returns empty parens if Empty results!  
+            (car-atom $highest_open)
             ; else try random move
             (let $random_move (random_move_empty_sq)
               (if (not (==  $random_move Empty)) 
@@ -454,6 +457,14 @@
                 (empty))))))))
                 
 (= (attemptcheckmate) (empty))
+
+
+; pick from lowest combined score from the scored atoms
+; use a single match for each score atom. Create a 'winner' atom. If a match has
+; lower combined score update the 'winner' then return the winner to above call.
+; if no winner return (empty)
+;($debug (println! (display_scores_debug)))
+;(score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score)
 
 ; if pawns can capture, return all possibilities
 (= (takehighestopen $Opponent_rank)
@@ -1220,30 +1231,34 @@
                     (q 9)
                     ))))
 
-; return vulnerable AI pieces 
+; return vulnerable AI piece values
 (= (human_player_attacking)
        (match &self (square $x $y g $AI_rank) 
-          ; check all non-pawn pieces for attack
-          (let ($BoolVulnerable (take_dest ($x $y) s))
+          (let $BoolVulnerable (take_dest ($x $y) s)
               (if (== $BoolVulnerable True)
-                  $AI_rank
+                  (case $AI_rank
+                    (
+                    (p 1)
+                    (n 3)
+                    (b 3)
+                    (r 5)
+                    (q 9)
+                    ))
                   (empty)))))
 
 ; return hypothetical score of opponent's pieces if move undertaken and
 ;   also the AI worst case hypothetical score.
-(= (score_move $X1 $Y1 $color $rank $X2 $Y2)
+(= (score_move ($X1 $Y1 $color $rank) ($X2 $Y2))
   (let*
       (
       ($all_opponent_piece_values (collapse (get_score s)))
       ($Opponent_hypothetical_score (addit_list $all_opponent_piece_values))
-      ;($all_vulnerable_AI_pieces (collapse (human_player_attacking)))
-      ($AI_worst_case_score 0)
+      ($all_vulnerable_AI_piece_values (collapse (human_player_attacking)))
+      ($AI_hypothetical_score (addit_list $all_vulnerable_AI_piece_values))
       ; compute AI worst case score
-      )
-      (println! $all_vulnerable_AI_pieces)))
-      
-      ;(add-atom &self 
-      ;  (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score))))
+      )  
+      (add-atom &self 
+        (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score))))
     
 ;
 ;
