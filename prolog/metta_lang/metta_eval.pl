@@ -91,8 +91,18 @@ nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
 call_in_shared_space(G):- call_in_thread(main,G).
 
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
-nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
-nb_bind(Name,Value):- call_in_shared_space(nb_setval(Name,Value)),!.
+%nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
+nb_bind(Name,Value):-
+   duplicate_deep_term(Value,NewValue),
+   call_in_shared_space(nb_linkval(Name,NewValue)),!.
+
+duplicate_deep_term(Value,NewValue):- duplicate_term(Value,NewValue),
+  deep_setarg(NewValue,Value).
+
+deep_setarg(NewValue,Value):- \+ compound(NewValue), Value=NewValue.
+deep_setarg(NewValue,Value):- functor(NewValue,_,N),deep_setarg(N,NewValue,Value).
+deep_setarg(N,NewValue,Value):- arg(N,NewValue,E),deep_setarg(E,EV),nb_linkarg(N,Value,EV),
+   (N==1 -> true ; (succ(Nm1,N),deep_setarg(Nm1,NewValue,Value))).
 
 
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
@@ -3005,7 +3015,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-dot',Arg1,Arg2| _Specialize],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
   must_det_ll((py_type(Arg,Res))).
 eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
-  must_det_ll((py_eval_string(Arg,Res))).
+  must_det_ll((py_eval_string*(Arg,Res))).
 
 eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
@@ -3137,6 +3147,18 @@ maybe_eval_subst(_Eq,_RetType,_Dpth,_Slf,Res,Res):- nb_current(maybe_eval_subst,
 maybe_eval_subst(Eq,RetType,Depth,Self,PredDecl,Res):-
   locally(nb_setval(maybe_eval_subst,false),
    finish_eval(Eq,RetType,Depth,Self,PredDecl,Res)).
+
+
+eval_40(_Eq,_RetType,_Depth,_Self,AEAdjusted,Res):-
+    find_transpiled(AEAdjusted,Res,Code),!,
+    call(Code).
+
+find_transpiled([Op|Adjusted],Res,Code):-
+  transpiler_predicate_store(_, Op, Len, _, _, _, _),
+  format(atom(Fn),'mc_~w__~w',[Len,Op]),
+  append([Fn|Adjusted],[Res], OpParams),
+  Code =.. OpParams, \+ predicate_property(Code,undefined).
+
 
 :- nb_setval(maybe_eval_subst,true).
 /*

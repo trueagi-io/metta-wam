@@ -364,6 +364,104 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
+
+%%%%%%%%%%%%%%%%%%%%% random number generation
+
+transpiler_predicate_store(builtin, 'random-int', 3, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
+
+'mc_3__random-int'(RNGId, Min, Max, N):-
+    maplist(must_be(integer), [Min, Max]),
+    with_random_generator(RNGId, random_between(Min, Max, N) ).
+
+
+transpiler_predicate_store(builtin, 'random-float', 3, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
+% !(let $rg (new-random-generator 1) ((random-float $rg 1 7) (random-float $rg 1 7)))
+'mc_3__random-float'(RNGId, Min, Max, N):-
+    with_random_generator(RNGId, random_float_between(Min, Max, N)).
+
+
+transpiler_predicate_store(builtin, 'set-random-seed', 2, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, [])], x(noeval, eager, [])).
+/*
+    !(let $rg (new-random-generator 1) (((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7))
+      (let $_ (set-random-seed $rg 1) ((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7)))))
+
+*/
+'mc_2__set-random-seed'(RNGId, Seed, RetVal):-
+     with_random_generator(RNGId, set_random(seed(Seed))),
+     RetVal = [].
+
+
+transpiler_predicate_store(builtin, 'new-random-generator', 1, '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
+
+% !(new-random-generator 66)
+'mc_1__new-random-generator'(Seed, RNG) :-
+    S = getrand(Old),
+    G = (set_random(seed(Seed)),
+         getrand(New)
+        ),
+    C = setrand(Old)
+    , setup_call_cleanup(S, G, C)
+    , gensym('&rng_', RNGId)
+    , RNG = rng(RNGId, New)
+    , update_rng(RNG, New).
+
+
+
+
+
+transpiler_predicate_store(builtin, 'reset-random-generator', 1, '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
+% !(reset-random-generator 0)
+% Not tested.
+'mc_1__reset-random-generator'(RNGId, RNGId ):-
+   getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
+   % arg(2, RNGId, NewState) % maybe was previous state?
+   update_rng(RNGId, NewState).
+%reset_random_generator( rng(Id, StateOld, _StateNew), rng(Id, StateOld, StateOld) ).
+
+
+%!  random_float_between(+Min, +Max, -Random) is det.
+%
+%   Get a Random float in the open interval (Min, Max).
+%
+%   This uses random/1 to generate a random R in the open interval
+%   (0.0, 1.0) then multiplies R by the distance from Min to Max and
+%   shifts the value of R by Min:
+%   ==
+%   random(R)
+%   , Random is (Max - Min) * R + Min
+%   ==
+%
+random_float_between(Min, Max, R_):-
+         maplist(must_be(number), [Min, Max]), % the range does not need to be specified as floats
+         random(R),
+         R_ is (Max-Min) * R + Min.
+
+
+%!    with_random_generator(+RNGId, ?Goal) is det.
+%
+%     Execute a Goal in the context of an RNGId.
+%
+%     keep RNGId changes local to the term being passed about.
+%
+with_random_generator('&rng', Call):- !, call(Call).
+with_random_generator(RNGId, Call):-
+    Setup = (getrand(OLD),
+             into_rng(RNGId, Current),
+             setrand(Current)),
+    Cleanup = (getrand(New),
+               update_rng(RNGId, New),
+               setrand(OLD)),
+    setup_call_cleanup(Setup, Call, Cleanup).
+
+% Get RNG
+into_rng(rng(_, Current), Current):-!.
+into_rng(RNGId, Current):- nb_bound(RNGId, rng(_, Current)).
+
+% Set RNG
+update_rng(RNG, Current):- RNG = rng(RNGId, _), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
+update_rng(RNGId, Current):- nb_setval(RNGId, rng(RNGId, Current)).
+
+
 %%%%%%%%%%%%%%%%%%%%% transpiler specific (non standard MeTTa)
 
 transpiler_predicate_store(builtin, 'prolog-trace', 0, [], '', [], x(doeval,eager,[])).

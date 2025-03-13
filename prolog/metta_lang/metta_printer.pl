@@ -534,6 +534,9 @@ is_final_write(V) :- var(V), !,  write_dvar(V), !.
 is_final_write('$VAR'(S)) :- !,  write_dvar(S), !.
 % For special character format `#\S`, write S in single quotes.
 is_final_write('#\\'(S)) :- !, format("'~w'", [S]).
+% For special character format `#\S`, write S in single quotes.
+is_final_write('rng'(Id,_,_)) :- !, format("~w", [Id]).
+is_final_write('rng'(Id,_)) :- !, format("~w", [Id]).
 % Big number use underscores betten them
 is_final_write(V) :- integer(V), V>10_000, catch(format('~I',[V]),_,fail),!.
 % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
