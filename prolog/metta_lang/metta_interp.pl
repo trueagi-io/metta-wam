@@ -65,10 +65,16 @@
 % UTF-8 is more universal and can handle a wider range of characters.
 :- encoding(utf8).
 
+:- dynamic('$metta_setup':on_init_metta/1).
+on_metta_setup(Goal):-
+   assertz('$metta_setup':on_init_metta(Goal)).
+do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
+                        ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
 % This likely enables detailed error backtraces when using Rust-based components.
 % Rust will now output full stack traces when errors occur, which aids in debugging.
-:- initialization(setenv('RUST_BACKTRACE', full)).
+:- on_metta_setup(setenv('RUST_BACKTRACE', full)).
 
 % Set the Prolog flag for encoding to UTF-8 (overrides other default encodings).
 % This ensures that the Prolog interpreter treats all input/output as UTF-8 encoded.
@@ -77,7 +83,7 @@
 
 % Set a global non-backtrackable variable 'cmt_override' with a specific string pattern.
 % This could be used for customizing the way comments or other formatting behaviors are handled.
-:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
+:- on_metta_setup(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
 
 % Set the flag to make the source search relative to the working directory.
 % This helps locate Prolog files from the current working directory.
@@ -2292,7 +2298,7 @@ nocut.
 %     % Disable unit testing mode:
 %     ?- set_is_unit_test(false).
 %
-:- initialization(set_is_unit_test(false)).
+:- on_metta_setup(set_is_unit_test(false)).
 
 %!  extract_prolog_arity(+TypesList, -PrologArity) is nondet.
 %
@@ -2779,7 +2785,7 @@ set_default_flags:- ignore(((
        nop((reset_default_flags))
 ))).
 
-:- initialization(set_default_flags).
+:- on_metta_setup(set_default_flags).
 
 %!  process_python_option is nondet.
 %
@@ -6915,7 +6921,7 @@ maybe_halt(H) :-
 %   Runs initialization steps when the program is loaded. These include setting
 %   the `cmt_override` variable and restoring the system state.
 %
-:- initialization(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
+:- on_metta_setup(nb_setval(cmt_override, lse('; ', ' !(" ', ' ") '))).
 
 % needs_repl:- \+ is_converting, \+ is_pyswip, \+ is_compiling, \+ has_file_arg.
 
@@ -6924,7 +6930,7 @@ maybe_halt(H) :-
 %
 %   Displays the operating system arguments (`os_argv`) during initialization.
 %
-:- initialization(show_os_argv).
+:- on_metta_setup(show_os_argv).
 
 %!  ensure_mettalog_system_compilable is det.
 %
@@ -7124,7 +7130,7 @@ nts :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-% nts1 :- !. % Dont Disable redefinition by cutting execution.
+nts1 :- !. % Dont Disable redefinition by cutting execution.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
@@ -7256,7 +7262,7 @@ fix_message_hook :-
     % Erase the identified clause.
     erase(Cl).
 
-:- initialization(unnullify_output).
+:- on_metta_setup(unnullify_output).
 
 %:- ensure_loaded(metta_python).
 
@@ -7614,3 +7620,5 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 :- find_missing_cuts.
 
+
+:- initialization(do_metta_setup).
