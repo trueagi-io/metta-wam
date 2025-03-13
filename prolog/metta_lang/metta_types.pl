@@ -801,7 +801,7 @@ get_type_symb(_Dpth, _Slf, Val, Type) :-
 get_type_symb(Depth, Self, Op, Type) :-
     % Evaluate arguments if the operator is defined.
     Depth2 is Depth - 1,
-    eval_args_for_type(Depth2, Self, Op, Val),
+    eval_args(Depth2, Self, Op, Val),
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
 

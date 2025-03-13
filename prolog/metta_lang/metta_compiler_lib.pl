@@ -413,9 +413,9 @@ transpiler_predicate_store(builtin, 'reset-random-generator', 1, '@doc', '@doc',
 % !(reset-random-generator 0)
 % Not tested.
 'mc_1__reset-random-generator'(RNGId, RNGId ):-
-   getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
+   %getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
    % arg(2, RNGId, NewState) % maybe was previous state?
-   update_rng(RNGId, NewState).
+   update_rng(RNGId, _). % unbound RNG defaults to systems RNG until the first time it is used after reset
 %reset_random_generator( rng(Id, StateOld, _StateNew), rng(Id, StateOld, StateOld) ).
 
 
@@ -447,7 +447,7 @@ with_random_generator('&rng', Call):- !, call(Call).
 with_random_generator(RNGId, Call):-
     Setup = (getrand(OLD),
              into_rng(RNGId, Current),
-             setrand(Current)),
+             if_t(nonvar(Current), setrand(Current))),
     Cleanup = (getrand(New),
                update_rng(RNGId, New),
                setrand(OLD)),
@@ -461,6 +461,8 @@ into_rng(RNGId, Current):- nb_bound(RNGId, rng(_, Current)).
 update_rng(RNG, Current):- RNG = rng(RNGId, _), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
 update_rng(RNGId, Current):- nb_setval(RNGId, rng(RNGId, Current)).
 
+% fake a built in one
+:- on_metta_setup(update_rng('&rng', _)).
 
 %%%%%%%%%%%%%%%%%%%%% transpiler specific (non standard MeTTa)
 
