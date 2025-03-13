@@ -95,6 +95,12 @@
                 ;we return the first element of the first list and concatenation of the remainder.
               (let $d (cons-atom $b $c) (let $f (concat_lists $d) (cons-atom $a $f )))  
             )))))
+
+; input a list of integers and return summation result of all values
+(= (addit_list $integer_list)
+    (if (== $integer_list ())
+        0
+        (+ (car-atom $integer_list) (addit_list (cdr-atom $integer_list)))))
 ;
 ; Execute a block of unevaluated statements sequentially.
 ; Input: (do_quoted
@@ -195,6 +201,10 @@
    (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
 (= (display_squares_atoms_debug_2)
     (collapse (match &self (square $x $y) (square $x $y) )))
+(= (display_scores_debug)
+  (collapse (match &self 
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score)
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score))))
 
 ; display game-state for debugging
 (= (display-game-state)
@@ -360,9 +370,15 @@
         (if (== $KingCompromised True)
             ; exit with Empty if AI king can be taken reversing move in atomspace
             (let $MoveBool  (reset_pieces $start $dest_full) (empty))
-            ; if we make it this far the move is good -- return the input.
+
+            ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
-            (let $MoveBool  (reset_pieces $start $dest_full) (($x1 $y1 g $rank) ($x2 $y2))))
+            (let* 
+              ( ; score the move for both players and reset pieces
+                ($scored (score_move ($x1 $y1 g $rank) ($x2 $y2)))  ; write score to Atomspace
+                ($MoveBool  (reset_pieces $start $dest_full)) 
+              )
+              (($x1 $y1 g $rank) ($x2 $y2)))) ; return the input move. 
       )
     )
   )
@@ -426,17 +442,105 @@
     ;     2) fail and return Empty
 
     ; try to take highest open piece
-    (let $highest_open (collapse (takehighestopen_with_pawn_rank_test (superpose (b r n q))))
-      (if (not (== $highest_open ())) ; collapse returns empty parens if Empty results!
-        (car-atom $highest_open)
-        ; else try random move
-        (let $random_move (random_move_empty_sq)
-          (if (not (==  $random_move Empty)) 
-            $random_move 
-            (empty))))))
+  ;TEST
+ (let $highest (takehighestopen_scored)
+   (if (not (==  $highest Empty))
+    $highest
+    (let $checkmate (attemptcheckmate)
+      (if (not (==  $checkmate Empty))
+        $checkmate 
+        ; REWRITE NEXT SO IT FILTERS BY HIGHEST PIECE AND ALSO RETURNS AN EMPTY LIST IF (empty)
+        ; Also, check to make sure no high value pieces exposed. Move this to first couple of tests.
+        (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
+          (if (not (== $highest_open ())) ; collapse returns empty parens if Empty results!  
+            (car-atom $highest_open)
+            ; else try random move
+            (let $random_move (random_move_empty_sq)
+              (if (not (==  $random_move Empty)) 
+                $random_move 
+                (empty))))))))))
+                
+(= (attemptcheckmate) (empty))
 
-;
-(= (takehighestopen_with_pawn_all $ranks)
+(= (takehighestopen_scored)
+    (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
+      (if (not (== $highest_open ()))
+        (let*
+            (
+            ($all_final_scored_moves (collapse (finalize_all_scored_moves)))            
+                ($_1 (println! $all_final_scored_moves ))
+            ; find best (lowest) score
+            ($best_move_final_winner (find_best_score $all_final_scored_moves))
+            ($best_move (cdr-atom $best_move_final_winner))
+            )
+            $best_move)
+        ; else no candidate moves
+        (empty))))
+    
+(= (finalize_all_scored_moves)
+      (match &self 
+        (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)            
+        (let  
+          $final_score (+ $Opponent_hypothetical_score $AI_hypothetical_score)
+            ; return final score with move
+            ($final_score ($X1 $Y1 $color $rank) ($X2 $Y2)))))
+
+(= (find_best_score $scored_moves)
+   (if (== (size-atom $scored_moves) 1)
+        (car-atom $scored_moves)
+        ; at least two moves left in list... don't call this with empty list ()
+        (let*
+          (
+          ($first_move (car-atom $scored_moves))
+          ($first_score_int (car-atom $first_move))
+          ($rest_moves (cdr-atom $scored_moves))
+          ($second_move (car-atom $rest_moves))
+          ($second_score_int (car-atom $second_move))
+          )
+          ; if the first score in list less than second score in list, return lowest of first and 
+          ;     all moves left after second if any
+          ; if the first score is greater than the second score in the list, return lowest of
+          ;     second move and all moves left.
+          (if (xor (< $first_score_int $second_score_int) (== $first_score_int $second_score_int))
+              (let*     (
+                    ($any_remaining_moves (cdr-atom $rest_moves))
+                    ($remainder (cons-atom $first_move $any_remaining_moves))
+                        )
+                    (find_best_score $remainder))
+              (find_best_score $rest_moves)))))
+
+; pick from lowest combined score from the scored atoms
+; use a single match for each score atom. Create a 'winner' atom. If a match has
+; lower combined score update the 'winner' then return the winner to above call.
+; if no winner return (empty)
+;($debug (println! (display_scores_debug)))
+;(score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_worst_case_score)
+
+; if pawns can capture, return all possibilities
+(= (takehighestopen $Opponent_rank)
+    ; match all opponent occupied squares
+    (match &self (square $x2 $y2 s $Opponent_rank)
+       ; match all AI occupied squares
+       (match &self (square $x1 $y1 g p) 
+          ; the gold pawn always has a clear route to capture if moving southwest or southeast.
+          (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
+            (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
+            (empty)))))
+
+; if higher ranking (non pawns) can capture, return all possibilities
+(= (takehighestopen $Opponent_rank)
+    ; match all opponent occupied squares
+    (match &self (square $x2 $y2 s $Opponent_rank)
+       ; match all AI occupied squares
+       (match &self (square $x1 $y1 g $AI_rank) 
+          ; check all non-pawn pieces for attack
+          (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True) (not (== $AI_rank p))) 
+            (try_move_and_verify ($x1 $y1 g $AI_rank) ($x2 $y2))
+            (empty)))))
+
+
+; 
+(= (takehighestopen_with_pawn_all_NOTACTIVE $ranks)
   (if (== $ranks ())
       (empty)
       (let* 
@@ -449,16 +553,8 @@
        (if (not (== $take Empty)) 
           $take
           (takehighestopen_with_pawn (cdr-atom $ranks))))))
-
-(= (takehighestopen_with_pawn_rank_test $rank)
-    (match &self (square $x2 $y2 s $rank)
-       (match &self (square $x1 $y1 g p) 
-          ; the gold pawn always has a clear route to capture if moving southwest or southeast.
-          (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
-            (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
-            (empty)))))
   
-(= (takehighestopen_with_pawn_rank)
+(= (takehighestopen_with_pawn_rank_NOTACTIVE)
     (let $take 
         (collapse (match &self 
               (,
@@ -474,21 +570,11 @@
           ; this should be randomized
           (car-atom $take)
           (empty))))
-;
-;
-;(= (takehighestopenpawn $A $B $C $D) (returnrandominteger $E 3) (set-det) (or (== $E 1) (== $E 2)) (buildgold ;$B $F) (checkgold $F $B $G) (set-det) (piece $H) (\= $H p) (xy_box $I #( :: (s $H) ) $B) (findgoldhigh $F $B #;( :: ($J $K g p) ) $I) (= $C  
-;  #( :: 
-;    ($J $K g p) )) (return_entire_box $I $D $B) (move_piece $C $D $B $A) (kingnotincheck $A))
-;
-; (checkgold)
-;
+
 (= (checkgold)  
    (match &self (square $x $y g $rank)
         (if (== (take_dest ($x $y) s) True) ($x $y) (empty))))
 
-;(= (checkgold #(Cons $A $B) $C #(Cons $A $D)) (take_dest $A s $C) (checkgold $B $C $D) (set-det))
-;(= (checkgold #(Cons $A $B) $C $D) (not (take_dest $A s $C)) (checkgold $B $C $D) (set-det))
-;
 ;
 ;#( = #(lookforempty () ()) True )
 ;(= (lookforempty #(Cons $A $B) #(Cons $A $C)) (len $A 2) (lookforempty $B $C))
@@ -1183,6 +1269,46 @@
     True)
 )
 
+; return value of a piece on board given $color
+(= (get_score $color)
+    (match &self (square $X $Y $color $rank)
+            (case $rank
+                    (
+                    (p 1)
+                    (n 3)
+                    (b 3)
+                    (r 5)
+                    (q 9)
+                    ))))
+
+; return vulnerable AI piece values
+(= (human_player_attacking)
+       (match &self (square $x $y g $AI_rank) 
+          (let $BoolVulnerable (take_dest ($x $y) s)
+              (if (== $BoolVulnerable True)
+                  (case $AI_rank
+                    (
+                    (p 1)
+                    (n 3)
+                    (b 3)
+                    (r 5)
+                    (q 9)
+                    ))
+                  (empty)))))
+
+; return hypothetical score of opponent's pieces if move undertaken and
+;   also the AI worst case hypothetical score.
+(= (score_move ($X1 $Y1 $color $rank) ($X2 $Y2))
+  (let*
+      (
+      ($all_opponent_piece_values (collapse (get_score s)))
+      ($Opponent_hypothetical_score (addit_list $all_opponent_piece_values))
+      ($all_vulnerable_AI_piece_values (collapse (human_player_attacking)))
+      ($AI_hypothetical_score (addit_list $all_vulnerable_AI_piece_values))
+      ; compute AI worst case score
+      )  
+      (add-atom &self 
+        (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score))))
     
 ;
 ;
@@ -1351,9 +1477,9 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6 s r) (2 6) (3 6) (4 6) (5 6 s n) (6 6) (7 6) (8 6 s b) 
+                        (1 6) (2 6) (3 6) (4 6 s r) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 4) (2 4) (3 4 s q) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
