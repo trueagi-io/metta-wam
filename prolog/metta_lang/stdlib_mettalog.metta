@@ -627,24 +627,6 @@ For example:
 ; this is deduced: (: isinf (-> Number Bool))
 (is-pred isinf-math is_Inf)
 
-(iz random-int MeTTa)
-(@doc random-int
-  (@desc "Returns random int number from range defined by two numbers (first and second argument)")
-  (@params (
-    (@param "Range start")
-    (@param "Range end")))
-  (@return "Random int number from defined range"))
-(is-op-2 random-int random)
-
-(iz random-float MeTTa)
-(@doc random-float
-  (@desc "Returns random float number from range defined by two numbers (first and second argument)")
-  (@params (
-    (@param "Range start")
-    (@param "Range end")))
-  (@return "Random float number from defined range"))
-(is-op-2 random-int random)
-
 (@doc random-int
   (@desc "Returns random int number from range defined by two numbers (second and third argument)")
   (@params (
@@ -679,6 +661,26 @@ For example:
   (@params (
     (@param "Random number generator instance")))
   (@return "Random number generator instance with default behavior"))
+
+;; Some code still uses the old syntax
+(iz random-int MeTTa)
+(@doc random-int
+  (@desc "Returns random int number from range defined by two numbers (first and second argument)")
+  (@params (
+	(@param "Range start")
+	(@param "Range end")))
+  (@return "Random int number from defined range"))
+(is-op-2 random-int random)
+
+(iz random-float MeTTa)
+(@doc random-float
+  (@desc "Returns random float number from range defined by two numbers (first and second argument)")
+  (@params (
+	(@param "Range start")
+	(@param "Range end")))
+  (@return "Random float number from defined range"))
+(is-op-2 random-int random)
+
 
 (iz collapse-bind MeTTa)
 (@doc collapse-bind

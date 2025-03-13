@@ -1203,7 +1203,7 @@ if [[ "$exe" == "true" ]]; then
         need_compile=1
     else
         # Check if any .pl file is newer than the reference file
-        for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
+        for pl_file in "$INTERP_SRC_DIR"/*_*.*; do
             if [[ ! -e "$pl_file" ]]; then
                 DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
             # If a .pl file is newer than the reference file, trigger recompilation
