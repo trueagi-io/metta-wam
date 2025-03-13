@@ -463,33 +463,51 @@
 (= (attemptcheckmate) (empty))
 
 (= (takehighestopen_scored)
-    (let*
-        (
-      ($highest_open (collapse (takehighestopen (superpose (b r n q p)))))
-      ($_1 (add-atom &self (winner 999 0 0 color rank 0 0))) ;initialize a 'winner' atom for best score on move
-      ($_2 (collapse (check_all_scored_moves)))            ; update the 'winner' atom
-          
-      ;($_3 (remove-atom &self (winner $highest_score $x1 $y1 $color $rank $x2 $y2))) ; now delete
-        )
-        (get-atom &self (winner $score $x1 $y1 $color $rank $x2 $y2)
-            (if (> $score 0)
-                ( ($x1 $y1 $color $rank) ($x2 $y2))
-                (empty)))))
+    (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
+      (if (not (== $highest_open ()))
+        (let*
+            (
+            ($all_final_scored_moves (collapse (finalize_all_scored_moves)))            
+                ($_1 (println! $all_final_scored_moves ))
+            ; find best (lowest) score
+            ($best_move_final_winner (find_best_score $all_final_scored_moves))
+            ($best_move (cdr-atom $best_move_final_winner))
+            )
+            $best_move)
+        ; else no candidate moves
+        (empty))))
     
-(= (check_all_scored_moves)
-  (match &self (winner $win_score $win_x1 $win_y1 $win_color $win_rank $win_x2 $win_y2)
-    (match &self 
-      (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)            
-      (let
-            ($move_score (+ $Opponent_hypothetical_score $AI_hypothetical_score))
-            (if (< $move_score $win_score) ; take move with lowest score
-              (progn
-                (println! "OK!")
-                (remove-atom &self 
-                    (winner $win_score $win_x1 $win_y1 $win_color $win_rank $win_x2 $win_y2))
-                (add-atom &self (winner $move_score $x1 $y1 $color $rank $x2 $y2)))
-              (empty))))))
+(= (finalize_all_scored_moves)
+      (match &self 
+        (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)            
+        (let  
+          $final_score (+ $Opponent_hypothetical_score $AI_hypothetical_score)
+            ; return final score with move
+            ($final_score ($X1 $Y1 $color $rank) ($X2 $Y2)))))
 
+(= (find_best_score $scored_moves)
+   (if (== (size-atom $scored_moves) 1)
+        (car-atom $scored_moves)
+        ; at least two moves left in list... don't call this with empty list ()
+        (let*
+          (
+          ($first_move (car-atom $scored_moves))
+          ($first_score_int (car-atom $first_move))
+          ($rest_moves (cdr-atom $scored_moves))
+          ($second_move (car-atom $rest_moves))
+          ($second_score_int (car-atom $second_move))
+          )
+          ; if the first score in list less than second score in list, return lowest of first and 
+          ;     all moves left after second if any
+          ; if the first score is greater than the second score in the list, return lowest of
+          ;     second move and all moves left.
+          (if (xor (< $first_score_int $second_score_int) (== $first_score_int $second_score_int))
+              (let*     (
+                    ($any_remaining_moves (cdr-atom $rest_moves))
+                    ($remainder (cons-atom $first_move $any_remaining_moves))
+                        )
+                    (find_best_score $remainder))
+              (find_best_score $rest_moves)))))
 
 ; pick from lowest combined score from the scored atoms
 ; use a single match for each score atom. Create a 'winner' atom. If a match has
