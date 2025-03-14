@@ -202,7 +202,7 @@ eval_args(Eq,RetTyp e,Depth,Self,X,Y):-
 
 
 %! eval_args(+X,-Y) is semidet.
-eval_args(X,Y):- current_self(Self), eval_args(500,Self,X,Y).
+eval_args(X,Y):- current_self(Self), eval_args(50_000,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
 
@@ -2334,15 +2334,19 @@ with_scope(Eq,RetType,Depth,Self,Goal):-
        pop_scope([eq=Eq,retType=RetType,depth=Depth,self=Self])).
 
 
+
+ppp_default_value(self,V):- current_self(V), nocut.
+ppp_default_value(depth,StackMax):-  current_prolog_flag(max_tagged_integer,MaxTI),option_else('stack-max',StackMax,MaxTI).
+ppp_default_value(retType,_).
+ppp_default_value(eq,=).
+
+
 peek_scope(Eq,RetType,Depth,Self):- peek_scope([eq=Eq,retType=RetType,depth=Depth,self=Self]).
 peek_scope(List):- maplist(peek_scope_item,List).
 peek_scope_item(N=V):- peek_scope_item(N,V).
+
 peek_scope_item(N,V):- peek_current_scope(N,V),!.
-peek_scope_item(N,V):- peek_default_value(N,V),!.
-peek_default_value(self,V):- current_self(V), nocut.
-peek_default_value(depth,500).
-peek_default_value(retType,_).
-peek_default_value(eq,=).
+peek_scope_item(N,V):- ppp_default_value(N,V),!.
 peek_current_scope(N,V):- nb_current(N,List),first_of(List,V).
 
 first_of(Nil,_):- Nil==[],!,fail.
@@ -2354,11 +2358,6 @@ push_scope(Eq,RetType,Depth,Self):- must_det_lls(push_scope([eq=Eq,retType=RetTy
 push_scope(List):- maplist(push_scope_item,List).
 push_scope_item(N=V):- push_scope_item(N,V),!.
 push_scope_item(N,V):- push_current_scope(N,V),!.
-push_scope_item(N,V):- peek_default_value(N,V),!.
-push_default_value(self,V):- current_self(V), nocut.
-push_default_value(depth,500).
-push_default_value(retType,_).
-push_default_value(eq,=).
 push_current_scope(N,V):- nb_current(N,List)->nb_setval(N,[V|List]),nb_setval(N,[V]).
 
 
@@ -2366,12 +2365,7 @@ pop_scope(Eq,RetType,Depth,Self):- pop_scope([eq=Eq,retType=RetType,depth=Depth,
 pop_scope(List):- maplist(pop_scope_item,List).
 pop_scope_item(N=V):- pop_scope_item(N,V).
 pop_scope_item(N,V):- pop_current_scope(N,V),!.
-pop_scope_item(N,V):- peek_default_value(N,V),!.
-pop_default_value(self,V):- current_self(V), nocut.
-pop_default_value(depth,500).
-pop_default_value(retType,_).
-pop_default_value(eq,=).
-pop_current_scope(N,_):- if_t(nb_current(N,[_|List]),nb_setval(N,List)).
+pop_scope_item(N,V):- ppp_default_value(N,V),!.
 
 
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,

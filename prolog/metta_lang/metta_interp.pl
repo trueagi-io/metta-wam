@@ -1188,7 +1188,7 @@ option_value_name_default_type_help('devel', false, [false, true], "Developer mo
 all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
 
 % Resource Limits
-option_value_name_default_type_help('stack-max', 500, [inf,1000,10_000], "Maximum stack depth allowed during execution", 'Resource Limits').
+option_value_name_default_type_help('stack-max', MaxTI, [MaxTI,1000,500], "Maximum stack depth allowed during execution", 'Resource Limits'):- current_prolog_flag(max_tagged_integer,MaxTI).
 all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
 option_value_name_default_type_help('initial-result-count', 10, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
@@ -1220,7 +1220,7 @@ option_value_name_default_type_help('halt', false, [false, true], "Halts executi
 % Debugging and Tracing
 option_value_name_default_type_help('trace-length', 500, [inf], "Length of the trace buffer for debugging", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-overtime', 4.0, [inf], "Trace if execution time exceeds limit", 'Debugging and Tracing').
-option_value_name_default_type_help('trace-on-overflow', 1000, [inf], "Trace on stack overflow", 'Debugging and Tracing').
+option_value_name_default_type_help('trace-on-overflow', 10_000, [inf,10_000_000], "Trace on stack overflow", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-eval', false, [false, true], "Trace during normal evaluation", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-load', silent, [silent, verbose], "Verbosity on file loading", 'Debugging and Tracing').
 option_value_name_default_type_help('trace-on-exec', false, [silent, verbose], "Trace on execution during loading", 'Debugging and Tracing').
@@ -5920,7 +5920,8 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
- option_else('stack-max',StackMax,100),
+ current_prolog_flag(max_tagged_integer,MaxTI),
+ option_else('stack-max',StackMax,MaxTI),
  CALL = eval_H(StackMax,Self,Term,X),
  notrace(( must_det_ll((
  if_t(show_transpiler,write_compiled_exec(TermV,_Goal)),
