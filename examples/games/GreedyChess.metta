@@ -139,7 +139,7 @@
 ;
 
 ;*******************************************************
-; Initialization 
+; Constants 
 ;*******************************************************
 
 (highestrank k) 
@@ -156,8 +156,11 @@
 (rank n) 
 (rank p) 
 
+;*******************************************************
+; Declare initializing game state
+;*******************************************************
 
-!(add-atom &self (game-state initializing))
+(game-state initializing)
 
 ;*******************************************************
 ; Code invoked by the basic commands 
@@ -197,6 +200,24 @@
       (remove-atom &self (square $x $y))  
       ))
 
+(= (delete-temporary-atoms)
+  (match &self
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)
+        ;($X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score)))
+    (remove-atom &self 
+    (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score))))
+
+; delete prior game state and reset with $new-state
+(= (change-game-state $new-state)
+  (progn
+    (delete-prior-game-states)
+    (add-atom &self (game-state $new-state))))
+
+; Invoke to terminate all prior game state atoms (with extreme prejudice)
+(= (delete-prior-game-states)
+  (match &self (game-state $prior-state) (remove-atom &self (game-state $prior-state))))
+
+
 (= (display_squares_atoms_debug_4)
    (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
 (= (display_squares_atoms_debug_2)
@@ -210,11 +231,6 @@
 (= (display-game-state)
     (match &self (game-state $msg) 
         (println! $msg)))
-
-; reset state by deleting all prior 'game-state' atoms
-(= (reset-state)
-    (match &self (game-state $msg) 
-        (remove-atom &self (game-state $msg))))
 
 ; Invoke with empty list, will return characters input from console until ENTER.
 (: (get-player-command (-> list list)))
@@ -238,13 +254,13 @@
     (display_board (match &self (board-state $board) $board)) 
     ((py-atom print) "- Your pieces are marked with an asterisk.")
     ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  M <ENTER> 1213 <ENTER>")
+    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> 1213 <ENTER>")
     ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
-    ((py-atom print) "Greedy Chess Move (AI)           ->  G")
-    ((py-atom print) "Reset & Replay                   ->  R")
-    ((py-atom print) "Commands List                    ->  C")
-    ((py-atom print) "Display Board                    ->  D")
-    ((py-atom print) "Quit                             ->  Q")
+    ((py-atom print) "Greedy Chess Move (AI)           ->  g")
+    ((py-atom print) "Reset & Replay                   ->  r")
+    ((py-atom print) "Commands List                    ->  c")
+    ((py-atom print) "Display Board                    ->  d")
+    ((py-atom print) "Quit                             ->  q")
     ))
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
@@ -344,7 +360,7 @@
 ; Output: a list of ( (starting piece) (destination)) if successful or Empty
 ;         So, we just output the input if the move is good
 ; Updates: Atomspace "square" atoms which are temporarily moved around for envisioning the move.
-(= (try_move_and_verify ($x1 $y1 g $rank)   ($x2 $y2))
+(= (try_move_and_verify ($x1 $y1 g $rank)   ($x2 $y2) $mode)
   (let*
     (
     ($start ($x1 $y1 g $rank))
@@ -354,6 +370,7 @@
     ($MoveBool  (move_piece $start $dest))  
     ; see if moving piece exposes to human player, "s" = silver color
     ($Exposed (take_dest ($x2 $y2) s))
+    ;($Exposed False)
     )
     (if (== $Exposed True)
       ; exit with Empty if the piece can be taken but after moving pieces back in atomspace
@@ -374,8 +391,16 @@
             ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
             (let* 
-              ( ; score the move for both players and reset pieces
-                ($scored (score_move ($x1 $y1 g $rank) ($x2 $y2)))  ; write score to Atomspace
+              ( 
+               ;($compute_move_score (score_move ($x1 $y1 g $rank) ($x2 $y2)))
+              ($compute_move_score ; score the move for both players and reset pieces as applicable
+                (case $mode
+                  (
+                    ; write score to Atomspace
+                    (1 (score_move ($x1 $y1 g $rank) ($x2 $y2)))
+                    ; if 0, don't compute a score
+                    (0 (empty))
+                  )))
                 ($MoveBool  (reset_pieces $start $dest_full)) 
               )
               (($x1 $y1 g $rank) ($x2 $y2)))) ; return the input move. 
@@ -394,7 +419,7 @@
              (square $x2 $y2)
               )
                 (if (== (clear_route ($x1 $y1 g $rank) ($x2 $y2)) True) 
-                  (try_move_and_verify ($x1 $y1 g $rank) ($x2 $y2))
+                  (try_move_and_verify ($x1 $y1 g $rank) ($x2 $y2) 0)
                   (empty)))) 
 
 ; (random_recursion_by_rank)
@@ -441,24 +466,19 @@
     ;     1) succeed and return the move, or 
     ;     2) fail and return Empty
 
-    ; try to take highest open piece
-  ;TEST
- (let $highest (takehighestopen_scored)
-   (if (not (==  $highest Empty))
-    $highest
+    ; attempt checkmate on human player
     (let $checkmate (attemptcheckmate)
       (if (not (==  $checkmate Empty))
         $checkmate 
-        ; REWRITE NEXT SO IT FILTERS BY HIGHEST PIECE AND ALSO RETURNS AN EMPTY LIST IF (empty)
-        ; Also, check to make sure no high value pieces exposed. Move this to first couple of tests.
-        (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
-          (if (not (== $highest_open ())) ; collapse returns empty parens if Empty results!  
-            (car-atom $highest_open)
-            ; else try random move
+        ; take a piece
+        (let $highest (takehighestopen_scored)
+          (if (not (==  $highest Empty))
+            $highest
+            ; move to an empty square
             (let $random_move (random_move_empty_sq)
               (if (not (==  $random_move Empty)) 
                 $random_move 
-                (empty))))))))))
+                (empty))))))))
                 
 (= (attemptcheckmate) (empty))
 
@@ -473,7 +493,10 @@
             ($best_move_final_winner (find_best_score $all_final_scored_moves))
             ($best_move (cdr-atom $best_move_final_winner))
             )
-            $best_move)
+            ; clean up score atoms and return optimal move
+            (let $temp_delete (collapse (delete-temporary-atoms))
+                  $best_move)
+        )
         ; else no candidate moves
         (empty))))
     
@@ -524,7 +547,7 @@
        (match &self (square $x1 $y1 g p) 
           ; the gold pawn always has a clear route to capture if moving southwest or southeast.
           (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
-            (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
+            (try_move_and_verify ($x1 $y1 g p) ($x2 $y2) 1)
             (empty)))))
 
 ; if higher ranking (non pawns) can capture, return all possibilities
@@ -535,7 +558,7 @@
        (match &self (square $x1 $y1 g $AI_rank) 
           ; check all non-pawn pieces for attack
           (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True) (not (== $AI_rank p))) 
-            (try_move_and_verify ($x1 $y1 g $AI_rank) ($x2 $y2))
+            (try_move_and_verify ($x1 $y1 g $AI_rank) ($x2 $y2) 1)
             (empty)))))
 
 
@@ -564,7 +587,7 @@
               )
                 ; the gold pawn always has a clear route to capture if moving southwest or southeast.
                 (if (and (== $y2 (- $y1 1)) (xor (== $x2 (- $x1 1)) (== $x2 (+ $x1 1)))) 
-                  (try_move_and_verify ($x1 $y1 g p) ($x2 $y2))
+                  (try_move_and_verify ($x1 $y1 g p) ($x2 $y2) 0)
                   (empty)))) 
         (if (not (== $take () )) ; !! collapse will return () not Empty if nothing found
           ; this should be randomized
@@ -651,6 +674,7 @@
     (match &self (square $x $y) ($x $y)))
 (= (return_entire_box ($x $y))
     (match &self (square $x $y $c $d) ($x $y $c $d)))
+(= (return_entire_box ($x $y $c $d)) ($x $y $c $d))
 
 
 (= (return_entire_box_old $Coordinates)
@@ -1211,10 +1235,10 @@
     ($X1  (nth 1 $starting_square))
     ($Y1  (nth 2 $starting_square))
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
-    ;($debug0 (println! $new_board2))
-    ;($debug1 (println! $new_board1))
-    ;($debug2 (println! $new_board2))
-        ) 
+    ($print (if (== (size-atom $target_square) 2)
+             (empty)
+             ((py-atom print) "Piece captured!")))
+    ) 
     $new_board2))
 
    
@@ -1471,21 +1495,18 @@
     ; if first invocation, just create board
     (if (==  initializing   $msg) ; then  
       (progn   
-        ; remove the 'initializing' message
-        (remove-atom &self (game-state $msg)) 
+        (change-game-state started)
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6 s r) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4 s q) (4 4) (5 4) (6 4) (7 4) (8 4) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5 s b) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5 s n) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
-        ; indicate game has passed the initializing state
-        (add-atom &self (game-state started))
         ; display welcome messages and board
         (welcome))
     ; elif there has already been one game played
@@ -1510,84 +1531,174 @@
     (; else if
         empty))))) 
 
-; The move command moves the human player's piece.
-
-;(= (m $A $B $C $D) (guimessage checkmate $E $F) (write 'Game over.') (nl) (set-det))
-
+(= (game-still-playing) 
+  (match &self (game-state $msg)
+   (if (xor (==  checkmate   $msg) (==  resigned $msg)) 
+      False
+      True)))
+  
 ;(: M (-> command))
 (= (M)  
-  (progn 
-  ; prompt for x/y location
-  ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-  ; add edit to make sure move within boundaries of 1 -> 8!
-  ((py-atom print) "Enter coordinates.")
-  (let $coordinates ((py-atom input)) ())
-  (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-  (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-  (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-  (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-  (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-  (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-  ; get the current board
-  (match &self (board-state $starting_board) $starting_board)
-  ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
-  (reset-pieces $starting_board)
-  ; check if source location and destination are not the same
-  (if (not (== $f $g))                            
-   ; check if destination is empty or destination has opponent's piece  
+  (if (== (game-still-playing) False)
+    ((py-atom print) "Game over. Please reset to play again (enter r).")
+    ; else keep playing
     (progn 
-    ; Retrieve the source box details.
-    (let $h (return_entire_box $f) ())
-          ;does not return here!
-    ; Retrieve the destination box details.
-    (let $i (return_entire_box $g) ())
-    ; Check there is a piece to move.
-    (if (and (== (size-atom $h) 4)                                    
-             (xor  
-             ; OK to move to open square size 2...
-             (== (size-atom $i) 2)     
-             ; OK to take another piece, check color is not the same...
-             (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
-      ; Validate the path for the piece.
-      (if (== (clear_route $h $i) True)               
-        ; Try moving piece provisionally
-        (let* ( 
-            ; Try the move and update the board state.   
-            ($MoveBool  (move_piece $h $i))   
-            ; locate human's king
-            ($king_square (xy_box (s k)))    
-            ; 
-            ($full_king_sq (return_entire_box $king_square))  
-            ; Ensure the player's king is not in check from gold (g) if moved.  
-            ($KingCompromised (take_dest $full_king_sq g))   
-                ) 
-            ; If move valid, proceed to create new board atom with move.
-            (if (== $KingCompromised True)
-                ((py-atom print) "Can't move there, your king would be in check.")
-                ;else
-                (progn 
-                ; re-create a new board 
-                ((py-atom print) "Moving piece...")
-                (let $provisional_board (move_piece_on_board $h $i $starting_board)
-                     (add-atom &self (board-state $provisional_board)))
-                ; remove the old chess board
-                (remove-atom &self (board-state $starting_board))
-                ; display
-                (D) 
-                ; Look for CHECK or CHECKMATE
-                )
-            )
+    ; prompt for x/y location
+    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
+    ; add edit to make sure move within boundaries of 1 -> 8!
+    ((py-atom print) "Enter coordinates.")
+    (let $coordinates ((py-atom input)) ())
+    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
+    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
+    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
+    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
+    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
+    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+    ; get the current board
+    (match &self (board-state $starting_board) $starting_board)
+    ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
+    (reset-pieces $starting_board)
+    ; check if source location and destination are not the same
+    (if (not (== $f $g))                            
+     ; check if destination is empty or destination has opponent's piece  
+      (progn 
+      ; Retrieve the source box details.
+      (let $h (return_entire_box $f) ())
+            ;does not return here!
+      ; Retrieve the destination box details.
+      (let $i (return_entire_box $g) ())
+      ; Check there is a piece to move.
+      (if (and (== (size-atom $h) 4)                                    
+               (xor  
+               ; OK to move to open square size 2...
+               (== (size-atom $i) 2)     
+               ; OK to take another piece, check color is not the same...
+               (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
+        ; Validate the path for the piece.
+        (if (== (clear_route $h $i) True)               
+          ; Try moving piece provisionally
+          (let* ( 
+              ; Try the move and update the board state.   
+              ($MoveBool  (move_piece $h $i))   
+              ; locate human's king
+              ($king_square (xy_box (s k)))    
+              ; 
+              ($full_king_sq (return_entire_box $king_square))  
+              ; Ensure the player's king is not in check from gold (g) if moved.  
+              ($KingCompromised (take_dest $full_king_sq g))   
+                  ) 
+              ; If move valid, proceed to create new board atom with move.
+              (if (== $KingCompromised True)
+                  ((py-atom print) "Can't move there, your king would be in check.")
+                  ;else
+                  (progn 
+                  ; re-create a new board 
+                  ((py-atom print) "Moving piece...")
+                  (let $provisional_board (move_piece_on_board $h $i $starting_board)
+                       (add-atom &self (board-state $provisional_board)))
+                  ; remove the old chess board
+                  (remove-atom &self (board-state $starting_board))
+                  ; display
+                  (D) 
+                  ; Look for CHECK or CHECKMATE
+                  )
+              )
+          )
+          ((py-atom print) "Can't move piece there."))
+        ; else (moving to location with same piece or other problem)
+        ((py-atom print) "Invalid move.")
+      )
+      )
+      ;else (trying to move to same location)
+      ((py-atom print) "Can't move to same location.")) 
+    ; since move complete, delete any individual square atoms which only live for a single move.
+    (delete-pieces)
+    )))
+
+; The move command moves the human player's piece.
+;(: M (-> command))
+(= (M-deactivate)  
+  ; check for game over (there can only be ONE game-state atom at a time or problems result!)
+  (match &self (game-state $msg)
+   (if (xor (==  checkmate   $msg) (==  resigned $msg))
+    ((py-atom print) "Game over. Please reset to play again (enter r).")
+
+    ;else keep playing...
+    (progn 
+      ; prompt for x/y location
+      ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
+      ; add edit to make sure move within boundaries of 1 -> 8!
+      ((py-atom print) "Enter coordinates.")
+      (let $coordinates ((py-atom input)) ())
+      (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
+      (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
+      (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
+      (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
+      (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
+      (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+      ; get the current board
+      (match &self (board-state $starting_board) $starting_board)
+      ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
+      (reset-pieces $starting_board)
+      ; check if source location and destination are not the same
+      (if (not (== $f $g))                            
+       ; check if destination is empty or destination has opponent's piece  
+        (progn 
+          ; Retrieve the source box details.
+          (let $h (return_entire_box $f) ())
+                ;does not return here!
+          ; Retrieve the destination box details.
+          (let $i (return_entire_box $g) ())
+          ; Check there is a piece to move.
+          (if (and (== (size-atom $h) 4)                                    
+                   (xor  
+                   ; OK to move to open square size 2...
+                   (== (size-atom $i) 2)     
+                   ; OK to take another piece, check color is not the same...
+                   (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
+            ; Validate the path for the piece.
+            (if (== (clear_route $h $i) True)               
+              ; Try moving piece provisionally
+              (let* ( 
+                  ; Try the move and update the board state.   
+                  ($MoveBool  (move_piece $h $i))   
+                  ; locate human's king
+                  ($king_square (xy_box (s k)))    
+                  ; 
+                  ($full_king_sq (return_entire_box $king_square))  
+                  ; Ensure the player's king is not in check from gold (g) if moved.  
+                  ($KingCompromised (take_dest $full_king_sq g))   
+                      ) 
+                  ; If move valid, proceed to create new board atom with move.
+                  (if (== $KingCompromised True)
+                      ((py-atom print) "Can't move there, your king would be in check.")
+                      ;else
+                      (progn 
+                        ; re-create a new board 
+                        (println! "checkpoint 1")
+                        ((py-atom print) "Moving piece...")
+                        (let $provisional_board (move_piece_on_board $h $i $starting_board)
+                             (add-atom &self (board-state $provisional_board)))
+                        ; remove the old chess board
+                        (remove-atom &self (board-state $starting_board))
+                        ; display
+                        (D) 
+                        ; Look for CHECK or CHECKMATE
+                      )
+                  )
+              )
+            ((py-atom print) "Can't move piece there."))
+          ; else (moving to location with same piece or other problem)
+          ((py-atom print) "Invalid move.")
+          )
         )
-        ((py-atom print) "Can't move piece there."))
-      ; else (moving to location with same piece or other problem)
-      ((py-atom print) "Invalid move.")
-    )
-    )
-    ;else (trying to move to same location)
-    ((py-atom print) "Can't move to same location.")) 
-  ; since move complete, delete any individual square atoms which only live for a single move.
-  (delete-pieces)
-  )
+        ;else (trying to move to same location)
+        ((py-atom print) "Can't move to same location.")) 
+      ; since move complete, delete any individual square atoms which only live for a single move.
+      (delete-pieces)
+    ) ; progn ends here
+   ) ; if ends here
+  ); end match
 )
 
 ; AI move piece command
@@ -1595,37 +1706,40 @@
 (= (G)  
   (match &self (game-state $msg)
   ; check for game over...
-  (if (==  checkmate   $msg) ; then  
-      ((py-atom print) "Game over. Please reset to play again (enter R).")
+  (if (xor (==  checkmate   $msg) (==  resigned $msg)) ; then  
+      ((py-atom print) "Game over. Please reset to play again (enter r).")
       ;else keep playing...
       (progn 
           ; get the current board
           (match &self (board-state $starting_board) $starting_board)
           ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
           (reset-pieces $starting_board)
-
-
+          ; determine next AI move
           (let $move (decide_greedy_move) () )
-          ; NEED TO HANDLE EMPTY IF NO MOVE IS POSSIBLE HERE, USE IF STATEMENT
-          (let $start (nth 1 $move) ())
-          (let $destination (nth 2 $move) ())
-
-          (println! "Greedy Chess moving...")
-
-          ; create atom for the updated complete chess board...
-          (let $provisional_board (move_piece_on_board $start $destination $starting_board)
-                (add-atom &self (board-state $provisional_board)))
-          ; remove the old chess board
-          (remove-atom &self (board-state $starting_board))
-          ; since move complete, delete any individual square atoms which only live for a single move.
-          (delete-pieces)
-          (println! (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
-          (println! (collapse (match &self (square $x $y) (square $x $y))))
-          ; display
-          (D)
-          ; check to see if human player's king is in check
-          ;     "
-      ))))
+          (if  (== $move Empty)
+            (progn
+              ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
+              (change-game-state resigned)
+            )
+            ; else proceed with move
+            (progn
+              (let $start (nth 1 $move) ())
+              (let $destination (nth 2 $move) ()) ; this is (x y) only
+              ; we need the entire present destination box to pass to the board display
+              (let $destination_entire (return_entire_box $destination) ())
+              ((py-atom print) "Greedy Chess moving...")
+              ; create atom for the updated complete chess board...
+              (let $provisional_board (move_piece_on_board $start $destination_entire $starting_board)
+                    (add-atom &self (board-state $provisional_board)))
+              ; remove the old chess board
+              (remove-atom &self (board-state $starting_board))
+              ; since move complete, delete any individual square atoms which only live for a single move.
+              (delete-pieces)
+              ; display the new board
+              (D)
+              ; check to see if human player's king is in check
+              ;     "
+            ))))))
 
 ;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
 ;(= (g) (board $A) (playdefenseR $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) (b ;$B) (examine_king $B s g) (printmove $C $D $A) (set-det))
@@ -1640,8 +1754,7 @@
 (: R (-> command))
 (= (R)  
   (progn 
-  (reset-state)
-  (add-atom &self (game-state restarted))
+  (change-game-state restarted)
   (chess)))
 
 ; The "commands" command just lists the available commands.
@@ -1652,13 +1765,13 @@
     ((py-atom print) "- Your pieces are marked with an asterisk.")
     ((py-atom print) "- Please take note of the following simple commands:")
     ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  M <ENTER> 1213 <ENTER>")
+    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> 1213 <ENTER>")
     ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
-    ((py-atom print) "Greedy Chess Move (AI)           ->  G")
-    ((py-atom print) "Reset & Replay                   ->  R")
-    ((py-atom print) "Commands List                    ->  C")
-    ((py-atom print) "Display Board                    ->  D")
-    ((py-atom print) "Quit                             ->  Q")))
+    ((py-atom print) "Greedy Chess Move (AI)           ->  g")
+    ((py-atom print) "Reset & Replay                   ->  r")
+    ((py-atom print) "Commands List                    ->  c")
+    ((py-atom print) "Display Board                    ->  d")
+    ((py-atom print) "Quit                             ->  q")))
 ;
 
 ; The display command shows the present board.
@@ -1674,15 +1787,15 @@
     (let $command ((py-atom input))   ; get user command
         (case $command
           (
-          ("M"  (M))                         ; Move human piece 
-          ("G"  (G))                         ; AI move (Greedy)
-          ("R"  (R))                         ; Reset = "R"
-          ("C"  (C))                         ; List valid commands = "C"
-          ("D"  (D))                         ; Display board "D"
-          ("Q"  ((py-atom print) "Quitting MeTTa Greedy Chess."))
-          ($_   ((py-atom print) "Invalid command, please try again or enter C for a list of commands."))
+          ("m"  (M))                         ; Move human piece 
+          ("g"  (G))                         ; AI move (Greedy)
+          ("r"  (R))                         ; Reset = "r"
+          ("c"  (C))                         ; List valid commands = "c"
+          ("d"  (D))                         ; Display board "d"
+          ("q"  ((py-atom print) "Quitting MeTTa Greedy Chess."))
+          ($_   ((py-atom print) "Invalid command, please try again or enter c for a list of commands."))
           )))
-    (if (== $command "Q") 
+    (if (== $command "q") 
       (empty)
       (command-loop))
       ))
