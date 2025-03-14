@@ -378,20 +378,32 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- is_mettalog_tracing(X,Type),!,
    with_debug(Type,eval_09(Eq,RetType,Depth,Self,X,Y)).
 eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 
+%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, X=Y, fail.
+%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
+%eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
-eval_09(Eq,RetType,Depth,Self,X,Y):- !,  eval_10(Eq,RetType,Depth,Self,X,Y).
+%eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y).
 
-eval_09(Eq,RetType,Depth,Self,X,Y):-!,
-     no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
 
-eval_09(Eq,RetType,Depth,Self,X,Y):-!,
+%eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
+eval_09(Eq,RetType,Depth,Self,X,Y):- !,
      no_repeats_var(YY),
-     eval_to_name(X,ThisNth),
-     eval_10(Eq,RetType,Depth,Self,X,Y),
-     ((copy_term(X+Y,YC), YC = YY)
-        -> (debug(metta(todo),'no_repeat in ~w: ~q',[ThisNth,X->Y])) ; (debug(metta(todo),'repeats in ~w: ~q',[ThisNth,X->Y]),fail)).
+     eval_to_name(X,XX),!,
+     eval_10(Eq,RetType,Depth,Self,X,Y), %break,
+     (fail_on_repeat(XX,YY,X,Y) -> true ; ( %print_last_choicepoint_upwards,
+                                             break,
+                                            !)).
 
-eval_09(Eq,RetType,Depth,Self,X,Y):-!,
+fail_on_repeat(ThisNth,YY,X,Y):-
+     ((copy_term(X+Y,YC), YC = YY)
+        -> nop(debug(metta(todo),'no_repeat in ~w: ~q',[ThisNth,X->Y]))
+        ; once((dmsg('repeats in'([ThisNth,X->Y])),
+               %bt,
+               dumpST,
+               dmsg('repeats in'([ThisNth,X->Y])),
+               !,fail))).
+
+eval_09_11(Eq,RetType,Depth,Self,X,Y):-!,
     eval_to_name(X,Named),
      (nb_current(previous_nths,NthL)->true;NthL=[]),
      append(NthL,[Named],StartNth), nb_setval(previous_nths,StartNth),nb_setval(this_nths,StartNth),

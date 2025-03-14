@@ -4260,7 +4260,7 @@ from_top_self(Self, Self).
 %   @arg Atom The atom associated with the knowledge base.
 %
 get_metta_atom_from(KB, Atom) :-
-    metta_atom(KB, Atom).
+  wo_inheritance_to(_Anywhere, metta_atom(KB, Atom)).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
 %
@@ -4324,10 +4324,11 @@ metta_atom(KB, Atom):-
   quietly(metta_atom0(KB, Atom)).
 
 
+/*
 metta_atom0(KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
-
+*/
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
@@ -4337,7 +4338,7 @@ metta_atom0(KB, [F, A | List]) :-
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
-metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
 metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
@@ -4405,7 +4406,8 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     % Temporarily disable inheritance to a specific space:
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
-wo_inheritance_to(_Where, Goal):- !, call(Goal).
+
+%wo_inheritance_to(_Where, Goal):- !, call(Goal).
 wo_inheritance_to(Where, Goal) :-
     % Temporarily assert the `no_space_inheritance_to/1` fact.
     setup_call_cleanup(
@@ -4603,6 +4605,8 @@ should_inherit_op_from_corelib('@doc').
 
 the_libs('&corelib').
 the_libs('&stdlib').
+
+metta_atom_asserted_last(_Top, _Lib):- !, fail.
 % Assert `&corelib` for the top-level context.
 metta_atom_asserted_last(Top, Lib) :- top_self(Top), nocut, the_libs(Lib).
 %metta_atom_asserted_last('&stdlib', '&corelib').

@@ -2047,10 +2047,33 @@ install_readline(Input):-
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
     %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
+    load_metta_history_from_txt_file('~/.config/metta/history.txt'),
     !.
 
 % Clause to handle non-tty(true) clients, like SWISH or HTTP server requests.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
+
+load_metta_history_from_txt_file(File):-
+   exists_file(File),!,
+   open(File, read, In, [encoding(utf8)]),
+   repeat,
+   read_line_to_string(In, Line),
+   (Line==end_of_file -> ! ;
+     (add_history_file_string(Line),fail)).
+load_metta_history_from_txt_file(File):-
+   expand_file_name(File,List),maplist(load_metta_history_from_txt_file,List).
+
+skip_over_history_txt(Line):- text_to_string(Line,Str),Str\==Line,!,skip_over_history_txt(Line).
+skip_over_history_txt(Line):- atom_concat('#V',_,Line),!.
+skip_over_history_txt(Line):- atom_concat('_H',_,Line),!.
+add_history_file_string(Line):- text_to_string(Line,Str),Str\==Line,!,add_history_file_string(Str).
+add_history_file_string(Line):- skip_over_history_txt(Line),!.
+add_history_file_string(Line):-
+  string_replace(Line,'\\n','\n',String),
+  string_replace(String,'\\t','\t',Str),
+  add_history_string(Str), !.
+
+
 
 %!  install_readline_editline1 is det.
 %

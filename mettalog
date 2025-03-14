@@ -1242,6 +1242,11 @@ if [[ $need_compile -eq 1 ]]; then
     fi
     # Generate a unique success file name inside the detected temporary directory
     export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
+
+    if [[ "$exe" == "true" ]]; then
+	rm -f "$TEMP_DIR/metta_cache/??*"
+	rm -f "$TEMP_DIR/tmp.??*"
+    fi
 fi
 
 
@@ -1256,6 +1261,7 @@ compiler_cleanup() {
 	# If the success file is missing, remove the binary
 
 	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
+	    rm -f "$METTALOG_COMPILE_SUCCESS"
 	    DEBUG "{$GREEN}CREATED $reference_file"
 	    STYLE=EXE
 	else
@@ -1303,6 +1309,8 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     # Remove any previous success files (clean up before new compilation)
     rm -f "$TEMP_DIR/create_on_successful_compile_*"
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
 
     # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS
@@ -1327,6 +1335,8 @@ fi
 # If exe is explicitly set to false, enforce the non-executable mode
 if [[ "$exe" == "false" ]]; then
     unset reference_file
+    #rm -f "$TEMP_DIR/metta_cache/??*"
+    #rm -f "$TEMP_DIR/tmp.??*"
     STYLE=INTERP    
 fi
 
