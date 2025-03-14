@@ -268,13 +268,13 @@ eval_001(_Eq,_RetType,_Depth,_Slf,X,Y):- self_eval(X),!,X=Y.
 eval_001(Eq,RetType,Depth,Self,X,YO):-
    eval_01(Eq,RetType,Depth,Self,X,YO).
 
-eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,!,X=YO.
+%eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,!,X=YO.
 eval_01(Eq,RetType,Depth,Self,X,Y):-
     % X\==[empty], % speed up n-queens x60 but breaks other things
 
    if_t((Depth<1, trace_on_overflow), debug(metta(e))),
 
-   notrace((Depth2 is Depth-1,    copy_term(X, XX))),!,
+   notrace((Depth2 is Depth-0,    copy_term(X, XX))),!,
 
    trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
 
@@ -1544,7 +1544,7 @@ metta_atom_iter(Eq,Depth,Self,Other,[Equal,[F|H],B]):- Eq == Equal,!,  % maybe_t
 metta_atom_iter(_Eq,Depth,_,_,_):- Depth<3,!,fail.
 metta_atom_iter(Eq,Depth,Self,Other,[And|Y]):- atom(And), is_comma(And),!,
   (Y==[] -> true ;
-    ( D2 is Depth -1, Y = [H|T],
+    ( D2 is Depth -0, Y = [H|T],
        metta_atom_iter(Eq,D2,Self,Other,H),metta_atom_iter(Eq,D2,Self,Other,[And|T]))).
 
 %metta_atom_iter(Eq,Depth,_Slf,Other,X):- dcall0000000000(eval_args_true(Eq,_RetType,Depth,Other,X)).
