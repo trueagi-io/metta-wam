@@ -3149,6 +3149,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,AEAdjusted,Res):-
 
 find_transpiled([Op|Adjusted],Res,Code):-
   transpiler_predicate_store(_, Op, Len, _, _, _, _),
+  length(Adjusted, Len),
   format(atom(Fn),'mc_~w__~w',[Len,Op]),
   append([Fn|Adjusted],[Res], OpParams),
   Code =.. OpParams, \+ predicate_property(Code,undefined).
