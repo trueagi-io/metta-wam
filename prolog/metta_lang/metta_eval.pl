@@ -3466,7 +3466,7 @@ get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,HArgs,RW,Y
              get_defn_expansions_guardedC(Eq,RetType,Depth,Self,ParamTypes,FRetType,HArgs,RW,Y))).
 
 % type signatiure claims we should curry
-get_defn_expansions_guardedA(Eq,RetType,Depth,Self,ParamTypes,FRetType,[[H|Start]|T1],[RW|T2],[['feval',Y]|T2]):-
+get_defn_expansions_guardedA(Eq,RetType,Depth,Self,ParamTypes,FRetType,[[H|Start]|T1],[RW|T2],[['eval',Y]|T2]):-
   is_list(Start),
   get_defn_expansions_guarded_low(Eq,RetType,Depth,Self,ParamTypes,FRetType,[H|Start],RW,Y),
   if_trace((defn;metta_defn;eval_args;e),indentq_d(Depth,'explicit curry  ', [[[H|Start]|T1] ,'----->', RW])).
