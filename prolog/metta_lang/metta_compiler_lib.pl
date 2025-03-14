@@ -371,7 +371,8 @@ transpiler_predicate_store(builtin, 'random-int', 3, '@doc', '@doc', [x(doeval, 
 
 'mc_3__random-int'(RNGId, Min, Max, N):-
     maplist(must_be(integer), [Min, Max]),
-    with_random_generator(RNGId, random_between(Min, Max, N) ).
+    MaxM1 is Max -1,
+    with_random_generator(RNGId, random_between(Min, MaxM1, N) ).
 
 
 transpiler_predicate_store(builtin, 'random-float', 3, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
