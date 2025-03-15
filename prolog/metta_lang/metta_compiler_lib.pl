@@ -332,8 +332,12 @@ transpiler_predicate_store(builtin, 'println!', [1], '@doc', '@doc', [x(doeval,e
 transpiler_predicate_store(builtin, 'stringToChars', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_stringToChars'(S,C) :- string_chars(S,C).
 
+transpiler_predicate_store(builtin, 'repr', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_repr'(A,S) :- with_output_to_str(S, write_src_woi(A)).
+
 transpiler_predicate_store(builtin, 'charsToString', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_charsToString'(C,S) :- string_chars(S,C).
+
 
 transpiler_predicate_store(builtin, 'assertEqual', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_2_assertEqual'(A,B,C) :-
