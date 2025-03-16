@@ -308,6 +308,19 @@ get_curried_name_structure([FnList|Args],Fn,TotalArgs,[L|LenArgs]) :- is_list(Fn
    length(Args,L), !.
 get_curried_name_structure([Fn|Args],Fn,[Args],[LenArgs]) :- length(Args,LenArgs).
 
+% Base case: When list length matches N, return the list itself.
+split_last_n(N, List, First, LastN) :-
+    length(List, Len),
+    Start is Len - N,
+    Start >= 0, % Ensure N is not greater than list length
+    length(LastN, N),
+    append(First, LastN, List).
+
+invert_curried_structure(F,[],[],F).
+invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
+   split_last_n(L,Args,ArgsFirst,ArgsLast),
+   invert_curried_structure(F,LenArgs,ArgsFirst,Result).
+
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format("recompile_from_depends ~w/~w\n",[FnName,LenArgs]),flush_output(user_output))),
    %LenArgs is LenArgsPlus1-1,
@@ -646,7 +659,7 @@ h2p(EagerArgList,LazyVars,Convert,Converted,CodeOut,TotalNewLazyVars) :-
    maplist(h2p(EagerArgList,LazyVars),FlattenedArgs,QuoteContentsOut,Code,NewLazyVars),
    append(NewLazyVars,NewLazyVarsAggregate),
    append(ThisNewLazyVars,NewLazyVarsAggregate,TotalNewLazyVars),
-   Converted=[FnName|QuoteContentsOut],
+   invert_curried_structure(FnName,LenArgs,QuoteContentsOut,Converted),
    append(Code,CodeOut).
 
 h2p(_EagerArgList,LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]],[]) :-
@@ -911,26 +924,30 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       assign_only(Converteds2,RetResult,[fcall(Fn,LenArgs),RetResults],Converted),
-      assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
+      invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
+      assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN)
    ; Docall=curried(EvalArgsC,LenArgsC) ->
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       assign_only(Converteds2,RetResult,[curried_fcall(Fn,LenArgs,LenArgsC,EvalArgsC),RetResults],Converted),
-      assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
+      invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
+      assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN)
    ; Docall=varargs(FixedLength2) ->
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       assign_only(Converteds2,RetResult,[call_var(Fn,FixedLength2)|RetResults],Converted),
-      assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
+      invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
+      assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN)
    ; Docall=call_curried(LenArgsP) ->
    %trace,
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
       assign_only(Converteds2,RetResult,[native_call,Fn,LenArgsP,RetResults],Converted),
-      assign_or_direct_var_only(Converteds2,RetResultN,list([Fn|RetResults]),ConvertedN)
+      invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
+      assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN)
    ;
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
       % do this twice so that RetResult and RetResultN are distinct
