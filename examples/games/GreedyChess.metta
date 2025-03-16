@@ -47,8 +47,6 @@
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
 (= (nth $n $list) 
-  ;(if (> $n (size-atom $list))
-  ;  NIL
     (if (== $n 1)
         (car-atom $list)
         (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
@@ -265,27 +263,36 @@
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
-(: identify_piece (-> list symbol))
+;(: identify_piece (-> list symbol))
+(: (identify_piece) (-> Expression Atom))
 (= (identify_piece $p) 
    (if (== (size-atom $p) 2)
       "  "
       (let*
         ( ; assign either * or " " 
-          ($player (if (== (contains_symbol $p s) True) * " "))
+          ($contains_bool (contains_symbol $p s))
+          ($player (if (== $contains_bool True) * " "))
           ; identify piece
           ($piece (nth 4 $p))
         )
         (format-args "{}{}" ($player $piece)))))
 
 ; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
-(: display_filter (-> list list))
+;(: display_filter (-> list list))
+(: (display_filter) (-> Expression Expression))
 (= (display_filter $brd) 
     (if (== (size-atom $brd) 1) 
       ; if on last piece, return a one element list of this form eg.:  (*k). Extra parens are needed to create list.
-      ( (identify_piece (car-atom $brd)) )
+      (let $last_piece (identify_piece (car-atom $brd)) ($last_piece) )
       ; otherwise convert all pieces to shorter description for display.
-      (let $rest (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $rest))))
+      (let*
+        ( 
+        ($rest (display_filter (cdr-atom $brd)))
+        ($piece_identified (identify_piece (car-atom $brd)))
+        )
+        (cons-atom $piece_identified $rest))))
 
+;(= (display_board $board) (println! $board))
 (= (display_board $board) 
   (
    (let* (
@@ -426,14 +433,16 @@
 ; 
 (= (random_recursion_by_rank)
     (let* (
-      ($random_level (random-int 1 4)) 
+      ; Warning: as of this writing random-int's max value is 1 more than the actual max.
+      ;          If random-int is changed to return beyond the max, the case statement will return lowrank.
+      ($random_level (random-int &rng 1 5)) 
       ($ranklevel (case $random_level
                     (
                     (1 lowrank)
                     (2 medrank)
                     (3 highrank)
                     (4 highestrank)
-                    ($_ (empty))
+                    ($_ lowrank)
                     )))
       ($debug (println! "Trying random move (may repeat)"))
       ($debug (println! $ranklevel))
@@ -448,17 +457,22 @@
 ;
 ;  Output: ( (starting piece) (destination)) if successful or Empty
 ;  Updates:   atomspace square atoms
+;
+; Warning: as of this writing random-int's max value is 1 more than the actual max.
+;          If random-int is changed to return beyond the max it will be set at the actual max.
 (= (random_move_empty_sq)
     (let*
       ( 
         ($random_moves (random_recursion_by_rank))
         ($move_count (size-atom $random_moves))
-        ($select-int (if (== $move_count 1) 
+        ($move_count_plus_1 (+ $move_count 1))
+        ($select_int (if (== $move_count 1) 
                     1
-                    (random-int 1 $move_count)))
+                    (random-int &rng 1 $move_count_plus_1)))
+        ($select_int_check (if (> $select_int $move_count) 1 $select_int)) ; if problem with random-int
       ) 
       ;return move
-      (nth $select-int $random_moves)
+      (nth $select_int_check $random_moves)
     ))
 
 (= (decide_greedy_move) 
@@ -1085,8 +1099,9 @@
            (if (and (< $X2 $X1) (< $Y2  $Y1))
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
-               False))))
-      ))
+               False)))))
+      ;($debug (println! $RouteClearBool))
+      )
       (if  
           (== $RouteClearBool True)
         True
@@ -1258,7 +1273,7 @@
     
 ;
 ; move_piece
-;   Input   starting square, target square, current board
+;   Input   starting square, target square
 ;   Output: new board
 ;(= (move_piece $starting_square $target_square) 
 (= (move_piece ($X1 $Y1 $color $rank) ($X2 $Y2)) 
@@ -1499,9 +1514,9 @@
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5 s b) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5 s n) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
@@ -1614,92 +1629,6 @@
     ; since move complete, delete any individual square atoms which only live for a single move.
     (delete-pieces)
     )))
-
-; The move command moves the human player's piece.
-;(: M (-> command))
-(= (M-deactivate)  
-  ; check for game over (there can only be ONE game-state atom at a time or problems result!)
-  (match &self (game-state $msg)
-   (if (xor (==  checkmate   $msg) (==  resigned $msg))
-    ((py-atom print) "Game over. Please reset to play again (enter r).")
-
-    ;else keep playing...
-    (progn 
-      ; prompt for x/y location
-      ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-      ; add edit to make sure move within boundaries of 1 -> 8!
-      ((py-atom print) "Enter coordinates.")
-      (let $coordinates ((py-atom input)) ())
-      (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-      (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-      (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-      (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-      (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-      (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-      ; get the current board
-      (match &self (board-state $starting_board) $starting_board)
-      ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
-      (reset-pieces $starting_board)
-      ; check if source location and destination are not the same
-      (if (not (== $f $g))                            
-       ; check if destination is empty or destination has opponent's piece  
-        (progn 
-          ; Retrieve the source box details.
-          (let $h (return_entire_box $f) ())
-                ;does not return here!
-          ; Retrieve the destination box details.
-          (let $i (return_entire_box $g) ())
-          ; Check there is a piece to move.
-          (if (and (== (size-atom $h) 4)                                    
-                   (xor  
-                   ; OK to move to open square size 2...
-                   (== (size-atom $i) 2)     
-                   ; OK to take another piece, check color is not the same...
-                   (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
-            ; Validate the path for the piece.
-            (if (== (clear_route $h $i) True)               
-              ; Try moving piece provisionally
-              (let* ( 
-                  ; Try the move and update the board state.   
-                  ($MoveBool  (move_piece $h $i))   
-                  ; locate human's king
-                  ($king_square (xy_box (s k)))    
-                  ; 
-                  ($full_king_sq (return_entire_box $king_square))  
-                  ; Ensure the player's king is not in check from gold (g) if moved.  
-                  ($KingCompromised (take_dest $full_king_sq g))   
-                      ) 
-                  ; If move valid, proceed to create new board atom with move.
-                  (if (== $KingCompromised True)
-                      ((py-atom print) "Can't move there, your king would be in check.")
-                      ;else
-                      (progn 
-                        ; re-create a new board 
-                        (println! "checkpoint 1")
-                        ((py-atom print) "Moving piece...")
-                        (let $provisional_board (move_piece_on_board $h $i $starting_board)
-                             (add-atom &self (board-state $provisional_board)))
-                        ; remove the old chess board
-                        (remove-atom &self (board-state $starting_board))
-                        ; display
-                        (D) 
-                        ; Look for CHECK or CHECKMATE
-                      )
-                  )
-              )
-            ((py-atom print) "Can't move piece there."))
-          ; else (moving to location with same piece or other problem)
-          ((py-atom print) "Invalid move.")
-          )
-        )
-        ;else (trying to move to same location)
-        ((py-atom print) "Can't move to same location.")) 
-      ; since move complete, delete any individual square atoms which only live for a single move.
-      (delete-pieces)
-    ) ; progn ends here
-   ) ; if ends here
-  ); end match
-)
 
 ; AI move piece command
 (: G (-> command))
