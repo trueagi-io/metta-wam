@@ -8,14 +8,14 @@ from_prolog_args(_,X,X).
 pred_uses_impl(F,A):- transpile_impl_prefix(F,A,Fn),current_predicate(Fn/A).
 
 use_interpreter:- fail.
-mc_fallback_unimpl(Fn,Arity,Args,Res):- \+ use_interpreter, !,
+mc__1_fallback_unimpl(Fn,Arity,Args,Res):- \+ use_interpreter, !,
   (pred_uses_fallback(Fn,Arity); (length(Args,Len), \+ pred_uses_impl(Fn,Len))),!,
     get_operator_typedef_props(_,Fn,Arity,Types,_RetType0),
     current_self(Self),
     maybe_eval(Self,Types,Args,NewArgs),
     [Fn|NewArgs]=Res.
 
-%mc_fallback_unimpl(Fn,_Arity,Args,Res):-  u_assign([Fn|Args], Res).
+%mc__1_fallback_unimpl(Fn,_Arity,Args,Res):-  u_assign([Fn|Args], Res).
 
 maybe_eval(_Self,_Types,[],[]):-!.
 maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
@@ -23,22 +23,22 @@ maybe_eval(Self,[T|Types],[A|Args],[N|NewArgs]):-
     maybe_eval(Self,Types,Args,NewArgs).
 
 
-%'mc_2__:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
+%'mc__1_2_:'(Obj, Type, [':',Obj, Type]):- current_self(Self), sync_type(10, Self, Obj, Type). %freeze(Obj, get_type(Obj,Type)),!.
 %sync_type(D, Self, Obj, Type):- nonvar(Obj), nonvar(Type), !, arg_conform(D, Self, Obj, Type).
 %sync_type(D, Self, Obj, Type):- nonvar(Obj), var(Type), !, get_type(D, Self, Obj, Type).
 %sync_type(D, Self, Obj, Type):- nonvar(Type), var(Obj), !, set_type(D, Self, Obj, Type). %, freeze(Obj, arg_conform(D, Self, Obj, Type)).
 %sync_type(D, Self, Obj, Type):- freeze(Type,sync_type(D, Self, Obj, Type)), freeze(Obj, sync_type(D, Self, Obj, Type)),!.
 
-transpiler_predicate_store(builtin, 'get-type', 1, '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
-%'mc_1__get-type'(Obj,Type) :-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
-'mc_1__get-type'(Obj,Type) :- current_self(Self), !, get_type(10, Self, Obj,Type).
+transpiler_predicate_store(builtin, 'get-type', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
+%'mc__1_1_get-type'(Obj,Type) :-  attvar(Obj),current_self(Self),!,trace,get_attrs(Obj,Atts),get_type(10, Self, Obj,Type).
+'mc__1_1_get-type'(Obj,Type) :- current_self(Self), !, get_type(10, Self, Obj,Type).
 
 %%%%%%%%%%%%%%%%%%%%% if
 
-transpiler_predicate_store(builtin, 'if', 3, '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
-'mc_3__if'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
-transpiler_predicate_store(builtin, 'if', 2, '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
-'mc_2__if'(If,Then,Result) :- (If*->Result=Then;fail).
+transpiler_predicate_store(builtin, 'if', [3], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+'mc__1_3_if'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
+transpiler_predicate_store(builtin, 'if', [2], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+'mc__1_2_if'(If,Then,Result) :- (If*->Result=Then;fail).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['if',Cond,Then,Else],!,
@@ -112,31 +112,31 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
-transpiler_predicate_store(builtin, '+', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc_2__+'(A,B,R) :- number(A),number(B),!,plus(A,B,R).
-'mc_2__+'(A,B,['+',A,B]).
+transpiler_predicate_store(builtin, '+', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+'mc__1_2_+'(A,B,R) :- number(A),number(B),!,plus(A,B,R).
+'mc__1_2_+'(A,B,['+',A,B]).
 
-transpiler_predicate_store(builtin, '-', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc_2__-'(A,B,R) :- number(A),number(B),!,plus(B,R,A).
-'mc_2__-'(A,B,['-',A,B]).
+transpiler_predicate_store(builtin, '-', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+'mc__1_2_-'(A,B,R) :- number(A),number(B),!,plus(B,R,A).
+'mc__1_2_-'(A,B,['-',A,B]).
 
-transpiler_predicate_store(builtin, '*', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc_2__*'(A,B,R) :- number(A),number(B),!,R is A*B.
-'mc_2__*'(A,B,['*',A,B]).
+transpiler_predicate_store(builtin, '*', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+'mc__1_2_*'(A,B,R) :- number(A),number(B),!,R is A*B.
+'mc__1_2_*'(A,B,['*',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
-%transpiler_predicate_store(builtin, 'and', 2, '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc_2__and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
-%mc_2__and(_,_,'False').
+%transpiler_predicate_store(builtin, 'and', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
+%mc__1_2_and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
+%mc__1_2_and(_,_,'False').
 
-%transpiler_predicate_store(builtin, 'or', 2, '@doc', '@doc', [x(doeval,eager), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc_2__or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
-%mc_2__or(_,_,'True').
+%transpiler_predicate_store(builtin, 'or', [2], '@doc', '@doc', [x(doeval,eager), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
+%mc__1_2_or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
+%mc__1_2_or(_,_,'True').
 
-transpiler_predicate_store(builtin, 'and', 2, '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
-mc_2__and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
-mc_2__and(_,_,'False').
+transpiler_predicate_store(builtin, 'and', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
+mc__1_2_and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
+mc__1_2_and(_,_,'False').
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['and',A,B],!,
   LazyEval=x(doeval,eager,[boolean]),
@@ -154,9 +154,9 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
   assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
-transpiler_predicate_store(builtin, 'or', 2, '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
-mc_2__or(A,B,C):- (\+ atomic(A); A='False'; A=0), !, as_p1_exec(B,C).
-mc_2__or(_,_,'True').
+transpiler_predicate_store(builtin, 'or', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
+mc__1_2_or(A,B,C):- (\+ atomic(A); A='False'; A=0), !, as_p1_exec(B,C).
+mc__1_2_or(_,_,'True').
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['or',A,B],!,
   LazyEval=x(doeval,eager,[boolean]),
@@ -174,108 +174,108 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
   assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
-transpiler_predicate_store(builtin, 'not', 1, '@doc', '@doc', [x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-mc_1__not(A,'False') :- atomic(A), A\=='False', A\==0, !.
-mc_1__not(_,'True').
+transpiler_predicate_store(builtin, 'not', [1], '@doc', '@doc', [x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
+mc__1_1_not(A,'False') :- atomic(A), A\=='False', A\==0, !.
+mc__1_1_not(_,'True').
 
 %%%%%%%%%%%%%%%%%%%%% comparison
 
 % not sure about the signature for this one
-transpiler_predicate_store(builtin, '==', 2, '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
-'mc_2__=='(A,B,'True') :- A==B,!.
-'mc_2__=='(_,_,'False').
+transpiler_predicate_store(builtin, '==', [2], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
+'mc__1_2_=='(A,B,'True') :- A==B,!.
+'mc__1_2_=='(_,_,'False').
 
-transpiler_predicate_store(builtin, '<', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc_2__<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
-'mc_2__<'(A,B,['<',A,B]).
+transpiler_predicate_store(builtin, '<', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
+'mc__1_2_<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
+'mc__1_2_<'(A,B,['<',A,B]).
 
-transpiler_predicate_store(builtin, '>', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc_2__>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
-'mc_2__>'(A,B,['>',A,B]).
+transpiler_predicate_store(builtin, '>', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
+'mc__1_2_>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
+'mc__1_2_>'(A,B,['>',A,B]).
 
-transpiler_predicate_store(builtin, '>=', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc_2__>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
-'mc_2__>='(A,B,['>=',A,B]).
+transpiler_predicate_store(builtin, '>=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
+'mc__1_2_>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
+'mc__1_2_>='(A,B,['>=',A,B]).
 
-transpiler_predicate_store(builtin, '<=', 2, '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc_2__<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
-'mc_2__<='(A,B,['<=',A,B]).
+transpiler_predicate_store(builtin, '<=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
+'mc__1_2_<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
+'mc__1_2_<='(A,B,['<=',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
-transpiler_predicate_store(builtin, 'car-atom', 1, '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[])).
-'mc_1__car-atom'([H|_],H).
+transpiler_predicate_store(builtin, 'car-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[])).
+'mc__1_1_car-atom'([H|_],H).
 
-transpiler_predicate_store(builtin, 'cdr-atom', 1, '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc_1__cdr-atom'([_|T],T).
+transpiler_predicate_store(builtin, 'cdr-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
+'mc__1_1_cdr-atom'([_|T],T).
 
-transpiler_predicate_store(builtin, 'cons-atom', 2, '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc_2__cons-atom'(A,B,[A|B]).
+transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[list])], x(noeval,eager,[list])).
+'mc__1_2_cons-atom'(A,B,[A|B]).
 
-transpiler_predicate_store(builtin, 'decons-atom', 1, '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc_1__decons-atom'([A|B],[A,B]).
+transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
+'mc__1_1_decons-atom'([A|B],[A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% set
 
 lazy_member(P,R2) :- as_p1_exec(R2,P).
 
-transpiler_predicate_store(builtin, subtraction, 2, '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+transpiler_predicate_store(builtin, subtraction, [2], '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
 % QUESTION: which one of these to use?
 % * The first is more time efficient (calculates the set for S2 and stores in Avoid)
-%'mc_2__subtraction'(S1,S2,R) :- 'mc_1__collapse'(S2,Avoid),as_p1_exec(S1,R), \+ member(R,Avoid).
+%'mc__1_2_subtraction'(S1,S2,R) :- 'mc__1_1_collapse'(S2,Avoid),as_p1_exec(S1,R), \+ member(R,Avoid).
 % the second is more memory efficient (steps through S2 every time, but does not need to store anything)
-'mc_2__subtraction'(S1,S2,R) :- as_p1_exec(S1,R), \+ lazy_member(R,S2).
+'mc__1_2_subtraction'(S1,S2,R) :- as_p1_exec(S1,R), \+ lazy_member(R,S2).
 
-transpiler_predicate_store(builtin, union, 2, '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__union'(S1,S2,R) :- as_p1_exec(S1,R) ; 'mc_2__subtraction'(S2,S1,R).
+transpiler_predicate_store(builtin, union, [2], '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_union'(S1,S2,R) :- as_p1_exec(S1,R) ; 'mc__1_2_subtraction'(S2,S1,R).
 
-%transpiler_predicate_store(builtin, intersection, 2, '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
-%'mc_2__intersection'(S1,S2,R)
+%transpiler_predicate_store(builtin, intersection, [2], '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
+%'mc__1_2_intersection'(S1,S2,R)
 
-transpiler_predicate_store(builtin, limit, 2, '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+transpiler_predicate_store(builtin, limit, [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 
-transpiler_predicate_store(builtin, 'limit!', 2, '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__limit!'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+transpiler_predicate_store(builtin, 'limit!', [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_limit!'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
-transpiler_predicate_store(builtin, superpose, 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_1__superpose'(S,R) :- member(R,S).
+transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_superpose'(S,R) :- member(R,S).
 
-transpiler_predicate_store(builtin, collapse, 1, '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_1__collapse'(ispu(X),[X]).
-'mc_1__collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(ispuU(X,true),[X]) :- !.
-'mc_1__collapse'(ispuU(A,Code),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
-'mc_1__collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(ispeEn(X,true,_),[X]) :- !.
-'mc_1__collapse'(ispeEn(A,Code,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
-'mc_1__collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
-'mc_1__collapse'(ispeEnN(X,true,_,_),[X]) :- !.
-'mc_1__collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
-'mc_1__collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
-'mc_1__collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
+transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_1_collapse'(ispu(X),[X]).
+'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
+'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc__1_1_collapse'(ispeEn(X,true,_),[X]) :- !.
+'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
+'mc__1_1_collapse'(ispeEnN(X,true,_,_),[X]) :- !.
+'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
+'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
-transpiler_predicate_store(builtin, 'bind!', 2, '@doc', '@doc', [x(noeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_2__bind!'(Name,Expression,[]) :- nb_bind(Name,Expression).
+transpiler_predicate_store(builtin, 'bind!', [2], '@doc', '@doc', [x(noeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_bind!'(Name,Expression,[]) :- nb_bind(Name,Expression).
 
-transpiler_predicate_store(builtin, 'new-space', 0, '@doc', '@doc', [], x(doeval,eager,[])).
-'mc_0__new-space'(Space) :- is_make_new_kb(['new-space'],Space,[]).
+transpiler_predicate_store(builtin, 'new-space', [0], '@doc', '@doc', [], x(doeval,eager,[])).
+'mc__1_0_new-space'(Space) :- is_make_new_kb(['new-space'],Space,[]).
 
 convert_space('&self','&top') :- !.
 convert_space(S,S).
 
-transpiler_predicate_store(builtin, 'add-atom', 2, '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+transpiler_predicate_store(builtin, 'add-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
 
-transpiler_predicate_store(builtin, 'remove-atom', 2, '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),retractall(metta_atom_asserted(Space1,PredDecl)).
+transpiler_predicate_store(builtin, 'remove-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),retractall(metta_atom_asserted(Space1,PredDecl)).
 
-transpiler_predicate_store(builtin, 'get-atoms', 1, '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
-'mc_1__get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
+transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
+'mc__1_1_get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
 
 % This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
 match_pattern(Space, Pattern):-
@@ -283,14 +283,14 @@ match_pattern(Space, Pattern):-
        (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
     metta_atom(Space, Atom), Atom=Pattern.
 
-transpiler_predicate_store(builtin, match, 3, '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_3__match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
-'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
-%'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
-%transpiler_predicate_store(builtin, match, 3, '@doc', '@doc', [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-%'mc_3__match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),as_p1_exec(Pattern,Atom),as_p1_exec(P1,Ret).
+transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
+'mc__1_3_match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
+%'mc__1_3_match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
+%transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
+%'mc__1_3_match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),as_p1_exec(Pattern,Atom),as_p1_exec(P1,Ret).
 
-match_aux(Space,Pattern) :- 'mc_3__match'(Space,Pattern,ispu(true),true).
+match_aux(Space,Pattern) :- 'mc__1_3_match'(Space,Pattern,ispu(true),true).
 
 % unify calls pattern matching if arg1 is a space
 unify_pattern(Space,Pattern):- is_metta_space(Space),!, match_pattern(Space, Pattern).
@@ -300,11 +300,11 @@ unify_pattern(Atom, Pattern):- metta_unify(Atom, Pattern).
 metta_unify(Atom, Pattern):- Atom=Pattern.
 
 % TODO FIXME: sort out the difference between unify and match
-transpiler_predicate_store(builtin, unify, 3, '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_3__unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
+transpiler_predicate_store(builtin, unify, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_3_unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 
-transpiler_predicate_store(builtin, unify, 4, '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_4__unify'(Space,Pattern,Psuccess,PFailure,RetVal) :-
+transpiler_predicate_store(builtin, unify, [4], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_4_unify'(Space,Pattern,Psuccess,PFailure,RetVal) :-
     (unify_pattern(Space,Pattern) -> as_p1_exec(Psuccess,RetVal) ; as_p1_exec(PFailure,RetVal)).
 
 %%%%%%%%%%%%%%%%%%%%% variable arity functions
@@ -314,47 +314,48 @@ transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doe
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
-transpiler_predicate_store(builtin, time, 1, '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc_1__time'(P,Ret) :- wtime_eval(as_p1_exec(P,Ret)).
+transpiler_predicate_store(builtin, time, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_1_time'(P,Ret) :- wtime_eval(as_p1_exec(P,Ret)).
 
-transpiler_predicate_store(builtin, empty, 0, '@doc', '@doc', [], x(doeval,eager,[])).
-'mc_0__empty'(_) :- fail.
+transpiler_predicate_store(builtin, empty, [0], '@doc', '@doc', [], x(doeval,eager,[])).
+'mc__1_0_empty'(_) :- fail.
 
-transpiler_predicate_store(builtin, 'eval', 1, '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_1__eval'(X,R) :- transpile_eval(X,R).
+transpiler_predicate_store(builtin, 'eval', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_eval'(X,R) :- transpile_eval(X,R).
 
-transpiler_predicate_store(builtin, 'get-metatype', 1, '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_1__get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
+transpiler_predicate_store(builtin, 'get-metatype', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
 
-transpiler_predicate_store(builtin, 'println!', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_1__println!'(X,[]) :- println_impl(X).
+transpiler_predicate_store(builtin, 'println!', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_println!'(X,[]) :- println_impl(X).
 
-transpiler_predicate_store(builtin, 'stringToChars', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_1__stringToChars'(S,C) :- string_chars(S,C).
+transpiler_predicate_store(builtin, 'stringToChars', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_stringToChars'(S,C) :- string_chars(S,C).
 
-transpiler_predicate_store(builtin, 'charsToString', 1, '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc_1__charsToString'(C,S) :- string_chars(S,C).
+transpiler_predicate_store(builtin, 'repr', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_repr'(A,S) :- with_output_to_str(S, write_src_woi(A)).
 
-transpiler_predicate_store(builtin, 'assertEqual', 2, '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
-'mc_2__assertEqual'(A,B,C) :-
+transpiler_predicate_store(builtin, 'charsToString', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_charsToString'(C,S) :- string_chars(S,C).
+
+
+transpiler_predicate_store(builtin, 'assertEqual', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_assertEqual'(A,B,C) :-
    loonit_assert_source_tf_empty(
         ['assertEqual',A,B],AA,BB,
-        ('mc_1__collapse'(A,AA),
-         'mc_1__collapse'(B,BB)),
+        ('mc__1_1_collapse'(A,AA),
+         'mc__1_1_collapse'(B,BB)),
          equal_enough_for_test_renumbered_l(strict_equals_allow_vn,AA,BB), C).
 
-transpiler_predicate_store(builtin, 'assertEqualToResult', 2, '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,eager,[])], x(doeval,eager,[])).
-'mc_2__assertEqualToResult'(A,B,C) :-
+transpiler_predicate_store(builtin, 'assertEqualToResult', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_assertEqualToResult'(A,B,C) :-
    loonit_assert_source_tf_empty(
         ['assertEqualToResult',A,B],AA,B,
-        ('mc_1__collapse'(A,AA)),
+        ('mc__1_1_collapse'(A,AA)),
          equal_enough_for_test_renumbered_l(strict_equals_allow_vn,AA,B), C).
 
-%transpiler_predicate_store(builtin, 'assertEqualToResult', 2, '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,eager,[])], x(doeval,eager,[])).
-%'mc_2__assertEqualToResult'(A,B,C) :- 'mc_1__collapse'(A,A2),u_assign([assertEqualToResult,A2,[B]],C).
-
-transpiler_predicate_store(builtin, 'quote', 1, '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
-'mc_1__quote'(A,['quote',A]).
+transpiler_predicate_store(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
+'mc__1_1_quote'(A,['quote',A]).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
   Convert = ['quote',Quoted],!,
   f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
@@ -467,8 +468,8 @@ update_rng(RNGId, Current):- nb_setval(RNGId, rng(RNGId, Current)).
 
 %%%%%%%%%%%%%%%%%%%%% transpiler specific (non standard MeTTa)
 
-transpiler_predicate_store(builtin, 'prolog-trace', 0, [], '', [], x(doeval,eager,[])).
-'mc_0__prolog-trace'([]) :- trace.
+transpiler_predicate_store(builtin, 'prolog-trace', [0], [], '', [], x(doeval,eager,[])).
+'mc__1_0_prolog-trace'([]) :- trace.
 
 listing_order(Order, [Origin1, Fn1, Arity1, _], [Origin2, Fn2, Arity2, _]) :-
     ( Origin1 \= Origin2 -> compare(Order, Origin1, Origin2)   % Compare first element
@@ -476,8 +477,8 @@ listing_order(Order, [Origin1, Fn1, Arity1, _], [Origin2, Fn2, Arity2, _]) :-
     ; compare(Order, Arity1, Arity2)                           % Compare third if first two are equal
     ).
 
-transpiler_predicate_store(builtin, 'transpiler-listing', 0, [], '', [], x(doeval,eager,[])).
-'mc_0__transpiler-listing'(Sorted) :-
+transpiler_predicate_store(builtin, 'transpiler-listing', [0], [], '', [], x(doeval,eager,[])).
+'mc__1_0_transpiler-listing'(Sorted) :-
   findall([Origin,Fn,Arity,[]],transpiler_predicate_store(Origin,Fn,Arity,_,_,_,_),Unsorted1),
   findall([Origin,Fn,Arity,['variable arity']],transpiler_predicate_nary_store(Origin,Fn,Arity,_,_,_,_,_,_),Unsorted2),
   append(Unsorted1,Unsorted2,Unsorted),
