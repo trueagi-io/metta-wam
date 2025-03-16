@@ -280,7 +280,10 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
 
-   ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_01(Eq,RetType,Depth2,Self,M,Y)).
+   ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
+
+eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
+eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
 eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  but breaks other things
@@ -291,7 +294,7 @@ eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  
 % TODO constrain Y
 var_pass(_Eq,_RetType,_Depth,_Self,_Y):-!.
 
-subst_once(G):- call(G),!.
+subst_once(G):- call(G).
 
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):-
 %   Y =@= [ house, _59198,_59204,==,fish,fish],!,break.
@@ -300,7 +303,7 @@ subst_once(G):- call(G),!.
 % %  uncommented causes 7% failure but a 10x speedup
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- Y=YO.
 % %  this next one at least causes no failures and 5x speedup
-subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- iz_conz(Y), \+ is_list(Y), !, bt,trace, break, Y=YO.
+subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- iz_conz(Y), \+ is_list(Y), !, bt,trace, break, Y=YO.
 %subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !,
   subst_once(subst_args(Eq,RetType,Depth2,Self,Y,YO)*->true;Y=YO).
@@ -3263,7 +3266,7 @@ is_host_predicate([AE|More],Pred,Len):-
     \+ (atom(AE),   atom_concat(_,'-fn',AE)).
 
 % predicate inherited by system
-eval_40(Eq,RetType,_Depth,_Self,[AE|More],TF):- allow_host_functions,
+eval_40(Eq,RetType,Depth,Self,[AE|More],TF):- allow_host_functions,
   is_host_predicate([AE|More],Pred,Len),
   current_predicate(Pred/Len),!,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
@@ -3335,7 +3338,7 @@ is_host_function([AE|More],Pred,Len):-
   \+ (symbol(AE), symbol_concat(_,'-p',AE)). % thus maybe -fn or !
 
 % function inherited from system
-eval_40(Eq,RetType,_Depth,_Self,[AE|More],Res):- allow_host_functions,
+eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- allow_host_functions,
   is_host_function([AE|More],Pred,Len),  % thus maybe -fn or !
   Len1 is Len+1, current_predicate(Pred/Len1), !,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
