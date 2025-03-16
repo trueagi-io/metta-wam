@@ -4411,6 +4411,14 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
 
+:- dynamic(no_space_inheritance_to/1).
+
+wo_inheritance_to(Where, Goal) :- !,
+  locally(no_space_inheritance_to(Where), Goal).
+
+print_wo_inheritance_to:- listing(no_space_inheritance_to/1).
+test_wo_inheritance_to:- forall((wo_inheritance_to(somwhere,(member(X,[1,2,3]),print_wo_inheritance_to)),writeln(X),print_wo_inheritance_to),nl).
+
 %!  should_inhert_from(+KB, -Atom) is nondet.
 %
 %   Determines if an atom (`Atom`) should be inherited from the specified knowledge
@@ -4425,6 +4433,12 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     ?- should_inhert_from('&my_space', Atom).
 %
 
+should_inhert_from(KB, Atom) :-
+    % Fail if inheritance to `KB` is explicitly disabled.
+    \+ no_space_inheritance_to(KB),
+    % Temporarily disable inheritance to `KB` and check inheritance rules.
+    wo_inheritance_to(KB, should_inhert_from_now(KB, Atom)).
+
 %!  should_inhert_from_now(+KB, -Atom) is nondet.
 %
 %   Directly checks if an atom (`Atom`) can be inherited from the given knowledge
@@ -4438,30 +4452,6 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     % Check if an atom can be inherited directly:
 %     ?- should_inhert_from_now('&my_space', Atom).
 %
-
-
-should_inhert_from(KB, Atom) :-
-    % Fail if inheritance to `KB` is explicitly disabled.
-    \+ no_space_inheritance_to(KB),
-    % Temporarily disable inheritance to `KB` and check inheritance rules.
-    wo_inheritance_to(KB, should_inhert_from_now(KB, Atom)).
-
-:- dynamic(no_space_inheritance_to/1).
-
-ensure_erased(Ref):- ignore(catch(erase(Ref),_,fail)).
-
-
-wo_inheritance_to(Where, Goal) :- !,
-  locally(no_space_inheritance_to(Where), Goal).
-
-wo_inheritance_to(Where, Goal) :-
-    % Temporarily assert the `no_space_inheritance_to/1` fact.
-    each_call_cleanup(
-        asserta(no_space_inheritance_to(Where), Clause),
-        Goal,
-        erase(Clause)
-    ).
-
 
 should_inhert_from_now(KB, Atom) :-
     \+ frozen(Atom, symbol(_)),
@@ -4503,9 +4493,8 @@ wo_inheritance(Goal) :-
   locally(b_setval(no_space_inheritance,t), Goal).
 
 :- thread_initialization(nb_setval(no_space_inheritance,[])).
-
 print_can_inherit:- nb_current(no_space_inheritance,X),writeln(no_space_inheritance=X).
-wo_inheritance:- forall((wo_inheritance((member(X,[1,2,3]),print_can_inherit)),writeln(X),print_can_inherit),nl).
+test_wo_inheritance:- forall((wo_inheritance((member(X,[1,2,3]),print_can_inherit)),writeln(X),print_can_inherit),nl).
 
 %!  should_not_inherit_from(+KB, +SubKB, +Atom) is nondet.
 %
