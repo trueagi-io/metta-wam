@@ -548,11 +548,14 @@ is_final_write('[|]') :- write('Cons'), !.
 % For an empty list, write it as '()'.
 is_final_write([]) :- !, write('()').
 %is_final_write([]):- write('Nil'),!.
+is_final_write(A) :- fail, \+ is_list(A), compound(A), A \= exec(_),
+  catch(portray_clause(A),_,fail), !.
 
-current_printer_override(P1):- nb_current(P1),!,P1\==[].
+
+current_printer_override(P1):- nb_current('printer_override', P1),!,P1\==[].
 with_write_override(P1, Goal):-
-  locally(b_setval(printer_override,P1), Goal).
-:- thread_local(nb_setval('printer_override',[])).
+  locally(b_setval('printer_override',P1), Goal).
+:- thread_initialization(nb_setval('printer_override',[])).
 
 
 %!  write_dvar(+S) is det.
@@ -831,12 +834,12 @@ once_writeq_nl_now(P) :-
              write_w_attvars(P),
              format('~N')))))).
 
-:- thread_local(nb_setval('suspend_type_unificaton',[])).
+:- thread_initialization(nb_setval('suspend_type_unificaton',[])).
 no_type_unification(G):-
   locally(b_setval(suspend_type_unificaton, true),G).
 
 
-:- thread_local(nb_setval('$write_goals',[])).
+:- thread_initialization(nb_setval('$write_goals',[])).
 
 with_written_goals(Call):-
    locally(b_setval('$write_goals',true),Call).
