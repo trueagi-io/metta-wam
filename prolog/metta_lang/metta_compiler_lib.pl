@@ -1,6 +1,9 @@
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous transpiler_predicate_store/7.
 
+:- discontiguous compile_test_then_else/10.
+:- discontiguous compile_flow_control/8.
+
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
@@ -368,35 +371,35 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
-transpiler_predicate_store(builtin, 'random-int', 3, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
+transpiler_predicate_store(builtin, 'random-int', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 
-'mc_3__random-int'(RNGId, Min, Max, N):-
+'mc__1_3_random-int'(RNGId, Min, Max, N):-
     maplist(must_be(integer), [Min, Max]),
     MaxM1 is Max -1,
     with_random_generator(RNGId, random_between(Min, MaxM1, N) ).
 
 
-transpiler_predicate_store(builtin, 'random-float', 3, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
+transpiler_predicate_store(builtin, 'random-float', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 % !(let $rg (new-random-generator 1) ((random-float $rg 1 7) (random-float $rg 1 7)))
-'mc_3__random-float'(RNGId, Min, Max, N):-
+'mc__1_3_random-float'(RNGId, Min, Max, N):-
     with_random_generator(RNGId, random_float_between(Min, Max, N)).
 
 
-transpiler_predicate_store(builtin, 'set-random-seed', 2, '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, [])], x(noeval, eager, [])).
+transpiler_predicate_store(builtin, 'set-random-seed', [2], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, [])], x(noeval, eager, [])).
 /*
     !(let $rg (new-random-generator 1) (((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7))
       (let $_ (set-random-seed $rg 1) ((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7)))))
 
 */
-'mc_2__set-random-seed'(RNGId, Seed, RetVal):-
+'mc__1_2_set-random-seed'(RNGId, Seed, RetVal):-
      with_random_generator(RNGId, set_random(seed(Seed))),
      RetVal = [].
 
 
-transpiler_predicate_store(builtin, 'new-random-generator', 1, '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
+transpiler_predicate_store(builtin, 'new-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 
 % !(new-random-generator 66)
-'mc_1__new-random-generator'(Seed, RNG) :-
+'mc__1_1_new-random-generator'(Seed, RNG) :-
     S = getrand(Old),
     G = (set_random(seed(Seed)),
          getrand(New)
@@ -411,10 +414,10 @@ transpiler_predicate_store(builtin, 'new-random-generator', 1, '@doc', '@doc', [
 
 
 
-transpiler_predicate_store(builtin, 'reset-random-generator', 1, '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
+transpiler_predicate_store(builtin, 'reset-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 % !(reset-random-generator 0)
 % Not tested.
-'mc_1__reset-random-generator'(RNGId, RNGId ):-
+'mc__1_1_reset-random-generator'(RNGId, RNGId ):-
    %getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
    % arg(2, RNGId, NewState) % maybe was previous state?
    update_rng(RNGId, _). % unbound RNG defaults to systems RNG until the first time it is used after reset
