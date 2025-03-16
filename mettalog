@@ -1243,15 +1243,23 @@ if [[ $need_compile -eq 1 ]]; then
     # Generate a unique success file name inside the detected temporary directory
     export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
 
-    if [[ "$exe" == "true" ]]; then
-	rm -f "$TEMP_DIR/metta_cache/??*"
-	rm -f "$TEMP_DIR/tmp.??*"
-    fi
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
 fi
 
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
+fi
 
 NEED_CLEANUP=0
 STYLE=EXE
+
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+ exe=false
+ need_compile=0
+ STYLE=INTERP
+fi
 
 # Function to cleanup compiled file if execution is interrupted or unsuccessful
 compiler_cleanup() {
