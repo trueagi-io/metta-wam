@@ -271,7 +271,7 @@ is_space_op('remove-atom').
 is_space_op('atom-count').
 is_space_op('atom-replace').
 
-subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval_20('=',_,Depth, Self, [OP|ARGS], Template).
+subst_args_as(Depth, Self, [OP|ARGS], Template):- !, eval_10('=',_,Depth, Self, [OP|ARGS], Template).
 
 subst_args_as(Depth,Self,['match',Other,Goal,Template],Template):- into_space(Self,Other,Space),!, metta_atom_iter_l1t(Eq,Depth,Space,Goal).
 subst_args_as(Depth,Self,['match',Other,Goal,Template,Else],Template):-
@@ -284,7 +284,7 @@ subst_args_as(_Dpth,Self,['atom-replace',Other,Rem,Add],TF):- !, into_space(Self
   as_tf((metta_atom_iter_l1t_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Other,load,Add)),TF).
 
 subst_args1(Eq,RetType,Depth,Self,X,Res):-
-   X= [CaseSym|_],CaseSym == 'case',  !, eval_20('=',_,Depth, Self, X,Res).
+   X= [CaseSym|_],CaseSym == 'case',  !, eval_10('=',_,Depth, Self, X,Res).
 
 % Macro: case
 subst_args1_hide(Depth,Self,X,Res):-
@@ -735,9 +735,9 @@ last_element(T,E):- compound_name_arguments(T,_,List),last_element(List,E),!.
 
 %as_tf(G,TF):- catch_nowarn((call(G)*->TF='True';TF='False')).
 */
-subst_selfless([O|_],_):- var(O),!,fail.
-subst_selfless(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
-subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
+%subst_selfless([O|_],_):- var(O),!,fail.
+%subst_selfless(['==',X,Y],TF):- (number(X);number(Y)), as_tf(X=:=Y,TF),!.
+%subst_selfless(['==',X,Y],TF):- as_tf(X=Y,TF),!.
 subst_selfless(X,Y):- !,eval_selfless(_,_,_,_,X,Y).
 /*subst_selfless(['=',X,Y],TF):-!,as_tf(X=Y,TF).
 subst_selfless(['>',X,Y],TF):-!,as_tf(X>Y,TF).
@@ -847,7 +847,9 @@ is_metta_builtin('pragma!').
 
 subst_args30(Eq,Depth,Self,H,B):- if_or_else(subst_args34(Depth,Self,H,B),subst_args37(Eq,Depth,Self,H,B)).
 
-subst_args34(_Dpth,Self,H,B):-  if_or_else(metta_eq_def(Eq,Self,H,B),(get_metta_atom(Eq,Self,H),B=H)).
+subst_args34(_Dpth,Self,H,B):-  
+  if_or_else(metta_eq_def(Eq,Self,H,B),
+     (get_metta_atom(Eq,Self,H),B=H)).
 
 % Has argument that is headed by the same function
 subst_args37(Eq,Depth,Self,[H1|Args],Res):-

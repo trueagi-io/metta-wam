@@ -71,6 +71,7 @@ on_metta_setup(Goal):-
 do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
                         ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
 
+
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
 % This likely enables detailed error backtraces when using Rust-based components.
 % Rust will now output full stack traces when errors occur, which aids in debugging.
@@ -1187,8 +1188,12 @@ all_option_value_name_default_type_help('prolog', false, [false, true], "Enable 
 option_value_name_default_type_help('devel', false, [false, true], "Developer mode", 'Compatibility and Modes').
 all_option_value_name_default_type_help('exec', noskip, [noskip, skip, interp], "Controls execution during script loading: noskip or skip (don't-skip-include/binds) vs skip-all", 'Execution and Control').
 
+default_depth(DEPTH):- default_max_depth(DEPTH), !.
+%default_depth(DEPTH):- DEPTH = 200,!.
+default_max_depth(DEPTH):- current_prolog_flag(max_tagged_integer,DEPTH).
+
 % Resource Limits
-option_value_name_default_type_help('stack-max', MaxTI, [MaxTI,1000,500], "Maximum stack depth allowed during execution", 'Resource Limits'):- current_prolog_flag(max_tagged_integer,MaxTI).
+option_value_name_default_type_help('stack-max', DEPTH, [MAXDEPTH,1000,500], "Maximum stack depth allowed during execution", 'Resource Limits'):- default_depth(DEPTH),default_max_depth(MAXDEPTH).
 all_option_value_name_default_type_help('limit-result-count', inf, [inf,1,2,3,10], "Set the maximum number of results, infinite by default", 'Miscellaneous').
 option_value_name_default_type_help('initial-result-count', 10, [inf,10,1], "For MeTTaLog log mode: print the first 10 answers without waiting for user", 'Miscellaneous').
 
@@ -1860,9 +1865,11 @@ not_compatio(G) :-
     if_t(
         once(is_mettalog ; is_testing ; (\+ is_compatio)),
         user_err(
-            locally(nb_setval(in_not_compatio, true), G)
+            locally(b_setval(in_not_compatio, true), G)
         )
     ).
+
+:- thread_initialization(nb_setval(in_not_compatio,[])).
 
 %!  extra_answer_padding(+Arg) is det.
 %
@@ -2282,6 +2289,7 @@ nocut.
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_eval).
+:- nb_setval(self_space, '&top').
 
 :- initialization(nb_setval(self_space, '&top')).
 
@@ -4260,7 +4268,7 @@ from_top_self(Self, Self).
 %   @arg Atom The atom associated with the knowledge base.
 %
 get_metta_atom_from(KB, Atom) :-
-    metta_atom(KB, Atom).
+  wo_inheritance(metta_atom(KB, Atom)).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
 %
@@ -4324,10 +4332,11 @@ metta_atom(KB, Atom):-
   quietly(metta_atom0(KB, Atom)).
 
 
+/*
 metta_atom0(KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
-
+*/
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
@@ -4337,14 +4346,14 @@ metta_atom0(KB, [F, A | List]) :-
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
-metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
 metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
-metta_atom0(KB, Atom) :- nonvar(KB),clause(metta_atomspace(KB,Atom),Body), call(Body).
+metta_atom0(KB, Atom) :- nonvar(KB),clause(metta_atomspace(KB,Atom),Body),!, call(Body).
 
 metta_atom0(KB, Atom) :-  KB \== '&corelib',  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
@@ -4389,9 +4398,6 @@ query_super_type(KB, Pred, Type, Cond) :-
 
 
 
-
-:- dynamic(no_space_inheritance_to/1).
-
 %!  wo_inheritance_to(+Where, :Goal) is det.
 %
 %   Temporarily disables space inheritance to a specific location (`Where`) while
@@ -4405,14 +4411,14 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     % Temporarily disable inheritance to a specific space:
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
-wo_inheritance_to(_Where, Goal):- !, call(Goal).
-wo_inheritance_to(Where, Goal) :-
-    % Temporarily assert the `no_space_inheritance_to/1` fact.
-    setup_call_cleanup(
-        asserta(no_space_inheritance_to(Where), Clause),
-        Goal,
-        erase(Clause)
-    ).
+
+:- dynamic(no_space_inheritance_to/1).
+
+wo_inheritance_to(Where, Goal) :- !,
+  locally(no_space_inheritance_to(Where), Goal).
+
+print_wo_inheritance_to:- listing(no_space_inheritance_to/1).
+test_wo_inheritance_to:- forall((wo_inheritance_to(somwhere,(member(X,[1,2,3]),print_wo_inheritance_to)),writeln(X),print_wo_inheritance_to),nl).
 
 %!  should_inhert_from(+KB, -Atom) is nondet.
 %
@@ -4427,6 +4433,7 @@ wo_inheritance_to(Where, Goal) :-
 %     % Check if an atom should be inherited:
 %     ?- should_inhert_from('&my_space', Atom).
 %
+
 should_inhert_from(KB, Atom) :-
     % Fail if inheritance to `KB` is explicitly disabled.
     \+ no_space_inheritance_to(KB),
@@ -4448,9 +4455,9 @@ should_inhert_from(KB, Atom) :-
 %
 
 should_inhert_from_now(KB, Atom) :-
-    attvar(Atom), !,
+    \+ frozen(Atom, symbol(_)),
     % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    freeze(SubKB, symbol(SubKB)), !,
+    freeze(SubKB, symbol(SubKB)),
     % Retrieve a sub-knowledge base associated with `KB`.
     metta_atom_added(KB, SubKB),
     SubKB \== KB,
@@ -4462,14 +4469,14 @@ should_inhert_from_now(KB, Atom) :-
 
 should_inhert_from_now(KB, Atom) :-
     % Ensure the atom is not an attributed variable.
-    \+ attvar(Atom),
+    \+ frozen(Atom, symbol(_)),
     % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    freeze(SubKB, symbol(SubKB)), !,
+    %freeze(SubKB, symbol(SubKB)), !,
     % Retrieve a sub-knowledge base associated with `KB`.
-    metta_atom_added(KB, SubKB),
+    should_inherit_kb(KB, SubKB),
     SubKB \== KB,
     % Retrieve atoms from the sub-knowledge base.
-    metta_atom(SubKB, Atom),
+    metta_atom_added(SubKB, Atom),
     % Ensure the atom is not excluded from inheritance.
     \+ should_not_inherit_from(KB, SubKB, Atom).
 
@@ -4480,6 +4487,15 @@ should_inhert_from_now(KB, Atom) :-
    metta_atom('&corelib',Atom),
    \+ should_not_inherit_from_corelib(Atom).
 */
+
+should_inherit_kb(KB, '&corelib'):- KB\=='&corelib'.
+
+wo_inheritance(Goal) :-
+  locally(b_setval(no_space_inheritance,t), Goal).
+
+:- thread_initialization(nb_setval(no_space_inheritance,[])).
+print_can_inherit:- nb_current(no_space_inheritance,X),writeln(no_space_inheritance=X).
+test_wo_inheritance:- forall((wo_inheritance((member(X,[1,2,3]),print_can_inherit)),writeln(X),print_can_inherit),nl).
 
 %!  should_not_inherit_from(+KB, +SubKB, +Atom) is nondet.
 %
@@ -4603,6 +4619,8 @@ should_inherit_op_from_corelib('@doc').
 
 the_libs('&corelib').
 the_libs('&stdlib').
+
+metta_atom_asserted_last(_Top, _Lib):- !, fail.
 % Assert `&corelib` for the top-level context.
 metta_atom_asserted_last(Top, Lib) :- top_self(Top), nocut, the_libs(Lib).
 %metta_atom_asserted_last('&stdlib', '&corelib').
@@ -5920,8 +5938,8 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
 
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
- current_prolog_flag(max_tagged_integer,MaxTI),
- option_else('stack-max',StackMax,MaxTI),
+ default_depth(DEPTH),
+ option_else('stack-max',StackMax,DEPTH),
  CALL = eval_H(StackMax,Self,Term,X),
  notrace(( must_det_ll((
  if_t(show_transpiler,write_compiled_exec(TermV,_Goal)),
@@ -7622,4 +7640,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 :- find_missing_cuts.
 
 
-:- initialization(do_metta_setup).
+:- thread_initialization(do_metta_setup).

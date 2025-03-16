@@ -132,7 +132,7 @@ ppc1(Msg, Term) :-
         write_src(Term), nl  % Display source representation.
     )).
 
-undo_bindings(G):- \+ \+ locally(set_prolog_flag(occurs_check,true),call(G)).
+undo_bindings(G):- \+ \+ woc(call(G)).
 
 dont_numbervars(_,_,_,_).
 
@@ -527,7 +527,7 @@ write_val(V) :-
 %     ?- is_final_write('$VAR'(example_variable)).
 %
 
-is_final_write(V) :- nb_current(printer_override,P1), catch(call(P1, V),_,fail),!.
+is_final_write(V) :- current_printer_override(P1), catch(call(P1, V),_,fail),!.
 % If V is an unbound variable, write it with `write_dvar/1`.
 is_final_write(V) :- var(V), !,  write_dvar(V), !.
 % For '$VAR' structures, write the variable name S.
@@ -548,9 +548,14 @@ is_final_write('[|]') :- write('Cons'), !.
 % For an empty list, write it as '()'.
 is_final_write([]) :- !, write('()').
 %is_final_write([]):- write('Nil'),!.
+is_final_write(A) :- fail, \+ is_list(A), compound(A), A \= exec(_),
+  catch(portray_clause(A),_,fail), !.
 
+
+current_printer_override(P1):- nb_current('printer_override', P1),!,P1\==[].
 with_write_override(P1, Goal):-
-  locally(nb_setval(printer_override,P1), Goal).
+  locally(b_setval('printer_override',P1), Goal).
+:- thread_initialization(nb_setval('printer_override',[])).
 
 
 %!  write_dvar(+S) is det.
@@ -829,13 +834,15 @@ once_writeq_nl_now(P) :-
              write_w_attvars(P),
              format('~N')))))).
 
+:- thread_initialization(nb_setval('suspend_type_unificaton',[])).
 no_type_unification(G):-
-  locally(nb_setval(suspend_type_unificaton, true),G).
+  locally(b_setval(suspend_type_unificaton, true),G).
 
-:- nb_setval('$write_goals',[]).
+
+:- thread_initialization(nb_setval('$write_goals',[])).
 
 with_written_goals(Call):-
-   locally(nb_setval('$write_goals',true),Call).
+   locally(b_setval('$write_goals',true),Call).
 
 maybe_write_goals(_Goals):- \+ nb_current('$write_goals',true), !.
 maybe_write_goals(Goals):-
@@ -1836,13 +1843,13 @@ last_item(Item,Item):- \+ is_lcons(Item),!.
 last_item([_|T],Last):- T \== [], !, last_item(T,Last).
 last_item([Item],Item).
 
-write_start(Type):- nb_current(printer_override,P1),call(P1,'$write_start'(Type)),!.
+write_start(Type):- current_printer_override(P1),call(P1,'$write_start'(Type)),!.
 write_start(Char):- atom_length(Char, 1),write(Char),!.
 write_start(Type):- compound_type_s_m_e(Type,L,_,_),write(L),!.
-write_middle(Type):- nb_current(printer_override,P1),call(P1,'$write_middle'(Type)),!.
+write_middle(Type):- current_printer_override(P1),call(P1,'$write_middle'(Type)),!.
 write_middle(Char):- atom_length(Char, 1),write(Char),!.
 write_middle(Type):- compound_type_s_m_e(Type,_,M,_),write(M),!.
-write_end(Type):- nb_current(printer_override,P1),call(P1,'$write_end'(Type)),!.
+write_end(Type):- current_printer_override(P1),call(P1,'$write_end'(Type)),!.
 write_end(Char):- atom_length(Char, 1),write(Char),!.
 write_end(Type):- compound_type_s_m_e(Type,_,_,R),write(R),!.
 
