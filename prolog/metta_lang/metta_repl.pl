@@ -867,8 +867,9 @@ eval(Form, Out) :-
 %     Out = some_output.
 %
 eval(Self, Form, Out) :-
-    % Use eval_H with a timeout of 500 to evaluate the form.
-    eval_H(500, Self, Form, Out).
+    % Use eval_H with a depth of default_depth(DEPTH), to evaluate the form.
+    default_depth(DEPTH),
+    eval_H(DEPTH, Self, Form, Out).
 
 %! eval_I(+Self, +Form, -OOut) is det.
 %   Evaluates a form and transforms the output using xform_out/2.
@@ -882,8 +883,9 @@ eval(Self, Form, Out) :-
 %     OOut = some_output.
 %
 eval_I(Self, Form, OOut) :-
-    % Evaluate the form with a timeout using eval_H.
-    eval_H(500, Self, Form, Out),
+    % Evaluate the form with a depth using eval_H.
+    default_depth(DEPTH),
+    eval_H(DEPTH, Self, Form, Out),
     % Enable trace for debugging purposes.
     trace,
     % Transform the output.
@@ -1039,7 +1041,8 @@ skip_do_metta_exec(From,Self,TermV,BaseEval,_Term,X,NamedVarsList,_Was,_VOutput,
     option_value('exec',skip), From = file(_Filename), \+ use_metta_compiler,
     \+ always_exec(BaseEval),  \+ always_exec(TermV),
     color_g_mesg('#da70d6', (write('; SKIPPING: '), write_src_woi(TermV))),
-    prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(500,Self,BaseEval,X)),writeln('.'))))),
+    default_depth(DEPTH),
+    prolog_only(if_t((TermV\=@=BaseEval),color_g_mesg('#da70d6', (write('\n% Thus: '), writeq(eval_H(DEPTH,Self,BaseEval,X)),writeln('.'))))),
     \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList).
 
 maybe_add_history(Self, BaseEval, NamedVarsList) :-
@@ -2036,6 +2039,7 @@ install_readline(Input):-
     ignore(el_unwrap(Input)),
     % Wrap the input with the Metta readline handler.
     ignore(el_wrap_metta(Input)),
+    load_metta_history_from_txt_file('~/.config/metta/history.txt'),
     % Load command history from a file, if it exists.
     history_file_location(HistoryFile),
     % Check if the history file exists, ensuring we can append to it.
@@ -2047,7 +2051,6 @@ install_readline(Input):-
     %add_history_string("!(pfb3)"),
     %add_history_string("!(obo-alt-id $X BS:00063)"),
     %add_history_string("!(and (total-rows $T TR$) (unique-values $T2 $Col $TR))"),
-    load_metta_history_from_txt_file('~/.config/metta/history.txt'),
     !.
 
 % Clause to handle non-tty(true) clients, like SWISH or HTTP server requests.

@@ -767,21 +767,27 @@ maybe_trace:- is_extreme_debug(trace).
 is_extreme_debug(_).
 
 sub_var_safely(Var,Source):-
-  locally(set_prolog_flag(occurs_check,true),
-         sub_var(Var,Source)).
+  woc(sub_var(Var,Source)).
 
 sub_term_safely(Sub,Source):-
-  locally(set_prolog_flag(occurs_check,true),
-        sub_term(Sub,Source)).
+  woc(sub_term(Sub,Source)).
 
 woc(Goal):-
-  locally(set_prolog_flag(occurs_check,true), Goal).
+  locally(set_prolog_flag(occurs_check,true),Goal).
 wocf(Goal):-
   locally(set_prolog_flag(occurs_check,false), Goal).
 
+print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
+test_locally_setting_flags:- 
+  forall((locally(set_prolog_flag(locally_tested_flag,1),
+     ((member(X,[1,2,3]),print_locally_tested_flag))),
+        writeln(X),print_locally_tested_flag),nl).
+:- thread_initialization(set_prolog_flag(locally_tested_flag,0)).
+
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- initialization(set_prolog_flag(occurs_check,true)).
-%:- initialization(set_prolog_flag(occurs_check,false)).
+:- initialization(set_prolog_flag(occurs_check,false)).
+:- thread_initialization(set_prolog_flag(occurs_check,false)).
 %:- initialization(set_prolog_flag(gc,false)).
 
 %!  is_showing(+Flag) is nondet.

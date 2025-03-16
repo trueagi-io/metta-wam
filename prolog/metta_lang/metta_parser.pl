@@ -950,14 +950,17 @@ process_expressions(FileName, InStream, OutStream) :-
    call(WriteOutput, :- dynamic(user:metta_file_buffer/7)),
    call(WriteOutput, :- multifile(user:metta_file_buffer/7)),
    call(WriteOutput,  afn_stem_filename(AFNStem, Stem, FileName)),
-    locally(nb_setval('$file_src_name', AFNStem),
-     locally(nb_setval('$file_src_write_readably', WriteOutput),
-     locally(nb_setval('$file_src_depth', 0),
+    locally(b_setval('$file_src_name', AFNStem),
+     locally(b_setval('$file_src_write_readably', WriteOutput),
+     locally(b_setval('$file_src_depth', 0),
        setup_call_cleanup(flag('$file_src_ordinal', Was, 0),
         % Start reading and processing expressions from the input stream.
          process_expressions_now(FileName, InStream),
                           flag('$file_src_ordinal', _, Was))))).
 
+:- thread_initialization(nb_setval('$file_src_name',[])).
+:- thread_initialization(nb_setval('$file_src_write_readably',[])).
+:- thread_initialization(nb_setval('$file_src_depth',[])).
 
 process_expressions_now(FileName, InStream):-
     repeat,

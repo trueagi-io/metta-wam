@@ -1010,11 +1010,16 @@ user:message_hook(Term, Kind, Lines) :-
 %
 wno_must(G) :-
     % Temporarily set the `no_must_det_ll` flag to true.
-    locally(nb_setval(no_must_det_ll, t),
+    locally(b_setval(no_must_det_ll, t),
         % Temporarily set the `cant_rrtrace` flag to true.
-        locally(nb_setval(cant_rrtrace, t),
+        locally(b_setval(cant_rrtrace, t),
             % Execute the goal G within the modified environment.
             call(G))).
+
+:- thread_initialization(nb_setval(no_must_det_ll,[])).
+:- thread_initialization(nb_setval(cant_rrtrace,[])).
+
+
 
 %!  md_maplist(:MD, :P1, +List) is det.
 %
@@ -4398,9 +4403,13 @@ arc_portray_pair_optional(Ps,K,Val,TF):-
 arc_portray(G):- \+ compound(G),fail.
 arc_portray(G):- is_vm(G), !, write('..VM..').
 arc_portray(G):- \+ nb_current(arc_portray,t),\+ nb_current(arc_portray,f),is_print_collapsed,!,
-  locally(nb_setval(arc_portray,t),arc_portray1(G)).
-arc_portray(G):- \+ nb_current(arc_portray,f),!, locally(nb_setval(arc_portray,t),arc_portray1(G)).
-arc_portray(G):- locally(nb_setval(arc_portray,f),arc_portray1(G)).
+  locally(b_setval(arc_portray,t),arc_portray1(G)).
+arc_portray(G):- \+ nb_current(arc_portray,f),!, locally(b_setval(arc_portray,t),arc_portray1(G)).
+arc_portray(G):- locally(b_setval(arc_portray,f),arc_portray1(G)).
+
+
+:- thread_initialization(nb_setval(arc_portray,[])).
+
 
 arc_portray1(G):-
  flag(arc_portray_current_depth,X,X), X < 3,
@@ -4745,9 +4754,9 @@ pp_parent([]):-!.
 %:- meta_predicate(lock_doing(+,+,0)).
 :- meta_predicate(lock_doing(+,+,:)).
 lock_doing(Lock,G,Goal):-
- (nb_current(Lock,Was);Was=[]), !,
+ (nb_current(Lock,Was);(Was=[],nb_setval(Lock,Was)), !,
   \+ ((member(E,Was),E==G)),
-  locally(nb_setval(Lock,[G|Was]),Goal).
+  locally(b_setval(Lock,[G|Was]),Goal).
 
 never_let_arc_portray_again:- set_prolog_flag(never_pp_hook, true),!.
 arc_can_portray:- \+ current_prolog_flag(never_pp_hook, true), nb_current(arc_can_portray,t).

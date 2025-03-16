@@ -1553,7 +1553,7 @@ dte :- gset(_X.global) = gval.
 dte :- must_det_ll((set(_X.a) = b)).
 % Use `must_det_ll` to ensure that `nb_setval/2` runs locally and call `dte` recursively
 % with a modified term involving `X.tail`.
-dte :- must_det_ll(locally(nb_setval(e, X.locally), dte([foo | set(X.tail)]))).
+dte :- must_det_ll(locally(b_setval(e, X.locally), dte([foo | set(X.tail)]))).
 % Check if `set(V.element)` is a member of `set(V.list)`.
 dte :- member(set(V.element), set(V.list)).
 % Define a specific expansion for `dte/1` with input `set(E.v)` when `set(E.that)` equals `v`.
