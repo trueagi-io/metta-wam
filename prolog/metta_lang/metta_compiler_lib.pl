@@ -387,8 +387,10 @@ transpiler_predicate_store(builtin, 'random-float', [3], '@doc', '@doc', [x(doev
 
 transpiler_predicate_store(builtin, 'set-random-seed', [2], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, [])], x(noeval, eager, [])).
 /*
-    !(let $rg (new-random-generator 1) (((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7))
-      (let $_ (set-random-seed $rg 1) ((random-int $rg 1 7)(random-int $rg 1 7)(random-int $rg 1 7)))))
+    !(let $rg (new-random-generator 3) (((random-int $rg 3 7)(random-int $rg 3 7)(random-int $rg 3 7))
+      (let $_ (set-random-seed $rg 3) ((random-int $rg 3 7)(random-int $rg 3 7)(random-int $rg 3 7)))))
+
+    [((5 3 4) (5 3 4))]
 
 */
 'mc__1_2_set-random-seed'(RNGId, Seed, RetVal):-
@@ -415,7 +417,7 @@ transpiler_predicate_store(builtin, 'new-random-generator', [1], '@doc', '@doc',
 
 
 transpiler_predicate_store(builtin, 'reset-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
-% !(reset-random-generator 0)
+% !(reset-random-generator &rng_1) -> &rng_1
 % Not tested.
 'mc__1_1_reset-random-generator'(RNGId, RNGId ):-
    %getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())

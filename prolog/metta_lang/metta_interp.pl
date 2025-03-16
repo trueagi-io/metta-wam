@@ -71,6 +71,7 @@ on_metta_setup(Goal):-
 do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
                         ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
 
+
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
 % This likely enables detailed error backtraces when using Rust-based components.
 % Rust will now output full stack traces when errors occur, which aids in debugging.
@@ -7639,4 +7640,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 :- find_missing_cuts.
 
 
-:- initialization(do_metta_setup).
+:- thread_initialization(do_metta_setup).
