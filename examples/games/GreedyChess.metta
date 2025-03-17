@@ -429,28 +429,54 @@
                   (try_move_and_verify ($x1 $y1 g $rank) ($x2 $y2) 0)
                   (empty)))) 
 
+; return next rank to try or NIL if all rank moves exhaused.
+(= (return_random_level $Ranks_Already_Tried_List)
+  (if (== (size-atom $Ranks_Already_Tried_List) 4)
+      ; we have tried all 4 rank levels, return NIL
+      NIL
+      ;else try another random level.
+      (let*
+        (
+            ($random_level (random-int  1 5))
+            ($rank_level (case $random_level
+                        (
+                        (1 lowrank)
+                        (2 medrank)
+                        (3 highrank)
+                        (4 highestrank)
+                        ($_ lowrank)
+                        )))
+        )
+        (if (== ($rank_level) 
+                (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
+                ;(collapse (intersection (superpose (1 2 3 4)) 2)) <-- returns (2);        
+            ; try again if this rank already tried
+            (return_random_level $Ranks_Already_Tried_List)
+            ; else success, return next new random level.
+            $rank_level
+            ))))
+
 ; (random_recursion_by_rank)
 ; 
-(= (random_recursion_by_rank)
+(= (random_recursion_by_rank $Ranks_Already_Tried_List)
     (let* (
       ; Warning: as of this writing random-int's max value is 1 more than the actual max.
-      ;          If random-int is changed to return beyond the max, the case statement will return lowrank.
-      ($random_level (random-int &rng 1 5)) 
-      ($ranklevel (case $random_level
-                    (
-                    (1 lowrank)
-                    (2 medrank)
-                    (3 highrank)
-                    (4 highestrank)
-                    ($_ lowrank)
-                    )))
-      ($debug (println! "Trying random move (may repeat)"))
+      ;    If random-int is changed to return beyond the max, the case statement will return lowrank.
+      ($ranklevel (return_random_level $Ranks_Already_Tried_List))
+      ;($New_Ranks_Already_Tried_List (cons-atom $ranklevel $Ranks_Already_Tried_List))
+      ($debug (println! "Trying random move (may repeat, quit if NIL)"))
       ($debug (println! $ranklevel))
-      ($somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel)))
         )
-      (if (== $somemoves ())
-        (random_recursion_by_rank)
-        $somemoves)))
+      (if (== $ranklevel NIL)
+        ; if we have exhausted all possible moves by level return empty list
+        (empty)
+        ; else try a move by level
+        (let $somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel))
+          (if (== $somemoves ())
+            ; if no move found
+            (random_recursion_by_rank (cons-atom $ranklevel $Ranks_Already_Tried_List))
+            ; Success! return move
+            $somemoves)))))
 
 ;  (random_move_empty_sq)
 ;  Make a random legal move to an empty square.
@@ -461,9 +487,31 @@
 ; Warning: as of this writing random-int's max value is 1 more than the actual max.
 ;          If random-int is changed to return beyond the max it will be set at the actual max.
 (= (random_move_empty_sq)
+  (let $random_moves (random_recursion_by_rank ())
+    (if (== $random_moves Empty)
+        (empty)
+        (let*
+          (
+          ($debug (println! $random_moves))
+          ($move_count (size-atom $random_moves))
+          ($move_count_plus_1 (+ $move_count 1))
+          ($select_int (if (== $move_count 1) 
+                    1
+                    ; use &rng after random-int!
+                    (random-int  1 $move_count_plus_1))) 
+          ($select_int_check (if (> $select_int $move_count) 1 $select_int)) ; if problem with random-int
+          ) 
+          ;return move
+          (nth $select_int_check $random_moves)
+          ))))
+
+        
+
+(= (random_move_empty_sq_OLD)
     (let*
       ( 
-        ($random_moves (random_recursion_by_rank))
+        ($random_moves (random_recursion_by_rank ()))
+        ($debug (println! $random_moves))
         ($move_count (size-atom $random_moves))
         ($move_count_plus_1 (+ $move_count 1))
         ($select_int (if (== $move_count 1) 
@@ -1646,10 +1694,23 @@
           ; determine next AI move
           (let $move (decide_greedy_move) () )
           (if  (== $move Empty)
-            (progn
-              ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
-              (change-game-state resigned)
-            )
+            (let*
+              ; if all attempts fail, locate AI king and see if he is in checkmate
+              (
+              ($king_square (xy_box (g k)))    
+              ($full_king_sq (return_entire_box $king_square))  
+              ($KingCompromised (take_dest $full_king_sq s))   
+              )
+              (if (== $KingCompromised True)
+                (progn
+                  ((py-atom print) "Checkmate! You win!")
+                  ((py-atom print) "Winner!  Winner!  Winner!!!!!!!")
+                  ((py-atom print) "")
+                  (change-game-state checkmate)
+                  )
+                (progn
+                  ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
+                  (change-game-state resigned))))
             ; else proceed with move
             (progn
               (let $start (nth 1 $move) ())
