@@ -801,7 +801,7 @@ get_type_symb(_Dpth, _Slf, Val, Type) :-
 get_type_symb(Depth, Self, Op, Type) :-
     % Evaluate arguments if the operator is defined.
     Depth2 is Depth - 1,
-    eval_args_for_type(Depth2, Self, Op, Val),
+    eval_args(Depth2, Self, Op, Val),
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
 
@@ -846,10 +846,15 @@ get_dict_type(Val, _, Type) :-
 %
 %get_type_cmpd(_Dpth,Self,Op,Type):- copy_term(Op,Copy),
 %  metta_type(Self,Op,Type), Op=@=Copy.
+
+type_by_functor('#\\',1,'Char').
+type_by_functor('rng',_,'RandomGenerator').
+
+
 get_type_cmpd(_Dpth,_Slf,Val,Type,dict):- is_dict(Val,Type),!,
   get_dict_type(Val,Type,TypeO).
 get_type_cmpd(_Dpth,_Slf,'$VAR'(_),'Var',functorV):- !.
-get_type_cmpd(_Dpth,_Slf,'#\\'(_),'Char',functor):- !.
+get_type_cmpd(_Dpth,_Slf,Cmpd,Type,type_by_functor(F,A,Type)):- functor(Cmpd,F,A),type_by_functor(F,A,Type),!.
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
@@ -1040,7 +1045,7 @@ as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
 
 
-as_prolog(0, Self, [Eval, Metta], Prolog) :- Eval == 'eval', !,
+as_prolog(0, Self, [Eval, Metta], Prolog) :- Eval == '!', !,
     Prolog = (eval(Metta,TF),is_true(TF)).
 
 as_prolog(0, Self, [Cons, H, T | Nil], [HH | TT]) :-

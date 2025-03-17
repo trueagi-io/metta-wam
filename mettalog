@@ -1203,7 +1203,7 @@ if [[ "$exe" == "true" ]]; then
         need_compile=1
     else
         # Check if any .pl file is newer than the reference file
-        for pl_file in "$INTERP_SRC_DIR"/*_*.pl; do
+        for pl_file in "$INTERP_SRC_DIR"/*_*.*; do
             if [[ ! -e "$pl_file" ]]; then
                 DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
             # If a .pl file is newer than the reference file, trigger recompilation
@@ -1242,11 +1242,24 @@ if [[ $need_compile -eq 1 ]]; then
     fi
     # Generate a unique success file name inside the detected temporary directory
     export METTALOG_COMPILE_SUCCESS="$TEMP_DIR/create_on_successful_compile_$(date +%s)_$RANDOM"
+
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
 fi
 
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
+fi
 
 NEED_CLEANUP=0
 STYLE=EXE
+
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+ exe=false
+ need_compile=0
+ STYLE=INTERP
+fi
 
 # Function to cleanup compiled file if execution is interrupted or unsuccessful
 compiler_cleanup() {
@@ -1256,6 +1269,7 @@ compiler_cleanup() {
 	# If the success file is missing, remove the binary
 
 	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
+	    rm -f "$METTALOG_COMPILE_SUCCESS"
 	    DEBUG "{$GREEN}CREATED $reference_file"
 	    STYLE=EXE
 	else
@@ -1303,6 +1317,8 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     # Remove any previous success files (clean up before new compilation)
     rm -f "$TEMP_DIR/create_on_successful_compile_*"
+    rm -f "$TEMP_DIR/metta_cache/??*"
+    rm -f "$TEMP_DIR/tmp.??*"
 
     # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS
@@ -1327,6 +1343,8 @@ fi
 # If exe is explicitly set to false, enforce the non-executable mode
 if [[ "$exe" == "false" ]]; then
     unset reference_file
+    #rm -f "$TEMP_DIR/metta_cache/??*"
+    #rm -f "$TEMP_DIR/tmp.??*"
     STYLE=INTERP    
 fi
 
