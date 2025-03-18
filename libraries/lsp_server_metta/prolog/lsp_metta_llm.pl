@@ -44,7 +44,7 @@ request_code_comment(Code, Commented) :-
     ;  ReqBody = _{model: Model,
                    % For OpenAI, include the system prompt for the
                    % custom model with all the metta docs?
-                   messages: [_{role: "user", content: Prompt}]} ),
+                   input: Prompt} ),
     http_post(Uri,
               json(ReqBody),
               Resp,
