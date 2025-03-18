@@ -340,18 +340,15 @@ extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
         (
             (LineNum =:= StartLine, LineNum =:= EndLine) ->  % Case where the start and end are on the same line.
             (EndCharStartChar is EndChar - StartChar,  % Get the substring within this line.
-             sub_atom(Line, StartChar, EndCharStartChar, _, LineText))
+             sub_string(Line, StartChar, EndCharStartChar, _, LineText))
         ;
             LineNum =:= StartLine ->  % Case where the current line is the start line.
-            sub_atom(Line, StartChar, _, 0, LineText)  % Get the substring starting from StartChar.
+            sub_string(Line, StartChar, _, 0, LineText)  % Get the substring starting from StartChar.
         ;
             LineNum =:= EndLine ->  % Case where the current line is the end line.
-            sub_atom(Line, 0, EndChar, _, LineText)  % Get the substring ending at EndChar.
+            sub_string(Line, 0, EndChar, _, LineText)  % Get the substring ending at EndChar.
         ;
             LineText = Line  % In-between lines are added fully.
         )
     ), CodeLines),
-    atomic_list_concat(CodeLines, '\n', Code).  % Combine the extracted lines into a single code string.
-
-
-
+    atomics_to_string(CodeLines, "\n", Code).  % Combine the extracted lines into a single code string.
