@@ -286,13 +286,14 @@
       (let $last_piece (identify_piece (car-atom $brd)) ($last_piece) )
       ; otherwise convert all pieces to shorter description for display.
       (let*
-        ( 
+        ( ;($debug IEFBR14) 
         ($rest (display_filter (cdr-atom $brd)))
         ($piece_identified (identify_piece (car-atom $brd)))
         )
         (cons-atom $piece_identified $rest))))
 
 ;(= (display_board $board) (println! $board))
+(= (display_boardO $board) (println! $board))
 (= (display_board $board) 
   (
    (let* (
@@ -437,11 +438,11 @@
       ;else try another random level.
       (let*
         (
-            ($random_level (random-int  1 5))
+            ($random_level (random-int  &rng 1 5))
             ($rank_level (case $random_level
                         (
-                        (1 lowrank)
-                        (2 medrank)
+                        (1 highrank) ;(1 lowrank)
+                        (2 highestrank) ;(2 medrank) 
                         (3 highrank)
                         (4 highestrank)
                         ($_ lowrank)
@@ -498,7 +499,7 @@
           ($select_int (if (== $move_count 1) 
                     1
                     ; use &rng after random-int!
-                    (random-int  1 $move_count_plus_1))) 
+                    (random-int  &rng 1 $move_count_plus_1))) 
           ($select_int_check (if (> $select_int $move_count) 1 $select_int)) ; if problem with random-int
           ) 
           ;return move
