@@ -20,16 +20,13 @@
 
 llm_http_api(Uri) :-
     getenv('METTA_LLM_URL', Uri), !.
-llm_http_api('http://localhost:11434/api/generate').
-%llm_http_api('https://api.openai.com/v1/responses').
+llm_http_api('https://api.openai.com/v1/responses').
 
 llm_model(Model) :-
     getenv('METTA_LLM_MODEL', Model), !.
-llm_model('llama3-metta').
-%llm_model('gpt-4o').
+llm_model('gpt-4o').
 
-%llm_http_auth_key(Key) :- getenv('METTA_LLM_KEY', Key).
-llm_http_auth_key('').
+llm_http_auth_key(Key) :- getenv('METTA_LLM_KEY', Key).
 
 request_code_comment(Code, Commented) :-
     llm_http_auth_key(Key),
