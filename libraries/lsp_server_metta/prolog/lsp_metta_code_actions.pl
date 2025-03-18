@@ -286,7 +286,6 @@ lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
     _{data: Data, kind: "refactor.comment"} :< Params,
     _{uri: Uri, range: Range} :< Data,
     get_code_at_range(exact, Uri, Range, Code),
-    debug_lsp(todo, "URI ~q RANGE ~q CODE ~n~q~n", [Uri, Range, Code]),
     request_code_comment(Code, Commented),
     atom_string(AUri, Uri),
     % using dict_create/3 instead of a literal because that doesn't
