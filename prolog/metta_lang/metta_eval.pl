@@ -70,7 +70,7 @@ self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0([]).
 self_eval0(X):- is_metta_declaration(X),!.
 self_eval0([_,Ar,_|T]):- T==[],(Ar=='-->';Ar=='<->';Ar=='<--';Ar==':-'),!.
-self_eval0([F|X]):- !, is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
+self_eval0([F|X]):- !, self_eval_ht(F,X).
 self_eval0(X):- compound(X),!.
 self_eval0(X):- typed_list(X,_,_),!.
 self_eval0(X):- py_is_py(X),!.
@@ -81,6 +81,10 @@ self_eval0('Empty').
 self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
+
+self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Len),!.
+self_eval_ht(F,X):- sub_term_safely(E,[F|X]), nonvar(E), E\==[], E\=='.', ( \+ is_list(E) ),!,fail.
+self_eval_ht(_,_).
 
 
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
@@ -683,7 +687,7 @@ eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eva
 
 % eval_20 CAN NOW USE ATOMS (not jsut eval_10)
 eval_20(_,_,_,_,['echo',Value],Value):- !.
-eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
+%eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 
 eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc__1_0+_make-var'(Types,Var).
 

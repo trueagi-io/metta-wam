@@ -567,7 +567,8 @@ get_type_each(_, _, Nil, UD) :-
     Nil == [], !, UD = '%Undefined%'.
 get_type_each(Depth, Self, Val, Type) :-
     % Default depth of 10 if Depth is not an integer.
-    \+ integer(Depth), !, get_type_each(10, Self, Val, Type).
+    default_depth(DEFAULT_DEPTH),
+    \+ integer(Depth), !, get_type_each(DEFAULT_DEPTH, Self, Val, Type).
 get_type_each(_Depth, _Slf, Val, PyObject) :-
     % If the value is a Python object, its type is 'PyObject'.
     is_PyObject(Val), !, 'PyObject' = PyObject.
@@ -1062,7 +1063,7 @@ as_prolog(0, Self, [CC | List], O) :-
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
 
-as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, exec(Eval), O) :- !, default_depth(DEFAULT_DEPTH),eval_args(DEFAULT_DEPTH, Self, Eval, O).
 as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
@@ -1613,7 +1614,7 @@ cns_attr_unify_hook(Self , TypeList, NewValue) :-
     show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
 
 can_assign_value_typelist(Self, NewValue, TypeList):-
-    get_type(20, Self, NewValue, Was),
+    default_depth(DEFAULT_DEPTH),get_type(DEFAULT_DEPTH, Self, NewValue, Was),
     must_det_lls(can_assign_value_typelist_4(Self, NewValue, Was, TypeList)).
 
 can_assign_value_typelist_4(_Self, _NewValue, _Was, Nil):- Nil==[],!.
