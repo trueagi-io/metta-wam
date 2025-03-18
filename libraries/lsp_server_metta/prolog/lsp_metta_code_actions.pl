@@ -287,6 +287,9 @@ lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
     _{uri: Uri, range: Range} :< Data,
     get_code_at_range(exact, Uri, Range, Code),
     request_code_comment(Code, Commented),
+    % [TODO] instead of sending the edit as one big edit, find just
+    % the minimal changes to *add* comments, so we can make sure that
+    % no code gets deleted
     atom_string(AUri, Uri),
     % using dict_create/3 instead of a literal because that doesn't
     % seem to work with a variable key
