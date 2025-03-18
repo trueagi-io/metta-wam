@@ -82,3 +82,41 @@ CMakeUserPresets.json
 /python/*.so
 /python/*.dylib
 /python/wheelhouse
+
+# Ignore temporary files and logs
+TEE_*.ansi
+*.log
+*.bak
+*.tmp
+
+# Ignore saved states, test runs, and experimental outputs
+State/
+Sav.*
+fail/
+just_HE/
+try_out*/
+ran_*/
+morph_8D*/
+
+# Ignore compiled or generated files
+*.egg-info/
+*.pyc
+*.pyo
+*.class
+*.*2
+
+# Ignore versioning of internal testing scripts and temporary execution results
+scripts/test_in_metta*.sh
+datastore_neo4j_out_v*/  
+neo4j_instance_copy/
+libraries/bioAS/neo4j_out_v*/
+
+# Ignore experimental and development directories
+metta-testsuite/
+hide*
+prolog/metta_lang??*
+*_*.pl.??*
+prolog??*
+prolog/metta_lang/*patch_?*.pl
+prolog/metta_lang/stdlib.*
+
