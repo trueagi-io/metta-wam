@@ -83,6 +83,8 @@
                                  get_src_code_at_range/4
                                ]).
 
+:- use_module(lsp_metta_llm, [ request_code_comment/2 ]).
+
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
     clause(handle_code_action_msg(Method, Msg, Result), Body), !,
@@ -260,6 +262,36 @@ lsp_hooks:exec_code_action("source_gpt_comment", [Uri], ExecutionResult) :-
 % GPT Comment Code
 gpt_comment_code(Code, CommentedCode) :-
     call_openai_for_gpt_task(Code, "Add comments to this code.", CommentedCode).
+
+lsp_hooks:compute_code_action(Uri, Range, CommentCodeAction) :-
+    % check that the client supports deferring edit calculation
+    lsp_state:stored_json_value(
+                  client_capabilities,
+                  [properties, resolveSupport, codeAction, textDocument],
+                  Props),
+    memberchk("edit", Props), !,
+    get_code_at_range(exact, Uri, Range, CodeFull),
+    sub_string(CodeFull, 0, 50, _, CodeExcerpt),
+    sformat(CommentTitle, "Source: Comment this block: '~w...'", [CodeExcerpt]),
+    CommentCodeAction = _{title: CommentTitle,
+                          kind: "refactor.comment",
+                         data: _{uri: Uri, range: Range}}.
+
+lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
+                          _{id: Id,
+                            result: _{title: "Source: Comment this block: ",
+                                      kind: "refactor.comment",
+                                      edit: _{changes: Changes}}}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{data: Data, kind: "refactor.comment"} :< Params,
+    _{uri: Uri, range: Range} :< Data,
+    get_code_at_range(exact, Uri, Range, Code),
+    debug_lsp(todo, "URI ~q RANGE ~q CODE ~n~q~n", [Uri, Range, Code]),
+    request_code_comment(Code, Commented),
+    atom_string(AUri, Uri),
+    % using dict_create/3 instead of a literal because that doesn't
+    % seem to work with a variable key
+    dict_create(Changes, _, [AUri=[_{range: Range, newText: Commented}]]).
 
 % The call_openai_for_gpt_task/3 predicate is defined earlier.
 
