@@ -34,13 +34,29 @@ function activate(context) {
   const swiplPath = config.get("server.swiplPath", "swipl");
   const debugLsp = config.get("server.debugLsp", false);
   const mettalogPath = config.get("server.mettalogPath", "");
+  const chatgptEnabled = config.get("xtras.chatgpt.enabled", false);
+  const chatgptApiKey = config.get("xtras.chatgpt.apiKey", "");
+  const chatgptAltUrl = config.get("xtras.chatgpt.alternateUrl", "");
+  const chatgptModel = config.get("xtras.chatgpt.model", "gpt-3.5-turbo");
 
   const loadLspSrc = debugLsp && mettalogPath !== '';
   const lspSrcPath = mettalogPath + "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl";
   const env = process.env;
-  const envAdditions = {"METTALOG_DIR": mettalogPath,
-                        "SWIPL_PACK_PATH": mettalogPath + "/libraries"};
-  Object.keys(envAdditions).forEach(key => env[key] = envAdditions[key]);
+  if (loadLspSrc) {
+    const envAdditions = {"METTALOG_DIR": mettalogPath,
+                          "SWIPL_PACK_PATH": mettalogPath + "/libraries"};
+    Object.keys(envAdditions).forEach(key => env[key] = envAdditions[key]);
+  }
+  if (chatgptEnabled) {
+    const envAdditions = {"OPENAI_API_KEY": chatgptApiKey,
+                          "METTA_LLM_URL": chatgptAltUrl,
+                          "METTA_LLM_MODEL": chatgptModel}
+    Object.keys(envAdditions).forEach(key => {
+      if (envAdditions[key] !== '') {
+        env[key] = envAdditions[key];
+      }
+    });
+  }
 
   // Define server options for stdio
   const serverOptions_stdio = {
@@ -51,7 +67,8 @@ function activate(context) {
         "-g", "lsp_server_metta:main",
         "-t", "halt",
         "--", "stdio"
-      ]
+      ],
+      options: {env: env}
     },
     debug: {
       command: swiplPath,
@@ -64,7 +81,8 @@ function activate(context) {
         "-g", "lsp_server_metta:main",
         "-t", "halt",
         "--", "stdio"
-      ]
+      ],
+      options: {env: env}
     }
   };
   if (loadLspSrc) {
@@ -72,8 +90,8 @@ function activate(context) {
     serverOptions_stdio.run.args[1] = lspSrcPath;
     serverOptions_stdio.debug.args[4] = "-l";
     serverOptions_stdio.debug.args[5] = lspSrcPath;
-    serverOptions_stdio.run.options = {cwd: mettalogPath, env: env};
-    serverOptions_stdio.debug.options = {cwd: mettalogPath, env: env};
+    serverOptions_stdio.run.options.cwd = mettalogPath;
+    serverOptions_stdio.debug.options.cwd = mettalogPath;
   }
 
   // Define server options for port-based with spawning
@@ -87,7 +105,8 @@ function activate(context) {
         "-t", "halt",
         "--"
         // setting transport above automatically appends "--socket=$port"
-      ]
+      ],
+      options: {env: env}
     },
     debug: {
       transport: {kind: TransportKind.socket, port: port},
@@ -102,7 +121,8 @@ function activate(context) {
         "-t", "halt",
         "--"
         // setting transport above automatically appends "--socket=$port"
-      ]
+      ],
+      options: {env: env}
     }
   };
   if (loadLspSrc) {
@@ -110,8 +130,8 @@ function activate(context) {
     serverOptions_portSpawn.run.args[1] = lspSrcPath;
     serverOptions_portSpawn.debug.args[8] = "-l";
     serverOptions_portSpawn.debug.args[9] = lspSrcPath;
-    serverOptions_portSpawn.run.options = {cwd: mettalogPath, env: env};
-    serverOptions_portSpawn.debug.options = {cwd: mettalogPath, env: env};
+    serverOptions_portSpawn.run.options.cwd =  mettalogPath;
+    serverOptions_portSpawn.debug.options.cwd = mettalogPath;
   }
 
 
@@ -291,6 +311,7 @@ function showMettaLSPSettings(outputChannel) {
     "options",
     "xtras.chatgpt.enabled",
     "xtras.chatgpt.apiKey",
+    "xtras.chatgpt.alternateUrl",
     "xtras.chatgpt.model",
     "xtras.chatgpt.maxTokens",
     "xtras.chatgpt.temperature",
