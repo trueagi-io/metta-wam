@@ -1,4 +1,5 @@
-:- module(lsp_metta_llm, [ request_code_comment/2 ]).
+:- module(lsp_metta_llm, [ request_code_comment/2,
+                           is_llm_enabled/0 ]).
 
 /** <module> lsp_metta_llm
  * This module implements an interface to an LLM over an HTTP API to
@@ -26,15 +27,19 @@ llm_model(Model) :-
     getenv('METTA_LLM_MODEL', Model), !.
 llm_model('gpt-4o').
 
-llm_http_auth_key(Key) :- getenv('METTA_LLM_KEY', Key).
+llm_http_auth_key(Key) :- getenv('OPENAI_API_KEY', Key).
 
 using_custom_endpoint :-
     getenv('METTA_LLM_URL', _).
 
+is_llm_enabled :- getenv('METTA_LLM_URL', _), !.
+is_llm_enabled :- getenv('OPENAI_API_KEY', _).
+
 request_code_comment(Code, Commented) :-
-    llm_http_auth_key(Key),
+    is_llm_enabled,
     llm_http_api(Uri),
     llm_model(Model),
+    ( llm_http_auth_key(Key) -> true ; Key = '' ),
     string_concat("Task: Please comment this source code by first outputting a comment describing the overall purpose of the code or function. Then, line by line describe what it is doing. Put each comment right above the line it is commenting. Improve the formatting when it makes sense to break up lines but don't add too much vertical space. Return only a text block that will replace exactly the block I just gave you. Do not include any other formatting markers such as markdown code fences; only the original code and the interleaved comments should be output. Be sure to include all the code and do not make any changes to the functionality, only add comments. \n\n Code:\n", Code, Prompt),
     ( using_custom_endpoint
     % assuming if a URL has been set, it's Ollama...make this configurable?
