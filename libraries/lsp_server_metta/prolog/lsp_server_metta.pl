@@ -249,7 +249,8 @@ after_slash(FileUri, FileUriAS) :-
 handle_parsed_request(Out, Req) :-
     % Extract the method name, request ID, and URI for logging
     first_dict_key(method, Req, Method),
-    first_dict_key(command;data;uri, Req, FileUri),
+    first_dict_key(command;uri;data, Req, FileUri0),
+    format(string(FileUri), "~w", [FileUri0]), % data isn't necessarily a string
     request_id(Req, RequestId),
     after_slash(Method,MethodAS),
     after_slash(FileUri,FileUriAS),
@@ -665,7 +666,7 @@ server_capabilities(
         % Popups
         hoverProvider: true,
         codeLensProvider: _{resolveProvider: true},  % Code lens resolve provider enabled to support resolving additional data on code lenses
-        codeActionProvider: true,  % Enabled to support code actions
+        codeActionProvider: _{resolveProvider: true},  % Enabled to support code actions
         % Dynamically enumerate commands for Popups
         executeCommandProvider: _{
             commands: CommandsList  % List available Code Lens commands
