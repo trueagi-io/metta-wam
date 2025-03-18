@@ -271,11 +271,16 @@ lsp_hooks:compute_code_action(Uri, Range, CommentCodeAction) :-
                   Props),
     memberchk("edit", Props), !,
     get_code_at_range(exact, Uri, Range, CodeFull),
-    sub_string(CodeFull, 0, 50, _, CodeExcerpt),
-    sformat(CommentTitle, "Source: LLM Comment this block: '~w...'", [CodeExcerpt]),
+    string_excerpt(CodeFull, 50, CodeExcerpt),
+    sformat(CommentTitle, "Source: LLM Comment this block: '~w'", [CodeExcerpt]),
     CommentCodeAction = _{title: CommentTitle,
                           kind: "refactor.comment",
                          data: _{uri: Uri, range: Range}}.
+
+string_excerpt(String, Len, Excerpt) :-
+    sub_string(String, 0, Len, _, Excerpt0), !,
+    string_concat(Excerpt0, "...", Excerpt).
+string_excerpt(String, _, String).
 
 lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
                           _{id: Id,
