@@ -1,4 +1,5 @@
 :- module(lsp_metta_llm, [ request_code_comment/2,
+                           make_llm_request/2,
                            is_llm_enabled/0 ]).
 
 /** <module> lsp_metta_llm

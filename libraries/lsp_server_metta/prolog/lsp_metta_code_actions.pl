@@ -84,7 +84,8 @@
                                ]).
 
 :- use_module(lsp_metta_llm, [ request_code_comment/2,
-                               is_llm_enabled/0
+                               is_llm_enabled/0,
+                               make_llm_request/2
                              ]).
 
 % Can comment this entire subsystem by commenting out the next hook
@@ -186,6 +187,7 @@ key_value_to_pair(Key-JsonValue, [Key, Value]) :- atomic(Key), json_to_metta(Jso
 % lsp_hooks:compute_code_action/3 for GPT Rewrite Block
 lsp_hooks:compute_code_action(Uri, Range, RewriteAction) :-
     debugging(lsp(todo)),  % Condition for GPT Rewrite
+    is_llm_enabled,
     get_src_code_at_range(block, Code, Range, Uri),
     trim_to_length(Code, 300, Block),
     sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w' (TODO)", [Block]),
@@ -210,40 +212,19 @@ gpt_rewrite_code(Code, RewrittenCode) :-
 
 % Generic GPT Task Execution
 call_openai_for_gpt_task(Code, Task, Result) :-
-    getenv('OPENAI_API_KEY', ApiKey),
-    OpenAIURL = 'https://api.openai.com/v1/chat/completions',
     sformat(Prompt, "Task: ~w\n\nCode:\n~w", [Task, Code]),
-    RequestPayload = _{
-        model: "gpt-3.5-turbo",
-        messages: [
-            _{role: "system", content: "You are a helpful assistant."},
-            _{role: "user", content: Prompt}
-        ],
-        max_tokens: 100,
-        stop: "\n"
-    },
-    % Send the request to OpenAI
-    http_post(
-        OpenAIURL,
-        json(RequestPayload),
-        ResponseDict,
-        [authorization(bearer(ApiKey)), json_object(dict)]
-    ),
-    % Extract the rewritten code from the response
-    (   _{choices: Choices} :< ResponseDict,
-        member(Choice, Choices),
-        get_dict(message, Choice, Message),
-        get_dict(content, Message, Result)
-    ;   Result = "Error: No result returned from GPT"
-    ).
+    ( make_llm_request(Prompt, Result)
+    -> true
+    ;  Result = "Error: No result returned from GPT" ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Action: GPT Comment Code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for GPT Comment Code
 lsp_hooks:compute_code_action(Uri, _Range, CommentCodeAction) :-
-    get_filepart(Uri, FilePart),
     debugging(lsp(todo)),  % Condition for GPT Comment
+    is_llm_enabled,
+    get_filepart(Uri, FilePart),
     sformat(CommentTitle, "Source: Comment this file: '~w...' (TODO)", [FilePart]),
     CommentCodeAction = _{
         title: CommentTitle,
