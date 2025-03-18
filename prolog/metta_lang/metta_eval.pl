@@ -92,7 +92,9 @@ nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
 
-call_in_shared_space(G):- call_in_thread(main,G).
+call_in_shared_space(G):- call_in_shared_thread(main,G).
+call_in_shared_thread(Thread,Goal):- thread_self(Self),Thread==Self,!,call(Goal).
+call_in_shared_thread(_Thread,Goal):- call(Goal). % should use call_in_thread/2 (but it blocks lazy calls)
 
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 %nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
