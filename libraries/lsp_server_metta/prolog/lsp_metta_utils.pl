@@ -327,10 +327,8 @@ get_code_at_range(exact, Path, Range, Code) :- !,
     source_file_text(Path, FullText),  % Retrieve the full file text.
     split_string(FullText, "\n", "", Lines),  % Split the file into lines.
     _{start: Start, end: End} :< Range,  % Extract start and end positions from the range.
-    _{line: StartLine0, character: StartChar} :< Start,  % Get line and character of the start position.
-    _{line: EndLine0, character: EndChar} :< End,  % Get line and character of the end position.
-    StartLine is StartLine0 + 0,  % Set the start line (Prolog indexing adjustment if needed).
-    EndLine is EndLine0 + 1,  % Set the end line (since Prolog indexes from 1).
+    _{line: StartLine, character: StartChar} :< Start,  % Get line and character of the start position.
+    _{line: EndLine, character: EndChar} :< End,  % Get line and character of the end position.
     extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code).  % Extract the exact code range.
 
 
@@ -338,7 +336,7 @@ get_code_at_range(exact, Path, Range, Code) :- !,
 extract_code(Lines, StartLine, StartChar, EndLine, EndChar, Code) :-
     findall(LineText, (
         between(StartLine, EndLine, LineNum),  % Iterate over the line numbers in the range.
-        nth1(LineNum, Lines, Line),  % Get the line at the current number.
+        nth0(LineNum, Lines, Line),  % Get the line at the current number.
         (
             (LineNum =:= StartLine, LineNum =:= EndLine) ->  % Case where the start and end are on the same line.
             (EndCharStartChar is EndChar - StartChar,  % Get the substring within this line.
