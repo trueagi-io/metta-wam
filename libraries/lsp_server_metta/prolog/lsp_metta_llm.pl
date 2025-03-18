@@ -1,4 +1,4 @@
-:- module(lsp_metta_llm, []).
+:- module(lsp_metta_llm, [ request_code_comment/2 ]).
 
 /** <module> lsp_metta_llm
  * This module implements an interface to an LLM over an HTTP API to
