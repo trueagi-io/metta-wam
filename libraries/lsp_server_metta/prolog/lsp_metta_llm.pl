@@ -26,7 +26,7 @@ llm_http_api('https://api.openai.com/v1/responses').
 
 llm_model(Model) :-
     getenv('METTA_LLM_MODEL', Model), !.
-llm_model('gpt-4o').
+llm_model('gpt-3.5-turbo').
 
 llm_http_auth_key(Key) :- getenv('OPENAI_API_KEY', Key).
 
