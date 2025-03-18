@@ -441,8 +441,8 @@
             ($random_level (random-int  &rng 1 5))
             ($rank_level (case $random_level
                         (
-                        (1 highrank) ;(1 lowrank)
-                        (2 highestrank) ;(2 medrank) 
+                        (1 lowrank)
+                        (2 medrank) 
                         (3 highrank)
                         (4 highestrank)
                         ($_ lowrank)
@@ -450,7 +450,7 @@
         )
         (if (== ($rank_level) 
                 (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
-                ;(collapse (intersection (superpose (1 2 3 4)) 2)) <-- returns (2);        
+                ;(collapse (intersection (superpose (1 2 3 4)) 2))) ;<-- returns (2);        
             ; try again if this rank already tried
             (return_random_level $Ranks_Already_Tried_List)
             ; else success, return next new random level.
