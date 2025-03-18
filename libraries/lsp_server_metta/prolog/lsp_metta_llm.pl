@@ -40,9 +40,9 @@ request_code_comment(Code, Commented) :-
               json(_{model: Model, stream: false,
                      prompt: Prompt
                     }),
-              json(Resp),
-              [authorization(bearer(Key))]),
-    memberchk(response=Commented, Resp).
+              Resp,
+              [authorization(bearer(Key)), json_object(dict)]),
+    Commented = Resp.response.
 
 /*
 lsp_metta_llm:request_code_comment("(: (do_quoted) (-> Expression Atom))
