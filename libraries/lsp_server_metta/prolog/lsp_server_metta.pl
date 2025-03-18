@@ -666,7 +666,7 @@ server_capabilities(
         % Popups
         hoverProvider: true,
         codeLensProvider: _{resolveProvider: true},  % Code lens resolve provider enabled to support resolving additional data on code lenses
-        codeActionProvider: true,  % Enabled to support code actions
+        codeActionProvider: _{resolveProvider: true},  % Enabled to support code actions
         % Dynamically enumerate commands for Popups
         executeCommandProvider: _{
             commands: CommandsList  % List available Code Lens commands
