@@ -982,7 +982,7 @@ eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
         possible_type(Self,V,RetTypeV),
         eval('=',RetTypeV,Depth,Self,E,ER),
         V=ER,
-        eval_args(Eq,RetType,100,Self,Body,OO).
+        eval_args(Eq,RetType,Depth,Self,Body,OO).
 /*
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
