@@ -282,7 +282,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
 
-eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
+%eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
 eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
@@ -552,7 +552,7 @@ eval_20(Eq,RetType,Depth,Self,[PyAtom2|Args],Res):- is_list(PyAtom2), fail,
    PyAtom2 = [PyAtom,Sym,ArrowType],
    is_py_atom(PyAtom),!,
    Op = [PyAtom,Sym],
-   eval_20(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
+   eval_10(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
 
 % !(invoke-ftype println! (-> Atom (->)) (+ 1 1))
 
@@ -617,6 +617,7 @@ is_sl('IntSet').
 % =================================================================
 
 eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
+
 %eval_20(Eq,RetType,_Dpth,Self,[X|T],Y):- T==[],  atom(X),
 %   \+ is_user_defined_head_f(Self,X),
 %   do_expander(Eq,RetType,X,YY),!,Y=[YY].
@@ -646,6 +647,9 @@ eval_20_disabled(Eq,RetType,Depth,Self,X,Y):- fail,
         catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
 
 do_eval_args_for(X,_ParamTypes,X):-!.
+
+eval_20(Eq,RetType,Depth,Self,[X|T],Y):- T==[], is_list(X),!,
+  eval_args(Eq,RetType,Depth,Self,X,YY),Y=[YY].
 
 eval_20_disabled(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- fail, Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
@@ -4048,7 +4052,7 @@ nameify(Type, SVar):- sformat(TypeStr,'~w',[Type]), svar_fixvarname(TypeStr,SVar
 
 
 
-    :- find_missing_cuts.
+:- find_missing_cuts.
 
 end_of_file.
 
