@@ -83,7 +83,9 @@
                                  get_src_code_at_range/4
                                ]).
 
-:- use_module(lsp_metta_llm, [ request_code_comment/2 ]).
+:- use_module(lsp_metta_llm, [ request_code_comment/2,
+                               is_llm_enabled/0
+                             ]).
 
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
@@ -264,6 +266,7 @@ gpt_comment_code(Code, CommentedCode) :-
     call_openai_for_gpt_task(Code, "Add comments to this code.", CommentedCode).
 
 lsp_hooks:compute_code_action(Uri, Range, CommentCodeAction) :-
+    is_llm_enabled,
     % check that the client supports deferring edit calculation
     lsp_state:stored_json_value(
                   client_capabilities,
