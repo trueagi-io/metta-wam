@@ -599,7 +599,8 @@
      )
      (result $Gene1 $Pathway $Gene2))
 
-   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996)))
+   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996))))
+
 
 
 (compare-query
@@ -616,7 +617,7 @@
      )
      (result $Gene1 $Pathway $Gene2 $P1 $P2 $P3))
 
-   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996)))
+   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996))))
 
 
 
@@ -625,73 +626,73 @@
 ;;; 21) Counts of genes and their number of transcripts, proteins, and GO terms
 ;;;    in decreasing order (62700 records)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  (compare-query 
-	(:name "Counts of Genes/Transcripts/Proteins/GO in Desc Order"
-	 :query-number "21"
-	 :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
+(compare-query 
+  (:name "Counts of Genes/Transcripts/Proteins/GO in Desc Order"
+   :query-number "21"
+   :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
 
-	 :metta
+   :metta
+   (match &neo4j_out_v3
+	 (,
+	   (neo $G:gene transcribed_to $T:transcript)
+	   (neo $T:transcript translates_to $P:protein)
+	   (neo $P:protein go_gene_product $GO:go)
+	 )
+	 (aggregate $G
+	   (count $T numTranscripts)
+	   (count $P numProteins)
+	   (count $GO numGOterms)
+	   (sum (+ numTranscripts numProteins numGOterms) total))
+	 (result $G $numTranscripts $numProteins $numGOterms $total))
+
+   :cypher
+   "MATCH (g:gene)-[:transcribed_to]->(t:transcript)
+	OPTIONAL MATCH (t)-[:translates_to]->(p:protein) <-[:go_gene_product]-(go:go)
+	WITH g,
+		 COUNT(DISTINCT t) AS numTranscripts,
+		 COUNT(DISTINCT p) AS numProteins,
+		 COUNT(DISTINCT go) AS numGOterms,
+		 (COUNT(DISTINCT t) + COUNT(DISTINCT p) + COUNT(DISTINCT go)) AS total
+	RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
+	ORDER BY total DESC"
+
+   :neo4j-info (result_count 62700)))
+
+
+(compare-query 
+  (:name "LIMIT 1 Counts of Genes/Transcripts/Proteins/GO in Desc Order"
+   :query-number "21-LIMIT-1"
+   :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
+
+   :metta
+   (limit 1 (sort
+			   
 	 (match &neo4j_out_v3
-	   (,
-		 (neo $G:gene transcribed_to $T:transcript)
-		 (neo $T:transcript translates_to $P:protein)
-		 (neo $P:protein go_gene_product $GO:go)
-	   )
-	   (aggregate $G
-		 (count $T numTranscripts)
-		 (count $P numProteins)
-		 (count $GO numGOterms)
-		 (sum (+ numTranscripts numProteins numGOterms) total))
-	   (result $G $numTranscripts $numProteins $numGOterms $total))
+	 (,
+	   (neo $G:gene transcribed_to $T:transcript)
+	   (neo $T:transcript translates_to $P:protein)
+	   (neo $P:protein go_gene_product $GO:go)
+	 )
+	 (aggregate $G
+	   (count $T numTranscripts)
+	   (count $P numProteins)
+	   (count $GO numGOterms)
+	   (sum (+ numTranscripts numProteins numGOterms) total))
+	 (result $total $G $numTranscripts $numProteins $numGOterms))))
 
-	 :cypher
-	 "MATCH (g:gene)-[:transcribed_to]->(t:transcript)
-	  OPTIONAL MATCH (t)-[:translates_to]->(p:protein) <-[:go_gene_product]-(go:go)
-	  WITH g,
-		   COUNT(DISTINCT t) AS numTranscripts,
-		   COUNT(DISTINCT p) AS numProteins,
-		   COUNT(DISTINCT go) AS numGOterms,
-		   (COUNT(DISTINCT t) + COUNT(DISTINCT p) + COUNT(DISTINCT go)) AS total
-	  RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
-	  ORDER BY total DESC"
+   :cypher
+   "MATCH (g:gene)-[:transcribed_to]->(t:transcript)
+	OPTIONAL MATCH (t)-[:translates_to]->(p:protein) <-[:go_gene_product]-(go:go)
+	WITH g,
+		 COUNT(DISTINCT t) AS numTranscripts,
+		 COUNT(DISTINCT p) AS numProteins,
+		 COUNT(DISTINCT go) AS numGOterms,
+		 (COUNT(DISTINCT t) + COUNT(DISTINCT p) + COUNT(DISTINCT go)) AS total
+	RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
+	ORDER BY total DESC 
+	LIMIT 1"
 
-	 :neo4j-info (result_count 62700)))
-
-
-  (compare-query 
-	(:name "LIMIT 1 Counts of Genes/Transcripts/Proteins/GO in Desc Order"
-	 :query-number "21-LIMIT-1"
-	 :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
-
-	 :metta
-	 (limit 1 (sort
-				 
-	   (match &neo4j_out_v3
-	   (,
-		 (neo $G:gene transcribed_to $T:transcript)
-		 (neo $T:transcript translates_to $P:protein)
-		 (neo $P:protein go_gene_product $GO:go)
-	   )
-	   (aggregate $G
-		 (count $T numTranscripts)
-		 (count $P numProteins)
-		 (count $GO numGOterms)
-		 (sum (+ numTranscripts numProteins numGOterms) total))
-	   (result $total $G $numTranscripts $numProteins $numGOterms))))
-
-	 :cypher
-	 "MATCH (g:gene)-[:transcribed_to]->(t:transcript)
-	  OPTIONAL MATCH (t)-[:translates_to]->(p:protein) <-[:go_gene_product]-(go:go)
-	  WITH g,
-		   COUNT(DISTINCT t) AS numTranscripts,
-		   COUNT(DISTINCT p) AS numProteins,
-		   COUNT(DISTINCT go) AS numGOterms,
-		   (COUNT(DISTINCT t) + COUNT(DISTINCT p) + COUNT(DISTINCT go)) AS total
-	  RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
-	  ORDER BY total DESC 
-	  LIMIT 1"
-
-	 :neo4j-info (result_count 1)))
+   :neo4j-info (result_count 1)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -980,4 +981,183 @@
 
    :neo4j-info (( execution_time 0.028) (result_count 502) (node_count 503) (edge_count 503))))
 
+
+
+(compare-query
+  (:name "5-edge chain: $R1–$R5"
+   :description "Chain of 5 edges using $R1,$R2,$R3,$R4,$R5."
+
+	:cypher
+	 "MATCH (A)
+	   WHERE A.R1 IS NOT NULL OR (A)-[:R1]->()
+	   WITH A
+	   MATCH (A)-[R1]->(B)
+	   WHERE (type(R1) IS NOT NULL OR A.R1 IS NOT NULL) 
+		 AND id(A) <> id(B)
+	   WITH A, B, R1
+	   MATCH (B)-[R2]->(C)
+	   WHERE (type(R2) IS NOT NULL OR B.R2 IS NOT NULL) 
+		 AND id(A) <> id(B) AND id(A) <> id(C) 
+		 AND id(B) <> id(C)
+		 AND type(R1) <> type(R2)
+	   WITH A, B, C, R1, R2
+	   MATCH (C)-[R3]->(D)
+	   WHERE (type(R3) IS NOT NULL OR C.R3 IS NOT NULL) 
+		 AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) 
+		 AND id(B) <> id(C) AND id(B) <> id(D) 
+		 AND id(C) <> id(D)
+		 AND type(R1) <> type(R3) AND type(R2) <> type(R3)
+	   WITH A, B, C, D, R1, R2, R3
+	   MATCH (D)-[R4]->(E)
+	   WHERE (type(R4) IS NOT NULL OR D.R4 IS NOT NULL) 
+		 AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) AND id(A) <> id(E)
+		 AND id(B) <> id(C) AND id(B) <> id(D) AND id(B) <> id(E)
+		 AND id(C) <> id(D) AND id(C) <> id(E)
+		 AND id(D) <> id(E)
+		 AND type(R1) <> type(R4) AND type(R2) <> type(R4) AND type(R3) <> type(R4)
+	   WITH A, B, C, D, E, R1, R2, R3, R4
+	   MATCH (E)-[R5]->(F)
+	   WHERE (type(R5) IS NOT NULL OR E.R5 IS NOT NULL) 
+		 AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) AND id(A) <> id(E) AND id(A) <> id(F)
+		 AND id(B) <> id(C) AND id(B) <> id(D) AND id(B) <> id(E) AND id(B) <> id(F)
+		 AND id(C) <> id(D) AND id(C) <> id(E) AND id(C) <> id(F)
+		 AND id(D) <> id(E) AND id(D) <> id(F)
+		 AND id(E) <> id(F)
+		 AND type(R1) <> type(R5) AND type(R2) <> type(R5) AND type(R3) <> type(R5) AND type(R4) <> type(R5)
+	   RETURN DISTINCT 
+		   A, 
+		   coalesce(type(R1), 'Property') AS R1, 
+		   B, 
+		   coalesce(type(R2), 'Property') AS R2, 
+		   C, 
+		   coalesce(type(R3), 'Property') AS R3, 
+		   D, 
+		   coalesce(type(R4), 'Property') AS R4, 
+		   E, 
+		   coalesce(type(R5), 'Property') AS R5, 
+		   F
+	   LIMIT 3"
+
+
+   :metta
+   (let $_
+	 (
+	   ;; Edges must differ:
+	   (apply different (each-pair ($R1 $R2 $R3 $R4 $R5)))
+	   ;; Nodes must differ:
+	   (apply different (each-pair ($A $B $C $D $E $F $G $H $I $J $K))))
+	 (limit 3
+	   (match &neo4j_out_v3
+		 (,
+		   (neo $A $R1 $B)
+		   (neo $B $R2 $C)
+		   (neo $C $R3 $D)
+		   (neo $D $R4 $E)
+		   (neo $E $R5 $F)
+		 )
+		 (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F))))))
+
+  ;; Provide any additional info if desired:
+
+   :neo4j-info ((execution_time "unknown")
+			   (result_count "dynamic")
+			   (node_count "unknown")
+			   (edge_count "unknown"))))))
+
+
+
+(compare-query
+  (:name "Ten-Step Path from $R1 to $R10"
+   :query-number "custom-r1-r10"
+   :description "Find paths with exactly ten relationships, from $R1 to $R10."
+
+   :cypher
+   "MATCH (A)
+    WHERE A.R1 IS NOT NULL OR (A)-[:R1]->()
+    WITH A
+    MATCH (A)-[R1]->(B)
+    WHERE (type(R1) IS NOT NULL OR A.R1 IS NOT NULL)
+      AND id(A) <> id(B)
+    WITH A, B, R1
+    MATCH (B)-[R2]->(C)
+    WHERE (type(R2) IS NOT NULL OR B.R2 IS NOT NULL)
+      AND id(A) <> id(B) AND id(A) <> id(C) 
+      AND id(B) <> id(C)
+      AND type(R1) <> type(R2)
+    WITH A, B, C, R1, R2
+    MATCH (C)-[R3]->(D)
+    WHERE (type(R3) IS NOT NULL OR C.R3 IS NOT NULL)
+      AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D)
+      AND id(B) <> id(C) AND id(B) <> id(D)
+      AND id(C) <> id(D)
+      AND type(R1) <> type(R3) AND type(R2) <> type(R3)
+    WITH A, B, C, D, R1, R2, R3
+    MATCH (D)-[R4]->(E)
+    WHERE (type(R4) IS NOT NULL OR D.R4 IS NOT NULL)
+      AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) AND id(A) <> id(E)
+      AND id(B) <> id(C) AND id(B) <> id(D) AND id(B) <> id(E)
+      AND id(C) <> id(D) AND id(C) <> id(E)
+      AND id(D) <> id(E)
+      AND type(R1) <> type(R4) AND type(R2) <> type(R4) AND type(R3) <> type(R4)
+    WITH A, B, C, D, E, R1, R2, R3, R4
+    MATCH (E)-[R5]->(F)
+    WHERE (type(R5) IS NOT NULL OR E.R5 IS NOT NULL)
+      AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) AND id(A) <> id(E) AND id(A) <> id(F)
+      AND id(B) <> id(C) AND id(B) <> id(D) AND id(B) <> id(E) AND id(B) <> id(F)
+      AND id(C) <> id(D) AND id(C) <> id(E) AND id(C) <> id(F)
+      AND id(D) <> id(E) AND id(D) <> id(F)
+      AND id(E) <> id(F)
+      AND type(R1) <> type(R5) AND type(R2) <> type(R5) AND type(R3) <> type(R5) AND type(R4) <> type(R5)
+    WITH A, B, C, D, E, F, R1, R2, R3, R4, R5
+    MATCH (F)-[R6]->(G)
+    WHERE (type(R6) IS NOT NULL OR F.R6 IS NOT NULL)
+      AND id(A) <> id(B) AND id(A) <> id(C) AND id(A) <> id(D) AND id(A) <> id(E) AND id(A) <> id(F) AND id(A) <> id(G)
+      AND id(B) <> id(C) AND id(B) <> id(D) AND id(B) <> id(E) AND id(B) <> id(F) AND id(B) <> id(G)
+      AND id(C) <> id(D) AND id(C) <> id(E) AND id(C) <> id(F) AND id(C) <> id(G)
+      AND id(D) <> id(E) AND id(D) <> id(F) AND id(D) <> id(G)
+      AND id(E) <> id(F) AND id(E) <> id(G)
+      AND id(F) <> id(G)
+      AND type(R1) <> type(R6) AND type(R2) <> type(R6) AND type(R3) <> type(R6) AND type(R4) <> type(R6) AND type(R5) <> type(R6)
+    WITH A, B, C, D, E, F, G, R1, R2, R3, R4, R5, R6
+    MATCH (G)-[R7]->(H)
+    MATCH (H)-[R8]->(I)
+    MATCH (I)-[R9]->(J)
+    MATCH (J)-[R10]->(K)
+    RETURN DISTINCT 
+      A, coalesce(type(R1), 'Property') AS R1, 
+      B, coalesce(type(R2), 'Property') AS R2, 
+      C, coalesce(type(R3), 'Property') AS R3, 
+      D, coalesce(type(R4), 'Property') AS R4, 
+      E, coalesce(type(R5), 'Property') AS R5, 
+      F, coalesce(type(R6), 'Property') AS R6, 
+      G, coalesce(type(R7), 'Property') AS R7, 
+      H, coalesce(type(R8), 'Property') AS R8, 
+      I, coalesce(type(R9), 'Property') AS R9, 
+      J, coalesce(type(R10), 'Property') AS R10, 
+      K
+    LIMIT 3"
+
+   :metta
+     (limit 3
+       (match &neo4j_out_v3
+         (,
+		   (each-different ($A $B $C $D $E $F $G $H $I $J $K))
+		   (each-different ($R1 $R2 $R3 $R4 $R5 $R6 $R7 $R8 $R9 $R10))
+           (neo $A $R1 $B)
+           (neo $B $R2 $C)
+           (neo $C $R3 $D)
+           (neo $D $R4 $E)
+           (neo $E $R5 $F)
+           (neo $F $R6 $G)
+           (neo $G $R7 $H)
+           (neo $H $R8 $I)
+           (neo $I $R9 $J)
+           (neo $J $R10 $K)
+         )
+        (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F $R6 $G $R7 $H $R8 $I $R9 $J $R10 $K)))
+
+   :neo4j-info (execution_time "unknown")
+               (result_count "dynamic")
+               (node_count "unknown")
+               (edge_count "unknown")))
 
