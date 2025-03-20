@@ -300,6 +300,29 @@
       
           $pieces)))))
 
+
+(= (decide_greedy_move) 
+    ; make sure each move search call can either 
+    ;     1) succeed and return the move, or 
+    ;     2) fail and return Empty
+
+    ; attempt checkmate on human player
+    (let $checkmate (attemptcheckmate)
+      (if (not (==  $checkmate Empty))
+        $checkmate
+        ; take a piece
+        (let $highest (takehighestopen_scored)
+          (if (not (==  $highest Empty))
+            $highest
+            (let $threaten_position (movetoposition)
+              (if (not (==  $threaten_position Empty))
+                $threaten_position
+                ; move to an empty square
+                (let $random_move (random_move_empty_sq)
+                  (if (not (==  $random_move Empty)) 
+                    $random_move 
+                    (empty))))))))))
+
 ; (try_move_and_verify)
 ;
 ; Try the AI move, make sure not exposing moved piece and AI king to attack.
@@ -379,7 +402,7 @@
       ;else try another random level.
       (let*
         (
-            ($random_level (random-int  &rng 1 5))
+            ($random_level (random-int  &rng 1 5)) 
             ($rank_level (case $random_level
                         (
                         (1 lowrank)
@@ -464,27 +487,101 @@
       ;return move
       (nth $select_int_check $random_moves)
     ))
-
-(= (decide_greedy_move) 
-    ; make sure each move search call can either 
-    ;     1) succeed and return the move, or 
-    ;     2) fail and return Empty
-
-    ; attempt checkmate on human player
-    (let $checkmate (attemptcheckmate)
-      (if (not (==  $checkmate Empty))
-        $checkmate 
-        ; take a piece
-        (let $highest (takehighestopen_scored)
-          (if (not (==  $highest Empty))
-            $highest
-            ; move to an empty square
-            (let $random_move (random_move_empty_sq)
-              (if (not (==  $random_move Empty)) 
-                $random_move 
-                (empty))))))))
                 
-(= (attemptcheckmate) (empty))
+(= (attemptcheckmate) 
+  (let $checkmate_moves (collapse (attemptcheckmate_match))
+    ;(if (== $checkmate_moves ()) (empty) (car-atom $checkmate_moves))))  <-- works alone for check!
+    (let $list_of_checkmate_moves 
+        (collapse (
+          (let $test_move (superpose $checkmate_moves)
+            (let*
+              ( 
+                ($start (nth 1 $test_move))
+                ($dest (nth 2 $test_move))
+                ($dest_full (return_entire_box $dest))
+                ; provisionally move the piece
+                ($__1  (move_piece $start $dest))  
+                ($any_moves_left_whatsoever (collapse (any_moves_to_escape s)))
+                ($__2 (reset_pieces $start $dest_full))
+              )
+              (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+                    ; if no moves possible for human AI has found checkmate
+                    ($start $dest)
+                    (empty))))))
+        (if (== $list_of_checkmate_moves ())
+          (empty)
+          (let*
+            ( 
+              ($first_car (car-atom $list_of_checkmate_moves))
+              ($first_checkmate (car-atom $first_car))
+              ; set checkmate switch so we don't repeat these deep searches!
+              ($__3 (change-game-state checkmate))
+            )
+            $first_checkmate))
+    )
+  )
+)
+
+; empty square variation
+(= (attemptcheckmate_match) 
+  ; can an AI piece put human king in check?
+  ; locate silver king (human player's king)
+  (let $king_square (xy_box (s k))
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+      ; find empty squares
+      (match &self (square $x2 $y2)
+      ; look for check route to king
+        (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                 (== (clear_route ($x2 $y2 g $AI_rank) $king_square) True))
+          ; king in check
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          (empty))))))
+
+; occupied square variation
+(= (attemptcheckmate_match) 
+  ; can an AI piece put human king in check?
+  ; locate silver king (human player's king)
+  (let $king_square (xy_box (s k))
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+      ; find occupied squares
+      (match &self (square $x2 $y2 s $anyrank)
+      ; look for check route to king
+        (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                 (== (clear_route ($x2 $y2 g $AI_rank) $king_square) True))
+          ; king in check
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          (empty))))))
+
+; empty square variation
+(= (movetoposition) (empty))
+(= (movetopositionX)
+  (let $threaten_moves (collapse (movetoposition_match (superpose (q r b n))))
+      (car-atom $threaten_moves)))
+
+(= (movetoposition_match $AI_rank) 
+    ; find all AI pieces
+    ;(match &self (square $x1 $y1 g $AI_rank)
+     ; find all empty squares
+    ; (match &self (square $x2 $y2)
+      ; find occupied opponent squares
+    ;  (match &self (square $x3 $y3 s $anyrank)
+    (match &self (,
+      (square $x1 $y1 g $AI_rank)
+      (square $x2 $y2)
+      (square $x3 $y3 s $anyrank))
+      ; look for clear route to threaten
+        (if (and (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                      (== (clear_route ($x2 $y2 g $AI_rank) ($x3 $y3)) True))
+                 (not (== (take_dest ($x2 $y2) s) True)))
+          ; piece threatened
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          ;(empty))))))
+          (empty))))
 
 (= (takehighestopen_scored)
     (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
@@ -1434,13 +1531,6 @@
       (if (== $AttackBool True) $next-sq (empty))))
 
 ;
-;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
-;  #( :: 
-;    ($G $H $I $J) )) (clear_route $K #( :: ($A $B) ) $F))
-;
-;
-;#( = #(concat_lists () ()) True )
-
 ;*******************************************************
 ; Basic commands.  The game is executed using the following commands.
 ;*******************************************************
@@ -1457,8 +1547,8 @@
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
-                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4 ) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5 b q) (7 5) (8 5) 
+                        (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4 g b) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
@@ -1477,7 +1567,7 @@
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
-                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 3) (2 3) (3 3 ) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
@@ -1616,33 +1706,36 @@
                   (change-game-state resigned))))
             ; else proceed with move
             (progn
+              ; reset the temporary square atoms to starting board to be safe
+              (reset-pieces $starting_board)
               (let $start (nth 1 $move) ())
               (let $destination (nth 2 $move) ()) ; this is (x y) only
               ; we need the entire present destination box to pass to the board display
               (let $destination_entire (return_entire_box $destination) ())
+              ; make the move in atomspace using the individual "square" atoms
+              (move_piece $start $destination)
               ((py-atom print) "Greedy Chess moving...")
               ; create atom for the updated complete chess board...
               (let $provisional_board (move_piece_on_board $start $destination_entire $starting_board)
                     (add-atom &self (board-state $provisional_board)))
               ; remove the old chess board
               (remove-atom &self (board-state $starting_board))
-              ; display the new board
+              ; display the new board 
               (D)
               ; announce CHECK or CHECKMATE of human player if applicable
-              (let $Check (checkking s)
-                  (if (== $Check True)
-                      ; if the human is in check, see if they have any moves whatsoever left to escape
-                      (let $any_moves_left_whatsoever (collapse (any_moves_to_escape s))
-                        (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves!
-                            ; if no moves possible for human
-                            (progn
+              ; Note: The attemptcheckmate routine will set the checkmate status.
+              (match &self (game-state $msg2) 
+                (if (==  checkmate   $msg2) 
+                  (progn
                               ((py-atom print) "Checkmate! Greedy Chess wins!!!")
                               ((py-atom print) "Good game!")
                               ((py-atom print) "")
-                              (change-game-state checkmate)
                             )
-                            (println! "Check!")))
-                      (empty)))
+                  ; else look for check...
+                  (let $Check (checkking s)
+                    (if (== $Check True)        
+                      ((py-atom print) "Check!")
+                      ((py-atom print) "Your move.")))))
               ; since move complete, delete any individual square atoms which only live for a single move.
               (delete-pieces)
               ;     "
