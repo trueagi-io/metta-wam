@@ -69,6 +69,19 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
+transpiler_predicate_store(builtin, 'if-decons-expr', [5], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+'mc__1_5_if-decons-expr'(If,H,T,Then,Else,Result) :- (If=[H|T]*->Result=Then;Result=Else).
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
+  Convert = ['if-decons-expr',Cond,Head,Tail,Then,Else],!,
+  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
+  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
+  f2p(HeadIs,LazyVars,HeadResult,HeadResultN,LazyRetHead,Head,HeadCode,HeadCodeN),
+  lazy_impedance_match(LazyRetHead,x(doeval,eager,[]),HeadResult,HeadCode,HeadResultN,HeadCodeN,HeadResult1,HeadCode1),
+  f2p(HeadIs,LazyVars,TailResult,TailResultN,LazyRetTail,Tail,TailCode,TailCodeN),
+  lazy_impedance_match(LazyRetTail,x(doeval,eager,[]),TailResult,TailCode,TailResultN,TailCodeN,TailResult1,TailCode1),
+  append([CondCode1,[[assign,CondResult1,list_with_tail([H],T)]],HeadCode1,[[assign,H,HeadResult1]],TailCode1,[[assign,T,TailResult1]]],If),
+  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted,ConvertedN).
+
 %%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
