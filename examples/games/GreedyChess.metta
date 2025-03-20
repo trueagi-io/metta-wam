@@ -1,6 +1,4 @@
-;		WORK IN PROGRESS!!, Will start but not play yet!
-
-;   Mettalog Project 2024
+;   Mettalog Project 2024-2025
 
 ;   Function:  Play chess (human vs MeTTa program) using a fairly simple "greedy" approach
 ;              with moves that do not project possible boards beyond the present board.
