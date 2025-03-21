@@ -311,7 +311,10 @@
     ;(lots_of_pawns_in_home_row)
     (let* (
       ($msg1 (println! "looking for checkmate..."))
-      ($checkmate (attemptcheckmate)))
+      ($checkmate (if (== (lots_of_pawns_in_home_row) True)
+                    ; get pieces out 
+                    (empty)
+                    (attemptcheckmate))))
       (if (not (==  $checkmate Empty))
         $checkmate
         ; take a piece
@@ -601,6 +604,18 @@
       (car-atom $threaten_moves_all))))
 
 (= (movetoposition_match $AI_rank $targetrank ) 
+    (match &self (square $x1 $y1 g $AI_rank)
+     (match &self (square $x2 $y2)
+        (if (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+          (match &self (square $x3 $y3 s $targetrank)
+            (if (and (== (clear_route ($x2 $y2 g $AI_rank) ($x3 $y3)) True)
+                     (not (== (take_dest ($x2 $y2) s) True)))
+                        ; piece threatening
+                        (($x1 $y1 g $AI_rank) ($x2 $y2))
+                        (empty)))
+          (empty)))))
+
+(= (movetoposition_matchOLD $AI_rank $targetrank ) 
     ; find all AI pieces
     (match &self (square $x1 $y1 g $AI_rank)
      ; find all empty squares
@@ -615,8 +630,7 @@
           (($x1 $y1 g $AI_rank) ($x2 $y2))
           ; else fail
           (empty))))))
-          ;(empty))))
-
+                                         
 (= (takehighestopen_scored)
     (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
       (if (not (== $highest_open ()))
@@ -1337,9 +1351,12 @@
     ($X1  (nth 1 $starting_square))
     ($Y1  (nth 2 $starting_square))
     ($new_board2 (remove_piece_recursive $X1 $Y1 $new_board1))
-    ($print (if (== (size-atom $target_square) 2)
+    ($print1 (if (== (size-atom $target_square) 2)
              (empty)
              ((py-atom print) "Piece captured!")))
+    ($print2 (if (== (size-atom $target_square) 2)
+             (empty)
+             (println! $target_square)))
     ) 
     $new_board2))
 
