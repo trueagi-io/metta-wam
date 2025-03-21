@@ -986,6 +986,48 @@
    :neo4j-info (( execution_time 0.028) (result_count 502) (node_count 503) (edge_count 503))))
 
 
+(isa-test-query
+  (:name "Same Start-End Pair with Directed Relation"
+   :query-number "custom-same-start-end"
+   :description "Find pairs of nodes A and B that share the same 'start' and 'end' property values, where A ≠ B and A links to B via some relationship."
+
+   :metta
+   (match &neo4j_out_v3
+     (,
+       (each-different ($A $B))
+       (neo $A start $S)
+       (neo $B start $S)
+       (neo $A end $E)
+       (neo $B end $E)
+       (neo_P $A $R $B $EdgeProps)
+     )
+     (result $A $B $S $E $R $EdgeProps))
+
+   :prolog
+   "neo(A, start, S),
+    neo(B, start, S),
+    A \\== B,
+    neo(A, end, E),
+    neo(B, end, E),
+    neo(A, R, B)."
+
+   :cypher
+   "MATCH (a)-[r]->(b)
+     WHERE a.start = b.start AND
+           a.end = b.end AND
+           id(a) <> id(b)
+     RETURN DISTINCT
+       a.id AS A_ID,
+       b.id AS B_ID,
+       a.start AS Start,
+       a.end AS End,
+       type(r) AS RelationType,
+       properties(r) AS RelationProperties;"
+
+   :neo4j-info ((execution_time "unknown")
+                (result_count "dynamic")
+                (node_count "unknown")
+                (edge_count "unknown"))))
 
 (isa-test-query
   (:name "5-edge chain: $R1–$R5"
