@@ -1247,17 +1247,18 @@ register_linked(F/A):- assert_neo_new(_,is_registered_link(F, A)), dynamic(F/A).
 :- time(link_mw_data(neo4j_out_v3_mw)).
 
 
-rtq:- forall(metta_atom(_,['isa-test-query',Y]),
-  ignore(do_isa_test_query(Y))).
+rtq:- rtq(10).
+:- cmd_note(rtq(120)).
+rtq(DefaultTime):- forall(metta_atom(_,['isa-test-query',Y]),
+  ignore(do_isa_test_query(Y, DefaultTime))).
 
-:- cmd_note(rtq).
 
-do_isa_test_query(Y):- nl,nl,write(' '),%write_src_wi(Y),
+do_isa_test_query(Y, DefaultTime):- nl,nl,write(' '),%write_src_wi(Y),
     must_det_lls((
     get_prop(Y,':metta',Z),
     get_prop(Y,':name',Name),
     get_prop(Y,':description',Desc),
-    get_prop_else(Y,':minimum-time', Time, 10),
+    get_prop_else(Y,':minimum-time', Time, DefaultTime),
     assign_old_varnames(Z,ZZ),
     nl,nl,write(' '),write_src_wi(exec(ZZ)),nl,
     into_prolog_query(ZZ,Prolog),
