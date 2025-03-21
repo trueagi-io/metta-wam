@@ -968,7 +968,7 @@ mw_set_varname_and_type(_Body,V, N):- ignore('$VAR'(N)=V).
 directly_in_pred(Body,Var):- sub_term(Found,Body),compound(Found),arg(_,Found,V),V==Var, !, \+ functor(Found,':',_).
 
 name_to_type(Name,_Type):- atom_concat('PropList',_,Name),!,fail.
-name_to_type(Name,_Type):- atom_length(Name,Len), Len<3,!,fail.
+name_to_type(Name,_Type):- atom_length(Name,Len), Len<5,!,fail.
 name_to_type(Name,Type):-
     downcase_atom(Name,DC),atom_chars(DC,[C|Chars]),append(TypeChars,[N|_],Chars),char_type(N,digit),
     atom_chars(Type,[C|TypeChars]),!.
