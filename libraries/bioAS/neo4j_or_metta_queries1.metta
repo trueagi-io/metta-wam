@@ -1,7 +1,11 @@
+
+(arg1Isa isa-test-query PropertyListAtom)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query1 - BRCA2 Gene Interactions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query1 - BRCA2 Gene Interactions"
    :query-number "1"
    :description "Find all interactions involving the BRCA2 gene, including transcripts, proteins, and pathways."
@@ -21,7 +25,7 @@
                (result_count 151956) (node_count 1908) (edge_count 1882))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query1 (With Properties) - BRCA2 Gene Interactions"
    :query-number "1-with-properties"
    :description "Find all interactions involving the BRCA2 gene, returning property lists."
@@ -45,7 +49,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query2 - IGF2 Components
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query2 - IGF2 Components"
    :query-number "2"
    :description "Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene."
@@ -65,7 +69,7 @@
                (result_count 41536) (node_count 144) (edge_count 143))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query2 (With Properties) - IGF2 Components"
    :query-number "2-with-properties"
    :description "Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene, returning property lists."
@@ -89,7 +93,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query3 - Gene Interactions and GO Terms
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query3 - Gene Interactions and GO Terms"
    :query-number "3"
    :description "Find gene interactions and associated GO terms including proteins and transcripts."
@@ -111,7 +115,7 @@
                (edge_count "unknown"))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query3 (With Properties) - Gene Interactions and GO Terms"
    :query-number "3-with-properties"
    :description "Find gene interactions and associated GO terms (proteins/transcripts), returning property lists."
@@ -137,7 +141,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query4 - Interactions Involving 1433B
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query4 - Interactions Involving 1433B"
    :query-number "4"
    :description "Find interactions involving 1433B protein, including transcripts, exons, and GO terms."
@@ -158,7 +162,7 @@
                 (result_count 794742) (node_count 2693) (edge_count 2698))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query4 - @xabush order Interactions Involving 1433B"
    :query-number "4x"
    :description "@xabush order Find interactions involving 1433B protein, including transcripts, exons, and GO terms."
@@ -178,7 +182,7 @@
                 (result_count 794742) (node_count 2693) (edge_count 2698))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query4 (With Properties) - Interactions Involving 1433B"
    :query-number "4-with-properties"
    :description "Find interactions involving 1433B protein, returning property lists."
@@ -203,7 +207,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query5 - Components Associated with IGF1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query5 - Components Associated with IGF1"
    :query-number "5"
    :description "Find enhancers, pathways, and transcripts associated with the IGF1 gene."
@@ -222,7 +226,7 @@
    :neo4j-info (( execution_time 25) (result_count 1932) (node_count 45) (edge_count 49))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query5 (With Properties) - Components Associated with IGF1"
    :query-number "5-with-properties"
    :description "Find enhancers, pathways, and transcripts associated with IGF1, returning property lists."
@@ -239,13 +243,13 @@
      (result $Gene $Pathway $Enh $Tx $Prot
              $P1 $P2 $P3 $P4 $P5))
 
-   :neo4j-info (( execution_time 25) (result_count 1932) (node_count 45) (edge_count 49)))))
+   :neo4j-info (( execution_time 25) (result_count 1932) (node_count 45) (edge_count 49))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query6 - Pathways and Protein Interactions for IGF1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query6 - Pathways and Protein Interactions for IGF1"
    :query-number "6"
    :description "Find pathways and interacting proteins for the IGF1 gene including all associated components."
@@ -265,10 +269,10 @@
    :neo4j-info (( execution_time "squiggly_mark")
                (result_count 5790204)
                (node_count 3042)
-               (edge_count 3046)))))
+               (edge_count 3046))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query6 (With Properties) - Pathways and Protein Interactions for IGF1"
    :query-number "6-with-properties"
    :description "Find pathways and interacting proteins for the IGF1 gene, returning property lists."
@@ -289,13 +293,13 @@
    :neo4j-info (( execution_time "squiggly_mark")
                (result_count 5790204)
                (node_count 3042)
-               (edge_count 3046)))))
+               (edge_count 3046))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query7 - Transcripts and Exons for TP73-AS1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query7 - Transcripts and Exons for TP73-AS1"
    :query-number "7"
    :description "Find transcripts and exons associated with the TP73-AS1 gene."
@@ -309,10 +313,10 @@
      )
      (result $Tx $Exon $Gene))
 
-   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284)))))
+   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query7 (With Properties) - Transcripts and Exons for TP73-AS1"
    :query-number "7-with-properties"
    :description "Find transcripts and exons associated with the TP73-AS1 gene, returning property lists."
@@ -326,13 +330,13 @@
      )
      (result $Tx $Exon $Gene $P1 $P2 $P3))
 
-   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284)))))
+   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query8 - Interactions Involving 1433S Protein
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query8 - Interactions Involving 1433S Protein"
    :query-number "8"
    :description "Find proteins interacting with 1433S and associated GO terms."
@@ -346,10 +350,10 @@
      )
      (result $GO $Prot1 $Prot2))
 
-   :neo4j-info (( execution_time 420) (result_count 62248) (node_count 2040) (edge_count 4047)))))
+   :neo4j-info (( execution_time 420) (result_count 62248) (node_count 2040) (edge_count 4047))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query8 (With Properties) - Interactions Involving 1433S Protein"
    :query-number "8-with-properties"
    :description "Find proteins interacting with 1433S and their GO terms, returning property lists."
@@ -370,7 +374,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query9 - IGF1 Expression in Tissues
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query9 - IGF1 Expression in Tissues"
    :query-number "9"
    :description "Find IGF1 expression in tissues and related transcripts."
@@ -384,10 +388,10 @@
      )
      (result $Gene $Uberon $Tx))
 
-   :neo4j-info (( execution_time 6) (result_count 1827) (node_count 269) (edge_count 268)))))
+   :neo4j-info (( execution_time 6) (result_count 1827) (node_count 269) (edge_count 268))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query9 (With Properties) - IGF1 Expression in Tissues"
    :query-number "9-with-properties"
    :description "Find IGF1 expression in tissues and related transcripts, returning property lists."
@@ -408,7 +412,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query10 - Transcripts & Exons on Chromosome 1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query10 - Transcripts & Exons on Chromosome 1"
    :query-number "10"
    :description "Find transcripts, exons (on chr1), and interacting proteins."
@@ -426,10 +430,10 @@
    :neo4j-info (( execution_time "stopped_after(3000)")
                (result_count 40172978)
                (node_count 51599)
-               (edge_count 1427846)))))
+               (edge_count 1427846))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query10 (With Properties) - Transcripts & Exons on Chromosome 1"
    :query-number "10-with-properties"
    :description "Find transcripts, exons (on chr1), and interacting proteins, returning property lists."
@@ -454,7 +458,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query11 - IGF1 Gene Expression in Cell Lines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query11 - IGF1 Gene Expression in Cell Lines"
    :query-number "11"
    :description "Find IGF1 gene expression in cell lines and related subclass relationships."
@@ -469,10 +473,10 @@
      (result $Gene $CL1 $CL2))
 
    :neo4j-info (( execution_time 1)
-               (result_count 42) (node_count 52) (edge_count 51)))))
+               (result_count 42) (node_count 52) (edge_count 51))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query11 (With Properties) - IGF1 Gene Expression in Cell Lines"
    :query-number "11-with-properties"
    :description "Find IGF1 gene expression in cell lines, plus subclass relationships, returning property lists."
@@ -494,7 +498,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query12 - IGF1 Gene Regulation by SNP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query12 - IGF1 Gene Regulation by SNP"
    :query-number "12"
    :description "Find regulation of the IGF1 gene by SNP activity."
@@ -508,10 +512,10 @@
      (result $Snp $Gene))
 
    :neo4j-info (( execution_time 3)
-               (result_count 445) (node_count 446) (edge_count 445)))))
+               (result_count 445) (node_count 446) (edge_count 445))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query12 (With Properties) - IGF1 Gene Regulation by SNP"
    :query-number "12-with-properties"
    :description "Find regulation of the IGF1 gene by SNP activity, returning property lists."
@@ -532,7 +536,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query13 - IGF1 Gene Interactions and Regulations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query13 - IGF1 Gene Interactions and Regulations"
    :query-number "13"
    :description "Find IGF1 gene interactions, regulations, transcripts, proteins, etc."
@@ -556,7 +560,7 @@
                (edge_count 377127))))
 
 
-(compare-query
+(isa-test-query
   (:name "Query13 (With Properties) - IGF1 Gene Interactions and Regulations"
    :query-number "13-with-properties"
    :description "Find IGF1 gene interactions, regulations, transcripts, proteins, returning property lists."
@@ -585,7 +589,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Query14 - Pathway Associations for SNAP25
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "Query14 - Pathway Associations for SNAP25"
    :query-number "14"
    :description "Locate SNAP25 in pathways with other genes."
@@ -603,7 +607,7 @@
 
 
 
-(compare-query
+(isa-test-query
   (:name "Query14 (With Properties) - Pathway Associations for SNAP25"
    :query-number "14-with-properties"
    :description "Locate SNAP25 in pathways with other genes, returning property lists."
@@ -626,7 +630,7 @@
 ;;; 21) Counts of genes and their number of transcripts, proteins, and GO terms
 ;;;    in decreasing order (62700 records)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query 
+(isa-test-query 
   (:name "Counts of Genes/Transcripts/Proteins/GO in Desc Order"
    :query-number "21"
    :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
@@ -656,10 +660,10 @@
 	RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
 	ORDER BY total DESC"
 
-   :neo4j-info (result_count 62700)))
+   :neo4j-info ((result_count 62700))))
 
 
-(compare-query 
+(isa-test-query 
   (:name "LIMIT 1 Counts of Genes/Transcripts/Proteins/GO in Desc Order"
    :query-number "21-LIMIT-1"
    :description "Counts of genes and their number of transcripts, proteins, and GO terms in decreasing order."
@@ -692,13 +696,13 @@
 	ORDER BY total DESC 
 	LIMIT 1"
 
-   :neo4j-info (result_count 1)))
+   :neo4j-info ((result_count 1))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 22) All transcripts, proteins, and GO terms of the TTN (Titin) gene (225 records)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "TTN: All transcripts, proteins, and GO terms"
    :query-number "22"
    :description "Find all transcripts, proteins, and GO terms connected to the TTN gene."
@@ -713,13 +717,13 @@
 	 )
 	 (result $G $T $P $GO))
 
-   :neo4j-info (result_count 225)))
+   :neo4j-info ((result_count 225))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 23) The above query but returning property names only (225 records)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "TTN: gene_name, transcript_name, protein_name, GO term_name"
    :query-number "23"
    :description "Same TTN query but returning property fields (225 records)."
@@ -739,14 +743,14 @@
 	 )
 	 (result $GeneName $TxName $ProtName $GoName))
 
-   :neo4j-info (result_count 225)))
+   :neo4j-info ((result_count 225))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 24) Transcripts, proteins, and GO terms for ALL genes (62700 records)
 ;;;    (Similar pattern but no restriction on gene_name)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "All genes: gene_name, transcript_name, protein_name, GO term_name"
    :query-number "24"
    :description "Find transcripts, proteins, and GO terms for all genes, returning property names."
@@ -765,13 +769,13 @@
 	 )
 	 (result $GeneName $TxName $ProtName $GoName))
 
-   :neo4j-info (result_count 62700)))
+   :neo4j-info ((result_count 62700))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 25) Transcripts and exons of a given gene (TTN): 1700 records
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "TTN: Transcripts and Exons"
    :query-number "25"
    :description "Find transcripts and exons for TTN, returning property fields (1700 records)."
@@ -790,13 +794,13 @@
 	 )
 	 (result $GeneName $TxName $ExonID))
 
-   :neo4j-info (result_count 1700)))
+   :neo4j-info ((result_count 1700))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 26) Transcripts and exons of ALL genes: 1,649,476 records
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "All Genes: Transcripts and Exons"
    :query-number "26"
    :description "Find transcripts and exons for all genes, returning property fields (1,649,476 records)."
@@ -814,7 +818,7 @@
 	 )
 	 (result $GeneName $TxName $ExonID))
 
-   :neo4j-info (result_count 1649476)))
+   :neo4j-info ((result_count 1649476))))
 
 
 
@@ -823,7 +827,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s2a - Transcript-Exon Relationship
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s2a - Transcript-Exon Relationship"
    :query-number "s2a"
    :description "Find transcripts (by transcript_id) and their included exons."
@@ -842,7 +846,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s2a (With Properties) - Transcript-Exon Relationship
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s2a (With Properties) - Transcript-Exon Relationship"
    :query-number "s2a-with-properties"
    :description "Find transcripts (by transcript_id) and their included exons, returning property lists."
@@ -861,7 +865,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s2b - Transcript & Exon Names
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s2b - Transcript & Exon Names"
    :query-number "s2b"
    :description "Find transcripts (by transcript_id) with transcript_name and exons with exon_id."
@@ -882,7 +886,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s2b (With Properties) - Transcript & Exon Names
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s2b (With Properties) - Transcript & Exon Names"
    :query-number "s2b-with-properties"
    :description "Find transcripts (by transcript_id) with transcript_name and exons with exon_id, returning property lists."
@@ -904,7 +908,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s502a - Regulators of FTO
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s502a - Regulators of FTO"
    :query-number "s502a"
    :description "Find all genes that regulate the FTO gene (1-hop)."
@@ -923,7 +927,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s502a (With Properties) - Regulators of FTO
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s502a (With Properties) - Regulators of FTO"
    :query-number "s502a-with-properties"
    :description "Find all genes that regulate the FTO gene (1-hop), returning property lists."
@@ -942,7 +946,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s502b - Regulators of FTO + gene_name
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s502b - Regulators of FTO + gene_name"
    :query-number "s502b"
    :description "Find all genes that regulate FTO, returning regulator and target gene_names."
@@ -963,7 +967,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; s502b (With Properties) - Regulators of FTO + gene_name
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(compare-query
+(isa-test-query
   (:name "s502b (With Properties) - Regulators of FTO + gene_name"
    :query-number "s502b-with-properties"
    :description "Find all genes that regulate FTO, returning regulator and target gene_names, plus property lists."
@@ -983,8 +987,8 @@
 
 
 
-(compare-query
-  (:name "5-edge chain: $R1–$R5"
+(isa-test-query
+  (:name "5-edge chain: $R1â€“$R5"
    :description "Chain of 5 edges using $R1,$R2,$R3,$R4,$R5."
 
 	:cypher
@@ -1055,18 +1059,18 @@
 		   (neo $D $R4 $E)
 		   (neo $E $R5 $F)
 		 )
-		 (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F))))))
+		 (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F))))
 
   ;; Provide any additional info if desired:
 
    :neo4j-info ((execution_time "unknown")
 			   (result_count "dynamic")
 			   (node_count "unknown")
-			   (edge_count "unknown"))))))
+			   (edge_count "unknown"))))
 
 
 
-(compare-query
+(isa-test-query
   (:name "Ten-Step Path from $R1 to $R10"
    :query-number "custom-r1-r10"
    :description "Find paths with exactly ten relationships, from $R1 to $R10."
@@ -1156,8 +1160,73 @@
          )
         (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F $R6 $G $R7 $H $R8 $I $R9 $J $R10 $K)))
 
-   :neo4j-info (execution_time "unknown")
+   :neo4j-info ((execution_time "unknown")
                (result_count "dynamic")
                (node_count "unknown")
-               (edge_count "unknown")))
+               (edge_count "unknown"))))
+
+
+
+
+(isa-test-query
+  (:name "Dynamic Query 9 relations"
+   :query-number "custom-dynamic-query-9-relations"
+   :description "Finds dynamic relationships with properties in both Neo4j (Cypher) and Prolog, ensuring all result values are distinct."
+
+   :metta
+   (match &neo4j_out_v3
+     (,
+	   (each-different (cl_0000540:cl $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 q13394))
+	   (each-different ($R1 $R2 $R3 $R4 $R5 $R6 $R7 $R8 $R9))
+       (neo cl_0000540:cl $R1 $VAR1)
+       (neo $VAR1 $R2 $VAR2 $P3)
+       (neo $VAR2 $R3 $VAR3 $P4)
+       (neo $VAR3 $R4 $VAR4 $P5)
+       (neo $VAR4 $R5 $VAR5 $P6)
+       (neo $VAR5 $R6 $VAR6 $P7)
+       (neo $VAR6 $R7 $VAR7 $P8)
+       (neo $VAR7 $R8 $VAR8 $P9)
+       (neo $VAR8 $R9 q13394)
+     )
+
+     (result $Class $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $Q13394
+             $R1 $R2 $R3 $R4 $R5 $R6 $R7 $R8 $R9))
+
+
+	:prolog
+	"m(neo(cl_0000540:cl, R1, VAR1),
+		  neo(VAR1, R2, VAR2),
+		  neo(VAR2, R3, VAR3),
+		  neo(VAR3, R4, VAR4),
+		  neo(VAR4, R5, VAR5),
+		  neo(VAR5, R6, VAR6),
+		  neo(VAR6, R7, VAR7),
+		  neo(VAR7, R8, VAR8),
+		  neo(VAR8, R9, q13394))"
+
+	:cypher 
+	"MATCH 
+	  (c {id: \"cl_0000540\"})-[r1]->(v1)-[r2]->(v2)-[r3]->(v3)-[r4]->(v4)
+	  -[r5]->(v5)-[r6]->(v6)-[r7]->(v7)-[r8]->(v8)-[r9]->({id: \"q13394\"} q)
+	WHERE 
+	  c <> v1 AND v1 <> v2 AND v2 <> v3 AND v3 <> v4 AND v4 <> v5 AND 
+	  v5 <> v6 AND v6 <> v7 AND v7 <> v8 AND v8 <> q
+	RETURN DISTINCT 
+		   c, v1, v2, v3, v4, v5, v6, v7, v8, q, 
+		   type(r1) AS R1_Label, properties(r1) AS R1_CypherProperties,
+		   type(r2) AS R2_Label, properties(r2) AS R2_CypherProperties,
+		   type(r3) AS R3_Label, properties(r3) AS R3_CypherProperties,
+		   type(r4) AS R4_Label, properties(r4) AS R4_CypherProperties,
+		   type(r5) AS R5_Label, properties(r5) AS R5_CypherProperties,
+		   type(r6) AS R6_Label, properties(r6) AS R6_CypherProperties,
+		   type(r7) AS R7_Label, properties(r7) AS R7_CypherProperties,
+		   type(r8) AS R8_Label, properties(r8) AS R8_CypherProperties,
+		   type(r9) AS R9_Label, properties(r9) AS R9_CypherProperties;"
+
+   :neo4j-info ((execution_time "unknown")
+               (result_count "dynamic")
+               (node_count "unknown")
+               (edge_count "unknown"))))
+
+
 
