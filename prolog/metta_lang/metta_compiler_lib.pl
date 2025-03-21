@@ -245,6 +245,12 @@ transpiler_predicate_store(builtin, union, [2], '@doc', '@doc', [x(doeval,lazy,[
 %transpiler_predicate_store(builtin, intersection, [2], '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
 %'mc__1_2_intersection'(S1,S2,R)
 
+transpiler_predicate_store(builtin, unique, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_1_unique'(S,R) :- 'mc__1_1_collapse'(S,S0),list_to_set(S0,R).
+
+transpiler_predicate_store(builtin, 'unique-atom', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_unique-atom'(S,R) :- list_to_set(S,R).
+
 transpiler_predicate_store(builtin, limit, [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_2_limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 

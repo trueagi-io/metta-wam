@@ -202,6 +202,7 @@ create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
 create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- !.
 create_p1(ERet,ECode,NRet,NCode,R) :- % try and combine code to prevent combinatorial explosion
+   %(\+ fullvar(ERet), ECode\=@=true -> trace, true),
    partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
    (CCode=[] ->
       R=[ispeEnN,ERet,ECode,NRet,NCode]
