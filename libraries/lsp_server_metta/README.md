@@ -261,3 +261,183 @@ vim.api.nvim_create_autocmd(
       end,
 })
 ```
+
+## Configuring LLM Integrations
+
+To use the LLM-based LSP code actions, some configuration is required.
+
+### Using OpenAI's API
+
+Set the environment variable `OPENAI_API_KEY` and optionally `METTA_LLM_MODEL` (defaults to `gpt-3.5-turbo`).
+
+If you are starting the server manually and connecting to it, set this environment variable there, e.g.
+
+```bash
+OPENAI_API_KEY="abc" METTA_LLM_MODEL="gpt-4o" swipl -l ... # as above
+```
+
+If you're configuring your editor to start the server automatically, see the appropriate section below under [Configuring Your Editor For LLM Usage](#configuring-your-editor-for-llm-usage).
+
+
+### Running Your Own LLM
+
+To run a local LLM for your editor to communicate to, install & run [ollama](https://ollama.com).
+
+For improved "knowledge" of Metta, you can use the included Modelfile to create an LLM variant with a system prompt that includes more context about the Metta language. Do this by running the following command from the `metta-wam` directory:
+
+```bash
+ollama create llama3-metta -f libraries/lsp_server_metta/Modelfile
+```
+
+Then configure start your server or configure your editor as indicated under [Configuring Your Editor For LLM Usage](#configuring-your-editor-for-llm-usage), except instead of setting `OPENAI_API_KEY` to whatever value, set `METTA_LLM_URL` to `http://localhost:11434/api/generate` and set `METTA_LLM_MODEL` to `llama3-metta`.
+
+### Configuring Your Editor For LLM Usage
+
+#### VSCode
+
+Go to "extensions", click on the "manage" cog on the "metta-lsp" extension, then settings.
+
+From here, you can set "enable integration with chatgpt" to true and set the API key or LLM URL and model.
+
+#### Emacs
+
+##### Eglot
+
+If you've installed the `lsp_server_metta` pack:
+
+```emacs-lisp
+(add-to-list 'eglot-server-programs
+              (cons 'metta-mode
+                    (list
+                     "env"                    ; added
+                     "OPENAI_API_KEY=abc"     ; added
+                     "METTA_LLM_MODEL=gpt-4o" ; added
+                     "swipl"
+                     "-g" "use_module(library(lsp_server_metta))."
+                     "-g" "lsp_server_metta:main"
+                     "-t" "halt"
+                     "--"
+                     "port" :autoport)))
+```
+
+If you want to load directly from the source:
+
+```emacs-lisp
+;; Replace this with the path to your metta-wam directory
+(let ((mettalog-dir "/path/to/metta-wam"))
+   (add-to-list 'eglot-server-programs
+                (cons 'metta-mode
+                      (list
+                       "env"
+                       "OPENAI_API_KEY=abc"      ; added
+                       "METTA_LLM_MODEL=gpt-4o"  ; added
+                       (concat "METTALOG_DIR=" mettalog-dir)
+                       (concat "SWIPL_PACK_PATH=" mettalog-dir "/libraries")
+                       "swipl"
+                       "-l" (concat mettalog-dir "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl")
+                       "-g" "lsp_server_metta:main"
+                       "-t" "halt"
+                       "--"
+                       "port" :autoport))))
+```
+
+##### lsp-mode
+
+If you've installed the `lsp_server_metta` pack:
+
+```emacs-lisp
+(lsp-register-client
+ (make-lsp-client
+  :new-connection (lsp-tcp-connection (lambda (port)
+                                        (list
+                                         "env"                    ; added
+                                         "OPENAI_API_KEY=abc"     ; added
+                                         "METTA_LLM_MODEL=gpt-4o" ; added
+                                         "swipl"
+                                         "-g" "use_module(library(lsp_server_metta))."
+                                         "-g" "lsp_server_metta:main"
+                                         "-t" "halt"
+                                         "--"
+                                         "port" port)))
+  :major-modes '(metta-mode)
+  :activation-fn (lsp-activate-on "metta")
+  :server-id 'metta-lsp))
+```
+
+If you want to load directly from the source:
+
+```emacs-lisp
+;; Replace this with the path to your metta-wam directory
+(let ((mettalog-dir "/path/to/metta-wam"))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-tcp-connection (lambda (port)
+                                          (list
+                                           "swipl"
+                                           "-l" (concat mettalog-dir "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl")
+                                           "-g" "lsp_server_metta:main"
+                                           "-t" "halt"
+                                           "--"
+                                           "port" port)))
+     :environment-fn (lambda ()
+                       (list ("METTALOG_DIR" . mettalog-dir)
+                             ("OPENAI_API_KEY" . "abc") ; added
+                             ("METTA_LLM_MODEL" . "gpt-4o") ; added
+                             ("SWIPL_PACK_PATH". (concat mettalog-dir "/libraries"))))
+    :major-modes '(metta-mode)
+    :activation-fn (lsp-activate-on "metta")
+    :server-id 'metta-lsp)))
+
+```
+
+#### Neovim
+
+If you've installed the `lsp_server_metta` pack:
+
+```lua
+vim.api.nvim_create_autocmd(
+   'FileType', {
+      pattern = 'metta',
+      callback = function(ev)
+         vim.lsp.start({
+               name = 'metta_lsp',
+               cmd = {'swipl',
+                     '-g', 'use_module(library(lsp_server_metta)).',
+                     '-g', 'lsp_server_metta:main',
+                     '-t', 'halt',
+                     '--', 'stdio'},
+               root_dir = vim.fs.root(ev.buf, {'README.md'}),
+               -- begin added
+               cmd_env = { OPENAI_API_KEY = 'abc';
+                           METTA_LLM_MODEL = 'gpt-4o'; },
+               -- end added
+         })
+      end,
+})
+```
+
+To run from the `metta_wam` directory
+
+```lua
+vim.api.nvim_create_autocmd(
+   'FileType', {
+      pattern = 'metta',
+      callback = function(ev)
+         local mettalogDir = '/path/to/metta-wam'
+         vim.lsp.start({
+               name = 'metta_lsp',
+               cmd = { 'swipl',
+                       '-l', mettalogDir .. '/libraries/lsp_server_metta/prolog/lsp_server_metta.pl',
+                       '-g', 'lsp_server_metta:main',
+                       '-t', 'halt',
+                       '--', 'stdio' },
+               cmd_cwd = mettalogDir,
+               cmd_env = { METTALOG_DIR = mettalogDir;
+                           OPENAI_API_KEY = 'abc'; -- added
+                           METTA_LLM_MODEL = 'gpt-4o'; -- added
+                           SWIPL_PACK_PATH = mettalogDir .. '/libraries'; },
+               root_dir = vim.fs.root(ev.buf, {'README.md'}),
+         })
+      end,
+})
+```

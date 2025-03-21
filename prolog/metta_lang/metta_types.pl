@@ -398,7 +398,7 @@ type_violation(T, L) :-
 %
 not_arg_violation(Depth, Self, Arg, Type) :-
     % Ensure the argument conforms to the type and does not violate it.
-    arg_conform(Depth, Self, Arg, Type),
+    arg_conform(not_arg_violation, Depth, Self, Arg, Type),
     \+ arg_violation(Depth, Self, Arg, Type).
 
 %!  get_types(+Depth, +Self, +Var, -TypeSet) is det.
@@ -567,7 +567,8 @@ get_type_each(_, _, Nil, UD) :-
     Nil == [], !, UD = '%Undefined%'.
 get_type_each(Depth, Self, Val, Type) :-
     % Default depth of 10 if Depth is not an integer.
-    \+ integer(Depth), !, get_type_each(10, Self, Val, Type).
+    default_depth(DEFAULT_DEPTH),
+    \+ integer(Depth), !, get_type_each(DEFAULT_DEPTH, Self, Val, Type).
 get_type_each(_Depth, _Slf, Val, PyObject) :-
     % If the value is a Python object, its type is 'PyObject'.
     is_PyObject(Val), !, 'PyObject' = PyObject.
@@ -647,7 +648,7 @@ check_bad_type(Depth,Self,Val):-
 check_bad_type2(Depth,Self,Val):- Val= [Op|Args],
   typed_expression(Depth,Self,[Op|Args],ArgTypes,RType),
    trace_get_type(type_sig(Op),ArgTypes,RType),
-   args_conform(Depth,Self,Args,ArgTypes),
+   args_conform(check, Depth,Self,Args,ArgTypes),
    (args_violation(Depth,Self,Args,ArgTypes) ->
     (trace_get_type(bad_type,args_violation(Args,ArgTypes),check),fail);
     (trace_get_type(conformed,no_args_violation(Args,ArgTypes),check),true)).
@@ -868,13 +869,14 @@ get_type_cmpd(Depth,Self,[Op|Args],Type,ac(Op,[P|Arams],RetType)):- symbol(Op),
   len_or_unbound(Args,Len),
   get_operator_typedef(Self,Op,Len,[P|Arams],RetType),
   % Fills in type variables when possible
-  args_conform(Depth,Self,Args,[P|Arams]),
+  args_conform(get_type, Depth,Self,Args,[P|Arams]),
   % \+ maplist(var,Arams),
   % unitests:  arg violations should return ()
   (\+ args_violation(Depth,Self,Args,[P|Arams])),
   Type=RetType.
 
-get_type_cmpd(Depth,Self,ArTypeDecl,Type,arrow_type(ParamTypes,RetType)):- arrow_type(ArTypeDecl,ParamTypes,RetType), Type='%Undefined%',!.
+get_type_cmpd(Depth,Self,ArTypeDecl,Type,arrow_type(ParamTypes,RetType)):-
+  arrow_type(ArTypeDecl,ParamTypes,RetType), Type='%Undefined%',!.
 
 get_type_cmpd(_Dpth,_Slf,Cmpd,Type,typed_list):-
   typed_list(Cmpd,Type,_List).
@@ -1061,7 +1063,7 @@ as_prolog(0, Self, [CC | List], O) :-
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
 
-as_prolog(_, Self, exec(Eval), O) :- !, eval_args(30, Self, Eval, O).
+as_prolog(_, Self, exec(Eval), O) :- !, default_depth(DEFAULT_DEPTH),eval_args(DEFAULT_DEPTH, Self, Eval, O).
 as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
@@ -1108,7 +1110,7 @@ try_adjust_arg_types(_Eq, RetType, Depth, Self, Params, X, Y) :-
     % Convert the input (X) to a Prolog-friendly format (M).
     as_prolog(Depth, Self, X, M),
     % Ensure the adjusted arguments conform to the expected parameter types.
-    args_conform(Depth, Self, M, Params), !,
+    args_conform(try_adjust_arg_types, Depth, Self, M, Params), !,
     % Set the return type.
     set_type(Depth, Self, Y, RetType),
     % Convert the typed arguments back into the final output (Y).
@@ -1189,7 +1191,7 @@ adjust_argsA1(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
     RRetType = RetType,
-    args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
+    args_conform(adjust_argsA1, Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     trace_if_debug(Op,Len),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 adjust_argsA2(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
@@ -1198,7 +1200,7 @@ adjust_argsA2(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
     RRetType = RetType,
     trace_if_debug(Op,Len),
-    args_conform(Depth, Self, [CRes | X], [RRetType | ParamTypes]),
+    args_conform(adjust_argsA2, Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 
 %!  adjust_argsB(+Else, +Eq, +RetType, +Res, -Res, +Depth, +Self, +Op, +Args, -Adjusted) is nondet.
@@ -1368,84 +1370,89 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     assert(get_operator_typedef0(Self, Op, Len, ParamTypes, RetType)).
     % nop(wdmsg(missing(get_operator_typedef2(Self, Op, ParamTypes, RetType)))), !, fail.
 
-%!  ignored_args_conform(+Depth, +Self, +Args, +List) is det.
+%!  ignored_args_conform(+Why, +Depth, +Self, +Args, +List) is det.
 %
 %   Checks if the arguments (Args) conform to the expected types (List), but allows
 %   non-specific types and ignores certain conditions.
 %
+%   @arg Why      The current reason calling this code
 %   @arg Depth The current recursion depth.
 %   @arg Self  The context or structure being evaluated.
 %   @arg Args  The list of arguments.
 %   @arg List  The list of expected types or values.
 %
-ignored_args_conform(Depth, Self, A, L) :-
+ignored_args_conform(_Why, Depth, Self, A, L) :-
     % If either Args or List is not a conz structure, succeed without further checks.
     (\+ iz_conz(A); \+ iz_conz(L)), !.
-ignored_args_conform(Depth, Self, A, L) :-
+ignored_args_conform(Why, Depth, Self, A, L) :-
     % Check if each argument conforms to its corresponding expected type.
-    maplist(ignored_arg_conform(Depth, Self), A, L).
+    maplist(ignored_arg_conform(Why, Depth, Self), A, L).
 
-%!  ignored_arg_conform(+Depth, +Self, +Arg, +Expected) is det.
+%!  ignored_arg_conform(Why, +Depth, +Self, +Arg, +Expected) is det.
 %
 %   Checks if a single argument (Arg) conforms to the expected type (Expected),
 %   allowing for non-specific types.
 %
+%   @arg Why      The current reason calling this code
 %   @arg Depth    The current recursion depth.
 %   @arg Self     The context or structure being evaluated.
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
-ignored_arg_conform_1(Depth, Self, A, L) :-
+ignored_arg_conform_1(_Why, Depth, Self, A, L) :-
     % Succeed if the expected type is a non-specific type.
     nonvar(L), is_nonspecific_type(L), !.
-ignored_arg_conform_1(Depth, Self, A, L) :-
+ignored_arg_conform_1(_Why, Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
     get_type(Depth, Self, A, T),
     can_assign(T, L), !.
 
-ignored_arg_conform(Depth, Self, A, L):- show_failure_when(argtypes,ignored_arg_conform_1(Depth, Self, A, L)),!.
-ignored_arg_conform(Depth, Self, _, _) :- !.
+ignored_arg_conform(Why, Depth, Self, A, L):- show_failure_when(argtypes,ignored_arg_conform_1(Why, Depth, Self, A, L)),!.
+ignored_arg_conform(_Why, Depth, Self, _, _) :- !.
 
-%!  args_conform(+Depth, +Self, +Args, +List) is det.
+%!  args_conform(+Why, +Depth, +Self, +Args, +List) is det.
 %
 %   Checks if the arguments (Args) conform to the expected types (List).
 %
+%   @arg Why      The current reason calling this code
 %   @arg Depth The current recursion depth.
 %   @arg Self  The context or structure being evaluated.
 %   @arg Args  The list of arguments.
 %   @arg List  The list of expected types or values.
 %
-args_conform(_Depth, _Self, _, Nil):- Nil==[],!.
-args_conform(_Depth, _Self, Nil, _):- Nil==[],!.
-args_conform(_Dpth, _Slf, Args, List) :-
+args_conform(_Why, _Depth, _Self, _, Nil):- Nil==[],!.
+args_conform(_Why, _Depth, _Self, Nil, _):- Nil==[],!.
+args_conform(_Why, _Dpth, _Slf, Args, List) :-
     % If either Args or List is not a conz structure, succeed without further checks.
     (\+ iz_conz(Args); \+ iz_conz(List)), !.
-args_conform(Depth, Self, [A | Args], [L | List]) :- !,
+args_conform(Why, Depth, Self, [A | Args], [L | List]) :- !,
     % Check if the argument conforms and proceed with the rest of the list.
-    show_failure_when(argtypes,arg_conform(Depth, Self, A, L)),
-    args_conform(Depth, Self, Args, List).
-%!  arg_conform(+Depth, +Self, +Arg, +Expected) is det.
+    show_failure_when(argtypes, arg_conform(Why, Depth, Self, A, L)),
+    args_conform(Why, Depth, Self, Args, List).
+%!  arg_conform(Why, +Depth, +Self, +Arg, +Expected) is det.
 %
 %   Checks if a single argument (Arg) conforms to the expected type (Expected).
 %
+%   @arg Why      The current reason calling this code
 %   @arg Depth    The current recursion depth.
 %   @arg Self     The context or structure being evaluated.
 %   @arg Arg      The argument to be checked.
 %   @arg Expected The expected type or value.
 %
 
-%arg_conform(_Depth, Self, A, ParamType):- !, non_arg_violation_each(Self,ParamType, A).
-arg_conform(_Dpth, _Slf, A, _L) :- var(A), !.
-arg_conform(_Dpth, _Slf, _A, L) :- var(L), !.
-arg_conform(_Dpth, _Slf, _A, L) :-
+%arg_conform(Why, _Depth, Self, A, ParamType):- !, non_arg_violation_each(Self,ParamType, A).
+arg_conform(_Why, _Dpth, _Slf, A, _L) :- var(A), !.
+arg_conform(_Why, _Dpth, _Slf, _A, L) :-
     % Succeed if the expected type is a non-specific type.
     nonvar(L), is_nonspecific_type(L), !.
-arg_conform(Depth, Self, A, L) :-
+arg_conform( Why, Depth, Self,  A, L) :- var(L), Why == get_type, !, get_type(Depth, Self, A, L).
+arg_conform(_Why, _Dpth, _Slf, _A, L) :- var(L), !.
+arg_conform(Why, Depth, Self, A, L) :-
     % Check the argument type and verify it conforms to the expected type.
     get_type_each(Depth, Self, A, T), T \== 'Var',
     type_conform(T, L), !.
-arg_conform(_Dpth, _Slf, _, _):- !.
-arg_conform(Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
+arg_conform(Why, _Dpth, _Slf, _, _):- Why\== get_type, !.
+arg_conform(Why, Depth, Self, A, _) :- get_type(Depth, Self, A, _), !.
 
 %!  type_conform(+Type, +Expected) is nondet.
 %
@@ -1607,7 +1614,7 @@ cns_attr_unify_hook(Self , TypeList, NewValue) :-
     show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
 
 can_assign_value_typelist(Self, NewValue, TypeList):-
-    get_type(20, Self, NewValue, Was),
+    default_depth(DEFAULT_DEPTH),get_type(DEFAULT_DEPTH, Self, NewValue, Was),
     must_det_lls(can_assign_value_typelist_4(Self, NewValue, Was, TypeList)).
 
 can_assign_value_typelist_4(_Self, _NewValue, _Was, Nil):- Nil==[],!.

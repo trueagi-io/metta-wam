@@ -70,7 +70,7 @@ self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0([]).
 self_eval0(X):- is_metta_declaration(X),!.
 self_eval0([_,Ar,_|T]):- T==[],(Ar=='-->';Ar=='<->';Ar=='<--';Ar==':-'),!.
-self_eval0([F|X]):- !, is_list(X),length(X,Len),!,nonvar(F), is_self_eval_l_fa(F,Len),!.
+self_eval0([F|X]):- !, self_eval_ht(F,X).
 self_eval0(X):- compound(X),!.
 self_eval0(X):- typed_list(X,_,_),!.
 self_eval0(X):- py_is_py(X),!.
@@ -82,13 +82,19 @@ self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
+self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Len),!.
+self_eval_ht(F,X):- sub_term_safely(E,[F|X]), nonvar(E), E\==[], E\=='.', ( \+ is_list(E) ),!,fail.
+self_eval_ht(_,_).
+
 
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X),!. % spaces and states are stored as compounds
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
 
-call_in_shared_space(G):- call_in_thread(main,G).
+call_in_shared_space(G):- call_in_shared_thread(main,G).
+call_in_shared_thread(Thread,Goal):- thread_self(Self),Thread==Self,!,call(Goal).
+call_in_shared_thread(_Thread,Goal):- call(Goal). % should use call_in_thread/2 (but it blocks lazy calls)
 
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
 %nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
@@ -282,7 +288,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
 
-eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
+%eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
 eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
@@ -552,7 +558,7 @@ eval_20(Eq,RetType,Depth,Self,[PyAtom2|Args],Res):- is_list(PyAtom2), fail,
    PyAtom2 = [PyAtom,Sym,ArrowType],
    is_py_atom(PyAtom),!,
    Op = [PyAtom,Sym],
-   eval_20(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
+   eval_10(Eq,RetType,Depth,Self,['invoke-ftype',Op,ArrowType|Args],Res).
 
 % !(invoke-ftype println! (-> Atom (->)) (+ 1 1))
 
@@ -617,6 +623,7 @@ is_sl('IntSet').
 % =================================================================
 
 eval_20(Eq,RetType,_Dpth,_Slf,[X|T],Y):- T==[], \+ callable(X),!, do_expander(Eq,RetType,X,YY),Y=[YY].
+
 %eval_20(Eq,RetType,_Dpth,Self,[X|T],Y):- T==[],  atom(X),
 %   \+ is_user_defined_head_f(Self,X),
 %   do_expander(Eq,RetType,X,YY),!,Y=[YY].
@@ -646,6 +653,9 @@ eval_20_disabled(Eq,RetType,Depth,Self,X,Y):- fail,
         catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
 
 do_eval_args_for(X,_ParamTypes,X):-!.
+
+eval_20(Eq,RetType,Depth,Self,[X|T],Y):- T==[], is_list(X),!,
+  eval_args(Eq,RetType,Depth,Self,X,YY),Y=[YY].
 
 eval_20_disabled(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- fail, Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
@@ -679,11 +689,11 @@ eval_20(Eq,_RetType,Depth,Self,[V|VI],[V|VO]):- var(V),is_list(VI),!,maplist(eva
 
 % eval_20 CAN NOW USE ATOMS (not jsut eval_10)
 eval_20(_,_,_,_,['echo',Value],Value):- !.
-eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
+%eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 
-eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc__1_0+_make-var'(Types,Var).
+eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc_0+__make-var'(Types,Var).
 
-eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mc__1_1+_bless-var'(Var,Types,Var).
+eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mc_1+__bless-var'(Var,Types,Var).
 
 % =================================================================
 % =================================================================
@@ -974,7 +984,7 @@ eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
         possible_type(Self,V,RetTypeV),
         eval('=',RetTypeV,Depth,Self,E,ER),
         V=ER,
-        eval_args(Eq,RetType,100,Self,Body,OO).
+        eval_args(Eq,RetType,Depth,Self,Body,OO).
 /*
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
@@ -1299,20 +1309,20 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
-'mi__1_2_=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
-'mi__1_2_=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
+'mi_2__=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
+'mi_2__=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
 /*
     % ============================
     %  Theoretical Equivalence & Unification (Check Possibility Only)
     % ============================
 
     % =alpha: Checks if two terms are structurally equivalent, allowing variable renaming.
-    'mi__1_2_=alpha'(X0, Y0, TF) :-
+    'mi_2__=alpha'(X0, Y0, TF) :-
         as_tf('=@='(X0, Y0), TF).
 
 */
 % =will: Checks if unification *could* succeed without actually binding variables.
-'mi__1_2_=will'(X0, Y0, TF) :-
+'mi_2__=will'(X0, Y0, TF) :-
     as_tf('=will'(X0,Y0), TF).
 
 '=u='(X0,Y0) :- (X0 = Y0).
@@ -1334,11 +1344,11 @@ with_attr(Attr,Var,Value):- get_attr(Var, Attr, Value).
 % ============================
 
 % =u=: Actually unifies two terms, modifying variable bindings.
-'mi__1_2_=u='(X0, Y0, TF) :-
+'mi_2__=u='(X0, Y0, TF) :-
     as_tf(X0 = Y0, TF).
 
 % =alpha-unify: Unifies two terms while considering alpha-equivalence.
-%'mi__1_2_=alpha-unify'(X0, Y0, TF) :-
+%'mi_2__=alpha-unify'(X0, Y0, TF) :-
 %    '=@='(X0, Y0),
 %    as_tf(X0 = Y0, TF).
 
@@ -1347,11 +1357,11 @@ with_attr(Attr,Var,Value):- get_attr(Var, Attr, Value).
 % ============================
 
 % =identical: Checks if two terms are *strictly* identical, including variables & bindings.
-'mi__1_2_=identical'(X0, Y0, TF) :-
+'mi_2__=identical'(X0, Y0, TF) :-
     as_tf(X0 == Y0, TF).
 
 % =references: Checks if two terms reference the *exact same* memory object.
-'mi__1_2_=references'(X0, Y0, TF) :-
+'mi_2__=references'(X0, Y0, TF) :-
     as_tf(same_terms(X0, Y0), TF).  % SWI-Prolog only
 
 
@@ -1821,28 +1831,25 @@ eval_20(Eq,RetType,Depth,Self,['do',Expr], NoResult):- !,
   %eval_ne(Eq,_RetType2,Depth,Self,Expr,_),!,
   make_empty(RetType,[],NoResult).
 
-eval_20(Eq,RetType1,Depth,Self,['call!'|S], TF):- !, eval_call(Eq,RetType1,Depth,Self,S,TF).
-eval_20(Eq,RetType1,Depth,Self,['call-p!'|S], TF):- !, eval_call(Eq,RetType1,Depth,Self,S,TF).
-eval_20(Eq,RetType1,Depth,Self,['call-fn!'|S], R):- !, eval_call_fn(Eq,RetType1,Depth,Self,S,R).
-eval_20(Eq,RetType1,Depth,Self,['call-fn-nth!',Nth|S], R):-
+eval_20(_Eq,_RetType1,_Depth,_Self,['call!'|S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-p!'|S], TF):- !, eval_call(S,TF).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn!'|S], R):- !, eval_call_fn(S,R).
+eval_20(_Eq,_RetType1,_Depth,_Self,['call-fn-nth!',Nth|S], R):-
     length(Left,Nth),
     append(Left,Right,S),
     append(Left,[R|Right],NewS),!,
-    eval_call(Eq,RetType1,Depth,Self,NewS,_).
+    eval_call(NewS,_).
 
-eval_40(Eq,RetType1,Depth,Self,['call'|S], TF):- !, eval_call(Eq,RetType1,Depth,Self,S,TF).
-eval_40(Eq,RetType1,Depth,Self,['call-p'|S], TF):- !, eval_call(Eq,RetType1,Depth,Self,S,TF).
-eval_40(Eq,RetType1,Depth,Self,['call-fn'|S], R):- !, eval_call_fn(Eq,RetType1,Depth,Self,S,R).
-eval_40(Eq,RetType1,Depth,Self,['call-fn-nth',Nth|S], R):-
+eval_40(_Eq,_RetType1,_Depth,_Self,['call'|S], TF):- !, eval_call(S,TF).
+eval_40(_Eq,_RetType1,_Depth,_Self,['call-p'|S], TF):- !, eval_call(S,TF).
+eval_40(_Eq,_RetType1,_Depth,_Self,['call-fn'|S], R):- !, eval_call_fn(S,R).
+eval_40(_Eq,_RetType1,_Depth,_Self,['call-fn-nth',Nth|S], R):-
     length(Left,Nth),
     append(Left,Right,S),
     append(Left,[R|Right],NewS),!,
-    eval_call(Eq,RetType1,Depth,Self,NewS,_).
+    eval_call(NewS,_).
 
-eval_call(Eq,RetType,Depth,Self,S,TF):-
-  with_metta_ctx(Eq,RetType,Depth,Self,['call-p'|S],eval_call(S,TF)).
-eval_call_fn(Eq,RetType,Depth,Self,S,TF):-
-  with_metta_ctx(Eq,RetType,Depth,Self,['call-fn'|S],eval_call_fn(S,TF)).
+
 
 
 max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
@@ -2461,25 +2468,30 @@ is_comma(C):- var(C),!,fail.
 is_comma(',').
 is_comma('{}').
 
-bool_xor(A,B) :- (A == 'True'; B == 'True'), \+ (A == B).
+bool_and(A,B) :- (A == 'True', B == 'True').
+bool_ior(A,B) :- (A == 'True'; B == 'True'),!.
+bool_xor(A,B) :- (A == 'True'; B == 'True'),!, \+ (A == B).
 
 eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
-    as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X),
-             eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
+    eval_args(Eq,RetType,Depth,Self,X,  XTF),  % evaluate X
+    eval_args(Eq,RetType,Depth,Self,Y,  YTF),  % evaluate Y
+    as_tf(  (bool_and(XTF,YTF))              ,   TF).
 
 
 eval_20(Eq,RetType,Depth,Self,['or',X,Y],TF):- !,
-  as_tf(( (eval_args_true(Eq,RetType,Depth,Self,X);
-           eval_args_true(Eq,RetType,Depth,Self,Y))), TF).
+    eval_args(Eq,RetType,Depth,Self,X,  XTF),  % evaluate X
+    eval_args(Eq,RetType,Depth,Self,Y,  YTF),  % evaluate Y
+    as_tf(  (bool_ior(XTF,YTF))              ,   TF).
 
 eval_20(Eq,RetType,Depth,Self,['xor',X,Y],TF):- !,
-  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,X)),  XTF),  % evaluate X
-  as_tf(  (eval_args_true(Eq,RetType,Depth,Self,Y)),  YTF),  % evaluate Y
-  as_tf(  (bool_xor(XTF,YTF))              ,   TF).
+    eval_args(Eq,RetType,Depth,Self,X,  XTF),  % evaluate X
+    eval_args(Eq,RetType,Depth,Self,Y,  YTF),  % evaluate Y
+    as_tf(  (bool_xor(XTF,YTF))              ,   TF).
 
 
 eval_20(Eq,RetType,Depth,Self,['not',X],TF):- !,
-   as_tf(( \+ eval_args_true(Eq,RetType,Depth,Self,X)), TF).
+   eval_args(Eq,RetType,Depth,Self,X,  XTF),  % evaluate X
+   as_tf(  (bool_xor(XTF,'True'))              ,   TF).
 
 
 % ================================================
@@ -3091,12 +3103,30 @@ eval_20(_Eq,RetType,_Dpth,_Slf,['====',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(same_terms(X,Y),TF).
 
+/*
+     A bit too dangerous uncommenting these...
+     when the compiler thunks to interpeter
+     these can call the compiler creating a loop
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
+    prefix_impl_preds('mc__',EQ,Len),
+    append(Args,[TF],PArgs),length(PArgs,Len),
+    atom_concat('mc__',EQ,Fn),!,
+    apply(Fn,PArgs).
+
+eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
+    prefix_impl_preds('mi__',EQ,Len),
+    append(Args,[TF],PArgs),length(PArgs,Len),
+    atom_concat('mi__',EQ,Fn),!,
+    apply(Fn,PArgs).
+*/
+
 % Main evaluation predicate with full caching
 
 transpiler_peek(Sym,Len,Type,Fn):-
-  transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
+  transpiler_predicate_store(_, Sym, Len, _, _, _, _),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
-  format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
+  format(atom(Fn),'~w_~w__~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
@@ -3116,8 +3146,6 @@ eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     memoize_tf(transpiler_peek(Sym,Len,'mc',Fn)),
     append(Args,[Res],PArgs),!,
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
-
-
 
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(Fn,PArgs).
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,Goal):-  Goal.
@@ -3260,7 +3288,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],TF):- allow_host_functions,
   % adjust_args(Depth,Self,AE,More,Adjusted),
   maplist(as_prolog_x(Depth,Self), More , Adjusted),
   if_trace(host;prolog;e,print_tree(apply(Pred,Adjusted))),
-  with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF)))),
+  catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF))),
   check_returnval(Eq,RetType,TF).
 
 show_ndet(G):- call(G).
@@ -3335,7 +3363,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- allow_host_functions,
   maplist(as_prolog_x(Depth,Self),More,Adjusted),
   append(Adjusted,[Res],Args),!,
   if_trace(host;prolog,print_tree(apply(Pred,Args))),
-  with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],efbug(show_call,catch_warn(apply(Pred,Args)))),
+  efbug(show_call,catch_warn(apply(Pred,Args))),
   check_returnval(Eq,RetType,Res).
 
 % user defined function
@@ -4022,13 +4050,13 @@ paramtype_assignable_to(ActualType,_ParamType):- ActualType = '%Undefined%',!.
 paramtype_assignable_to(ActualType, ParamType):- assignable_to(ActualType, ParamType),!.
 
 
-'mc__1_0+_make-var'(Types, Var):-
+'mc_0+__make-var'(Types, Var):-
    %freeze(Var, non_arg_violation_each(_, Type, Var)),
    put_attr(Var,cns, _ = Types),
    % name it something recognisable/debuggable
    push_typename(Var,Types).
 
-'mc__1_1+_bless-var'(Var, Types, Var):-
+'mc_1+__bless-var'(Var, Types, Var):-
    %freeze(Var, non_arg_violation_each(_, Type, Var)),
    maplist(prevent_type_violations(Var),Types),
    % _maybe_ name it something recognisable/debuggable
@@ -4048,7 +4076,7 @@ nameify(Type, SVar):- sformat(TypeStr,'~w',[Type]), svar_fixvarname(TypeStr,SVar
 
 
 
-    :- find_missing_cuts.
+:- find_missing_cuts.
 
 end_of_file.
 

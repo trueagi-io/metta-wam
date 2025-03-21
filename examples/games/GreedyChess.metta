@@ -1,6 +1,4 @@
-;		WORK IN PROGRESS!!, Will start but not play yet!
-
-;   Mettalog Project 2024
+;   Mettalog Project 2024-2025
 
 ;   Function:  Play chess (human vs MeTTa program) using a fairly simple "greedy" approach
 ;              with moves that do not project possible boards beyond the present board.
@@ -47,8 +45,6 @@
 
 ; nth function, eg:  (nth 2 (a b c)), answer = b
 (= (nth $n $list) 
-  ;(if (> $n (size-atom $list))
-  ;  NIL
     (if (== $n 1)
         (car-atom $list)
         (nth (- $n 1) (cdr-atom $list)))) ; Recursion: move to the next element (cdr-atom) and decrease n.
@@ -115,27 +111,6 @@
       (if (== $exp ())
             empty
             (let () (unquote (car-atom $exp)) (do_quoted (cdr-atom $exp)))))
-;
-
-;
-;#( = #(removelists () $A $A) True )
-;; /* apparently swipl used: nth1(A, B, C):-integer(A), !, D is A-1, nth0_det(D, B, C). nth1(A, B, C):-var(A), ;!, nth_gen(B, C, 1, A). */
-;(= (removelists #(Cons $A $B) #(Cons $A $C) $D)  
-;  (removelists $B $C $D))
-;(= (removelists $A #(Cons $B $C) #(Cons $B $D))  
-;  (removelists $A $C $D))
-;
-;
-;(= (len Nil 0)  
-;  (set-det))
-;(= (len #( :: ($A) ) 1) (atomic $A) (set-det))
-;(= (len #(Cons $A $B) $C) (atomic $A) (len $B $D) (is $C (+ $D 1)))
-;
-;
-;(= (returnrandominteger $A $B)  
-;  (is $A 
-;    (+ 
-;      (random $B) 1)))
 ;
 
 ;*******************************************************
@@ -217,6 +192,11 @@
 (= (delete-prior-game-states)
   (match &self (game-state $prior-state) (remove-atom &self (game-state $prior-state))))
 
+(= (lots_of_pawns_in_home_row)
+   (let $pawns_at_home (collapse (match &self (square $x 7 g p) (square $x $y $s $p)))
+        (if (> (size-atom $pawns_at_home) 4)
+          True
+          False)))
 
 (= (display_squares_atoms_debug_4)
    (collapse (match &self (square $x $y $s $p) (square $x $y $s $p))))
@@ -265,91 +245,114 @@
 
 ; identify_piece inputs an expression of a piece, eg: "(2 1 s n)," and outputs a shorted two character string 
 ; describing the piece, eg: "*n" which means that it is the human player's knight (the astrisk denotes human player pieces).
-(: identify_piece (-> list symbol))
+;(: identify_piece (-> list symbol))
+(: (identify_piece) (-> Expression Atom))
 (= (identify_piece $p) 
    (if (== (size-atom $p) 2)
       "  "
       (let*
         ( ; assign either * or " " 
-          ($player (if (== (contains_symbol $p s) True) * " "))
+          ($contains_bool (contains_symbol $p s))
+          ($player (if (== $contains_bool True) * " "))
           ; identify piece
           ($piece (nth 4 $p))
         )
         (format-args "{}{}" ($player $piece)))))
 
 ; Input the board, output a list of the board easier to read with an identifier for each piece, eg., human king is "*k."
-(: display_filter (-> list list))
+;(: display_filter (-> list list))
+(: (display_filter) (-> Expression Expression))
 (= (display_filter $brd) 
     (if (== (size-atom $brd) 1) 
       ; if on last piece, return a one element list of this form eg.:  (*k). Extra parens are needed to create list.
-      ( (identify_piece (car-atom $brd)) )
+      (let $last_piece (identify_piece (car-atom $brd)) ($last_piece) )
       ; otherwise convert all pieces to shorter description for display.
-      (let $rest (display_filter (cdr-atom $brd))  (cons-atom (identify_piece (car-atom $brd)) $rest))))
+      (let*
+        ( ;($debug IEFBR14) 
+        ($rest (display_filter (cdr-atom $brd)))
+        ($piece_identified (identify_piece (car-atom $brd)))
+        )
+        (cons-atom $piece_identified $rest))))
 
+;(= (display_board $board) (println! $board))
+(= (display_board_debug $board) (println! $board))
 (= (display_board $board) 
   (
    (let* (
-          ($a (display_filter     $board ))
+          ($pieces (display_filter     $board ))
           )
           ((py-atom print) (format-args "\n
-        --1-----2-----3-----4-----5-----6-----7-----8-- \n
-      8| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |8\n
-       |-----------------------------------------------| \n
-      7| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |7\n
-       |-----------------------------------------------| \n
-      6| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |6\n
-       |-----------------------------------------------| \n
-      5| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |5\n
-       |-----------------------------------------------| \n
-      4| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |4\n
-       |-----------------------------------------------| \n
-      3| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |3\n
-       |-----------------------------------------------| \n
-      2| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |2\n
-       |-----------------------------------------------| \n
-      1| {}  | {}  | {}  | {}  | {}  | {}  | {}  | {}  |1\n
-        --1-----2-----3-----4-----5-----6-----7-----8-- \n
+        ---1-------2-------3-------4-------5-------6-------7-------8--- \n
+      8|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |8\n
+       |---------------------------------------------------------------| \n
+      7|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |7\n
+       |---------------------------------------------------------------| \n
+      6|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |6\n
+       |---------------------------------------------------------------| \n
+      5|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |5\n
+       |---------------------------------------------------------------| \n
+      4|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |4\n
+       |---------------------------------------------------------------| \n
+      3|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |3\n
+       |---------------------------------------------------------------| \n
+      2|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |2\n
+       |---------------------------------------------------------------| \n
+      1|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |1\n
+        ---1-------2-------3-------4-------5-------6-------7-------8--- \n
       " 
       
-          $a)))))
+          $pieces)))))
 
-;
-;
-;(= (kingnotincheck $A) (xy_box $B #( :: (g k) ) $A) (not (take_dest $B s $A)))
-;
-;
-;(= (attemptcheckmate $A $B $C $D) (xy_box $E #( :: (s k) ) $B) (buildgold $B $F) (set-det) (rpiece $G) (cord ;$H) (cord $I) (member #( :: ($H $I g $G) ) $F) (= $C  
-;  #( :: 
-;    ($H $I g $G) )) (positiontotake $E $C $D $B) (move_piece $C $D $B $A) (nth1 1 $D $J) (nth1 2 $D $K) ;(return_entire_box #( :: ($J $K) ) $L $A) (threatOK1 $A s g #( :: ($L) )) (threatOK2 $A s g) (threatOK3 $A ;s g) (kingnotincheck $A)) 
-;
-;
-;(= (playdefenseR $A $B $C $D) (returnrandominteger $E 3) (set-det) (or (== $E 1) (== $E 2)) (playdefense $A $B ;$C $D))
-;; /* /* newer code start */ /* see if anybody can check the silver king first... if possible do next rule ;(long) */ attemptcheckmate(Newboard,Listofboxes,Goldbox,Destbox) :- /* find silver king */ xy_box(Kingbox,[s,;k],Listofboxes), /* return list of all gold pieces */ buildgold(Listofboxes,Currentgoldpieces), /* no gold can ;align to check king, sequential check. */ rpiece(Piece), cord(X), cord(Y), member([X,Y,g,Piece],;Currentgoldpieces), positiontotake(Kingbox,[X,Y,g,Piece],Destbox,Listofboxes), !, /* don't try the exhaustive ;search if it doesn't seem likely to work... */ deepattemptcheckmate(Newboard,Listofboxes,Goldbox,Destbox). /* ;move from -Goldbox to -Destbox for checkmate, return -Newboard */ deepattemptcheckmate(Newboard,Listofboxes,;Goldbox,Destbox) :- /* find silver king */ xy_box(Kingbox,[s,k],Listofboxes), /* return list of all gold ;pieces */ buildgold(Listofboxes,Currentgoldpieces), !, /* find *** -Goldbox AND -Destbox *** which can check ;Kingbox */ findgoldcheck(Currentgoldpieces,Listofboxes,Newboard,Goldbox,Destbox,Kingbox). findgoldcheck([],_,_,;_,_,_) :- !, fail. findgoldcheck([Goldbox|_],Listofboxes,Newboard,Goldbox,Destbox,Kingbox) :- /* see if ;Goldbox can be moved into position to take Kingbox */ positiontotake(Kingbox,Goldbox,Destbox,Listofboxes), ;move_piece(Goldbox,Destbox,Listofboxes,Newboard), nth1(1,Destbox,X), nth1(2,Destbox,Y), return_entire_box([X,;Y],EntireBox,Newboard), threatOK1(Newboard,s,g,[EntireBox]), /*can your piece be taken? */ threatOK2(Newboard,;s,g), /* can king move out of the way ?? */ threatOK3(Newboard,s,g). /* can a piece block threat? */ ;findgoldcheck([_|Currentgoldpieces],Listofboxes,Newboard,Goldbox,Destbox,Kingbox) :- findgoldcheck;(Currentgoldpieces,Listofboxes,Newboard,Goldbox,Destbox,Kingbox). /* newer code end */ */
-;
-;
-;(= (playdefense $A $B $C $D) (buildgold $B $E) (checkgold $E $B Nil) (set-det) (fail))
-;(= (playdefense $A $B $C $D) (buildgold $B $E) (checkgold $E $B $F) (piece $G) (member #( :: ($H $I g $G) ) ;$F) (= $J  
-;  #( :: 
-;    ($H $I g $G) )) (hpiece $K) (xy_box $L #( :: (s $K) ) $B) (return_entire_box $L $D $B) (clear_route $D $J ;$B) (findgoldhigh $E $B $C $L) (move_piece $C $D $B $A) (or (not (take_dest $L s $A)) (or (nth1 4 $C p) ;(guimessage check g s))) (kingnotincheck $A))
-;(= (playdefense $A $B $C $D) (buildgold $B $E) (checkgold $E $B $F) (piece $G) (member #( :: ($H $I g $G) ) ;$F) (= $C  
-;  #( :: 
-;    ($H $I g $G) )) (hpiece $J) (xy_box $K #( :: (s $J) ) $B) (positiontotake $K $C $D $B) (move_piece $C $D ;$B $A) (not (take_dest $D s $A)) (kingnotincheck $A))
-;(= (playdefense $A $B $C $D) (buildgold $B $E) (checkgold $E $B $F) (lookforempty $B $G) (set-det) (piece $H) ;(member #( :: ($I $J g $H) ) $F) (= $C  
-;  #( :: 
-;    ($I $J g $H) )) (member #( :: ($K $L) ) $G) (= $D  
-;  #( :: 
-;    ($K $L) )) (clear_route $C $D $B) (move_piece $C $D $B $A) (not (take_dest $D s $A)) (kingnotincheck $A))
-;
-;
-;(= (movetoposition $A $B $C $D) (returnrandominteger $E 2) (set-det) (== $E 1) (buildgold $B $F) ;(checkeachgold $F $A $B $C $D))
-;(= (movetoposition $Newboard $Listofboxes $Goldbox $Destbox) (buildgold $Listofboxes $Currentgoldpieces) ;(checkeachgold $Currentgoldpieces $Newboard $Listofboxes $Goldbox $Destbox))
-;
-;
-;(= (checkeachgold Nil $A $B $C $D) (set-det) (fail))
-;(= (checkeachgold #(Cons $A $B) $C $D $A $E) (piece $F) (xy_box $G #( :: (s $F) ) $D) (positiontotake $G $A $E ;$D) (move_piece $A $E $D $C) (not (take_dest $E s $C)) (kingnotincheck $C))
-;(= (checkeachgold #(Cons $A $B) $C $D $E $F)  
-;  (checkeachgold $B $C $D $E $F))
+(= (decide_greedy_move) 
+    ; make sure each move search call can either 
+    ;     1) succeed and return the move, or 
+    ;     2) fail and return Empty
+    ; attempt checkmate on human player
+    ;(lots_of_pawns_in_home_row)
+    (let* (
+      ($msg1 (println! "looking for checkmate..."))
+      ($checkmate (attemptcheckmate)))
+      (if (not (==  $checkmate Empty))
+        $checkmate
+        ; take a piece
+        (let* (
+          ($msg2 (println! "looking for capture..."))
+          ($highest (takehighestopen_scored)))
+          (if (not (==  $highest Empty))
+            $highest
+            (let* (
+              ($msg3 (println! "looking for threat position..."))
+              ($threaten_position (movetoposition)))
+              (if (not (==  $threaten_position Empty))
+                $threaten_position
+                ; move to an empty square
+                (let* (
+                  ($msg4 (println! "looking for random move..."))
+                  ($random_move (random_move_empty_sq)))
+                  (if (not (==  $random_move Empty)) 
+                    $random_move 
+                    (empty))))))))))
 
+(= (decide_greedy_moveOLD) 
+    ; make sure each move search call can either 
+    ;     1) succeed and return the move, or 
+    ;     2) fail and return Empty
+    ; attempt checkmate on human player
+    (let $checkmate (attemptcheckmate)
+      (if (not (==  $checkmate Empty))
+        $checkmate
+        ; take a piece
+        (let $highest (takehighestopen_scored)
+          (if (not (==  $highest Empty))
+            $highest
+            (let $threaten_position (empty) ;(movetoposition)
+              (if (not (==  $threaten_position Empty))
+                $threaten_position
+                ; move to an empty square
+                (let $random_move (random_move_empty_sq)
+                  (if (not (==  $random_move Empty)) 
+                    $random_move 
+                    (empty))))))))))
 
 ; (try_move_and_verify)
 ;
@@ -362,7 +365,8 @@
 ; Updates: Atomspace "square" atoms which are temporarily moved around for envisioning the move.
 (= (try_move_and_verify ($x1 $y1 g $rank)   ($x2 $y2) $mode)
   (let*
-    (
+    ( 
+    ($debug IEFBR14)
     ($start ($x1 $y1 g $rank))
     ($dest ($x2 $y2))
     ($dest_full (return_entire_box $dest))
@@ -422,78 +426,210 @@
                   (try_move_and_verify ($x1 $y1 g $rank) ($x2 $y2) 0)
                   (empty)))) 
 
+; return next rank to try or NIL if all rank moves exhaused.
+(= (return_random_level $Ranks_Already_Tried_List)
+  (if (== (size-atom $Ranks_Already_Tried_List) 4)
+      ; we have tried all 4 rank levels, return NIL
+      NIL
+      ;else try another random level.
+      (let*
+        (
+            ($random_level 
+                  ; try to move pawns out from home row.
+                  (if (== (lots_of_pawns_in_home_row) True)
+                  1
+                  (random-int  &rng 1 5))) 
+            ($rank_level (case $random_level
+                        (
+                        (1 lowrank)
+                        (2 medrank) 
+                        (3 highrank)
+                        (4 highestrank)
+                        ($_ lowrank)
+                        )))
+        )
+        (if (== ($rank_level) 
+                (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
+                ;(collapse (intersection (superpose (1 2 3 4)) 2))) ;<-- returns (2);        
+            ; try again if this rank already tried
+            (return_random_level $Ranks_Already_Tried_List)
+            ; else success, return next new random level.
+            $rank_level
+            ))))
+
 ; (random_recursion_by_rank)
 ; 
-(= (random_recursion_by_rank)
+(= (random_recursion_by_rank $Ranks_Already_Tried_List)
     (let* (
-      ($random_level (random-int 1 4)) 
-      ($ranklevel (case $random_level
-                    (
-                    (1 lowrank)
-                    (2 medrank)
-                    (3 highrank)
-                    (4 highestrank)
-                    ($_ (empty))
-                    )))
-      ($debug (println! "Trying random move (may repeat)"))
-      ($debug (println! $ranklevel))
-      ($somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel)))
+      ; Warning: as of this writing random-int's max value is 1 more than the actual max.
+      ;    If random-int is changed to return beyond the max, the case statement will return lowrank.
+      ($ranklevel (return_random_level $Ranks_Already_Tried_List))
+      ;($New_Ranks_Already_Tried_List (cons-atom $ranklevel $Ranks_Already_Tried_List))
+      ;($debug (println! "Trying random move (may repeat, will quit when NIL)"))
+      ;($debug (println! $ranklevel))
         )
-      (if (== $somemoves ())
-        (random_recursion_by_rank)
-        $somemoves)))
+      (if (== $ranklevel NIL)
+        ; if we have exhausted all possible moves by level return empty list
+        (empty)
+        ; else try a move by level
+        (let $somemoves   (collapse (find_by_rank_move_empty_sq $ranklevel))
+          (if (== $somemoves ())
+            ; if no move found
+            (random_recursion_by_rank (cons-atom $ranklevel $Ranks_Already_Tried_List))
+            ; Success! return move
+            $somemoves)))))
 
 ;  (random_move_empty_sq)
 ;  Make a random legal move to an empty square.
 ;
 ;  Output: ( (starting piece) (destination)) if successful or Empty
-;  Updates:   atomspace square atoms
+;  Updates:   atomspace square atoms are updated to "envision" the move but restored to 
+;             starting position.
+;
+; Warning: as of this writing random-int's max value is 1 more than the actual max.
+;          If random-int is changed to return beyond the max it will be set at the actual max.
 (= (random_move_empty_sq)
+  (let $random_moves (random_recursion_by_rank ())
+    (if (== $random_moves Empty)
+        (empty)
+        (let*
+          (
+          ;($debug (println! $random_moves))
+          ($move_count (size-atom $random_moves))
+          ($move_count_plus_1 (+ $move_count 1))
+          ($select_int (if (== $move_count 1) 
+                    1
+                    ; use &rng after random-int!
+                    (random-int  &rng 1 $move_count_plus_1))) 
+          ($select_int_check (if (> $select_int $move_count) 1 $select_int)) ; if problem with random-int
+          ) 
+          ;return move
+          (nth $select_int_check $random_moves)
+          ))))
+
+(= (random_move_empty_sq_OLD)
     (let*
       ( 
-        ($random_moves (random_recursion_by_rank))
+        ($random_moves (random_recursion_by_rank ()))
+        ($debug (println! $random_moves))
         ($move_count (size-atom $random_moves))
-        ($select-int (if (== $move_count 1) 
+        ($move_count_plus_1 (+ $move_count 1))
+        ($select_int (if (== $move_count 1) 
                     1
-                    (random-int 1 $move_count)))
+                    (random-int &rng 1 $move_count_plus_1)))
+        ($select_int_check (if (> $select_int $move_count) 1 $select_int)) ; if problem with random-int
       ) 
       ;return move
-      (nth $select-int $random_moves)
+      (nth $select_int_check $random_moves)
     ))
-
-(= (decide_greedy_move) 
-    ; make sure each move search call can either 
-    ;     1) succeed and return the move, or 
-    ;     2) fail and return Empty
-
-    ; attempt checkmate on human player
-    (let $checkmate (attemptcheckmate)
-      (if (not (==  $checkmate Empty))
-        $checkmate 
-        ; take a piece
-        (let $highest (takehighestopen_scored)
-          (if (not (==  $highest Empty))
-            $highest
-            ; move to an empty square
-            (let $random_move (random_move_empty_sq)
-              (if (not (==  $random_move Empty)) 
-                $random_move 
-                (empty))))))))
                 
-(= (attemptcheckmate) (empty))
+(= (attemptcheckmate) 
+  (let $checkmate_moves (collapse (attemptcheckmate_match))
+    ;(if (== $checkmate_moves ()) (empty) (car-atom $checkmate_moves))))  <-- works alone for check!
+    (let $list_of_checkmate_moves 
+        (collapse (
+          (let $test_move (superpose $checkmate_moves)
+            (let*
+              ( 
+                ;($debug1 (println! "finished attack analysis"))
+                ($start (nth 1 $test_move))
+                ($dest (nth 2 $test_move))
+                ($dest_full (return_entire_box $dest))
+                ; provisionally move the piece
+                ($__1  (move_piece $start $dest))  
+                ($any_moves_left_whatsoever (collapse (any_moves_to_escape s)))
+                ($__2 (reset_pieces $start $dest_full))
+                ;($_1 (println! $any_moves_left_whatsoever))
+              )
+              (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+                    ; if no moves possible for human AI has found checkmate
+                    $test_move
+                    (empty))))))
+        (if (== $list_of_checkmate_moves ())
+          (empty)
+          (let*
+            ( 
+              ($first_car (car-atom $list_of_checkmate_moves))
+              ($first_checkmate (car-atom $first_car))
+              ; set checkmate switch so we don't repeat these deep searches!
+              ($__3 (change-game-state checkmate))
+            )
+            $first_checkmate))
+    )
+  )
+)
+
+; empty square variation
+(= (attemptcheckmate_match) 
+  ; can an AI piece put human king in check?
+  ; locate silver king (human player's king)
+  (let $king_square (xy_box (s k))
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+      ; find empty squares
+      (match &self (square $x2 $y2)
+      ; look for check route to king
+        (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                 (== (clear_route ($x2 $y2 g $AI_rank) $king_square) True))
+          ; king in check
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          (empty))))))
+
+; occupied square variation
+(= (attemptcheckmate_match) 
+  ; can an AI piece put human king in check?
+  ; locate silver king (human player's king)
+  (let $king_square (xy_box (s k))
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+      ; find occupied squares
+      (match &self (square $x2 $y2 s $anyrank)
+      ; look for check route to king
+        (if (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                 (== (clear_route ($x2 $y2 g $AI_rank) $king_square) True))
+          ; king in check
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          (empty))))))
+
+(= (movetoposition)
+  (let $threaten_moves_all 
+    (collapse (movetoposition_match (superpose (q r n b)) (superpose (k q r n b))))
+    (if (== $threaten_moves_all ())
+      (empty)
+      (car-atom $threaten_moves_all))))
+
+(= (movetoposition_match $AI_rank $targetrank ) 
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+     ; find all empty squares
+     (match &self (square $x2 $y2)
+      ; find occupied opponent squares
+      (match &self (square $x3 $y3 s $targetrank)
+      ; look for clear route to threaten
+        (if (and (and (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                      (== (clear_route ($x2 $y2 g $AI_rank) ($x3 $y3)) True))
+                 (not (== (take_dest ($x2 $y2) s) True)))
+          ; piece threatening
+          (($x1 $y1 g $AI_rank) ($x2 $y2))
+          ; else fail
+          (empty))))))
+          ;(empty))))
 
 (= (takehighestopen_scored)
     (let $highest_open (collapse (takehighestopen (superpose (b r n q p))))
       (if (not (== $highest_open ()))
         (let*
-            (
+            ( 
             ($all_final_scored_moves (collapse (finalize_all_scored_moves)))            
-                ($_1 (println! $all_final_scored_moves ))
+                ;($_1 (println! $all_final_scored_moves ))
             ; find best (lowest) score
             ($best_move_final_winner (find_best_score $all_final_scored_moves))
             ($best_move (cdr-atom $best_move_final_winner))
             )
             ; clean up score atoms and return optimal move
+            ; Retain the usual "square" atoms used to envision the possible moves.
             (let $temp_delete (collapse (delete-temporary-atoms))
                   $best_move)
         )
@@ -561,7 +697,6 @@
             (try_move_and_verify ($x1 $y1 g $AI_rank) ($x2 $y2) 1)
             (empty)))))
 
-
 ; 
 (= (takehighestopen_with_pawn_all_NOTACTIVE $ranks)
   (if (== $ranks ())
@@ -598,20 +733,6 @@
    (match &self (square $x $y g $rank)
         (if (== (take_dest ($x $y) s) True) ($x $y) (empty))))
 
-;
-;#( = #(lookforempty () ()) True )
-;(= (lookforempty #(Cons $A $B) #(Cons $A $C)) (len $A 2) (lookforempty $B $C))
-;(= (lookforempty #(Cons $A $B) $C)  
-;  (lookforempty $B $C))
-;
-;
-;#( = #(buildrandomgold () ()) True )
-;(= (buildrandomgold #(Cons $A $B) #(Cons $C $D)) (len $A 4) (nth1 3 $A g) (returnrandominteger $E 99) (is $F ;$E) (concat_lists #( :: (#( :: ($F) ) #( :: ($A) )) ) $C) (buildrandomgold $B $D))
-;(= (buildrandomgold #(Cons $A $B) $C)  
-;  (buildrandomgold $B $C))
-;
-;
-
 ; (buildgold)
 ;
 ; Input:  None
@@ -620,27 +741,7 @@
   (match &self (square $x $y g $p) 
       ($x $y g $p)))
 
-;
-;(= (findgoldmove #(Cons $A $B) $C $D $E $F) (= #( :: ($G $E) )  $A) (returnrandominteger $H 8) (is $I $H) ;(returnrandominteger $J 8) (is $K $J) (set-det) (findgolddest $E $D $C $F $I $K))
-;
-;
-;(= (findgolddest $A $B $C $D $E $F) (= $D  
-;  #( :: 
-;    ($E $F) )) (member $D $C) (clear_route $A $D $B))
-;
-;
-;#( = #(findgoldhigh () $A $B $C) (empty) )
-;(= (findgoldhigh #(Cons $A $B) $C $A $D)  
-;  (clear_route $A $D $C))
-;(= (findgoldhigh #(Cons $A $B) $C $D $E)  
-;  (findgoldhigh $B $C $D $E))
-;
 
-;(= (LoadPiecesAtomspace $CanAttack)
-;   (if (> (size-atom $CanAttack) 0)
-;       create atom
-;       (LoadPiecesAtomspace (cdr-atom $CanAttack))
-;)
 ;
 (= (take_dest_recursive $Square $OpponentColor $Board) 
   (let* 
@@ -1085,8 +1186,9 @@
            (if (and (< $X2 $X1) (< $Y2  $Y1))
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
-               False))))
-      ))
+               False)))))
+      ;($debug (println! $RouteClearBool))
+      )
       (if  
           (== $RouteClearBool True)
         True
@@ -1258,7 +1360,7 @@
     
 ;
 ; move_piece
-;   Input   starting square, target square, current board
+;   Input   starting square, target square
 ;   Output: new board
 ;(= (move_piece $starting_square $target_square) 
 (= (move_piece ($X1 $Y1 $color $rank) ($X2 $Y2)) 
@@ -1334,90 +1436,76 @@
       (add-atom &self 
         (score $X1 $Y1 $color $rank $X2 $Y2 $Opponent_hypothetical_score $AI_hypothetical_score))))
     
-;
-;
-;(= (printmove $A $B $C) (nth1 1 $A $D) (nth1 2 $A $E) (nth1 3 $A $F) (nth1 4 $A $G) (nth1 1 $B $H) (nth1 2 $B ;$I) (or (, (len $B 4) (return_entire_box #( :: ($H $I) ) $J $C) (nth1 4 $J $K)) (= $K  nil)) (or (, (== $F g) ;(write 'DBD moves from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) (write and2) (write ;$I)) (, (== $F s) (write 'YOU move from:') (write $D) (write and2) (write $E) (write ' to: ') (write $H) ;(write and2) (write $I))) #(add-atom &self #(guimessage move $A $B $K)) (or (, (\= $K nil) (nl) (write 'Piece ;captured!! -> ') (write $K) (nl)) nl) (write 'Type c. for commands you can use.'))
-;
-;
-;(= (examine_king $A $B $C) (cantakepiece $A $B k $C $D) (\= $D Nil) (threatOK1 $A $B $C $D) (threatOK2 $A $B ;$C) (threatOK3 $A $B $C) (write Checkmate!) (nl) #(add-atom &self #(guimessage checkmate $B $C)))
-;(= (examine_king $A $B $C) (cantakepiece $A $B k $C $D) (\= $D Nil) (write Check!) (nl) #(add-atom &self #;(guimessage check $B $C)))
-;#( = #(examine_king $A $B $C) True )
-;
-;
-;(= (threatOK1 $A $B $C $D) (seekopponents $A $B $D $E) (== $E Nil) (set-det))
-;(= (threatOK1 $A $B $C $D) (seekopponents $A $B $D $E) (checkthreat $E $A) (set-det))
-;
-;
-;(= (checkthreat Nil $A)  
-;  (set-det))
-;(= (checkthreat #(Cons $A $B) $C) (checkeachthreat $A $C) (set-det) (checkthreat $B $C) (set-det))
-;
-;
-;#( = #(checkeachthreat () $A) True )
-;(= (checkeachthreat #(Cons $A #(Cons $B $C)) $D) (nth1 3 $A $E) (nth1 3 $B $F) (move_piece $A $B $D $G) ;(xy_box $H #( :: ($E k) ) $G) (set-det) (checkking $H $F $G) (checkeachthreat $C $D))
-;
-;
-;(= (checkking $A $B $C)  
-;  (take_dest $A $B $C))
-;
-;
-;(= (threatOK2 $A $B $C) (lookforempty $A $D) (xy_box $E #( :: ($B k) ) $A) (return_entire_box $E $F $A) ;(set-det) (not (king_can_move $F $C $D $A)))
-;
-;
-;(= (king_can_move $A $B #(Cons $C $D) $E) (clear_route $A $C $E) (move_piece $A $C $E $F) (not (take_dest $C ;$B $F)))
-;(= (king_can_move $A $B #(Cons $C $D) $E) (not (clear_route $A $C $E)) (fail))
-;(= (king_can_move $A $B #(Cons $C $D) $E) (clear_route $A $C $E) (move_piece $A $C $E $F) (take_dest $C $B $F) ;(fail))
-;(= (king_can_move $A $B #(Cons $C $D) $E)  
-;  (king_can_move $A $B $D $E))
-;(= (king_can_move $A $B Nil $C) (set-det) (fail))
-;
-;
-;(= (threatOK3 $A $B $C) (set-det) (not (opponentblock $A $B $C)))
-;
-;
-;(= (opponentblock $A $B $C) (xy_box $D #( :: ($B k) ) $A) (rpiece $E) (\== $E k) (xy_box $F #( :: ($B $E) ) ;$A) (return_entire_box $F $G $A) (cord $H) (cord $I) (return_entire_box #( :: ($H $I) ) $J $A) (or (not ;(samecolor $G $J)) (len $J 2)) (clear_route $G $J $A) (move_piece $G $J $A $K) (not (take_dest $D $C $K)) ;(set-det))
-;
-;
-;(= (seekopponents $A $B $C $D) (buildopponent $A $B $E) (set-det) (takingpieces $E $C $A $F) (set-det) (delete ;$F Nil $D) (set-det))
-;
-;
-;#( = #(takingpieces () $A $B ()) True )
-;(= (takingpieces #(Cons $A $B) $C $D #(Cons $E $F)) (checkopponent $A $C $D $E) (set-det) (takingpieces $B $C ;$D $F))
-;(= (takingpieces #(Cons $A $B) $C $D $E)  
-;  (takingpieces $B $C $D $E))
-;
-;
-;#( = #(checkopponent $A () $B ()) True )
-;(= (checkopponent $A #(Cons $B $C) $D #(Cons $A #(Cons $B $E))) (clear_route $A $B $D) (checkopponent $A $C $D ;$E))
-;(= (checkopponent $A #(Cons $B $C) $D $E)  
-;  (checkopponent $A $C $D $E))
-;
-;
-;(= (takeyourpiece #(Cons Nil $A) $B)  
-;  (takeyourpiece $A $C $B))
-;(= (takeyourpiece #(Cons Nil $A) $B)  
-;  (takeyourpiece $A $C $B))
-;
-;
-;#( = #(buildopponent () $A ()) True )
-;(= (buildopponent #(Cons $A $B) $C #(Cons $A $D)) (len $A 4) (nth1 3 $A $C) (buildopponent $B $C $D))
-;(= (buildopponent #(Cons $A $B) $C $D)  
-;  (buildopponent $B $C $D))
-;
-;
-;#( = #(seekopponent () $A $B $C ()) True )
-;(= (seekopponent #(Cons $A $B) $C $D $E $A) (len $A 4) (nth1 3 $A $C) (takeyourpiece $D $A $E))
-;(= (seekopponent #(Cons $A $B) $C $D $E $F)  
-;  (seekopponent $B $C $D $E $F))
-;
-;
-;#( = #(takeyourpiece () $A $B) (empty) )
-;(= (takeyourpiece #(Cons $A $B) $C $D)  
-;  (clear_route $C $A $D))
-;
-;
-;(= (cantakepiece $A $B $C $D $E) (takingboxes $D $A $F) (set-det) (xy_box $G #( :: ($B $C) ) $A) ;(list_clear_route $A $G $F $E))
-;
+; 
+(= (checkking $king_side_to_check)  
+  (let*
+    (
+    ; locate king
+    ($king_square (xy_box ($king_side_to_check k)))    
+    ; 
+    ($full_king_sq (return_entire_box $king_square))  
+    )
+    ; Ensure the king is not in check, return True or False (True=Check)
+    (if (== $king_side_to_check s) 
+        (take_dest $full_king_sq g)
+        (take_dest $full_king_sq s)
+    )))
+
+; (any_moves_to_escape $side) 
+;  Function: See if there are any moves at all for a king to escape checkmate.
+;  Input:    king's side (silver or gold)
+;  Output:   If no moves, Empty
+;            If moves, a list of moves
+
+; variation to move any piece to an empty square.
+(= (any_moves_to_escape $side) 
+    ; match all squares occupied by $side (eg., s or g)
+    (match &self (square $x1 $y1 $side $rank)
+       ; match all empty squares
+       (match &self (square $x2 $y2) 
+          ; check all possible moves to empty squares
+          (if (== (clear_route ($x1 $y1 $side $rank) ($x2 $y2)) True)
+            ; if there is a route to empty square, move pieces in atomspace and see if king in check
+            (let*
+              (
+                ; move piece in atomspace
+                ($__1 (move_piece ($x1 $y1 $side $rank) ($x2 $y2)))
+                ($king_status (checkking $side))
+                ; move piece back in atomspace (we are just envisioning possibilities now)
+                ($__2 (reset_pieces ($x1 $y1 $side $rank) ($x2 $y2)))
+
+              )
+              (if (== $king_status False)
+                    ; we have found that a piece can block check
+                    (($x1 $y1 $side $rank) ($x2 $y2))
+                    (empty)))
+            (empty)))))
+
+; variation to capture any piece whatsoever
+(= (any_moves_to_escape $side) 
+  ; assign a variable with the opposing side color
+  (let $otherside (if (== $side g) s g) 
+    ; match all squares occupied by $side (eg., s or g)
+    (match &self (square $x1 $y1 $side $rank)
+       ; match all occupied squares by other side
+       (match &self (square $x2 $y2 $otherside $rank_capture_piece) 
+          ; check all possible moves to occupied squares
+          (if (== (clear_route ($x1 $y1 $side $rank) ($x2 $y2)) True)
+            ; if there is a route to occupied square, move pieces in atomspace and see if king in check
+            (let*
+              (
+                ; move piece in atomspace
+                ($__1 (move_piece ($x1 $y1 $side $rank) ($x2 $y2)))
+                ($king_status (checkking $side))
+                ; move piece back in atomspace (we are just envisioning possibilities now)
+                ($__2 (reset_pieces ($x1 $y1 $side $rank) ($x2 $y2 $otherside $rank_capture_piece)))
+              )
+              (if (== $king_status False)
+                    ; we have found a move that can block check
+                    (($x1 $y1 $side $rank) ($x2 $y2))
+                    (empty)))
+            (empty))))))
+
 
 ; (takingboxes)
 ;
@@ -1478,13 +1566,6 @@
       (if (== $AttackBool True) $next-sq (empty))))
 
 ;
-;(= (positiontotake #(Cons $A #(Cons $B $C)) $D $E $F) (cord $G) (cord $H) (return_entire_box #( :: ($G $H) ) ;$E $F) (or (not (samecolor $D $E)) (len $E 2)) (clear_route $D $E $F) (nth1 3 $D $I) (nth1 4 $D $J) (= $K  
-;  #( :: 
-;    ($G $H $I $J) )) (clear_route $K #( :: ($A $B) ) $F))
-;
-;
-;#( = #(concat_lists () ()) True )
-
 ;*******************************************************
 ; Basic commands.  The game is executed using the following commands.
 ;*******************************************************
@@ -1499,9 +1580,9 @@
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5 s b) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5 s n) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
@@ -1521,7 +1602,7 @@
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
-                        (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
+                        (1 3) (2 3) (3 3 ) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
                         (1 1 s r) (2 1 s n) (3 1 s b) (4 1 s q) (5 1 s k) (6 1 s b) (7 1 s n) (8 1 s r)))
         )
@@ -1579,13 +1660,9 @@
           ; Try moving piece provisionally
           (let* ( 
               ; Try the move and update the board state.   
-              ($MoveBool  (move_piece $h $i))   
-              ; locate human's king
-              ($king_square (xy_box (s k)))    
-              ; 
-              ($full_king_sq (return_entire_box $king_square))  
-              ; Ensure the player's king is not in check from gold (g) if moved.  
-              ($KingCompromised (take_dest $full_king_sq g))   
+              ($MoveBool  (move_piece $h $g))   
+              ; Ensure the human player's king (s) is not in check from gold (g) if moved.   
+              ($KingCompromised (checkking s))
                   ) 
               ; If move valid, proceed to create new board atom with move.
               (if (== $KingCompromised True)
@@ -1600,7 +1677,21 @@
                   (remove-atom &self (board-state $starting_board))
                   ; display
                   (D) 
-                  ; Look for CHECK or CHECKMATE
+                  ; announce CHECK or CHECKMATE of gold player (AI)
+                  (let $Check (checkking g)
+                      (if (== $Check True)
+                          ; if the AI is in check, see if AI has any moves whatsoever left to escape
+                          (let $any_moves_left_whatsoever (collapse (any_moves_to_escape g))
+                            (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves!
+                                ; if no moves possible for AI
+                                (progn
+                                  ((py-atom print) "Checkmate! You win!")
+                                  ((py-atom print) "Winner!  Winner!  Winner!")
+                                  ((py-atom print) "")
+                                  (change-game-state checkmate)
+                                )
+                                (println! "Check!")))
+                          (empty)))
                   )
               )
           )
@@ -1615,140 +1706,82 @@
     (delete-pieces)
     )))
 
-; The move command moves the human player's piece.
-;(: M (-> command))
-(= (M-deactivate)  
-  ; check for game over (there can only be ONE game-state atom at a time or problems result!)
-  (match &self (game-state $msg)
-   (if (xor (==  checkmate   $msg) (==  resigned $msg))
-    ((py-atom print) "Game over. Please reset to play again (enter r).")
-
-    ;else keep playing...
-    (progn 
-      ; prompt for x/y location
-      ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-      ; add edit to make sure move within boundaries of 1 -> 8!
-      ((py-atom print) "Enter coordinates.")
-      (let $coordinates ((py-atom input)) ())
-      (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-      (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-      (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-      (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-      (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-      (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-      ; get the current board
-      (match &self (board-state $starting_board) $starting_board)
-      ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
-      (reset-pieces $starting_board)
-      ; check if source location and destination are not the same
-      (if (not (== $f $g))                            
-       ; check if destination is empty or destination has opponent's piece  
-        (progn 
-          ; Retrieve the source box details.
-          (let $h (return_entire_box $f) ())
-                ;does not return here!
-          ; Retrieve the destination box details.
-          (let $i (return_entire_box $g) ())
-          ; Check there is a piece to move.
-          (if (and (== (size-atom $h) 4)                                    
-                   (xor  
-                   ; OK to move to open square size 2...
-                   (== (size-atom $i) 2)     
-                   ; OK to take another piece, check color is not the same...
-                   (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
-            ; Validate the path for the piece.
-            (if (== (clear_route $h $i) True)               
-              ; Try moving piece provisionally
-              (let* ( 
-                  ; Try the move and update the board state.   
-                  ($MoveBool  (move_piece $h $i))   
-                  ; locate human's king
-                  ($king_square (xy_box (s k)))    
-                  ; 
-                  ($full_king_sq (return_entire_box $king_square))  
-                  ; Ensure the player's king is not in check from gold (g) if moved.  
-                  ($KingCompromised (take_dest $full_king_sq g))   
-                      ) 
-                  ; If move valid, proceed to create new board atom with move.
-                  (if (== $KingCompromised True)
-                      ((py-atom print) "Can't move there, your king would be in check.")
-                      ;else
-                      (progn 
-                        ; re-create a new board 
-                        (println! "checkpoint 1")
-                        ((py-atom print) "Moving piece...")
-                        (let $provisional_board (move_piece_on_board $h $i $starting_board)
-                             (add-atom &self (board-state $provisional_board)))
-                        ; remove the old chess board
-                        (remove-atom &self (board-state $starting_board))
-                        ; display
-                        (D) 
-                        ; Look for CHECK or CHECKMATE
-                      )
-                  )
-              )
-            ((py-atom print) "Can't move piece there."))
-          ; else (moving to location with same piece or other problem)
-          ((py-atom print) "Invalid move.")
-          )
-        )
-        ;else (trying to move to same location)
-        ((py-atom print) "Can't move to same location.")) 
-      ; since move complete, delete any individual square atoms which only live for a single move.
-      (delete-pieces)
-    ) ; progn ends here
-   ) ; if ends here
-  ); end match
-)
-
 ; AI move piece command
 (: G (-> command))
 (= (G)  
   (match &self (game-state $msg)
   ; check for game over...
-  (if (xor (==  checkmate   $msg) (==  resigned $msg)) ; then  
+    (if (xor (==  checkmate   $msg) (==  resigned $msg)) 
+      ; then  
       ((py-atom print) "Game over. Please reset to play again (enter r).")
       ;else keep playing...
       (progn 
-          ; get the current board
-          (match &self (board-state $starting_board) $starting_board)
-          ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
-          (reset-pieces $starting_board)
-          ; determine next AI move
-          (let $move (decide_greedy_move) () )
-          (if  (== $move Empty)
-            (progn
-              ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
-              (change-game-state resigned)
+        ; get the current board
+        (match &self (board-state $starting_board) $starting_board)
+        ; Add each piece to &self atomspace to work with individually with form eq '(square 1 1 s r)'.
+        ; These atoms are used to "envision" moves only. So if you alter these atoms, when done immediately
+        ; reverse back to the starting state. 
+        ; You can use move_piece and reset_pieces to respectively envision a move, then reverse the move.
+        (reset-pieces $starting_board)
+        ; determine next AI move
+        (let $move (decide_greedy_move) () )
+        (if  (== $move Empty)
+          (let*
+            ; if all attempts fail, locate AI king and see if he is in checkmate
+            (
+            ($king_square (xy_box (g k)))    
+            ($full_king_sq (return_entire_box $king_square))  
+            ($KingCompromised (take_dest $full_king_sq s))   
             )
-            ; else proceed with move
-            (progn
-              (let $start (nth 1 $move) ())
-              (let $destination (nth 2 $move) ()) ; this is (x y) only
-              ; we need the entire present destination box to pass to the board display
-              (let $destination_entire (return_entire_box $destination) ())
-              ((py-atom print) "Greedy Chess moving...")
-              ; create atom for the updated complete chess board...
-              (let $provisional_board (move_piece_on_board $start $destination_entire $starting_board)
-                    (add-atom &self (board-state $provisional_board)))
-              ; remove the old chess board
-              (remove-atom &self (board-state $starting_board))
-              ; since move complete, delete any individual square atoms which only live for a single move.
-              (delete-pieces)
-              ; display the new board
-              (D)
-              ; check to see if human player's king is in check
-              ;     "
-            ))))))
-
-;(= (g) (board $A) (attemptcheckmate $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (write 'Checkmate!  Deep Blue Dummy Wins!') (nl) #(add-atom &self #(guimessage checkmate s g)) ;(printmove $C $D $A) (set-det))
-;(= (g) (board $A) (playdefenseR $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) (b ;$B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (takehighestopen $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (movetoposition $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board $B)) ;(b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-;(= (g) (board $A) (takehighestopenpawn $B $A $C $D) #(remove-atom &self #(board $A)) #(add-atom &self #(board ;$B)) (b $B) (examine_king $B s g) (printmove $C $D $A) (set-det))
-
-
-;
+            (if (== $KingCompromised True)
+              (progn
+                ((py-atom print) "Checkmate! You win!")
+                ((py-atom print) "Winner!  Winner!  Winner!")
+                ((py-atom print) "")
+                (change-game-state checkmate)
+                )
+              (progn
+                ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
+                (change-game-state resigned))))
+          ; else proceed with move
+          (progn
+            (let $start (nth 1 $move) ())
+            (let $destination (nth 2 $move) ()) ; this is (x y) only
+            ; we need the entire present destination box to pass to the board display
+            (let $destination_entire (return_entire_box $destination) ())
+            ; make the move in atomspace using the individual "square" atoms
+            (move_piece $start $destination) ; the envision move persists in atomspace "square" atoms until end of routine.
+            ((py-atom print) "Greedy Chess moving...")
+            ; create atom for the updated complete chess board...
+            (let $provisional_board (move_piece_on_board $start $destination_entire $starting_board)
+                  (add-atom &self (board-state $provisional_board)))
+            ; remove the old chess board
+            (remove-atom &self (board-state $starting_board))
+            ; display the new board 
+            (D)
+            ; announce CHECK or CHECKMATE of human player if applicable
+            ; Note: The attemptcheckmate routine will set the checkmate status.
+            (match &self (game-state $msg2) 
+              (if (==  checkmate   $msg2) 
+                (progn
+                            ((py-atom print) "Checkmate! Greedy Chess wins!!!")
+                            ((py-atom print) "Good game!")
+                            ((py-atom print) "")
+                          )
+                ; else look for check...
+                (let $Check (checkking s)
+                  (if (== $Check True)        
+                    ((py-atom print) "Check!")
+                    ((py-atom print) "Your move.")))))
+            ; since move complete, delete any individual square atoms which only live for a single move.     
+            ;     "
+          )
+        )
+        (delete-pieces)
+      )
+    )
+  )
+)
 
 ; The reset command will start the game over.
 (: R (-> command))

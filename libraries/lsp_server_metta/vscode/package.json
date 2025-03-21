@@ -129,6 +129,12 @@
           "default": true,
           "description": "Enables integration with ChatGPT for enhanced code assistance, leveraging AI to augment coding capabilities."
         },
+        "metta-lsp.xtras.chatgpt.alternateUrl": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Specifies the URL used for sending requests to a non-OpenAI (presumably local) LLM model."
+        },
         "metta-lsp.xtras.chatgpt.apiKey": {
           "scope": "window",
           "type": "string",
