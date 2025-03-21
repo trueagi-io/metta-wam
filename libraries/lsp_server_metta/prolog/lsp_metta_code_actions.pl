@@ -83,6 +83,11 @@
                                  get_src_code_at_range/4
                                ]).
 
+:- use_module(lsp_metta_llm, [ request_code_comment/2,
+                               is_llm_enabled/0,
+                               make_llm_request/2
+                             ]).
+
 % Can comment this entire subsystem by commenting out the next hook
 lsp_hooks:handle_msg_hook(Method, Msg, Result) :-
     clause(handle_code_action_msg(Method, Msg, Result), Body), !,
@@ -182,6 +187,7 @@ key_value_to_pair(Key-JsonValue, [Key, Value]) :- atomic(Key), json_to_metta(Jso
 % lsp_hooks:compute_code_action/3 for GPT Rewrite Block
 lsp_hooks:compute_code_action(Uri, Range, RewriteAction) :-
     debugging(lsp(todo)),  % Condition for GPT Rewrite
+    is_llm_enabled,
     get_src_code_at_range(block, Code, Range, Uri),
     trim_to_length(Code, 300, Block),
     sformat(RewriteTitle, "Refactor: Have GPT Rewrite Block '~w' (TODO)", [Block]),
@@ -206,40 +212,19 @@ gpt_rewrite_code(Code, RewrittenCode) :-
 
 % Generic GPT Task Execution
 call_openai_for_gpt_task(Code, Task, Result) :-
-    getenv('OPENAI_API_KEY', ApiKey),
-    OpenAIURL = 'https://api.openai.com/v1/chat/completions',
     sformat(Prompt, "Task: ~w\n\nCode:\n~w", [Task, Code]),
-    RequestPayload = _{
-        model: "gpt-3.5-turbo",
-        messages: [
-            _{role: "system", content: "You are a helpful assistant."},
-            _{role: "user", content: Prompt}
-        ],
-        max_tokens: 100,
-        stop: "\n"
-    },
-    % Send the request to OpenAI
-    http_post(
-        OpenAIURL,
-        json(RequestPayload),
-        ResponseDict,
-        [authorization(bearer(ApiKey)), json_object(dict)]
-    ),
-    % Extract the rewritten code from the response
-    (   _{choices: Choices} :< ResponseDict,
-        member(Choice, Choices),
-        get_dict(message, Choice, Message),
-        get_dict(content, Message, Result)
-    ;   Result = "Error: No result returned from GPT"
-    ).
+    ( make_llm_request(Prompt, Result)
+    -> true
+    ;  Result = "Error: No result returned from GPT" ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Code Action: GPT Comment Code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % lsp_hooks:compute_code_action/3 for GPT Comment Code
 lsp_hooks:compute_code_action(Uri, _Range, CommentCodeAction) :-
-    get_filepart(Uri, FilePart),
     debugging(lsp(todo)),  % Condition for GPT Comment
+    is_llm_enabled,
+    get_filepart(Uri, FilePart),
     sformat(CommentTitle, "Source: Comment this file: '~w...' (TODO)", [FilePart]),
     CommentCodeAction = _{
         title: CommentTitle,
@@ -260,6 +245,44 @@ lsp_hooks:exec_code_action("source_gpt_comment", [Uri], ExecutionResult) :-
 % GPT Comment Code
 gpt_comment_code(Code, CommentedCode) :-
     call_openai_for_gpt_task(Code, "Add comments to this code.", CommentedCode).
+
+lsp_hooks:compute_code_action(Uri, Range, CommentCodeAction) :-
+    is_llm_enabled,
+    % check that the client supports deferring edit calculation
+    lsp_state:stored_json_value(
+                  client_capabilities,
+                  [properties, resolveSupport, codeAction, textDocument],
+                  Props),
+    memberchk("edit", Props), !,
+    get_code_at_range(exact, Uri, Range, CodeFull),
+    string_excerpt(CodeFull, 50, CodeExcerpt),
+    sformat(CommentTitle, "Source: LLM Comment this block: '~w'", [CodeExcerpt]),
+    CommentCodeAction = _{title: CommentTitle,
+                          kind: "refactor.comment",
+                         data: _{uri: Uri, range: Range}}.
+
+string_excerpt(String, Len, Excerpt) :-
+    sub_string(String, 0, Len, _, Excerpt0), !,
+    string_concat(Excerpt0, "...", Excerpt).
+string_excerpt(String, _, String).
+
+lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
+                          _{id: Id,
+                            result: _{title: "Source: LLM Comment this block: ",
+                                      kind: "refactor.comment",
+                                      edit: _{changes: Changes}}}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{data: Data, kind: "refactor.comment"} :< Params,
+    _{uri: Uri, range: Range} :< Data,
+    get_code_at_range(exact, Uri, Range, Code),
+    request_code_comment(Code, Commented),
+    % [TODO] instead of sending the edit as one big edit, find just
+    % the minimal changes to *add* comments, so we can make sure that
+    % no code gets deleted
+    atom_string(AUri, Uri),
+    % using dict_create/3 instead of a literal because that doesn't
+    % seem to work with a variable key
+    dict_create(Changes, _, [AUri=[_{range: Range, newText: Commented}]]).
 
 % The call_openai_for_gpt_task/3 predicate is defined earlier.
 

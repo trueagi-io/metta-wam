@@ -280,10 +280,10 @@ create_edit_list(Orig, Formatted, Edits) :-
     create_edit_list(0, Orig, Formatted, Edits).
 
 create_edit_list(_, [], [], []) :- !.
-create_edit_list(LineNum, [_Line|Lines], [], [Edit]) :- !,
+create_edit_list(LineNum, [Line|Lines], [], [Edit]) :- !,
     length(Lines, NLines),
     EndLine is LineNum + NLines,
-    last(Lines, LastLine),
+    last([Line|Lines], LastLine),
     string_length(LastLine, LastLineLen),
     Edit = _{range: _{start: _{line: LineNum, character: 0},
                       end: _{line: EndLine, character: LastLineLen}},

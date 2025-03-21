@@ -2216,7 +2216,7 @@ show_options_values :-
 %     ?- interpreter_source_file(File).
 %     File = 'your_prolog_file.pl'.
 %
- :- ignore((prolog_load_context(source, File), assert(interpreter_source_file(File)))).
+:- ignore((prolog_load_context(source, File), assert(interpreter_source_file(File)))).
 
 
 

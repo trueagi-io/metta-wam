@@ -538,7 +538,7 @@ is_final_write('#\\'(S)) :- !, format("'~w'", [S]).
 is_final_write('rng'(Id,_,_)) :- !, format("~w", [Id]).
 is_final_write('rng'(Id,_)) :- !, format("~w", [Id]).
 % Big number use underscores betten them
-is_final_write(V) :- integer(V), V>10_000, catch(format('~I',[V]),_,fail),!.
+is_final_write(V) :- integer(V), V>900_000, catch(format('~I',[V]),_,fail),!.
 % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
 is_final_write(V) :- py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
 % For lists like ['$VAR', Value], write the variable if the tail is empty.
@@ -547,8 +547,12 @@ is_final_write([VAR, V | T]) :- '$VAR' == VAR, T == [], !, write_dvar(V).
 is_final_write('[|]') :- write('Cons'), !.
 % For an empty list, write it as '()'.
 is_final_write([]) :- !, write('()').
+
+is_final_write(A:B) :- write_src(A),write(':'),write_src(B),!.
+
 %is_final_write([]):- write('Nil'),!.
 is_final_write(A) :- fail, \+ is_list(A), compound(A), A \= exec(_),
+  \+ woc((sub_term(E,A), is_list(E))),
   catch(portray_clause(A),_,fail), !.
 
 
