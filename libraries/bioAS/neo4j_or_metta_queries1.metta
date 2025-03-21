@@ -990,7 +990,7 @@
   (:name "Same Start-End Pair with Directed Relation"
    :query-number "custom-same-start-end"
    :description "Find pairs of nodes A and B that share the same 'start' and 'end' property values, where A ≠ B and A links to B via some relationship."
-
+   :minimum-time 30
    :metta
    (match &neo4j_out_v3
      (,
@@ -1032,7 +1032,7 @@
 (isa-test-query
   (:name "5-edge chain: $R1–$R5"
    :description "Chain of 5 edges using $R1,$R2,$R3,$R4,$R5."
-
+	:minimum-time 60
 	:cypher
 	 "MATCH (A)
 	   WHERE A.R1 IS NOT NULL OR (A)-[:R1]->()
@@ -1085,23 +1085,21 @@
 	   LIMIT 3"
 
 
-   :metta
-   (let $_
-	 (
-	   ;; Edges must differ:
-	   (apply different (each-pair ($R1 $R2 $R3 $R4 $R5)))
-	   ;; Nodes must differ:
-	   (apply different (each-pair ($A $B $C $D $E $F $G $H $I $J $K))))
+   :metta	 
 	 (limit 3
 	   (match &neo4j_out_v3
 		 (,
+		   ;; Edges must differ:
+		   (each-different ($R1 $R2 $R3 $R4 $R5))
+		   ;; Nodes must differ:
+		   (each-different  ($A $B $C $D $E $F $G $H $I $J $K))
 		   (neo $A $R1 $B)
 		   (neo $B $R2 $C)
 		   (neo $C $R3 $D)
 		   (neo $D $R4 $E)
 		   (neo $E $R5 $F)
 		 )
-		 (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F))))
+		 (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F)))
 
   ;; Provide any additional info if desired:
 

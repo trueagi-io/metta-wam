@@ -55,6 +55,10 @@ mw_print_fail(_):- fail.
 mw_print_arg(List):- is_list(List),!,fail.
 mw_print_arg(H):- \+ compound(H), !, write_src_rec(H).
 mw_print_arg(H):- compound_name_arguments(H,':',[I,T]),atom(T),write_src(I),write(':'),write_src(T).
+mw_print_arg(A) :- fail, \+ is_list(A), compound(A), A \= exec(_),
+      \+ woc((sub_term(E,A), is_list(E))),
+      catch(portray_clause(A),_,fail), !.
+
 mw_print_arg(H):- compound_name_arguments(H,F,Args), \+ atom_concat('$',_,F), write_src([F|Args]),!.
 %mw_print_arg(neo_P(X,Y,Z)):- write_src([neo_P,X,Y,Z]),!.
 
@@ -294,9 +298,9 @@ sample_query(4-"4. Interactions Involving 1433B Protein",
     ['Gene', 'Transcript', 'Exon', 'Protein1', 'Protein2', 'GO1Term'],
     [Gene, Transcript, Exon, Protein1, Protein2, GO1Term], [
     neo(Protein1, protein_name, startsWith("1433B")),
-    neo(Gene, transcribed_to, Transcript),
-    neo(Transcript, includes, Exon),
-    neo(Protein1, translation_of, Transcript),
+    neo(Gene, transcribed_to, Transcript:transcript),
+    neo(Transcript:transcript, includes, Exon),
+    neo(Protein1, translation_of, Transcript:transcript),
     neo(Protein1, interacts_with, Protein2),
     neo(GO1Term, go_gene_product, Protein1)]).
 
@@ -307,8 +311,8 @@ sample_query(5-"5. Components Associated with IGF1",
     neo(Gene:gene, gene_name, "IGF1"),
     neo(Gene:gene, genes_pathways, Pathway),
     neo(Enhancer:enhancer, associated_with, Gene:gene),
-    neo(Transcript, transcribed_from, Gene:gene),
-    neo(Transcript, translates_to, Protein:protein)]).
+    neo(Transcript:transcript, transcribed_from, Gene:gene),
+    neo(Transcript:transcript, translates_to, Protein:protein)]).
 
 sample_query(6-"6. Pathways and Protein Interactions for IGF1",
     "Find pathways and interacting proteins for the IGF1 gene including all associated components.",
@@ -317,17 +321,17 @@ sample_query(6-"6. Pathways and Protein Interactions for IGF1",
     neo(Gene:gene, gene_name, "IGF1"),
     neo(Gene:gene, genes_pathways, Pathway),
     neo(Enhancer:enhancer, associated_with, Gene:gene),
-    neo(Transcript, transcribed_from, Gene:gene),
-    neo(Transcript, translates_to, Protein1),
+    neo(Transcript:transcript, transcribed_from, Gene:gene),
+    neo(Transcript:transcript, translates_to, Protein1),
     neo(Protein1, interacts_with, Protein2)]).
 
 sample_query(7-"7. Transcripts and Exons for TP73-AS1",
     "Find transcripts and exons associated with the TP73-AS1 gene.",
     ['Transcript', 'Exon', 'Gene'],
     [Transcript, Exon, Gene], [
-    neo(Transcript, includes, Exon),
-    neo(Transcript, transcribed_from, Gene),
-    neo(Gene, gene_name, endsWith("TP73-AS1"))]).
+    neo(Transcript:transcript, includes, Exon:exon),
+    neo(Transcript:transcript, transcribed_from, Gene:gene),
+    neo(Gene:gene, gene_name, endsWith("TP73-AS1"))]).
 
 sample_query(8-"8. Interactions Involving 1433S Protein",
     "Find proteins interacting with 1433S and associated GO terms.",
@@ -964,6 +968,7 @@ mw_set_varname_and_type(_Body,V, N):- ignore('$VAR'(N)=V).
 directly_in_pred(Body,Var):- sub_term(Found,Body),compound(Found),arg(_,Found,V),V==Var, !, \+ functor(Found,':',_).
 
 name_to_type(Name,_Type):- atom_concat('PropList',_,Name),!,fail.
+name_to_type(Name,_Type):- atom_length(Name,Len), Len<3,!,fail.
 name_to_type(Name,Type):-
     downcase_atom(Name,DC),atom_chars(DC,[C|Chars]),append(TypeChars,[N|_],Chars),char_type(N,digit),
     atom_chars(Type,[C|TypeChars]),!.
@@ -993,13 +998,13 @@ var_in_list(List, Var) :-
 
 
 run_sample_query(Name, Desc, VNs, Vars, Body):-
-  \+ \+ run_sample_query1(Name, Desc, VNs, Vars, Body),
+  \+ \+ run_sample_query1(60,Name, Desc, VNs, Vars, Body),
   must_det_lls((maplist(add_props, [Name, Desc| Body], [Name2, Desc2| Body2]), !,
    term_variables(Body2, AllVars), remove_eqs(AllVars, Vars, NewVars),
    length(NewVars, N), generate_var_names(N, NewVNs),
    append(Vars, NewVars, Vars2), append(VNs, NewVNs, VNs2))),
   %nop
-  (run_sample_query1(Name2, Desc2, VNs2, Vars2, Body2)), !.
+  (run_sample_query1(60,Name2, Desc2, VNs2, Vars2, Body2)), !.
 
 generate_var_names(N, Names) :-
     findall(Prop, (between(1, N, I), atomic_list_concat(['PropList', I], Prop)), Names).
@@ -1007,41 +1012,45 @@ generate_var_names(N, Names) :-
 number_and_name(Num-Name,Num,Name):- nonvar(Num),!.
 number_and_name(Name,unknown,Name).
 
-run_sample_query1(NName, Desc, VNs, Vars, Body):- nl, nl, nl, nl,
+run_sample_query1(Time, NName, Desc, VNs, Vars, Body):-
+    nl, nl, nl, nl,
     number_and_name(NName,Num,Name),
     format('### ~w~n',[Name]),
     writeln('```no-wrap'),
     writeln('================================================================='),
     format('\t~w~n', [Desc]), % Prints the name and description of the query
-    Time = 60,
     %maplist(mw_set_type, Vars, VNs),
     \+ \+
     ( copy_term(Vars,RVars),
       maplist(mw_set_varname_and_type(Body), Vars, VNs),
       maplist(mw_set_varname, RVars, VNs),
       Result =.. [result|Vars], nl,
-      CBody =.. [','| Body],
+      conj_as_comma(Body,CBody),
       mw_write_src(match('&neo4j_out_v3', CBody, Result)), nl), !,
-
-    time(   % Attempt to execute the query within a Time-second time limit
-        catch(call_with_time_limit(Time, execute_query(Body, VNs, Vars)),
-              time_limit_exceeded,
-              format('Time limit ~w exceeded for ~w~n', [Time, Name]))
-    ;   % If no more results or after handling time limit exceeded
-        true
-    ), !,
-    flag(result_count, Length, Length), % Get the number of results
-    nb_current(last_result_at, ResultTimeTaken),
-    format(' Last answer found: ~2f seconds~n', [ResultTimeTaken]),
-    format(' Number of answers: ~D~n', [Length]), !,
+    execute_query_tl(Body, VNs, Vars, Time),
     stats_about(Num),
     writeln('================================================================='),
     writeln('```').
+
+conj_as_comma(Body,CBody):- is_list(Body),CBody =.. [','| Body],!.
+conj_as_comma(Body,CBody):- conjuncts_to_list(Body,LBody),CBody =.. [','|LBody],!.
 
 stats_about(QueryID):-
     forall(query_summary(QueryID, ExecutionTimeSeconds, ResultCount, NodeCount, EdgeCount),
     format('Neo4J Query ~w: Execution Time: ~w sec | Rows: ~w | Nodes: ~w | Edges: ~w~n',
            [QueryID, ExecutionTimeSeconds, ResultCount, NodeCount, EdgeCount])).
+
+execute_query_tl(Body, VNs, Vars, Time):-
+    time(   % Attempt to execute the query within a Time-second time limit
+          catch(call_with_time_limit(Time, execute_query(Body, VNs, Vars)),
+                time_limit_exceeded,
+                format(' Time limit ~w seconds exceeded! ~n', [Time]))
+      ;   % If no more results or after handling time limit exceeded
+                format(' Failed ~w~n', [Body])), !,
+    flag(result_count, Length, Length), % Get the number of results
+    nb_current(last_result_at, ResultTimeTaken),
+    format(' Last answer found: ~2f seconds~n', [ResultTimeTaken]),
+    format(' Number of answers: ~D~n', [Length]), !.
 
 
 % Helper predicate to execute the query, record and print execution time and number of results
@@ -1241,12 +1250,45 @@ register_linked(F/A):- assert_neo_new(_,is_registered_link(F, A)), dynamic(F/A).
 rtq:- forall(metta_atom(_,['isa-test-query',Y]),
   ignore(do_isa_test_query(Y))).
 
-do_isa_test_query(Y):- nl,nl,write(' '),%write_src_wi(Y),
-    get_prop(Y,':metta',Z),
-    assign_old_varnames(Z,ZZ),
-    nl,nl,write(' '),write_src_wi(exec(ZZ)),nl.
+:- cmd_note(rtq).
 
-get_prop(Y,Prop,V):- sub_term(Sub,Y),compound(Sub),Sub=[N,V|_],N==Prop,!.
+do_isa_test_query(Y):- nl,nl,write(' '),%write_src_wi(Y),
+    must_det_lls((
+    get_prop(Y,':metta',Z),
+    get_prop(Y,':name',Name),
+    get_prop(Y,':description',Desc),
+    get_prop_else(Y,':minimum-time', Time, 10),
+    assign_old_varnames(Z,ZZ),
+    nl,nl,write(' '),write_src_wi(exec(ZZ)),nl,
+    into_prolog_query(ZZ,Prolog),
+    subst_vars(Prolog, NewTerm, NamedVarsList),
+    mw_writeq(prolog=Prolog),
+    %mw_writeq(term=NewTerm),
+    %mw_writeq(vn=NamedVarsList),
+    maplist(sep_var_name_vars,NamedVarsList, VNs, Vars),
+    run_sample_query1(Time, Name, Desc, VNs, Vars, NewTerm))),!.
+    %execute_query_tl(NewTerm, _VNs, NamedVarsList, 10).
+
+sep_var_name_vars(N=V,N,V).
+
+'each-different'(X):- nl,writeq('each-different'(X)),nl.
+
+into_prolog_query(ZZ,Prolog):-
+  sub_term(SubTerm,ZZ),is_list(SubTerm),member(E,SubTerm),E=[Neo,_|_],(Neo==neo;Neo==neo_P),!,
+  neo_into_prolog_query(SubTerm,Prolog),!.
+
+neo_into_prolog_query([Comma|SubTerm],Prolog):- Comma==',',!,neo_into_prolog_query(SubTerm,Prolog).
+neo_into_prolog_query(Nil,true):- Nil==[],!.
+neo_into_prolog_query(NL,NL):- \+ is_list(NL),!.
+neo_into_prolog_query([A|B],F):- B\==[], is_list(B),atom(A),!,maplist(neo_into_prolog_query,B,BL),F=..[A|BL].
+neo_into_prolog_query([A|B],(AA,BB)):- !, neo_into_prolog_query(A,AA), neo_into_prolog_query(B,BB),!.
+neo_into_prolog_query(A,A).
+
+get_prop_else(Y, Prop,V,_Else):- compound(Y), sub_term(Sub,Y),compound(Sub),Sub=[N,V|_],N==Prop,!.
+get_prop_else(_, _Prp,V, Else):- V=Else,!.
+
+get_prop(Y, Prop,V):- compound(Y), sub_term(Sub,Y),compound(Sub),Sub=[N,V|_],N==Prop,!.
+get_prop(_, Prop,V):- sformat(V,"Unknown ~w",[Prop]).
 
 assign_old_varnames(Z,Nat):-
   copy_term(Z,Nat,_Stuff),
