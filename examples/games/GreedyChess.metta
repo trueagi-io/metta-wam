@@ -79,8 +79,10 @@
 ;   NOTES
 ;
 ;   During programming tail recursion functions were often created, but it was discovered that these
-;   were often faster with metta calls to 'match'. The original functions have sometimes been retained for
-;   comparison.
+;   were often faster instead using metta calls to 'match', The original functions have sometimes been retained for
+;   comparison. In general the definite features of Metta are the use of atomspace, 'match' 'superpose' and
+;   'collapse'. Occasionally it is wise to use 'xor' in lieu of 'or' (if possible) to avoid unexpected
+;   nondeterministic behavior. In general it is not necessary to think in GOFAI chaining terms (forward, backward).
 ;
 ;   ENHANCEMENTS POSSIBLE
 ;
@@ -96,6 +98,9 @@
 ;   4) use of the standard letters on the x axis
 ;   5) tuning and more sophisticated moves of all types
 ;
+
+
+
 ;*******************************************************
 ; Global type definitions
 ;*******************************************************
@@ -108,8 +113,6 @@
 ;*******************************************************
 ; General utility functions
 ;*******************************************************
-
-
 
 ;***************************************************************
 ; Function:     nth
@@ -246,6 +249,7 @@
 (rank p) 
 
 
+
 ;*******************************************************
 ; Declare initializing game state
 ;*******************************************************
@@ -253,11 +257,10 @@
 (game-state initializing)
 
 
+
 ;*******************************************************
 ; Code invoked by the basic commands 
 ;*******************************************************
-
-
 
 ;***************************************************************
 ; Function:     add-pieces
@@ -590,7 +593,7 @@
           $threaten_position
 
       (let* (
-        ($msg4 (println! "try to play defense..."))
+        ($msg4 (println! "looking to play defense..."))
         ($position (playdefense)))
         (if (not (==  $position Empty))
           $position
@@ -600,7 +603,14 @@
         ($random_move (random_move_empty_sq)))
         (if (not (==  $random_move Empty)) 
           $random_move 
-          (empty))))))))))))
+
+      (let* (
+        ($msg6 (println! "looking for desperation move..."))
+        ($random_moveD (random_move_empty_sq_desperate)))
+        (if (not (==  $random_moveD Empty)) 
+          $random_moveD 
+      
+          (empty))))))))))))))
 
 ;***************************************************************
 ; Function:     try_move_and_verify
@@ -712,8 +722,8 @@
       (let*
         (
             ($random_level 
-                  ; try to move pawns out from home row.
-                  (if (== (lots_of_pawns_in_home_row) True)
+                  ; try to move pawns out from home row, but only on first random try!
+                  (if (and (== (lots_of_pawns_in_home_row) True) (== $Ranks_Already_Tried_List 0))
                   1
                   (random-int  &rng 1 5))) 
             ($rank_level (case $random_level
@@ -800,7 +810,32 @@
           ;return move
           (nth $select_int_check $random_moves)
           ))))
-                
+              
+;***********************************************************************
+; Function:     random_move_empty_sq_desperate
+;
+; Description:  Attempts to find *any* legal AI (gold) move that would 
+;               escape from checkmate. It is invoked as a last resort 
+;               when standard move generation fails.
+;
+; Input:        None
+;
+; Output:       A single valid move in the form ((x1 y1 g rank) (x2 y2)), 
+;               if one exists; otherwise returns Empty.
+;
+; Side Effects: - Relies on transient square atoms in atomspace.
+;               - Uses `any_moves_to_escape` to probe escape moves.
+;
+; Note:         This function acts as a fallback if the AI is under 
+;               immediate threat of checkmate and no optimal moves 
+;               can be found through standard AI strategies.
+;***********************************************************************
+(= (random_move_empty_sq_desperate)
+    (let $any_moves_left_whatsoever (collapse (any_moves_to_escape g))
+      (if (not (== $any_moves_left_whatsoever ())) ;an empty list means no moves for escape exist, checkmate!
+            (car-atom $any_moves_left_whatsoever)  ; "Custer's last stand" type of move is possible
+            (empty))))
+
 ;***********************************************************************
 ; Function:     attemptcheckmate
 ;
@@ -836,11 +871,12 @@
                 ($dest_full (return_entire_box $dest))
                 ; provisionally move the piece
                 ($__1  (move_piece $start $dest))  
+                ; with move envisioned, see if the silver king can escape using any moves whatsoever
                 ($any_moves_left_whatsoever (collapse (any_moves_to_escape s)))
                 ($__2 (reset_pieces $start $dest_full))
               )
               (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
-                    ; if no moves possible for human AI has found checkmate, success! 
+                    ; if no moves possible for human, Greedy Chess has found checkmate, success! 
                     $test_move
                     (empty))))))
         (if (== $list_of_checkmate_moves ())
@@ -997,12 +1033,15 @@
               (if (== (clear_route ($x2 $y2 g $AI_rank) ($x3 $y3)) True)
                     ; if AI piece is not exposed in new position
                     (let*
-                          ( ;envision the move to empty square, see if exposed after moves
+                          ( ;envision the move to empty square
                             ($__1 (move_piece ($x1 $y1 g $AI_rank) ($x2 $y2)))
+                            ; see if exposed after moves
                             ($exposed (take_dest ($x2 $y2) s))
+                            ; make sure king safe
+                            ($king_status (checkking g))
                             ($__2 (reset_pieces ($x1 $y1 g $AI_rank) ($x2 $y2)))
                           )
-                          (if (== $exposed False)
+                          (if (and (== $exposed False) (== $king_status False))
                             ; success!
                             (($x1 $y1 g $AI_rank) ($x2 $y2))
                             ; whoops, the piece is exposed to capture
@@ -1078,9 +1117,11 @@
                           ( ;envision the move to empty square, see if exposed after moves
                             ($__1 (move_piece ($x1 $y1 g $AI_rank) ($x2 $y2)))
                             ($exposed (take_dest ($x2 $y2) s))
+                            ; make sure king safe
+                            ($king_status (checkking g))
                             ($__2 (reset_pieces ($x1 $y1 g $AI_rank) ($x2 $y2)))
                           )
-                          (if (== $exposed False)
+                          (if (and (== $exposed False) (== $king_status False))
                             ; success!
                             (($x1 $y1 g $AI_rank) ($x2 $y2))
                             ; whoops, the piece is exposed to capture
@@ -2153,13 +2194,13 @@
    ) 
 )
 
-;
+
+
 ;*******************************************************
 ; Basic commands.  The game is executed using the following commands.
 ;*******************************************************
 
 ;***************************************************************
-; Function:     Chess Command Engine
 ; Description:  Core command handlers for Greedy Chess gameplay.
 ;               Enables human/AI move input, game state transitions, 
 ;               board initialization, command help, and board display.
@@ -2191,7 +2232,7 @@
         ; create the board for the first time
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
-                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
+                        (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7) (7 7 g p) (8 7 g p) 
                         (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
                         (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
