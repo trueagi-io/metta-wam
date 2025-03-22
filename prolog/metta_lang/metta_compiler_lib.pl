@@ -263,18 +263,19 @@ transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,ea
 'mc__1_1_superpose'(S,R) :- member(R,S).
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_1_collapse'(ispu(X),[X]).
+'mc__1_1_collapse'(ispu(X),[X]) :- !.
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
-'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEn(X,true,_),[X]) :- !.
-'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEnN(X,true,_,_),[X]) :- !.
-'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
-'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),!,findall(_,(Common,Code),X),maplist(=(A),X).
+'mc__1_1_collapse'(X,_) :- format("Error in library collapse: ~w",[X]),throw(0).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
