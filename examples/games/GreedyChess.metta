@@ -373,7 +373,7 @@
 ;***************************************************************
 (= (lots_of_pawns_in_home_row)
    (let $pawns_at_home (collapse (match &self (square $x 7 g p) (square $x $y $s $p)))
-        (if (> (size-atom $pawns_at_home) 3) ; <-- set here
+        (if (> (size-atom $pawns_at_home) 6) ; <-- set here
           True
           False)))
 
