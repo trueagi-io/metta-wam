@@ -587,16 +587,16 @@
           $highest
 
       (let* (
-        ($msg3 (println! "looking for threat position..."))
-        ($threaten_position (movetoposition)))
-        (if (not (==  $threaten_position Empty))
-          $threaten_position
-
-      (let* (
         ($msg4 (println! "looking to play defense..."))
         ($position (playdefense)))
         (if (not (==  $position Empty))
           $position
+
+      (let* (
+        ($msg3 (println! "looking for threat position..."))
+        ($threaten_position (movetoposition)))
+        (if (not (==  $threaten_position Empty))
+          $threaten_position
 
       (let* (
         ($msg5 (println! "looking for random move..."))
