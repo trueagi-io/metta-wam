@@ -1505,7 +1505,6 @@
         True
         False)))
 
-
 ; Move gold AI pawn 
 (= (clear_route ($X1 $Y1 g p) $destination)
   (let*
