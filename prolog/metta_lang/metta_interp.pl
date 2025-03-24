@@ -60,6 +60,12 @@
 % IMPORTANT:  DO NOT DELETE COMMENTED-OUT CODE AS IT MAY BE UN-COMMENTED AND USED
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+:- dynamic('$metta_setup':on_init_metta/1).
+on_metta_setup(Goal):-
+   assertz('$metta_setup':on_init_metta(Goal)).
+do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
+                        ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+
 % Set the encoding for the Prolog system to UTF-8 to ensure proper handling of characters.
 % The previously commented out line was for iso_latin_1 encoding.
 % UTF-8 is more universal and can handle a wider range of characters.
