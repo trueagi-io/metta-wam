@@ -1184,6 +1184,7 @@ need_compile=0  # Ensure this is initialized
 
 if [[ "$exe" == "force" ]]; then
     exe=true
+    rm -f "$INTERP_SRC_DIR/skip_compile"
     need_compile=1
 fi
 

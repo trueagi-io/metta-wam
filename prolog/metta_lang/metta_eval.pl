@@ -102,14 +102,17 @@ nb_bind(Name,Value):-
    duplicate_deep_term(Value,NewValue),
    call_in_shared_space(nb_linkval(Name,NewValue)),!.
 
-duplicate_deep_term(Value,NewValue):- duplicate_term(Value,NewValue),
-  deep_setarg(NewValue,Value).
+duplicate_deep_term(Value,NewValueValue):- duplicate_term(Value,NewValue),
+  deep_setarg(NewValue,NewValueValue).
 
-deep_setarg(NewValue,Value):- \+ compound(NewValue), Value=NewValue.
+
+deep_setarg(NewValue,Value):- \+ compound(NewValue),!, Value=NewValue.
+deep_setarg(NewValue,Value):- Value=NewValue,!.
+/*
 deep_setarg(NewValue,Value):- functor(NewValue,_,N),deep_setarg(N,NewValue,Value).
 deep_setarg(N,NewValue,Value):- arg(N,NewValue,E),deep_setarg(E,EV),nb_linkarg(N,Value,EV),
    (N==1 -> true ; (succ(Nm1,N),deep_setarg(Nm1,NewValue,Value))).
-
+*/
 
 coerce(Type,Value,Result):- nonvar(Value),Value=[Echo|EValue], Echo == echo, EValue = [RValue],!,coerce(Type,RValue,Result).
 coerce(Type,Value,Result):- var(Type), !, Value=Result, freeze(Type,coerce(Type,Value,Result)).
@@ -2126,7 +2129,7 @@ fetch_or_create_state(NameOrInstance, State) :-
             nb_bound(NameOrInstance, State))
     ;   is_valid_nb_state(NameOrInstance)
     ->  State = NameOrInstance
-    ;   fbug('Error: Invalid input.')
+    ;   nop(fbug('Error: Invalid input.'))
     ),
     is_valid_nb_state(State).
 
@@ -2470,7 +2473,7 @@ is_comma('{}').
 
 bool_and(A,B) :- (A == 'True', B == 'True').
 bool_ior(A,B) :- (A == 'True'; B == 'True'),!.
-bool_xor(A,B) :- (A == 'True'; B == 'True'),!, \+ (A == B).
+bool_xor(A,B) :- bool_ior(A,B), \+ (A == B).
 
 eval_20(Eq,RetType,Depth,Self,['and',X,Y],TF):- !,
     eval_args(Eq,RetType,Depth,Self,X,  XTF),  % evaluate X

@@ -445,7 +445,9 @@ reset_only_eval_num :-
 %   ?- is_fast_mode.
 %   false.
 %
+is_fast_mode :- is_nodebug,!.
 is_fast_mode :- fail, \+ is_debugging(eval), !.
+
 
 %!  ignore_trace_once(:Goal) is nondet.
 %
@@ -638,6 +640,11 @@ with_debug(Flag, Goal) :-
 %     ?- is_nodebug.
 %     true.
 %
+
+% Check if the option 'nodebug' is explicitly set to false.  (ideally very rare - code has to relaly know about this)
+is_nodebug :- option_value(nodebug, false), !, fail.
+% By default spawned threads would need nodebug=false
+is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
     option_value(nodebug, true).
@@ -778,7 +785,7 @@ wocf(Goal):-
   locally(set_prolog_flag(occurs_check,false), Goal).
 
 print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
-test_locally_setting_flags:- 
+test_locally_setting_flags:-
   forall((locally(set_prolog_flag(locally_tested_flag,1),
      ((member(X,[1,2,3]),print_locally_tested_flag))),
         writeln(X),print_locally_tested_flag),nl).
@@ -933,6 +940,7 @@ efbug(_, G) :- call(G).
 is_debugging_always(_) :- is_nodebug, !, fail.
 is_debugging_always(_Flag) :- !.
 
+
 %!  is_debugging(+Flag) is nondet.
 %
 %   Check if debugging is enabled for a flag.
@@ -994,7 +1002,7 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
 
-%trace_eval(P4, _, D1, Self, X, Y) :- !, call(P4, D1, Self, X, Y).
+trace_eval(P4, _, D1, Self, X, Y) :- is_nodebug, !, call(P4, D1, Self, X, Y).
 
 
 trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
