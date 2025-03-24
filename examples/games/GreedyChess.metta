@@ -80,13 +80,13 @@
 ;
 ;   During programming tail recursion functions were often created, but it was discovered that these
 ;   were often faster instead using metta calls to 'match'. The original functions have sometimes been retained for
-;   comparison. In general the definitive features of Metta are the use of atomspace, 'match' 'superpose' and
+;   comparison. In general the defining features of Metta are the use of atomspace, 'match' 'superpose' and
 ;   'collapse'. Occasionally it is wise to use 'xor' in lieu of 'or' (if possible) to avoid unexpected
 ;   nondeterministic behavior. In general it is not necessary to think in GOFAI chaining terms (forward, backward).
 ;
 ;   ENHANCEMENTS POSSIBLE
 ;
-;   Many chess games exists. The objective of this program has been to exercise the Mettalog 
+;   Many chess games exist. The objective of this program has been to exercise the Mettalog 
 ;   processing substrate for shaking out bugs and speed testing. The program was a translation from an old Prolog 
 ;   program called "Deep Blue Dummy." These programs are functional but not totally complete chess games.
 ;
@@ -373,7 +373,7 @@
 ;***************************************************************
 (= (lots_of_pawns_in_home_row)
    (let $pawns_at_home (collapse (match &self (square $x 7 g p) (square $x $y $s $p)))
-        (if (> (size-atom $pawns_at_home) 3) ; <-- set here
+        (if (> (size-atom $pawns_at_home) 6) ; <-- set here
           True
           False)))
 
@@ -587,16 +587,16 @@
           $highest
 
       (let* (
-        ($msg3 (println! "looking for threat position..."))
-        ($threaten_position (movetoposition)))
-        (if (not (==  $threaten_position Empty))
-          $threaten_position
-
-      (let* (
         ($msg4 (println! "looking to play defense..."))
         ($position (playdefense)))
         (if (not (==  $position Empty))
           $position
+
+      (let* (
+        ($msg3 (println! "looking for threat position..."))
+        ($threaten_position (movetoposition)))
+        (if (not (==  $threaten_position Empty))
+          $threaten_position
 
       (let* (
         ($msg5 (println! "looking for random move..."))
@@ -723,7 +723,7 @@
         (
             ($random_level 
                   ; try to move pawns out from home row, but only on first random try!
-                  (if (and (== (lots_of_pawns_in_home_row) True) (== $Ranks_Already_Tried_List 0))
+                  (if (and (== (lots_of_pawns_in_home_row) True) (== (size-atom $Ranks_Already_Tried_List) 0))
                   1
                   (random-int  &rng 1 5))) 
             ($rank_level (case $random_level
@@ -1504,7 +1504,6 @@
           ))
         True
         False)))
-
 
 ; Move gold AI pawn 
 (= (clear_route ($X1 $Y1 g p) $destination)
