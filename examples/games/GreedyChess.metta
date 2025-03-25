@@ -44,7 +44,8 @@
 ;   a square on the board. Each square is unique with ordinary cartesian x/y coordinates on 8x8 grid.
 ;   There are two colors in play:  gold (AI) and silver (human). The structure of the list is eg:
 ; 
-;     Main chessboard list example:   (  (1 1 s r) (1 2 s n).... (4 4).... (1 8 g r)... ) with 64 sublists
+;   Main chessboard list atom example:  
+;     (board-state (  (1 1 s r) (1 2 s n).... (4 4).... (1 8 g r)... )) with 64 sublists
 ;
 ;   Note that squares occupied by a piece have a length of 4 with the color and rank. Squares with
 ;   no occupying piece are only two in length with just x/y coordinates. Thus simply determining the
@@ -56,7 +57,7 @@
 ;     (square x y color rank) and (square x y) to denote both occupied and unoccupied squares.
 ;
 ;   These 'square' type atoms only exists for one move. The permanent move is stored in the larger list
-;   as described above: the main chessboard list is the main record of play for the whole game.
+;   as described above: the main chessboard list atom is the main record of play for the whole game.
 ;
 ;   PROCESSING
 ;   
@@ -150,7 +151,7 @@
 ;
 ; Input:        $char - A string representing a digit ("0".."9")
 ;
-; Output:       Integer value 0..9 if valid; Empty result otherwise
+; Output:       Integer value 0..9 if valid; (empty) result otherwise
 ;***************************************************************
 (= (char_to_int $char)
    (if (== $char "0") 0
@@ -555,62 +556,66 @@
 ;***************************************************************
 ; Function:     decide_greedy_move
 ; Description:  Core decision-making logic for the AI's move.
-;               Attempts multiple strategies in order of priority:
+;               Attempts multiple strategies:
 ;               1) Checkmate the human player
 ;               2) Capture high-value enemy piece
 ;               3) Threaten a human piece position
 ;               4) Defend a threatened AI piece
 ;               5) Make a legal random move
+;               6) If everything else fails, make a desperation type of move
 ;
 ; Input:        None (relies on current board state via atomspace)
 ;
-; Output:       A move of the form ((x1 y1 g rank) (x2 y2)) or `Empty` if no move found.
+; Output:       A move of the form ((x1 y1 g rank) (x2 y2)) or () if no move found.
 ;***************************************************************
 (= (decide_greedy_move) 
     ; make sure each move search call can either 
     ;     1) succeed and return the move, or 
-    ;     2) fail and return Empty
+    ;     2) fail and return (empty)
     
       (let* (
         ($msg1 (println! "looking for checkmate..."))
-        ($checkmate (if (== (lots_of_pawns_in_home_row) True)
+        ($checkmate (collapse (if (== (lots_of_pawns_in_home_row) True)
                       ; get pieces out at beginning of game
                       (empty)
-                      (attemptcheckmate))))
-        (if (not (==  $checkmate Empty))
-          $checkmate
+                      (attemptcheckmate)))))
+        (if (not (==  $checkmate ()))
+          (car-atom $checkmate)
 
-      (let* (
+          (let* (
         ($msg2 (println! "looking for capture..."))
-        ($highest (takehighestopen_scored)))
-        (if (not (==  $highest Empty))
-          $highest
+        ($highest (collapse (takehighestopen_scored))))
+        (if (not (==  $highest ()))
+          (car-atom $highest)
 
-      (let* (
-        ($msg4 (println! "looking to play defense..."))
-        ($position (playdefense)))
-        (if (not (==  $position Empty))
-          $position
+          (let* (
+        ($msg3 (println! "looking to play defense..."))
+        ($position (collapse (playdefense))))
+        (if (not (==  $position ()))
+          (car-atom $position)
 
-      (let* (
-        ($msg3 (println! "looking for threat position..."))
-        ($threaten_position (movetoposition)))
-        (if (not (==  $threaten_position Empty))
-          $threaten_position
+          (let* (
+        ($msg4 (println! "looking for threat position..."))
+        ($threaten_position (collapse (movetoposition))))
+        (if (not (==  $threaten_position ()))
+          (car-atom $threaten_position)
 
-      (let* (
+          (let* (
         ($msg5 (println! "looking for random move..."))
-        ($random_move (random_move_empty_sq)))
-        (if (not (==  $random_move Empty)) 
-          $random_move 
+        ($random_move (collapse (random_move_empty_sq))))
+        (if (not (==  $random_move ())) 
+          (car-atom $random_move)
 
-      (let* (
+          (let* (
         ($msg6 (println! "looking for desperation move..."))
-        ($random_moveD (random_move_empty_sq_desperate)))
-        (if (not (==  $random_moveD Empty)) 
-          $random_moveD 
-      
-          (empty))))))))))))))
+        ($random_moveD (collapse (random_move_empty_sq_desperate))))
+        (if (not (==  $random_moveD ())) 
+          (car-atom $random_moveD)
+
+          ; if everything fails including desperation move, return empty list
+          ()
+          
+          )))))))))))))
 
 ;***************************************************************
 ; Function:     try_move_and_verify
@@ -794,11 +799,13 @@
 ;
 ;***************************************************************
 (= (random_move_empty_sq)
-  (let $random_moves (random_recursion_by_rank ())
-    (if (== $random_moves Empty)
+  (let $random_moves_collapsed (collapse (random_recursion_by_rank ()))
+    (if (== $random_moves ())
         (empty)
         (let*
-          (
+          (  
+          ($random_moves (car-atom $random_moves_collapsed)) ;get rid of an extra set of parens
+              ($debug (println! $random_moves))
           ($move_count (size-atom $random_moves))
           ($move_count_plus_1 (+ $move_count 1))
           ($select_int (if (== $move_count 1) 
@@ -2376,8 +2383,8 @@
         ; You can use move_piece and reset_pieces to respectively envision a move, then reverse the move.
         (reset-pieces $starting_board)
         ; determine next AI move
-        (let $move (decide_greedy_move) () )
-        (if  (== $move Empty)
+        (let $move (decide_greedy_move) NIL )  
+        (if  (== $move ())
           (let*
             ; if all attempts fail, locate AI king and see if he is in checkmate
             (
