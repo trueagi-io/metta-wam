@@ -3716,13 +3716,13 @@ into_fp(D, D) :-
     \+ \+ dont_x(D),
     !.
 into_fp(ListX, CallAB) :-
-    sub_term(STerm, ListX),
+    sub_term_safely(STerm, ListX),
     needs_expanded(STerm, Term),
     % copy_term_g(Term, CTerm),  % Original commented-out line
     =(Term, CTerm),
     substM(ListX, CTerm, Var, CallB),
     fn_append1(Term, Var, CallA),
-    into_fp((CallA, CallB), CallAB).
+    into_fp((CallA, CallB), CallAB), !.
 into_fp(A, A).
 
 %!  needs_expand(+Expand) is nondet.
@@ -3752,7 +3752,7 @@ needs_expand(Expand) :-
 %
 needs_expanded(eval_H(Term, _), Expand) :-
     !,
-    sub_term(Expand, Term),
+    sub_term_safely(Expand, Term),
     compound(Expand),
     Expand\=@=Term,
     compound(Expand),
@@ -3760,7 +3760,7 @@ needs_expanded(eval_H(Term, _), Expand) :-
     \+ is_ftVar(Expand),
     needs_expand(Expand).
 needs_expanded([A|B], Expand) :-
-    sub_term(Expand, [A|B]),
+    sub_term_safely(Expand, [A|B]),
     compound(Expand),
     \+ is_conz(Expand),
     \+ is_ftVar(Expand),
@@ -4120,7 +4120,8 @@ option_switch_pred(F) :-
     interpreter_source_file(File),
     source_file(F, File),
     % Ensure the predicate name matches one of the prefixes.
-    \+ \+ (member(Prefix, [is_, show_, trace_on_]), symbol_concat(Prefix, _, F)),
+    \+ \+ (member(Prefix, ['is_', 'show_', 'trace_on_']), symbol_concat(Prefix, _, F)),
+    \+  symbol_concat(_, '0', F), \+  symbol_concat(_, '_', F),
     % Exclude `show_help_options` from the results.
     F \== show_help_options.
 
@@ -4262,7 +4263,9 @@ from_top_self(Self, Self).
 %   @arg Atom The atom associated with the knowledge base.
 %
 get_metta_atom_from(KB, Atom) :-
-    metta_atom(KB, Atom).
+  woc(wo_inheritance(metta_atom0(KB, Atom))).
+
+not_quietly(G):- call(G).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
 %
@@ -4273,7 +4276,10 @@ get_metta_atom_from(KB, Atom) :-
 %   @arg Atom  The retrieved atom.
 %
 get_metta_atom(Eq, Space, Atom) :-
-    metta_atom(Space, Atom),
+   not_quietly(get_metta_atom0(Eq, Space, Atom)). %
+
+get_metta_atom0(Eq, Space, Atom) :-
+    metta_atom0(Space, Atom),
     \+ (Atom = [EQ, _, _], EQ == Eq).
 
 %!  metta_atom(-Atom) is nondet.
@@ -4282,7 +4288,8 @@ get_metta_atom(Eq, Space, Atom) :-
 %
 %   @arg Atom The atom associated with the current knowledge base.
 %
-metta_atom(Atom) :-
+metta_atom(Atom) :- not_quietly(metta_atom0(Atom)).
+metta_atom0(Atom) :-
     current_self(KB),
     metta_atom(KB, Atom).
 
@@ -4294,17 +4301,17 @@ metta_atom(Atom) :-
 %   @arg X The context or space.
 %   @arg Y The atom to check.
 %
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was explicitly asserted.
     metta_atom_asserted(X, Y).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom is associated with a file.
     metta_atom_in_file(X, Y).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was deduced and not explicitly asserted.
     metta_atom_deduced(X, Y),
     \+ clause(metta_atom_asserted(X, Y), true).
-metta_atom_added(X, Y) :-
+metta_atom_added(X, Y) :- nocut,
     % Check if the atom was recently asserted.
     metta_atom_asserted_last(X, Y).
 
@@ -4318,23 +4325,37 @@ metta_atom_added(X, Y) :-
 %   @arg Atom  The atom associated with the given space.
 %
 
+metta_atom(KB, Atom):-
+  woc(quietly(metta_atom0(KB, Atom))).
+
+metta_atom_fast(KB, Atom):-
+  quietly(metta_atom0(KB, Atom)).
+
+
+/*
+metta_atom0(KB, Fact) :-
+   transform_about(Fact, Rule, Cond), Cond=='True',!,
+   fact_store(KB, Rule, Fact, Cond).
+*/
+
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
-metta_atom(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
-metta_atom(KB, [F, A | List]) :-
-    KB == '&flybase', fb_pred_nr(F, Len), current_predicate(F/Len),
+metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
+metta_atom0(KB, [F, A | List]) :-
+    KB == '&flybase', !, fb_pred_nr(F, Len), current_predicate(F/Len),
     length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
-metta_atom(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom(TopSelf, Y).
+metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
-metta_atom(KB, Atom) :- metta_atom_added(KB, Atom).
+metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
+metta_atom0(KB, Atom) :- nonvar(KB),clause(metta_atomspace(KB,Atom),Body),!, call(Body).
 
-metta_atom(KB, Atom) :-  KB \== '&corelib', !,  nonvar(KB), \+ nb_current(space_inheritance, false),
+metta_atom0(KB, Atom) :-  KB \== '&corelib',  nonvar(KB), \+ nb_current(space_inheritance, false),
     should_inhert_from(KB, Atom).
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
 
@@ -4434,9 +4455,9 @@ should_inhert_from(KB, Atom) :-
 %
 
 should_inhert_from_now(KB, Atom) :-
-    attvar(Atom), !,
+    \+ frozen(Atom, symbol(_)),
     % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    freeze(SubKB, symbol(SubKB)), !,
+    freeze(SubKB, symbol(SubKB)),
     % Retrieve a sub-knowledge base associated with `KB`.
     metta_atom_added(KB, SubKB),
     SubKB \== KB,
@@ -4448,14 +4469,14 @@ should_inhert_from_now(KB, Atom) :-
 
 should_inhert_from_now(KB, Atom) :-
     % Ensure the atom is not an attributed variable.
-    \+ attvar(Atom),
+    \+ frozen(Atom, symbol(_)),
     % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    freeze(SubKB, symbol(SubKB)), !,
+    %freeze(SubKB, symbol(SubKB)), !,
     % Retrieve a sub-knowledge base associated with `KB`.
-    metta_atom_added(KB, SubKB),
+    should_inherit_kb(KB, SubKB),
     SubKB \== KB,
     % Retrieve atoms from the sub-knowledge base.
-    metta_atom(SubKB, Atom),
+    metta_atom_added(SubKB, Atom),
     % Ensure the atom is not excluded from inheritance.
     \+ should_not_inherit_from(KB, SubKB, Atom).
 
@@ -4466,6 +4487,15 @@ should_inhert_from_now(KB, Atom) :-
    metta_atom('&corelib',Atom),
    \+ should_not_inherit_from_corelib(Atom).
 */
+
+should_inherit_kb(KB, '&corelib'):- KB\=='&corelib'.
+
+wo_inheritance(Goal) :-
+  locally(b_setval(no_space_inheritance,t), Goal).
+
+:- thread_initialization(nb_setval(no_space_inheritance,[])).
+print_can_inherit:- nb_current(no_space_inheritance,X),writeln(no_space_inheritance=X).
+test_wo_inheritance:- forall((wo_inheritance((member(X,[1,2,3]),print_can_inherit)),writeln(X),print_can_inherit),nl).
 
 %!  should_not_inherit_from(+KB, +SubKB, +Atom) is nondet.
 %
@@ -6368,7 +6398,7 @@ rtrace_this(_Call) :-
 
 %:- nb_setval(cmt_override,lse('; ',' !(" ',' ") ')).
 
-:- abolish(fbug/1).  % Removes any existing definition of `fbug/1` to ensure a clean slate.
+:- ignore(abolish(fbug/1)).  % Removes any existing definition of `fbug/1` to ensure a clean slate.
 
 %!  fbug(+Info) is det.
 %
@@ -6381,9 +6411,8 @@ rtrace_this(_Call) :-
 fbug(_) :-
     % If compatibility mode (`is_compatio`) is active, do nothing.
     is_compatio, !.
-fbug(_) :-
-    % If the 'log' option is not set to 'true', do nothing.
-    \+ option_value('log', 'true'), !.
+fbug(_) :- % If the 'log' option is not set to 'true', do nothing.
+    option_value('log', 'false'), !.
 fbug(Info) :-
     % Otherwise, log the debug information using `write_src/1` with formatting.
     real_notrace(in_cmt(color_g_mesg('#2f2f2f', write_src(Info)))).
@@ -6521,6 +6550,9 @@ catch_red(Term) :-
 pp_m_m_red(_, T) :-
     % Skip logging for specific error terms.
     T =@= in(not_compat_io(maybe_halt(7)), unwind(halt(7))), !.
+pp_m_m_red(_, T) :- compound(T),
+    % Skip logging for specific error terms.
+    T = in(not_compat_io(maybe_halt(Seven)), unwind(halt(Seven))), number(Seven),!.
 pp_m_m_red(C, T) :-
     % Log the term with the given color.
     pp_m(C, T).

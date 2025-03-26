@@ -1569,11 +1569,10 @@ For example:
   (@params ())
   (@return "Unit atom"))
 
+(: help! (-> (->)))
+(= (help!) (metta-help!))
+
 (: metta-help! (-> (->)))
-(= (metta-help!) (let $top-space (mod-space! top)
-    (unify $top-space (@doc $name (@desc $desc) $params $ret)
-      (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
-      Empty)))
 (= (metta-help!) (let $top-space (mod-space! top)
     (unify $top-space (@doc $name (@desc $desc))
       (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
