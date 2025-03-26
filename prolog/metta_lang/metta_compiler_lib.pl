@@ -72,6 +72,19 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
+transpiler_predicate_store(builtin, 'if-decons-expr', [5], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+'mc__1_5_if-decons-expr'(If,H,T,Then,Else,Result) :- (If=[H|T]*->Result=Then;Result=Else).
+compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
+  Convert = ['if-decons-expr',Cond,Head,Tail,Then,Else],!,
+  f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
+  lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
+  f2p(HeadIs,LazyVars,HeadResult,HeadResultN,LazyRetHead,Head,HeadCode,HeadCodeN),
+  lazy_impedance_match(LazyRetHead,x(doeval,eager,[]),HeadResult,HeadCode,HeadResultN,HeadCodeN,HeadResult1,HeadCode1),
+  f2p(HeadIs,LazyVars,TailResult,TailResultN,LazyRetTail,Tail,TailCode,TailCodeN),
+  lazy_impedance_match(LazyRetTail,x(doeval,eager,[]),TailResult,TailCode,TailResultN,TailCodeN,TailResult1,TailCode1),
+  append([CondCode1,[[assign,CondResult1,list_with_tail([H],T)]],HeadCode1,[[assign,H,HeadResult1]],TailCode1,[[assign,T,TailResult1]]],If),
+  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted,ConvertedN).
+
 %%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
@@ -235,6 +248,12 @@ transpiler_predicate_store(builtin, union, [2], '@doc', '@doc', [x(doeval,lazy,[
 %transpiler_predicate_store(builtin, intersection, [2], '@doc', '@doc', [x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,eager,[])).
 %'mc__1_2_intersection'(S1,S2,R)
 
+transpiler_predicate_store(builtin, unique, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_1_unique'(S,R) :- 'mc__1_1_collapse'(S,S0),list_to_set(S0,R).
+
+transpiler_predicate_store(builtin, 'unique-atom', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_unique-atom'(S,R) :- list_to_set(S,R).
+
 transpiler_predicate_store(builtin, limit, [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_2_limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
 
@@ -247,18 +266,19 @@ transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,ea
 'mc__1_1_superpose'(S,R) :- member(R,S).
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_1_collapse'(ispu(X),[X]).
+'mc__1_1_collapse'(ispu(X),[X]) :- !.
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
-'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEn(X,true,_),[X]) :- !.
-'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispeEnN(Ret,Code,_,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEnN(X,true,_,_),[X]) :- !.
-'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
-'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),findall(_,(Common,Code),X),maplist(=(A),X).
+'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),!,findall(_,(Common,Code),X),maplist(=(A),X).
+'mc__1_1_collapse'(X,_) :- format("Error in library collapse: ~w",[X]),throw(0).
 
 %%%%%%%%%%%%%%%%%%%%% spaces
 
@@ -367,7 +387,6 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   lazy_impedance_match(x(noeval,eager,[]),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
-
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 

@@ -2072,12 +2072,12 @@ load_metta_buffer(Self, Filename) :-
     % Register the file as loaded in the knowledge base.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
-    forall(
+    (forall(
         user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
          (maybe_name_vars(NamedVarsList),
           (must_det_ll(do_metta(file(Filename), Mode, Self, Expr, _O))
      -> true
-     ;  (trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr)))))).
+     ;  (trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
 
 
 %!  is_file_stream_and_size(+Stream, -Size) is nondet.
