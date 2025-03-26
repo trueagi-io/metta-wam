@@ -110,6 +110,16 @@
 (: board-state (-> Expression Atom))       ; for saving the board after each move 
 
 
+; these are used to prevent unexpected non-determinism
+(: and1 (-> Atom Atom Bool))
+(= (and1 $x $y)    (and  (limit 1 $x)  (limit 1 $y)))
+(: xor1 (-> Atom Atom Bool))
+(= (xor1 $x $y) (xor  (limit 1 $x)  (limit 1 $y)))
+(: or1 (-> Atom Atom Bool))
+(= (or1 $x $y) (or  (limit 1 $x)  (limit 1 $y)))
+(: not1 (-> Atom Bool))
+(= (not1 $x)  (not  (limit 1 $x)))
+
 
 ;*******************************************************
 ; General utility functions
@@ -805,7 +815,6 @@
         (let*
           (  
           ($random_moves (car-atom $random_moves_collapsed)) ;get rid of an extra set of parens
-              ($debug (println! $random_moves))
           ($move_count (size-atom $random_moves))
           ($move_count_plus_1 (+ $move_count 1))
           ($select_int (if (== $move_count 1) 
@@ -2306,14 +2315,17 @@
       (let $h (return_entire_box $f) ())
             ;does not return here!
       ; Retrieve the destination box details.
-      (let $i (return_entire_box $g) ())
+      (let $i (return_entire_box $g) ()) 
+      (let $dest_color (if (== (size-atom $i) 4) 
+                           (nth 3 $i)
+                            NIL) ())
       ; Check there is a piece to move.
-      (if (and (== (size-atom $h) 4)                                    
-               (xor  
+      (if (and1 (== (size-atom $h) 4)                                    
+               (xor1  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
                ; OK to take another piece, check color is not the same...
-               (and (== (size-atom $i) 4) (not (== (nth 3 $h) (nth 3 $i))))))
+               (and1 (== (size-atom $i) 4) (not1 (== (nth 3 $h) $dest_color)))))
         ; Validate the path for the piece.
         (if (== (clear_route $h $i) True)               
           ; Try moving piece provisionally
