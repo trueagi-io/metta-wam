@@ -375,8 +375,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-   trace(compile_flow_control/8),
- %must_det_lls((
+   %must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
@@ -442,6 +441,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       %print_ast( green, Ast),
       maplist(h2p(EagerArgList,LazyArgsListAdj),FlattenedArgs,Args2,Code,NewLazyVars),
       append([LazyArgsListAdj|NewLazyVars],NewLazyVarsAggregate),
+      trace,
       f2p(HeadIs,NewLazyVarsAggregate,H0Result,H0ResultN,LazyRet,AsBodyFn,NextBody,NextBodyN),
       lazy_impedance_match(LazyRet,FinalLazyRetAdj,H0Result,NextBody,H0ResultN,NextBodyN,HResult,FullCode),
 
