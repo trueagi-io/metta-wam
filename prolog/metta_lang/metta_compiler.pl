@@ -184,17 +184,19 @@ arg_eval_props(N,x(doeval,eager,[N])).
 %  N = expr code
 %  C = common code tp be called before both the exec and expr cases
 
-as_p1_exec(ispu(URet),URet).
+as_p1_exec(ispu(URet),URet) :- !.
 as_p1_exec(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_exec(ispeEn(ERet,ECode,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
+%as_p1_exec(X,X) :- trace.
 
-as_p1_expr(ispu(URet),URet).
+as_p1_expr(ispu(URet),URet) :- !.
 as_p1_expr(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_expr(ispeEn(_,_,NRet),NRet).
 as_p1_expr(ispeEnN(_,_,NRet,NCode),NRet) :- !, call(NCode).
 as_p1_expr(ispeEnNC(_,_,NRet,NCode,CCode),NRet) :- !,call(CCode),call(NCode).
+%as_p1_expr(X,X) :- trace.
 
 create_p1(URet,[],[ispu,URet]) :- !.
 create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
@@ -373,6 +375,7 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
+   trace(compile_flow_control/8),
  %must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
@@ -980,7 +983,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN).
 
 transpiler_apply(Prefix,Fn,RetResults,RetResult,RetResultsParts, RetResultsPartsN, LazyResultParts,ConvertedParts, ConvertedNParts) :-
-   (atom(Fn),transpiler_predicate_store(_,Fn,_,_,_,ArgTypes,_RetType) ->
+   (atom(Fn),transpiler_predicate_store(_,Fn,LenArgs,_,_,ArgTypes,_RetType),sum_list(LenArgs,L),length(RetResultsParts,L) ->
       atom_concat(Prefix,Fn,Fn2),
       % now do the evaluation and impedance matching
       maplist(runtime_lazy_impedance_match,LazyResultParts,ArgTypes,RetResultsParts,ConvertedParts,RetResultsPartsN,ConvertedNParts,AdjResults),
@@ -1000,8 +1003,8 @@ runtime_lazy_impedance_match(x(_,lazy,_),x(_,lazy,_),ValE,CodeE,ValN,CodeN,Code)
 %   append(CodeE,[[native(as_p1_exec),ValE,RetResultE]],CodeAE),
 %   append(CodeN,[[native(as_p1_expr),ValN,RetResultN]],CodeAN),
 % lazy -> eager
-runtime_lazy_impedance_match(x(_,lazy,_),x(doeval,eager,_),ValE,CodeE,_ValN,_CodeN,RetResult) :- !,call(CodeE),as_p1_exec(ValE,RetResult).
-runtime_lazy_impedance_match(x(_,lazy,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,RetResult) :- !,call(CodeN),as_p1_expr(ValN,RetResult).
+runtime_lazy_impedance_match(x(_,lazy,_),x(doeval,eager,_),ValE,CodeE,_ValN,_CodeN,RetResult) :- !,call(CodeE),RetResult=ValE.
+runtime_lazy_impedance_match(x(_,lazy,_),x(noeval,eager,_),_ValE,_CodeE,ValN,CodeN,RetResult) :- !,call(CodeN),RetResult=ValN.
 % eager -> lazy
 runtime_lazy_impedance_match(x(_,eager,_),x(doeval,lazy,_),ValE,CodeE,ValN,CodeN,Code) :- Code=ispeEnN(ValE,CodeE,ValN,CodeN).
 runtime_lazy_impedance_match(x(_,eager,_),x(noeval,lazy,_),ValE,CodeE,ValN,CodeN,Code) :- Code=ispeEnN(ValE,CodeE,ValN,CodeN).
