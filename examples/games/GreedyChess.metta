@@ -662,7 +662,7 @@
     )
     (if (== $Exposed True)
       ; exit with Empty if the piece can be taken but after moving pieces back in atomspace
-      (let $MoveBool  (reset_pieces $start $dest_full) (empty))
+      (let $MoveBool  (reset_pieces $start $dest_full) ())
       ; else see if king exposed
       (let*
         (
@@ -673,7 +673,7 @@
         )
         (if (== $KingCompromised True)
             ; exit with Empty if AI king can be taken reversing move in atomspace
-            (let $MoveBool  (reset_pieces $start $dest_full) (empty))
+            (let $MoveBool  (reset_pieces $start $dest_full) ())
 
             ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
@@ -685,7 +685,7 @@
                     ; write score to Atomspace
                     (1 (score_move ($x1 $y1 g $rank) ($x2 $y2)))
                     ; if 0, don't compute a score
-                    (0 (empty))
+                    (0 0)
                   )))
                 ($MoveBool  (reset_pieces $start $dest_full)) 
               )
@@ -1890,10 +1890,10 @@
     ; messages for user
     ($print0 ((py-atom print) (format-args "Moving from: {} to: {}" ($starting_square $target_square))))
     ($print1 (if (== (size-atom $target_square) 2)
-             (empty)
+             ()
              ((py-atom print) "Piece captured!")))
     ($print2 (if (== (size-atom $target_square) 2)
-             (empty)
+             ()
              (println! $target_square)))
     ) 
     ; return new chessboard list
@@ -2362,7 +2362,7 @@
                                   (change-game-state checkmate)
                                 )
                                 (println! "Check!")))
-                          (empty)))
+                          ()  ))
                   )
               )
           )
@@ -2518,7 +2518,7 @@
           ($_   ((py-atom print) "Invalid command, please try again or enter c for a list of commands."))
           )))
     (if (== $command "q") 
-      (empty)
+      ()
       (command-loop))
       ))
 
