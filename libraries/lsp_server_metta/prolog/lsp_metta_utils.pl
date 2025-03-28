@@ -238,7 +238,7 @@ get_code_at_range(symbol, Path, Range, Code):-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
     % Get the buffer contents for the file.
     ( user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange)
-    *-> true
+    *-> true % soft-cut, because we need to backtrack over user:metta_file_buffer
     ;  % if the file hasn't already been read in, do so now
        xref_source_now(Path),
        user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange) ),
