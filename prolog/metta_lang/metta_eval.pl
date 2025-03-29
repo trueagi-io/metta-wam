@@ -985,7 +985,7 @@ possible_type(_Self,_Var,_RetTypeV).
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
         %(var(V)->true;trace),
         possible_type(Self,V,RetTypeV),
-        eval('=',RetTypeV,Depth,Self,E,ER),
+        (is_flag(old_empty)->eval('=',RetTypeV,Depth,Self,E,ER);eval_ne('=',RetTypeV,Depth,Self,E,ER)),
         V=ER,
         eval_args(Eq,RetType,Depth,Self,Body,OO).
 /*
@@ -1170,10 +1170,10 @@ eval_20(Eq,_RetType,Depth,Self,['assertNotAlphaEqual',X,Y],RetVal):- !,
 
 loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
     loonit_assert_source_tf(Src,Goal,Check,TF),
-    tf_to_empty(TF,['Error',['~nGot: ',XX],['~nExpected: ',YY]],RetVal).
+    tf_to_empty(TF,['Error',Src,['\nGot: ',XX,'\nExpected: ',YY]],RetVal).
 
 tf_to_empty(TF,Else,RetVal):-
-  (TF=='True'->as_nop(RetVal);RetVal=Else).
+  (TF=='True'->as_nop(RetVal);  subst001(Else,'Empty','Empt𝘺',RetVal)).
 
 val_sort(Y,YY):- is_list(Y),!,sort(Y,YY).
 val_sort(Y,[Y]).
@@ -1217,8 +1217,9 @@ unify_lists(L,L):-!.
 unify_lists([C|CC],[L|LL]):- unify_enough(L,C),!,unify_lists(CC,LL).
 
 is_blank(X):- var(X),!,fail.
-is_blank(E):- is_empty(E),!.
 is_blank([]).
+is_blank(_):- \+ is_flag(testing_fudge_parens),!,fail.
+is_blank(E):- is_empty(E),!.
 is_blank([X]):-!,is_blank(X).
 has_let_star(Y):- sub_var_safely('let*',Y).
 
