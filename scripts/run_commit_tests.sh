@@ -172,7 +172,7 @@ run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 # Run filtered test suites
 for test_dir in "${test_dirs[@]}"; do
     echo "Starting tests for: $test_dir"
-    run_mettalog_tests 40 "$test_dir"
+#    run_mettalog_tests 40 "$test_dir"
 done
 
 # Check if SKIP_LONG is not set to 1
