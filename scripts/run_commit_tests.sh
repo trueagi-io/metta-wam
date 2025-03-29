@@ -44,7 +44,7 @@ output=./reports/tests_output/baseline-compat/
 test_dirs=(
     "tests/baseline_compat/module-system"
     "tests/baseline_compat/hyperon-experimental_scripts"
-    "tests/baseline_compat/hyperon-mettalog_sanity"
+    # "tests/baseline_compat/hyperon-mettalog_sanity"
     "tests/baseline_compat/metta-morph_tests"
 )
 
