@@ -194,6 +194,85 @@ If you want to load directly from the source:
 
 It currently isn't straightforward to have an automatically started server over a TCP port with neovim.
 
+Note that the LSP doesn't configure a metta mode itself. If you don't already have one set up, at a minimum you'll want to figure neovim to recognize the type of `.metta` files. To do this, create the following file at `~/.config/nvim/ftdetect/metta.vim`:
+
+```vim
+au BufRead,BufNewFile *.metta    set filetype=metta
+```
+
+### Neovim >= 0.11
+
+As of version 0.11, Neovim now has easier support for configuring an LSP server without additional plugins.
+
+
+#### Connecting to a Running Server
+
+Since neovim can't start its own LSP server that will connect over TCP, you'll have to start your own server, by running the following command in the Mettalog directory:
+
+```bash
+swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
+```
+
+Then create the following file at `~/.config/nvim/lsp/metta.lua`:
+
+```lua
+return {
+   cmd = vim.lsp.rpc.connect('127.0.0.1', 40222),
+   --                  this port argument ^
+   -- should match the above argument used when starting the server
+   root_markers = { '.git', },
+   filetypes = { 'metta' },
+}
+```
+
+Then need to enable the LSP by adding the following line to your `init.lua`:
+
+```lua
+vim.lsp.enable({'metta'})
+```
+#### Automatically Started Server Over stdio
+
+
+To run from the `metta_wam` directory, put the following file at `~/.config/nvim/lsp/metta.lua`:
+
+```lua
+local mettaDir = '/Users/james/Work/metta/metta-wam'
+return {
+   cmd = { 'swipl',
+           '-l', mettaDir .. '/libraries/lsp_server_metta/prolog/lsp_server_metta.pl',
+           '-g', 'lsp_server_metta:main',
+           '-t', 'halt',
+           '--', 'stdio' },
+   cmd_cwd = mettaDir,
+   cmd_env = { METTALOG_DIR = mettaDir;
+               SWIPL_PACK_PATH = mettaDir .. '/libraries'; },
+   root_markers = { '.git', },
+   filetypes = { 'metta' },
+}
+```
+
+If the server has been installed as a pack:
+
+```lua
+return {
+   cmd = { 'swipl',
+           '-g', 'use_module(library(lsp_server_metta))',
+           '-g', 'lsp_server_metta:main',
+           '-t', 'halt',
+           '--', 'stdio' },
+   root_markers = { '.git', },
+   filetypes = { 'metta' },
+}
+```
+
+In either case, you'll then need to enable the LSP by adding the following line to your `init.lua`:
+
+```lua
+vim.lsp.enable({'metta'})
+```
+
+### Neovim < 0.11
+
 To have an automatically started server over stdio, add the following to your `~/.config/nvim/init.lua`.
 
 If you've installed the `lsp_server_metta` pack:

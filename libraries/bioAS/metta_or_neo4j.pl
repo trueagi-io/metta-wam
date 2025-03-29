@@ -82,7 +82,6 @@ use_mw_directory(KB) :-
 % Recursively find and use all _mw.pl files in a given base directory
 load_mw_data(KB) :-
     expand_file_name(KB, [KBExpanded]), % Expand '~' or other paths
-    load_mw_info(KB),
     directory_files_ending_with(KBExpanded, '.qlf', Files),
     length(Files, Len),
     mw_note(KBExpanded=Len),
@@ -100,11 +99,10 @@ load_mw_file(KB, File):-
     mw_note(ended(load_mw_file(KB, File))), !.
 
 :- cmd_note((load_mw_info(neo4j_out_v3_mw))).
-load_mw_info(KB):- expand_file_name(KB, [KBExpanded]), % Expand '~' or other paths
-    KBExpanded\==KB, !, load_mw_info(KBExpanded).
-load_mw_info(KB) :-
-    exists_directory(KB),
-    directory_files(KB, Files), !, Files \== [],
+load_mw_info(KB):-
+    expand_file_name(KB, [KBExpanded]), % Expand '~' or other paths
+    exists_directory(KBExpanded),
+    directory_files(KBExpanded, Files), !, Files \== [],
     include(is_file_extension('txt'), Files, TxtFiles),
     maplist(load_mw_info_file(KB), TxtFiles),
     !.
@@ -198,203 +196,6 @@ write_prolog_terms(Stream, [Row | Rows]) :-
     write_term(Stream, Row, [fullstop(true), nl(true)]),
     write_prolog_terms(Stream, Rows).
 
-:- abolish(query_summary/5).
-:- discontiguous(query_summary/5).
-:- discontiguous(sample_query/5).
-% Example usage:
-% ?- use_mw_directory(neo4j_out_v4_mw).
-% query_summary(QueryID, ExecutionTimeSeconds, ResultCount, NodeCount, EdgeCount).
-query_summary(1, stopped_after(4980), 151956, 1908, 1882).  % Stopped after 83 min (4980 sec)
-query_summary(2, about(180), 41536, 144, 143).      % 3 min (180 sec)
-query_summary(3, stopped_after(1200), too_many_results, unknown, unknown). % Stopped after 20 min (1200 sec)
-query_summary(4, stopped_after(2400), 794742, 2693, 2698).  % Stopped after 40 min (2400 sec)
-query_summary(5, 25, 1932, 45, 49).          % 25 sec
-query_summary(6, squiggly_mark, 5790204:adam_says('didnt run would be ~56gb results'), 3042, 3046). % Unknown time
-query_summary(7, 8, 142, 106, 284).          % 8 sec
-query_summary(8, 420, 62248, 2040, 4047).    % 7 min (420 sec)
-query_summary(9, 6, 1827, 269, 268).         % 6 sec
-query_summary(10, stopped_after(3000), 40172978, 51599, 1427846). % Stopped after 50 min (3000 sec)
-query_summary(11, 1, 42, 52, 51).            % 1 sec
-query_summary(12, 3, 445, 446, 445).         % 3 sec
-query_summary(13, unknown, 58854894, 18900, 377127). % Unknown time
-query_summary(14, 5, 11967, 5665, 11996).    % 5 sec
-
-sample_query(s2a-"Saulo - returns 2 answers ",
-    "MATCH ((t:transcript {transcript_id: 'ENST00000472835.1'})-[:includes]->(e:exon))
-    RETURN t.id, e.id",
-    ['T', 'E'],
-    [T, E], [
-    neo(T:transcript,transcript_id,'ENST00000472835.1'),
-    neo(T:transcript,includes,E:exon)]).
-query_summary(s2a, 0.0001, 2, 3, 2).
-
-sample_query(s2b-"Saulo - returns 2 answers ",
-    "MATCH ((t:transcript {transcript_id: 'ENST00000472835.1'})-[:includes]->(e:exon))
-    RETURN t.transcript_name, e.exon_id",
-    ['TranscriptName', 'ExonID'],
-    [TranscriptName, ExonID], [
-    neo(T:transcript,transcript_id,'ENST00000472835.1'),
-    neo(T:transcript,includes,E:exon),
-    neo(T:transcript,transcript_name,TranscriptName),
-    neo(E:exon,exon_id,ExonID)]).
-query_summary(s2b, 0.0001, 2, 3, 2).
-
-
-sample_query(s502a-"Saulo - 502 https://chat.singularitynet.io/snet/pl/ypbc7org4p8odqpubddnogf6cc",
-    "MATCH path = (x:gene)-[:regulates*1..1]->(g:gene {gene_name: 'FTO'})
-    UNWIND relationships(path) AS rel
-    RETURN DISTINCT startNode(rel).gene_name AS regulator, endNode(rel).gene_name AS target",
-    ['Gene1', 'Gene2'],
-    [Gene1, Gene2], [
-    neo(Gene1,gene_name,"FTO"),
-    neo(Gene2,regulates,Gene1)]).
-query_summary(s502a, 0.018, 502, 503, 503).
-
-sample_query(s502b-"Saulo - 502 https://chat.singularitynet.io/snet/pl/ypbc7org4p8odqpubddnogf6cc",
-    "MATCH path = (x:gene)-[:regulates*1..1]->(g:gene {gene_name: 'FTO'})
-    UNWIND relationships(path) AS rel
-    RETURN DISTINCT startNode(rel).gene_name AS regulator, endNode(rel).gene_name AS target",
-    ['Regulator', 'Target'],
-    [Regulator, Target], [
-    neo(Gene1:gene,gene_name,"FTO"),
-    neo(Gene2:gene,regulates,Gene1),
-    neo(Gene1:gene,gene_name,Target),
-    neo(Gene2:gene,gene_name,Regulator)]).
-query_summary(s502b, 0.028, 502, 503, 503).
-
-sample_query(1-"1. Find Interactions of BRCA2 Gene",
-    "Find all interactions involving the BRCA2 gene, including transcripts, proteins, and pathways.",
-    ['Gene1', 'Transcript1', 'Protein1', 'Protein2', 'Pathway1'],
-    [Gene, Transcript, Protein1, Protein2, Pathway], [
-    neo(Gene, gene_name, startsWith("BRCA2")),
-    neo(Gene, transcribed_to, Transcript),
-    neo(Transcript, translates_to, Protein1),
-    neo(Protein1, interacts_with, Protein2),
-    neo(Gene, genes_pathways, Pathway)]).
-
-
-sample_query(2-"2. Find Components Associated with IGF2",
-    "Find promoters, enhancers, pathways, and child pathways associated with the IGF2 gene.",
-    ['Promoter', 'Gene', 'Enhancer', 'Pathway', 'Pathway1Child'],
-    [Promoter, Gene, Enhancer, Pathway, Pathway1Child], [
-    neo(Gene:gene, gene_name, startsWith("IGF2")),
-    neo(Promoter:promoter, associated_with, Gene:gene),
-    neo(Enhancer:enhancer, associated_with, Gene:gene),
-    neo(Gene:gene, genes_pathways, Pathway:pathway),
-    neo(Pathway1Child:pathway, child_pathway_of, Pathway:pathway)]).
-
-sample_query(3-"3. Gene Interactions and GO Terms",
-    "Find gene interactions and associated GO terms including proteins and transcripts.",
-    ['Gene', 'Transcript', 'Exon', 'Protein1', 'Protein2', 'GO1Term'],
-    [Gene, Transcript, Exon, Protein1, Protein2, GO1Term], [
-    neo(Gene, transcribed_to, Transcript),
-    neo(Transcript, includes, Exon),
-    neo(Protein1, translation_of, Transcript),
-    neo(Protein1, interacts_with, Protein2),
-    neo(GO1Term, go_gene_product, Protein1)]).
-
-sample_query(4-"4. Interactions Involving 1433B Protein",
-    "Find interactions involving 1433B protein including transcripts, exons, and GO terms.",
-    ['Gene', 'Transcript', 'Exon', 'Protein1', 'Protein2', 'GO1Term'],
-    [Gene, Transcript, Exon, Protein1, Protein2, GO1Term], [
-    neo(Protein1, protein_name, startsWith("1433B")),
-    neo(Gene, transcribed_to, Transcript:transcript),
-    neo(Transcript:transcript, includes, Exon),
-    neo(Protein1, translation_of, Transcript:transcript),
-    neo(Protein1, interacts_with, Protein2),
-    neo(GO1Term, go_gene_product, Protein1)]).
-
-sample_query(5-"5. Components Associated with IGF1",
-    "Find enhancers, pathways, and transcripts associated with the IGF1 gene.",
-    ['Gene', 'Pathway', 'Enhancer', 'Transcript1', 'Protein'],
-    [Gene, Pathway, Enhancer, Transcript, Protein], [
-    neo(Gene:gene, gene_name, "IGF1"),
-    neo(Gene:gene, genes_pathways, Pathway),
-    neo(Enhancer:enhancer, associated_with, Gene:gene),
-    neo(Transcript:transcript, transcribed_from, Gene:gene),
-    neo(Transcript:transcript, translates_to, Protein:protein)]).
-
-sample_query(6-"6. Pathways and Protein Interactions for IGF1",
-    "Find pathways and interacting proteins for the IGF1 gene including all associated components.",
-    ['Gene', 'Pathway', 'Enhancer', 'Transcript1', 'Protein1', 'Protein2'],
-    [Gene, Pathway, Enhancer, Transcript, Protein1, Protein2], [
-    neo(Gene:gene, gene_name, "IGF1"),
-    neo(Gene:gene, genes_pathways, Pathway),
-    neo(Enhancer:enhancer, associated_with, Gene:gene),
-    neo(Transcript:transcript, transcribed_from, Gene:gene),
-    neo(Transcript:transcript, translates_to, Protein1),
-    neo(Protein1, interacts_with, Protein2)]).
-
-sample_query(7-"7. Transcripts and Exons for TP73-AS1",
-    "Find transcripts and exons associated with the TP73-AS1 gene.",
-    ['Transcript', 'Exon', 'Gene'],
-    [Transcript, Exon, Gene], [
-    neo(Transcript:transcript, includes, Exon:exon),
-    neo(Transcript:transcript, transcribed_from, Gene:gene),
-    neo(Gene:gene, gene_name, endsWith("TP73-AS1"))]).
-
-sample_query(8-"8. Interactions Involving 1433S Protein",
-    "Find proteins interacting with 1433S and associated GO terms.",
-    ['GO1Term', 'Protein1', 'Protein2'],
-    [GO1Term, Protein1, Protein2], [
-    neo(Protein1, protein_name, stringEqual("1433S")),
-    neo(GO1Term, go_gene_product, Protein1),
-    neo(Protein1, interacts_with, Protein2)]).
-
-sample_query(9-"9. IGF1 Expression in Tissues and Transcripts",
-    "Find IGF1 expression in tissues and related transcripts.",
-    ['Gene', 'Uberon', 'Transcript'],
-    [Gene, Uberon, Transcript], [
-    neo(Gene, gene_name, startsWith("IGF1")),
-    neo(Gene, expressed_in, Uberon),
-    neo(Gene, transcribed_to, Transcript)]).
-
-sample_query(10-"10. Transcripts and Exons on Chromosome 1",
-    "Find transcripts, exons, and interacting proteins located on chromosome 1.",
-    ['Transcript', 'Exon', 'Protein1', 'Protein2'],
-    [Transcript, Exon, Protein1, Protein2], [
-    neo(Exon, chr, chr1),
-    neo(Transcript, includes, Exon),
-    neo(Transcript, translates_to, Protein1),
-    neo(Protein2, interacts_with, Protein1)]).
-
-sample_query(11-"11. IGF1 Gene Expression in Cell Lines",
-    "Find IGF1 gene expression in cell lines and related subclass relationships.",
-    ['Gene', 'CL1', 'CL2'],
-    [Gene, CL1, CL2], [
-    neo(Gene, gene_name, "IGF1"),
-    neo(Gene, expressed_in, CL1),
-    neo(CL2, subclass_of, CL1)]).
-
-sample_query(12-"12. IGF1 Gene Regulation by SNP Activity",
-    "Find regulation of the IGF1 gene by SNP activity.",
-    ['SNP', 'Gene'],
-    [SNP, Gene], [
-    neo(Gene, gene_name, startsWith("IGF1")),
-    neo(SNP, activity_by_contact, Gene)]).
-
-sample_query(13-"13. IGF1 Gene Interactions and Regulations",
-    "Find IGF1 gene interactions, regulations, and pathways including transcripts and proteins.",
-    ['Gene', 'CL1', 'CL2', 'Gene2Regulating', 'Transcript', 'Protein1', 'Protein2'],
-    [Gene, CellLine1, CellLine2, RegulatingGene, Transcript, Protein1, Protein2], [
-    neo(Gene, gene_name, startsWith("IGF1")),
-    neo(Gene, expressed_in, CellLine1:cl),
-    neo(CellLine2:cl, subclass_of, CellLine1:cl),
-    neo(RegulatingGene, regulates, Gene),
-    neo(RegulatingGene, transcribed_to, Transcript),
-    neo(Transcript, translates_to, Protein1),
-    neo(Protein2, interacts_with, Protein1)]).
-
-sample_query(14-"14. Pathway Associations for SNAP25",
-    "Locate SNAP25 in pathways with other genes.",
-    ['Gene1', 'Pathway', 'Gene2'],
-    [Gene1, Pathway, Gene2], [
-    neo(Gene1, gene_name, "SNAP25"),
-    neo(Gene1, genes_pathways, Pathway),
-    neo(Gene2, genes_pathways, Pathway)]).
-
-
-
 clear_linked:-
   forall(is_registered_link(F, A), clear_linked(F, A)).
 clear_linked(F, A):- dynamic(F/A), functor(P, F, A), retractall(P).
@@ -455,6 +256,7 @@ show_three(T, List):-
 :- cmd_note((link_mw_data(neo4j_out_v3_mw))).
 link_mw_data(KB):-
     %abolish(neo_triple/3),
+    load_mw_info(KB),
     clear_linked, dyn_linked, !,
     forall(mw_scheme_info(KB, Term),
          must_link_mw_term(KB, Term)),
@@ -516,27 +318,6 @@ m2(7, (neo(_A, _R1, B),
       neo(E, _R5, F),
       neo(F, _R6, G),
       neo(G, _R7, _H))).
-
-m7:- eval("
-;; basically i am going for
-```no-wrap
-(let $_
- ((apply different (each-pair ($R1 $R2 $R3 $R4 $R5)))
-  (apply different (each-pair ($A $B $C $D $E $F))))
- (limit 3
-  (match &neo4j_out_v3
-   (,
-    (neo $A $R1 $B)
-    (neo $B $R2 $C)
-    (neo $C $R3 $D)
-    (neo $D $R4 $E)
-    (neo $E $R5 $F))
-  ($A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F))))
-```
-;; whichj mines various relationships the will in this case 5 5 steps appart
-;; MeTTaLog, which is using SWI-Prolog is using JITI indexing https://www.swi-prolog.org/pldoc/doc_for?object=jiti_list/1
-;; so it is much most automatic
-").
 
 m2(8, (neo(_A, _R1, B),
       neo(B, _R2, C),
@@ -771,34 +552,46 @@ dfq([Neo|Args]):- is_list(Args), match_template([Neo|Args]).
 neo(S, P, O):- neo2p(S, S2), neo2p(P, P2), neo2p(O, O2), neo3(S2, P2, O2).
 neo_P(S, P, O, Props):- neo2p(S, S2), neo2p(P, P2), neo2p(O, O2), neo4(S2, P2, O2, Props).
 
-s2_s_st(S, I, T):- \+ compound(S), \+ var(S), !, I=S, T=_.
+s2_s_st(S, I, T):- var(S), !, freeze(I, (var(T) -> (S=I) ;  (S = (I:T)))).
+s2_s_st(S, I, T):- \+ compound(S), !, I=S, T=_.
+s2_s_st(I:T, I, T).
 %s2_s_st(S, I, T):- var(S), !, S=I:T.
 %s2_s_st(S, I, T):- var(S), !, I=S, T=_.
-s2_s_st(I:T, I, T).
-
-neo4(S2, Label, O2, Props):-s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), dfi(neo_edge_proplist(ST, TT, Props, Label, O, S)).
-
-neo4(S2, Label, O2, Props):-
-    s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), dfi(neo_node_prop(Label, ST, S, O)), maybe_typed(ST, S), ignore(maybe_typed(TT, O)),
-    ignore(dfi(neo_node_proplist(S, SProps, ST))),
-    ignore(dfi(neo_node_proplist(O, OProps, TT))),
-    ignore(((OProps=[]))), ignore(((SProps=[]))),
-    append(OProps, SProps, Props).
-
-
-
-maybe_typed(ST, S):- if_t(nonvar(ST), dfi(neo_node_inst(ST, S))).
-
 
 neo3a(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), (nonvar(ST);nonvar(TT)),dfi(neo_edge_typed(Label, ST, TT, O, S)).
 neo3b(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), var(ST),var(TT),dfi(neo_edge_link(Label, S, O)), maybe_typed(ST, S), maybe_typed(TT, O).
 neo3c(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), dfi(neo_edge_link(Label, S, O)), maybe_typed(ST, S), maybe_typed(TT, O).
-neo3(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), dfi(neo_edge_typed(Label, ST, TT, O, S)).
-neo3(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), dfi(neo_node_prop(Label, ST, S, O)), maybe_typed(ST, S), ignore(maybe_typed(TT, O)).
-%neo3(S2, P2, O2):- dfi(neo_node(ST, S)):- Pred)),
-%  assert_neo_new(KB, (dfi(neo_node_proplist(ST, Props, S)):- Pred)),
-%  assert_neo_new(KB, (dfi(neo_node_prop(F, ST, S, O)):- Pred))))).
+
+neo3(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), was_sv(S,Label,O, Cut), dfi(neo_edge_typed(Label, ST, TT, O, S)), ((Cut=='!')->!;true).
+neo3(S2, Label, O2):- s2_s_st(S2, S, ST), s2_s_st(O2, O, TT), was_sv(S,Label,O, Cut), dfi(neo_node_prop(Label, ST, S, O)), maybe_typed(ST, S), ignore(maybe_typed(TT, O)), ((Cut=='!')->!;true).
 neo3(S2, P2, O2):- bi_triple(S2, P2, O2).
+
+neo_props(Node,Props):- s2_s_st(Node, S, ST),
+    was_sv(S,_Label,o,Cut),
+    dfi(neo_node_proplist(ST, Props, S)),
+    nop((Cut=='!')->!;true).
+maybe_typed(ST, S):- if_t(nonvar(ST), (dfi(neo_node_inst(ST, S)),(nonvar(S)->!;true))).
+was_sv(S, _Label,O, Cut):- ground(S:O),!,(Cut='!').
+was_sv(_S, _Label, _O, _).
+
+neo4(S2, Label, O2, Props):-s2_s_st(S2, S, ST), s2_s_st(O2, O, TT),
+    was_sv(S,Label,O,Cut),
+    dfi(neo_edge_proplist(ST, TT, EProps, Label, O, S)),
+    ignore(dfi(neo_node_proplist(ST, SProps, S))),ignore(((SProps=[]))),
+    ignore(dfi(neo_node_proplist(TT, OProps, O))),ignore(((OProps=[]))),
+    append([EProps,OProps,SProps], Props),
+    ((Cut=='!')->!;true).
+
+neo4(S2, Label, O2, Props):-
+    s2_s_st(S2, S, ST), s2_s_st(O2, O, TT),
+    was_sv(S,Label,O,Cut),
+    dfi(neo_node_prop(Label, ST, S, O)), maybe_typed(ST, S), ignore(maybe_typed(TT, O)),
+    ignore(dfi(neo_node_proplist(ST, SProps, S))),
+    ignore(dfi(neo_node_proplist(TT, OProps, O))),
+    ignore(((OProps=[]))), ignore(((SProps=[]))),
+    append(OProps, SProps, Props),
+    ((Cut=='!')->!;true).
+
 
 mw_stats('metta-atoms', Total):-
   findall(X, analysis_source_file(_, _, X), Each),
@@ -967,6 +760,7 @@ mw_set_varname_and_type(_Body,V, N):- ignore('$VAR'(N)=V).
 
 directly_in_pred(Body,Var):- sub_term(Found,Body),compound(Found),arg(_,Found,V),V==Var, !, \+ functor(Found,':',_).
 
+name_to_type(_Name,_Type):- !, fail.
 name_to_type(Name,_Type):- atom_concat('PropList',_,Name),!,fail.
 name_to_type(Name,_Type):- atom_length(Name,Len), Len<5,!,fail.
 name_to_type(Name,Type):-
@@ -1028,7 +822,7 @@ run_sample_query1(Time, NName, Desc, VNs, Vars, Body):-
       conj_as_comma(Body,CBody),
       mw_write_src(match('&neo4j_out_v3', CBody, Result)), nl), !,
     execute_query_tl(Body, VNs, Vars, Time),
-    stats_about(Num),
+    nop(stats_about(Num)),
     writeln('================================================================='),
     writeln('```').
 
@@ -1182,6 +976,10 @@ edge_proplist(T, Proplist):- predicate_schema(T, List), exclude(non_prop, List, 
 single_value(T, F, V):- analysis_column(T, F, 1, _, V, _).
 
 
+classify_value(V,analysis_column(T, F, Nths, Type, Low, High)):- atom(V),!,
+   name(V,[C|_]),!, analysis_column(T, F, Nths, Type, Low, High), V @< High, V @> Low,
+    if_t(Type==str,(name(High,[C|_]),name(Low,[C|_]))).
+
 kind_contains(List1, List2):- List1=List2, !.
 kind_contains(List1, List2):- forall(member(E, List1), member(E, List2)).
 
@@ -1238,13 +1036,13 @@ search_cost(KoC, Pred, Sum):- predicate_property(Pred, number_of_rules(Rules)), 
 search_cost(_KoC, _Pred, 1_000).
 
 register_linked(F/A):- assert_neo_new(_,is_registered_link(F, A)), dynamic(F/A).
-:- register_linked(dfi/1).
 
+:- time(load_mw_data(neo4j_out_v3_mw)).
+:- time(link_mw_data(neo4j_out_v3_mw)).
+
+:- register_linked(dfi/1).
 :- ensure_loaded(library(metta_rt)).
 :- load_metta('&self','neo4j_or_metta_queries1.metta').
-:- time(load_mw_data(neo4j_out_v3_mw)).
-
-:- time(link_mw_data(neo4j_out_v3_mw)).
 
 
 rtq:- rtq(10).
@@ -1258,32 +1056,36 @@ do_isa_test_query(Y, DefaultTime):- nl,nl,write(' '),%write_src_wi(Y),
     get_prop(Y,':metta',Z),
     get_prop(Y,':name',Name),
     get_prop(Y,':description',Desc),
+    get_prop(Y,':neo4j-info', Neo4JInfo),
     get_prop_else(Y,':minimum-time', Time, DefaultTime),
     assign_old_varnames(Z,ZZ),
     nl,nl,write(' '),write_src_wi(exec(ZZ)),nl,
-    into_prolog_query(ZZ,Prolog),
+    find_match_query(ZZ,Prolog),
     subst_vars(Prolog, NewTerm, NamedVarsList),
     mw_writeq(prolog=Prolog),
     %mw_writeq(term=NewTerm),
     %mw_writeq(vn=NamedVarsList),
     maplist(sep_var_name_vars,NamedVarsList, VNs, Vars),
-    run_sample_query1(Time, Name, Desc, VNs, Vars, NewTerm))),!.
+    run_sample_query1(Time, Name, Desc, VNs, Vars, NewTerm))),!,
+    write_src([':neo4j-info',Neo4JInfo]).
     %execute_query_tl(NewTerm, _VNs, NamedVarsList, 10).
 
 sep_var_name_vars(N=V,N,V).
 
 'each-different'(X):- nl,writeq('each-different'(X)),nl.
 
-into_prolog_query(ZZ,Prolog):-
+find_match_query(ZZ,Prolog):-
   sub_term(SubTerm,ZZ),is_list(SubTerm),member(E,SubTerm),E=[Neo,_|_],(Neo==neo;Neo==neo_P),!,
-  neo_into_prolog_query(SubTerm,Prolog),!.
+  into_prolog_query(SubTerm,Prolog),!.
 
-neo_into_prolog_query([Comma|SubTerm],Prolog):- Comma==',',!,neo_into_prolog_query(SubTerm,Prolog).
-neo_into_prolog_query(Nil,true):- Nil==[],!.
-neo_into_prolog_query(NL,NL):- \+ is_list(NL),!.
-neo_into_prolog_query([A|B],F):- B\==[], is_list(B),atom(A),!,maplist(neo_into_prolog_query,B,BL),F=..[A|BL].
-neo_into_prolog_query([A|B],(AA,BB)):- !, neo_into_prolog_query(A,AA), neo_into_prolog_query(B,BB),!.
-neo_into_prolog_query(A,A).
+into_prolog_query([Comma|SubTerm],Prolog):- Comma==',',!,into_prolog_query(SubTerm,Prolog).
+into_prolog_query(Nil,true):- Nil==[],!.
+into_prolog_query(NL,NL):- \+ is_list(NL),!.
+into_prolog_query([A,B|Nil],F):- Nil==[], atom(A),!,F=..[A,B].
+into_prolog_query([A|B    ],F):- B \==[], atom(A),is_list(B),!, maplist(into_prolog_query,B,BL),F=..[A|BL].
+into_prolog_query([A,B|Nil],(AA,BB)):- Nil==[], into_prolog_query(A,AA), into_prolog_query(B,BB),!.
+into_prolog_query([A|B    ],(AA,BB)):- !, into_prolog_query(A,AA), into_prolog_query(B,BB),!.
+into_prolog_query(A,A).
 
 get_prop_else(Y, Prop,V,_Else):- compound(Y), sub_term(Sub,Y),compound(Sub),Sub=[N,V|_],N==Prop,!.
 get_prop_else(_, _Prp,V, Else):- V=Else,!.

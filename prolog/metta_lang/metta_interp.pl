@@ -233,9 +233,7 @@ dont_change_streams:- true.
 %   the Python environment or integration.
 %
 :- dynamic(lazy_load_python/0).
-
 lazy_load_python.
-
 
 % 'dynamic' enables runtime modification
 :- dynamic(user:is_metta_src_dir/1).
@@ -354,7 +352,6 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 %   is detected as Windows 64-bit. If the platform is not Windows 64-bit, the
 %   directive does nothing.
 %
-
 :- is_win64 -> ensure_loaded(library(logicmoo_utils)) ; true.
 
 %   :- initialization(attach_packs).
@@ -383,7 +380,6 @@ user:file_search_path(mettalog,Dir):- metta_dir(Dir).
 :- initialization(nodebug(metta(prolog))).
 */
 % Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
-
 
 %
 %   This section declares several dynamic and multifile predicates used in the
@@ -2818,7 +2814,7 @@ set_default_flags:- ignore(((
 process_python_option :- process_python_option_now, !.
 process_python_option_now :- option_value('python', false),!.
 process_python_option_now :-
-    ensure_loaded(mettalog(metta_python)),
+    %ensure_loaded(('/home/deb12user/metta-wam/prolog-NOW/metta_lang/metta_python')),
     % Initialize Python integration.
     setenv('METTALOG_VERBOSE','0'),
     real_notrace((ensure_mettalog_py)).
@@ -3058,7 +3054,6 @@ cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
     \+ symbol_concat('-', _, Filemask), !,
     if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
     cmdline_load_metta(Phase, Self, Rest).
-
 % Handle command-line options by setting their corresponding values.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
     m_opt(M, Opt),
@@ -4268,7 +4263,9 @@ from_top_self(Self, Self).
 %   @arg Atom The atom associated with the knowledge base.
 %
 get_metta_atom_from(KB, Atom) :-
-  wo_inheritance(metta_atom(KB, Atom)).
+  woc(wo_inheritance(metta_atom0(KB, Atom))).
+
+not_quietly(G):- call(G).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
 %
@@ -4279,10 +4276,10 @@ get_metta_atom_from(KB, Atom) :-
 %   @arg Atom  The retrieved atom.
 %
 get_metta_atom(Eq, Space, Atom) :-
-   quietly(get_metta_atom0(Eq, Space, Atom)).
+   not_quietly(get_metta_atom0(Eq, Space, Atom)). %
 
 get_metta_atom0(Eq, Space, Atom) :-
-    metta_atom(Space, Atom),
+    metta_atom0(Space, Atom),
     \+ (Atom = [EQ, _, _], EQ == Eq).
 
 %!  metta_atom(-Atom) is nondet.
@@ -4291,7 +4288,7 @@ get_metta_atom0(Eq, Space, Atom) :-
 %
 %   @arg Atom The atom associated with the current knowledge base.
 %
-metta_atom(Atom) :- quietly(metta_atom0(Atom)).
+metta_atom(Atom) :- not_quietly(metta_atom0(Atom)).
 metta_atom0(Atom) :-
     current_self(KB),
     metta_atom(KB, Atom).
@@ -4329,6 +4326,9 @@ metta_atom_added(X, Y) :- nocut,
 %
 
 metta_atom(KB, Atom):-
+  woc(quietly(metta_atom0(KB, Atom))).
+
+metta_atom_fast(KB, Atom):-
   quietly(metta_atom0(KB, Atom)).
 
 
@@ -4397,6 +4397,7 @@ query_super_type(KB, Pred, Type, Cond) :-
    fact_store(KB, type_type(Pred, Type), _, Cond).
 
 
+:- dynamic(no_space_inheritance_to/1).
 
 %!  wo_inheritance_to(+Where, :Goal) is det.
 %
@@ -4411,14 +4412,14 @@ query_super_type(KB, Pred, Type, Cond) :-
 %     % Temporarily disable inheritance to a specific space:
 %     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
 %
-
-:- dynamic(no_space_inheritance_to/1).
-
-wo_inheritance_to(Where, Goal) :- !,
-  locally(no_space_inheritance_to(Where), Goal).
-
-print_wo_inheritance_to:- listing(no_space_inheritance_to/1).
-test_wo_inheritance_to:- forall((wo_inheritance_to(somwhere,(member(X,[1,2,3]),print_wo_inheritance_to)),writeln(X),print_wo_inheritance_to),nl).
+wo_inheritance_to(_Where, Goal):- !, call(Goal).
+wo_inheritance_to(Where, Goal) :-
+    % Temporarily assert the `no_space_inheritance_to/1` fact.
+    setup_call_cleanup(
+        asserta(no_space_inheritance_to(Where), Clause),
+        Goal,
+        erase(Clause)
+    ).
 
 %!  should_inhert_from(+KB, -Atom) is nondet.
 %
@@ -4433,7 +4434,6 @@ test_wo_inheritance_to:- forall((wo_inheritance_to(somwhere,(member(X,[1,2,3]),p
 %     % Check if an atom should be inherited:
 %     ?- should_inhert_from('&my_space', Atom).
 %
-
 should_inhert_from(KB, Atom) :-
     % Fail if inheritance to `KB` is explicitly disabled.
     \+ no_space_inheritance_to(KB),
@@ -4617,15 +4617,19 @@ should_inherit_op_from_corelib('@doc').
 %     Atom = '&corelib'.
 
 
-the_libs('&corelib').
-the_libs('&stdlib').
-
-metta_atom_asserted_last(_Top, _Lib):- !, fail.
-% Assert `&corelib` for the top-level context.
-metta_atom_asserted_last(Top, Lib) :- top_self(Top), nocut, the_libs(Lib).
-%metta_atom_asserted_last('&stdlib', '&corelib').
-metta_atom_asserted_last('&flybase', Lib):- nocut, the_libs(Lib).
-metta_atom_asserted_last('&catalog', Lib):- nocut, the_libs(Lib).
+%metta_atom_asserted('&self','&corelib').
+%metta_atom_asserted('&self','&stdlib').
+metta_atom_asserted_last(Top, '&corelib') :-
+    % Assert `&corelib` for the top-level context.
+    top_self(Top).
+metta_atom_asserted_last(Top, '&stdlib') :-
+    % Assert `&stdlib` for the top-level context.
+    top_self(Top).
+metta_atom_asserted_last('&stdlib', '&corelib').
+metta_atom_asserted_last('&flybase', '&corelib').
+metta_atom_asserted_last('&flybase', '&stdlib').
+metta_atom_asserted_last('&catalog', '&corelib').
+metta_atom_asserted_last('&catalog', '&stdlib').
 
 %!  maybe_resolve_space_dag(+Var, +XX) is det.
 %
@@ -4727,8 +4731,8 @@ not_metta_atom_corelib(A, N) :-
 %     ?- is_metta_space('&unknown_space').
 %     false.
 %
-is_metta_space(Space) :-  quietly((nonvar(Space),
-    \+ \+ is_space_type(Space, _Type))).  % Enforce deterministic behavior using double negation.
+is_metta_space(Space) :-  nonvar(Space),
+    \+ \+ is_space_type(Space, _Test).  % Enforce deterministic behavior using double negation.
 
 %!  metta_eq_def(+Eq, +KB, +H, +B) is det.
 %
@@ -4779,7 +4783,7 @@ metta_eq_def0(Eq, KB, H, B) :-
 %   @arg B  The body of the definition.
 metta_defn(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    quietly(metta_eq_def0('=', KB, H, B)).
+    metta_eq_def('=', KB, H, B).
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -4899,9 +4903,9 @@ metta_anew1(unload_all, OBO) :-
     must_det_ll((
         load_hook(unload_all, OBO),  % Execute the unload_all hook.
         subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
-        if_trace(atomspace, once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
+        once_writeq_nl_now(yellow, retractall(Cl)), % Log and retract all matching clauses.
         retractall(Cl)      %to_metta(Cl).
-    )), !.
+    )).
 % Alternative `unload_all` operation with detailed clause handling.
 metta_anew1(unload_all, OBO) :-
     subst_vars(OBO, Cl),           % Substitute variables in `OBO`.
@@ -4914,9 +4918,9 @@ metta_anew1(unload_all, OBO) :-
             ((Head + Body) =@= (Head2 + Body2)) -> % Check if the clauses are equivalent.
                 (erase(Ref), nop(pp_m(unload_all(Ref, Cl)))) % Erase and log equivalent clauses.
             ;
-                if_verbose(load,(pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2))))) % Log differences.
+                (pp_m(unload_all_diff(Cl, (Head + Body) \=@= (Head2 + Body2)))) % Log differences.
         ))
-    ), !.
+    ).
 
 /*
 metta_anew2(Load,_OBO):- var(Load),trace,!.
@@ -5718,8 +5722,6 @@ do_metta_exec(From, Self, TermV, FOut) :-
     % Debugging output for final state.
     % format("########################X2 ~w ~w ~w\n", [Self, TermV, FOut]).
 
-
-
 %!  a_e(+Assertion) is nondet.
 %
 %   Defines valid assertion operation names in Metta. These operations are typically used
@@ -6018,8 +6020,6 @@ eval_H(_StackMax, _Self, Term, Term) :-
 eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
     catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
-
-
 /*
 eval_H(StackMax,Self,Term,X).
 
@@ -6192,6 +6192,12 @@ not_in_eq(List, Element) :-
     member(V, List), V == Element.
 
 :- ensure_loaded(metta_repl).
+
+% Each of these `nodebug/1` directives suppresses debugging output for the corresponding category.
+:- nodebug(metta(eval)).
+:- nodebug(metta(exec)).
+:- nodebug(metta(load)).
+:- nodebug(metta(prolog)).
 
 %
 % Below code measures the execution time of a Prolog goal and displays the duration in seconds,
@@ -6541,6 +6547,9 @@ catch_red(Term) :-
 %   @arg Color The color used for formatting the log.
 %   @arg Term  The exception or term to be logged.
 %
+pp_m_m_red(_, T) :-
+    % Skip logging for specific error terms.
+    T =@= in(not_compat_io(maybe_halt(7)), unwind(halt(7))), !.
 pp_m_m_red(_, T) :- compound(T),
     % Skip logging for specific error terms.
     T = in(not_compat_io(maybe_halt(Seven)), unwind(halt(Seven))), number(Seven),!.
@@ -6817,7 +6826,7 @@ do_loon_prev :-
    metta_final,
    % ensure_corelib_types,
    set_output_stream,
-   if_t(is_compiled, update_changed_files),
+            if_t(is_compiled, update_changed_files),
    test_alarm,
    run_cmd_args,
    write_answer_output,
@@ -6918,11 +6927,9 @@ maybe_halt(_) :-
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
     option_value('repl', false), !, halt(Seven).
-
 maybe_halt(Seven) :-
     % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
     option_value('halt', true), !, halt(Seven).
-
 maybe_halt(_) :-
     % Perform extended halting checks (`pre_halt2`) and fail.
     once(pre_halt2), fail.
@@ -7002,8 +7009,8 @@ ensure_mettalog_system:-
     %ensure_loaded('./src/main/flybase_main'),
     %ensure_loaded(library(flybase_convert)),
     %ensure_loaded(library(flybase_main)),
-    autoload_all,
-    make,
+    %autoload_all,
+    %make,
     autoload_all,
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
@@ -7074,7 +7081,7 @@ next_save_name(Name) :-
     before_underscore(E, N),
     symbol_concat(N, '_', Stem),
     gensym(Stem, Name),
-   \+ exists_file(Name),
+  \+ exists_file(Name),
     Name \== E, !.
 next_save_name('Sav.MeTTaLog').
 
@@ -7325,7 +7332,6 @@ stack_times_16 :-
 %     % Perform immediate initialization while ignoring errors:
 %     ?- immediate_ignore.
 %
-
 immediate_ignore:- ignore(((
    %write_src_uo(init_prog),
    use_corelib_file,

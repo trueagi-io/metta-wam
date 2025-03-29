@@ -1449,7 +1449,9 @@ For example:
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
 (: get-doc (-> Atom Atom))
-(= (get-doc $atom)
+(= (get-doc $atom) (metta-get-doc $atom))
+(: metta-get-doc (-> Atom Atom))
+(= (metta-get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
       (Expression (get-doc-atom $atom))
@@ -1542,7 +1544,9 @@ For example:
     (@param "Input to get documentation for")))
   (@return "Unit atom"))
 (: help! (-> Atom (->)))
-(= (help! $atom)
+(= (help! $atom) (metta-help! $atom))
+(: metta-help! (-> Atom (->)))
+(= (metta-help! $atom)
   (case (get-doc $atom) (
     ((@doc-formal (@item $item) (@kind function) (@type $type) (@desc $descr)
                  (@params $params)
@@ -1566,11 +1570,10 @@ For example:
   (@return "Unit atom"))
 
 (: help! (-> (->)))
-(= (help!) (let $top-space (mod-space! top)
-    (unify $top-space (@doc $name (@desc $desc) $params $ret)
-      (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
-      Empty)))
-(= (help!) (let $top-space (mod-space! top)
+(= (help!) (metta-help!))
+
+(: metta-help! (-> (->)))
+(= (metta-help!) (let $top-space (mod-space! top)
     (unify $top-space (@doc $name (@desc $desc))
       (let () (println! (format-args "{}\n\t{}" ($name $desc))) Empty)
       Empty)))
