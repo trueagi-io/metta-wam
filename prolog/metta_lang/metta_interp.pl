@@ -65,6 +65,12 @@
 % UTF-8 is more universal and can handle a wider range of characters.
 :- encoding(utf8).
 
+o_quietly(G):- call(G).
+% o_quietly(G):- quietly(G).
+
+o_woc(G):- call(G).
+% o_woc(G):- woc(G).
+
 :- dynamic('$metta_setup':on_init_metta/1).
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
@@ -459,7 +465,10 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
-pfcAdd_Now(Cl):- \+ nb_current(allow_dupes,t),clause_asserted(Cl),!.
+pfcAdd_Now(Cl):-
+   once( \+ nb_current(allow_dupes,t)
+     ; sub_var_safely('&corelib',Cl )),
+    clause_asserted(Cl),!.
 
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
@@ -539,6 +548,9 @@ is_fAlSe(TF) :-
 %
 %   @arg What The flag to check.
 %
+
+is_flag(What):- notrace(is_flag0(What)).
+
 is_flag0(What) :-
     % Check if the flag exists as a non-backtrackable global variable and is true.
     nb_current(What, TF),is_tRuE(TF),!.
@@ -691,7 +703,7 @@ is_synthing_unit_tests0 :- is_testing.
 %   @example
 %     ?- is_testing.
 %     true.
-is_testing :- quietly(is_metta_flag('test')).
+is_testing :- o_quietly(is_metta_flag('test')).
 
 %!  is_html is nondet.
 %
@@ -1200,6 +1212,7 @@ option_value_name_default_type_help('time', true, [false, true], "Enable or disa
 option_value_name_default_type_help('vn', true, [true, auto, false], "Enable or disable, (auto = enable but not if it breaks stuff) EXPERIMENTAL BUG-FIX where variable names are preserved (see https://github.com/trueagi-io/metta-wam/issues/221)", 'Miscellaneous').
 option_value_name_default_type_help('top-self', true, [true, false, auto], "When set, stop pretending &self==&top", 'Miscellaneous').
 option_value_name_default_type_help('devel', false, [false, true], "Set all developer flags", 'Miscellaneous').
+option_value_name_default_type_help('old-empty', false, [false, true], "Enable Old Empty undoing EXPERIMENTAL BUG-FIX (see https://github.com/trueagi-io/metta-wam/issues/275)", 'Miscellaneous').
 
 % Testing and Validation
 option_value_name_default_type_help('synth-unit-tests', false, [false, true], "Synthesize unit tests", 'Testing and Validation').
@@ -1675,9 +1688,9 @@ fake_notrace(G) :-
     !, notrace(G).
 fake_notrace(G) :-
     !, once(G).
-% `quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
+% `o_quietly/1` allows breaking in and inspection (real `no_trace/1` does not)
 fake_notrace(G) :-
-    quietly(G), !.
+    o_quietly(G), !.
 
 :- meta_predicate real_notrace(0).
 
@@ -3697,7 +3710,7 @@ is_conz(Self) :-
 %     true.
 %
 
-% dont_x(eval_H(Depth,Self,metta_if(A<B,L1,L2),R)).
+%dont_x(eval_H(Depth,Self,metta_if(A<B,L1,L2),R)).
 dont_x(eval_H(_<_,_)).
 
 %!  into_fp(+D, -CallAB) is det.
@@ -4263,9 +4276,7 @@ from_top_self(Self, Self).
 %   @arg Atom The atom associated with the knowledge base.
 %
 get_metta_atom_from(KB, Atom) :-
-  woc(wo_inheritance(metta_atom0(KB, Atom))).
-
-not_quietly(G):- call(G).
+  o_quietly(metta_atom0(no_inherit,KB, Atom)).
 
 %!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
 %
@@ -4276,11 +4287,11 @@ not_quietly(G):- call(G).
 %   @arg Atom  The retrieved atom.
 %
 get_metta_atom(Eq, Space, Atom) :-
-   not_quietly(get_metta_atom0(Eq, Space, Atom)). %
+   o_quietly(get_metta_atom0(Eq, Space, Atom)). %
 
 get_metta_atom0(Eq, Space, Atom) :-
-    metta_atom0(Space, Atom),
-    \+ (Atom = [EQ, _, _], EQ == Eq).
+    metta_atom0(inherit([Space]),Space, Atom),
+    \+ \+ (Atom = [EQ, _, _], EQ == Eq).
 
 %!  metta_atom(-Atom) is nondet.
 %
@@ -4288,9 +4299,8 @@ get_metta_atom0(Eq, Space, Atom) :-
 %
 %   @arg Atom The atom associated with the current knowledge base.
 %
-metta_atom(Atom) :- not_quietly(metta_atom0(Atom)).
-metta_atom0(Atom) :-
-    current_self(KB),
+metta_atom(Atom) :-
+    notrace(current_self(KB)),
     metta_atom(KB, Atom).
 
 %!  metta_atom_added(+X, -Y) is nondet.
@@ -4326,39 +4336,43 @@ metta_atom_added(X, Y) :- nocut,
 %
 
 metta_atom(KB, Atom):-
-  woc(quietly(metta_atom0(KB, Atom))).
+  o_quietly(metta_atom0(inherit([KB]),KB, Atom)).
 
 metta_atom_fast(KB, Atom):-
-  quietly(metta_atom0(KB, Atom)).
+  o_quietly(metta_atom0(no_inherit,KB, Atom)).
 
 
 /*
-metta_atom0(KB, Fact) :-
+metta_atom0(Inherit,KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
 */
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
-metta_atom0(Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
-metta_atom0(KB, [F, A | List]) :-
+metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
+metta_atom0(_Inherit,KB, [F, A | List]) :-
     KB == '&flybase', !, fb_pred_nr(F, Len), current_predicate(F/Len),
     length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
-metta_atom0(X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(TopSelf, Y).
+metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
 % metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
 
-metta_atom0(KB, Atom) :- metta_atom_added(KB, Atom), nocut.
+metta_atom0(_Inherit,KB, _Atom) :- \+atom(KB), !, fail.
+metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom), nocut.
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
-metta_atom0(KB, Atom) :- nonvar(KB),clause(metta_atomspace(KB,Atom),Body),!, call(Body).
+metta_atom0(_Inherit,KB, Atom) :- clause(metta_atomspace(KB,Atom),Body),!, call(Body).
 
-metta_atom0(KB, Atom) :-  KB \== '&corelib',  nonvar(KB), \+ nb_current(space_inheritance, false),
-    should_inhert_from(KB, Atom).
+metta_atom0(inherit(Except),KB, Atom) :- inherit_into(KB,KB2), \+ member(KB2,Except), metta_atom0(inherit([KB2|Except]),KB2, Atom).
+
+
+inherit_into(KB,'&corelib') :- KB=='&top', \+ should_not_inherit_from_corelib(KB).
+
+%  should_inhert_from(KB, Atom).
 % metta_atom(KB, Atom) :- metta_atom_asserted_last(KB, Atom).
-
 
 'same-index'(X,Y):-
   transform_about(X, t(Inst,Type,Pred, Super), Cond), \+ \+ (nonvar(Pred);nonvar(Super)),
@@ -4396,140 +4410,14 @@ query_type_of(KB, Pred, Type, Cond) :-
 query_super_type(KB, Pred, Type, Cond) :-
    fact_store(KB, type_type(Pred, Type), _, Cond).
 
-
-:- dynamic(no_space_inheritance_to/1).
-
-%!  wo_inheritance_to(+Where, :Goal) is det.
-%
-%   Temporarily disables space inheritance to a specific location (`Where`) while
-%   executing the provided `Goal`. The original state of inheritance is restored
-%   after the `Goal` completes.
-%
-%   @arg Where The location or space where inheritance is temporarily disabled.
-%   @arg Goal  The Prolog goal to execute while inheritance is disabled.
-%
-%   @example
-%     % Temporarily disable inheritance to a specific space:
-%     ?- wo_inheritance_to('&my_space', writeln('Executing without inheritance.')).
-%
-wo_inheritance_to(_Where, Goal):- !, call(Goal).
-wo_inheritance_to(Where, Goal) :-
-    % Temporarily assert the `no_space_inheritance_to/1` fact.
-    setup_call_cleanup(
-        asserta(no_space_inheritance_to(Where), Clause),
-        Goal,
-        erase(Clause)
-    ).
-
-%!  should_inhert_from(+KB, -Atom) is nondet.
-%
-%   Determines if an atom (`Atom`) should be inherited from the specified knowledge
-%   base (`KB`). Inheritance is temporarily disabled for `KB` while checking for
-%   the atom's inheritance.
-%
-%   @arg KB   The knowledge base to check for inheritance.
-%   @arg Atom The atom to inherit, if applicable.
-%
-%   @example
-%     % Check if an atom should be inherited:
-%     ?- should_inhert_from('&my_space', Atom).
-%
-should_inhert_from(KB, Atom) :-
-    % Fail if inheritance to `KB` is explicitly disabled.
-    \+ no_space_inheritance_to(KB),
-    % Temporarily disable inheritance to `KB` and check inheritance rules.
-    wo_inheritance_to(KB, should_inhert_from_now(KB, Atom)).
-
-%!  should_inhert_from_now(+KB, -Atom) is nondet.
-%
-%   Directly checks if an atom (`Atom`) can be inherited from the given knowledge
-%   base (`KB`). Handles variable atoms using `freeze/2` and ensures inheritance
-%   exclusions are respected.
-%
-%   @arg KB   The knowledge base to check for inheritance.
-%   @arg Atom The atom to inherit, if applicable.
-%
-%   @example
-%     % Check if an atom can be inherited directly:
-%     ?- should_inhert_from_now('&my_space', Atom).
-%
-
-should_inhert_from_now(KB, Atom) :-
-    \+ frozen(Atom, symbol(_)),
-    % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    freeze(SubKB, symbol(SubKB)),
-    % Retrieve a sub-knowledge base associated with `KB`.
-    metta_atom_added(KB, SubKB),
-    SubKB \== KB,
-    % Retrieve atoms from the sub-knowledge base.
-    metta_atom(SubKB, Atom),
-    % Ensure the atom is not excluded from inheritance.
-    \+ should_not_inherit_from(KB, SubKB, Atom).
-
-
-should_inhert_from_now(KB, Atom) :-
-    % Ensure the atom is not an attributed variable.
-    \+ frozen(Atom, symbol(_)),
-    % Freeze the sub-knowledge base (`SubKB`) until it is instantiated.
-    %freeze(SubKB, symbol(SubKB)), !,
-    % Retrieve a sub-knowledge base associated with `KB`.
-    should_inherit_kb(KB, SubKB),
-    SubKB \== KB,
-    % Retrieve atoms from the sub-knowledge base.
-    metta_atom_added(SubKB, Atom),
-    % Ensure the atom is not excluded from inheritance.
-    \+ should_not_inherit_from(KB, SubKB, Atom).
-
-/*
-   KB \== '&corelib',  % is_code_inheritor(KB),
-   \+ \+ (metta_atom_added(KB,'&corelib'),
-          should_inherit_atom_from_corelib(Atom)), !,
-   metta_atom('&corelib',Atom),
-   \+ should_not_inherit_from_corelib(Atom).
-*/
-
-should_inherit_kb(KB, '&corelib'):- KB\=='&corelib'.
-
-wo_inheritance(Goal) :-
-  locally(b_setval(no_space_inheritance,t), Goal).
-
-:- thread_initialization(nb_setval(no_space_inheritance,[])).
-print_can_inherit:- nb_current(no_space_inheritance,X),writeln(no_space_inheritance=X).
-test_wo_inheritance:- forall((wo_inheritance((member(X,[1,2,3]),print_can_inherit)),writeln(X),print_can_inherit),nl).
-
-%!  should_not_inherit_from(+KB, +SubKB, +Atom) is nondet.
-%
-%   Determines whether an atom (`Atom`) should not be inherited from a specific
-%   sub-knowledge base (`SubKB`) within the context of the parent knowledge base (`KB`).
-%   Currently, the rule only excludes symbols (`symbol/1`) from inheritance.
-%
-%   @arg KB    The parent knowledge base.
-%   @arg SubKB The sub-knowledge base being checked.
-%   @arg Atom  The atom to check for inheritance exclusion.
-%
-%   @example
-%     % Exclude symbols from inheritance:
-%     ?- should_not_inherit_from('&my_space', '&sub_space', my_atom).
-%     false.
-%
-%     % Exclude symbols explicitly:
-%     ?- should_not_inherit_from('&my_space', '&sub_space', my_symbol).
-%     true.
-%
-should_not_inherit_from(_, _, S) :-
-    % Exclude symbols from inheritance.
-    symbol(S),!.
-should_not_inherit_from(KB, Sub, _S) :- should_not_inherit_from_corelib(KB),should_not_inherit_from_corelib(Sub),!.
-
-should_not_inherit_from_corelib('&corelib').
-should_not_inherit_from_corelib('&stdlib').
 /*
 % Commented-out inheritance exclusions for core libraries.
 % Uncomment or modify as needed to apply specific rules for inheritance exclusion.
-
-should_not_inherit_from_corelib('&self').
+%should_not_inherit_from_corelib('&self').
 %should_not_inherit_from_corelib('&top').
 */
+should_not_inherit_from_corelib('&corelib').
+should_not_inherit_from_corelib('&stdlib').
 
 %!  should_inherit_atom_from_corelib(+Atom) is nondet.
 %
@@ -4617,6 +4505,7 @@ should_inherit_op_from_corelib('@doc').
 %     Atom = '&corelib'.
 
 
+metta_atom_asserted_last(_,_) :- !, fail.
 %metta_atom_asserted('&self','&corelib').
 %metta_atom_asserted('&self','&stdlib').
 metta_atom_asserted_last(Top, '&corelib') :-
@@ -4755,18 +4644,9 @@ is_metta_space(Space) :-  nonvar(Space),
 
 % metta_eq_def(Eq,KB,H,B):- ignore(Eq = '='),if_or_else(metta_atom(KB,[Eq,H,B]), metta_atom_corelib(KB,[Eq,H,B])).
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
-
-metta_eq_def(Eq, KB, H, B):- quietly(metta_eq_def0(Eq, KB, H, B)).
-
-metta_eq_def0(Eq, KB, H, B) :-
-    % Ensure `Eq` is unified with '='.
-    ignore(Eq = '='),
-    if_or_else(
-        % Check if equality is defined in `KB`.
-        metta_atom(KB, [Eq, H, B]),
-        % If not, ensure it does not belong to `&corelib`.
-        not_metta_atom_corelib(KB, [Eq, H, B])
-    ).
+metta_eq_def(Eq, KB, H, B) :-
+   ignore(Eq = '='),
+   get_metta_atom(Eq, KB, [_, H, B]).
 
 % Original commented-out code, retained as-is for potential future use:
 % metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
@@ -4797,7 +4677,7 @@ metta_defn(KB, H, B) :-
 % metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB, H, B) :-
     % Use `:` to associate the head with a type in the given knowledge base.
-    quietly(metta_eq_def0(':', KB, H, B)).
+    metta_eq_def(':', KB, H, B).
 % metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 
 % typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -7156,7 +7036,7 @@ nts :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-nts1 :- !. % Dont Disable redefinition by cutting execution.
+%nts1 :- !. % Dont Disable redefinition by cutting execution.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
@@ -7647,3 +7527,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 
 :- thread_initialization(do_metta_setup).
+
