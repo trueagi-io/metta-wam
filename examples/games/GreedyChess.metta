@@ -96,7 +96,7 @@
 ;   1) en passant pawn moves
 ;   2) castling
 ;   3) reward for advancing pawn to opponent's end line
-;   4) use of the standard letters on the x axis
+;   4) (COMPLETED) use of the standard letters on the x axis 
 ;   5) tuning and more sophisticated moves of all types
 ;
 
@@ -158,23 +158,86 @@
 ;***************************************************************
 ; Function:     char_to_int
 ; Description:  Converts a character string "0".."9" to its corresponding integer.
+;               Will convert to standard chess x axis letters too.
 ;
 ; Input:        $char - A string representing a digit ("0".."9")
 ;
-; Output:       Integer value 0..9 if valid; (empty) result otherwise
+; Output:       Integer value 0..9 if valid; otherwise NIL
 ;***************************************************************
 (= (char_to_int $char)
-   (if (== $char "0") 0
-   (if (== $char "1") 1
-   (if (== $char "2") 2
-   (if (== $char "3") 3
-   (if (== $char "4") 4
-   (if (== $char "5") 5
-   (if (== $char "6") 6
-   (if (== $char "7") 7
-   (if (== $char "8") 8
-   (if (== $char "9") 9
-   )))))))))))
+    (case $char
+        (
+        ("1"  1)
+        ("2"  2)
+        ("3"  3)
+        ("4"  4)
+        ("5"  5)
+        ("6"  6)
+        ("7"  7)
+        ("8"  8)
+        ("a"  1)
+        ("b"  2)
+        ("c"  3)
+        ("d"  4)
+        ("e"  5)
+        ("f"  6)
+        ("g"  7)
+        ("h"  8)
+        ;otherwise
+        ($_   9) ; <-- in case user inputs bad char, this will result in a fail.
+        )))
+
+;***************************************************************
+; Function:     int_to_char
+; Description:  Converts an integer 1..8 to the corresponding chess file letter.
+;
+; Input:        $int - Integer in range 1 to 8
+;
+; Output:       Corresponding file letter "a".."h", or "?" if invalid
+;***************************************************************
+(= (int_to_char $int)
+    (case $int
+        (
+        (1 a)
+        (2 b)
+        (3 c)
+        (4 d)
+        (5 e)
+        (6 f)
+        (7 g)
+        (8 h)
+        ($_ ?) ; fallback for invalid input
+        )))
+
+;***************************************************************
+; Function:     convert_x_letter
+; Description:  Extracts the X axis component from a chess square and converts
+;               the integer to the standard letter format
+;
+; Input:        $square - A string representing a chess square
+;
+; Output:       An expression with the converted x-coordinate (int) to a standard letter
+;     
+;***************************************************************
+(= (convert_x_letter $square)
+  (let*
+    (
+      ($x (nth 1 $square))         ; get the int x axis value
+      ($x_ltr (int_to_char $x))    ; convert to char
+      ($y (nth 2 $square))
+    )
+    (if (== (size-atom $square) 2 )
+      ($x_ltr $y)
+      (let*
+        (
+         ($color (nth 3 $square))
+         ($rank (nth 4 $square))
+        ) ;also convert to black or white color for standardization.
+        (if (== $color s) 
+            ($x_ltr $y white $rank)
+            ($x_ltr $y black $rank)
+        )))))
+
 
 ;***************************************************************
 ; Function:     concat_lists
@@ -216,13 +279,13 @@
         (+ (car-atom $integer_list) (addit_list (cdr-atom $integer_list)))))
 
 ;***************************************************************
-; Function:     do_quoted
+; Function:     progq
 ; Description:  Executes a list of quoted expressions sequentially.
 ;               Each expression must be wrapped in (quote (...)).
 ;
 ; Input:        $exp - A list of quoted expressions
 ;               Example:
-;                   (do_quoted
+;                   (progq
 ;                     (
 ;                       (quote (function-a))
 ;                       (quote (function-b))
@@ -230,13 +293,15 @@
 ;                     ))
 ;
 ; Output:       Evaluates each expression in order for side effects.
-;               Returns `empty` when all are processed.
+;               Returns () when all are processed.
+;
+; Note:         Similar to progn style but uses quotes. Does not nest.
 ;***************************************************************                    
-(: (do_quoted) (-> Expression Atom))
-(= (do_quoted $exp) 
+(: (progq) (-> Expression Atom))
+(= (progq $exp) 
       (if (== $exp ())
-            empty
-            (let () (unquote (car-atom $exp)) (do_quoted (cdr-atom $exp)))))
+            ()
+            (let $IEFBR14 (unquote (car-atom $exp)) (progq (cdr-atom $exp)))))
 ;
 
 
@@ -474,8 +539,8 @@
     (display_board (match &self (board-state $board) $board)) 
     ((py-atom print) "- Your pieces are marked with an asterisk.")
     ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> 1213 <ENTER>")
-    ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
+    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
+    ((py-atom print) "   Result:  YOUR pawn in a2 moved to location a3.")
     ((py-atom print) "Greedy Chess Move (AI)           ->  g")
     ((py-atom print) "Reset & Replay                   ->  r")
     ((py-atom print) "Commands List                    ->  c")
@@ -543,7 +608,7 @@
           ($pieces (display_filter     $board ))
           )
           ((py-atom print) (format-args "\n
-        ---1-------2-------3-------4-------5-------6-------7-------8--- \n
+        ---a-------b-------c-------d-------e-------f-------g-------h--- \n
       8|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |8\n
        |---------------------------------------------------------------| \n
       7|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |7\n
@@ -559,7 +624,7 @@
       2|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |2\n
        |---------------------------------------------------------------| \n
       1|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |1\n
-        ---1-------2-------3-------4-------5-------6-------7-------8--- \n
+        ---a-------b-------c-------d-------e-------f-------g-------h--- \n
       " 
           $pieces)))))
 
@@ -585,10 +650,13 @@
     
       (let* (
         ($msg1 (println! "looking for checkmate..."))
-        ($checkmate (collapse (if (== (lots_of_pawns_in_home_row) True)
-                      ; get pieces out at beginning of game
-                      (empty)
-                      (attemptcheckmate)))))
+        ($checkmate (collapse 
+                      (if (== (lots_of_pawns_in_home_row) True)
+                          ; get pieces out at beginning of game
+                          (empty)
+                          (attemptcheckmate))
+                    ))
+            )
         (if (not (==  $checkmate ()))
           (car-atom $checkmate)
 
@@ -610,11 +678,12 @@
         (if (not (==  $threaten_position ()))
           (car-atom $threaten_position)
 
-          (let* (
+        (let* (
         ($msg5 (println! "looking for random move..."))
-        ($random_move (collapse (random_move_empty_sq))))
+        ($random_move (collapse (random_move_empty_sq)))
+              )
         (if (not (==  $random_move ())) 
-          (car-atom $random_move)
+          (car-atom $random_move)          
 
           (let* (
         ($msg6 (println! "looking for desperation move..."))
@@ -642,7 +711,7 @@
 ;               $mode             - If 1, score the move; if 0, skip scoring
 ;
 ; Output:       ((from-square) (to-square))  if move is safe and valid
-;               Empty                        if the move is unsafe or invalid
+;               (empty)                        if the move is unsafe or invalid
 ;
 ; Side Effects: Uses and resets "square" atoms in atomspace for evaluation.
 ;***************************************************************
@@ -662,7 +731,7 @@
     )
     (if (== $Exposed True)
       ; exit with Empty if the piece can be taken but after moving pieces back in atomspace
-      (let $MoveBool  (reset_pieces $start $dest_full) ())
+      (let $MoveBool  (reset_pieces $start $dest_full) (empty))
       ; else see if king exposed
       (let*
         (
@@ -673,7 +742,7 @@
         )
         (if (== $KingCompromised True)
             ; exit with Empty if AI king can be taken reversing move in atomspace
-            (let $MoveBool  (reset_pieces $start $dest_full) ())
+            (let $MoveBool  (reset_pieces $start $dest_full) (empty))
 
             ; SUCCESS! if we make it this far the move is good -- score move and return the input.
             ; still need to reverse move in atomspace since we are testing a lot of moves at once!
@@ -737,8 +806,8 @@
       (let*
         (
             ($random_level 
-                  ; try to move pawns out from home row, but only on first random try!
-                  (if (and (== (lots_of_pawns_in_home_row) True) (== (size-atom $Ranks_Already_Tried_List) 0))
+                  ; try to move pawns out from home row early in the game
+                  (if (== (lots_of_pawns_in_home_row) True) 
                   1
                   (random-int  &rng 1 5))) 
             ($rank_level (case $random_level
@@ -749,6 +818,7 @@
                         (4 highestrank)
                         ($_ lowrank)
                         )))
+                  ;($debug (println! $rank_level))
         )
         (if (== ($rank_level) 
                 (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
@@ -810,14 +880,14 @@
 ;***************************************************************
 (= (random_move_empty_sq)
   (let $random_moves_collapsed (collapse (random_recursion_by_rank ()))
-    (if (== $random_moves ())
+    (if (== $random_moves_collapsed ())
         (empty)
         (let*
-          (  
+          (
           ($random_moves (car-atom $random_moves_collapsed)) ;get rid of an extra set of parens
           ($move_count (size-atom $random_moves))
           ($move_count_plus_1 (+ $move_count 1))
-          ($select_int (if (== $move_count 1) 
+          ($select_int (if (== $move_count_plus_1 2) 
                     1
                     ; use &rng after random-int!
                     (random-int  &rng 1 $move_count_plus_1))) 
@@ -1888,13 +1958,16 @@
     ; move piece on chessboard list
     ($new_board (replace_square_recursive $X1 $Y1 $color $rank $X2 $Y2 $current_board))
     ; messages for user
-    ($print0 ((py-atom print) (format-args "Moving from: {} to: {}" ($starting_square $target_square))))
+    ($starting_square_lettered (convert_x_letter $starting_square))
+    ($target_square_lettered (convert_x_letter $target_square))
+    ($print0 ((py-atom print) (format-args "Moving from: {} to: {}" 
+        ($starting_square_lettered $target_square_lettered))))
     ($print1 (if (== (size-atom $target_square) 2)
              ()
              ((py-atom print) "Piece captured!")))
     ($print2 (if (== (size-atom $target_square) 2)
              ()
-             (println! $target_square)))
+             (println! $target_square_lettered)))
     ) 
     ; return new chessboard list
     $new_board))
@@ -2293,10 +2366,10 @@
     ; else keep playing
     (progn 
     ; prompt for x/y location
-    ; THIS NEEDS TO BE ALTERED PRIOR TO PRODUCTION FOR EDITS! Convert to "file and rank"
-    ; add edit to make sure move within boundaries of 1 -> 8!
     ((py-atom print) "Enter coordinates.")
     (let $coordinates ((py-atom input)) ())
+    ;TO-DO, fail if char_to_int returns and 9s.
+    (let $bad_input_sw False ())
     (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
     (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
     (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
@@ -2341,7 +2414,7 @@
                   ;else
                   (progn 
                   ; re-create a new board 
-                  ((py-atom print) "Moving piece...")
+                  ((py-atom print) "Moving your piece...")
                   (let $provisional_board (move_piece_on_board $h $i $starting_board)
                        (add-atom &self (board-state $provisional_board)))
                   ; remove the old chess board
@@ -2469,8 +2542,8 @@
     ((py-atom print) "- Your pieces are marked with an asterisk.")
     ((py-atom print) "- Please take note of the following simple commands:")
     ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> 1213 <ENTER>")
-    ((py-atom print) "   Result:  YOUR pawn in 1,2 moved to location 1,3 based on standard cartesian x/y.")
+    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
+    ((py-atom print) "   Result:  YOUR pawn in a2 moved to location a3.")
     ((py-atom print) "Greedy Chess Move (AI)           ->  g")
     ((py-atom print) "Reset & Replay                   ->  r")
     ((py-atom print) "Commands List                    ->  c")
