@@ -465,6 +465,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
+
 pfcAdd_Now(Cl):-
    once( \+ nb_current(allow_dupes,t)
      ; sub_var_safely('&corelib',Cl )),

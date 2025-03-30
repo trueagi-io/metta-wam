@@ -77,7 +77,7 @@ self_eval0(X):- py_is_py(X),!.
 %self_eval0(X):- py_type(X,List), List\==list,!.
 %self_eval0(X):- is_ref(X),!,fail.
 self_eval0('True'). self_eval0('False'). % self_eval0('F').
-self_eval0('Empty').
+%self_eval0('Empty').
 self_eval0([]).
 self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
@@ -148,12 +148,12 @@ set_list_value(Value,Result):- nb_setarg(1,Value,echo),nb_setarg(1,Value,[Result
 %is_self_eval_l_fa(':',2).
 % is_self_eval_l_fa('=',2).
 % eval_20(Eq,RetType,Depth,Self,['quote',Eval],RetVal):- !, Eval = RetVal, check_returnval(Eq,RetType,RetVal).
-is_self_eval_l_fa('quote',_).
+is_self_eval_l_fa('quote',1).
 is_self_eval_l_fa('Error',_).
 is_self_eval_l_fa('{...}',_).
 is_self_eval_l_fa('[...]',_).
 
-self_eval(X):- quietly(notrace(self_eval0(X))).
+self_eval(X):- notrace(self_eval0(X)).
 
 :-  set_prolog_flag(access_level,system).
 hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/A).
@@ -295,7 +295,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
-eval_02(Eq,RetType,Depth2,Self,Y,YO):-  % Y\==[empty], % speed up n-queens x60  but breaks other things
+eval_02(Eq,RetType,Depth2,Self,Y,YO):-  %Y\==[empty], % speed up n-queens x60  but breaks other things
   once(if_or_else((subst_args_here(Eq,RetType,Depth2,Self,Y,YO)),
     if_or_else((fail,finish_eval(Eq,RetType,Depth2,Self,Y,YO)),
         Y=YO))).
@@ -456,7 +456,9 @@ eval_09(Eq,RetType,Depth,Self,X,Y):-
       (rtrace(eval_10(Eq,RetType,Depth,Self,X,Y)),break)).
 */
 :- nodebug(metta(todo)).
-
+eval_10(_Eq,_RetType,_Dpth,_Self,X,YO):- self_eval(X),!,YO=X.
+eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==[empty],!,fail.
+eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==['Empty'],!,fail.
 eval_10(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
 eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,X),
   eval_20(Eq,RetType,Depth,Self,X,Y).
@@ -985,9 +987,14 @@ possible_type(_Self,_Var,_RetTypeV).
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- !, % var(V), nonvar(E), !,
         %(var(V)->true;trace),
         possible_type(Self,V,RetTypeV),
-        (is_flag(old_empty)->eval('=',RetTypeV,Depth,Self,E,ER);eval_ne('=',RetTypeV,Depth,Self,E,ER)),
+       ( let_Empty
+       ->eval('=',RetTypeV,Depth,Self,E,ER)
+        ; eval_ne('=',RetTypeV,Depth,Self,E,ER)),
         V=ER,
         eval_args(Eq,RetType,Depth,Self,Body,OO).
+
+let_Empty:- !.
+
 /*
 
 eval_20(Eq,RetType,Depth,Self,['let',V,E,Body],OO):- nonvar(V),nonvar(E),!,
@@ -1761,6 +1768,17 @@ eval_10(Eq,RetType,Depth,Self,['superpose-bind',List],Res):- !,
 re_member(Res,E,List):- term_variables(Res+E+List,TV),copy_term(TV,Copy),
     member(E,List),TV=Copy.
 
+% Premature optimization
+eval_10(Eq,RetType,Depth,Self,['collapse',Eval],RetVal):-
+     Eval= [SetOp,[SuperPoseOp1,List1],[SuperPoseOp2,List2]],
+     maplist(symbol,[SetOp,SuperPoseOp1,SuperPoseOp2]),
+     Eval= [SetOp,['superpose',List1],['superpose',List2]],
+     member(SetOp,['subtraction','union','intersection']),!,
+     symbol_concat(SetOp,'-atom',SetOp_Atom),!,
+     eval_args(Eq,RetType,Depth,Self,[SetOp_Atom,List1,List2],RetVal).
+
+
+
 %[collapse,[1,2,3]]
 eval_10(Eq,RetType,Depth,Self,['collapse',List],Res):-!,
  findall_eval(Eq,RetType,Depth,Self,List,Res).
@@ -1823,7 +1841,7 @@ eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
 % ================================================================
 eval_20(_Eq,RetType,_Depth,_Self,['nop'],                 NoResult ):- !,
    make_nop(RetType,[], NoResult).
-eval_20(_Eq,RetType,_Depth,_Self,['empty'],                Empty ):- !,
+eval_20(_Eq,RetType,_Depth,_Self,['empty'],                Empty ):- !, fail,
    make_empty(RetType, Empty).
 eval_20(_Eq,RetType,Depth,Self,['nop',Expr], NoResult ):- !,
    make_nop(RetType,[], NoResult),
@@ -2883,6 +2901,9 @@ call_as_p2(P2,X,Y):-
    TF = 'True'.
 
 
+eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
+   list_to_set(List,RetVal).
+
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
    no_repeats_var(YY),
@@ -2893,6 +2914,9 @@ eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 
+eval_20(_Eq,_RetType,_Depth,_Self,['subtraction-atom',List1,List2],RetVal):- !,
+    exclude(is_in(variant_by_type,List2),List1,RetVal).
+
 eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
     lazy_subtraction(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
@@ -2902,6 +2926,10 @@ eval_20(Eq,RetType,Depth,Self,['subtraction-by',P2,Eval1,Eval2],RetVal):- !,
     lazy_subtraction(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['union-atom',List1,List2],RetVal):- !,
+   exclude(is_in(variant_by_type,List2),List1,List1a), !,
+    append(List1a,List2,RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
     lazy_union(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
@@ -2915,6 +2943,11 @@ eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
 % !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['intersection-atom',List1,List2],RetVal):-  !,
+    include(is_in(variant_by_type,List2),List1,RetVal).
+
+is_in(P2,List2,Item1):- \+ \+ (member(Item2,List2),call(P2,Item1,Item2)),!.
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
     lazy_intersection(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
@@ -3557,7 +3590,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 
 % get a guarded definition
-eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
+eval_30(Eq,RetType,Depth,Self,X,Y):-  fail, can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
@@ -3781,7 +3814,7 @@ eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
 
 %findall_eval(Eq,RetType,Depth,Self,X,L):- findall_eval(Eq,RetType,_RT,Depth,Self,X,L).
 %findall_eval(Eq,RetType,Depth,Self,X,S):- findall(E,eval_ne(Eq,RetType,Depth,Self,X,E),S)*->true;S=[].
-findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,L=[X].
+findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- self_eval(X),!,(is_returned(X)-> L=[X] ; L =[]).
 findall_eval(_Eq,_RetType,_Dpth,_Slf,X,L):- typed_list(X,_Type,L),!.
 findall_eval(Eq,RetType,Depth,Self,Funcall,L):-
    findall_ne(E,eval(Eq,RetType,Depth,Self,Funcall,E),L).
@@ -3808,7 +3841,8 @@ eval_ne(Eq,RetType,Depth,Self,Funcall,E):-
     *-> is_returned(E);(fail,E=Funcall)).
 
 is_returned(E):- notrace( \+ is_empty(E)).
-is_empty(E):- notrace(( nonvar(E), sub_var_safely('Empty',E))),!.
+is_empty(E):- E=='Empty'.
+%is_empty(E):- notrace(( nonvar(E), sub_var_safely('Empty',E))),!.
 
 
 :- ensure_loaded(metta_subst).

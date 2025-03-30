@@ -1363,7 +1363,7 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_
 
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     % Default return type is 'AnyRet'.
-    ignore('AnyRet' = RetType),
+    nop(ignore('AnyRet' = RetType)),
     % Ensure all parameter types are valid evaluation kinds.
     maplist(is_eval_kind, ParamTypes),
     % Cache the result for future lookups.
