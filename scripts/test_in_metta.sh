@@ -499,7 +499,7 @@ process_file() {
                 DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
                 [ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
-        if [ $TEST_EXIT_CODE -eq 143 ]; then
+        elif [ $TEST_EXIT_CODE -eq 143 ]; then
                 DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
                 #[ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
