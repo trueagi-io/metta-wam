@@ -4279,20 +4279,6 @@ from_top_self(Self, Self).
 get_metta_atom_from(KB, Atom) :-
   o_quietly(metta_atom0(no_inherit,KB, Atom)).
 
-%!  get_metta_atom(+Eq, +Space, -Atom) is nondet.
-%
-%   Retrieves an atom associated with a space, excluding specific equality atoms (`Eq`).
-%
-%   @arg Eq    The equality to exclude.
-%   @arg Space The context or space.
-%   @arg Atom  The retrieved atom.
-%
-get_metta_atom(Eq, Space, Atom) :-
-   o_quietly(get_metta_atom0(Eq, Space, Atom)). %
-
-get_metta_atom0(Eq, Space, Atom) :-
-    metta_atom0(inherit([Space]),Space, Atom),
-    \+ \+ (Atom = [EQ, _, _], EQ == Eq).
 
 %!  metta_atom(-Atom) is nondet.
 %
@@ -4351,17 +4337,21 @@ metta_atom0(Inherit,KB, Fact) :-
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
-metta_atom0(_Inherit,KB, [F, A | List]) :-
-    KB == '&flybase', !, fb_pred_nr(F, Len), current_predicate(F/Len),
-    length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_corelib(Atom).
 % metta_atom(X, Y) :- use_top_self, maybe_resolve_space_dag(X, XX), !, in_dag(XX, XXX), XXX \== X, metta_atom(XXX, Y).
 
+%metta_atom0(Inherit,X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom0(Inherit,TopSelf, Y), X = '&self'.
 metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
-% metta_atom(X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom(TopSelf, Y), X = '&self'.
+
+metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom).
+
+
+
 
 metta_atom0(_Inherit,KB, _Atom) :- \+atom(KB), !, fail.
-metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom), nocut.
+metta_atom0(_Inherit,KB, [F, A | List]) :-
+    KB == '&flybase', !, fb_pred_nr(F, Len), current_predicate(F/Len),
+    length([A | List], Len), apply(F, [A | List]).
 % metta_atom(KB, Atom) :- KB == '&corelib', !, metta_atom_asserted('&self', Atom).
 % metta_atom(KB, Atom) :- KB \== '&corelib', using_all_spaces, !, metta_atom('&corelib', Atom).
 %metta_atom(KB, Atom) :- KB \== '&corelib', !, metta_atom('&corelib', Atom).
@@ -4647,7 +4637,8 @@ is_metta_space(Space) :-  nonvar(Space),
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
 metta_eq_def(Eq, KB, H, B) :-
    ignore(Eq = '='),
-   get_metta_atom(Eq, KB, [_, H, B]).
+  metta_atom0(inherit([KB]),KB,[EQ, H, B]),
+  EQ == Eq.
 
 % Original commented-out code, retained as-is for potential future use:
 % metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).

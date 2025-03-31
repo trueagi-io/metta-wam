@@ -167,7 +167,7 @@ is_metta_data_functor(Eq, Other, H) :-
     H \== 'Right', H \== 'Something',
     % \+ metta_type(Other, H, _), % fail,
     % Perform various negated checks to confirm the validity of the functor.
-    \+ get_metta_atom(Eq, Other, [H|_]),
+    %\+ get_metta_atom(Eq, Other, [H|_]),
     \+ metta_eq_def(Eq, Other, [H|_], _),
     \+ is_metta_builtin(H),
     \+ is_comp_op(H, _),
