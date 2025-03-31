@@ -1738,24 +1738,7 @@
             ; otherwise rook bad move
                False)))))
       )
-      (if (and 
-          (== $RouteClearBool True)
-          ; straight vertical 
-          (xor 
-            (and
-              (== $X2 $X1)
-              (xor
-              (> $Y2 $Y1)
-              (< $Y2 $Y1)))
-          ; straight sideways 
-            (and
-              (== $Y2 $Y1)
-              (xor
-              (> $X2 $X1)
-              (< $X2 $X1)))))
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckup (-> Atom Atom Atom Bool))
 (: clearcheckdown (-> Atom Atom Atom Bool))
@@ -1764,8 +1747,13 @@
 
 
 (= (clearcheckup $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (< $Y1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1776,8 +1764,13 @@
               False))))
 
 (= (clearcheckdown $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (> $Y1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1788,8 +1781,13 @@
               False))))
 
 (= (clearcheckright $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (< $X1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1800,8 +1798,13 @@
               False))))
 
 (= (clearcheckleft $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (> $X1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1831,47 +1834,56 @@
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
                False)))))
-      ;($debug (println! $RouteClearBool))
       )
-      (if  
-          (== $RouteClearBool True)
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckNE (-> Atom Atom Atom Atom Bool))
 (: clearcheckSE (-> Atom Atom Atom Atom Bool))
 (: clearcheckNW (-> Atom Atom Atom Atom Bool))
 (: clearcheckSW (-> Atom Atom Atom Atom Bool))
 
-
 (= (clearcheckNE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2)
+              (clearcheckNE (+ $X1 1) (+ $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckSE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+              (clearcheckSE (+ $X1 1) (- $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckNW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
@@ -1882,8 +1894,13 @@
               False))))
 
 (= (clearcheckSW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
