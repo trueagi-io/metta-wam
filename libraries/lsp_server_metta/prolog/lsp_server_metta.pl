@@ -871,6 +871,8 @@ handle_msg("textDocument/typeDefinition", Msg, _{id: Msg.id, result: null}) :- !
 %    {insertText:hover_at_position(${1:_}, ${2:_}, ${3:_}, ${4:_})$0,insertTextFormat:2,label:hover_at_position/4},
 %    {insertText:handle_doc_changes_d4(${1:_}, ${2:_})$0,insertTextFormat:2,label:handle_doc_changes_d4/2}]}
 % OUT: {id:123,result:[]}
+% Completion is in lsp_metta_completion
+/*
 handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :- fail,
      _{id: Id, params: Params} :< Msg,
      _{textDocument: _{uri: Uri},
@@ -879,6 +881,7 @@ handle_msg("textDocument/completion", Msg, _{id: Id, result: Completions}) :- fa
      succ(Line0, Line1),
      completions_at(Path, line_char(Line1, Char0), Completions), !.
 handle_msg("textDocument/completion", Msg, _{id: Msg.id, result: []}) :- !. % FIXME
+*/
 
 handle_msg("textDocument/semanticTokens", Msg, Response) :-
     handle_msg("textDocument/semanticTokens/full", Msg, Response).
