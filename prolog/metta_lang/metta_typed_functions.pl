@@ -57,6 +57,8 @@
 %*********************************************************************************************
 
 
+%calc_non_evalation_args:- forall()
+
 :- discontiguous default_isa/2.
 :- discontiguous desc_aka/2.
 :- discontiguous explicit_isa/2.

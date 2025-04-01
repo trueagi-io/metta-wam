@@ -21,8 +21,8 @@
      )
      (result $Gene $Tx $Prot $Prot2 $Pathway))
 
-   :neo4j-info (( execution_time "stopped_after(4980)")
-               (result_count 151956) (node_count 1908) (edge_count 1882))))
+   :neo4j-info (( neo4j-time "stopped_after(4980)")
+               (neo4j-results 151956) (neo4j-nodes 1908) (neo4j-edges 1882))))
 
 
 (isa-test-query
@@ -42,8 +42,8 @@
      (result $Gene $Tx $Prot $Prot2 $Pathway
              $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
 
-   :neo4j-info (( execution_time "stopped_after(4980)")
-               (result_count 151956) (node_count 1908) (edge_count 1882))))
+   :neo4j-info (( neo4j-time "stopped_after(4980)")
+               (neo4j-results 151956) (neo4j-nodes 1908) (neo4j-edges 1882))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,8 +65,8 @@
      )
      (result $Prom $Gene $Enh $Pway $Child))
 
-   :neo4j-info (( execution_time "about(180)")
-               (result_count 41536) (node_count 144) (edge_count 143))))
+   :neo4j-info (( neo4j-time "about(180)")
+               (neo4j-results 41536) (neo4j-nodes 144) (neo4j-edges 143))))
 
 
 (isa-test-query
@@ -86,8 +86,8 @@
      (result $Prom $Gene $Enh $Pway $Child
              $PropList1 $PropList2 $PropList3 $PropList4 $PropList5))
 
-   :neo4j-info (( execution_time "about(180)")
-               (result_count 41536) (node_count 144) (edge_count 143))))
+   :neo4j-info (( neo4j-time "about(180)")
+               (neo4j-results 41536) (neo4j-nodes 144) (neo4j-edges 143))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,10 +109,10 @@
      )
      (result $Gene $Tx $Exon $Prot1 $Prot2 $GO))
 
-   :neo4j-info (( execution_time "stopped_after(1200)")
-               (result_count "too_many_results")
-               (node_count "unknown")
-               (edge_count "unknown"))))
+   :neo4j-info (( neo4j-time "stopped_after(1200)")
+               (neo4j-results "too_many_results")
+               (neo4j-nodes "unknown")
+               (neo4j-edges "unknown"))))
 
 
 (isa-test-query
@@ -132,10 +132,10 @@
      (result $Gene $Tx $Exon $Prot1 $Prot2 $GO
              $P1 $P2 $P3 $P4 $P5))
 
-   :neo4j-info (( execution_time "stopped_after(1200)")
-               (result_count "too_many_results")
-               (node_count "unknown")
-               (edge_count "unknown"))))
+   :neo4j-info (( neo4j-time "stopped_after(1200)")
+               (neo4j-results "too_many_results")
+               (neo4j-nodes "unknown")
+               (neo4j-edges "unknown"))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -158,8 +158,8 @@
      )
      (result $Gene $Tx $Exon $Prot1 $Prot2 $GO))
 
-   :neo4j-info ((execution_time "stopped_after(2400)")
-                (result_count 794742) (node_count 2693) (edge_count 2698))))
+   :neo4j-info ((neo4j-time "stopped_after(2400)")
+                (neo4j-results 794742) (neo4j-nodes 2693) (neo4j-edges 2698))))
 
 
 (isa-test-query
@@ -178,8 +178,8 @@
        (neo $GO1Term:go go_gene_product $Protein1:protein))
      (result $Gene $Tx $Exon $Prot1 $Prot2 $GO))
    
-   :neo4j-info ((execution_time "stopped_after(2400)")
-                (result_count 794742) (node_count 2693) (edge_count 2698))))
+   :neo4j-info ((neo4j-time "stopped_after(2400)")
+                (neo4j-results 794742) (neo4j-nodes 2693) (neo4j-edges 2698))))
 
 
 (isa-test-query
@@ -200,8 +200,8 @@
      (result $Gene $Tx $Exon $Prot1 $Prot2 $GO
              $P1 $P2 $P3 $P4 $P5 $P6))
 
-   :neo4j-info (( execution_time "stopped_after(2400)")
-               (result_count 794742) (node_count 2693) (edge_count 2698))))
+   :neo4j-info (( neo4j-time "stopped_after(2400)")
+               (neo4j-results 794742) (neo4j-nodes 2693) (neo4j-edges 2698))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -223,7 +223,7 @@
      )
      (result $Gene $Pathway $Enh $Tx $Prot))
 
-   :neo4j-info (( execution_time 25) (result_count 1932) (node_count 45) (edge_count 49))))
+   :neo4j-info (( neo4j-time 25) (neo4j-results 1932) (neo4j-nodes 45) (neo4j-edges 49))))
 
 
 (isa-test-query
@@ -243,7 +243,7 @@
      (result $Gene $Pathway $Enh $Tx $Prot
              $P1 $P2 $P3 $P4 $P5))
 
-   :neo4j-info (( execution_time 25) (result_count 1932) (node_count 45) (edge_count 49))))
+   :neo4j-info (( neo4j-time 25) (neo4j-results 1932) (neo4j-nodes 45) (neo4j-edges 49))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -266,10 +266,10 @@
      )
      (result $Gene $Pathway $Enh $Tx $Prot1 $Prot2))
 
-   :neo4j-info (( execution_time "squiggly_mark")
-               (result_count 5790204)
-               (node_count 3042)
-               (edge_count 3046))))
+   :neo4j-info (( neo4j-time "squiggly_mark")
+               (neo4j-results 5790204)
+               (neo4j-nodes 3042)
+               (neo4j-edges 3046))))
 
 
 (isa-test-query
@@ -290,10 +290,10 @@
      (result $Gene $Pathway $Enh $Tx $Prot1 $Prot2
              $P1 $P2 $P3 $P4 $P5 $P6))
 
-   :neo4j-info (( execution_time "squiggly_mark")
-               (result_count 5790204)
-               (node_count 3042)
-               (edge_count 3046))))
+   :neo4j-info (( neo4j-time "squiggly_mark")
+               (neo4j-results 5790204)
+               (neo4j-nodes 3042)
+               (neo4j-edges 3046))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -313,7 +313,7 @@
      )
      (result $Tx $Exon $Gene))
 
-   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284))))
+   :neo4j-info (( neo4j-time 8) (neo4j-results 142) (neo4j-nodes 106) (neo4j-edges 284))))
 
 
 (isa-test-query
@@ -330,7 +330,7 @@
      )
      (result $Tx $Exon $Gene $P1 $P2 $P3))
 
-   :neo4j-info (( execution_time 8) (result_count 142) (node_count 106) (edge_count 284))))
+   :neo4j-info (( neo4j-time 8) (neo4j-results 142) (neo4j-nodes 106) (neo4j-edges 284))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -350,7 +350,7 @@
      )
      (result $GO $Prot1 $Prot2))
 
-   :neo4j-info (( execution_time 420) (result_count 62248) (node_count 2040) (edge_count 4047))))
+   :neo4j-info (( neo4j-time 420) (neo4j-results 62248) (neo4j-nodes 2040) (neo4j-edges 4047))))
 
 
 (isa-test-query
@@ -367,7 +367,7 @@
      )
      (result $GO $Prot1 $Prot2 $P1 $P2 $P3))
 
-   :neo4j-info (( execution_time 420) (result_count 62248) (node_count 2040) (edge_count 4047))))
+   :neo4j-info (( neo4j-time 420) (neo4j-results 62248) (neo4j-nodes 2040) (neo4j-edges 4047))))
 
 
 
@@ -388,7 +388,7 @@
      )
      (result $Gene $Uberon $Tx))
 
-   :neo4j-info (( execution_time 6) (result_count 1827) (node_count 269) (edge_count 268))))
+   :neo4j-info (( neo4j-time 6) (neo4j-results 1827) (neo4j-nodes 269) (neo4j-edges 268))))
 
 
 (isa-test-query
@@ -405,7 +405,7 @@
      )
      (result $Gene $Uberon $Tx $P1 $P2 $P3))
 
-   :neo4j-info (( execution_time 6) (result_count 1827) (node_count 269) (edge_count 268))))
+   :neo4j-info (( neo4j-time 6) (neo4j-results 1827) (neo4j-nodes 269) (neo4j-edges 268))))
 
 
 
@@ -427,10 +427,10 @@
      )
      (result $Tx $Exon $P1 $P2))
 
-   :neo4j-info (( execution_time "stopped_after(3000)")
-               (result_count 40172978)
-               (node_count 51599)
-               (edge_count 1427846))))
+   :neo4j-info (( neo4j-time "stopped_after(3000)")
+               (neo4j-results 40172978)
+               (neo4j-nodes 51599)
+               (neo4j-edges 1427846))))
 
 
 (isa-test-query
@@ -448,10 +448,10 @@
      )
      (result $Tx $Exon $P3 $P4 $P1 $P2 $P3Props $P4Props))
 
-   :neo4j-info (( execution_time "stopped_after(3000)")
-               (result_count 40172978)
-               (node_count 51599)
-               (edge_count 1427846))))
+   :neo4j-info (( neo4j-time "stopped_after(3000)")
+               (neo4j-results 40172978)
+               (neo4j-nodes 51599)
+               (neo4j-edges 1427846))))
 
 
 
@@ -472,8 +472,8 @@
      )
      (result $Gene $CL1 $CL2))
 
-   :neo4j-info (( execution_time 1)
-               (result_count 42) (node_count 52) (edge_count 51))))
+   :neo4j-info (( neo4j-time 1)
+               (neo4j-results 42) (neo4j-nodes 52) (neo4j-edges 51))))
 
 
 (isa-test-query
@@ -490,8 +490,8 @@
      )
      (result $Gene $CL1 $CL2 $P1 $P2 $P3))
 
-   :neo4j-info (( execution_time 1)
-               (result_count 42) (node_count 52) (edge_count 51))))
+   :neo4j-info (( neo4j-time 1)
+               (neo4j-results 42) (neo4j-nodes 52) (neo4j-edges 51))))
 
 
 
@@ -511,8 +511,8 @@
      )
      (result $Snp $Gene))
 
-   :neo4j-info (( execution_time 3)
-               (result_count 445) (node_count 446) (edge_count 445))))
+   :neo4j-info (( neo4j-time 3)
+               (neo4j-results 445) (neo4j-nodes 446) (neo4j-edges 445))))
 
 
 (isa-test-query
@@ -528,8 +528,8 @@
      )
      (result $Snp $Gene $P1 $P2))
 
-   :neo4j-info (( execution_time 3)
-               (result_count 445) (node_count 446) (edge_count 445))))
+   :neo4j-info (( neo4j-time 3)
+               (neo4j-results 445) (neo4j-nodes 446) (neo4j-edges 445))))
 
 
 
@@ -554,10 +554,10 @@
      )
      (result $Gene $CL1 $CL2 $GeneReg $Tx $Prot1 $Prot2))
 
-   :neo4j-info (( execution_time "unknown")
-               (result_count 58854894)
-               (node_count 18900)
-               (edge_count 377127))))
+   :neo4j-info (( neo4j-time "unknown")
+               (neo4j-results 58854894)
+               (neo4j-nodes 18900)
+               (neo4j-edges 377127))))
 
 
 (isa-test-query
@@ -579,10 +579,10 @@
      (result $Gene $CL1 $CL2 $GeneReg $Tx $Prot1 $Prot2
              $P1 $P2 $P3 $P4 $P5 $P6 $P7))
 
-   :neo4j-info (( execution_time "unknown")
-               (result_count 58854894)
-               (node_count 18900)
-               (edge_count 377127))))
+   :neo4j-info (( neo4j-time "unknown")
+               (neo4j-results 58854894)
+               (neo4j-nodes 18900)
+               (neo4j-edges 377127))))
 
 
 
@@ -603,7 +603,7 @@
      )
      (result $Gene1 $Pathway $Gene2))
 
-   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996))))
+   :neo4j-info ((neo4j-time 5) (neo4j-results 11967) (neo4j-nodes 5665) (neo4j-edges 11996))))
 
 
 
@@ -621,7 +621,7 @@
      )
      (result $Gene1 $Pathway $Gene2 $P1 $P2 $P3))
 
-   :neo4j-info ((execution_time 5) (result_count 11967) (node_count 5665) (edge_count 11996))))
+   :neo4j-info ((neo4j-time 5) (neo4j-results 11967) (neo4j-nodes 5665) (neo4j-edges 11996))))
 
 
 
@@ -660,7 +660,7 @@
 	RETURN g.gene_name AS gene, numTranscripts, numProteins, numGOterms, total
 	ORDER BY total DESC"
 
-   :neo4j-info ((result_count 62700))))
+   :neo4j-info ((neo4j-results 62700))))
 
 
 (isa-test-query 
@@ -696,7 +696,7 @@
 	ORDER BY total DESC 
 	LIMIT 1"
 
-   :neo4j-info ((result_count 1))))
+   :neo4j-info ((neo4j-results 1))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -717,7 +717,7 @@
 	 )
 	 (result $G $T $P $GO))
 
-   :neo4j-info ((result_count 225))))
+   :neo4j-info ((neo4j-results 225))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -743,7 +743,7 @@
 	 )
 	 (result $GeneName $TxName $ProtName $GoName))
 
-   :neo4j-info ((result_count 225))))
+   :neo4j-info ((neo4j-results 225))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -769,7 +769,7 @@
 	 )
 	 (result $GeneName $TxName $ProtName $GoName))
 
-   :neo4j-info ((result_count 62700))))
+   :neo4j-info ((neo4j-results 62700))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -794,7 +794,7 @@
 	 )
 	 (result $GeneName $TxName $ExonID))
 
-   :neo4j-info ((result_count 1700))))
+   :neo4j-info ((neo4j-results 1700))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -818,7 +818,7 @@
 	 )
 	 (result $GeneName $TxName $ExonID))
 
-   :neo4j-info ((result_count 1649476))))
+   :neo4j-info ((neo4j-results 1649476))))
 
 
 
@@ -840,7 +840,7 @@
 	 )
 	 (result $T $E))
 
-   :neo4j-info (( execution_time 0.0001) (result_count 2) (node_count 3) (edge_count 2))))
+   :neo4j-info (( neo4j-time 0.0001) (neo4j-results 2) (neo4j-nodes 3) (neo4j-edges 2))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -859,7 +859,7 @@
 	 )
 	 (result $T $E $PropList1 $PropList2))
 
-   :neo4j-info (( execution_time 0.0001) (result_count 2) (node_count 3) (edge_count 2))))
+   :neo4j-info (( neo4j-time 0.0001) (neo4j-results 2) (neo4j-nodes 3) (neo4j-edges 2))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -880,7 +880,7 @@
 	 )
 	 (result $TranscriptName:transcriptname $ExonID:exonid))
 
-   :neo4j-info (( execution_time 0.0001) (result_count 2) (node_count 3) (edge_count 2))))
+   :neo4j-info (( neo4j-time 0.0001) (neo4j-results 2) (neo4j-nodes 3) (neo4j-edges 2))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -902,7 +902,7 @@
 	 (result $TranscriptName:transcriptname $ExonID:exonid
 			 $PropList1 $PropList2 $PropList3 $PropList4 $PropList5 $PropList6))
 
-   :neo4j-info (( execution_time 0.0001) (result_count 2) (node_count 3) (edge_count 2))))
+   :neo4j-info (( neo4j-time 0.0001) (neo4j-results 2) (neo4j-nodes 3) (neo4j-edges 2))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -921,7 +921,7 @@
 	 )
 	 (result $GeneFTO:gene $GeneReg:gene))
 
-   :neo4j-info (( execution_time 0.018) (result_count 502) (node_count 503) (edge_count 503))))
+   :neo4j-info (( neo4j-time 0.018) (neo4j-results 502) (neo4j-nodes 503) (neo4j-edges 503))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -940,7 +940,7 @@
 	 )
 	 (result $GeneFTO:gene $GeneReg:gene $PropList1 $PropList2))
 
-   :neo4j-info (( execution_time 0.018) (result_count 502) (node_count 503) (edge_count 503))))
+   :neo4j-info (( neo4j-time 0.018) (neo4j-results 502) (neo4j-nodes 503) (neo4j-edges 503))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -961,7 +961,7 @@
 	 )
 	 (result $Regulator:regulator $Target:target))
 
-   :neo4j-info (( execution_time 0.028) (result_count 502) (node_count 503) (edge_count 503))))
+   :neo4j-info (( neo4j-time 0.028) (neo4j-results 502) (neo4j-nodes 503) (neo4j-edges 503))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -983,7 +983,7 @@
 	 (result $Regulator:regulator $Target:target
 			 $PropList1 $PropList2 $PropList3 $PropList4 $PropList5 $PropList6))
 
-   :neo4j-info (( execution_time 0.028) (result_count 502) (node_count 503) (edge_count 503))))
+   :neo4j-info (( neo4j-time 0.028) (neo4j-results 502) (neo4j-nodes 503) (neo4j-edges 503))))
 
 
 (isa-test-query
@@ -1024,10 +1024,10 @@
        type(r) AS RelationType,
        properties(r) AS RelationProperties;"
 
-   :neo4j-info ((execution_time "unknown")
-                (result_count "dynamic")
-                (node_count "unknown")
-                (edge_count "unknown"))))
+   :neo4j-info ((neo4j-time "unknown")
+                (neo4j-results "dynamic")
+                (neo4j-nodes "unknown")
+                (neo4j-edges "unknown"))))
 
 (isa-test-query
   (:name "5-edge chain: $R1–$R5"
@@ -1103,10 +1103,10 @@
 
   ;; Provide any additional info if desired:
 
-   :neo4j-info ((execution_time "unknown")
-			   (result_count "dynamic")
-			   (node_count "unknown")
-			   (edge_count "unknown"))))
+   :neo4j-info ((neo4j-time "unknown")
+			   (neo4j-results "dynamic")
+			   (neo4j-nodes "unknown")
+			   (neo4j-edges "unknown"))))
 
 
 
@@ -1200,10 +1200,10 @@
          )
         (result $A $R1 $B $R2 $C $R3 $D $R4 $E $R5 $F $R6 $G $R7 $H $R8 $I $R9 $J $R10 $K)))
 
-   :neo4j-info ((execution_time "unknown")
-               (result_count "dynamic")
-               (node_count "unknown")
-               (edge_count "unknown"))))
+   :neo4j-info ((neo4j-time "unknown")
+               (neo4j-results "dynamic")
+               (neo4j-nodes "unknown")
+               (neo4j-edges "unknown"))))
 
 
 
@@ -1263,10 +1263,10 @@
 		   type(r8) AS R8_Label, properties(r8) AS R8_CypherProperties,
 		   type(r9) AS R9_Label, properties(r9) AS R9_CypherProperties;"
 
-   :neo4j-info ((execution_time "unknown")
-               (result_count "dynamic")
-               (node_count "unknown")
-               (edge_count "unknown"))))
+   :neo4j-info ((neo4j-time "unknown")
+               (neo4j-results "dynamic")
+               (neo4j-nodes "unknown")
+               (neo4j-edges "unknown"))))
 
 
 

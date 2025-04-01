@@ -285,7 +285,7 @@ repl3 :-
         % Set the terminal prompt without tracing.
         notrace(set_metta_prompt),
         % Flush the terminal and call repl4 to handle input.
-        ((ttyflush, repl4, ttyflush)),
+        setup_call_cleanup(ttyflush, repl4, ttyflush),
         % After execution, restore the previous terminal prompt.
         notrace(prompt(_, Was))).
 
@@ -363,28 +363,30 @@ restore_metta_trace:- notrace,ignore((retract(metta_trace_restore(W)),call(W))).
 %     % This switches the system to the mettarust mode.
 %
 check_has_directive(V) :- var(V), !, fail.
+check_has_directive(V) :- notrace(check_has_directive1(V)),!,notrace(throw(restart_reading)).
+% No directive found.
+check_has_directive(_).
+
 % Directive to switch to mettalog.
-check_has_directive('@log') :- switch_to_mettalog, !, write_src_uo(switch_to_mettalog),notrace(throw(restart_reading)).
+check_has_directive1('@log') :- switch_to_mettalog, !, write_src_uo(switch_to_mettalog).
 % Directive to switch to mettarust.
-check_has_directive('@rust') :- switch_to_mettarust, !, write_src_uo(switch_to_mettarust), notrace(throw(restart_reading)).
+check_has_directive1('@rust') :- switch_to_mettarust, !, write_src_uo(switch_to_mettarust).
 % Displays options when '@' is input and restarts reading.
-check_has_directive('@') :- do_show_options_values, !, notrace(throw(restart_reading)).
+check_has_directive1('@') :- do_show_options_values, !.
 % Checks if the symbol contains a '.' (common for directives).
-check_has_directive(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
+check_has_directive1(Atom) :- symbol(Atom), symbol_concat(_, '.', Atom), !.
 % Assign a value to a directive, e.g., call(N=V).
-check_has_directive(call(N=V)) :- nonvar(N), !, set_directive(N, V).
+check_has_directive1(call(N=V)) :- nonvar(N), !, set_directive(N, V).
 % Handle directive in the form [@Name, Value].
-check_has_directive([AtEq, Value]) :- symbol(AtEq), symbol_concat('@', Name, AtEq), set_directive(Name, Value).
+check_has_directive1([AtEq, Value]) :- symbol(AtEq), symbol_concat('@', Name, AtEq), set_directive(Name, Value).
 % Enable rtrace debugging and restart reading.
 % check_has_directive(call(Rtrace)) :- rtrace == Rtrace, !. % rtrace, notrace(throw(restart_reading)).
 % Handle expressions in the form of N=V.
-check_has_directive(NEV) :- symbol(NEV), symbolic_list_concat([N, V], '=', NEV), set_directive(N, V).
+check_has_directive1(NEV) :- symbol(NEV), symbolic_list_concat([N, V], '=', NEV), set_directive(N, V).
 % Handle mode changes in the REPL.
-check_has_directive(ModeChar) :- symbol(ModeChar), metta_interp_mode(ModeChar, _Mode), !, set_directive(repl_mode, ModeChar).
+check_has_directive1(ModeChar) :- symbol(ModeChar), metta_interp_mode(ModeChar, _Mode), !, set_directive(repl_mode, ModeChar).
 % Process expressions like @NEV=Value.
-check_has_directive(AtEq) :- symbol(AtEq), symbol_concat('@', NEV, AtEq), option_value(NEV, Foo), fbug(NEV = Foo), !, notrace(throw(restart_reading)).
-% No directive found.
-check_has_directive(_).
+check_has_directive1(AtEq) :- symbol(AtEq), symbol_concat('@', NEV, AtEq), option_value(NEV, Foo), fbug(NEV = Foo), !.
 
 %!  set_directive(+N, +V) is det.
 %
@@ -471,7 +473,7 @@ repl_read(In, Expr) :-
     % Read the next expression from the input stream.
     repl_read_next(In, ExprI),
     % Process it to determine the final expression.
-    next_expr(ExprI, Expr).
+    next_expr(ExprI, Expr),!.
 
 %!  repl_read(-Expr) is det.
 %

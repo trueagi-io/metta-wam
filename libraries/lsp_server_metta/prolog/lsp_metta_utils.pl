@@ -13,7 +13,8 @@
 :- use_module(lsp_metta_workspace, [ maybe_doc_path/2,
                                      into_json_range/2,
                                      into_line_char_range/2,
-                                     source_file_text/2
+                                     source_file_text/2,
+                                     xref_source_now/1
                                    ]).
 
 :- include(lsp_metta_include).
@@ -235,7 +236,12 @@ get_code_at_range(text, Uri, Range, Target):- !, get_code_at_range(symbol, Uri, 
 
 get_code_at_range(symbol, Path, Range, Code):-
     into_line_char_range(Range, LspLCRange),  % Convert the LSP range into line_char format.
-    user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange),  % Get the buffer contents for the file.
+    % Get the buffer contents for the file.
+    ( user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange)
+    *-> true % soft-cut, because we need to backtrack over user:metta_file_buffer
+    ;  % if the file hasn't already been read in, do so now
+       xref_source_now(Path),
+       user:metta_file_buffer(_Lvl, _Ord, _Kind, Code, Vs, Path, BRange) ),
     %sub_var(Target, Code),  % Check that the symbol (Target) appears within the buffer (Code).
     \+ completely_before_range(BRange, LspLCRange),  % Ensure the buffer range is relevant to the LSP range.
     \+ is_list(Code),!,maybe_name_vars(Vs), !.

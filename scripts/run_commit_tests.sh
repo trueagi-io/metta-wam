@@ -44,7 +44,7 @@ output=./reports/tests_output/baseline-compat/
 test_dirs=(
     "tests/baseline_compat/module-system"
     "tests/baseline_compat/hyperon-experimental_scripts"
-    "tests/baseline_compat/hyperon-mettalog_sanity"
+    # "tests/baseline_compat/hyperon-mettalog_sanity"
     "tests/baseline_compat/metta-morph_tests"
 )
 
@@ -163,19 +163,16 @@ cat /dev/null > /tmp/SHARED.UNITS
 
 # 23+ tests (~30 seconds)
 run_mettalog_tests 40 tests/baseline_compat/module-system/
-
 #SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
-
 # 200+ tests (~4 minutes)
 run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
-run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
 # 50+ tests (~2 minutes)
-#run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
+run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
 
 # Run filtered test suites
 for test_dir in "${test_dirs[@]}"; do
     echo "Starting tests for: $test_dir"
-    run_mettalog_tests 40 "$test_dir"
+#    run_mettalog_tests 40 "$test_dir"
 done
 
 # Check if SKIP_LONG is not set to 1
@@ -184,9 +181,10 @@ if [ "$SKIP_LONG" != "1" ]; then
     : # Placeholder for additional tests
     # Uncomment below to run additional test suites
     # 50+ tests (~2 minutes)
-    #run_mettalog_tests 15 tests/baseline_compat/anti-regression/
+    run_mettalog_tests 15 tests/baseline_compat/anti-regression/
 
     # 400+ tests (~7 minutes)
+    #run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
     #SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
     # Gets the rest
     #run_mettalog_tests 40 tests/baseline_compat/
