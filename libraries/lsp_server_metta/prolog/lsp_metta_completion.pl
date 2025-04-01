@@ -24,6 +24,9 @@
 %:- use_module(lsp_metta_utils, [linechar_offset/3]).
 :- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
 
+:- use_module(lsp_metta_llm, [is_llm_enabled/0,
+                              request_code_completion/2]).
+
 
 :- include(lsp_metta_include).
 
@@ -101,13 +104,35 @@ args_str(Arity, Str) :-
 lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_completions(Method,Msg,Response).
 
 handle_completions("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
-     _{id: Id, params: Params} :< Msg,
-     _{textDocument: _{uri: Uri},
-       position: _{line: Line0, character: Char0}} :< Params,
-     path_doc(Path, Uri),
-     succl(Line0, Line1),
-     completions_at(Path, line_char(Line1, Char0), Completions).
+    _{id: Id, params: Params} :< Msg,
+    _{textDocument: _{uri: Uri},
+      position: _{line: Line0, character: Char0}} :< Params,
+    path_doc(Path, Uri),
+    completions_at(Path, line_char(Line0, Char0), Completions0),
+    ( is_llm_enabled
+    -> completion_context(Uri, line_char(Line0, Char0), Ctx),
+       ( request_code_completion(Ctx, LLMSuggestions) -> true ; LLMSuggestions = [] ),
+       findall(Completion,
+               ( member(Suggestion, LLMSuggestions),
+                 Completion = _{label: Suggestion,
+                                insertText: Suggestion,
+                                insertTextFormat: 1} ),
+               Completions,
+               Completions0)
+    ; Completions = Completions0 ).
 
+completion_context(Uri, line_char(Line0, Char0), Context) :-
+    % not using prefix_at/3 here, because for the LLM we want to give it the whole line as context
+    get_document_lines(Uri, Lines),
+    nth0(Line0, Lines, Line),
+    ( Char0 = end -> string_length(Line, Char) ; Char = Char0 ),
+    sub_string(Line, 0, Char, _, Context0),
+    string_code(1, Context0, FirstCode),
+    ( code_type(FirstCode, white), Line0 > 0
+    -> PrevLine is Line0 - 1,
+       completion_context(Uri, line_char(PrevLine, end), LeadingCtx),
+       string_concat(LeadingCtx, Context0, Context)
+    ; Context = Context0 ).
 
 % Handle the 'textDocument/completion' Request
 handle_completions("textDocument/completion", Msg, _{id: Id, result: CompletionList}) :-
