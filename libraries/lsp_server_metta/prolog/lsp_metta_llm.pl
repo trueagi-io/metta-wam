@@ -1,4 +1,5 @@
 :- module(lsp_metta_llm, [ request_code_comment/2,
+                           request_code_completion/2,
                            make_llm_request/2,
                            is_llm_enabled/0 ]).
 
@@ -80,3 +81,11 @@ lsp_metta_llm:request_code_comment("(: (do_quoted) (-> Expression Atom))
     (let () (unquote (car-atom $exp)) (do_quoted (cdr-atom $exp)))))", Resp).
 
 */
+
+request_code_completion(Context, Continuation) :-
+    string_concat("Task: Generate a completion for the snippet of Metta code below. Give options for the text that should follow the code below as a JSON-encoded list of strings containing the completion text. Include just the JSON-encoded strings, with no explanations of formatting markers. Make sure parentheses are properly balanced. Do not include the code in the returned continuations - it must be suitable for insertion directly after the provided context.\n\n Code: \n",
+                  Context, Prompt),
+    debug_lsp(todo, "REQUEST LLM CODE", []),
+    make_llm_request(Prompt, Response),
+    debug_lsp(todo, "CODE LLM CODE ~q", [Response]),
+    atom_json_term(Response, Continuation, [as(string)]).
