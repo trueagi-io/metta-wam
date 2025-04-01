@@ -2397,25 +2397,25 @@
     (match &self (board-state $starting_board) $starting_board)
     ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
     (reset-pieces $starting_board)
-    ; check if source location and destination are not the same
-    (if (not (== $f $g))                            
+    (let $entire_source (return_entire_box $f) ())
+    ; check if source location and destination are not the same, and if there is piece to move.
+    (if (and (not (== $f $g)) (== (size-atom $entire_source) 4))                            
      ; check if destination is empty or destination has opponent's piece  
       (progn 
       ; Retrieve the source box details.
       (let $h (return_entire_box $f) ())
-            ;does not return here!
       ; Retrieve the destination box details.
       (let $i (return_entire_box $g) ()) 
       (let $dest_color (if (== (size-atom $i) 4) 
                            (nth 3 $i)
                             NIL) ())
       ; Check there is a piece to move.
-      (if (and1 (== (size-atom $h) 4)                                    
-               (xor1  
+      (if (and (== (size-atom $h) 4)                                    
+               (xor  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
                ; OK to take another piece, check color is not the same...
-               (and1 (== (size-atom $i) 4) (not1 (== (nth 3 $h) $dest_color)))))
+               (and (== (size-atom $i) 4) (not (== (nth 3 $h) $dest_color)))))
         ; Validate the path for the piece.
         (if (== (clear_route $h $i) True)               
           ; Try moving piece provisionally
@@ -2462,7 +2462,7 @@
       )
       )
       ;else (trying to move to same location)
-      ((py-atom print) "Can't move to same location.")) 
+      ((py-atom print) "Invalid move.")) 
     ; since move complete, delete any individual square atoms which only live for a single move.
     (delete-pieces)
     )))
