@@ -707,6 +707,7 @@ server_capabilities(
 
         % Formatting
         documentFormattingProvider: true,
+        documentRangeFormattingProvider: true,
         documentOnTypeFormattingProvider: false,  % Disabled as it is not yet implemented
         foldingRangeProvider: false  % Folding support is disabled as it is not required currently
     }

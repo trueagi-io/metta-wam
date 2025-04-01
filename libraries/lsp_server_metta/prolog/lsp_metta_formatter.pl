@@ -26,7 +26,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 :- include(lsp_metta_include).
 
-:- use_module(library(apply), [foldl/4]).
+:- use_module(library(apply), [foldl/4, include/3]).
 :- use_module(library(dcg/basics), [string_without//2, eol//0, eos//0]).
 :- use_module(library(lists)).
 
@@ -48,18 +48,50 @@ lsp_hooks:handle_msg_hook("textDocument/formatting", Msg, _{id: Id, result: []})
     _{id: Id} :< Msg,
     debug_lsp(formatting, "Failed to format file", []).
 
+lsp_hooks:handle_msg_hook("textDocument/rangeFormatting", Msg, _{id: Id, result: Edits}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{textDocument: _{uri: Uri}, range: Range} :< Params,
+    % smart would be to extract just the region in question & format that
+    % stupid but easy way...format the whole buffer, then just take the region in question
+    % that way we don't have to worry about being in the middle of a form or something at least
+    format_lisp_document(Uri, Edits0, _NewText), !,
+    include(edit_in_range(Range), Edits0, Edits),
+    % TODO: apply the partial edit?
+    true.
+
+edit_in_range(Range, Edit) :-
+    _{start: _{line: RStartLine, character: RStartChar},
+      end: _{line: REndLine, character: REndChar}} :< Range,
+    _{start: _{line: EStartLine, character: EStartChar},
+      end: _{line: EEndLine, character: EEndChar}} :< Edit.range,
+    RStartLine =< EStartLine, REndLine >= EEndLine,
+    ( RStartLine == EStartLine
+    -> RStartChar =< EStartChar
+    % do we care to restrict the *end* of the edit?
+    ; ( REndLine == EEndLine
+      -> REndChar >= EEndChar
+      ; true ) ).
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper: Format the Lisp Document by Applying Formatting Rules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 format_lisp_document(Uri, Edits, FullNewText) :-
-    source_file_text(Uri, Text),      % Retrieve the document text
+    source_file_text(Uri, Text), % Retrieve the document text
     split_string(Text, "\n", "", Lines),
     string_codes(Text, Codes),
     phrase(metta_lines(ParsedLines), Codes),
     process_lines([0], ParsedLines, ProcessedLines),
     lines_to_strings(ProcessedLines, FormattedLines),
-    create_edit_list(Lines, FormattedLines, Edits),  % Create a list of edits based on the differences
+    create_edit_list(Lines, FormattedLines, Edits), % Create a list of edits based on the differences
     atomics_to_string(FormattedLines, "\n", FullNewText).
+
+test_format_lisp_document(Uri) :-
+    source_file_text(Uri, Text), % Retrieve the document text
+    string_codes(Text, Codes),
+    phrase(metta_lines(ParsedLines), Codes),
+    process_lines([0], ParsedLines, ProcessedLines),
+    emit_lines(user_error, ProcessedLines).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Parsing
@@ -119,6 +151,8 @@ metta_lines([Line|Lines]) -->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Process parsed lines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO: special-case = to align nicely?
 
 % single-line cleanups
 drop_leading_white([white(_)|Rest], Rest) :- !.
@@ -235,7 +269,7 @@ process_lines(Parens, Lines, ProcessedLines) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Emitting parsed lines back to strings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-emit_line(_To, []) => true. % format(To, "~n", []).
+emit_line(_To, []) => true.       % format(To, "~n", []).
 emit_line(To, [white(N)|Rest]) =>
     length(Whites, N),
     maplist(=(0' ), Whites),
