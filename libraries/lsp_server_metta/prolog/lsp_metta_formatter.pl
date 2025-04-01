@@ -24,7 +24,7 @@
 % Date: 10-21-2024
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    :- include(lsp_metta_include).
+:- include(lsp_metta_include).
 
 :- use_module(library(apply), [foldl/4]).
 :- use_module(library(dcg/basics), [string_without//2, eol//0, eos//0]).
@@ -133,7 +133,7 @@ trim_whites(Line0, Line) :-
     drop_trailing_white(Line1, Line).
 
 normalize_whitespaces([open, white(_), X|Rest], [open, X|Rest1]) :-
-    \+ \+ ( X = atom(_) ; X = close ; X = open), !,
+    \+ \+ ( X = atom(_) ; X = close ; X = open ), !,
     normalize_whitespaces(Rest, Rest1).
 normalize_whitespaces([white(_), close|Rest], [close|Rest1]) :- !,
     normalize_whitespaces(Rest, Rest1).
@@ -188,7 +188,7 @@ process_line(Parens0, Parens1, Line0, Line) :-
     emit_line(user_error, Line2),
     ( Indent > 0
     -> Line = [white(Indent)|Line2]
-    ;  Line = Line2).
+    ;  Line = Line2 ).
 
 % multi-line cleanups
 
@@ -205,7 +205,7 @@ line_ending_comment(Line, Tail, Rest) :-
 not_just_comment_line(Line) :-
     member(E, Line), E \= comment(_), E \= white(_), !.
 
-no_orphaned_close_parens([Line1,Line2|Rest], OutRest) :-
+no_orphaned_close_parens([Line1, Line2|Rest], OutRest) :-
     forall(member(E, Line2), once(( E = close ; E = white(_) ))),
     trim_whites(Line2, TrimLine2), TrimLine2 \= [],
     not_just_comment_line(Line1), !,
@@ -287,22 +287,21 @@ create_edit_list(LineNum, [Line|Lines], [], [Edit]) :- !,
     string_length(LastLine, LastLineLen),
     Edit = _{range: _{start: _{line: LineNum, character: 0},
                       end: _{line: EndLine, character: LastLineLen}},
-            newText: ""}.
+             newText: ""}.
 create_edit_list(LineNum, [], [NewLine|NewLines], [Edit|Edits]) :- !,
     string_length(NewLine, LenLen),
     Edit = _{range: _{start: _{line: LineNum, character: 0},
                       end: _{line: LineNum, character: LenLen}},
-            newText: NewLine},
+             newText: NewLine},
     succ(LineNum, LineNum1),
     create_edit_list(LineNum1, [], NewLines, Edits).
 create_edit_list(LineNum, [OrigLine|OrigRest], [FormattedLine|FormattedRest], Edits) :-
     (   OrigLine \= FormattedLine  % Only create an edit if the line has changed
     -> string_length(OrigLine, LineLen), %TODO: what should this be?
        Edit = _{
-                  range: _{
-                             start: _{line: LineNum, character: 0},
-                             end: _{line: LineNum, character: LineLen}
-                         },
+                  range: _{start: _{line: LineNum, character: 0},
+                           end: _{line: LineNum, character: LineLen}
+                  },
                   newText: FormattedLine
               },
        Edits = [Edit|EditRest]
