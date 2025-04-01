@@ -272,7 +272,7 @@ lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
                                       kind: "refactor.comment",
                                       edit: _{changes: Changes}}}) :-
     _{id: Id, params: Params} :< Msg,
-    _{data: Data, kind: "refactor.comment"} :< Params,
+    _{data: Data, kind: "refactor.comment"} :< Params, !,
     _{uri: Uri, range: Range} :< Data,
     get_code_at_range(exact, Uri, Range, Code),
     request_code_comment(Code, Commented),
@@ -283,6 +283,11 @@ lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
     % using dict_create/3 instead of a literal because that doesn't
     % seem to work with a variable key
     dict_create(Changes, _, [AUri=[_{range: Range, newText: Commented}]]).
+% VSCode still sends a resolve request, even when the message has what it needs?
+lsp_hooks:handle_msg_hook("codeAction/resolve", Msg, Result) :-
+    _{id: Id, params: Params} :< Msg,
+    Result = _{id: Id, result: Params}.
+
 
 % The call_openai_for_gpt_task/3 predicate is defined earlier.
 

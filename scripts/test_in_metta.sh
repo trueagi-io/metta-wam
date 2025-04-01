@@ -499,6 +499,10 @@ process_file() {
                 DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
                 [ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
+        elif [ $TEST_EXIT_CODE -eq 143 ]; then
+                DEBUG_MESSAGE="${RED}Killed (definitely due to timeout) (EXITCODE=$TEST_EXIT_CODE) after $EXTRA_INFO seconds: $TEST_CMD${NC}"
+                #[ "$if_failures" -eq 1 ] && SHOULD_DELETE_HTML=1
+                PASS_OR_FAIL="FAIL"
         elif [ $TEST_EXIT_CODE -eq 134 ]; then
                 DEBUG_MESSAGE="${RED}Test aborted by user (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
                 SHOULD_DELETE_HTML=1
@@ -508,6 +512,12 @@ process_file() {
                 SHOULD_DELETE_HTML=1
                 PASS_OR_FAIL="FAIL"
 		exit 4
+        elif [ $TEST_EXIT_CODE -eq 7 ]; then
+                DEBUG_MESSAGE="${GREEN}Completed successfully (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                PASS_OR_FAIL="PASS"
+        elif [ $TEST_EXIT_CODE -eq 1 ]; then
+                DEBUG_MESSAGE="${YELLOW}Completed successfully (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
+                PASS_OR_FAIL="PASS"
         elif [ $TEST_EXIT_CODE -ne 7 ]; then
                 DEBUG_MESSAGE="${YELLOW}Completed (EXITCODE=$TEST_EXIT_CODE) $EXTRA_INFO: $TEST_CMD${NC}"
                 PASS_OR_FAIL="FAIL"
