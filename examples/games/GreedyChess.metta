@@ -818,7 +818,7 @@
                         (4 highestrank)
                         ($_ lowrank)
                         )))
-                  ;($debug (println! $rank_level))
+                  ($debug (println! $rank_level))
         )
         (if (== ($rank_level) 
                 (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
@@ -1157,7 +1157,7 @@
 ;*************************************************************************
 (= (playdefense)
   (let $defense_all
-    (collapse (playdefense_match (superpose (q r n b))))
+    (collapse (playdefense_match (superpose (k q r n b))))
     (if (== $defense_all ())
       (empty)
       (let*
@@ -1177,7 +1177,7 @@
 ;               and attempts to find a safe, unoccupied square to retreat to.
 ;
 ; Input:        
-;   - $AI_rank: The type of gold (AI) piece (q, r, n, b).
+;   - $AI_rank: The type of gold (AI) piece 
 ;
 ; Output:       
 ;   - A list of viable escape moves, where the AI piece:
@@ -1745,7 +1745,8 @@
 (: clearcheckleft (-> Atom Atom Atom Bool))
 (: clearcheckright (-> Atom Atom Atom Bool))
 
-
+; These helper routines for the rook move work by testing for empty squares for the rook to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckup $X $Y1 $Y2) 
    (let $next_box 
         ; make sure valid square lookup possible
@@ -1842,6 +1843,8 @@
 (: clearcheckNW (-> Atom Atom Atom Atom Bool))
 (: clearcheckSW (-> Atom Atom Atom Atom Bool))
 
+; These helper routines for the bishop move work by testing for empty squares for the bishop to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckNE $X1 $Y1 $X2 $Y2) 
    (let $next_box 
         ; make sure valid square lookup possible
@@ -2451,8 +2454,8 @@
                                   ((py-atom print) "")
                                   (change-game-state checkmate)
                                 )
-                                (println! "Check!")))
-                          ()  ))
+                                (println! "Check! Enter g for Greedy Chess move.")))
+                          (println! "Enter g for Greedy Chess move.")  ))
                   )
               )
           )
