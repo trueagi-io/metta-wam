@@ -674,7 +674,14 @@
 
           (let* (
         ($msg4 (println! "looking for threat position..."))
-        ($threaten_position (collapse (movetoposition))))
+        ($random_threat (random-int  &rng 1 3)) ; get a random number 1 through 2
+        ($threaten_position 
+                (if (> $random_threat 1)     
+                  (collapse (movetoposition))
+                  ; return empty parens and skip randomly
+                  ()
+                  ))
+                )
         (if (not (==  $threaten_position ()))
           (car-atom $threaten_position)
 
@@ -818,7 +825,7 @@
                         (4 highestrank)
                         ($_ lowrank)
                         )))
-                  ;($debug (println! $rank_level))
+                  ($debug (println! $rank_level))
         )
         (if (== ($rank_level) 
                 (collapse (intersection (superpose $Ranks_Already_Tried_List) $rank_level)))
@@ -1157,7 +1164,7 @@
 ;*************************************************************************
 (= (playdefense)
   (let $defense_all
-    (collapse (playdefense_match (superpose (q r n b))))
+    (collapse (playdefense_match (superpose (k q r n b))))
     (if (== $defense_all ())
       (empty)
       (let*
@@ -1177,7 +1184,7 @@
 ;               and attempts to find a safe, unoccupied square to retreat to.
 ;
 ; Input:        
-;   - $AI_rank: The type of gold (AI) piece (q, r, n, b).
+;   - $AI_rank: The type of gold (AI) piece 
 ;
 ; Output:       
 ;   - A list of viable escape moves, where the AI piece:
@@ -1738,34 +1745,23 @@
             ; otherwise rook bad move
                False)))))
       )
-      (if (and 
-          (== $RouteClearBool True)
-          ; straight vertical 
-          (xor 
-            (and
-              (== $X2 $X1)
-              (xor
-              (> $Y2 $Y1)
-              (< $Y2 $Y1)))
-          ; straight sideways 
-            (and
-              (== $Y2 $Y1)
-              (xor
-              (> $X2 $X1)
-              (< $X2 $X1)))))
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckup (-> Atom Atom Atom Bool))
 (: clearcheckdown (-> Atom Atom Atom Bool))
 (: clearcheckleft (-> Atom Atom Atom Bool))
 (: clearcheckright (-> Atom Atom Atom Bool))
 
-
+; These helper routines for the rook move work by testing for empty squares for the rook to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckup $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (< $Y1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1776,8 +1772,13 @@
               False))))
 
 (= (clearcheckdown $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (> $Y1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1788,8 +1789,13 @@
               False))))
 
 (= (clearcheckright $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (< $X1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1800,8 +1806,13 @@
               False))))
 
 (= (clearcheckleft $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (> $X1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1831,47 +1842,58 @@
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
                False)))))
-      ;($debug (println! $RouteClearBool))
       )
-      (if  
-          (== $RouteClearBool True)
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckNE (-> Atom Atom Atom Atom Bool))
 (: clearcheckSE (-> Atom Atom Atom Atom Bool))
 (: clearcheckNW (-> Atom Atom Atom Atom Bool))
 (: clearcheckSW (-> Atom Atom Atom Atom Bool))
 
-
+; These helper routines for the bishop move work by testing for empty squares for the bishop to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckNE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2)
+              (clearcheckNE (+ $X1 1) (+ $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckSE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+              (clearcheckSE (+ $X1 1) (- $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckNW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
@@ -1882,8 +1904,13 @@
               False))))
 
 (= (clearcheckSW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
@@ -2380,25 +2407,25 @@
     (match &self (board-state $starting_board) $starting_board)
     ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
     (reset-pieces $starting_board)
-    ; check if source location and destination are not the same
-    (if (not (== $f $g))                            
+    (let $entire_source (return_entire_box $f) ())
+    ; check if source location and destination are not the same, and if there is piece to move.
+    (if (and (not (== $f $g)) (== (size-atom $entire_source) 4))                            
      ; check if destination is empty or destination has opponent's piece  
       (progn 
       ; Retrieve the source box details.
       (let $h (return_entire_box $f) ())
-            ;does not return here!
       ; Retrieve the destination box details.
       (let $i (return_entire_box $g) ()) 
       (let $dest_color (if (== (size-atom $i) 4) 
                            (nth 3 $i)
                             NIL) ())
       ; Check there is a piece to move.
-      (if (and1 (== (size-atom $h) 4)                                    
-               (xor1  
+      (if (and (== (size-atom $h) 4)                                    
+               (xor  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
                ; OK to take another piece, check color is not the same...
-               (and1 (== (size-atom $i) 4) (not1 (== (nth 3 $h) $dest_color)))))
+               (and (== (size-atom $i) 4) (not (== (nth 3 $h) $dest_color)))))
         ; Validate the path for the piece.
         (if (== (clear_route $h $i) True)               
           ; Try moving piece provisionally
@@ -2434,8 +2461,8 @@
                                   ((py-atom print) "")
                                   (change-game-state checkmate)
                                 )
-                                (println! "Check!")))
-                          ()  ))
+                                (println! "Check! Enter g for Greedy Chess move.")))
+                          (println! "Enter g for Greedy Chess move.")  ))
                   )
               )
           )
@@ -2445,7 +2472,7 @@
       )
       )
       ;else (trying to move to same location)
-      ((py-atom print) "Can't move to same location.")) 
+      ((py-atom print) "Invalid move.")) 
     ; since move complete, delete any individual square atoms which only live for a single move.
     (delete-pieces)
     )))
