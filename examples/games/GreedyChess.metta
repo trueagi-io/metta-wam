@@ -674,7 +674,14 @@
 
           (let* (
         ($msg4 (println! "looking for threat position..."))
-        ($threaten_position (collapse (movetoposition))))
+        ($random_threat (random-int  &rng 1 3)) ; get a random number 1 through 2
+        ($threaten_position 
+                (if (> $random_threat 1)     
+                  (collapse (movetoposition))
+                  ; return empty parens and skip randomly
+                  ()
+                  ))
+                )
         (if (not (==  $threaten_position ()))
           (car-atom $threaten_position)
 
