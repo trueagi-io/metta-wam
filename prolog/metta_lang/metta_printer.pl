@@ -552,7 +552,7 @@ is_final_write(A:B) :- write_src(A),write(':'),write_src(B),!.
 
 %is_final_write([]):- write('Nil'),!.
 is_final_write(A) :- fail, \+ is_list(A), compound(A), A \= exec(_),
-  \+ woc((sub_term(E,A), is_list(E))),
+  \+ ((sub_term_safely(E,A), is_list(E))),
   catch(portray_clause(A),_,fail), !.
 
 

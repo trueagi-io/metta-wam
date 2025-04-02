@@ -759,10 +759,11 @@ if_tracemsg(Flag, Message):- if_trace(Flag, wdmsg(Message)).
 
 rtrace_when(Why,Goal):- is_debugging(Why)->rtrace(Goal);call(Goal).
 show_failure_when(Why,Goal):- \+ is_debugging(Why), !, call(Goal).
-show_failure_when(Why, Goal):-
- is_debugging(Why),!,
-  if_or_else(Goal, (notrace,debugm1(Why, show_failed(Why, Goal)),ignore(nortrace),
-   if_t(is_debugging(failures),trace),!,fail)).
+show_failure_when(Why, Goal):- if_or_else(Goal, (once(show_failing(Why,Goal)),fail)).
+show_failing(Why,Goal):- notrace, ignore(nortrace),
+                      debugm1(Why, show_failed(Why, Goal)),
+                      nop(if_t(is_debugging(failures),trace)),!,fail.
+
 %show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
 
@@ -776,11 +777,17 @@ is_extreme_debug(_).
 sub_var_safely(Var,Source):-
   woc(sub_var(Var,Source)).
 
-sub_term_safely(Sub,Source):-
-  woc(sub_term(Sub,Source)).
+sub_term_safely(Sub,Source):- acyclic_term(Source),!,sub_term(Sub,Source).
 
-woc(Goal):-
-  locally(set_prolog_flag(occurs_check,true),Goal).
+%abolish_trace:- \+ is_flag(abolish_trace),!.
+abolish_trace:-
+  redefine_system_predicate(system:trace/0),
+  abolish(system:trace/0),
+  assert(( (system:trace) :- (format(user_error,'~nTRACE_CALLED~n',[]), break, bt))).
+
+woc(Goal):- current_prolog_flag(occurs_check,true),!,call(Goal).
+woc(Goal):- redo_call_cleanup(set_prolog_flag(occurs_check,true),Goal,set_prolog_flag(occurs_check,false)).
+% woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
 wocf(Goal):-
   locally(set_prolog_flag(occurs_check,false), Goal).
 
