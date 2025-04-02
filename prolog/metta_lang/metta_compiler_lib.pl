@@ -107,8 +107,8 @@ compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResult,LazyEval,ValueResu
    append(TargetCode1,[[assign,RetResult,TargetResult1]],T),
    append(RestCode1,[[assign,RetResult,RestResult1]],R),
    append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],T,R]],Converted),
-   append(TargetCode1,[[assign,RetResult,TargetResult1]],TN),
-   append(RestCode1,[[assign,RetResult,RestResult1]],RN),
+   append(TargetCodeN,[[assign,RetResult,TargetResultN]],TN),
+   append(RestCodeN,[[assign,RetResult,RestResultN]],RN),
    append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],TN,RN]],ConvertedN).
 
 /*
