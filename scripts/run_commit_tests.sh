@@ -162,12 +162,23 @@ cat /dev/null > /tmp/SHARED.UNITS
 
 
 # 23+ tests (~30 seconds)
-run_mettalog_tests 40 tests/baseline_compat/module-system/
+run_mettalog_tests 41 tests/baseline_compat/module-system/
 #SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 # 200+ tests (~4 minutes)
-run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
+run_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
 # 50+ tests (~2 minutes)
-run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
+run_mettalog_tests 300 tests/baseline_compat/metta-morph_tests/
+run_mettalog_tests 300 tests/nars_interp/nars/main-branch/ --compile=full
+
+# 23+ tests (~30 seconds)
+run_mettalog_tests 41 tests/baseline_compat/module-system/ --compile=full
+#SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+# 200+ tests (~4 minutes)
+run_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/ --compile=full
+# 50+ tests (~2 minutes)
+run_mettalog_tests 300 tests/baseline_compat/metta-morph_tests/ --compile=full
+run_mettalog_tests 300 tests/nars_interp/nars/main-branch/ --compile=full
+
 
 # Run filtered test suites
 for test_dir in "${test_dirs[@]}"; do
