@@ -2469,21 +2469,9 @@
     ; else keep playing
     (progn 
     ; prompt for x/y location
-    ;((py-atom print) "Enter coordinates.")
-    ;(let $coordinates ((py-atom input)) ())
-    ;;TO-DO, fail if char_to_int returns and 9s.
-    ;(let $bad_input_sw False ())
-    ;(let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-    ;(let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-    ;(let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-    ;(let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-    ;(let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-    ;(let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
-
     (let $coord (prompt-for-move) ())
     (let $f (nth 1 $coord) ())
     (let $g (nth 2 $coord) ())
-    
     ; get the current board
     (match &self (board-state $starting_board) $starting_board)
     ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
