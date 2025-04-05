@@ -180,7 +180,7 @@ make_test_name(FilePath0, Number, TestName) :-
     % Formats the test number as a zero-padded two-digit string.
     wots(NS, format('~`0t~d~2|', [Number])),
     compiled_or_interp(CorI),
-    sformat(NoUnderscore,'~w~w',[NoUnderscore0,'']),
+    sformat(NoUnderscore,'~w~w',[NoUnderscore0,CorI]),
     sformat(NoUnderscoreParent,'~w~w',[NoUnderscoreParent0,CorI]),
     % Combines parent directory, file base, and test number to form the test name.
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
