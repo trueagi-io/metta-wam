@@ -179,11 +179,11 @@ run_interp_and_comp_tests 120 tests/nars_interp/nars/main-branch/
 
 run_interp_and_comp_tests 121 tests/direct_comp/important/
 run_interp_and_comp_tests 122 tests/direct_comp/nqueens/
-run_interp_and_comp_tests 44 tests/direct_comp/easy/
-run_interp_and_comp_tests 45 tests/direct_comp/types/
-run_interp_and_comp_tests 46 tests/direct_comp/sanity/
+run_interp_and_comp_tests 43 tests/direct_comp/easy/
+run_interp_and_comp_tests 44 tests/direct_comp/types/
+run_interp_and_comp_tests 45 tests/direct_comp/sanity/
 run_interp_and_comp_tests 123 tests/direct_comp/More-important/
-run_interp_and_comp_tests 47 tests/quick_quality/
+run_interp_and_comp_tests 46 tests/quick_quality/
 
 #run_interp_and_comp_tests 48 tests/baseline_compat-next/metta-morph_tests/
 
