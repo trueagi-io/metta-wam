@@ -468,13 +468,14 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
         file_name_extension(Base, _, R))),
         % Optional format output for HTML log entry.
         nop(format('<h3 id="~w">;; ~w</h3>', [TestName, TestName])),
-        compiled_or_interp(CompOrInterp),
+        compiled_or_interp_html(CompOrInterp),
         % Log test details deterministically.
         must_det_ll((
             (tee_file(TEE_FILE) -> true ; 'TEE.ansi' = TEE_FILE),
             ((
                 % Retrieve or create HTML file name.
-                once(getenv('HTML_FILE', HTML_OUT) ; sformat(HTML_OUT, '~w.metta~w.html', [Base,CompOrInterp])),
+                once(getenv('HTML_FILE', HTML_OUT0) ; sformat(HTML_OUT0, '~w.metta.html', [Base])),
+                sformat(HTML_OUT,'~w~w',[HTML_OUT0,CompOrInterp]),
                 % Compute and store a per-test HTML output.
                 compute_html_out_per_test(HTML_OUT, TEE_FILE, TestName, HTML_OUT_PerTest),
                 % Measure and format the duration of the last call.
@@ -498,6 +499,8 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
 
 compiled_or_interp('-COMP'):- option_value('compile', 'full'),!.
 compiled_or_interp('').
+compiled_or_interp_html('-COMP.html'):- option_value('compile', 'full'),!.
+compiled_or_interp_html('').
 
 % Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
 
