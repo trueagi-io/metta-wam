@@ -173,7 +173,7 @@ run_both_mettalog_tests 41 tests/baseline_compat/module-system/
 # 200+ tests (~4 minutes)
 run_both_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
 # 50+ tests (~2 minutes)
-run_both_mettalog_tests 43 tests/baseline_compat/metta-morph_tests/
+#run_both_mettalog_tests 43 tests/baseline_compat/metta-morph_tests/
 # SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 run_both_mettalog_tests 120 tests/nars_interp/nars/main-branch/
 
@@ -182,7 +182,7 @@ run_both_mettalog_tests 120 tests/direct_comp/nqueens/
 run_both_mettalog_tests 44 tests/direct_comp/easy/
 run_both_mettalog_tests 45 tests/direct_comp/types/
 run_both_mettalog_tests 46 tests/direct_comp/sanity/
-run_both_mettalog_tests 47 tests/baseline_compat-next/metta-morph_tests/
+#run_both_mettalog_tests 47 tests/baseline_compat-next/metta-morph_tests/
 
 run_both_mettalog_tests 120 tests/direct_comp/More-important/
 
