@@ -168,12 +168,12 @@ run_interp_and_comp_tests() {
   run_mettalog_tests "$id" "$path" --compile=full "$@"
 }
 
+# 50+ tests (~2 minutes)
+run_interp_and_comp_tests 40 tests/baseline_compat/metta-morph_tests/
 # 23+ tests (~30 seconds)
 run_interp_and_comp_tests 41 tests/baseline_compat/module-system/
 # 200+ tests (~4 minutes)
 run_interp_and_comp_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
-# 50+ tests (~2 minutes)
-run_interp_and_comp_tests 43 tests/baseline_compat/metta-morph_tests/
 # SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 run_interp_and_comp_tests 120 tests/nars_interp/nars/main-branch/
 
