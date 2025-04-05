@@ -160,19 +160,32 @@ echo "Running tests METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UN
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
 
+run_both_mettalog_tests() {
+  local id="$1"
+  local path="$2"
+  shift 2
+  run_mettalog_tests "$id" "$path" "$@"
+  run_mettalog_tests "$id" "$path" --compile=full "$@"
+}
 
 # 23+ tests (~30 seconds)
-run_mettalog_tests 41 tests/baseline_compat/module-system/
-run_mettalog_tests 41 tests/baseline_compat/module-system/ --compile=full
+run_both_mettalog_tests 41 tests/baseline_compat/module-system/
 # 200+ tests (~4 minutes)
-run_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
-run_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/ --compile=full
+run_both_mettalog_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
 # 50+ tests (~2 minutes)
-run_mettalog_tests 43 tests/baseline_compat/metta-morph_tests/
-run_mettalog_tests 43 tests/baseline_compat/metta-morph_tests/ --compile=full
-#SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
-run_mettalog_tests 120 tests/nars_interp/nars/main-branch/
-run_mettalog_tests 120 tests/nars_interp/nars/main-branch/ --compile=full
+run_both_mettalog_tests 43 tests/baseline_compat/metta-morph_tests/
+# SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+run_both_mettalog_tests 120 tests/nars_interp/nars/main-branch/
+
+run_both_mettalog_tests 120 tests/direct_comp/important/
+run_both_mettalog_tests 120 tests/direct_comp/nqueens/
+run_both_mettalog_tests 44 tests/direct_comp/easy/
+run_both_mettalog_tests 45 tests/direct_comp/types/
+run_both_mettalog_tests 46 tests/direct_comp/sanity/
+run_both_mettalog_tests 47 tests/baseline_compat-next/metta-morph_tests/
+
+run_both_mettalog_tests 120 tests/direct_comp/More-important/
+
 
 
 # Run filtered test suites
