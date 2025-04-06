@@ -486,7 +486,7 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
              ignore((   shared_units(UNITS),
              catch(setup_call_cleanup(
                 open(UNITS, append, Stream, [encoding(utf8)]),
-                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-testsuite/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
                     [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
                     trim_gstring_bar_I(write_src_woi([P,C]),600),
                     trim_gstring_bar_I(write_src_woi(G1),600),
@@ -621,7 +621,7 @@ trim_gstring_bar_I(Goal, MaxLen) :-
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
-    ;   (sub_string(String, 0, MaxLen, LeftOver, SubStr),
+    ;   (sub_string(String, LeftOver, MaxLen, 0, SubStr),
         format(string(Trimmed), '~w...(~w)', [SubStr, LeftOver]))
     ),
     write(Trimmed).

@@ -185,7 +185,7 @@ run_interp_and_comp_tests 45 tests/direct_comp/sanity/
 run_interp_and_comp_tests 123 tests/direct_comp/More-important/
 run_interp_and_comp_tests 46 tests/quick_quality/
 
-#run_interp_and_comp_tests 48 tests/baseline_compat-next/metta-morph_tests/
+#run_interp_and_comp_tests 47 tests/baseline_compat-next/metta-morph_tests/
 
 
 
