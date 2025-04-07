@@ -1049,9 +1049,12 @@
                 ($__1  (move_piece $start $dest))  
                 ; with move envisioned, see if the silver king can escape using any moves whatsoever
                 ($any_moves_left_whatsoever (collapse (any_moves_to_escape s)))
+                ; make sure gold AI king safe
+                ($king_status (checkking g))
                 ($__2 (reset_pieces $start $dest_full))
               )
-              (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+              (if (and (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+                       (== $king_status False))
                     ; if no moves possible for human, Greedy Chess has found checkmate, success! 
                     $test_move
                     (empty))))))
