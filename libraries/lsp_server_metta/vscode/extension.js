@@ -38,6 +38,7 @@ function activate(context) {
   const chatgptApiKey = config.get("xtras.chatgpt.apiKey", "");
   const chatgptAltUrl = config.get("xtras.chatgpt.alternateUrl", "");
   const chatgptModel = config.get("xtras.chatgpt.model", "gpt-3.5-turbo");
+  const useChatgptCompletion = config.get("xtras.chatgpt.inlineCompletion", false);
 
   const loadLspSrc = debugLsp && mettalogPath !== '';
   const lspSrcPath = mettalogPath + "/libraries/lsp_server_metta/prolog/lsp_server_metta.pl";
@@ -50,7 +51,8 @@ function activate(context) {
   if (chatgptEnabled) {
     const envAdditions = {"OPENAI_API_KEY": chatgptApiKey,
                           "METTA_LLM_URL": chatgptAltUrl,
-                          "METTA_LLM_MODEL": chatgptModel}
+                          "METTA_LLM_MODEL": chatgptModel,
+                          "LSP_LLM_COMPLETE_INLINE": useChatgptCompletion};
     Object.keys(envAdditions).forEach(key => {
       if (envAdditions[key] !== '') {
         env[key] = envAdditions[key];
@@ -315,6 +317,7 @@ function showMettaLSPSettings(outputChannel) {
     "xtras.chatgpt.model",
     "xtras.chatgpt.maxTokens",
     "xtras.chatgpt.temperature",
+    "xtras.chatgpt.inlineCompletion",
     "server.mode",
     "server.spawnProcess",
     "server.port",

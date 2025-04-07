@@ -370,6 +370,8 @@ ollama create llama3-metta -f libraries/lsp_server_metta/Modelfile
 
 Then configure start your server or configure your editor as indicated under [Configuring Your Editor For LLM Usage](#configuring-your-editor-for-llm-usage), except instead of setting `OPENAI_API_KEY` to whatever value, set `METTA_LLM_URL` to `http://localhost:11434/api/generate` and set `METTA_LLM_MODEL` to `llama3-metta`.
 
+The LSP server can also use LLMs for code completion, however it is disabled by default, is it is currently fairly slow (compared to normal completion). If you're okay with this or have a fast-enough LLM, you can enable it by setting the environment variable `LSP_LLM_COMPLETE_INLINE` to `true` when starting the server, in a similar manner as the other variables for your respective editor below.
+
 ### Configuring Your Editor For LLM Usage
 
 #### VSCode
