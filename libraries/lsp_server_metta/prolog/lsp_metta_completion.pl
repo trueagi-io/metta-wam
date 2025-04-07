@@ -103,25 +103,32 @@ args_str(Arity, Str) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Completion Handlers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_completions(Method,Msg,Response).
+lsp_hooks:handle_msg_hook(Method, Msg, Response):- handle_completions(Method, Msg, Response).
+
+should_llm_complete_inline :- getenv('LSP_LLM_COMPLETE_INLINE', "true").
 
 handle_completions("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
     _{id: Id, params: Params} :< Msg,
     _{textDocument: _{uri: Uri},
       position: _{line: Line0, character: Char0}} :< Params,
     path_doc(Path, Uri),
-    completions_at(Path, line_char(Line0, Char0), Completions0),
-    ( is_llm_enabled
-    -> completion_context(Uri, line_char(Line0, Char0), Ctx),
-       ( request_code_completion(Ctx, LLMSuggestions) -> true ; LLMSuggestions = [] ),
-       findall(Completion,
-               ( member(Suggestion, LLMSuggestions),
-                 Completion = _{label: Suggestion,
-                                insertText: Suggestion,
-                                insertTextFormat: 1} ),
-               Completions,
-               Completions0)
+    succ(Line0, Line1),
+    completions_at(Path, line_char(Line1, Char0), Completions0),
+    ( is_llm_enabled, should_llm_complete_inline
+    -> llm_complete(Uri, line_char(Line0, Char0), Completions, Completions0)
     ; Completions = Completions0 ).
+
+
+llm_complete(Uri, Position, Completions, CompletionsTail) :-
+    completion_context(Uri, Position, Ctx),
+    ( request_code_completion(Ctx, LLMSuggestions) -> true ; LLMSuggestions = [] ),
+    findall(Completion,
+            ( member(Suggestion, LLMSuggestions),
+              Completion = _{label: Suggestion,
+                             insertText: Suggestion,
+                             insertTextFormat: 1} ),
+            Completions,
+            CompletionsTail).
 
 completion_context(Uri, line_char(Line0, Char0), Context) :-
     % not using prefix_at/3 here, because for the LLM we want to give it the whole line as context

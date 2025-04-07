@@ -135,6 +135,12 @@
           "default": "",
           "description": "Specifies the URL used for sending requests to a non-OpenAI (presumably local) LLM model."
         },
+        "metta-lsp.xtras.chatgpt.inlineCompletion": {
+          "scope": "window",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the configured LLM as a source for completions. Note this may slow down completion options being disabled significantly."
+        },
         "metta-lsp.xtras.chatgpt.apiKey": {
           "scope": "window",
           "type": "string",
