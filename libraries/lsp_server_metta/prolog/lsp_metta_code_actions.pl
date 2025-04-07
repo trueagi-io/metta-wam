@@ -83,7 +83,10 @@
                                  get_src_code_at_range/4
                                ]).
 
+:- use_module(lsp_metta_completion, [ completion_context/3 ]).
+
 :- use_module(lsp_metta_llm, [ request_code_comment/2,
+                               request_code_completion/2,
                                is_llm_enabled/0,
                                make_llm_request/2
                              ]).
@@ -259,20 +262,15 @@ lsp_hooks:compute_code_action(Uri, Range, CommentCodeAction) :-
     sformat(CommentTitle, "Source: LLM Comment this block: '~w'", [CodeExcerpt]),
     CommentCodeAction = _{title: CommentTitle,
                           kind: "refactor.comment",
-                         data: _{uri: Uri, range: Range}}.
-
-string_excerpt(String, Len, Excerpt) :-
-    sub_string(String, 0, Len, _, Excerpt0), !,
-    string_concat(Excerpt0, "...", Excerpt).
-string_excerpt(String, _, String).
-
+                         data: _{uri: Uri, range: Range, action_from: "comment_code_action"}}.
 lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
                           _{id: Id,
                             result: _{title: "Source: LLM Comment this block: ",
                                       kind: "refactor.comment",
                                       edit: _{changes: Changes}}}) :-
     _{id: Id, params: Params} :< Msg,
-    _{data: Data, kind: "refactor.comment"} :< Params, !,
+    _{data: Data, kind: "refactor.comment"} :< Params,
+    Data.action_from = "comment_code_action", !,
     _{uri: Uri, range: Range} :< Data,
     get_code_at_range(exact, Uri, Range, Code),
     request_code_comment(Code, Commented),
@@ -283,6 +281,42 @@ lsp_hooks:handle_msg_hook("codeAction/resolve", Msg,
     % using dict_create/3 instead of a literal because that doesn't
     % seem to work with a variable key
     dict_create(Changes, _, [AUri=[_{range: Range, newText: Commented}]]).
+
+lsp_hooks:compute_code_action(Uri, Range, LLMCompleteCodeAction) :-
+    is_llm_enabled,
+    lsp_state:stored_json_value(
+                  client_capabilities,
+                  [properties, resolveSupport, codeAction, textDocument],
+                  Props),
+    memberchk("edit", Props), !,
+    _{end: End} :< Range,
+    LLMCompleteCodeAction = _{title: "Complete with LLM",
+                              kind: "source",
+                              data: _{uri: Uri, position: End,
+                                      action_from: "llm_complete_action"}}.
+
+lsp_hooks:handle_msg_hook("codeAction/resolve", Msg, _{id: Id, result: Result}) :-
+    _{id: Id, params: Params} :< Msg,
+    _{data: Data, kind: "source"} :< Params,
+    Data.action_from = "llm_complete_action", !,
+    _{uri: Uri, position: Position} :< Data,
+    _{line: Line0, character: Char0} :< Position,
+    completion_context(Uri, line_char(Line0, Char0), Ctx),
+    ( request_code_completion(Ctx, Completions), Completions = [Completion|_]
+    -> true
+    ; Completion = "" ),
+    atom_string(AUri, Uri),
+    Range = _{start: Position, end: Position},
+    dict_create(Changes, _, [AUri=[_{range: Range, newText: Completion}]]),
+    Result = _{title: "Complete with LLM",
+              kind: "source",
+              edit: _{changes: Changes}}.
+
+string_excerpt(String, Len, Excerpt) :-
+    sub_string(String, 0, Len, _, Excerpt0), !,
+    string_concat(Excerpt0, "...", Excerpt).
+string_excerpt(String, _, String).
+
 % VSCode still sends a resolve request, even when the message has what it needs?
 lsp_hooks:handle_msg_hook("codeAction/resolve", Msg, Result) :-
     _{id: Id, params: Params} :< Msg,
