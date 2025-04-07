@@ -1,36 +1,39 @@
-% :- module(lsp_metta_completion, [completions_at/3]).
-% /** <module> LSP Completion
-%
-% This module implements code completion, based on defined predicates in
-% the file & imports.
-%
-% Uses =lsp_metta_changes= in order to see the state of the buffer being edited.
-%
-% @see lsp_metta_changes:doc_text_fallback/2
-%
-% @author James Cash
-% */
-%
+:- module(lsp_metta_completion, [completions_at/3]).
+/** <module> LSP Completion
+
+This module implements code completion, based on defined predicates in
+the file & imports.
+
+Uses =lsp_metta_changes= in order to see the state of the buffer being edited.
+
+@see lsp_metta_changes:doc_text_fallback/2
+
+@author James Cash
+*/
+
 
 % Douglas added
-:- use_module(library(http/http_open)).  % For making HTTP requests
-:- use_module(library(http/json)).       % For handling JSON
+:- use_module(library(http/http_open)).   % For making HTTP requests
+:- use_module(library(http/json)).        % For handling JSON
 :- use_module(library(http/http_header)).
 
 :- use_module(library(apply), [maplist/3]).
 :- use_module(library(lists), [numlist/3]).
 :- use_module(library(yall)).
 :- use_module(library(filesex)).
-%:- use_module(lsp_metta_utils, [linechar_offset/3]).
+
+:- include(lsp_metta_include).
+
+:- use_module(lsp_prolog_utils, [linechar_offset/3]).
 :- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
+
 
 :- use_module(lsp_metta_llm, [is_llm_enabled/0,
                               request_code_completion/2]).
 
 
-:- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [source_file_text/2, xref_metta_source/1]).
+:- use_module(lsp_metta_workspace).
 
 :- discontiguous(handle_completions/3).
 
