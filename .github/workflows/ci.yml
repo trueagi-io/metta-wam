@@ -133,7 +133,7 @@ jobs:
         if [ -f "previous_test_results.txt" ]; then
           if diff previous_test_results.txt current_test_results.txt > /dev/null; then
             echo "No changes in test results."
-            echo "TEST_CHANGED=false" >> $GITHUB_ENV
+            echo "TEST_CHANGED=true" >> $GITHUB_ENV
           else
             echo "Changes detected in test results."
             echo "TEST_CHANGED=true" >> $GITHUB_ENV

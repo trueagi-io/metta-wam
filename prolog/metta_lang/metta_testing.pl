@@ -174,11 +174,14 @@ make_test_name(FilePath0, Number, TestName) :-
     string_upper(Base, UpperBase),
     % Replaces underscores with hyphens in the base name.
     string_replace(UpperBase, "_MW", "", NOMW),
-    string_replace(NOMW, "_", "-", NoUnderscore),
+    string_replace(NOMW, "_", "-", NoUnderscore0),
     % Replaces underscores with hyphens in the parent directory name.
-    string_replace(UpperParentDirBase, "_", "-", NoUnderscoreParent),
+    string_replace(UpperParentDirBase, "_", "-", NoUnderscoreParent0),
     % Formats the test number as a zero-padded two-digit string.
     wots(NS, format('~`0t~d~2|', [Number])),
+    compiled_or_interp(CorI),
+    sformat(NoUnderscore,'~w~w',[NoUnderscore0,CorI]),
+    sformat(NoUnderscoreParent,'~w~w',[NoUnderscoreParent0,CorI]),
     % Combines parent directory, file base, and test number to form the test name.
     format(string(TestName), "~w.~w.~w", [NoUnderscoreParent, NoUnderscore, NS]).
 
@@ -465,12 +468,14 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
         file_name_extension(Base, _, R))),
         % Optional format output for HTML log entry.
         nop(format('<h3 id="~w">;; ~w</h3>', [TestName, TestName])),
+        compiled_or_interp_html(CompOrInterp),
         % Log test details deterministically.
         must_det_ll((
             (tee_file(TEE_FILE) -> true ; 'TEE.ansi' = TEE_FILE),
             ((
                 % Retrieve or create HTML file name.
-                once(getenv('HTML_FILE', HTML_OUT) ; sformat(HTML_OUT, '~w.metta.html', [Base])),
+                once(getenv('HTML_FILE', HTML_OUT0) ; sformat(HTML_OUT0, '~w.metta.html', [Base])),
+                sformat(HTML_OUT,'~w~w',[HTML_OUT0,CompOrInterp]),
                 % Compute and store a per-test HTML output.
                 compute_html_out_per_test(HTML_OUT, TEE_FILE, TestName, HTML_OUT_PerTest),
                 % Measure and format the duration of the last call.
@@ -481,7 +486,7 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
              ignore((   shared_units(UNITS),
              catch(setup_call_cleanup(
                 open(UNITS, append, Stream, [encoding(utf8)]),
-                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-wam/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
+                format(Stream,'| ~w | ~w |[~w](https://logicmoo.github.io/metta-testsuite/~w#~w) | ~@ | ~@ | ~@ | ~w | ~w |~n',
                     [TestName,PASS_FAIL,TestName,HTML_OUT,TestName,
                     trim_gstring_bar_I(write_src_woi([P,C]),600),
                     trim_gstring_bar_I(write_src_woi(G1),600),
@@ -490,6 +495,12 @@ write_pass_fail(TestName, P, C, PASS_FAIL, G1, G2) :-
                     HTML_OUT_PerTest]),
                 % Close the log stream
                 close(Stream)),_,true))))))).
+
+
+compiled_or_interp('-COMP'):- option_value('compile', 'full'),!.
+compiled_or_interp('').
+compiled_or_interp_html('-COMP.html'):- option_value('compile', 'full'),!.
+compiled_or_interp_html('').
 
 % Needs not to be absolute and not relative to CWD (since tests like all .metta files change their local CWD at least while "loading")
 
@@ -610,7 +621,7 @@ trim_gstring_bar_I(Goal, MaxLen) :-
     atom_length(String, Len),
     (   Len =< MaxLen
     ->  Trimmed = String
-    ;   (sub_string(String, 0, MaxLen, LeftOver, SubStr),
+    ;   (sub_string(String, LeftOver, MaxLen, 0, SubStr),
         format(string(Trimmed), '~w...(~w)', [SubStr, LeftOver]))
     ),
     write(Trimmed).
