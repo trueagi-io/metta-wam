@@ -4112,7 +4112,7 @@ maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6]) :-
     call(Pred, X1, X2, X3, X4, X5, X6),
     maplist(Pred, Xs1, Xs2, Xs3, Xs4, Xs5, Xs6).
 
-% maplist/8 applies Pred to the elements of List1, List2, ..., List8 in parallel
+% maplist/8 applies Pred to the elements of List1, List2, ..., List7 in parallel
 maplist(_, [], [], [], [], [], [], []).
 maplist(Pred, [X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7]) :-
     call(Pred, X1, X2, X3, X4, X5, X6, X7),

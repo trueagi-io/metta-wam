@@ -1,5 +1,6 @@
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous transpiler_predicate_store/7.
+:- discontiguous transpiler_predicate_nary_store/9.
 
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
@@ -130,16 +131,26 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 transpiler_predicate_store(builtin, '+', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_+'(A,B,R) :- number(A),number(B),!,plus(A,B,R).
+'mc__1_2_+'(A,B,R) :- integer(A),integer(B),!,plus(A,B,R).
+'mc__1_2_+'(A,B,R) :- number(A),number(B),!,R is A+B.
 'mc__1_2_+'(A,B,['+',A,B]).
 
 transpiler_predicate_store(builtin, '-', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_-'(A,B,R) :- number(A),number(B),!,plus(B,R,A).
+'mc__1_2_-'(A,B,R) :- integer(A),integer(B),!,plus(B,R,A).
+'mc__1_2_-'(A,B,R) :- number(A),number(B),!,R is A-B.
 'mc__1_2_-'(A,B,['-',A,B]).
 
 transpiler_predicate_store(builtin, '*', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
 'mc__1_2_*'(A,B,R) :- number(A),number(B),!,R is A*B.
 'mc__1_2_*'(A,B,['*',A,B]).
+
+transpiler_predicate_store(builtin, '/', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+'mc__1_2_/'(A,B,R) :- number(A),number(B),!,R is A/B.
+'mc__1_2_/'(A,B,['/',A,B]).
+
+transpiler_predicate_store(builtin, '%', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
+'mc__1_2_%'(A,B,R) :- number(A),number(B),!,R is A mod B.
+'mc__1_2_%'(A,B,['%',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
@@ -263,7 +274,7 @@ transpiler_predicate_store(builtin, 'limit!', [2], '@doc', '@doc', [x(doeval,eag
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
-transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
+transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(noeval,eager,[])).
 'mc__1_1_superpose'(S,R) :- member(R,S).
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
@@ -308,7 +319,7 @@ match_pattern(Space, Pattern):-
     metta_atom(Space, Atom), Atom=Pattern.
 
 transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
+'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[Comma|Patterns],Comma==',',!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
 'mc__1_3_match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
 %'mc__1_3_match'(Space,Pattern,P1,Ret) :- match_pattern(Space, Atom),format("match1 ~w: ~w:\n",[Pattern,Atom]),Atom=Pattern,as_p1_exec(P1,Ret),format("match2 ~w:\n",[Ret]),trace.
 %transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
@@ -335,6 +346,12 @@ transpiler_predicate_store(builtin, unify, [4], '@doc', '@doc', [x(doeval,eager,
 
 transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_0__progn'(List,Ret) :- append(_,[Ret],List).
+
+transpiler_predicate_nary_store(builtin, 'call-fn!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__call-fn!'(Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
+
+transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__call-p!'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
