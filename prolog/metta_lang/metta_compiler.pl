@@ -642,22 +642,27 @@ lazy_impedance_match(x(_,eager,_),x(noeval,lazy,_),ValE,CodeE,ValN,CodeN,RetResu
 %%%%%%%%%%%%%%%% h2p
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-himpedance_match(x(_,L,_),x(_,L,_),Convert,Convert,[]).
-himpedance_match(x(_,eager,_),x(doeval,lazy,_),Convert,Converted,[[native(as_p1_exec),Converted,Convert]]).
-himpedance_match(x(_,eager,_),x(noeval,lazy,_),Convert,Converted,[[native(as_p1_expr),Converted,Convert]]).
-himpedance_match(x(_,lazy,_),x(doeval,eager,_),Convert,Converted,[[native(ispuU),Converted,Convert]]).
-himpedance_match(x(_,lazy,_),x(noeval,eager,_),Convert,Converted,[[native(ispuU),Converted,Convert]]).
-
-h2p(_EagerArgList,_LazyVars,ArgType,Convert,Converted,Code,[]) :- is_ftVar(Convert), !,
-   himpedance_match(x(noeval,eager,[]),ArgType,Convert,Converted,Code).
-
-h2p(_EagerArgList,_LazyVars,ArgType,Convert,Converted,Code,[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !,
-   himpedance_match(x(noeval,eager,[]),ArgType,Convert,Converted,Code).
-
-h2p(_EagerArgList,_LazyVars,ArgType,'#\\'(Convert),Converted,Code,[]) :- !,
-   himpedance_match(x(noeval,eager,[]),ArgType,Convert,Converted,Code).
+himpedance_match(_,_,Convert,Convert,[]).
+%himpedance_match(x(_,L,_),x(_,L,_),Convert,Convert,[]).
+%himpedance_match(x(_,eager,_),x(doeval,lazy,_),Convert,Converted,[[native(as_p1_exec),Converted,Convert]]).
+%himpedance_match(x(_,eager,_),x(noeval,lazy,_),Convert,Converted,[[native(as_p1_expr),Converted,Convert]]).
+%himpedance_match(x(_,lazy,_),x(doeval,eager,_),Convert,Converted,[[native(ispuU),Converted,Convert]]) :- trace.
+%himpedance_match(x(_,lazy,_),x(noeval,eager,_),Convert,Converted,[[native(ispuU),Converted,Convert]]) :- trace.
 
 h2p(EagerArgList,LazyVars,ArgType,Convert,Converted,CodeOut,TotalNewLazyVars) :-
+      %trace,
+      h2p_sub(EagerArgList,LazyVars,Convert,ConvertedInt,CodeOut1,TotalNewLazyVars),
+      var_prop_lookup(Converted,LazyVars,Type),
+      himpedance_match(Type,ArgType,ConvertedInt,Converted,CodeOut2),
+      append(CodeOut1,CodeOut2,CodeOut).
+
+h2p_sub(_EagerArgList,_LazyVars,Convert,Convert,[],[]) :- is_ftVar(Convert), !.
+
+h2p_sub(_EagerArgList,_LazyVars,Convert,Convert,[],[]) :- (number(Convert) ; atom(Convert); atomic(Convert)), !.
+
+h2p_sub(_EagerArgList,_LazyVars,'#\\'(Convert),Convert,[],[]) :- !.
+
+h2p_sub(EagerArgList,LazyVars,Convert,Converted,CodeOut,TotalNewLazyVars) :-
    get_curried_name_structure(Convert,FnName,Args,LenArgs),
    append(Args,FlattenedArgs),
    atom(FnName),
@@ -672,26 +677,35 @@ h2p(EagerArgList,LazyVars,ArgType,Convert,Converted,CodeOut,TotalNewLazyVars) :-
    ),
    maplist(combine_lazy_types_props,EagerLazyList,TypeProps,FinalLazyArgs),
    maplist(arrange_lazy_args,FlattenedArgs,FinalLazyArgs,ThisNewLazyVars),
-   maplist(h2p(EagerArgList,LazyVars,ArgType),FlattenedArgs,QuoteContentsOut,Code,NewLazyVars),
+   maplist(h2p_sub(EagerArgList,LazyVars),FlattenedArgs,QuoteContentsOut,Code,NewLazyVars),
    append(NewLazyVars,NewLazyVarsAggregate),
    append(ThisNewLazyVars,NewLazyVarsAggregate,TotalNewLazyVars),
    invert_curried_structure(FnName,LenArgs,QuoteContentsOut,Converted),
    append(Code,CodeOut).
 
-h2p(_EagerArgList,LazyVars,_ArgType,Convert,Converted,[[native(as_p1_expr),Converted,Convert]],[]) :-
+h2p_sub(_EagerArgList,LazyVars,Convert,Converted,[[native(as_p1_expr),Converted,Convert]],[]) :-
    Convert=[Fn|_],atom(Fn),
    var_prop_lookup(Convert,LazyVars,x(_,lazy,_)),!.
 
-h2p(EagerArgList,LazyVars,ArgType,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
+h2p_sub(EagerArgList,LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    is_list(Convert),
    var_prop_lookup(Convert,LazyVars,x(_,eager,_)),!,
-   maplist(h2p(EagerArgList,LazyVars,ArgType),Convert,Converted,Code,NewLazyVars),
+   maplist(h2p_sub(EagerArgList,LazyVars),Convert,Converted,Code,NewLazyVars),
    append(NewLazyVars,NewLazyVarsAggregate),
    append(Code,CodeOut).
 
-h2p(_EagerArgList,_ArgType,_LazyVars,X,X,[],[]) :-
-   format("Error in h2p: ~w",[X]),
+h2p_sub(_EagerArgList,_ArgType,_LazyVars,X,X,[],[]) :-
+   format("Error in h2p_sub: ~w",[X]),
    throw(0).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% transpile_interpret
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+transpile_interpret(Convert,Convert) :- \+ is_list(convert),!.
+
+%transpile_interpret(Convert,Converted) :-
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% f2p
@@ -946,8 +960,9 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
       maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
       append(Converteds,Converteds2),
-      assign_only(Converteds2,RetResult,[curried_fcall(Fn,LenArgs,LenArgsC,EvalArgsC),RetResults],Converted),
+      assign_only(Converteds2,RetResult,[curried_fcall(Fn,LenArgs,LenArgsC,EvalArgsC),RetResults],Converted), %%% remove me
       invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
+      %assign_or_direct_var_only(Converteds2,RetResult,list(RecurriedList),Converted),
       assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN)
    ; Docall=varargs(FixedLength2) ->
       maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, ArgsFlattened, ConvertedParts, ConvertedNParts),
@@ -1206,7 +1221,6 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[native_call,F,LenArgs,ArgsIn]],R) :
       transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
    ; true)
    )).
-
 ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRest),ArgsIn],R0) :- !,
  %must_det_lls((
    maybe_lazy_list(Caller,FIn,1,ArgsIn,Args0),
@@ -1981,15 +1995,16 @@ transpile_eval(Convert,Converted) :-
 transpile_eval(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
    subst_varnames(Convert0,Convert),
-   (transpiler_stored_eval_lookup(Convert,PrologCode0,Converted0) ->
-      PrologCode=PrologCode0,
-      LiConverted=Converted0
-   ;
+   %(transpiler_stored_eval_lookup(Convert,PrologCode0,Converted0) ->
+   %   PrologCode=PrologCode0,
+   %   LiConverted=Converted0
+   %;
       f2p(null,[],Converted,_,LE,Convert,Code1,_),
       lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
       ast_to_prolog(no_caller,[],Code,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted))
-   ).
+   %)
+   .
 
 transpile_eval_nocache(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
