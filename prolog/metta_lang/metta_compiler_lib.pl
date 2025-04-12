@@ -1,9 +1,6 @@
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous transpiler_predicate_store/7.
 
-:- discontiguous compile_test_then_else/10.
-:- discontiguous compile_flow_control/8.
-
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
@@ -88,26 +85,30 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
 %%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
+   %trace,
    Convert=['case',Value,Cases],!,
    f2p(HeadIs,LazyVars,ValueResult,ValueResultN,LazyRetValue,Value,ValueCode,ValueCodeN),
+   lazy_impedance_match(LazyRetValue,x(doeval,eager,[]),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
    lazy_impedance_match(LazyRetValue,x(doeval,eager,[]),ValueResult,ValueCode,ValueResultN,ValueCodeN,ValueResult1,ValueCode1),
    ValueCode1a=[[prolog_if,ValueCode1,[[assign,ValueResult1a,ValueResult1]],[[assign,ValueResult1a,'Empty']]]],
    compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult1a,Cases,Converted0,Converted0N),
    append(ValueCode1a,Converted0,Converted),
    append(ValueCode1a,Converted0N,ConvertedN).
 
-compile_flow_control_case(_,_,RetResult,RetResultN,_,_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
-compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
+compile_flow_control_case(_,_,RetResult,RetResultN,x(doeval,eager,[]),_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
+compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResult,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
    f2p(HeadIs,LazyVars,MatchResult,MatchResultN,LazyRetMatch,Match,MatchCode,MatchCodeN),
    lazy_impedance_match(LazyRetMatch,x(doeval,eager,[]),MatchResult,MatchCode,MatchResultN,MatchCodeN,MatchResult1,MatchCode1),
    f2p(HeadIs,LazyVars,TargetResult,TargetResultN,LazyEval0,Target,TargetCode,TargetCodeN),
    compile_flow_control_case(HeadIs,LazyVars,RestResult,RestResultN,LazyEval1,ValueResult,Rest,RestCode,RestCodeN),
    arg_properties_widen(LazyEval0,LazyEval1,LazyEval),
-   append(TargetCode,[[assign,RetResult,TargetResult]],T),
-   append(RestCode,[[assign,RetResult,RestResult]],R),
+   lazy_impedance_match(LazyEval0,LazyEval,TargetResult,TargetCode,TargetResultN,TargetCodeN,TargetResult1,TargetCode1),
+   lazy_impedance_match(LazyEval1,LazyEval,RestResult,RestCode,RestResultN,RestCodeN,RestResult1,RestCode1),
+   append(TargetCode1,[[assign,RetResult,TargetResult1]],T),
+   append(RestCode1,[[assign,RetResult,RestResult1]],R),
    append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],T,R]],Converted),
-   append(TargetCodeN,[[assign,RetResultN,TargetResultN]],TN),
-   append(RestCodeN,[[assign,RetResultN,RestResultN]],RN),
+   append(TargetCode1,[[assign,RetResult,TargetResult1]],TN),
+   append(RestCode1,[[assign,RetResult,RestResult1]],RN),
    append(MatchCode1,[[prolog_if,[[prolog_match,ValueResult,MatchResult1]],TN,RN]],ConvertedN).
 
 /*
@@ -304,7 +305,7 @@ transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,
 match_pattern(Space, Pattern):-
     if_t(compound(Pattern),
        (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
-    metta_atom_fast(Space, Atom), Atom=Pattern.
+    metta_atom(Space, Atom), Atom=Pattern.
 
 transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
@@ -376,6 +377,15 @@ transpiler_predicate_store(builtin, 'assertEqualToResult', [2], '@doc', '@doc', 
         ['assertEqualToResult',A,B],AA,B,
         ('mc__1_1_collapse'(A,AA)),
          equal_enough_for_test_renumbered_l(strict_equals_allow_vn,AA,B), C).
+
+
+transpiler_predicate_store(builtin, 'assertAlphaEqual', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_assertAlphaEqual'(A,B,C) :-
+   loonit_assert_source_tf_empty(
+        ['assertAlphaEqual',A,B],AA,BB,
+        ('mc__1_1_collapse'(A,AA),
+         'mc__1_1_collapse'(B,BB)),
+         equal_enough_for_test_renumbered_l(alpha_equ,AA,BB), C).
 
 transpiler_predicate_store(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
 'mc__1_1_quote'(A,['quote',A]).
