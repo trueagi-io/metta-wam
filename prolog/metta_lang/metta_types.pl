@@ -1063,7 +1063,7 @@ as_prolog(0, Self, [CC | List], O) :-
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
 
-as_prolog(_, Self, exec(Eval), O) :- !, default_depth(DEFAULT_DEPTH),eval_args(DEFAULT_DEPTH, Self, Eval, O).
+as_prolog(_, Self, exec(Eval), O) :- default_depth(DEFAULT_DEPTH),!,eval_args(DEFAULT_DEPTH, Self, Eval, O).
 as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
@@ -1077,7 +1077,8 @@ as_prolog(N, Self, [At| List], O) :-
     atom(HH), !,
     compound_name_arguments(O, HH, L).
 
-
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term(I),!,writeq(cyclic_term(I)),fail,trace, I=O.
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term(O),!,writeq(cyclic_term(O)),fail,trace, I=O.
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
