@@ -2,8 +2,9 @@
 ; Entry point
 ; ----------------------------------------
 
-(Player X)
-(Player O)
+;; so we know they are not Number
+(: X Player) 
+(: O Player)
 
 (= (start-game)
   (let* 
