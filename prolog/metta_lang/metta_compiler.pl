@@ -624,7 +624,8 @@ lazy_impedance_match(x(_,lazy,_),x(noeval,lazy,_),_ValE,_CodeE,ValN,[],ValN,[]) 
 lazy_impedance_match(x(_,lazy,_),x(doeval,lazy,_),ValE,[],_ValN,_CodeN,ValE,[]) :- !.
 lazy_impedance_match(x(_,lazy,_),x(_,lazy,_),ValE,CodeE,ValN,CodeN,Val,Code) :- !,
    append(CodeE,[[native(as_p1_exec),ValE,RetResultE]],CodeAE),
-   append(CodeN,[[assign,ValN,RetResultN]],CodeAN),
+   append(CodeN,[[native(as_p1_expr),ValN,RetResultN]],CodeAN),
+   %append(CodeN,[[assign,ValN,RetResultN]],CodeAN),
    create_p1(RetResultE,CodeAE,RetResultN,CodeAN,P1),Code=[[assign,Val,P1]].
 %lazy_impedance_match(x(_,lazy,_),x(_,lazy,_),ValE,CodeE,ValN,CodeN,Val,Code) :- !,
 %   append(CodeE,[[native(as_p1_exec),ValE,RetResultE]],CodeAE),
