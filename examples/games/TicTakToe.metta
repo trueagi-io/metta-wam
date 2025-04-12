@@ -6,16 +6,15 @@
 (Player O)
 
 (= (start-game)
-  (superpose (
-      (println! "If you want AI to play by itself press enter, otherwise choose X or O.")
-      (collapse (case (read-atom)
+  (let* 
+	(($_1 (println! "If you want AI to play by itself press enter, otherwise choose X or O."))
+     ($_2 (case (read-atom)
           ((X (add-atom &self (is-human X)))
             (x (add-atom &self (is-human X)))
             (o (add-atom &self (is-human O)))
             (O (add-atom &self (is-human O)))
             ($_))))
-			         
-      (play-now))))
+	($_3 (play-now))) True))
 
 (= (play-now) (play-game (1 2 3 4 5 6 7 8 9) X))
 
@@ -25,16 +24,16 @@
 ; ----------------------------------------
 
 (= (play-game $Board $Player)
-  (superpose ((display-board $Board)
+  (let $_1 (display-board $Board)
       (let $Winner (collapse (winner $Board))
-        (if (not (== () $Winner))
+        (if (non-empty $Winner)
           (println! ($Winner "wins!"))
           (if (is-tie $Board)
             (println! ("It was a draw!"))
             (let $Move (choose-move $Board $Player)
-              (let $_ (println! ($Player Move $Move))
+              (let $_2 (println! ($Player Move $Move))
                 (let $NewBoard (move $Board $Move $Player)
-                  (play-game $NewBoard (opponent $Player)))))))))))
+                  (play-game $NewBoard (opponent $Player))))))))))
 
 ; ----------------------------------------
 ; Display the board
@@ -75,25 +74,25 @@
 (= (computer-move $Board $Player)
   (let $Opponent (opponent $Player)
     (let $Moves (available-moves $Board)
-      (superpose
-        ((println! ("Computer is moving as " $Player "..."))
-          (let $Move (winning-move $Board $Player)
+      (let $_ (println! ("Computer is moving as " $Player "..."))
+          (let $Move (collapse (winning-move $Board $Player))
             (if (non-empty $Move)
-              $Move
-              (let $Move2 (winning-move $Board $Opponent)
+              (car-atom $Move)
+              (let $Move2 (collapse (winning-move $Board $Opponent))
                 (if (non-empty $Move2)
-                  $Move2
-                  (random-atom $Moves))))))))))
+                  (car-atom $Move2)
+                  (random-atom $Moves)))))))))
 
 (= (move-choices $Board)
     (let $Moves (available-moves $Board)
-	  (let $Place (superpose $Moves) $Place)))
+	   (superpose $Moves)))
 
 (= (winning-move $Board $Player)
     (let $Place (move-choices $Board)
       (let $Player (winner (move $Board $Player $Place))
 		   $Place)))
 
+(= (non-empty $list) (not (== () $list)))
 ; ----------------------------------------
 ; Game over / winner
 ; ----------------------------------------
@@ -138,7 +137,7 @@
 ;; (: move (-> Expression Number Atom Expression))
 (= (move $list $index $replacement)
   (if (== $index 1)
-    (cons-atom $replacement (cdr-atom $list))
+    (let $rest (cdr-atom $list) (cons-atom $replacement $rest))
     (let* (($head (car-atom $list))
            ($rest (cdr-atom $list))
            ($idx (- $index 1))
@@ -162,4 +161,5 @@
 
 
 ; !(start-game)
+!(play-now)
 
