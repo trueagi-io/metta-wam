@@ -184,7 +184,7 @@
         ("g"  7)
         ("h"  8)
         ;otherwise
-        ($_   9) ; <-- in case user inputs bad char, this will result in a fail.
+        ($_   NIL) ; <-- in case user inputs bad char, this will result in a fail.
         )))
 
 ;***************************************************************
@@ -208,6 +208,24 @@
         (8 h)
         ($_ ?) ; fallback for invalid input
         )))
+
+;***************************************************************
+; Function:     return_length
+; Description:  Calculates the number of characters in a given symbol.
+;               Converts the symbol to a character list using `stringToChars`,
+;               then returns the size of that list.
+;
+; Input:        $symbol - A string or symbol (e.g., "a2a3")
+;
+; Output:       Integer representing the number of characters in the symbol.
+;
+; Example:      (return_length "a2a3") ⇒ 4
+;
+; Notes:        Useful for validating input lengths, such as move commands.
+;               Also works for symbols, eg., a2a3 with no quotes.
+;***************************************************************
+(= (return_length $symbol)
+  (let $list_from_symbol (stringToChars $symbol) (size-atom $list_from_symbol)))
 
 ;***************************************************************
 ; Function:     convert_x_letter
@@ -629,6 +647,69 @@
           $pieces)))))
 
 ;***************************************************************
+; Function:     game-still-playing
+; Description:  Determines whether the chess game is still active
+;               based on the current `game-state` atom.
+;
+; Input:        None (uses `match` to query the atomspace)
+;
+; Output:       Boolean:
+;                 - False if the game is in state "checkmate" or "resigned"
+;                 - True  otherwise (game still in progress)
+;
+; Usage:        Called before allowing further commands or moves.
+;***************************************************************
+(= (game-still-playing) 
+  (match &self (game-state $msg)
+   (if (xor (==  checkmate   $msg) (==  resigned $msg)) 
+      False
+      True)))
+
+;***************************************************************
+; Function:     prompt-for-move
+; Description:  Interactively prompts the player to enter a move as
+;               a 4-character string (e.g., "a2a3"). Verifies that:
+;                 - The input string is exactly 4 characters long
+;                 - Each character maps to a valid board coordinate
+;
+; Input:        None (reads from console using `py-atom input`)
+;
+; Output:       If valid:
+;                  - A pair of coordinate lists:
+;                      (x1 y1) - source square
+;                      (x2 y2) - destination square
+;               If invalid:
+;                  - Recursively re-prompts until valid input is given.
+;
+; Example:      Input "e2e4" ⇒ returns ((5 2) (5 4))
+;***************************************************************
+(= (prompt-for-move)
+  (let*
+    (
+    ; prompt for x/y location
+    ($__1 ((py-atom print) "Enter valid coordinates."))
+    ($coordinates ((py-atom input)))
+    ; make sure we have 4 chars, otherwise NIL
+    ($input_length (return_length $coordinates))
+    ($x1 (if (== $input_length 4)
+      (char_to_int ((py-dot $coordinates __getitem__) 0)) NIL))
+    ($y1 (if (== $input_length 4)
+      (char_to_int ((py-dot $coordinates __getitem__) 1)) NIL))
+    ($x2 (if (== $input_length 4)
+      (char_to_int ((py-dot $coordinates __getitem__) 2)) NIL))
+    ($y2 (if (== $input_length 4)
+      (char_to_int ((py-dot $coordinates __getitem__) 3)) NIL))
+    ; return NIL if off scale input and redo the prompt
+    ($error_check (contains_symbol ($x1 $y1 $x2 $y2) NIL))
+    ($f (concat_lists ( ($x1) ($y1))) ) ; Create the source coordinate list.
+    ($g (concat_lists ( ($x2) ($y2))) ) ; Create the destination coordinate list.
+    )
+    ; if invalid coordinates, try again
+    (if (== True $error_check)   
+      (prompt-for-move)
+      ($f $g))))
+
+;***************************************************************
 ; Function:     decide_greedy_move
 ; Description:  Core decision-making logic for the AI's move.
 ;               Attempts multiple strategies:
@@ -674,7 +755,14 @@
 
           (let* (
         ($msg4 (println! "looking for threat position..."))
-        ($threaten_position (collapse (movetoposition))))
+        ($random_threat (random-int  &rng 1 3)) ; get a random number 1 through 2
+        ($threaten_position 
+                (if (> $random_threat 1)     
+                  (collapse (movetoposition))
+                  ; return empty parens and skip randomly
+                  ()
+                  ))
+                )
         (if (not (==  $threaten_position ()))
           (car-atom $threaten_position)
 
@@ -720,7 +808,6 @@
 (= (try_move_and_verify ($x1 $y1 g $rank)   ($x2 $y2) $mode)
   (let*
     ( 
-    ($debug IEFBR14)
     ($start ($x1 $y1 g $rank))
     ($dest ($x2 $y2))
     ($dest_full (return_entire_box $dest))
@@ -809,13 +896,16 @@
                   ; try to move pawns out from home row early in the game
                   (if (== (lots_of_pawns_in_home_row) True) 
                   1
-                  (random-int  &rng 1 5))) 
+                  (random-int  &rng 1 8))) 
             ($rank_level (case $random_level
                         (
                         (1 lowrank)
                         (2 medrank) 
                         (3 highrank)
-                        (4 highestrank)
+                        (4 lowrank)
+                        (5 medrank) 
+                        (6 highrank)
+                        (7 highestrank) ;reduce likelihood of king moving for no good reason
                         ($_ lowrank)
                         )))
                   ;($debug (println! $rank_level))
@@ -959,9 +1049,12 @@
                 ($__1  (move_piece $start $dest))  
                 ; with move envisioned, see if the silver king can escape using any moves whatsoever
                 ($any_moves_left_whatsoever (collapse (any_moves_to_escape s)))
+                ; make sure gold AI king safe
+                ($king_status (checkking g))
                 ($__2 (reset_pieces $start $dest_full))
               )
-              (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+              (if (and (== $any_moves_left_whatsoever ()) ;an empty list means no moves for escape exist.
+                       (== $king_status False))
                     ; if no moves possible for human, Greedy Chess has found checkmate, success! 
                     $test_move
                     (empty))))))
@@ -1157,7 +1250,7 @@
 ;*************************************************************************
 (= (playdefense)
   (let $defense_all
-    (collapse (playdefense_match (superpose (q r n b))))
+    (collapse (playdefense_match (superpose (k q r n b))))
     (if (== $defense_all ())
       (empty)
       (let*
@@ -1177,7 +1270,7 @@
 ;               and attempts to find a safe, unoccupied square to retreat to.
 ;
 ; Input:        
-;   - $AI_rank: The type of gold (AI) piece (q, r, n, b).
+;   - $AI_rank: The type of gold (AI) piece 
 ;
 ; Output:       
 ;   - A list of viable escape moves, where the AI piece:
@@ -1738,34 +1831,23 @@
             ; otherwise rook bad move
                False)))))
       )
-      (if (and 
-          (== $RouteClearBool True)
-          ; straight vertical 
-          (xor 
-            (and
-              (== $X2 $X1)
-              (xor
-              (> $Y2 $Y1)
-              (< $Y2 $Y1)))
-          ; straight sideways 
-            (and
-              (== $Y2 $Y1)
-              (xor
-              (> $X2 $X1)
-              (< $X2 $X1)))))
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckup (-> Atom Atom Atom Bool))
 (: clearcheckdown (-> Atom Atom Atom Bool))
 (: clearcheckleft (-> Atom Atom Atom Bool))
 (: clearcheckright (-> Atom Atom Atom Bool))
 
-
+; These helper routines for the rook move work by testing for empty squares for the rook to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckup $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (< $Y1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1776,8 +1858,13 @@
               False))))
 
 (= (clearcheckdown $X $Y1 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (> $Y1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $Y1 $Y2) 
           True
@@ -1788,8 +1875,13 @@
               False))))
 
 (= (clearcheckright $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if  (< $X1 9) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1800,8 +1892,13 @@
               False))))
 
 (= (clearcheckleft $X1 $X2 $Y) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (> $X1 0)
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (== $X1 $X2) 
           True
@@ -1831,47 +1928,58 @@
                (clearcheckSW (- $X1 1) (- $Y1 1) $X2 $Y2)
             ; otherwise bishop bad move
                False)))))
-      ;($debug (println! $RouteClearBool))
       )
-      (if  
-          (== $RouteClearBool True)
-        True
-        False
-        )))
+      $RouteClearBool))
 
 (: clearcheckNE (-> Atom Atom Atom Atom Bool))
 (: clearcheckSE (-> Atom Atom Atom Atom Bool))
 (: clearcheckNW (-> Atom Atom Atom Atom Bool))
 (: clearcheckSW (-> Atom Atom Atom Atom Bool))
 
-
+; These helper routines for the bishop move work by testing for empty squares for the bishop to pass to its destination.
+; Sanity checks are included so we don't exceed the space on the board, and if so, return False.
 (= (clearcheckNE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckNE (+ 1 $X1) (+ 1 $Y1) $X2 $Y2)
+              (clearcheckNE (+ $X1 1) (+ $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckSE $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
               ; Not on destination, check for empty passing square
           (if (== (size-atom $next_box) 2)
-              (clearcheckSE (+ 1 $X1) (- $Y1 1) $X2 $Y2)
+              (clearcheckSE (+ $X1 1) (- $Y1 1) $X2 $Y2)
               ; if there is a piece in box we cannot move through this square (size 4 is occupied)
               False))))
 
 (= (clearcheckNW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
@@ -1882,8 +1990,13 @@
               False))))
 
 (= (clearcheckSW $X1 $Y1 $X2 $Y2) 
-   (let* (
-        ($next_box (return_entire_box ($X1 $Y1)))
+   (let $next_box 
+        ; make sure valid square lookup possible
+        (if (and (and (< $X1 9) (> $X1 0)) (and (< $Y1 9) (> $Y1 0))) 
+          ;return all the contents of the square
+          (return_entire_box ($X1 $Y1)) 
+          ; else in this case, either x or y is invalid, setting to size-atom 0 will result in False below.
+          ()  
           )
         (if (and (== $Y1 $Y2) (== $X1 $X2))
           True
@@ -2352,13 +2465,6 @@
     (; else if
         empty))))) 
 
-; helper routine
-(= (game-still-playing) 
-  (match &self (game-state $msg)
-   (if (xor (==  checkmate   $msg) (==  resigned $msg)) 
-      False
-      True)))
-  
 ;(: M (-> command))
 (= (M)  
   (if (== (game-still-playing) False)
@@ -2366,39 +2472,32 @@
     ; else keep playing
     (progn 
     ; prompt for x/y location
-    ((py-atom print) "Enter coordinates.")
-    (let $coordinates ((py-atom input)) ())
-    ;TO-DO, fail if char_to_int returns and 9s.
-    (let $bad_input_sw False ())
-    (let $x1 (char_to_int ((py-dot $coordinates __getitem__) 0)) ())
-    (let $y1 (char_to_int ((py-dot $coordinates __getitem__) 1)) ())
-    (let $x2 (char_to_int ((py-dot $coordinates __getitem__) 2)) ())
-    (let $y2 (char_to_int ((py-dot $coordinates __getitem__) 3)) ())
-    (let $f (concat_lists ( ($x1) ($y1))) ()) ; Create the source coordinate list.
-    (let $g (concat_lists ( ($x2) ($y2))) ()) ; Create the destination coordinate list.
+    (let $coord (prompt-for-move) ())
+    (let $f (nth 1 $coord) ())
+    (let $g (nth 2 $coord) ())
     ; get the current board
     (match &self (board-state $starting_board) $starting_board)
     ; reset, then add each piece to atomspace to work with individually with form eq '(square 1 1 s r)'
     (reset-pieces $starting_board)
-    ; check if source location and destination are not the same
-    (if (not (== $f $g))                            
+    (let $entire_source (return_entire_box $f) ())
+    ; check if source location and destination are not the same, and if there is piece to move.
+    (if (and (not (== $f $g)) (== (size-atom $entire_source) 4))                            
      ; check if destination is empty or destination has opponent's piece  
       (progn 
       ; Retrieve the source box details.
       (let $h (return_entire_box $f) ())
-            ;does not return here!
       ; Retrieve the destination box details.
       (let $i (return_entire_box $g) ()) 
       (let $dest_color (if (== (size-atom $i) 4) 
                            (nth 3 $i)
                             NIL) ())
       ; Check there is a piece to move.
-      (if (and1 (== (size-atom $h) 4)                                    
-               (xor1  
+      (if (and (== (size-atom $h) 4)                                    
+               (xor  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
                ; OK to take another piece, check color is not the same...
-               (and1 (== (size-atom $i) 4) (not1 (== (nth 3 $h) $dest_color)))))
+               (and (== (size-atom $i) 4) (not (== (nth 3 $h) $dest_color)))))
         ; Validate the path for the piece.
         (if (== (clear_route $h $i) True)               
           ; Try moving piece provisionally
@@ -2434,8 +2533,8 @@
                                   ((py-atom print) "")
                                   (change-game-state checkmate)
                                 )
-                                (println! "Check!")))
-                          ()  ))
+                                (println! "Check! Enter g for Greedy Chess move.")))
+                          (println! "Enter g for Greedy Chess move.")  ))
                   )
               )
           )
@@ -2445,7 +2544,7 @@
       )
       )
       ;else (trying to move to same location)
-      ((py-atom print) "Can't move to same location.")) 
+      ((py-atom print) "Invalid move.")) 
     ; since move complete, delete any individual square atoms which only live for a single move.
     (delete-pieces)
     )))

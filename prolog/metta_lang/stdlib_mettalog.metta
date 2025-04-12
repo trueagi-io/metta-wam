@@ -478,9 +478,6 @@ For example:
 ;; ==> (= (index-atom $L $N) (call-fn! nth0 $N $L))
 
 
-
-
-
 (iz pow-math MeTTa)
 (@doc pow-math
   (@desc "Takes base (first argument) and power (second argument) and returns result of a power function (base ^ power)")
@@ -490,7 +487,14 @@ For example:
   (@return "Result of base raised to the power"))
 
 
-(= (pow-math $B $P) (call-fn! pow $B $P))
+; Define a variable using a function call to compute the power of a base number to an exponent
+; The result of the computation is stored in the variable `pow-math`
+
+; Assign the result of a function call to `pow-math`
+(= (pow-math $B $P)
+   ; Call the function `pow` with arguments `$B` and `$P` to calculate the power
+   (call-fn! pow $B $P))
+
 
 (==> (is-op-1 $m $p) (is-fn-1 $m $p))
 (==> (is-op-1 $m $_) (: $m (-> Number Number)))

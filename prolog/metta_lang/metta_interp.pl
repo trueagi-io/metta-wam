@@ -563,7 +563,7 @@ is_flag0(What) :-
     current_prolog_flag(What, TF),is_tRuE(TF),!.
 is_flag0(What) :-
     % Check if the flag exists as a Prolog configuration flag and is false.
-    current_prolog_flag(What, TF),is_fAlSe(TF),!.
+    current_prolog_flag(What, TF),is_fAlSe(TF),!,fail.
 is_flag0(What) :-
     % Build flag strings for parsing command-line arguments.
     symbol_concat('--', What, FWhat),
@@ -1541,10 +1541,12 @@ set_option_value_interp(N,V):-
 %
 
 % Map string logical values ('True', 'False') to their atom equivalents.
+
 on_set_value(Note,N,'True'):- nocut,
     on_set_value(Note,N,true).    % true
 on_set_value(Note,N,'False'):- nocut,
     on_set_value(Note,N,false).   % false
+on_set_value(_Note,abolish_trace,true):- nocut, ignore(abolish_trace),!.
 on_set_value(_Note,log,true):-
     % Switch to mettalog mode if 'log' is set to true.
     switch_to_mettalog,!.
@@ -1657,6 +1659,7 @@ set_is_unit_test(false):-
     !.
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
+    abolish_trace,
     % Reset all options to their default values.
     reset_default_flags,
     % Disable specific trace settings during unit testing.
@@ -1702,6 +1705,7 @@ fake_notrace(G) :-
 %
 %   @arg Goal The goal to execute.
 %
+real_notrace(Goal) :- !, notrace(Goal).
 real_notrace(Goal) :-
     % Temporarily disable tracing and execute the goal.
     setup_call_cleanup(
@@ -7018,8 +7022,7 @@ qsave_program(Name) :-
 %
 %   Main entry point for initializing or running `nts1`.
 %
-nts :-
-    nts1.
+% nts :- nts1.
 
 %!  nts1 is det.
 %
@@ -7028,7 +7031,8 @@ nts :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-%nts1 :- !. % Dont Disable redefinition by cutting execution.
+%nts1 :- !. % Disable redefinition by cutting execution.
+%nts1 :- is_flag(notrace),!.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
@@ -7041,15 +7045,12 @@ nts1 :-
   meta_predicate(system:notrace(0)),
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta((
-        system:notrace(G) :-
-            (!, once(G)
-    ))).
+    asserta(( system:notrace(G) :- (!, once(G) ))).
 nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
-:-nts1.
+%:-nts1.
 :- initialization(nts1).
 %!  nts0 is det.
 %

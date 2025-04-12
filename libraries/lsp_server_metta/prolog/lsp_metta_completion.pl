@@ -1,33 +1,39 @@
-% :- module(lsp_metta_completion, [completions_at/3]).
-% /** <module> LSP Completion
-%
-% This module implements code completion, based on defined predicates in
-% the file & imports.
-%
-% Uses =lsp_metta_changes= in order to see the state of the buffer being edited.
-%
-% @see lsp_metta_changes:doc_text_fallback/2
-%
-% @author James Cash
-% */
-%
+:- module(lsp_metta_completion, [completions_at/3]).
+/** <module> LSP Completion
+
+This module implements code completion, based on defined predicates in
+the file & imports.
+
+Uses =lsp_metta_changes= in order to see the state of the buffer being edited.
+
+@see lsp_metta_changes:doc_text_fallback/2
+
+@author James Cash
+*/
+
 
 % Douglas added
-:- use_module(library(http/http_open)).  % For making HTTP requests
-:- use_module(library(http/json)).       % For handling JSON
+:- use_module(library(http/http_open)).   % For making HTTP requests
+:- use_module(library(http/json)).        % For handling JSON
 :- use_module(library(http/http_header)).
 
 :- use_module(library(apply), [maplist/3]).
 :- use_module(library(lists), [numlist/3]).
 :- use_module(library(yall)).
 :- use_module(library(filesex)).
-%:- use_module(lsp_metta_utils, [linechar_offset/3]).
-:- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
-
 
 :- include(lsp_metta_include).
 
-:- use_module(lsp_metta_workspace, [source_file_text/2, xref_metta_source/1]).
+:- use_module(lsp_prolog_utils, [linechar_offset/3]).
+:- use_module(lsp_metta_changes, [doc_text_fallback_d4/2]).
+
+
+:- use_module(lsp_metta_llm, [is_llm_enabled/0,
+                              request_code_completion/2]).
+
+
+
+:- use_module(lsp_metta_workspace).
 
 :- discontiguous(handle_completions/3).
 
@@ -67,28 +73,27 @@ completions_at(File, Position, Completions) :-
             % Use definitions from the current file, corelib, and stdlib
             % TODO: also look at imported definitions?
             ( ( metta_atom_xref(Atom, File, _Loc)
-              ; ( metta_atom_xref(Atom, Path, _),
-                  directory_file_path(_, F, Path),
-                  memberchk(F, ['corelib.metta', 'stdlib_mettalog.metta']) )
+                ; ( metta_atom_xref(Atom, Path, _),
+                    directory_file_path(_, F, Path),
+                    memberchk(F, ['corelib.metta', 'stdlib_mettalog.metta']) )
               ),
-              (( Atom = [':>', Defn|_]
-               ; Atom = [':', [Defn|_]|_]
-               ; Atom = [':', Defn|_]
-               ; Atom = ['=', [Defn|_]|_]
-               ; Atom = ['=', Defn|_]
-               )),
+              member(Atom, [[':>', Defn|_],
+                            [':', [Defn|_]|_],
+                            [':', Defn|_],
+                            ['=', [Defn|_]|_],
+                            ['=', Defn|_]]),
               atom(Defn),
               atom_concat(Prefix, _, Defn),
               Result = _{label: Defn,
                          insertText: Defn,
-                         insertTextFormat: 1}),
+                         insertTextFormat: 1} ),
             Completions
-           ).
+    ).
 %
 args_str(Arity, Str) :-
     numlist(1, Arity, Args),
     maplist([A, S]>>format(string(S), "${~w:_}", [A]),
-           Args, ArgStrs),
+            Args, ArgStrs),
     atomic_list_concat(ArgStrs, ', ', Str).
 
 
@@ -98,16 +103,45 @@ args_str(Arity, Str) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Completion Handlers
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lsp_hooks:handle_msg_hook(Method,Msg,Response):- handle_completions(Method,Msg,Response).
+lsp_hooks:handle_msg_hook(Method, Msg, Response):- handle_completions(Method, Msg, Response).
+
+should_llm_complete_inline :- getenv('LSP_LLM_COMPLETE_INLINE', "true").
 
 handle_completions("textDocument/completion", Msg, _{id: Id, result: Completions}) :-
-     _{id: Id, params: Params} :< Msg,
-     _{textDocument: _{uri: Uri},
-       position: _{line: Line0, character: Char0}} :< Params,
-     path_doc(Path, Uri),
-     succl(Line0, Line1),
-     completions_at(Path, line_char(Line1, Char0), Completions).
+    _{id: Id, params: Params} :< Msg,
+    _{textDocument: _{uri: Uri},
+      position: _{line: Line0, character: Char0}} :< Params,
+    path_doc(Path, Uri),
+    succ(Line0, Line1),
+    completions_at(Path, line_char(Line1, Char0), Completions0),
+    ( is_llm_enabled, should_llm_complete_inline
+    -> llm_complete(Uri, line_char(Line0, Char0), Completions, Completions0)
+    ; Completions = Completions0 ).
 
+
+llm_complete(Uri, Position, Completions, CompletionsTail) :-
+    completion_context(Uri, Position, Ctx),
+    ( request_code_completion(Ctx, LLMSuggestions) -> true ; LLMSuggestions = [] ),
+    findall(Completion,
+            ( member(Suggestion, LLMSuggestions),
+              Completion = _{label: Suggestion,
+                             insertText: Suggestion,
+                             insertTextFormat: 1} ),
+            Completions,
+            CompletionsTail).
+
+completion_context(Uri, line_char(Line0, Char0), Context) :-
+    % not using prefix_at/3 here, because for the LLM we want to give it the whole line as context
+    get_document_lines(Uri, Lines),
+    nth0(Line0, Lines, Line),
+    ( Char0 = end -> string_length(Line, Char) ; Char = Char0 ),
+    sub_string(Line, 0, Char, _, Context0),
+    string_code(1, Context0, FirstCode),
+    ( code_type(FirstCode, white), Line0 > 0
+    -> PrevLine is Line0 - 1,
+       completion_context(Uri, line_char(PrevLine, end), LeadingCtx),
+       string_concat(LeadingCtx, Context0, Context)
+    ; Context = Context0 ).
 
 % Handle the 'textDocument/completion' Request
 handle_completions("textDocument/completion", Msg, _{id: Id, result: CompletionList}) :-
@@ -129,8 +163,8 @@ compute_completions_combined(Uri, Position, CompletionList) :-
     find_local_completions(Word, LocalCompletions),
     % Step 2: Call OpenAI to get completions if API key is set
     (   Word \= '', getenv('OPENAI_API_KEY', ApiKey) ->
-        call_openai_for_completions(Word, OpenAICompletions, ApiKey)
-    ;   OpenAICompletions = []),
+            call_openai_for_completions(Word, OpenAICompletions, ApiKey)
+        ;   OpenAICompletions = []   ),
     % Step 3: Merge both local and OpenAI completions
     append(LocalCompletions, OpenAICompletions, AllCompletions),
     process_completions(AllCompletions, CompletionList).
@@ -145,30 +179,30 @@ resolve_completion_item(CompletionItem, ResolvedItem) :-
 % Find completions from predefined symbols
 find_local_completions(Word, CompletionItems) :-
     findall(CompletionItem,
-        (
-            symbol_possibility(Symbol),
-            (Word == '' ; sub_atom(Symbol, 0, _, _, Word)),  % Match symbols starting with Word
-            CompletionItem = _{
-                label: Symbol,
-                kind: 1,  % 1 indicates a "Text" kind in LSP
-                data: Symbol  % Include symbol name in data for resolution
-            }
-        ),
-        CompletionItems).
+            (
+                symbol_possibility(Symbol),
+                (Word == '' ; sub_atom(Symbol, 0, _, _, Word)),  % Match symbols starting with Word
+                CompletionItem = _{
+                                     label: Symbol,
+                                     kind: 1,  % 1 indicates a "Text" kind in LSP
+                                     data: Symbol  % Include symbol name in data for resolution
+                }
+            ),
+            CompletionItems).
 
 
 % Process and convert completions into LSP CompletionItems
 process_completions(Completions, CompletionList) :-
     findall(CompletionItem,
-        (
-            member(Completion, Completions),
-            CompletionItem = _{
-                label: Completion,
-                kind: 1,  % 1 indicates a "Text" kind in LSP
-                data: Completion  % Include the completion text as data for resolution
-            }
-        ),
-        Items),
+            (
+                member(Completion, Completions),
+                CompletionItem = _{
+                                     label: Completion,
+                                     kind: 1,  % 1 indicates a "Text" kind in LSP
+                                     data: Completion  % Include the completion text as data for resolution
+                }
+            ),
+            Items),
     CompletionList = _{isIncomplete: false, items: Items}.
 
 % Get the current word at the cursor position
@@ -212,9 +246,9 @@ contains_symbol(Line, Symbol, StartChar, EndChar) :-
 % Check if the symbol is a whole word in the line
 is_whole_word(Line, StartChar, EndChar) :-
     ( StartChar =:= 0
-    ; StartBefore is StartChar - 1,
-      sub_atom(Line, StartBefore, 1, _, BeforeChar),
-      \+ code_type(BeforeChar, csym)
+      ; StartBefore is StartChar - 1,
+        sub_atom(Line, StartBefore, 1, _, BeforeChar),
+        \+ code_type(BeforeChar, csym)
     ),
     ( sub_atom(Line, EndChar, 1, _, AfterChar)
     -> \+ code_type(AfterChar, csym)
@@ -241,10 +275,10 @@ symbol_documentation(_, "No documentation available.").
 % run with:
 %                  clear ; cat lsp_server_metta_llm.pl ; swipl -s lsp_server_metta_llm.pl -g test_for_completions_with_context,test_for_completions_with_context,run_tests,halt
 
-:- use_module(library(http/http_client)).  % Ensure HTTP client is loaded
+:- use_module(library(http/http_client)).   % Ensure HTTP client is loaded
 :- use_module(library(http/http_open)).
-:- use_module(library(http/http_json)).    % Correct JSON library for SWI-Prolog
-:- use_module(library(readutil)).          % For reading file content
+:- use_module(library(http/http_json)).     % Correct JSON library for SWI-Prolog
+:- use_module(library(readutil)).           % For reading file content
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Non-context version
@@ -257,14 +291,14 @@ call_openai_for_completions(Word, Completions, ApiKey) :-
 
     % Construct the request payload for gpt-3.5-turbo model
     RequestPayload = _{
-        model: "gpt-3.5-turbo",
-        messages: [
-            _{role: "system", content: "You are a helpful assistant."},
-            _{role: "user", content: Word}
-        ],
-        max_tokens: 10,
-        n: 5,
-        stop: "\n"
+                         model: "gpt-3.5-turbo",
+                         messages: [
+                             _{role: "system", content: "You are a helpful assistant."},
+                             _{role: "user", content: Word}
+                                   ],
+                         max_tokens: 10,
+                         n: 5,
+                         stop: "\n"
     },
 
     % Print the request payload for diagnostics
@@ -290,13 +324,13 @@ call_openai_for_completions(Word, Completions, ApiKey) :-
 
             % Extract the completions from the response
             (   _{choices: Choices} :< ResponseDict ->
-                extract_choices(Choices, Completions),
-                writeln('Extracted Completions:'),
-                writeln(Completions),
-                flush_output  % Ensure the output is printed immediately
-            ;   Completions = [],
-                writeln('No completions returned.'),
-                flush_output  % Ensure the output is printed immediately
+                    extract_choices(Choices, Completions),
+                    writeln('Extracted Completions:'),
+                    writeln(Completions),
+                    flush_output  % Ensure the output is printed immediately
+                ;   Completions = [],
+                    writeln('No completions returned.'),
+                    flush_output  % Ensure the output is printed immediately
             )
         )
     ;   writeln('Error: API key not set'),
@@ -323,14 +357,14 @@ call_openai_for_completions_with_context(Word, Context, Completions, ApiKey) :-
 
     % Construct the request payload for gpt-3.5-turbo model
     RequestPayload = _{
-        model: "gpt-3.5-turbo",
-        messages: [
-            _{role: "system", content: "You are a helpful assistant."},
-            _{role: "user", content: Prompt}
-        ],
-        max_tokens: 10,
-        n: 5,
-        stop: "\n"
+                         model: "gpt-3.5-turbo",
+                         messages: [
+                             _{role: "system", content: "You are a helpful assistant."},
+                             _{role: "user", content: Prompt}
+                                   ],
+                         max_tokens: 10,
+                         n: 5,
+                         stop: "\n"
     },
 
     % Print the request payload for diagnostics
@@ -356,13 +390,13 @@ call_openai_for_completions_with_context(Word, Context, Completions, ApiKey) :-
 
             % Extract the completions from the response
             (   _{choices: Choices} :< ResponseDict ->
-                extract_choices(Choices, Completions),
-                writeln('Extracted Completions:'),
-                writeln(Completions),
-                flush_output  % Ensure the output is printed immediately
-            ;   Completions = [],
-                writeln('No completions returned.'),
-                flush_output  % Ensure the output is printed immediately
+                    extract_choices(Choices, Completions),
+                    writeln('Extracted Completions:'),
+                    writeln(Completions),
+                    flush_output  % Ensure the output is printed immediately
+                ;   Completions = [],
+                    writeln('No completions returned.'),
+                    flush_output  % Ensure the output is printed immediately
             )
         )
     ;   writeln('Error: API key not set'),
@@ -379,12 +413,12 @@ extract_choices(Choices, Completions) :-
     writeln('Choices received:'),
     writeln(Choices),
     findall(CompletionText,
-        (
-            member(Choice, Choices),
-            get_dict(message, Choice, Message),
-            get_dict(content, Message, CompletionText)  % Extract the content from message
-        ),
-        Completions).
+            (
+                member(Choice, Choices),
+                get_dict(message, Choice, Message),
+                get_dict(content, Message, CompletionText)  % Extract the content from message
+            ),
+            Completions).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Tests
@@ -422,11 +456,11 @@ test(call_openai_for_completions_with_context) :-
 test(response_parsing) :-
     % Mock OpenAI chat response for testing
     MockResponse = _{
-        choices: [
-            _{message: _{content: "completion_1"}},
-            _{message: _{content: "completion_2"}},
-            _{message: _{content: "completion_3"}}
-        ]
+                       choices: [
+                           _{message: _{content: "completion_1"}},
+                           _{message: _{content: "completion_2"}},
+                           _{message: _{content: "completion_3"}}
+                                ]
     },
     extract_choices(MockResponse.choices, Completions),
     assertion(Completions == ["completion_1", "completion_2", "completion_3"]).
@@ -451,8 +485,5 @@ test_for_completions_with_context(FilePath) :-
     writeq(Completions), nl.
 
 test_for_completions_with_context:-
-  test_for_completions_with_context('context_file.txt').
-
-
-
+    test_for_completions_with_context('context_file.txt').
 

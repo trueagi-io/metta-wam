@@ -1,9 +1,6 @@
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous transpiler_predicate_store/7.
 
-:- discontiguous compile_test_then_else/10.
-:- discontiguous compile_flow_control/8.
-
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
@@ -308,7 +305,7 @@ transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,
 match_pattern(Space, Pattern):-
     if_t(compound(Pattern),
        (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
-    metta_atom_fast(Space, Atom), Atom=Pattern.
+    metta_atom(Space, Atom), Atom=Pattern.
 
 transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[','|Patterns],!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
