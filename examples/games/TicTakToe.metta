@@ -25,7 +25,8 @@
             (x (add-atom &self (is-human X)))
             (o (add-atom &self (is-human O)))
             (O (add-atom &self (is-human O)))
-            ($_))))
+            ($_))
+	           True))
     ;; Begin the game
     ($_3 (play-now))) True))
 
@@ -190,12 +191,13 @@
          (cons-atom $head $newrest))))
 
 ;; Choose a random value from a list
-(: random-atom (-> Expression Atom))
+; (: random-atom (-> Expression Atom))
 (= (random-atom $list)
  (if (== () $list) (empty)
   (let $len (size-atom $list)
-    (let $index (random-int &rng 1 (+ $len 1))
-      (nth_x $list $index)))))
+    (let $i2 (+ $len 1)
+	 (let $index (random-int &rng 1 $i2)
+        (nth_x $list $index))))))
 
 ;; ----------------------------------------
 ;; Sanity tests (for development use only)
