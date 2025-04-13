@@ -37,12 +37,15 @@ load_mettalog_xref_file(File):-
    locally(set_prolog_flag(argv,[]),
      locally(set_prolog_flag(os_argv,[swipl]),
        notrace(load_mettalog_xref_file_now(File)))).
-    
-load_mettalog_xref_file_now(File):-   
+
+load_mettalog_xref_file_now(File):-
    set_prolog_flag(mettalog_rt, true),
    set_prolog_flag(mettalog_rt_args, []),
    set_prolog_flag(metta_argv, []),
    user:ensure_loaded(File),!,
+   redefine_system_predicate(system:trace/0),
+   abolish(system:trace/0),
+   assert(( (system:trace) :- (format(user_error,'~nTRACE_CALLED_LSP_SERVER~n',[])))),
    user:loon.
 
 
