@@ -1,3 +1,7 @@
+;; ----------------------------------------
+;; Game setup: declare players and their relationships
+;; ----------------------------------------
+
 ;; Declare 'X' and 'O' as valid Player atoms
 (: X Player) 
 (: O Player)
@@ -22,10 +26,10 @@
             (o (add-atom &self (is-human O)))
             (O (add-atom &self (is-human O)))
             ($_))))
-    ;; Begin game
+    ;; Begin the game
     ($_3 (play-now))) True))
 
-;; Start the game loop with an empty board and 'X' going first
+;; Default behavior: start game with empty board and 'X' playing first
 (= (play-now) (play-game (1 2 3 4 5 6 7 8 9) X))
 
 ;; ----------------------------------------
@@ -33,20 +37,20 @@
 ;; ----------------------------------------
 
 (= (play-game $Board $Player)
-  (let $_1 (display-board $Board) ;; Show current board
-      (let $Winner (collapse (winner $Board)) ;; Check if there's a winner
+  (let $_1 (display-board $Board) ;; Show current board state
+      (let $Winner (collapse (winner $Board)) ;; Check for winner
         (if (non-empty $Winner)
-          (println! ($Winner "wins!")) ;; Declare winner
+          (println! ($Winner "wins!")) ;; 🏁 Game ends with winner
           (if (is-tie $Board)
-            (println! ("It was a draw!")) ;; Declare draw
-            ;; Otherwise, get move and continue the game
+            (println! ("It was a draw!")) ;; 🤝 Game ends in tie
+            ;; Otherwise, choose move and continue playing
             (let $Move (choose-move $Board $Player)
               (let $_2 (println! ($Player Move $Move))
                 (let $NewBoard (move $Board $Move $Player)
                   (play-game $NewBoard (opponent $Player))))))))))
 
 ;; ----------------------------------------
-;; Display board in traditional format
+;; Display the board in a formatted grid
 ;; ----------------------------------------
 
 (= (display-board $Nine)
@@ -55,66 +59,80 @@
       -----------
        {} | {} | {}
       -----------
-       {} | {} | {}" $Nine)))
+       {} | {} | {}
+
+\n" $Nine)))
 
 ;; ----------------------------------------
-;; Determine who chooses the move: human or computer
+;; Decide who makes the move — AI or Human
 ;; ----------------------------------------
 
 (= (choose-move $Board $Player)
   (if (== () (collapse (match &self (is-human $Player) True)))
-    (computer-move $Board $Player) ;; AI move
-    (human-move $Player)))         ;; Human move
+    (computer-move $Board $Player) ;; AI makes move
+    (human-move $Player)))         ;; Human inputs move
 
+;; Prompt human for move input (1–9)
 (= (human-move $Player)
   (let $_ (println! ("Your move " $Player " (1–9):")) (read-atom)))
 
-;; Parse user input into an Atom
+;; Parse user input into a usable atom
 (= (read-atom)
   (let $s ((py-atom input)) (parse $s)))
 
 ;; ----------------------------------------
-;; AI move logic
+;; AI Move Logic with Visual Feedback
 ;; ----------------------------------------
 
 (= (computer-move $Board $Player)
-  (let $Opponent (opponent $Player)
-    (let $Moves (available-moves $Board)
-      (let $_ (println! ("Computer is moving as " $Player "..."))
-          (let $Move (collapse (winning-move $Board $Player))
-            (if (non-empty $Move)
-              (car-atom $Move) ;; Take win if possible
-              (let $Move2 (collapse (winning-move $Board $Opponent))
-                (if (non-empty $Move2)
-                  (car-atom $Move2) ;; Block opponent if needed
-                  (random-atom $Moves))))))))) ;; Else random move
+  (let $Opponent (opponent $Player)                             ;; Determine the opponent
+    (let $Moves (available-moves $Board)                       ;; Get available positions
+      (let $_ (println! ("Computer is moving as " $Player "...")) ;; Announce turn
+        ;; Try to win if possible
+        (let $Move (collapse (winning-move $Board $Player))
+          (if (non-empty $Move)
+            (let $_msg (println! ("🏆 Taking winning move for " $Player "!"))
+              (car-atom $Move))                                ;; Take winning move
+            ;; Otherwise, try to block opponent
+            (let $Move2 (collapse (winning-move $Board $Opponent))
+              (if (non-empty $Move2)
+                (let $_msg (println! ("🛡️ Blocking " $Opponent " from winning!"))
+                  (car-atom $Move2))                           ;; Block winning threat
+                ;; Else pick random legal move
+                (let $_msg (println! ("🎲 No win or threat — picking a random move."))
+                  (random-atom $Moves))))))))))                ;; Default to random move
 
-;; Wrapper to produce each possible move position as choice
+;; ----------------------------------------
+;; Win prediction utilities
+;; ----------------------------------------
+
+;; Create a choice point over all possible move positions
 (= (move-choices $Board)
     (let $Moves (available-moves $Board)
 	   (superpose $Moves)))
 
-;; Determine if a move leads to a win
+;; Determine if a given move results in a win
 (= (winning-move $Board $Player)
     (let $Place (move-choices $Board)
-      (let $Player (winner (move $Board $Place $Player))
-		   $Place)))
+	  (let $newboard (move $Board $Place $Player)
+        (let $Player (winner $newboard) 
+		   $Place))))
 
-;; Utility to check if a list/expression is non-empty
+;; Utility function: check if result is non-empty
 (: non-empty (-> Expression Bool))
 (= (non-empty $list) (not (== () $list)))
 
 ;; ----------------------------------------
-;; Move validation and winner detection
+;; Move validation and board state checks
 ;; ----------------------------------------
 
-;; Filters out positions that are already taken (i.e., not numbers)
+;; Helper: alternate way to get available numbered positions
 (= (available-moves-mettalog-only $Board) (filter-atom $Board $x (eval (number-p $x))))
 
 (: number-p (-> Atom Bool))
-(= (number-p $v) (== Number (get-type $v)))
+(= (number-p $v) (== Number (get-type $v))) ;; Atom is available if it's a Number
 
-;; Recursive version to collect all numbered positions (i.e., available spots)
+;; Recursive function to extract all unfilled positions
 (= (available-moves $list)
   (if (== () $list)
 	$list	
@@ -125,15 +143,19 @@
 		  (cons-atom $head $newrest)
 		  $newrest))))
 
-;; Tie occurs when there are no more available moves
+;; A tie occurs when no valid moves remain
 (= (is-tie $Board) (== () (available-moves $Board)))
 
-;; Define all 8 win positions on a tic-tac-toe board
+;; ----------------------------------------
+;; Winning combinations
+;; ----------------------------------------
+
+;; All 8 win conditions (3 rows, 3 columns, 2 diagonals)
 (win-pos 1 2 3) (win-pos 4 5 6) (win-pos 7 8 9)
 (win-pos 1 4 7) (win-pos 2 5 8) (win-pos 3 6 9)
 (win-pos 1 5 9) (win-pos 3 5 7)
 
-;; Evaluate if a player has won by comparing values in win positions
+;; Determine winner by matching board values at win positions
 (: winner (-> Expression Atom))
 (= (winner $Board)
   (match &self (win-pos $A $B $C)
@@ -143,7 +165,7 @@
 		   $W)))))
 
 ;; ----------------------------------------
-;; List helpers for indexing and replacing elements
+;; List utilities: indexing and replacement
 ;; ----------------------------------------
 
 ;; Retrieve the Nth element in a list
@@ -167,42 +189,38 @@
            ($newrest (move $rest $idx $replacement)))
          (cons-atom $head $newrest))))
 
-;; Pick a random element from a list
+;; Choose a random value from a list
 (: random-atom (-> Expression Atom))
 (= (random-atom $list)
+ (if (== () $list) (empty)
   (let $len (size-atom $list)
     (let $index (random-int &rng 1 (+ $len 1))
-      (nth_x $list $index))))
+      (nth_x $list $index)))))
 
 ;; ----------------------------------------
-;; Sanity tests (not part of main game loop)
+;; Sanity tests (for development use only)
 ;; ----------------------------------------
 
-(= (sanity-tests)
-  (superpose (
-	 (println! "what is your name?")
-     (println! ("Hello " (read-atom)))
-	 (display-board
-		(X X X 4 5 6 O O O))
-	 (println!
-		(random-atom (1 2 3 4 5 6 7 8 9)))
-	 (println!
-		(random-atom (1 2 3 4 5 6 7 8 9)))
-	 (println!
-		(winner (O O 3 4 5 6 X X X)))
-	 (println!
-		(available-moves (O O 3 4 5 6 X X X)))
-	 (println!
-		(move-choices (O O 3 4 5 6 X X X)))
-	 (println!
-		(winning-move (O O 3 4 5 6 7 8 9) O))
-  )))
+!(display-board (X X X 4 5 6 O O O)) ;; Should show X win on top row
+!(random-atom (1 2 3 4 5 6 7 8 9))   ;; Random move demo
+!(assertEqualToResult (random-atom (1)) (1)) ;; Edge case: only one option
+!(assertEqualToResult (random-atom ()) ())   ;; Edge case: no options
+!(assertEqualToResult (winner (O O 3 4 5 6 X X X)) (X)) ;; X wins in bottom row
+!(assertEqualToResult (available-moves (O O 3 4 5 6 X X X)) ((3 4 5 6)))
+!(assertEqualToResult (move-choices (O O 3 4 5 6 X X X)) (6 5 4 3)) ;; Should list in reverse
+!(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) O) (3))     ;; O can win
+!(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) X) ())      ;; X cannot win
+!(assertEqualToResult (winning-move (O O 3 4 5 6 7 X X) X) (7))     ;; X can win with 7
 
-;; Uncomment one of these to run it interactively:
-;!(sanity-tests)
-; !(start-game)
-; (is-human O)
+;; ----------------------------------------
+;; Entry point: starts AI vs AI by default
+;; ----------------------------------------
 
-;; Run AI vs AI by default
+;; Would ask if human plays
+;; !(start-game)
+
+;; Would make human the 2nd player
+;; (is-human O)
+
 !(play-now)
 
