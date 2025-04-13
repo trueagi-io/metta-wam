@@ -43,10 +43,15 @@ load_mettalog_xref_file_now(File):-
    set_prolog_flag(mettalog_rt_args, []),
    set_prolog_flag(metta_argv, []),
    user:ensure_loaded(File),!,
-   redefine_system_predicate(system:trace/0),
-   abolish(system:trace/0),
-   assert(( (system:trace) :- (format(user_error,'~nTRACE_CALLED_LSP_SERVER~n',[])))),
+   disable_lsp_calls(system,trace,0),
+   disable_lsp_calls(system,break,0),
    user:loon.
+
+disable_lsp_calls(M,F,A):-
+    redefine_system_predicate(M:F/A),
+    abolish(M:F/A),
+    (A==0-> Head=F ; functor(Head,F,A)),
+    assert(( (M:Head) :- format(user_error,'~nCALLED_FROM_LSP_SERVER~q~n',[Head]))).
 
 
 
