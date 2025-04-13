@@ -2044,7 +2044,8 @@ no_conflict_numbervars(Term):-
 functs_to_preds(I,OO):-
    must_det_lls(functs_to_preds0(I,OO)),!.
 
-functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
+functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
+   must_det_lls(compile_for_assert(H, B, OO)),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-

@@ -779,7 +779,7 @@ sub_var_safely(Var,Source):-
 
 sub_term_safely(Sub,Source):- acyclic_term(Source),!,sub_term(Sub,Source).
 
-%abolish_trace:- \+ is_flag(abolish_trace),!.
+abolish_trace:- \+ is_flag(abolish_trace),!.
 abolish_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
