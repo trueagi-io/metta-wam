@@ -3643,9 +3643,9 @@ eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
     XXB0L \==[], % trace,
     \+ sub_var_safely('Any', XXB0L),!,
-
+  must_or_die((
     (XXB0L==[] ->  eval_constructor(Eq,RetType,Depth,Self,X,Y);  % no definition therefore treat it like a data constructor
-         catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y)).
+         catch(eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y)))).
 
 eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
   if_trace((defn;metta_defn;eval_args;e),show_bodies('GUARDS ', Depth, XXB0L)),
@@ -3654,6 +3654,8 @@ eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
             eval_defn_failure_guarded(Eq,RetType,Depth,Self,ParamTypes,X,Y)).
 
 
+must_or_die(G):- call(G).
+%must_or_die(G):- call(G)*->true;(trace,must(G)).
 
 true_or_log_fail(Depth,Goal,LogFail):- (call(Goal)
           -> true ; ((if_trace(e,color_g_mesg('#713700',indentq2(Depth,failure(LogFail)))),!),!,fail)).
@@ -3685,16 +3687,17 @@ eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(maybe_eval_defn,X),
        quietly( findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L) ),
         XXB0L \==[], !, %trace,
         % maybe_trace(unknown),
-        catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y).
+        must_or_die((catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y))).
 % eval_40(Eq,RetType,Depth,Self,['If2',Cond,Then,_],Res):- trace,fail.
 
 eval_30(Eq,RetType,Depth,Self,H,BO):- can_be_ok(metta_eq_def,H),
   copy_term(H,HC),
   findall(H->B0, ((woc(metta_eq_def(Eq,Self,H,B0)),HC=@=H)), BL),
   BL\==[],!,
+ must_or_die((
   member(H->B0,BL),nl,
   print_templates(Depth,HC,rule(H,B0,_Nth,_Types)),
-  eval_args(Eq,RetType,Depth,Self,B0,BO).
+  eval_args(Eq,RetType,Depth,Self,B0,BO))).
 
 
 
@@ -3843,14 +3846,15 @@ eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   woc(eval_30(Eq,RetType,Depth,Self,AEAdjusted,ResIn)),
   \+ \+ check_returnval(Eq,RetType,ResOut).
 
-eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !, eval_40(Eq,RetType,Depth,Self,[Op|X],Y).
+eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !,
+  must_or_die((eval_40(Eq,RetType,Depth,Self,[Op|X],Y))).
 
 eval_each_arg(Eq,_RetType,Depth,Self,X,Y):- is_list(X),!, maplist(eval_ret_5(Eq,Depth,Self),X,YY),YY=Y.
 eval_each_arg(_Eq,_RetType,_Depth,_Self,X,X).
 
 eval_ret_5(Eq,Depth,Self,X,Y):- eval_ret(Eq,_,Depth,Self,X,Y).
 
-eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, eval_each_arg(Eq,RetType,Depth,Self,X,Y).
+eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, must_or_die((eval_each_arg(Eq,RetType,Depth,Self,X,Y))).
 eval_30(Eq,RetType,Depth,Self,X,Y):-
   subst_args_here(Eq,RetType,Depth,Self,X,Y).
 

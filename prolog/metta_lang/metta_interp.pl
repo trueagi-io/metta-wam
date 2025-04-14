@@ -1659,7 +1659,7 @@ set_is_unit_test(false):-
     !.
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
-    abolish_trace,
+    maybe_abolish_trace,
     % Reset all options to their default values.
     reset_default_flags,
     % Disable specific trace settings during unit testing.
