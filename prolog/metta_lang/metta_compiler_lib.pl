@@ -243,6 +243,12 @@ transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
 'mc__1_1_decons-atom'([A|B],[A,B]).
 
+transpiler_predicate_store(builtin, 'length', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])).
+'mc__1_1_length'(L,S) :- length(L,S).
+
+transpiler_predicate_store(builtin, 'size-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])).
+'mc__1_1_size-atom'(L,S) :- length(L,S).
+
 %%%%%%%%%%%%%%%%%%%%% set
 
 lazy_member(P,R2) :- as_p1_exec(R2,P).
