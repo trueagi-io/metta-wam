@@ -785,7 +785,19 @@ maybe_abolish_trace:- abolish_trace.
 abolish_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
-  assert(( (system:trace) :- (format(user_error,'~nTRACE_CALLED~n',[]), break, bt))).
+  assert(( (system:trace) :- system:trace_called)),
+  redefine_system_predicate(system:break/0),
+  abolish(system:break/0),
+  assert(( (system:break) :- system:break_called)).
+
+system:trace_called:- format(user_error,'~nTRACE_CALLED~n',[]), fail.
+system:trace_called:- once(bt), fail.
+%system:trace_called:- break.
+
+system:break_called:- format(user_error,'~nBREAK_CALLED~n',[]), fail.
+system:break_called:- once(bt), fail.
+%system:break_called:- break.
+
 
 woc(Goal):- current_prolog_flag(occurs_check,true),!,call(Goal).
 woc(Goal):- redo_call_cleanup(set_prolog_flag(occurs_check,true),Goal,set_prolog_flag(occurs_check,false)).

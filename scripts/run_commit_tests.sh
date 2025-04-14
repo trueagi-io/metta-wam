@@ -112,7 +112,7 @@ run_mettalog_tests() {
     echo "Running tests in: $test_dir"
 
     # Construct the command
-    local cmd=(mettalog --output="$output" --test --no-regen --timeout="$max_time_per_test" "$test_dir")
+    local cmd=(mettalog --output="$output" --test --abolish_trace --no-regen --timeout="$max_time_per_test" "$test_dir")
     
     if [ "${#args[@]}" -gt 0 ]; then
         cmd+=("${args[@]}")
