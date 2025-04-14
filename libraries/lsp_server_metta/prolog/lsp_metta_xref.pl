@@ -37,13 +37,21 @@ load_mettalog_xref_file(File):-
    locally(set_prolog_flag(argv,[]),
      locally(set_prolog_flag(os_argv,[swipl]),
        notrace(load_mettalog_xref_file_now(File)))).
-    
-load_mettalog_xref_file_now(File):-   
+
+load_mettalog_xref_file_now(File):-
    set_prolog_flag(mettalog_rt, true),
    set_prolog_flag(mettalog_rt_args, []),
    set_prolog_flag(metta_argv, []),
    user:ensure_loaded(File),!,
+   disable_lsp_calls(system,trace,0),
+   disable_lsp_calls(system,break,0),
    user:loon.
+
+disable_lsp_calls(M,F,A):-
+    redefine_system_predicate(M:F/A),
+    abolish(M:F/A),
+    (A==0-> Head=F ; functor(Head,F,A)),
+    assert(( (M:Head) :- format(user_error,'~nCALLED_FROM_LSP_SERVER~q~n',[Head]))).
 
 
 

@@ -696,7 +696,7 @@ h2p_sub(EagerArgList,LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    append(Code,CodeOut).
 
 h2p_sub(_EagerArgList,_ArgType,_LazyVars,X,X,[],[]) :-
-   format("Error in h2p_sub: ~w",[X]),
+   format(user_error,"Error in h2p_sub: ~w",[X]),
    throw(0).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -718,7 +718,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, T, Converted, Converted
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, [eval,X], Converted, ConvertedN).
 
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
-   nb_bound(Convert,X),!,
+   nb_bound(Convert,X),!, % TODO might need to look this up at evaluation time instead
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
 
 f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
@@ -728,6 +728,7 @@ f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(doeval,eager,[]), Convert, [], []) :-
    (number(Convert)),!. % Check if Convert is a number
 
+% BUG !(get-type 'a') -> returns Symbol needs to return Char
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), '#\\'(Convert), [], []) :- !.
 
 % If Convert is a number or an atom, it is considered as already converted.
@@ -737,6 +738,17 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+
+f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
+     as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs
+
+as_is_data_term(Var):- var(Var),!,fail.
+as_is_data_term(Term):- py_is_py(Term),!.
+as_is_data_term(Term):- is_valid_nb_state(Term),!.
+as_is_data_term(Term):- \+ callable(Term),!.
+as_is_data_term(Term):- compound(Term),!,compound_name_arity(Term,F,A),as_is_no_convert_f_a(F,A).
+as_is_no_convert_f_a(rng,2).
+
 
 /*
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
@@ -1061,7 +1073,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Conver
     f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
     f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
     assign_or_direct_var_only(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
-    assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
+    assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN), !.
 
 /*
 f2p(HeadIs,LazyVars,RetResult,ResultLazy,Convert,Converted):-fail,
@@ -1093,15 +1105,16 @@ f2p_skip_atom(HeadIs, LazyVars,Converted,EvalArgs,Convert,Allcodes):-
    f2p(HeadIs, LazyVars,Converted,EvalArgs,Convert,Allcodes).
 */
 
-f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Converted, ConvertedN) :- HeadIs\==Convert, is_list(Convert),!,
+f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Converted, ConvertedN) :-
+    HeadIs\==Convert, is_list(Convert),
     maplist(f2p(HeadIs,LazyVars), RetResultsParts, RetResultsPartsN, LazyResultParts, Convert, ConvertedParts, ConvertedNParts),
     f2p_do_group(x(doeval,eager,[]),LazyResultParts,RetResultsParts,DoEvalRetResults,ConvertedParts,DoEvalCodeCollected),
     f2p_do_group(x(noeval,eager,[]),LazyResultParts,RetResultsPartsN,NoEvalRetResults,ConvertedNParts,NoEvalCodeCollected),
     assign_or_direct(DoEvalCodeCollected,RetResult,list(DoEvalRetResults),Converted),
-    assign_or_direct(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
+    assign_or_direct(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN), !.
 
 f2p(HeadIs,LazyVars,_,_,EvalArgs,Convert,_,_):-
-   format("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
+   format(user_error,"Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
    throw(0).
 
 /*
@@ -1497,10 +1510,16 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
+user:numbervars(Term):- varnumbers:numbervars(Term).
+
+must_det_lls(G):- tracing,!,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
-must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
+%must_det_lls((G,B)):- catch(G,E,(wdmsg(E),fail)),!,must_det_lls(B).
+%must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
+%must_det_lls(G):- tracing,!,(real_notrace(G)*->true;fail).
+must_det_lls(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
-must_det_lls(G):- notrace,nortrace,trace,call(G),!.
+must_det_lls(G):- notrace,nortrace,trace,rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
@@ -2044,7 +2063,8 @@ no_conflict_numbervars(Term):-
 functs_to_preds(I,OO):-
    must_det_lls(functs_to_preds0(I,OO)),!.
 
-functs_to_preds0([Eq,H,B],OO):- Eq == '=', compile_for_assert(H, B, OO),!.
+functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
+   must_det_lls(compile_for_assert(H, B, OO)),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-

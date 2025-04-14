@@ -1043,9 +1043,11 @@ as_prolog(I, O) :-
 :- dynamic(dont_de_Cons/0).
 dont_de_Cons.
 
+
+acyclic_term_nat(I):- copy_term(I,O,_),acyclic_term(O).
+
 as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
-
 
 as_prolog(0, Self, [Eval, Metta], Prolog) :- Eval == '!', !,
     Prolog = (eval(Metta,TF),is_true(TF)).
@@ -1063,7 +1065,7 @@ as_prolog(0, Self, [CC | List], O) :-
     maplist(as_prolog(0, Self), List, L),
     !, O = L.
 
-as_prolog(_, Self, exec(Eval), O) :- !, default_depth(DEFAULT_DEPTH),eval_args(DEFAULT_DEPTH, Self, Eval, O).
+as_prolog(_, Self, exec(Eval), O) :- default_depth(DEFAULT_DEPTH),!,eval_args(DEFAULT_DEPTH, Self, Eval, O).
 as_prolog(_, Self, quote(O), O) :- !.
 as_prolog(_Dpth, _Slf, I, O) :-
     % If I is not a 'conz' structure, unify it directly with O.
@@ -1077,7 +1079,8 @@ as_prolog(N, Self, [At| List], O) :-
     atom(HH), !,
     compound_name_arguments(O, HH, L).
 
-
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(I),!,nl,writeq(cyclic_I_term_BUG(I)),nl,nl,!,fail, I=O.
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(O),!,nl,writeq(cyclic_O_term_BUG(O)),nl,nl, I=O.
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
