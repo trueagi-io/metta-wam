@@ -718,7 +718,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, T, Converted, Converted
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, [eval,X], Converted, ConvertedN).
 
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
-   nb_bound(Convert,X),!,
+   nb_bound(Convert,X),!, % TODO might need to look this up at evaluation time instead
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
 
 f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
@@ -728,6 +728,7 @@ f2p(_HeadIs, LazyVars, Convert, Convert, EL, Convert, [], []) :-
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(doeval,eager,[]), Convert, [], []) :-
    (number(Convert)),!. % Check if Convert is a number
 
+% BUG !(get-type 'a') -> returns Symbol needs to return Char
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), '#\\'(Convert), [], []) :- !.
 
 % If Convert is a number or an atom, it is considered as already converted.
@@ -737,6 +738,17 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
     once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+
+f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
+     as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs
+
+as_is_data_term(Var):- var(Var),!,fail.
+as_is_data_term(Term):- py_is_py(Term),!.
+as_is_data_term(Term):- is_valid_nb_state(Term),!.
+as_is_data_term(Term):- \+ callable(Term),!.
+as_is_data_term(Term):- compound(Term),!,compound_name_arity(Term,F,A),as_is_no_convert_f_a(F,A).
+as_is_no_convert_f_a(rng,2).
+
 
 /*
 f2p(_HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted) :-
