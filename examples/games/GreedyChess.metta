@@ -187,6 +187,7 @@
         ($_   NIL) ; <-- in case user inputs bad char, this will result in a fail.
         )))
 
+
 ;***************************************************************
 ; Function:     int_to_char
 ; Description:  Converts an integer 1..8 to the corresponding chess file letter.
@@ -342,7 +343,20 @@
 (rank n) 
 (rank p) 
 
+; Chess symbols to display on console
+(s k ♔)
+(s q ♕)
+(s r ♖)
+(s b ♗)
+(s n ♘) 
+(s p ♙)
 
+(g k ♚)
+(g q ♛)
+(g r ♜) 
+(g b ♝)
+(g n ♞)
+(g p ♟)
 
 ;*******************************************************
 ; Declare initializing game state
@@ -555,7 +569,7 @@
     ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
     ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.") 
     (display_board (match &self (board-state $board) $board)) 
-    ((py-atom print) "- Your pieces are marked with an asterisk.")
+    ((py-atom print) "- Your pieces are white at bottom")
     ((py-atom print) "*------- C o m m a n d s ------------*")
     ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
     ((py-atom print) "   Result:  YOUR pawn in a2 moved to location a3.")
@@ -569,6 +583,29 @@
 ;***************************************************************
 ; Function:     identify_piece
 ; Description:  Converts a board square's full data (e.g. `(2 1 s n)`)
+;               into small chess symbols for console display.
+;
+; Input:        $p - A square: either (x y) for empty, or (x y color rank).
+;
+; Output:       A chess piece console symbol
+;***************************************************************
+(: (identify_piece) (-> Expression Atom))
+(= (identify_piece $p) 
+   (if (== (size-atom $p) 2)
+      "."
+      (let*
+        ( ; assign either * or " " 
+          ($player (nth 3 $p))
+          ; identify piece
+          ($piece (nth 4 $p))
+          ; look up icon
+          ($chess_console_symbol (match &self ($player $piece $symbol) $symbol))
+        )
+        $chess_console_symbol)))
+
+;***************************************************************
+; Function:     identify_piece
+; Description:  Converts a board square's full data (e.g. `(2 1 s n)`)
 ;               into a 2-character string like `*n` (asterisk = human).
 ;               Empty squares return "  ".
 ;
@@ -576,8 +613,8 @@
 ;
 ; Output:       A string like "*k", " q", or "  " for rendering the board.
 ;***************************************************************
-(: (identify_piece) (-> Expression Atom))
-(= (identify_piece $p) 
+(: (identify_piece_text) (-> Expression Atom))
+(= (identify_piece_text $p) 
    (if (== (size-atom $p) 2)
       "  "
       (let*
@@ -618,14 +655,42 @@
 ;
 ; Input:        $board - Full board as 64-element list of squares
 ;
-; Output:       Formatted string printed to console showing the board.
+; Output:       Formatted string printed to console showing the board with chess symbols.
 ;***************************************************************
 (= (display_board $board) 
   (
    (let* (
           ($pieces (display_filter     $board ))
           )
-          ((py-atom print) (format-args "\n
+          (println! (format-args "\n
+        -a---b---c---d---e---f---g---h- \n
+      8| {} | {} | {} | {} | {} | {} | {} | {} |8\n
+      7| {} | {} | {} | {} | {} | {} | {} | {} |7\n
+      6| {} | {} | {} | {} | {} | {} | {} | {} |6\n
+      5| {} | {} | {} | {} | {} | {} | {} | {} |5\n
+      4| {} | {} | {} | {} | {} | {} | {} | {} |4\n
+      3| {} | {} | {} | {} | {} | {} | {} | {} |3\n
+      2| {} | {} | {} | {} | {} | {} | {} | {} |2\n
+      1| {} | {} | {} | {} | {} | {} | {} | {} |1\n
+        -a---b---c---d---e---f---g---h- \n
+      " 
+          $pieces)))))
+
+;***************************************************************
+; Function:     display_board_text
+; Description:  Pretty-prints the current board to console in a
+;               human-readable grid format using identify_piece output.
+;
+; Input:        $board - Full board as 64-element list of squares
+;
+; Output:       Formatted string printed to console showing the board.
+;***************************************************************
+(= (display_board_text $board) 
+  (
+   (let* (
+          ($pieces (display_filter     $board ))
+          )
+          (println! (format-args "\n
         ---a-------b-------c-------d-------e-------f-------g-------h--- \n
       8|  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |  {}   |8\n
        |---------------------------------------------------------------| \n
@@ -730,7 +795,8 @@
     ;     2) fail and return (empty)
     
       (let* (
-        ($msg1 (println! "looking for checkmate..."))
+        ($msgd (println! "Greedy Chess deliberating... please wait..."))
+        ;($msg1 (println! "looking for checkmate..."))
         ($checkmate (collapse 
                       (if (== (lots_of_pawns_in_home_row) True)
                           ; get pieces out at beginning of game
@@ -742,19 +808,19 @@
           (car-atom $checkmate)
 
           (let* (
-        ($msg2 (println! "looking for capture..."))
+        ;($msg2 (println! "looking for capture..."))
         ($highest (collapse (takehighestopen_scored))))
         (if (not (==  $highest ()))
           (car-atom $highest)
 
           (let* (
-        ($msg3 (println! "looking to play defense..."))
+        ;($msg3 (println! "looking to play defense..."))
         ($position (collapse (playdefense))))
         (if (not (==  $position ()))
           (car-atom $position)
 
           (let* (
-        ($msg4 (println! "looking for threat position..."))
+        ;($msg4 (println! "looking for threat position..."))
         ($random_threat (random-int  &rng 1 3)) ; get a random number 1 through 2
         ($threaten_position 
                 (if (> $random_threat 1)     
@@ -767,14 +833,14 @@
           (car-atom $threaten_position)
 
         (let* (
-        ($msg5 (println! "looking for random move..."))
+        ;($msg5 (println! "looking for random move..."))
         ($random_move (collapse (random_move_empty_sq)))
               )
         (if (not (==  $random_move ())) 
           (car-atom $random_move)          
 
           (let* (
-        ($msg6 (println! "looking for desperation move..."))
+        ;($msg6 (println! "looking for desperation move..."))
         ($random_moveD (collapse (random_move_empty_sq_desperate))))
         (if (not (==  $random_moveD ())) 
           (car-atom $random_moveD)
@@ -2638,7 +2704,7 @@
 (= (C) 
   (progn
     ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
-    ((py-atom print) "- Your pieces are marked with an asterisk.")
+    ((py-atom print) "- Your pieces are white at bottom.")
     ((py-atom print) "- Please take note of the following simple commands:")
     ((py-atom print) "*------- C o m m a n d s ------------*")
     ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
@@ -2700,4 +2766,3 @@
     (chess)           ; Start the chess game
     (command-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
 !(main_loop)
-;-----------;
