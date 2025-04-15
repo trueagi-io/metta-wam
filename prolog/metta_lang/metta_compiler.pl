@@ -701,7 +701,7 @@ h2p_sub(EagerArgList,LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    append(Code,CodeOut).
 
 h2p_sub(_EagerArgList,_ArgType,_LazyVars,X,X,[],[]) :-
-   format_e(user_error,"Error in h2p_sub: ~w",[X]),
+   format_e("Error in h2p_sub: ~w",[X]),
    throw(0).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1119,7 +1119,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Conver
     assign_or_direct(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN), !.
 
 f2p(HeadIs,LazyVars,_,_,EvalArgs,Convert,_,_):-
-   format_e(user_error,"Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
+   format_e("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
    throw(0).
 
 /*
@@ -1448,7 +1448,7 @@ write_to_streams(StreamList, Format, Args) :-
     forall(member(Stream, StreamList),
            format_e(Stream, Format, Args)),
     % Write to stdout
-    format_e(user_output, Format, Args),
+    format(user_output, Format, Args),
     flush_output(user_output). % Ensure output is displayed immediately
 
 
