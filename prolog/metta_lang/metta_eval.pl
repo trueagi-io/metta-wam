@@ -2813,7 +2813,12 @@ compile_metta_defn(_KB,Op,Len,Args,BodyFn, ClauseU):-
 '>'(A,B,TFO):- as_tf(A<B,TF),!,TF=TFO.
 minus(A,B,C):- plus(B,C,A).
 
-user:pow(X,Y,Z):- quintus:pow(X,Y,Z).
+user:import_module_predicates(M):-
+ forall(
+   (module_property(M,exports(List)),member(F/A,List),functor(P,F,A)),
+    user:import(M:P)).
+
+:- on_metta_setup(user:import_module_predicates(quintus)).
 
 eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):-
     AE = MettaPred,
