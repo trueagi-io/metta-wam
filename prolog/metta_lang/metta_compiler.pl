@@ -361,12 +361,12 @@ recompile_from_depends0(Fn/Arity) :-
    maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Clause),
    %leash(-all),trace,
    %format("X: ~w\n",[Clause]),flush_output(user_output),
-   number_vars_wo_conficts(Clause,Clause2),
+   number_vars_wo_conficts(Clause,Clause2),!,
    maplist(compile_for_assert_with_add,Clause2).
 
 compile_for_assert_with_add(Head-Body) :-
    compile_for_assert(Head,Body,Converted),
-   assertz(Converted).
+   compiler_assertz(Converted).
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
@@ -1511,8 +1511,8 @@ strip_m(BB,BB).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    %debug_info(compiler_assertz,Info),
-    once(clause_asserted(Assert)->true;assertz(Assert)).
+    debug_info(compiler_assertz,Info),
+    once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).

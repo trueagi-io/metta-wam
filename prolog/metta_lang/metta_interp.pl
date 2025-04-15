@@ -4081,10 +4081,15 @@ load_hook1(Load, Self, Fact):-
 
 debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
 
+:- dynamic(did_load_hook_compiler/3).
+
+load_hook_compiler(Load, Self, Assertion):- \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!.
 load_hook_compiler(Load, Self, Assertion):- Assertion = [Eq, _, _],
+    asserta(did_load_hook_compiler(Load, Self, Assertion)),
     Eq == '=',!,
     % Convert functions to predicates.
-    woc(functs_to_preds(Assertion, Preds)),
+    debug_info(load_hook_compiler,(Load, Self, Assertion)),
+    woc(functs_to_preds(Assertion, Preds)), !,
     % Assert the converted predicates into the knowledge base.
     woc(assert_preds(Self, Load, Preds)), !.
 load_hook_compiler(Load, Self, Assertion):-
