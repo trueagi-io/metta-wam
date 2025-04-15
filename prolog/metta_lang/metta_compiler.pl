@@ -1511,7 +1511,7 @@ strip_m(BB,BB).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    debug_info(compiler_assertz,Info),
+    %debug_info(compiler_assertz,Info),
     once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),

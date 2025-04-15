@@ -4088,7 +4088,7 @@ load_hook_compiler(Load, Self, Assertion):- Assertion = [Eq, _, _],
     asserta(did_load_hook_compiler(Load, Self, Assertion)),
     Eq == '=',!,
     % Convert functions to predicates.
-    debug_info(load_hook_compiler,(Load, Self, Assertion)),
+    % debug_info(load_hook_compiler,(Load, Self, Assertion)),
     woc(functs_to_preds(Assertion, Preds)), !,
     % Assert the converted predicates into the knowledge base.
     woc(assert_preds(Self, Load, Preds)), !.

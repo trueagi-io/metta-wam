@@ -1182,6 +1182,22 @@ export RUST_BACKTRACE=full
 DefaultSav="Sav.$(hostname).MeTTaLog"
 need_compile=0  # Ensure this is initialized
 
+
+
+# Check if any .pl file is newer than the skip_compile file
+if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
+    for pl_file in "$INTERP_SRC_DIR"/*_*.*; do
+	if [[ ! -e "$pl_file" ]]; then
+	    DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
+	# If a .pl file is newer than the skip_compile file, delete the skip_compile
+	elif [[ "$pl_file" -nt "$INTERP_SRC_DIR/skip_compile" ]]; then
+	    DEBUG "${ORANGE}$pl_file is newer than $INTERP_SRC_DIR/skip_compile."
+	    rm -f "$INTERP_SRC_DIR/skip_compile"
+	    break  # Exit loop early as skip_compile is deleted
+	fi
+    done
+fi
+
 if [[ "$exe" == "force" ]]; then
     exe=true
     rm -f "$INTERP_SRC_DIR/skip_compile"
@@ -1216,6 +1232,9 @@ if [[ "$exe" == "true" ]]; then
         done
     fi
 fi
+
+
+
 
 if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
  exe=false
@@ -1348,6 +1367,12 @@ if [[ "$exe" == "false" ]]; then
     #rm -f "$TEMP_DIR/tmp.??*"
     STYLE=INTERP    
 fi
+
+
+if [[ " $* " == *" --compile-only "* ]]; then
+    [[ "$IS_SOURCED" == "1" ]] && return 0 || exit 0
+fi
+
 
 DEBUG STYLE="$STYLE"
 

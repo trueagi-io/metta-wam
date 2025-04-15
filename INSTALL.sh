@@ -84,6 +84,7 @@ elif [ -f /.dockerenv ] || grep -qa docker /proc/1/cgroup; then
     export PIP_BREAK_SYSTEM_PACKAGES=1
     export ALLOW_MODIFY_SYSTEM=1        
     SWI_INSTALL="src"
+    #SWI_INSTALL="ppa"
     EASY_INSTALL="Y"
 else
     echo -e "${BLUE}User's Devel Machine${NC}."
@@ -259,7 +260,7 @@ install_swi_from_ppa() {
     sudo add-apt-repository ppa:swi-prolog/devel -y
     sudo apt update
     echo -e "${BLUE}Installing SWI-Prolog Itself..${NC}."
-    sudo apt install -y swi-prolog
+    sudo apt install -y swi-prolog    
 }
 
 # SWI-Prolog from source
@@ -497,6 +498,7 @@ if ! swipl -g "use_module(library(janus)), halt(0)." -t "halt(1)" 2>/dev/null; t
     if [ "${EASY_INSTALL}" == "Y" ] || confirm_with_default "Y" "Would you like to install Python (Janus) support?"; then
         echo -e "${BLUE}Installing Janus for SWI-Prolog..${NC}."
        ensure_venv_and_pip || return 1
+	    export PIP_BREAK_SYSTEM_PACKAGES=1
 	    pip install git+https://github.com/SWI-Prolog/packages-swipy.git	    
 	    if [ $? -ne 0 ]; then
 	       	echo -e "${RED}Failed to install Janus. Exiting script${NC}."
