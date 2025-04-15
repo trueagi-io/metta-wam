@@ -316,7 +316,7 @@ transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,
 match_pattern(Space, Pattern):-
     if_t(compound(Pattern),
        (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
-    metta_atom(Space, Atom), Atom=Pattern.
+    metta_atom(Space, Atom), woc(true, Atom=Pattern).
 
 transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_3_match'(Space,P,P1,Ret) :- is_list(P),P=[Comma|Patterns],Comma==',',!,(maplist(match_aux(Space),Patterns) -> as_p1_exec(P1,Ret) ; fail).
@@ -351,7 +351,7 @@ transpiler_predicate_nary_store(builtin, 'call-fn!', 1, ['Atom'], 'Atom', 'Atom'
 'mc_n_1__call-fn!'(Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
 
 transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
-'mc_n_1__call-p!'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
+'mc_n_1__call-p!'(Fn,List,Ret) :- (woc(apply(Fn,List)) *-> Ret='True'; Ret='False').
 
 %%%%%%%%%%%%%%%%%%%%% misc
 

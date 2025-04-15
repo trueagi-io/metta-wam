@@ -888,7 +888,7 @@ eval_I(Self, Form, OOut) :-
     default_depth(DEPTH),
     eval_H(DEPTH, Self, Form, Out),
     % Enable trace for debugging purposes.
-    trace,
+    %trace,
     % Transform the output.
     xform_out(Out, OOut).
 
@@ -966,7 +966,7 @@ u_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Reset internal caches before executing the command.
     woc(reset_caches),
     % Attempt to execute the command interactively, catching any errors.
-    woc(catch(u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    (catch(u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           Error,
           % If an error occurs, log it along with the source and the term.
           write_src(error(Error,From,TermV)))).
@@ -996,7 +996,7 @@ u_do_metta_exec000(FromLSP,Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- 
 
 u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
-    woc(catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    (catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           % Handle the '$aborted' exception by logging it.
           '$aborted', fbug(aborted(From,TermV)))).
 

@@ -3037,6 +3037,9 @@ maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
 
 % Base case: succeed when the argument list is empty.
 cmdline_load_metta(_, _, Nil) :- Nil == [], !.
+
+cmdline_load_metta(Phase, Self, [M | _]) :- fail,
+      debug_info(argv,cmdline_load_metta(Phase, Self, M)), fail.
 % Handle double-dash (`--`) by skipping it and continuing with the rest of the arguments.
 cmdline_load_metta(Phase, Self, ['--' | Rest]) :- !,
     cmdline_load_metta(Phase, Self, Rest).
@@ -3073,10 +3076,15 @@ cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
     if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle command-line options by setting their corresponding values.
+
+cmdline_load_metta(Phase, Self, [Skip, _ | Rest]) :- skip_cmdarg(Skip), !,
+    cmdline_load_metta(Phase, Self, Rest).
+
+cmdline_load_metta(Phase, Self, ['-D', M | Rest]) :- !,
+    process_flag(M), !,
+    cmdline_load_metta(Phase, Self, Rest).
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
-    m_opt(M, Opt),
-    is_cmd_option(Opt, M, TF),
-    set_option_value_interp(Opt, TF), !,
+    process_flag(M), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle unrecognized command-line options by logging a warning.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
@@ -3085,16 +3093,29 @@ cmdline_load_metta(Phase, Self, [M | Rest]) :-
     cmdline_load_metta(Phase, Self, Rest).
 
 
+skip_cmdarg('-l').
+skip_cmdarg('-g').
+skip_cmdarg('-x').
+
 reset_default_flags:-
-   forall(option_value_def(A,B), set_option_value_interp(A,B)),
-   metta_cmd_args(Rest),
-   forall(member(Flag,Rest),process_flag(Flag)).
+    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    metta_cmd_args(Rest),process_metta_cmd_arg_flags(Rest),
+    current_prolog_flag(os_argv,[_|ArgV]),
+    debug_info(os_argv,ArgV),
+    process_metta_cmd_arg_flags(ArgV).
 
-process_flag(M) :- ignore((symbol(M),
-    m_opt(M, Opt),
-    is_cmd_option(Opt, M, TF),
-    set_option_value_interp(Opt, TF))),!.
 
+process_metta_cmd_arg_flags(Rest):-
+   do_cmdline_load_metta('reset', '&self', Rest).
+
+
+process_flag(M) :- m_opt(M, Opt), is_cmd_option(Opt, M, TF),!,process_nv(Opt,TF).
+process_flag(M) :- atomic_list_concat([N, V], '=', M),!, process_nv(N,V).
+process_flag(M) :- !, process_nv(M,true).
+
+process_nv(Opt,TF):-
+    debug_info(process_nv(Opt,TF)),
+    set_option_value_interp(Opt, TF),!.
 
 
 %!  install_ontology is det.
@@ -4078,15 +4099,19 @@ load_hook1(Load, Self, Fact):-
     %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
     woc(load_hook_compiler(Load, Self, Fact)).
 
-
+debug_info(_Topic,_Info):- !.
 debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
+debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
+debug_info(Info):- debug_info(debug_info,Info).
+
+
 
 :- dynamic(did_load_hook_compiler/3).
 
 load_hook_compiler(Load, Self, Assertion):- \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!.
 load_hook_compiler(Load, Self, Assertion):- Assertion = [Eq, _, _],
     asserta(did_load_hook_compiler(Load, Self, Assertion)),
-    Eq == '=',!,
+    Eq == '=', !,
     % Convert functions to predicates.
     % debug_info(load_hook_compiler,(Load, Self, Assertion)),
     woc(functs_to_preds(Assertion, Preds)), !,
@@ -5921,7 +5946,7 @@ eval_string(String, Out):-
 %
 eval_H(Term, X) :-
     % Wrap the evaluation in `catch_metta_return/2` to handle any errors.
-    catch_metta_return(eval_args(Term, X), X).
+    woc(catch_metta_return(eval_args(Term, X), X)).
 
 %!  eval_H(+StackMax, +Self, +Term, -Result) is det.
 %
@@ -5943,7 +5968,7 @@ eval_H(_StackMax, _Self, Term, Term) :-
     fast_option_value(compile, save), !.
 eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
-    catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
+    woc(catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X)).
 /*
 eval_H(StackMax,Self,Term,X).
 

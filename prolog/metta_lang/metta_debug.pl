@@ -820,6 +820,9 @@ test_locally_setting_flags:-
 :- thread_initialization(set_prolog_flag(occurs_check,false)).
 %:- initialization(set_prolog_flag(gc,false)).
 
+%:- initialization(set_prolog_flag(occurs_check,error)).
+%:- thread_initialization(set_prolog_flag(occurs_check,error)).
+
 %!  is_showing(+Flag) is nondet.
 %
 %   Check if showing is enabled for a flag.
