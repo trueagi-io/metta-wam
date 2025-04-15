@@ -55,7 +55,7 @@
          decl_dcgTest/2,
          decl_dcgTest/3,
          dcgReorder/4
-	 ]).
+     ]).
 
 
 /** <module> Utility LOGICMOO_DCG_META
@@ -242,15 +242,29 @@ theText0(S) --> {atomic(S),concat_atom([W1,W2|List],' ',S),!},theText([W1,W2|Lis
 theText0(S) --> {!}, [Data],{equals_text(S,Data)}.
 
 
-
-
+% theString(String,Sep) --> [S|Text], {atomic_list_concat_catch([S|Text],Sep,String),!}.
+%theString(String,Sep) --> [S|Text], {atomics_to_string_str([S|Text],Sep,String),!}.
 decl_dcgTest("this is a string",theString("this is a string")).
-theString(String) --> theString(String, " ").
+%theString(String) --> theString(String, " ").
+%:- module_transparent dcg_meta:theString/3.
+
+theString(String, A, B) :-
+    theString(String, " ", A, B).
+
+%:- module_transparent dcg_meta:theString/4.
+
+theString(String, Sep, A, B) :-
+    '$append'([S|Text], C, A),
+    atomics_to_string_str([S|Text], Sep, String),
+    !,
+    B=C.
+
+
 
 atomic_to_string(S,S):- string(S),!.
 atomic_to_string(S,Str):-sformat(Str,'~w',[S]).
 
-atomics_to_string_str(L,S,A):-catch(atomics_to_string(L,S,A),_,fail).
+atomics_to_string_str(L,S,A):-catch(atomics_to_string(L,S,A),_,fail),!.
 atomics_to_string_str(L,S,A):-atomics_to_string_str0(L,S,A).
 
 atomics_to_string_str0([],_Sep,""):-!.
@@ -261,8 +275,6 @@ atomics_to_string_str0([S|Text],Sep,String):-
    atomics_to_string_str0(Text,Sep,StrR),!,
    new_a2s([StrL,StrR],Sep,String).
 
-% theString(String,Sep) --> [S|Text], {atomic_list_concat_catch([S|Text],Sep,String),!}.
-theString(String,Sep) --> [S|Text], {atomics_to_string_str([S|Text],Sep,String),!}.
 
 decl_dcgTest_startsWith([a,b|_],theCode(X=1),X==1).
 decl_dcgTest_startsWith("anything",theCode(X=1),X==1).

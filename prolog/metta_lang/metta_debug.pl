@@ -799,11 +799,13 @@ system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
 
-woc(Goal):- current_prolog_flag(occurs_check,true),!,call(Goal).
-woc(Goal):- redo_call_cleanup(set_prolog_flag(occurs_check,true),Goal,set_prolog_flag(occurs_check,false)).
+woc(Goal):- woc(true,Goal).
+woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
+woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 % woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
-wocf(Goal):-
-  locally(set_prolog_flag(occurs_check,false), Goal).
+woct(Goal):-woc(true,Goal).
+woce(Goal):-woc(error,Goal).
+wocf(Goal):-woc(false,Goal).
 
 print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
 test_locally_setting_flags:-

@@ -361,12 +361,12 @@ recompile_from_depends0(Fn/Arity) :-
    maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Clause),
    %leash(-all),trace,
    %format("X: ~w\n",[Clause]),flush_output(user_output),
-   number_vars_wo_conficts(Clause,Clause2),
+   number_vars_wo_conficts(Clause,Clause2),!,
    maplist(compile_for_assert_with_add,Clause2).
 
 compile_for_assert_with_add(Head-Body) :-
    compile_for_assert(Head,Body,Converted),
-   assertz(Converted).
+   compiler_assertz(Converted).
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
@@ -1410,14 +1410,11 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % Generate a unique temporary memory buffer
     tmp_file_stream(text, TempFileName, TempFileStream),
     % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [metta_compiled_predicate, 3]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [metta_compiled_predicate, 3]),
-    format(TempFileStream, '~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
-
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
+    make_multifile_dynamic(TempFileStream,metta_compiled_predicate, 3),
+    write_clause(TempFileStream,metta_compiled_predicate(Space,F,A)),
+    make_multifile_dynamic(TempFileStream,F, A),
     %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
+    if_t(option_value('tabling','True'),write_clause(TempFileStream,(:- table(F/A)))),
     maplist(write_clause(TempFileStream), PredClauses),
     % Close the temporary file
     close(TempFileStream),
@@ -1425,14 +1422,20 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % abolish(F/A),
     /*'&self':*/
     % sformat(CAT,'cat ~w',[TempFileName]), shell(CAT),
-    consult(TempFileName),
+    %consult(TempFileName),
 
     % listing(F/A),
     % Delete the temporary file after consulting
     delete_file(TempFileName),
-    current_predicate(F/A),
+    assertion(current_predicate(F/A)),
     %listing(metta_compiled_predicate/3),
     true)).
+
+
+make_multifile_dynamic(TempFileStream,F, A):-
+    write_clause(TempFileStream, (:- multifile(F/A))),
+    write_clause(TempFileStream, (:- dynamic(F/A))),!.
+
 
 
 write_to_streams(StreamList, Format, Args) :-
@@ -1448,10 +1451,17 @@ write_to_streams(StreamList, Format, Args) :-
 
 % Helper predicate to write a clause to the file
 write_clause(Stream, Clause) :-
-    subst_vars(Clause,Can),
-    write_canonical(Stream, Can),
+    must_det_lls((subst_vars(Clause,Can),
+    write_clause_can(Stream, Can),
+    write_clause_mem(Can))).
+
+write_clause_can(Stream, Can):-
+    must_det_lls((write_canonical(Stream, Can),
     write(Stream, '.'),
-    nl(Stream).
+    nl(Stream))).
+
+write_clause_mem(:- (Can)):- !, forall(must_det_lls(Can),true).
+write_clause_mem(Can):- compiler_assertz(Can).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % STILL unsorted
@@ -1499,8 +1509,10 @@ strip_m(BB,BB).
 
 
 compiler_assertz(Info):-
-  unnumbervars_clause(Info,Assert),
-  assertz(Assert),transpiler_debug(2,output_prolog(Info)).
+  once(unnumbervars_clause(Info,Assert)),
+  transpiler_debug(2,output_prolog(Info)),
+    %debug_info(compiler_assertz,Info),
+    once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
@@ -1510,7 +1522,7 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
-user:numbervars(Term):- varnumbers:numbervars(Term).
+%user:numbervars(Term):- varnumbers:numbervars(Term).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
@@ -1519,7 +1531,7 @@ must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls(G):- tracing,!,(real_notrace(G)*->true;fail).
 must_det_lls(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
-must_det_lls(G):- notrace,nortrace,trace,rtrace(G),!.
+must_det_lls(G):- ignore((notrace,nortrace,trace)),rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
@@ -2065,6 +2077,7 @@ functs_to_preds(I,OO):-
 
 functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
    must_det_lls(compile_for_assert(H, B, OO)),!.
+
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
@@ -2279,7 +2292,7 @@ maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,Arg,ArgO).
 check_supporting_predicates(Space,F/A) :- % already exists
 %trace,
    create_mc_name(A,F,Fp),
-   with_mutex(transpiler_mutex_lock,
+   with_mutex_maybe(transpiler_mutex_lock,
       (sum_list(A,ATot),ATot1 is ATot+1,
          (current_predicate(Fp/ATot1) -> true ;
             findall(Atom0, (between(1, ATot1, I0) ,Atom0='$VAR'(I0)), AtomList0),
@@ -2717,7 +2730,7 @@ is_compiled_and(AND):- member(AND,[ (','), ('and'), ('and-seq')]).
 flowc.
 
 unnumbervars_clause(Cl,ClU):-
-  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
+  woc((copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU))),!.
 % ===============================
 %  Compile in memory buffer
 % ===============================
@@ -2738,8 +2751,11 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
 % :- dynamic(needs_tabled/2).
 
 add_assertion(Space,List):- is_list(List),!,
-   maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+   maplist(add_assertion(Space),List),!.
+add_assertion(Space,AC):- must_det_lls(unnumbervars_clause(AC,UAC)), add_assertion1(Space,UAC).
+
+with_mutex_maybe(_,Goal):- wocf(call(Goal)).
+
 add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
 
@@ -2748,7 +2764,7 @@ add_assertion1(Space,ACC) :-
      copy_term(ACC,AC,_),
      expand_to_hb(AC,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    with_mutex(transpiler_mutex_lock,(
+    with_mutex_maybe(transpiler_mutex_lock,(
       % assert(AC),
       % Get the current clauses of my_predicate/1
       findall(HH:-B,clause(/*'&self':*/HH,B),Prev),

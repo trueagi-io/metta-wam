@@ -3821,6 +3821,9 @@ assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),L
 %assert_preds(_Self,_Load,Clause):- assertz(Clause),!.
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
+   forall(assert_preds_now(Self,Load,Preds),true).
+
+assert_preds_now(_Self,_Load,Preds):- fail,
   expand_to_hb(Preds,H,_B),
   functor(H,F,A), %trace,
   if_t((false,show_transpiler),
@@ -3832,12 +3835,23 @@ assert_preds(Self,Load,Preds):-
            not_compatio(format('  :- ~q.~n',[dynamic(F/A)]))),
       if_t(option_value('tabling','True'),
            not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
-      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
+      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))).
 
   %if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
   % allow errors and warning rather than silently doing nothing as the clause above would have done
-  if_t(is_transpiling, add_assertion(Self,Preds)),
+assert_preds_now(Self,_Load,Preds):-
+  if_t(is_transpiling, add_assertion_now(Self,Preds)).
+
+assert_preds_now(Self,_Load,Preds):-
+  if_t( (\+ is_transpiling), add_assertion_now(Self,Preds)).
+
+assert_preds_now(_Self,Load,Preds):-
   nop(metta_anew1(Load,Preds)).
+
+add_assertion_now(Self,Preds):-
+    nop(debug_info(assert_hooks,add_assertion_now(Self,Preds))),
+    ignore(woc(add_assertion(Self,Preds))),
+    nop(debug_info(assert_hooks,added_assertion_now(Self,Preds))),!.
 
 %!  load_hook(+Load, -Hooked) is det.
 %
@@ -3856,6 +3870,10 @@ assert_preds(Self,Load,Preds):-
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
+
+metta_atom_asserted_hook(Self,Assertion):-
+  woc(load_hook(load, metta_atom_asserted(Self,Assertion))).
+
 
 %!  rtrace_on_error(:Goal) is det.
 %
@@ -3973,6 +3991,10 @@ assertion_hb(metta_atom_asserted(Self, [Eq, H, B]), Self, Eq, H, B) :-
     assertion_neck_cl(Eq),
     !.
 
+assertion_fact(metta_atom_asserted(Self, Fact), Self, Fact).
+assertion_fact(Assertion,Self,[Eq, H, B]):- assertion_hb(Assertion, Self, Eq, H, B),!.
+assertion_fact(Assertion,Self,Assertion):- current_self(Self),!.
+
 %!  assertion_neck_cl(+Eq) is nondet.
 %
 %   Verifies if the provided equality operator (`Eq`) is valid.
@@ -4014,9 +4036,15 @@ assertion_neck_cl(':-').
 %   % load_hook0(_, _) :- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load, Assertion) :-
     % Extract components of the assertion using `assertion_hb/5`.
-    once(assertion_hb(Assertion, Self, Eq, H, B)),
+    once(assertion_hb(Assertion, Self, Eq, H, B)), !,
     % Pass the components to `load_hook1/5` for further processing.
-    load_hook1(Load, Self, Eq, H, B).
+    load_hook1(Load, Self, [Eq, H, B]).
+
+load_hook0(Load, Assertion) :-
+    % Extract components of the assertion using `assertion_hb/5`.
+    once(assertion_fact(Assertion, Self, Fact)), !,
+    % Pass the components to `load_hook1/5` for further processing.
+    load_hook1(Load, Self, Fact).
 
 %!  load_hook1(+Load, +Self, +Eq, +H, +B) is det.
 %
@@ -4035,17 +4063,37 @@ load_hook0(Load, Assertion) :-
 %     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
-load_hook1(_, _, _, _, _) :-
+load_hook1(Load, Self, Fact) :-
     % Skip processing if the `metta_interp` flag is not set to `ready`.
-    \+ current_prolog_flag(metta_interp, ready), !.
-load_hook1(Load, Self, Eq, H, B) :-
-    % Ensure the Metta compiler is ready for use.
-    use_metta_compiler,
-    % Convert functions to predicates.
-    functs_to_preds([Eq, H, B], Preds),
-    % Assert the converted predicates into the knowledge base.
-    assert_preds(Self, Load, Preds), !.
+    \+ current_prolog_flag(metta_interp, ready),
+    %debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)), fail,
+    !, load_hook_compiler(Load, Self, Fact).
 
+load_hook1(Load, Self, Fact) :-
+    % Ensure the Metta compiler is ready for use.
+    once(use_metta_compiler),!,
+    %debug_info(assert_hooks,use_metta_compiler(Load, Self, Fact)),
+    woc(load_hook_compiler(Load, Self, Fact)).
+load_hook1(Load, Self, Fact):-
+    %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
+    woc(load_hook_compiler(Load, Self, Fact)).
+
+
+debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
+
+:- dynamic(did_load_hook_compiler/3).
+
+load_hook_compiler(Load, Self, Assertion):- \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!.
+load_hook_compiler(Load, Self, Assertion):- Assertion = [Eq, _, _],
+    asserta(did_load_hook_compiler(Load, Self, Assertion)),
+    Eq == '=',!,
+    % Convert functions to predicates.
+    % debug_info(load_hook_compiler,(Load, Self, Assertion)),
+    woc(functs_to_preds(Assertion, Preds)), !,
+    % Assert the converted predicates into the knowledge base.
+    woc(assert_preds(Self, Load, Preds)), !.
+load_hook_compiler(Load, Self, Assertion):-
+  nop(debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion))).
 % old compiler hook
 /*
 load_hook0(Load,Assertion):-
@@ -4101,7 +4149,7 @@ use_metta_compiler :-
 % preview_compiler :- use_metta_compiler, !.
 preview_compiler :-
     % Use the compiler or check if the `compile` option is `true`.
-    notrace(use_metta_compiler; option_value('compile', 'true')).
+    notrace(use_metta_compiler; option_value('compile', 'true')),!.
 
 %!  show_transpiler is nondet.
 %
