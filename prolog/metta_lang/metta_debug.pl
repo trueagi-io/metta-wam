@@ -825,6 +825,13 @@ test_locally_setting_flags:-
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- thread_initialization(set_prolog_flag(occurs_check,error)).
 
+    debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
+    debug_info_goal(Topic,Info):- original_user_error(X),
+      mesg_color(Topic, TopicColor),
+      mesg_color(Info,  InfoColor),
+      \+ \+ (( % numbervars(Info,4123,_,[attvar(bind)]),
+      format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,Info)]))).
+
 debug_info(_Topic,_Info):- \+ is_douglas,!.
 debug_info(Topic,Info):- original_user_error(X),
   mesg_color(Topic, TopicColor),

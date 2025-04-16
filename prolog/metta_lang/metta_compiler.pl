@@ -1201,7 +1201,7 @@ ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
    %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    %label_arg_types(F,1,Args1),
-   A~..[xxx(6),F|Args1]
+   A ~.. [xxx(6),F|Args1]
    %notice_callee(Caller,A)
    )).
 ast_to_prolog_aux(Caller,DontStub,[transpiler_apply,Prefix,Fn,RetResults,RetResult,RetResultsParts, RetResultsPartsN, LazyResultParts,ConvertedParts, ConvertedNParts],A) :- !,
@@ -1244,7 +1244,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    %label_arg_types(F,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
-   R~..[xxx(FIn),Fp|Args2],
+   R ~.. [xxx(FIn),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
@@ -1279,7 +1279,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    create_mc_name(LenArgsAll,FIn,Fp),
    %label_arg_types(FIn,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
-   R0~..[xxx(a),Fp|Args1],
+   R0 ~.. [xxx(a),Fp|Args1],
    %R1=R0),
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(FIn-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs)),
@@ -1301,7 +1301,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
    append(FixedPart,VariablePart,Args1),
    append(FixedPart,[VariablePart],Args1a),
    append(Args1a,[A],Args2),
-   R~..[xxx(c),Fp|Args2],
+   R ~.. [xxx(c),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
@@ -1313,7 +1313,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
 %   label_arg_types(F,1,Args1),
-%   A~..[xxx(d),F|Args1],
+%   A ~.. [xxx(d),F|Args1],
 %   notice_callee(Caller,A))).
 %ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
 % must_det_lls((
@@ -1327,7 +1327,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,0,[A|Args1]),
 %   %LenArgs1 is LenArgs+1,
 %   append(Args1,[A],Args2),
-%   R~..[xxx(1),Fp|Args2].
+%   R ~.. [xxx(1),Fp|Args2].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
@@ -1533,28 +1533,29 @@ call_from_comp(FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A), interp, di
 call_from_comp(_FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A),compiler, disabled), Right = [Y],
    peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),eval_args(Eq,RetType,Depth,Self,Left,Y).
 
-call_from_comp(_FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), _, _), Right = [Y], !,
-    peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),
-    use_right_thing_comp(fa(InterpFn,_A1),Eq,RetType,Depth,Self,Left,Y).
+
+call_from_comp(FnComp,InterpFn,Args):-
+  \+ \+ ( member(E, Args), compound(E), \+ is_list(E) ),
+  \+ use_evaluator(fa(InterpFn,_A), compiler, disabled), !, apply(FnComp,Args).
 
 
 
-call_from_comp(FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), compiler, disabled), !, apply(FnComp,Args).
+call_from_comp(FnComp,InterpFn,Args):- fail,
+    FA = fa(InterpFn,_),
+    \+ use_evaluator(FA, _, _),
+    peek_scope(Eq,RetType,Depth,Self),
+    debug_info(compiled_version, writeq(apply(FnComp,Args))),
 
-call_from_comp(_FnComp,InterpFn,Args):- Right = [Y], !,
-    peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),
-    use_right_thing_comp(fa(InterpFn,_A),Eq,RetType,Depth,Self,Left,Y).
+    Right = [Y], append(Left,Right,Args), X = [InterpFn|Left],
 
-call_fn_native(F, _InterpFn, Args):- !, true_safe,
-    apply(F, Args).
+    debug_info(interp_version,( X -> Y)),
 
-call_fn_native(F, InterpFn,Args):- true_safe,
-    call_from_comp(F, InterpFn,Args).
 
-true_safe.
+    nl,nl,
+    !, apply(FnComp,Args).
 
-use_right_thing_comp(FA, Eq, RetType, Depth, Self, X, Y) :-
-    \+ use_evaluator(FA, _, enabled),
+/*
+    trace,
     compare_impls(
         only_interpreted_eval(FA, Eq, RetType, Depth, Self, X, Y1), Y1,
         only_compiled_eval(FA, Eq, RetType, Depth, Self, X, Y2), Y2,
@@ -1564,8 +1565,34 @@ use_right_thing_comp(FA, Eq, RetType, Depth, Self, X, Y) :-
     ;   set_use_evaluator(FA, interp, enabled)
     ),
     !, member(Y, Answers).
+*/
+call_from_comp(FnComp,_InterpFn,Args):- apply(FnComp,Args).
 
-%~..
+/*
+call_from_comp(_FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), _, _),
+    Right = [Y], append(Left,Right,Args),
+    peek_scope(Eq,RetType,Depth,Self),
+    use_right_thing_comp(fa(InterpFn,_A1),Eq,RetType,Depth,Self,[InterpFn|Left],Y).
+
+call_from_comp(FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), compiler, disabled), !, apply(FnComp,Args).
+*/
+
+
+/*
+call_from_comp(_FnComp,InterpFn,Args):- Right = [Y], !,
+    peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),
+    use_right_thing_comp(fa(InterpFn,_A),Eq,RetType,Depth,Self,Left,Y).
+*/
+
+% call_fn_native(F, _InterpFn, Args):- !, true_safe, apply(F, Args).
+
+call_fn_native(F, InterpFn,Args):- true_safe,
+    call_from_comp(F, InterpFn,Args).
+
+true_safe.
+
+
+% ~..
 dmp_break:- st,ds,break.
 cmpd4lst(A,_):- nonvar(A),dmp_break,fail.
 cmpd4lst(_A,[Cmpd,_F|_Args]):- \+ compound(Cmpd),dmp_break,fail.
@@ -1609,7 +1636,7 @@ correct_assertz(Info,InfoC):- \+ compound(Info),!,InfoC=Info.
 correct_assertz(M:Info,MM:InfoC):- !, correct_assertz(M,MM),correct_assertz(Info,InfoC).
 correct_assertz((Info:- (T, B)),(Info:- (T, B))):- compound(Info), atom(T), !.
 correct_assertz((Info:-B),(InfoC:-B)):- !, correct_assertz(Info,InfoC).
-correct_assertz(call_fn_native(X,_Info,Y),InfoC):- 
+correct_assertz(call_fn_native(X,_Info,Y),InfoC):-
  !, must_det_lls(InfoC=..[X|Y]).
 correct_assertz(Info,Info).
 
@@ -3861,6 +3888,7 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
+
 
 
 
