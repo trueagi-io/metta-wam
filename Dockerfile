@@ -18,7 +18,8 @@ RUN apt update && apt install -y \
     vim \
     bc \
     locales \
-    dos2unix
+    dos2unix \
+    bash-completion
 
 
 RUN locale-gen en_US.UTF-8
