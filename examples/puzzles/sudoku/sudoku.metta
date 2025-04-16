@@ -153,24 +153,24 @@
 !(assertEqual (remove-singletons (1 2 3) 2 ((1 4))) (False (1 2 3)))
 
 
-(= (collect-histogram-aux1 $v $nv) (if (== $v None) $nv NoProcess))
+(= (collect-histogram-aux1 $n $v $nv) (if (== $v None) ($nv $n) NoProcess))
 
-!(assertEqual (collect-histogram-aux1 None 3) 3)
-!(assertEqual (collect-histogram-aux1 4 3) NoProcess)
-!(assertEqual (collect-histogram-aux1 NoProcess 3) NoProcess)
+!(assertEqual (collect-histogram-aux1 0 None 3) (3 0))
+!(assertEqual (collect-histogram-aux1 0 (4 0) 3) NoProcess)
+!(assertEqual (collect-histogram-aux1 0 NoProcess 3) NoProcess)
 
 (= (collect-histogram-aux $histogram $n $nv $c)
     (let ($h $t) (decons-atom $histogram)
         (if (< $n $c)
             (let $hist2 (collect-histogram-aux $t (+ $n 1) $nv $c) (cons-atom $h $hist2))
-            (let $h1 (collect-histogram-aux1 $h $nv) (cons-atom $h1 $t))
+            (let $h1 (collect-histogram-aux1 $n $h $nv) (cons-atom $h1 $t))
         )
     )
 )
 
-!(assertEqual (collect-histogram-aux (None None None None) 0 1 2) (None None 1 None))
-!(assertEqual (collect-histogram-aux (None None 1 None) 0 2 3) (None None 1 2))
-!(assertEqual (collect-histogram-aux (None None 1 1) 0 3 3) (None None 1 NoProcess))
+!(assertEqual (collect-histogram-aux (None None None None) 1 1 3) (None None (1 3) None))
+!(assertEqual (collect-histogram-aux (None None (1 3) None) 1 2 4) (None None (1 3) (2 4)))
+!(assertEqual (collect-histogram-aux (None None (1 3) (1 4)) 1 3 4) (None None (1 3) NoProcess))
 
 (= (collect-histogram-singleton $histogram $n $c)
     (let ($h $t) (decons-atom $histogram)
@@ -188,8 +188,8 @@
     )
 )
 
-!(assertEqual (collect-histogram (None None None None) 3 (1 3)) (3 None 3 None))
-!(assertEqual (collect-histogram (3 None 3 None) 2 (2 3)) (3 2 NoProcess None))
+!(assertEqual (collect-histogram (None None None None) 3 (1 3)) ((3 1) None (3 3) None))
+!(assertEqual (collect-histogram ((3 1) None (3 3) None) 2 (2 3)) ((3 1) (2 2) NoProcess None))
 
 (= (remove-singleton-row-collect-info-aux $row $n $N $singletons)
     (if-decons-expr $row $rh $rt
@@ -218,8 +218,8 @@
 !(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ()) (False ((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
 !(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
 !(assertEqual (remove-singleton-row-collect-info-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1))) (False ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess 1)))
-!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 ()) (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess 0 1)))
+!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4)))
+!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 ()) (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4))))
 
 (= (sudoku-iteration $N $singletons $bb)
     (let* (
