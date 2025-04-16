@@ -218,8 +218,26 @@
 !(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ()) (False ((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
 !(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
 !(assertEqual (remove-singleton-row-collect-info-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1))) (False ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4)))
+!(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1))) (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4))))
 !(assertEqual (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 ()) (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4))))
+
+(= (hist-cleanup $hist)
+    (if-decons-expr $hist $h $t
+        (let $tail (hist-cleanup $t)
+            (if (== $h None) (Empty) (if (== $h NoProcess) $tail (cons-atom $h $tail)))
+        )
+        ()
+    )
+)
+
+!(assertEqual (hist-cleanup (NoProcess (0 3) (1 4) NoProcess)) ((0 3) (1 4)))
+
+(= (remove-singleton-row-collect-info $row $N $singletons)
+    (let* (
+        (($changed $newrow $newsing $hist) (remove-singleton-row-collect-info-aux $row 0 $N $singletons))
+        ($newhist (hist-cleanup $hist)))
+    )
+)
 
 (= (sudoku-iteration $N $singletons $bb)
     (let* (
