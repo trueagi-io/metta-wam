@@ -3892,9 +3892,6 @@ add_assertion_now(Self,Preds):-
 load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
 
-metta_atom_asserted_hook(Self,Assertion):-
-  woc(load_hook(load, metta_atom_asserted(Self,Assertion))).
-
 
 %!  rtrace_on_error(:Goal) is det.
 %
@@ -4061,7 +4058,7 @@ load_hook0(Load, Assertion) :-
     % Pass the components to `load_hook1/5` for further processing.
     load_hook1(Load, Self, [Eq, H, B]).
 
-load_hook0(Load, Assertion) :-
+load_hook0(Load, Assertion) :- fail,
     % Extract components of the assertion using `assertion_hb/5`.
     once(assertion_fact(Assertion, Self, Fact)), !,
     % Pass the components to `load_hook1/5` for further processing.
@@ -4087,8 +4084,10 @@ load_hook0(Load, Assertion) :-
 load_hook1(Load, Self, Fact) :-
     % Skip processing if the `metta_interp` flag is not set to `ready`.
     \+ current_prolog_flag(metta_interp, ready),
-    %debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)), fail,
-    !, load_hook_compiler(Load, Self, Fact).
+    debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
+    %fail,
+    !,
+    nop(woc(load_hook_compiler(Load, Self, Fact))).
 
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
@@ -4099,10 +4098,8 @@ load_hook1(Load, Self, Fact):-
     %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
     woc(load_hook_compiler(Load, Self, Fact)).
 
-debug_info(_Topic,_Info):- !.
-debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
-debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
-debug_info(Info):- debug_info(debug_info,Info).
+metta_atom_asserted_hook(Self,Assertion):-
+  nop(woc(load_hook(load, metta_atom_asserted(Self,Assertion)))).
 
 
 
@@ -7597,4 +7594,5 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 
 :- thread_initialization(do_metta_setup).
+
 

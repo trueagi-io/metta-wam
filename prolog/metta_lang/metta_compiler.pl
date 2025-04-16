@@ -207,7 +207,7 @@ create_p1(URet,[],[ispu,URet]) :- !.
 create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
 create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
-create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- debug_format("0 ~q ~q\n",[ERet,ECode]),!.
+create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- format("0 ~q ~q\n",[ERet,ECode]),!.
 create_p1(ERet,ECode,NRet,NCode,R) :- % try and combine code to prevent combinatorial explosion
    debug_format("1 ~q ~q\n",[ERet,ECode]),
    ((fullvar(ERet);ECode=@=true) -> true; trace),
@@ -1516,7 +1516,7 @@ strip_m(BB,BB).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    %debug_info(compiler_assertz,Info),
+    debug_info(compiler_assertz,Info),
     once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
@@ -1527,7 +1527,8 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
-%user:numbervars(Term):- varnumbers:numbervars(Term).
+% user:numbervars(Term):- varnumbers:numbervars(Term).
+%:- use_module(library(varnumbers)).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
@@ -2082,7 +2083,6 @@ functs_to_preds(I,OO):-
 
 functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
    must_det_lls(compile_for_assert(H, B, OO)),!.
-
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
@@ -2780,8 +2780,8 @@ add_assertion1(Space,ACC) :-
       length(Set,N),
       if_t(N=2,
          (Set=[X,Y],
-            numbervars(X),
-            numbervars(Y)
+            numbervars(X, 0, _, [attvar(skip)]),
+            numbervars(Y, 0, _, [attvar(skip)])
          %nl,display(X),
          %nl,display(Y),
          %nl
@@ -3747,6 +3747,7 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
+
 
 
 
