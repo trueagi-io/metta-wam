@@ -90,8 +90,7 @@ merge_fp(T1,T2,N) :-
 
 :- set_prolog_flag(pfc_term_expansion,true).
 
-metta_atom_asserted(KB2,Y) ==>
-  {metta_atom_asserted_hook(KB2,Y)}.
+metta_atom_asserted(KB2,Y) ==> {metta_atom_asserted_hook(KB2,Y)}.
 
 ((metta_atom_asserted(KB,['==>',X,Y])/nonvar(KB)),
   metta_atom_asserted(KB2,X)) ==>

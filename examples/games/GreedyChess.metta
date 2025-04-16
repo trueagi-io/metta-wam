@@ -565,19 +565,19 @@
 ;***************************************************************
 (= (welcome)  
  (progn   
-    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
-    ((py-atom print) "M E T T A    G R E E D Y   C H E S S")
-    ((py-atom print) "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.") 
+    (println! " ") (println! " ") (println! " ") (println! " ")
+    (println! "M E T T A    G R E E D Y   C H E S S")
+    (println! "This program is a MeTTa exercise which takes the best immediate move without planning far ahead.") 
     (display_board (match &self (board-state $board) $board)) 
-    ((py-atom print) "- Your pieces are white at bottom")
-    ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
-    ((py-atom print) "   Result:  YOUR pawn in a2 moved to location a3.")
-    ((py-atom print) "Greedy Chess Move (AI)           ->  g")
-    ((py-atom print) "Reset & Replay                   ->  r")
-    ((py-atom print) "Commands List                    ->  c")
-    ((py-atom print) "Display Board                    ->  d")
-    ((py-atom print) "Quit                             ->  q")
+    (println! "- Your pieces are white at bottom")
+    (println! "*------- C o m m a n d s ------------*")
+    (println! "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
+    (println! "   Result:  YOUR pawn in a2 moved to location a3.")
+    (println! "Greedy Chess Move (AI)           ->  g")
+    (println! "Reset & Replay                   ->  r")
+    (println! "Commands List                    ->  c")
+    (println! "Display Board                    ->  d")
+    (println! "Quit                             ->  q")
     ))
 
 ;***************************************************************
@@ -752,7 +752,7 @@
   (let*
     (
     ; prompt for x/y location
-    ($__1 ((py-atom print) "Enter valid coordinates."))
+    ($__1 (println! "Enter valid coordinates."))
     ($coordinates ((py-atom input)))
     ; make sure we have 4 chars, otherwise NIL
     ($input_length (return_length $coordinates))
@@ -1616,7 +1616,7 @@
   (let*
     (
     ; assign variables for the next piece
-    ;($debug ((py-atom print) $PieceColor))
+    ;($debug (println! $PieceColor))
     ($next_square (car-atom $Board)  )
     ($next_x (nth 1 $next_square) )
     ($next_y (nth 2 $next_square) )
@@ -2139,11 +2139,11 @@
     ; messages for user
     ($starting_square_lettered (convert_x_letter $starting_square))
     ($target_square_lettered (convert_x_letter $target_square))
-    ($print0 ((py-atom print) (format-args "Moving from: {} to: {}" 
+    ($print0 (println! (format-args "Moving from: {} to: {}" 
         ($starting_square_lettered $target_square_lettered))))
     ($print1 (if (== (size-atom $target_square) 2)
              ()
-             ((py-atom print) "Piece captured!")))
+             (println! "Piece captured!")))
     ($print2 (if (== (size-atom $target_square) 2)
              ()
              (println! $target_square_lettered)))
@@ -2534,7 +2534,7 @@
 ;(: M (-> command))
 (= (M)  
   (if (== (game-still-playing) False)
-    ((py-atom print) "Game over. Please reset to play again (enter r).")
+    (println! "Game over. Please reset to play again (enter r).")
     ; else keep playing
     (progn 
     ; prompt for x/y location
@@ -2575,11 +2575,11 @@
                   ) 
               ; If move valid, proceed to create new board atom with move.
               (if (== $KingCompromised True)
-                  ((py-atom print) "Can't move there, your king would be in check.")
+                  (println! "Can't move there, your king would be in check.")
                   ;else
                   (progn 
                   ; re-create a new board 
-                  ((py-atom print) "Moving your piece...")
+                  (println! "Moving your piece...")
                   (let $provisional_board (move_piece_on_board $h $i $starting_board)
                        (add-atom &self (board-state $provisional_board)))
                   ; remove the old chess board
@@ -2594,9 +2594,9 @@
                             (if (== $any_moves_left_whatsoever ()) ;an empty list means no moves!
                                 ; if no moves possible for AI
                                 (progn
-                                  ((py-atom print) "Checkmate! You win!")
-                                  ((py-atom print) "Winner!  Winner!  Winner!")
-                                  ((py-atom print) "")
+                                  (println! "Checkmate! You win!")
+                                  (println! "Winner!  Winner!  Winner!")
+                                  (println! "")
                                   (change-game-state checkmate)
                                 )
                                 (println! "Check! Enter g for Greedy Chess move.")))
@@ -2604,13 +2604,13 @@
                   )
               )
           )
-          ((py-atom print) "Can't move piece there."))
+          (println! "Can't move piece there."))
         ; else (moving to location with same piece or other problem)
-        ((py-atom print) "Invalid move.")
+        (println! "Invalid move.")
       )
       )
       ;else (trying to move to same location)
-      ((py-atom print) "Invalid move.")) 
+      (println! "Invalid move.")) 
     ; since move complete, delete any individual square atoms which only live for a single move.
     (delete-pieces)
     )))
@@ -2622,7 +2622,7 @@
   ; check for game over...
     (if (xor (==  checkmate   $msg) (==  resigned $msg)) 
       ; then  
-      ((py-atom print) "Game over. Please reset to play again (enter r).")
+      (println! "Game over. Please reset to play again (enter r).")
       ;else keep playing...
       (progn 
         ; get the current board
@@ -2644,13 +2644,13 @@
             )
             (if (== $KingCompromised True)
               (progn
-                ((py-atom print) "Checkmate! You win!")
-                ((py-atom print) "Winner!  Winner!  Winner!")
-                ((py-atom print) "")
+                (println! "Checkmate! You win!")
+                (println! "Winner!  Winner!  Winner!")
+                (println! "")
                 (change-game-state checkmate)
                 )
               (progn
-                ((py-atom print) "Greedy Chess cannot find a good move. Game over. You win!")
+                (println! "Greedy Chess cannot find a good move. Game over. You win!")
                 (change-game-state resigned))))
           ; else proceed with move
           (progn
@@ -2660,7 +2660,7 @@
             (let $destination_entire (return_entire_box $destination) ())
             ; make the move in atomspace using the individual "square" atoms
             (move_piece $start $destination) ; the envision move persists in atomspace "square" atoms until end of routine.
-            ((py-atom print) "Greedy Chess moving...")
+            (println! "Greedy Chess moving...")
             ; create atom for the updated complete chess board...
             (let $provisional_board (move_piece_on_board $start $destination_entire $starting_board)
                   (add-atom &self (board-state $provisional_board)))
@@ -2673,15 +2673,15 @@
             (match &self (game-state $msg2) 
               (if (==  checkmate   $msg2) 
                 (progn
-                            ((py-atom print) "Checkmate! Greedy Chess wins!!!")
-                            ((py-atom print) "Good game!")
-                            ((py-atom print) "")
+                            (println! "Checkmate! Greedy Chess wins!!!")
+                            (println! "Good game!")
+                            (println! "")
                           )
                 ; else look for check...
                 (let $Check (checkking s)
                   (if (== $Check True)        
-                    ((py-atom print) "Check!")
-                    ((py-atom print) "Your move.")))))
+                    (println! "Check!")
+                    (println! "Your move.")))))
             ; since move complete, delete any individual square atoms which only live for a single move.     
             ;     "
           )
@@ -2703,17 +2703,17 @@
 (: C (-> command))
 (= (C) 
   (progn
-    ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ") ((py-atom print) " ")
-    ((py-atom print) "- Your pieces are white at bottom.")
-    ((py-atom print) "- Please take note of the following simple commands:")
-    ((py-atom print) "*------- C o m m a n d s ------------*")
-    ((py-atom print) "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
-    ((py-atom print) "   Result:  YOUR pawn in a2 moved to location a3.")
-    ((py-atom print) "Greedy Chess Move (AI)           ->  g")
-    ((py-atom print) "Reset & Replay                   ->  r")
-    ((py-atom print) "Commands List                    ->  c")
-    ((py-atom print) "Display Board                    ->  d")
-    ((py-atom print) "Quit                             ->  q")))
+    (println! " ") (println! " ") (println! " ") (println! " ")
+    (println! "- Your pieces are white at bottom.")
+    (println! "- Please take note of the following simple commands:")
+    (println! "*------- C o m m a n d s ------------*")
+    (println! "MOVE YOUR PIECE USE example      ->  m <ENTER> a2a3 <ENTER>")
+    (println! "   Result:  YOUR pawn in a2 moved to location a3.")
+    (println! "Greedy Chess Move (AI)           ->  g")
+    (println! "Reset & Replay                   ->  r")
+    (println! "Commands List                    ->  c")
+    (println! "Display Board                    ->  d")
+    (println! "Quit                             ->  q")))
 ;
 
 ; The display command shows the present board.
@@ -2743,7 +2743,7 @@
 
 (= (command-loop)
   (progn 
-    ((py-atom print) "Please enter your command.")
+    (println! "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
         (case $command
           (
@@ -2752,8 +2752,8 @@
           ("r"  (R))                         ; Reset = "r"
           ("c"  (C))                         ; List valid commands = "c"
           ("d"  (D))                         ; Display board "d"
-          ("q"  ((py-atom print) "Quitting MeTTa Greedy Chess."))
-          ($_   ((py-atom print) "Invalid command, please try again or enter c for a list of commands."))
+          ("q"  (println! "Quitting MeTTa Greedy Chess."))
+          ($_   (println! "Invalid command, please try again or enter c for a list of commands."))
           )))
     (if (== $command "q") 
       ()

@@ -771,7 +771,9 @@ trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
 maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
 maybe_trace:- is_extreme_debug(trace).
 
-%is_extreme_debug(G):- (( fail, gethostname(X),X=='HOSTAGE')), !, call(G).
+is_extreme_debug:- is_douglas. 
+is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
+is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
 sub_var_safely(Var,Source):-
@@ -822,6 +824,11 @@ test_locally_setting_flags:-
 
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- thread_initialization(set_prolog_flag(occurs_check,error)).
+
+debug_info(_Topic,_Info):- \+ is_douglas,!.
+debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
+debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
+debug_info(Info):- debug_info(debug_info,Info).
 
 %!  is_showing(+Flag) is nondet.
 %
