@@ -152,10 +152,10 @@ check_file_exists_for_append(HistoryFile) :-
 %     ?- save_history.
 %     true.
 %
-:- if(is_win64).
+
 % Dummy to avoid errors on windows.
-save_history.
-:- else.
+save_history:- is_win64, !.
+save_history:- is_docker, !.
 save_history :-
     % Get the current input stream.
     current_input(Input),
@@ -167,7 +167,6 @@ save_history :-
     ;
         % Otherwise, do nothing.
         true).
-:- endif.
 
 %! load_and_trim_history is det.
 %   Loads and trims the REPL history if needed, and installs readline support.
@@ -889,7 +888,7 @@ eval_I(Self, Form, OOut) :-
     default_depth(DEPTH),
     eval_H(DEPTH, Self, Form, Out),
     % Enable trace for debugging purposes.
-    trace,
+    %trace,
     % Transform the output.
     xform_out(Out, OOut).
 
@@ -965,12 +964,12 @@ reset_caches :-
 %       Output = ..., FOut = ...
 u_do_metta_exec(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Reset internal caches before executing the command.
-    reset_caches,
+    woc(reset_caches),
     % Attempt to execute the command interactively, catching any errors.
-    catch(u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    (catch(u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           Error,
           % If an error occurs, log it along with the source and the term.
-          write_src(error(Error,From,TermV))).
+          write_src(error(Error,From,TermV)))).
 
 each_pair_list(A-B,A,B).
 
@@ -992,14 +991,14 @@ u_do_metta_exec00(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut):-
    catch(u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),'$aborted', fbug(aborted(From,TermV))).
 
 u_do_metta_exec000(FromLSP,Self,TermV,Term,X,NamedVarsList,Was,OutputL,FOutL):- ground(FromLSP), FromLSP = file(lsp(From)), nonvar(From), !,
-   findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List),!,
-   maplist(each_pair_list,List,OutputL,FOutL).
+   woc(findall(Output-FOut,u_do_metta_exec01(repl_true,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),List)),!,
+   woc(maplist(each_pair_list,List,OutputL,FOutL)).
 
 u_do_metta_exec000(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut) :-
     % Attempt the actual execution and catch any '$aborted' exceptions.
-    catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
+    (catch(u_do_metta_exec01(From,Self,TermV,Term,X,NamedVarsList,Was,Output,FOut),
           % Handle the '$aborted' exception by logging it.
-          '$aborted', fbug(aborted(From,TermV))).
+          '$aborted', fbug(aborted(From,TermV)))).
 
 %!  u_do_metta_exec01(+From, +Self, +_TermV, +Term, -X, +NamedVarsList, +Was, -VOutput, +FOut) is det.
 %
@@ -1935,6 +1934,7 @@ interact(Variables, Goal, Tracing) :-
 :- volatile(is_installed_readline_editline/1).
 
 install_readline_editline :-  is_win64,!.
+install_readline_editline :-  is_docker,!.
 install_readline_editline :-
     % Get the current input stream.
     current_input(Input),
@@ -2020,6 +2020,10 @@ add_metta_commands(Input) :-
 %
 %       ?- install_readline(user_input).
 %
+is_docker :- exists_file('/.dockerenv'),!.
+
+install_readline(_Input):- is_docker,!. % too chancy
+install_readline(_Input):- is_win64,!. % already installed
 install_readline(Input):-
     % Check if readline is already installed for this Input.
     is_installed_readline_editline(Input), !.
@@ -2057,6 +2061,7 @@ install_readline(Input):-
 
 % Clause to handle non-tty(true) clients, like SWISH or HTTP server requests.
 install_readline(_NoTTY). % For non-tty(true) clients over SWISH/Http/Rest server
+
 
 load_metta_history_from_txt_file(File):-
    exists_file(File),!,

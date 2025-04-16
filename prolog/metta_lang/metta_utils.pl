@@ -103,6 +103,7 @@
    % :- ensure_loaded(library(dictoo)).
 :- endif.
 
+
 % Declare `done_once/1` as a dynamic predicate to allow runtime modification.
 :- dynamic(done_once/1).
 

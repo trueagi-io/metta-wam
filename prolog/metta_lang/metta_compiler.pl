@@ -108,6 +108,11 @@ non_arg_violation(_,_,_).
 %transpiler_enable_interpreter_calls.
 transpiler_enable_interpreter_calls :- fail.
 
+debug_format(Fmt,Args):- transpiler_debug(1,format_e(Fmt,Args)).
+
+% format to go out the visable error console since stdout can be sometimes redirected like in the case of the LSP server
+format_e(Fmt,Args):- stream_property(StdErr, file_no(2)), format(StdErr,Fmt,Args),flush_output(StdErr).
+
 transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Level -> call(Code) ; true).
 %transpiler_debug(_Level,Code) :- call(Code).
 
@@ -202,9 +207,9 @@ create_p1(URet,[],[ispu,URet]) :- !.
 create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
 create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
-create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- format("0 ~q ~q\n",[ERet,ECode]),!.
+create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- debug_format("0 ~q ~q\n",[ERet,ECode]),!.
 create_p1(ERet,ECode,NRet,NCode,R) :- % try and combine code to prevent combinatorial explosion
-   format("1 ~q ~q\n",[ERet,ECode]),
+   debug_format("1 ~q ~q\n",[ERet,ECode]),
    ((fullvar(ERet);ECode=@=true) -> true; trace),
    partial_combine_lists(ECode,NCode,CCode,ECode1,NCode1),
    (CCode=[] ->
@@ -290,7 +295,7 @@ combine_transpiler_clause_store_and_maybe_recompile(FnName,LenArgs,FinalLazyArgs
          true
       ;
          % signature is changed, need to do a recompile
-         transpiler_debug(2,format("~q/~q signature is changed, need to do a recompile",FnName,LenArgs)),
+         transpiler_debug(2,format_e("~q/~q signature is changed, need to do a recompile",FnName,LenArgs)),
          recompile_from_depends(FnName,LenArgs)
       )
    ;
@@ -326,15 +331,15 @@ invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
    invert_curried_structure(F,LenArgs,ArgsFirst,Result).
 
 recompile_from_depends(FnName,LenArgs) :-
-   transpiler_debug(2,(format("recompile_from_depends ~w/~w\n",[FnName,LenArgs]),flush_output(user_output))),
+   transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
    %create_mc_name(LenArgs,,FnName,FnNameWPrefix),
    %findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
    %H=..[FnNameWPrefix|AtomList0],
-   %transpiler_debug(2,format("Retracting stub: ~q\n",[H]) ; true),
+   %transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
    %retractall(H),
    findall(FnD/ArityD,transpiler_depends_on(FnD,ArityD,FnName,LenArgs),List),
-   transpiler_debug(2,(format("recompile_from_depends list ~w\n",[List]))),
+   transpiler_debug(2,(format_e("recompile_from_depends list ~w\n",[List]))),
    maplist(recompile_from_depends0,List).
 
 unnumbervars_wco(X,XXX):- compound(X),
@@ -349,7 +354,7 @@ number_vars_wo_conficts(X,XX):-
    numbervars(XX,N2,_,[attvar(skip)]).
 
 recompile_from_depends0(Fn/Arity) :-
-   %format("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
+   %format_e("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
    ArityP1 is Arity+1,
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
    create_mc_name(Arity,Fn,FnWPrefix),
@@ -360,17 +365,17 @@ recompile_from_depends0(Fn/Arity) :-
    sort(ClauseIdList,SortedClauseIdList),
    maplist(extract_info_and_remove_transpiler_clause_store(Fn,Arity),SortedClauseIdList,Clause),
    %leash(-all),trace,
-   %format("X: ~w\n",[Clause]),flush_output(user_output),
-   number_vars_wo_conficts(Clause,Clause2),
+   %format_e("X: ~w\n",[Clause]),flush_output(user_output),
+   number_vars_wo_conficts(Clause,Clause2),!,
    maplist(compile_for_assert_with_add,Clause2).
 
 compile_for_assert_with_add(Head-Body) :-
    compile_for_assert(Head,Body,Converted),
-   assertz(Converted).
+   compiler_assertz(Converted).
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
-   %format("Extracted clause: ~w:-~w\n",[Head,Body]),
+   %format_e("Extracted clause: ~w:-~w\n",[Head,Body]),
    retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
@@ -390,7 +395,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       retract(transpiler_stub_created(FnName,LenArgs)),
       findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
       H=..[FnNameWPrefix|AtomList0],
-      transpiler_debug(2,format("Retracting stub: ~q\n",[H]) ; true),
+      transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
       retractall(H)
    ; true),
    %AsFunction = HeadIs,
@@ -447,7 +452,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       transpiler_debug(2,output_prolog(LazyEagerInfo)),
 
-      %format("HeadIs:~q HResult:~q AsBodyFn:~q FullCode:~q\n",[HeadIs,HResult,AsBodyFn,FullCode]),
+      %format_e("HeadIs:~q HResult:~q AsBodyFn:~q FullCode:~q\n",[HeadIs,HResult,AsBodyFn,FullCode]),
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
@@ -465,15 +470,15 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
       ast_to_prolog(caller(FnName,LenArgs),[FnName/LenArgs],FullCode2,NextBodyC),
 
-      %format("###########1 ~q",[Converted]),
+      %format_e("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
-      %format("###########2 ~q",[Converted]),
+      %format_e("###########2 ~q",[Converted]),
       extract_constraints(Converted,EC),
       optimize_prolog([],Converted,Optimized),
       transpiler_debug(2,output_prolog('#F08080',[EC])),!,
-      output_prolog('#ADD8E6',[Converted]),!,
+      transpiler_debug(1,output_prolog('#ADD8E6',[Converted])),!,
       if_t(Optimized\=@=Converted,
-             output_prolog(green,Optimized)),
+             transpiler_debug(1,output_prolog(green,Optimized))),
 
         transpiler_debug(2,tree_deps(Space,FnName,LenArgsPlus1)),
 
@@ -696,7 +701,7 @@ h2p_sub(EagerArgList,LazyVars,Convert,Converted,CodeOut,NewLazyVarsAggregate) :-
    append(Code,CodeOut).
 
 h2p_sub(_EagerArgList,_ArgType,_LazyVars,X,X,[],[]) :-
-   format(user_error,"Error in h2p_sub: ~w",[X]),
+   format_e("Error in h2p_sub: ~w",[X]),
    throw(0).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -832,7 +837,7 @@ f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Co
     append([PreCode,[[native(Native),Args]],PostCode],Converted).
 
 % !(compile-body! (length-p (a b c d) 4))
-% !(compile-body! (format! "~q ~q ~q" (a b c)))
+% !(compile-body! (format_e! "~q ~q ~q" (a b c)))
 f2p(HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- HeadIs\==Convert,
     is_host_predicate(Convert,Native,_Len),!,Convert=[_|Args],
     compile_maplist_p2(as_prolog,Args,NewArgs,PreCode),
@@ -937,8 +942,8 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
             findall(Atom1, (between(1, LenArgs, I1), Atom1='$VAR'(I1)), AtomList1),
             B=..[u_assign,[F|AtomList1],'$VAR'(LenArgs1)],
             compiler_assertz(transpiler_stub_created(F,LenArgs)),
-            transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
-            create_and_consult_temp_file('&self',Fp/LenArgs1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
+            transpiler_debug(2,format_e("; % ######### warning: creating stub for:~q\n",[F])),
+            create_and_consult_temp_file('&self',Fp/LenArgs1,[H:-(format_e("; % ######### warning: using stub for:~q\n",[F]),B)])
          ),
          ResultLazy=x(noeval,eager,[]),
          Docall=yes)
@@ -959,7 +964,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
       true
    ;
       compiler_assertz(transpiler_depends_on(FnHead,LenArgsHead,Fn,LenArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHead,LenArgsHead,Fn,LenArgs]))
+      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[FnHead,LenArgsHead,Fn,LenArgs]))
    ),
    append(Args,ArgsFlattened),
    (Docall=yes ->
@@ -1114,7 +1119,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Conver
     assign_or_direct(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN), !.
 
 f2p(HeadIs,LazyVars,_,_,EvalArgs,Convert,_,_):-
-   format(user_error,"Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
+   format_e("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
    throw(0).
 
 /*
@@ -1212,7 +1217,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    R=..[Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
+      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
    ; true)
    %sum_list(LenArgs,LenArgsTotal),
    %LenArgsTotalPlus1 is LenArgsTotal+1,
@@ -1232,7 +1237,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[native_call,F,LenArgs,ArgsIn]],R) :
    R=..[',',R0,R1],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
+      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
    ; true)
    )).
 ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRest),ArgsIn],R0) :- !,
@@ -1248,7 +1253,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    %R1=R0),
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(FIn-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,FIn,LenArgs]))
+      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,FIn,LenArgs]))
    ; true)
    %))
    .
@@ -1269,7 +1274,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
    R=..[Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
-      transpiler_debug(2,format("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
+      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
    ; true),
    ((current_predicate(Fp/LenArgs);member(F/LenArgs,DontStub)) ->
       true
@@ -1365,17 +1370,17 @@ create_and_consult_temp_file(Space,F/A,PredClauses):-  fail, !,
         open_memory_file(MemFile,write,TempStream),
 
         %Writethetabledpredicatetothememoryfile
-        format(TempStream,':-multifile((~q)/~q).~n',[metta_compiled_predicate,3]),
-        format(TempStream,':-dynamic((~q)/~q).~n',[metta_compiled_predicate,3]),
-        format(TempStream,'~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
+        format_e(TempStream,':-multifile((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format_e(TempStream,':-dynamic((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format_e(TempStream,'~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
 
-        format(TempStream,':-multifile((~q)/~q).~n',[F,A]),
-        format(TempStream,':-dynamic((~q)/~q).~n',[F,A]),
+        format_e(TempStream,':-multifile((~q)/~q).~n',[F,A]),
+        format_e(TempStream,':-dynamic((~q)/~q).~n',[F,A]),
 
         %Iftablingisturnedon:
         if_t(
         option_value('tabling','True'),
-        format(TempStream,':-~q.~n',[table(F/A)])
+        format_e(TempStream,':-~q.~n',[table(F/A)])
     ),
 
     %Writeeachclause
@@ -1410,14 +1415,11 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % Generate a unique temporary memory buffer
     tmp_file_stream(text, TempFileName, TempFileStream),
     % Write the tabled predicate to the temporary file
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [metta_compiled_predicate, 3]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [metta_compiled_predicate, 3]),
-    format(TempFileStream, '~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
-
-    format(TempFileStream, ':- multifile((~q)/~w).~n', [F, A]),
-    format(TempFileStream, ':- dynamic((~q)/~w).~n', [F, A]),
+    make_multifile_dynamic(TempFileStream,metta_compiled_predicate, 3),
+    write_clause(TempFileStream,metta_compiled_predicate(Space,F,A)),
+    make_multifile_dynamic(TempFileStream,F, A),
     %if_t( \+ option_value('tabling',false),
-    if_t(option_value('tabling','True'),format(TempFileStream,':- ~q.~n',[table(F/A)])),
+    if_t(option_value('tabling','True'),write_clause(TempFileStream,(:- table(F/A)))),
     maplist(write_clause(TempFileStream), PredClauses),
     % Close the temporary file
     close(TempFileStream),
@@ -1425,20 +1427,26 @@ create_and_consult_temp_file(Space,F/A, PredClauses) :-
     % abolish(F/A),
     /*'&self':*/
     % sformat(CAT,'cat ~w',[TempFileName]), shell(CAT),
-    consult(TempFileName),
+    %consult(TempFileName),
 
     % listing(F/A),
     % Delete the temporary file after consulting
     delete_file(TempFileName),
-    current_predicate(F/A),
+    assertion(current_predicate(F/A)),
     %listing(metta_compiled_predicate/3),
     true)).
+
+
+make_multifile_dynamic(TempFileStream,F, A):-
+    write_clause(TempFileStream, (:- multifile(F/A))),
+    write_clause(TempFileStream, (:- dynamic(F/A))),!.
+
 
 
 write_to_streams(StreamList, Format, Args) :-
     % Write to each stream in the list
     forall(member(Stream, StreamList),
-           format(Stream, Format, Args)),
+           format_e(Stream, Format, Args)),
     % Write to stdout
     format(user_output, Format, Args),
     flush_output(user_output). % Ensure output is displayed immediately
@@ -1448,10 +1456,17 @@ write_to_streams(StreamList, Format, Args) :-
 
 % Helper predicate to write a clause to the file
 write_clause(Stream, Clause) :-
-    subst_vars(Clause,Can),
-    write_canonical(Stream, Can),
+    must_det_lls((subst_vars(Clause,Can),
+    write_clause_can(Stream, Can),
+    write_clause_mem(Can))).
+
+write_clause_can(Stream, Can):-
+    must_det_lls((write_canonical(Stream, Can),
     write(Stream, '.'),
-    nl(Stream).
+    nl(Stream))).
+
+write_clause_mem(:- (Can)):- !, forall(must_det_lls(Can),true).
+write_clause_mem(Can):- compiler_assertz(Can).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % STILL unsorted
@@ -1499,8 +1514,10 @@ strip_m(BB,BB).
 
 
 compiler_assertz(Info):-
-  unnumbervars_clause(Info,Assert),
-  assertz(Assert),transpiler_debug(2,output_prolog(Info)).
+  once(unnumbervars_clause(Info,Assert)),
+  transpiler_debug(2,output_prolog(Info)),
+    %debug_info(compiler_assertz,Info),
+    once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
@@ -1510,7 +1527,7 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
-user:numbervars(Term):- varnumbers:numbervars(Term).
+%user:numbervars(Term):- varnumbers:numbervars(Term).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
@@ -1519,7 +1536,7 @@ must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls(G):- tracing,!,(real_notrace(G)*->true;fail).
 must_det_lls(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
-must_det_lls(G):- notrace,nortrace,trace,rtrace(G),!.
+must_det_lls(G):- ignore((notrace,nortrace,trace)),rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
@@ -1533,7 +1550,7 @@ extract_constraints(V,Types,V=Types).
 label_vns(S,G,E):- term_variables(G,Vars),assign_vns(S,Vars,E),!.
 assign_vns(S,[],S):-!.
 assign_vns(N,[V|Vars],O):- get_attr(V,vn,_),!, assign_vns(N,Vars,O).
-assign_vns(N,[V|Vars],O):- format(atom(VN),'~w',['$VAR'(N)]),
+assign_vns(N,[V|Vars],O):- format_e(atom(VN),'~w',['$VAR'(N)]),
   put_attr(V,vn,VN), N2 is N+1, assign_vns(N2,Vars,O).
 
 label_arg_types(_,_,[]):-!.
@@ -1952,7 +1969,7 @@ notice_callee(CallerInt,CallerSz,F,LenArgs1):-
         CallerInt  \== exec0,
         \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LenArgs1U), CallerSzU=@=CallerSz, LenArgs1U=@=LenArgs1),
          compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
+         transpiler_debug(2,format_e("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
          transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)) ))),
     ignore((
@@ -2065,6 +2082,7 @@ functs_to_preds(I,OO):-
 
 functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
    must_det_lls(compile_for_assert(H, B, OO)),!.
+
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
@@ -2246,7 +2264,7 @@ notice_callee(CallerInt,CallerSz,F,LenArgs1):-
         CallerInt  \== exec0,
         \+ (transpiler_depends_on(CallerInt,CallerSzU,F,LenArgs1U), CallerSzU=@=CallerSz, LenArgs1U=@=LenArgs1),
          compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)),
-         transpiler_debug(2,format("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
+         transpiler_debug(2,format_e("; Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs1])),
          ignore((current_self(Space),ensure_callee_site(Space,CallerInt,CallerSz))),
          transpiler_debug(2,output_prolog(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs1)) ))),
     ignore((
@@ -2279,7 +2297,7 @@ maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,Arg,ArgO).
 check_supporting_predicates(Space,F/A) :- % already exists
 %trace,
    create_mc_name(A,F,Fp),
-   with_mutex(transpiler_mutex_lock,
+   with_mutex_maybe(transpiler_mutex_lock,
       (sum_list(A,ATot),ATot1 is ATot+1,
          (current_predicate(Fp/ATot1) -> true ;
             findall(Atom0, (between(1, ATot1, I0) ,Atom0='$VAR'(I0)), AtomList0),
@@ -2288,12 +2306,12 @@ check_supporting_predicates(Space,F/A) :- % already exists
             B=..[u_assign,[F|AtomList1],'$VAR'(ATot1)],
    %         (transpiler_enable_interpreter_calls -> G=true;G=fail),
    %         compiler_assertz(transpiler_stub_created(F,A)),
-   %         create_and_consult_temp_file(Space,Fp/ATot1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
+   %         create_and_consult_temp_file(Space,Fp/ATot1,[H:-(format_e("; % ######### warning: using stub for:~q\n",[F]),G,B)]))).
    %         compiler_assertz(transpiler_stub_created(F,A)),
 
-   %         transpiler_debug(2,format("; % ######### warning: creating stub for:~q\n",[F])),
+   %         transpiler_debug(2,format_e("; % ######### warning: creating stub for:~q\n",[F])),
             (transpiler_enable_interpreter_calls ->
-               create_and_consult_temp_file(Space,Fp/ATot1,[H:-(format("; % ######### warning: using stub for:~q\n",[F]),B)])
+               create_and_consult_temp_file(Space,Fp/ATot1,[H:-(format_e("; % ######### warning: using stub for:~q\n",[F]),B)])
             ;
                create_and_consult_temp_file(Space,Fp/ATot1,[H:-('$VAR'(ATot1)=[F|AtomList1])])
             )
@@ -2717,7 +2735,7 @@ is_compiled_and(AND):- member(AND,[ (','), ('and'), ('and-seq')]).
 flowc.
 
 unnumbervars_clause(Cl,ClU):-
-  copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU).
+  woc((copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU))),!.
 % ===============================
 %  Compile in memory buffer
 % ===============================
@@ -2738,8 +2756,11 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
 % :- dynamic(needs_tabled/2).
 
 add_assertion(Space,List):- is_list(List),!,
-   maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+   maplist(add_assertion(Space),List),!.
+add_assertion(Space,AC):- must_det_lls(unnumbervars_clause(AC,UAC)), add_assertion1(Space,UAC).
+
+with_mutex_maybe(_,Goal):- wocf(call(Goal)).
+
 add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
 
@@ -2748,7 +2769,7 @@ add_assertion1(Space,ACC) :-
      copy_term(ACC,AC,_),
      expand_to_hb(AC,H,_),
      as_functor_args(H,F,A), as_functor_args(HH,F,A),
-    with_mutex(transpiler_mutex_lock,(
+    with_mutex_maybe(transpiler_mutex_lock,(
       % assert(AC),
       % Get the current clauses of my_predicate/1
       findall(HH:-B,clause(/*'&self':*/HH,B),Prev),
@@ -3117,7 +3138,7 @@ compile_for_assert(HeadIs, AsBodyFn, Converted) :- fail,is_ftVar(AsBodyFn), /*tr
    nop(ignore(Result = '$VAR'('HeadRes'))))),!.
 
 compile_for_assert(HeadIs, AsBodyFn, Converted) :-
-   %format("~q ~q ~q\n",[HeadIs, AsBodyFn, Converted]),
+   %format_e("~q ~q ~q\n",[HeadIs, AsBodyFn, Converted]),
    AsFunction = HeadIs,
    must_det_lls((
    Converted = (HeadC :- NextBodyC),  % Create a rule with Head as the converted AsFunction and NextBody as the converted AsBodyFn

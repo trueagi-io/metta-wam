@@ -17,7 +17,15 @@ RUN apt update && apt install -y \
     wget \
     vim \
     bc \
-    dos2unix
+    locales \
+    dos2unix \
+    bash-completion
+
+
+RUN locale-gen en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 # Create user
 ENV USER=user
@@ -26,6 +34,7 @@ RUN chsh -s /bin/bash user
 # SWI packages no longer need the user's user
 #USER ${USER}
 ENV HOME=/home/${USER}
+
 WORKDIR ${HOME}
 
 # Install MeTTaLog
@@ -44,10 +53,12 @@ COPY ./ ./
 # get rid of copied venv that is probably using a whole different python anyways
 RUN rm -rf ./venv/  
 COPY ./INSTALL.sh ./INSTALL.sh
+RUN mkdir -p  /home/user/.config/metta && touch /home/user/.config/metta/repl_history.txt
 
 SHELL ["/bin/bash", "-c"]
 RUN source ./INSTALL.sh --easy --allow-system-modifications
 
+RUN mettalog --compile-only
 
 #RUN swipl -l src/main/metta_interp.pl -g qcompile_mettalog
 
