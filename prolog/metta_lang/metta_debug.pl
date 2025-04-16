@@ -771,7 +771,7 @@ trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
 maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
 maybe_trace:- is_extreme_debug(trace).
 
-is_extreme_debug:- is_douglas. 
+is_extreme_debug:- is_douglas.
 is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
@@ -826,7 +826,18 @@ test_locally_setting_flags:-
 %:- thread_initialization(set_prolog_flag(occurs_check,error)).
 
 debug_info(_Topic,_Info):- \+ is_douglas,!.
-debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
+debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~@ ~n~n',[Topic,debug_pp_info(Info)]).
+
+debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),!,debug_pp_cmpd(Info,F,Args).
+debug_pp_info(Info):-  write_src(Info).
+debug_pp_cmpd(Info,':-',_):- !, nl, write('  '), debug_pp_now(Info).
+debug_pp_cmpd(Info,'[|]',_):- !, write_src(Info).
+debug_pp_cmpd(Info,_,_Args):- debug_pp_now(Info).
+debug_pp_now(Info):- pp_as_src(Info),!,write_src(Info).
+debug_pp_now(Info):- ignore(catch(notrace(print_tree(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))).
+
+pp_as_src(Info):- compound(Info), arg(_,Info,E),is_list(E),E=[H|_],is_list(H),!.
+
 debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
 debug_info(Info):- debug_info(debug_info,Info).
 
