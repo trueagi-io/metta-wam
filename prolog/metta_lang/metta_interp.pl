@@ -4083,7 +4083,7 @@ load_hook0(Load, Assertion) :- fail,
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
 load_hook1(Load, Self, Fact) :-
     % Skip processing if the `metta_interp` flag is not set to `ready`.
-    \+ current_prolog_flag(metta_interp, ready),
+    \+ is_metta_interp_ready,
     debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
     %fail,
     !,
@@ -4101,7 +4101,7 @@ load_hook1(Load, Self, Fact):-
 metta_atom_asserted_hook(Self,Assertion):-
   nop(woc(load_hook(load, metta_atom_asserted(Self,Assertion)))).
 
-
+is_metta_interp_ready :- current_prolog_flag(metta_interp, ready).
 
 :- dynamic(did_load_hook_compiler/3).
 
