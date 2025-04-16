@@ -3037,6 +3037,9 @@ maybe_do_repl(_Why) :- flag(cmdline_load_file, X, X), X==0, once(repl).
 
 % Base case: succeed when the argument list is empty.
 cmdline_load_metta(_, _, Nil) :- Nil == [], !.
+
+cmdline_load_metta(Phase, Self, [M | _]) :- fail,
+      debug_info(argv,cmdline_load_metta(Phase, Self, M)), fail.
 % Handle double-dash (`--`) by skipping it and continuing with the rest of the arguments.
 cmdline_load_metta(Phase, Self, ['--' | Rest]) :- !,
     cmdline_load_metta(Phase, Self, Rest).
@@ -3073,10 +3076,15 @@ cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
     if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle command-line options by setting their corresponding values.
+
+cmdline_load_metta(Phase, Self, [Skip, _ | Rest]) :- skip_cmdarg(Skip), !,
+    cmdline_load_metta(Phase, Self, Rest).
+
+cmdline_load_metta(Phase, Self, ['-D', M | Rest]) :- !,
+    process_flag(M), !,
+    cmdline_load_metta(Phase, Self, Rest).
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
-    m_opt(M, Opt),
-    is_cmd_option(Opt, M, TF),
-    set_option_value_interp(Opt, TF), !,
+    process_flag(M), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle unrecognized command-line options by logging a warning.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
@@ -3085,16 +3093,29 @@ cmdline_load_metta(Phase, Self, [M | Rest]) :-
     cmdline_load_metta(Phase, Self, Rest).
 
 
+skip_cmdarg('-l').
+skip_cmdarg('-g').
+skip_cmdarg('-x').
+
 reset_default_flags:-
-   forall(option_value_def(A,B), set_option_value_interp(A,B)),
-   metta_cmd_args(Rest),
-   forall(member(Flag,Rest),process_flag(Flag)).
+    forall(option_value_def(A,B), set_option_value_interp(A,B)),
+    metta_cmd_args(Rest),process_metta_cmd_arg_flags(Rest),
+    current_prolog_flag(os_argv,[_|ArgV]),
+    debug_info(os_argv,ArgV),
+    process_metta_cmd_arg_flags(ArgV).
 
-process_flag(M) :- ignore((symbol(M),
-    m_opt(M, Opt),
-    is_cmd_option(Opt, M, TF),
-    set_option_value_interp(Opt, TF))),!.
 
+process_metta_cmd_arg_flags(Rest):-
+   do_cmdline_load_metta('reset', '&self', Rest).
+
+
+process_flag(M) :- m_opt(M, Opt), is_cmd_option(Opt, M, TF),!,process_nv(Opt,TF).
+process_flag(M) :- atomic_list_concat([N, V], '=', M),!, process_nv(N,V).
+process_flag(M) :- !, process_nv(M,true).
+
+process_nv(Opt,TF):-
+    debug_info(process_nv(Opt,TF)),
+    set_option_value_interp(Opt, TF),!.
 
 
 %!  install_ontology is det.
@@ -3821,6 +3842,9 @@ assert_preds(Self,Load,List):- is_list(List),!,maplist(assert_preds(Self,Load),L
 %assert_preds(_Self,_Load,Clause):- assertz(Clause),!.
 %assert_preds(_Self,_Load,_Preds):- \+ show_transpiler,!.
 assert_preds(Self,Load,Preds):-
+   forall(assert_preds_now(Self,Load,Preds),true).
+
+assert_preds_now(_Self,_Load,Preds):- fail,
   expand_to_hb(Preds,H,_B),
   functor(H,F,A), %trace,
   if_t((false,show_transpiler),
@@ -3832,12 +3856,23 @@ assert_preds(Self,Load,Preds):-
            not_compatio(format('  :- ~q.~n',[dynamic(F/A)]))),
       if_t(option_value('tabling','True'),
            not_compatio(format('  :- ~q.~n',[table(F/A)]))))),
-      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))),
+      not_compatio(format('~N~n  ~@',[portray_clause(Preds)]))))).
 
   %if_t(is_transpiling, if_t( \+ predicate_property(H, static), add_assertion(Self,Preds))),
   % allow errors and warning rather than silently doing nothing as the clause above would have done
-  if_t(is_transpiling, add_assertion(Self,Preds)),
+assert_preds_now(Self,_Load,Preds):-
+  if_t(is_transpiling, add_assertion_now(Self,Preds)).
+
+assert_preds_now(Self,_Load,Preds):-
+  if_t( (\+ is_transpiling), add_assertion_now(Self,Preds)).
+
+assert_preds_now(_Self,Load,Preds):-
   nop(metta_anew1(Load,Preds)).
+
+add_assertion_now(Self,Preds):-
+    nop(debug_info(assert_hooks,add_assertion_now(Self,Preds))),
+    ignore(woc(add_assertion(Self,Preds))),
+    nop(debug_info(assert_hooks,added_assertion_now(Self,Preds))),!.
 
 %!  load_hook(+Load, -Hooked) is det.
 %
@@ -3856,6 +3891,10 @@ assert_preds(Self,Load,Preds):-
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):-
    ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
+
+metta_atom_asserted_hook(Self,Assertion):-
+  woc(load_hook(load, metta_atom_asserted(Self,Assertion))).
+
 
 %!  rtrace_on_error(:Goal) is det.
 %
@@ -3973,6 +4012,10 @@ assertion_hb(metta_atom_asserted(Self, [Eq, H, B]), Self, Eq, H, B) :-
     assertion_neck_cl(Eq),
     !.
 
+assertion_fact(metta_atom_asserted(Self, Fact), Self, Fact).
+assertion_fact(Assertion,Self,[Eq, H, B]):- assertion_hb(Assertion, Self, Eq, H, B),!.
+assertion_fact(Assertion,Self,Assertion):- current_self(Self),!.
+
 %!  assertion_neck_cl(+Eq) is nondet.
 %
 %   Verifies if the provided equality operator (`Eq`) is valid.
@@ -4014,9 +4057,15 @@ assertion_neck_cl(':-').
 %   % load_hook0(_, _) :- \+ show_transpiler, !. % \+ is_transpiling, !.
 load_hook0(Load, Assertion) :-
     % Extract components of the assertion using `assertion_hb/5`.
-    once(assertion_hb(Assertion, Self, Eq, H, B)),
+    once(assertion_hb(Assertion, Self, Eq, H, B)), !,
     % Pass the components to `load_hook1/5` for further processing.
-    load_hook1(Load, Self, Eq, H, B).
+    load_hook1(Load, Self, [Eq, H, B]).
+
+load_hook0(Load, Assertion) :-
+    % Extract components of the assertion using `assertion_hb/5`.
+    once(assertion_fact(Assertion, Self, Fact)), !,
+    % Pass the components to `load_hook1/5` for further processing.
+    load_hook1(Load, Self, Fact).
 
 %!  load_hook1(+Load, +Self, +Eq, +H, +B) is det.
 %
@@ -4035,16 +4084,44 @@ load_hook0(Load, Assertion) :-
 %     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
-load_hook1(_, _, _, _, _) :-
+load_hook1(Load, Self, Fact) :-
     % Skip processing if the `metta_interp` flag is not set to `ready`.
-    \+ current_prolog_flag(metta_interp, ready), !.
-load_hook1(Load, Self, Eq, H, B) :-
+    \+ current_prolog_flag(metta_interp, ready),
+    %debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)), fail,
+    !, load_hook_compiler(Load, Self, Fact).
+
+load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
-    use_metta_compiler,
+    once(use_metta_compiler),!,
+    %debug_info(assert_hooks,use_metta_compiler(Load, Self, Fact)),
+    woc(load_hook_compiler(Load, Self, Fact)).
+load_hook1(Load, Self, Fact):-
+    %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
+    woc(load_hook_compiler(Load, Self, Fact)).
+
+debug_info(_Topic,_Info):- !.
+debug_info(Topic,Info):- original_user_error(X),format(X,'~N ~w: ~q. ~n~n',[Topic,Info]).
+debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
+debug_info(Info):- debug_info(debug_info,Info).
+
+
+
+:- dynamic(did_load_hook_compiler/3).
+
+load_hook_compiler(Load, Self, Assertion):- \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!.
+load_hook_compiler(Load, Self, Assertion):- Assertion = [Eq, _, _],
+    asserta(did_load_hook_compiler(Load, Self, Assertion)),
+    Eq == '=', !,
     % Convert functions to predicates.
-    functs_to_preds([Eq, H, B], Preds),
+    % debug_info(load_hook_compiler,(Load, Self, Assertion)),
+    ignore(catch(load_compiler(Load, Self, Assertion),_,true)),!.
+load_hook_compiler(Load, Self, Assertion):-
+  nop(debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion))).
+
+load_compiler(Load, Self, Assertion):-
+    woc(functs_to_preds(Assertion, Preds)), !,
     % Assert the converted predicates into the knowledge base.
-    assert_preds(Self, Load, Preds), !.
+    woc(assert_preds(Self, Load, Preds)), !.
 
 % old compiler hook
 /*
@@ -4101,7 +4178,7 @@ use_metta_compiler :-
 % preview_compiler :- use_metta_compiler, !.
 preview_compiler :-
     % Use the compiler or check if the `compile` option is `true`.
-    notrace(use_metta_compiler; option_value('compile', 'true')).
+    notrace(use_metta_compiler; option_value('compile', 'true')),!.
 
 %!  show_transpiler is nondet.
 %
@@ -5873,7 +5950,7 @@ eval_string(String, Out):-
 %
 eval_H(Term, X) :-
     % Wrap the evaluation in `catch_metta_return/2` to handle any errors.
-    catch_metta_return(eval_args(Term, X), X).
+    woc(catch_metta_return(eval_args(Term, X), X)).
 
 %!  eval_H(+StackMax, +Self, +Term, -Result) is det.
 %
@@ -5895,7 +5972,7 @@ eval_H(_StackMax, _Self, Term, Term) :-
     fast_option_value(compile, save), !.
 eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
-    catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X).
+    woc(catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X)).
 /*
 eval_H(StackMax,Self,Term,X).
 
