@@ -337,46 +337,64 @@
 
 !(assertEqual (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
 
-(= (coordinate-transpose ($x $y $v)) ($y $x $v))
+(= (transpose-coordinate ($x $y $v)) ($y $x $v))
 
-!(assertEqual (coordinate-transpose (1 2 3)) (2 1 3))
+!(assertEqual (transpose-coordinate (1 2 3)) (2 1 3))
 
 (= (sort-singleton-list $N2 $singletons)
     (let $empty-sing (dup-list $N2 ()) (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a))))
 
-!(sort-singleton-list 4 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)))
+!(assertEqual (sort-singleton-list 4 ((1 3 2) (1 2 1) (2 1 4) (2 0 2))) (() ((2 1) (3 2)) ((0 2) (1 4)) ()))
 
 (= (process-board-all-dimensions $board $N $singletons $changed $newsing)
     (let* (
         ($N2 (* $N $N))
         (() ())
-        ($board0 (process-board-one-dimension $board 0 $N2 $singletons $changed0 $newsing0))
+        (() (println! (format-args "here1" ())))
+        ($singsorted (sort-singleton-list $N2 $singletons))
+        (() (println! (format-args "here2 {} {} {} {}" (2 $N2 $board $singsorted))))
+        ($board0 (process-board-one-dimension $board 0 $N2 $singsorted $changed0 $newsing0))
+        (() (println! (format-args "here3" ())))
         ($board0t (transpose-board $board0))
-        ($singletonst (map-atom $singletons $v0 (coordinate-transpose $v0)))
-        ($board1t (process-board-one-dimension $boardot 0 $N2 $singletonst $changed1 $newsing1t))
+        (() (println! (format-args "here4" ())))
+        ($singletonst (map-atom $singletons $v0 (transpose-coordinate $v0)))
+        (() (println! (format-args "here5" ())))
+        ($singletonstsorted (sort-singleton-list $N2 $singletonst))
+        (() (println! (format-args "here6 {} {} {} {}" (6 $N2 $board0t $singletonstsorted))))
+        ($board1t (process-board-one-dimension $board0t 0 $N2 $singletonstsorted $changed1 $newsing1t))
+        (() (println! (format-args "here7" ())))
         ($board1 (transpose-board $board1t))
-        ($newsing1 (map-atom $newsing1t $v1 (coordinate-transpose $v1)))
-        ($changed (or $changed1 $changed2))
-        ($newsing ($newsing0 $newsing1))
+        (() (println! (format-args "here8" ())))
+        ($newsing1 (map-atom $newsing1t $v1 (transpose-coordinate $v1)))
+        (() (println! (format-args "here9" ())))
+        ($changed (or $changed0 $changed1))
+        (() (println! (format-args "herea" ())))
+        ($newsing (append $newsing0 $newsing1))
         )
         $board1
     )
 )
 
-;!(process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((3 2) (2 1) (1 4) (0 2)) $changed $newsing)
+!(let $c (process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)) $changed $newsing) ($changed $c $newsing))
 
 ; from: (
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
 ;   ((1 2 3 4) (1 2 3 4) (1      ) (  2    ))
 ;   ((  2    ) (      4) (1 2 3 4) (1 2 3 4))
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)))
-; (() ((3 2) (2 1)) ((1 4) (0 2)) ())
-; to: (
+; ((1 3 2) (1 2 1) (2 1 4) (2 0 2))
+; 1: (
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
-;   (    (3 4) (    3 4) (1      ) (  2    ))
-;   ((  2    ) (      4) (1 3    ) (1   3  ))
+;   ((    3 4) (    3 4) (1      ) (  2    ))
+;   ((  2    ) (      4) (1   3  ) (1   3  ))
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)))
 ; ()
+; 2: (
+;   ((1   3 4) (1 2 3  ) (  2 3 4) (1   3 4))
+;   ((    3 4) (    3  ) (1      ) (  2    ))
+;   ((  2    ) (      4) (    3  ) (1   3  ))
+;   ((1   3 4) (1 2 3  ) (  2 3 4) (1   3 4))
+; ((1 1 3) (2 2 3))
 
 (= (sudoku-iteration $N $singletons $bb)
     (let* (
