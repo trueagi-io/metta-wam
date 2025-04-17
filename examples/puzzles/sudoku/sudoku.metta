@@ -43,25 +43,25 @@
 
 !(assertEqual (cell-pop-all 1 9) (1 2 3 4 5 6 7 8 9))
 
-(= (cell-remove $c $v)
+(= (cell-remove $c $v $changed)
     (if-decons-expr $c $h $t
         (if (== $h $v)
-            (True $t)
+            (let $changed True $t)
             (if (> $h $v)
-                (False $c)
-                (let ($changed $rest) (cell-remove $t $v) ($changed (cons-atom $h $rest)))
+                (let $changed False $c)
+                (let $rest (cell-remove $t $v $changed) (cons-atom $h $rest))
             )
         )
-        (False ())
+        (let $changed False ())
     )
 )
 
 (= (cell-length $c) (size-atom $c))
 
-!(assertEqual (cell-remove (1 2 3 4) 8) (False (1 2 3 4)))
-!(assertEqual (cell-remove (1 2 3 4) 0) (False (1 2 3 4)))
-!(assertEqual (cell-remove (1 2 3 4) 3) (True (1 2 4)))
-!(assertEqual (cell-remove (1 2 4) 3) (False (1 2 4)))
+!(assertEqual (let $c (cell-remove (1 2 3 4) 8 $changed) ($changed $c)) (False (1 2 3 4)))
+!(assertEqual (let $c (cell-remove (1 2 3 4) 0 $changed) ($changed $c)) (False (1 2 3 4)))
+!(assertEqual (let $c (cell-remove (1 2 3 4) 3 $changed) ($changed $c)) (True (1 2 4)))
+!(assertEqual (let $c (cell-remove (1 2 4) 3 $changed) ($changed $c)) (False (1 2 4)))
 
 (= (value-to-cell $N $v)
     (if (== (get-type $v) Number)
@@ -138,10 +138,10 @@
         (let* (
             (($shi $shv) $sh)
             ($c1 (remove-singletons $c $n $st $changed1))
-            (($changed2 $c2)
+            ($c2
                 (if (== $shi $n)
-                    (False $c1)
-                    (cell-remove $c1 $shv)
+                    (let $changed2 False $c1)
+                    (cell-remove $c1 $shv $changed2)
                 )
             ))
             (let $changed (or $changed1 $changed2) $c2)
@@ -202,14 +202,14 @@
 !(assertEqual (collect-histogram (None None None None) 3 (1 3)) ((3 1) None (3 3) None))
 !(assertEqual (collect-histogram ((3 1) None (3 3) None) 2 (2 3)) ((3 1) (2 2) NoProcess None))
 
-(= (remove-singleton-row-collect-info-aux $row $n $N $singletons $changed)
+(= (remove-singleton-row-collect-info-aux $row $n $N $singletons $changed $newsing $histogram)
     (if-decons-expr $row $rh $rt
         (let* (
-            (($row1 $newsing1 $histogram1) (remove-singleton-row-collect-info-aux $rt (+ $n 1) $N $singletons $changed1))
+            ($row1 (remove-singleton-row-collect-info-aux $rt (+ $n 1) $N $singletons $changed1 $newsing1 $histogram1))
             ($cell (remove-singletons $rh $n $singletons $changed2))
             ($changed (if $changed1 True $changed2))
             ($newrow (cons-atom $cell $row1))
-            ($histogram2
+            ($histogram
                 (if-decons-expr $cell $ch $ct
                     (if (== $ct ())
                         (collect-histogram-singleton $histogram1 1 $ch)
@@ -218,24 +218,33 @@
                     (empty)
                 )))
             (if (and $changed2 (== (size-atom $cell) 1))
-                (let ($f) $cell ($newrow (cons-atom ($n $f) $newsing1) $histogram2))
-                ($newrow $newsing1 $histogram2)
+                (let* (
+                    (($f) $cell)
+                    ($newsing (cons-atom ($n $f) $newsing1)))
+                    $newrow
+                )
+                (let $newsing $newsing1 $newrow)
             )
         )
-        (let $changed False (() () (dup-list $N None)))
+        (let* (
+            ($changed False)
+            ($newsing ())
+            ($histogram (dup-list $N None)))
+            ()
+        )
     )
 )
 
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed) ($changed $c))
-    (False (((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess))))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed) ($changed $c))
-    (True (((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess))))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed) ($changed $c))
-    (False (((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess))))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed) ($changed $c))
-    (True (((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4)))))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed) ($changed $c))
-    (False (((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4)))))
+!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+    (False ((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
+!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+    (True ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
+!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+    (False ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
+!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+    (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4))))
+!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+    (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4))))
 
 (= (hist-cleanup $hist)
     (if-decons-expr $hist $h $t
