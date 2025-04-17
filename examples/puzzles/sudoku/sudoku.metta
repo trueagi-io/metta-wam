@@ -275,7 +275,7 @@
     (let* (
         ($newrow0 (remove-singleton-row-collect-info-aux $row 0 $N $singletons $changed0 $newsing0 $hist))
         ($newhist (hist-cleanup $hist))
-        ($changed (or $changed0 (\= $newhist ())))
+        ($changed (or $changed0 (not (== $newhist ()))))
         ($newsing (append $newsing0 $newhist)))
         (foldl-atom $newhist $newrow0 $a $b (apply-singleton 0 $a $b))
     )
