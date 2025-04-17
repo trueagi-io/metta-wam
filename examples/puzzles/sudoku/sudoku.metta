@@ -36,10 +36,10 @@
 
 ;; A cell is an ordered list of the values that that cell can still take.
 
-(= (cell-pop-all $i $N)
-    (if (== $i $N)
-        ($N)
-        (let $t (cell-pop-all (+ $i 1) $N) (cons-atom $i $t))))
+(= (cell-pop-all $i $N2)
+    (if (== $i $N2)
+        ($N2)
+        (let $t (cell-pop-all (+ $i 1) $N2) (cons-atom $i $t))))
 
 !(assertEqual (cell-pop-all 1 9) (1 2 3 4 5 6 7 8 9))
 
@@ -63,13 +63,13 @@
 !(assertEqual (let $c (cell-remove (1 2 3 4) 3 $changed) ($changed $c)) (True (1 2 4)))
 !(assertEqual (let $c (cell-remove (1 2 4) 3 $changed) ($changed $c)) (False (1 2 4)))
 
-(= (value-to-cell $N $v)
+(= (value-to-cell $N2 $v)
     (if (== (get-type $v) Number)
-        (if (and (< 0 $v) (<= $v $N)) ; have to do this separately, as HE won't short circuit, then will give type error
+        (if (and (< 0 $v) (<= $v $N2)) ; have to do this separately, as HE won't short circuit, then will give type error
             ($v)
-            (cell-pop-all 1 $N)
+            (cell-pop-all 1 $N2)
         )
-        (cell-pop-all 1 $N)
+        (cell-pop-all 1 $N2)
     )
 )
 
@@ -98,7 +98,8 @@
     (if-decons-expr $r $h $t
         (let* (
             ($tail (collect-singleton1 (+ $n 1) $t))
-            (($v $tt) (decons-atom $h)))
+            (($v $tt) (decons-atom $h))
+            )
             (if (== $tt ()) (cons-atom ($n $v) $tail) $tail))
         ()
     )
@@ -108,7 +109,8 @@
     (if-decons-expr $r $h $t
         (let* (
             ($tail (collect-singleton2 (+ $n 1) $t))
-            ($m (map-atom $h $v (cons-atom $n $v))))
+            ($m (map-atom $h $v (cons-atom $n $v)))
+            )
             (cons-atom $m $tail)
         )
         ()
@@ -143,7 +145,8 @@
                     (let $changed2 False $c1)
                     (cell-remove $c1 $shv $changed2)
                 )
-            ))
+            )
+            )
             (let $changed (or $changed1 $changed2) $c2)
         )
         (let $changed False $c)
@@ -202,10 +205,10 @@
 !(assertEqual (collect-histogram (None None None None) 3 (1 3)) ((3 1) None (3 3) None))
 !(assertEqual (collect-histogram ((3 1) None (3 3) None) 2 (2 3)) ((3 1) (2 2) NoProcess None))
 
-(= (remove-singleton-row-collect-info-aux $row $n $N $singletons $changed $newsing $histogram)
+(= (process-board-one-row-aux $row $n $N2 $singletons $changed $newsing $histogram)
     (if-decons-expr $row $rh $rt
         (let* (
-            ($row1 (remove-singleton-row-collect-info-aux $rt (+ $n 1) $N $singletons $changed1 $newsing1 $histogram1))
+            ($row1 (process-board-one-row-aux $rt (+ $n 1) $N2 $singletons $changed1 $newsing1 $histogram1))
             ($cell (remove-singletons $rh $n $singletons $changed2))
             ($changed (if $changed1 True $changed2))
             ($newrow (cons-atom $cell $row1))
@@ -216,7 +219,8 @@
                         (collect-histogram $histogram1 $n $cell)
                     )
                     (empty)
-                )))
+                ))
+            )
             (if (and $changed2 (== (size-atom $cell) 1))
                 (let* (
                     (($f) $cell)
@@ -229,21 +233,22 @@
         (let* (
             ($changed False)
             ($newsing ())
-            ($histogram (dup-list $N None)))
+            ($histogram (dup-list $N2 None))
+            )
             ()
         )
     )
 )
 
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+!(assertEqual (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
     (False ((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqual (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (True ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqual (let $c (process-board-one-row-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (False ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqual (let $c (process-board-one-row-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4))))
-!(assertEqual (let $c (remove-singleton-row-collect-info-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+!(assertEqual (let $c (process-board-one-row-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
     (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4))))
 
 (= (hist-cleanup $hist)
@@ -260,7 +265,8 @@
 (= (apply-singleton $n $row $sing)
     (let* (
         (($entry $value) $sing)
-        (($h $t) (decons-atom $row)))
+        (($h $t) (decons-atom $row))
+        )
         (if (< $n $entry)
             (let $tail (apply-singleton (+ $n 1) $t $sing) (cons-atom $h $tail))
             (cons-atom ($value) $t)
@@ -271,37 +277,114 @@
 !(assertEqual (apply-singleton 0 ((1 2 3) (1 2 4) (1 2) (1 2)) (1 4)) ((1 2 3) (4) (1 2) (1 2)))
 !(assertEqual (foldl-atom ((1 4) (0 3)) ((1 2 3) (1 2 4) (1 2) (1 2)) $a $b (apply-singleton 0 $a $b)) ((3) (4) (1 2) (1 2)))
 
-(= (remove-singleton-row-collect-info $row $N $singletons $changed $newsing)
+(= (process-board-one-row $row $N2 $singletons $changed $newsing)
     (let* (
-        ($newrow0 (remove-singleton-row-collect-info-aux $row 0 $N $singletons $changed0 $newsing0 $hist))
+        ($newrow0 (process-board-one-row-aux $row 0 $N2 $singletons $changed0 $newsing0 $hist))
         ($newhist (hist-cleanup $hist))
         ($changed (or $changed0 (not (== $newhist ()))))
-        ($newsing (append $newsing0 $newhist)))
+        ($newsing (append $newsing0 $newhist))
+        )
         (foldl-atom $newhist $newrow0 $a $b (apply-singleton 0 $a $b))
     )
 )
 
-!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3 4) (1 2 3 4) (1) (2)) 4 () $changed $ns) ($changed $c $ns))
+!(assertEqual (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 () $changed $ns) ($changed $c $ns))
     (False ((1 2 3 4) (1 2 3 4) (1) (2)) ()))
-!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3 4) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqual (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (True ((3 4) (3 4) (1) (2)) ()))
-!(assertEqual (let $c (remove-singleton-row-collect-info ((3 4) (3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqual (let $c (process-board-one-row ((3 4) (3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (False ((3 4) (3 4) (1) (2)) ()))
-!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqual (let $c (process-board-one-row ((1 2 3) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (True ((3) (4) (1) (2)) ((0 3) (1 4))))
-!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3) (1 2 4) (1 2) (1 2)) 4 () $changed $ns) ($changed $c $ns))
+!(assertEqual (let $c (process-board-one-row ((1 2 3) (1 2 4) (1 2) (1 2)) 4 () $changed $ns) ($changed $c $ns))
     (True ((3) (4) (1 2) (1 2)) ((0 3) (1 4))))
+
+(= (process-board-one-dimension $board $n $N2 $singletons $changed $newsing)
+    (if-decons-expr $board $boardh $boardt
+       (let* (
+            (($singh $singt) (decons-atom $singletons))
+            ($newrow (process-board-one-row $boardh $N2 $singh $changedh $newsingh))
+            ($newsinghp (map-atom $newsingh $v (cons-atom $n $v)))
+            ($tail (process-board-one-dimension $boardt (+ $n 1) $N2 $singt $changedt $newsingt))
+            ($changed (or $changedh $changedt))
+            ($newsing (append $newsinghp $newsingt))
+            )
+            (cons-atom $newrow $tail)
+        )
+        (let* (($changed False) ($newsing ())) ())
+    )
+)
+
+!(assertEqual (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
+    (True (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((3 4) (3 4) (1) (2)) ((2) (4) (1 3) (1 3)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) ()))
+!(assertEqual (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
+    (True (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((4) (3) (1) (2)) ((2) (4) (1 3) (1 3)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) ((1 0 4) (1 1 3))))
+
+(= (transpose-board $b)
+    (let* (
+        ($h (map-atom $b $v0 (car-atom $v0)))
+        ($t (map-atom $b $v0 (cdr-atom $v0)))
+        ($tail
+            (if (== (car-atom $t) ())
+                ()
+                (transpose-board $t)
+            )
+        )
+        )
+        (cons-atom $h $tail)
+    )
+)
+
+!(assertEqual (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
+
+(= (coordinate-transpose ($x $y $v)) ($y $x $v))
+
+!(assertEqual (coordinate-transpose (1 2 3)) (2 1 3))
+
+(= (process-board-all-dimensions $board $N $singletons $changed $newsing)
+    (let* (
+        ($N2 (* $N $N))
+        (() ())
+        ($board0 (process-board-one-dimension $board 0 $N2 $singletons $changed0 $newsing0))
+        ($board0t (transpose-board $board0))
+        ($singletonst (map-atom $singletons $v0 (coordinate-transpose $v0)))
+        ($board1t (process-board-one-dimension $boardot 0 $N2 $singletonst $changed1 $newsing1t))
+        ($board1 (transpose-board $board1t))
+        ($newsing1 (map-atom $newsing1t $v1 (coordinate-transpose $v1)))
+        ($changed (or $changed1 $changed2))
+        ($newsing ($newsing0 $newsing1))
+        )
+        $board1
+    )
+)
+
+;!(process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((3 2) (2 1) (1 4) (0 2)) $changed $newsing)
+
+; from: (
+;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
+;   ((1 2 3 4) (1 2 3 4) (1      ) (  2    ))
+;   ((  2    ) (      4) (1 2 3 4) (1 2 3 4))
+;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)))
+; (() ((3 2) (2 1)) ((1 4) (0 2)) ())
+; to: (
+;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
+;   (    (3 4) (    3 4) (1      ) (  2    ))
+;   ((  2    ) (      4) (1 3    ) (1   3  ))
+;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)))
+; ()
 
 (= (sudoku-iteration $N $singletons $bb)
     (let* (
         ($N2 (* $N $N))
-        ($empty-sing (dup-list $N2 ()))
+        ($empty-sing (dup-list $N2 ())
+        )
         ($sorted-sing (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a)))
     )
     $sorted-sing)
 )
 
-(= (sudoku-n $N $B) (let* (
+(= (sudoku-n $N $B)
+    (let* (
         ($N2 (* $N $N))
         ($bx (map-atom $B $r (map-atom $r $v (value-to-cell $N2 $v))))
         ($singletons (extract-singletons $bx))
