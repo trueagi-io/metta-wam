@@ -1650,7 +1650,7 @@ is_debug_like(verbose, true).
 % Disable unit testing and reset runtime options to defaults.
 set_is_unit_test(false):-
     % Reset all options to their default values.
-    reset_default_flags,
+    %reset_default_flags,
     % Explicitly disable trace and test-related settings.
     set_option_value_interp('trace-on-test', false),
     set_option_value_interp('trace-on-fail', false),
@@ -1661,7 +1661,7 @@ set_is_unit_test(false):-
 set_is_unit_test(TF):-
     maybe_abolish_trace,
     % Reset all options to their default values.
-    reset_default_flags,
+    %reset_default_flags,
     % Disable specific trace settings during unit testing.
     set_option_value_interp('trace-on-test', false),
     set_option_value_interp('trace-on-fail', false),
@@ -2320,7 +2320,7 @@ nocut.
 %     % Disable unit testing mode:
 %     ?- set_is_unit_test(false).
 %
-:- on_metta_setup(set_is_unit_test(false)).
+%:- on_metta_setup(set_is_unit_test(false)).
 
 %!  extract_prolog_arity(+TypesList, -PrologArity) is nondet.
 %
@@ -2855,7 +2855,7 @@ process_late_opts:- forall(process_each_late_opt, true).
 
 process_each_late_opt :- nocut,
     % Process all option definitions by calling `process_python_option/0`.
-    forall(process_python_option, true).
+    process_python_option, fail.
 process_each_late_opt :-
     % If the `html` option is set to `true`, enable unit testing mode.
     once(option_value('html', true)),
@@ -2899,7 +2899,7 @@ do_cmdline_load_metta(Phase, Self, Rest) :-
     % Store the remaining arguments in the `late_metta_opts` Prolog flag.
     set_prolog_flag(late_metta_opts, Rest),
     % Process all defined options using `process_python_option/0`.
-    forall(process_python_option, true), !,
+    process_python_option,
     % Execute the Metta command-line loading logic for the specified Phase and context.
     cmdline_load_metta(Phase, Self, Rest), !,
     % Process any late options, such as enabling specific features.
