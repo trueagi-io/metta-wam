@@ -98,9 +98,10 @@ non_arg_violation(_,_,_).
 % =======================================
 %:- set_option_value(encoding,utf8).
 
+:- if(prolog_load_context(reloading,false)).
 :- initialization(mutex_create(transpiler_mutex_lock)).
 :- at_halt(mutex_destroy(transpiler_mutex_lock)).
-
+:- endif.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Global transpiler flags
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -157,6 +158,21 @@ transpiler_debug(Level,Code) :- (option_value('debug-level',DLevel),DLevel>=Leve
 :- dynamic(transpiler_stored_eval/3).
 transpiler_stored_eval([],true,0).
 
+'~..'(A,B):- a_f_args(A,B), cmpd4lst(A,B),!.
+:- op(700,xfx,'~..').
+
+a_f_args(_,B):- is_list(B),!.
+a_f_args(A,_):- compound(A),!.
+a_f_args(A,_):- atom(A),!.
+a_f_args(_A,_B):- bt,!,ds,break,trace.
+
+
+:- op(700,xfx,'@..').
+
+A @.. B:- a_f_args(A,B), A=..B.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Put any type definitions here
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -207,7 +223,7 @@ create_p1(URet,[],[ispu,URet]) :- !.
 create_p1(URet,UCode,[ispuU,URet,UCode]) :- !.
 create_p1(ERet,[],NRet,[],[ispu,ERet]) :- ERet==NRet,!.
 create_p1(ERet,ECode,NRet,NCode,[ispuU,ERet,ECode]) :- [ERet,ECode]=[NRet,NCode],!.
-create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- format("0 ~q ~q\n",[ERet,ECode]),!.
+create_p1(ERet,ECode,NRet,[],[ispeEn,ERet,ECode,NRet]) :- debug_format("0 ~q ~q\n",[ERet,ECode]),!.
 create_p1(ERet,ECode,NRet,NCode,R) :- % try and combine code to prevent combinatorial explosion
    debug_format("1 ~q ~q\n",[ERet,ECode]),
    ((fullvar(ERet);ECode=@=true) -> true; trace),
@@ -335,7 +351,7 @@ recompile_from_depends(FnName,LenArgs) :-
    %LenArgs is LenArgsPlus1-1,
    %create_mc_name(LenArgs,,FnName,FnNameWPrefix),
    %findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-   %H=..[FnNameWPrefix|AtomList0],
+   %H @.. [FnNameWPrefix|AtomList0],
    %transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
    %retractall(H),
    findall(FnD/ArityD,transpiler_depends_on(FnD,ArityD,FnName,LenArgs),List),
@@ -347,11 +363,20 @@ unnumbervars_wco(X,XXX):- compound(X),
    subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
 unnumbervars_wco(X,X).
 
+% max_integer_in_term(+Term, -Max)
+max_integer_in_term(Term, Start, Max) :-
+        Box = box(Start),  % Correct initialization
+        forall( ( sub_term(Int, Term), integer(Int), ( box(Int) @> Box )),
+            nb_setarg(1, Box, Int)),
+        arg(1, Box, Max),!.
+
 number_vars_wo_conficts(X,XX):-
    copy_term(X,XX),
-   max_var_number(XX,0,N),
+   woc(max_integer_in_term(XX,0,N)),
    succ(N,N2),
    numbervars(XX,N2,_,[attvar(skip)]).
+
+
 
 recompile_from_depends0(Fn/Arity) :-
    %format_e("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
@@ -380,6 +405,9 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
+  compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted).
+
+compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
    current_self(Space),
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
@@ -391,13 +419,15 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
    sum_list(LenArgs,LenArgsTotal),
    LenArgsTotalPlus1 is LenArgsTotal+1,
    % retract any stubs
+
    (transpiler_stub_created(FnName,LenArgs) ->
       retract(transpiler_stub_created(FnName,LenArgs)),
       findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-      H=..[FnNameWPrefix|AtomList0],
+      H @.. [FnNameWPrefix|AtomList0],
       transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
       retractall(H)
    ; true),
+
    %AsFunction = HeadIs,
    %must_det_lls((
       %leash(-all),trace(f2p/8),
@@ -462,7 +492,7 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
       append(CodeAppend,FullCode,FullCode2),
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       %append(Args,[HResult],HArgs),
-      %HeadC =.. [FnNameWPrefix|HArgs],
+      %HeadC @.. [FnNameWPrefix|HArgs],
 
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
@@ -938,7 +968,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
          (current_predicate(Fp/LenArgs) -> true ;
             LenArgs1 is LenArgs+1,
             findall(Atom0, (between(1, LenArgs1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-            H=..[Fp|AtomList0],
+            H @.. [Fp|AtomList0],
             findall(Atom1, (between(1, LenArgs, I1), Atom1='$VAR'(I1)), AtomList1),
             B=..[u_assign,[F|AtomList1],'$VAR'(LenArgs1)],
             compiler_assertz(transpiler_stub_created(F,LenArgs)),
@@ -1166,12 +1196,12 @@ ast_to_prolog_aux(Caller,DontStub,[prolog_if,If,Then,Else],R) :- !,
 ast_to_prolog_aux(_,_,[assign,A,X0],(A=X0)) :- fullvar(X0),!.
 ast_to_prolog_aux(Caller,DontStub,[native(FIn)|ArgsIn],A) :- !,
  must_det_lls((
-   FIn=..[F|Pre], % allow compound natives
+   FIn @.. [F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args0),
    %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    %label_arg_types(F,1,Args1),
-   A=..[F|Args1]
+   A ~.. [xxx(6),F|Args1]
    %notice_callee(Caller,A)
    )).
 ast_to_prolog_aux(Caller,DontStub,[transpiler_apply,Prefix,Fn,RetResults,RetResult,RetResultsParts, RetResultsPartsN, LazyResultParts,ConvertedParts, ConvertedNParts],A) :- !,
@@ -1205,7 +1235,7 @@ ast_to_prolog_aux(Caller,DontStub,[ispeEnNC,R,Code0,Expr,CodeN0,CodeC0],ispeEnNC
    ast_to_prolog(Caller,DontStub,CodeC0,CodeC1).
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
-   FIn=..[F|Pre], % allow compound natives
+   FIn @.. [F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args00),
    maybe_lazy_list(Caller,F,1,Args00,Args0),
    %label_arg_types(F,1,Args0),
@@ -1214,7 +1244,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    %label_arg_types(F,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
-   R=..[Fp|Args2],
+   R ~.. [xxx(FIn),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
@@ -1232,8 +1262,8 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[native_call,F,LenArgs,ArgsIn]],R) :
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    create_mc_name(LenArgs,F,Fp),
    append(Args1,[A],Args2),
-   R0=..[Fp,XX],
-   R1=..[call,XX|Args2],
+   R0 =..[Fp,XX],
+   R1=..[apply_fn,XX,Args2],
    R=..[',',R0,R1],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
@@ -1249,7 +1279,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    create_mc_name(LenArgsAll,FIn,Fp),
    %label_arg_types(FIn,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
-   R0=..[Fp|Args1],
+   R0 ~.. [xxx(a),Fp|Args1],
    %R1=R0),
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(FIn-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs)),
@@ -1259,7 +1289,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    .
 ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
  must_det_lls((
-   FIn=..[F|Pre], % allow compound natives
+   FIn @.. [F|Pre], % allow compound natives
    append(Pre,ArgsIn,Args00),
    maybe_lazy_list(Caller,F,1,Args00,Args0),
    %label_arg_types(F,1,Args0),
@@ -1271,7 +1301,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
    append(FixedPart,VariablePart,Args1),
    append(FixedPart,[VariablePart],Args1a),
    append(Args1a,[A],Args2),
-   R=..[Fp|Args2],
+   R ~.. [xxx(c),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
@@ -1283,11 +1313,11 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
 %   label_arg_types(F,1,Args1),
-%   A=..[F|Args1],
+%   A ~.. [xxx(d),F|Args1],
 %   notice_callee(Caller,A))).
 %ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
 % must_det_lls((
-%   FIn=..[F|Pre], % allow compound natives
+%   FIn @.. [F|Pre], % allow compound natives
 %   append(Pre,ArgsIn,Args00),
 %   maybe_lazy_list(Caller,F,1,Args00,Args0),
 %   label_arg_types(F,1,Args0),
@@ -1297,7 +1327,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,0,[A|Args1]),
 %   %LenArgs1 is LenArgs+1,
 %   append(Args1,[A],Args2),
-%   R=..[Fp|Args2].
+%   R ~.. [xxx(1),Fp|Args2].
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
@@ -1370,17 +1400,17 @@ create_and_consult_temp_file(Space,F/A,PredClauses):-  fail, !,
         open_memory_file(MemFile,write,TempStream),
 
         %Writethetabledpredicatetothememoryfile
-        format_e(TempStream,':-multifile((~q)/~q).~n',[metta_compiled_predicate,3]),
-        format_e(TempStream,':-dynamic((~q)/~q).~n',[metta_compiled_predicate,3]),
-        format_e(TempStream,'~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
+        format(TempStream,':-multifile((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format(TempStream,':-dynamic((~q)/~q).~n',[metta_compiled_predicate,3]),
+        format(TempStream,'~N~q.~n',[metta_compiled_predicate(Space,F,A)]),
 
-        format_e(TempStream,':-multifile((~q)/~q).~n',[F,A]),
-        format_e(TempStream,':-dynamic((~q)/~q).~n',[F,A]),
+        format(TempStream,':-multifile((~q)/~q).~n',[F,A]),
+        format(TempStream,':-dynamic((~q)/~q).~n',[F,A]),
 
         %Iftablingisturnedon:
         if_t(
         option_value('tabling','True'),
-        format_e(TempStream,':-~q.~n',[table(F/A)])
+        format(TempStream,':-~q.~n',[table(F/A)])
     ),
 
     %Writeeachclause
@@ -1446,7 +1476,7 @@ make_multifile_dynamic(TempFileStream,F, A):-
 write_to_streams(StreamList, Format, Args) :-
     % Write to each stream in the list
     forall(member(Stream, StreamList),
-           format_e(Stream, Format, Args)),
+           format(Stream, Format, Args)),
     % Write to stdout
     format(user_output, Format, Args),
     flush_output(user_output). % Ensure output is displayed immediately
@@ -1481,16 +1511,105 @@ for_all(G1,G2):- forall(G1,G2).
 compound_non_cons(B):-  compound(B),  \+ B = [_|_].
 iz_conz(B):- compound(B), B=[_|_].
 
-'=~'(A,B):- notrace('=~0'(A,B)).
+'=~'(A,B):- a_f_args(A,B), notrace('=~0'(A,B)).
 
 '=~0'(A,B):- compound_non_cons(B),!,into_list_args(B,BB),!,'=~'(A,BB).
 '=~0'(B,A):- compound_non_cons(B),!,into_list_args(B,BB),!,'=~'(A,BB).
 '=~0'(A,B):- iz_conz(A),iz_conz(B),!,A=B.
 '=~0'(A,B):- var(A),iz_conz(B),!,A=B.
 '=~0'(A,B):- iz_conz(A),var(B),!,A=B.
-'=~0'(A,B):- compound_non_cons(A),var(B),!,A=..B.
+'=~0'(A,B):- compound_non_cons(A),var(B),!,A @.. B.
 '=~0'(A,B):- compound_non_cons(B),!,A=B.
 '=~0'(A,B):- '=..'(A,B).
+
+
+call_from_comp(FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A), compiler, enabled),!,apply(FnComp,Args).
+call_from_comp(_FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A), interp, enabled), Right = [Y],
+   peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),eval_args(Eq,RetType,Depth,Self,Left,Y).
+call_from_comp(_FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A), hyperon, enabled), !, Right = [Y],
+  peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),eval_args(Eq,RetType,Depth,Self,Left,Y).
+
+call_from_comp(FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A), interp, disabled), !, apply(FnComp,Args).
+call_from_comp(_FnComp,InterpFn,Args):- use_evaluator(fa(InterpFn,_A),compiler, disabled), Right = [Y],
+   peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),eval_args(Eq,RetType,Depth,Self,Left,Y).
+
+
+call_from_comp(FnComp,InterpFn,Args):-
+  \+ \+ ( member(E, Args), compound(E), \+ is_list(E) ),
+  \+ use_evaluator(fa(InterpFn,_A), compiler, disabled), !, apply(FnComp,Args).
+
+
+
+call_from_comp(FnComp,InterpFn,Args):- fail,
+    FA = fa(InterpFn,_),
+    \+ use_evaluator(FA, _, _),
+    % peek_scope(Eq,RetType,Depth,Self),
+    debug_info(compiled_version, writeq(apply(FnComp,Args))),
+
+    Right = [Y], append(Left,Right,Args), X = [InterpFn|Left],
+
+    debug_info(interp_version,( X -> Y)),
+
+ % metta_compiled_predicate
+    nl,nl,
+    !, apply(FnComp,Args).
+
+/*
+    trace,
+    compare_impls(
+        only_interpreted_eval(FA, Eq, RetType, Depth, Self, X, Y1), Y1,
+        only_compiled_eval(FA, Eq, RetType, Depth, Self, X, Y2), Y2,
+        Answers, Status),
+    ( Status == ok ->
+        set_use_evaluator(FA, compiler, enabled)
+    ;   set_use_evaluator(FA, interp, enabled)
+    ),
+    !, member(Y, Answers).
+*/
+call_from_comp(FnComp,_InterpFn,Args):- apply(FnComp,Args).
+
+/*
+call_from_comp(_FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), _, _),
+    Right = [Y], append(Left,Right,Args),
+    peek_scope(Eq,RetType,Depth,Self),
+    use_right_thing_comp(fa(InterpFn,_A1),Eq,RetType,Depth,Self,[InterpFn|Left],Y).
+
+call_from_comp(FnComp,InterpFn,Args):- \+ use_evaluator(fa(InterpFn,_A), compiler, disabled), !, apply(FnComp,Args).
+*/
+
+
+/*
+call_from_comp(_FnComp,InterpFn,Args):- Right = [Y], !,
+    peek_scope(Eq,RetType,Depth,Self), !, append(Left,Right,[InterpFn|Args]),
+    use_right_thing_comp(fa(InterpFn,_A),Eq,RetType,Depth,Self,Left,Y).
+*/
+
+% call_fn_native(F, _InterpFn, Args):- !, true_safe, apply(F, Args).
+
+call_fn_native(F, InterpFn,Args):- true_safe,
+    call_from_comp(F, InterpFn,Args).
+
+true_safe.
+
+
+% ~..
+dmp_break:- st,ds,break.
+cmpd4lst(A,_):- nonvar(A),dmp_break,fail.
+cmpd4lst(_A,[Cmpd,_F|_Args]):- \+ compound(Cmpd),dmp_break,fail.
+cmpd4lst(_A,[_Cmpd,_F|Args]):- \+ is_list(Args),dmp_break,fail.
+cmpd4lst(A,[_Cmpd,F,Arg]):- F==is_True,!,A=is_True(Arg),!.
+cmpd4lst(call_fn_native(F,XXX,Args),[Cmpd,F|Args]):- compound(Cmpd),xxx(XXX)=Cmpd,!.
+cmpd4lst(call_fn_native(F,xxx(?),Args),[F|Args]):- !.
+/*
+cmpd4lst2(A,Info):- compound(A), A=call_fn_native(F,XXX,Args),!,cmpd4lst(F,XXX,Args,Info).
+cmpd4lst2(A,Info):- compound(A), compound_name_arguments(A,F,Args),!,cmpd4lst(F,xxx(?),Args,Info).
+cmpd4lst2(A,Info):- A=call_fn_native(F,XXX,Args), Info = [XXX,F|Args], compound(XXX), XXX=xxx(_),!,cmpd4lst(F,XXX,Args,Info).
+cmpd4lst2(A,Info):- A=call_fn_native(F,XXX,Args), Info = [F|Args], XXX=xxx(?),!,cmpd4lst(F,XXX,Args,Info).
+cmpd4lst2(A,[F|Args]):- trace, ' @.. '(A,[F|Args]).
+
+cmpd4lst(F,_XXX,Args,[F|Args]).
+cmpd4lst(F,XXX,Args,[XXX2,F|Args]):- compound(XXX2),!.
+*/
 
 
 %into_list_args(A,AA):- is_ftVar(A),AA=A.
@@ -1513,10 +1632,26 @@ strip_m(M:BB,BB):- nonvar(BB),nonvar(M),!.
 strip_m(BB,BB).
 
 
+correct_assertz(Info,InfoC):- \+ compound(Info),!,InfoC=Info.
+correct_assertz(M:Info,MM:InfoC):- !, correct_assertz(M,MM),correct_assertz(Info,InfoC).
+correct_assertz((Info:- (T, B)),(Info:- (T, B))):- compound(Info), atom(T), !.
+correct_assertz((Info:-B),(InfoC:-B)):- !, correct_assertz(Info,InfoC).
+correct_assertz(call_fn_native(X,_Info,Y),InfoC):-
+ !, must_det_lls(InfoC=..[X|Y]).
+correct_assertz(Info,Info).
+
+
+compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
+compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
+   compiler_assertz(InfoC).
+
+compiler_assertz(Info):- debug_info(compiler_assertz,Info),fail.
+
+compiler_assertz(Info:-_):- predicate_property(Info,static),!, debug_info(skipping_redef,Info).
+compiler_assertz(Info):- (Info \= (_:-_)), predicate_property(Info,static),!, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    debug_info(compiler_assertz,Info),
     once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
@@ -1527,10 +1662,11 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
-% user:numbervars(Term):- varnumbers:numbervars(Term).
-%:- use_module(library(varnumbers)).
+%user:numbervars(Term):- varnumbers:numbervars(Term).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
+must_det_lls((A,B)):- !, (A, B).
+must_det_lls(G):- !,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls((G,B)):- catch(G,E,(wdmsg(E),fail)),!,must_det_lls(B).
 %must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
@@ -1924,8 +2060,9 @@ ensure_callee_site(Space,Fn,Arity):-
 
 ((current_predicate(CFn/Arity) -> true ;
   must_det_lls((( functor(CallP,CFn,Arity),
-    CallP=..[CFn|Args],
-    transpile_impl_prefix(Fn,Arity,IFn), CallI=..[IFn|Args],
+    CallP @.. [CFn|Args],
+    transpile_impl_prefix(Fn,Arity,IFn),
+    CallI @.. [IFn|Args],
     %dynamic(IFn/Arity),
     append(InArgs,[OutArg],Args),
     Clause= (CallP:-((pred_uses_impl(Fn,Arity),CallI)*->true;(mc_fallback_unimpl(Fn,Arity,InArgs,OutArg)))),
@@ -2109,7 +2246,7 @@ merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
    must_optimize_body(Head,Body,BodyNew).
 
 assertable_head(x_assign(FList,R),Head):- FList =~ [F|List],
-   append(List,[R],NewArgs), atom(F), Head=..[F|NewArgs],!.
+   append(List,[R],NewArgs), atom(F), Head @.. [F|NewArgs],!.
 assertable_head(Head,Head).
 
 label_body_singles(Head,Body):-
@@ -2185,8 +2322,8 @@ optimize_x_assign(HB,MeTTaEvalP, R, Code):- \+ is_ftVar(MeTTaEvalP),
 
 % optimize_x_assign(_,_,_,_):- !,fail.
 optimize_x_assign((H:-_),[Pred| ArgsL], R, Code):- var(R), atom(Pred), ok_to_append(Pred),
-  append([Pred| ArgsL],[R], PrednArgs),Code=..PrednArgs,
-  (H=..[Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
+  append([Pred| ArgsL],[R], PrednArgs),Code @.. PrednArgs,
+  (H @.. [Pred|_] -> nop(set_option_value('tabling',true)) ; current_predicate(_,Code)),!.
 
 number_wang(A,B,C):-
   (numeric(C);numeric(A);numeric(B)),!,
@@ -2230,8 +2367,9 @@ ensure_callee_site(Space,Fn,Arity):-
     %trace,
 ((current_predicate(CFn/Arity) -> true ;
   must_det_lls((( functor(CallP,CFn,Arity),
-    CallP=..[CFn|Args],
-    transpile_impl_prefix(Fn,IFn), CallI=..[IFn|Args],
+    CallP @.. [CFn|Args],
+    transpile_impl_prefix(Fn,IFn),
+    CallI @.. [IFn|Args],
     %dynamic(IFn/Arity),
     append(InArgs,[OutArg],Args),
     Clause= (CallP:-((pred_uses_impl(Fn,Arity),CallI)*->true;(mc_fallback_unimpl(Fn,Arity,InArgs,OutArg)))),
@@ -2301,7 +2439,7 @@ check_supporting_predicates(Space,F/A) :- % already exists
       (sum_list(A,ATot),ATot1 is ATot+1,
          (current_predicate(Fp/ATot1) -> true ;
             findall(Atom0, (between(1, ATot1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-            H=..[Fp|AtomList0],
+            H @.. [Fp|AtomList0],
             findall(Atom1, (between(1, ATot, I1), Atom1='$VAR'(I1)), AtomList1),
             B=..[u_assign,[F|AtomList1],'$VAR'(ATot1)],
    %         (transpiler_enable_interpreter_calls -> G=true;G=fail),
@@ -2584,7 +2722,7 @@ compile_flow_control4(HeadIs, LazyVars, RetResult, ResultLazy, Convert,CodeForVa
     current_predicate(PrefixPlus/3), number(N),
     \+ number(Value), \+ is_ftVar(Value),!,
     f2p(HeadIs, LazyVars, ValueResult, ResultLazy, Value,CodeForValue),!,
-    Converted =.. [PrefixPlus,N,ValueResult,RetResult],
+    Converted=..[PrefixPlus,N,ValueResult,RetResult],
     combine_code(CodeForValue,Converted,CodeForValueConverted).
 
 compound_equals(COL1,COL2):- COL1=@=COL2,!,COL1=COL2.
@@ -2741,11 +2879,11 @@ unnumbervars_clause(Cl,ClU):-
 % ===============================
 is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
   expand_to_hb(UAC,H,B),
-  H=..[Fh|Args],
+  H @.. [Fh|Args],
   length(Args,N),
   N1 is N-1,
   atomic_list_concat(['mc_',N1,'__',Fh],FPrefixed),
-  H2=..[FPrefixed|Args],
+  H2 @.. [FPrefixed|Args],
   clause(H2,B,Ref),clause(HH,BB,Ref),
   strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
@@ -2798,13 +2936,13 @@ as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
   (is_list(ArgsL);(integer(A),A>=0)),!,
    length(ArgsL,A),
    (symbol(F)->
-      AsPred =..[F|ArgsL]
+      AsPred @.. [F|ArgsL]
    ;
       (AsPred = [F|ArgsL])).
 
 %as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
 as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
-  AsPred=..List,!, as_functor_args(List,F,A,ArgsL),!.
+  AsPred @.. List,!, as_functor_args(List,F,A,ArgsL),!.
 %as_functor_args([Eq,R,Stuff],F,A,ArgsL):- (Eq == '='),
 %   into_list_args(Stuff,List),append(List,[R],AsPred),!,
 %   as_functor_args(AsPred,F,A,ArgsL).
@@ -2868,7 +3006,9 @@ flatten_term([A | B ], FlatList) :-  !, % If Term is a conjunction, flatten both
 flatten_term(Term, [Term]). % Base case: single term, wrap it in a list
 
 
-fn_eval(Fn,Args,Res):- is_list(Args),symbol(Fn),transpile_call_prefix(Fn,Pred),Pre=..[Pred|Args],
+fn_eval(Fn,Args,Res):- is_list(Args),symbol(Fn),
+  transpile_call_prefix(Fn,Pred),
+  Pre @.. [Pred|Args],
   catch(call(Pre,Res),error(existence_error(procedure,_/_),_),Res=[Fn|Args]).
 
 fn_native(Fn,Args):- apply(Fn,Args).
@@ -3192,7 +3332,8 @@ head_preconds_into_body(AHead,Body,Head,BodyNew):-
 
 
 assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
-   append(List,[R],NewArgs), atom(F),!, Head=..[F|NewArgs].
+   append(List,[R],NewArgs), atom(F),!,
+   Head @.. [F|NewArgs].
 assertable_head(Head,Head).
 
 ok_to_append('$VAR'):- !, fail.
@@ -3747,6 +3888,10 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
+
+
+
+
 
 
 

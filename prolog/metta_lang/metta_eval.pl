@@ -167,6 +167,7 @@ hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/
 :- 'hyde'(nonvar/1).
 :- 'hyde'(quietly/1).
 %:- 'hyde'(option_value/2).
+:- ensure_loaded(metta_improve).
 
 
 is_metta_declaration([F|_]):- F == '->',!.
@@ -416,11 +417,12 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
 %eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
-%eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y).
-
+eval_09(Eq,RetType,Depth,Self,X,Y):- fail, assumed_functor(X,F,Len),!,
+   use_right_thing(F,Len,Eq,RetType,Depth,Self,X,Y).
+eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
 
 %eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
-eval_09(Eq,RetType,Depth,Self,X,Y):- !,
+eval_09_er(Eq,RetType,Depth,Self,X,Y):- !,
      no_repeats_var(YY),
      eval_to_name(X,XX),!,
      eval_10(Eq,RetType,Depth,Self,X,Y), %break,
@@ -3298,8 +3300,11 @@ maybe_eval_subst(Eq,RetType,Depth,Self,PredDecl,Res):- !,
   subst_args_here(Eq,RetType,Depth,Self,PredDecl,Res).
 
 
-maybe_eval_subst(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
+maybe_eval_subst( Eq, RetType, Dpth, Slf,[H|PredDecl],Res):- fail,
   is_rust_operation([H|PredDecl]),!, % run
+  run_in_rust( Eq, RetType, Dpth, Slf,[H|PredDecl],Res).
+
+run_in_rust(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):-
   must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
   nop(write_src(res(Res))))).
 
