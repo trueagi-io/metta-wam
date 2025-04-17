@@ -335,6 +335,12 @@
     )
 )
 
+(= (transpose-cell-board
+    (($a1 $a2 $a3 $a4) ($b1 $b2 $b3 $b4) ($c1 $c2 $c3 $c4) ($d1 $d2 $d3 $d4)))
+    (($a1 $a2 $b1 $b2) ($a3 $a4 $b3 $b4) ($c1 $c2 $d1 $d2) ($c3 $c4 $d3 $d4)))
+
+!(transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16)))
+
 !(assertEqual (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
 
 (= (transpose-coordinate ($x $y $v)) ($y $x $v))
