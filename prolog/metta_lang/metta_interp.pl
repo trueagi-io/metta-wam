@@ -2320,7 +2320,7 @@ nocut.
 %     % Disable unit testing mode:
 %     ?- set_is_unit_test(false).
 %
-%:- on_metta_setup(set_is_unit_test(false)).
+:- on_metta_setup(set_is_unit_test(false)).
 
 %!  extract_prolog_arity(+TypesList, -PrologArity) is nondet.
 %

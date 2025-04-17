@@ -417,9 +417,9 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
 %eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
-eval_09(Eq,RetType,Depth,Self,X,Y):- assumed_functor(X,F,Len),!,
+eval_09(Eq,RetType,Depth,Self,X,Y):- fail, assumed_functor(X,F,Len),!,
    use_right_thing(F,Len,Eq,RetType,Depth,Self,X,Y).
-eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
+eval_09(Eq,RetType,Depth,Self,X,Y):- !, woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
 
 %eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
 eval_09(Eq,RetType,Depth,Self,X,Y):- !,
