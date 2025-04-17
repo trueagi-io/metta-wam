@@ -1550,7 +1550,7 @@ call_from_comp(FnComp,InterpFn,Args):- fail,
 
     debug_info(interp_version,( X -> Y)),
 
-
+ % metta_compiled_predicate
     nl,nl,
     !, apply(FnComp,Args).
 
