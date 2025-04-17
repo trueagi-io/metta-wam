@@ -1543,7 +1543,7 @@ call_from_comp(FnComp,InterpFn,Args):-
 call_from_comp(FnComp,InterpFn,Args):- fail,
     FA = fa(InterpFn,_),
     \+ use_evaluator(FA, _, _),
-    peek_scope(Eq,RetType,Depth,Self),
+    % peek_scope(Eq,RetType,Depth,Self),
     debug_info(compiled_version, writeq(apply(FnComp,Args))),
 
     Right = [Y], append(Left,Right,Args), X = [InterpFn|Left],
