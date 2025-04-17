@@ -341,6 +341,11 @@
 
 !(assertEqual (coordinate-transpose (1 2 3)) (2 1 3))
 
+(= (sort-singleton-list $N2 $singletons)
+    (let $empty-sing (dup-list $N2 ()) (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a))))
+
+!(sort-singleton-list 4 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)))
+
 (= (process-board-all-dimensions $board $N $singletons $changed $newsing)
     (let* (
         ($N2 (* $N $N))
