@@ -257,12 +257,40 @@
 
 !(assertEqual (hist-cleanup (NoProcess (0 3) (1 4) NoProcess)) ((0 3) (1 4)))
 
-(= (remove-singleton-row-collect-info $row $N $singletons)
+(= (apply-singleton $n $row $sing)
     (let* (
-        (($changed $newrow $newsing $hist) (remove-singleton-row-collect-info-aux $row 0 $N $singletons))
-        ($newhist (hist-cleanup $hist)))
+        (($entry $value) $sing)
+        (($h $t) (decons-atom $row)))
+        (if (< $n $entry)
+            (let $tail (apply-singleton (+ $n 1) $t $sing) (cons-atom $h $tail))
+            (cons-atom ($value) $t)
+        )
     )
 )
+
+!(assertEqual (apply-singleton 0 ((1 2 3) (1 2 4) (1 2) (1 2)) (1 4)) ((1 2 3) (4) (1 2) (1 2)))
+!(assertEqual (foldl-atom ((1 4) (0 3)) ((1 2 3) (1 2 4) (1 2) (1 2)) $a $b (apply-singleton 0 $a $b)) ((3) (4) (1 2) (1 2)))
+
+(= (remove-singleton-row-collect-info $row $N $singletons $changed $newsing)
+    (let* (
+        ($newrow0 (remove-singleton-row-collect-info-aux $row 0 $N $singletons $changed0 $newsing0 $hist))
+        ($newhist (hist-cleanup $hist))
+        ($changed (or $changed0 (\= $newhist ())))
+        ($newsing (append $newsing0 $newhist)))
+        (foldl-atom $newhist $newrow0 $a $b (apply-singleton 0 $a $b))
+    )
+)
+
+!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3 4) (1 2 3 4) (1) (2)) 4 () $changed $ns) ($changed $c $ns))
+    (False ((1 2 3 4) (1 2 3 4) (1) (2)) ()))
+!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3 4) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+    (True ((3 4) (3 4) (1) (2)) ()))
+!(assertEqual (let $c (remove-singleton-row-collect-info ((3 4) (3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+    (False ((3 4) (3 4) (1) (2)) ()))
+!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+    (True ((3) (4) (1) (2)) ((0 3) (1 4))))
+!(assertEqual (let $c (remove-singleton-row-collect-info ((1 2 3) (1 2 4) (1 2) (1 2)) 4 () $changed $ns) ($changed $c $ns))
+    (True ((3) (4) (1 2) (1 2)) ((0 3) (1 4))))
 
 (= (sudoku-iteration $N $singletons $bb)
     (let* (
