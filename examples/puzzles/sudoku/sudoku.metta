@@ -30,6 +30,9 @@
 
 (= (divmod $x $y) (let $m (% $x $y) ((/ (- $x $m) $y) $m)))
 
+(= (select $x) (if (== $x ()) (empty) (car-atom $x)))
+(= (select $x) (if (== $x ()) (empty) (let $z (cdr-atom $x) (select $z))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cell internals
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -352,7 +355,30 @@
     ($a1 $a2 $b1 $b2)
     ($a3 $a4 $b3 $b4)
     ($c1 $c2 $d1 $d2)
-    ($c3 $c4 $d3 $d4)))
+    ($c3 $c4 $d3 $d4)
+))
+
+(= (transpose-cell-board (
+    ($a1 $a2 $a3 $a4 $a5 $a6 $a7 $a8 $a9)
+    ($b1 $b2 $b3 $b4 $b5 $b6 $b7 $b8 $b9)
+    ($c1 $c2 $c3 $c4 $c5 $c6 $c7 $c8 $c9)
+    ($d1 $d2 $d3 $d4 $d5 $d6 $d7 $d8 $d9)
+    ($e1 $e2 $e3 $e4 $e5 $e6 $e7 $e8 $e9)
+    ($f1 $f2 $f3 $f4 $f5 $f6 $f7 $f8 $f9)
+    ($g1 $g2 $g3 $g4 $g5 $g6 $g7 $g8 $g9)
+    ($h1 $h2 $h3 $h4 $h5 $h6 $h7 $h8 $h9)
+    ($i1 $i2 $i3 $i4 $i5 $i6 $i7 $i8 $i9)
+    )) (
+    ($a1 $a2 $a3 $b1 $b2 $b3 $c1 $c2 $c3)
+    ($a4 $a5 $a6 $b4 $b5 $b6 $c4 $c5 $c6)
+    ($a7 $a8 $a9 $b7 $b8 $b9 $c7 $c8 $c9)
+    ($d1 $d2 $d3 $e1 $e2 $e3 $f1 $f2 $f3)
+    ($d4 $d5 $d6 $e4 $e5 $e6 $f4 $f5 $f6)
+    ($d7 $d8 $d9 $e7 $e8 $e9 $f7 $f8 $f9)
+    ($g1 $g2 $g3 $h1 $h2 $h3 $i1 $i2 $i3)
+    ($g4 $g5 $g6 $h4 $h5 $h6 $i4 $i5 $i6)
+    ($g7 $g8 $g9 $h7 $h8 $h9 $i7 $i8 $i9)
+))
 
 !(assertEqual (transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16))) ((1 2 5 6) (3 4 7 8) (9 10 13 14) (11 12 15 16)))
 
@@ -375,20 +401,24 @@
 (= (process-board-all-dimensions $board $N $singletons $changed $newsing)
     (let* (
         ($N2 (* $N $N))
+        ; first the rows
         ($singsorted (sort-singleton-list $N2 $singletons))
         ($board0 (process-board-one-dimension $board 0 $N2 $singsorted $changed0 $newsing0))
+        ; then the columns
         ($board0t (transpose-board $board0))
         ($singletonst (map-atom $singletons $v0 (transpose-coordinate $v0)))
         ($singletonstsorted (sort-singleton-list $N2 $singletonst))
         ($board1t (process-board-one-dimension $board0t 0 $N2 $singletonstsorted $changed1 $newsing1t))
         ($board1 (transpose-board $board1t))
         ($newsing1 (map-atom $newsing1t $v1 (transpose-coordinate $v1)))
+        ; then the 3x3 cells
         ($board1u (transpose-cell-board $board1))
         ($singletonsu (map-atom $singletons $v2 (transpose-cell-coordinate $N $v2)))
         ($singletonsusorted (sort-singleton-list $N2 $singletonsu))
         ($board2u (process-board-one-dimension $board1u 0 $N2 $singletonsusorted $changed2 $newsing2u))
         ($board2 (transpose-cell-board $board2u))
         ($newsing2 (map-atom $newsing2u $v3 (transpose-cell-coordinate $N $v3)))
+        ; then combine the change flags and new singletons
         ($changed (or $changed0 (or $changed1 $changed2)))
         ($newsing (append $newsing0 (append $newsing1 $newsing2)))
         )
@@ -396,18 +426,99 @@
     )
 )
 
-!(let $c (process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)) $changed $newsing) ($changed $c $newsing))
+; !(let $c (process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)) $changed $newsing) ($changed $c $newsing))
 
-(= (process-board-all-dimensions-fixed $board $N $singletons)
-    (let $board2 (process-board-all-dimensions $board $N $singletons $changed $newsing)
-        (if $changed
-            (process-board-all-dimensions-fixed $board2 $N $newsing)
-            $board2
+(= (process-board-all-dimensions-fixed $iteration $left $leftout $board $N $singletons)
+    (if (== $left (size-atom $singletons))
+        (let $leftout 0 $board)
+        (let* (
+            ($newleft (- $left (size-atom $singletons)))
+            (() (println! (format-args "Iteration:{}, cells left {}" ($iteration $newleft))))
+            ($board2 (process-board-all-dimensions $board $N $singletons $changed $newsing))
+            )
+            (if $changed
+                (process-board-all-dimensions-fixed (+ $iteration 1) $newleft $leftout $board2 $N $newsing)
+                (let $leftout (- $newleft (size-atom $newsing)) $board2)
+            )
         )
     )
 )
 
-; !(process-board-all-dimensions-fixed (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)))
+(= (smallest-multicell-row $row $n $smallest)
+    (if-decons-expr $row $h $t
+        (let* (
+            ($best (smallest-multicell-row $t (+ $n 1) $smallest0))
+            ($len (size-atom $h))
+            )
+            (if (and (< 1 $len) (<= $len $smallest0))
+                (let $smallest $len ($n $h))
+                (let $smallest $smallest0 $best)
+            )
+        )
+        (let $smallest 1000 ())
+    )
+)
+
+!(assertEqual (smallest-multicell-row (() (1) (3 2) (1) (4 3) (5)) 0 $smallest) (2 (3 2)))
+
+(= (smallest-multicell $board $n $smallest)
+    (if-decons-expr $board $h $t
+        (let* (
+            ($best (smallest-multicell $t (+ $n 1) $smallest0))
+            ($bestrow (smallest-multicell-row $h 0 $smallestrow))
+            )
+            (if (< $smallestrow $smallest0)
+                (let $smallest $smallestrow (cons-atom $n $bestrow))
+                (let $smallest $smallest0 $best)
+            )
+        )
+        (let $smallest 1000 ())
+    )
+)
+
+!(assertEqual (smallest-multicell (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 0 $smallest) (2 2 (3 2)))
+!(assertEqual (smallest-multicell (((4)) (() (1) (3 2) (1) (4 3) (5))) 0 $smallest) (1 2 (3 2)))
+
+(= (update-row $row $n $value)
+    (let ($h $t) (decons-atom $row)
+        (if (> $n 0)
+            (let $tail (update-row $t (- $n 1) $value) (cons-atom $h $tail))
+            (cons-atom $value $t)
+        )
+    )
+)
+
+!(assertEqual (update-row (() (1) (3 2) (1) (4 3) (5)) 2 xxx) (() (1) xxx (1) (4 3) (5)))
+
+(= (update-board $board $r $c $value)
+    (let ($h $t) (decons-atom $board)
+        (if (> $r 0)
+            (let $tail (update-board $t (- $r 1) $c $value) (cons-atom $h $tail))
+            (let $nv (update-row $h $c $value) (cons-atom $nv $t))
+        )
+    )
+)
+
+!(assertEqual (update-board (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 2 2 xxx) (() ((4)) (() (1) xxx (1) (4 3) (5)) ((3))))
+
+(= (process-board-backtrack $iteration $left $board $N $singletons)
+    (let $bnext (process-board-all-dimensions-fixed $iteration $left $leftout $board $N $singletons)
+        (if (== $leftout 0)
+            $bnext
+            ; find the smallest ambiguous cell
+            (let* (
+                (($r $c $values) (smallest-multicell $bnext 0 $_smallest))
+                ($v (select $values))
+                (() (println! "backtracking"))
+                ($bupdate (update-board $bnext $r $c ($v)))
+                ($bfinal (process-board-backtrack 0 $leftout $bupdate $N (($r $c $v))))
+                ;(() (println! (exit $r $c $v)))
+                )
+                $bfinal
+            )
+        )
+    )
+)
 
 ; from: (
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
@@ -439,12 +550,50 @@
         ($N2 (* $N $N))
         ($bx (map-atom $B $r (map-atom $r $v (value-to-cell $N2 $v))))
         ($singletons (extract-singletons $bx))
-        ($bxf (process-board-all-dimensions-fixed $bx $N $singletons))
+        ($bxf (process-board-backtrack 1 (* $N2 $N2) $bx $N $singletons))
         ($bx2 (map-atom $bxf $rx (map-atom $rx $vx (cell-to-value $vx))))
+        ($_ (map-atom $bx2 $x (println! $x)))
     )
     $bx2
     )
 )
 
-!(time (sudoku-n 2 ( (x x x x) (x x 1 2) (2 4 x x) (x x x x) )))
+(= (sudoku $B) (sudoku-n 3 $B))
 
+!(sudoku-n 2 ((x x x x) (x x 1 2) (2 4 x x) (x x x x)))
+
+; !(sudoku-n 2 ((x x x x) (x x 1 2) (2 x x x) (x x x x)))
+
+; !(sudoku ( (x x x x 2 x 3 5 x) (3 9 x 8 x x 7 6 x) (x x x x x x x x 9) (x x x 6 x 5 x 9 x) (5 8 x x x 4 x 2 6) (x x x 2 x 9 5 8 3) (4 x x 5 x 8 9 3 x) (x x 1 3 4 2 6 x 8) (6 x x 1 x 7 2 x 5) ))
+
+;    (x x x x 2 x 3 5 x)
+;    (3 9 x 8 x x 7 6 x)
+;    (x x x x x x x x 9)
+;    (x x x 6 x 5 x 9 x)
+;    (5 8 x x x 4 x 2 6)
+;    (x x x 2 x 9 5 8 3)
+;    (4 x x 5 x 8 9 3 x)
+;    (x x 1 3 4 2 6 x 8)
+;    (6 x x 1 x 7 2 x 5)
+
+; !(sudoku ( (3 x 8 5 x 4 9 x x) (9 x x x x x x 2 x) (x x x 1 x x x x x) (x 6 x x x x x x 7) (x x 5 9 x 8 2 x x) (x x x x 3 x x x x) (x x x x 1 x 4 x x) (x x 3 x 2 x x x x) (x 5 x 4 x 3 x 6 x) ))
+
+;    (3 x 8 5 x 4 9 x x)
+;    (9 x x x x x x 2 x)
+;    (x x x 1 x x x x x)
+;    (x 6 x x x x x x 7)
+;    (x x 5 9 x 8 2 x x)
+;    (x x x x 3 x x x x)
+;    (x x x x 1 x 4 x x)
+;    (x x 3 x 2 x x x x)
+;    (x 5 x 4 x 3 x 6 x)
+
+;    (3 2 8 5 6 4 9 7 1)
+;    (9 x x 3 8 7 x 2 x)
+;    (5 x x 1 9 2 x x x)
+;    (x 6 x 2 5 1 x x 7)
+;    (7 3 5 9 4 8 2 1 6)
+;    (x x x 7 3 6 x x x)
+;    (x x x x 1 x 4 x x)
+;    (x x 3 x 2 x 7 x x)
+;    (x 5 x 4 7 3 1 6 x))
