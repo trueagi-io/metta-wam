@@ -28,6 +28,8 @@
 
 !(assertEqual (dup-list 5 a) (a a a a a))
 
+(= (divmod $x $y) (let $m (% $x $y) ((/ (- $x $m) $y) $m)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cell internals
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -335,17 +337,35 @@
     )
 )
 
-(= (transpose-cell-board
-    (($a1 $a2 $a3 $a4) ($b1 $b2 $b3 $b4) ($c1 $c2 $c3 $c4) ($d1 $d2 $d3 $d4)))
-    (($a1 $a2 $b1 $b2) ($a3 $a4 $b3 $b4) ($c1 $c2 $d1 $d2) ($c3 $c4 $d3 $d4)))
-
-!(transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16)))
-
 !(assertEqual (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
 
 (= (transpose-coordinate ($x $y $v)) ($y $x $v))
 
 !(assertEqual (transpose-coordinate (1 2 3)) (2 1 3))
+
+(= (transpose-cell-board (
+    ($a1 $a2 $a3 $a4)
+    ($b1 $b2 $b3 $b4)
+    ($c1 $c2 $c3 $c4)
+    ($d1 $d2 $d3 $d4)
+    )) (
+    ($a1 $a2 $b1 $b2)
+    ($a3 $a4 $b3 $b4)
+    ($c1 $c2 $d1 $d2)
+    ($c3 $c4 $d3 $d4)))
+
+!(assertEqual (transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16))) ((1 2 5 6) (3 4 7 8) (9 10 13 14) (11 12 15 16)))
+
+(= (transpose-cell-coordinate $N ($y $x $value))
+    (let* (
+        (($xh $xl) (divmod $x $N))
+        (($yh $yl) (divmod $y $N))
+        )
+        ((+ (* $N $yh) $xh) (+ (* $N $yl) $xl) $value)))
+
+!(assertEqual (map-atom ((0 0 0) (0 1 1) (0 2 2) (0 3 3) (1 0 10) (1 1 11) (1 2 12) (1 3 13) (2 0 20) (2 1 11) (2 2 22) (2 3 23) (3 0 30) (3 1 31) (3 2 32) (3 3 33)) $x (transpose-cell-coordinate 2 $x))
+    ((0 0 0) (0 1 1) (1 0 2) (1 1 3) (0 2 10) (0 3 11) (1 2 12) (1 3 13) (2 0 20) (2 1 11) (3 0 22) (3 1 23) (2 2 30) (2 3 31) (3 2 32) (3 3 33)))
+
 
 (= (sort-singleton-list $N2 $singletons)
     (let $empty-sing (dup-list $N2 ()) (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a))))
@@ -355,33 +375,39 @@
 (= (process-board-all-dimensions $board $N $singletons $changed $newsing)
     (let* (
         ($N2 (* $N $N))
-        (() ())
-        (() (println! (format-args "here1" ())))
         ($singsorted (sort-singleton-list $N2 $singletons))
-        (() (println! (format-args "here2 {} {} {} {}" (2 $N2 $board $singsorted))))
         ($board0 (process-board-one-dimension $board 0 $N2 $singsorted $changed0 $newsing0))
-        (() (println! (format-args "here3" ())))
         ($board0t (transpose-board $board0))
-        (() (println! (format-args "here4" ())))
         ($singletonst (map-atom $singletons $v0 (transpose-coordinate $v0)))
-        (() (println! (format-args "here5" ())))
         ($singletonstsorted (sort-singleton-list $N2 $singletonst))
-        (() (println! (format-args "here6 {} {} {} {}" (6 $N2 $board0t $singletonstsorted))))
         ($board1t (process-board-one-dimension $board0t 0 $N2 $singletonstsorted $changed1 $newsing1t))
-        (() (println! (format-args "here7" ())))
         ($board1 (transpose-board $board1t))
-        (() (println! (format-args "here8" ())))
         ($newsing1 (map-atom $newsing1t $v1 (transpose-coordinate $v1)))
-        (() (println! (format-args "here9" ())))
-        ($changed (or $changed0 $changed1))
-        (() (println! (format-args "herea" ())))
-        ($newsing (append $newsing0 $newsing1))
+        ($board1u (transpose-cell-board $board1))
+        ($singletonsu (map-atom $singletons $v2 (transpose-cell-coordinate $N $v2)))
+        ($singletonsusorted (sort-singleton-list $N2 $singletonsu))
+        ($board2u (process-board-one-dimension $board1u 0 $N2 $singletonsusorted $changed2 $newsing2u))
+        ($board2 (transpose-cell-board $board2u))
+        ($newsing2 (map-atom $newsing2u $v3 (transpose-cell-coordinate $N $v3)))
+        ($changed (or $changed0 (or $changed1 $changed2)))
+        ($newsing (append $newsing0 (append $newsing1 $newsing2)))
         )
-        $board1
+        $board2
     )
 )
 
 !(let $c (process-board-all-dimensions (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)) $changed $newsing) ($changed $c $newsing))
+
+(= (process-board-all-dimensions-fixed $board $N $singletons)
+    (let $board2 (process-board-all-dimensions $board $N $singletons $changed $newsing)
+        (if $changed
+            (process-board-all-dimensions-fixed $board2 $N $newsing)
+            $board2
+        )
+    )
+)
+
+; !(process-board-all-dimensions-fixed (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 2 ((1 3 2) (1 2 1) (2 1 4) (2 0 2)))
 
 ; from: (
 ;   ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))
@@ -399,30 +425,26 @@
 ;   ((1   3 4) (1 2 3  ) (  2 3 4) (1   3 4))
 ;   ((    3 4) (    3  ) (1      ) (  2    ))
 ;   ((  2    ) (      4) (    3  ) (1   3  ))
-;   ((1   3 4) (1 2 3  ) (  2 3 4) (1   3 4))
+;   ((1   3 4) (1 2 3  ) (  2 3 4) (1   3 4)))
 ; ((1 1 3) (2 2 3))
-
-(= (sudoku-iteration $N $singletons $bb)
-    (let* (
-        ($N2 (* $N $N))
-        ($empty-sing (dup-list $N2 ())
-        )
-        ($sorted-sing (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a)))
-    )
-    $sorted-sing)
-)
+; 3: (
+;   ((1   3 4) (  2    ) (    3 4) (    3 4))
+;   ((    3 4) (    3  ) (1      ) (  2    ))
+;   ((  2    ) (      4) (    3  ) (1   3  ))
+;   ((1   3  ) (1   3  ) (  2    ) (1   3 4)))
+; ((0 1 2) (3 2 2))
 
 (= (sudoku-n $N $B)
     (let* (
         ($N2 (* $N $N))
         ($bx (map-atom $B $r (map-atom $r $v (value-to-cell $N2 $v))))
         ($singletons (extract-singletons $bx))
-        ($bxf (sudoku-iteration $N $singletons $bx))
-        ($bx2 (map-atom $bx $rx (map-atom $rx $vx (cell-to-value $vx))))
+        ($bxf (process-board-all-dimensions-fixed $bx $N $singletons))
+        ($bx2 (map-atom $bxf $rx (map-atom $rx $vx (cell-to-value $vx))))
     )
-    ($singletons $bx $bx2 $bxf)
+    $bx2
     )
 )
 
-!(sudoku-n 2 ( (x x x x) (x x 1 2) (2 4 x x) (x x x x) ))
+!(time (sudoku-n 2 ( (x x x x) (x x 1 2) (2 4 x x) (x x x x) )))
 
