@@ -344,19 +344,19 @@
 (rank p) 
 
 ; Chess symbols to display on console
-(s k ♔)
-(s q ♕)
-(s r ♖)
-(s b ♗)
-(s n ♘) 
-(s p ♙)
+(g k ♔)
+(g q ♕)
+(g r ♖)
+(g b ♗)
+(g n ♘) 
+(g p ♙)
 
-(g k ♚)
-(g q ♛)
-(g r ♜) 
-(g b ♝)
-(g n ♞)
-(g p ♟)
+(s k ♚)
+(s q ♛)
+(s r ♜) 
+(s b ♝)
+(s n ♞)
+(s p ♟)
 
 ;*******************************************************
 ; Declare initializing game state
