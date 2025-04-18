@@ -587,13 +587,3 @@
 ;    (x x x x 1 x 4 x x)
 ;    (x x 3 x 2 x x x x)
 ;    (x 5 x 4 x 3 x 6 x)
-
-;    (3 2 8 5 6 4 9 7 1)
-;    (9 x x 3 8 7 x 2 x)
-;    (5 x x 1 9 2 x x x)
-;    (x 6 x 2 5 1 x x 7)
-;    (7 3 5 9 4 8 2 1 6)
-;    (x x x 7 3 6 x x x)
-;    (x x x x 1 x 4 x x)
-;    (x x 3 x 2 x 7 x x)
-;    (x 5 x 4 7 3 1 6 x))
