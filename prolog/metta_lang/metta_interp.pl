@@ -3097,12 +3097,16 @@ skip_cmdarg('-l').
 skip_cmdarg('-g').
 skip_cmdarg('-x').
 
+:- dynamic(is_reseting_default_flags/0).
+reset_default_flags:- is_reseting_default_flags,!.
 reset_default_flags:-
+    asserta(is_reseting_default_flags),!,
     forall(option_value_def(A,B), set_option_value_interp(A,B)),
     metta_cmd_args(Rest),process_metta_cmd_arg_flags(Rest),
     current_prolog_flag(os_argv,[_|ArgV]),
     debug_info(os_argv,ArgV),
-    process_metta_cmd_arg_flags(ArgV).
+    process_metta_cmd_arg_flags(ArgV),
+    retractall(is_reseting_default_flags).
 
 
 process_metta_cmd_arg_flags(Rest):-
