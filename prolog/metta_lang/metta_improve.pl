@@ -1,6 +1,15 @@
 
 
 :- dynamic use_evaluator/3.
+
+use_evaluator(FA, Type, only):-
+   use_evaluator(FA, Other, disabled), Type\==Other.
+use_evaluator(FA, Type, enabled):- use_evaluator(FA, Type, only).
+
+use_evaluator(fa('help!',1),compiler,disabled).
+use_evaluator(fa('help!',0),compiler,disabled).
+
+
 :- meta_predicate with_evaluator_status(+, +, +, 0).
 
 
@@ -8,6 +17,9 @@ test_case_improve([superpose,[1,2,3]]).
 test_case_improve([get-type,[+,2,3]]).
 test_case_improve([eval,[+,1,2,3]]).
 test_case_improve([eval,[+,[+,1,2],3]]).
+test_case_improve(['help!',['if']]).
+test_case_improve(['help!']).
+
 
 
 test_drt:-
@@ -86,6 +98,7 @@ only_compiled_eval(FA, Eq, RetType, Depth, Self, X, Y) :-
 only_interpreted_eval(FA, Eq, RetType, Depth, Self, X, Y) :-
     with_evaluator_status(compiler=disabled, FA,
         woc(eval_10(Eq, RetType, Depth, Self, X, Y))).
+
 
 % --- Temporarily override evaluator status ---
 
