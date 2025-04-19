@@ -408,8 +408,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
   compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
+  must_det_lls((
   metta_to_metta_macro(HeadIsIn, AsBodyFnIn, HeadIs, AsBodyFn),
-  compile_for_assert_3(HeadIs, AsBodyFn, Converted).
+  compile_for_assert_3(HeadIs, AsBodyFn, Converted))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
