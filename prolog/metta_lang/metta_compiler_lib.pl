@@ -388,6 +388,11 @@ transpiler_predicate_store(builtin, 'get-metatype', [1], '@doc', '@doc', [x(noev
 transpiler_predicate_store(builtin, 'println!', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_println!'(X,[]) :- println_impl(X).
 
+transpiler_predicate_store(builtin, 'format-args', [2], '@doc', '@doc', [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_format-args!'(EFormat,EArgs,Str) :-
+ string_chars(EFormat, FormatChars), !,
+ user_io(with_output_to_str( Str, format_nth_args(FormatChars, 0, EArgs))).
+
 transpiler_predicate_store(builtin, 'stringToChars', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_stringToChars'(S,C) :- string_chars(S,C).
 
@@ -552,6 +557,19 @@ transpiler_predicate_store(builtin, 'transpiler-listing', [0], [], '', [], x(doe
   findall([Origin,Fn,Arity,['variable arity']],transpiler_predicate_nary_store(Origin,Fn,Arity,_,_,_,_,_,_),Unsorted2),
   append(Unsorted1,Unsorted2,Unsorted),
   predsort(listing_order,Unsorted,Sorted).
+
+
+
+
+
+transpiler_predicate_store(builtin, 'metta-equals', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[boolean])).
+'mc__1_2_metta-equals'(A,B,TF):- as_tf(A=@=B,TF).
+
+transpiler_predicate_store(builtin, 'metta-unify', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[boolean])).
+'mc__1_2_metta-unify'(A,B,TF):- as_tf(unify_with_occurs_check(A,B),TF).
+
+transpiler_predicate_store(builtin, 'decons-ht', [3], '@doc', '@doc', [x(noeval,eager,[]),x(noeval,eager,[]),x(noeval,eager,[])],x(doeval,eager,[boolean])).
+'mc__1_3_decons-ht'(E,H,T,TF):- as_tf(E=[H|T],TF).
 
 
 metta_to_metta_macro(HeadIsN, AsBodyFnN, HeadIsC, AsBodyFnOut):-
