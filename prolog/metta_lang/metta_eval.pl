@@ -3190,7 +3190,10 @@ transpiler_peek(Sym,Len,Type,Fn):-
   transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
-  succ(Len,LenP1), current_predicate(Fn/LenP1).
+  succ(Len,LenP1), current_predicate(Fn/LenP1),
+  \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
+  \+ transpiler_predicate_nary_store(_,Sym,[Len],_,_,_,_).
+  \+ transpiler_clause_store(Sym,[Len],_,_,_,_,_,_,_).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
