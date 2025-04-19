@@ -836,8 +836,8 @@ debug_info(_Topic,_Info):- \+ is_douglas,!.
 debug_info(Topic,Info):- original_user_error(X),
   mesg_color(Topic, TopicColor),
   mesg_color(Info,  InfoColor),
-  \+ \+ (( % numbervars(Info,4123,_,[attvar(bind)]),
-  number_vars_wo_conficts(Info,RNVInfo),
+  \+ \+ (( numbervars(Info,4123,_,[attvar(bind)]),
+  %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
   format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,debug_pp_info(RNVInfo))]))).
 

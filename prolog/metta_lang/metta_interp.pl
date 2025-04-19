@@ -2237,7 +2237,7 @@ show_options_values :-
 
 find_missing_cuts :-
     once(prolog_load_context(source, File);prolog_load_context(file, File)),!,
-    find_missing_cuts(File).
+    is_extreme_debug((debug_info(nondet_src,c(find_missing_cuts(File))))).
 
 find_missing_cuts(File) :-
     findall(Predicate, source_file(Predicate, File), Predicates),
@@ -4091,7 +4091,7 @@ load_hook1(Load, Self, Fact) :-
     debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
     %fail,
     !,
-    nop(woc(load_hook_compiler(Load, Self, Fact))).
+    woc(load_hook_compiler(Load, Self, Fact)).
 
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
