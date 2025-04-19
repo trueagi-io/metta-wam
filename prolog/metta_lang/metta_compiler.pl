@@ -1597,9 +1597,18 @@ dmp_break:- st,ds,break.
 cmpd4lst(A,_):- nonvar(A),dmp_break,fail.
 cmpd4lst(_A,[Cmpd,_F|_Args]):- \+ compound(Cmpd),dmp_break,fail.
 cmpd4lst(_A,[_Cmpd,_F|Args]):- \+ is_list(Args),dmp_break,fail.
-cmpd4lst(A,[_Cmpd,F,Arg]):- F==is_True,!,A=is_True(Arg),!.
-cmpd4lst(call_fn_native(F,XXX,Args),[Cmpd,F|Args]):- compound(Cmpd),xxx(XXX)=Cmpd,!.
-cmpd4lst(call_fn_native(F,xxx(?),Args),[F|Args]):- !.
+%cmpd4lst(A,[_Cmpd,F|Args]):- atom(F),is_cmp_builtin(F),A=..[F|Args],!.
+%cmpd4lst(call_fn_native(F,XXX,Args),[Cmpd,F|Args]):- compound(Cmpd),f(XXX)=Cmpd,!.
+cmpd4lst(A,[_Cmpd,F|Args]):- atom(F),!,A=..[F|Args],!.
+cmpd4lst(call_fn_native_error(F,xxx(?),Args),[F|Args]):- !.
+
+is_cmp_builtin(is_True).
+is_cmp_builtin(as_p1_expr).
+is_cmp_builtin(as_p1_exec).
+is_cmp_builtin(ispeEnN).
+is_cmp_builtin(call_fn_native).
+
+
 /*
 cmpd4lst2(A,Info):- compound(A), A=call_fn_native(F,XXX,Args),!,cmpd4lst(F,XXX,Args,Info).
 cmpd4lst2(A,Info):- compound(A), compound_name_arguments(A,F,Args),!,cmpd4lst(F,xxx(?),Args,Info).
@@ -2940,6 +2949,7 @@ as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
    ;
       (AsPred = [F|ArgsL])).
 
+as_functor_args(call_fn_native(F,_,ArgsL),F,A,ArgsL):- length(ArgsL,A),!.
 %as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
 as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
   AsPred @.. List,!, as_functor_args(List,F,A,ArgsL),!.

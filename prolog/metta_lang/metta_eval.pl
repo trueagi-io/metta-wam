@@ -769,6 +769,10 @@ eval_args_once(Eq,RetType,Depth,Space,Eval,Result):-
    eval_10(Eq,RetType,Depth,Space,Eval,Result)*->true;(Eval=Result).
 
 
+eval_20(Eq,RetType,Depth,Self,['capture',X],Res):- !,
+   eval_args(Eq,RetType,Depth,Self,X, Res).
+
+
 eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
 
