@@ -389,9 +389,9 @@ transpiler_predicate_store(builtin, 'println!', [1], '@doc', '@doc', [x(doeval,e
 'mc__1_1_println!'(X,[]) :- println_impl(X).
 
 transpiler_predicate_store(builtin, 'format-args', [2], '@doc', '@doc', [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
-'mc__1_2_format-args!'(EFormat,EArgs,Str) :-
- string_chars(EFormat, FormatChars), !,
- user_io(with_output_to_str( Str, format_nth_args(FormatChars, 0, EArgs))).
+'mc__1_2_format-args'(EFormat,EArgs,Str) :-
+    string_chars(EFormat, FormatChars), !,
+    user_io(with_output_to_str( Str, format_nth_args(FormatChars, 0, EArgs))).
 
 transpiler_predicate_store(builtin, 'stringToChars', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_stringToChars'(S,C) :- string_chars(S,C).
