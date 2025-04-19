@@ -1,6 +1,7 @@
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous transpiler_predicate_store/7.
 :- discontiguous transpiler_predicate_nary_store/9.
+:- discontiguous compile_flow_control/8.
 
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
@@ -243,6 +244,12 @@ transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
 'mc__1_1_decons-atom'([A|B],[A,B]).
 
+%transpiler_predicate_store(builtin, 'length', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])).
+%'mc__1_1_length'(L,S) :- length(L,S).
+
+transpiler_predicate_store(builtin, 'size-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])).
+'mc__1_1_size-atom'(L,S) :- length(L,S).
+
 %%%%%%%%%%%%%%%%%%%%% set
 
 lazy_member(P,R2) :- as_p1_exec(R2,P).
@@ -351,11 +358,17 @@ transpiler_predicate_store(builtin, unify, [4], '@doc', '@doc', [x(doeval,eager,
 transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_0__progn'(List,Ret) :- append(_,[Ret],List).
 
-transpiler_predicate_nary_store(builtin, 'call-fn!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+transpiler_predicate_nary_store(builtin, 'call-fn!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__call-fn!'(Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
 
-transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+transpiler_predicate_nary_store(builtin, 'call-fn', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__call-fn'(Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
+
+transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[bool])).
 'mc_n_1__call-p!'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
+
+transpiler_predicate_nary_store(builtin, 'call-p', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[bool])).
+'mc_n_1__call-p'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
@@ -539,5 +552,53 @@ transpiler_predicate_store(builtin, 'transpiler-listing', [0], [], '', [], x(doe
   append(Unsorted1,Unsorted2,Unsorted),
   predsort(listing_order,Unsorted,Sorted).
 
+
+metta_to_metta_macro(HeadIsN, AsBodyFnN, HeadIsC, AsBodyFnOut):-
+ must_det_lls((
+ copy_term(AsBodyFnN+HeadIsN,AsBodyFnC+HeadIsC,_),
+ number_vars_wo_conficts(AsBodyFnC+HeadIsC,AsBodyFn+HeadIs),
+ (AsBodyFnC+HeadIsC=AsBodyFn+HeadIs),
+    metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut),!,
+    \+ \+ if_t(AsBodyFn\=@=AsBodyFnOut,
+    ( debug_info(metta_macro_in,c(print_tree([=,HeadIs, AsBodyFn]))),!,
+      debug_info(metta_macro_out,c(print_tree([=,HeadIs, AsBodyFnOut]))))))),!.
+
+metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
+   must_det_lls((metta_body_macro1(HeadIs, [], AsBodyFn, AsBodyFnE),
+    metta_body_macro2(HeadIs, [], AsBodyFnE, AsBodyFnMid),
+   (AsBodyFn =@= AsBodyFnMid -> AsBodyFnMid = AsBodyFnOut ;
+     metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)))).
+
+metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
+metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
+metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro1(HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
+metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
+   maplist(metta_body_macro1(HeadIs, [Op|Stack]), AsBodyFn, AsBodyFnMid),
+   [Op|AsBodyFnMid]=OpAsBodyMid,
+   copy_term(OpAsBodyMid,OpAsBodyMidCopy),
+   metta_body_macro_final1(HeadIs, Stack, OpAsBodyMid , AsBodyFnOut),
+   OpAsBodyMid=@=OpAsBodyMidCopy,!.
+
+metta_body_macro_final1(_HeadIs,_Stack, [NonOp|More], AsBodyFn):- \+ atom(NonOp),!,[NonOp|More]= AsBodyFn.
+metta_body_macro_final1(_HeadIs,_Stack, ['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
+metta_body_macro_final1(_HeadIs,_Stack, ['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
+metta_body_macro_final1(_HeadIs,_Stack, ['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_final1(_HeadIs,_Stack, ['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_final1(_HeadIs,_Stack, ['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
+metta_body_macro_final1(_HeadIs,_Stack, ['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
+%metta_body_macro_final1(_HeadIs,_Stack, [eval,Next], Next).
+metta_body_macro_final1(_HeadIs,_Stack, AsBodyFnOut, AsBodyFnOut).
+
+metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
+metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
+metta_body_macro2(HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
+   copy_term(OpAsBody,OpAsBodyMidCopy),
+   metta_body_macro_final2(HeadIs, Stack, OpAsBody , AsBodyFnOut),
+   OpAsBody=@=OpAsBodyMidCopy,!,
+   maplist( metta_body_macro2(HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally).
+
+metta_body_macro_final2(_HeadIs,_Stack, [NonOp|More], AsBodyFn):- \+ atom(NonOp),!,[NonOp|More]= AsBodyFn.
+metta_body_macro_final2(_HeadIs,_Stack, [eval,Next], Next).
+metta_body_macro_final2(_HeadIs,_Stack, AsBodyFnOut, AsBodyFnOut).
 
 

@@ -405,7 +405,11 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-  compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted).
+  compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
+
+compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
+  metta_to_metta_macro(HeadIsIn, AsBodyFnIn, HeadIs, AsBodyFn),
+  compile_for_assert_3(HeadIs, AsBodyFn, Converted).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -1543,7 +1547,7 @@ call_from_comp(FnComp,InterpFn,Args):-
 call_from_comp(FnComp,InterpFn,Args):- fail,
     FA = fa(InterpFn,_),
     \+ use_evaluator(FA, _, _),
-    peek_scope(Eq,RetType,Depth,Self),
+    % peek_scope(Eq,RetType,Depth,Self),
     debug_info(compiled_version, writeq(apply(FnComp,Args))),
 
     Right = [Y], append(Left,Right,Args), X = [InterpFn|Left],

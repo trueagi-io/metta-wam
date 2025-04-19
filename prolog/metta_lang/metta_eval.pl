@@ -2913,8 +2913,23 @@ lazy_union(P2, E1^Call1, E2^Call2, E) :-
     ).
 
 
-variant_by_type(X,Y):- var(X),!,X==Y.
-variant_by_type(X,Y):- X=@=Y.
+%variant_by_type(X,Y):- var(X),!,X==Y.
+variant_by_type(X,Y):- var(X),!, matching_vn_relaxed(X,Y).
+%variant_by_type(X,Y):- X=@=Y.
+variant_by_type(X, Y) :-
+    copy_term(X+Y, X1+Y1, _Gs),
+    X1 =@= Y1, X1 = Y1,
+    term_variables(X, VX),
+    term_variables(Y, VY),
+    maplist(matching_vn_relaxed, VX, VY), !,
+    X1 = X, Y1 = Y.
+
+
+matching_vn_relaxed(V1, V2) :-
+  ( get_attr(V1, vn, VN1) -> 
+     ( get_attr(V2, vn, VN2) -> (VN1 == VN2, V1 = V2) ; (V1=V2) )
+    ; V1 == V2 ).
+
 
 call_as_p2(P2,X,Y):-
    once(eval([P2,X,Y],TF)),
@@ -2926,7 +2941,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
-   no_repeats_var(YY),
+   no_repeats_var(variant_by_type,YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
 eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
