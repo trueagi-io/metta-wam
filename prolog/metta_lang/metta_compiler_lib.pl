@@ -71,6 +71,7 @@ compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Els
   append(ElseCodeN,[[assign,RetResultN,ElseResultN]],EN),
   ConvertedN=[[prolog_if,If,TN,EN]].
 
+/*
 transpiler_predicate_store(builtin, 'if-decons-expr', [5], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
 'mc__1_5_if-decons-expr'(If,H,T,Then,Else,Result) :- (If=[H|T]*->Result=Then;Result=Else).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
@@ -83,7 +84,7 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   lazy_impedance_match(LazyRetTail,x(doeval,eager,[]),TailResult,TailCode,TailResultN,TailCodeN,TailResult1,TailCode1),
   append([CondCode1,[[assign,CondResult1,list_with_tail([H],T)]],HeadCode1,[[assign,H,HeadResult1]],TailCode1,[[assign,T,TailResult1]]],If),
   compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted,ConvertedN).
-
+*/
 %%%%%%%%%%%%%%%%%%%%% case. NOTE: there is no library equivalent for this, as various parts of the structure have to be lazy
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Converted,ConvertedN) :-
@@ -322,11 +323,11 @@ transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,
 % This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
 match_pattern(Space, Pattern):-
     if_t(compound(Pattern),
-       (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),    
-    metta_atom(Space, Atom), 
+       (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
+    metta_atom(Space, Atom),
     %unify_with_occurs_check(Atom,Pattern). % 0.262 secs.
     Atom=Pattern. % 0.170 secs
-    %wocf(Atom=Pattern). 
+    %wocf(Atom=Pattern).
     %woc(Atom=Pattern). %  2.09 seconds.
 
 transpiler_predicate_store(builtin, match, [3], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).

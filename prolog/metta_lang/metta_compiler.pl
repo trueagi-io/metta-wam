@@ -1248,7 +1248,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    %label_arg_types(F,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
-   R ~.. [xxx(FIn),Fp|Args2],
+   R ~.. [f(FIn),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
@@ -1283,7 +1283,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    create_mc_name(LenArgsAll,FIn,Fp),
    %label_arg_types(FIn,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
-   R0 ~.. [xxx(a),Fp|Args1],
+   R0 ~.. [xxx(4),Fp|Args1],
    %R1=R0),
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(FIn-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs)),
@@ -1305,7 +1305,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
    append(FixedPart,VariablePart,Args1),
    append(FixedPart,[VariablePart],Args1a),
    append(Args1a,[A],Args2),
-   R ~.. [xxx(c),Fp|Args2],
+   R ~.. [xxx(3),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
@@ -1317,7 +1317,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
 %   label_arg_types(F,1,Args1),
-%   A ~.. [xxx(d),F|Args1],
+%   A ~.. [xxx(2),F|Args1],
 %   notice_callee(Caller,A))).
 %ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
 % must_det_lls((
