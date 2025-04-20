@@ -292,6 +292,7 @@ compile_for_exec1(AsBodyFn, Converted) :-
    ast_to_prolog_aux(no_caller,[],[native(exec0),HHResult],HeadC),
    %ast_to_prolog(no_caller,[],[[native(trace)]|NextBody],NextBodyC).
    append(NextBody,HCode,Code),
+   debug_info(pre_ast,t(Code)),
    ast_to_prolog(no_caller,[],Code,NextBodyC))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -409,7 +410,9 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
   must_det_lls((
-  metta_to_metta_macro(HeadIsIn, AsBodyFnIn, HeadIs, AsBodyFn),
+  IN = ['=',HeadIsIn, AsBodyFnIn],
+  metta_to_metta_macro_recurse(IN, OUT),
+  OUT = ['=',HeadIs, AsBodyFn],
   compile_for_assert_3(HeadIs, AsBodyFn, Converted))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
@@ -502,14 +505,14 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
       %print_ast( yellow, [=,HeadAST,FullCode2]),
-
+      debug_info(pre_ast,t(FullCode2)),
       ast_to_prolog(caller(FnName,LenArgs),[FnName/LenArgs],FullCode2,NextBodyC),
 
       %format_e("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
       %format_e("###########2 ~q",[Converted]),
       extract_constraints(Converted,EC),
-      optimize_prolog([],Converted,Optimized),
+      try_optimize_prolog(fa,Converted,Optimized),
       transpiler_debug(2,output_prolog('#F08080',[EC])),!,
       transpiler_debug(1,output_prolog('#ADD8E6',[Converted])),!,
       if_t(Optimized\=@=Converted,
@@ -1659,7 +1662,11 @@ compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
 compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    compiler_assertz(InfoC).
 
-compiler_assertz(Info):- debug_info(compiler_assertz,Info),fail.
+compiler_assertz(Info):- debug_info(compiler_assertz, Info),fail.
+
+compiler_assertz(Info):- once(try_optimize_prolog(ca,Info,Info2)),Info\=@=Info2,!,
+     debug_info(compiler_assertz,optimize_prolog(ca)),
+     compiler_assertz(Info2).
 
 compiler_assertz(Info:-_):- predicate_property(Info,static),!, debug_info(skipping_redef,Info).
 compiler_assertz(Info):- (Info \= (_:-_)), predicate_property(Info,static),!, debug_info(skipping_redef,Info).
@@ -2150,14 +2157,28 @@ maybe_argo(_Caller,_F,_N,Arg,Arg):- is_list(Arg),!.
 maybe_argo(_Caller,_F,_N,Arg,Arg):- \+ compound(Arg),!.
 maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,[],Arg,ArgO).
 
+:- dynamic(maybe_optimize_prolog/4).
 
-optimize_prolog(_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
-optimize_prolog(_,Converted,Optimized):- is_list(Converted),!,Converted=Optimized.
-optimize_prolog(FL,Converted,Optimized):-
+try_optimize_prolog(Y,Convert,Optimized):-
+   optimize_prolog(Y,[],Convert,MaybeOptimized), Convert\=@=MaybeOptimized,!,
+   try_optimize_prolog(Y,MaybeOptimized,Optimized).
+try_optimize_prolog(_,Optimized,Optimized).
+
+optimize_prolog(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
+optimize_prolog(Y,FL,Converted,Optimized):-
+   copy_term(Converted,ConvertedC),
+   maybe_optimize_prolog(Y,FL,Converted,Optimized),
+   \+ ((ConvertedC\=@=ConvertedC,
+       debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),!.
+optimize_prolog(Y,FL,Converted,Optimized):- is_list(Converted),
+   maplist(optimize_prolog(Y,[list()|FL]),Converted,Optimized),!.
+optimize_prolog(Y,FL,Converted,Optimized):-
    compound_name_arguments(Converted,F,Args),
-   maplist(optimize_prolog([F|FL]),Args,OArgs),
+   maplist(optimize_prolog(Y,[F|FL]),Args,OArgs),
    compound_name_arguments(Optimized,F,OArgs), !.
-optimize_prolog(_,Prolog,Prolog).
+optimize_prolog(_,_,Prolog,Prolog).
+
+
 
 
 de_eval(eval(X),X):- compound(X),!.
@@ -2258,6 +2279,12 @@ merge_and_optimize_head_and_body(Head,Converted,HeadO,Body):- nonvar(Head),
 merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
    assertable_head(AHead,Head),
    must_optimize_body(Head,Body,BodyNew).
+
+
+
+maybe_optimize_prolog(_,_,Cmpd,(Cl:-BodyNew)):-
+  compound(Cmpd),
+  (Cl:-Body)=Cmpd,nonvar(Body),!,must_optimize_body(Cl,Body,BodyNew).
 
 assertable_head(x_assign(FList,R),Head):- FList =~ [F|List],
    append(List,[R],NewArgs), atom(F), Head @.. [F|NewArgs],!.

@@ -218,6 +218,20 @@ eval_args(X,Y):- current_self(Self),
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
 
+
+eval_20(X,Y):- current_self(Self),
+   default_depth(DEPTH),
+   eval_20(DEPTH,Self,X,Y).
+%eval_20(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_20(Eq,RetType,X)),fail.
+eval_20(Depth,Self,X,Y):- eval_20('=',_RetType,Depth,Self,X,Y).
+
+
+eval_40(X,Y):- current_self(Self),
+   default_depth(DEPTH),
+   eval_40(DEPTH,Self,X,Y).
+%eval_40(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_40(Eq,RetType,X)),fail.
+eval_40(Depth,Self,X,Y):- eval_40('=',_RetType,Depth,Self,X,Y).
+
 %! eval_to(+X,+Y) is semidet.
 % checks if X evals to Y
 evals_to(XX,Y):- Y=@=XX,!.
@@ -694,10 +708,6 @@ eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- \+ is_list(X),!,do_expander(Eq,RetType,X,Y)
 % eval_20 CAN NOW USE ATOMS (not jsut eval_10)
 eval_20(_,_,_,_,['echo',Value],Value):- !.
 %eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
-
-eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mc__1_0+_make-var'(Types,Var).
-
-eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mc__1_1+_bless-var'(Var,Types,Var).
 
 % =================================================================
 % =================================================================
@@ -2926,7 +2936,7 @@ variant_by_type(X, Y) :-
 
 
 matching_vn_relaxed(V1, V2) :-
-  ( get_attr(V1, vn, VN1) -> 
+  ( get_attr(V1, vn, VN1) ->
      ( get_attr(V2, vn, VN2) -> (VN1 == VN2, V1 = V2) ; (V1=V2) )
     ; V1 == V2 ).
 
@@ -2941,7 +2951,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
-   no_repeats_var(variant_by_type,YY),
+   no_repeat_variant_var(YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
 eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
@@ -3186,32 +3196,50 @@ eval_20(_Eq,RetType,_Dpth,_Slf,['====',X,Y],TF):- !,
 
 % Main evaluation predicate with full caching
 
-transpiler_peek(Sym,Len,Type,Fn):-
-  transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
+%eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mx__1_0+_make-var'(Types,Var).
+%eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
+
+transpiler_peek(Sym,Len,Type,Fn, N):-
+  %transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
+  if_t(var(Type),member(Type,['mx','mi','mc'])),
+  between(0,Len,N),succ(N,N1),
+  format(atom(Fn),'~w__1_~w+_~w',[Type,N,Sym]),
+  succ(N1,LenP1), current_predicate(Fn/LenP1),
+  \+ transpiler_predicate_store(_,Sym,[_],_,_,_,_),
+  ignore(ok_call_predicate(Sym,Len,Type)).
+
+transpiler_peek(Sym,Len,Type,Fn,Len):-
+  %transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1),
   \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
-  \+ transpiler_predicate_nary_store(_,Sym,[Len],_,_,_,_).
+  ignore(ok_call_predicate(Sym,Len,Type)).
+
+ok_call_predicate(Sym,Len, _Type):-
+  \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
+  \+ transpiler_predicate_nary_store(_,Sym,[Len],_,_,_,_),
   \+ transpiler_clause_store(Sym,[Len],_,_,_,_,_,_,_).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mi',Fn)),
-    append(Args, [Res], PArgs),!,
+    memoize_tf(transpiler_peek(Sym,Len,'mi',Fn, N)),
+    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mx',Fn)),
-    append(Args, [Res], PArgs),!,
+    memoize_tf(transpiler_peek(Sym,Len,'mx',Fn, N)),
+    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     length(Args,Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mc',Fn)),
-    append(Args,[Res],PArgs),!,
+    memoize_tf(transpiler_peek(Sym,Len,'mc',Fn, N)),
+    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
+
+
 
 
 
@@ -4170,13 +4198,13 @@ paramtype_assignable_to(ActualType,_ParamType):- ActualType = '%Undefined%',!.
 paramtype_assignable_to(ActualType, ParamType):- assignable_to(ActualType, ParamType),!.
 
 
-'mc__1_0+_make-var'(Types, Var):-
+'mx__1_0+_make-var'(Types, Var):-
    %freeze(Var, non_arg_violation_each(_, Type, Var)),
    put_attr(Var,cns, _ = Types),
    % name it something recognisable/debuggable
    push_typename(Var,Types).
 
-'mc__1_1+_bless-var'(Var, Types, Var):-
+'mx__1_1+_bless-var'(Var, Types, Var):-
    %freeze(Var, non_arg_violation_each(_, Type, Var)),
    maplist(prevent_type_violations(Var),Types),
    % _maybe_ name it something recognisable/debuggable

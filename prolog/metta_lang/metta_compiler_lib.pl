@@ -212,8 +212,9 @@ mc__1_1_not(_,'True').
 
 % not sure about the signature for this one
 transpiler_predicate_store(builtin, '==', [2], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
-'mc__1_2_=='(A,B,'True') :- A==B,!.
-'mc__1_2_=='(_,_,'False').
+%'mc__1_2_=='(A,B,TF):- eval_40(['==',A,B],TF).
+'mc__1_2_=='(A,B,TF) :- var(A),!,as_tf(A==B,TF).
+'mc__1_2_=='(A,B,TF) :- as_tf(A=@=B,TF).
 
 transpiler_predicate_store(builtin, '<', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc__1_2_<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
@@ -571,8 +572,21 @@ transpiler_predicate_store(builtin, 'metta-unify', [2], '@doc', '@doc', [x(noeva
 transpiler_predicate_store(builtin, 'decons-ht', [3], '@doc', '@doc', [x(noeval,eager,[]),x(noeval,eager,[]),x(noeval,eager,[])],x(doeval,eager,[boolean])).
 'mc__1_3_decons-ht'(E,H,T,TF):- as_tf(E=[H|T],TF).
 
+transpiler_predicate_nary_store(builtin, 'py-atom-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__py-atom-call'(SymRef,Args,Ret) :- 'mc_n_1__py-atom-call!'(SymRef,Args,Ret).
 
-metta_to_metta_macro(HeadIsN, AsBodyFnN, HeadIsC, AsBodyFnOut):-
+transpiler_predicate_nary_store(builtin, 'py-atom-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__py-atom-call!'(SymRef,Args,Ret) :-
+    py_call_method_and_args(SymRef,Args,Res),
+    py_metta_return_value(_RetType,Ret,Res).
+
+metta_to_metta_macro_recurse(I,O):-
+  metta_to_metta_macro(I,M),I\=@=M,!,
+  metta_to_metta_macro_recurse(M,O).
+metta_to_metta_macro_recurse(I,I).
+
+metta_to_metta_macro(NoList,NoList):- \+ is_list(NoList),!.
+metta_to_metta_macro([EQ,HeadIsN,AsBodyFnN], ['=',HeadIsC, AsBodyFnOut]):- EQ=='=', !,
  must_det_lls((
  copy_term(AsBodyFnN+HeadIsN,AsBodyFnC+HeadIsC,_),
  number_vars_wo_conficts(AsBodyFnC+HeadIsC,AsBodyFn+HeadIs),
@@ -581,6 +595,8 @@ metta_to_metta_macro(HeadIsN, AsBodyFnN, HeadIsC, AsBodyFnOut):-
     \+ \+ if_t(AsBodyFn\=@=AsBodyFnOut,
     ( debug_info(metta_macro_in,c(print_tree([=,HeadIs, AsBodyFn]))),!,
       debug_info(metta_macro_out,c(print_tree([=,HeadIs, AsBodyFnOut]))))))),!.
+metta_to_metta_macro(Body,BodyOut):- metta_to_metta_macro(['=',[whatever],Body],['=',[whatever],BodyOut]).
+
 
 metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
    must_det_lls((metta_body_macro1(HeadIs, [], AsBodyFn, AsBodyFnE),
@@ -592,32 +608,43 @@ metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
 metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
 metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro1(HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
 metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
-   maplist(metta_body_macro1(HeadIs, [Op|Stack]), AsBodyFn, AsBodyFnMid),
+   maplist( metta_body_macro1(HeadIs, Stack), AsBodyFn, AsBodyFnMid),
    [Op|AsBodyFnMid]=OpAsBodyMid,
    copy_term(OpAsBodyMid,OpAsBodyMidCopy),
-   metta_body_macro_final1(HeadIs, Stack, OpAsBodyMid , AsBodyFnOut),
+   metta_body_macro_pass(e,OpAsBodyMid,AsBodyFnOut),
    OpAsBodyMid=@=OpAsBodyMidCopy,!.
-
-metta_body_macro_final1(_HeadIs,_Stack, [NonOp|More], AsBodyFn):- \+ atom(NonOp),!,[NonOp|More]= AsBodyFn.
-metta_body_macro_final1(_HeadIs,_Stack, ['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
-metta_body_macro_final1(_HeadIs,_Stack, ['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
-metta_body_macro_final1(_HeadIs,_Stack, ['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
-metta_body_macro_final1(_HeadIs,_Stack, ['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
-metta_body_macro_final1(_HeadIs,_Stack, ['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
-metta_body_macro_final1(_HeadIs,_Stack, ['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
-%metta_body_macro_final1(_HeadIs,_Stack, [eval,Next], Next).
-metta_body_macro_final1(_HeadIs,_Stack, AsBodyFnOut, AsBodyFnOut).
 
 metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
 metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
 metta_body_macro2(HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
    copy_term(OpAsBody,OpAsBodyMidCopy),
-   metta_body_macro_final2(HeadIs, Stack, OpAsBody , AsBodyFnOut),
+   metta_body_macro_pass(f, OpAsBody , AsBodyFnOut),
    OpAsBody=@=OpAsBodyMidCopy,!,
    maplist( metta_body_macro2(HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally).
 
-metta_body_macro_final2(_HeadIs,_Stack, [NonOp|More], AsBodyFn):- \+ atom(NonOp),!,[NonOp|More]= AsBodyFn.
-metta_body_macro_final2(_HeadIs,_Stack, [eval,Next], Next).
-metta_body_macro_final2(_HeadIs,_Stack, AsBodyFnOut, AsBodyFnOut).
+metta_body_macro_pass(e,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
+metta_body_macro_pass(e,['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
+metta_body_macro_pass(e,['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
+metta_body_macro_pass(e,['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_pass(e,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_pass(e,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
+metta_body_macro_pass(e,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
 
+metta_body_macro_pass(f,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
+
+%metta_body_macro_pass(e,[eval,Next], Next).
+metta_body_macro_pass(e,AsBodyFnOut, AsBodyFnOut).
+
+metta_body_macro_pass(f,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
+metta_body_macro_pass(f,[eval,Eval], Eval).
+
+metta_body_macro_pass(f,['unique',Eval],
+   ['let',Var,['call-fn!','no_repeat_var',variant_by_type],
+     ['let',Res,Eval,['metta-unify',Var,Res],Res]]).
+
+metta_body_macro_pass(f,AsBodyFnOut, AsBodyFnOut).
+
+
+
+no_repeat_variant_var(Var):- no_repeat_var(variant_by_type,Var).
 

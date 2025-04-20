@@ -801,11 +801,11 @@ system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
 
-woc(Goal):- woc(true,Goal).
+woc(Goal):- woc(error,Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 % woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
-woct(Goal):-woc(true,Goal).
+woct(Goal):-woc(error,Goal).
 woce(Goal):-woc(error,Goal).
 wocf(Goal):-woc(false,Goal).
 
@@ -818,19 +818,24 @@ test_locally_setting_flags:-
 
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- initialization(set_prolog_flag(occurs_check,true)).
-:- initialization(set_prolog_flag(occurs_check,false)).
-:- thread_initialization(set_prolog_flag(occurs_check,false)).
-%:- initialization(set_prolog_flag(gc,false)).
+set_occurs_check_default:- thread_self(Self),set_occurs_check_default(Self),!.
 
-%:- initialization(set_prolog_flag(occurs_check,error)).
-%:- thread_initialization(set_prolog_flag(occurs_check,error)).
+set_occurs_check_default(NonMain):- NonMain\==main,set_prolog_flag(occurs_check,false).
+set_occurs_check_default(main):- \+ is_douglas,set_prolog_flag(occurs_check,false).
+set_occurs_check_default(_):- set_prolog_flag(occurs_check,error),set_more_douglas.
 
-    debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
-    debug_info_goal(Topic,Info):- original_user_error(X),
-      mesg_color(Topic, TopicColor),
-      mesg_color(Info,  InfoColor),
-      \+ \+ (( % numbervars(Info,4123,_,[attvar(bind)]),
-      format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,Info)]))).
+set_more_douglas:- set_prolog_flag(gc,false).
+
+
+:- initialization(set_occurs_check_default).
+:- thread_initialization(set_occurs_check_default).
+
+debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
+debug_info_goal(Topic,Info):- original_user_error(X),
+  mesg_color(Topic, TopicColor),
+  mesg_color(Info,  InfoColor),
+  \+ \+ (( % numbervars(Info,4123,_,[attvar(bind)]),
+  format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,Info)]))).
 
 debug_info(_Topic,_Info):- \+ is_douglas,!.
 debug_info(Topic,Info):- original_user_error(X),
@@ -843,19 +848,35 @@ debug_info(Topic,Info):- original_user_error(X),
 
 debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),!,debug_pp_cmpd(Info,F,Args).
 debug_pp_info(Info):-  write_src(Info).
-debug_pp_cmpd(_Info,'c',[Call]):- !, nl, write('  '), call(Call).
+debug_pp_cmpd(_Info,'c',[Call]):- !, nl, write('  '), ignore(catch(notrace( call(Call)),E,ansicall(red,(nl,writeln(err(E,Call),nl))))),!.
+debug_pp_cmpd(_Info,'t',[Call]):- !, write('  '), debug_pp_tree(Call).
+debug_pp_cmpd(_Info,'s',[Call]):- !, nl, write('  '), debug_pp_src(Call).
+debug_pp_cmpd(_Info,'wi',[Call]):- !, nl, write('  '), debug_pp_w(write_src_wi,Call).
+debug_pp_cmpd(_Info,'q',[Call]):- !, nl, write('  '), debug_pp_term(Call).
 debug_pp_cmpd(Info,':-',_):- !, nl, write('  '), debug_pp_tree(Info).
 debug_pp_cmpd(Info,'[|]',_):- !, write_src(Info),!.
-debug_pp_cmpd(Info,_,_Args):- debug_pp_term(Info),!.
+debug_pp_cmpd(Info,_,_Args):- debug_pp_tree(Info),!.
 debug_pp_now(Info):- pp_as_src(Info),!,debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_tree(Info),!.
 
+print_tree_safe1(PTS):- catch(wots(S,print_tree(PTS)),_,fail),writeln(S),!.
+print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),writeln(S),!.
+%print_tree_safe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
+print_tree_safe(PTS):- print_tree_safe1(PTS),!.
+print_tree_safe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
+print_tree_safe(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),fail)),!,throw(E).
+%print_tree_safe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
+%print_tree_safe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
+print_tree_safe(PTS):- writeln(PTS),!.
+
+
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.
- debug_pp_src(Info):- ignore(catch(notrace( write_src(Info)),_,((nl,writeln(err),nl,debug_pp_tree(Info))))),!.
-debug_pp_tree(Info):- ignore(catch(notrace(print_tree(Info)),_,((nl,writeln(err),nl,debug_pp_term(Info))))),!.
-debug_pp_term(Info):- ignore(catch(notrace(print(Info)),E,((writeq(Info),nl,writeln(err),nl,nop(((display(E=Info),bt))))))),!.
+ debug_pp_w(P1,Info):- ignore(catch(notrace( call(P1,Info)),_,ansicall(red,(nl,writeln(err(P1)),nl,debug_pp_tree(Info))))),!.
+ debug_pp_src(Info):- ignore(catch(notrace( write_src(Info)),_,ansicall(red,(nl,writeln(err(src)),nl,debug_pp_tree(Info))))),!.
+debug_pp_tree(Info):- ignore(catch(notrace(print_tree_safe(Info)),E,ansicall(red,(nl,writeln(err(tree(E))),nl,debug_pp_term(Info))))),!.
+debug_pp_term(Info):- ignore(catch(notrace(print(Info)),E,ansicall(red,(writeq(Info),nl,writeln(err(print)),nl,nop(((display(E=Info),bt))))))),!.
 
 pp_as_src(Info):- compound(Info), arg(_,Info,E),is_list(E),E=[H|_],is_list(H),!.
 
