@@ -405,7 +405,11 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-  compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted).
+  compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
+
+compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
+  metta_to_metta_macro(HeadIsIn, AsBodyFnIn, HeadIs, AsBodyFn),
+  compile_for_assert_3(HeadIs, AsBodyFn, Converted).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -1244,7 +1248,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    %label_arg_types(F,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
-   R ~.. [xxx(FIn),Fp|Args2],
+   R ~.. [f(FIn),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
@@ -1279,7 +1283,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    create_mc_name(LenArgsAll,FIn,Fp),
    %label_arg_types(FIn,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
-   R0 ~.. [xxx(a),Fp|Args1],
+   R0 ~.. [xxx(4),Fp|Args1],
    %R1=R0),
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(FIn-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,FIn,LenArgs)),
@@ -1301,7 +1305,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
    append(FixedPart,VariablePart,Args1),
    append(FixedPart,[VariablePart],Args1a),
    append(Args1a,[A],Args2),
-   R ~.. [xxx(c),Fp|Args2],
+   R ~.. [xxx(3),Fp|Args2],
    (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-0),\+ transpiler_depends_on(CallerInt,CallerSz,F,0) ->
       compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,0)),
       transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,0]))
@@ -1313,7 +1317,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
 %   label_arg_types(F,1,Args1),
-%   A ~.. [xxx(d),F|Args1],
+%   A ~.. [xxx(2),F|Args1],
 %   notice_callee(Caller,A))).
 %ast_to_prolog_aux(Caller,DontStub,[assign,A,[call(FIn)|ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
 % must_det_lls((
@@ -1597,9 +1601,18 @@ dmp_break:- st,ds,break.
 cmpd4lst(A,_):- nonvar(A),dmp_break,fail.
 cmpd4lst(_A,[Cmpd,_F|_Args]):- \+ compound(Cmpd),dmp_break,fail.
 cmpd4lst(_A,[_Cmpd,_F|Args]):- \+ is_list(Args),dmp_break,fail.
-cmpd4lst(A,[_Cmpd,F,Arg]):- F==is_True,!,A=is_True(Arg),!.
-cmpd4lst(call_fn_native(F,XXX,Args),[Cmpd,F|Args]):- compound(Cmpd),xxx(XXX)=Cmpd,!.
-cmpd4lst(call_fn_native(F,xxx(?),Args),[F|Args]):- !.
+%cmpd4lst(A,[_Cmpd,F|Args]):- atom(F),is_cmp_builtin(F),A=..[F|Args],!.
+%cmpd4lst(call_fn_native(F,XXX,Args),[Cmpd,F|Args]):- compound(Cmpd),f(XXX)=Cmpd,!.
+cmpd4lst(A,[_Cmpd,F|Args]):- atom(F),!,A=..[F|Args],!.
+cmpd4lst(call_fn_native_error(F,xxx(?),Args),[F|Args]):- !.
+
+is_cmp_builtin(is_True).
+is_cmp_builtin(as_p1_expr).
+is_cmp_builtin(as_p1_exec).
+is_cmp_builtin(ispeEnN).
+is_cmp_builtin(call_fn_native).
+
+
 /*
 cmpd4lst2(A,Info):- compound(A), A=call_fn_native(F,XXX,Args),!,cmpd4lst(F,XXX,Args,Info).
 cmpd4lst2(A,Info):- compound(A), compound_name_arguments(A,F,Args),!,cmpd4lst(F,xxx(?),Args,Info).
@@ -2940,6 +2953,7 @@ as_functor_args(AsPred,F,A,ArgsL):-var(AsPred),!,
    ;
       (AsPred = [F|ArgsL])).
 
+as_functor_args(call_fn_native(F,_,ArgsL),F,A,ArgsL):- length(ArgsL,A),!.
 %as_functor_args(AsPred,_,_,_Args):- is_ftVar(AsPred),!,fail.
 as_functor_args(AsPred,F,A,ArgsL):- \+ iz_conz(AsPred),
   AsPred @.. List,!, as_functor_args(List,F,A,ArgsL),!.

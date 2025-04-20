@@ -767,9 +767,12 @@ eval_args_once(Eq,RetType,Depth,Space,Eval,Result):-
    eval_10(Eq,RetType,Depth,Space,Eval,Result)*->true;(Eval=Result).
 
 
-eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
+eval_20(Eq,RetType,Depth,Self,['capture',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
 
+
+eval_20(Eq,RetType,Depth,Self,['eval',X],Res):- !,
+   eval_args(Eq,RetType,Depth,Self,X, Res).
 
 eval_20(Eq,RetType,Depth,Self,['eval-for',Type,X],Res):- !,
     ignore(Type=RetType),
@@ -2904,8 +2907,23 @@ lazy_union(P2, E1^Call1, E2^Call2, E) :-
     ).
 
 
-variant_by_type(X,Y):- var(X),!,X==Y.
-variant_by_type(X,Y):- X=@=Y.
+%variant_by_type(X,Y):- var(X),!,X==Y.
+variant_by_type(X,Y):- var(X),!, matching_vn_relaxed(X,Y).
+%variant_by_type(X,Y):- X=@=Y.
+variant_by_type(X, Y) :-
+    copy_term(X+Y, X1+Y1, _Gs),
+    X1 =@= Y1, X1 = Y1,
+    term_variables(X, VX),
+    term_variables(Y, VY),
+    maplist(matching_vn_relaxed, VX, VY), !,
+    X1 = X, Y1 = Y.
+
+
+matching_vn_relaxed(V1, V2) :-
+    ( get_attr(V1, vn, VN1) ->
+        ( get_attr(V2, vn, VN2) -> (VN1 == VN2, V1 = V2) ; (V1=V2) )
+    ; V1 == V2 ).
+
 
 call_as_p2(P2,X,Y):-
    once(eval([P2,X,Y],TF)),
@@ -2917,7 +2935,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
-   no_repeats_var(YY),
+   no_repeats_var(variant_by_type,YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
 eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
@@ -3183,8 +3201,11 @@ eval_20(_Eq,RetType,_Dpth,_Slf,[EQ|Args],TF):-
 transpiler_peek(Sym,Len,Type,Fn):-
   transpiler_predicate_store(_, Sym, Len, _, _, _, _),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
-  format(atom(Fn),'~w_~w__~w',[Type,Len,Sym]),
-  succ(Len,LenP1), current_predicate(Fn/LenP1).
+  format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
+  succ(Len,LenP1), current_predicate(Fn/LenP1),
+  \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
+  % \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_).
+  \+ transpiler_clause_store(Sym,[Len],_,_,_,_,_,_,_).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
