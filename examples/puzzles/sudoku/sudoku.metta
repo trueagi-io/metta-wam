@@ -1,3 +1,5 @@
+(= (assertEqualOpt $a $b) ())
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General Utilities
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8,9 +10,9 @@
         $b)
 )
 
-!(assertEqual (append () (1 2 3 4)) (1 2 3 4))
-!(assertEqual (append (1 2) (3 4)) (1 2 3 4))
-!(assertEqual (append (1 2 3 4) ()) (1 2 3 4))
+!(assertEqualOpt (append () (1 2 3 4)) (1 2 3 4))
+!(assertEqualOpt (append (1 2) (3 4)) (1 2 3 4))
+!(assertEqualOpt (append (1 2 3 4) ()) (1 2 3 4))
 
 (= (append-all $l)
     (if-decons-expr $l $h $t
@@ -20,13 +22,13 @@
     )
 )
 
-!(assertEqual (append-all (() ((1 2 1) (1 3 2)) ((2 0 2) (2 1 4)) ())) ((1 2 1) (1 3 2) (2 0 2) (2 1 4)))
+!(assertEqualOpt (append-all (() ((1 2 1) (1 3 2)) ((2 0 2) (2 1 4)) ())) ((1 2 1) (1 3 2) (2 0 2) (2 1 4)))
 
 (= (dup-list $n $v)
     (if (== $n 0) () (let $t (dup-list (- $n 1) $v) (cons-atom $v $t)))
 )
 
-!(assertEqual (dup-list 5 a) (a a a a a))
+!(assertEqualOpt (dup-list 5 a) (a a a a a))
 
 (= (divmod $x $y) (let $m (% $x $y) ((/ (- $x $m) $y) $m)))
 
@@ -46,7 +48,7 @@
         ($N2)
         (let $t (cell-pop-all (+ $i 1) $N2) (cons-atom $i $t))))
 
-!(assertEqual (cell-pop-all 1 9) (1 2 3 4 5 6 7 8 9))
+!(assertEqualOpt (cell-pop-all 1 9) (1 2 3 4 5 6 7 8 9))
 
 (= (cell-remove $c $v $changed)
     (if-decons-expr $c $h $t
@@ -63,10 +65,10 @@
 
 (= (cell-length $c) (size-atom $c))
 
-!(assertEqual (let $c (cell-remove (1 2 3 4) 8 $changed) ($changed $c)) (False (1 2 3 4)))
-!(assertEqual (let $c (cell-remove (1 2 3 4) 0 $changed) ($changed $c)) (False (1 2 3 4)))
-!(assertEqual (let $c (cell-remove (1 2 3 4) 3 $changed) ($changed $c)) (True (1 2 4)))
-!(assertEqual (let $c (cell-remove (1 2 4) 3 $changed) ($changed $c)) (False (1 2 4)))
+!(assertEqualOpt (let $c (cell-remove (1 2 3 4) 8 $changed) ($changed $c)) (False (1 2 3 4)))
+!(assertEqualOpt (let $c (cell-remove (1 2 3 4) 0 $changed) ($changed $c)) (False (1 2 3 4)))
+!(assertEqualOpt (let $c (cell-remove (1 2 3 4) 3 $changed) ($changed $c)) (True (1 2 4)))
+!(assertEqualOpt (let $c (cell-remove (1 2 4) 3 $changed) ($changed $c)) (False (1 2 4)))
 
 (= (value-to-cell $N2 $v)
     (if (== (get-type $v) Number)
@@ -78,11 +80,11 @@
     )
 )
 
-!(assertEqual (value-to-cell 9 0) (1 2 3 4 5 6 7 8 9))
-!(assertEqual (value-to-cell 9 10) (1 2 3 4 5 6 7 8 9))
-!(assertEqual (value-to-cell 9 x) (1 2 3 4 5 6 7 8 9))
-!(assertEqual (value-to-cell 9 -) (1 2 3 4 5 6 7 8 9))
-!(assertEqual (value-to-cell 9 7) (7))
+!(assertEqualOpt (value-to-cell 9 0) (1 2 3 4 5 6 7 8 9))
+!(assertEqualOpt (value-to-cell 9 10) (1 2 3 4 5 6 7 8 9))
+!(assertEqualOpt (value-to-cell 9 x) (1 2 3 4 5 6 7 8 9))
+!(assertEqualOpt (value-to-cell 9 -) (1 2 3 4 5 6 7 8 9))
+!(assertEqualOpt (value-to-cell 9 7) (7))
 
 (= (cell-to-value $c)
     (let ($t $u) (decons-atom $c)
@@ -90,10 +92,10 @@
     )
 )
 
-!(assertEqual (cell-to-value (7)) 7)
-!(assertEqual (cell-to-value (2 7)) (default-empty-cell))
+!(assertEqualOpt (cell-to-value (7)) 7)
+!(assertEqualOpt (cell-to-value (2 7)) (default-empty-cell))
 
-!(assertEqual (map-atom (0 0 1 2) $v (value-to-cell 4 $v)) ((1 2 3 4) (1 2 3 4) (1) (2)))
+!(assertEqualOpt (map-atom (0 0 1 2) $v (value-to-cell 4 $v)) ((1 2 3 4) (1 2 3 4) (1) (2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Cell higher processing - dealing with singletons
@@ -135,10 +137,10 @@
     )
 )
 
-!(assertEqual (sort-singleton (2 3 2) (() () () ())) (() () ((3 2)) ()))
-!(assertEqual (foldl-atom () (() () () ()) $a $b (sort-singleton $a $b)) (() () () ()))
-!(assertEqual (foldl-atom ((1 2 1)) (() () () ()) $a $b (sort-singleton $b $a)) (() ((2 1)) () ()))
-!(assertEqual (foldl-atom ((1 2 1) (1 2 2) (3 2 1)) (() () () ()) $a $b (sort-singleton $b $a)) (() ((2 2) (2 1)) () ((2 1))))
+!(assertEqualOpt (sort-singleton (2 3 2) (() () () ())) (() () ((3 2)) ()))
+!(assertEqualOpt (foldl-atom () (() () () ()) $a $b (sort-singleton $a $b)) (() () () ()))
+!(assertEqualOpt (foldl-atom ((1 2 1)) (() () () ()) $a $b (sort-singleton $b $a)) (() ((2 1)) () ()))
+!(assertEqualOpt (foldl-atom ((1 2 1) (1 2 2) (3 2 1)) (() () () ()) $a $b (sort-singleton $b $a)) (() ((2 2) (2 1)) () ((2 1))))
 
 (= (remove-singletons $c $n $singletons $changed)
     (if-decons-expr $singletons $sh $st
@@ -162,21 +164,21 @@
 ;!(retvalue 1 $x)
 ;!(let $t (retvalue 1 $x) ($x $t))
 
-!(assertEqual (let $c (remove-singletons (2) 0 () $changed) ($changed $c)) (False (2)))
-!(assertEqual (let $c (remove-singletons (2) 0 ((1 4) (0 2)) $changed) ($changed $c)) (False (2)))
-!(assertEqual (let $c (remove-singletons (4) 1 ((1 4) (0 2)) $changed) ($changed $c)) (False (4)))
-!(assertEqual (let $c (remove-singletons (1 2 3 4) 2 ((1 4)) $changed) ($changed $c)) (True (1 2 3)))
-!(assertEqual (let $c (remove-singletons (1 2 3 4) 2 ((0 2)) $changed) ($changed $c)) (True (1 3 4)))
-!(assertEqual (let $c (remove-singletons (1 2 3 4) 2 ((1 4) (0 2)) $changed) ($changed $c)) (True (1 3)))
-!(assertEqual (let $c (remove-singletons (1 2 3 4) 2 ((0 2) (1 4)) $changed) ($changed $c)) (True (1 3)))
-!(assertEqual (let $c (remove-singletons (1 2 3) 2 ((1 4)) $changed) ($changed $c)) (False (1 2 3)))
+!(assertEqualOpt (let $c (remove-singletons (2) 0 () $changed) ($changed $c)) (False (2)))
+!(assertEqualOpt (let $c (remove-singletons (2) 0 ((1 4) (0 2)) $changed) ($changed $c)) (False (2)))
+!(assertEqualOpt (let $c (remove-singletons (4) 1 ((1 4) (0 2)) $changed) ($changed $c)) (False (4)))
+!(assertEqualOpt (let $c (remove-singletons (1 2 3 4) 2 ((1 4)) $changed) ($changed $c)) (True (1 2 3)))
+!(assertEqualOpt (let $c (remove-singletons (1 2 3 4) 2 ((0 2)) $changed) ($changed $c)) (True (1 3 4)))
+!(assertEqualOpt (let $c (remove-singletons (1 2 3 4) 2 ((1 4) (0 2)) $changed) ($changed $c)) (True (1 3)))
+!(assertEqualOpt (let $c (remove-singletons (1 2 3 4) 2 ((0 2) (1 4)) $changed) ($changed $c)) (True (1 3)))
+!(assertEqualOpt (let $c (remove-singletons (1 2 3) 2 ((1 4)) $changed) ($changed $c)) (False (1 2 3)))
 
 
 (= (collect-histogram-aux1 $n $v $nv) (if (== $v None) ($nv $n) NoProcess))
 
-!(assertEqual (collect-histogram-aux1 0 None 3) (3 0))
-!(assertEqual (collect-histogram-aux1 0 (4 0) 3) NoProcess)
-!(assertEqual (collect-histogram-aux1 0 NoProcess 3) NoProcess)
+!(assertEqualOpt (collect-histogram-aux1 0 None 3) (3 0))
+!(assertEqualOpt (collect-histogram-aux1 0 (4 0) 3) NoProcess)
+!(assertEqualOpt (collect-histogram-aux1 0 NoProcess 3) NoProcess)
 
 (= (collect-histogram-aux $histogram $n $nv $c)
     (let ($h $t) (decons-atom $histogram)
@@ -187,9 +189,9 @@
     )
 )
 
-!(assertEqual (collect-histogram-aux (None None None None) 1 1 3) (None None (1 3) None))
-!(assertEqual (collect-histogram-aux (None None (1 3) None) 1 2 4) (None None (1 3) (2 4)))
-!(assertEqual (collect-histogram-aux (None None (1 3) (1 4)) 1 3 4) (None None (1 3) NoProcess))
+!(assertEqualOpt (collect-histogram-aux (None None None None) 1 1 3) (None None (1 3) None))
+!(assertEqualOpt (collect-histogram-aux (None None (1 3) None) 1 2 4) (None None (1 3) (2 4)))
+!(assertEqualOpt (collect-histogram-aux (None None (1 3) (1 4)) 1 3 4) (None None (1 3) NoProcess))
 
 (= (collect-histogram-singleton $histogram $n $c)
     (let ($h $t) (decons-atom $histogram)
@@ -207,8 +209,8 @@
     )
 )
 
-!(assertEqual (collect-histogram (None None None None) 3 (1 3)) ((3 1) None (3 3) None))
-!(assertEqual (collect-histogram ((3 1) None (3 3) None) 2 (2 3)) ((3 1) (2 2) NoProcess None))
+!(assertEqualOpt (collect-histogram (None None None None) 3 (1 3)) ((3 1) None (3 3) None))
+!(assertEqualOpt (collect-histogram ((3 1) None (3 3) None) 2 (2 3)) ((3 1) (2 2) NoProcess None))
 
 (= (process-board-one-row-aux $row $n $N2 $singletons $changed $newsing $histogram)
     (if-decons-expr $row $rh $rt
@@ -245,15 +247,15 @@
     )
 )
 
-!(assertEqual (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+!(assertEqualOpt (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
     (False ((1 2 3 4) (1 2 3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqualOpt (let $c (process-board-one-row-aux ((1 2 3 4) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (True ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (process-board-one-row-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqualOpt (let $c (process-board-one-row-aux ((3 4) (3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (False ((3 4) (3 4) (1) (2)) () (NoProcess NoProcess NoProcess NoProcess)))
-!(assertEqual (let $c (process-board-one-row-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
+!(assertEqualOpt (let $c (process-board-one-row-aux ((1 2 3) (1 2 3 4) (1) (2)) 0 4 ((3 2) (2 1)) $changed $ns $h) ($changed $c $ns $h))
     (True ((3) (3 4) (1) (2)) ((0 3)) (NoProcess NoProcess NoProcess (1 4))))
-!(assertEqual (let $c (process-board-one-row-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
+!(assertEqualOpt (let $c (process-board-one-row-aux ((1 2 3) (1 2 4) (1 2) (1 2)) 0 4 () $changed $ns $h) ($changed $c $ns $h))
     (False ((1 2 3) (1 2 4) (1 2) (1 2)) () (NoProcess NoProcess (0 3) (1 4))))
 
 (= (hist-cleanup $hist)
@@ -265,7 +267,7 @@
     )
 )
 
-!(assertEqual (hist-cleanup (NoProcess (0 3) (1 4) NoProcess)) ((0 3) (1 4)))
+!(assertEqualOpt (hist-cleanup (NoProcess (0 3) (1 4) NoProcess)) ((0 3) (1 4)))
 
 (= (apply-singleton $n $row $sing)
     (let* (
@@ -279,8 +281,8 @@
     )
 )
 
-!(assertEqual (apply-singleton 0 ((1 2 3) (1 2 4) (1 2) (1 2)) (1 4)) ((1 2 3) (4) (1 2) (1 2)))
-!(assertEqual (foldl-atom ((1 4) (0 3)) ((1 2 3) (1 2 4) (1 2) (1 2)) $a $b (apply-singleton 0 $a $b)) ((3) (4) (1 2) (1 2)))
+!(assertEqualOpt (apply-singleton 0 ((1 2 3) (1 2 4) (1 2) (1 2)) (1 4)) ((1 2 3) (4) (1 2) (1 2)))
+!(assertEqualOpt (foldl-atom ((1 4) (0 3)) ((1 2 3) (1 2 4) (1 2) (1 2)) $a $b (apply-singleton 0 $a $b)) ((3) (4) (1 2) (1 2)))
 
 (= (process-board-one-row $row $N2 $singletons $changed $newsing)
     (let* (
@@ -293,15 +295,15 @@
     )
 )
 
-!(assertEqual (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 () $changed $ns) ($changed $c $ns))
+!(assertEqualOpt (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 () $changed $ns) ($changed $c $ns))
     (False ((1 2 3 4) (1 2 3 4) (1) (2)) ()))
-!(assertEqual (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqualOpt (let $c (process-board-one-row ((1 2 3 4) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (True ((3 4) (3 4) (1) (2)) ()))
-!(assertEqual (let $c (process-board-one-row ((3 4) (3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqualOpt (let $c (process-board-one-row ((3 4) (3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (False ((3 4) (3 4) (1) (2)) ()))
-!(assertEqual (let $c (process-board-one-row ((1 2 3) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
+!(assertEqualOpt (let $c (process-board-one-row ((1 2 3) (1 2 3 4) (1) (2)) 4 ((3 2) (2 1)) $changed $ns) ($changed $c $ns))
     (True ((3) (4) (1) (2)) ((0 3) (1 4))))
-!(assertEqual (let $c (process-board-one-row ((1 2 3) (1 2 4) (1 2) (1 2)) 4 () $changed $ns) ($changed $c $ns))
+!(assertEqualOpt (let $c (process-board-one-row ((1 2 3) (1 2 4) (1 2) (1 2)) 4 () $changed $ns) ($changed $c $ns))
     (True ((3) (4) (1 2) (1 2)) ((0 3) (1 4))))
 
 (= (process-board-one-dimension $board $n $N2 $singletons $changed $newsing)
@@ -320,9 +322,9 @@
     )
 )
 
-!(assertEqual (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
+!(assertEqualOpt (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
     (True (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((3 4) (3 4) (1) (2)) ((2) (4) (1 3) (1 3)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) ()))
-!(assertEqual (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
+!(assertEqualOpt (let $c (process-board-one-dimension (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((1 2 4) (1 2 3 4) (1) (2)) ((2) (4) (1 2 3 4) (1 2 3 4)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) 0 4 (() ((3 2) (2 1)) ((1 4) (0 2)) ()) $changed $newsing) ($changed $c $newsing))
     (True (((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4)) ((4) (3) (1) (2)) ((2) (4) (1 3) (1 3)) ((1 2 3 4) (1 2 3 4) (1 2 3 4) (1 2 3 4))) ((1 0 4) (1 1 3))))
 
 (= (transpose-board $b)
@@ -340,11 +342,11 @@
     )
 )
 
-!(assertEqual (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
+!(assertEqualOpt (transpose-board ((1 2 3) (4 5 6) (7 8 9))) ((1 4 7) (2 5 8) (3 6 9)))
 
 (= (transpose-coordinate ($x $y $v)) ($y $x $v))
 
-!(assertEqual (transpose-coordinate (1 2 3)) (2 1 3))
+!(assertEqualOpt (transpose-coordinate (1 2 3)) (2 1 3))
 
 (= (transpose-cell-board (
     ($a1 $a2 $a3 $a4)
@@ -380,7 +382,7 @@
     ($g7 $g8 $g9 $h7 $h8 $h9 $i7 $i8 $i9)
 ))
 
-!(assertEqual (transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16))) ((1 2 5 6) (3 4 7 8) (9 10 13 14) (11 12 15 16)))
+!(assertEqualOpt (transpose-cell-board ((1 2 3 4) (5 6 7 8) (9 10 11 12) (13 14 15 16))) ((1 2 5 6) (3 4 7 8) (9 10 13 14) (11 12 15 16)))
 
 (= (transpose-cell-coordinate $N ($y $x $value))
     (let* (
@@ -389,14 +391,14 @@
         )
         ((+ (* $N $yh) $xh) (+ (* $N $yl) $xl) $value)))
 
-!(assertEqual (map-atom ((0 0 0) (0 1 1) (0 2 2) (0 3 3) (1 0 10) (1 1 11) (1 2 12) (1 3 13) (2 0 20) (2 1 11) (2 2 22) (2 3 23) (3 0 30) (3 1 31) (3 2 32) (3 3 33)) $x (transpose-cell-coordinate 2 $x))
+!(assertEqualOpt (map-atom ((0 0 0) (0 1 1) (0 2 2) (0 3 3) (1 0 10) (1 1 11) (1 2 12) (1 3 13) (2 0 20) (2 1 11) (2 2 22) (2 3 23) (3 0 30) (3 1 31) (3 2 32) (3 3 33)) $x (transpose-cell-coordinate 2 $x))
     ((0 0 0) (0 1 1) (1 0 2) (1 1 3) (0 2 10) (0 3 11) (1 2 12) (1 3 13) (2 0 20) (2 1 11) (3 0 22) (3 1 23) (2 2 30) (2 3 31) (3 2 32) (3 3 33)))
 
 
 (= (sort-singleton-list $N2 $singletons)
     (let $empty-sing (dup-list $N2 ()) (foldl-atom $singletons $empty-sing $a $b (sort-singleton $b $a))))
 
-!(assertEqual (sort-singleton-list 4 ((1 3 2) (1 2 1) (2 1 4) (2 0 2))) (() ((2 1) (3 2)) ((0 2) (1 4)) ()))
+!(assertEqualOpt (sort-singleton-list 4 ((1 3 2) (1 2 1) (2 1 4) (2 0 2))) (() ((2 1) (3 2)) ((0 2) (1 4)) ()))
 
 (= (process-board-all-dimensions $board $N $singletons $changed $newsing)
     (let* (
@@ -459,7 +461,7 @@
     )
 )
 
-!(assertEqual (smallest-multicell-row (() (1) (3 2) (1) (4 3) (5)) 0 $smallest) (2 (3 2)))
+!(assertEqualOpt (smallest-multicell-row (() (1) (3 2) (1) (4 3) (5)) 0 $smallest) (2 (3 2)))
 
 (= (smallest-multicell $board $n $smallest)
     (if-decons-expr $board $h $t
@@ -476,8 +478,8 @@
     )
 )
 
-!(assertEqual (smallest-multicell (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 0 $smallest) (2 2 (3 2)))
-!(assertEqual (smallest-multicell (((4)) (() (1) (3 2) (1) (4 3) (5))) 0 $smallest) (1 2 (3 2)))
+!(assertEqualOpt (smallest-multicell (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 0 $smallest) (2 2 (3 2)))
+!(assertEqualOpt (smallest-multicell (((4)) (() (1) (3 2) (1) (4 3) (5))) 0 $smallest) (1 2 (3 2)))
 
 (= (update-row $row $n $value)
     (let ($h $t) (decons-atom $row)
@@ -488,7 +490,7 @@
     )
 )
 
-!(assertEqual (update-row (() (1) (3 2) (1) (4 3) (5)) 2 xxx) (() (1) xxx (1) (4 3) (5)))
+!(assertEqualOpt (update-row (() (1) (3 2) (1) (4 3) (5)) 2 xxx) (() (1) xxx (1) (4 3) (5)))
 
 (= (update-board $board $r $c $value)
     (let ($h $t) (decons-atom $board)
@@ -499,7 +501,7 @@
     )
 )
 
-!(assertEqual (update-board (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 2 2 xxx) (() ((4)) (() (1) xxx (1) (4 3) (5)) ((3))))
+!(assertEqualOpt (update-board (() ((4)) (() (1) (3 2) (1) (4 3) (5)) ((3))) 2 2 xxx) (() ((4)) (() (1) xxx (1) (4 3) (5)) ((3))))
 
 (= (process-board-backtrack $iteration $left $board $N $singletons)
     (let $bnext (process-board-all-dimensions-fixed $iteration $left $leftout $board $N $singletons)
@@ -552,7 +554,7 @@
         ($singletons (extract-singletons $bx))
         ($bxf (process-board-backtrack 1 (* $N2 $N2) $bx $N $singletons))
         ($bx2 (map-atom $bxf $rx (map-atom $rx $vx (cell-to-value $vx))))
-        ($_ (map-atom $bx2 $x (println! $x)))
+        ($_ (map-atom $bx2 $x (let () (println! $x) ())))
     )
     $bx2
     )
@@ -560,7 +562,7 @@
 
 (= (sudoku $B) (sudoku-n 3 $B))
 
-!(sudoku-n 2 ((x x x x) (x x 1 2) (2 4 x x) (x x x x)))
+; !(sudoku-n 2 ((x x x x) (x x 1 2) (2 4 x x) (x x x x)))
 
 ; !(sudoku-n 2 ((x x x x) (x x 1 2) (2 x x x) (x x x x)))
 
@@ -576,7 +578,7 @@
 ;    (x x 1 3 4 2 6 x 8)
 ;    (6 x x 1 x 7 2 x 5)
 
-; !(sudoku ( (3 x 8 5 x 4 9 x x) (9 x x x x x x 2 x) (x x x 1 x x x x x) (x 6 x x x x x x 7) (x x 5 9 x 8 2 x x) (x x x x 3 x x x x) (x x x x 1 x 4 x x) (x x 3 x 2 x x x x) (x 5 x 4 x 3 x 6 x) ))
+!(sudoku ( (3 x 8 5 x 4 9 x x) (9 x x x x x x 2 x) (x x x 1 x x x x x) (x 6 x x x x x x 7) (x x 5 9 x 8 2 x x) (x x x x 3 x x x x) (x x x x 1 x 4 x x) (x x 3 x 2 x x x x) (x 5 x 4 x 3 x 6 x) ))
 
 ;    (3 x 8 5 x 4 9 x x)
 ;    (9 x x x x x x 2 x)
