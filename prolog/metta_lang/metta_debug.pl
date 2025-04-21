@@ -773,7 +773,7 @@ maybe_trace:- is_extreme_debug(trace).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
+%is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 

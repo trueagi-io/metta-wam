@@ -580,6 +580,8 @@ transpiler_predicate_nary_store(builtin, 'py-atom-call!', 1, ['Atom'], 'Atom', '
     py_call_method_and_args(SymRef,Args,Res),
     py_metta_return_value(_RetType,Ret,Res).
 
+this_is_in_compiler_lib.
+
 metta_to_metta_macro_recurse(I,O):-
   metta_to_metta_macro(I,M),I\=@=M,!,
   metta_to_metta_macro_recurse(M,O).
