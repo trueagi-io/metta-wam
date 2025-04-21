@@ -3,6 +3,7 @@
 debug_this_script=false
 
 generate_junit_report=0
+ADD_COMPILE_ARG=()
 junit_report_file=""
 start_time=0
 export RPWD=$PWD
@@ -1198,6 +1199,10 @@ if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
     done
 fi
 
+if [[ " $* " == *" --douglas "* ]]; then
+    ADD_COMPILE_ARG+="--douglas"
+fi
+
 if [[ "$exe" == "force" ]]; then
     exe=true
     rm -f "$INTERP_SRC_DIR/skip_compile"
@@ -1342,7 +1347,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS
-    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' -- --exeout=$reference_file"
+    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$reference_file"
     DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
 
     unset DISPLAY
