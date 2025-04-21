@@ -4,7 +4,6 @@
                            ]).
 
 :- use_module(library(debug), [debug/3]).
-:- use_module(lsp_metta_xref).
 :- use_module(lsp_metta_changes, [handle_doc_changes_d4/2]).
 :- use_module(lsp_metta_parser, [annotated_read_sexpr_list/4]).
 :- use_module(lsp_metta_split, [

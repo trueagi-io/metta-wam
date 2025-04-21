@@ -1,4 +1,4 @@
-:- module(lsp_metta_completion, [completions_at/3]).
+:- module(lsp_metta_completion, [completions_at/3,completion_context/3]).
 /** <module> LSP Completion
 
 This module implements code completion, based on defined predicates in

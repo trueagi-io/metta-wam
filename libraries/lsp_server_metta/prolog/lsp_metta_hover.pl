@@ -31,6 +31,8 @@ hover_at_position(Doc, Line0, Char0, S) :- maybe_doc_path(Doc, Path), !, hover_a
 hover_at_position(Path, Line0, Char0, S) :-
     Loc = line_char(Line0, Char0), thread_signal(main,make),
     clause_with_arity_in_file_at_position(Term, Arity, Path, Loc),
+    %assume_mode(markdown),
+    assume_mode(markdown),
     findall(S, lsp_hooks:hover_string(Path, Loc, Term, Arity, S), SS),
     combine_hover(SS, S).
 
@@ -231,9 +233,24 @@ term_info_string_resolved(Path, Loc, Term, Arity, Str):-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-in_markdown(G) :- format("~N", []), call(G).
+in_markdown(G) :- in_mode(markdown,call(G)).
+in_textual(G) :- in_mode(textual,call(G)).
+in_mode(X,G):- enter_mode(X),call(G),format("~N", []).
+
+inside_mode(X):-nb_current(md_mode,M),M==X.
+
+enter_mode(X):- inside_mode(X),!.
+enter_mode(X):- assume_mode(X),start_mode(X),!.
+assume_mode(X):- nb_setval(md_mode,X),!.
+start_mode(textual):- write('\n```no-wrap\n').
+start_mode(markdown):- write('\n```\n').
+start_mode(_).
+
 banner_for(Type, Target):- in_markdown(format('***~n ## ~w: ~w', [Type, Target])).
 lsp_separator :- in_markdown(format('~N***~n',[])).
+linebr:- inside_mode(pre),!, lsp_separator.
+linebr:- nl,write(' -'),nl.
+
 
 show_checked(Name, Value, Caption) :- fail,
   format("[~w](file:command:myExtension.toggleValue?{\"name\":\"~w\", \"value\":\"~w\"}) ~w ", [Value, Name, Value, Caption]).
@@ -278,11 +295,15 @@ lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :- use_vitalys_help,
     lsp_separator,
-    % Don't redirect so we can capture output of this predicate
-    locally(nb_setval('$dont_redirect_output', true),
-            xref_call(eval(['help!', Target], _))),
+    in_textual_eval(['help!', Target]),
     lsp_separator.  % Evaluate the help command for the term.
 
+
+% Eval capturing output of this code
+in_textual_eval(MeTTa):-
+    locally(nb_setval('$dont_redirect_output', true),
+            % Don't redirect so we can capture output of this predicate
+            forall(in_textual(xref_call(eval(MeTTa, _))),true)).
 
 lsp_hooks:hover_print(_Path,_Loc, Term, Arity):- fail, % this isn't very helpful
   lsp_separator,
@@ -308,7 +329,20 @@ lsp_hooks:hover_print(_Path,_Loc, Target, Arity):- number(Arity), Arity > 1,
 lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
   lsp_separator,
   each_type_at_sorted(Target, Term, AtPath, AtLoc, Type),
+  lsp_separator,
   write_src_xref(Term, Type, AtPath, AtLoc).  % Write the source cross-reference for the atom.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compiled predicate Help
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lsp_hooks:hover_print(_Path,_Loc, Target, _) :-
+    lsp_separator,
+    %in_textual_eval(writeq(['sinfo!', Target])),
+    in_textual(catch_ignore(compiled_info(Target))),
+    lsp_separator.  % Evaluate the help command for the term.
+
+
 
 get_code_at_range_type(term).
 get_code_at_range_type(expression).
@@ -420,10 +454,10 @@ write_src_xref(Src):- % fail,
 write_src_xref(Src):-
   write_src_woi(Src).  % Otherwise, write the source content without additional information.
 
-
 write_src_xref(Term, Type, Path, Loc):-
-   catch_skip((write_src_xref(Term),
-   in_markdown(ignore(write_file_link(Type, Path, Loc))))).
+   catch_skip((
+      in_textual(write_src_xref(Term)),
+      in_markdown(ignore(write_file_link(Type, Path, Loc))))).
 
 write_src_xref(Term, Path, Loc):-
    catch_skip((write_src_xref(Term),
@@ -456,7 +490,7 @@ next_clause(Ref, NextTerm) :-
 
 %   ~n```~n*~w*~n```lisp~n
 write_file_link(Type, Path, Position):-
-  write_file_link(Path, Position), format(' _(~w)_', [Type]).
+  in_markdown((write_file_link(Path, Position), format(' _(~w)_', [Type]))).
 
 write_file_link(Path, Position):- is_in_emacs, !,
     must_succeed1(position_line(Position, Line0)), succ(Line0, Line1),
