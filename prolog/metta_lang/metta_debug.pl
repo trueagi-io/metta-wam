@@ -772,6 +772,7 @@ maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
 maybe_trace:- is_extreme_debug(trace).
 
 is_extreme_debug:- is_douglas.
+is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
 is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
@@ -862,20 +863,21 @@ debug_pp_now(Info):- debug_pp_tree(Info),!.
 
 print_tree_safe1(PTS):- catch(wots(S,print_tree(PTS)),_,fail),writeln(S),!.
 print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),writeln(S),!.
-%print_tree_safe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
-print_tree_safe(PTS):- print_tree_safe1(PTS),!.
-print_tree_safe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
-print_tree_safe(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),fail)),!,throw(E).
-%print_tree_safe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
-%print_tree_safe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
-print_tree_safe(PTS):- writeln(PTS),!.
+%pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
+%ppt0(PTS):- print_tree_safe1(PTS),!.
+ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
+ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),fail)),!,throw(E).
+%pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
+%pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
+ppt0(PTS):- writeln(PTS),!.
 
-
+ppt(O):- format('~N'),ppt0(O),format('~N').
+%pp(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.
  debug_pp_w(P1,Info):- ignore(catch(notrace( call(P1,Info)),_,ansicall(red,(nl,writeln(err(P1)),nl,debug_pp_tree(Info))))),!.
  debug_pp_src(Info):- ignore(catch(notrace( write_src(Info)),_,ansicall(red,(nl,writeln(err(src)),nl,debug_pp_tree(Info))))),!.
-debug_pp_tree(Info):- ignore(catch(notrace(print_tree_safe(Info)),E,ansicall(red,(nl,writeln(err(tree(E))),nl,debug_pp_term(Info))))),!.
+debug_pp_tree(Info):- ignore(catch(notrace(ppt(Info)),E,ansicall(red,(nl,writeln(err(tree(E))),nl,debug_pp_term(Info))))),!.
 debug_pp_term(Info):- ignore(catch(notrace(print(Info)),E,ansicall(red,(writeq(Info),nl,writeln(err(print)),nl,nop(((display(E=Info),bt))))))),!.
 
 pp_as_src(Info):- compound(Info), arg(_,Info,E),is_list(E),E=[H|_],is_list(H),!.

@@ -1,7 +1,7 @@
 
 interpC(Goal):-
   interpC(Goal, Proof),
-  once(print_tree(Proof)).
+  once(ppt(Proof)).
 
 interpC(Goal, Proof):-
   save_module_pred_info,!,

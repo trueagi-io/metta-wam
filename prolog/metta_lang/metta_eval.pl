@@ -1059,7 +1059,7 @@ gen_eval_20_stubs2:-
      nonvar(F),atom(F),
      ast_to_prolog_aux(no_caller,fn_impl(F,Args,Res),Head),
      ast_to_prolog_aux(Head,Body,Body1),
-     print_tree_nl(Head:-Body1)))).
+     ppt(Head:-Body1)))).
 
 
 is_like_eval_20(E20):- atom(E20),atom_concat(eval,_,E20),
@@ -1100,7 +1100,7 @@ eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond
 eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
-eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),write_src_woi(Res),format('~N').
 % !(print! $1)
 eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
   maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
@@ -3398,7 +3398,7 @@ eval_40(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
     % Constructs a compound term for the Python function call with adjusted arguments.
     compound_name_arguments(Call, PyFun, Adjusted),
     % Optionally prints a debug tree of the Python call if tracing is enabled.
-    if_trace(host;python, print_tree(py_call(PyModule:Call, RetVal))),
+    if_trace(host;python, ppt(py_call(PyModule:Call, RetVal))),
     % Executes the Python function call and captures the result in MVal which propagates to RetVal.
     py_call(PyModule:Call, MVal),
     % Checks the return value against the expected type and criteria.
@@ -3420,7 +3420,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],TF):- allow_host_functions,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   % adjust_args(Depth,Self,AE,More,Adjusted),
   maplist(as_prolog_x(Depth,Self), More , Adjusted),
-  if_trace(host;prolog;e,print_tree(apply(Pred,Adjusted))),
+  if_trace(host;prolog;e,ppt(apply(Pred,Adjusted))),
   with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF)))),
   check_returnval(Eq,RetType,TF).
 
@@ -3495,7 +3495,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- allow_host_functions,
   %current_predicate(Pred/Len1),
   maplist(as_prolog_x(Depth,Self),More,Adjusted),
   append(Adjusted,[Res],Args),!,
-  if_trace(host;prolog,print_tree(apply(Pred,Args))),
+  if_trace(host;prolog,ppt(apply(Pred,Args))),
   with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],efbug(show_call,catch_warn(apply(Pred,Args)))),
   check_returnval(Eq,RetType,Res).
 

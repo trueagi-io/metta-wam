@@ -593,8 +593,8 @@ metta_to_metta_macro([EQ,HeadIsN,AsBodyFnN], ['=',HeadIsC, AsBodyFnOut]):- EQ=='
  (AsBodyFnC+HeadIsC=AsBodyFn+HeadIs),
     metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut),!,
     \+ \+ if_t(AsBodyFn\=@=AsBodyFnOut,
-    ( debug_info(metta_macro_in,c(print_tree([=,HeadIs, AsBodyFn]))),!,
-      debug_info(metta_macro_out,c(print_tree([=,HeadIs, AsBodyFnOut]))))))),!.
+    ( debug_info(metta_macro_in,c(ppt([=,HeadIs, AsBodyFn]))),!,
+      debug_info(metta_macro_out,c(ppt([=,HeadIs, AsBodyFnOut]))))))),!.
 metta_to_metta_macro(Body,BodyOut):- metta_to_metta_macro(['=',[whatever],Body],['=',[whatever],BodyOut]).
 
 

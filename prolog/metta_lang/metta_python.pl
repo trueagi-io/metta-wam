@@ -1633,11 +1633,11 @@ py_to_str(PyObj,Str):- with_output_to(string(Str),py_pp(PyObj,[nl(false)])).
 tafs:-
     atoms_from_space(Space,_),
     py_to_pl(VL,Space,AA),
-    print_tree(aa(Pl,aa)),
+    ppt(aa(Pl,aa)),
     pl_to_rust(VL,AA,Py),
-    print_tree(py(Pl,py)),
+    ppt(py(Pl,py)),
     pl_to_rust(VL,Py,Pl),
-    print_tree(pl(Pl,pl)),
+    ppt(pl(Pl,pl)),
     atoms_from_space(Space,[A]),
     py_to_pl(VL,A,AA),
     atoms_from_space(Space,[A]),
@@ -2091,7 +2091,7 @@ cache_type(N,R):- asserta_if_new(cached_py_type(N,R)),fbug(cached_py_type(N,R)).
 %   @example Convert and print a Python object:
 %       ?- print_py(PyObject).
 %
-print_py(Py):- py_to_pl(Py,R),print(R),nl.
+print_py(Py):- py_to_pl(Py,R), pp(R).
 
 %!  combine_term_l(+Type, +RustTerm, -PrologTerm) is det.
 %
