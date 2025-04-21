@@ -203,16 +203,20 @@
 ;; Sanity tests (for development use only)
 ;; ----------------------------------------
 
-!(display-board (X X X 4 5 6 O O O)) ;; Should show X win on top row
-!(random-atom (1 2 3 4 5 6 7 8 9))   ;; Random move demo
-!(assertEqualToResult (random-atom (1)) (1)) ;; Edge case: only one option
-!(assertEqualToResult (random-atom ()) ())   ;; Edge case: no options
-!(assertEqualToResult (winner (O O 3 4 5 6 X X X)) (X)) ;; X wins in bottom row
-!(assertEqualToResult (available-moves (O O 3 4 5 6 X X X)) ((3 4 5 6)))
-!(assertEqualToResult (move-choices (O O 3 4 5 6 X X X)) (6 5 4 3)) ;; Should list in reverse
-!(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) O) (3))     ;; O can win
-!(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) X) ())      ;; X cannot win
-!(assertEqualToResult (winning-move (O O 3 4 5 6 7 X X) X) (7))     ;; X can win with 7
+
+(= (my-tests)
+  (
+(display-board (X X X 4 5 6 O O O)) ;; Should show X win on top row
+(random-atom (1 2 3 4 5 6 7 8 9))   ;; Random move demo
+(assertEqualToResult (random-atom (1)) (1)) ;; Edge case: only one option
+(assertEqualToResult (random-atom ()) ())   ;; Edge case: no options
+(assertEqualToResult (winner (O O 3 4 5 6 X X X)) (X)) ;; X wins in bottom row
+(assertEqualToResult (available-moves (O O 3 4 5 6 X X X)) ((3 4 5 6)))
+(assertEqualToResult (move-choices (O O 3 4 5 6 X X X)) (6 5 4 3)) ;; Should list in reverse
+(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) O) (3))     ;; O can win
+(assertEqualToResult (winning-move (O O 3 4 5 6 7 8 9) X) ())      ;; X cannot win
+(assertEqualToResult (winning-move (O O 3 4 5 6 7 X X) X) (7))     ;; X can win with 7
+))
 
 ;; ----------------------------------------
 ;; Entry point: starts AI vs AI by default
@@ -225,4 +229,4 @@
 ;; (is-human O)
 
 !(play-now)
-
+!(repl!)

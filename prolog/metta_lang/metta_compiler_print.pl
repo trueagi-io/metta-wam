@@ -197,7 +197,7 @@ print_ast(HB):- print_ast( yellow, HB).
 print_ast(Color,HB):-
    inotrace((printable_vars(HB,HBP),
    color_g_mesg(Color,
-     output_language( ast, (writeln('======='), print_tree_nl(HBP)))))).
+     output_language( ast, (writeln('======='), ppt(HBP)))))).
 
 printable_vars(HB,HBPN):-
    copy_term(HB,HBP),

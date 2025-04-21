@@ -256,7 +256,7 @@ compile_body(Body, Output):-
   cname_var('Out_',Ret),
   %transpile_eval(Body,Output),
   guess_varnames(Output,PrintCode),
-  print_tree_nl(out(Ret):-(PrintCode)))).
+  ppt(out(Ret):-(PrintCode)))).
 
 on_compile_for_exec.
 
@@ -292,6 +292,7 @@ compile_for_exec1(AsBodyFn, Converted) :-
    ast_to_prolog_aux(no_caller,[],[native(exec0),HHResult],HeadC),
    %ast_to_prolog(no_caller,[],[[native(trace)]|NextBody],NextBodyC).
    append(NextBody,HCode,Code),
+   debug_info(pre_ast,t(Code)),
    ast_to_prolog(no_caller,[],Code,NextBodyC))).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -408,8 +409,11 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
   compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
-  metta_to_metta_macro(HeadIsIn, AsBodyFnIn, HeadIs, AsBodyFn),
-  compile_for_assert_3(HeadIs, AsBodyFn, Converted).
+  must_det_lls((
+  IN = ['=',HeadIsIn, AsBodyFnIn],
+  metta_to_metta_macro_recurse(IN, OUT),
+  OUT = ['=',HeadIs, AsBodyFn],
+  compile_for_assert_3(HeadIs, AsBodyFn, Converted))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -501,14 +505,14 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
       %print_ast( yellow, [=,HeadAST,FullCode2]),
-
+      debug_info(pre_ast,t(FullCode2)),
       ast_to_prolog(caller(FnName,LenArgs),[FnName/LenArgs],FullCode2,NextBodyC),
 
       %format_e("###########1 ~q",[Converted]),
       %numbervars(Converted,0,_),
       %format_e("###########2 ~q",[Converted]),
       extract_constraints(Converted,EC),
-      optimize_prolog([],Converted,Optimized),
+      try_optimize_prolog(fa,Converted,Optimized),
       transpiler_debug(2,output_prolog('#F08080',[EC])),!,
       transpiler_debug(1,output_prolog('#ADD8E6',[Converted])),!,
       if_t(Optimized\=@=Converted,
@@ -1658,10 +1662,13 @@ compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
 compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    compiler_assertz(InfoC).
 
-compiler_assertz(Info):- debug_info(compiler_assertz,Info),fail.
+compiler_assertz(Info):- debug_info(compiler_assertz, Info),fail.
 
-compiler_assertz(Info:-_):- predicate_property(Info,static),!, debug_info(skipping_redef,Info).
-compiler_assertz(Info):- (Info \= (_:-_)), predicate_property(Info,static),!, debug_info(skipping_redef,Info).
+compiler_assertz(Info):- once(try_optimize_prolog(ca,Info,Info2)),Info\=@=Info2,!,
+     debug_info(compiler_assertz,optimize_prolog(ca)),
+     compiler_assertz(Info2).
+
+compiler_assertz(Info):- skip_redef(Info), !, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
@@ -1671,6 +1678,14 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
     %ignore(Expr='$VAR'(ExprV)), debug_var(ExprV,Expr).
 
+
+skip_redef(Info):- \+ callable(Info),!,fail.
+skip_redef(Info:-_):- !,skip_redef(Info).
+skip_redef(Info):- predicate_property(Info,static),!.
+skip_redef(_:Info):- !, skip_redef(Info).
+skip_redef(Info):- compound(Info),compound_name_arity(Info,F,A), compiler_data(F/A),!,fail.
+skip_redef(Info):- source_file(this_is_in_compiler_lib,F), source_file(Info,F).
+%skip_redef(Info):- source_file(Info,_). % diallow otehr places
 
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
@@ -1780,7 +1795,7 @@ precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,Result) :-
 
 :- use_module(library(gensym)).          % for gensym/2
 :- use_module(library(pairs)).           % for group_pair_by_key/2
-:- use_module(library(logicmoo_utils)).  % for print_tree_nl/1 (pretty-print)
+:- use_module(library(logicmoo_utils)).  % for ppt/1 (pretty-print)
 
 /** <module> combine_transform_and_collect_subterm
 
@@ -2017,17 +2032,17 @@ test_combine_big :-
     combine_transform_and_collect(OldExpr, Assignments, NewExpr, VarMappings),
 
     writeln("=== Original Expression ==="),
-    print_tree_nl(OldExpr),
+    ppt(OldExpr),
 
     writeln("=== Assignments (subcalls replaced) ==="),
-    print_tree_nl(Assignments),
+    ppt(Assignments),
 
     writeln("=== New Expression ==="),
-    print_tree_nl(NewExpr),
+    ppt(NewExpr),
 
     writeln("=== Var Mappings (underscore variables) ==="),
     append(Assignments,VarMappings,SM),sort(SM,S),
-    print_tree_nl(S).
+    ppt(S).
 
 %:- test_combine_big.
 
@@ -2063,6 +2078,54 @@ remove_stub(Space,Fn,Arity):- \+ transpiler_stub_created(Space,Fn,Arity),!.
 remove_stub(Space,Fn,Arity):- retract(transpiler_stub_created(Space,Fn,Arity)),!,
   transpile_impl_prefix(Fn,Arity,IFn),abolish(IFn/Arity),!.
 
+% !(compiled-info cdr-atom)
+'compiled-info'(S):-
+  find_compiled_refs(S, Refs),
+  print_refs(Refs).
+
+print_refs(Refs):- is_list(Refs),!,maplist(print_refs,Refs).
+print_refs(Refs):- atomic(Refs),clause(M:H,B,Refs),!,print_itree(((M:H):-B)).
+print_refs(Refs):- print_itree(Refs).
+print_itree(C):- \+ compound(C),!,nl_print_tree(C).
+print_itree((H:-B)):- B==true,!,print_itree((H)).
+print_itree((M:H)):- M==user,!,print_itree((H)).
+print_itree(((M:H):-B)):- M==user,!,print_itree((H:-B)).
+print_itree(T):- nl_print_tree(T).
+
+nl_print_tree(PT):- format('~N'),ppt(PT),format('~N').
+
+
+find_compiled_refs(S, Refs):-
+   atom_concat('_',S,Dashed),
+   compiled_info_s(S,Refs1),
+   findall(Refs,(current_atom(F),atom_concat(_,Dashed,F),compiled_info_f(F,Refs)),Refs2),
+   append_sets([Refs1,Refs2],Refs).
+
+append_sets(RefsL,Refs):- flatten(RefsL,Flat),list_to_set(Flat,Refs).
+compiled_info_s(S,Refs):- findall(Ref,(compiler_data(F/A),compiled_refs(S,F,A,Ref)),RefsL),append_sets(RefsL,Refs).
+compiled_info_f(F,Refs):- compiled_info_s(F,Refs1), compiled_info_p(F,Refs2),append_sets([Refs1,Refs2],Refs).
+compiled_info_p(F,Refs):-
+   findall(Ref,(current_predicate(F/A),functor(P,F,A),current_module(M),
+    \+ \+ predicate_property(M:P,_), \+ predicate_property(M:P,imported_from(_)),
+    clause(M:P,_,Ref)),Refs).
+
+compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref),call(B), \+ \+ (arg(_,P,S),S==Symbol),
+   (B==true->Info=Ref;Info=P).
+
+compiler_data(metta_compiled_predicate/3).
+compiler_data(is_transpile_call_prefix/3).
+compiler_data(is_transpile_impl_prefix/3).
+compiler_data(transpiler_stub_created/2).
+compiler_data(transpiler_stub_created/3).
+compiler_data(transpiler_depends_on/4).
+compiler_data(transpiler_clause_store/9).
+compiler_data(transpiler_predicate_nary_store/9).
+compiler_data(transpiler_predicate_store/7).
+%compiler_data(transpiler_stored_eval/3).
+compiler_data(metta_atom/2).
+compiler_data(metta_type/3).
+compiler_data(metta_defn/3).
+%compiler_data(metta_file_buffer/7).
 
 ensure_callee_site(Space,Fn,Arity):- check_supporting_predicates(Space,Fn/Arity),!.
 ensure_callee_site(Space,Fn,Arity):-transpiler_stub_created(Space,Fn,Arity),!.
@@ -2149,14 +2212,29 @@ maybe_argo(_Caller,_F,_N,Arg,Arg):- is_list(Arg),!.
 maybe_argo(_Caller,_F,_N,Arg,Arg):- \+ compound(Arg),!.
 maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,[],Arg,ArgO).
 
+:- dynamic(maybe_optimize_prolog/4).
 
-optimize_prolog(_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
-optimize_prolog(_,Converted,Optimized):- is_list(Converted),!,Converted=Optimized.
-optimize_prolog(FL,Converted,Optimized):-
+try_optimize_prolog(Y,Convert,Optimized):- fail,
+   catch_warn(optimize_prolog(Y,[],Convert,MaybeOptimized)),
+   Convert\=@=MaybeOptimized,!,
+   try_optimize_prolog(Y,MaybeOptimized,Optimized).
+try_optimize_prolog(_,Optimized,Optimized).
+
+optimize_prolog(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
+optimize_prolog(Y,FL,Converted,Optimized):-
+   copy_term(Converted,ConvertedC),
+   maybe_optimize_prolog(Y,FL,Converted,Optimized),
+   \+ ((ConvertedC\=@=ConvertedC,
+       debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),!.
+optimize_prolog(Y,FL,Converted,Optimized):- is_list(Converted),
+   maplist(optimize_prolog(Y,[list()|FL]),Converted,Optimized),!.
+optimize_prolog(Y,FL,Converted,Optimized):-
    compound_name_arguments(Converted,F,Args),
-   maplist(optimize_prolog([F|FL]),Args,OArgs),
+   maplist(optimize_prolog(Y,[F|FL]),Args,OArgs),
    compound_name_arguments(Optimized,F,OArgs), !.
-optimize_prolog(_,Prolog,Prolog).
+optimize_prolog(_,_,Prolog,Prolog).
+
+
 
 
 de_eval(eval(X),X):- compound(X),!.
@@ -2258,6 +2336,12 @@ merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
    assertable_head(AHead,Head),
    must_optimize_body(Head,Body,BodyNew).
 
+
+
+maybe_optimize_prolog(_,_,Cmpd,(Cl:-BodyNew)):-
+  compound(Cmpd),
+  (Cl:-Body)=Cmpd,nonvar(Body),!,must_optimize_body(Cl,Body,BodyNew).
+
 assertable_head(x_assign(FList,R),Head):- FList =~ [F|List],
    append(List,[R],NewArgs), atom(F), Head @.. [F|NewArgs],!.
 assertable_head(Head,Head).
@@ -2285,6 +2369,13 @@ optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_bo
 optimize_body( HB,(B1*->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+
+
+optimize_body(Head,(B0,B1,B2),(B0,BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2,B3),(BN1,B3)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2),(BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+
 % TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
 optimize_body( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
@@ -3902,6 +3993,8 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
+
+
 
 
 

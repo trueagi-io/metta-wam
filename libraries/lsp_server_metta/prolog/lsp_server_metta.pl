@@ -39,8 +39,6 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
 :- include(lsp_server_hooks).
 :- include(lsp_metta_include).
 
-:- set_prolog_flag(gc,false).
-
 :- user:ensure_loaded(lsp_metta_utils).
 :- use_module(lsp_metta_checking, [metta_check_errors/2]).
 :- use_module(lsp_json_parser, [lsp_metta_request//1]).
@@ -53,7 +51,7 @@ Supports LSP methods like hover, document symbol, definition, references, and mo
                             file_range_colours/4,
                             token_types/1,
                             token_modifiers/1]).
-:- use_module(lsp_metta_xref).
+
 /*
 :- use_module(lsp_metta_split, [
         split_text_document_d4/2,
@@ -88,6 +86,8 @@ debug_ide:-
    prolog_ide(debug_monitor),
    prolog_ide(thread_monitor),!.
 
+:- dynamic(user:was_main_argv/1).
+:- dynamic(user:was_os_argv/1).
 
 % Main entry point
 main :-
@@ -95,6 +95,9 @@ main :-
     set_prolog_flag(report_error, true),
     set_prolog_flag(toplevel_prompt, ''),
     current_prolog_flag(argv, Args),
+    current_prolog_flag(os_argv, OS_ArgV),
+    asserta(user:was_os_argv(OS_ArgV)),
+    asserta(user:was_main_argv(Args)),
    nodebug(lsp(_)), % Everything
     %prolog_ide(debug_monitor),
     %debug(lsp(low)),
@@ -107,7 +110,9 @@ main :-
     debug(lsp(todo)),
     %debug(lsp(position)),
     debug(lsp(xref)),
-    load_mettalog_xref,
+    make_lsp_untraced,
+    set_thread_initialization_flags,
+    ensure_mettalog_runtime,
     start(Args).
 
 
@@ -1084,11 +1089,7 @@ check_errors_resp(_, false) :-
     debug_lsp(errors, "Failed checking errors", []).
 
 
-make_lsp_untraced:-
-   unsetenv('DISPLAY'),
-   redefine_system_predicate(system:trace/0),
-   abolish(system:trace/0),
-   assert(system:trace:- throw('$abort')).
+
 
 
 :- dynamic lsp_server_callback_file_path/1.
@@ -1108,8 +1109,76 @@ restore_lsp_server_callbacks :- assert(restored_lsp_server_callbacks),
     lsp_server_callback_file_path(MettaPath),
     import_metta('&lsp-server', MettaPath).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LOAD METTALOG LOCALLY IF NOT LOADED
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+disable_lsp_calls(M,F,A):-
+    redefine_system_predicate(M:F/A),
+    abolish(M:F/A),
+    (A==0-> Head=F ; functor(Head,F,A)),
+    assert(( (M:Head) :- usrerr_dmsg('~nCALLED_FROM_LSP_SERVER(~q)~n',[Head]), (Head==trace->throw('$abort');true))).
+
+make_lsp_untraced:-
+   unsetenv('DISPLAY'),
+   disable_lsp_calls(system,trace,0),
+   %disable_lsp_calls(system,break,0),
+   !.
+
+:- user:use_module(library(logicmoo_common)).
+:- user:use_module(library(logicmoo_utils)).
+
+usrerr_dmsg(Msg):- format(user_error,'~N~w~n',[Msg]).
+usrerr_dmsg(Fmt,Args):- sformat(S,Fmt,Args),usrerr_dmsg(S).
+
+absolute_directory_exists(E,D):- absolute_file_name(E,D),exists_directory(D).
+absolute_directory_exists(E,D):- catch(absolute_directory(E,D),_,fail),exists_directory(D).
+absolute_directory_exists(E,D):- absolute_file_name(E,D,[file_type(directory)]),exists_directory(D).
+
+guess_metta_home(Dir):- current_prolog_flag(os_argv, List),member(Flag,List),atom(Flag),atom_concat('--METTALOG_DIR=',LTH,Flag),absolute_directory_exists(LTH,Dir).
+guess_metta_home(LTH):- absolute_directory_exists(pack(metta), LTH).
+guess_metta_home(Dir):- absolute_file_name(library(metta_lang/metta_interp),X,[file_type(prolog),file_errors(fail),access(search)]),absolute_file_name('../../',LTH,[relative_to(X)]),absolute_directory_exists(LTH,Dir).
+
+metta_home(LTH):- getenv('METTALOG_DIR',LTH).
+metta_home(LTH):- getenv('METTA_DIR',LTH).
+metta_home(LTH):- guess_metta_home(LTH), setenv('METTALOG_DIR',LTH),!.
+
+
+
+
+set_thread_initialization_flags:-
+   ignored_catch_lsp(set_prolog_flag(mettalog_rt, true)),
+   set_prolog_flag(mettalog_app, lsp_server),
+   set_prolog_flag(metta_argv, []),!.
+
+ignored_catch_lsp(Goal):- ignore(notrace(catch(Goal,_,fail))).
+
+ensure_mettalog_runtime_file(File):-
+   locally(set_prolog_flag(argv,[]),
+     locally(set_prolog_flag(os_argv,[swipl]),
+       notrace(load_mettalog_runtime_file_now(File)))).
+
+load_mettalog_runtime_file_now(File):-
+   set_thread_initialization_flags,
+   ignored_catch_lsp(thread_initialization(set_thread_initialization_flags)),
+   user:ensure_loaded(File),!,
+   user:loon.
+
+load_mettalog_from_dir(LTH):- \+ exists_directory(LTH),!,usrerr_dmsg("Skipping metta: not exists_directory"+LTH).
+load_mettalog_from_dir(LTH):- absolute_file_name('prolog/metta_lang/metta_interp.pl',File,[relative_to(LTH)]),!,
+   ensure_mettalog_runtime_file(File).
+load_mettalog_from_dir(LTH):- usrerr_dmsg("Skipping metta="+LTH).
+
+ensure_mettalog_runtime:- current_predicate(system:trace_called/0),!.
+ensure_mettalog_runtime:- current_predicate(write_src/1),!.
+ensure_mettalog_runtime:- app_argv('--nometta'), !, usrerr_dmsg("Skipping metta (--nometta)").
+ensure_mettalog_runtime:- metta_home(LTH), exists_directory(LTH),!,load_mettalog_from_dir(LTH).
+ensure_mettalog_runtime:- metta_home(LTH), \+ exists_directory(LTH),!,usrerr_dmsg("Skipping metta: not exists_directory"+LTH),
+  exists_source(library(metta_lang/metta_interp)),ensure_loaded(library(metta_lang/metta_interp)).
+
+%:- before_boot(ensure_mettalog_runtime).
+
 %:- initialization(restore_lsp_server_callbacks).
 :- after_boot(restore_lsp_server_callbacks).
 
-
-:- initialization(make_lsp_untraced).

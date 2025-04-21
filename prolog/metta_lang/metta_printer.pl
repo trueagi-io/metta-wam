@@ -104,7 +104,7 @@ ppc(Msg, Term) :-
 %   This predicate attempts to print Term in a structured format. It calls `ppct/2`
 %   for terms that match specific patterns, or uses a generalized pretty-printing
 %   structure if none of the patterns apply. Additional information such as source
-%   representation (`write_src/1`) and conversion trees (`print_tree/1`) is also
+%   representation (`write_src/1`) and conversion trees (`ppt/1`) is also
 %   displayed to enhance readability.
 %
 %   @arg Msg  A message or label associated with this printout for context.
@@ -126,7 +126,7 @@ ppc1(Msg, Term) :-
         portray_clause(Term),  % Print Term in clause form.
         writeln('---------------------'),
         % Display the conversion tree if available.
-        undo_bindings(print_tree(?-show_cvts(Term))), nl,
+        undo_bindings(ppt(?-show_cvts(Term))), nl,
         writeln('---------------------'),
         write(s(Msg)), write(':'), nl,
         write_src(Term), nl  % Display source representation.
@@ -174,7 +174,7 @@ ppct(Msg, Term) :-
     writeln('---------------------'),
     write((Msg)), write(':'), nl,
     dont_numbervars(Term, 222, _, [attvar(skip)]),
-    print_tree(Term), nl.
+    ppt(Term), nl.
 
 %!  pp_metta(+P) is det.
 %
@@ -288,7 +288,7 @@ print_pl_source0(_) :-
 
 print_pl_source0(P) :- fail,!,
     format('~N'),
-    print_tree(P),
+    ppt(P),
     format('~N'), !.
 
 print_pl_source0(P) :-
@@ -301,13 +301,13 @@ print_pl_source0((:- B)) :-
     % For directives (:- B), display using portray_clause.
     !,portray_clause((:- B)).
 print_pl_source0(P) :-
-    % Default printing using `print_tree/1`.
+    % Default printing using `ppt/1`.
     format('~N'),
-    print_tree(P),
+    ppt(P),
     format('~N'), !.
 print_pl_source0(P) :-
     % Try different display actions and choose the output with the least height.
-    Actions = [print_tree, portray_clause, pp_fb1_e],
+    Actions = [ppt, portray_clause, pp_fb1_e],
     % For each action, produce output and measure its height.
     findall(
         H - Pt,
@@ -368,8 +368,8 @@ pp_fb1_a(P) :-
 %   @arg P The Prolog term to be printed.
 %
 pp_fb1_e(P) :-
-    % Attempt to print P using `print_tree`.
-    pp_fb2(print_tree, P).
+    % Attempt to print P using `ppt`.
+    pp_fb2(ppt, P).
 pp_fb1_e(P) :-
     % Attempt to print P using `pp_ilp`.
     pp_fb2(pp_ilp, P).
@@ -698,7 +698,7 @@ into_hyphens(D, U) :-
 unlooped_fbug(W, Mesg) :-
     % Check if W is already set to avoid looping; if so, print Mesg and break.
     nb_current(W, true), !,
-    print(Mesg), nl, bt, break.
+    writeq(Mesg), nl, bt, break.
 unlooped_fbug(W, Mesg) :-
     % Otherwise, safely set W and execute Mesg once, cleaning up afterward.
     setup_call_cleanup(
@@ -959,7 +959,7 @@ pp_sexi(V) :-
     is_final_write(V), !.
 pp_sexi(V) :-
     % If `V` is a dictionary, print it directly.
-    is_dict(V), !, print(V).
+    is_dict(V), !, write_term(V,[]).
 pp_sexi((USER:Body)) :- fail,
     % If `V` is in the format `user:Body`, process `Body` directly.
     USER == user, !, pp_sex(Body).
