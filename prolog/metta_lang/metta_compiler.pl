@@ -1699,9 +1699,17 @@ skip_redef_head(_,Info):- compound(Info),compound_name_arity(Info,F,A), compiler
 skip_redef_head(M,Info):- source_file(this_is_in_compiler_lib,F), once(source_file(M:Info,F);source_file(Info,F)).
 %skip_redef(Info):- source_file(Info,_). % diallow otehr places
 
-skip_redef_fa(Fn/Arity) :- create_mc_name(Arity,Fn,FnWPrefix),succ(Arity,ArityP1),functor(Info,FnWPrefix,ArityP1),
+skip_redef_fa(Fn,Arity) :- integer(Arity),!,skip_redef_fa(Fn,[Arity]).
+skip_redef_fa(Fn,LenArgs) :-
+   create_mc_name(LenArgs,Fn,FnWPrefix),
+   sum_list(LenArgs,LenArgsTotal),
+   LenArgsTotalPlus1 is LenArgsTotal+1,
+   functor(Info,FnWPrefix,LenArgsTotalPlus1),
    skip_redef_head(user,Info),!.
 
+into_fa(Fn/[Arity],Fn,Arity):- must_be(number,Arity).
+into_fa(Fn/Arity,Fn,Arity):- must_be(number,Arity).
+into_fa(FnArity,_Fn,_Arity):- throw(type_error(f/a,FnArity)).
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
@@ -2137,7 +2145,6 @@ compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref),call(B), \+ \+ (
 compiler_data(metta_compiled_predicate/3).
 compiler_data(is_transpile_call_prefix/3).
 compiler_data(is_transpile_impl_prefix/3).
-compiler_data(transpiler_stub_created/2).
 compiler_data(transpiler_stub_created/3).
 compiler_data(transpiler_depends_on/4).
 compiler_data(transpiler_clause_store/9).
