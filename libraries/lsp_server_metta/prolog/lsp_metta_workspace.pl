@@ -12,7 +12,8 @@
                                  xref_metta_source/1,
                                  xref_reload_source/1,
                                  xref_source_expired/1,
-                                 maybe_doc_path/2
+                                 maybe_doc_path/2,
+                                 xref_source_now/1
                                ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

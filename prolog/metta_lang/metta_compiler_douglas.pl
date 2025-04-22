@@ -380,7 +380,7 @@ print_ast(HB):- print_ast( yellow, HB).
 print_ast(Color,HB):-
    inotrace((printable_vars(HB,HBP),
    color_g_mesg(Color,
-     output_language( ast, (writeln('======='), print_tree_nl(HBP)))))).
+     output_language( ast, (writeln('======='), ppt(HBP)))))).
 
 printable_vars(HB,HBPN):-
    copy_term(HB,HBP),
@@ -505,7 +505,7 @@ precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,Result) :-
 
 :- use_module(library(gensym)).          % for gensym/2
 :- use_module(library(pairs)).           % for group_pair_by_key/2
-:- use_module(library(logicmoo_utils)).  % for print_tree_nl/1 (pretty-print)
+:- use_module(library(logicmoo_utils)).  % for ppt/1 (pretty-print)
 
 /** <module> combine_transform_and_collect_subterm
 
@@ -742,17 +742,17 @@ test_combine_big :-
     combine_transform_and_collect(OldExpr, Assignments, NewExpr, VarMappings),
 
     writeln("=== Original Expression ==="),
-    print_tree_nl(OldExpr),
+    ppt(OldExpr),
 
     writeln("=== Assignments (subcalls replaced) ==="),
-    print_tree_nl(Assignments),
+    ppt(Assignments),
 
     writeln("=== New Expression ==="),
-    print_tree_nl(NewExpr),
+    ppt(NewExpr),
 
     writeln("=== Var Mappings (underscore variables) ==="),
     append(Assignments,VarMappings,SM),sort(SM,S),
-    print_tree_nl(S).
+    ppt(S).
 
 %:- test_combine_big.
 
@@ -912,7 +912,7 @@ compile_body(Body, Output):-
   cname_var('Out_',Ret),
   %transpile_eval(Body,Output),
   guess_varnames(Output,PrintCode),
-  print_tree_nl(out(Ret):-(PrintCode)))).
+  ppt(out(Ret):-(PrintCode)))).
 
 on_compile_for_exec.
 

@@ -185,7 +185,7 @@ inotrace(G):-
 print_ast(Color,HB):-
    inotrace((printable_vars(HB,HBP),
    color_g_mesg(Color,
-     output_language( ast, (writeln('Ast:======='), print_tree_nl(HBP)))))).
+     output_language( ast, (writeln('Ast:======='), ppt(HBP)))))).
 
 printable_vars(HB,HBPN):-
    copy_term(HB,HBP),
@@ -340,7 +340,7 @@ compile_body(Body, Output):-
   cname_var('Out_',Ret),
   %transpile_eval(Body,Output),
   guess_varnames(Output,PrintCode),
-  print_tree_nl(out(Ret):-(PrintCode)))).
+  ppt(out(Ret):-(PrintCode)))).
 
 % ?- compile_for_exec(RetResult, is(pi+pi), Converted).
 

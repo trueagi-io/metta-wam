@@ -170,7 +170,7 @@ subst_args1(Eq,RetType,Depth,Self,['rtrace',Cond],Res):- !, rtrace(subst_args(Eq
 subst_args1(Eq,RetType,Depth,Self,['time',Cond],Res):- !, time(subst_args(Eq,RetType,Depth,Self,Cond,Res)).
 %subst_args1(Eq,RetType,Depth,Self,['print',Cond],Res):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
 % !(println! $1)
-subst_args1(Eq,RetType,Depth,Self,['println!',Cond],[]):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+subst_args1(Eq,RetType,Depth,Self,['println!',Cond],[]):- !, subst_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),write_src(Res),format('~N').
 
 subst_args1(Eq,RetType,_Dpth,_Slf,List,Y):- is_list(List),maplist(self_subst,List),List=[H|_], \+ atom(H), !,Y=List.
 
@@ -847,7 +847,7 @@ is_metta_builtin('pragma!').
 
 subst_args30(Eq,Depth,Self,H,B):- if_or_else(subst_args34(Depth,Self,H,B),subst_args37(Eq,Depth,Self,H,B)).
 
-subst_args34(_Dpth,Self,H,B):-  
+subst_args34(_Dpth,Self,H,B):-
   metta_eq_def(Eq,Self,H,B).
 
 % Has argument that is headed by the same function

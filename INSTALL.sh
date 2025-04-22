@@ -601,7 +601,9 @@ check_metalog_in_path() {
 }
 
 # Call the function to check and update PATH
+#set -x  # before line 600
 check_metalog_in_path
+#set +x  # after line 610
 
 if [ -f ./scripts/lsp_server_prolog_install.sh ]; then
     # Ensure the script is executable

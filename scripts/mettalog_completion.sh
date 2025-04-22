@@ -570,5 +570,5 @@ _mettalog() {
 ##############################################################################
 # 9) REGISTER
 ##############################################################################
-complete -r mettalog 2>/dev/null
-complete -o nospace -F _mettalog mettalog
+complete -r mettalog 2>/dev/null || true
+complete -o nospace -F _mettalog mettalog || true
