@@ -360,7 +360,7 @@ recompile_from_depends(FnName,LenArgs) :-
    findall(FnD/ArityD,transpiler_depends_on(FnD,ArityD,FnName,LenArgs),List),
    transpiler_debug(2,(format_e("recompile_from_depends list ~w\n",[List]))),
    debug_info(recompile_from_depends, fa(FnName,LenArgs)=List),
-   maplist(recompile_from_depends0,List).
+   maplist(recompile_from_depends_child(FnName/LenArgs),List).
 
 unnumbervars_wco(X,XXX):- compound(X),
    sub_term(E, X), compound(E), E = '$VAR'(_),!,
@@ -381,9 +381,10 @@ number_vars_wo_conficts(X,XX):-
    numbervars(XX,N2,_,[attvar(skip)]).
 
 
-recompile_from_depends0(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_parent(FnName,LenArgs)),!.
-recompile_from_depends0(Fn/Arity) :-
-   %format_e("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
+recompile_from_depends_child(ParentFA,FnName/LenArgs) :- skip_redef_fa(FnName,LenArgs),!,
+    debug_info(recompile_from_depends,skip_child(ParentFA,FnName/LenArgs)),!.
+recompile_from_depends_child(_ParentFA,Fn/Arity) :-
+   %format_e("recompile_from_depends_child ~w/~w\n",[Fn,Arity]),flush_output(user_output),
    ArityP1 is Arity+1,
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
    create_mc_name(Arity,Fn,FnWPrefix),
@@ -3026,8 +3027,9 @@ with_mutex_maybe(_,Goal):- wocf(call(Goal)).
 
 add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
-
-add_assertion1(Space,ACC) :-
+%add_assertion1(Space,ACC) :- add_assertion1_depricated(Space,ACC), !.
+add_assertion1(_,ACC) :- compiler_assertz(ACC), !.
+add_assertion1_depricated(Space,ACC) :-
    must_det_lls((
      copy_term(ACC,AC,_),
      expand_to_hb(AC,H,_),
