@@ -95,7 +95,12 @@ fi
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # echo "PATH=$PATH"
 #echo "PYTHONPATH=$PYTHONPATH"
-source $METTALOG_DIR/scripts/mettalog_completion.sh
+if [[ $- == *i* ]]; then
+  # only source if interactive shell
+  [[ -f /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion
+  source $METTALOG_DIR/scripts/mettalog_completion.sh
+fi
+
 
 alias ensure_venv="source $METTALOG_DIR/scripts/ensure_venv"
 
