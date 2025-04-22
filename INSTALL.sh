@@ -593,11 +593,11 @@ check_metalog_in_path() {
         echo -e "${GREEN}MeTTaLog was already in your .bashrc${NC}."
     fi
 
-    source "$env_file"
+    #source "$env_file"
 
-    print_var "METTALOG_DIR"
-    print_var "PYTHONPATH"
-    print_var "PATH"
+    #print_var "METTALOG_DIR"
+    #print_var "PYTHONPATH"
+    #print_var "PATH"
 }
 
 # Call the function to check and update PATH
