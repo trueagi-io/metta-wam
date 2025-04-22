@@ -431,15 +431,17 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
 %eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
-hybrid_interp :- !.
-hybrid_interp :- option_value(compile,false),!.
+%hybrid_interp :- !.
+hybrid_interp :- option_value(compile,hybrid),!.
+hybrid_interp :- option_value(compile,false),!,fail.
 %hybrid_interp :- option_value(compile,false),!,fail.
 hybrid_interp :- option_value(compile,full),!,fail.
 hybrid_interp :- option_value(compile,true),!.
 
-eval_09(Eq,RetType,Depth,Self,X,Y):- hybrid_interp,
-   \+ nb_current('eval_in_only', interp), !,
-   eval_use_right_thing(Eq,RetType,Depth,Self,X,Y).
+
+eval_09(Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', interp), !, woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
+eval_09(Eq,RetType,Depth,Self,X,Y):- hybrid_interp, !, eval_use_right_thing(Eq,RetType,Depth,Self,X,Y).
 eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
 
 %eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
