@@ -5233,6 +5233,12 @@ toplevel_interp_only_symbol('import!').
 toplevel_interp_only_symbol('extend-py!').
 toplevel_interp_only_symbol('include').
 toplevel_interp_only_symbol('include!').
+toplevel_interp_only_symbol('call-string').
+toplevel_interp_only_symbol('compiled-info').
+toplevel_interp_only_symbol('repl!').
+toplevel_interp_only_symbol('eval').
+toplevel_interp_only_symbol('pragma!').
+
 toplevel_interp_only_symbol(H):- symbol_concat('add-atom',_,H),!.
 
 %!  always_exec(+W) is nondet.
@@ -5893,7 +5899,15 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   X = RealRes)))),!.
 
 
-into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-!,
+into_metta_callable(Self,TermV, OUT,X,NamedVarsList,Was):-
+  toplevel_interp_only(TermV),
+  into_metta_callable_H(Self,TermV,CALL,X,NamedVarsList,Was),!,
+  OUT=locally(nb_setval('eval_in_only', interp),CALL).
+
+into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-
+  into_metta_callable_H(Self,TermV,CALL,X,NamedVarsList,Was),!.
+
+into_metta_callable_H(Self,TermV,CALL,X,NamedVarsList,Was):-!,
  default_depth(DEPTH),
  option_else('stack-max',StackMax,DEPTH),
  CALL = eval_H(StackMax,Self,Term,X),
@@ -7109,7 +7123,7 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-%nts1 :- !. % Disable redefinition by cutting execution.
+nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.

@@ -167,7 +167,7 @@ hyde(F/A):- functor(P,F,A), redefine_system_predicate(P),'$hide'(F/A), '$iso'(F/
 :- 'hyde'(nonvar/1).
 :- 'hyde'(quietly/1).
 %:- 'hyde'(option_value/2).
-:- ensure_loaded(metta_improve).
+:- include(metta_improve).
 
 
 is_metta_declaration([F|_]):- F == '->',!.
@@ -302,7 +302,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    if_t((Depth<1, trace_on_overflow), debug(metta(e))),
 
-   trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
+   trace_eval(eval_09(Eq,RetType),e,Depth2,Self,X,M),
 
    ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
 
@@ -431,10 +431,15 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 %eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
 %eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
-hybrid_interp :- option_value(compile,true).
+hybrid_interp :- !.
+hybrid_interp :- option_value(compile,false),!.
+%hybrid_interp :- option_value(compile,false),!,fail.
+hybrid_interp :- option_value(compile,full),!,fail.
+hybrid_interp :- option_value(compile,true),!.
 
-eval_09(Eq,RetType,Depth,Self,X,Y):- hybrid_interp, assumed_functor(X,F,Len),!,
-   use_right_thing(F,Len,Eq,RetType,Depth,Self,X,Y).
+eval_09(Eq,RetType,Depth,Self,X,Y):- hybrid_interp,
+   \+ nb_current('eval_in_only', interp), !,
+   eval_use_right_thing(Eq,RetType,Depth,Self,X,Y).
 eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
 
 %eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
@@ -1913,10 +1918,17 @@ max_counting(F,Max):- flag(F,X,X+1),  X<Max ->  true; (flag(F,_,10),!,fail).
 must_unify(A,A):-!.
 must_unify(A,B):- fail, throw('Error-last-form'(must_unify(A,B))). % @TODO
 
+
+arity_args(List,ArgList):- List=ArgList,!.
+arity_args(List,ArgList):- throw('Error-last-form'(arity_args(List,ArgList))).
+
+eval_20(_Eq,_RetType,_Depth,_Self,['compiled-info',S],RetVal):- !, user_io('mc__1_1_compiled-info'(S,RetVal)).
 % OLD
-eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
-eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
-eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
+%eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
+eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom'|Args],[H,T]):- !,
+   arity_args(Args,[OneArg]), must_be(iz_conz,OneArg), must_unify(OneArg,[H|T]).
+eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!,
+   arity_args(TwoArgs,[HH,TT]), must_be(iz_conz,TT),H=HH,T=TT,must_unify(TwoArgs,[H,T]).
 % NEW
 eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
@@ -3085,10 +3097,13 @@ simple_math(X):- number(X),!.
 
 
 eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-string!'(Str,NoResult).
+eval_40(_Eq,_RetType,_Depth,_Self,['call-string',Str],NoResult):- !,'call-string!'(Str,NoResult).
 
 'call-string!'(Str,NoResult):-
                read_term_from_atom(Str,Term,[variables(Vars)]),!,
-               call(Term),NoResult=Vars.
+               stream_property(Err, file_no(2)),
+               user_io(with_output_to(Err,(format('~N'),call(Term),format('~N')))),
+               NoResult=Vars.
 
 
 /*

@@ -773,7 +773,7 @@ maybe_trace:- is_extreme_debug(trace).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-%is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
+bis_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
@@ -842,10 +842,18 @@ debug_info(_Topic,_Info):- \+ is_douglas,!.
 debug_info(Topic,Info):- original_user_error(X),
   mesg_color(Topic, TopicColor),
   mesg_color(Info,  InfoColor),
-  \+ \+ (( numbervars(Info,4123,_,[attvar(bind)]),
+  \+ \+ ((
+  maybe_nv(Info),
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
   format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,debug_pp_info(RNVInfo))]))).
+
+maybe_nv(Info):- ground(Info),!.
+%maybe_nv(Info):- term_attvars(Info,AVs), AVs\==[],!, maplist(maybe_nv_each,AVs).
+%maybe_nv(Info):- sub_term_safe(DVar,Info),compound(DVar),compound_name_arity(Info,'$VAR',_),!.
+maybe_nv(Info):- numbervars(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
+   term_attvars(Info,AVs), maplist(maybe_nv_each,AVs),numbervars(Info,CountUP,_,[attvar(bind),singleton(false)]).
+maybe_nv_each(V):- notrace(ignore(catch((attvar(V),get_attr(V,vn,Named),!,V='$VAR'(Named)),_,true))),!.
 
 debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),!,debug_pp_cmpd(Info,F,Args).
 debug_pp_info(Info):-  write_src(Info).

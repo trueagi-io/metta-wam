@@ -347,6 +347,8 @@ invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
    split_last_n(L,Args,ArgsFirst,ArgsLast),
    invert_curried_structure(F,LenArgs,ArgsFirst,Result).
 
+
+recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_redef_fa(FnName,LenArgs)),!.
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
@@ -357,6 +359,7 @@ recompile_from_depends(FnName,LenArgs) :-
    %retractall(H),
    findall(FnD/ArityD,transpiler_depends_on(FnD,ArityD,FnName,LenArgs),List),
    transpiler_debug(2,(format_e("recompile_from_depends list ~w\n",[List]))),
+   debug_info(recompile_from_depends, fa(FnName,LenArgs)=List),
    maplist(recompile_from_depends0,List).
 
 unnumbervars_wco(X,XXX):- compound(X),
@@ -378,7 +381,7 @@ number_vars_wo_conficts(X,XX):-
    numbervars(XX,N2,_,[attvar(skip)]).
 
 
-
+recompile_from_depends0(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_parent(FnName,LenArgs)),!.
 recompile_from_depends0(Fn/Arity) :-
    %format_e("recompile_from_depends0 ~w/~w\n",[Fn,Arity]),flush_output(user_output),
    ArityP1 is Arity+1,
@@ -1659,10 +1662,13 @@ correct_assertz(Info,Info).
 
 
 compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
-compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
-   compiler_assertz(InfoC).
+
 
 compiler_assertz(Info):- debug_info(compiler_assertz, Info),fail.
+
+compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
+   debug_info(compiler_assertz,correct_assertz(ca)),
+   compiler_assertz(InfoC).
 
 compiler_assertz(Info):- once(try_optimize_prolog(ca,Info,Info2)),Info\=@=Info2,!,
      debug_info(compiler_assertz,optimize_prolog(ca)),
@@ -1680,12 +1686,20 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
 
 
 skip_redef(Info):- \+ callable(Info),!,fail.
-skip_redef(Info:-_):- !,skip_redef(Info).
-skip_redef(Info):- predicate_property(Info,static),!.
-skip_redef(_:Info):- !, skip_redef(Info).
-skip_redef(Info):- compound(Info),compound_name_arity(Info,F,A), compiler_data(F/A),!,fail.
-skip_redef(Info):- source_file(this_is_in_compiler_lib,F), source_file(Info,F).
+skip_redef(Info:-_):- !,skip_redef_head(user,Info).
+skip_redef(_:Info):- \+ callable(Info),!,fail.
+skip_redef(M:(Info:-_)):- !,skip_redef_head(M,Info).
+
+skip_redef_head(_,Info):- \+ callable(Info),!,fail.
+skip_redef_head(_,M:Info):- !, skip_redef_head(M, Info).
+skip_redef_head(M,Info):- predicate_property(M:Info,static),!.
+skip_redef_head(_,Info):- predicate_property(Info,static),!.
+skip_redef_head(_,Info):- compound(Info),compound_name_arity(Info,F,A), compiler_data(F/A),!,fail.
+skip_redef_head(M,Info):- source_file(this_is_in_compiler_lib,F), once(source_file(M:Info,F);source_file(Info,F)).
 %skip_redef(Info):- source_file(Info,_). % diallow otehr places
+
+skip_redef_fa(Fn/Arity) :- create_mc_name(Arity,Fn,FnWPrefix),succ(Arity,ArityP1),functor(Info,FnWPrefix,ArityP1),
+   skip_redef_head(user,Info),!.
 
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
@@ -2078,10 +2092,15 @@ remove_stub(Space,Fn,Arity):- \+ transpiler_stub_created(Space,Fn,Arity),!.
 remove_stub(Space,Fn,Arity):- retract(transpiler_stub_created(Space,Fn,Arity)),!,
   transpile_impl_prefix(Fn,Arity,IFn),abolish(IFn/Arity),!.
 
-% !(compiled-info cdr-atom)
-'compiled-info'(S):-
+% !(compiled-info! cdr-atom)
+transpiler_predicate_store(builtin, 'compiled-info', [1], [], '', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_compiled-info'(S,RetVal):-
   find_compiled_refs(S, Refs),
-  print_refs(Refs).
+  print_refs(Refs),!,
+  length(Refs,RetVal).
+
+'compiled_info'(S):-
+  'mc__1_1_compiled-info'(S,_RetVal).
 
 print_refs(Refs):- is_list(Refs),!,maplist(print_refs,Refs).
 print_refs(Refs):- atomic(Refs),clause(M:H,B,Refs),!,print_itree(((M:H):-B)).
@@ -2092,7 +2111,9 @@ print_itree((M:H)):- M==user,!,print_itree((H)).
 print_itree(((M:H):-B)):- M==user,!,print_itree((H:-B)).
 print_itree(T):- nl_print_tree(T).
 
-nl_print_tree(PT):- format('~N'),ppt(PT),format('~N').
+nl_print_tree(PT):-
+  stream_property(Err, file_no(2)),
+  with_output_to(Err,(format('~N'),ppt(PT),format('~N'))).
 
 
 find_compiled_refs(S, Refs):-

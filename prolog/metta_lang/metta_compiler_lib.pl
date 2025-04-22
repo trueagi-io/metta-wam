@@ -580,6 +580,16 @@ transpiler_predicate_nary_store(builtin, 'py-atom-call!', 1, ['Atom'], 'Atom', '
     py_call_method_and_args(SymRef,Args,Res),
     py_metta_return_value(_RetType,Ret,Res).
 
+transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__py-dot-call'(SymRef,Args,Ret) :- 'mc_n_1__py-dot-call!'(SymRef,Args,Ret).
+
+transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
+    eval_only_interp([['py-dot'|SymRef]|Args],Ret).
+    %make_py_dot(Arg1,Arg2,Res)
+    %py_call_method_and_args(SymRef,Args,Res),
+    %py_metta_return_value(_RetType,Ret,Res).
+
 this_is_in_compiler_lib.
 
 metta_to_metta_macro_recurse(I,O):-
@@ -632,6 +642,7 @@ metta_body_macro_pass(e,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,
 metta_body_macro_pass(e,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
 metta_body_macro_pass(e,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
 
+metta_body_macro_pass(f,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
 metta_body_macro_pass(f,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 
 %metta_body_macro_pass(e,[eval,Next], Next).
