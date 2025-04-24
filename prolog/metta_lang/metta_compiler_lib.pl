@@ -685,5 +685,5 @@ metta_body_macro_pass(_,AsBodyFnOut, AsBodyFnOut).
 
 
 
-no_repeat_variant_var(Var):- no_repeat_var(variant_by_type,Var).
+
 

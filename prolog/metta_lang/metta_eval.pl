@@ -2969,6 +2969,8 @@ eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    no_repeat_variant_var(YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
+no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
+
 eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
    no_repeats_var(call_as_p2(P2),YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
@@ -3256,7 +3258,6 @@ eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     memoize_tf(transpiler_peek(Sym,Len,'mc',Fn, N)),
     length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
-
 
 
 
