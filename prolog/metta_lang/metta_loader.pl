@@ -2074,10 +2074,10 @@ load_metta_buffer(Self, Filename) :-
     % Process each buffered expression.
     (forall(
         user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
-         (maybe_name_vars(NamedVarsList),
-          (must_det_ll(do_metta(file(Filename), Mode, Self, Expr, _O))
-     -> true
-     ;  (trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
+         (must_det_lls(maybe_name_vars(NamedVarsList)),
+          (must_det_lls(do_metta(file(Filename), Mode, Self, Expr, _O)) -> true
+        ;  (ignore(rtrace(do_metta(file(Filename), Mode, Self, Expr, _O2))),
+                   trace, epp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
 
 
 %!  is_file_stream_and_size(+Stream, -Size) is nondet.
@@ -3126,11 +3126,13 @@ really_use_corelib_file(Dir, File) :-
      exists_file(Filename),
      debug(lsp(main), "~q", [start_really_use_corelib_file(Dir, File)]),
      locally(nb_setval(may_use_fast_buffer, t),
+        locally(nb_setval(debug_context, stdlib),
              locally(nb_setval(suspend_answers, true),
-            without_output(include_metta_directory_file('&corelib', Dir, Filename)))),
+            without_output(include_metta_directory_file('&corelib', Dir, Filename))))),
      asserta(really_using_corelib_file),
      debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))).
 
 without_output(G):- is_devel,!,call(G).
 without_output(G):- with_output_to(string(_), G).
+:- nb_setval(debug_context, 'run').
 

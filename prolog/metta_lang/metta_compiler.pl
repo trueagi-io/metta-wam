@@ -1662,10 +1662,13 @@ correct_assertz(call_fn_native(X,_Info,Y),InfoC):-
 correct_assertz(Info,Info).
 
 
-compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
+is_prolog_code(Info):- strip_module(Info,_,Neck), compound(Neck), compound_name_arity(Neck,F,_),
+  (Neck == ':-' ; \+ compiler_data(F/_)),!.
 
+compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info),fail.
 
-compiler_assertz(Info):- debug_info(compiler_assertz, Info),fail.
+compiler_assertz(Info):-
+   (is_prolog_code(Info)-> debug_info(prolog_code, t(Info)); debug_info(compiler_assertz, Info)),fail.
 
 compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    debug_info(compiler_assertz,correct_assertz(ca)),
@@ -1707,24 +1710,20 @@ skip_redef_fa(Fn,LenArgs) :-
    functor(Info,FnWPrefix,LenArgsTotalPlus1),
    skip_redef_head(user,Info),!.
 
-into_fa(Fn/[Arity],Fn,Arity):- must_be(number,Arity).
-into_fa(Fn/Arity,Fn,Arity):- must_be(number,Arity).
-into_fa(FnArity,_Fn,_Arity):- throw(type_error(f/a,FnArity)).
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
 %user:numbervars(Term):- varnumbers:numbervars(Term).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
-must_det_lls((A,B)):- !, (A, B).
-must_det_lls(G):- !,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
+%must_det_lls(G):- call(G). % already tracing
 %must_det_lls((G,B)):- catch(G,E,(wdmsg(E),fail)),!,must_det_lls(B).
 %must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls(G):- tracing,!,(real_notrace(G)*->true;fail).
-must_det_lls(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
+must_det_lls(G):- catch(G,E,(trace_break(must_det_lls(G)),wdmsg(G->E),rtrace(G),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
-must_det_lls(G):- ignore((notrace,nortrace,trace)),rtrace(G),!.
+must_det_lls(G):- ignore((notrace,nortrace,trace_break(must_det_lls(G)))),rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
@@ -2274,10 +2273,16 @@ call3(G):- call(G).
 call4(G):- call(G).
 call5(G):- call(G).
 
-trace_break:- trace,break.
+trace_break:- trace_break((trace,break)).
+trace_break(G):-
+   stream_property(Err, file_no(2)),
+   current_output(Cur), Cur\=@=Err,!,
+   with_output_to(Err, trace_break(G)).
+trace_break(G):- nl, writeq(call(G)), trace,break.
+%    :- set_prolog_flag(gc,false).
 
 :- if(debugging(metta(compiler_bugs))).
-:- set_prolog_flag(gc,false).
+    :- set_prolog_flag(gc,false).
 :- endif.
 
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).

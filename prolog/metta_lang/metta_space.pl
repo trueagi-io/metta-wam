@@ -2341,4 +2341,4 @@ alpha_unify(What, What0) :-
     (nonvar(What) -> What = What0; What == What0).
 
 
-:- find_missing_cuts.
+%:- find_missing_cuts.

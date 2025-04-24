@@ -1022,6 +1022,8 @@ while [ "$#" -gt 0 ]; do
 	--output=*) METTALOG_OUTPUT="${1#*=}"  ;;
         --report=*) generate_report_auto_reply="${1#*=}" ;;
         --clean) clean=1; if_failures=0 ;;
+	--exe=force) add_to_list "--exe=true" passed_along_to_mettalog ;; # only first time is forced
+	--exe=*) add_to_list "$1" passed_along_to_mettalog ;; # only first time is forced
         --regression*) clean=0; if_failures=0; if_regressions=1 ;;
         --continu*) clean=0; if_failures=0 ;;
         --fail*) clean=0; if_failures=1 ;;

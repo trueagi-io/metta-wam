@@ -599,40 +599,66 @@ metta_to_metta_macro_recurse(I,I).
 
 metta_to_metta_macro(NoList,NoList):- \+ is_list(NoList),!.
 metta_to_metta_macro([EQ,HeadIsN,AsBodyFnN], ['=',HeadIsC, AsBodyFnOut]):- EQ=='=', !,
- must_det_lls((
+ ((
  copy_term(AsBodyFnN+HeadIsN,AsBodyFnC+HeadIsC,_),
  number_vars_wo_conficts(AsBodyFnC+HeadIsC,AsBodyFn+HeadIs),
  (AsBodyFnC+HeadIsC=AsBodyFn+HeadIs),
     metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut),!,
     \+ \+ if_t(AsBodyFn\=@=AsBodyFnOut,
-    ( debug_info(metta_macro_in,c(ppt([=,HeadIs, AsBodyFn]))),!,
-      debug_info(metta_macro_out,c(ppt([=,HeadIs, AsBodyFnOut]))))))),!.
-metta_to_metta_macro(Body,BodyOut):- metta_to_metta_macro(['=',[whatever],Body],['=',[whatever],BodyOut]).
+    ( debug_info(metta_macro_in,t(([=,HeadIs, AsBodyFn]))),!,
+      debug_info(metta_macro_out,t(([=,HeadIs, AsBodyFnOut]))))))),!.
+metta_to_metta_macro(Body,BodyOut):- metta_to_metta_macro(['=',[whatever],Body],['=',[whatever],BodyOut]),!.
 
 
+%metta_body_macro(_HeadIs, AsBodyFn, AsBodyFnOut):-!, AsBodyFnOut=AsBodyFn.
 metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
-   must_det_lls((metta_body_macro1(HeadIs, [], AsBodyFn, AsBodyFnE),
+   must_det_lls((
+    nop((term_variables(HeadIs+AsBodyFn,Vars),copy_term(Vars,Copy),freeze_vars(Vars,Copy))),
+    metta_body_macro1(HeadIs, [], AsBodyFn, AsBodyFnE),
     metta_body_macro2(HeadIs, [], AsBodyFnE, AsBodyFnMid),
    (AsBodyFn =@= AsBodyFnMid -> AsBodyFnMid = AsBodyFnOut ;
-     metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)))).
+     metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)),
+    nop((unfreeze_vars(Vars,Copy))))).
 
-metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
-metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
+variables_are_safe(Inp,Goal):-
+    term_variables(Inp,Vars),copy_term(Inp+Vars,InpC+Copy),freeze_vars(Vars,Copy),
+    call(Goal),Inp=@=InpC,
+    unfreeze_vars(Vars,Copy).
+
+freeze_var(Var,Copy):- put_attr(Var,cant_bind,Copy).
+freeze_vars(Vars,Copy):- maplist(freeze_var,Vars,Copy).
+cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),Copy=@=NewValue.
+unfreeze_var(Var,_):- del_attr(Var,cant_bind),!.
+%unfreeze_var(Var,Copy):- get_attr(Var,cant_bind,Now),Copy==Now,del_attr(Var,cant_bind),Var=@=Copy.
+unfreeze_vars(Vars,Copy):- maplist(unfreeze_var,Vars,Copy).
+
+
+metta_body_macro1(_HeadIs, _,_AsBodyFn, AsBodyFnO):- nonvar(AsBodyFnO),!,trace_break(nonvar(AsBodyFnO)).
+metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ compound(AsBodyFn), !, AsBodyFn=AsBodyFnO.
+metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ is_list(AsBodyFn), !, AsBodyFn=AsBodyFnO.
 metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro1(HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
+
 metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
+   once((copy_term(AsBodyFn,AsBodyFnCopy),
    maplist( metta_body_macro1(HeadIs, Stack), AsBodyFn, AsBodyFnMid),
+   AsBodyFn=@=AsBodyFnCopy)),
    [Op|AsBodyFnMid]=OpAsBodyMid,
    copy_term(OpAsBodyMid,OpAsBodyMidCopy),
    metta_body_macro_pass(e,OpAsBodyMid,AsBodyFnOut),
    OpAsBodyMid=@=OpAsBodyMidCopy,!.
+metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn).
 
-metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
-metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
+metta_body_macro2(_HeadIs, _,_AsBodyFn, AsBodyFnO):- nonvar(AsBodyFnO),!,trace_break(nonvar(AsBodyFnO)).
+metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ compound(AsBodyFn), !, AsBodyFn=AsBodyFnO.
+metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ is_list(AsBodyFn), !, AsBodyFn=AsBodyFnO.
+metta_body_macro2(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro1(HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
+
 metta_body_macro2(HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
-   copy_term(OpAsBody,OpAsBodyMidCopy),
+   once((copy_term(OpAsBody,OpAsBodyMidCopy),
    metta_body_macro_pass(f, OpAsBody , AsBodyFnOut),
-   OpAsBody=@=OpAsBodyMidCopy,!,
-   maplist( metta_body_macro2(HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally).
+   OpAsBody=@=OpAsBodyMidCopy)),
+   maplist( metta_body_macro2(HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally),!.
+metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn).
 
 metta_body_macro_pass(e,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
 metta_body_macro_pass(e,['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
@@ -655,7 +681,7 @@ metta_body_macro_pass(f,['unique',Eval],
    ['let',Var,['call-fn!','no_repeat_var',variant_by_type],
      ['let',Res,Eval,['metta-unify',Var,Res],Res]]).
 
-metta_body_macro_pass(f,AsBodyFnOut, AsBodyFnOut).
+metta_body_macro_pass(_,AsBodyFnOut, AsBodyFnOut).
 
 
 

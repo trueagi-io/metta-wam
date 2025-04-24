@@ -1928,13 +1928,15 @@ eval_20(_Eq,_RetType,_Depth,_Self,['compiled-info',S],RetVal):- !, user_io('mc__
 % OLD
 %eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom',OneArg],_):- OneArg==[], !, fail. %H=[],T=[],!.
 eval_20(_Eq,_RetType,_Depth,_Self,['decons-atom'|Args],[H,T]):- !,
-   arity_args(Args,[OneArg]), must_be(iz_conz,OneArg), must_unify(OneArg,[H|T]).
+   arity_args(Args,[OneArg]), should_be(iz_conz,OneArg), must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!,
-   arity_args(TwoArgs,[HH,TT]), must_be(iz_conz,TT),H=HH,T=TT,must_unify(TwoArgs,[H,T]).
+   arity_args(TwoArgs,[HH,TT]), should_be(iz_conz,TT),H=HH,T=TT,must_unify(TwoArgs,[H,T]).
 % NEW
 eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 
+
+should_be(P1,Term):- call(P1,Term).
 
 %eval_20(Eq,RetType,Depth,Self,['get-doc'|Args],Res):- !,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-get-doc'|Args],Res)),!.
 %eval_20(Eq,RetType,Depth,Self,['help!'|Args],Res):-!,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-help!'|Args],Res)),!.

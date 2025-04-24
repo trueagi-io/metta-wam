@@ -869,14 +869,8 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*)
-		ADD_COMPILE_ARG+=" $arg"
-		add_to_list "$arg" PRE_METTALOG_OPTIONS
-                continue
-		;;
-
-           --show*|--hide*)
-		ADD_COMPILE_ARG+=" $arg"
+           --douglas*|--show*|-O)
+		add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue
 		;;
@@ -1361,7 +1355,7 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS
-    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$reference_file"
+    MAKE_REF_FILE="swipl ${SWI_OPTIONS[*]} -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$reference_file"
     DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
 
     unset DISPLAY

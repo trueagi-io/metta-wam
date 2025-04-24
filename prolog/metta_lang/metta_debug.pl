@@ -630,6 +630,12 @@ with_debug(Flag, Goal) :-
     reset_only_eval_num,
     setup_call_cleanup(set_debug(Flag, true), call(Goal), set_debug(Flag, false)).
 
+
+
+%!  is_mettalog_rt is semidet.
+%  True if the Prolog runtime flag `mettalog_rt` is true
+is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
+
 %!  is_nodebug is nondet.
 %
 %   Checks if the 'nodebug' option is set to true.
@@ -642,6 +648,7 @@ with_debug(Flag, Goal) :-
 %
 
 % Check if the option 'nodebug' is explicitly set to false.  (ideally very rare - code has to relaly know about this)
+is_nodebug :- is_mettalog_rt, !.
 is_nodebug :- option_value(nodebug, false), !, fail.
 % By default spawned threads would need nodebug=false
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
@@ -728,7 +735,7 @@ flag_to_var(Flag,Var):-Flag=Var.
 set_debug(metta(Flag), TF) :- nonvar(Flag), !, set_debug(Flag, TF).
 %set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag, Val) :- atom(Flag), atom_concat('trace-on-', Var, Flag),!,set_debug(Var,Val).
-set_debug(Flag, Var) :- debugging(metta(Flag), Var),!.
+set_debug(Flag, Var) :- prolog_debug:debugging(metta(Flag), Var, _),!.
 set_debug(Flag, TF) :- TF == 'False', !, set_debug(Flag, false).
 set_debug(Flag, TF) :- TF == 'silent', !, set_debug(Flag, false).
 set_debug(Flag, TF) :- atomic(TF), symbol_concat('h',_,TF),!, set_debug(Flag, false). % hide, hid, hidden, ..
@@ -773,7 +780,7 @@ maybe_trace:- is_extreme_debug(trace).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-bis_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
+% is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
@@ -802,7 +809,7 @@ system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
 
-woc(Goal):- woc(error,Goal).
+woc(Goal):- woc(true,Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 % woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
@@ -819,34 +826,168 @@ test_locally_setting_flags:-
 
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- initialization(set_prolog_flag(occurs_check,true)).
+set_occurs_check_default:- thread_self(GC),GC==gc,!.
+set_occurs_check_default:- thread_self(NonMain),NonMain\==main,!.
 set_occurs_check_default:- thread_self(Self),set_occurs_check_default(Self),!.
 
 set_occurs_check_default(NonMain):- NonMain\==main,set_prolog_flag(occurs_check,false).
 set_occurs_check_default(main):- \+ is_douglas,set_prolog_flag(occurs_check,false).
-set_occurs_check_default(_):- set_prolog_flag(occurs_check,error),set_more_douglas.
+set_occurs_check_default(_):- set_prolog_flag(occurs_check,false),set_more_douglas.
 
-set_more_douglas:- set_prolog_flag(gc,false).
+set_more_douglas:- thread_self(Self), (Self\==main->true;set_prolog_flag(gc,false)).
 
 
 :- initialization(set_occurs_check_default).
 :- thread_initialization(set_occurs_check_default).
 
-debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
+%debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
+debug_info_goal(Topic,Info):- \+ unfiltered_topic_and_info(Topic,Info),!.
 debug_info_goal(Topic,Info):- original_user_error(X),
   mesg_color(Topic, TopicColor),
   mesg_color(Info,  InfoColor),
   \+ \+ (( % numbervars(Info,4123,_,[attvar(bind)]),
-  format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,Info)]))).
+  format(X,'~N ~@: ~@~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,Info)]))).
 
-debug_info(_Topic,_Info):- \+ is_douglas,!.
-debug_info(Topic,Info):- original_user_error(X),
-  mesg_color(Topic, TopicColor),
-  mesg_color(Info,  InfoColor),
-  \+ \+ ((
-  maybe_nv(Info),
-  %number_vars_wo_conficts1(Info,RNVInfo),
-  if_t(var(RNVInfo),Info=RNVInfo),
-  format(X,'~N ~@: ~@ ~n~n',[ansicall(TopicColor,write(Topic)),ansicall(InfoColor,debug_pp_info(RNVInfo))]))).
+
+/*
+
+  --show=code_compiler
+      Show only topics matching 'code_compiler'
+      (includes things like code_compiler_assertz, rust_code_compiler_assertz, etc.)
+
+  --show=code_compiler --hide=stdlib
+      Show only topics matching 'code_compiler',
+      but hide anything that also matches 'stdlib'
+
+  --show=compiler_assertz --hide=prolog,depend
+      Show only topics matching 'compiler_assertz',
+      but hide anything that also matches 'prolog' or 'depend'
+
+  --show=cdr-atom
+      Show any messages that contain 'cdr-atom' anywhere in the topic name
+
+  --hide=annoy1
+      Show everything except topics matching 'annoy1'
+
+  --hide=debug,trace --show=compiler_assertz
+      Default is to show everything **except** debug and trace,
+      but **force-enable** anything matching 'compiler_assertz' (even if it overlaps)
+*/
+
+unfiltered_topic_and_info(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(show, stdlib), !, fail.
+unfiltered_topic_and_info(Topic,Info):-
+  (nb_current(debug_context, Ctx)->true;Ctx=runtime),
+   sformat(Combined,'~w ~w ~w',[Ctx,Topic,Info]),
+   unfiltered_topic(Combined),!.
+
+currently_stdlib:- nb_current(debug_context, Ctx), Ctx == stdlib.
+
+filter_matches(Ele,Topic):- Ele=@=Topic,!.
+filter_matches(Ele,Topic):- string(Topic),!,contains_atom(Topic,Ele).
+filter_matches(Ele,Topic):- term_to_atom(Topic,Str),contains_atom(Str,Ele).
+
+filter_matches_var(Var, Topic):-
+    nb_current_listify(Var,List), member(Ele,List),filter_matches(Ele,Topic),!.
+nb_current_listify(N,L):- nb_current(N,V),V\==[],!,listify(V,L),!.
+nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
+
+unfiltered_topic(T):- unfiltered_topic_cl(T).
+unfiltered_topic_cl(Topic):-
+  filter_matches_var(hideall, Topic), !,fail.
+unfiltered_topic_cl(Topic):-
+  filter_matches_var(showall, Topic), !.
+unfiltered_topic_cl(Topic):-
+  option_value(filter_default,Show), Show==show,
+  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),!, fail.
+unfiltered_topic_cl(Topic):-
+  option_value(filter_default,Hide), Hide==hide, !,
+  \+ (filter_matches_var(show, Topic), \+ filter_matches_var(hide, Topic)),!.
+  %wdmsg(filtered_topic(Topic)), fail.
+unfiltered_topic_cl(_):- option_value(filter_default,_),!.
+
+
+
+:- volatile(thread_util:has_console/4).
+:- dynamic(did_setup_show_hide_debug/0).
+
+%setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
+setup_show_hide_debug:- did_setup_show_hide_debug,!.
+setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
+setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
+setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
+setup_show_hide_debug:- nb_current_listify(hideall,Showing),maplist(set_tf_debug(false),Showing), fail.
+setup_show_hide_debug:- !.
+%setup_show_hide_debug:- list_debug_topics.
+
+set_tf_debug(TF,Flag):- set_debug(Flag, TF),debug_info_now(cmdargs,set_debug(Flag,TF)).
+
+
+is_qcompiling:- current_prolog_flag(os_argv,O), member('qcompile_mettalog.',O).
+
+
+boot_debug_show(qcompile).
+boot_debug_show(initialize).
+boot_debug_show(stdlib).
+boot_debug_show(cmdargs).
+some_debug_show(boot, X):- boot_debug_show(X).
+
+dont_show_any_qcompile:- filter_matches_var(hidall,qcompile),!.
+dont_show_any_qcompile:- filter_matches_var(show,qcompile),!, fail.
+dont_show_any_qcompile:- filter_matches_var(showall,qcompile),!, fail.
+dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
+dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
+dont_show_any_qcompile.
+
+         debug_info( Topic, Info):- setup_show_hide_debug,!,ignore(debug_info_filtered( Topic, Info)),!.
+debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
+debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
+debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.
+%debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.
+debug_info_filtered( Topic, Info):- unfiltered_topic_and_info( Topic, Info),!,debug_info_now( Topic, Info),!.
+debug_info_filtered(_Topic,_Info):- !.
+
+
+one_ele_delistify([X],X):-!.
+one_ele_delistify(X,X).
+
+
+debug_info(Info):- compound(Info),
+   compound_name_arguments(Info,Topic,Params),
+   one_ele_delistify(Params,Args),!, debug_info(Topic,Args).
+debug_info(Info):- compound(Info), compound_name_arguments(Info,Topic,_),!,
+    debug_info(Topic,Info).
+debug_info(Info):- debug_info(debug_info,Info).
+
+topic_color_string(Topic,TopicColor,Str):- \+ is_list(Topic),
+   mesg_color(Topic, TopicColor), Topic = Str,!.
+topic_color_string(Topic,TopicColor,Str):- \+ is_list(Topic),
+   rtrace((mesg_color(Topic, TopicColor), Topic = Str)),!.
+topic_color_string([Topic,Info],[],StrO):- !,
+   must_det_lls((mesg_color(Topic, TopicColor), mesg_color(Info, InfoColor))),
+   wots(Str, must_det_lls(( format('~@ - ~@',[ansicall(TopicColor,write(Topic)),
+                              ansicall(InfoColor,write(Info))])))),!,
+     must_det_lls((Str=StrO)),!.
+topic_color_string(Topic,TopicColor,Str):-
+   mesg_color(Topic, TopicColor), Topic = Str,!.
+%debug_info_now(Topic, Info):-!.
+debug_info_now(Topic, Info):-
+ %writeln(debug_info_now(Topic, Info)),
+ must_det_ll((
+  stream_property(X, file_no(2)),
+  %original_user_error(X),
+  format(X,'~N',[]))),
+    must_det_ll(topic_color_string(Topic, TopicColor, TopicStr)),
+    must_det_ll((
+      mesg_color(Info,  InfoColor),
+      \+ \+ ((
+      maybe_nv(Info),
+      %number_vars_wo_conficts1(Info,RNVInfo),
+      if_t(var(RNVInfo),Info=RNVInfo),
+      format(X,'~@: ~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,debug_pp_info(RNVInfo))]))))).
+
+maybe_ansicall(Nil,Goal):- Nil == [],!,call(Goal).
+maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).
 
 maybe_nv(Info):- ground(Info),!.
 %maybe_nv(Info):- term_attvars(Info,AVs), AVs\==[],!, maplist(maybe_nv_each,AVs).
@@ -855,14 +996,17 @@ maybe_nv(Info):- numbervars(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
    term_attvars(Info,AVs), maplist(maybe_nv_each,AVs),numbervars(Info,CountUP,_,[attvar(bind),singleton(false)]).
 maybe_nv_each(V):- notrace(ignore(catch((attvar(V),get_attr(V,vn,Named),!,V='$VAR'(Named)),_,true))),!.
 
+%debug_pp_info(Info):- !, writeln(Info),!.
 debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),!,debug_pp_cmpd(Info,F,Args).
 debug_pp_info(Info):-  write_src(Info).
-debug_pp_cmpd(_Info,'c',[Call]):- !, nl, write('  '), ignore(catch(notrace( call(Call)),E,ansicall(red,(nl,writeln(err(E,Call),nl))))),!.
-debug_pp_cmpd(_Info,'t',[Call]):- !, write('  '), debug_pp_tree(Call).
-debug_pp_cmpd(_Info,'s',[Call]):- !, nl, write('  '), debug_pp_src(Call).
-debug_pp_cmpd(_Info,'wi',[Call]):- !, nl, write('  '), debug_pp_w(write_src_wi,Call).
-debug_pp_cmpd(_Info,'q',[Call]):- !, nl, write('  '), debug_pp_term(Call).
-debug_pp_cmpd(Info,':-',_):- !, nl, write('  '), debug_pp_tree(Info).
+
+debug_pp_cmpd(_Info,'c',[Call]):- !, ignore(catch(notrace( call(Call)),E,ansicall(red,(nl,writeln(err(E,Call),nl))))),!.
+debug_pp_cmpd(_Info,'t',[Call]):- !, debug_pp_tree(Call).
+debug_pp_cmpd(_Info,'s',[Call]):- !, debug_pp_src(Call).
+debug_pp_cmpd(_Info,'wi',[Call]):- !, debug_pp_w(write_src_wi,Call).
+debug_pp_cmpd(_Info,'q',[Call]):- !, debug_pp_term(Call).
+debug_pp_cmpd(Info,':-',_):- !, debug_pp_tree(Info).
+debug_pp_cmpd(Info,_,_Args):- debug_pp_tree(Info),!.
 debug_pp_cmpd(Info,'[|]',_):- !, write_src(Info),!.
 debug_pp_cmpd(Info,_,_Args):- debug_pp_tree(Info),!.
 debug_pp_now(Info):- pp_as_src(Info),!,debug_pp_src(Info),!.
@@ -874,24 +1018,32 @@ print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),writeln(S),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
 ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
-ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),fail)),!,throw(E).
+%ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),throw(E),fail)),!.
 %pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
 %pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
 ppt0(PTS):- writeln(PTS),!.
 
-ppt(O):- format('~N'),ppt0(O),format('~N').
-%pp(O):- print(O).
+%ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
+ppt(O):- format('~N '),ppt0(O),format('~N').
+%ppt0(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.
  debug_pp_w(P1,Info):- ignore(catch(notrace( call(P1,Info)),_,ansicall(red,(nl,writeln(err(P1)),nl,debug_pp_tree(Info))))),!.
  debug_pp_src(Info):- ignore(catch(notrace( write_src(Info)),_,ansicall(red,(nl,writeln(err(src)),nl,debug_pp_tree(Info))))),!.
+%debug_pp_tree(Info):- !,writeln(Info),!.
+debug_pp_tree(Info):- simple_compound_a1(Info),ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
 debug_pp_tree(Info):- ignore(catch(notrace(ppt(Info)),E,ansicall(red,(nl,writeln(err(tree(E))),nl,debug_pp_term(Info))))),!.
 debug_pp_term(Info):- ignore(catch(notrace(print(Info)),E,ansicall(red,(writeq(Info),nl,writeln(err(print)),nl,nop(((display(E=Info),bt))))))),!.
 
 pp_as_src(Info):- compound(Info), arg(_,Info,E),is_list(E),E=[H|_],is_list(H),!.
 
-debug_info(Info):- compound(Info),compound_name_arguments(Info,Topic,Args),!,debug_info(Topic,Args).
-debug_info(Info):- debug_info(debug_info,Info).
+simple_compound_a1(Info):- \+ acyclic_term(Info),!,fail.
+simple_compound_a1(Info):- \+ is_list(Info), compound(Info),compound_name_arguments(Info,_,Args), maplist(simple_arg_a1,Args).
+simple_arg_a1(Arg):- \+ compound(Arg),!.
+simple_arg_a1(Arg):- is_list(Arg),!, Arg \= [_,_|_].
+simple_arg_a1(Arg):- is_ftVar(Arg),!.
+simple_arg_a1(Cmp):- compound_name_arguments(Cmp,_,Args), maplist(simple_arg_a1,Args).
+
 
 %!  is_showing(+Flag) is nondet.
 %
@@ -1434,5 +1586,7 @@ user:choice_info(clause(Goal, ClauseRef, jump(PC))) -->
     prolog_stack:success_goal(Goal, 'an in-clause choice_info point'),
     [ nl, '  ' ],
     prolog_stack:where_no_goal(Where).
+
+
 
 
