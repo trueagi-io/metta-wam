@@ -179,7 +179,7 @@ set_io_flags() {
         add_to_list "--stdin=file" STDIO_OPTIONS
         add_to_list "--input-filename=${input_filename}" STDIO_OPTIONS
     else
-        add_to_list "--stdin=tty" STDIO_OPTIONS
+        : #add_to_list "--stdin=tty" STDIO_OPTIONS
     fi
 
     #### STDOUT DETECTION ####
@@ -206,7 +206,7 @@ set_io_flags() {
             add_to_list "--output-filename=${output_filename}" STDIO_OPTIONS
         fi
     else
-        add_to_list "--stdout=tty" STDIO_OPTIONS
+        : #add_to_list "--stdout=tty" STDIO_OPTIONS
     fi
 
     #### STDERR DETECTION ####
@@ -233,7 +233,7 @@ set_io_flags() {
             add_to_list "--error-filename=${error_filename}" STDIO_OPTIONS
         fi
     else
-        add_to_list "--stderr=tty" STDIO_OPTIONS
+        : #add_to_list "--stderr=tty" STDIO_OPTIONS
     fi
 }
 
@@ -784,7 +784,7 @@ function handle_args {
         esac
 
 
-        if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
+	if [[ "$arg" =~ ^--timeout=([0-9]+)$ ]]; then
             parsed="${BASH_REMATCH[1]}"
 	    #do_DEBUG "TIMEOUT=$TIMEOUT PARSED=$parsed"
 	    TIMEOUT=$parsed
@@ -801,6 +801,7 @@ function handle_args {
         elif [[ "$arg" == "--no-python" ]]; then
             python_flag=false
             continue
+
         elif [[ "$arg" == "--repl" ]]; then
             #add_to_list "$arg" METTALOG_OPTIONS_LAST
             repl_flag=true
@@ -857,12 +858,29 @@ function handle_args {
                 continue
                 ;;
 
+           --exe=force) exe=force
+                continue
+		;;
+
            --exe=*) exe=${arg#*=}
                 continue
 		;;
            --EXE=*) exe=${arg#*=}
                 continue
 		;;
+
+           --douglas*)
+		ADD_COMPILE_ARG+=" $arg"
+		add_to_list "$arg" PRE_METTALOG_OPTIONS
+                continue
+		;;
+
+           --show*|--hide*)
+		ADD_COMPILE_ARG+=" $arg"
+		add_to_list "$arg" PRE_METTALOG_OPTIONS
+                continue
+		;;
+
             -x|-g|-t|-f|-F|-l|-s|-p|--on-error|--on-warning|--home|--stack-limit|--table-space|--shared-table-space|--pldoc)
                 SWI_OPTIONS+=("$arg")
                 SWI_FLAG_WITH_ARG=true
@@ -1197,10 +1215,6 @@ if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
 	    break  # Exit loop early as skip_compile is deleted
 	fi
     done
-fi
-
-if [[ " $* " == *" --douglas "* ]]; then
-    ADD_COMPILE_ARG+="--douglas"
 fi
 
 if [[ "$exe" == "force" ]]; then
