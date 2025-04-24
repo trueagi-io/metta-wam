@@ -3217,12 +3217,12 @@ eval_20(_Eq,RetType,_Dpth,_Slf,['====',X,Y],TF):- !,
 %eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mx__1_0+_make-var'(Types,Var).
 %eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
 
-transpiler_peek(Sym,Len,Type,Fn, N):-
-  transpiler_predicate_store(_Builtin, Sym, [Len], _, _, _, _),
+transpiler_peek(Sym,Len,Type,Fn, Min):-
+  transpiler_predicate_nary_store(_Builtin, Sym, Min, _, _, _, _, _, _),
+  Len>=Min,between(0,Len,N),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
-  between(0,Len,N),succ(N,N1),
   format(atom(Fn),'~w__1_~w+_~w',[Type,N,Sym]),
-  succ(N1,LenP1), current_predicate(Fn/LenP1),
+  succ(N,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
   %\+ transpiler_predicate_store(_,Sym,[_],_,_,_,_),
   ignore(ok_call_predicate(Sym,Len,Type)).
 
@@ -3265,7 +3265,8 @@ with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(F
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,Goal):-  Goal.
 
 :- dynamic memoized_result/3.
-memoize_tf(Goal) :-
+memoize_tf(Goal) :- call(Goal).
+memoize_tf_real(Goal) :-
     term_variables(Goal, Vars),
     copy_term(Goal, CopyGoal),numbervars(CopyGoal,0,_,[attvar(bind)]),
     (   memoized_result(CopyGoal, Vars, Result) ->
