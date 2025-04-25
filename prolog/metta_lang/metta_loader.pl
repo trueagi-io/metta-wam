@@ -3127,8 +3127,9 @@ really_use_corelib_file(Dir, File) :-
      debug(lsp(main), "~q", [start_really_use_corelib_file(Dir, File)]),
      locally(nb_setval(may_use_fast_buffer, t),
         locally(nb_setval(debug_context, stdlib),
+          locally(nb_setval(compiler_context, builtin),
              locally(nb_setval(suspend_answers, true),
-            without_output(include_metta_directory_file('&corelib', Dir, Filename))))),
+            without_output(include_metta_directory_file('&corelib', Dir, Filename)))))),
      asserta(really_using_corelib_file),
      debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))).
 
