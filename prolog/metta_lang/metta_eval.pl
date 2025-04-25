@@ -1119,11 +1119,12 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
   maplist(println_impl,Out),
   make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-println_impl(X):- ttyflush,user_io((format("~N~@~N",[write_sln(X)]))),!,flush_output,ttyflush.
+println_impl(X):- ttyflush,
+   user_io((format("~N"),write_sln(X),format("~N"))),flush_output,ttyflush.
 %println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 %println_impl(X):- ((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 
-princ_impl(X):- format("~@",[write_sln(X)]),!,flush_output.
+princ_impl(X):- user_io((write_sln(X))),flush_output,ttyflush.
 
 write_sln(X):- string(X), !, write(X),flush_output.
 write_sln(X):- write_src_woi(X),flush_output.
@@ -1340,8 +1341,9 @@ has_unicode(A):- atom_codes(A,Cs),member(N,Cs),N>127,!.
 
 set_last_error(_).
 
-'mi__1_2_=alpha'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF).
-'mi__1_2_=alpha-unify'(X0,Y0,TF):- as_tf(equal_enough_for_test_renumbered(alpha_equ,X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
+'mi__1_2_=alpha'(X0,Y0,TF):- as_tf('=alpha'(X0,Y0),TF).
+
+'mi__1_2_=alpha-unify'(X0,Y0,TF):- as_tf('=alpha'(X0,Y0),TF),(TF=='True',blend_vars(X0,Y0)).
 /*
     % ============================
     %  Theoretical Equivalence & Unification (Check Possibility Only)
@@ -1359,9 +1361,15 @@ set_last_error(_).
 '=u='(X0,Y0) :- (X0 = Y0).
 '=will'(X0,Y0) :- \+ \+ (X0 = Y0).
 % alpha equivelant
-'=alpha'(X0,Y0) :- (X0 =@= Y0).
+'=alpha'(X0,Y0) :- equal_enough_for_test_renumbered(alpha_equ,X0,Y0).
 % like =alpha, however it actualyl also unifies (if they were alpha)
-'=alpha-unify'(X0,Y0) :- X0 =@= Y0, X0 = Y0.
+'=alpha-unify'(X0,Y0) :- '=alpha'(X0,Y0), blend_vars(X0,Y0).
+
+vv:attr_portray_hook(VV,Var):-
+ get_attrs(Var,AllAttrs),writeln(vv(VV,AllAttrs)),!.
+
+vn_attr_portray_hook(VN,_Var,AllAttrs):- att(vn,VN,[])==AllAttrs,!, format("$~w",[VN]),!.
+vn:attr_portray_hook(VN,Var):- get_attrs(Var,AllAttrs), vn_attr_portray_hook(VN,Var,AllAttrs),!.
 
 
 alpha_equ(X,Y):- X=@=Y->if_tracemsg(unknown,alpha_equ(X,Y));if_tracemsg(unknown,not_alpha_equ(X,Y)).
@@ -2956,13 +2964,9 @@ matching_vn_relaxed(V1, V2) :-
     ; V1 == V2 ).
 
 
-call_as_p2(P2,X,Y):-
-   once(eval([P2,X,Y],TF)),
-   TF = 'True'.
 
-
-eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
-   list_to_set(List,RetVal).
+eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
+   unique_elements_by(==,List,RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
@@ -2971,9 +2975,89 @@ eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
 
 no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
 
-eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
-   no_repeats_var(call_as_p2(P2),YY),
+eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
+   unique_elements_by(P2,List,RetVal).
+
+unique_elements_by_xform(_, [], []).
+unique_elements_by_xform(P2, [H|T], R) :-
+    eval_as_f2(P2, H, Key),
+    include(different_key(P2, Key), T, NewT),
+    unique_elements_by_xform(P2, NewT, RT),
+    R = [H|RT].
+
+different_key(P2, Key, Elem) :-
+    call(P2, Elem, OtherKey),
+    Key \= OtherKey.
+
+/*
+[1] 3 ?- unique_elements_by(==,[1,2,3,4,1,2,2],X).
+X = [1, 2, 3, 4].
+
+[1] 4 ?- unique_elements_by(>,[1,2,3,4,1,2,2],X).
+X = [1, 2, 3, 4].
+
+[1] 5 ?- unique_elements_by(<,[1,2,3,4,1,2,2],X).
+X = [1, 1].
+
+[1] 6 ?- unique_elements_by(>,[4,2,3,4,1,2,2],X).
+X = [4, 4].
+
+[1] 7 ?- unique_elements_by(>,[3,2,3,4,1,2,2],X).
+X = [3, 3, 4].
+*/
+unique_elements_by(_, [], []).
+unique_elements_by(P2, [H|T], [H|R]) :-
+    exclude(call_as_p2(P2, H), T, Filtered),
+    unique_elements_by(P2, Filtered, R).
+
+unnegate_f2(P2,_):- \+ compound(P2),!,fail.
+unnegate_f2(not(P2),P2).
+unnegate_f2([Not,P2|Nil],P2):- !,Nil==[],Not=='not'.
+
+call_as_p2(F2,A,B):- unnegate_f2(F2,P2),!, \+ call_as_p2(P2,A,B).
+%call_as_p2(F2,A,B):- f2_to_p2(F2,P2),F2\==P2,!,call(P2,A,B).
+call_as_p2(F2,A,B):- f2_to_p3(F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
+call_as_p2(P2,A,B):- current_predicate(P2/3),!,call(P2,A,B,RetVal),f2_success(RetVal,A,B).
+call_as_p2(P2,A,B):- current_predicate(P2/2),!,call(P2,A,B).
+call_as_p2(F2,A,B):- eval_as_f2(F2,A,B,RetVal),f2_success(RetVal,A,B).
+
+f2_success(RetVal,A,B):- once(RetVal=='True';RetVal==A;RetVal==B).
+
+eval_as_f2(F2,A,B,RetVal):- current_predicate(F2/3),!,call(F2,A,B,RetVal),!.
+eval_as_f2(F2,A,B,RetVal):- f2_to_p3(F2,P3),!,call(P3,A,B,RetVal).
+eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
+   (TF == 'True'-> RetVal=A ;
+    TF == 'False'-> fail ; RetVal = TF).
+
+f2_to_p2(F2,P2):-
+  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
+  interp_calls_module(Builtin).
+
+f2_to_p3(F2,P2):-
+  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
+  interp_calls_module(Builtin).
+
+
+impl_module(Sym,Builtin):-
+   transpiler_predicate_nary_store(Builtin, Sym, _, _, _, _, _, _, _).
+impl_module(Sym,Builtin):-
+   transpiler_predicate_store(Builtin,Sym,_,_,_,_,_).
+impl_module(Sym,Builtin):-
+   transpiler_clause_store(Sym,_,_,_,_,_,_,_,_),Builtin = atomspace.
+
+
+interp_calls_module(Builtin):- Builtin==code,!.
+interp_calls_module(Builtin):- Builtin==stdlib,!.
+interp_calls_module(Builtin):- Builtin==code_found,!.
+interp_calls_module(Builtin):- Builtin==builtin, \+ option_value(compiler,full).
+interp_calls_module(UserMod):- (UserMod==(user)), \+ option_value(compiler,false).
+
+eval_20(Eq,RetType,Depth,Self,['unique-by',F2,Eval],RetVal):- !,
+   no_repeats_var(call_as_p2(F2),YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
+
+
+
 
 
 eval_20(_Eq,_RetType,_Depth,_Self,['subtraction-atom',List1,List2],RetVal):- !,
@@ -2984,8 +3068,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['subtraction-by',P2,Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['subtraction-by',F2,Eval1,Eval2],RetVal):- !,
+    lazy_subtraction(equal_to_f2(F2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -2998,8 +3082,8 @@ eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
-    lazy_union(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['union-by',F2,Eval1,Eval2],RetVal):- !,
+    lazy_union(call_as_p2(F2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3009,15 +3093,15 @@ eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
 eval_20(_Eq,_RetType,_Depth,_Self,['intersection-atom',List1,List2],RetVal):-  !,
     include(is_in(variant_by_type,List2),List1,RetVal).
 
-is_in(P2,List2,Item1):- \+ \+ (member(Item2,List2),call(P2,Item1,Item2)),!.
+is_in(F2,List2,Item1):- \+ \+ (member(Item2,List2),call_as_p2(F2,Item1,Item2)),!.
 
 eval_20(Eq,RetType,Depth,Self,['intersection',Eval1,Eval2],RetVal):- !,
     lazy_intersection(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['intersection-by',P2,Eval1,Eval2],RetVal):- !,
-    lazy_intersection(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+eval_20(Eq,RetType,Depth,Self,['intersection-by',F2,Eval1,Eval2],RetVal):- !,
+    lazy_intersection(call_as_p2(F2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3214,49 +3298,69 @@ eval_20(_Eq,RetType,_Dpth,_Slf,['====',X,Y],TF):- !,
     suggest_type(RetType,'Bool'),
     as_tf(same_terms(X,Y),TF).
 
+same_terms(X,Y):- same_term(X,Y),!.
+same_terms(X,Y):- \+ compound(X), X==Y.
 % Main evaluation predicate with full caching
 
 %eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mx__1_0+_make-var'(Types,Var).
 %eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
 
-transpiler_peek(Sym,Len,Type,Fn, Min):-
-  transpiler_predicate_nary_store(_Builtin, Sym, Min, _, _, _, _, _, _),
-  Len>=Min,between(0,Len,N),
-  if_t(var(Type),member(Type,['mx','mi','mc'])),
-  format(atom(Fn),'~w__1_~w+_~w',[Type,N,Sym]),
-  succ(N,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
-  %\+ transpiler_predicate_store(_,Sym,[_],_,_,_,_),
-  ignore(ok_call_predicate(Sym,Len,Type)).
-
-transpiler_peek(Sym,Len,Type,Fn,Len):-
-  transpiler_predicate_store(_Builtin, Sym, [Len], _, _, _, _),
+transpiler_peek(Sym,Len,Type,Fn, Len, RestAsList):-
+  transpiler_peek(Sym,Len,Type,Fn, Len, RestAsList, Builtin),
+  interp_calls_module(Builtin).
+% call-fn _len_ 'mc' FirstArgsToBeforeRestAsList
+transpiler_peek(Sym,Len,Type,Fn, Len, exactArgs, Builtin):-
+  (transpiler_predicate_store(Builtin, Sym, [Len], _, _, _, _)*->true;
+    (Builtin=code,if_t(var(Len),between(0,10,Len)))),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1),
   %\+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
   ignore(ok_call_predicate(Sym,Len,Type)).
 
-ok_call_predicate(Sym,Len, _Type):-
-  \+ transpiler_predicate_store(_,Sym,[Len],_,_,_,_),
-  \+ transpiler_predicate_nary_store(_,Sym,[Len],_,_,_,_),
-  \+ transpiler_clause_store(Sym,[Len],_,_,_,_,_,_,_).
+transpiler_peek(Sym,2,'mi',Fn, 2, exactArgs, Builtin):-
+  nonvar(Sym),Builtin=code_found,
+  atom_concat('mi__1_2_',Sym,Fn),current_predicate(Fn/3),
+  \+ transpiler_predicate_store(_, Sym, [2], _, _, _, _).
+
+transpiler_peek(Sym,Len,Type,Fn, Min, restAsList, Builtin):-
+  (transpiler_predicate_nary_store(Builtin, Sym, Min, _, _, _, _, _, _)
+         *->true;(between(0,Len, Min),Builtin=code)),
+  Len>=Min,
+  if_t(var(Type),member(Type,['mx','mi','mc'])),
+  format(atom(Fn),'~w__1_~w+_~w',[Type,Min,Sym]),
+  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  %\+ transpiler_predicate_store(_,Sym,[_],_,_,_,_),
+  ignore(ok_call_predicate(Sym,Min,Type)).
+
+ok_call_predicate(Sym,Min, _Type):-
+  \+ transpiler_predicate_store(_,Sym,[Min],_,_,_,_),
+  \+ transpiler_predicate_nary_store(_,Sym,Min,_,_,_,_,_,_),
+  \+ transpiler_clause_store(Sym,[Min],_,_,_,_,_,_,_).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mi',Fn, N)),
-    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
+    transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
+jiggle_args(Args,Ret,LenIsMin,LenIsMin,exactArgs,PArgs):- !, append(Args, [Ret], PArgs).
+jiggle_args(Args,Ret,_,Min,AsList,PArgs):-
+  length(Left,Min), append(Left,Right,Args),
+  jiggle_append(Left,Right,Ret, AsList, PArgs).
+jiggle_append(Left,Right,Ret,restAsList, PArgs):- !, append(Left, [Right,Ret], PArgs),!.
+jiggle_append(Left,Right,Ret,exactArgs,PArgs):- append(Left, [Ret], PArgs), !, must_unify(Right,[]).
+
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
     length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mx',Fn, N)),
-    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
+    transpiler_peek(Sym,Len,'mx',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     length(Args,Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mc',Fn, N)),
-    length(Left,N), append(Left,Right,Args), append([Left,Right,[Res]], PArgs),!,
+    transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
 
 
