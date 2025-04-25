@@ -243,6 +243,7 @@ print_pl_source(P) :-
     % Run the primary source-printing predicate within `run_pl_source/1`.
     run_pl_source(print_pl_source0(P)).
 
+%pnotrace(G):- !, call(G).
 pnotrace(G):- notrace(G).
 %pnotrace(G):- quietly(G).
 
@@ -596,7 +597,7 @@ mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<varia
 mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<variable>`.
    attvar(S), notrace,ignore(nortrace),
    with_output_to(string(SS),ignore((get_attrs(S,Attrs),display(Attrs)))),
-   trace,
+   %trace,
    sformat(N,'a-~w-~w', [SS,S]). % bou
 mvar_str(S,N) :- % For an unbound variable without a name, format it as `$<variable>`.
     var(S), !, sformat(N,'~p', [S]).
@@ -764,10 +765,19 @@ write_src(V) :-
  % display(v=V),
  no_type_unification((
     % Guess variables in V and pretty-print using `pp_sex/1`.
+
     undo_bindings(pnotrace((
-               gather_src_and_goal(V,Nat,NatGoals),
-               once((pp_sex(Nat))),
-               maybe_write_goals(NatGoals)))))), !.
+               term_variables(V,Vars),
+               copy_term(V+Vars,CV+CVars,_),
+               maplist(transfer_varname,Vars,CVars),
+               ((CVars=@=Vars)
+              -> pp_sex(V);
+                (gather_src_and_goal(V,Nat,NatGoals),
+                 unify_with_occurs_check(CV,Nat),
+                 write_src_ng(CV,NatGoals)))))))),!.
+
+write_src_ng(Nat,NatGoals):- pp_sex(Nat),
+   if_t(NatGoals\==[],if_t(nb_current('$write_goals',true),maybe_write_goals(NatGoals))).
 
 bou:attr_portray_hook(Val,_V):- copy_term(Val,_,Info),!,format(' bou ~w ',[Info]),!. %writeq(break_on_unify(V,Val)),write(' ').
 bou:attr_unify_hook(_,_):- bt,!,trace,break.
@@ -848,11 +858,10 @@ no_type_unification(G):-
 with_written_goals(Call):-
    locally(b_setval('$write_goals',true),Call).
 
-maybe_write_goals(_Goals):- \+ nb_current('$write_goals',true), !.
-maybe_write_goals(Goals):-
-   exclude(is_f_nv,Goals,LGoals),
-   if_t(LGoals\==[],format(' {<~q>} ', [LGoals])).
-   %if_t(LGoals\==[],with_output_to(user_error,ansi_format([fg(yellow)], ' {~q} ', [LGoals]))).
+maybe_write_goals(Goals):- Goals==[],!.
+maybe_write_goals(_):- \+ nb_current('$write_goals',true), !.
+maybe_write_goals(Goals):- once(exclude(is_f_nv,Goals,LGoals)),if_t(LGoals\==[],format(' {<~q>} ', [LGoals])).
+
 is_f_nv(P):- compound(P), functor(P,F,A,_), !, is_f_nv(F,A).
 is_f_nv(break_on_unify,2). is_f_nv(name_variable,2).
 
