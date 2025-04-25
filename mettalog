@@ -602,7 +602,7 @@ Note: A bare filename is equivalent to using the -s option for MeTTa scripts.
      --quiet[=bool] (-q)      Do (not) suppress informational messages
 
    Testing:
-     --test 			Defaults to true if directory argument was provided as <metta-files|directories>
+      --test 			Defaults to true if directory argument was provided as <metta-files|directories>
 			        
    Test options:
      --continue                 The default. Continue running tests (Generating any missing html files)
@@ -869,7 +869,7 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*|--show*|-O)
+           --douglas*|--show*|--test|-O)
 		add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue
