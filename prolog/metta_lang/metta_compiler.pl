@@ -317,7 +317,8 @@ combine_transpiler_clause_store_and_maybe_recompile(FnName,LenArgs,FinalLazyArgs
       )
    ;
       % new, insert clause
-      compiler_assertz(transpiler_predicate_store(user,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj)),
+      current_compiler_context(CompCtx), % where expected to be stored (builtin,user,etc)
+      compiler_assertz(transpiler_predicate_store(CompCtx,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj)),
       recompile_from_depends(FnName,LenArgs)
    ).
 
@@ -325,6 +326,9 @@ create_mc_name(LenArgs,FnName,String) :-
    length(LenArgs,L),
    append(['mc_',L|LenArgs],[FnName],Parts),
    atomic_list_concat(Parts,'_',String).
+
+current_compiler_context(CompCtx):- option_value(compiler_context,CompCtx),!.
+current_compiler_context(user).
 
 get_curried_name_structure(null,'',[],[]) :- !. % special null case
 get_curried_name_structure([],[],[],[]) :- !.
@@ -2131,7 +2135,9 @@ find_compiled_refs(S, Refs):-
    append_sets([Refs1,Refs2],Refs).
 
 append_sets(RefsL,Refs):- flatten(RefsL,Flat),list_to_set(Flat,Refs).
-compiled_info_s(S,Refs):- findall(Ref,(compiler_data(F/A),compiled_refs(S,F,A,Ref)),RefsL),append_sets(RefsL,Refs).
+compiled_info_s(S,Refs):-
+   findall(Ref,(compiler_data(F/A),compiled_refs(S,F,A,Ref)),RefsL),append_sets(RefsL,Refs1),
+   findall(Ref,(current_predicate(S/A),functor(P,S,A),clause(P,_,Ref)),Refs2),append_sets([Refs1,Refs2],Refs).
 compiled_info_f(F,Refs):- compiled_info_s(F,Refs1), compiled_info_p(F,Refs2),append_sets([Refs1,Refs2],Refs).
 compiled_info_p(F,Refs):-
    findall(Ref,(current_predicate(F/A),functor(P,F,A),current_module(M),
