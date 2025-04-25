@@ -1071,7 +1071,7 @@ gen_eval_20_stubs2:-
      nonvar(F),atom(F),
      ast_to_prolog_aux(no_caller,fn_impl(F,Args,Res),Head),
      ast_to_prolog_aux(Head,Body,Body1),
-     print_tree_nl(Head:-Body1)))).
+     ppt(Head:-Body1)))).
 
 
 is_like_eval_20(E20):- atom(E20),atom_concat(eval,_,E20),
@@ -1124,11 +1124,12 @@ eval_20(Eq,RetType,Depth,Self,['println!'|Cond],Res):- !,
   maplist(println_impl,Out),
   make_nop(RetType,[],Res),check_returnval(Eq,RetType,Res).
 
-println_impl(X):- ttyflush,user_io((format("~N~@~N",[write_sln(X)]))),!,flush_output,ttyflush.
+println_impl(X):- ttyflush,
+   user_io((format("~N"),write_sln(X),format("~N"))),flush_output,ttyflush.
 %println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 %println_impl(X):- ((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 
-princ_impl(X):- format("~@",[write_sln(X)]),!,flush_output.
+princ_impl(X):- user_io((write_sln(X))),flush_output,ttyflush.
 
 write_sln(X):- string(X), !, write(X),flush_output.
 write_sln(X):- write_src_woi(X),flush_output.
@@ -1946,6 +1947,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(Tw
 eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):-!, must_unify(TwoArgs,[H,T]).
 
+should_be(P1,Term):- call(P1,Term)-> true ; (debug_info(porting,hyperon_throws_error(should_be(P1,Term))),fail).
 
 %eval_20(Eq,RetType,Depth,Self,['get-doc'|Args],Res):- !,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-get-doc'|Args],Res)),!.
 %eval_20(Eq,RetType,Depth,Self,['help!'|Args],Res):-!,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-help!'|Args],Res)),!.
@@ -3112,10 +3114,13 @@ simple_math(X):- number(X),!.
 
 
 eval_20(_Eq,_RetType,_Depth,_Self,['call-string!',Str],NoResult):- !,'call-string!'(Str,NoResult).
+eval_40(_Eq,_RetType,_Depth,_Self,['call-string',Str],NoResult):- !,'call-string!'(Str,NoResult).
 
 'call-string!'(Str,NoResult):-
                read_term_from_atom(Str,Term,[variables(Vars)]),!,
-               call(Term),NoResult=Vars.
+               stream_property(Err, file_no(2)),
+               user_io(with_output_to(Err,(format('~N'),call(Term),format('~N')))),
+               NoResult=Vars.
 
 
 /*
@@ -3422,7 +3427,7 @@ eval_40(Eq, RetType, _Depth, Self, [MyFun|More], RetVal) :-
     % Constructs a compound term for the Python function call with adjusted arguments.
     compound_name_arguments(Call, PyFun, Adjusted),
     % Optionally prints a debug tree of the Python call if tracing is enabled.
-    if_trace(host;python, print_tree(py_call(PyModule:Call, RetVal))),
+    if_trace(host;python, ppt(py_call(PyModule:Call, RetVal))),
     % Executes the Python function call and captures the result in MVal which propagates to RetVal.
     py_call(PyModule:Call, MVal),
     % Checks the return value against the expected type and criteria.
@@ -3444,7 +3449,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],TF):- allow_host_functions,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   % adjust_args(Depth,Self,AE,More,Adjusted),
   maplist(as_prolog_x(Depth,Self), More , Adjusted),
-  if_trace(host;prolog;e,print_tree(apply(Pred,Adjusted))),
+  if_trace(host;prolog;e,ppt(apply(Pred,Adjusted))),
   with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],catch_warn(efbug(show_call,eval_call(apply(Pred,Adjusted),TF)))),
   check_returnval(Eq,RetType,TF).
 
@@ -3519,7 +3524,7 @@ eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- allow_host_functions,
   %current_predicate(Pred/Len1),
   maplist(as_prolog_x(Depth,Self),More,Adjusted),
   append(Adjusted,[Res],Args),!,
-  if_trace(host;prolog,print_tree(apply(Pred,Args))),
+  if_trace(host;prolog,ppt(apply(Pred,Args))),
   with_metta_ctx(Eq,RetType,Depth,Self,[AE|More],efbug(show_call,catch_warn(apply(Pred,Args)))),
   check_returnval(Eq,RetType,Res).
 
