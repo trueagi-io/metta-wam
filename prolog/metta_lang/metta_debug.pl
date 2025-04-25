@@ -876,11 +876,17 @@ debug_info_goal(Topic,Info):- original_user_error(X),
 
 unfiltered_topic_and_info(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(show, stdlib), !, fail.
 unfiltered_topic_and_info(Topic,Info):-
-  (nb_current(debug_context, Ctx)->true;Ctx=runtime),
-   sformat(Combined,'~w ~w ~w',[Ctx,Topic,Info]),
-   unfiltered_topic(Combined),!.
+  debug_context_filter(Ctx),
+  sformat(Combined,'~w ~w ~w',[Ctx,Topic,Info]),
+  unfiltered_topic(Combined),!.
+
+
+debug_context_filter(Ctx):- nb_current(debug_context, Ctx), Ctx\==[],!.
+debug_context_filter(Ctx):- nb_current(compiler_context, Ctx), Ctx\==[], Ctx \== user,!.
+debug_context_filter('').
 
 currently_stdlib:- nb_current(debug_context, Ctx), Ctx == stdlib.
+currently_stdlib:- nb_current(compiler_context, Ctx), Ctx == corelib.
 
 filter_matches(Ele,Topic):- Ele=@=Topic,!.
 filter_matches(Ele,Topic):- string(Topic),!,contains_atom(Topic,Ele).
