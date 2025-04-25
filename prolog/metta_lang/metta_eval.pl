@@ -1112,7 +1112,7 @@ eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond
 eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
-eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),print(Res),format('~N').
+eval_20(Eq,RetType,Depth,Self,['print',Cond],Res):- !, eval_args(Eq,RetType,Depth,Self,Cond,Res),format('~N'),write_src_woi(Res),format('~N').
 % !(print! $1)
 eval_20(Eq,RetType,Depth,Self,['princ!'|Cond],Res):- !,
   maplist(eval_args(Eq,RetType,Depth,Self),Cond,Out),
@@ -2978,13 +2978,97 @@ eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
    term_variables(Eval+RetVal,Vars),
-   %no_repeat_variant_var(YY),
-   %no_repeats_var(YY),
-   no_repeats_var(variant_by_type,YY),
+   no_repeat_variant_var(YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
-eval_20(Eq,RetType,Depth,Self,['unique-by',P2,Eval],RetVal):- !,
-   no_repeats_var(call_as_p2(P2),YY),
+no_repeat_variant_var(Var):- no_repeats_var(Var).
+%no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
+
+eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
+   unique_elements_by(P2,List,RetVal).
+
+unique_elements_by_xform(_, [], []).
+unique_elements_by_xform(P2, [H|T], R) :-
+    eval_as_f2(P2, H, Key),
+    include(different_key(P2, Key), T, NewT),
+    unique_elements_by_xform(P2, NewT, RT),
+    R = [H|RT].
+
+different_key(P2, Key, Elem) :-
+    call(P2, Elem, OtherKey),
+    Key \= OtherKey.
+
+/*
+[1] 3 ?- unique_elements_by(==,[1,2,3,4,1,2,2],X).
+X = [1, 2, 3, 4].
+
+[1] 4 ?- unique_elements_by(>,[1,2,3,4,1,2,2],X).
+X = [1, 2, 3, 4].
+
+[1] 5 ?- unique_elements_by(<,[1,2,3,4,1,2,2],X).
+X = [1, 1].
+
+[1] 6 ?- unique_elements_by(>,[4,2,3,4,1,2,2],X).
+X = [4, 4].
+
+[1] 7 ?- unique_elements_by(>,[3,2,3,4,1,2,2],X).
+X = [3, 3, 4].
+*/
+unique_elements_by(_, [], []).
+unique_elements_by(P2, [H|T], [H|R]) :-
+    exclude(call_as_p2(P2, H), T, Filtered),
+    unique_elements_by(P2, Filtered, R).
+
+unnegate_f2(P2,_):- \+ compound(P2),!,fail.
+unnegate_f2(not(P2),P2).
+unnegate_f2([Not,P2|Nil],P2):- !,Nil==[],Not=='not'.
+
+must_use_eval(_,2):- !.
+%must_use_eval(_,2):- fail.
+
+call_as_p2a(F2,A,B):- unnegate_f2(F2,P2),!, \+ call_as_p2(P2,A,B).
+call_as_p2a(P2,A,B):- current_predicate(P2/2),!,call(P2,A,B).
+call_as_p2a(P2,A,B):- current_predicate(P2/3),!,call(P2,A,B,RetVal),f2_success(RetVal,A,B).
+call_as_p2a(F,X,Y):- must_use_eval(F,2), !,
+   once(eval([F,X,Y],RetVal)),
+   f2_success(RetVal,X,Y).
+%call_as_p2(F2,A,B):- f2_to_p2(F2,P2),F2\==P2,!,call(P2,A,B).
+call_as_p2a(F2,A,B):- f2_to_p3(F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
+call_as_p2a(F2,A,B):- eval_as_f2(F2,A,B,RetVal),f2_success(RetVal,A,B).
+
+f2_success(RetVal,A,B):- once(RetVal=='True';RetVal==A;RetVal==B).
+
+eval_as_f2(F2,A,B,RetVal):- current_predicate(F2/3),!,call(F2,A,B,RetVal),!.
+eval_as_f2(F2,A,B,RetVal):- f2_to_p3(F2,P3),!,call(P3,A,B,RetVal).
+eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
+   (TF == 'True'-> RetVal=A ;
+    TF == 'False'-> fail ; RetVal = TF).
+
+f2_to_p2(F2,P2):-
+  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
+  interp_calls_module(Builtin).
+
+f2_to_p3(F2,P2):-
+  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
+  interp_calls_module(Builtin).
+
+
+impl_module(Sym,Builtin):-
+   transpiler_predicate_nary_store(Builtin, Sym, _, _, _, _, _, _, _).
+impl_module(Sym,Builtin):-
+   transpiler_predicate_store(Builtin,Sym,_,_,_,_,_).
+impl_module(Sym,Builtin):-
+   transpiler_clause_store(Sym,_,_,_,_,_,_,_,_),Builtin = atomspace.
+
+
+interp_calls_module(Builtin):- Builtin==code,!.
+interp_calls_module(Builtin):- Builtin==stdlib,!.
+interp_calls_module(Builtin):- Builtin==code_found,!.
+interp_calls_module(Builtin):- Builtin==builtin, \+ option_value(compiler,full).
+interp_calls_module(UserMod):- (UserMod==(user)), \+ option_value(compiler,false).
+
+eval_20(Eq,RetType,Depth,Self,['unique-by',F2,Eval],RetVal):- !,
+   no_repeats_var(call_as_p2(F2),YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
 
