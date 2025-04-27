@@ -15,7 +15,7 @@
 ;; Entry point: Starts the game
 ;; ----------------------------------------
 
-(= (start-game)
+(= (ask-who-plays)
   (let* 
     ;; Prompt user to choose player or press Enter for AI vs AI
     (($_1 (println! "If you want AI to play by itself press enter, otherwise choose X or O."))
@@ -26,9 +26,7 @@
             (o (add-atom &self (is-human O)))
             (O (add-atom &self (is-human O)))
             ($_))
-	           True))
-    ;; Begin the game
-    ($_3 (play-now))) True))
+	           True)))))
 
 ;; Default behavior: start game with empty board and 'X' playing first
 (= (play-now) (play-game (1 2 3 4 5 6 7 8 9) X))
@@ -224,17 +222,23 @@
 ;; Entry point: starts AI vs AI by default
 ;; ----------------------------------------
 
-;; Would ask if human plays
-;; !(start-game)
+;; Optionally, uncomment one of these to **force the human to play as X or O**:
+; (is-human X)  ;; Human goes first (as X)
+; (is-human O)  ;; Human goes second (as O)
 
-;; Would make human the 2nd player
-;; (is-human O)
-!(my-tests)
+;; Or, uncomment this to **ask at runtime** who should play:
+; !(ask-who-plays)
+
+;; Or, uncomment to run test cases:
+; !(my-tests)
+
 !(set-random-seed &rng 0)
 !(random-int &rng 1 10)
 !(random-int &rng 1 10)
 !(random-int &rng 1 10)
+
 !(assertEqualToResult (play-now) (()))
+
 ; !(repl!)
 !(random-int &rng 1 10)
 !(random-int &rng 1 10)
