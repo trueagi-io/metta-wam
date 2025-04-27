@@ -2710,7 +2710,7 @@ run_cmd_args_prescan :-
     % Mark that the prescan has been executed.
     assert(has_run_cmd_args),
     % Perform the prescan using `do_cmdline_load_metta/1`.
-    do_cmdline_load_metta(prescan).
+    do_cmdline_load_metta(prescan), setup_show_hide_debug.
 
 %!  run_cmd_args is det.
 %
@@ -3952,6 +3952,8 @@ load_hook(Load,Hooked):-
 %     % Execute a goal and trace errors:
 %     ?- rtrace_on_error(writeln('Hello, World!')).
 %
+
+rtrace_on_error(G):- is_user_repl, !, call(G).
 rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
@@ -5993,6 +5995,12 @@ eval_string(String):- user_io((eval_string(String, _Out))).
 eval_string(String, Out):-
     current_self(Self),
     read_metta(String, Metta),
+    do_metta(true, +, Self, exec(Metta), Out).
+
+load_string(String):- user_io((eval_string(String, _Out))).
+load_string(String, Out):-
+    current_self(Self),
+    read_metta(String, Metta),
     do_metta(true, +, Self, Metta, Out).
 
 
@@ -6030,9 +6038,9 @@ eval_H(Term, X) :-
 eval_H(_StackMax, _Self, Term, Term) :-
     % If the `compile` option is set to `save`, return the term unchanged.
     fast_option_value(compile, save), !.
-eval_H(StackMax, Self, Term, X) :-
+eval_H(_StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
-    woc(catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X)).
+    woc(catch_metta_return(eval_args('=', _, 0, Self, Term, X), X)).
 /*
 eval_H(StackMax,Self,Term,X).
 
