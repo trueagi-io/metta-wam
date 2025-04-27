@@ -574,7 +574,7 @@ get_type_each(_Depth, _Slf, Val, PyObject) :-
     is_PyObject(Val), !, 'PyObject' = PyObject.
 get_type_each(Depth, _Slf, _Type, _) :-
     % Fail if recursion depth is exhausted.
-    Depth < 1, !, fail.
+    overflow_depth(Depth), !, fail.
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
@@ -584,7 +584,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
     notrace(is_valid_nb_state(Expr)), !,
     if_or_else(state_decltype(Expr, Type), nonvar(Type)),
-    ('get-state'(Expr, Val), !, Depth2 is Depth - 1,
+    ('get-state'(Expr, Val), !, deepen(Depth, Depth2),
      get_value_type(Depth2, Self, Val, Type)).
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
@@ -801,7 +801,7 @@ get_type_symb(_Dpth, _Slf, Val, Type) :-
     symbolic_list_concat([Type, _ | _], ':', Val).
 get_type_symb(Depth, Self, Op, Type) :-
     % Evaluate arguments if the operator is defined.
-    Depth2 is Depth - 1,
+    deepen(Depth, Depth2),
     eval_args(Depth2, Self, Op, Val),
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
@@ -859,7 +859,7 @@ get_type_cmpd(_Dpth,_Slf,Cmpd,Type,type_by_functor(F,A,Type)):- functor(Cmpd,F,A
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
- Depth2 is Depth-1,
+ deepen(Depth, Depth2),
  get_type_cmpd(Depth2,Self,[Op|Args],Type1,W),
  get_type(Depth2,Self,Arg,ArgType),
  ignore(sub_var_safely(ArgType,Type1)->true;
@@ -894,14 +894,14 @@ get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):-
   List\==[],
   \+ badly_typed_expression(Depth,Self,List),
   is_list(List),
-  Depth2 is Depth-1,
+  deepen(Depth, Depth2),
   maplist(get_type(Depth2,Self),List,Types),
   \+ badly_typed_expression(Depth,Self,Types).
 
 */
 get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):-
     needs_eval(EvalMe),
-    Depth2 is Depth-1,
+    deepen(Depth, Depth2),
     eval_args_for_type(Depth2,Self,EvalMe,Val),
     get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,Eval_First).
 get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
@@ -985,14 +985,14 @@ get_value_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),las
 get_value_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
    is_type(Type).
 
-get_value_type(Depth,_Slf,Type,Type):- Depth<1,!.
+get_value_type(Depth,_Slf,Type,Type):- overflow_depth(Depth),!.
 get_value_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_value_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_value_type(Depth2,Self),List,Types).
+get_value_type(Depth,Self,List,Types):- List\==[], is_list(List),deepen(Depth, Depth2),maplist(get_value_type(Depth2,Self),List,Types).
 get_value_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
-%get_value_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_value_type(Depth2,Self,Type2,Type).
+%get_value_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),deepen(Depth, Depth2),get_value_type(Depth2,Self,Type2,Type).
 %get_value_type(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-%get_value_type(Depth,Self,Expr,Type):-Depth2 is Depth-1,
+%get_value_type(Depth,Self,Expr,Type):-deepen(Depth, Depth2),
 % eval_args(Depth2,Self,Expr,Val),
 %  Expr\=@=Val,get_value_type(Depth2,Self,Val,Type).
 
@@ -1003,7 +1003,7 @@ get_value_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %get_value_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
 %get_value_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
 %get_value_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
-%get_value_type(Depth,Self,Val,Type):- Depth2 is Depth-1, get_type_equals(Depth2,Self,Val,Type).
+%get_value_type(Depth,Self,Val,Type):- deepen(Depth, Depth2), get_type_equals(Depth2,Self,Val,Type).
 */
 
 %!  as_prolog(+I, -O) is det.
