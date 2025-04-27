@@ -955,6 +955,8 @@ dont_show_any_qcompile.
 
          debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
         debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,ignore(debug_info_filtered( Topic, Info)))),_,fail)),!.
+
+debug_info_filtered( always(Topic), Info):- !, once((filter_matches_var(hide,Topic);filter_matches_var(hideall,Topic);debug_info_now([always,Topic], Info))),!.
 debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
 debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
 debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.

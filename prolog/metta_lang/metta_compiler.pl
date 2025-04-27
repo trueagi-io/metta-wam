@@ -74,11 +74,10 @@
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_compiler_print).
 :- dynamic(transpiler_clause_store/9).
-:- multifile(transpiler_predicate_store/7).
 :- dynamic(transpiler_predicate_store/7).
-:- dynamic(transpiler_predicate_nary_store/9).
-:- discontiguous transpiler_predicate_nary_store/9.
-:- multifile(compile_flow_control/8).
+:- discontiguous(compile_flow_control/8).
+:- ensure_loaded(metta_compiler_lib).
+:- ensure_loaded(metta_compiler_lib_stdlib).
 
 non_arg_violation(_,_,_).
 
@@ -91,26 +90,6 @@ non_arg_violation(_,_,_).
 % ==============================
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
-
-setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :-
-    sum_list(LenArgs,LenArgsTotal),
-    LenArgsTotalPlus1 is LenArgsTotal+1,
-    findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-    create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
-    Hc =.. [FnNameWPrefix|AtomList0],
-    create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
-    Hi =.. [FnNameWMiPrefix|AtomList0],
-    create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
-    He =.. [FnNameWMePrefix|AtomList0],
-    Bi =.. [ci,true,[],true,Goal],
-    compiler_assertz(Hi:-((Goal=Hc),Bi)),
-    compiler_assertz(He:-Hc).
-
-setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,MettaTypeResult,InternalTypeArgs,InternalTypeResult) :-
-    (transpiler_predicate_store(_,FnName,LenArgs,_,_,_,_) -> true ;
-      compiler_assertz(transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,MettaTypeResult,InternalTypeArgs,InternalTypeResult)),
-      setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult)
-    ).
 
 
 % =======================================
@@ -262,19 +241,6 @@ partial_combine_lists([H1|L1],[H2|L2],[H1|Lcomb],L1a,L2a) :- H1==H2,!,
    partial_combine_lists(L1,L2,Lcomb,L1a,L2a).
 partial_combine_lists(L1,L2,[],L1,L2).
 
-ci(_,_,_,G):-call(G).
-
-create_prefixed_name(Prefix,LenArgs,FnName,String) :-
-   %(sub_string(FnName, 0, _, _, "f") -> break ; true),
-   length(LenArgs,L),
-   append([Prefix,L|LenArgs],[FnName],Parts),
-   atomic_list_concat(Parts,'_',String).
-
-create_mc_name(LenArgs,FnName,String) :-
-   length(LenArgs,L),
-   append(['mc_',L|LenArgs],[FnName],Parts),
-   atomic_list_concat(Parts,'_',String).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% Evaluation (!)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -354,9 +320,13 @@ combine_transpiler_clause_store_and_maybe_recompile(FnName,LenArgs,FinalLazyArgs
       % new, insert clause
       current_compiler_context(CompCtx), % where expected to be stored (builtin,user,etc)
       compiler_assertz(transpiler_predicate_store(CompCtx,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj)),
-      %recompile_from_depends(FnName,LenArgs),
-      setup_mi_me(FnName,LenArgs,FinalLazyArgsAdj,FinalLazyRetAdj)
+      recompile_from_depends(FnName,LenArgs)
    ).
+
+create_mc_name(LenArgs,FnName,String) :-
+   length(LenArgs,L),
+   append(['mc_',L|LenArgs],[FnName],Parts),
+   atomic_list_concat(Parts,'_',String).
 
 current_compiler_context(CompCtx):- option_value(compiler_context,CompCtx),!.
 current_compiler_context(user).
@@ -387,7 +357,7 @@ recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
-   %create_prefixed_name('mc_',LenArgs,,FnName,FnNameWPrefix),
+   %create_mc_name(LenArgs,,FnName,FnNameWPrefix),
    %findall(Atom0, (between(1, LenArgsPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
    %H @.. [FnNameWPrefix|AtomList0],
    %transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
@@ -422,12 +392,8 @@ recompile_from_depends_child(_ParentFA,Fn/Arity) :-
    %format_e("recompile_from_depends_child ~w/~w\n",[Fn,Arity]),flush_output(user_output),
    ArityP1 is Arity+1,
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
-   create_prefixed_name('mc_',Arity,Fn,FnWPrefix),
+   create_mc_name(Arity,Fn,FnWPrefix),
    abolish(FnWPrefix/ArityP1),
-   create_prefixed_name('mc_',Arity,Fn,FnWMiPrefix),
-   abolish(FnWMiPrefix/ArityP1),
-   create_prefixed_name('mc_',Arity,Fn,FnWMePrefix),
-   abolish(FnWMePrefix/ArityP1),
    % retract(transpiler_stub_created(Fn,Arity)),
    % create an ordered list of integers to make sure to do them in order
    findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
@@ -444,7 +410,7 @@ compile_for_assert_with_add(Head-Body) :-
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
-   format_e("Extracted clause: ~w:~w:-~w\n",[Fn,Head,Body]),
+   %format_e("Extracted clause: ~w:-~w\n",[Head,Body]),
    retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
@@ -464,7 +430,7 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    get_curried_name_structure(HeadIs,FnName,Args,LenArgs),
-   create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
+   create_mc_name(LenArgs,FnName,FnNameWPrefix),
    %ensure_callee_site(Space,FnName,LenArgs),
    remove_stub(Space,FnName,LenArgs),
    sum_list(LenArgs,LenArgsTotal),
@@ -474,16 +440,9 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    (transpiler_stub_created(FnName,LenArgs) ->
       retract(transpiler_stub_created(FnName,LenArgs)),
       findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
-      %create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
       H @.. [FnNameWPrefix|AtomList0],
       transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
-      retractall(H),
-      create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
-      H1 @.. [FnNameWMiPrefix|AtomList0],
-      retractall(H1),
-      create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
-      H2 @.. [FnNameWMePrefix|AtomList0],
-      retractall(H2)
+      retractall(H)
    ; true),
 
    %AsFunction = HeadIs,
@@ -544,7 +503,7 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
       %(var(HResult) -> (Result = HResult, HHead = Head) ;
       %   funct_with_result_is_nth_of_pred(HeadIs,AsFunction, Result, _Nth, Head)),
 
-      HeadAST=[assign,HResult,[hcall(FnName,LenArgs),Args2]],
+      HeadAST=[assign,HResult,[fcall(FnName,LenArgs),Args2]],
       (transpiler_trace(FnName) -> Prefix=[[native(trace)]] ; Prefix=[]),
       append([Prefix|Code],CodeAppend),
       append(CodeAppend,FullCode,FullCode2),
@@ -1028,7 +987,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    ;
       (transpiler_enable_interpreter_calls ->
          % create a stub to call the interpreter
-         (create_prefixed_name('mc_',LenArgs,Fn,Fp),
+         (create_mc_name(LenArgs,Fn,Fp),
          (current_predicate(Fp/LenArgs) -> true ;
             LenArgs1 is LenArgs+1,
             findall(Atom0, (between(1, LenArgs1, I0) ,Atom0='$VAR'(I0)), AtomList0),
@@ -1115,8 +1074,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, Con
    maplist(lazy_impedance_match, LazyResultParts, EvalArgs, RetResultsParts, ConvertedParts, RetResultsPartsN, ConvertedNParts, RetResults, Converteds),
    append(Converteds,Converteds2),
    %append(RetResults,[RetResult],RetResults2),
-   % BEER this is where to change the call to another function
-   create_prefixed_name('mc_',LenArgs,'',Prefix),
+   create_mc_name(LenArgs,'',Prefix),
    invert_curried_structure(Fn,LenArgs,RetResults,RecurriedList),
    append(Converteds2,[[transpiler_apply,Prefix,Fn,RecurriedList,RetResult,RetResultsParts, RetResultsPartsN, LazyResultParts,ConvertedParts, ConvertedNParts]],Converted),
    assign_or_direct_var_only(Converteds2,RetResultN,list(RecurriedList),ConvertedN).
@@ -1305,30 +1263,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[fcall(FIn,LenArgs),ArgsIn]],R) :- (
    maybe_lazy_list(Caller,F,1,Args00,Args0),
    %label_arg_types(F,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   create_prefixed_name('mi_',LenArgs,F,Fp),
-   %label_arg_types(F,0,[A|Args1]),
-   %LenArgs1 is LenArgs+1,
-   append(Args1,[A],Args2),
-   R ~.. [f(FIn),Fp|Args2],
-   (Caller=caller(CallerInt,CallerSz),(CallerInt-CallerSz)\=(F-LenArgs),\+ transpiler_depends_on(CallerInt,CallerSz,F,LenArgs) ->
-      compiler_assertz(transpiler_depends_on(CallerInt,CallerSz,F,LenArgs)),
-      transpiler_debug(2,format_e("Asserting: transpiler_depends_on(~q,~q,~q,~q)\n",[CallerInt,CallerSz,F,LenArgs]))
-   ; true)
-   %sum_list(LenArgs,LenArgsTotal),
-   %LenArgsTotalPlus1 is LenArgsTotal+1,
-   %((current_predicate(Fp/LenArgsTotalPlus1);member(F/LenArgs,DontStub)) ->
-   %   true
-   %; check_supporting_predicates('&self',F/LenArgs))
-   %notice_callee(Caller,F/LenArgs)
-   )).
-ast_to_prolog_aux(Caller,DontStub,[assign,A,[hcall(FIn,LenArgs),ArgsIn]],R) :- (fullvar(A); \+ compound(A)),callable(FIn),!,
- must_det_lls((
-   FIn @.. [F|Pre], % allow compound natives
-   append(Pre,ArgsIn,Args00),
-   maybe_lazy_list(Caller,F,1,Args00,Args0),
-   %label_arg_types(F,1,Args0),
-   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   create_prefixed_name('mc_',LenArgs,F,Fp),
+   create_mc_name(LenArgs,F,Fp),
    %label_arg_types(F,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    append(Args1,[A],Args2),
@@ -1348,7 +1283,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[native_call,F,LenArgs,ArgsIn]],R) :
  must_det_lls((
    maybe_lazy_list(Caller,F,1,ArgsIn,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
-   create_prefixed_name('mc_',LenArgs,F,Fp),
+   create_mc_name(LenArgs,F,Fp),
    append(Args1,[A],Args2),
    R0 =..[Fp,XX],
    R1=..[apply_fn,XX,Args2],
@@ -1364,7 +1299,7 @@ ast_to_prolog_aux(Caller,DontStub,[curried_fcall(FIn,LenArgs,LenArgsRest,_SigRes
    %label_arg_types(FIn,1,Args0),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
    append(LenArgsRest,LenArgs,LenArgsAll),
-   create_prefixed_name('mc_',LenArgsAll,FIn,Fp),
+   create_mc_name(LenArgsAll,FIn,Fp),
    %label_arg_types(FIn,0,[A|Args1]),
    %LenArgs1 is LenArgs+1,
    R0 ~.. [xxx(4),Fp|Args1],
@@ -1411,7 +1346,7 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,[call_var(FIn,FixedArity)|ArgsIn]],R
 %   label_arg_types(F,1,Args0),
 %   maplist(ast_to_prolog_aux(Caller,DontStub),Args0,Args1),
 %   length(Args0,LenArgs),
-%   create_prefixed_name('mc_',LenArgs,F,Fp),
+%   create_mc_name(LenArgs,F,Fp),
 %   label_arg_types(F,0,[A|Args1]),
 %   %LenArgs1 is LenArgs+1,
 %   append(Args1,[A],Args2),
@@ -2246,6 +2181,8 @@ compiler_data(transpiler_predicate_store/7).
 compiler_data(metta_atom/2).
 compiler_data(metta_type/3).
 compiler_data(metta_defn/3).
+%compiler_data(metta_atom_asserted/2).
+
 %compiler_data(metta_file_buffer/7).
 
 ensure_callee_site(Space,Fn,Arity):- check_supporting_predicates(Space,Fn/Arity),!.
@@ -2668,7 +2605,7 @@ maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,Arg,ArgO).
 
 check_supporting_predicates(Space,F/A) :- % already exists
 %trace,
-   create_prefixed_name('mc_',A,F,Fp),
+   create_mc_name(A,F,Fp),
    with_mutex_maybe(transpiler_mutex_lock,
       (sum_list(A,ATot),ATot1 is ATot+1,
          (current_predicate(Fp/ATot1) -> true ;
@@ -4124,6 +4061,7 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
+
 
 
 

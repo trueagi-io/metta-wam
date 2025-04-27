@@ -3394,7 +3394,7 @@ same_terms(X,Y):- \+ compound(X), X==Y.
 %eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
 
 
-transpiler_peek(Sym,Len,Type,Fn, Len, exactArgs):- 
+transpiler_peek(Sym,Len,Type,Fn, Len, exactArgs):-
   if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
   nonvar(Sym),
   if_t((var(Len)),ignore(transpiler_predicate_store(_,Sym,[Len],_, _, _, _))),
@@ -3403,7 +3403,7 @@ transpiler_peek(Sym,Len,Type,Fn, Len, exactArgs):-
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
-  
+
 transpiler_peek(Sym,2,'mi',Fn, 2, exactArgs):-
   nonvar(Sym),
   atom_concat('mi__1_2_',Sym,Fn),current_predicate(Fn/3),
@@ -4525,6 +4525,7 @@ end_of_file.
            maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
            XX = [H|NewArgs],Y=XX.
         eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.
+
 
 
 
