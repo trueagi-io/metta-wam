@@ -39,10 +39,20 @@ test_drt(X, Y):-
    must(assumed_functor(X, FA)), !,
    use_right_thing(FA, Eq, RetType, Depth, Self, X, Y).
 
+
 eval_use_right_thing(Eq,RetType,Depth,Self,X,Y):-
     must(assumed_functor(X, FA)), !,
     use_right_thing(FA, Eq, RetType, Depth, Self, X, Y).
 
+use_right_thing(_FA, Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', interp), !,
+  woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
+use_right_thing(_FA, Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', compiler), !,
+  with_scope(Eq, RetType, Depth, Self, transpile_eval(X,Y)).
+use_right_thing(_FA, Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', rust), !,
+  with_scope(Eq, RetType, Depth, Self, rust_metta_run(exec(X),Y)).
 use_right_thing(FA, Eq, RetType, Depth, Self, X, Y):-
    with_scope(Eq, RetType, Depth, Self, use_right_thing(FA, X, Y)).
 
@@ -59,7 +69,18 @@ use_right_thing(FA, _X, _Y) :-
    ppt(use_right_thing(onlyIn=OnlyIn,fallBack=FallBack,FA=Info)),
    fail.
 
-use_right_thing(FA, X, Y) :-
+
+use_right_thing(_FA, X,Y):-
+  nb_current('eval_in_only', interp), !,
+  peek_scope(Eq,RetType,Depth,Self),!,
+  woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
+use_right_thing(_FA, X,Y):-
+  nb_current('eval_in_only', compiler), !,
+  transpile_eval(X,Y).
+use_right_thing(_FA, X,Y):-
+  nb_current('eval_in_only', rust), !,
+  rust_metta_run(exec(X),Y).
+use_right_thing( FA, X, Y) :-
     use_evaluator(FA, compiler, disabled), !,
     eval_in_only(interp, X, Y).
 
@@ -151,14 +172,18 @@ with_evaluator_status(Flag=Status, FA, Goal) :-
     ).
 
 
-eval_in_only(OnlyIn, X, Y):-
+eval_in_only(OnlyIn, Goal):-
   locally(nb_setval('eval_in_only', OnlyIn),
-   eval_in(OnlyIn, X, Y)).
+   Goal).
+
+eval_in_only(OnlyIn, X, Y):-
+   eval_in_only(OnlyIn,
+    eval_in(OnlyIn, X, Y)).
 
 eval_in(interp, X, Y):-
    peek_scope(Eq, RetType, Depth, Self),
     woc(eval_10(Eq, RetType, Depth, Self, X, Y)).
-
 eval_in(compiler, X, Y):-
     transpile_eval(X, Y).
-
+eval_in(rust, X, Y):-
+  rust_metta_run(exec(X),Y).
