@@ -395,6 +395,19 @@ py_is_list(X):- py_resolve(X,V),py_is_object(V),py_type(V,list).
 load_builtin_module:- ensure_py_loaded(metta_python_builtin).
 
 
+%!  py_call_method_and_args_sig(+RetType,+Sig,+List, -Py) is det.
+%
+%   Converts a list `List` into a Python call, returning the result as `Py`.
+%
+%   @arg RetType The return type required or var.
+%   @arg Sig Any singature overloads required or [].
+%   @arg O The input list to be converted toi call.
+%   @arg Py The result.
+py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res):-
+   if_t(Specialize\==[], debug_info(todo,warn(ignoring(specialize=Specialize)))),
+   py_call_method_and_args(Sym,Adjusted,Ret),
+   py_metta_return_value(RetType, Ret,Res).
+
 %!  py_call_method_and_args(+List, -Py) is det.
 %
 %   Converts a list `List` into a Python call, returning the result as `Py`.
@@ -861,8 +874,11 @@ py_dot_from(From,I,O):- make_py_dot(From,I,O).
 make_py_dot(A,B,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
 make_py_dot(A,B,Py):- py_dot([A,B],Py),!.
 
+make_py_dot(A,B,_Specialize,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
+make_py_dot(A,B,_Specialize,Py):- py_dot([A,B],Py),!.
 
-py_error_fail(E):- bt,wdmsg(E),!,trace,fail.
+py_error_fail(E):- wdmsg(E), \+ is_extreme_debug, !,fail.
+py_error_fail(E):- wdmsg(E),bt,wdmsg(E),!,trace,fail.
 
 %!  py_eval_object(+Var, -VO) is det.
 %
@@ -889,11 +905,13 @@ py_is_function(PyObject):- py_call(callable(PyObject),C),!,C= @(true).
 py_is_method_type(type).
 py_is_method_type(builtin_function_or_method).
 py_is_method_type(ufunc).
+py_is_method_type('numpy.ufunc').
 %py_is_method_type('OperatorAtom').
 py_is_method_type(function).
 py_is_method_type(method).
 py_is_method_type('method-wrapper').
 
+py_is_callable(O):- py_is_function(O).
 
 %!  py_eval_from(+From, +I, -O) is det.
 %

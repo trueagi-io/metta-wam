@@ -201,6 +201,30 @@ import importlib
 import types
 import time
 
+def is_ufunc_like(f):
+    """
+    Detects if a callable behaves like a universal function (ufunc),
+    including NumPy, CuPy, JAX, TensorFlow, PyTorch, Dask, etc.
+    """
+    if not callable(f):
+        return False
+
+    # True ufuncs have 'nin' and 'nout'
+    if hasattr(f, 'nin') and hasattr(f, 'nout'):
+        return True
+
+    # TensorFlow ops and JAX often have a 'signature'
+    if hasattr(f, 'signature'):
+        return True
+
+    # JAX, Dask, and custom array libraries may have '__array_ufunc__'
+    if hasattr(f, '__array_ufunc__'):
+        return True
+
+    return False
+
+
+
 def py_call_method_and_args(*method_and_args):
     """
     Calls a Python callable (function, method, or constructor) with the provided arguments.
@@ -261,6 +285,8 @@ def py_call_method_and_args(*method_and_args):
     # that leads us to a callable.
     # --------------------------------------------------   
     callable_obj, *args = method_and_args
+
+    if is_ufunc_like(callable_obj): return callable_obj(*args)
 
     # ==================================================
     # CASE 1: Bound Method
