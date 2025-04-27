@@ -2365,7 +2365,7 @@ get_type_expansionB(Eq,RetType,Depth,Other,Val,TypeO):-
     if_or_else(get_type(Depth,Other,Val,Type),Type='%Undefined%'), %term_singletons(Type,[]), %Type\==[], Type\==Val,!,
     do_expander(Eq,RetType,Type,TypeO).
 
-eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
+%eval_20(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 eval_20(Eq,RetType,Depth,Self,['CountElement',L],Res):- !, eval_args(Eq,RetType,Depth,Self,L,LL), !, (is_list(LL)->length(LL,Res);Res=1).
 
 eval_20(_Eq,_RetType,_Depth,_Self,['get-metatype',Val],TypeO):- !,
@@ -3390,26 +3390,48 @@ same_terms(X,Y):- same_term(X,Y),!.
 same_terms(X,Y):- \+ compound(X), X==Y.
 % Main evaluation predicate with full caching
 
-transpiler_peek(Sym,Len,Type,Fn):-
-  transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
+%eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mx__1_0+_make-var'(Types,Var).
+%eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
+
+
+transpiler_peek(Sym,Len,Type,Fn, Len, exactArgs):- 
+  if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
+  nonvar(Sym),
+  if_t((var(Len)),ignore(transpiler_predicate_store(_,Sym,[Len],_, _, _, _))),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
+  if_t(var(Len),between(1,10,Len)),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1),
-  if_t(nb_current('eval_in_only', interp), \+ symbol_impl_exists(interp,Sym,Len)),
-  nop(ok_call_predicate(Sym,Len)).
+  ok_call_predicate(Sym,Len,Type).
+  
+transpiler_peek(Sym,2,'mi',Fn, 2, exactArgs):-
+  nonvar(Sym),
+  atom_concat('mi__1_2_',Sym,Fn),current_predicate(Fn/3),
+  \+ transpiler_predicate_store(_, Sym, [2], _, _, _, _),
+  ok_call_predicate(Sym,Len,Type).
 
+transpiler_peek(Sym,Len,Type,Fn, Min, restAsList):-
+  between(0,Len, Min),
+  if_t(var(Type),member(Type,['mx','mi','mc'])),
+  format(atom(Fn),'~w__1_~w+_~w',[Type,Min,Sym]),
+  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  ok_call_predicate(Sym,Len,Type).
+
+transpiler_peek(Sym,Len,Type,Fn, Min, restAsList):-
+  between(0,Len, Min),
+  if_t(var(Type),member(Type,['mx','mi','mc'])),
+  format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]),
+  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  ok_call_predicate(Sym,Len,Type).
 
 
 ok_call_predicate(Sym,Min, _Type):-
-  \+ transpiler_predicate_store(_,Sym,[Min],_,_,_,_),
-  \+ transpiler_predicate_nary_store(_,Sym,Min,_,_,_,_,_,_),
-  \+ transpiler_clause_store(Sym,[Min],_,_,_,_,_,_,_).
-
+  if_t(nb_current('eval_in_only', interp), \+ symbol_impl_exists(interp,Sym,Len)).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
-    length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mi',Fn)),
-    append(Args, [Res], PArgs),!,
+    len_or_unbound(Args, Len),
+    transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 jiggle_args(Args,Ret,LenIsMin,LenIsMin,exactArgs,PArgs):- !, append(Args, [Ret], PArgs).
@@ -3420,15 +3442,15 @@ jiggle_append(Left,Right,Ret,restAsList, PArgs):- !, append(Left, [Right,Ret], P
 jiggle_append(Left,Right,Ret,exactArgs,PArgs):- append(Left, [Ret], PArgs), !, must_unify(Right,[]).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
-    length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mx',Fn)),
-    append(Args, [Res], PArgs),!,
+    len_or_unbound(Args, Len),
+    transpiler_peek(Sym,Len,'mx',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
-    length(Args,Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mc',Fn)),
-    append(Args,[Res],PArgs),!,
+    len_or_unbound(Args,Len),
+    transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
 
 
