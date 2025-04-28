@@ -416,6 +416,7 @@ py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res):-
 %   @arg Py The result.
 py_call_method_and_args([F|List], Py):- py_call_method_and_args(F,List, Py).
 
+py_call_method_and_args(F,List, Py):- is_list(F),F=[Input],atom(Input),py_atom(Input,PyCallable),PyCallable\==F,!,py_call_method_and_args(PyCallable,List, Py).
 py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
    maplist(py_arg,NewList,PyArgs),
    py_list([F|PyArgs],PyList),
