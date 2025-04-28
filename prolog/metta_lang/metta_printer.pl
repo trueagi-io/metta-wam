@@ -1857,14 +1857,20 @@ last_item([_|T],Last):- T \== [], !, last_item(T,Last).
 last_item([Item],Item).
 
 write_start(Type):- current_printer_override(P1),call(P1,'$write_start'(Type)),!.
-write_start(Char):- atom_length(Char, 1),write(Char),!.
-write_start(Type):- compound_type_s_m_e(Type,L,_,_),write(L),!.
+write_start(Char):- is_str_char(Char),write_ch(Char),!.
+write_start(Type):- compound_type_s_m_e(Type,L,_,_),write_ch(L),!.
 write_middle(Type):- current_printer_override(P1),call(P1,'$write_middle'(Type)),!.
-write_middle(Char):- atom_length(Char, 1),write(Char),!.
-write_middle(Type):- compound_type_s_m_e(Type,_,M,_),write(M),!.
+write_middle(Char):- is_str_char(Char),write_ch(Char),!.
+write_middle(Type):- compound_type_s_m_e(Type,_,M,_), write_ch(M),!.
 write_end(Type):- current_printer_override(P1),call(P1,'$write_end'(Type)),!.
-write_end(Char):- atom_length(Char, 1),write(Char),!.
-write_end(Type):- compound_type_s_m_e(Type,_,_,R),write(R),!.
+write_end(Char):- is_str_char(Char),write_ch(Char),!.
+write_end(Type):- compound_type_s_m_e(Type,_,_,R),write_ch(R),!.
+
+is_str_char( L ):- compound(L),arg(1,L,C),!,is_str_char(C).
+is_str_char(Char):- atomic(Char), atom_length(Char, 1),!.
+
+write_ch(L):- compound(L),arg(1,L,C),!,write_ch(C).
+write_ch(L):- assertion(L\==cmpd),write(L).
 
 print_compound_type(Indent, Type, [H|T] ):-
     last_item([H|T],Last),
@@ -1880,7 +1886,7 @@ symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
 
 compound_type_s_m_e(list,'(','.',')').
-compound_type_s_m_e(cmpd,S,E,M):- prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
+compound_type_s_m_e(cmpd,S,E,M):- !, prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
 compound_type_s_m_e(ocmpd,'#(','.',')').
 compound_type_s_m_e(ocmpd,'[','|',']').
 compound_type_s_m_e(ocmpd,'{','|','}').
@@ -1895,12 +1901,12 @@ paren_pair_functor('[',']','[...]').
 
 % Print the rest of the elements in the list, ensuring spacing
 print_rest_elements(_,T, _) :- T==[], !.
-print_rest_elements(M, T, Indent) :- \+ is_lcons(T), !, write(' '), write(M), write(' '), print_sexpr(T, Indent).
-print_rest_elements(M, [H|T], Indent) :-
+print_rest_elements(Type, T, Indent) :- \+ is_lcons(T), !, write(' '), write_middle(Type), write(' '), print_sexpr(T, Indent).
+print_rest_elements(Type, [H|T], Indent) :-
     write(' '),  % Space before each element after the first
     print_sexpr(H, Indent),
     (is_lcons(H) -> NextIndent is Indent + 0 ; NextIndent is Indent + 0),
-    print_rest_elements(M, T, NextIndent).
+    print_rest_elements(Type, T, NextIndent).
 
 % Helper predicate to print indentation spaces
 

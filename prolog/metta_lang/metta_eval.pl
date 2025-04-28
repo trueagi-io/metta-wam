@@ -556,7 +556,7 @@ eval_10(Eq,RetType,Depth,Self,[Sym|Args],Y):- \+ atom(Sym), !,
   maplist(as_prolog_x(Depth,Self), [Sym|Args] , [ASym|Adjusted]),
   eval_20(Eq,RetType,Depth,Self, [ASym|Adjusted], Y),sanity_check_eval(eval_20_not_atom,Y).
 
-eval_20(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
+eval_20(_Eq,_RetType,Depth,_Self,X,YO):- overflow_depth(Depth),bt,trace,!,X=YO.
 eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
     atom(Name), !,
       (Name=='NotReducible'->throw(metta_NotReducible);

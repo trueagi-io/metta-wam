@@ -74,8 +74,12 @@
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_compiler_print).
 :- dynamic(transpiler_clause_store/9).
+:- multifile(transpiler_predicate_store/7).
 :- dynamic(transpiler_predicate_store/7).
+:- dynamic(transpiler_predicate_nary_store/9).
+:- discontiguous transpiler_predicate_nary_store/9.
 :- discontiguous(compile_flow_control/8).
+:- multifile(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 :- ensure_loaded(metta_compiler_lib_stdlib).
 
