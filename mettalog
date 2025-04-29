@@ -20,6 +20,7 @@ export METTALOG_DIR=$(dirname "$SCRIPT")
 need_compile=0
 exe=true
 compatio=false
+html_flag=enable
 # compatio=false
 RC_OPTIONS=()
 TIMEOUT=0
@@ -146,6 +147,22 @@ add_to_list() {
         options+=("$flag")
     fi
 }
+
+# Function to remove a flag from a list
+remove_from_list() {
+    local flag=$1
+    local -n options=$2
+    local new_options=()
+
+    for item in "${options[@]}"; do
+        if [[ "$item" != "$flag" ]]; then
+            new_options+=("$item")
+        fi
+    done
+
+    options=("${new_options[@]}")
+}
+
 
 # Global variables for detected input/output/error file names
 input_filename=""
@@ -660,6 +677,7 @@ if [[ "$compatio" == "true" && ! ( $* == *--compatio* ) ]]; then
   METTALOG_OPTIONS=("--compatio")
 fi
 PRE_METTALOG_OPTIONS=()
+add_to_front "--html" PRE_METTALOG_OPTIONS
 SWI_FLAG_WITH_ARG=false
 python_flag=enable
 # Optional: Check if SWI-Prolog has Janus support
@@ -853,6 +871,13 @@ function handle_args {
                 continue
                 ;;
 
+           --html=false|--no-html)
+	        add_to_list "$arg" PRE_METTALOG_OPTIONS
+	        remove_from_list "--html" PRE_METTALOG_OPTIONS
+		add_to_front "--no-html" PRE_METTALOG_OPTIONS
+		html_flag=false
+                continue
+                ;;
 
            --v=*) REQUEST_PYSWIP_VERSION="${arg#*=}"
                 continue
