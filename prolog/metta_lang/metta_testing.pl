@@ -413,7 +413,7 @@ give_pass_credit(TestSrc, _Pre, G) :-
     % Increments the success counter.
     flag(loonit_success, X, X + 1),
     % Displays a success message in cyan color.
-    if_t(is_testing,color_g_mesg(cyan, ignore(write_src_wi(loonit_success(G))))))), !.
+    if_t((is_testing;true),color_g_mesg(cyan, ignore(write_src_wi(loonit_success(G))))))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -887,7 +887,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
     must_det_ll((
         color_g_mesg(red, write_src_wi(loonit_failureR(G))),
         write_pass_fail(TestSrc, 'FAIL', G),
-        display(G),
+        %display(G),
         flag(loonit_failure, X, X + 1),
         % Optional trace or REPL on failure based on settings.
         if_t(option_value('on-fail', 'repl'), repl),

@@ -14,7 +14,7 @@ use_evaluator(FA, Type, enabled):- use_evaluator(FA, Type, only).
 
 use_evaluator(fa('help!', 1), compiler, disabled).
 use_evaluator(fa('help!', 0), compiler, disabled).
-use_evaluator(fa('compiled-info', 1), interp, disabled).
+use_evaluator(fa('listing!', 1), interp, disabled).
 
 some_evaluator(interp).
 some_evaluator(compiler).

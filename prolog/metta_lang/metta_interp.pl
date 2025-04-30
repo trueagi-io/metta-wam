@@ -717,7 +717,8 @@ is_testing :- o_quietly(is_metta_flag('test')).
 %   @example
 %     ?- is_html.
 %     true.
-is_html :- is_metta_flag('html').
+is_html :- is_metta_flag('html'),!.
+is_html.
 
 % If the file is not already loaded, this is equivalent to consult/1. Otherwise, if the file defines a module,
 % import all public predicates. Finally, if the file is already loaded, is not a module file, and the context
@@ -4472,7 +4473,7 @@ metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L)
 %metta_atom0(Inherit,X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom0(Inherit,TopSelf, Y), X = '&self'.
 metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
 
-metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom).
+metta_atom0(_Inherit,KB, Atom) :- woct(metta_atom_added(KB, Atom)).
 
 
 
@@ -5281,7 +5282,7 @@ toplevel_interp_only_symbol('extend-py!').
 toplevel_interp_only_symbol('include').
 toplevel_interp_only_symbol('include!').
 toplevel_interp_only_symbol('call-string').
-toplevel_interp_only_symbol('compiled-info').
+toplevel_interp_only_symbol('listing!').
 toplevel_interp_only_symbol('repl!').
 toplevel_interp_only_symbol('eval').
 toplevel_interp_only_symbol('pragma!').
@@ -7180,7 +7181,7 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-nts1 :- !. % Disable redefinition by cutting execution.
+%nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
 nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.

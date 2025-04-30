@@ -2117,15 +2117,15 @@ remove_stub(Space,Fn,Arity):- \+ transpiler_stub_created(Space,Fn,Arity),!.
 remove_stub(Space,Fn,Arity):- retract(transpiler_stub_created(Space,Fn,Arity)),!,
   transpile_impl_prefix(Fn,Arity,IFn),abolish(IFn/Arity),!.
 
-% !(compiled-info! cdr-atom)
-transpiler_predicate_store(builtin, 'compiled-info', [1], [], '', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc__1_1_compiled-info'(S,RetVal):-
+% !(listing!! cdr-atom)
+transpiler_predicate_store(builtin, 'listing!', [1], [], '', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_listing!'(S,RetVal):-
   find_compiled_refs(S, Refs),
   locally(nb_setval(focal_symbol,S),print_refs(Refs)),!,
   length(Refs,RetVal).
 
 'compiled_info'(S):-
-  'mc__1_1_compiled-info'(S,_RetVal).
+  'mc__1_1_listing!'(S,_RetVal).
 
 print_refs(Refs):- is_list(Refs),!,maplist(print_refs,Refs).
 print_refs(Refs):- atomic(Refs),clause(M:H,B,Refs),!,print_itree(((M:H):-B)).
@@ -2162,7 +2162,7 @@ compiled_info_p(F,Refs):-
     \+ \+ predicate_property(M:P,_), \+ predicate_property(M:P,imported_from(_)),
     clause(M:P,_,Ref)),Refs).
 
-compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref),call(B), symbol_in(2,Symbol,P),
+compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref), (\+ compiler_data_no_call(F/A) -> call(B)), symbol_in(2,Symbol,P),
    (B==true->Info=Ref;Info=P).
 
 
@@ -2185,6 +2185,9 @@ compiler_data(transpiler_predicate_store/7).
 compiler_data(metta_atom/2).
 compiler_data(metta_type/3).
 compiler_data(metta_defn/3).
+compiler_data(eval_20/6).
+compiler_data_no_call(eval_20/6).
+
 %compiler_data(metta_atom_asserted/2).
 
 %compiler_data(metta_file_buffer/7).

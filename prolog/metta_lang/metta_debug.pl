@@ -650,6 +650,7 @@ is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
 is_nodebug :- option_value(nodebug, false), !, fail.
 % By default spawned threads would need nodebug=false
 is_nodebug :- is_mettalog_rt, !.
+is_nodebug :- is_mettalog_release, !.
 is_nodebug :- is_user_repl, !.
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
@@ -813,14 +814,21 @@ system:break_called:- format(user_error,'~nBREAK_CALLED~n',[]), fail.
 system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
+% return true if we want to hide away developer chicanery
+is_mettalog_release:- current_prolog_flag(release, true),!.
+is_mettalog_release:- current_prolog_flag(devel, true),!, fail.
+is_mettalog_release:- true.
 
-woc(Goal):- woc(true,Goal).
+% runtime should change this to true
+woc(Goal):- (is_mettalog_rt;is_mettalog_release),!,woc(true,Goal).
+woc(Goal):- woc(error,Goal). % for developement purposes
+woce(Goal):-woc(error,Goal).
+wocf(Goal):-woc(false,Goal). % only use after 100% safe
+woct(Goal):-woc(true,Goal). % only use after 100% required
+
+% woc(TFE,Goal):- !, locally(set_prolog_flag(occurs_check,TFE),Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
-% woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
-woct(Goal):-woc(error,Goal).
-woce(Goal):-woc(error,Goal).
-wocf(Goal):-woc(false,Goal).
 
 print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
 test_locally_setting_flags:-
@@ -1303,7 +1311,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
     ((sub_term_safely(Why, ReasonsToTrace), ReasonsToTrace \= Why) -> true ; ReasonsToTrace = Why), % Ensure proper Why handling.
 
-    if_t(D1<0, (set_debug(deval,true))),
+    if_t(D1<0, (set_debug(devel,true))),
 
     (\+ \+ if_trace((eval; ReasonsToTrace), (
         PrintRet = 1,
