@@ -245,92 +245,6 @@ partial_combine_lists([H1|L1],[H2|L2],[H1|Lcomb],L1a,L2a) :- H1==H2,!,
    partial_combine_lists(L1,L2,Lcomb,L1a,L2a).
 partial_combine_lists(L1,L2,[],L1,L2).
 
-is_proper_arg(O):- compound(O),iz_conz(O), \+ is_list(O),!,bt, trace.
-is_proper_arg(_).
-% This hook is called when an attributed var is unified
-proper_list_attr:attr_unify_hook(_, Value) :- \+ compound(Value),!.
-proper_list_attr:attr_unify_hook(_, Value) :- is_list(Value),!.
-proper_list_attr:attr_unify_hook(_, Value) :- iz_conz(Value),!,trace.
-proper_list_attr:attr_unify_hook(_, _Value).
-% Attach the attribute if not already present and not already a proper list
-ensure_proper_list_var(Var) :- var(Var),!, put_attr(Var, proper_list_attr, is_proper_arg).
-ensure_proper_list_var(Var) :- is_proper_arg(Var),!.
-
-
-eval_at(_Fn,Where):- nb_current('eval_in_only',NonNil),NonNil\==[],!,Where=NonNil.
-eval_at( Fn,Where):- use_evaluator(fa(Fn, _), Only, only),!,Only=Where.
-eval_at(_Fn,Where):- option_value(compile,false),!,Where=interp.
-eval_at( Fn,Where):- use_evaluator(fa(Fn, _), Where, enabled),!.
-eval_at( Fn,Where):- nb_current(disable_compiler,WasDC),member(Fn,WasDC), Where==compiler,!,fail.
-eval_at( Fn,Where):- nb_current(disable_interp,WasDC),member(Fn,WasDC), Where==interp,!,fail.
-eval_at(_Fn,Where):- option_value(compile,full),!,Where=compiler.
-eval_at(_Fn, _Any):- !.
-
-must_use_interp(Fn, only_interp(Fn), true):- use_evaluator(fa(Fn, _), interp, only).
-must_use_interp(_ , eval_in_only(compiler), never):- nb_current('eval_in_only',compiler).
-must_use_interp(_ , eval_in_only(interp), true):- nb_current('eval_in_only',interp).
-must_use_interp(Fn, disable_compiler(Fn), true):- nb_current(disable_compiler,WasDC), member(Fn,WasDC).
-must_use_interp(Fn,compiler_disabled(Fn), true):- use_evaluator(fa(Fn, _), compiler, disabled).
-must_use_interp(Fn,unknown(Fn), unknown).
-
-must_use_compiler(_ ,eval_in_only(compiler)):- nb_current('eval_in_only',compiler).
-must_use_compiler(_ ,eval_in_only(interp)):- nb_current('eval_in_only',interp), fail.
-must_use_compiler(Fn,only_compiler(Fn)):- use_evaluator(fa(Fn, _), compiler, only).
-must_use_compiler(Fn,disable_interp(Fn)):- nb_current(disable_interp,WasDC), member(Fn,WasDC).
-must_use_compiler(Fn,interp_disabled(Fn)):- use_evaluator(fa(Fn, _), interp, disabled).
-
-% Compiler is Disabled for Fn
-ci(PreInterp,Fn,Len,Eval,RetVal,_PreComp,_Compiled):- fail,
-    once(must_use_interp(Fn,Why,TF)),
-    TF \== unknown, TF \== never,
-    debug_info(must_use_interp,why(Why,Fn=TF)),
-    TF == true, !,
-
-    % \+ nb_current(disable_interp,WasDI),member(Fn,WasDI),
-    call(PreInterp),
-    maplist(lazy_eval_to_src,Eval,Src),
-    if_t(Eval\=@=Src,
-       debug_info(lazy_eval_to_src,ci(Fn,Len,Eval,RetVal))),
-    %eval_fn_disable(Fn,disable_compiler,interp,((call(PreComp),call(Compiled)))),
-    debug_info(Why,eval_args(Src,RetVal)),!,
-    eval_args(Src,RetVal).
-
-ci(_PreInterp,Fn,Len,_Eval,_RetVal,PreComp,Compiled):-
-    %(nb_current(disable_interp,WasDI),member(Fn,WasDI);
-    %\+ nb_current(disable_compiler,WasDC),member(Fn,WasDC)),!,
-    %\+ \+ (maplist(lazy_eval_to_src,Eval,Src),
-    %       if_t(Eval\=@=Src, debug_info(lazy_eval_to_src,ci(Fn,Len,Eval,RetVal)))),
-    if_t(false,debug_info(call_in_only_compiler,ci(Fn,Len,Compiled))),!,
-    % eval_fn_disable(Fn,disable_compiler,eval_args(EvalM,Ret))
-    %show_eval_into_src(PreInterp,Eval,_EvalM),
-    (call(PreComp),call(Compiled)),
-    %eval_fn_disable(Fn,disable_compiler,(call(PreComp),call(Compiled))),
-    true.
-
-eval_fn_disable(Fn,DisableCompiler,Call):-
-   (nb_current(DisableCompiler,Was)->true;Was=[]),
-   (New = [Fn|Was]),
-   Setup = nb_setval(DisableCompiler,New),
-   Restore = nb_setval(DisableCompiler,Was),
-   redo_call_cleanup(Setup,Call,Restore).
-
-
-lazy_eval_to_src(A,O):- nonvar(O),trace,A=O.
-%lazy_eval_to_src(A,O):- var(A),!,O=A,ensure_proper_list_var(A).
-lazy_eval_to_src(A,O):- \+ compound(A),!,O=A.
-%lazy_eval_to_src(A,P):- is_list(A), maplist(lazy_eval_to_src,A,P),!.
-lazy_eval_to_src(A,P):- [H|T] = A, lazy_eval_to_src(H,HH),lazy_eval_to_src(T,TT),!,P= [HH|TT].
-lazy_eval_to_src(A,P):- as_p1_expr(A,P),!.
-
-delistify(L,D):- is_list(L),L=[D],!.
-delistify(L,L).
-
-create_prefixed_name(Prefix,LenArgs,FnName,String) :-
-   %(sub_string(FnName, 0, _, _, "f") -> break ; true),
-   length(LenArgs,L),
-   append([Prefix,L|LenArgs],[FnName],Parts),
-   atomic_list_concat(Parts,'_',String).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% Evaluation (!)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2401,7 +2315,9 @@ trace_break(G):-
    stream_property(Err, file_no(2)),
    current_output(Cur), Cur\=@=Err,!,
    with_output_to(Err, trace_break(G)).
-trace_break(G):- nl, writeq(call(G)), trace,break.
+trace_break(G):- notrace, nl, writeq(call(G)),nl,nl, current_prolog_flag(noninteractive,true), format('~nTRACE_BREAK_CALLED~n',[]),
+  once(bt), writeq(call(G)),throw('aborted').
+trace_break(G):- notrace,nl, writeq(call(G)),nl,nl,format('~nTRACE_BREAK_CALLED~n',[]), nl, trace, \+  current_prolog_flag(noninteractive,true), break.
 %    :- set_prolog_flag(gc,false).
 
 :- if(debugging(metta(compiler_bugs))).

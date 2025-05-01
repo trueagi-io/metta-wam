@@ -868,6 +868,7 @@ null_output(MFS) :- use_module(library(memfile)),new_memory_file(MF),open_memory
 %   @example
 %     ?- nullify_output.
 %     true.
+
 nullify_output :- keep_output, !.
 nullify_output :- dont_change_streams, !.
 nullify_output :- nullify_output_really.
@@ -1554,7 +1555,9 @@ on_set_value(Note,N,'True'):- nocut,
     on_set_value(Note,N,true).    % true
 on_set_value(Note,N,'False'):- nocut,
     on_set_value(Note,N,false).   % false
-on_set_value(_Note,abolish_trace,true):- nocut, ignore(abolish_trace),!.
+
+on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
+on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
 
 on_set_value(_Note,show, Value):-
     if_t( \+ prolog_debug:debugging(filter_default,_,_), set_debug(default,false)),
@@ -1675,7 +1678,8 @@ set_is_unit_test(false):-
     !.
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
-    maybe_abolish_trace,
+    maybe_noninteractive,
+    maybe_abort_trace,
     % Reset all options to their default values.
     %reset_default_flags,
     % Disable specific trace settings during unit testing.
@@ -6948,7 +6952,7 @@ maybe_halt(_) :-
     once(pre_halt1), fail.
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
-    option_value('repl', false), !, halt(Seven).
+    option_value('repl', false), \+ current_prolog_flag(mettalog_rt, true), !, halt(Seven).
 maybe_halt(Seven) :-
     % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
     option_value('halt', true), !, halt(Seven).
@@ -7181,9 +7185,10 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-%nts1 :- !. % Disable redefinition by cutting execution.
+nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
-nts1 :-
+nts1 :- no_interupts(nts1r).
+nts1r :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
   %listing(system:notrace/1),
@@ -7193,12 +7198,31 @@ nts1 :-
   dynamic(system:notrace/1),
     % Define the meta-predicate behavior for `system:notrace/1`.
   meta_predicate(system:notrace(0)),
+
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta(( system:notrace(G) :- (!, once(G) ))).
-nts1 :-
+    asserta(( system:notrace(G) :- (!, unotrace(G),! ))).
+nts1r :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
+
+:- meta_predicate(no_interupts(0)).
+no_interupts(G):- setup_call_cleanup(G,true,true).
+:- use_module(library(logicmoo/redo_locally)).
+:- meta_predicate(unotrace(0)).
+unotrace(G):- unotrace2(G).
+:- meta_predicate(unotrace1(0)).
+unotrace1(G):-  (\+ tracing -> once(G) ; scce_orig(notrace,once(G),trace)).
+:- meta_predicate(unotrace2(0)).
+unotrace2(G):- with_leash_visible(-all,-all,G),!.
+:- meta_predicate(with_leash_visible(+,+,0)).
+with_leash_visible(Leash,Visible,Goal):-
+  '$leash'(OldL, OldL),'$visible'(OldV, OldV),
+   leash(Leash), visible(Visible),
+  '$leash'(NewL, NewL),'$visible'(NewV, NewV),
+   scce_orig(('$leash'(_, NewL),'$visible'(_, NewV)),
+                     (Goal*->('$leash'(_, OldL),'$visible'(_, OldV));(('$leash'(_, OldL),'$visible'(_, OldV)),fail)),
+            ('$leash'(_, OldL),'$visible'(_, OldV))).
 
 %:-nts1.
 :- initialization(nts1).
