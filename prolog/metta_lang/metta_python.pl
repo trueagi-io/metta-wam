@@ -445,6 +445,9 @@ pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
 pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
 
 
+
+py_term(Term, PyObject):- is_ftVar(Term),!,py_obi(identity(prolog(Term)), PyObject).
+py_term([Quoted|Thing], Obj) :- is_list(Thing), Quoted = 'quote', Thing = [Arg],!,py_term(Arg, Obj).
 py_term(Term, PyObject):- py_obi(identity(prolog(Term)), PyObject).
 py_identity(Term, PyObject):- py_obi(identity((Term)), PyObject).
 
@@ -458,8 +461,10 @@ py_arg(Symbol, PyObject) :- symbol(Symbol),!,py_term(Symbol, PyObject).
 py_arg(Number, PyObject) :- number(Number),!,py_identity(Number, PyObject).
 % Handle strings
 py_arg(String, PyObject) :- string(String),!,py_identity(String, PyObject).
+% Handle py-term Arg
+py_arg([Quoted|Thing], Obj) :- is_list(Thing), Quoted = 'quote', Thing = [Arg],!,py_term(Arg, Obj).
 % Handle lists
-py_arg(List, PyList) :- is_list(List), !, maplist(py_arg, List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
+py_arg(List, PyList) :- is_list(List), !, maplist(py_arg,List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
 % Handle Python objects
 py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall_direct(tuple(Mapped),PyObject).
 %py_arg(Tuple, PyObject) :- py_type(Tuple,'tuple'),!,map_tuple(py_arg,Tuple, Mapped),py_ocall(tuple(Mapped),PyObject),!. %py_tuple(Mapped,PyObject).
@@ -879,7 +884,13 @@ make_py_dot(A,B,_Specialize,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_f
 make_py_dot(A,B,_Specialize,Py):- py_dot([A,B],Py),!.
 
 py_error_fail(E):- wdmsg(E), \+ is_extreme_debug, !,fail.
+py_error_fail(E):- E = error(python_error(_ErrorType, Value), _), print_python_traceback(Value), fail.
 py_error_fail(E):- wdmsg(E),bt,wdmsg(E),!,trace,fail.
+
+
+print_python_traceback(Value) :-
+    py_call(metta_python_builtin:format_python_exception(Value), TraceList),
+    format('Python traceback:\n~s', [TraceList]).
 
 %!  py_eval_object(+Var, -VO) is det.
 %

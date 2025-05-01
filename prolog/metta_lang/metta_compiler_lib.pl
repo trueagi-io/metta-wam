@@ -1,7 +1,10 @@
 :- dynamic(transpiler_predicate_store/7).
-:- discontiguous transpiler_predicate_store/7.
-:- discontiguous transpiler_predicate_nary_store/9.
-:- discontiguous compile_flow_control/8.
+:- discontiguous(transpiler_predicate_store/7).
+:- dynamic(transpiler_predicate_nary_store/9).
+:- discontiguous(transpiler_predicate_nary_store/9).
+:- multifile(compile_flow_control/8).
+:- discontiguous(compile_flow_control/8).
+:- ensure_loaded(metta_compiler).
 
 from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
@@ -236,16 +239,19 @@ transpiler_predicate_store(builtin, '<=', [2], '@doc', '@doc', [x(doeval,eager,[
 %%%%%%%%%%%%%%%%%%%%% lists
 
 transpiler_predicate_store(builtin, 'car-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[])).
-'mc__1_1_car-atom'([H|_],H).
+'mc__1_1_car-atom'(HT,H):- check_type_error( \+ is_list(HT),'car-atom'(HT,H)),HT=[H|_].
 
 transpiler_predicate_store(builtin, 'cdr-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_1_cdr-atom'([_|T],T).
+'mc__1_1_cdr-atom'(HT,T):- check_type_error( \+ is_list(HT),'cdr-atom'(HT,T)),HT=[_|T].
 
 transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_2_cons-atom'(A,B,[A|B]).
+'mc__1_2_cons-atom'(A,B,AB):- check_type_error( \+ is_list(B),'cons-atom'(A,B,AB)),AB=[A|B].
 
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_1_decons-atom'([A|B],[A,B]).
+'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ is_list(AB1), decons_atom(AB1,AB2)),!,[A|B]=AB1,AB2=[A,B].
+
+check_type_error( Check, Error):- if_t(Check, raise_type_error( Check, Error)).
+raise_type_error( Check, Error):- trace,throw(raise_type_error( Check, Error)).
 
 %transpiler_predicate_store(builtin, 'length', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])).
 %'mc__1_1_length'(L,S) :- length(L,S).
@@ -292,6 +298,7 @@ transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,laz
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
 'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispuU(A,Code),X) :- !, findall(A,Code,X). %,maplist(=(A),X).
 'mc__1_1_collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEn(X,true,_),[X]) :- !.
 'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
@@ -445,6 +452,10 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   lazy_impedance_match(x(noeval,eager,[]),LazyRetQuoted,QuotedResult1a,QuotedCode1,QuotedResult1a,QuotedCode1,QuotedResult2,QuotedCode2),
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
+
+%:- initialization(setup_library_call(builtin, 'chain', [3], '@doc', '@doc', [x(eval,eager,[]), x(noeval,eager,[]), x(eval,lazy,[])], x(noeval,eager,[])), program).
+
+
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
@@ -610,6 +621,10 @@ transpiler_predicate_store(builtin, 'eval-string', [1], ['String'], 'Atom', [x(d
 'mc__1_1_eval-string'(String,Res) :-
     eval_string(String,Res).
 
+transpiler_predicate_store(builtin,'eval-in-only', [1], ['Symbol','Atom'], 'Atom', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_eval-in-only'(Where,Eval,Res) :-
+    eval_in_only(Where,Eval,Res).
+    
 transpiler_predicate_nary_store(builtin, 'py-atom', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-atom'(SymRef,Specialize,ResO) :-
    py_atom(SymRef,Res), specialize_res(Res,Specialize,ResO).
@@ -625,9 +640,7 @@ transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'At
 transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
     eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
-    %make_py_dot(Arg1,Arg2,Res)
-    %py_call_method_and_args(SymRef,Args,Res),
-    %py_metta_return_value(_RetType,Ret,Res)
+
 
 
 this_is_in_compiler_lib.
@@ -668,8 +681,9 @@ metta_to_metta_body_macro(_,Body,Body):-!.
 metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
    must_det_lls((
     nop((term_variables(HeadIs+AsBodyFn,Vars),copy_term(Vars,Copy),ss_freeze_vars(Vars,Copy))),
-    metta_body_macro_stack(bu,HeadIs, [], AsBodyFn, AsBodyFnE),
-    metta_body_macro_stack(td,HeadIs, [], AsBodyFnE, AsBodyFnMid),
+    metta_body_macro_stack(td1,HeadIs, [], AsBodyFn, AsBodyFnE),
+    metta_body_macro_stack(bu,HeadIs, [], AsBodyFnE, AsBodyFnMidE),
+    metta_body_macro_stack(td2,HeadIs, [], AsBodyFnMidE, AsBodyFnMid),
    (AsBodyFn =@= AsBodyFnMid -> AsBodyFnMid = AsBodyFnOut ;
      metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)),
     nop((ss_unfreeze_vars(Vars,Copy))))).
@@ -720,15 +734,15 @@ metta_body_macro_pass(bu,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr
 metta_body_macro_pass(bu,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
 metta_body_macro_pass(bu,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
 
-metta_body_macro_pass(td,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
-metta_body_macro_pass(td,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
+metta_body_macro_pass(td1,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
+metta_body_macro_pass(td1,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 %metta_body_macro_pass(bu,[eval,Next], Next).
-metta_body_macro_pass(td,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
+
 % metta_body_macro_pass(td,[eval,Eval], Eval).
 
-metta_body_macro_pass(td,['unique',Eval],
+metta_body_macro_pass(td2,['unique',Eval],
    ['let',Var,['call-fn!','no_repeats_var'],
-     ['let',Res,Eval,['metta-unify',Var,Res],Res]]).
+     ['let',Res,Eval,['metta-unify',Var,Res],Res]]):- fail.
 
 metta_body_macro_pass(_,AsBodyFnOut, AsBodyFnOut).
 

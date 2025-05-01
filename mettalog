@@ -1219,7 +1219,53 @@ export RUST_BACKTRACE=full
 # Set default reference file name based on hostname
 DefaultSav="Sav.$(hostname).MeTTaLog"
 need_compile=0  # Ensure this is initialized
+INTERP_SRC_DIR="${INTERP_SRC_DIR:-.}"
+checksum_file="$INTERP_SRC_DIR/lastbuilt.checksum"
 
+# Function to calculate and save checksums in $INTERP_SRC_DIR
+save_checksums() {
+  local dir="${INTERP_SRC_DIR:-.}"
+  # Set checksum_file if not already set
+  if [[ -z "$checksum_file" ]]; then
+    checksum_file="$dir/lastbuilt.checksum"
+  fi
+  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
+    -exec sha256sum "{}" + | sort > "$checksum_file"
+  DEBUG "Checksums saved to $checksum_file"
+}
+# Function to check if any files have changed in $INTERP_SRC_DIR
+check_for_changes() {
+  local dir="${INTERP_SRC_DIR:-.}"
+
+  # Set checksum_file if not already set
+  if [[ -z "$checksum_file" ]]; then
+    checksum_file="$dir/lastbuilt.checksum"
+  fi
+
+  if [[ ! -f "$checksum_file" ]]; then
+    #echo "No checksum file found in $dir. Needs rebuilt."
+    #need_compile=1
+    return 1
+  fi
+
+  local temp_file
+  temp_file=$(mktemp)
+
+  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
+    -exec sha256sum "{}" + | sort > "$temp_file"
+
+  if diff -q "$checksum_file" "$temp_file" &> /dev/null; then
+    #echo "No changes detected in $dir."
+    rm "$temp_file"
+    return 0
+  else
+    # echo "Changes detected in $dir!"
+    # Suppress diff output completely
+    # (you could log it somewhere instead if needed)
+    rm "$temp_file"
+    return 2
+  fi
+}
 
 
 # Check if any .pl file is newer than the skip_compile file
@@ -1235,6 +1281,7 @@ if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
 	fi
     done
 fi
+
 
 if [[ "$exe" == "force" ]]; then
     exe=true
@@ -1258,16 +1305,16 @@ if [[ "$exe" == "true" ]]; then
         need_compile=1
     else
         # Check if any .pl file is newer than the reference file
-        for pl_file in "$INTERP_SRC_DIR"/*_*.*; do
-            if [[ ! -e "$pl_file" ]]; then
-                DEBUG "{ORANGE}No matching .pl files found in $INTERP_SRC_DIR."
-            # If a .pl file is newer than the reference file, trigger recompilation
-            elif [[ "$pl_file" -nt "$reference_file" ]]; then
-                DEBUG "${ORANGE}$pl_file is newer than $reference_file."
-                need_compile=1
-                break  # Exit loop early as compilation is already needed
-            fi
-        done
+	if check_for_changes; then
+	  DEBUG "✅ Checksum OK: No changes detected in \$INTERP_SRC_DIR"
+	elif [[ $? -eq 1 ]]; then
+	  DEBUG "⚠️  Checksum file not found."
+	  need_compile=1
+	else
+	  DEBUG "❌ Checksum MISMATCH: removing $INTERP_SRC_DIR/skip_compile"
+	  rm -f "$INTERP_SRC_DIR/skip_compile"
+	  need_compile=1
+	fi
     fi
 fi
 
@@ -1310,6 +1357,8 @@ if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
     rm -f "$TEMP_DIR/tmp.??*"
 fi
 
+had_display=0
+original_display=""
 NEED_CLEANUP=0
 STYLE=EXE
 
@@ -1321,6 +1370,12 @@ fi
 
 # Function to cleanup compiled file if execution is interrupted or unsuccessful
 compiler_cleanup() {
+
+    if [[ $had_display -eq 1 ]]; then
+	export DISPLAY="$original_display"
+	DEBUG "Restored DISPLAY=$DISPLAY"
+    fi
+
     if [[ $NEED_CLEANUP -eq 1 ]]; then
 	NEED_CLEANUP=0
 
@@ -1328,6 +1383,7 @@ compiler_cleanup() {
 
 	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
 	    rm -f "$METTALOG_COMPILE_SUCCESS"
+	    save_checksums
 	    DEBUG "{$GREEN}CREATED $reference_file"
 	    STYLE=EXE
 	else
@@ -1364,7 +1420,16 @@ compiler_cleanup() {
 
 }
 
+
 if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
+
+
+    if [[ -n "$DISPLAY" ]]; then
+	had_display=1
+	original_display="$DISPLAY"
+	unset DISPLAY
+	DEBUG "Temporarily unset DISPLAY (was $original_display)"
+    fi
 
     NEED_CLEANUP=1
     # Register cleanup before starting compilation
@@ -1383,11 +1448,9 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
     MAKE_REF_FILE="swipl ${SWI_OPTIONS[*]} -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$reference_file"
     DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
 
-    unset DISPLAY
-
     # Execute the compilation command
     set +e
-    DEBUG "${BOLD}Compiling $reference_file..."
+    DEBUG "${BOLD}Compiling $reference_file..."    
     eval "$MAKE_REF_FILE" 
     # trap reset_settings  compiler_cleanup SIGINT SIGTERM EXIT
     )

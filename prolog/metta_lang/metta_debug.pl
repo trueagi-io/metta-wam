@@ -790,10 +790,8 @@ is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArg
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
-sub_var_safely(Var,Source):-
-  woc(sub_var(Var,Source)).
-
-sub_term_safely(Sub,Source):- acyclic_term(Source),!,sub_term(Sub,Source).
+sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_var(Sub,Source).
+sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_term(Sub,Source).
 
 
 maybe_abolish_trace:- \+ is_flag(abolish_trace), !.
@@ -964,10 +962,16 @@ dont_show_any_qcompile.
          debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
         debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,ignore(debug_info_filtered( Topic, Info)))),_,fail)),!.
 
+debug_info_filtered( Topic, Info):- var(Topic),!, debug_info_filtered(unknown, Info).
 debug_info_filtered( always(Topic), Info):- !, once((filter_matches_var(hide,Topic);filter_matches_var(hideall,Topic);debug_info_now([always,Topic], Info))),!.
 debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
 debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
 debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.
+
+% Roy requested to make it easy to hide stdlib building in transpiler
+debug_info_filtered(_Topic,_Info):- currently_stdlib,   (filter_matches_var(hideall,stdlib);    filter_matches_var(hide,stdlib)),!.
+debug_info_filtered(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(showall,stdlib), \+ filter_matches_var(show,stdlib),!.
+
 debug_info_filtered( Topic, Info):- filter_matches_var(show, Topic), !, ignore(debug_info_now( Topic, Info)),!.
 
 %debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.

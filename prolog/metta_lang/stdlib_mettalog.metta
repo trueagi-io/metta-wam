@@ -314,6 +314,275 @@ For example:
 )
 (: py-exec! (-> String Bool))
 
+
+; !(import! &corelib "src/canary/stdlib_mettalog.metta")
+;!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
+
+(iz findall! MeTTaLog)
+(@doc findall!
+  (@desc "Takes a Template and a Goal. Returns the list resulting from substituting all bindings from solving Goal into Template.
+  See Prolog's built-in predicate findall/3.")
+  (@params (
+    (@param "Template")
+    (@param "Goal")))
+  (@return "Result list of all bindings for Goal substituted into Template"))
+(: findall! (-> Expression Expression Expression))
+
+;; Functional Programming
+(iz maplist! MeTTaLog)
+(@doc maplist!
+  (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
+ The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
+ F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three).
+ Use concurrent-maplist! for a multi-threaded, nondeterministic version.
+ See Prolog's built-in predicate maplist.")
+  (@params (
+    (@param "Function to be applied")
+    (@param "List")))
+  (@return "Result of applying Function to List(s)"))
+(: maplist! (-> Function Expression Expression))
+(: maplist! (-> Function Expression Expression Expression))
+(: maplist! (-> Function Expression Expression Expression Expression))
+
+;; Functional Programming
+(iz concurrent-maplist! MeTTaLog)
+(@doc concurrent-maplist!
+  (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
+ The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
+ F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three).
+ The applications of F to the list items are processed in parallel. Because of the overhead of this approach, a speedup is only likely if F is expensive to evaluate.
+ Use maplist! for a single-threaded, deterministic version.
+ See Prolog's built-in predicate concurrent-maplist.")
+  (@params (
+    (@param "Function to be applied")
+    (@param "List")))
+  (@return "Result of applying Function to List(s)"))
+(: concurrent-maplist! (-> Function Expression Expression))
+(: concurrent-maplist! (-> Function Expression Expression Expression))
+(: concurrent-maplist! (-> Function Expression Expression Expression Expression))
+
+(iz throw MeTTaLog)
+(@doc throw
+  (@desc "Raises an exception. See also `catch`; the system will look for the innermost catch such that Exception unifies with Catcher.")
+  (@params (
+    (@param "Exception")))
+  (@return "Does not return - raises an exception"))
+(: throw (-> Atom ErrorType))
+
+(iz catch MeTTaLog)
+(@doc catch
+  (@desc "Executes Form. If an exception is raised with `throw` during execution of Form while this is the innermost catch such that Catcher unifies with Exception, the exception is caught. Recover is then executed with bindings from Catcher.")
+  (@params (
+    (@param "Form")
+    (@param "Catcher")
+    (@param "Recover")))
+  (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
+(: catch (-> Atom Atom Atom Atom))
+
+(iz max-time! MeTTaLog)
+(@doc max-time!
+  (@desc "Executes Form. If execution takes longer than Time, will raise a time_limit_exceeded exception. See also `catch`.")
+  (@params (
+    (@param "Time (in seconds)")
+    (@param "Form")))
+  (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
+(: max-time! (-> Number Atom Atom))
+
+(iz sleep! MeTTaLog)
+(@doc sleep!
+  (@desc "Sleeps for N seconds.")
+  (@params (
+    (@param "N")))
+  (@return "Returns True after sleeping completes."))
+(: sleep! (-> Number Bool))
+
+(iz limit! MeTTaLog)
+(@doc limit!
+  (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Limit")
+    (@param "Form")))
+  (@return "First Limit results of Form."))
+(: limit! (-> Number Atom Atom))
+
+(iz number-of MeTTaLog)
+(@doc number-of
+  (@desc "Returns the number of results Form generates")
+  (@params (
+    (@param "Form")))
+  (@return "Number of results of Form."))
+(: number-of (-> Atom Number))
+
+(iz offset! MeTTaLog)
+(@doc offset!
+  (@desc "Executes Form ignoring the first Count results. Results are returned as soon as they become available.")
+  (@params (
+    (@param "Count")
+    (@param "Form")))
+  (@return "Results of Form after ignoring the first Count results that are generated."))
+(: offset! (-> Number Atom Atom))
+
+(iz call! MeTTaLog)
+(@doc call!
+  (@desc "Trampolines to Prolog's call. Only works when the predicate and each arg are provided separately. e.g. !(call! ls /) will print the root directory but !(call! ls(/)) will fail.")
+  (@params (
+    (@param "Form")))
+  (@return "True if the call succeeds, False otherwise."))
+(: call! (-> Atom Atom))
+
+(iz call-p! MeTTaLog)
+(@doc call-p!
+  (@desc "Like call-fn! except it does not append the called term with a return arg.")
+  (@params (
+    (@param "Form")))
+  (@return "True if the call succeeds, False otherwise."))
+(: call-p! (-> Atom Atom))
+
+(iz call-fn! MeTTaLog)
+(@doc call-fn!
+  (@desc "Trampolines to Prolog's call after appending the return argument.  Each arg are provided separately. e.g. !(call-fn! length (1 2 3)) will return 3.")
+  (@params (
+    (@param "Form")))
+  (@return "appends a return argument to a form and calls it"))
+(: call-fn! (-> Atom Atom))
+
+(iz call-string! MeTTaLog)
+(@doc call-string!
+  (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
+  (@params (
+    (@param "PrologSrc")))
+  (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
+(: call-string! (-> String Atom))
+
+(iz call-cleanup! MeTTaLog)
+(@doc call-cleanup!
+  (@desc "Same as (setup-call-cleanup! true Form Cleanup). setup-call-cleanup! is recommended instead if Cleanup is intended to undo prior side-effects - place those side-effects in Setup.")
+  (@params (
+    (@param "Form")
+    (@param "Cleanup")))
+  (@return "Result of Form."))
+(: call-cleanup! (-> Atom Atom Atom))
+
+(iz setup-call-cleanup! MeTTaLog)
+(@doc setup-call-cleanup!
+  (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception. For each result of Setup, Form is run to completion, then Cleanup is run.")
+  (@params (
+    (@param "Setup")
+    (@param "Form")
+    (@param "Cleanup")))
+  (@return "Result of Form."))
+(: setup-call-cleanup! (-> Atom Atom Atom Atom))
+
+(iz predicate-arity MeTTaLog)
+(@doc predicate-arity
+  (@desc "Returns the arity of Function's predicate form, i.e. the function-arity + 1. (The additional argument being the function's result as an argument to the predicate.)")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function's predicate form."))
+
+(iz function-arity MeTTaLog)
+(@doc function-arity
+  (@desc "Returns the arity of Function.")
+  (@params (
+    (@param "Function")))
+  (@return "Arity of Function."))
+
+(iz open! MeTTaLog)
+(@doc open!
+  (@desc "Opens Filename as a stream under Mode. Mode is one of read, write, append, or update. Mode append opens the file for writing, positioning the file pointer at the end. Mode update opens the file for writing, positioning the file pointer at the beginning of the file without truncating the file.")
+  (@params (
+    (@param "Filename")
+    (@param "Mode")))
+  (@return "Stream"))
+(: open! (-> String Atom Stream))
+
+(iz close! MeTTaLog)
+(@doc close!
+  (@desc "Closes Steam, returning True on success.")
+  (@params (
+    (@param "Stream")))
+  (@return "Boolean"))
+(: close! (-> Stream Boolean))
+
+(iz with-output-to! MeTTaLog)
+(@doc with-output-to!
+  (@desc "Evaluates expression with all outupt (e.g. from print) redirected to Stream. See also open! and close!.")
+  (@params (
+    (@param "Stream")
+    (@param "Expression")))
+  (@return "Result of Expression"))
+(: with-output-to! (-> Stream Expression Atom))
+
+(iz load-file! MeTTaLog)
+(@doc load-file!
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes MeTTa. Like import! but favors MeTTa over Python when the file type is ambiguous.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-file! (-> hyperon::space::DynSpace String Expression))
+
+(iz load-ascii MeTTa)
+(@doc load-ascii
+  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file. Works like include!.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: load-ascii (-> hyperon::space::DynSpace String Expression))
+
+(iz transfer! MeTTa)
+(@doc transfer!
+  (@desc "Loads the contents of Filename into &self, as include. Returns () if successful, throws an exception otherwise.")
+  (@params (
+    (@param "Filename")))
+  (@return "Expression"))
+(: transfer! (-> String (->)))
+
+(iz save-space! MeTTa)
+(@doc save-space!
+  (@desc "Writes the contents of Space into Filename, returning () if successful.")
+  (@params (
+    (@param "Space")
+    (@param "Filename")))
+  (@return "Expression"))
+(: save-space! (-> hyperon::space::DynSpace String Expression))
+
+(iz rtrace! MeTTaLog)
+(@doc rtrace!
+  (@desc "Fully evaluates input Atom, providing a complete trace of the evaluation.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rtrace! (-> Atom Atom))
+
+(iz rust MeTTaLog)
+(@doc rust
+  (@desc "Interface with the rust / Hyperon MeTTa implementation. Enters Atom into rust atomspace. If Atom is evaluated (i.e. by being of the form !<atom>), returns the result of evaluation. See also rust!.")
+  (@params (
+    (@param "Atom to be entered into the space")))
+  (@return "Result of entering Atom into the space"))
+(: rust (-> Atom Atom))
+
+(iz rust! MeTTaLog)
+(@doc rust!
+  (@desc "Like rust but evaluates the atom rather than entering into the space. (rust! <atom>) and (rust !<atom>) are identical.")
+  (@params (
+    (@param "Atom to be evaluated")))
+  (@return "Result of evaluation"))
+(: rust! (-> Atom Atom))
+
+(iz coerce MeTTaLog)
+(@doc coerce
+  (@desc "Cast (coerce) Value to be of Type. Supports the basic types Atom (no-op), Number, String, and Bool.
+  Number: Converts number strings and bools to numbers. True is 1, False is 0.
+  String: Coerced as if Value were printed.
+  Bool: False, 0, and () are False, all other values are True.")
+  (@params (
+    (@param "Type")
+    (@param "Value")))
+  (@return "Value cast to Type"))
+(: coerce (-> Type Atom Atom))
 (iz = MeTTa)
 (@doc = 
   (@desc "A symbol used to define reduction rules for expressions.")
@@ -370,7 +639,7 @@ For example:
     (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")
     (@param "Space to evaluate atom in its context")))
   (@return "Result of evaluation"))
-(: evalc (-> Atom Grounded Atom))
+(: evalc (-> Atom Grounded %Undefined%))
 
 (iz chain MinimalMeTTa)
 (@doc chain
@@ -483,7 +752,7 @@ For example:
   (@desc "Takes base (first argument) and power (second argument) and returns result of a power function (base ^ power)")
   (@params (
     (@param "Base. Could be a float.")
-    (@param "Power. Must be an integer.")))
+    (@param "Power.")))
   (@return "Result of base raised to the power"))
 
 
@@ -1343,6 +1612,65 @@ For example:
 ; TODO: MINIMAL added for compatibility, remove after migration
 ;(= (empty-minimal) Empty)
 
+
+(iz unique MeTTa)
+(@doc unique
+  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
+  (@params (
+	(@param "Non-deterministic set of values")))
+  (@return "Unique non-deterministic values from input set"))
+(: unique (-> Atom Atom))
+
+(iz union MeTTa)
+(@doc union
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Union of sets"))
+(: union (-> Atom Atom Atom))
+
+(iz intersection MeTTa)
+(@doc intersection
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Intersection of sets"))
+(: intersection (-> Atom Atom Atom))
+
+(iz subtraction MeTTa)
+(@doc subtraction
+  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
+  (@params (
+	(@param "Non-deterministic set of values")
+	(@param "Another non-deterministic set of values")))
+  (@return "Non-deterministic Subtraction of sets"))
+(: subtraction (-> Atom Atom Atom))
+
+
+(@doc add-reducts
+  (@desc "Function takes space and expression, evaluates atoms in it and adds them into given space")
+  (@params (
+    (@param "Space")
+    (@param "Expression")))
+  (@return "Unit atom"))
+(: add-reducts (-> Grounded %Undefined% (->)))
+(= (add-reducts $space $tuple)
+    (foldl-atom $tuple () $a $b (eval (add-atom $space $b))))
+
+(@doc add-atoms
+  (@desc "Function takes space and expression and adds atoms in Expression into given space without reducing them")
+  (@params (
+    (@param "Space")
+    (@param "Expression")))
+  (@return "Unit atom"))
+(: add-atoms (-> Grounded Expression (->)))
+(= (add-atoms $space $tuple)
+    (foldl-atom $tuple () $a $b (eval (add-atom $space $b))))
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1729,7 +2057,7 @@ For example:
 (@doc match
   (@desc "Searches for all declared atoms corresponding to the given pattern (second argument) and produces the output pattern (third argument)")
   (@params (
-    (@param "A grounded atom referencing a Space")
+    (@param "Atomspace to search pattern")
     (@param "Pattern atom to be searched")
     (@param "Output template typically containing variables from the input pattern")))
   (@return "If match was successful it outputs template (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Empty - otherwise"))
@@ -2102,66 +2430,6 @@ For example:
 
 
 
-
-
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;                     NON-DETERMINISTIC SET OPERATIONS                  ;;
-;;                                                                        ;;
-;; These functions operate on non-deterministic sets (represented using   ;;
-;; `superpose`). They perform basic set operations without the need for a ;;
-;; comparator predicate.                                                  ;;
-;;                                                                        ;;
-;; Functions:                                                             ;;
-;;   - `unique`        : Removes duplicate values                         ;;
-;;   - `union`         : Merges two sets, preserving duplicates           ;;
-;;   - `intersection`  : Returns values present in both sets              ;;
-;;   - `subtraction`   : Removes elements found in the second set         ;;
-;;                                                                        ;;
-;; These functions assume elements are compared strictly for equality.    ;;
-;; They do not account for variable unification or alpha equivalence.     ;;
-;;                                                                        ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(iz unique MeTTa)
-(@doc unique
-  (@desc "Function takes non-deterministic input (first argument) and returns only unique entities. E.g. (unique (superpose (a b c d d))) -> [a, b, c, d]")
-  (@params (
-	(@param "Non-deterministic set of values")))
-  (@return "Unique non-deterministic values from input set"))
-(: unique (-> Atom Atom))
-
-(iz union MeTTa)
-(@doc union
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their union. E.g. (union (superpose (a b b c)) (superpose (b c c d))) -> [a, b, b, c, b, c, c, d]")
-  (@params (
-	(@param "Non-deterministic set of values")
-	(@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Union of sets"))
-(: union (-> Atom Atom Atom))
-
-(iz intersection MeTTa)
-(@doc intersection
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their intersection. E.g. (intersection (superpose (a b c c)) (superpose (b c c c d))) -> [b, c, c]")
-  (@params (
-	(@param "Non-deterministic set of values")
-	(@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Intersection of sets"))
-(: intersection (-> Atom Atom Atom))
-
-(iz subtraction MeTTa)
-(@doc subtraction
-  (@desc "Function takes two non-deterministic inputs (first and second argument) and returns their subtraction. E.g. !(subtraction (superpose (a b b c)) (superpose (b c c d))) -> [a, b]")
-  (@params (
-	(@param "Non-deterministic set of values")
-	(@param "Another non-deterministic set of values")))
-  (@return "Non-deterministic Subtraction of sets"))
-(: subtraction (-> Atom Atom Atom))
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;              NON-DETERMINISTIC SET OPERATIONS WITH PREDICATES          ;;
 ;;                                                                        ;;
@@ -2468,272 +2736,3 @@ For example:
   (@return "Unit atom"))
 (: git-module! (-> Atom (->)))
 	
-
-; !(import! &corelib "src/canary/stdlib_mettalog.metta")
-;!(println! "!(import! &corelib \"src/canary/stdlib_mettalog.metta\")")
-
-(iz findall! MeTTaLog)
-(@doc findall!
-  (@desc "Takes a Template and a Goal. Returns the list resulting from substituting all bindings from solving Goal into Template.
-  See Prolog's built-in predicate findall/3.")
-  (@params (
-    (@param "Template")
-    (@param "Goal")))
-  (@return "Result list of all bindings for Goal substituted into Template"))
-(: findall! (-> Expression Expression Expression))
-
-;; Functional Programming
-(iz maplist! MeTTaLog)
-(@doc maplist!
-  (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
- The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
- F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three).
- Use concurrent-maplist! for a multi-threaded, nondeterministic version.
- See Prolog's built-in predicate maplist.")
-  (@params (
-    (@param "Function to be applied")
-    (@param "List")))
-  (@return "Result of applying Function to List(s)"))
-(: maplist! (-> Function Expression Expression))
-(: maplist! (-> Function Expression Expression Expression))
-(: maplist! (-> Function Expression Expression Expression Expression))
-
-;; Functional Programming
-(iz concurrent-maplist! MeTTaLog)
-(@doc concurrent-maplist!
-  (@desc "Takes a function F and one to three lists; Returns the result of applying F to each item in the list(s). 
- The provided lists are not evaluated (this matches the behavior of e.g. cons-atom).
- F must have the number of lists provided as a valid arity (i.e. unary for one list, binary for two, ternary for three).
- The applications of F to the list items are processed in parallel. Because of the overhead of this approach, a speedup is only likely if F is expensive to evaluate.
- Use maplist! for a single-threaded, deterministic version.
- See Prolog's built-in predicate concurrent-maplist.")
-  (@params (
-    (@param "Function to be applied")
-    (@param "List")))
-  (@return "Result of applying Function to List(s)"))
-(: concurrent-maplist! (-> Function Expression Expression))
-(: concurrent-maplist! (-> Function Expression Expression Expression))
-(: concurrent-maplist! (-> Function Expression Expression Expression Expression))
-
-(iz throw MeTTaLog)
-(@doc throw
-  (@desc "Raises an exception. See also `catch`; the system will look for the innermost catch such that Exception unifies with Catcher.")
-  (@params (
-    (@param "Exception")))
-  (@return "Does not return - raises an exception"))
-(: throw (-> Atom ErrorType))
-
-(iz catch MeTTaLog)
-(@doc catch
-  (@desc "Executes Form. If an exception is raised with `throw` during execution of Form while this is the innermost catch such that Catcher unifies with Exception, the exception is caught. Recover is then executed with bindings from Catcher.")
-  (@params (
-    (@param "Form")
-    (@param "Catcher")
-    (@param "Recover")))
-  (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
-(: catch (-> Atom Atom Atom Atom))
-
-(iz max-time! MeTTaLog)
-(@doc max-time!
-  (@desc "Executes Form. If execution takes longer than Time, will raise a time_limit_exceeded exception. See also `catch`.")
-  (@params (
-    (@param "Time (in seconds)")
-    (@param "Form")))
-  (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
-(: max-time! (-> Number Atom Atom))
-
-(iz sleep! MeTTaLog)
-(@doc sleep!
-  (@desc "Sleeps for N seconds.")
-  (@params (
-    (@param "N")))
-  (@return "Returns True after sleeping completes."))
-(: sleep! (-> Number Bool))
-
-(iz limit! MeTTaLog)
-(@doc limit!
-  (@desc "Executes Form generating at most Limit results. Results are returned as soon as they become available.")
-  (@params (
-    (@param "Limit")
-    (@param "Form")))
-  (@return "First Limit results of Form."))
-(: limit! (-> Number Atom Atom))
-
-(iz number-of MeTTaLog)
-(@doc number-of
-  (@desc "Returns the number of results Form generates")
-  (@params (
-    (@param "Form")))
-  (@return "Number of results of Form."))
-(: number-of (-> Atom Number))
-
-(iz offset! MeTTaLog)
-(@doc offset!
-  (@desc "Executes Form ignoring the first Count results. Results are returned as soon as they become available.")
-  (@params (
-    (@param "Count")
-    (@param "Form")))
-  (@return "Results of Form after ignoring the first Count results that are generated."))
-(: offset! (-> Number Atom Atom))
-
-(iz call! MeTTaLog)
-(@doc call!
-  (@desc "Trampolines to Prolog's call. Only works when the predicate and each arg are provided separately. e.g. !(call! ls /) will print the root directory but !(call! ls(/)) will fail.")
-  (@params (
-    (@param "Form")))
-  (@return "True if the call succeeds, False otherwise."))
-(: call! (-> Atom Atom))
-
-(iz call-p! MeTTaLog)
-(@doc call-p!
-  (@desc "Like call-fn! except it does not append the called term with a return arg.")
-  (@params (
-    (@param "Form")))
-  (@return "True if the call succeeds, False otherwise."))
-(: call-p! (-> Atom Atom))
-
-(iz call-fn! MeTTaLog)
-(@doc call-fn!
-  (@desc "Trampolines to Prolog's call after appending the return argument.  Each arg are provided separately. e.g. !(call-fn! length (1 2 3)) will return 3.")
-  (@params (
-    (@param "Form")))
-  (@return "appends a return argument to a form and calls it"))
-(: call-fn! (-> Atom Atom))
-
-(iz call-string! MeTTaLog)
-(@doc call-string!
-  (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
-  (@params (
-    (@param "PrologSrc")))
-  (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
-(: call-string! (-> String Atom))
-
-(iz call-cleanup! MeTTaLog)
-(@doc call-cleanup!
-  (@desc "Same as (setup-call-cleanup! true Form Cleanup). setup-call-cleanup! is recommended instead if Cleanup is intended to undo prior side-effects - place those side-effects in Setup.")
-  (@params (
-    (@param "Form")
-    (@param "Cleanup")))
-  (@return "Result of Form."))
-(: call-cleanup! (-> Atom Atom Atom))
-
-(iz setup-call-cleanup! MeTTaLog)
-(@doc setup-call-cleanup!
-  (@desc "Executes Setup, then Form, then finally Cleanup. Setup is protected from interrupts (e.g. max-time!). In most uses, Setup will perform temporary side-effects required by Form that are finally undone by Cleanup. Cleanup is run even if Form raises an exception. For each result of Setup, Form is run to completion, then Cleanup is run.")
-  (@params (
-    (@param "Setup")
-    (@param "Form")
-    (@param "Cleanup")))
-  (@return "Result of Form."))
-(: setup-call-cleanup! (-> Atom Atom Atom Atom))
-
-(iz predicate-arity MeTTaLog)
-(@doc predicate-arity
-  (@desc "Returns the arity of Function's predicate form, i.e. the function-arity + 1. (The additional argument being the function's result as an argument to the predicate.)")
-  (@params (
-    (@param "Function")))
-  (@return "Arity of Function's predicate form."))
-
-(iz function-arity MeTTaLog)
-(@doc function-arity
-  (@desc "Returns the arity of Function.")
-  (@params (
-    (@param "Function")))
-  (@return "Arity of Function."))
-
-(iz open! MeTTaLog)
-(@doc open!
-  (@desc "Opens Filename as a stream under Mode. Mode is one of read, write, append, or update. Mode append opens the file for writing, positioning the file pointer at the end. Mode update opens the file for writing, positioning the file pointer at the beginning of the file without truncating the file.")
-  (@params (
-    (@param "Filename")
-    (@param "Mode")))
-  (@return "Stream"))
-(: open! (-> String Atom Stream))
-
-(iz close! MeTTaLog)
-(@doc close!
-  (@desc "Closes Steam, returning True on success.")
-  (@params (
-    (@param "Stream")))
-  (@return "Boolean"))
-(: close! (-> Stream Boolean))
-
-(iz with-output-to! MeTTaLog)
-(@doc with-output-to!
-  (@desc "Evaluates expression with all outupt (e.g. from print) redirected to Stream. See also open! and close!.")
-  (@params (
-    (@param "Stream")
-    (@param "Expression")))
-  (@return "Result of Expression"))
-(: with-output-to! (-> Stream Expression Atom))
-
-(iz load-file! MeTTaLog)
-(@doc load-file!
-  (@desc "Loads the contents of Filename into Space, returning () if successful. Can load Python code (.py) or MeTTa (.metta); if ambiguous, assumes MeTTa. Like import! but favors MeTTa over Python when the file type is ambiguous.")
-  (@params (
-    (@param "Space")
-    (@param "Filename")))
-  (@return "Expression"))
-(: load-file! (-> hyperon::space::DynSpace String Expression))
-
-(iz load-ascii MeTTa)
-(@doc load-ascii
-  (@desc "Loads the contents of Filename into Space, returning () if successful. Assumes the file is an ASCII file. Works like include!.")
-  (@params (
-    (@param "Space")
-    (@param "Filename")))
-  (@return "Expression"))
-(: load-ascii (-> hyperon::space::DynSpace String Expression))
-
-(iz transfer! MeTTa)
-(@doc transfer!
-  (@desc "Loads the contents of Filename into &self, as include. Returns () if successful, throws an exception otherwise.")
-  (@params (
-    (@param "Filename")))
-  (@return "Expression"))
-(: transfer! (-> String (->)))
-
-(iz save-space! MeTTa)
-(@doc save-space!
-  (@desc "Writes the contents of Space into Filename, returning () if successful.")
-  (@params (
-    (@param "Space")
-    (@param "Filename")))
-  (@return "Expression"))
-(: save-space! (-> hyperon::space::DynSpace String Expression))
-
-(iz rtrace! MeTTaLog)
-(@doc rtrace!
-  (@desc "Fully evaluates input Atom, providing a complete trace of the evaluation.")
-  (@params (
-    (@param "Atom to be evaluated")))
-  (@return "Result of evaluation"))
-(: rtrace! (-> Atom Atom))
-
-(iz rust MeTTaLog)
-(@doc rust
-  (@desc "Interface with the rust / Hyperon MeTTa implementation. Enters Atom into rust atomspace. If Atom is evaluated (i.e. by being of the form !<atom>), returns the result of evaluation. See also rust!.")
-  (@params (
-    (@param "Atom to be entered into the space")))
-  (@return "Result of entering Atom into the space"))
-(: rust (-> Atom Atom))
-
-(iz rust! MeTTaLog)
-(@doc rust!
-  (@desc "Like rust but evaluates the atom rather than entering into the space. (rust! <atom>) and (rust !<atom>) are identical.")
-  (@params (
-    (@param "Atom to be evaluated")))
-  (@return "Result of evaluation"))
-(: rust! (-> Atom Atom))
-
-(iz coerce MeTTaLog)
-(@doc coerce
-  (@desc "Cast (coerce) Value to be of Type. Supports the basic types Atom (no-op), Number, String, and Bool.
-  Number: Converts number strings and bools to numbers. True is 1, False is 0.
-  String: Coerced as if Value were printed.
-  Bool: False, 0, and () are False, all other values are True.")
-  (@params (
-    (@param "Type")
-    (@param "Value")))
-  (@return "Value cast to Type"))
-(: coerce (-> Type Atom Atom))

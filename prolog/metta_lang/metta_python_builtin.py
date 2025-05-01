@@ -1,19 +1,129 @@
 import sys
 #import numpy
 
+DEBUG_MODE = 2
 the_modules_and_globals=None
+
+import traceback
+import sys
+
+def print_debug(Lvl, Message):
+    if DEBUG_MODE >= Lvl:
+        flush_stdout_stderr()
+        print(Message, file=sys.stderr)
+        flush_stdout_stderr()
+        
+def arg_info(callable_obj, method_args=None, kwargs=None):
+    """
+    Collects and returns a formatted string of debug information
+    about a function call (callable + arguments).
+    
+    Args:
+        callable_obj: The function or method being called.
+        method_args: A list of positional arguments.
+        kwargs: A dictionary of keyword arguments.
+        
+    Returns:
+        A formatted string with function name, argument types, and values.
+    """
+    import inspect
+    import io
+
+    if method_args is None:
+        method_args = []
+    if kwargs is None:
+        kwargs = {}
+
+    buffer = io.StringIO()
+    buffer.write("=== Debug Information ===\n")
+    buffer.write(f"Callable: {get_str_rep(callable_obj)}\n")
+    buffer.write(f"Type: {type(callable_obj).__name__}\n")
+    if hasattr(callable_obj, '__name__'):
+        buffer.write(f"Callable Name: {callable_obj.__name__}\n")
+    if hasattr(callable_obj, '__module__'):
+        buffer.write(f"Callable Module: {callable_obj.__module__}\n")     
+    
+    if hasattr(callable_obj, '__self__') and callable_obj.__self__ is not None:
+        buffer.write(f"Bound to: {repr(callable_obj.__self__)} "
+                     f"(type: {type(callable_obj.__self__).__name__})\n")
+
+    buffer.write("\nPositional Arguments:\n")
+    for i, arg in enumerate(method_args):
+        buffer.write(f"  [Arg {i}] Type: {type(arg).__name__} — Value: {repr(arg)[:200]}\n")
+
+    buffer.write("\nKeyword Arguments:\n")
+    for key, value in kwargs.items():
+        buffer.write(f"  {key} = {repr(value)[:200]} (type: {type(value).__name__})\n")
+
+    buffer.write("=" * 60 + "\n")
+    return buffer.getvalue()
+
+def with_explicit_trace(func, *args, **kwargs):
+    """
+    Executes a function and prints a detailed traceback if an exception occurs.
+    
+    Args:
+        func: The function or callable to execute.
+        *args: Positional arguments to pass to the function.
+        **kwargs: Keyword arguments to pass to the function.
+
+    Returns:
+        The result of the function, or None if an exception occurred.
+    """
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        flush_stdout_stderr()
+        buffer = io.StringIO()
+        buffer.write("=" * 60 + "\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("=" * 60 + "\n")
+
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_tb, file=buffer)
+
+        buffer.write("=" * 60 + "\n")
+        buffer.write("--- Diagnostic Info ---\n")
+        buffer.write(f"Function: {get_str_rep(func)}\n")
+        buffer.write(f"Type: {type(func).__name__}\n")
+
+        if hasattr(func, '__self__'):
+            buffer.write(f"Bound to: {repr(func.__self__)} (type: {type(func.__self__).__name__})\n")
+
+        if args:
+            buffer.write("Positional Args:\n")
+            for i, a in enumerate(args):
+                buffer.write(f"  [Arg {i}] Type: {type(a).__name__} — Value: {repr(a)[:200]}\n")
+
+        if kwargs:
+            buffer.write("Keyword Args:\n")
+            for k, v in kwargs.items():
+                buffer.write(f"  {k} = {repr(v)[:200]} (type: {type(v).__name__})\n")
+
+        buffer.write("=" * 60 + "\n")
+
+        debug_output = buffer.getvalue()
+        buffer.close()
+        print_debug(1, debug_output)
+        flush_stdout_stderr()
+
+        if not DEBUG_MODE==0:
+            raise  # Re-raises the current exception (no need to use `raise e`)
+
+        return None
 
 def eval_string(s):
     global the_modules_and_globals
     global_vars = the_modules_and_globals
     local_vars = locals()
-    return eval(s,global_vars,local_vars)
+    return with_explicit_trace(eval,s,global_vars,local_vars)
 
 def exec_string(s):
     global the_modules_and_globals
     global_vars = the_modules_and_globals
     local_vars = locals()
-    return exec(s,global_vars,local_vars)
+    return with_explicit_trace(exec,s,global_vars,local_vars)
+
 
 def py_nth(s,nth):
     return s[nth]
@@ -195,9 +305,9 @@ def get_str_rep(func):
         return func.__name__
     return f"{func.__module__}.{func.__name__}"
 
-DEBUG_MODE = False  # Set this to True to enable debug output
 
 import importlib
+import inspect
 import types
 import time
 
@@ -223,8 +333,41 @@ def is_ufunc_like(f):
 
     return False
 
+def resolve_dotted_callable(path: str):
+    """
+    Resolves a dotted path like 'time.time' or 'os.path.join' into an actual callable object.
+    """
+    if not isinstance(path, str):
+        raise TypeError("Expected a string for dotted callable resolution.")
+
+    parts = path.split('.')
+    module_path = []
+    obj = None
+    
+    for i in range(len(parts), 0, -1):
+        try:
+            module_name = '.'.join(parts[:i])
+            obj = importlib.import_module(module_name)
+            module_path = parts[i:]
+            break
+        except ImportError:
+            continue
+    
+    if obj is None:
+        raise ImportError(f"Could not resolve any module from path '{path}'.")
+    
+    for attr in module_path:
+        obj = getattr(obj, attr)
+    
+    if not callable(obj):
+        raise TypeError(f"The resolved object from '{path}' is not callable.")
+    
+    return obj
 
 
+#def py_call_method_and_args(*method_and_args):
+#    #return with_explicit_trace(py_call_method_and_args_direct,method_and_args)
+    
 def py_call_method_and_args(*method_and_args):
     """
     Calls a Python callable (function, method, or constructor) with the provided arguments.
@@ -269,6 +412,14 @@ def py_call_method_and_args(*method_and_args):
         # Unpack the single list or tuple argument
         method_and_args = method_and_args[0]
 
+    # Unpack the single list or tuple argument
+    #if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)) and not isinstance(method_and_args[0], (str)):
+    #    method_and_args = method_and_args[0]
+
+    # Unpack the single list or tuple argument
+    #if isinstance(method_and_args[0], (list, tuple)) and not isinstance(method_and_args[0], (str)):
+    #    method_and_args = method_and_args[0]
+
     # --------------------------------------------------
     # Make sure we actually got something to call
     # --------------------------------------------------
@@ -283,8 +434,20 @@ def py_call_method_and_args(*method_and_args):
     # Extract the first element from method_and_args,
     # which should be our potential callable or something
     # that leads us to a callable.
-    # --------------------------------------------------   
-    callable_obj, *args = method_and_args
+    # --------------------------------------------------  
+    
+     
+    first = method_and_args[0]
+    args = method_and_args[1:]
+
+    # Resolve dotted path to a callable, like "time.time"
+    if isinstance(first, str) and '.' in first:
+        try:
+            callable_obj = resolve_dotted_callable(first)
+        except Exception:
+            callable_obj = first  # Will fall back to method name logic later
+    else:
+        callable_obj = first
 
     if is_ufunc_like(callable_obj): return callable_obj(*args)
 
@@ -369,11 +532,12 @@ def py_call_method_and_args(*method_and_args):
 
         # Retrieve the method from the class by name
         method = getattr(cls, method_name, None)
-        if method is None or not callable(method):
+        if method is None:
             raise AttributeError(f"The class '{cls.__name__}' has no callable method named '{method_name}'.")
 
-        # Call that method via py_call_w_args
-        return py_call_w_args(method, *method_args)
+        if callable(method):
+            # Call that method via py_call_w_args
+            return py_call_w_args(method, *method_args)
 
     # ==================================================
     # CASE 4: Object + Method Name (str)
@@ -421,8 +585,17 @@ def py_call_method_and_args(*method_and_args):
 
     # ==================================================
     # CASE 7: If none matched, raise an error
-    # ==================================================
-    raise TypeError("The provided arguments do not form a callable invocation.")
+    # ================================================== 
+    buffer = io.StringIO()
+    buffer.write("method_and_args:\n")
+    buffer.write(f"  [Callable-Object] Type: {type(callable_obj).__name__} — Value: {repr(callable_obj)[:200]}\n")
+    if method_and_args:
+        for i, a in enumerate(method_and_args):
+            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} — Value: {repr(a)[:200]}\n")
+    debug_output = buffer.getvalue()
+    buffer.close()
+    raise TypeError(f"py_call_method_and_args: The provided arguments do not form a callable invocation.\n{debug_output}\n")
+
 
 def py_call_w_args(callable_obj, *w_args):
     """
@@ -445,13 +618,29 @@ def py_call_w_args(callable_obj, *w_args):
         ValueError: If 'callable_obj' is not callable.
         TypeError: If there are missing or unexpected arguments based on the signature.
     """
-
     if not callable(callable_obj):
-        raise ValueError("First argument must be callable.")
+        raise ValueError(
+            f"First argument must be callable, but got: {repr(callable_obj)[:200]} "
+            f"(type: {type(callable_obj).__name__}, class: {callable_obj.__class__.__name__})\n"
+            f"{arg_info(callable_obj, w_args)}"
+        )
 
     args = list(w_args)
     kwargs = {}
-    sig = inspect.signature(callable_obj)
+
+    args = maybe_unpack_single_list_args(callable_obj, args)
+
+    try:
+        sig = inspect.signature(callable_obj)
+    except (ValueError, TypeError):
+        if DEBUG_MODE > 2:
+            print_debug(3, f"Calling {callable_obj} without signature (fallback)\n" + arg_info(callable_obj, args))
+        try:
+            return callable_obj(*args)
+        except Exception:
+            print_debug(1, traceback.format_exc() + "\n" + arg_info(callable_obj, args))
+            raise
+
     kwarg_names = {param.name for param in sig.parameters.values()
                    if param.kind in [param.KEYWORD_ONLY, param.VAR_KEYWORD]}
 
@@ -464,7 +653,8 @@ def py_call_w_args(callable_obj, *w_args):
             if args and not isinstance(args[0], (dict, list, tuple)):
                 method_args.append(args.pop(0))
             elif param.default is inspect.Parameter.empty:
-                raise TypeError(f"Missing required positional argument: '{param.name}'")
+                raise TypeError(f"Missing required positional argument: '{param.name}'\n"
+                                f"{arg_info(callable_obj, w_args)}")
         elif param.kind == param.VAR_POSITIONAL:
             while args and not isinstance(args[0], (dict, list, tuple)):
                 method_args.append(args.pop(0))
@@ -477,13 +667,15 @@ def py_call_w_args(callable_obj, *w_args):
                     if pair[0] in kwarg_names:
                         kwargs[pair[0]] = pair[1]
                     else:
-                        raise TypeError(f"Unexpected keyword argument: '{pair[0]}'")
+                        raise TypeError(f"Unexpected keyword argument: '{pair[0]}'\n"
+                                        f"{arg_info(callable_obj, w_args)}")
             elif args and keyword_order_index < len(keyword_order):
                 # Assume the next argument corresponds to the next keyword-only parameter by order
                 kwargs[keyword_order[keyword_order_index]] = args.pop(0)
                 keyword_order_index += 1
             else:
-                raise TypeError(f"Expected keyword argument for '{keyword_order[keyword_order_index]}' not provided")
+                raise TypeError(f"Expected keyword argument for '{keyword_order[keyword_order_index]}' not provided\n"
+                                f"{arg_info(callable_obj, w_args)}")
 
     # Handle remaining variadic keyword arguments
     if args:
@@ -491,29 +683,55 @@ def py_call_w_args(callable_obj, *w_args):
             if isinstance(arg, dict):
                 kwargs.update(arg)
             else:
-                raise TypeError("Non-keyword arguments found after processing all parameters")
+                print_debug(2, "Non-keyword argument after processing:\n" +
+                                f"Type: {type(arg).__name__} — Value: {repr(arg)[:200]}\n" +
+                                arg_info(callable_obj, method_args, kwargs))
+        # You may raise here if you want stricter enforcement
+
+    method_args.extend(args)
 
     # Debugging output
-    if DEBUG_MODE:
-        print("Debug Information:")
-        print(f"Callable object: {callable_obj}")
-        print(f"Positional arguments: {method_args}")
-        print(f"Keyword arguments: {kwargs}")
+    if DEBUG_MODE > 2:
+        print_debug(3, arg_info(callable_obj, method_args, kwargs))
 
     try:
-        return callable_obj(*method_args, **kwargs)
-    finally:
+        try:
+            return callable_obj(*method_args, **kwargs)
+        finally:
+            flush_stdout_stderr()
+    except Exception as e:
+        buffer = io.StringIO()
+        buffer.write("=" * 60 + "\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("=" * 60 + "\n")
+        traceback.print_exception(type(e), e, e.__traceback__, file=buffer)
+        buffer.write(arg_info(callable_obj, method_args, kwargs))
+        buffer.write("=" * 60 + "\n")
+        print_debug(1, buffer.getvalue())
         flush_stdout_stderr()
-    #
-    # For now, let's omit that, or place it in a try/finally:
-    #
-    # (We'll keep it simple here.)
+        if True: raise
+        return None
+        
+def maybe_unpack_single_list_args(callable_obj, args):
+    """
+    If there's a single list argument and the callable accepts *args,
+    this unpacks it so each item becomes a separate argument.
+    """
+    if len(args) == 1 and isinstance(args[0], list):
+        try:
+            sig = inspect.signature(callable_obj)
+            for param in sig.parameters.values():
+                if param.kind == param.VAR_POSITIONAL:
+                    return args[0]  # Unpack it
+        except Exception:
+            pass
+    return args
 
 
 
 # Example usage
 def wild_test_function(a, b, c=3, *args, d, **kwargs):
-    print(f"a={a}, b={b}, c={c}, args={args}, d={d}, kwargs={kwargs}")
+    print_debug(3,f"a={a}, b={b}, c={c}, args={args}, d={d}, kwargs={kwargs}")
 
 # Correct usage
 def test_wild_test_function():
@@ -544,15 +762,15 @@ def py_call_method_and_args_kw(kwa, *method_and_args):
         AttributeError: If the method does not exist on the given class or instance.
     """
 
-    if DEBUG_MODE:
-        print("Debug: Initial method_and_args =", method_and_args)
-        print("Debug: Initial kwa =", kwa)
+    if DEBUG_MODE >2:
+        print_debug(3,"Debug: Initial method_and_args =", method_and_args)
+        print_debug(3,"Debug: Initial kwa =", kwa)
 
     # Check if a single argument is provided and if it is a list or tuple
     if len(method_and_args) == 1 and isinstance(method_and_args[0], (list, tuple)):
         method_and_args = method_and_args[0]
-        if DEBUG_MODE:
-            print("Debug: Unpacked method_and_args =", method_and_args)
+        if DEBUG_MODE > 2 :
+            print_debug(3,"Debug: Unpacked method_and_args =", method_and_args)
 
     kwargs = kwa
 
@@ -564,9 +782,9 @@ def py_call_method_and_args_kw(kwa, *method_and_args):
     callable_obj, *args = list(method_and_args)
 
     # Debug after extracting callable and args
-    if DEBUG_MODE:
-        print("Debug: Callable object =", callable_obj)
-        print("Debug: Positional arguments =", args)
+    if DEBUG_MODE > 2:
+        print_debug(3,"Debug: Callable object =", callable_obj)
+        print_debug(3,"Debug: Positional arguments =", args)
 
     # Case 1: Bound method
     if callable(callable_obj) and hasattr(callable_obj, '__self__') and callable_obj.__self__ is not None:
@@ -628,7 +846,14 @@ def py_call_method_and_args_kw(kwa, *method_and_args):
         return py_call_kw_args(kwargs, callable_obj, *args)
 
     # If none of the above, raise an error
-    raise TypeError("The provided arguments do not form a callable invocation.")
+    buffer = io.StringIO()
+    buffer.write("method_and_args:\n")
+    if method_and_args:
+        for i, a in enumerate(method_and_args):
+            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} — Value: {repr(a)[:200]}\n")
+    debug_output = buffer.getvalue()
+    buffer.close()
+    raise TypeError(f"py_call_method_and_args_kw: The provided arguments do not form a callable invocation.\n{debug_output}\n")
 
 import inspect
 
@@ -644,8 +869,12 @@ def py_call_kw_args(kwargs, callable_obj, *w_args):
     :return: The result of invoking the callable object.
     :raises ValueError: If the first argument is not callable.
     """
+    
     if not callable(callable_obj):
-        raise ValueError("First argument must be callable.")
+        raise ValueError(
+            f"First argument must be callable, but got: {repr(callable_obj)[:200]} "
+            f"(type: {type(callable_obj).__name__}, class: {callable_obj.__class__.__name__})"
+        )
 
     args = list(w_args)  # Positional arguments
     sig = inspect.signature(callable_obj)
@@ -695,17 +924,47 @@ def py_call_kw_args(kwargs, callable_obj, *w_args):
         raise TypeError(f"Got unexpected keyword arguments: {', '.join(kwargs.keys())}")
 
     # Debugging output
-    if DEBUG_MODE:
-        print("Debug Information:")
-        print(f"Callable object: {callable_obj}")
-        print(f"Positional arguments: {method_args}")
-        print(f"Keyword arguments: {method_kwargs}")
+    if DEBUG_MODE > 2:
+        print_debug(3,"Debug Information:")
+        print_debug(3,f"Callable object: {callable_obj}")
+        print_debug(3,f"Positional arguments: {method_args}")
+        print_debug(3,f"Keyword arguments: {method_kwargs}")
 
-    # Call the function with the prepared arguments
     try:
-        return callable_obj(*method_args, **method_kwargs)
-    finally:
+        # Call the function with the prepared arguments
+        try:
+            return callable_obj(*method_args, **method_kwargs)
+        finally:
+            flush_stdout_stderr()
+    except Exception as e:
         flush_stdout_stderr()
+        buffer = io.StringIO()
+        buffer.write("="*60 + "\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("="*60 + "\n")
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_tb, file=buffer)
+        
+        # Append custom diagnostic information
+        if len(args) > 0:
+            buffer.write("\n--- Diagnostic Info ---\n")
+            for i, a in enumerate(args):
+                buffer.write(f"[Arg {i}] Type: {type(a).__name__} — Value: {repr(a)[:200]}\n")
+        
+            if 'func' in locals() and hasattr(func, '__name__'):
+                buffer.write(f"Callable Name: {func.__name__}\n")
+            if 'func' in locals() and hasattr(func, '__module__'):
+                buffer.write(f"Callable Module: {func.__module__}\n")
+                buffer.write("="*60 + "\n")
+
+        traceback.print_exc(file=buffer)
+        buffer.write("="*60 + "\n")
+        debug_output = buffer.getvalue()
+        buffer.close()
+        print_debug(1, debug_output)
+        flush_stdout_stderr()
+        if True: raise e
+        return None
 
 
 
@@ -895,5 +1154,17 @@ def py_to_str(arg):
         sys.stdout = sys.__stdout__  # Restore standard output
     return captured_output.getvalue()  # Get the captured output as a string
 
+def format_python_exception(exc):
+    """
+    Given an exception object `exc`, return the full formatted traceback string.
+    """
+    import traceback
+    exc_type = type(exc)
+    exc_tb = getattr(exc, '__traceback__', None)
+    trace_list = traceback.format_exception(exc_type, exc, exc_tb)
+    str = ''.join(trace_list)
+    return str
 
 the_modules_and_globals = merge_modules_and_globals()
+
+
