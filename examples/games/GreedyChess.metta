@@ -65,7 +65,7 @@
 ;   first created at the outset of each side's move based upon the chessboard list.
 ;
 ;   Possible moves are evaluated by rapidly adding and removing these 'square' atoms. As a design
-;   consideration use of such atoms harmonizes well with the 'atomic' structure of Metta which is 
+;   consideration use of such atoms harmonizes well with the 'atomic' structure of MeTTa which is 
 ;   not really the same as LISP type list processing. At the start of the move, the transient 'square' atoms
 ;   are loaded into atomspace and at the conclusion of the move the 'square' atoms are used to 
 ;   recreate the chessboard. Take care that after "envisioning" moves you move the 'square' atoms
@@ -81,7 +81,7 @@
 ;
 ;   During programming tail recursion functions were often created, but it was discovered that these
 ;   were often faster instead using metta calls to 'match'. The original functions have sometimes been retained for
-;   comparison. In general the defining features of Metta are the use of atomspace, 'match' 'superpose' and
+;   comparison. In general the defining features of MeTTa are the use of atomspace, 'match' 'superpose' and
 ;   'collapse'. Occasionally it is wise to use 'xor' in lieu of 'or' (if possible) to avoid unexpected
 ;   nondeterministic behavior. In general it is not necessary to think in GOFAI chaining terms (forward, backward).
 ;
@@ -1353,6 +1353,8 @@
     (match &self (square $x1 $y1 g $AI_rank)
         ; if piece under threat by human
         (if (== (take_dest ($x1 $y1) s) True)
+          ; if square not covered by a different AI piece that could in turn capture attacking human piece...
+          (if (== (take_dest ($x1 $y1) g) False)
             ; find all empty squares to flee to...
             (match &self (square $x2 $y2)
                 ; if piece can escape to an empty square
@@ -1374,7 +1376,7 @@
                     (empty)
                 )
             )
-        )))
+            (empty)))))
 
 ;*************************************************************************
 ; Function:     takehighestopen_scored
