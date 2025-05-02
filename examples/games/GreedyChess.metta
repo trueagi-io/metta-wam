@@ -2554,13 +2554,15 @@
       (progn 
       ; Retrieve the source box details.
       (let $h (return_entire_box $f) ())
+      ; Get source box color, assign NIL if no piece
+      (let $source_color (if (== (size-atom $h) 4) (nth 3 $h) NIL) ())
       ; Retrieve the destination box details.
       (let $i (return_entire_box $g) ()) 
       (let $dest_color (if (== (size-atom $i) 4) 
                            (nth 3 $i)
                             NIL) ())
-      ; Check there is a piece to move.
-      (if (and (== (size-atom $h) 4)                                    
+      ; Check there is a human piece to move.
+      (if (and (== $source_color s)                                    
                (xor  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
