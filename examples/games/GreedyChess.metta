@@ -1353,8 +1353,41 @@
     (match &self (square $x1 $y1 g $AI_rank)
         ; if piece under threat by human
         (if (== (take_dest ($x1 $y1) s) True)
-          ; if square not covered by a different AI piece that could in turn capture attacking human piece...
-          (if (== (take_dest ($x1 $y1) g) False)
+          ; if square not covered by a different AI piece that could in turn capture attacking human piece,
+          (if (xor (== (take_dest ($x1 $y1) g) False)
+                   ;   except if threatened piece is a queen. If queen is threatened play defense regardless...
+                   (and (== (take_dest ($x1 $y1) g) True) (== $AI_rank q)))
+            ; find all empty squares to flee to...
+            (match &self (square $x2 $y2)
+                ; if piece can escape to an empty square
+                (if (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                    ; if AI piece is not exposed in new position
+                    (let*
+                          ( ;envision the move to empty square, see if exposed after moves
+                            ($__1 (move_piece ($x1 $y1 g $AI_rank) ($x2 $y2)))
+                            ($exposed (take_dest ($x2 $y2) s))
+                            ; make sure king safe
+                            ($king_status (checkking g))
+                            ($__2 (reset_pieces ($x1 $y1 g $AI_rank) ($x2 $y2)))
+                          )
+                          (if (and (== $exposed False) (== $king_status False))
+                            ; success!
+                            (($x1 $y1 g $AI_rank) ($x2 $y2))
+                            ; whoops, the piece is exposed to capture
+                            (empty)))
+                    (empty)
+                )
+            )
+            (empty)))))
+
+; This variation will play defense if high ranking pieces are ever threatened by a pawn.
+(= (playdefense_match $AI_rank) 
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+        ; find human pawns...
+        (match &self (square $PAWNx1 $PAWNy1 s p)
+          ; if there is a capture route for the human pawn to capture higher rank AI piece
+          (if (== (clear_route ($PAWNx1 $PAWNy1 s p) ($x1 $y1)) True) 
             ; find all empty squares to flee to...
             (match &self (square $x2 $y2)
                 ; if piece can escape to an empty square
@@ -2502,8 +2535,8 @@
         (add-atom &self 
           (board-state ((1 8 g r) (2 8 g n) (3 8 g b) (4 8 g q) (5 8 g k) (6 8 g b) (7 8 g n) (8 8 g r) 
                         (1 7 g p) (2 7 g p) (3 7 g p) (4 7 g p) (5 7 g p) (6 7 g p) (7 7 g p) (8 7 g p) 
-                        (1 6) (2 6) (3 6) (4 6) (5 6) (6 6) (7 6) (8 6) 
-                        (1 5) (2 5) (3 5) (4 5) (5 5) (6 5) (7 5) (8 5) 
+                        (1 6) (2 6) (3 6) (4 6 g b) (5 6) (6 6) (7 6) (8 6) 
+                        (1 5) (2 5) (3 5) (4 5) (5 5 s p) (6 5) (7 5) (8 5) 
                         (1 4) (2 4) (3 4) (4 4) (5 4) (6 4) (7 4) (8 4) 
                         (1 3) (2 3) (3 3) (4 3) (5 3) (6 3) (7 3) (8 3) 
                         (1 2 s p) (2 2 s p) (3 2 s p) (4 2 s p) (5 2 s p) (6 2 s p) (7 2 s p) (8 2 s p) 
