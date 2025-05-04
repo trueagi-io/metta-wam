@@ -65,7 +65,7 @@
 ;   first created at the outset of each side's move based upon the chessboard list.
 ;
 ;   Possible moves are evaluated by rapidly adding and removing these 'square' atoms. As a design
-;   consideration use of such atoms harmonizes well with the 'atomic' structure of Metta which is 
+;   consideration use of such atoms harmonizes well with the 'atomic' structure of MeTTa which is 
 ;   not really the same as LISP type list processing. At the start of the move, the transient 'square' atoms
 ;   are loaded into atomspace and at the conclusion of the move the 'square' atoms are used to 
 ;   recreate the chessboard. Take care that after "envisioning" moves you move the 'square' atoms
@@ -81,7 +81,7 @@
 ;
 ;   During programming tail recursion functions were often created, but it was discovered that these
 ;   were often faster instead using metta calls to 'match'. The original functions have sometimes been retained for
-;   comparison. In general the defining features of Metta are the use of atomspace, 'match' 'superpose' and
+;   comparison. In general the defining features of MeTTa are the use of atomspace, 'match' 'superpose' and
 ;   'collapse'. Occasionally it is wise to use 'xor' in lieu of 'or' (if possible) to avoid unexpected
 ;   nondeterministic behavior. In general it is not necessary to think in GOFAI chaining terms (forward, backward).
 ;
@@ -1353,6 +1353,10 @@
     (match &self (square $x1 $y1 g $AI_rank)
         ; if piece under threat by human
         (if (== (take_dest ($x1 $y1) s) True)
+          ; if square not covered by a different AI piece that could in turn capture attacking human piece,
+          (if (xor (== (take_dest ($x1 $y1) g) False)
+                   ;   except if threatened piece is a queen. If queen is threatened play defense regardless...
+                   (and (== (take_dest ($x1 $y1) g) True) (== $AI_rank q)))
             ; find all empty squares to flee to...
             (match &self (square $x2 $y2)
                 ; if piece can escape to an empty square
@@ -1374,7 +1378,38 @@
                     (empty)
                 )
             )
-        )))
+            (empty)))))
+
+; This variation will play defense if high ranking pieces are ever threatened by a pawn.
+(= (playdefense_match $AI_rank) 
+    ; find all AI pieces
+    (match &self (square $x1 $y1 g $AI_rank)
+        ; find human pawns...
+        (match &self (square $PAWNx1 $PAWNy1 s p)
+          ; if there is a capture route for the human pawn to capture higher rank AI piece
+          (if (== (clear_route ($PAWNx1 $PAWNy1 s p) ($x1 $y1)) True) 
+            ; find all empty squares to flee to...
+            (match &self (square $x2 $y2)
+                ; if piece can escape to an empty square
+                (if (== (clear_route ($x1 $y1 g $AI_rank) ($x2 $y2)) True)
+                    ; if AI piece is not exposed in new position
+                    (let*
+                          ( ;envision the move to empty square, see if exposed after moves
+                            ($__1 (move_piece ($x1 $y1 g $AI_rank) ($x2 $y2)))
+                            ($exposed (take_dest ($x2 $y2) s))
+                            ; make sure king safe
+                            ($king_status (checkking g))
+                            ($__2 (reset_pieces ($x1 $y1 g $AI_rank) ($x2 $y2)))
+                          )
+                          (if (and (== $exposed False) (== $king_status False))
+                            ; success!
+                            (($x1 $y1 g $AI_rank) ($x2 $y2))
+                            ; whoops, the piece is exposed to capture
+                            (empty)))
+                    (empty)
+                )
+            )
+            (empty)))))
 
 ;*************************************************************************
 ; Function:     takehighestopen_scored
@@ -2552,13 +2587,15 @@
       (progn 
       ; Retrieve the source box details.
       (let $h (return_entire_box $f) ())
+      ; Get source box color, assign NIL if no piece
+      (let $source_color (if (== (size-atom $h) 4) (nth 3 $h) NIL) ())
       ; Retrieve the destination box details.
       (let $i (return_entire_box $g) ()) 
       (let $dest_color (if (== (size-atom $i) 4) 
                            (nth 3 $i)
                             NIL) ())
-      ; Check there is a piece to move.
-      (if (and (== (size-atom $h) 4)                                    
+      ; Check there is a human piece to move.
+      (if (and (== $source_color s)                                    
                (xor  
                ; OK to move to open square size 2...
                (== (size-atom $i) 2)     
