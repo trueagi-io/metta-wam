@@ -21,6 +21,8 @@ touch ~/.config/metta/repl_history.txt
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
+METTALOG_TESTING_OPTS="--noninteractive --abort_trace --nodebug --repl=disable --no-regen"
+
 need_compile=0
 exe=true
 compatio=false

@@ -793,23 +793,32 @@ is_extreme_debug(_).
 sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_var(Sub,Source).
 sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_term(Sub,Source).
 
-
-maybe_abolish_trace:- \+ is_flag(abolish_trace), !.
-maybe_abolish_trace:- abolish_trace.
-abolish_trace:-
+maybe_abort_trace:- \+ is_flag(abort_trace), !.
+maybe_abort_trace:- abort_trace.
+abort_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
-  assert(( (system:trace) :- system:trace_called)),
+  assert(( (system:trace) :- system:trace_called)), !.
+system:trace_called:- notrace,format(user_error,'~nTRACE_CALLED~n',[]), once(bt),  current_prolog_flag(abort_trace,true), format(user_error,'~nTRACE_CALLED~n',[]), throw('aborted').
+system:trace_called:- break.
+
+
+maybe_noninteractive:- \+ is_flag(noninteractive), !.
+maybe_noninteractive:- noninteractive.
+noninteractive:-
+  set_prolog_flag(noninteractive,true),
+  %redefine_system_predicate(system:trace/0),
+  %abolish(system:trace/0),
+  %assert(( (system:trace) :- system:trace_called)),
+  leash(-all),
+  %no_interupts(nts1r),
   redefine_system_predicate(system:break/0),
   abolish(system:break/0),
   assert(( (system:break) :- system:break_called)).
+system:break_called:- notrace,format(user_error,'~nBREAK_CALLED~n',[]), once(bt),  current_prolog_flag(noninteractive,true), format(user_error,'~nBREAK_CALLED~n',[]), throw('aborted').
+system:break_called:- prolog.
 
-system:trace_called:- format(user_error,'~nTRACE_CALLED~n',[]), fail.
-system:trace_called:- once(bt), fail.
-%system:trace_called:- break.
 
-system:break_called:- format(user_error,'~nBREAK_CALLED~n',[]), fail.
-system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
 % return true if we want to hide away developer chicanery

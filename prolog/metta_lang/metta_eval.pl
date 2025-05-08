@@ -329,7 +329,7 @@ eval_001(_Eq,_RetType,_Depth,_Slf,X,Y):- self_eval(X),!,X=Y.
 eval_001(Eq,RetType,Depth,Self,X,YO):-
    eval_01(Eq,RetType,Depth,Self,X,YO).
 
-overflow_depth(N,Depth):- Depth>(10_000-N).
+overflow_depth(N,Depth):- (10_000-N)=<Depth.
 overflow_depth(Depth):- Depth>10_000.
 deepen(Depth,Depth2):- succ(Depth,Depth2).
 
@@ -341,7 +341,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    if_t((overflow_depth(Depth), trace_on_overflow), debug(metta(e))),
 
-   trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
+   trace_eval(eval_07(Eq,RetType),e,Depth2,Self,X,M),
 
    ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
 
@@ -465,13 +465,13 @@ is_mettalog_tracing(X,_):- var(X),!,fail.
 is_mettalog_tracing([X|_],Type):- !, is_mettalog_tracing(X,Type).
 is_mettalog_tracing(H,Type):- woc(metta_atom(_,[mettalog_trace,HH,Type])), \+ \+ H=HH, !.
 
-eval_08(Eq,RetType,Depth,Self,X,Y):- is_mettalog_tracing(X,Type),!,
-   with_debug(Type,eval_09(Eq,RetType,Depth,Self,X,Y)).
-eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_07(Eq,RetType,Depth,Self,X,Y):- is_mettalog_tracing(X,Type),!,
+   with_debug(Type,eval_08(Eq,RetType,Depth,Self,X,Y)).
+eval_07(Eq,RetType,Depth,Self,X,Y):- eval_08(Eq,RetType,Depth,Self,X,Y).
 
-%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, X=Y, fail.
-%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
-%eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
+%eval_08(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, X=Y, fail.
+%eval_08(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
+%eval_08(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
 
 %hybrid_interp :- !.
 hybrid_interp :- option_value(compile,hybrid),!.
@@ -480,16 +480,34 @@ hybrid_interp :- option_value(compile,false),!,fail.
 hybrid_interp :- option_value(compile,full),!,fail.
 hybrid_interp :- option_value(compile,true),!.
 
+get_symbol_impl_only(interp,Fn,Len):- symbol_impl_only(interp,Fn,Len),!.
+get_symbol_impl_only(interp,Fn,Len):- eval_at(fa(Fn,Len), interp), \+ eval_at(fa(Fn,Len), compiler),!.
 
-eval_09(Eq,RetType,Depth,Self,X,Y):-
+eval_08(Eq,RetType,Depth,Self,X,Y):- option_value(compile, false), !, eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Eq,RetType,Depth,Self,X,Y):- \+ compound(X), !, eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Eq,RetType,Depth,Self,X,Y):- \+ is_list(X), !, eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Eq,RetType,Depth,Self,X,Y):-
   nb_current('eval_in_only', interp), !,
-  woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
-eval_09(Eq,RetType,Depth,Self,X,Y):- hybrid_interp, !,
+  eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', compiler), !,
+  with_scope(Eq, RetType, Depth, Self, transpile_eval(X,Y)).
+eval_08(Eq,RetType,Depth,Self,X,Y):-
+  nb_current('eval_in_only', rust), !,
+  with_scope(Eq, RetType, Depth, Self, rust_metta_run(exec(X),Y)).
+eval_08(Eq,RetType,Depth,Self,X,Y):- X = [Fn|Args], length(Args,Len), eval_08(Fn,Len,Eq,RetType,Depth,Self,X,Y).
+
+eval_08(Fn,Len,Eq,RetType,Depth,Self,X,Y):-
+  get_symbol_impl_only(interp,Fn,Len),!, eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Fn,Len,Eq,RetType,Depth,Self,X,Y):-
+  symbol_impl_exists(interp, Fn, Len),!, eval_09(Eq,RetType,Depth,Self,X,Y).
+eval_08(Eq,RetType,Depth,Self,X,Y):- hybrid_interp, !,
     eval_use_right_thing(Eq,RetType,Depth,Self,X,Y).
 eval_09(Eq,RetType,Depth,Self,X,Y):- woc(eval_10(Eq,RetType,Depth,Self,X,Y)).
 
-%eval_09(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
-eval_09_hide(Eq,RetType,Depth,Self,X,Y):- !,
+
+%eval_08(Eq,RetType,Depth,Self,X,Y):- !, no_repeats(X+Y,eval_10(Eq,RetType,Depth,Self,X,Y)).
+eval_08_hide(Eq,RetType,Depth,Self,X,Y):- !,
      no_repeats_var(YY),
      eval_to_name(X,XX),!,
      eval_10(Eq,RetType,Depth,Self,X,Y), %break,
@@ -772,9 +790,11 @@ eval_20(Eq,RetType,_Dpth,_Slf,X,Y):- \+ is_list(X),!,do_expander(Eq,RetType,X,Y)
 eval_20(_,_,_,_,['echo',Value],Value):- !.
 %eval_20(=,Type,_,_,['coerce',Type,Value],Result):- !, coerce(Type,Value,Result).
 
-eval_20(_Eq,RetType,Depth,Self,['py-atom-call!',[Sym|Specialize]|Args],Res):- is_list(Args), !,
+eval_20(_Eq,RetType,Depth,Self,['py-atom-call!',SymSpecialize|Args],Res):- is_list(Args), !,
+    listify(SymSpecialize,[Sym|Specialize]),
     maplist(as_prolog_x(Depth,Self), Args , Adjusted),!,
-    py_call_method_and_args_sig(RetType,[],Sym,Adjusted,Res).
+    py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res).
+
 eval_40(Eq,RetType,Depth,Self,['py-atom-call',Sym|Args],Res):-
     eval_20(Eq,RetType,Depth,Self,['py-atom-call!',Sym|Args],Res).
 
@@ -1172,7 +1192,7 @@ gen_eval_20_stubs([F|Args],Res,ParamTypes,RetType,Body):-
 
 
 
-eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !,  repl,check_returnval(Eq,RetType,Y).
+eval_20(Eq,RetType,_Dpth,_Slf,['repl!'],Y):- !, repl, check_returnval(Eq,RetType,Y).
 %eval_20(Eq,RetType,Depth,Self,['enforce',Cond],Res):- !, enforce_true(Eq,RetType,Depth,Self,Cond,Res).
 
 eval_20(Eq,RetType,Depth,Self,['trace!',A,B],C):- !, % writeln(trace(A)),
@@ -3084,7 +3104,7 @@ eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
 no_repeat_variant_var(Var):- no_repeats_var(Var).
 %no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
 
-eval_30(=,_RetType,_,_,[Var|Types],_):- var(Var), !, 
+eval_30(=,_RetType,_,_,[Var|Types],_):- var(Var), !,
    throw(var_eval_30([Var|Types])).
 
 eval_30(_Eq,_RetType,_Depth,_Self,[Space|More],[Space|More]):-
@@ -3435,7 +3455,7 @@ same_terms(X,Y):- \+ compound(X), X==Y.
 transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
   is_list(TypeL), !, member(Type,TypeL),
   transpiler_peek(Sym,Len,Type,Fn, Min, SpreadArgs).
-  
+
 transpiler_peek(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
   nonvar(Sym),
@@ -3512,7 +3532,7 @@ eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
     jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
     with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
 
-eval_30(Eq, RetType, Depth, Self, [Sym | Args], Res) :- 
+eval_30(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
   fail,
   \+ eval_at(Sym,interp), symbol(Sym), is_list(Args),
    len_or_unbound(Args, Len),

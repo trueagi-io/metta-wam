@@ -112,7 +112,7 @@ run_mettalog_tests() {
     echo "Running tests in: $test_dir"
 
     # Construct the command
-    local cmd=(mettalog --output="$output" --test --timeout="$max_time_per_test" "$test_dir")
+    local cmd=(mettalog --output="$output" --test --noninteractive --abort_trace --repl=disable --no-regen --timeout="$max_time_per_test" "$test_dir")
     
     if [ "${#args[@]}" -gt 0 ]; then
         cmd+=("${args[@]}")
@@ -160,17 +160,40 @@ echo "Running tests METTALOG_OUTPUT=$METTALOG_OUTPUT and SHARED_UNITS=$SHARED_UN
 #blank out the shared units
 cat /dev/null > /tmp/SHARED.UNITS
 
+run_interp_and_comp_tests() {
+  local id="$1"
+  local path="$2"
+  shift 2
+  run_mettalog_tests "$id" "$path" "$@"
+  run_mettalog_tests "$id" "$path" --compile=full "$@"
+}
 
+# 50+ tests (~2 minutes)
+run_interp_and_comp_tests 40 tests/baseline_compat/metta-morph_tests/
 # 23+ tests (~30 seconds)
-run_mettalog_tests 40 tests/baseline_compat/module-system/
+run_interp_and_comp_tests 41 tests/baseline_compat/module-system/
+# 200+ tests (~4 minutes)
+run_interp_and_comp_tests 42 tests/baseline_compat/hyperon-experimental_scripts/
+# SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
+run_interp_and_comp_tests 120 tests/nars_interp/nars/main-branch/
+
+run_interp_and_comp_tests 121 tests/direct_comp/important/
+run_interp_and_comp_tests 122 tests/direct_comp/nqueens/
+run_interp_and_comp_tests 43 tests/direct_comp/easy/
+run_interp_and_comp_tests 44 tests/direct_comp/types/
+run_interp_and_comp_tests 45 tests/direct_comp/sanity/
+run_interp_and_comp_tests 123 tests/direct_comp/More-important/
+run_interp_and_comp_tests 46 tests/quick_quality/
+
+#run_interp_and_comp_tests 47 tests/baseline_compat-next/metta-morph_tests/
 
 #SHOW_ALL_OUTPUT=true # Set to false normally, true for debugging
 
 # 200+ tests (~4 minutes)
-run_mettalog_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
-run_mettalog_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
+run_interp_and_comp_tests 40 tests/baseline_compat/hyperon-experimental_scripts/
+run_interp_and_comp_tests 40 tests/baseline_compat/hyperon-mettalog_sanity/
 # 50+ tests (~2 minutes)
-#run_mettalog_tests 40 tests/baseline_compat/metta-morph_tests/
+#run_interp_and_comp_tests 40 tests/baseline_compat/metta-morph_tests/
 
 # Run filtered test suites
 for test_dir in "${test_dirs[@]}"; do
@@ -191,17 +214,18 @@ if [ "$SKIP_LONG" != "1" ]; then
     # Gets the rest
     #run_mettalog_tests 40 tests/baseline_compat/
 
-    run_mettalog_tests 40 tests/more-anti-regression/
-
-    run_mettalog_tests 40 tests/extended_compat/metta-examples/
-    run_mettalog_tests 40 tests/extended_compat/
-
-    run_mettalog_tests 40 tests/direct_comp/
-    run_mettalog_tests 40 tests/features/
-    run_mettalog_tests 40 tests/performance/
-
-  # compiler based tests
-    #run_mettalog_tests 40 tests/compiler_baseline/
+    run_interp_and_comp_tests 40 tests/more-anti-regression/
+    
+    run_interp_and_comp_tests 40 tests/extended_compat/metta-examples/
+    run_interp_and_comp_tests 40 tests/extended_compat/
+    
+    run_interp_and_comp_tests 40 tests/quick_quality/
+    run_interp_and_comp_tests 40 tests/direct_comp/
+    run_interp_and_comp_tests 40 tests/features/
+    run_interp_and_comp_tests 40 tests/performance/
+    
+    # compiler based tests
+    
     #run_mettalog_tests 40 tests/nars_w_comp/
     # run_mettalog_tests 40 tests/python_compat/
 fi
