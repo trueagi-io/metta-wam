@@ -14,6 +14,10 @@ if [ "$IS_SOURCED" -eq "0" ]; then SCRIPT=$(readlink -f "$0"); else SCRIPT=$(rea
 export MeTTa=$(readlink -m "$SCRIPT")
 export METTALOG_DIR=$(dirname "$SCRIPT")
 
+mkdir -p ~/.config/metta
+touch ~/.config/metta/history.txt
+touch ~/.config/metta/repl_history.txt
+
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 

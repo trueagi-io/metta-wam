@@ -23,7 +23,7 @@ fi
 
 # ## Display help if "--help" is in the arguments
 # If "--help" is passed as an argument, display usage information and exit.
-if [[ "$@" =~ "--help" ]]; then
+if [[ "$@" =~ "--help" ]] || [[ $# == 0 ]]; then
     echo -e "${BOLD}Usage:${NC} source $0 [OPTIONS]"
     echo ""
     echo -e "${BOLD}Options:${NC}"
@@ -92,6 +92,8 @@ else
     SWI_INSTALL="src"
     EASY_INSTALL="Y"
 fi
+
+export ALLOW_MODIFY_SYSTEM=1
 
 # ## Parse command-line arguments
 # Parse and process any command-line arguments passed to the script.
