@@ -395,19 +395,6 @@ py_is_list(X):- py_resolve(X,V),py_is_object(V),py_type(V,list).
 load_builtin_module:- ensure_py_loaded(metta_python_builtin).
 
 
-%!  py_call_method_and_args_sig(+RetType,+Sig,+List, -Py) is det.
-%
-%   Converts a list `List` into a Python call, returning the result as `Py`.
-%
-%   @arg RetType The return type required or var.
-%   @arg Sig Any singature overloads required or [].
-%   @arg O The input list to be converted toi call.
-%   @arg Py The result.
-py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res):-
-   if_t(Specialize\==[], debug_info(todo,warn(ignoring(specialize=Specialize)))),
-   py_call_method_and_args(Sym,Adjusted,Ret),
-   py_metta_return_value(RetType, Ret,Res).
-
 %!  py_call_method_and_args(+List, -Py) is det.
 %
 %   Converts a list `List` into a Python call, returning the result as `Py`.
@@ -416,7 +403,6 @@ py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res):-
 %   @arg Py The result.
 py_call_method_and_args([F|List], Py):- py_call_method_and_args(F,List, Py).
 
-py_call_method_and_args(F,List, Py):- is_list(F),F=[Input],atom(Input),py_atom(Input,PyCallable),PyCallable\==F,!,py_call_method_and_args(PyCallable,List, Py).
 py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwargs', must_det_lls((make_kw_args(Args,KeyWordArgs),
    maplist(py_arg,NewList,PyArgs),
    py_list([F|PyArgs],PyList),
@@ -445,9 +431,6 @@ pair_arg_s(List,Key,PyValue):- pair_arg(List,Key,PyValue),!.
 pair_arg_s([Key,Value],Key,PyValue):- symbolic(Key), py_arg(Value, PyValue),!.
 
 
-
-py_term(Term, PyObject):- is_ftVar(Term),!,py_obi(identity(prolog(Term)), PyObject).
-py_term([Quoted|Thing], Obj) :- is_list(Thing), Quoted = 'quote', Thing = [Arg],!,py_term(Arg, Obj).
 py_term(Term, PyObject):- py_obi(identity(prolog(Term)), PyObject).
 py_identity(Term, PyObject):- py_obi(identity((Term)), PyObject).
 
@@ -461,10 +444,8 @@ py_arg(Symbol, PyObject) :- symbol(Symbol),!,py_term(Symbol, PyObject).
 py_arg(Number, PyObject) :- number(Number),!,py_identity(Number, PyObject).
 % Handle strings
 py_arg(String, PyObject) :- string(String),!,py_identity(String, PyObject).
-% Handle py-term Arg
-py_arg([Quoted|Thing], Obj) :- is_list(Thing), Quoted = 'quote', Thing = [Arg],!,py_term(Arg, Obj).
 % Handle lists
-py_arg(List, PyList) :- is_list(List), !, maplist(py_arg,List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
+py_arg(List, PyList) :- is_list(List), !, maplist(py_arg, List, PyArgs), py_obi(py_list(PyArgs),PyList),!.
 % Handle Python objects
 py_arg(Tuple, PyObject) :- compound(Tuple),compound_name_arguments(Tuple,'-',ArgsA),maplist(py_arg,ArgsA,ArgsB),compound_name_arguments(Mapped,'-',ArgsB),py_ocall_direct(tuple(Mapped),PyObject).
 %py_arg(Tuple, PyObject) :- py_type(Tuple,'tuple'),!,map_tuple(py_arg,Tuple, Mapped),py_ocall(tuple(Mapped),PyObject),!. %py_tuple(Mapped,PyObject).
@@ -880,17 +861,8 @@ py_dot_from(From,I,O):- make_py_dot(From,I,O).
 make_py_dot(A,B,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
 make_py_dot(A,B,Py):- py_dot([A,B],Py),!.
 
-make_py_dot(A,B,_Specialize,Py):- catch(py_obi(make_py_dot(A,B),Py),E,py_error_fail(E)),!.
-make_py_dot(A,B,_Specialize,Py):- py_dot([A,B],Py),!.
 
-py_error_fail(E):- wdmsg(E), \+ is_extreme_debug, !,fail.
-py_error_fail(E):- E = error(python_error(_ErrorType, Value), _), print_python_traceback(Value), fail.
-py_error_fail(E):- wdmsg(E),bt,wdmsg(E),!,trace,fail.
-
-
-print_python_traceback(Value) :-
-    py_call(metta_python_builtin:format_python_exception(Value), TraceList),
-    format('Python traceback:\n~s', [TraceList]).
+py_error_fail(E):- bt,wdmsg(E),!,trace,fail.
 
 %!  py_eval_object(+Var, -VO) is det.
 %
@@ -917,13 +889,11 @@ py_is_function(PyObject):- py_call(callable(PyObject),C),!,C= @(true).
 py_is_method_type(type).
 py_is_method_type(builtin_function_or_method).
 py_is_method_type(ufunc).
-py_is_method_type('numpy.ufunc').
 %py_is_method_type('OperatorAtom').
 py_is_method_type(function).
 py_is_method_type(method).
 py_is_method_type('method-wrapper').
 
-py_is_callable(O):- py_is_function(O).
 
 %!  py_eval_from(+From, +I, -O) is det.
 %

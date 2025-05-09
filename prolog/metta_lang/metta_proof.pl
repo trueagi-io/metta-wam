@@ -1,11 +1,4 @@
 
-
-metta_why(True):- forall(mpred_why(True),true),fail.
-metta_why(metta_atom(KB,True)):- !,forall(metta_atom(KB,True),forall(metta_why(metta_atom_asserted(KB,True)),true)).
-metta_why(metta_type(KB,H,B)):- !, metta_why(metta_atom(KB,[':',H,B])).
-metta_why(metta_defn(KB,H,B)):- !, metta_why(metta_atom(KB,['=',H,B])).
-metta_why(_True).
-
 interpC(Goal):-
   interpC(Goal, Proof),
   once(ppt(Proof)).

@@ -74,12 +74,8 @@
 :- ensure_loaded(metta_space).
 :- ensure_loaded(metta_compiler_print).
 :- dynamic(transpiler_clause_store/9).
-:- multifile(transpiler_predicate_store/7).
 :- dynamic(transpiler_predicate_store/7).
-:- dynamic(transpiler_predicate_nary_store/9).
-:- discontiguous transpiler_predicate_nary_store/9.
 :- discontiguous(compile_flow_control/8).
-:- multifile(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
 :- ensure_loaded(metta_compiler_lib_stdlib).
 
@@ -215,7 +211,6 @@ as_p1_exec(ispeEn(ERet,ECode,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
 as_p1_exec(X,X) :- !.
-
 
 as_p1_expr(ispu(URet),URet) :- !.
 as_p1_expr(ispuU(URet,UCode),URet) :- !, call(UCode).
@@ -357,7 +352,7 @@ invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
    invert_curried_structure(F,LenArgs,ArgsFirst,Result).
 
 
-recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_code_from_depends,skip_redef_fa(FnName,LenArgs)),!.
+recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_redef_fa(FnName,LenArgs)),!.
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
@@ -773,11 +768,6 @@ transpile_interpret(Convert,Convert) :- \+ is_list(convert),!.
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, T, Converted, ConvertedN) :- compound(T),T=exec(X),!,
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, [eval,X], Converted, ConvertedN).
 
-f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :- fail,
-   atom(Convert), nb_bound(Convert,_),!, % TODO might need to look this up at evaluation time instead
-   atom_string(Convert,SConvert),
-   f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, ['eval-string',SConvert], Converted, ConvertedN),!.
-
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
    nb_bound(Convert,X),!, % TODO might need to look this up at evaluation time instead
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
@@ -827,8 +817,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
 
 % If Convert is a number or an atomic, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); atomic(Convert) %; data_term(Convert)
-    ),  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert); atomic(Convert) /*; data_term(Convert)*/ ),  % Check if Convert is a number or an atom
     (ResultLazy=x(_,eager,_) -> C2=Convert ; C2=[ispu,Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
@@ -1730,7 +1719,6 @@ skip_redef_fa(Fn,LenArgs) :-
 %must_det_lls(G):- rtrace(G),!.
 %user:numbervars(Term):- varnumbers:numbervars(Term).
 
-must_det_lls(G):- is_nodebug,!,call(G). % is_mettalog_rt or is_user_repl
 must_det_lls(G):- tracing,!,call(G). % already tracing
 must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls(G):- call(G). % already tracing
@@ -1742,7 +1730,6 @@ must_det_lls(G):- catch(G,E,(trace_break(must_det_lls(G)),wdmsg(G->E),rtrace(G),
 must_det_lls(G):- ignore((notrace,nortrace,trace_break(must_det_lls(G)))),rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
-extract_constraints(V,VS):- var(V),VS=[],!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
 extract_constraints(Converted,VSS):- term_variables(Converted,Vars),
       % assign_vns(0,Vars,_),
@@ -2117,15 +2104,15 @@ remove_stub(Space,Fn,Arity):- \+ transpiler_stub_created(Space,Fn,Arity),!.
 remove_stub(Space,Fn,Arity):- retract(transpiler_stub_created(Space,Fn,Arity)),!,
   transpile_impl_prefix(Fn,Arity,IFn),abolish(IFn/Arity),!.
 
-% !(listing!! cdr-atom)
-transpiler_predicate_store(builtin, 'listing!', [1], [], '', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc__1_1_listing!'(S,RetVal):-
+% !(compiled-info! cdr-atom)
+transpiler_predicate_store(builtin, 'compiled-info', [1], [], '', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_compiled-info'(S,RetVal):-
   find_compiled_refs(S, Refs),
-  locally(nb_setval(focal_symbol,S),print_refs(Refs)),!,
+  print_refs(Refs),!,
   length(Refs,RetVal).
 
 'compiled_info'(S):-
-  'mc__1_1_listing!'(S,_RetVal).
+  'mc__1_1_compiled-info'(S,_RetVal).
 
 print_refs(Refs):- is_list(Refs),!,maplist(print_refs,Refs).
 print_refs(Refs):- atomic(Refs),clause(M:H,B,Refs),!,print_itree(((M:H):-B)).
@@ -2138,13 +2125,8 @@ print_itree(T):- nl_print_tree(T).
 
 nl_print_tree(PT):-
   stream_property(Err, file_no(2)),
-  mesg_color(PT, Color),
-  maybe_subcolor(PT,CPT),
-  with_output_to(Err,(format('~N'),ansicall(Color,ppt(CPT)),format('~N'))).
+  with_output_to(Err,(format('~N'),ppt(PT),format('~N'))).
 
-maybe_subcolor(PT,CPT):- fail, nb_current(focal_symbol,S), mesg_color(PT, Color), wots(Str,ansicall(Color,ppt1(S))),
-   subst001(PT,S,Str,CPT),!.
-maybe_subcolor(PT,PT).
 
 find_compiled_refs(S, Refs):-
    atom_concat('_',S,Dashed),
@@ -2162,16 +2144,8 @@ compiled_info_p(F,Refs):-
     \+ \+ predicate_property(M:P,_), \+ predicate_property(M:P,imported_from(_)),
     clause(M:P,_,Ref)),Refs).
 
-compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref), (\+ compiler_data_no_call(F/A) -> call(B)), symbol_in(2,Symbol,P),
+compiled_refs(Symbol,F,A,Info):- functor(P,F,A),clause(P,B,Ref),call(B), \+ \+ (arg(_,P,S),S==Symbol),
    (B==true->Info=Ref;Info=P).
-
-
-symbol_in(_, Symbol, P):-Symbol=@=P,!.
-symbol_in(N, Symbol, P):- N>0, compound(P), N2 is N-1, symbol_in_sub(N2, Symbol, P).
-symbol_in_sub(N, Symbol, P):- is_list(P),P=[S1,S2,_|_],!,symbol_in_sub(N, Symbol, [S1,S2]).
-symbol_in_sub(N, Symbol, P):- is_list(P),!,member(S,P),symbol_in(N, Symbol, S).
-symbol_in_sub(N, Symbol, P):- arg(_,P,S),symbol_in(N, Symbol, S).
-
 
 compiler_data(metta_compiled_predicate/3).
 compiler_data(is_transpile_call_prefix/3).
@@ -2185,11 +2159,6 @@ compiler_data(transpiler_predicate_store/7).
 compiler_data(metta_atom/2).
 compiler_data(metta_type/3).
 compiler_data(metta_defn/3).
-compiler_data(eval_20/6).
-compiler_data_no_call(eval_20/6).
-
-%compiler_data(metta_atom_asserted/2).
-
 %compiler_data(metta_file_buffer/7).
 
 ensure_callee_site(Space,Fn,Arity):- check_supporting_predicates(Space,Fn/Arity),!.
@@ -2315,9 +2284,7 @@ trace_break(G):-
    stream_property(Err, file_no(2)),
    current_output(Cur), Cur\=@=Err,!,
    with_output_to(Err, trace_break(G)).
-trace_break(G):- notrace, nl, writeq(call(G)),nl,nl, current_prolog_flag(noninteractive,true), format('~nTRACE_BREAK_CALLED~n',[]),
-  once(bt), writeq(call(G)),throw('aborted').
-trace_break(G):- notrace,nl, writeq(call(G)),nl,nl,format('~nTRACE_BREAK_CALLED~n',[]), nl, trace, \+  current_prolog_flag(noninteractive,true), break.
+trace_break(G):- nl, writeq(call(G)), trace,break.
 %    :- set_prolog_flag(gc,false).
 
 :- if(debugging(metta(compiler_bugs))).
@@ -2327,7 +2294,6 @@ trace_break(G):- notrace,nl, writeq(call(G)),nl,nl,format('~nTRACE_BREAK_CALLED~
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).
 call_fr(G,Result,_):- Result=G.
 
-transpile_eval(Convert,Converted) :- nb_current('eval_in_only', interp),!, eval(Convert,Converted).
 transpile_eval(Convert,Converted) :-
   transpile_eval(Convert,Converted,PrologCode),!,
   call(PrologCode).
@@ -2339,15 +2305,13 @@ transpile_eval(Convert0,LiConverted,PrologCode) :-
    %   PrologCode=PrologCode0,
    %   LiConverted=Converted0
    %;
-      metta_to_metta_body_macro_recurse('transpile_eval',Convert,ConvertMacr),
-      f2p(null,[],Converted,_,LE,ConvertMacr,Code1,_),
+      f2p(null,[],Converted,_,LE,Convert,Code1,_),
       lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
       ast_to_prolog(no_caller,[],Code,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted))
    %)
    .
 
-transpile_eval_nocache(Convert,Converted,true) :- nb_current('eval_in_only', interp),!, eval(Convert,Converted).
 transpile_eval_nocache(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
    subst_varnames(Convert0,Convert),
@@ -4070,7 +4034,6 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
-
 
 
 

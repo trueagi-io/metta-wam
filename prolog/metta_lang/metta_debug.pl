@@ -631,6 +631,7 @@ with_debug(Flag, Goal) :-
     setup_call_cleanup(set_debug(Flag, true), call(Goal), set_debug(Flag, false)).
 
 
+
 %!  is_mettalog_rt is semidet.
 %  True if the Prolog runtime flag `mettalog_rt` is true
 is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
@@ -647,11 +648,9 @@ is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
 %
 
 % Check if the option 'nodebug' is explicitly set to false.  (ideally very rare - code has to relaly know about this)
+is_nodebug :- is_mettalog_rt, !.
 is_nodebug :- option_value(nodebug, false), !, fail.
 % By default spawned threads would need nodebug=false
-is_nodebug :- is_mettalog_rt, !.
-is_nodebug :- is_mettalog_release, !.
-is_nodebug :- is_user_repl, !.
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
@@ -779,63 +778,44 @@ trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
 maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
 maybe_trace:- is_extreme_debug(trace).
 
-
-
-is_user_repl:- is_douglas, !, fail.
-is_user_repl:- \+ option_value(user_repl, false).
-
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-%is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolog_flag(os_argv,OSArgV), \+ member('--douglas=false',OSArgV),!.
+% is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
-sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_var(Sub,Source).
-sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_term(Sub,Source).
+sub_var_safely(Var,Source):-
+  woc(sub_var(Var,Source)).
 
-maybe_abort_trace:- \+ is_flag(abort_trace), !.
-maybe_abort_trace:- abort_trace.
-abort_trace:-
+sub_term_safely(Sub,Source):- acyclic_term(Source),!,sub_term(Sub,Source).
+
+
+maybe_abolish_trace:- \+ is_flag(abolish_trace), !.
+maybe_abolish_trace:- abolish_trace.
+abolish_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
-  assert(( (system:trace) :- system:trace_called)), !.
-system:trace_called:- notrace,format(user_error,'~nTRACE_CALLED~n',[]), once(bt),  current_prolog_flag(abort_trace,true), format(user_error,'~nTRACE_CALLED~n',[]), throw('aborted').
-system:trace_called:- break.
-
-
-maybe_noninteractive:- \+ is_flag(noninteractive), !.
-maybe_noninteractive:- noninteractive.
-noninteractive:-
-  set_prolog_flag(noninteractive,true),
-  %redefine_system_predicate(system:trace/0),
-  %abolish(system:trace/0),
-  %assert(( (system:trace) :- system:trace_called)),
-  leash(-all),
-  %no_interupts(nts1r),
+  assert(( (system:trace) :- system:trace_called)),
   redefine_system_predicate(system:break/0),
   abolish(system:break/0),
   assert(( (system:break) :- system:break_called)).
-system:break_called:- notrace,format(user_error,'~nBREAK_CALLED~n',[]), once(bt),  current_prolog_flag(noninteractive,true), format(user_error,'~nBREAK_CALLED~n',[]), throw('aborted').
-system:break_called:- prolog.
 
+system:trace_called:- format(user_error,'~nTRACE_CALLED~n',[]), fail.
+system:trace_called:- once(bt), fail.
+%system:trace_called:- break.
 
+system:break_called:- format(user_error,'~nBREAK_CALLED~n',[]), fail.
+system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
-% return true if we want to hide away developer chicanery
-is_mettalog_release:- current_prolog_flag(release, true),!.
-is_mettalog_release:- current_prolog_flag(devel, true),!, fail.
-is_mettalog_release:- true.
 
-% runtime should change this to true
-woc(Goal):- (is_mettalog_rt;is_mettalog_release),!,woc(true,Goal).
-woc(Goal):- woc(error,Goal). % for developement purposes
-woce(Goal):-woc(error,Goal).
-wocf(Goal):-woc(false,Goal). % only use after 100% safe
-woct(Goal):-woc(true,Goal). % only use after 100% required
-
-% woc(TFE,Goal):- !, locally(set_prolog_flag(occurs_check,TFE),Goal).
+woc(Goal):- woc(true,Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
+% woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
+woct(Goal):-woc(error,Goal).
+woce(Goal):-woc(error,Goal).
+wocf(Goal):-woc(false,Goal).
 
 print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
 test_locally_setting_flags:-
@@ -917,21 +897,18 @@ filter_matches_var(Var, Topic):-
 nb_current_listify(N,L):- nb_current(N,V),V\==[],!,listify(V,L),!.
 nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
 
-unfiltered_topic(T):- nonvar(T), unfiltered_topic_cl(T).
+unfiltered_topic(T):- unfiltered_topic_cl(T).
 unfiltered_topic_cl(Topic):-
-  filter_matches_var(hideall, Topic), !,debug_info_now(unfiltered_topic,filter_matches_var(hideall, Topic)),fail.
+  filter_matches_var(hideall, Topic), !,fail.
 unfiltered_topic_cl(Topic):-
   filter_matches_var(showall, Topic), !.
 unfiltered_topic_cl(Topic):-
   option_value(filter_default,Show), Show==show,
-  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),debug_info_now(unfiltered_topic,filter_matches_var(hide, Topic)),!, fail.
+  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),!, fail.
 unfiltered_topic_cl(Topic):-
   option_value(filter_default,Hide), Hide==hide, !,
-  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
-unfiltered_topic_cl(Topic):-
-  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
+  \+ (filter_matches_var(show, Topic), \+ filter_matches_var(hide, Topic)),!.
   %wdmsg(filtered_topic(Topic)), fail.
-unfiltered_topic_cl(_):- is_douglas,!.
 unfiltered_topic_cl(_):- option_value(filter_default,_),!.
 
 
@@ -940,8 +917,8 @@ unfiltered_topic_cl(_):- option_value(filter_default,_),!.
 :- dynamic(did_setup_show_hide_debug/0).
 
 %setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
-%setup_show_hide_debug:- did_setup_show_hide_debug,!.
-%setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+setup_show_hide_debug:- did_setup_show_hide_debug,!.
+setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
 setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
@@ -968,21 +945,10 @@ dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
 dont_show_any_qcompile.
 
-         debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
-        debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,ignore(debug_info_filtered( Topic, Info)))),_,fail)),!.
-
-debug_info_filtered( Topic, Info):- var(Topic),!, debug_info_filtered(unknown, Info).
-debug_info_filtered( always(Topic), Info):- !, once((filter_matches_var(hide,Topic);filter_matches_var(hideall,Topic);debug_info_now([always,Topic], Info))),!.
+         debug_info( Topic, Info):- setup_show_hide_debug,!,ignore(debug_info_filtered( Topic, Info)),!.
 debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
 debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
 debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.
-
-% Roy requested to make it easy to hide stdlib building in transpiler
-debug_info_filtered(_Topic,_Info):- currently_stdlib,   (filter_matches_var(hideall,stdlib);    filter_matches_var(hide,stdlib)),!.
-debug_info_filtered(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(showall,stdlib), \+ filter_matches_var(show,stdlib),!.
-
-debug_info_filtered( Topic, Info):- filter_matches_var(show, Topic), !, ignore(debug_info_now( Topic, Info)),!.
-
 %debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.
 debug_info_filtered( Topic, Info):- unfiltered_topic_and_info( Topic, Info),!,debug_info_now( Topic, Info),!.
 debug_info_filtered(_Topic,_Info):- !.
@@ -1063,7 +1029,6 @@ ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_s
 %pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
 ppt0(PTS):- writeln(PTS),!.
 
-ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
 ppt(O):- format('~N '),ppt0(O),format('~N').
 %ppt0(O):- print(O).
@@ -1324,7 +1289,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
     ((sub_term_safely(Why, ReasonsToTrace), ReasonsToTrace \= Why) -> true ; ReasonsToTrace = Why), % Ensure proper Why handling.
 
-    if_t(D1<0, (set_debug(devel,true))),
+    if_t(D1<0, (set_debug(deval,true))),
 
     (\+ \+ if_trace((eval; ReasonsToTrace), (
         PrintRet = 1,

@@ -717,8 +717,7 @@ is_testing :- o_quietly(is_metta_flag('test')).
 %   @example
 %     ?- is_html.
 %     true.
-is_html :- is_metta_flag('html'),!.
-is_html.
+is_html :- is_metta_flag('html').
 
 % If the file is not already loaded, this is equivalent to consult/1. Otherwise, if the file defines a module,
 % import all public predicates. Finally, if the file is already loaded, is not a module file, and the context
@@ -868,7 +867,6 @@ null_output(MFS) :- use_module(library(memfile)),new_memory_file(MF),open_memory
 %   @example
 %     ?- nullify_output.
 %     true.
-
 nullify_output :- keep_output, !.
 nullify_output :- dont_change_streams, !.
 nullify_output :- nullify_output_really.
@@ -1555,9 +1553,7 @@ on_set_value(Note,N,'True'):- nocut,
     on_set_value(Note,N,true).    % true
 on_set_value(Note,N,'False'):- nocut,
     on_set_value(Note,N,false).   % false
-
-on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
-on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
+on_set_value(_Note,abolish_trace,true):- nocut, ignore(abolish_trace),!.
 
 on_set_value(_Note,show, Value):-
     if_t( \+ prolog_debug:debugging(filter_default,_,_), set_debug(default,false)),
@@ -1678,8 +1674,7 @@ set_is_unit_test(false):-
     !.
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
-    maybe_noninteractive,
-    maybe_abort_trace,
+    maybe_abolish_trace,
     % Reset all options to their default values.
     %reset_default_flags,
     % Disable specific trace settings during unit testing.
@@ -2715,7 +2710,7 @@ run_cmd_args_prescan :-
     % Mark that the prescan has been executed.
     assert(has_run_cmd_args),
     % Perform the prescan using `do_cmdline_load_metta/1`.
-    do_cmdline_load_metta(prescan), setup_show_hide_debug.
+    do_cmdline_load_metta(prescan).
 
 %!  run_cmd_args is det.
 %
@@ -3957,8 +3952,6 @@ load_hook(Load,Hooked):-
 %     % Execute a goal and trace errors:
 %     ?- rtrace_on_error(writeln('Hello, World!')).
 %
-
-rtrace_on_error(G):- is_user_repl, !, call(G).
 rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
@@ -4468,6 +4461,9 @@ metta_atom0(Inherit,KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
 */
+metta_atom0(_Inherit,_KB, Atom) :- Atom=@=[_676238, :, _674118],!,fail.
+metta_atom0(_Inherit,_KB, Atom) :- Atom=@=[=, [_502628, _502592, _502598], _502424],!,fail.
+metta_atom0(_Inherit,_Space, Atom) :- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]),!,fail.
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
@@ -4477,7 +4473,8 @@ metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L)
 %metta_atom0(Inherit,X, Y) :- var(X), use_top_self, current_self(TopSelf),  metta_atom0(Inherit,TopSelf, Y), X = '&self'.
 metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
 
-metta_atom0(_Inherit,KB, Atom) :- woct(metta_atom_added(KB, Atom)).
+
+metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom).
 
 
 
@@ -5286,7 +5283,7 @@ toplevel_interp_only_symbol('extend-py!').
 toplevel_interp_only_symbol('include').
 toplevel_interp_only_symbol('include!').
 toplevel_interp_only_symbol('call-string').
-toplevel_interp_only_symbol('listing!').
+toplevel_interp_only_symbol('compiled-info').
 toplevel_interp_only_symbol('repl!').
 toplevel_interp_only_symbol('eval').
 toplevel_interp_only_symbol('pragma!').
@@ -6000,12 +5997,6 @@ eval_string(String):- user_io((eval_string(String, _Out))).
 eval_string(String, Out):-
     current_self(Self),
     read_metta(String, Metta),
-    do_metta(true, +, Self, exec(Metta), Out).
-
-load_string(String):- user_io((eval_string(String, _Out))).
-load_string(String, Out):-
-    current_self(Self),
-    read_metta(String, Metta),
     do_metta(true, +, Self, Metta, Out).
 
 
@@ -6043,9 +6034,9 @@ eval_H(Term, X) :-
 eval_H(_StackMax, _Self, Term, Term) :-
     % If the `compile` option is set to `save`, return the term unchanged.
     fast_option_value(compile, save), !.
-eval_H(_StackMax, Self, Term, X) :-
+eval_H(StackMax, Self, Term, X) :-
     % Otherwise, perform evaluation with error handling, passing the stack limit.
-    woc(catch_metta_return(eval_args('=', _, 0, Self, Term, X), X)).
+    woc(catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X)).
 /*
 eval_H(StackMax,Self,Term,X).
 
@@ -6952,7 +6943,7 @@ maybe_halt(_) :-
     once(pre_halt1), fail.
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
-    option_value('repl', false), \+ current_prolog_flag(mettalog_rt, true), !, halt(Seven).
+    option_value('repl', false), !, halt(Seven).
 maybe_halt(Seven) :-
     % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
     option_value('halt', true), !, halt(Seven).
@@ -7187,8 +7178,7 @@ qsave_program(Name) :-
 
 nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
-nts1 :- no_interupts(nts1r).
-nts1r :-
+nts1 :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
   %listing(system:notrace/1),
@@ -7198,31 +7188,12 @@ nts1r :-
   dynamic(system:notrace/1),
     % Define the meta-predicate behavior for `system:notrace/1`.
   meta_predicate(system:notrace(0)),
-
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta(( system:notrace(G) :- (!, unotrace(G),! ))).
-nts1r :-
+    asserta(( system:notrace(G) :- (!, once(G) ))).
+nts1 :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
-
-:- meta_predicate(no_interupts(0)).
-no_interupts(G):- setup_call_cleanup(G,true,true).
-:- use_module(library(logicmoo/redo_locally)).
-:- meta_predicate(unotrace(0)).
-unotrace(G):- unotrace2(G).
-:- meta_predicate(unotrace1(0)).
-unotrace1(G):-  (\+ tracing -> once(G) ; scce_orig(notrace,once(G),trace)).
-:- meta_predicate(unotrace2(0)).
-unotrace2(G):- with_leash_visible(-all,-all,G),!.
-:- meta_predicate(with_leash_visible(+,+,0)).
-with_leash_visible(Leash,Visible,Goal):-
-  '$leash'(OldL, OldL),'$visible'(OldV, OldV),
-   leash(Leash), visible(Visible),
-  '$leash'(NewL, NewL),'$visible'(NewV, NewV),
-   scce_orig(('$leash'(_, NewL),'$visible'(_, NewV)),
-                     (Goal*->('$leash'(_, OldL),'$visible'(_, OldV));(('$leash'(_, OldL),'$visible'(_, OldV)),fail)),
-            ('$leash'(_, OldL),'$visible'(_, OldV))).
 
 %:-nts1.
 :- initialization(nts1).
