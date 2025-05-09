@@ -37,6 +37,7 @@ loonit_reset :-
     flush_output,
     % Calls a report function.
     loonit_report,
+    retractall((gave_loonit_report)),
     % Flushes output again after reporting.
     flush_output,
     % Resets the failure counter to zero.
@@ -413,7 +414,7 @@ give_pass_credit(TestSrc, _Pre, G) :-
     % Increments the success counter.
     flag(loonit_success, X, X + 1),
     % Displays a success message in cyan color.
-    if_t(is_testing,color_g_mesg(cyan, ignore(write_src_wi(loonit_success(G))))))), !.
+    if_t((is_testing;true),color_g_mesg(cyan, ignore(write_src_wi(loonit_success(G))))))), !.
 
 %!  write_pass_fail(+TestDetails, +Status, +Goal) is det.
 %
@@ -887,7 +888,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
     must_det_ll((
         color_g_mesg(red, write_src_wi(loonit_failureR(G))),
         write_pass_fail(TestSrc, 'FAIL', G),
-        display(G),
+        %display(G),
         flag(loonit_failure, X, X + 1),
         % Optional trace or REPL on failure based on settings.
         if_t(option_value('on-fail', 'repl'), repl),
@@ -920,6 +921,9 @@ loonit_report :-
 loonit_report :-
     % Mark the report as generated.
     assert(gave_loonit_report),
+    give_loonit_report.
+
+give_loonit_report :-
     % Retrieve current counts of successes and failures.
     flag(loonit_success, Successes, Successes),
     flag(loonit_failure, Failures, Failures),
@@ -927,7 +931,7 @@ loonit_report :-
     loonit_report(Successes, Failures),
     % If no successes or any failures, open REPL if settings permit.
     if_t((Successes == 0 ; Failures > 0),
-         if_t(option_value(repl, failures) ; option_value(frepl, true), repl)).
+         if_t((option_value(repl, failures) ; option_value(frepl, true)), if_t( \+ option_value(repl,disable), repl))).
 
 % Ensure loonit report runs at program halt.
 :- at_halt(loonit_report).
@@ -1004,6 +1008,13 @@ set_exec_num(SFileName, Val) :-
     ),
     % Assert the new execution number for FileName.
     asserta(file_exec_num(FileName, Val)).
+
+set_exec_num(Val) :-
+    % Get the absolute path of the current file.
+    if_t(current_exec_file_abs(FileName),
+    % Retrieve the execution number for FileName, stopping after one result.
+    set_exec_num(FileName, Val)).
+
 
 %!  get_exec_num(-Val) is det.
 %

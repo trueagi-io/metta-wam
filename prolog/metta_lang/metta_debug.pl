@@ -213,6 +213,14 @@ i_this(UseThis) :-
 %   ?- indentq2(3, some_term(foo, bar)).
 %   '    some_term(foo, bar)'  % Indented by 3 units.
 %
+
+ss_unify(W,T):- copy_term(T,TT),W=T,T=@=TT.
+
+indentq2(Depth, Term) :- fail, ss_unify(defs_used(X-->Y,R),Term),
+  indentq2(Depth, lhs(X)),
+  indentq2(Depth, rhs(Y)),
+  indentq2(Depth, R),!.
+
 indentq2(Depth, Term) :-
     w_indent(Depth, format('~q', [Term])), % Print the term with indentation.
     !.
@@ -631,7 +639,6 @@ with_debug(Flag, Goal) :-
     setup_call_cleanup(set_debug(Flag, true), call(Goal), set_debug(Flag, false)).
 
 
-
 %!  is_mettalog_rt is semidet.
 %  True if the Prolog runtime flag `mettalog_rt` is true
 is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
@@ -648,9 +655,11 @@ is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
 %
 
 % Check if the option 'nodebug' is explicitly set to false.  (ideally very rare - code has to relaly know about this)
-is_nodebug :- is_mettalog_rt, !.
 is_nodebug :- option_value(nodebug, false), !, fail.
 % By default spawned threads would need nodebug=false
+is_nodebug :- is_mettalog_rt, !.
+is_nodebug :- is_mettalog_release, !.
+is_nodebug :- is_user_repl, !.
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
@@ -733,6 +742,9 @@ flag_to_var(Flag,Var):-Flag=Var.
 %   ?- set_debug(eval, true).
 %
 set_debug(metta(Flag), TF) :- nonvar(Flag), !, set_debug(Flag, TF).
+
+set_debug(N,V):- maybe_mispelled(N,NN),!,set_debug(NN,V).
+
 %set_debug(Flag,Val):- \+ atom(Flag), flag_to_var(Flag,Var), atom(Var),!,set_debug(Var,Val).
 set_debug(Flag, Val) :- atom(Flag), atom_concat('trace-on-', Var, Flag),!,set_debug(Var,Val).
 set_debug(Flag, Var) :- prolog_debug:debugging(metta(Flag), Var, _),!.
@@ -774,48 +786,144 @@ show_failing(Why,Goal):- notrace, ignore(nortrace),
 %show_failure_when(_Why,Goal):- call(Goal)*->true;(trace,fail).
 check_trace(Topic):- (is_debugging(Topic)-> (notrace,ignore(nortrace),writeln(user_error,check_trace(Topic)),maybe_trace) ; true).
 
-trace_if_debug(AE,_LenX):- if_t(is_debugging(AE),maybe_trace),!.
+trace_if_debug_call(AE,_LenX):-  if_t(is_debugging_code(AE),maybe_trace),!.
 maybe_trace(Why):- if_t(is_debugging(Why),maybe_trace),!.
-maybe_trace:- is_extreme_debug(trace).
+maybe_trace:- trace,is_extreme_debug(trace).
+
+
+is_debugging_code(AE):- sub_term_safely(Atom,AE), atom(Atom), !, is_debugging(Atom).
+
+is_user_repl:- is_douglas, !, fail.
+is_user_repl:- \+ option_value(user_repl, false).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-% is_douglas:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!.
+is_douglas_machine:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolog_flag(os_argv,OSArgV), \+ member('--douglas=false',OSArgV),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
-sub_var_safely(Var,Source):-
-  woc(sub_var(Var,Source)).
+sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_var(Sub,Source).
+sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_term(Sub,Source).
 
-sub_term_safely(Sub,Source):- acyclic_term(Source),!,sub_term(Sub,Source).
-
-
-maybe_abolish_trace:- \+ is_flag(abolish_trace), !.
-maybe_abolish_trace:- abolish_trace.
-abolish_trace:-
+maybe_abort_trace:- \+ is_flag(abort_trace), !.
+maybe_abort_trace:- abort_trace.
+abort_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
-  assert(( (system:trace) :- system:trace_called)),
+  assert(( (system:trace) :- system:trace_called)), !.
+system:trace_called:- notrace,format(user_error,'~nTRACE_CALLED~n',[]), once(bt),  current_prolog_flag(abort_trace,true), format(user_error,'~nTRACE_CALLED~n',[]), throw('aborted').
+system:trace_called:- break.
+
+
+maybe_noninteractive:- \+ is_flag(noninteractive), !.
+maybe_noninteractive:- noninteractive.
+noninteractive:-
+  set_prolog_flag(noninteractive,true),
+  %redefine_system_predicate(system:trace/0),
+  %abolish(system:trace/0),
+  %assert(( (system:trace) :- system:trace_called)),
+  leash(-all),
+  %no_interupts(nts1r),
   redefine_system_predicate(system:break/0),
   abolish(system:break/0),
   assert(( (system:break) :- system:break_called)).
+system:break_called:- notrace,format(user_error,'~nBREAK_CALLED~n',[]), once(bt),  current_prolog_flag(noninteractive,true), format(user_error,'~nBREAK_CALLED~n',[]), throw('aborted').
+system:break_called:- prolog.
 
-system:trace_called:- format(user_error,'~nTRACE_CALLED~n',[]), fail.
-system:trace_called:- once(bt), fail.
-%system:trace_called:- break.
 
-system:break_called:- format(user_error,'~nBREAK_CALLED~n',[]), fail.
-system:break_called:- once(bt), fail.
 %system:break_called:- break.
 
+% return true if we want to hide away developer chicanery
+is_mettalog_release:- current_prolog_flag(release, true),!.
+is_mettalog_release:- current_prolog_flag(devel, true),!, fail.
+is_mettalog_release:- \+ is_douglas_machine.
 
-woc(Goal):- woc(true,Goal).
-woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
-woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
-% woc(Goal):- locally(set_prolog_flag(occurs_check,true),Goal).
-woct(Goal):-woc(error,Goal).
+% runtime should change this to true
+woc(Goal):- !,woct(Goal).
+woc(Goal):- is_bg_thread,!,woct(Goal).
+woc(Goal):- current_prolog_flag(occurs_check,error), !, precopy_term(Goal,CGoal),!,call(Goal),precopy_term(Goal,CGoal).
+
+
+%woc(Goal):- is_douglas_machine,!,woc(error,Goal). % for developement purposes
+woc(Goal):- (is_mettalog_rt;is_mettalog_release),!,woc(true,Goal).
+woc(Goal):- woc(error,Goal). % for developement purposes
+
 woce(Goal):-woc(error,Goal).
-wocf(Goal):-woc(false,Goal).
+wocf(Goal):-woc(false,Goal). % only use after 100% safe
+woct(Goal):-woc(true,Goal). % only use after 100% required
+
+% woc(TFE,Goal):- !, locally(set_prolog_flag(occurs_check,TFE),Goal).
+woc(TFE,Goal):- TFE==error, !, %fail,
+   current_prolog_flag(occurs_check,Was),
+   redo_call_cleanup( set_prolog_flag(occurs_check,TFE),
+                      catch_oce(Goal),
+                      set_prolog_flag(occurs_check,Was)).
+
+woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,precopy_term(Goal,CGoal),!,call(CGoal),uncopy_term(Goal,CGoal).
+woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
+
+catch_oce(CGoal):-
+   Error = error(occurs_check(_,_),_),
+   precopy_term(CGoal,Goal), catch(Goal,Error,(rtrace(Goal),maybe_rethrow(Error))), uncopy_term(CGoal,Goal).
+
+locally_clause_asserted(Assert):- woce(clause_asserted_occurs_warning(Assert)).
+locally_clause_asserted(H,B,R):- woce(clause_asserted_occurs_warning(H,B,R)).
+
+clause_asserted_occurs_warning(C):-
+              expand_to_hb(C, H, B),
+              clause_asserted_occurs_warning(H,B,_).
+
+clause_asserted_occurs_warning(H,B,R):-
+              copy_term(H+B, HB),
+              clause_occurs_warning(H,B,R),
+              variant(H+B, HB).
+
+locally_clause_unifies(Assert):- woce(clause_occurs_warning(Assert)).
+locally_clause_unifies(H,B,R):- woce(clause_occurs_warning(H,B,R)).
+
+clause_occurs_warning(C):-
+              expand_to_hb(C, H, B),
+              clause_occurs_warning(H,B,_).
+
+clause_occurs_warning(H,B,R):-
+              if_t(nonvar(R),clause(HH, BB, R)),
+              functor(H,F,A),functor(HH,F,A),
+              clause(HH, BB, R),
+              unify_with_occurs_warning(h(H),h(HH)),
+              unify_with_occurs_warning(b(B),b(BB)).
+
+be_fast.
+
+precopy_term(H,HH):- be_fast,!,H=HH,!.
+precopy_term(H,HH):- copy_term(H,HH).
+uncopy_term(H,HH):- notrace(H==HH),!.
+uncopy_term(H,HH):- woct(H=HH).
+%uncopy_term(H,HH):- unify_with_occurs_warning(H,HH).
+
+unify_with_occurs_warning(H,HH):- unify_with_occurs_check(H,HH).
+%unify_with_occurs_warning(H,HH):- unify_with_occurs_warning_real(H,HH).
+% catch weird bugs
+unify_with_occurs_warning_real(H,HH):-
+   \+ \+ wocf(H=HH),
+   if_t( \+ woct(H=HH),
+     err_out((
+      ppt_red(unify_with_occurs_warning(H,HH)),
+      bt,
+      ppt_red(t1(H)),
+      ppt_red(t2(HH)),
+      trace,
+      true))),
+   woct(H=HH).
+
+
+ppt_red(G):- !, ansicall(red,write_src_wi(G)).
+ppt_red(G):- ppt(red,G).
+
+ppt(Color,G):- \+ simple_compound_a1(G), !, ansicall(Color,write_src_wi(G)),!.
+ppt(Color,G):- ansicall(Color,ppt(G)),!.
+
+maybe_rethrow(Error):- woct((show_error(Error),throw(Error))).
+show_error(Error):- wdmsg(Error),bt,wdmsg(Error),trace.
 
 print_locally_tested_flag:- current_prolog_flag(locally_tested_flag,X),writeln(locally_tested_flag=X).
 test_locally_setting_flags:-
@@ -827,8 +935,10 @@ test_locally_setting_flags:-
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- initialization(set_prolog_flag(occurs_check,true)).
 set_occurs_check_default:- thread_self(GC),GC==gc,!.
-set_occurs_check_default:- thread_self(NonMain),NonMain\==main,!.
+set_occurs_check_default:- is_bg_thread,!.
 set_occurs_check_default:- thread_self(Self),set_occurs_check_default(Self),!.
+
+is_bg_thread:- thread_self(NonMain),NonMain\==main.
 
 set_occurs_check_default(NonMain):- NonMain\==main,set_prolog_flag(occurs_check,false).
 set_occurs_check_default(main):- \+ is_douglas,set_prolog_flag(occurs_check,false).
@@ -897,18 +1007,21 @@ filter_matches_var(Var, Topic):-
 nb_current_listify(N,L):- nb_current(N,V),V\==[],!,listify(V,L),!.
 nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
 
-unfiltered_topic(T):- unfiltered_topic_cl(T).
+unfiltered_topic(T):- nonvar(T), unfiltered_topic_cl(T).
 unfiltered_topic_cl(Topic):-
-  filter_matches_var(hideall, Topic), !,fail.
+  filter_matches_var(hideall, Topic), !,debug_info_now(unfiltered_topic,filter_matches_var(hideall, Topic)),fail.
 unfiltered_topic_cl(Topic):-
   filter_matches_var(showall, Topic), !.
 unfiltered_topic_cl(Topic):-
   option_value(filter_default,Show), Show==show,
-  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),!, fail.
+  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),debug_info_now(unfiltered_topic,filter_matches_var(hide, Topic)),!, fail.
 unfiltered_topic_cl(Topic):-
   option_value(filter_default,Hide), Hide==hide, !,
-  \+ (filter_matches_var(show, Topic), \+ filter_matches_var(hide, Topic)),!.
+  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
+unfiltered_topic_cl(Topic):-
+  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
   %wdmsg(filtered_topic(Topic)), fail.
+unfiltered_topic_cl(_):- is_douglas,!.
 unfiltered_topic_cl(_):- option_value(filter_default,_),!.
 
 
@@ -917,8 +1030,8 @@ unfiltered_topic_cl(_):- option_value(filter_default,_),!.
 :- dynamic(did_setup_show_hide_debug/0).
 
 %setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
-setup_show_hide_debug:- did_setup_show_hide_debug,!.
-setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+%setup_show_hide_debug:- did_setup_show_hide_debug,!.
+%setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
 setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
@@ -945,10 +1058,21 @@ dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
 dont_show_any_qcompile.
 
-         debug_info( Topic, Info):- setup_show_hide_debug,!,ignore(debug_info_filtered( Topic, Info)),!.
+         debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
+        debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,ignore(debug_info_filtered( Topic, Info)))),_,fail)),!.
+
+debug_info_filtered( Topic, Info):- var(Topic),!, debug_info_filtered(unknown, Info).
+debug_info_filtered( always(Topic), Info):- !, once((filter_matches_var(hide,Topic);filter_matches_var(hideall,Topic);debug_info_now([always,Topic], Info))),!.
 debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
 debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
 debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.
+
+% Roy requested to make it easy to hide stdlib building in transpiler
+debug_info_filtered(_Topic,_Info):- currently_stdlib,   (filter_matches_var(hideall,stdlib);    filter_matches_var(hide,stdlib)),!.
+debug_info_filtered(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(showall,stdlib), \+ filter_matches_var(show,stdlib),!.
+
+debug_info_filtered( Topic, Info):- filter_matches_var(show, Topic), !, ignore(debug_info_now( Topic, Info)),!.
+
 %debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.
 debug_info_filtered( Topic, Info):- unfiltered_topic_and_info( Topic, Info),!,debug_info_now( Topic, Info),!.
 debug_info_filtered(_Topic,_Info):- !.
@@ -985,12 +1109,19 @@ debug_info_now(Topic, Info):-
   format(X,'~N',[]))),
     must_det_ll(topic_color_string(Topic, TopicColor, TopicStr)),
     must_det_ll((
-      mesg_color(Info,  InfoColor),
-      \+ \+ ((
-      maybe_nv(Info),
-      %number_vars_wo_conficts1(Info,RNVInfo),
-      if_t(var(RNVInfo),Info=RNVInfo),
+  mesg_color(Info,  InfoColor),
+  \+ \+ ((
+  maybe_nv(Info),
+  %number_vars_wo_conficts1(Info,RNVInfo),
+  if_t(var(RNVInfo),Info=RNVInfo),
       format(X,'~@: ~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,debug_pp_info(RNVInfo))]))))).
+
+err_out(G):-
+   stream_property(X, file_no(2)),
+   current_output(Was),
+   scce_orig(set_output(X),G,set_output(Was)).
+
+
 
 maybe_ansicall(Nil,Goal):- Nil == [],!,call(Goal).
 maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).
@@ -998,7 +1129,7 @@ maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).
 maybe_nv(Info):- ground(Info),!.
 %maybe_nv(Info):- term_attvars(Info,AVs), AVs\==[],!, maplist(maybe_nv_each,AVs).
 %maybe_nv(Info):- sub_term_safe(DVar,Info),compound(DVar),compound_name_arity(Info,'$VAR',_),!.
-maybe_nv(Info):- numbervars(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
+maybe_nv(Info):- sub_term_safely(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
    term_attvars(Info,AVs), maplist(maybe_nv_each,AVs),numbervars(Info,CountUP,_,[attvar(bind),singleton(false)]).
 maybe_nv_each(V):- notrace(ignore(catch((attvar(V),get_attr(V,vn,Named),!,V='$VAR'(Named)),_,true))),!.
 
@@ -1029,6 +1160,7 @@ ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_s
 %pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
 ppt0(PTS):- writeln(PTS),!.
 
+ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
 ppt(O):- format('~N '),ppt0(O),format('~N').
 %ppt0(O):- print(O).
@@ -1212,18 +1344,20 @@ is_debugging_always(_Flag) :- !.
 %
 %is_debugging(Flag):- !, fail.
 is_debugging(Flag) :- var(Flag), !, fail.
-is_debugging(_) :- is_nodebug, !, fail.
+%is_debugging(_) :- is_nodebug, !, fail.
 is_debugging((A; B)) :- !, (is_debugging(A); is_debugging(B)).
 is_debugging((A, B)) :- !, (is_debugging(A), is_debugging(B)).
 is_debugging(not(Flag)) :- !, \+ is_debugging(Flag).
 is_debugging(Flag) :- Flag == false, !, fail.
 is_debugging(Flag) :- Flag == true, !.
+is_debugging(metta(Flag)) :- !, is_debugging(Flag).
 %is_debugging(e):- is_testing, \+ fast_option_value(compile,'full'),!.
 %is_debugging(e):- is_testing,!.
 %is_debugging(eval):- is_testing,!.
 %is_debugging(_):-!,fail.
 is_debugging(Flag) :- fast_option_value(Flag, 'debug'), !.
 is_debugging(Flag) :- fast_option_value(Flag, 'trace'), !.
+
 is_debugging(Flag) :- debugging(metta(Flag), TF), !, TF == true.
 is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %is_debugging(Flag):- debugging(Flag,TF),!,TF==true.
@@ -1289,7 +1423,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
     ((sub_term_safely(Why, ReasonsToTrace), ReasonsToTrace \= Why) -> true ; ReasonsToTrace = Why), % Ensure proper Why handling.
 
-    if_t(D1<0, (set_debug(deval,true))),
+    if_t(D1<0, (set_debug(devel,true))),
 
     (\+ \+ if_trace((eval; ReasonsToTrace), (
         PrintRet = 1,
@@ -1592,7 +1726,4 @@ user:choice_info(clause(Goal, ClauseRef, jump(PC))) -->
     prolog_stack:success_goal(Goal, 'an in-clause choice_info point'),
     [ nl, '  ' ],
     prolog_stack:where_no_goal(Where).
-
-
-
 

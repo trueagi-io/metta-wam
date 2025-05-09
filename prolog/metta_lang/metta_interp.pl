@@ -74,6 +74,7 @@ o_woc(G):- call(G).
 :- dynamic('$metta_setup':on_init_metta/1).
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
+% only on main thread
 do_metta_setup:- thread_self(Self), Self\==main,!.
 do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
                         ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
@@ -470,7 +471,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 pfcAdd_Now(Cl):-
    once( \+ nb_current(allow_dupes,t)
      ; sub_var_safely('&corelib',Cl )),
-    clause_asserted(Cl),!.
+    woct(clause_asserted(Cl)),!.
 
 pfcAdd_Now(P) :-
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
@@ -717,7 +718,7 @@ is_testing :- o_quietly(is_metta_flag('test')).
 %   @example
 %     ?- is_html.
 %     true.
-is_html :- is_metta_flag('html').
+is_html :- is_metta_flag('html'),!.
 
 % If the file is not already loaded, this is equivalent to consult/1. Otherwise, if the file defines a module,
 % import all public predicates. Finally, if the file is already loaded, is not a module file, and the context
@@ -1516,6 +1517,8 @@ set_option_value_interp(N,V):-
     List \= [_], % Ensure it's not a single-element list.
     !,forall(member(E,List), set_option_value_interp(E,V)).
 
+set_option_value_interp(N,V):- maybe_mispelled(N,NN),!,set_option_value_interp(NN,V).
+set_option_value_interp(N,V):- maybe_mispelled(V,VV),!,set_option_value_interp(N,VV).
 set_option_value_interp(N,V):- atom(V), undress_value(V, List), V\==List,!,set_option_value_interp(N,List).
 set_option_value_interp(N,V):- nb_current(N,Was),Was==V,!.
 set_option_value_interp(N,V):-
@@ -1526,6 +1529,14 @@ set_option_value_interp(N,V):-
     %fbugio(Note,set_option_value(N,V)), % Uncomment for debugging.
     ignore(set_option_value(N,V)), % Set the value for the option.
     ignore(forall(on_set_value(Note,N,V), true)). % Trigger callbacks if any.
+
+maybe_mispelled(NA,_):- \+ atom(NA),!,fail.
+maybe_mispelled(traced,trace).
+maybe_mispelled(tracing,trace).
+maybe_mispelled(compiler,compile).
+maybe_mispelled(compiled,compile).
+maybe_mispelled(compiling,compile).
+
 
 %!  on_set_value(+Note, +N, +V) is det.
 %
@@ -1674,7 +1685,8 @@ set_is_unit_test(false):-
     !.
 % Enable unit testing with specific runtime configurations.
 set_is_unit_test(TF):-
-    maybe_abolish_trace,
+    maybe_noninteractive,
+    maybe_abort_trace,
     % Reset all options to their default values.
     %reset_default_flags,
     % Disable specific trace settings during unit testing.
@@ -3158,7 +3170,8 @@ process_metta_cmd_arg_flags(Rest):-
 
 process_flag(M) :- m_opt(M, Opt), is_cmd_option(Opt, M, TF),!,set_option_value_interp(Opt,TF).
 process_flag(M) :- atomic_list_concat([N, V], '=', M),!, set_option_value_interp(N,V).
-process_flag(M) :- !, set_option_value_interp(M,true).
+process_as_flag(M) :- process_flag(M),!.
+process_as_flag(M) :- set_option_value_interp(M,true).
 
 %cmdargs(Opt,TF):-
 %    debug_info(cmdargs(Opt,TF)),
@@ -4959,7 +4972,7 @@ metta_anew(Ch, Src, OBO) :-
     !,
     metta_anew(Mode, Src, OBO).   % Recur with the resolved mode.
 % If silent loading is enabled, process the object without additional output.
-metta_anew(Load, _Src, OBO) :-
+metta_anew(Load, _Src, OBO) :- fail,
     silent_loading,  % Check if silent loading is active.
     !,
     metta_anew1(Load, OBO).  % Directly delegate to `metta_anew1/2`.
@@ -4969,7 +4982,7 @@ metta_anew(Load, Src, OBO) :-
     not_compat_io((
         % Output information about the source if in Metta language.
         output_language(metta, (
-            if_trace((atomspace;loading), color_g_mesg('#ffa500', ((
+            if_trace((atomspace;loading;load), color_g_mesg('#ffa500', ((
                 format('~N '),  % Newline for separation.
                   % format('~N'),
                 nop(copy_term(Src,OSrc,Names)),
@@ -5131,7 +5144,7 @@ combine_result(TF, _, TF) :-
 %   @arg Self     The current self context (unused here).
 %   @arg LoadExec The execution context or mode (used for specific terms).
 %   @arg Term     The term to process.
-do_metta1_e(_Self, _, exec(Exec)) :-
+do_metta1_e(_Self, _, exec(Exec)) :- nb_setval(exec_src, Exec),
     % If the term is an executable expression, write the execution representation.
     !,write_exec(Exec),!.
 do_metta1_e(_Self, _, [=, A, B]) :-
@@ -5995,6 +6008,12 @@ eval_S(Self, Form) :-
 % Read the form in `+` mode.
 eval_string(String):- user_io((eval_string(String, _Out))).
 eval_string(String, Out):-
+    current_self(Self),
+    read_metta(String, Metta),
+    do_metta(true, +, Self, exec(Metta), Out).
+
+load_string(String):- user_io((eval_string(String, _Out))).
+load_string(String, Out):-
     current_self(Self),
     read_metta(String, Metta),
     do_metta(true, +, Self, Metta, Out).
@@ -6943,7 +6962,7 @@ maybe_halt(_) :-
     once(pre_halt1), fail.
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
-    option_value('repl', false), !, halt(Seven).
+    option_value('repl', false), \+ current_prolog_flag(mettalog_rt, true), !, halt(Seven).
 maybe_halt(Seven) :-
     % If halting is explicitly enabled (`halt = true`), halt with the specified exit code.
     option_value('halt', true), !, halt(Seven).
@@ -7178,7 +7197,8 @@ qsave_program(Name) :-
 
 nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
-nts1 :-
+nts1 :- no_interupts(nts1r).
+nts1r :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),
   %listing(system:notrace/1),
@@ -7190,12 +7210,30 @@ nts1 :-
   meta_predicate(system:notrace(0)),
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta(( system:notrace(G) :- (!, once(G) ))).
-nts1 :-
+    asserta(( system:notrace(G) :- (!, unotrace(G),! ))).
+nts1r :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
 
-%:-nts1.
+:- meta_predicate(no_interupts(0)).
+no_interupts(G):- setup_call_cleanup(G,true,true).
+:- use_module(library(logicmoo/redo_locally)).
+:- meta_predicate(unotrace(0)).
+unotrace(G):- unotrace2(G).
+:- meta_predicate(unotrace1(0)).
+unotrace1(G):-  (\+ tracing -> once(G) ; scce_orig(notrace,once(G),trace)).
+:- meta_predicate(unotrace2(0)).
+unotrace2(G):- with_leash_visible(-all,-all,G),!.
+:- meta_predicate(with_leash_visible(+,+,0)).
+with_leash_visible(Leash,Visible,Goal):-
+  '$leash'(OldL, OldL),'$visible'(OldV, OldV),
+   leash(Leash), visible(Visible),
+  '$leash'(NewL, NewL),'$visible'(NewV, NewV),
+   scce_orig(('$leash'(_, NewL),'$visible'(_, NewV)),
+                     (Goal*->('$leash'(_, OldL),'$visible'(_, OldV));(('$leash'(_, OldL),'$visible'(_, OldV)),fail)),
+            ('$leash'(_, OldL),'$visible'(_, OldV))).
+
+:-nts1.
 :- initialization(nts1).
 %!  nts0 is det.
 %

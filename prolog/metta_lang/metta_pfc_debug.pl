@@ -2283,7 +2283,7 @@ get_first_user_reason(P, (F, T)) :-
   UU = (F, T),
   ((((lookup_spft(P, F, T))), is_user_reason(UU)) *-> true;
     ((((lookup_spft(P, F, T))), \+ is_user_reason(UU)) *-> (!, fail) ;
-       (clause_asserted(P), get_source_uu(UU), is_user_reason(UU)))), !.
+       (locally_clause_asserted(P), get_source_uu(UU), is_user_reason(UU)))), !.
 get_first_user_reason(_, UU) :- get_why_uu(UU), is_user_reason(UU), !.
 get_first_user_reason(_, UU) :- get_why_uu(UU), !.
 get_first_user_reason(P, UU) :- must_ex(ignore((get_first_user_reason0(P, UU)))), !.
