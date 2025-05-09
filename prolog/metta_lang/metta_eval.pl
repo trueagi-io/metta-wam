@@ -2980,7 +2980,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['unique-atom',List],RetVal):- !,
    list_to_set(List,RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
-   term_variables(Eval+RetVal,Vars),
+   term_variables(RetVal,Vars),
    no_repeat_variant_var(YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=Vars.
 
