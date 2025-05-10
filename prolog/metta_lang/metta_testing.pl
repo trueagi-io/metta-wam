@@ -296,7 +296,9 @@ print_current_test :-
     % Generates the test name based on the current number.
     get_test_name(Number, TestName),
     % Prints the test name in an HTML heading format.
-    format('~N~n;<h3 id="~w">;; ~w</h3>~n', [TestName, TestName]).
+    format('~N~n;<h3 id="~w">;; ~w</h3>~n', [TestName, TestName]),
+    flush_output.
+
 
 %!  ensure_increments(:Goal) is det.
 %
@@ -386,6 +388,58 @@ loonit_asserts0(S, Pre, G) :-
     % wots(S, ((((nb_current(exec_src, WS), WS \== []) -> writeln(WS); write_src(exec(TestSrc)))))),
     % Evaluates the main assertion goal.
     once(loonit_asserts1(Exec, Pro, G)).
+
+
+with_output_and_error_to(Out, Err, Goal) :-
+    current_input(OrigIn),
+    current_output(OrigOut),
+    current_error(OrigErr),
+    setup_call_cleanup(
+        set_prolog_IO(OrigIn, Out, Err),
+        Goal,
+        set_prolog_IO(OrigIn, OrigOut, OrigErr)
+    ).
+
+with_disabled_writing(Goal) :-
+    setup_call_cleanup(disable_writing,Goal,enable_writing).
+
+:- dynamic saved_io/3.
+
+disable_writing :- saved_io(_, _, _),!.
+disable_writing :-
+    \+ saved_io(_, _, _),  % prevent double disable
+    current_input(In),
+    current_output(Out),
+    stream_property(Err, alias(user_error)),
+    assertz(saved_io(In, Out, Err)),
+    disabled_stream(Null),
+    set_prolog_IO(In, Null, Null),
+    set_stream(Null, alias(disabled_output)).
+
+enable_writing :-
+    \+ saved_io(_, _, _), !.
+enable_writing :-
+    retract(saved_io(In, Out, Err)),!,
+    set_prolog_IO(In, Out, Err),
+    current_output(WasOut),
+    (   catch(close(WasOut), _, true)
+    ->  true
+    ;   true
+    ),
+    set_prolog_IO(In, Out, Err).
+/*
+enable_writing:- original_user_error(Err),
+   current_input(In),
+   set_prolog_IO(In, Err, Err).
+*/
+
+disabled_stream(Stream):-
+   open_prolog_stream(oops, write, Stream, []).
+
+oops:stream_write(_,S2):- S2=="\n", nb_current(lw,S1),S1==S2,!, enable_writing,trace,disable_writing. %,original_user_error(Err), writeq(Err,S2),  write(Err,S2).
+oops:stream_write(_,S2):- nb_setval(lw,S2), !, original_user_error(Err), write(Err,S2).
+%oops(S):- trace,writeln(S).
+:- set_prolog_flag(gc,false).
 
 %!  give_pass_credit(+TestSrc, +Precondition, +Goal) is det.
 %

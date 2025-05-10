@@ -4474,9 +4474,12 @@ metta_atom0(Inherit,KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
 */
-metta_atom0(_Inherit,_KB, Atom) :- Atom=@=[_676238, :, _674118],!,fail.
-metta_atom0(_Inherit,_KB, Atom) :- Atom=@=[=, [_502628, _502592, _502598], _502424],!,fail.
-metta_atom0(_Inherit,_Space, Atom) :- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]),!,fail.
+dont_bother(Atom):- Atom=@=[_, :, _].
+dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
+dont_bother(Atom):- Atom=@=[=, [_, _], _]. % maybe
+dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
+
+metta_atom0(_Inherit,_KB, Atom) :- dont_bother(Atom),!,fail.
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).

@@ -203,7 +203,8 @@ get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 % Evaluates the given term X and succeeds if X is not a constraint (i.e. \+ iz_conz(X)) and is callable, and calling X succeeds.
 %
 % If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
-eval_true(X):- \+ iz_conz(X), callable(X),!, call(X).
+eval_true(X):- \+ iz_conz(X), callable(X), !, call(X).
+eval_true([F,X,Y]):- F=='=alpha',!,'=alpha'(X,Y).
 eval_true(X):- eval_args(X,Y), is_True(Y) , !.
 
 eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
@@ -1359,9 +1360,8 @@ equal_enough_for_test_renumbered_l(P2,X0,Y0):- maplist(equal_enough_for_test_ren
 equal_enough_for_test_l(P2,X,Y):-            must_be(proper_list,X), must_be(proper_list,Y), sort(X,X0),sort(Y,Y0),
     maplist(equal_enough_for_test(P2),X0,Y0).
 
-
+equal_enough_for_test_renumbered(P2,X0,Y0):- X0=@=Y0, \+ is_negation_f2(P2), !. % ignore(with_debug(varnames,equal_enough_for_test_renumbered2(P2,X0,Y0))).
 equal_enough_for_test_renumbered(P2,X0,Y0):- equal_enough_for_test_renumbered2(P2,X0,Y0),!.
-equal_enough_for_test_renumbered(P2,X0,Y0):- X0=@=Y0, \+ is_negation_f2(P2), ignore(with_debug(varnames,equal_enough_for_test_renumbered2(P2,X0,Y0))).
 
 equal_enough_for_test_renumbered2(P2,X0,Y0):- equal_renumbered(X0,Y0,XX,YY), equal_enough_for_test(P2, XX,YY).
 
@@ -3965,7 +3965,7 @@ eval_30(Eq,RetType,Depth,Self,H,BO):- can_be_ok(metta_eq_def,H),
   findall(H->B0, ((woc(metta_eq_def(Eq,Self,H,B0)),HC=@=H)), BL),
   BL\==[],!,
  must_or_die((
-  member(H->B0,BL),nl,
+  member(H->B0,BL),%nl,
   print_templates(Depth,HC,rule(H,B0,_Nth,_Types)),
   eval_args(Eq,RetType,Depth,Self,B0,BO))).
 

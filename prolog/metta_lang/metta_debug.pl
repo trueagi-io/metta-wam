@@ -859,6 +859,7 @@ woc(TFE,Goal):- TFE==error, !, %fail,
                       catch_oce(Goal),
                       set_prolog_flag(occurs_check,Was)).
 
+woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,precopy_term(Goal,CGoal),!,call(CGoal),uncopy_term(Goal,CGoal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 
