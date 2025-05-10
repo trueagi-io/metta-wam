@@ -442,6 +442,14 @@ transpiler_predicate_store(builtin, 'assertAlphaEqual', [2], '@doc', '@doc', [x(
          'mc__1_1_collapse'(B,BB)),
          equal_enough_for_test_renumbered_l(alpha_equ,AA,BB), C).
 
+transpiler_predicate_store(builtin, 'assertNotAlphaEqual', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])).
+'mc__1_2_assertNotAlphaEqual'(A,B,C) :-
+   loonit_assert_source_tf_empty(
+        ['assertNotAlphaEqual',A,B],AA,BB,
+        ('mc__1_1_collapse'(A,AA),
+         'mc__1_1_collapse'(B,BB)),
+         equal_enough_for_test_renumbered_l(not_alpha_equ,AA,BB), C).
+
 transpiler_predicate_store(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
 'mc__1_1_quote'(A,['quote',A]).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
@@ -740,6 +748,7 @@ metta_body_macro_pass(td1,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 %metta_body_macro_pass(bu,[eval,Next], Next).
 
 % metta_body_macro_pass(td,[eval,Eval], Eval).
+metta_body_macro_pass(td1,['capture',Eval], Eval).
 
 metta_body_macro_pass(td2,['unique',Eval],
    ['let',Var,['call-fn!','no_repeats_var'],

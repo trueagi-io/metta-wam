@@ -64,6 +64,7 @@
 % That loads all the predicates called from this file
 :- ensure_loaded(metta_interp).
 :- ensure_loaded(metta_compiler).
+:- ensure_loaded(metta_compiler_lib).
 
 :- discontiguous(user:metta_file_buffer/7).
 :-     multifile(user:metta_file_buffer/7).

@@ -898,6 +898,7 @@ include_metta1(Self, RelFilename):-
     exists_file(RelFilename),!,
     % Convert the relative filename to an absolute path.
     afn_from(RelFilename, Filename),
+    set_exec_num(Filename, 0),
     % Generate a temporary file if necessary, based on the absolute filename.
     gen_tmp_file(false, Filename),
     % Extract the directory path from the filename.
@@ -911,6 +912,25 @@ include_metta1(Self, RelFilename):-
     % Register the file status in the knowledge base and optionally list it.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     nop(listing(user:loaded_into_kb/2)).
+
+
+test_file(Filename):- test_file([], Filename).
+test_file(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, test_file(TopSelf, Filename).
+test_file(Self, Filename):-
+    % Use without_circular_error/2 to handle circular dependencies for including files.
+    without_circular_error(test_file1(Self, Filename),
+        missing_exception(test_file(Self, Filename))).
+
+handle_pragmas(Self,[N,V|More]):- symbol(N), !, set_option_value_interp(N,V),handle_pragmas(Self,More).
+handle_pragmas(Self,[H|T]):- is_list(T), !,handle_pragmas(Self,H),handle_pragmas(Self,T).
+handle_pragmas(_,_).
+
+test_file1(Self, Filename):-
+  if_t(is_list(Self), handle_pragmas('&self',Self)),
+  loonit_reset,
+  user_io(format(';=== !(test-file! ~w ~w) ===;',[Self, Filename])),
+  include_metta1('&self', Filename),!,
+  loonit_reset,!.
 
 %!  count_lines_up_to(+TwoK, +Filename, -Count) is det.
 %
@@ -2077,7 +2097,7 @@ load_metta_buffer(Self, Filename) :-
          (must_det_lls(maybe_name_vars(NamedVarsList)),
           (must_det_lls(do_metta(file(Filename), Mode, Self, Expr, _O)) -> true
         ;  (ignore(rtrace(do_metta(file(Filename), Mode, Self, Expr, _O2))),
-                   trace, epp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
+                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
 
 
 %!  is_file_stream_and_size(+Stream, -Size) is nondet.
@@ -3033,12 +3053,14 @@ progress_bar_example.
 %   calling `really_use_corelib_file/0`. It uses a dynamic flag `using_corelib_file` to track
 %   whether the core library has been loaded.
 %
-use_corelib_file :- using_corelib_file, !.
-use_corelib_file :-
+
+use_corelib_file:- use_corelib_file_now, nb_setval(debug_context, 'running').
+use_corelib_file_now :- using_corelib_file, !.
+use_corelib_file_now :-
      % Mark core library as in use and attempt to load it.
      asserta(using_corelib_file), fail.
-use_corelib_file :- really_use_corelib_file, !.
-use_corelib_file :- !.
+use_corelib_file_now :- really_use_corelib_file, !.
+use_corelib_file_now :- !.
 %use_corelib_file :- really_use_corelib_file, !.
 
 %!  really_use_corelib_file is det.

@@ -232,6 +232,7 @@ repl1 :-
 %     metta>
 %
 repl2 :-
+    if_t(option_value(repl,disable),throw('$aborted')),
     % Load the REPL history and clean it up if necessary.
     ignore(catch(load_and_trim_history,_,true)),
 
@@ -2083,6 +2084,12 @@ add_history_file_string(Line):-
   string_replace(String,'\\t','\t',Str),
   add_history_string(Str), !.
 
+:- abolish(add_history1/1).
+add_history1(Hist):- atomic(Hist),!,add_history_string(Hist).
+add_history1(Hist):- add_history_src(Hist).
+
+:- abolish(add_history/1).
+add_history(Hist):- add_history1(Hist).
 
 
 %!  install_readline_editline1 is det.

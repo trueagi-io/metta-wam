@@ -49,7 +49,7 @@ def arg_info(callable_obj, method_args=None, kwargs=None):
 
     buffer.write("\nPositional Arguments:\n")
     for i, arg in enumerate(method_args):
-        buffer.write(f"  [Arg {i}] Type: {type(arg).__name__} ? Value: {repr(arg)[:200]}\n")
+        buffer.write(f"  [Arg {i}] Type: {type(arg).__name__} -- Value: {repr(arg)[:200]}\n")
 
     buffer.write("\nKeyword Arguments:\n")
     for key, value in kwargs.items():
@@ -93,7 +93,7 @@ def with_explicit_trace(func, *args, **kwargs):
         if args:
             buffer.write("Positional Args:\n")
             for i, a in enumerate(args):
-                buffer.write(f"  [Arg {i}] Type: {type(a).__name__} ? Value: {repr(a)[:200]}\n")
+                buffer.write(f"  [Arg {i}] Type: {type(a).__name__} -- Value: {repr(a)[:200]}\n")
 
         if kwargs:
             buffer.write("Keyword Args:\n")
@@ -588,10 +588,10 @@ def py_call_method_and_args(*method_and_args):
     # ================================================== 
     buffer = io.StringIO()
     buffer.write("method_and_args:\n")
-    buffer.write(f"  [Callable-Object] Type: {type(callable_obj).__name__} ? Value: {repr(callable_obj)[:200]}\n")
+    buffer.write(f"  [Callable-Object] Type: {type(callable_obj).__name__} -- Value: {repr(callable_obj)[:200]}\n")
     if method_and_args:
         for i, a in enumerate(method_and_args):
-            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} ? Value: {repr(a)[:200]}\n")
+            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} -- Value: {repr(a)[:200]}\n")
     debug_output = buffer.getvalue()
     buffer.close()
     raise TypeError(f"py_call_method_and_args: The provided arguments do not form a callable invocation.\n{debug_output}\n")
@@ -684,7 +684,7 @@ def py_call_w_args(callable_obj, *w_args):
                 kwargs.update(arg)
             else:
                 print_debug(2, "Non-keyword argument after processing:\n" +
-                                f"Type: {type(arg).__name__} ? Value: {repr(arg)[:200]}\n" +
+                                f"Type: {type(arg).__name__} -- Value: {repr(arg)[:200]}\n" +
                                 arg_info(callable_obj, method_args, kwargs))
         # You may raise here if you want stricter enforcement
 
@@ -850,7 +850,7 @@ def py_call_method_and_args_kw(kwa, *method_and_args):
     buffer.write("method_and_args:\n")
     if method_and_args:
         for i, a in enumerate(method_and_args):
-            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} ? Value: {repr(a)[:200]}\n")
+            buffer.write(f"  [Arg {i}] Type: {type(a).__name__} -- Value: {repr(a)[:200]}\n")
     debug_output = buffer.getvalue()
     buffer.close()
     raise TypeError(f"py_call_method_and_args_kw: The provided arguments do not form a callable invocation.\n{debug_output}\n")
@@ -949,7 +949,7 @@ def py_call_kw_args(kwargs, callable_obj, *w_args):
         if len(args) > 0:
             buffer.write("\n--- Diagnostic Info ---\n")
             for i, a in enumerate(args):
-                buffer.write(f"[Arg {i}] Type: {type(a).__name__} ? Value: {repr(a)[:200]}\n")
+                buffer.write(f"[Arg {i}] Type: {type(a).__name__} -- Value: {repr(a)[:200]}\n")
         
             if 'func' in locals() and hasattr(func, '__name__'):
                 buffer.write(f"Callable Name: {func.__name__}\n")

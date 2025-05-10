@@ -736,7 +736,7 @@ clause_match(H, _B, uses_call_only(H)) :-
     uses_call_only(H), !.
 clause_match(H, B, Ref) :-
     % Match an asserted clause for head 'H' and body 'B', retrieving 'Ref' as the clause reference.
-    clause_asserted(H, B, Ref), !.
+    locally_clause_asserted(H, B, Ref), !.
 clause_match(H, B, Ref) :-
     % Copy the head 'H' to a temporary variable 'HH' and check for clause matching.
     % Ensure that 'H' is structurally equal to 'HH' (using '=@=') and that the body is not reserved.

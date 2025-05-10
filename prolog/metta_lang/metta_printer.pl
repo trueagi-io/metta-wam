@@ -1078,8 +1078,14 @@ write_mobj(F, Args) :-
 %   @arg V The list to be printed.
 %
 pp_sex_l(V) :-
+    flag(pp_sex_l,D,D+1),
     % Delegate to `pp_sexi_l/1` for detailed list formatting.
-    pp_sexi_l(V), !.
+    (D>30->(write(' '),writeq(V),write(' '));pp_sexi_l(V)), !,
+    flag(pp_sex_l,_,D).
+
+
+is_simple_term(NC):- \+ compound(NC),!.
+is_simple_term(Cmpd):- forall(arg(_,Cmpd,Arg), \+ compound(Arg)).
 
 %!  pp_sexi_l(+V) is det.
 %
@@ -1102,26 +1108,31 @@ pp_sexi_l([F | V]) :-
     symbol(F), is_list(V), write_mobj(F, V), !.
 pp_sexi_l([H | T]) :- T == [], !,  % If `T` is an empty list, print `H` in parentheses.
     write_start(list), pp_sex_nc(H), write_end(list).
+pp_sexi_l([H, H2| T]) :- T ==[], is_simple_term(H2), !,
+    % If `V` has two elements, print `H` followed by `H2` in S-expression format.
+    write_start(list), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(list,[H2])),
+    write_end(list), !.
+
 pp_sexi_l([H, H2| T]) :- T ==[], !,
     % If `V` has two elements, print `H` followed by `H2` in S-expression format.
     write_start(list), pp_sex_nc(H), write(' '), with_indents(false, write_args_as_sexpression(list,[H2])),
     write_end(list), !.
 
-pp_sexi_l([H| T]) :- \+ is_list(T),!, pp_sexi_lc([H | T]).
+pp_sexi_l([H| T]) :- \+ is_list(T), pp_sexi_lc([H | T]), !.
 
-pp_sexi_l([H, S]) :-
+pp_sexi_l([H, S| Nil]) :- Nil == [],
     % If `H` is `'[...]'`, print `S` enclosed in square brackets.
     H == '[...]', write('['), write_args_as_sexpression(S), write(' ]').
-pp_sexi_l([H, S]) :-
+pp_sexi_l([H, S| Nil]) :- Nil == [],
     % If `H` is `'{...}'`, print `S` enclosed in curly braces.
     H == '{...}', write('{'), write_args_as_sexpression(S), write(' }').
 %pp_sex_l(X):- \+ compound(X),!,write_src(X).
 %pp_sex_l('$VAR'(S))):-
-pp_sexi_l([Eq, H, B]) :- Eq == '=',
+pp_sexi_l([Eq, H, B| Nil]) :- Nil == [], Eq == '=',
     % For lists in the format `[=, H, B]`, format using `pp_sexi_hb/2`.
     pp_sexi_hb(H, B), !.
 
-pp_sexi_l([H | T]):- pp_sexi_lc([H | T]).
+pp_sexi_l([H | T]):- pp_sexi_lc([H | T]), !.
 
 
 pp_sexi_lc([H | T]) :- \+ is_list(T),!,
@@ -1134,7 +1145,7 @@ pp_sexi_lc([H | T]) :-
     write_start(list), pp_sex_nc(H), write(' '), write_args_as_sexpression(list, T), write_end(list), !.
 pp_sexi_lc([H | T]) :-
     % If `H` is a control structure and indents are enabled, apply proper indentation.
-    \+ no_src_indents, symbol(H), member(H, ['If', 'cond', 'let', 'let*']), !,
+    \+ no_src_indents, symbol(H), member(H, ['If', 'cond', 'case', 'let', 'let*', 'Expression']), !,
     with_indents(true, w_proper_indent(2, w_in_p(pp_sex([H | T])))).
 
 pp_sexi_lc([H | T]) :-
@@ -1144,6 +1155,7 @@ pp_sexi_lc([H | T]) :-
     ((symbol_length(SS, Len), Len < 20) -> write(SS);
         with_indents(true, w_proper_indent(2, w_in_p(pp_sex_c([H | T]))))), !.
 
+pp_sexi_lc(HT) :- write('#{'), writeq(HT),!,write('}.').
 
 /*
 
@@ -1206,8 +1218,11 @@ write_src_inl(B) :-
 %   @arg V The compound term or list to be printed.
 %
 pp_sex_c(V) :-
-    % Delegate to `pp_sexi_c/1` for detailed formatting of `V`.
-    pp_sexi_c(V), !.
+    flag(pp_sex_c,D,D+1),
+    % Delegate to `pp_sexi_c/1` for detailed list formatting.
+    (D>30->(write(' '),writeq(V),write(' '));pp_sexi_c(V)), !,
+    flag(pp_sex_c,_,D).
+
 
 %!  pp_sexi_c(+V) is det.
 %
@@ -1857,14 +1872,20 @@ last_item([_|T],Last):- T \== [], !, last_item(T,Last).
 last_item([Item],Item).
 
 write_start(Type):- current_printer_override(P1),call(P1,'$write_start'(Type)),!.
-write_start(Char):- atom_length(Char, 1),write(Char),!.
-write_start(Type):- compound_type_s_m_e(Type,L,_,_),write(L),!.
+write_start(Char):- is_str_char(Char),write_ch(Char),!.
+write_start(Type):- compound_type_s_m_e(Type,L,_,_),write_ch(L),!.
 write_middle(Type):- current_printer_override(P1),call(P1,'$write_middle'(Type)),!.
-write_middle(Char):- atom_length(Char, 1),write(Char),!.
-write_middle(Type):- compound_type_s_m_e(Type,_,M,_),write(M),!.
+write_middle(Char):- is_str_char(Char),write_ch(Char),!.
+write_middle(Type):- compound_type_s_m_e(Type,_,M,_), write_ch(M),!.
 write_end(Type):- current_printer_override(P1),call(P1,'$write_end'(Type)),!.
-write_end(Char):- atom_length(Char, 1),write(Char),!.
-write_end(Type):- compound_type_s_m_e(Type,_,_,R),write(R),!.
+write_end(Char):- is_str_char(Char),write_ch(Char),!.
+write_end(Type):- compound_type_s_m_e(Type,_,_,R),write_ch(R),!.
+
+is_str_char( L ):- compound(L),arg(1,L,C),!,is_str_char(C).
+is_str_char(Char):- atomic(Char), atom_length(Char, 1),!.
+
+write_ch(L):- compound(L),arg(1,L,C),!,write_ch(C).
+write_ch(L):- assertion(L\==cmpd),write(L).
 
 print_compound_type(Indent, Type, [H|T] ):-
     last_item([H|T],Last),
@@ -1880,7 +1901,7 @@ symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
 
 compound_type_s_m_e(list,'(','.',')').
-compound_type_s_m_e(cmpd,S,E,M):- prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
+compound_type_s_m_e(cmpd,S,E,M):- !, prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
 compound_type_s_m_e(ocmpd,'#(','.',')').
 compound_type_s_m_e(ocmpd,'[','|',']').
 compound_type_s_m_e(ocmpd,'{','|','}').
@@ -1895,12 +1916,12 @@ paren_pair_functor('[',']','[...]').
 
 % Print the rest of the elements in the list, ensuring spacing
 print_rest_elements(_,T, _) :- T==[], !.
-print_rest_elements(M, T, Indent) :- \+ is_lcons(T), !, write(' '), write(M), write(' '), print_sexpr(T, Indent).
-print_rest_elements(M, [H|T], Indent) :-
+print_rest_elements(Type, T, Indent) :- \+ is_lcons(T), !, write(' '), write_middle(Type), write(' '), print_sexpr(T, Indent).
+print_rest_elements(Type, [H|T], Indent) :-
     write(' '),  % Space before each element after the first
     print_sexpr(H, Indent),
     (is_lcons(H) -> NextIndent is Indent + 0 ; NextIndent is Indent + 0),
-    print_rest_elements(M, T, NextIndent).
+    print_rest_elements(Type, T, NextIndent).
 
 % Helper predicate to print indentation spaces
 

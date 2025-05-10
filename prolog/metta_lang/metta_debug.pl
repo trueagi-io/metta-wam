@@ -216,7 +216,7 @@ i_this(UseThis) :-
 
 ss_unify(W,T):- copy_term(T,TT),W=T,T=@=TT.
 
-indentq2(Depth, Term) :- fail, ss_unify(defs_used(X-->Y,R),Term),
+indentq2(Depth, Term) :- ss_unify(defs_used(X-->Y,R),Term),
   indentq2(Depth, lhs(X)),
   indentq2(Depth, rhs(Y)),
   indentq2(Depth, R),!.
@@ -860,9 +860,10 @@ woc(TFE,Goal):- TFE==error, !, %fail,
                       set_prolog_flag(occurs_check,Was)).
 
 woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
-woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,precopy_term(Goal,CGoal),!,call(CGoal),uncopy_term(Goal,CGoal).
+%woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,precopy_term(Goal,CGoal),!,call(CGoal),uncopy_term(Goal,CGoal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 
+catch_oce(CGoal):- !, call(CGoal).
 catch_oce(CGoal):-
    Error = error(occurs_check(_,_),_),
    precopy_term(CGoal,Goal), catch(Goal,Error,(rtrace(Goal),maybe_rethrow(Error))), uncopy_term(CGoal,Goal).

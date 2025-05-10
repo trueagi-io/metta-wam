@@ -105,7 +105,7 @@ typed_list(Cmpd, Type, List) :-
 %
 is_syspred(H, Len, Pred) :-
     % Suppress debugging with notrace while calling is_syspred0/3.
-    notrace(is_syspred0(H, Len, Pred)).
+    is_syspred0(H, Len, Pred).
 
 %!  is_syspred0(+H, +Len, -Pred) is nondet.
 %
@@ -128,19 +128,19 @@ is_syspred0(H, _Ln, _Prd) :-
     upcase_atom(H, U), downcase_atom(H, U), !, fail.
 is_syspred0(H, Len, Pred) :-
     % Check if the predicate with the given name and arity exists.
-    current_predicate(H/Len), !, Pred = H.
+    woce(current_predicate(H/Len)), Pred = H.
 is_syspred0(H, Len, Pred) :-
     % Check for predicates with a '!' suffix.
-    atom_concat(Mid, '!', H), H \== Mid, is_syspred0(Mid, Len, Pred), !.
+    atom_concat(Mid, '!', H), H \== Mid, !, is_syspred0(Mid, Len, Pred).
 is_syspred0(H, Len, Pred) :-
     % Check for predicates with a '-p' suffix.
-    atom_concat(Mid, '-p', H), H \== Mid, is_syspred0(Mid, Len, Pred), !.
+    atom_concat(Mid, '-p', H), H \== Mid, !, is_syspred0(Mid, Len, Pred).
 is_syspred0(H, Len, Pred) :-
     % Check for predicates with a '-fn' suffix.
-    atom_concat(Mid, '-fn', H), H \== Mid, is_syspred0(Mid, Len, Pred), !.
+    atom_concat(Mid, '-fn', H), H \== Mid, !, is_syspred0(Mid, Len, Pred).
 is_syspred0(H, Len, Pred) :-
     % Check if H can be transformed by replacing certain characters with underscores.
-    into_underscores(H, Mid), H \== Mid, is_syspred0(Mid, Len, Pred), !.
+    once(into_underscores(H, Mid)), H \== Mid, !, is_syspred0(Mid, Len, Pred).
 
 %is_function(F):- atom(F).
 
@@ -222,8 +222,9 @@ dont_put_attr(V,M,T):- nop(put_attr(V,M,T)),!.
 is_decl_utype(U):- is_decl_utype(U,_).
 is_decl_utype('Atom',1).
 is_decl_utype('Expression',5).
-is_decl_utype('Any',3).
+is_decl_utype('EagerAny',3).
 is_decl_utype('%Undefined%',3).
+is_decl_utype('Any',3).
 is_decl_utype('AnyRet',3).
 is_decl_utype('Type',5).
 is_decl_utype('Number',5).
@@ -574,7 +575,7 @@ get_type_each(_Depth, _Slf, Val, PyObject) :-
     is_PyObject(Val), !, 'PyObject' = PyObject.
 get_type_each(Depth, _Slf, _Type, _) :-
     % Fail if recursion depth is exhausted.
-    Depth < 1, !, fail.
+    overflow_depth(Depth), !, fail.
 % get_type(Depth, Self, Val, Type) :- is_debugging(eval),
 %     ftrace(get_type_each(Depth, Self, Val, Type)),
 %     fail.
@@ -584,7 +585,7 @@ get_type_each(Depth, Self, Expr, ['StateMonad', Type]) :-
     % Handle state monad expressions.
     notrace(is_valid_nb_state(Expr)), !,
     if_or_else(state_decltype(Expr, Type), nonvar(Type)),
-    ('get-state'(Expr, Val), !, Depth2 is Depth - 1,
+    ('get-state'(Expr, Val), !, deepen(Depth, Depth2),
      get_value_type(Depth2, Self, Val, Type)).
 get_type_each(_Dpth, Self, Var, Type) :-
     % Retrieve type from variable attributes.
@@ -801,7 +802,7 @@ get_type_symb(_Dpth, _Slf, Val, Type) :-
     symbolic_list_concat([Type, _ | _], ':', Val).
 get_type_symb(Depth, Self, Op, Type) :-
     % Evaluate arguments if the operator is defined.
-    Depth2 is Depth - 1,
+    deepen(Depth, Depth2),
     eval_args(Depth2, Self, Op, Val),
     Op \=@= Val, !,
     get_type(Depth2, Self, Val, Type).
@@ -859,7 +860,7 @@ get_type_cmpd(_Dpth,_Slf,Cmpd,Type,type_by_functor(F,A,Type)):- functor(Cmpd,F,A
 % Curried Op
 get_type_cmpd(Depth,Self,[[Op|Args]|Arg],Type,curried(W)):-
  symbol(Op),
- Depth2 is Depth-1,
+ deepen(Depth, Depth2),
  get_type_cmpd(Depth2,Self,[Op|Args],Type1,W),
  get_type(Depth2,Self,Arg,ArgType),
  ignore(sub_var_safely(ArgType,Type1)->true;
@@ -894,14 +895,14 @@ get_type_cmpd(Depth,Self,List,Types,maplist(get_type)):-
   List\==[],
   \+ badly_typed_expression(Depth,Self,List),
   is_list(List),
-  Depth2 is Depth-1,
+  deepen(Depth, Depth2),
   maplist(get_type(Depth2,Self),List,Types),
   \+ badly_typed_expression(Depth,Self,Types).
 
 */
 get_type_cmpd(Depth,Self,EvalMe,Type,Eval_First):-
     needs_eval(EvalMe),
-    Depth2 is Depth-1,
+    deepen(Depth, Depth2),
     eval_args_for_type(Depth2,Self,EvalMe,Val),
     get_type_cmpd_eval(Depth2,Self,EvalMe,Val,Type,Eval_First).
 get_type_cmpd(_Dpth,_Slf,_Cmpd,[],unknown).
@@ -985,14 +986,14 @@ get_value_type(_Dpth,Self,[Fn|_],Type):- symbol(Fn),metta_type(Self,Fn,List),las
 get_value_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,List,LType),last_element(LType,Type), nonvar(Type),
    is_type(Type).
 
-get_value_type(Depth,_Slf,Type,Type):- Depth<1,!.
+get_value_type(Depth,_Slf,Type,Type):- overflow_depth(Depth),!.
 get_value_type(_Dpth,Self,List,Type):- is_list(List),metta_type(Self,Type,['->'|List]).
-get_value_type(Depth,Self,List,Types):- List\==[], is_list(List),Depth2 is Depth-1,maplist(get_value_type(Depth2,Self),List,Types).
+get_value_type(Depth,Self,List,Types):- List\==[], is_list(List),deepen(Depth, Depth2),maplist(get_value_type(Depth2,Self),List,Types).
 get_value_type(_Dpth,Self,Fn,Type):- symbol(Fn),metta_type(Self,Fn,Type),!.
-%get_value_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),Depth2 is Depth-1,get_value_type(Depth2,Self,Type2,Type).
+%get_value_type(Depth,Self,Fn,Type):- nonvar(Fn),metta_type(Self,Fn,Type2),deepen(Depth, Depth2),get_value_type(Depth2,Self,Type2,Type).
 %get_value_type(Depth,Self,Fn,Type):- Depth>0,nonvar(Fn),metta_type(Self,Type,Fn),!. %,!,last_element(List,Type).
 
-%get_value_type(Depth,Self,Expr,Type):-Depth2 is Depth-1,
+%get_value_type(Depth,Self,Expr,Type):-deepen(Depth, Depth2),
 % eval_args(Depth2,Self,Expr,Val),
 %  Expr\=@=Val,get_value_type(Depth2,Self,Val,Type).
 
@@ -1003,7 +1004,7 @@ get_value_type(_Dpth,_Slf,Val,'Bool'):- (Val=='False';Val=='True'),!.
 %get_value_type(Depth,_Slf,Cmpd,Type):- compound(Cmpd), functor(Cmpd,Type,1),!.
 %get_value_type(_Dpth,_Slf,Cmpd,Type):- \+ ground(Cmpd),!,Type=[].
 %get_value_type(_Dpth,_Slf,_,'%Undefined%'):- fail.
-%get_value_type(Depth,Self,Val,Type):- Depth2 is Depth-1, get_type_equals(Depth2,Self,Val,Type).
+%get_value_type(Depth,Self,Val,Type):- deepen(Depth, Depth2), get_type_equals(Depth2,Self,Val,Type).
 */
 
 %!  as_prolog(+I, -O) is det.
@@ -1043,11 +1044,17 @@ as_prolog(I, O) :-
 :- dynamic(dont_de_Cons/0).
 dont_de_Cons.
 
+%:- set_prolog_flag(gc,false).
 
-acyclic_term_nat(I):- copy_term(I,O,_),acyclic_term(O).
+acyclic_term_nat(I):-  \+ acyclic_term(I),!,trace,bt,fail.
+acyclic_term_nat(_):- !.
+%acyclic_term_nat(I):- copy_term(I,O,_),acyclic_term(O).
 
 as_prolog(0, _Slf, S, P):- S=='Nil', \+ dont_de_Cons, !,P=[].
 as_prolog(_Dpth, _Slf, I, O) :- \+ compound(I), !, O = I.
+
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(I),!,nl,bt,writeq(cyclic_I_term_BUG(I)),nl,nl,!,fail, I=O.
+as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(O),!,nl,bt,writeq(cyclic_O_term_BUG(O)),nl,nl, I=O.
 
 as_prolog(0, Self, [Eval, Metta], Prolog) :- Eval == '!', !,
     Prolog = (eval(Metta,TF),is_true(TF)).
@@ -1079,8 +1086,6 @@ as_prolog(N, Self, [At| List], O) :-
     atom(HH), !,
     compound_name_arguments(O, HH, L).
 
-as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(I),!,nl,writeq(cyclic_I_term_BUG(I)),nl,nl,!,fail, I=O.
-as_prolog(_Depth, _Self, I, O) :- \+ acyclic_term_nat(O),!,nl,writeq(cyclic_O_term_BUG(O)),nl,nl, I=O.
 as_prolog(Depth, Self, I, O) :-
     % If I is a list, map each element to Prolog terms.
     is_list(I), !,
@@ -1138,7 +1143,7 @@ try_adjust_arg_types(_Eq, RetType, Depth, Self, Params, X, Y) :-
 %
 adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
     show_failure_when(argtypes,
-       rtrace_when(argtypes,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted))).
+       rtrace_when(argtypes_rtrace,adjust_args(eval, Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted))).
 
 
 %!  adjust_args(+Else, +Eq, +RetType, +Res, -NewRes, +Depth, +Self, +Op, +X, -Y) is det.
@@ -1160,7 +1165,7 @@ adjust_args_9(Eq, RetType, ResIn, ResOut, Depth, Self, AE, More, Adjusted) :-
 
 adjust_args(_Else, _Eq, _RetType, Res, Res, _Dpth, Self, F, X, Y) :-
     % If the input is empty, or if it uses a special operator, or if X is not a conz structure.
-    (X == [] ; is_special_op(Self, F) ; \+ iz_conz(X)), !,
+    once(X == [] ; is_special_op(Self, F) ; \+ iz_conz(X)), !,
     Y = X.
 adjust_args( Else, Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     % Attempt primary adjustment, and fall back if necessary.
@@ -1195,14 +1200,14 @@ adjust_argsA1(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
     RRetType = RetType,
     args_conform(adjust_argsA1, Depth, Self, [CRes | X], [RRetType | ParamTypes]),
-    trace_if_debug(Op,Len),
+    trace_if_debug_call(Op,Len),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 adjust_argsA2(_Else,_Eq, RetType, Res, NewRes, Depth, Self, Op, X, Y) :-
     len_or_unbound(X, Len),
     get_operator_typedef(Self, Op, Len, ParamTypes, RRetType),
     (nonvar(NewRes) -> CRes = NewRes ; CRes = Res),
     RRetType = RetType,
-    trace_if_debug(Op,Len),
+    trace_if_debug_call(Op,Len),
     args_conform(adjust_argsA2, Depth, Self, [CRes | X], [RRetType | ParamTypes]),
     into_typed_args(Depth, Self, [RRetType | ParamTypes], [Res | X], [NewRes | Y]).
 
@@ -1358,6 +1363,8 @@ get_operator_typedef1(Self, Op, Len, ParamTypes, RetType) :-
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_concat(_,'!',Op);symbol_concat(_,'@',Op)),!,
     % Default return type is 'AnyRet'.
     ignore('Atom' = RetType),
+    % Ensure the length matches the parameter types or is unbound.
+    len_or_unbound(ParamTypes, Len),
     % Ensure all parameter types are valid evaluation kinds.
     maplist(=('Atom'), ParamTypes),
     % Cache the result for future lookups.
@@ -1367,6 +1374,8 @@ get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :- symbol(Op),(symbol_
 get_operator_typedef2(Self, Op, Len, ParamTypes, RetType) :-
     % Default return type is 'AnyRet'.
     nop(ignore('AnyRet' = RetType)),
+    % Ensure the length matches the parameter types or is unbound.
+    len_or_unbound(ParamTypes, Len),
     % Ensure all parameter types are valid evaluation kinds.
     maplist(is_eval_kind, ParamTypes),
     % Cache the result for future lookups.
@@ -1726,10 +1735,14 @@ is_non_eval_kind(Var) :-
     var(Var), !, fail.
 is_non_eval_kind('Atom').
 is_non_eval_kind('Expression').
+is_non_eval_kind('LazyBool').
+is_non_eval_kind(Type):- type_is_type(Type,'NonEval').
 % is_non_eval_kind('Variable').
-is_non_eval_kind(Type) :-
+is_non_eval_kind(Type) :- fail,
     % If the type is non-variable, not 'Any', and non-specific, succeed.
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
+
+type_is_type(_Type,_IsType):- fail.
 
 %!  is_nonspecific_type(+Type) is nondet.
 %
@@ -1753,6 +1766,7 @@ is_nonspecific_type0('ErrorType').
 is_nonspecific_type0('Expression').
 % is_nonspecific_type([]).
 is_nonspecific_type0('Atom').
+is_nonspecific_type0(Type):- type_is_type(Type,'NonSpecific').
 is_nonspecific_type0(Any) :-
     is_nonspecific_any(Any).
 
@@ -1769,6 +1783,7 @@ formated_data_type('Char').
 formated_data_type('String').
 formated_data_type([List | _]) :-
     List == 'List'.
+formated_data_type(Type):- type_is_type(Type,'DataFormat').
 
 %!  is_nonspecific_any(+Type) is nondet.
 %
@@ -1783,13 +1798,13 @@ is_nonspecific_any(Any) :-
 %
 %   Helper predicate that defines non-specific "any" types.
 %
-is_nonspecific_any0(Any) :-
-    Any == 'Any'.
-is_nonspecific_any0(Any) :-
-    Any == '%Undefined%'.
+is_nonspecific_any0('EagerAny').
+is_nonspecific_any0('LazyAny').
+is_nonspecific_any0('Any').
+is_nonspecific_any0('AnyRet').
+is_nonspecific_any0('%Undefined%').
+is_nonspecific_any0(Type):- type_is_type(Type,'NonSpecific').
 % is_nonspecific_any0(Any) :- Any == 'Type'.
-is_nonspecific_any0(Any) :-
-    Any == 'AnyRet'.
 
 %!  is_nonspecific_type_na(+Type) is nondet.
 %
@@ -1886,8 +1901,6 @@ is_pro_eval_kind(Var) :-
 is_pro_eval_kind(A) :- is_non_eval_kind(A),!,fail.
 is_pro_eval_kind(SDT) :- % Check if the type is a formatted data type.
     formated_data_type(SDT), !.
-is_pro_eval_kind(A) :- % Fail for certain types.
-    A == 'Atom', !, fail.
 is_pro_eval_kind(A) :-
     A == '%Undefined%', !.
 is_pro_eval_kind(A) :-
@@ -2087,7 +2100,8 @@ is_special_op(_Slf, F) :-
 %
 is_eval_kind(ParamType) :-
     % Ignore unbound parameter types and assume 'Any' as default.
-    ignore(ParamType = 'Any').
+    ignore(ParamType = 'EagerAny').
+    %ignore(ParamType = '%Undefined%').
 
 %!  is_metta_data_functor(+Eq, +F) is nondet.
 %

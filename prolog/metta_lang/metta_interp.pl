@@ -1564,6 +1564,9 @@ on_set_value(Note,N,'True'):- nocut,
     on_set_value(Note,N,true).    % true
 on_set_value(Note,N,'False'):- nocut,
     on_set_value(Note,N,false).   % false
+
+on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
+on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
 on_set_value(_Note,abolish_trace,true):- nocut, ignore(abolish_trace),!.
 
 on_set_value(_Note,show, Value):-
@@ -2722,7 +2725,7 @@ run_cmd_args_prescan :-
     % Mark that the prescan has been executed.
     assert(has_run_cmd_args),
     % Perform the prescan using `do_cmdline_load_metta/1`.
-    do_cmdline_load_metta(prescan).
+    do_cmdline_load_metta(prescan), setup_show_hide_debug.
 
 %!  run_cmd_args is det.
 %
@@ -3110,22 +3113,25 @@ cmdline_load_metta(Phase, Self, ['-G', Str | Rest]) :- !,
     if_phase(Phase, execute, catch_abort(['-G', Str], ignore(call_sexpr('!', Self, Str, _S, _Out)))), !,
     cmdline_load_metta(Phase, Self, Rest).
 
-% Handle file loading when the argument does not start with `-`.
-cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
-    symbol(Filemask),
-    \+ symbol_concat('-', _, Filemask), !,
-    if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
-    cmdline_load_metta(Phase, Self, Rest).
 % Handle command-line options by setting their corresponding values.
 
 cmdline_load_metta(Phase, Self, [Skip, _ | Rest]) :- skip_cmdarg(Skip), !,
     cmdline_load_metta(Phase, Self, Rest).
 
+% forces whatver is after -D to bve treated as flag-like
 cmdline_load_metta(Phase, Self, ['-D', M | Rest]) :- !,
-    process_flag(M), !,
+    process_as_flag(M), !,
     cmdline_load_metta(Phase, Self, Rest).
+
+% picks up on  name=value
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
     process_flag(M), !,
+    cmdline_load_metta(Phase, Self, Rest).
+% Handle file loading when the argument does not start with `-`.
+cmdline_load_metta(Phase, Self, [Filemask | Rest]) :-
+    symbol(Filemask),
+    \+ symbol_concat('-', _, Filemask), !,
+    if_phase(Phase, execute, cmdline_load_file(Self, Filemask)), !,
     cmdline_load_metta(Phase, Self, Rest).
 % Handle unrecognized command-line options by logging a warning.
 cmdline_load_metta(Phase, Self, [M | Rest]) :-
@@ -3965,6 +3971,8 @@ load_hook(Load,Hooked):-
 %     % Execute a goal and trace errors:
 %     ?- rtrace_on_error(writeln('Hello, World!')).
 %
+
+rtrace_on_error(G):- is_user_repl, !, call(G).
 rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
@@ -4440,7 +4448,7 @@ metta_atom(Atom) :-
 %
 metta_atom_added(X, Y) :- nocut,
     % Check if the atom was explicitly asserted.
-    metta_atom_asserted(X, Y).
+    metta_atom_asserted_ocw(X, Y).
 metta_atom_added(X, Y) :- nocut,
     % Check if the atom is associated with a file.
     metta_atom_in_file(X, Y).
@@ -4451,6 +4459,11 @@ metta_atom_added(X, Y) :- nocut,
 metta_atom_added(X, Y) :- nocut,
     % Check if the atom was recently asserted.
     metta_atom_asserted_last(X, Y).
+
+
+metta_atom_asserted_ocw(X, Y):-
+    woct(metta_atom_asserted(X, Y)).
+   %clause_occurs_warning(metta_atom_asserted(X, Y)).
 
 %!  metta_atom(+Space, -Atom) is nondet.
 %
@@ -4490,7 +4503,7 @@ metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L)
 metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
 
 
-metta_atom0(_Inherit,KB, Atom) :- metta_atom_added(KB, Atom).
+metta_atom0(_Inherit,KB, Atom) :- woce(metta_atom_added(KB, Atom)).
 
 
 
@@ -6056,9 +6069,16 @@ eval_H(Term, X) :-
 eval_H(_StackMax, _Self, Term, Term) :-
     % If the `compile` option is set to `save`, return the term unchanged.
     fast_option_value(compile, save), !.
-eval_H(StackMax, Self, Term, X) :-
+eval_H(StackMax, Self, Term, XO) :-
+    copy_term(Term+X,CTerm+CX),
     % Otherwise, perform evaluation with error handling, passing the stack limit.
-    woc(catch_metta_return(eval_args('=', _, StackMax, Self, Term, X), X)).
+    woc(catch_metta_return(eval_args_stack_max('=', _, StackMax, Self, CTerm, CX), CX)),
+    CX\=='Empty',
+    CTerm=Term,CX=X,
+    XO=CX.
+
+eval_args_stack_max('=', _, StackMax, Self, Term, X):-
+  eval_args('=', _, StackMax, Self, Term, X).
 /*
 eval_H(StackMax,Self,Term,X).
 
@@ -7198,7 +7218,7 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-nts1 :- !. % Disable redefinition by cutting execution.
+%nts1 :- !. % Disable redefinition by cutting execution.
 %nts1 :- is_flag(notrace),!.
 nts1 :- no_interupts(nts1r).
 nts1r :-
@@ -7213,7 +7233,8 @@ nts1r :-
   meta_predicate(system:notrace(0)),
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta(( system:notrace(G) :- (!, unotrace(G),! ))).
+    asserta(( system:notrace(G) :- (!, once(G),! ))).
+    %asserta(( system:notrace(G) :- (!, unotrace(G),! )))
 nts1r :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.
