@@ -3032,7 +3032,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['compile!',Space],Res):- !,
        compile_metta_defn(KB,X,Len,Args,BodyFn,_Clause))),
     if_t( \+ current_predicate(X/_),
        (ignore(nortrace),forall(metta_defn(KB,[X | Args] ,BodyFn),
-       (maybe_trace(unknown),compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
+       (maybe_trace(compile_metta_defn),compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
     % pfcNoWatch,
     true,!,
      notrace(catch((write_src_uo(?-listing(X)),listing(X)),E,
@@ -3092,7 +3092,9 @@ eval_201(_Eq,_RetType,_Depth,_Self,Pred,Adjusted,_Arity,_Len,Res):-
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['trace!',A],A):- !, format('~N'),fbug(A),format('~N').
 
-eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),maplist(self_eval,List),List=[H|_], \+ atom(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
+eval_20(Eq,RetType,_Dpth,_Slf,List,YY):- is_list(List),
+   maplist(self_eval,List),List=[H|_], \+ atom(H),
+   \+ py_is_callable(H), !,Y=List,do_expander(Eq,RetType,Y,YY).
 
 % Temporarily in this file
 eval_20_disabled(Eq,_ListOfRetType,Depth,Self,['TupleConcat',A,B],OO):- fail, !,
@@ -3236,12 +3238,11 @@ eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
     TF == 'False'-> fail ; RetVal = TF).
 
 f2_to_p2(F2,P2):-
-  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
-  interp_calls_module(Builtin).
+  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
 
 f2_to_p3(F2,P2):-
-  transpiler_peek(F2,2,_,P2,_,exactArgs,Builtin),
-  interp_calls_module(Builtin).
+  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
+
 
 
 impl_module(Sym,Builtin):-
@@ -3468,7 +3469,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
   must_det_ll((py_eval_string(Arg,Res))).
 
-eval_40(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
+eval_40(Eq,RetType,Depth,Self,['length',L],Res):- fail, !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 
@@ -3594,16 +3595,21 @@ eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
 
 cache_arrow_types(AE,Len):- arg_type_n(AE,Len,_,_),!.
 cache_arrow_types(AE,Len):-
-  forall((metta_type(_KB,AE,Arrow),arrow_type(Arrow,Args,_Ret),length(Args,Len)),
+  forall((
+    find_arrow_types(_KB,AE,Len,Args)),
     forall(between(1,Len,N),
      ignore((nth1(N,Args,Type),maybe_non_eval(AE,Len,N,Type))))).
   %arg_type_n(AE,Len,_,_)
 
+find_arrow_types(KB,AE,Len,Args):- metta_type(KB,AE,Arrow),arrow_type(Arrow,Args,_Ret),length(Args,Len).
+% next line can cause infloops
+% find_arrow_types(KB,AE,Len,ParamTypes):- get_operator_typedef(KB, AE,Len, ParamTypes, _RetType).
+
 :- dynamic(arg_type_n/4).
 
-maybe_non_eval(AE,Len,N,Type):- var(Type),!, assert(arg_type_n(AE,Len,N,var)),!.
+maybe_non_eval(AE,Len,N,Type):- var(Type),!, compiler_assertz(arg_type_n(AE,Len,N,var)),!.
     maybe_non_eval(AE,Len,N,Type):- once(sub_var('Atom',Type);sub_var('Expression',Type)),!,
-       assert(arg_type_n(AE,Len,N,non_eval(Type))),!.
+       compiler_assertz(arg_type_n(AE,Len,N,non_eval(Type))),!.
 maybe_non_eval(AE,Len,N,Type):- assert(arg_type_n(AE,Len,N,eval(Type))),!.
 
 
@@ -3880,7 +3886,7 @@ as_nop(G,NoResult):-  G\=[_|_], rtrace_on_failure(G),!,
 
 as_tf(G,TF):-  G\=[_|_], catch_warn((call(G)*->TF='True';TF='False')).
 as_tf_nowarn(G,TF):-  G\=[_|_], catch_nowarn((call(G)*->TF='True';TF='False')).
-as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((maybe_trace(unknown),writeln(E),rtrace(G),!,throw(E))))*->TF='True';TF='False')).
+as_tf_traceable(G,TF):-  G\=[_|_], ((catch(G,E,((maybe_trace(as_tf_traceable),writeln(E),notrace,trace,true,rtrace(G),!,throw(E))))*->TF='True';TF='False')).
 as_tf_tracabe(G,TF):-  G\=[_|_], ((call(G)*->TF='True';TF='False')).
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=:=Y,TF),!.
 %eval_selfless_1(['==',X,Y],TF):- as_tf(X=@=Y,TF),!.
@@ -4072,7 +4078,7 @@ eval_defn_success_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,Y,XX,B0,US
   true_or_log_fail(Depth, \+ \+ (maplist(non_arg_violation(Self),ParamTypes,Args)), non_arg_violation(ParamTypes,Args)),
   Y=B0, X\=@=B0,
   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(XX-->B0,def(USED))))),
-  maybe_trace(unknown),
+  maybe_trace(eval_defn_success_guarded),
   light_eval(Eq,RetType,Depth,Self,B0,Y),
   nop(non_arg_violation(Self,FRetType,Y)).
 
@@ -4133,9 +4139,11 @@ eval_defn_success(_Eq,_RetType,Depth,_Self,X,Y,XX,B0,USED):-
   variable_count(B0,Bc1),variable_count(XX,Xc1),
   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(XX-->B0,def(USED))))),
   if_trace(e,color_g_mesg('#993700',indentq2(Depth,variable_count(xc0=Xc0,wc1=Xc1,bc0=Bc0,bc1=Bc1)))),
-  ignore(show_tf(((Bc0)*2>=Bc1))),
-  ignore(find_term_cycles(30,X)),
-  maybe_trace(unknown).
+  if_trace(e,((
+  ignore(show_tf((Bc0*2>=Bc1))),
+  ignore(show_tf((Xc0==Bc1)))))),
+  if_trace(occurs,((ignore(find_term_cycles(300,X))))),
+  maybe_trace(eval_defn_success).
 /*
   nop(light_eval(Eq,RetType,Depth,Self,B0,Y)),
   if_t(between(401,420,Depth),writeq(a(B0))),
@@ -4150,10 +4158,10 @@ eval_defn_failure(_Eq,_RetType,Depth,_Self,X,Res):- % trace,
   if_trace(e,color_g_mesg('#773701',indentq2(Depth,defs_failed(X)))),
   !, \+ fail_missed_defn, X=Res.
 
-show_tf(Goal):- 
-   (call(Goal)*-> ppt(green,yes(Goal)) 
+show_tf(Goal):-
+   (call(Goal)*-> ppt(green,yes(Goal))
      ; (ppt(red,failed(Goal)),fail)).
-   
+
 variable_count(B0,Bc1):- term_variables(B0,Vars),length(Vars,Bc1),!.
 
 pl_clause_num(Head,Body,Ref,Index):-
@@ -4526,12 +4534,12 @@ return_type_compat(_RetType,_XType).
 type_checks_out(Self,AE,LenX,Adjusted,RetType):-
    get_operator_typedef_R(Self,AE,LenX,XParamTypes,XType),
    return_type_compat(RetType,XType),
-   trace_if_debug(AE,LenX),
+   trace_if_debug_call(AE,LenX),
    maplist(non_arg_violation_each(Self),XParamTypes,Adjusted),!.
 type_checks_out(Self,AE,LenX,Adjusted,RetType):-
   get_operator_typedef_R(Self,AE,LenX,XParamTypes,XType),
   return_type_compat(RetType,XType),
-  trace_if_debug(AE,LenX),
+  trace_if_debug_call(AE,LenX),
   maplist(throw_violation_each(Self),XParamTypes,Adjusted),!.
 type_checks_out(Self,AE,LenX,Adjusted,RetType):-
   nop(type_checks_out(Self,AE,LenX,Adjusted,RetType)),!.

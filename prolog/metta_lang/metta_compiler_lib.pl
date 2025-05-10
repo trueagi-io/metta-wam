@@ -248,7 +248,7 @@ transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,
 'mc__1_2_cons-atom'(A,B,AB):- check_type_error( \+ is_list(B),'cons-atom'(A,B,AB)),AB=[A|B].
 
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ is_list(AB1), decons_atom(AB1,AB2)),!,[A|B]=AB1,AB2=[A,B].
+'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ iz_conz(AB1), decons_atom(AB1,AB2)),!,[A|B]=AB1,AB2=[A,B].
 
 check_type_error( Check, Error):- if_t(Check, raise_type_error( Check, Error)).
 raise_type_error( Check, Error):- trace,throw(raise_type_error( Check, Error)).

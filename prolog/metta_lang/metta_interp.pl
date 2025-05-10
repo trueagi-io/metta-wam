@@ -5308,11 +5308,15 @@ never_compile(_):- option_value('exec',interp),!.
 %never_compile(X):- always_exec(X).
 toplevel_interp_only([S|_]):-  symbol(S), toplevel_interp_only_symbol(S).
 toplevel_interp_only_symbol('import!').
+toplevel_interp_only_symbol('test-file!').
+toplevel_interp_only_symbol('test-file-p!').
 toplevel_interp_only_symbol('extend-py!').
 toplevel_interp_only_symbol('include').
 toplevel_interp_only_symbol('include!').
 toplevel_interp_only_symbol('call-string').
 toplevel_interp_only_symbol('compiled-info').
+toplevel_interp_only_symbol('listing!').
+toplevel_interp_only_symbol('eval-in-only!').
 toplevel_interp_only_symbol('repl!').
 toplevel_interp_only_symbol('eval').
 toplevel_interp_only_symbol('pragma!').
@@ -5655,7 +5659,7 @@ do_metta(From, comment(Load), Self, [Expr], Out) :- !,
     do_metta(From, comment(Load), Self, Expr, Out).
 do_metta(From, comment(Load), Self, Cmt, Out) :-
     % Write the comment and handle specific cases of MettaLog comments.
-    if_trace(loading;load,write_comment(Cmt)), !,
+    if_trace((loading;load),write_comment(Cmt)), !,
     ignore((symbolic(Cmt),
             symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
             !,
@@ -5742,7 +5746,7 @@ do_metta(From, exec, Self, TermV, Out) :- !,
 %     Out = ResultOfExecution.
 %
 do_metta_exec(From, Self, TermV, FOut) :-
-
+    nb_setval(exec_src, TermV),
     % Debugging output for initial state.
     % format("########################X0 ~w ~w ~w\n", [Self, TermV, FOut]),
  (catch(((
