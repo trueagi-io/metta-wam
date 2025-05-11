@@ -69,6 +69,7 @@
 
 %self_eval0(X):- var(X),!,fail.
 self_eval0(X):- \+ callable(X),!.
+self_eval0(X):- is_list(X),maplist(var,X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- string(X),!.
 %self_eval0(X):- number(X),!.
@@ -586,6 +587,7 @@ sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
 %eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
 
+% The first eval_20/6 clause
 eval_20(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_20_var,X),
   Y=X,!,var_pass(Eq,RetType,Depth,Self,Y).
 
@@ -606,6 +608,13 @@ eval_args_alone(':').
 eval_10(Eq,RetType,Depth,Self,[Fn|Args],Y):- fail, eval_args_alone(Fn),
    is_list(Args),!,
    Y=[Fn|RArgs], mapl_eval_args(Eq,RetType,Depth,Self,Args,RArgs).
+
+
+% DMILES @ TODO make sure this isnt an implicit curry
+eval_10(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-  V==':',is_list(VI),!,
+  mapl_eval_args(Eq,RetType,Depth,Self,VI,VO).
+eval_10(Eq,RetType,Depth,Self,[V|VI],VO):-  is_list(V),V=[HV,_,_],HV==':',is_list(VI),!,
+  mapl_eval_args(Eq,RetType,Depth,Self,[V|VI],VO).
 
 eval_10(Eq,RetType,Depth,Self,[Sym|Args],Y):- \+ atom(Sym), !,
   maplist(as_prolog_x(Depth,Self), [Sym|Args] , [ASym|Adjusted]),
@@ -808,6 +817,11 @@ eval_20_disabled(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- fail, Eval == eval,
 eval_20_disabled(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
   eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
+
+
+% DMILES @ TODO make sure this isnt an implicit curry
+eval_20(Eq,RetType,Depth,Self,[V|VI],VO):-  is_list(V),V=[HV,_,_],HV==':',is_list(VI),!,
+  mapl_eval_args(Eq,RetType,Depth,Self,[V|VI],VO).
 
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
@@ -1015,6 +1029,7 @@ eval_until_eq_tf(Flags, Eq, XType,YType,Depth,Self,X,Y,TF):-
 
 
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
+eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X=@=Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
 eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
 eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
 %eval_until_eq(Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X\=@=Y,unify_woc(X,Y),!,check_returnval(Eq,XType,YType,Y,TF).
@@ -2169,10 +2184,18 @@ eval_10(Eq,RetType,Depth,Self,['container-unify',Arg1,Arg2,Then|ElseL],Res):- !,
     *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
     ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
 
+/*
+for occurs check warnngs
 eval_10(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
-   (as_tf( \+ \+ unify_woc(X,Y),TF),if_or_else(TF,eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y]))
+   (as_tf( \+ \+ unify_woc(X,Y),TF),if_or_else((TF=='True',X=Y),eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y]))
      *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
     ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
+*/
+
+eval_10(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
+       (eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y])
+         *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
+        ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
 
 
 

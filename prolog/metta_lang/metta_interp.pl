@@ -3470,7 +3470,9 @@ clear_space(S) :-
     %retractall(metta_eq_def(_, S, _, _)),
     nop(retractall(metta_type(S, _, _))),
     % Remove asserted atoms for the space.
-    retractall(metta_atom_asserted(S, _)).
+    retractall(metta_atom_asserted(S, _)),
+    retractall(metta_function_asserted(S,_ , _)),
+    !.
 
 %!  dcall(:G) is det.
 %
@@ -4149,13 +4151,9 @@ load_hook0(Load, Assertion) :- fail,
 %     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
-load_hook1(Load, Self, Fact) :-
-    % Skip processing if the `metta_interp` flag is not set to `ready`.
-    % \+ is_metta_interp_ready,
-    % debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
-    %fail,
-    !,
-    woc(load_hook_compiler(Load, Self, Fact)).
+
+load_hook1(_Load, Self, [Eq,H,B]) :- Eq == '=', assertz_if_new(metta_function_asserted(Self,H,B)),fail.
+
 
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
@@ -4164,6 +4162,13 @@ load_hook1(Load, Self, Fact) :-
     woc(load_hook_compiler(Load, Self, Fact)).
 load_hook1(Load, Self, Fact):-
     %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
+    woc(load_hook_compiler(Load, Self, Fact)),!.
+load_hook1(Load, Self, Fact) :-
+    % Skip processing if the `metta_interp` flag is not set to `ready`.
+    % \+ is_metta_interp_ready,
+    % debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
+    %fail,
+    !,
     woc(load_hook_compiler(Load, Self, Fact)).
 
 metta_atom_asserted_hook(Self,Assertion):-
@@ -4355,6 +4360,8 @@ tf_to_trace(X,X).
 
 % Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across
 % multiple files.
+:- dynamic(metta_function_asserted/3).
+:- multifile(metta_function_asserted/3).
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
 :- dynamic(metta_atom_deduced/2).
@@ -4446,6 +4453,15 @@ metta_atom(Atom) :-
 %   @arg X The context or space.
 %   @arg Y The atom to check.
 %
+
+dont_bother(Atom):- Atom=@=[_, :, _].
+dont_bother(Atom):- Atom=@=[=, [_, _], _]. % maybe
+dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
+dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
+
+metta_atom_added(_KB, Atom) :- dont_bother(Atom),!,fail.
+metta_atom_added(X, [Eq,A,B]) :- Eq =='=', !, metta_function_asserted(X,A,B).
+
 metta_atom_added(X, Y) :- nocut,
     % Check if the atom was explicitly asserted.
     metta_atom_asserted_ocw(X, Y).
@@ -4487,12 +4503,8 @@ metta_atom0(Inherit,KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
 */
-dont_bother(Atom):- Atom=@=[_, :, _].
-dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
-dont_bother(Atom):- Atom=@=[=, [_, _], _]. % maybe
-dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
 
-metta_atom0(_Inherit,_KB, Atom) :- dont_bother(Atom),!,fail.
+metta_atom0(_KB, Atom) :- dont_bother(Atom),!,fail.
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
@@ -4797,8 +4809,7 @@ is_metta_space(Space) :-  nonvar(Space),
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
 metta_eq_def(Eq, KB, H, B) :-
    ignore(Eq = '='),
-  metta_atom0(inherit([KB]),KB,[EQ, H, B]),
-  EQ == Eq.
+  metta_atom0(inherit([KB]),KB,[Eq, H, B]).
 
 % Original commented-out code, retained as-is for potential future use:
 % metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
