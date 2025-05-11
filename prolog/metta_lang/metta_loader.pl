@@ -3157,5 +3157,5 @@ really_use_corelib_file(Dir, File) :-
 
 without_output(G):- is_devel,!,call(G).
 without_output(G):- with_output_to(string(_), G).
-:- nb_setval(debug_context, 'run').
+:- nb_setval(debug_context, 'init').
 

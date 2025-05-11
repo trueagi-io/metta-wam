@@ -250,6 +250,7 @@ transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
 'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ iz_conz(AB1), decons_atom(AB1,AB2)),!,[A|B]=AB1,AB2=[A,B].
 
+check_type_error(_Check,_Error):- \+ option_value(typecheck, true), !.
 check_type_error( Check, Error):- if_t(Check, raise_type_error( Check, Error)).
 raise_type_error( Check, Error):- trace,throw(raise_type_error( Check, Error)).
 
@@ -467,7 +468,7 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
-use_python_main_rng(_):-!,fail.
+use_python_main_rng(_):- \+ option_value('fast-random', false),!,fail.
 use_python_main_rng('&rng'):-!.
 use_python_main_rng(rng('&rng', _)).
 
@@ -611,7 +612,7 @@ transpiler_predicate_store(builtin, 'metta-unify', [2], '@doc', '@doc', [x(noeva
 'mc__1_2_metta-unify'(A,B,TF):- as_tf(unify_with_occurs_check(A,B),TF).
 
 transpiler_predicate_store(builtin, 'decons-ht', [3], '@doc', '@doc', [x(noeval,eager,[]),x(noeval,eager,[]),x(noeval,eager,[])],x(doeval,eager,[boolean])).
-'mc__1_3_decons-ht'(E,H,T,TF):- as_tf(unify_with_occurs_check(E,[H|T]),TF).
+'mc__1_3_decons-ht'(E,H,T,TF):- check_type_error( \+ iz_conz(E), 'decons-ht'(E,H,T)), as_tf(unify_with_occurs_warning(E,[H|T]),TF).
 
 transpiler_predicate_nary_store(builtin, 'py-atom-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-atom-call'(SymRef,Args,Ret) :- 'mc_n_1__py-atom-call!'(SymRef,Args,Ret).

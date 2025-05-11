@@ -5652,6 +5652,11 @@ do_metta(File,Load,Self,Cmt,Out):-
   fail,
   if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 */
+do_metta_f(File, Load, Self, In, Out):-
+   copy_term(do_metta_f(File, Load, Self, In, Out),
+             do_metta_f(File, Load, Self, CIn, COut)),
+   !, do_metta(File, Load, Self, CIn, COut).
+
 do_metta(_File, _Load, _Self, In, Out) :-
     % If the input is a variable, unify it directly with the output.
     var(In), !, In = Out.

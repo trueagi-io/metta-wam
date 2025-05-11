@@ -458,7 +458,7 @@ recompile_from_depends(FnName,LenArgs) :-
    maplist(recompile_from_depends_child(FnName/LenArgs),List).
 
 unnumbervars_wco(X,XXX):- compound(X),
-   sub_term(E, X), compound(E), E = '$VAR'(_),!,
+   sub_term_safely(E, X), compound(E), E = '$VAR'(_),!,
    subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
 unnumbervars_wco(X,X).
 
@@ -505,14 +505,14 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-  compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
+  woc(compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted)).
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
   must_det_lls((
   IN = ['=',HeadIsIn, AsBodyFnIn],
-  metta_to_metta_macro_recurse(IN, OUT),
+  woc(metta_to_metta_macro_recurse(IN, OUT)),
   OUT = ['=',HeadIs, AsBodyFn],
-  compile_for_assert_3(HeadIs, AsBodyFn, Converted))).
+  woc(compile_for_assert_3(HeadIs, AsBodyFn, Converted)))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -1786,7 +1786,7 @@ compiler_assertz(Info):- skip_redef(Info), !, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    once(clause_asserted(Assert)->true;assertz(Assert)),!.
+    once(locally_clause_asserted(Assert)->true;assertz(Assert)),!.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
@@ -3209,7 +3209,7 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
   N1 is N-1,
   atomic_list_concat(['mc_',N1,'__',Fh],FPrefixed),
   H2 @.. [FPrefixed|Args],
-  clause(H2,B,Ref),clause(HH,BB,Ref),
+  clause_occurs_warning(H2,B,Ref),clause(HH,BB,Ref),
   strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
 
@@ -3818,7 +3818,7 @@ f2p(HeadIs,RetResultL, ConvertL, Converted) :- fail,
 % If any sub-term of Convert is a function, convert that sub-term and then proceed with the conversion.
 f2p(HeadIs,RetResult,Convert, Converted) :-
     rev_sub_sterm(AsFunction, Convert),  % Get the deepest sub-term AsFunction of Convert
-  %  sub_term(AsFunction, Convert), AsFunction\==Convert,
+  %  sub_term_safely(AsFunction, Convert), AsFunction\==Convert,
     callable(AsFunction),  % Check if AsFunction is callable
     compile_flow_control(HeadIs,Result,AsFunction, AsPred),
     HeadIs\=@=AsFunction,!,
@@ -4029,7 +4029,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
    %ignore(Result = '$VAR'('HeadRes')),
    conjuncts_to_list(Body,List),
    reverse(List,RevList),append(Left,[BE|Right],RevList),
-   compound(BE),arg(Nth,BE,ArgRes),sub_var(Result,ArgRes),
+   compound(BE),arg(Nth,BE,ArgRes),sub_var_safely(Result,ArgRes),
    remove_funct_arg(BE, Nth, AsBodyFunction),
    append(Left,[eval_args(AsBodyFunction,Result)|Right],NewRevList),
    reverse(NewRevList,NewList),
@@ -4043,7 +4043,7 @@ preds_to_functs0((Head:-Body), Converted) :- !,
 preds_to_functs0((AsPred, Convert), Converted) :-
     \+ not_function(AsPred),
     pred_to_funct(AsPred, AsFunction, Result),
-    sub_var(Result, Convert), !,
+    sub_var_safely(Result, Convert), !,
     % The function equivalent of AsPred _xs Result in Convert
     subst(Convert, Result, AsFunction, Converting),
     preds_to_functs0(Converting, Converted).

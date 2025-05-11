@@ -265,17 +265,18 @@ eval_40(Depth,Self,X,Y):- eval_40('=',_RetType,Depth,Self,X,Y).
 evals_to(XX,Y):- Y=@=XX,!.
 evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
-:- set_prolog_flag(optimise, false).
-:- set_prolog_flag(access_level, system).
+%:- set_prolog_flag(optimise, false).
+%:- set_prolog_flag(access_level, system).
 check_term_depth(X,Y):- find_term_cycles(X), X=Y.
 check_term_depth(X,Y):- find_term_cycles(Y), X=Y.
 find_term_cycles(X):- find_term_cycles(100,X).
 find_term_cycles(_,X):- \+ acyclic_term_nat(X), notrace, nl,nl, writeq(X), nl,nl, break.
 find_term_cycles(N,X):- term_depth(X,Deep), Deep>N, notrace, nl,nl, writeq(X), nl,nl, break.
 
-%eval_args(_Eq,_RetType,_Dpth,_Self,X,Y):- check_term_depth(X,Y),!.
-eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,X=Y.
-eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,Y=X.
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- var(X),nonvar(Y),!,
+   unify_woc(X,Y).
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,
+   unify_woc(X,Y).
 
 eval_args(Eq,RetType,Depth,Self,X,Y):-
     notrace(nonvar(Y)), var(RetType),
@@ -380,7 +381,7 @@ subst_once(G):- call(G).
 % %  uncommented causes 7% failure but a 10x speedup
 % subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- Y=YO.
 % %  this next one at least causes no failures and 5x speedup
-subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- iz_conz(Y), \+ is_list(Y), !, bt,trace, break, Y=YO.
+subst_args_here(_Eq,_RetType,_Depth2,_Self,Y,YO):- iz_conz(Y), \+ is_list(Y), !, maybe_bt(depth), break, Y=YO.
 %subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !, Y=YO.
 subst_args_here(Eq,RetType,Depth2,Self,Y,YO):- !,
   subst_once(subst_args(Eq,RetType,Depth2,Self,Y,YO)*->true;Y=YO).
@@ -486,9 +487,9 @@ eval_08(Eq,RetType,Depth,Self,X,Y):- is_mettalog_tracing(X,Type),!,
    with_debug(Type,eval_09(Eq,RetType,Depth,Self,X,Y)).
 eval_08(Eq,RetType,Depth,Self,X,Y):- eval_09(Eq,RetType,Depth,Self,X,Y).
 
-%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, X=Y, fail.
-%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, X=Y.
-%eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,bt),!, fail.
+%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 0, !, unify_woc(X,Y), fail.
+%eval_09(_Eq,_RetType, Depth,_Slf,X,Y):- Depth< 1, !, unify_woc(X,Y).
+%eval_09(_Eq,_RetType, Depth,_Slf,_X,_Y):- Depth<1, if_trace(e,maybe_bt),!, fail.
 
 %hybrid_interp :- !.
 hybrid_interp :- option_value(compile,hybrid),!.
@@ -518,7 +519,7 @@ fail_on_repeat(ThisNth,YY,X,Y):-
      ((copy_term(X+Y,YC), YC = YY)
         -> nop(debug(metta(todo),'no_repeat in ~w: ~q',[ThisNth,X->Y]))
         ; once((dmsg('repeats in'([ThisNth,X->Y])),
-               %bt,
+               %maybe_bt,
                dumpST,
                dmsg('repeats in'([ThisNth,X->Y])),
                !,fail))).
@@ -579,16 +580,16 @@ insanity_check_eval(Which,X):-  X=@=[_|_],debug_info(insanity_check_eval,insanit
 
 sanity_check_eval(_,_):- is_testing,!.
 sanity_check_eval(_,_):- !.
-sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), maybe_trace(unknown)),!.
+sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), maybe_trace(Which)),!.
 sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
-%eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
+%eval_10(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_10_in,X),unify_woc(X,Y),!,var_pass(Eq,RetType,Depth,Self,Y).
 
 % The first eval_20/6 clause
 eval_20(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_20_var,X),
-  Y=X,!,var_pass(Eq,RetType,Depth,Self,Y).
+  unify_woc(X,Y),!,var_pass(Eq,RetType,Depth,Self,Y).
 
-%eval_20(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_20_in,X),X=Y,!,var_pass(Eq,RetType,Depth,Self,Y).
+%eval_20(Eq,RetType,Depth,Self,X,Y):- \+ sanity_check_eval(eval_20_in,X),unify_woc(X,Y),!,var_pass(Eq,RetType,Depth,Self,Y).
 
 eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ compound(X), !,
     as_prolog_x(Depth,Self,X,XX),
@@ -618,7 +619,7 @@ eval_10(Eq,RetType,Depth,Self,[Sym|Args],Y):- \+ atom(Sym), !,
 
 
 leave_args_alone('->').
-%eval_10_disabled(_Eq,_RetType,_Depth,_Self,[Fn|Args],Y):-  leave_args_alone(Fn), !, Y=[Fn|Args].
+eval_10_disabled(_Eq,_RetType,_Depth,_Self,[Fn|Args],Y):-  leave_args_alone(Fn), !, Y=[Fn|Args].
 
 eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):-
   Where==interp,!,
@@ -883,7 +884,7 @@ eval_20(Eq,RetType,Depth,Self,X,RetVal):-
         %fbug(expand_eval(X,XX)),
         eval_10(Eq,RetType,Depth,Self,XX,RetVal).
 
-expand_eval(X,Y):- \+ is_list(X),!, X=Y.
+expand_eval(X,Y):- \+ is_list(X),!, unify_woc(X,Y).
 expand_eval([H|A],[H|AA]):- \+ ground(H),!,maplist(expand_eval,A,AA).
 expand_eval(['let*',Lets,Body],NewBody):- expand_let_star(Lets,Body,NewBody),!.
 expand_eval([H|A],[H|AA]):- maplist(expand_eval,A,AA).
@@ -1364,9 +1365,7 @@ eval_20(Eq,_RetType,Depth,Self,['assertNotAlphaEqualToResult',X,Y],RetVal):- !,
          equal_enough_for_test_renumbered_l(not_alpha_equ,XX,YY), RetVal).
 
 loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
-    %ignore(nortrace),
     loonit_assert_source_tf(Src,Goal,Check,TF),
-    %ignore(rtrace),
     tf_to_empty(TF,['Error',Src,['\nGot: ',XX,'\nEXP: ',YY]],RetVal).
 
 tf_to_empty(TF,Else,RetVal):-
@@ -1658,18 +1657,18 @@ eval_20(_Eq,_RetType,_Depth,_Self,['=alpha', X,Y],TF):- !,
    as_tf('=alpha'(X,Y),TF).
 
 equal_renumbered(X0,Y0,XX,YY):-
-   max_var_number(X+Y,0,N),succ(N,N2),
+   max_var_number(X0+Y0,0,N),succ(N,N2),
    copy_term(X0+Y0,X+Y),
    term_variables(X,VXs), term_variables(Y,VYs),
-   merge_same_named_vars(VXs,VYs,Same,Merges,_LOXVs,_LOYVs),
-   max_var_number(X+Y,0,N),succ(N,N2),
+   merge_same_named_vars(VXs,VYs,Same,Merges,LOXVs,LOYVs),
+   debug_info(varnames,merge_same_named_vars(VXs,VYs,Same,Merges,LOXVs,LOYVs)),
    maplist(remerge_attrs,Merges),
    maplist(remove_attr(vn),VXs), maplist(remove_attr(vn),VYs),
    numbervars(Same,N2,_,[attvar(skip)]),
    %numbervars(_Merges,N3,_,[attvar(skip)]),
    renumber_vars_wo_confict_tu(X,XX),
    renumber_vars_wo_confict_tu(Y,YY),!.
-   %if_tracemsg(unknown,equal_enough_for_test(P2,XX,YY)),
+   %debug_info(unknown,equal_enough_for_test(P2,XX,YY)),
 
 
 renumber_vars_wo_confict_tu(X,XXX):-
@@ -1895,6 +1894,9 @@ eval_20p(Eq,RetType,Depth,Self,X,Y):- must_be(acyclic,X),
 
 eval_10(Eq,RetType,Depth,Self,['switch',A,CL|T],Res):- !,
   eval_10(Eq,RetType,Depth,Self,['case',A,CL|T],Res).
+eval_10_new(Eq,RetType,Depth,Self,I,Res):- fail,
+  once(metta_to_metta_body_macro_recurse(eval10,I,O)),I\=@=O,!,
+  eval_10p(Eq,RetType,Depth,Self,O,Res).
 
 eval_10_disabled(Eq,RetType,Depth,Self,[P,X|More],YY):- fail, is_list(X),X=[_,_,_],simple_math(X),
    eval_selfless_2(X,XX),X\=@=XX,!, eval_20(Eq,RetType,Depth,Self,[P,XX|More],YY).
@@ -3145,9 +3147,9 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
 %  - E: The resulting element that is part of the union of the two sets
 lazy_union(P2, E1^Call1, E2^Call2, E) :-
     % Step 1: Use lazy_findall/3 to declare that all elements satisfying Call1 are supposedly in List1
-    lazy_findall(E1, Call1, List1),
+    maybe_lazy_findall(E1, Call1, List1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
-    lazy_findall(E2, Call2, List2),
+    maybe_lazy_findall(E2, Call2, List2),
     % Step 3: Perform the union logic
     (   % Case 1: If E is a member of List1, include it in the result
         member(E, List1)
@@ -3335,7 +3337,7 @@ lazy_intersection(P2, E1^Call1, E2^Call2, E1) :-
     % Step 1: Evaluate Call1 to generate E1
     call(Call1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
-    lazy_findall(E2, Call2, List2),
+    maybe_lazy_findall(E2, Call2, List2),
     % Step 3: Perform the intersection logic
     % Only return E1 if it is not a member of List2
     member(E2, List2), call(P2,E1,E2).
@@ -3353,11 +3355,14 @@ lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
     % Step 1: Evaluate Call1 to generate E1
     call(Call1),
     % Step 2: Use lazy_findall/3 to declare that all elements satisfying Call2 are supposedly in List2
-    lazy_findall(E2, Call2, List2),
+    maybe_lazy_findall(E2, Call2, List2),
     % Step 3: Perform the subtraction logic
     % Only return E1 if it is not a member of List2
     \+ (member(E2, List2), call(P2, E1, E2)).
 
+
+maybe_lazy_findall(T,G,L):- option_value(lazy_findall,true),!,lazy_findall(T,G,L).
+maybe_lazy_findall(T,G,L):- findall(T,G,L).
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
   Do_more_defs = do_more_defs(true),
