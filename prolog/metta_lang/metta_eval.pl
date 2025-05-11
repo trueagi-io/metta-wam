@@ -606,6 +606,12 @@ eval_10(Eq,RetType,Depth,Self,[Fn|Args],Y):- fail, eval_args_alone(Fn),
    is_list(Args),!,
    Y=[Fn|RArgs], mapl_eval_args(Eq,RetType,Depth,Self,Args,RArgs).
 
+
+eval_10(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-  V==':',is_list(VI),!,
+  mapl_eval_args(Eq,RetType,Depth,Self,VI,VO).
+eval_10(Eq,RetType,Depth,Self,[V|VI],VO):-  is_list(V),V=[HV,_,_],HV==':',is_list(VI),!,
+  mapl_eval_args(Eq,RetType,Depth,Self,[V|VI],VO).
+
 eval_10(Eq,RetType,Depth,Self,[Sym|Args],Y):- \+ atom(Sym), !,
   maplist(as_prolog_x(Depth,Self), [Sym|Args] , [ASym|Adjusted]),
   eval_20(Eq,RetType,Depth,Self, [ASym|Adjusted], Y),sanity_check_eval(eval_20_not_atom,Y).
