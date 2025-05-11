@@ -2651,7 +2651,7 @@ For example:
     (@param "List of values")
     (@param "List of values")))
   (@return "Union of sets based on predicate"))
-(ALT= (union-atom-by $Pred $L1 $L2)
+(= (union-atom-by $Pred $L1 $L2)
   (collapse (union-by $Pred (superpose $L1) (superpose $L2))))
 (: union-atom-by (-> Atom Expression Expression Expression))
 

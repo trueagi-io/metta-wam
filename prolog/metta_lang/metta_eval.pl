@@ -69,7 +69,6 @@
 
 %self_eval0(X):- var(X),!,fail.
 self_eval0(X):- \+ callable(X),!.
-self_eval0(X):- is_list(X),maplist(var,X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
 %self_eval0(X):- string(X),!.
 %self_eval0(X):- number(X),!.
@@ -301,6 +300,8 @@ eval_args(Eq,RetType,Depth,Self,[F|X],Y):-
 
 eval_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('match')) ,!,
    call(call,Eq,'=',RetType,Depth,Self,X,Y).
+
+eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args(Eq,RetType,Depth,Self,X,Y):-
   eval_00(Eq,RetType,Depth,Self,X,Y).
 %eval_ret(Eq,RetType,1000,Self,X,Y):- !,
@@ -355,14 +356,10 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
    if_t((Depth<1, trace_on_overflow), debug(metta(e))),
 
    trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
-   %ignore(find_term_cycles(M)),
+
    ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
 
 %eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
-
-%eval_03(_Eq,_RetType,_Dpth,_Self,X,Y):- check_term_depth(X,Y),!.
-eval_03(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
-
 eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
@@ -609,13 +606,6 @@ eval_10(Eq,RetType,Depth,Self,[Fn|Args],Y):- fail, eval_args_alone(Fn),
    is_list(Args),!,
    Y=[Fn|RArgs], mapl_eval_args(Eq,RetType,Depth,Self,Args,RArgs).
 
-
-% DMILES @ TODO make sure this isnt an implicit curry
-eval_10(Eq,RetType,Depth,Self,[V|VI],[V|VO]):-  V==':',is_list(VI),!,
-  mapl_eval_args(Eq,RetType,Depth,Self,VI,VO).
-eval_10(Eq,RetType,Depth,Self,[V|VI],VO):-  is_list(V),V=[HV,_,_],HV==':',is_list(VI),!,
-  mapl_eval_args(Eq,RetType,Depth,Self,[V|VI],VO).
-
 eval_10(Eq,RetType,Depth,Self,[Sym|Args],Y):- \+ atom(Sym), !,
   maplist(as_prolog_x(Depth,Self), [Sym|Args] , [ASym|Adjusted]),
   eval_20(Eq,RetType,Depth,Self, [ASym|Adjusted], Y),sanity_check_eval(eval_20_not_atom,Y).
@@ -817,11 +807,6 @@ eval_20_disabled(Eq,RetType,Depth,Self,[F,[Eval,V]|VI],VO):- fail, Eval == eval,
 eval_20_disabled(Eq,RetType,Depth,Self,[[Eval,V]|VI],VO):- Eval == eval,!,
   ((eval_args(Eq,_FRype,Depth,Self,V,VV), V\=@=VV)*-> true; VV = V),
   eval_args(Eq,RetType,Depth,Self,[VV|VI],VO).
-
-
-% DMILES @ TODO make sure this isnt an implicit curry
-eval_20(Eq,RetType,Depth,Self,[V|VI],VO):-  is_list(V),V=[HV,_,_],HV==':',is_list(VI),!,
-  mapl_eval_args(Eq,RetType,Depth,Self,[V|VI],VO).
 
 % DMILES @ TODO make sure this isnt an implicit curry
 eval_20(Eq,RetType,Depth,Self,[V|VI],VO):-  \+ callable(V), is_list(VI),!,
@@ -1029,7 +1014,6 @@ eval_until_eq_tf(Flags, Eq, XType,YType,Depth,Self,X,Y,TF):-
 
 
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
-eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X=@=Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
 eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
 eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
 %eval_until_eq(Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X\=@=Y,unify_woc(X,Y),!,check_returnval(Eq,XType,YType,Y,TF).
@@ -2193,9 +2177,10 @@ eval_10(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
 */
 
 eval_10(Eq,RetType,Depth,Self,['if-unify',X,Y,Then|ElseL],Res):- !,
-       (eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y])
-         *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
-        ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
+       %(eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y])
+       (as_tf( \+ \+ unify_woc(X,Y),TF),if_or_else((TF=='True',X=Y),eval_args_true(Eq,'Bool',Depth,Self,['metta-unify',X,Y]))
+     *-> eval_args(Eq,RetType,Depth,Self,Then,Res)
+    ; (ElseL=[Else],eval_args(Eq,RetType,Depth,Self,Else,Res))).
 
 
 
@@ -3510,7 +3495,7 @@ eval_40(Eq,RetType,Depth,Self,[P,A,X|More],YY):- is_list(X),X=[_,_,_],simple_mat
 */
 %eval_40(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res):-  !, subst_args(Eq,RetType,_Dpth,_Slf,['==',X,Y],Res).
 
-eval_20(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- X=@=Y, X\==Y, !,TF='False'.
+%eval_20(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- X=@=Y, X\==Y, !,TF='False'.
 eval_20(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- copy_term(X+Y,XX+YY,_),XX=@=YY,XX\==YY, !,TF='False'.
 eval_20(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- (var(X) , var(Y)), !, as_tf(X==Y,TF),!.
 eval_40(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- (var(X) , var(Y)), !, as_tf(X==Y,TF),!.
@@ -3519,7 +3504,7 @@ eval_20(Eq,RetType,Depth,Self,['metta-unify',X,Y],TF):- !,
    woc((ignore(get_operator_typedef(Self,'metta-unify',2,[XType,YType],RetType)),
          eval_until_eq_tf(['metta-unify',double_sided],Eq, XType, YType, Depth,Self, X, Y, TF))).
 
-eval_20(Eq,RetType,Depth,Self,['==',X,Y],TF):- !,
+eval_20(Eq,RetType,Depth,Self,['==',X,Y],TF):- fail, !,
   ignore(get_operator_typedef(Self,'==',2,[XType,YType],RetType)),
   eval_until_eq_tf(['==',dont_eval],Eq, XType, YType, Depth,Self, X, Y, TF).
 

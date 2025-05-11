@@ -3974,7 +3974,7 @@ load_hook(Load,Hooked):-
 %     ?- rtrace_on_error(writeln('Hello, World!')).
 %
 
-rtrace_on_error(G):- is_user_repl, !, call(G).
+%rtrace_on_error(G):- is_user_repl, !, call(G).
 rtrace_on_error(G):- !, call(G).
 %rtrace_on_error(G):- catch(G,_,fail).
 rtrace_on_error(G):-
@@ -4151,9 +4151,13 @@ load_hook0(Load, Assertion) :- fail,
 %     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
-
-load_hook1(_Load, Self, [Eq,H,B]) :- Eq == '=', assertz_if_new(metta_function_asserted(Self,H,B)),fail.
-
+load_hook1(Load, Self, Fact) :-
+    % Skip processing if the `metta_interp` flag is not set to `ready`.
+    % \+ is_metta_interp_ready,
+    % debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
+    %fail,
+    !,
+    woc(load_hook_compiler(Load, Self, Fact)).
 
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
@@ -4162,13 +4166,6 @@ load_hook1(Load, Self, Fact) :-
     woc(load_hook_compiler(Load, Self, Fact)).
 load_hook1(Load, Self, Fact):-
     %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
-    woc(load_hook_compiler(Load, Self, Fact)),!.
-load_hook1(Load, Self, Fact) :-
-    % Skip processing if the `metta_interp` flag is not set to `ready`.
-    % \+ is_metta_interp_ready,
-    % debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
-    %fail,
-    !,
     woc(load_hook_compiler(Load, Self, Fact)).
 
 metta_atom_asserted_hook(Self,Assertion):-
@@ -4453,15 +4450,6 @@ metta_atom(Atom) :-
 %   @arg X The context or space.
 %   @arg Y The atom to check.
 %
-
-dont_bother(Atom):- Atom=@=[_, :, _].
-dont_bother(Atom):- Atom=@=[=, [_, _], _]. % maybe
-dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
-dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
-
-metta_atom_added(_KB, Atom) :- dont_bother(Atom),!,fail.
-metta_atom_added(X, [Eq,A,B]) :- Eq =='=', !, metta_function_asserted(X,A,B).
-
 metta_atom_added(X, Y) :- nocut,
     % Check if the atom was explicitly asserted.
     metta_atom_asserted_ocw(X, Y).
@@ -4503,8 +4491,12 @@ metta_atom0(Inherit,KB, Fact) :-
    transform_about(Fact, Rule, Cond), Cond=='True',!,
    fact_store(KB, Rule, Fact, Cond).
 */
+dont_bother(Atom):- Atom=@=[_, :, _].
+dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
+dont_bother(Atom):- Atom=@=[=, [_, _], _]. % maybe
+dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
 
-metta_atom0(_KB, Atom) :- dont_bother(Atom),!,fail.
+metta_atom0(_Inherit,_KB, Atom) :- dont_bother(Atom),!,fail.
 
 % metta_atom([Superpose,ListOf], Atom) :-   Superpose == 'superpose',    is_list(ListOf), !,      member(KB, ListOf),    get_metta_atom_from(KB, Atom).
 metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L).
@@ -4809,7 +4801,8 @@ is_metta_space(Space) :-  nonvar(Space),
 % metta_eq_def(Eq,KB,H,B):-  ignore(Eq = '='),metta_atom(KB,[Eq,H,B]).
 metta_eq_def(Eq, KB, H, B) :-
    ignore(Eq = '='),
-  metta_atom0(inherit([KB]),KB,[Eq, H, B]).
+  metta_atom0(inherit([KB]),KB,[EQ, H, B]),
+  EQ == Eq.
 
 % Original commented-out code, retained as-is for potential future use:
 % metta_defn(KB,Head,Body):- metta_eq_def(_Eq,KB,Head,Body).
@@ -5328,6 +5321,7 @@ toplevel_interp_only_symbol('call-string').
 toplevel_interp_only_symbol('compiled-info').
 toplevel_interp_only_symbol('listing!').
 toplevel_interp_only_symbol('eval-in-only!').
+toplevel_interp_only_symbol('set-debug!').
 toplevel_interp_only_symbol('repl!').
 toplevel_interp_only_symbol('eval').
 toplevel_interp_only_symbol('pragma!').
@@ -5670,7 +5664,7 @@ do_metta(From, comment(Load), Self, [Expr], Out) :- !,
     do_metta(From, comment(Load), Self, Expr, Out).
 do_metta(From, comment(Load), Self, Cmt, Out) :-
     % Write the comment and handle specific cases of MettaLog comments.
-    if_trace((loading;load),write_comment(Cmt)), !,
+    if_trace((loading;load,comment),write_comment(Cmt)), !,
     ignore((symbolic(Cmt),
             symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
             !,

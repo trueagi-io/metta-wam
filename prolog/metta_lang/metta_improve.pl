@@ -186,7 +186,7 @@ eval_in_only(OnlyIn, X, Y):-
 
 eval_in(interp, X, Y):-
    peek_scope(Eq, RetType, Depth, Self),
-    eval_09(Eq, RetType, Depth, Self, X, Y).
+    woc(eval_10(Eq, RetType, Depth, Self, X, Y)).
 eval_in(compiler, X, Y):-
     transpile_eval(X, Y).
 eval_in(rust, X, Y):-
