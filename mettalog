@@ -21,7 +21,7 @@ touch ~/.config/metta/repl_history.txt
 # echo "METTALOG_DIR=$METTALOG_DIR"
 # cd "$METTALOG_DIR" || { echo "Failed to navigate to $METTALOG_DIR"; [[ "$IS_SOURCED" == "1" ]] && return 1 || exit 1; }
 
-METTALOG_TESTING_OPTS="--noninteractive --abort_trace --nodebug --repl=disable --no-regen"
+UNIT_TESTING_OPTS="--noninteractive --abort_trace --nodebug --repl=disable --no-regen"
 
 need_compile=0
 exe=true
@@ -900,7 +900,15 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*|--show*|--test|-O)
+           --test=unit)
+		handle_args "${UNIT_TESTING_OPTS}"
+		add_to_list "--no-regen" RC_OPTIONS
+		add_to_list "$arg" PRE_METTALOG_OPTIONS
+		add_to_list "$arg" ADD_COMPILE_ARG
+                continue
+		;;
+
+           --douglas*|--show*|--test*|-O)
 		add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue

@@ -7,6 +7,7 @@ _mettalog() {
 
     ########################################################################
     # 1) ARRAYS
+    ########################################################################
 
     # 1a) Short options -> placeholders we want to show in the listing.
     declare -A short_opt_placeholder=(
@@ -45,39 +46,39 @@ _mettalog() {
 
     ########################################################################
     # 2) LONG OPTIONS
+    ########################################################################
 
     # 2a) Long no-argument options
     local long_noarg_opts=(
         "--help" "--version" "--traditional" "--abi-version" "--arch"
-        "--repl" "--test" "--continue" "--failures" "--regress" "--fresh"
-        "--no-regen" "--clean" "--skip-tests"
-        "--prolog"
-
+        "--repl" "--continue" "--failures" "--regress" "--fresh"
+        "--no-regen" "--clean" "--prolog"
         "--v=prolog/metta_lang"
     )
 
-    # 2b) Enumerated
+    # 2b) Enumerated long options and their values
     declare -A enum_opts=(
         ["--vn"]="true false auto"
-        ["--exec"]="true skip debug"
-        ["--eval"]="nodebug debug"
-        ["--case"]="nodebug debug"
+	["--test"]="true skip unit trace"
+        ["--case"]="nodebug trace debug"
+	["--compile"]="false full skip hybrid"
         ["--markdown"]="false true"
         ["--docker"]="false true"
         ["--e"]="notrace trace"
-
+        ["--eval"]="true skip trace debug"
+        ["--exec"]="true skip trace debug"
         ["--compat"]="false true"
         ["--compatio"]="false true"
         ["--repeats"]="true false"
         ["--time"]="false true"
-        ["--top-self"]="true false auto"
+        ["--top-self"]="false true auto"
         ["--answer-format"]="show rust silent detailed"
         ["--transpiler"]="silent verbose"
         ["--log"]="unset false true"
         ["--devel"]="false true"
         ["--synth-unit-tests"]="false true"
         ["--optimize"]="true false"
-        ["--compile"]="false full true"
+        ["--compile"]="false full hybrid"
         ["--tabling"]="auto true false"
         ["--trace-on-eval"]="false true"
         ["--trace-on-load"]="silent verbose"
@@ -88,7 +89,7 @@ _mettalog() {
         ["--repl-on-error"]="false true"
         ["--repl-on-fail"]="false true"
         ["--on-fail"]="continue repl halt"
-        ["--exit-on-fail"]="false true"
+        #["--exit-on-fail"]="false true"
         ["--rrtrace"]="false true"
 
         ["--table-space"]="2G 20G 30M 1000k"
@@ -125,9 +126,10 @@ _mettalog() {
         # Multi-value enumerations
         ["--on-error"]="print halt status"
         ["--on-warning"]="print halt status"
+
     )
 
-    # 2c) Directory-only & File-only are now **associative** with defaults
+    # 2c) Directory-only and File-only options
     declare -A dir_only_opts=(
       ["--output"]="./reports"
       ["--cachedir"]="~/.cache"
@@ -149,6 +151,7 @@ _mettalog() {
 
     ########################################################################
     # 4) HELPER FUNCTIONS
+    ########################################################################
 
     # 4a) Directory completion, keep `..`, exclude hidden & ~
     _complete_dir_only() {
@@ -167,10 +170,12 @@ _mettalog() {
 
         # 3) Filter out “hidden” directories except `.` or `..`
         #    i.e., exclude `.git`, `.config`, etc., but keep `./` and `../`.
-        slashDirs=( $(
+        slashDirs=(
+            $(
             printf '%s\n' "${slashDirs[@]}" \
             | grep -vE '(^|/)\.[^./]|~'
-        ) )
+            )
+        )
 
         COMPREPLY=( "${slashDirs[@]}" )
     }
@@ -195,8 +200,8 @@ _mettalog() {
 
         if [[ "$exts" == "/" ]]; then
             _complete_dir_only "$partial"
-            return
-        fi
+        return
+    fi
 
         local IFS=$'\n'
         local patterns=( $exts )
@@ -226,6 +231,7 @@ _mettalog() {
 
     ########################################################################
     # 5) CHECK PREVIOUS TOKEN
+    ########################################################################
 
     # If PREV is in short_opt_file_extension_or_dir => file/dir completions
     if [[ -n "${short_opt_file_extension_or_dir[$prev]+_exists}" ]]; then
@@ -239,7 +245,7 @@ _mettalog() {
        && [[ -z "${short_opt_file_extension_or_dir[$prev]+_exists}" ]]; then
         compopt -o nospace
         COMPREPLY=( "${short_opt_placeholder[$prev]}" )
-        complete_extensions_or_dir "$cur" "${short_opt_file_extension_or_dir[$prev]}"
+        _complete_extensions_or_dir "$cur" "${short_opt_file_extension_or_dir[$prev]}"
         return 0
     fi
 
@@ -249,7 +255,7 @@ _mettalog() {
         _complete_extensions_or_dir "$cur" "${short_opt_file_extension_or_dir[$prev]}"
         COMP_WORDBREAKS="$old_cwb"
         return 0
-    fi
+        fi
 
     # 5b) If PREV is in short_opt_placeholder but not file extension => textual placeholder
     if [[ -n "${short_opt_placeholder[$prev]+_exists}" ]] \
@@ -275,6 +281,20 @@ _mettalog() {
         return 0
     fi
 
+    # Handle enumerated long options like: --compile <TAB><TAB>
+    if [[ "$cur" == --* && -z "$prev" ]] || [[ "$prev" == --* ]]; then
+    local opt="${cur%%=*}"  # strip anything after =
+        if [[ -n "$opt" && -n "${enum_opts[$opt]+_exists}" ]]; then
+            local choices="${enum_opts[$opt]}"
+            COMPREPLY=()
+        for choice in $choices; do
+            COMPREPLY+=( "$opt=$choice" )
+        done
+            compopt -o nospace
+            return 0
+        fi
+    fi
+
     ########################################################################
     # 6) MAIN CASE
     ########################################################################
@@ -287,6 +307,8 @@ _mettalog() {
             local optionName="${cur%%=*}"   # e.g. --output
             local partialVal="${cur#*=}"    # e.g. (whatever after =)
 
+        echo "DEBUG: optionName='$optionName' partialVal='$partialVal'" > /tmp/mettalog.debug
+
             # 1) If `optionName` is in dir_only_opts => do directory completion
             if [[ -n "${dir_only_opts[$optionName]+_exists}" ]]; then
                 local defaultVal="${dir_only_opts[$optionName]}"
@@ -294,7 +316,7 @@ _mettalog() {
                 if [[ -z "$partialVal" ]]; then
                     # user typed `--output=` with NO partial => insert default
                     COMPREPLY=( "${optionName}=${defaultVal}" )
-                    compopt -o nospace
+                compopt -o nospace
                     return 0
                 else
                     # user typed something => normal directory completion
@@ -303,8 +325,8 @@ _mettalog() {
                     if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
                         : # compopt -o nofilenames
                     else
-                        compopt -o nospace
-                    fi
+                compopt -o nospace
+            fi
                     # Prepend `--output=` etc. to each match
                     COMPREPLY=( "${COMPREPLY[@]/#/${optionName}=}" )
                     return 0
@@ -345,7 +367,7 @@ _mettalog() {
                 return 0
             fi
 
-            # 4) Otherwise fallback => let's do file completion by default
+            # 4) Otherwise fallback => file completion by default
             compopt -o nospace
             _complete_file_only "$partialVal"
             COMPREPLY=( "${COMPREPLY[@]/#/${optionName}=}" )
@@ -393,7 +415,7 @@ _mettalog() {
             if [[ ${#combined[@]} -eq 1 ]]; then
                 # if that single match ends with '=', skip trailing space
                 if [[ "${combined[0]}" == *= ]]; then
-                    compopt -o nospace
+            compopt -o nospace
                 fi
                 COMPREPLY=( "${combined[0]}" )
             else
@@ -495,12 +517,15 @@ _mettalog() {
         vis+=( "$f" )
     done
 
-    local metta_files=( $(
-        printf '%s\n' "${vis[@]}" \
-        | grep -E '\.metta$'
-    ) )
 
-    # 7c) Gather short options
+    local metta_files=(
+        $(
+            printf '%s\n' "${vis[@]}" \
+            | grep -E '\.metta$'
+        )
+    )
+
+    # 7c) Gather short options (but do not display them in fallback here; can enable if desired)
     local short_matches=()
 
     # 1) from short_opt_placeholder
@@ -535,7 +560,7 @@ _mettalog() {
         if [[ -z "${seenShort[$item]+_exists}" ]]; then
             seenShort["$item"]=1
             final_short+=( "$item" )
-        fi
+    fi
     done
 
     final_short=()
@@ -563,12 +588,17 @@ _mettalog() {
     final_long_clean=()
 
     # 7e) Combine them all
-    COMPREPLY=( "${slashDirs[@]}" "${metta_files[@]}" "${final_short[@]}" "${final_long_clean[@]}" )
+    COMPREPLY=(
+        "${slashDirs[@]}"
+        "${metta_files[@]}"
+        "${final_short[@]}"
+        "${final_long_clean[@]}"
+    )
     return 0
 }
 
 ##############################################################################
-# 9) REGISTER
+# 8) REGISTER COMPLETION
 ##############################################################################
 complete -r mettalog 2>/dev/null || true
 complete -o nospace -F _mettalog mettalog || true

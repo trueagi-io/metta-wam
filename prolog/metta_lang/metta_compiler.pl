@@ -505,14 +505,15 @@ extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
 compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
-  woc(compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted)).
+  compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
-  must_det_lls((
+  %must_det_lls
+  ((
   IN = ['=',HeadIsIn, AsBodyFnIn],
-  woc(metta_to_metta_macro_recurse(IN, OUT)),
+  woct(metta_to_metta_macro_recurse(IN, OUT)),
   OUT = ['=',HeadIs, AsBodyFn],
-  woc(compile_for_assert_3(HeadIs, AsBodyFn, Converted)))).
+  woct(compile_for_assert_3(HeadIs, AsBodyFn, Converted)))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -2584,10 +2585,10 @@ no_conflict_numbervars(Term):-
 %                   eval_args(_C, RetResult)).
 %
 functs_to_preds(I,OO):-
-   must_det_lls(functs_to_preds0(I,OO)),!.
+   functs_to_preds0(I,OO),!.
 
 functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
-   must_det_lls(compile_for_assert(H, B, OO)),!.
+   compile_for_assert(H, B, OO),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
