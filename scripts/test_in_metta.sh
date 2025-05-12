@@ -170,30 +170,9 @@ process_file() {
     DEBUG "==========================================================================="
 
     ##########################################################
-    # Decide (Well try to Guess) which is the hyperon_results (.answers file)
+    # The hyperon_results (.answers file)
     ##########################################################
-    export hyperon_results=(${file}\..*)     # gets any other names as well 
-    # List of excluded extensions 
-    # (because now that any file can be an answer file we need to still be able to use test directories for test that 
-    #   use things besides metta files    such as    
-    #    buffer_test.metta.md   uses_config_test.metta.mettalogrc  )
-    #  We really need a naming convertion for those generate file names that doenst already conflict with the test framework names  
-    #      current conflicts are
-    # 
-    #     transpile_test.metta.pl (the prolog version of the transpilation)
-    #     test.metta.html (created on test output for web results . (stored elsewhere most of the time))
-    #     large_file.metta.datalog - Created for test files larger than 20mb
-    #     uses_config_test.metta.mettalogrc  currently used for configs
-    #     a_mork_test.metta.xml ( XML translated metta files )
-    #     a_jetta_test.metta.js ( Tests created by Adam )
-    #     test.metta.bak (file backups)
-    #
-    #     Perhaps Stassa might use a predicatable naming convention that can be filtered 
-    #         test_error  -> result_test_error
-    #         unknown_error -> result_unknown_error
-    excluded_extensions=( "tmp" "bak" "html" "~" "sav" "ansi" "pl" "csv" 
-             "py" "txt" "md" "tee" "o" "dll" "so" "exe" "sh" "text" "rc" 
-            "mettalogrc" "bat" "c" "java" "datalog" "in" "out" "xml" "obo" )
+    export hyperon_results=(${file}\.answers)     # gets any other names as well 
     
     local base_name="$absfile"
     test_local_dir=$(dirname "$base_name")
@@ -217,49 +196,18 @@ process_file() {
 	    esac
 	done < "$rcfile"
     fi
-
+    
     ##########################################################
     # Decide whether or not to run hyperon test
     ##########################################################
     local take_hyperon_test=false
-    if [[ "$no_regen" -eq 1 ]]; then
+    if [[ "$regen_hyperon_results" -eq 0 ]]; then
         take_hyperon_test=false
-        DEBUG_H_E "--no-regen flag is set. Disabling generation of $file.answers"
+        DEBUG_H_E "--regen flag is not set. Disabling generation of $file.answers"
     else
-        local file_found=false
-        # Loop over all potential files matching the base pattern
-        for potential_file in "${base_name}\.".*; do
-            # Extract the extension of the file
-            extension="${potential_file##*.}"
-            exclude_item=false
-    
-            # Check if the extracted extension is in the excluded list
-            for excluded in "${excluded_extensions[@]}"; do
-                if [[ "$extension" == "$excluded" ]]; then
-                    exclude_item=true
-                    break
-                fi
-            done
-    
-            # If the extension is not in the excluded list, use the file
-            if [ -f "$potential_file" ]; then
-                if [[ "$exclude_item" == true ]]; then
-                    DEBUG_H_E "Skipped $potential_file"
-                else
-                    DEBUG_H_E "Found $potential_file"
-                    export hyperon_results=$potential_file
-                    file_found=true
-                    break  # break if you only need the first match
-                fi
-            fi
-            if [[ "$file_found" == true ]]; then
-                break
-            fi
-        done
     
         # Check if no file was found
-        if [[ "$file_found" == false ]]; then
-            export hyperon_results="${base_name}.answers"
+        if [[ ! -f "${hyperon_results}" ]]; then
             DEBUG_H_E "No alternate answer file extension: defaulting to ${hyperon_results} file."
             take_hyperon_test=true
         else
@@ -382,11 +330,8 @@ process_file() {
     
 	if [ -f "${hyperon_results}" ]; then
 	    if grep -q "Got" "${hyperon_results}"; then
-		DEBUG_H_E "${RED}Failures in Rust Answers  ${hyperon_results} assumed should be ${file}.test_error ${NC}"
-		if [[ "${hyperon_results}" != "${file}.test_error" ]]; then
-		    cat "${hyperon_results}" > "${file}.test_error"
-		    export hyperon_results="${file}.test_error"
-		fi 
+		  DEBUG_H_E "${RED}Failures in Rust Answers  ${hyperon_results}${NC}"
+		  echo ERROR_INFO >> "${hyperon_results}"
 	    fi
 	    echo INFO >> "${hyperon_results}"
 	fi
@@ -598,7 +543,7 @@ run_tests_auto_reply=""
 generate_report_auto_reply=""
 METTALOG_OUTPUT="$METTALOG_DIR/reports/tests_output/testrun_$(date +%Y%m%d_%H%M%S)"
 fresh=0
-no_regen=0
+regen_hyperon_results=0
 clean=0  # 0 means don't clean, 1 means do clean
 if_failures=0
 if_regressions=0
@@ -745,7 +690,7 @@ find_test_masks() {
                                 files_with_exclamation+=("$subfile")
                             fi
                         fi
-                    done < <(find "$file" -type f -print0)		    
+                    done < <(find -L "$file" -type f -print0)		    
                 fi
             fi
         done
@@ -762,15 +707,15 @@ function add_test_units_dir() {
 
       #set +v
          DEBUG "Finding files with 'test' in their name and apply $EXTRA_FIND_ARGS ..."
-         mapfile -t test_files < <(find "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -iname "*test*.metta")
+         mapfile -t test_files < <(find -L "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -iname "*test*.metta")
          DEBUG "'Test' files found: ${#test_files[@]}"
 
          DEBUG "Finding files containing 'assert' keyword and apply $MUST_HAVE ..."
-         mapfile -t assert_files < <(find "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl 'assert' -- $GREP_ARGS)
+         mapfile -t assert_files < <(find -L "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl 'assert' -- $GREP_ARGS)
          DEBUG "Assert<*> files found: ${#assert_files[@]} "
 
          DEBUG "Finding files containing execution directive (lines starting with '!') and apply $MUST_HAVE ..."
-         mapfile -t has_tests < <(find "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl '^!\([^!]*\)$' -- $GREP_ARGS)
+         mapfile -t has_tests < <(find -L "${BASE_DIR}" $EXTRA_FIND_ARGS -type f -name '*.metta' -print0 | xargs -0 grep -rl '^!\([^!]*\)$' -- $GREP_ARGS)
         DEBUG "Test directive files found: ${#has_tests[@]}"
 
 
@@ -923,7 +868,7 @@ show_help() {
     echo "  -y|--yes                   Automatically choose 'y' for rerunning all tests"
     echo "  -n|--no                    Automatically choose 'n'"
     echo "  --fresh                    Clean up by deleting any .answers files under directory"
-    echo "  --no-regen                 Do not create/recreate .answers files"
+    echo "  --regen                    Update missing or stale .answers files"
     echo "  --clean                    Clean up by deleting all .html files under directory"
     echo "  --continue                 The default. Continue running tests (Generating any missing html files)"
     echo "  --failures                 Rerun Unsuccessful tests"
@@ -1031,7 +976,7 @@ while [ "$#" -gt 0 ]; do
         --dry-run) dry_run=1 ;;
         --test) dry_run=0 ; add_to_list "$1" passed_along_to_mettalog ;;	    
         --fresh) fresh=1 ;;
-	--no-regen*) no_regen=1 ;;
+	--regen*) regen_hyperon_results=1 ;;
         --v=*) PYSWIP_VERSION="${1#*=}"; add_to_list "$1" passed_along_to_mettalog ;;
         --exclude=*) EXTRA_FIND_ARGS+=" ! -path ${1#*=}"; CANT_HAVE="${1#*=}" ;;
         --include=*) EXTRA_FIND_ARGS+=" -path ${1#*=}"; MUST_HAVE="${1#*=}" ;;
