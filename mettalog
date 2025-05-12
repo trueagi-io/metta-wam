@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-debug_this_script=false
+debug_this_script=true
 
 generate_junit_report=0
 ADD_COMPILE_ARG=()
@@ -903,8 +903,9 @@ function handle_args {
            --test=unit)
 		handle_args "${UNIT_TESTING_OPTS}"
 		add_to_list "--no-regen" RC_OPTIONS
-		add_to_list "$arg" PRE_METTALOG_OPTIONS
-		add_to_list "$arg" ADD_COMPILE_ARG
+		#add_to_list "$arg" PRE_METTALOG_OPTIONS
+		#add_to_list "$arg" ADD_COMPILE_ARG
+		use_test_script=1
                 continue
 		;;
 

@@ -1567,7 +1567,6 @@ on_set_value(Note,N,'False'):- nocut,
 
 on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
 on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
-on_set_value(_Note,abolish_trace,true):- nocut, ignore(abolish_trace),!.
 
 on_set_value(_Note,show, Value):-
     if_t( \+ prolog_debug:debugging(filter_default,_,_), set_debug(default,false)),
@@ -4152,7 +4151,7 @@ load_hook0(Load, Assertion) :- fail,
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
 
-load_hook1(_Load, Self, [Eq,H,B]) :- 
+load_hook1(_Load, Self, [Eq,H,B]) :-
   Eq == '=', assertz_if_new(metta_function_asserted(Self,H,B)),fail.
 
 
@@ -4460,7 +4459,7 @@ dont_bother(Atom):- Atom=@=[=, [_, _, _], _].
 dont_bother(Atom):- Atom = [V1, [Colon, Thing, V2], V3], Colon==':', nonvar(Thing),maplist(var,[V1,V2,V3]).
 
 metta_atom_added(_KB, Atom) :- dont_bother(Atom),!,fail.
-metta_atom_added(X, [Eq,A,B]) :- Eq =='=', !, 
+metta_atom_added(X, [Eq,A,B]) :- Eq =='=', !,
     woct(metta_function_asserted(X,A,B)).
 
 metta_atom_added(X, Y) :- nocut,

@@ -659,7 +659,7 @@ is_nodebug :- option_value(nodebug, false), !, fail.
 % By default spawned threads would need nodebug=false
 is_nodebug :- is_mettalog_rt, !.
 is_nodebug :- is_mettalog_release, !.
-is_nodebug :- is_user_repl, !.
+%is_nodebug :- is_user_repl, !.
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
@@ -802,8 +802,8 @@ is_douglas_machine:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolo
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
-sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_var(Sub,Source).
-sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),!,sub_term(Sub,Source).
+sub_var_safely(Sub,Source):- woct(sub_var(Sub,Source)).
+sub_term_safely(Sub,Source):- woct(sub_term(Sub,Source)).
 
 maybe_abort_trace:- \+ is_flag(abort_trace), !.
 maybe_abort_trace:- abort_trace.
@@ -1392,7 +1392,10 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 %   ?- trace_eval(my_predicate, trace_type, 1, self, input, output).
 %
 
-trace_eval(P4, _, D1, Self, X, Y) :- is_nodebug, !, call(P4, D1, Self, X, Y).
+trace_eval(P4, _, D1, Self, X, Y) :-
+  \+ is_debugging(e),
+  \+ is_debugging(eval), !,
+  call(P4, D1, Self, X, Y).
 
 
 trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
@@ -1404,7 +1407,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
             TraceLen is EX0 mod 500,               % Calculate TraceLen modulo 500.
             DR is 99 - (D1 mod 100),         % Calculate DR based on depth.
             PrintRet = _,                    % Initialize PrintRet.
-            option_else('trace-length', MaxTraceLen, 500), % Get trace-length option.
+            option_else('trace-length', MaxTraceLen, 5000), % Get trace-length option.
             %option_else('trace-depth', MaxTraceDepth, 30),   % Get trace-depth option.
             !
         )),
@@ -1413,9 +1416,10 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
         quietly((
             if_t((nop(stop_rtrace), TraceLen > MaxTraceLen), (
-                set_debug(eval, false),
+                set_option_value_interp(eval, notrace),
+                set_option_value_interp(e, notrace),
                 MaxP1 is MaxTraceLen + 1,
-                nop(format('; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)', [MaxP1])),
+                (format(user_error,'; Switched off tracing. For a longer trace: !(pragma! trace-length ~w)', [MaxP1])),
                 TraceTooLong = 1,
                 nop((start_rtrace, rtrace))
             ))
@@ -1427,7 +1431,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
     if_t(D1<0, (set_debug(devel,true))),
 
-    (\+ \+ if_trace((eval; ReasonsToTrace), (
+    ( if_trace((e;eval;ReasonsToTrace), (
         PrintRet = 1,
         if_t( TraceTooLong \== 1, indentq(DR, TraceLen, '-->', [Why, X]))
     ))),
@@ -1440,7 +1444,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
            flag(eval_num, EX1, EX1 + 1),
            PrintRet == 1,
            TraceTooLong \== 1,
-           ((Ret \=@= retval(fail), nonvar(Y))
+           ((Ret \=@= retval(fail), nop(nonvar(Y)))
                 -> indentq(DR, EX1, '<--', [Why, Y])
                 ; indentq(DR, EX1, '<--', [Why, Ret])
             )
@@ -1456,7 +1460,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
     Ret \=@= retval(fail).
 
-
+/*
 trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :-
     must_det_ll((
         notrace((
@@ -1496,6 +1500,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :-
        (notrace(ignore((( % Y\=@=X,
          if_t(DR<MaxTraceDepth,if_trace((eval;Why),one_shot(Display))))))))))),
         Ret \=@= retval(fail).
+*/
 
 %  (Ret\=@=retval(fail)->true;(fail,trace,(call(P4,D1,Self,X,Y)),fail)).
 one_shot(Display):- ignore(once(Display)),setarg(1,Display,true).

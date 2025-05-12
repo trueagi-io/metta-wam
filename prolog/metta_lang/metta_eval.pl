@@ -267,8 +267,7 @@ evals_to(XX,Y):- Y=='True',!, is_True(XX),!.
 
 %:- set_prolog_flag(optimise, false).
 %:- set_prolog_flag(access_level, system).
-check_term_depth(X,Y):- find_term_cycles(X), X=Y.
-check_term_depth(X,Y):- find_term_cycles(Y), X=Y.
+check_term_depth(X,Y):- fail, (find_term_cycles(X);find_term_cycles(Y)), X=Y.
 find_term_cycles(X):- find_term_cycles(100,X).
 find_term_cycles(_,X):- \+ acyclic_term_nat(X), notrace, nl,nl, writeq(X), nl,nl, break.
 find_term_cycles(N,X):- term_depth(X,Deep), Deep>N, notrace, nl,nl, writeq(X), nl,nl, break.
@@ -537,6 +536,11 @@ eval_09_11(Eq,RetType,Depth,Self,X,Y):-!,
          ((copy_term(X+Y,YC), YC = YY) -> (debug(metta(todo),'no_repeat in ~w: ~q',[ThisNth,X->Y])) ; (debug(metta(todo),'repeats in ~w: ~q',[ThisNth,X->Y]),fail))),
        nb_setval(previous_nths,NthL)).
 
+
+depth_overflow:- fail, notrace,ignore(nortrace),
+   trace,dumpST,break,throw(depth_limit_exceeded).
+
+maybe_bt(Why):- Why == depth, depth_overflow,fail.
 maybe_bt(Why):- maybe_trace(bt(Why)),!.
 %   maybe_bt:- notrace,maybe_trace(depth),bt.
 /*
@@ -551,6 +555,7 @@ eval_10(_Eq,_RetType,_Dpth,_Self,X,Y):- self_eval(X),!,unify_woc(X,Y).
 
 eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==[empty],!,fail.
 eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==['Empty'],!,fail.
+eval_10(_Eq,_RetType,_Dpth,_Self,X,Y):- X=@=['runreduction',_],!,Y=X.
 eval_10(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
 eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,X),
   eval_20(Eq,RetType,Depth,Self,X,Y).
@@ -2711,9 +2716,19 @@ pop_scope_item(N,V):- peek_current_scope(N,V),!.
 pop_scope_item(N,V):- ppp_default_value(N,V),!.
 
 
+
+eval_10(Eq,RetType,Depth,Self,['with-pragma!',List,X],Y):- !,
+ setup_call_cleanup(maplist(undoable_set_pragma(Self),List,Restore),
+                    eval_args(Eq,RetType,Depth,Self,X,Y),
+                    maplist(set_pragma(Self),Restore)).
+
+% @TODO so someting with Self
+set_pragma(_Self,[N,V]):- set_option_value_interp(N,V),!.
+undoable_set_pragma(Self,[N,V],[N,Was]):- (option_value(N,Was)->true;Was='Empty'), set_pragma(Self,[N,V]),!.
+
 eval_20(Eq,RetType,Depth,Self,['pragma!',Other,Expr],RetVal):- !,
    must_det_lls((into_name(Self,Other,Name),nd_ignore((eval_args(Eq,RetType,Depth,Self,Expr,Value),
-   set_option_value_interp(Name,Value))),  make_nop(RetType,Value,RetVal),
+   set_pragma(Self,[Name,Value]))),  make_nop(RetType,Value,RetVal),
     check_returnval(Eq,RetType,RetVal))).
 eval_20(Eq,RetType,_Dpth,Self,['transfer!',File],RetVal):- !, must((include_metta(Self,File),
    make_nop(RetType,Self,RetVal),check_returnval(Eq,RetType,RetVal))).
@@ -3632,13 +3647,13 @@ maybe_non_eval(AE,Len,N,Type):- var(Type),!, compiler_assertz(arg_type_n(AE,Len,
 maybe_non_eval(AE,Len,N,Type):- assert(arg_type_n(AE,Len,N,eval(Type))),!.
 
 
-do_each_arg(_Eq, _RetType, _ResIn, _Depth, _Self, _AE, _Len, _N, [], []):-!.
-do_each_arg(_Eq, _RetType, _ResIn, _Depth, _Self, _AE, Len, N, _, []) :- N > Len, !.
+do_each_arg(_Eq, _RetType, _ResIn, _Depth, _Self, _AE, _Len, _N, [], Out):- !, Out=[].
+do_each_arg(_Eq, _RetType, _ResIn, _Depth, _Self, _AE, Len, N, _, Out) :- N > Len, !, Out=[].
 do_each_arg(Eq, RetType, ResIn, Depth, Self, AE, Len, N, [In|More], [Out|Adjusted]) :-
     do_arg(Eq, RetType, ResIn, Depth, Self, AE, Len, N, In, Out), succ(N, Np1),
     do_each_arg(Eq, RetType, ResIn, Depth, Self, AE, Len, Np1, More, Adjusted).
 
-do_arg(_Eq, _RetType, _RsIn, _Dpth, _Slf, AE, Len, N, InOut, InOut) :- nonvar(AE), arg_type_n(AE, Len, N, no_eval(_)), !.
+do_arg(_Eq, _RetType, _RsIn, _Dpth, _Slf,  AE, Len,   N, InOut, InOut) :- nonvar(AE), arg_type_n(AE, Len, N, non_eval(_)), !.
 do_arg( Eq, _RetType, _RsIn, Depth, Self, _AE, _Len, _N, In, Out) :-
   eval_args(Eq, _, Depth, Self, In, Out).
 
@@ -4126,7 +4141,7 @@ eval_30(Eq,RetType,Depth,Self,H,BO):- can_be_ok(metta_eq_def,H),
   BL\==[],!,
  must_or_die((
   member(H->B0,BL),%nl,
-  print_templates(Depth,HC,rule(H,B0,_Nth,_Types)),
+  if_trace((e;eval;defn),print_templates(Depth,HC,rule(H,B0,_Nth,_Types))),
   eval_args(Eq,RetType,Depth,Self,B0,BO))).
 
 
@@ -4158,9 +4173,9 @@ eval_defn_success(_Eq,_RetType,Depth,_Self,X,Y,XX,B0,USED):-
   variable_count(B0,Bc1),variable_count(XX,Xc1),
   if_trace(e,color_g_mesg('#773700',indentq2(Depth,defs_used(XX-->B0,def(USED))))),
   if_trace(e,color_g_mesg('#993700',indentq2(Depth,variable_count(xc0=Xc0,wc1=Xc1,bc0=Bc0,bc1=Bc1)))),
-  if_trace(e,((
+  nop((if_trace(e,((
   ignore(show_tf((Bc0*2>=Bc1))),
-  ignore(show_tf((Xc0==Bc1)))))),
+  ignore(show_tf((Xc0==Bc1)))))))),
   if_trace(occurs,((ignore(find_term_cycles(300,X))))),
   maybe_trace(eval_defn_success).
 /*
@@ -4297,10 +4312,9 @@ eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !,
 
 
 
-eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, must_or_die((mapl_eval_args(Eq,RetType,Depth,Self,X,Y))).
-eval_30(Eq,RetType,Depth,Self,X,Y):-
-  subst_args_here(Eq,RetType,Depth,Self,X,Y).
-
+%eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, must_or_die((mapl_eval_args(Eq,RetType,Depth,Self,X,Y))).
+%eval_30(Eq,RetType,Depth,Self,X,Y):-  subst_args_here(Eq,RetType,Depth,Self,X,Y).
+eval_30(_Eq,_RetType,_Depth,_Self,X,Y):- unify_woc(X,Y).
 
 % functs_to_preds([Eq, H, B], Preds)
 eval_40_disabled(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
@@ -4308,9 +4322,14 @@ eval_40_disabled(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
       must_det_ll((rust_metta_run(exec([H|PredDecl]),Res),
       nop(write_src(res(Res))))).
 
-eval_40(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, mapl_eval_args(Eq,RetType,Depth,Self,X,Y).
+eval_40(Eq,_RetType,Depth,Self,[AIn|More],[AE|More]):- nonvar(AE),!,
+  (eval_args(Eq, _, Depth, Self, AIn, AE) *-> true ; AIn=AE).
 
-eval_40(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
+eval_40(_Eq,_RetType,_Depth,_Self,X,Y):- unify_woc(X,Y).
+
+eval_40_disabled(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, mapl_eval_args(Eq,RetType,Depth,Self,X,Y).
+
+eval_40_disabled(Eq,RetType,Depth,Self,[H|PredDecl],Res):-
    eval_args(Eq,_,Depth,Self,H,HH),
    % maybe_eval_subst ?
    subst_args_here(Eq,RetType,Depth,Self,[HH|PredDecl],Res).
