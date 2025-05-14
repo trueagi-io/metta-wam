@@ -3395,9 +3395,13 @@ save_html_of(_Filename) :-
     % Exit silently if no terminal output file is set.
     \+ tee_file(_TEE_FILE), !.
 save_html_of(_) :-
+    once((
+          has_loonit_results,
+          loonit_report)),
+    fail.
+save_html_of(_) :-
     % Exit if there are no results or HTML output is disabled.
-    \+ has_loonit_results,
-    \+ option_value('html', true).
+    \+ option_value('html', true), !.
 save_html_of(_) :-
     % Generate the summary report if applicable.
     loonit_report, !,
