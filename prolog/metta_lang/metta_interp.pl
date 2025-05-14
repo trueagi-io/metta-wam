@@ -3405,7 +3405,8 @@ save_html_of(_) :-
 save_html_of(_) :-
     % Generate the summary report if applicable.
     loonit_report, !,
-    writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>').
+    % @ todo have have loonits do this
+    nop(writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>')).
 save_html_of(_Filename) :- !.
 save_html_of(Filename) :-
     must_det_ll((
