@@ -773,7 +773,7 @@ function handle_args {
 
 	if [[ "$arg" == "--compatio" ]]; then
 	    #debug_this_script=false
-	    compatio=true        
+	    compatio=true
 	fi
 
 	if [[ "$arg" == "--debug" ]]; then
