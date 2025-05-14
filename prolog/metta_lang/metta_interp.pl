@@ -3236,7 +3236,7 @@ cmdline_load_file(Self, Filemask) :-
         (
             must_det_ll((
                 % Ensure compatibility checks and write debug output.
-                not_compatio((nl, write('; '), write_src(Src), nl)),
+                if_trace((loading; main), not_compatio((nl, write('; '), write_src(Src), nl))),
                 % Execute the file loading logic with error handling.
                 catch_red(Src),
                 !,
