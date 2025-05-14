@@ -905,6 +905,7 @@ For example:
 (is-pred isinf-math is_Inf)
 
 (: random-int (-> RandomGenerator Number Number Number))
+(iz random-int UseRust)
 (@doc random-int
   (@desc "Returns random int number from range defined by two numbers (second and third argument)")
   (@params (
@@ -913,6 +914,7 @@ For example:
     (@param "Range end")))
   (@return "Random int number from defined range"))
 
+(iz random-float UseRust)
 (: random-float (-> RandomGenerator Number Number Number))
 (@doc random-float
   (@desc "Returns random float number from range defined by two numbers (second and third argument)")
@@ -923,6 +925,7 @@ For example:
   (@return "Random float number from defined range"))
 
 (iz set-random-seed MeTTa)
+(iz set-random-seed UseRust)
 (: set-random-seed (-> RandomGenerator Number (->)))
 (@doc set-random-seed
   (@desc "Sets a new seed (second argument) for random number generator (first argument)")
@@ -932,6 +935,7 @@ For example:
   (@return "Unit atom"))
 
 (iz new-random-generator MeTTa)
+(iz new-random-generator UseRust)
 (: new-random-generator (-> Number RandomGenerator))
 (@doc new-random-generator
   (@desc "Creates new random number generator instance using seed as input (first argument)")
@@ -948,7 +952,7 @@ For example:
   (@return "Random number generator instance with default behavior"))
 
 ;; Some code still uses the old syntax
-(iz random-int MeTTa)
+(iz random-int MeTTaLog)
 (@doc random-int
   (@desc "Returns random int number from range defined by two numbers (first and second argument)")
   (@params (
@@ -957,7 +961,7 @@ For example:
   (@return "Random int number from defined range"))
 (is-op-2 random-int random)
 
-(iz random-float MeTTa)
+(iz random-float MeTTaLog)
 (@doc random-float
   (@desc "Returns random float number from range defined by two numbers (first and second argument)")
   (@params (

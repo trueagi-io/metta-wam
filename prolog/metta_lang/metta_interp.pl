@@ -5321,7 +5321,10 @@ asserted_do_metta2(Self, Load, PredDecl, Src) :-
 %   @arg X The term to check.
 never_compile(_):- option_value('exec',interp),!.
 %never_compile(X):- always_exec(X).
-toplevel_interp_only([S|_]):-  symbol(S), toplevel_interp_only_symbol(S).
+toplevel_interp_only(Var):- is_ftVar(Var),!.
+toplevel_interp_only(exec(G)):- !, toplevel_interp_only(G).
+toplevel_interp_only([S|_]):-  symbol(S), !, toplevel_interp_only_symbol(S).
+toplevel_interp_only(_):-!.
 toplevel_interp_only_symbol('import!').
 toplevel_interp_only_symbol('test-file!').
 toplevel_interp_only_symbol('test-file-p!').

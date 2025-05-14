@@ -385,7 +385,10 @@ transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom',
 'mc_n_1__call-p!'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 transpiler_predicate_nary_store(builtin, 'call-p', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[bool])).
-'mc_n_1__call-p'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
+'mc_n_1__call-p'(Fn,List,Ret) :- (apply(Fn,List)*->Ret='True';Ret='False').
+
+inline_comp(apply(Fn,[]), Fn).
+inline_comp(append(X,[],Y), true):- X=Y.
 
 %%%%%%%%%%%%%%%%%%%%% misc
 
@@ -468,16 +471,30 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
-use_python_main_rng(_):- \+ option_value('fast-random', false),!,fail.
-use_python_main_rng('&rng'):-!.
-use_python_main_rng(rng('&rng', _)).
+use_py_random:- option_value('py-random', true), !.
+use_py_random:- \+ option_value('fast-random', true).
+
+use_rust_random:- \+ option_value('rust-random', false), !.
+
+use_python_rng(X,Y):- notrace(use_python_rng0(X,Y)).
+use_python_rng0(rng(_, PyObj),PyObj):- py_is_object(PyObj),!.
+use_python_rng0(PyObj,PyObj):- py_is_object(PyObj),!.
+use_python_rng0(_, _):- \+ use_py_random,!,fail.
+use_python_rng0(RNGId, PyObj):- nb_bound(RNGId, rng(_, Value)), is_rng_or_main(Value,PyObj).
+use_python_rng0(RNGId, PyObj):- nb_bound(RNGId, Value), is_rng_or_main(Value,PyObj).
+use_python_rng0('&rng','random'):-!.
+use_python_rng0(rng('&rng', _),'random'):-!.
+
+is_rng_or_main(Value,PyObj):- py_is_object(Value),!,Value=PyObj.
+is_rng_or_main(_,'random').
 
 transpiler_predicate_store(builtin, 'random-int', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 
+'mc__1_3_random-int'(RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-int',RNGId, Min, Max]), N).
 'mc__1_3_random-int'(RNGId, Min, Max, N):-
-   use_python_main_rng(RNGId),!,
+   use_python_rng(RNGId,RNG),!,
    MaxM1 is Max-1,
-   py_call('random':'randint'(Min, MaxM1), N).
+   py_call(RNG:'randint'(Min, MaxM1), N).
 'mc__1_3_random-int'(RNGId, Min, Max, N):-
     maplist(must_be(integer), [Min, Max]),
     MaxM1 is Max -1,
@@ -486,9 +503,10 @@ transpiler_predicate_store(builtin, 'random-int', [3], '@doc', '@doc', [x(doeval
 
 transpiler_predicate_store(builtin, 'random-float', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 % !(let $rg (new-random-generator 1) ((random-float $rg 1 7) (random-float $rg 1 7)))
+'mc__1_3_random-float'(RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-float',RNGId, Min, Max]), N).
 'mc__1_3_random-float'(RNGId, Min, Max, N):-
-    use_python_main_rng(RNGId),!,
-    py_call('random':'uniform'(Min, Max), N).
+    use_python_rng(RNGId,RNG),!,
+    py_call(RNG:'uniform'(Min, Max), N).
 'mc__1_3_random-float'(RNGId, Min, Max, N):-
     with_random_generator(RNGId, random_float_between(Min, Max, N)).
 
@@ -501,9 +519,12 @@ transpiler_predicate_store(builtin, 'set-random-seed', [2], '@doc', '@doc', [x(d
     [((5 3 4) (5 3 4))]
 
 */
+
+'mc__1_2_set-random-seed'(RNGId, Seed, RetVal):- use_rust_random,!,rust_metta_run(exec(['set-random-seed',RNGId, Seed]), RetVal).
+
 'mc__1_2_set-random-seed'(RNGId, Seed, RetVal):-
-    use_python_main_rng(RNGId),!,
-    py_call('random':'seed'(Seed), _),
+    use_python_rng(RNGId,RNG),!,
+    py_call(RNG:'seed'(Seed), _),
     RetVal = [].
 'mc__1_2_set-random-seed'(RNGId, Seed, RetVal):-
      with_random_generator(RNGId, set_random(seed(Seed))),
@@ -513,6 +534,13 @@ transpiler_predicate_store(builtin, 'set-random-seed', [2], '@doc', '@doc', [x(d
 transpiler_predicate_store(builtin, 'new-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 
 % !(new-random-generator 66)
+'mc__1_1_new-random-generator'(Seed, RNGId) :- use_rust_random,!,
+        gensym('&rng_', RNGId),rust_metta_run(exec(['bind!',RNGId,['new-random-generator', Seed]]), _).
+'mc__1_1_new-random-generator'(Seed, RNG) :- use_py_random,!,
+    py_call('random':'Random'(Seed), PyObj),
+    gensym('&rng_', RNGId),
+    RNG = rng(RNGId, PyObj),
+    update_rng(RNG, PyObj).
 'mc__1_1_new-random-generator'(Seed, RNG) :-
     S = getrand(Old),
     G = (set_random(seed(Seed)),
@@ -531,7 +559,12 @@ transpiler_predicate_store(builtin, 'new-random-generator', [1], '@doc', '@doc',
 transpiler_predicate_store(builtin, 'reset-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 % !(reset-random-generator &rng_1) -> &rng_1
 % Not tested.
-'mc__1_1_reset-random-generator'(RNGId, RNGId ):-
+'mc__1_1_reset-random-generator'(RNGId, RNG):-use_rust_random,!,rust_metta_run(exec(['reset-random-generator', RNGId]), RNG).
+'mc__1_1_reset-random-generator'(RNGId, RNGId):-
+    use_py_random,!,py_call('random':'Random'(), PyObj),
+    RNG = rng(RNGId, PyObj),
+    update_rng(RNG, _).
+'mc__1_1_reset-random-generator'(RNGId, RNGId):-
    %getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
    % arg(2, RNGId, NewState) % maybe was previous state?
    update_rng(RNGId, _). % unbound RNG defaults to systems RNG until the first time it is used after reset
@@ -577,7 +610,7 @@ into_rng(rng(_, Current), Current):-!.
 into_rng(RNGId, Current):- nb_bound(RNGId, rng(_, Current)).
 
 % Set RNG
-update_rng(RNG, Current):- RNG = rng(RNGId, _), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
+update_rng(RNG, Current):- RNG = rng(RNGId, _), atomic(RNGId), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
 update_rng(RNGId, Current):- nb_setval(RNGId, rng(RNGId, Current)).
 
 % fake a built in one

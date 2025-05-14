@@ -1905,7 +1905,7 @@ self_extend_py(Self,Module,File,R):-
         % working_directory(PWD,PWD),maybe_py_add_lib_dir(PWD),
         % replace_in_string(["/"="."],Module,ToPython),
         % py_mcall(mettalog:import_module_to_rust(ToPython)),
-        % sformat(S,'!(import! &self ~w)',[Use]),rust_metta_run(S,R),
+        % sformat(S,'!(import! &self ~w)',[Use]),rust_metta_exec(S,R),
         R = [],
         % py_module_exists(Module),
         % py_call_warg(MeTTa:load_py_module(ToPython),Result),
@@ -1946,11 +1946,11 @@ file_to_modname(Filename,ModName):- symbol_concat(Name,'/_init_.py',Filename),!,
 file_to_modname(Filename,ModName):- symbol_concat(Name,'.py',Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName).
 
-%import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_run(S).
+%import_module_to_rust(ToPython):- sformat(S,'!(import! &self ~w)',[ToPython]),rust_metta_exec(S).
 
 %!  rust_metta_run(+S,-Run) is det.
 %
-%   Executes a metta command in the Rust environment by calling rust_metta_run1/2.
+%   Executes a metta command in the Rust environment by calling rust_metta_exec/2.
 %   If the command S is a variable, the execution is delayed using freeze/2 until S is
 %   instantiated.
 %
@@ -1961,11 +1961,10 @@ file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName
 %       ?- rust_metta_run('command_string', Result).
 %
 rust_metta_run(S,Run):- var(S),!,freeze(S,rust_metta_run(S,Run)).
-%rust_metta_run(exec(S),Run):- \+ callable(S),string_concat('!',S,SS),!,rust_metta_run(SS,Run).
-rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
-%rust_metta_run(I,O):-
+rust_metta_run(RR,Res):- rust_metta_exec(RR,L),!,member(ResL,L),member(Res,ResL).
 
-%!  rust_metta_run1(+I, -Run) is det.
+
+%!  rust_metta_exec(+I, -Run) is det.
 %
 %   The actual implementation of rust_metta_run/2 that handles executing the Rust
 %   metta command via py_ocall/2. It loads the hyperon module and converts the result
@@ -1975,11 +1974,16 @@ rust_metta_run(S,Run):- coerce_string(S,R),!,rust_metta_run1(R,Run).
 %   @arg Run The result of the execution.
 %
 %   @example Run a command in Rust and retrieve the result:
-%       ?- rust_metta_run1('some_command',Result).
+%       ?- rust_metta_exec('some_command',Result).
 %
-rust_metta_run1(I,O):- ensure_py_loaded(hyperon_module),!,py_ocall(hyperon_module:rust_metta_run(I),M),!,
+rust_metta_exec(S,Run):- var(S),!,freeze(S,rust_metta_exec(S,Run)).
+%rust_metta_exec(exec(S),Run):- \+ callable(S),string_concat('!',S,SS),!,rust_metta_exec(SS,Run).
+rust_metta_exec(S,Run):- coerce_string(S,R),!,rust_metta_exec1(R,Run).
+%rust_metta_exec(I,O):-
+
+rust_metta_exec1(I,O):- ensure_py_loaded(hyperon_module),!,py_ocall(hyperon_module:rust_metta_exec(I),M),!,
     rust_return(M,O).
-rust_metta_run1(R,Run):-
+rust_metta_exec1(R,Run):-
     with_safe_argv((((
         % ensure_rust_metta(MeTTa),
         py_call_warg(mettalog:rust_metta_run(R),Run)
@@ -2074,7 +2078,7 @@ to_py_char(R,Py):- load_hyperon_module,!,py_ocall(hyperon_module:rust_to_py_char
 as_var('_',_):- !.
 as_var(N,'$VAR'(S)):- sformat(S,'_~w',[N]),!.
 
-%!  rust_metta_run(+S) is det.
+%!  rust_metta_exec(+S) is det.
 %
 %   Executes a metta command S in the Rust environment and prints the result.
 %   After executing the command, it converts the Python object result into a Prolog
@@ -2083,9 +2087,9 @@ as_var(N,'$VAR'(S)):- sformat(S,'_~w',[N]),!.
 %   @arg S The metta command to be executed.
 %
 %   @example Run a command in the Rust metta environment:
-%       ?- rust_metta_run('command_string').
+%       ?- rust_metta_exec('command_string').
 %
-rust_metta_run(S):-rust_metta_run(S,Py),print_py(Py).
+rust_metta_exec(S):-rust_metta_exec(S,Py),print_py(Py).
 
  :-volatile(cached_py_op/2).
 
@@ -2161,7 +2165,7 @@ combine_term_l(T,P,ga(P,T)).
 
 %coerce_string(S,R):- atom(S),sformat(R,'~w',[S]),!.
 coerce_string(S,R):- string(S),!,S=R.
-coerce_string(S,R):- with_output_to(string(R),write_src(S)),!.
+coerce_string(S,R):- with_output_to(string(R),write_src_woi(S)),!.
 
 %!  load_functions_motto is det.
 %

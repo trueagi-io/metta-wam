@@ -539,7 +539,8 @@ is_final_write('#\\'(S)) :- !, format("'~w'", [S]).
 is_final_write('rng'(Id,_,_)) :- !, format("~w", [Id]).
 is_final_write('rng'(Id,_)) :- !, format("~w", [Id]).
 % Big number use underscores betten them
-is_final_write(V) :- integer(V), V>900_000, catch(format('~I',[V]),_,fail),!.
+is_final_write(V) :- integer(V), !, ( (V<1_000_000;no_src_indents)-> catch(format('~w',[V]),_,fail); catch(format('~I',[V]),_,fail)).
+
 % If Python mode is enabled and V is a Python object, format with `py_ppp/1`.
 is_final_write(V) :- py_is_enabled, notrace(catch((py_is_py(V), !, py_ppp(V)),_,fail)), !.
 % For lists like ['$VAR', Value], write the variable if the tail is empty.
