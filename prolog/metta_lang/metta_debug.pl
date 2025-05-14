@@ -656,11 +656,11 @@ is_mettalog_rt:- current_prolog_flag(mettalog_rt, true).
 
 % Check if the option 'nodebug' is explicitly set to false.  (ideally very rare - code has to relaly know about this)
 is_nodebug :- option_value(nodebug, false), !, fail.
+is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 % By default spawned threads would need nodebug=false
 is_nodebug :- is_mettalog_rt, !.
-is_nodebug :- is_mettalog_release, !.
+%is_nodebug :- is_mettalog_release, !.
 %is_nodebug :- is_user_repl, !.
-is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
     option_value(nodebug, true).
@@ -836,7 +836,7 @@ system:break_called:- prolog.
 % return true if we want to hide away developer chicanery
 is_mettalog_release:- current_prolog_flag(release, true),!.
 is_mettalog_release:- current_prolog_flag(devel, true),!, fail.
-is_mettalog_release:- \+ is_douglas_machine.
+%is_mettalog_release:- \+ is_douglas_machine, !.
 
 % runtime should change this to true
 woc(Goal):- !,woct(Goal).
@@ -1002,31 +1002,14 @@ currently_stdlib:- nb_current(compiler_context, Ctx), Ctx == corelib.
 
 filter_matches(Ele,Topic):- Ele=@=Topic,!.
 filter_matches(Ele,Topic):- string(Topic),!,contains_atom(Topic,Ele).
-filter_matches(Ele,Topic):- term_to_atom(Topic,Str),contains_atom(Str,Ele).
+filter_matches(Ele,Topic):- term_to_atom(Topic,Str),sub_atom(Str,_,_,_,Ele).
 
-filter_matches_var(Var, Topic):-
-    nb_current_listify(Var,List), member(Ele,List),filter_matches(Ele,Topic),!.
+filter_matches_var(Var, Topic):- filter_matches_var(Var, Topic,_).
+filter_matches_var(Var, Topic, [Var->Topic,Ele:List]):-
+   %nb_current_listify(Var,List), ((member(Ele,List),filter_matches(Ele,Topic)) -> nl,writeln(filter_matches_var(Var, Ele,Topic)) ; (writeq(filter_not_matches_var(Var,List,Topic)),fail)).
+   nb_current_listify(Var,List),!, member(Ele,List),filter_matches(Ele,Topic).
 nb_current_listify(N,L):- nb_current(N,V),V\==[],!,listify(V,L),!.
 nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
-
-unfiltered_topic(T):- nonvar(T), unfiltered_topic_cl(T).
-unfiltered_topic_cl(Topic):-
-  filter_matches_var(hideall, Topic), !,debug_info_now(unfiltered_topic,filter_matches_var(hideall, Topic)),fail.
-unfiltered_topic_cl(Topic):-
-  filter_matches_var(showall, Topic), !.
-unfiltered_topic_cl(Topic):-
-  option_value(filter_default,Show), Show==show,
-  filter_matches_var(hide, Topic), \+ filter_matches_var(show, Topic),debug_info_now(unfiltered_topic,filter_matches_var(hide, Topic)),!, fail.
-unfiltered_topic_cl(Topic):-
-  option_value(filter_default,Hide), Hide==hide, !,
-  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
-unfiltered_topic_cl(Topic):-
-  filter_matches_var(show, Topic), !. %\+ filter_matches_var(hide, Topic),!.
-  %wdmsg(filtered_topic(Topic)), fail.
-unfiltered_topic_cl(_):- is_douglas,!.
-unfiltered_topic_cl(_):- option_value(filter_default,_),!.
-
-
 
 :- volatile(thread_util:has_console/4).
 :- dynamic(did_setup_show_hide_debug/0).
@@ -1061,23 +1044,29 @@ dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
 dont_show_any_qcompile.
 
          debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
-        debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,ignore(debug_info_filtered( Topic, Info)))),_,fail)),!.
+        debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
+                   ignore(( debug_info_filtered( Topic, Info , NewTopic),!,
+                            if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
+                            if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
-debug_info_filtered( Topic, Info):- var(Topic),!, debug_info_filtered(unknown, Info).
-debug_info_filtered( always(Topic), Info):- !, once((filter_matches_var(hide,Topic);filter_matches_var(hideall,Topic);debug_info_now([always,Topic], Info))),!.
-debug_info_filtered( Topic,_Info):- filter_matches_var(hideall,Topic), !.
-debug_info_filtered( Topic, Info):- filter_matches_var(showall,Topic), !, debug_info_now([showall,Topic], Info),!.
-debug_info_filtered(_Topic,_Info):- is_qcompiling, dont_show_any_qcompile,!.
-
+debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
+debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
+debug_info_filtered( always(_Topic),  Info, fail(filter_matches_var(hideall,Info, How))):- filter_matches_var(hideall,Info, How),!.
+debug_info_filtered( always( Topic), _Info, [do,always,Topic]):-!.
+debug_info_filtered( Topic,_Info,fail(hideall,Topic,How)):- filter_matches_var(hideall,Topic, How), !.
+debug_info_filtered( Topic, Info, [How,showall,Topic]):- (filter_matches_var(showall,Topic, How); filter_matches_var(showall,Info, How)),!.
+debug_info_filtered( Topic,_Info,fail(dont_show_any_qcompile(Topic))):- is_qcompiling, dont_show_any_qcompile,!.
 % Roy requested to make it easy to hide stdlib building in transpiler
-debug_info_filtered(_Topic,_Info):- currently_stdlib,   (filter_matches_var(hideall,stdlib);    filter_matches_var(hide,stdlib)),!.
-debug_info_filtered(_Topic,_Info):- currently_stdlib, \+ filter_matches_var(showall,stdlib), \+ filter_matches_var(show,stdlib),!.
-
-debug_info_filtered( Topic, Info):- filter_matches_var(show, Topic), !, ignore(debug_info_now( Topic, Info)),!.
-
+debug_info_filtered( Topic,_Info,fail(currently_stdlib1(Topic,How))):- currently_stdlib,   (filter_matches_var(hideall,stdlib,How);    filter_matches_var(hide,stdlib,How)),!.
+debug_info_filtered( Topic,_Info,fail(currently_stdlib2(Topic))):- currently_stdlib, !, \+ filter_matches_var(showall,stdlib,_), \+ filter_matches_var(show,stdlib,_),!.
+debug_info_filtered( Topic,_Info, [How,show=Topic]):- filter_matches_var(show, Topic, How), !.
+debug_info_filtered( Topic,_Info, fail([default,hide,Topic])):- option_value(filter_default,Show), Show==hide, !.
+debug_info_filtered( Topic,_Info, fail([hide=Topic,How])):- filter_matches_var(hide, Topic, How), !.
+debug_info_filtered( Topic,_Info, [show,Topic,'']):- option_value(filter_default,Show), Show==show, !.
 %debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.
-debug_info_filtered( Topic, Info):- unfiltered_topic_and_info( Topic, Info),!,debug_info_now( Topic, Info),!.
-debug_info_filtered(_Topic,_Info):- !.
+%debug_info_filtered( Topic, Info, [unfiltered_topic_and_info,Topic]):- unfiltered_topic_and_info( Topic, Info),!.
+%debug_info_filtered( Topic,_,fail(unfiltered_topic_and_info(Topic))).
+debug_info_filtered( Topic,_Info, fail(Topic)):- !.
 
 
 one_ele_delistify([X],X):-!.
@@ -1131,7 +1120,7 @@ maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).
 maybe_nv(Info):- ground(Info),!.
 %maybe_nv(Info):- term_attvars(Info,AVs), AVs\==[],!, maplist(maybe_nv_each,AVs).
 %maybe_nv(Info):- sub_term_safe(DVar,Info),compound(DVar),compound_name_arity(Info,'$VAR',_),!.
-maybe_nv(Info):- sub_term_safely(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
+maybe_nv(Info):- numbervars(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
    term_attvars(Info,AVs), maplist(maybe_nv_each,AVs),numbervars(Info,CountUP,_,[attvar(bind),singleton(false)]).
 maybe_nv_each(V):- notrace(ignore(catch((attvar(V),get_attr(V,vn,Named),!,V='$VAR'(Named)),_,true))),!.
 

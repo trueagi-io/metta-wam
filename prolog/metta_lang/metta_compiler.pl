@@ -1770,7 +1770,7 @@ is_prolog_code(Info):- strip_module(Info,_,Neck), compound(Neck), compound_name_
 compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info),fail.
 
 compiler_assertz(Info):-
-   (is_prolog_code(Info)-> debug_info(prolog_code, t(Info)); debug_info(compiler_assertz, Info)),fail.
+   (is_prolog_code(Info)-> debug_info(assertz_code, t(Info)); debug_info(compiler_assertz, Info)),fail.
 
 compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    debug_info(compiler_assertz,correct_assertz(ca)),

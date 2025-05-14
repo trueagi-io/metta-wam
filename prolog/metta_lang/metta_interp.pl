@@ -1226,7 +1226,7 @@ option_value_name_default_type_help('synth-unit-tests', false, [false, true], "S
 % Optimization and Compilation
 option_value_name_default_type_help('optimize', true, [true, false], "Enable or disable optimization", 'Optimization and Compilation').
 option_value_name_default_type_help('transpiler', 'silent', ['silent', 'verbose'], "Sets the expected level of output from the transpiler", 'Output and Logging').
-option_value_name_default_type_help('compile', 'false', ['false', 'true', 'full'], "Compilation option: 'true' is safe vs 'full' means to include unsafe as well", 'Optimization and Compilation').
+option_value_name_default_type_help('compile', 'false', ['false', 'true', 'hybrid', 'full'], "Compilation option: 'true' is safe vs 'full' means to include unsafe as well", 'Optimization and Compilation').
 option_value_name_default_type_help('tabling', auto, [auto, true, false], "When to use predicate tabling (memoization)", 'Optimization and Compilation').
 
 % Output and Logging
@@ -1569,10 +1569,10 @@ on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
 on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
 
 on_set_value(_Note,show, Value):-
-    if_t( \+ prolog_debug:debugging(filter_default,_,_), set_debug(default,false)),
+    if_t( \+ prolog_debug:debugging(filter_default,_,_), set_option_value(filter_default,hide)),
     listify(Value,List), maplist(set_tf_debug(true),List).
 on_set_value(_Note,hide,Value):-
-    if_t( \+ prolog_debug:debugging(filter_default,_,_), set_debug(default,true)),
+    if_t( \+ prolog_debug:debugging(filter_default,_,_), (set_option_value(filter_default,show))),
     listify(Value,List), maplist(set_tf_debug(false),List).
 
 on_set_value(_Note,log,true):-
@@ -3405,8 +3405,7 @@ save_html_of(_) :-
 save_html_of(_) :-
     % Generate the summary report if applicable.
     loonit_report, !,
-    % @ todo have have loonits do this
-    nop(writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>')).
+    nop(writeln('<br/> <a href="#" onclick="window.history.back(); return false;">Return to summaries</a><br/>')),!.
 save_html_of(_Filename) :- !.
 save_html_of(Filename) :-
     must_det_ll((
@@ -4190,10 +4189,10 @@ load_hook_compiler(Load, Self, Assertion):-
     asserta(did_load_hook_compiler(Load, Self, Assertion)),
     Assertion = [Eq, _, _], Eq == '=', !,
     % Convert functions to predicates.
-    % debug_info(load_hook_compiler,(Load, Self, Assertion)),
-    ignore(catch(load_compiler(Load, Self, Assertion),_,true)),!.
+    debug_info(assert_hooks,load_hook_compiler(Load, Self, Assertion)),
+    catch(load_compiler(Load, Self, Assertion),Err,debug_info(always(assert_hooks),skip_load_hook_compiler(Err,Load, Self, Assertion))),!.
 load_hook_compiler(Load, Self, Assertion):-
-  nop(debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion))).
+  debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion)).
 
 load_compiler(Load, Self, Assertion):-
     woc(functs_to_preds(Assertion, Preds)), !,
@@ -7249,8 +7248,8 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-%nts1 :- !. % Disable redefinition by cutting execution.
-%nts1 :- is_flag(notrace),!.
+nts1 :- !. % Disable redefinition by cutting execution.
+nts1 :- is_flag(notrace),!.
 nts1 :- no_interupts(nts1r).
 nts1r :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
