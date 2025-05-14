@@ -3236,7 +3236,7 @@ cmdline_load_file(Self, Filemask) :-
         (
             must_det_ll((
                 % Ensure compatibility checks and write debug output.
-                not_compatio((nl, write('; '), write_src(Src), nl)),
+                if_trace((loading; main), not_compatio((nl, write('; '), write_src(Src), nl))),
                 % Execute the file loading logic with error handling.
                 catch_red(Src),
                 !,
@@ -3395,9 +3395,13 @@ save_html_of(_Filename) :-
     % Exit silently if no terminal output file is set.
     \+ tee_file(_TEE_FILE), !.
 save_html_of(_) :-
+    once((
+          has_loonit_results,
+          loonit_report)),
+    fail.
+save_html_of(_) :-
     % Exit if there are no results or HTML output is disabled.
-    \+ has_loonit_results,
-    \+ option_value('html', true).
+    \+ option_value('html', true), !.
 save_html_of(_) :-
     % Generate the summary report if applicable.
     loonit_report, !,
@@ -6491,6 +6495,8 @@ rtrace_this(_Call) :-
 fbug(_) :-
     % If compatibility mode (`is_compatio`) is active, do nothing.
     is_compatio, !.
+fbug(_) :-
+    \+ is_debugging(fbug),!.
 fbug(_) :- % If the 'log' option is not set to 'true', do nothing.
     option_value('log', 'false'), !.
 fbug(Info) :-
