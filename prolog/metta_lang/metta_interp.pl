@@ -6495,6 +6495,8 @@ rtrace_this(_Call) :-
 fbug(_) :-
     % If compatibility mode (`is_compatio`) is active, do nothing.
     is_compatio, !.
+fbug(_) :-
+    \+ is_debugging(fbug),!.
 fbug(_) :- % If the 'log' option is not set to 'true', do nothing.
     option_value('log', 'false'), !.
 fbug(Info) :-

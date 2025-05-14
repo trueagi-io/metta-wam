@@ -95,6 +95,8 @@
 fbug(_) :-
     % if compatibility mode is enabled.
     is_compatio, !.
+fbug(_) :-
+    \+ is_debugging(fbug),!.
 fbug(P) :-
     % Write output to `user_error` if `write_src/1` exists.
     format("~N"), current_predicate(write_src/1),
