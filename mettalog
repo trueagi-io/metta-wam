@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-debug_this_script=true
+debug_this_script=false
 
 generate_junit_report=0
 ADD_COMPILE_ARG=()
