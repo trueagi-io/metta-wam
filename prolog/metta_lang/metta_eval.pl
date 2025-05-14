@@ -1369,6 +1369,8 @@ eval_20(Eq,_RetType,Depth,Self,['assertNotAlphaEqualToResult',X,Y],RetVal):- !,
          findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          equal_enough_for_test_renumbered_l(not_alpha_equ,XX,YY), RetVal).
 
+
+loonit_assert_source_tf_empty(_Src,_XX,_YY,_Goal,_Check,RetVal):- (option_value(test,skip);option_value(test,false)), !, RetVal = [].
 loonit_assert_source_tf_empty(Src,XX,YY,Goal,Check,RetVal):-
     loonit_assert_source_tf(Src,Goal,Check,TF),
     tf_to_empty(TF,['Error',Src,['\nGot: ',XX,'\nEXP: ',YY]],RetVal).
