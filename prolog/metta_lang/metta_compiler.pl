@@ -2227,12 +2227,14 @@ print_itree(C):- \+ compound(C),!,nl_print_tree(C).
 print_itree((H:-B)):- B==true,!,print_itree((H)).
 print_itree((M:H)):- M==user,!,print_itree((H)).
 print_itree(((M:H):-B)):- M==user,!,print_itree((H:-B)).
-print_itree(T):- nl_print_tree(T).
+print_itree(T):- \+ \+ nl_print_tree(T).
 
 nl_print_tree(PT):-
   stream_property(Err, file_no(2)),
   mesg_color(PT, Color),
+  numbervars(PT,55,_,[attvar(skip),singletons(true)]),
   maybe_subcolor(PT,CPT),
+
   with_output_to(Err,(format('~N'),ansicall(Color,ppt(CPT)),format('~N'))).
 
 maybe_subcolor(PT,CPT):- fail, nb_current(focal_symbol,S), mesg_color(PT, Color), wots(Str,ansicall(Color,ppt1(S))),
