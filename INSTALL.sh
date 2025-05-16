@@ -625,6 +625,8 @@ if false && confirm_with_default "N" "Show README.md"; then
     echo -en "${NC}"
 fi
 
+./mettalog --exe=force --compile-only
+
 # ## Final output and clean-up
 # After the installation, return to the original working directory and print a success message.
 cd "$RPWD"  # Return to the original directory.

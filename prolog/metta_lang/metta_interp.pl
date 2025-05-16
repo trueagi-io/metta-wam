@@ -3474,6 +3474,7 @@ clear_space(S) :-
     nop(retractall(metta_type(S, _, _))),
     % Remove asserted atoms for the space.
     retractall(metta_atom_asserted(S, _)),
+    retractall(metta_other_asserted(S, _)),
     retractall(metta_function_asserted(S,_ , _)),
     !.
 
@@ -4155,10 +4156,11 @@ load_hook0(Load, Assertion) :- fail,
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
 
-load_hook1(_Load, Self, [Eq,H,B]) :-
-  Eq == '=', compiler_assertz(metta_function_asserted(Self,H,B)),fail.
+metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == '=', compiler_assertz(metta_function_asserted(Self,H,B)),!.
+metta_asserted_hook(_Load, Self, StuffHook):- send_to_pl_file(metta_other_asserted(Self,StuffHook)),!.
 
-
+load_hook1(Load, Self, StuffHook) :-
+    once(metta_asserted_hook(Load, Self, StuffHook)), fail.
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
     once(use_metta_compiler),!,
@@ -4364,6 +4366,10 @@ tf_to_trace(X,X).
 
 % Dynamic and Multifile Declaration: Ensures that predicates can be modified at runtime and extended across
 % multiple files.
+:- dynamic(metta_function_asserted/3).
+:- multifile(metta_function_asserted/3).
+:- dynamic(metta_other_asserted/2).
+:- multifile(metta_other_asserted/2).
 :- dynamic(metta_function_asserted/3).
 :- multifile(metta_function_asserted/3).
 :- dynamic(metta_atom_asserted/2).
@@ -5684,6 +5690,7 @@ do_metta(From, comment(Load), Self, [Expr], Out) :- !,
 do_metta(From, comment(Load), Self, Cmt, Out) :-
     % Write the comment and handle specific cases of MettaLog comments.
     if_trace((loading;load,comment),write_comment(Cmt)), !,
+    send_to_pl_file(call(write_comment('% ',Cmt))),
     ignore((symbolic(Cmt),
             symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
             !,

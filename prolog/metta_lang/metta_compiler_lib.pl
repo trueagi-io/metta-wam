@@ -297,7 +297,7 @@ transpiler_predicate_store(builtin, 'limit!', [2], '@doc', '@doc', [x(doeval,eag
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
 transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(noeval,eager,[])).
-'mc__1_1_superpose'(S,R) :- should_be(is_list,S), member(R,S).
+'mc__1_1_superpose'(S,R) :- should_be(is_list,S), member(E,S), as_p1_exec(E,R).
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
 

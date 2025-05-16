@@ -2085,6 +2085,8 @@ metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount) :-
 load_metta_buffer(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, load_metta_buffer(TopSelf, Filename).
 load_metta_buffer(Self, Filename) :-
     % Set execution number, load answer file, and reset execution.
+    atom_concat(Filename,'.pl',PlFile), % append .pl to the .metta name
+    write_new_plfile(Filename,PlFile),
     set_exec_num(Filename, 1),
     load_answer_file(Filename),
     set_exec_num(Filename, 0),
@@ -2093,11 +2095,14 @@ load_metta_buffer(Self, Filename) :-
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
     (forall(
-        user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
+        user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount),
          (must_det_lls(maybe_name_vars(NamedVarsList)),
+        with_option(loading_file, Filename,
+         with_option(file_loc, LineCount,
+         (
           (must_det_lls(do_metta(file(Filename), Mode, Self, Expr, _O)) -> true
         ;  (ignore(rtrace(do_metta(file(Filename), Mode, Self, Expr, _O2))),
-                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))).
+                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr)))))))))).
 
 
 %!  is_file_stream_and_size(+Stream, -Size) is nondet.
@@ -2269,9 +2274,12 @@ writeqln(W, Q):- nop(format(W, '; ~q~n', [Q])).
 %
 %   @arg Cmt The comment to write, if permitted by conditions.
 %
+
 write_comment(_):- is_compatio, !.
 write_comment(_):- silent_loading, !.
-write_comment(Cmt):- connlf, format(';;~w~n', [Cmt]).
+write_comment(Cmt):- write_comment(';;',Cmt).
+write_comment(Prefix,Cmt):- string(Cmt),split_string(Cmt, "\n", "\r", Lines), Lines\==[], Lines\=[_], !, maplist(write_comment(Prefix),Lines).
+write_comment(Prefix,Cmt):- connlf, format('~w ~w~n', [Prefix,Cmt]).
 
 %!  do_metta_cmt(+Self, +Cmt) is det.
 %

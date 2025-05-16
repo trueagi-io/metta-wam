@@ -529,6 +529,7 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %ensure_callee_site(Space,FnName,LenArgs),
    remove_stub(Space,FnName,LenArgs),
    sum_list(LenArgs,LenArgsTotal),
+   nb_setval('$info_id',fa(FnName,LenArgsTotal)),
    LenArgsTotalPlus1 is LenArgsTotal+1,
    % retract any stubs
 
@@ -1784,19 +1785,66 @@ compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
 compiler_assertz(Info):-
      once(try_optimize_prolog(ca,Info,Info2)),
      Info\=@=Info2,!,
-     debug_info(compiler_assertz,optimize_prolog(ca)),
+     info_identity(Info,Id),
+     debug_info(compiler_assertz,optimized_code(Id,ca)),
      compiler_assertz(Info2).
-
 
 compiler_assertz(Info):- skip_redef(Info), !, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
+    send_to_pl_file(Info),
     once(locally_clause_asserted(Assert)->true;assertz(Assert)),!.
+
+
+send_to_pl_file(Info):-
+  ignore((option_value(loading_file,MeTTaFile), MeTTaFile \==[], atom(MeTTaFile),
+    atom_concat(MeTTaFile,'.pl',PlFile), % append .pl to the .metta name
+    ensure_compiled_created(MeTTaFile,PlFile),
+    setup_call_cleanup(open(PlFile, append, Stream, [encoding(utf8)]),
+      with_output_to(Stream, maybe_write_info(Info)), close(Stream)))),!.
+
+maybe_write_info(Info):- var(Info),!.
+maybe_write_info(call(Info)):- ignore(Info),!.
+maybe_write_info(Info):- string(Info),!,writeln(Info).
+maybe_write_info(Info):- \+ compound(Info),!, ppt(Info).
+maybe_write_info(Info):- \+ \+ (no_conflict_numbervars(Info), maybe_write_info0(Info)).
+maybe_write_info0((H:-B)):-  into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt(Info2), nl,nl.
+maybe_write_info0(Info):- into_plnamed(Info,Info2), !, writeq(Info2),writeln('.').
+
+
+ensure_compiled_created(MeTTaFile,PlFile) :-
+    \+ exists_file(PlFile),!,write_new_plfile(MeTTaFile,PlFile).
+ensure_compiled_created(MeTTaFile,PlFile) :-
+ nop(((
+    time_file(PlFile, PlTime),
+    time_file(MeTTaFile, MeTTaTime),
+    if_t(PlTime < MeTTaTime,write_new_plfile(MeTTaFile,PlFile))))).
+
+write_new_plfile(MeTTaFile,PlFile):-
+    setup_call_cleanup(open(PlFile, write, Stream, [encoding(utf8)]),
+      with_output_to(Stream, setup_pl_file(MeTTaFile)), close(Stream)),!.
+
+setup_pl_file(MeTTaFile) :-
+    get_time(Now),
+    format_time(atom(Timestamp), '%FT%T%:z', Now),
+    format('%% Generated from ~w at ~w~n', [MeTTaFile, Timestamp]),
+    writeln(":- set_prolog_flag(mettalog_rt,true)."),
+    writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl=false'])."),
+    writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl'])."),
+    writeln(":- include(library(metta_lang/metta_transpiled_header))."),
+    writeln("%:- ensure_loaded(library(metta_lang/metta_interp))."),
+    writeln(":- ensure_loaded(library(metta_rt)). % avoids starting the REPL"),
+    writeln(":- style_check(-discontiguous)."),
+    writeln(":- style_check(-singleton)."),
+    nl.
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
     %ignore(Expr='$VAR'(ExprV)), debug_var(ExprV,Expr).
+
+info_identity(_Info,ID):- nb_current('$info_id',ID),!.
+info_identity(_Info,info_id).
 
 
 skip_redef(Info):- \+ callable(Info),!,fail.
@@ -1852,7 +1900,7 @@ extract_constraints(V,Types,V=Types).
 label_vns(S,G,E):- term_variables(G,Vars),assign_vns(S,Vars,E),!.
 assign_vns(S,[],S):-!.
 assign_vns(N,[V|Vars],O):- get_attr(V,vn,_),!, assign_vns(N,Vars,O).
-assign_vns(N,[V|Vars],O):- format_e(atom(VN),'~w',['$VAR'(N)]),
+assign_vns(N,[V|Vars],O):- format(atom(VN),'~w',['$VAR'(N)]),
   put_attr(V,vn,VN), N2 is N+1, assign_vns(N2,Vars,O).
 
 label_arg_types(_,_,[]):-!.
@@ -2274,15 +2322,19 @@ symbol_in_sub(N, Symbol, P):- is_list(P),!,member(S,P),symbol_in(N, Symbol, S).
 symbol_in_sub(N, Symbol, P):- arg(_,P,S),symbol_in(N, Symbol, S).
 
 
-compiler_data(metta_compiled_predicate/3).
-compiler_data(is_transpile_call_prefix/3).
-compiler_data(is_transpile_impl_prefix/3).
-compiler_data(transpiler_stub_created/3).
-compiler_data(transpiler_depends_on/4).
-compiler_data(transpiler_clause_store/9).
-compiler_data(transpiler_predicate_nary_store/9).
-compiler_data(transpiler_predicate_store/7).
-%compiler_data(transpiler_stored_eval/3).
+compiler_data_mf(metta_compiled_predicate/3).
+compiler_data_mf(is_transpile_call_prefix/3).
+compiler_data_mf(is_transpile_impl_prefix/3).
+compiler_data_mf(transpiler_stub_created/3).
+compiler_data_mf(transpiler_depends_on/4).
+compiler_data_mf(transpiler_clause_store/9).
+compiler_data_mf(transpiler_predicate_nary_store/9).
+compiler_data_mf(transpiler_predicate_store/7).
+compiler_data_mf(metta_function_asserted/3).
+compiler_data_mf(metta_other_asserted/2).
+compiler_data_mf(transpiler_stored_eval/3).
+
+compiler_data(F/A):- compiler_data_mf(F/A).
 compiler_data(metta_atom/2).
 compiler_data(metta_type/3).
 compiler_data(metta_defn/3).
@@ -2300,7 +2352,7 @@ ensure_callee_site(Space,Fn,Arity):-
     compiler_assertz(transpiler_stub_created(Space,Fn,Arity)),
     transpile_call_prefix(Fn,Arity,CFn),
 
-((current_predicate(CFn/Arity) -> true ;
+ ((current_predicate(CFn/Arity) -> true ;
   must_det_lls((( functor(CallP,CFn,Arity),
     CallP @.. [CFn|Args],
     transpile_impl_prefix(Fn,Arity,IFn),

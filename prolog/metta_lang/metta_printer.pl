@@ -889,10 +889,11 @@ w_color(Color,Goal):-
            wots(Text,Goal),
            with_output_to(user_error,ansi_format([fg(Color)], '~w', [Text]))))).
 
-materialize_vns(Term,NewTerm):- term_attvars(Term,List), materialize_vnl(List,Term,MidTerm),!,term_variables(MidTerm,MList),materialize_vnl(MList,MidTerm,NewTerm),!.
-materialize_vnl([],IO,IO):-!.
-materialize_vnl([Var|List],Term,NewTerm):- get_vnamed(Var,VNamed), subst001(Term,Var,VNamed,MidTerm),!,materialize_vnl(List,MidTerm,NewTerm).
-materialize_vnl([_|List],Term,NewTerm):- materialize_vnl(List,Term,NewTerm).
+materialize_vns(Term,NewTerm):- materialize_vns(get_vnamed,Term,NewTerm).
+materialize_vns(P2,Term,NewTerm):- term_attvars(Term,List), materialize_vnl(P2,List,Term,MidTerm),!,term_variables(MidTerm,MList),materialize_vnl(P2,MList,MidTerm,NewTerm),!.
+materialize_vnl(_P2,[],IO,IO):-!.
+materialize_vnl(P2,[Var|List],Term,NewTerm):- call(P2,Var,VNamed), subst001(Term,Var,VNamed,MidTerm),!,materialize_vnl(P2,List,MidTerm,NewTerm).
+materialize_vnl(P2,[_|List],Term,NewTerm):- materialize_vnl(P2,List,Term,NewTerm).
 
 get_snamed(Var, SNamed):- attvar(Var), get_attr(Var,vn,NN), atom_string(NN,SNamed),!.
 get_snamed(Var, SNamed):- var(Var), get_var_name(Var, N), atom_string(N,SNamed),!.
@@ -904,7 +905,15 @@ get_vnamed(Var, _Named):- \+ compound(Var),!,fail.
 get_vnamed('$VAR'(N), VNamed):- into_vnamed(N,VNamed),!.
 get_vnamed('$'(N), VNamed):- into_vnamed(N,VNamed),!.
 
-into_vnamed(S,'$VAR'(NS)):- mvar_str(S,N),sformat(NS,'_~w',[N]).
+dvar_form(T):- \+ compound(T),!,fail.
+dvar_form('$VAR'(_)).
+
+into_plnamed(Term,NewTerm):- sub_term_safely(Sub,Term), \+ dvar_form(Sub), get_vnamed(Sub,VName),into_vnamed(VName,Replc),Replc\==Sub,!,subst001(Term,Sub,Replc,MidTerm),!,into_plnamed(MidTerm,NewTerm).
+into_plnamed(Term,NewTerm):- materialize_vns(into_vnamed,Term,NewTerm).
+
+into_vnamed(S,'$VAR'(NS)):- mvar_str(S,N), vn_format(N,NS).
+vn_format(N,NS):- integer(N),NS=N.
+vn_format(N,NS):- format(atom(NS),'_~w',[N]).
 
 %!  write_src_woi(+Term) is det.
 %
