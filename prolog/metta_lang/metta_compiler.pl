@@ -214,6 +214,8 @@ as_p1_exec(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_exec(ispeEn(ERet,ECode,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
+as_p1_exec(rtrace(T),TRet) :- !, rtrace(as_p1_exec(T,TRet)).
+as_p1_exec(call(P1,T),TRet) :- !, call(P1,as_p1_exec(T,TRet)).
 as_p1_exec(X,X) :- !.
 
 
@@ -222,6 +224,8 @@ as_p1_expr(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_expr(ispeEn(_,_,NRet),NRet).
 as_p1_expr(ispeEnN(_,_,NRet,NCode),NRet) :- !, call(NCode).
 as_p1_expr(ispeEnNC(_,_,NRet,NCode,CCode),NRet) :- !,call(CCode),call(NCode).
+as_p1_expr(rtrace(T),TRet) :- !, rtrace(as_p1_expr(T,TRet)).
+as_p1_expr(call(P1,T),TRet) :- !, call(P1,as_p1_expr(T,TRet)).
 as_p1_expr(X,X) :- !.
 
 create_p1(URet,[],[ispu,URet]) :- !.

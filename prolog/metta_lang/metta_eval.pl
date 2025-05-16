@@ -637,11 +637,11 @@ eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):- !,
 
 
 eval_20(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
-eval_20(Eq,RetType,_Dpth,_Slf,Name,Y):-
+eval_20(Eq,RetType,Depth,Self,Name,Y):-
     atom(Name), !,
       (Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
-       Y = Name)),
+       eval_30(Eq,RetType,Depth,Self,Name,Y))),
       sanity_check_eval(eval_20_atom,Y).
 
 eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
@@ -2153,7 +2153,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['cons-atom'|TwoArgs],[H|T]):-!, must_unify(Tw
 eval_20(_Eq,_RetType,_Depth,_Self,['decons',OneArg],[H,T]):- fail, !, must_unify(OneArg,[H|T]).
 eval_20(_Eq,_RetType,_Depth,_Self,['cons'|TwoArgs],[H|T]):- fail, !, must_unify(TwoArgs,[H,T]).
 
-should_be(P1,Term):- call(P1,Term)-> true ; (debug_info(porting,hyperon_throws_error(should_be(P1,Term))),fail).
+should_be(P1,Term):- (callable(P1), call(P1,Term) )-> true ; (debug_info(always(porting),hyperon_throws_error(should_be(P1,Term))),bt,fail).
 
 %eval_20(Eq,RetType,Depth,Self,['get-doc'|Args],Res):- !,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-get-doc'|Args],Res)),!.
 %eval_20(Eq,RetType,Depth,Self,['help!'|Args],Res):-!,with_all_spaces(eval_args(Eq,RetType,Depth,Self,['metta-help!'|Args],Res)),!.
@@ -3217,6 +3217,8 @@ no_repeat_variant_var(Var):- no_repeats_var(Var).
 %no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
 
 % first eval_30
+eval_30(Eq,RetType,Depth,Self,Var,Out):- var(Var), !, throw(var_eval_30(Eq,RetType,Depth,Self,Var,Out)).
+eval_30(Eq,RetType,Depth,Self,[Var|Types],Out):- var(Var), !, debug_info(always(eval),warn_eval_30(Eq,RetType,Depth,Self,[Var|Types],Out)),!,[Var|Types]=Out.
 eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
    unique_elements_by(P2,List,RetVal).
 

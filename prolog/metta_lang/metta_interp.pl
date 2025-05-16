@@ -4156,7 +4156,7 @@ load_hook0(Load, Assertion) :- fail,
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
 
 load_hook1(_Load, Self, [Eq,H,B]) :-
-  Eq == '=', assertz_if_new(metta_function_asserted(Self,H,B)),fail.
+  Eq == '=', compiler_assertz(metta_function_asserted(Self,H,B)),fail.
 
 
 load_hook1(Load, Self, Fact) :-

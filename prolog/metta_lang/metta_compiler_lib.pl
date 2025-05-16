@@ -141,39 +141,37 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 transpiler_predicate_store(builtin, '+', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_+'(A,B,R) :- integer(A),integer(B),!,plus(A,B,R).
-'mc__1_2_+'(A,B,R) :- number(A),number(B),!,R is A+B.
+'mc__1_2_+'(A,B,R) :- should_be(number,A),should_be(number,B),!,R is A+B.
 'mc__1_2_+'(A,B,['+',A,B]).
 
 transpiler_predicate_store(builtin, '-', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_-'(A,B,R) :- integer(A),integer(B),!,plus(B,R,A).
-'mc__1_2_-'(A,B,R) :- number(A),number(B),!,R is A-B.
+'mc__1_2_-'(A,B,R) :- should_be(number,A),should_be(number,B),!,R is A-B.
 'mc__1_2_-'(A,B,['-',A,B]).
 
 transpiler_predicate_store(builtin, '*', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_*'(A,B,R) :- number(A),number(B),!,R is A*B.
+'mc__1_2_*'(A,B,R) :- should_be(number,A),should_be(number,B),!,R is A*B.
 'mc__1_2_*'(A,B,['*',A,B]).
 
 transpiler_predicate_store(builtin, '/', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_/'(A,B,R) :- number(A),number(B),!,R is A/B.
+'mc__1_2_/'(A,B,R) :- should_be(number,A),should_be(number,B),!,R is A/B.
 'mc__1_2_/'(A,B,['/',A,B]).
 
 transpiler_predicate_store(builtin, '%', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-'mc__1_2_%'(A,B,R) :- number(A),number(B),!,R is A mod B.
+'mc__1_2_%'(A,B,R) :- should_be(number,A),should_be(number,B),!,R is A mod B.
 'mc__1_2_%'(A,B,['%',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% logic
 
 %transpiler_predicate_store(builtin, 'and', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc__1_2_and(A,B,B) :- atomic(A), A\=='False', A\==0, !.
+%mc__1_2_and(A,B,B) :- should_be(metta_bool,A), A\=='False', A\==0, !.
 %mc__1_2_and(_,_,'False').
 
 %transpiler_predicate_store(builtin, 'or', [2], '@doc', '@doc', [x(doeval,eager), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-%mc__1_2_or(A,B,B):- (\+ atomic(A); A='False'; A=0), !.
+%mc__1_2_or(A,B,B):- (\+ should_be(metta_bool,A); A='False'; A=0), !.
 %mc__1_2_or(_,_,'True').
 
 transpiler_predicate_store(builtin, 'and', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
-mc__1_2_and(A,B,C) :- atomic(A), A\=='False', A\==0, !, as_p1_exec(B,C).
+mc__1_2_and(A,B,C) :- should_be(symbol,A), A\=='False', A\==0, !, as_p1_exec(B,C).
 mc__1_2_and(_,_,'False').
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['and',A,B],!,
@@ -193,7 +191,7 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
 transpiler_predicate_store(builtin, 'or', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,lazy,[boolean])], x(doeval,eager,[boolean])).
-mc__1_2_or(A,B,C):- (\+ atomic(A); A='False'; A=0), !, as_p1_exec(B,C).
+mc__1_2_or(A,B,C):- (\+ should_be(metta_bool,A); A='False'; A=0), !, as_p1_exec(B,C).
 mc__1_2_or(_,_,'True').
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = ['or',A,B],!,
@@ -213,9 +211,12 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Conv
   assign_or_direct_var_only(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN).
 
 transpiler_predicate_store(builtin, 'not', [1], '@doc', '@doc', [x(doeval,eager,[boolean])], x(doeval,eager,[boolean])).
-mc__1_1_not(A,'False') :- atomic(A), A\=='False', A\==0, !.
+mc__1_1_not(A,'False') :- should_be(metta_bool,A), A\=='False', A\==0, !.
 mc__1_1_not(_,'True').
 
+metta_bool(A):- is_ftVar(A), !,fail.
+metta_bool('True').
+metta_bool('False').
 %%%%%%%%%%%%%%%%%%%%% comparison
 
 % not sure about the signature for this one
@@ -225,19 +226,19 @@ transpiler_predicate_store(builtin, '==', [2], '@doc', '@doc', [x(doeval,eager,[
 'mc__1_2_=='(A,B,TF) :- as_tf(A=@=B,TF).
 
 transpiler_predicate_store(builtin, '<', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc__1_2_<'(A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
+'mc__1_2_<'(A,B,R) :- should_be(number,A),should_be(number,B),!,(A<B -> R='True' ; R='False').
 'mc__1_2_<'(A,B,['<',A,B]).
 
 transpiler_predicate_store(builtin, '>', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc__1_2_>'(A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
+'mc__1_2_>'(A,B,R) :- should_be(number,A),should_be(number,B),!,(A>B -> R='True' ; R='False').
 'mc__1_2_>'(A,B,['>',A,B]).
 
 transpiler_predicate_store(builtin, '>=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc__1_2_>='(A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
+'mc__1_2_>='(A,B,R) :- should_be(number,A),should_be(number,B),!,(A>=B -> R='True' ; R='False').
 'mc__1_2_>='(A,B,['>=',A,B]).
 
 transpiler_predicate_store(builtin, '<=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-'mc__1_2_<='(A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
+'mc__1_2_<='(A,B,R) :- should_be(number,A),should_be(number,B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
 'mc__1_2_<='(A,B,['<=',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% lists
@@ -282,23 +283,26 @@ transpiler_predicate_store(builtin, union, [2], '@doc', '@doc', [x(doeval,lazy,[
 %'mc__1_2_intersection'(S1,S2,R)
 
 transpiler_predicate_store(builtin, unique, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_1_unique'(S,R) :- term_variables(S+R,Vars), no_repeats_var(NR), as_p1_exec(S,R), NR=Vars.
+'mc__1_1_unique'(S,R) :- no_repeats_var(NR), as_p1_exec(S,R), R=NR.
 
 transpiler_predicate_store(builtin, 'unique-atom', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-'mc__1_1_unique-atom'(S,R) :- list_to_set(S,R).
+'mc__1_1_unique-atom'(S,R) :- should_be(is_list,S), list_to_set(S,R).
 
 transpiler_predicate_store(builtin, limit, [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_2_limit'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+'mc__1_2_limit'(N,S,R) :- should_be(number,N),N>=0,limit(N,as_p1_exec(S,R)).
 
 transpiler_predicate_store(builtin, 'limit!', [2], '@doc', '@doc', [x(doeval,eager,[number]),x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_2_limit!'(N,S,R) :- integer(N),N>=0,limit(N,as_p1_exec(S,R)).
+'mc__1_2_limit!'(N,S,R) :- should_be(number,N),N>=0,limit(N,as_p1_exec(S,R)).
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
 transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(noeval,eager,[])).
-'mc__1_1_superpose'(S,R) :- member(R,S).
+'mc__1_1_superpose'(S,R) :- should_be(is_list,S), member(R,S).
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
+
+/*
+'mc__1_1_collapse'(rtrace(T),O):-!, rtrace('mc__1_1_collapse'(T,O)).
 'mc__1_1_collapse'(ispu(X),[X]) :- !.
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
@@ -314,7 +318,8 @@ transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,laz
 'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),!,findall(_,(Common,Code),X),maplist(=(A),X).
 % --liberr=fail will continue on to findall
 'mc__1_1_collapse'(X,_) :- library_error("Error in library collapse: ~w",[X]).
-'mc__1_1_collapse'(S,R) :- findall(Ret,as_p1_exec(S,Ret),R).
+*/
+'mc__1_1_collapse'(S,List) :- findall(Ret,(as_p1_exec(S,Ret),Ret\=='Empty'),List).
 
 % --liberr=fail will fail after printing
 library_error(Fmt,Args):- sformat(S,Fmt,Args),format_e('~w',[S]),debug_info(liberr,S),!,
@@ -614,7 +619,7 @@ into_rng(rng(_, Current), Current):-!.
 into_rng(RNGId, Current):- nb_bound(RNGId, rng(_, Current)).
 
 % Set RNG
-update_rng(RNG, Current):- RNG = rng(RNGId, _), atomic(RNGId), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
+update_rng(RNG, Current):- RNG = rng(RNGId, _), should_be(atomic,RNGId), !, nb_setarg(2, RNG, Current), nb_setval(RNGId, RNG).
 update_rng(RNGId, Current):- nb_setval(RNGId, rng(RNGId, Current)).
 
 % fake a built in one
