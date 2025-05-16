@@ -89,8 +89,8 @@ self_eval0('%Undefined%').
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
 self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Len),!.
-self_eval_ht(F,X):- sub_term_safely(E,[F|X]), nonvar(E), E\==[], E\=='.', ( \+ is_list(E) ),!,fail.
-self_eval_ht(_,_).
+%self_eval_ht(F,X):- sub_term_safely(E,[F|X]), nonvar(E), E\==[], E\=='.', ( \+ is_list(E) ),!,fail.
+%self_eval_ht(_,_).
 
 
 unify_woc(X,Y):- unify_with_occurs_warning(X,Y).
@@ -160,6 +160,8 @@ is_self_eval_l_fa('quote',1).
 is_self_eval_l_fa('Error',_).
 is_self_eval_l_fa('{...}',_).
 is_self_eval_l_fa('[...]',_).
+is_self_eval_l_fa('Evaluation',_).
+
 
 self_eval(X):- notrace(self_eval0(X)).
 
@@ -252,7 +254,6 @@ eval_20(X,Y):- current_self(Self),
    eval_20(DEPTH,Self,X,Y).
 %eval_20(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_20(Eq,RetType,X)),fail.
 eval_20(Depth,Self,X,Y):- eval_20('=',_RetType,Depth,Self,X,Y).
-
 
 eval_40(X,Y):- current_self(Self),
    default_start_depth(DEPTH),
@@ -348,6 +349,8 @@ deepen(Depth,Depth2):- Depth2 is Depth -1.
 
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
+eval_01(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,
+   unify_woc(X,Y).
 eval_01(Eq,RetType,Depth,Self,X,Y):-
     % X\==[empty], % speed up n-queens x60 but breaks other things
 
@@ -844,6 +847,10 @@ eval_20(_Eq,RetType,Depth,Self,['py-atom-call!',SymSpecialize|Args],Res):- is_li
     maplist(as_prolog_x(Depth,Self), Args , Adjusted),!,
     py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res).
 
+% first eval_40
+eval_40(Eq,RetType,Depth,Self,Var,Out):- var(Var), !, throw(var_eval_40(Eq,RetType,Depth,Self,Var,Out)).
+eval_40(Eq,RetType,Depth,Self,[Var|Types],Out):- var(Var), !, throw(var_eval_40(Eq,RetType,Depth,Self,[Var|Types],Out)).
+
 eval_40(Eq,RetType,Depth,Self,['py-atom-call',Sym|Args],Res):-
     eval_20p(Eq,RetType,Depth,Self,['py-atom-call!',Sym|Args],Res).
 
@@ -855,7 +862,6 @@ eval_40(Eq,RetType,Depth,Self,['py-dot-call',Sym|Args],Res):-
     eval_20p(Eq,RetType,Depth,Self,['py-dot-call!',Sym|Args],Res).
 
 
-eval_40(=,_RetType,_,_,[Var|Types],_):- var(Var), !, throw(var_eval_40([Var|Types])).
 eval_40(=,_RetType,_,_,['make-var'|Types],Var):- !, 'mx__1_0+_make-var'(Types,Var).
 
 eval_40(=,_RetType,_,_,['bless-var',Var|Types],Var):- !, 'mx__1_1+_bless-var'(Var,Types,Var).
@@ -3210,6 +3216,7 @@ eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
 no_repeat_variant_var(Var):- no_repeats_var(Var).
 %no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
 
+% first eval_30
 eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
    unique_elements_by(P2,List,RetVal).
 
@@ -4084,7 +4091,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 
 % get a guarded definition
-eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
+eval_30_disabled(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
@@ -4317,6 +4324,7 @@ eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !,
 %eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, must_or_die((mapl_eval_args(Eq,RetType,Depth,Self,X,Y))).
 %eval_30(Eq,RetType,Depth,Self,X,Y):-  subst_args_here(Eq,RetType,Depth,Self,X,Y).
 eval_30(_Eq,_RetType,_Depth,_Self,X,Y):- unify_woc(X,Y).
+% last eval_30
 
 % functs_to_preds([Eq, H, B], Preds)
 eval_40_disabled(_Eq,_RetType,_Dpth,_Slf,[H|PredDecl],Res):- fail,
@@ -4328,6 +4336,7 @@ eval_40(Eq,_RetType,Depth,Self,[AIn|More],[AE|More]):- nonvar(AE),!,
   (eval_args(Eq, _, Depth, Self, AIn, AE) *-> true ; AIn=AE).
 
 eval_40(_Eq,_RetType,_Depth,_Self,X,Y):- unify_woc(X,Y).
+% last eval_40
 
 eval_40_disabled(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, mapl_eval_args(Eq,RetType,Depth,Self,X,Y).
 

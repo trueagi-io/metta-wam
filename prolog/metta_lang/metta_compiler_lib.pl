@@ -39,26 +39,30 @@ transpiler_predicate_store(builtin, 'get-type', [1], '@doc', '@doc', [x(noeval,e
 'mc__1_1_get-type'(Obj,Type) :- current_self(Self), !, get_type(10, Self, Obj,Type).
 
 %%%%%%%%%%%%%%%%%%%%% if
+is_If('If').
+is_If('if').
 
-transpiler_predicate_store(builtin, 'if', [3], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+transpiler_predicate_store(builtin, IF, [3], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])):- is_If(IF).
 'mc__1_3_if'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
-transpiler_predicate_store(builtin, 'if', [2], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])).
+'mc__1_3_If'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
+transpiler_predicate_store(builtin, IF, [2], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])):- is_If(IF).
 'mc__1_2_if'(If,Then,Result) :- (If*->Result=Then;fail).
+'mc__1_2_If'(If,Then,Result) :- (If*->Result=Then;fail).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then,Else],!,
+  Convert = [IF,Cond,Then,Else],nonvar(IF),is_If(IF),!,
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
   append(CondCode1,[[native(is_True),CondResult1]],If),
   compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then],!,
-  debug_info(compatiblity_error,f('unsupported if/2 in hyperon: ~w',[['if',Cond,Then]])),
+  Convert = [IF,Cond,Then],nonvar(IF),is_If(IF),!,
+  debug_info(always(ompatiblity_error),f('unsupported if/2 in hyperon: ~w',[[IF,Cond,Then]])),
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
   append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,'Empty',Converted, ConvertedN).
+  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,[empty],Converted, ConvertedN).
 
 compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN):-
   f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
@@ -102,7 +106,7 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert,Conve
    append(ValueCode1a,Converted0,Converted),
    append(ValueCode1a,Converted0N,ConvertedN).
 
-compile_flow_control_case(_,_,RetResult,RetResultN,x(doeval,eager,[]),_,[],[[assign,RetResult,'Empty']],[[assign,RetResultN,'Empty']]) :- !.
+compile_flow_control_case(_,_,RetResult,RetResultN,x(doeval,eager,[]),_,[],[[native(mc__1_0_empty),RetResult]],[[native(mc__1_0_empty),RetResultN]]) :- !.
 compile_flow_control_case(HeadIs,LazyVars,RetResult,RetResult,LazyEval,ValueResult,[[Match,Target]|Rest],Converted,ConvertedN) :-
    f2p(HeadIs,LazyVars,MatchResult,MatchResultN,LazyRetMatch,Match,MatchCode,MatchCodeN),
    lazy_impedance_match(LazyRetMatch,x(doeval,eager,[]),MatchResult,MatchCode,MatchResultN,MatchCodeN,MatchResult1,MatchCode1),
@@ -131,7 +135,7 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Next, _Empty, EvalFailed) 
     case_list_to_if_list(Var, Tail, Next, Result, EvalFailed).
 case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFailed) :-
     case_list_to_if_list(Var, Tail, Next, IfEvalFailed, EvalFailed),
-    Out = ['if', [metta_unify, Var, Pattern], Result, Next].
+    Out = [IF, [metta_unify, Var, Pattern], Result, Next].
 */
 
 %%%%%%%%%%%%%%%%%%%%% arithmetic
@@ -667,7 +671,7 @@ transpiler_predicate_store(builtin, 'eval-string', [1], ['String'], 'Atom', [x(d
 transpiler_predicate_store(builtin,'eval-in-only', [1], ['Symbol','Atom'], 'Atom', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_eval-in-only'(Where,Eval,Res) :-
     eval_in_only(Where,Eval,Res).
-    
+
 transpiler_predicate_nary_store(builtin, 'py-atom', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-atom'(SymRef,Specialize,ResO) :-
    py_atom(SymRef,Res), specialize_res(Res,Specialize,ResO).

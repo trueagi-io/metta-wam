@@ -1097,6 +1097,9 @@ debug_info_now(Topic, Info):-
  must_det_ll((
   stream_property(X, file_no(2)),
   %original_user_error(X),
+  stream_property(Out, file_no(1)),
+  flush_output(Out),
+  flush_output(X),
   format(X,'~N',[]))),
     must_det_ll(topic_color_string(Topic, TopicColor, TopicStr)),
     must_det_ll((
@@ -1105,14 +1108,44 @@ debug_info_now(Topic, Info):-
   maybe_nv(Info),
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
-      format(X,'~@: ~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,debug_pp_info(RNVInfo))]))))).
+ (should_comment(Topic, Info) ->
+   format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
+    format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
+  )))).
+
+%w_no_crlf(G):- call(G),!.
+w_no_crlf(G):- with_output_to(string(S),call(G)),trim_ws_right(S,TS),write(TS).
+
+%trim_ws_right(S,S):-!.
+trim_ws_right(S,TS):- \+ string(S), catch(text_to_string(S,SS),_,sformat(SS,'~w',[S])),!,trim_ws_right(SS,TS).
+trim_ws_right("",""):-!.
+trim_ws_right(S,TS):- string_concat(SS,' ',S),!,trim_ws_right(SS,TS).
+trim_ws_right(S,TS):- string_concat(SS,'\t',S),!,trim_ws_right(SS,TS).
+trim_ws_right(S,TS):- string_concat(SS,'\r',S),!,trim_ws_right(SS,TS).
+trim_ws_right(S,TS):- string_concat(SS,'\n',S),!,trim_ws_right(SS,TS).
+trim_ws_right(S,TS):- S=TS.
 
 err_out(G):-
    stream_property(X, file_no(2)),
    current_output(Was),
    scce_orig(set_output(X),G,set_output(Was)).
 
+should_comment(Topic, _Info):- is_ftVar(Topic),!.
+should_comment(_Topic, Info):- is_ftVar(Info),!.
+should_comment(List, Info):- is_list(List), \+ \+ ((member(Topic,List);last(List,Topic)), \+ should_comment(Topic, Info)), !,fail.
+should_comment(show=Topic, Info):- !, should_comment(Topic, Info).
 
+should_comment(compiler_assertz, _Info):- !,fail.
+should_comment(CodeTopic, _Info):- is_code_topic(CodeTopic), !,fail.
+should_comment(_Topic, Info):- \+ compound(Info),!.
+should_comment(_Topic, Info):- is_list(Info),!.
+should_comment(_Topic, f(_,_)):- !.
+should_comment(_Topic, (:- _Info)):- !, fail.
+should_comment(Topic, Info):- compound_name_arguments(Info,_,[Arg]),!,should_comment(Topic, Arg).
+should_comment(_Topic, _Info).
+
+is_code_topic(assertz_code).
+is_code_topic(compiler_assertz).
 
 maybe_ansicall(Nil,Goal):- Nil == [],!,call(Goal).
 maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).
@@ -1125,8 +1158,8 @@ maybe_nv(Info):- numbervars(Info,15,CountUP,[attvar(skip),singleton(true)]),!,
 maybe_nv_each(V):- notrace(ignore(catch((attvar(V),get_attr(V,vn,Named),!,V='$VAR'(Named)),_,true))),!.
 
 %debug_pp_info(Info):- !, writeln(Info),!.
-debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),!,debug_pp_cmpd(Info,F,Args).
-debug_pp_info(Info):-  write_src(Info).
+debug_pp_info(Info):- compound(Info), compound_name_arguments(Info,F,Args),debug_pp_cmpd(Info,F,Args),!.
+debug_pp_info(Info):- write_src(Info).
 
 debug_pp_cmpd(_Info,'c',[Call]):- !, ignore(catch(notrace( call(Call)),E,ansicall(red,(nl,writeln(err(E,Call),nl))))),!.
 debug_pp_cmpd(_Info,'t',[Call]):- !, debug_pp_tree(Call).
@@ -1141,19 +1174,19 @@ debug_pp_now(Info):- pp_as_src(Info),!,debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_tree(Info),!.
 
-print_tree_safe1(PTS):- catch(wots(S,print_tree(PTS)),_,fail),writeln(S),!.
-print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),writeln(S),!.
+print_tree_safe1(PTS):- catch(wots(S,print_tree_with_final(PTS,".")),_,fail),writeln(S),!.
+print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),write(S),writeln("."),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
 ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
 %ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),throw(E),fail)),!.
 %pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
 %pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
-ppt0(PTS):- writeln(PTS),!.
+ppt0(PTS):- write(PTS),writeln("."),!.
 
 ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
-ppt(O):- format('~N '),ppt0(O),format('~N').
+ppt(O):- format('~N'),ppt0(O),format('~N').
 %ppt0(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.
@@ -1432,10 +1465,11 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
         \+ \+ (
            flag(eval_num, EX1, EX1 + 1),
            PrintRet == 1,
+           (Y\==X -> Color=green;Color=[]),
            TraceTooLong \== 1,
            ((Ret \=@= retval(fail), nop(nonvar(Y)))
-                -> indentq(DR, EX1, '<--', [Why, Y])
-                ; indentq(DR, EX1, '<--', [Why, Ret])
+                -> ansicall(Color,indentq(DR, EX1, '<--', [Why, Y]))
+                ; ansicall(red,indentq(DR, EX1, '<--', [Why, Ret]))
             )
         )
     )),

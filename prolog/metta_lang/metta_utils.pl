@@ -702,7 +702,7 @@ pp_m(C, Cl) :-
 %
 %   @arg Cl The clause to be printed or outputted.
 pp_q(Cl):-
-  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true)]), print_tree_with_final(Cl,"."))))))).
+  notrace((format('~N'), ignore(( \+ ((numbervars(Cl,0,_,[singletons(true),attvar(skip)]), print_tree_with_final(Cl,"."))))))).
 
 %!  ncatch(:G, +E, :F) is det.
 %

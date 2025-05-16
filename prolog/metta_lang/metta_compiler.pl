@@ -685,14 +685,14 @@ determine_eager_vars(lazy,lazy,A,[]) :- fullvar(A),!.
 determine_eager_vars(eager,eager,A,[A]) :- fullvar(A),!.
 determine_eager_vars(_,eager,A,EagerVars) :- is_list(A),A=[Var|_],fullvar(Var),!,  % avoid binding free var to 'if'
    maplist(determine_eager_vars(eager),_,A,EagerVars0),foldl(union_var,EagerVars0,[],EagerVars).
-determine_eager_vars(Lin,Lout,[IF,If,Then,Else],EagerVars) :- atom(IF),IF='if',!,
+determine_eager_vars(Lin,Lout,[IF,If,Then,Else],EagerVars) :- atom(IF), is_If(IF),!,
    determine_eager_vars(eager,_,If,EagerVarsIf),
    determine_eager_vars(Lin,LoutThen,Then,EagerVarsThen),
    determine_eager_vars(Lin,LoutElse,Else,EagerVarsElse),
    intersect_var(EagerVarsThen,EagerVarsElse,EagerVars0),
    union_var(EagerVarsIf,EagerVars0,EagerVars),
    (LoutThen=eager,LoutElse=eager -> Lout=eager ; Lout=lazy).
-determine_eager_vars(Lin,Lout,[IF,If,Then],EagerVars) :- atom(IF),IF='if',!,
+determine_eager_vars(Lin,Lout,[IF,If,Then],EagerVars) :- atom(IF),is_If(IF),!,
    determine_eager_vars(eager,_,If,EagerVars),
    determine_eager_vars(Lin,Lout,Then,_EagerVarsThen).
 % for case, treat it as nested if then else
@@ -885,7 +885,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
-    once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert);atomic(Convert);self_eval(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
 
 f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
      as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs
@@ -896,6 +896,7 @@ as_is_data_term(Term):- is_valid_nb_state(Term),!.
 as_is_data_term(Term):- \+ callable(Term),!.
 as_is_data_term(Term):- compound(Term),!,compound_name_arity(Term,F,A),as_is_no_convert_f_a(F,A).
 as_is_no_convert_f_a(rng,2).
+as_is_no_convert_f_a('Evaluation',_).
 
 
 /*

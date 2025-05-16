@@ -1065,8 +1065,8 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
     notrace((
      if_t(is_interactive(From), \+ \+ maybe_add_history(Self, BaseEval, NamedVarsList)),
      % Was --exec=skip but this is the type of directive we'd do anyways
-     if_t((From = file(_), option_value('exec',skip)), \+ \+ color_g_mesg('#da7036', (write('\n; Always-Exec: '), write_src_woi(TermV),nl,
-        write_w_attvars(Term)))),
+     if_t((From = file(_), option_value('exec',skip)), \+ \+ color_g_mesg('#da7036',
+      (write('\n; Always-Exec: '), write_src_woi(TermV),nl, write_w_attvars(Term)))),
 
     % Initialize the result variable, with FOut to hold the final output
     Result = res(FOut),
