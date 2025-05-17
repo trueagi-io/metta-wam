@@ -149,9 +149,9 @@ fi
 add_to_list() {
     local flag=$1
     local -n options=$2
-    if [[ -n "$flag" ]]; then
+    #if [[ -n "$flag" ]]; then
         options+=("$flag")
-    fi
+    #fi
 }
 
 # Function to remove a flag from a list
@@ -563,9 +563,9 @@ function load_rc_file {
 add_to_list() {
     local item="$1"
     local -n list_ref="$2"
-    if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
+    #if [[ ! " ${list_ref[*]} " =~ " $item " ]]; then
         list_ref+=("$item")
-    fi
+    #fi
 }
 
 add_to_front() {
@@ -909,7 +909,7 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*|--show*|--test*|-O)
+           --douglas*|--show*|--hide*|--test*|-O)
 		#add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue
