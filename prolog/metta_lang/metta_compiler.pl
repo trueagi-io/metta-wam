@@ -216,7 +216,7 @@ as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
 as_p1_exec(rtrace(T),TRet) :- !, rtrace(as_p1_exec(T,TRet)).
 as_p1_exec(call(P1,T),TRet) :- !, call(P1,as_p1_exec(T,TRet)).
-as_p1_exec(X,X) :- !.
+as_p1_exec(X,Y) :- as_p1_expr(X,S),eval(S,Y).
 
 
 as_p1_expr(ispu(URet),URet) :- !.
@@ -2433,7 +2433,7 @@ maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,[],Arg,ArgO).
 :- dynamic(maybe_optimize_prolog_term/4).
 :- dynamic(maybe_optimize_prolog_assertion/4).
 
-try_optimize_prolog(Y,Convert,Optimized):-
+try_optimize_prolog(Y,Convert,Optimized):- fail,
    catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,Optimized)),!.
 try_optimize_prolog(_,Optimized,Optimized).
 /*

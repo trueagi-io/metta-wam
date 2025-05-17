@@ -221,9 +221,9 @@ metta_bool('False').
 
 % not sure about the signature for this one
 transpiler_predicate_store(builtin, '==', [2], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
-%'mc__1_2_=='(A,B,TF):- eval_40(['==',A,B],TF).
-'mc__1_2_=='(A,B,TF) :- var(A),!,as_tf(A==B,TF).
-'mc__1_2_=='(A,B,TF) :- as_tf(A=@=B,TF).
+'mc__1_2_=='(A,B,TF) :- (var(A);var(B)),!,as_tf(A==B,TF).
+'mc__1_2_=='(A,B,TF):- eval_40(['==',A,B],TF).
+%'mc__1_2_=='(A,B,TF) :- as_tf(A=@=B,TF).
 
 transpiler_predicate_store(builtin, '<', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
 'mc__1_2_<'(A,B,R) :- should_be(number,A),should_be(number,B),!,(A<B -> R='True' ; R='False').
@@ -244,16 +244,16 @@ transpiler_predicate_store(builtin, '<=', [2], '@doc', '@doc', [x(doeval,eager,[
 %%%%%%%%%%%%%%%%%%%%% lists
 
 transpiler_predicate_store(builtin, 'car-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[])).
-'mc__1_1_car-atom'(HT,H):- check_type_error( \+ is_list(HT),'car-atom'(HT,H)),HT=[H|_].
+'mc__1_1_car-atom'(HT,H):- check_type_error( \+ is_list(HT),'car-atom'(HT,H)),unify_with_occurs_check(HT,[H|_]).
 
 transpiler_predicate_store(builtin, 'cdr-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_1_cdr-atom'(HT,T):- check_type_error( \+ is_list(HT),'cdr-atom'(HT,T)),HT=[_|T].
+'mc__1_1_cdr-atom'(HT,T):- check_type_error( \+ is_list(HT),'cdr-atom'(HT,T)),unify_with_occurs_check(HT,[_|T]).
 
 transpiler_predicate_store(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_2_cons-atom'(A,B,AB):- check_type_error( \+ is_list(B),'cons-atom'(A,B,AB)),AB=[A|B].
+'mc__1_2_cons-atom'(A,B,AB):- check_type_error( \+ is_list(B),'cons-atom'(A,B,AB)),unify_with_occurs_check(AB,[A|B]).
 
 transpiler_predicate_store(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])).
-'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ iz_conz(AB1), decons_atom(AB1,AB2)),!,[A|B]=AB1,AB2=[A,B].
+'mc__1_1_decons-atom'(AB1,AB2):- check_type_error( \+ iz_conz(AB1), decons_atom(AB1,AB2)),!,unify_with_occurs_check([A|B],AB1),unify_with_occurs_check(AB2,[A,B]).
 
 check_type_error(_Check,_Error):- \+ option_value(typecheck, true), !.
 check_type_error( Check, Error):- if_t(Check, raise_type_error( Check, Error)).
@@ -296,8 +296,48 @@ transpiler_predicate_store(builtin, 'limit!', [2], '@doc', '@doc', [x(doeval,eag
 
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
-transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(noeval,eager,[])).
+transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[])).
+
+'mc__1_1_superpose'(S,R) :- should_be(nonvar,S), \+ is_list(S), !, as_p1_expr(S,X), should_be(is_list,X), member(E,S), % as_p1_exec(E,R).
+                         as_p1_expr(E,Y),eval(Y,R). %
 'mc__1_1_superpose'(S,R) :- should_be(is_list,S), member(E,S), as_p1_exec(E,R).
+
+:- op(700,xfx,'=~').
+
+soon_compile_flow_control(_HeadIs, _LazyVars, RetResult, RetResultN, _ResultLazy, Convert, [inline(Converted)], ConvertedN) :-
+    Convert =~ ['superpose',ValueL],is_ftVar(ValueL),
+    %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
+    Converted = eval_args(['superpose',ValueL],RetResult),
+    cname_var('MeTTa_SP_',ValueL).
+
+soon_compile_flow_control(HeadIs, _LazyVars, RetResult, RetResultN, _ResultLazy, Convert, [inline(Converted)], ConvertedN) :-
+    Convert =~ ['superpose',ValueL],is_list(ValueL),
+    %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
+    cname_var('SP_Ret',RetResult),
+    maplist(f2p_assign(HeadIs,RetResult),ValueL,CodeForValueL),
+    list_to_disjuncts(CodeForValueL,Converted),!.
+
+/*
+maybe_unlistify([UValueL],ValueL,RetResult,[URetResult]):- fail, is_list(UValueL),!,
+  maybe_unlistify(UValueL,ValueL,RetResult,URetResult).
+maybe_unlistify(ValueL,ValueL,RetResult,RetResult).
+
+list_to_disjuncts([],false).
+list_to_disjuncts([A],A):- !.
+list_to_disjuncts([A|L],(A;D)):-  list_to_disjuncts(L,D).
+
+
+%f2p_assign(_HeadIs,V,Value,is_True(V)):- Value=='True'.
+f2p_assign(_HeadIs,ValueR,Value,ValueR=Value):- \+ compound(Value),!.
+f2p_assign(_HeadIs,ValueR,Value,ValueR=Value):- is_ftVar(Value),!.
+f2p_assign(HeadIs,ValueResult,Value,Converted):-
+   f2p(HeadIs, _LazyVars, ValueResultR, _ResultLazy, Value,CodeForValue),
+   %into_equals(ValueResultR,ValueResult,ValueResultRValueResult),
+   ValueResultRValueResult = (ValueResultR=ValueResult),
+   combine_code(CodeForValue,ValueResultRValueResult,Converted).
+*/
+
+
 
 transpiler_predicate_store(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])).
 
@@ -337,21 +377,22 @@ convert_space('&self','&top') :- !.
 convert_space(S,S).
 
 transpiler_predicate_store(builtin, 'add-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
-'mc__1_2_add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+'mc__1_2_add-atom'(Space,PredDecl,TF) :- convert_space(Space,Space1), %A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+             do_metta(python,load,Space1,PredDecl,TF).
 
 transpiler_predicate_store(builtin, 'remove-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
 'mc__1_2_remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),retractall(metta_atom_asserted(Space1,PredDecl)).
 
 transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
-'mc__1_1_get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
+'mc__1_1_get-atoms'(Space,Atoms) :- metta_atom(Space, Atom),unify_with_occurs_check(Atoms,Atom).
 
 % This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
 match_pattern(Space, Pattern):-
     if_t(compound(Pattern),
        (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
     metta_atom(Space, Atom),
-    %unify_with_occurs_check(Atom,Pattern). % 0.262 secs.
-    Atom=Pattern. % 0.170 secs
+    unify_with_occurs_check(Atom,Pattern). % 0.262 secs.
+    %Atom=Pattern. % 0.170 secs
     %wocf(Atom=Pattern).
     %woc(Atom=Pattern). %  2.09 seconds.
 
@@ -369,11 +410,11 @@ unify_pattern(Space,Pattern):- is_metta_space(Space),!, match_pattern(Space, Pat
 % otherwise calls prolog unification (with occurs check later)
 unify_pattern(Atom, Pattern):- metta_unify(Atom, Pattern).
 
-metta_unify(Atom, Pattern):- Atom=Pattern.
+metta_unify(Atom, Pattern):- unify_with_occurs_check(Atom,Pattern).
 
 % TODO FIXME: sort out the difference between unify and match
 transpiler_predicate_store(builtin, unify, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
-'mc__1_3_unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
+'mc__1_3_unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),unify_with_occurs_check(Atom,Pattern),as_p1_exec(P1,Ret).
 
 transpiler_predicate_store(builtin, unify, [4], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])).
 'mc__1_4_unify'(Space,Pattern,Psuccess,PFailure,RetVal) :-
@@ -408,7 +449,8 @@ transpiler_predicate_store(builtin, empty, [0], '@doc', '@doc', [], x(doeval,eag
 'mc__1_0_empty'(_) :- fail.
 
 transpiler_predicate_store(builtin, 'eval', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
-'mc__1_1_eval'(X,R) :- transpile_eval(X,R).
+%'mc__1_1_eval'(X,R) :- transpile_eval(X,R).
+'mc__1_1_eval'(X,R) :- eval(X,R).
 
 transpiler_predicate_store(builtin, 'get-metatype', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
@@ -464,7 +506,7 @@ transpiler_predicate_store(builtin, 'assertNotAlphaEqual', [2], '@doc', '@doc', 
          equal_enough_for_test_renumbered_l(not_alpha_equ,AA,BB), C).
 
 transpiler_predicate_store(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
-'mc__1_1_quote'(A,['quote',A]).
+'mc__1_1_quote'(A,['quote',AA]):- unify_with_occurs_check(A,AA).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
   Convert = ['quote',Quoted],!,
   f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
