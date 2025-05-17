@@ -85,6 +85,8 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 %self_eval0('Empty').
 self_eval0([]).
 self_eval0('%Undefined%').
+self_eval0('NotReducible').
+self_eval0(X):- atom(X),!,fail.
 %self_eval0(X):- get_type(X,'hyperon::space::DynSpace'),!.
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
@@ -227,7 +229,8 @@ eval_args(X,Y):- current_self(Self),
    default_start_depth(DEPTH),
    eval_args(DEPTH,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
-eval_args(Depth,Self,X,Y):- eval_args('=',_RetType,Depth,Self,X,Y).
+eval_args(Depth,Self,X,Y):-
+  user_io(eval_args('=',_RetType,Depth,Self,X,Y)).
 
 symbol_impl_not_exists(compiler,'notcompiled',_).
 symbol_impl_exists(compiler,Sym,A):- symbol_impl_not_exists(interp,Sym,A).
@@ -639,10 +642,10 @@ eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):- !,
 eval_20(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
 eval_20(Eq,RetType,Depth,Self,Name,Y):-
     atom(Name), !,
-      (Name=='NotReducible'->throw(metta_NotReducible);
+      ((Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
-       eval_30(Eq,RetType,Depth,Self,Name,Y))),
-      sanity_check_eval(eval_20_atom,Y).
+      (eval_30(Eq,RetType,Depth,Self,Name,Y)*->true;Name=Y)))),
+      \+ \+ sanity_check_eval(eval_20_atom,Y).
 
 eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
     py_is_callable(Sym), is_list(Args), !,
@@ -847,7 +850,7 @@ eval_20(_Eq,RetType,Depth,Self,['py-atom-call!',SymSpecialize|Args],Res):- is_li
     maplist(as_prolog_x(Depth,Self), Args , Adjusted),!,
     py_call_method_and_args_sig(RetType,Specialize,Sym,Adjusted,Res).
 
-% first eval_40
+% The first eval_40/6 clause
 eval_40(Eq,RetType,Depth,Self,Var,Out):- var(Var), !, throw(var_eval_40(Eq,RetType,Depth,Self,Var,Out)).
 eval_40(Eq,RetType,Depth,Self,[Var|Types],Out):- var(Var), !, throw(var_eval_40(Eq,RetType,Depth,Self,[Var|Types],Out)).
 
@@ -1886,6 +1889,8 @@ cant_be_ok(_,[Let|_]):- Let==let.
 eval_10(Eq,RetType,Depth,Self,['with-debug',E,X],Y):- !,
    with_debug(E,eval_10(Eq,RetType,Depth,Self,X,Y)).
 
+eval_10(Eq,RetType,Depth,Self,['strace!',X],Y):- !,
+   with_debug(e,eval_10(Eq,RetType,Depth,Self,X,Y)).
 
 % =================================================================
 % =================================================================
@@ -3216,8 +3221,9 @@ eval_20(Eq,RetType,Depth,Self,['unique',Eval],RetVal):- !,
 no_repeat_variant_var(Var):- no_repeats_var(Var).
 %no_repeat_variant_var(Var):- no_repeats_var(variant_by_type,Var).
 
-% first eval_30
+% The first eval_30/6 clause
 eval_30(Eq,RetType,Depth,Self,Var,Out):- var(Var), !, throw(var_eval_30(Eq,RetType,Depth,Self,Var,Out)).
+
 eval_30(Eq,RetType,Depth,Self,[Var|Types],Out):- var(Var), !, debug_info(always(eval),warn_eval_30(Eq,RetType,Depth,Self,[Var|Types],Out)),!,[Var|Types]=Out.
 eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
    unique_elements_by(P2,List,RetVal).
@@ -4318,10 +4324,14 @@ eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   woc(eval_30(Eq,RetType,Depth,Self,AEAdjusted,ResIn)),
   \+ \+ check_returnval(Eq,RetType,ResOut).
 
+sub_selfs(Self,Self).
+sub_selfs(Self,'&corelib'):- Self\=='&corelib'.
+
+eval_30(_Eq,_RetType,_Depth,Self,X,Y):- copy_term(X,XX), sub_selfs(Self,Sub),
+  metta_function_asserted(Sub,X,Y),XX=@=X, deterministic(YN), (YN=true->!;true).
+
 eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !,
   must_or_die((eval_40(Eq,RetType,Depth,Self,[Op|X],Y))).
-
-
 
 %eval_30(Eq,RetType,Depth,Self,X,Y):- \+ old_sys, !, must_or_die((mapl_eval_args(Eq,RetType,Depth,Self,X,Y))).
 %eval_30(Eq,RetType,Depth,Self,X,Y):-  subst_args_here(Eq,RetType,Depth,Self,X,Y).
