@@ -1569,11 +1569,19 @@ on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
 on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
 
 on_set_value(_Note,show, Value):-
-    if_t( \+ prolog_debug:debugging(filter_default,_,_), set_option_value(filter_default,hide)),
+    if_t( \+ option_value(default_show_hide,_), set_option_value(default_show_hide,hide)),
     listify(Value,List), maplist(set_tf_debug(true),List).
 on_set_value(_Note,hide,Value):-
-    if_t( \+ prolog_debug:debugging(filter_default,_,_), (set_option_value(filter_default,show))),
+    if_t( \+ option_value(default_show_hide,_), (set_option_value(default_show_hide,show))),
     listify(Value,List), maplist(set_tf_debug(false),List).
+
+on_set_value(_Note,trace, Value):-
+    if_t( \+ option_value(default_trace_notrace,_), set_option_value(default_trace_notrace,notrace)),
+    listify(Value,List), maplist(set_tf_debug(true),List).
+on_set_value(_Note,notrace,Value):-
+    if_t( \+ option_value(default_trace_notrace,_), (set_option_value(default_trace_notrace,trace))),
+    listify(Value,List), maplist(set_tf_debug(false),List).
+
 
 on_set_value(_Note,log,true):-
     % Switch to mettalog mode if 'log' is set to true.
@@ -1833,7 +1841,7 @@ null_io(G) :-
 %
 user_io(G) :-
     % Execute the goal using the user_io_0/1 helper.
-    notrace(user_io_0(G)).
+    user_io_0(G).
 
 %!  user_io_0(:Goal) is det.
 %
@@ -4132,7 +4140,7 @@ load_hook0(Load, Assertion) :-
     % Pass the components to `load_hook1/5` for further processing.
     load_hook1(Load, Self, [Eq, H, B]).
 
-load_hook0(Load, Assertion) :- fail,
+load_hook0(Load, Assertion) :-
     % Extract components of the assertion using `assertion_hb/5`.
     once(assertion_fact(Assertion, Self, Fact)), !,
     % Pass the components to `load_hook1/5` for further processing.
@@ -4157,10 +4165,12 @@ load_hook0(Load, Assertion) :- fail,
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
 
 metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == '=', compiler_assertz(metta_function_asserted(Self,H,B)),!.
-metta_asserted_hook(_Load, Self, StuffHook):- send_to_pl_file(metta_other_asserted(Self,StuffHook)),!.
+%metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == 'ALT=', compiler_assertz(metta_function_asserted(Self,H,B)),!.
+metta_asserted_hook(_Load, Self, StuffHook):- compiler_assertz( metta_other_asserted(Self,StuffHook)). %send_to_pl_file( metta_other_asserted(Self,StuffHook)))),!.
 
 load_hook1(Load, Self, StuffHook) :-
-    once(metta_asserted_hook(Load, Self, StuffHook)), fail.
+    metta_asserted_hook(Load, Self, StuffHook), fail.
+
 load_hook1(Load, Self, Fact) :-
     % Ensure the Metta compiler is ready for use.
     once(use_metta_compiler),!,
@@ -4184,7 +4194,8 @@ is_metta_interp_ready :- current_prolog_flag(metta_interp, ready).
 
 :- dynamic(did_load_hook_compiler/3).
 
-load_hook_compiler(Load, Self, Assertion):- \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!,
+load_hook_compiler(Load, Self, Assertion):-
+  \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!,
     %debug_info(skip_load_repeated_hook_compiler(Load, Self, Assertion)),!.
     debug_info(skip_2nd(Load, Self, Assertion)),!.
 load_hook_compiler(Load, Self, Assertion):-
@@ -7255,9 +7266,10 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-nts1 :- !. % Disable redefinition by cutting execution.
+%nts1 :- !. % Disable redefinition by cutting execution.
 nts1 :- is_flag(notrace),!.
 nts1 :- no_interupts(nts1r).
+%nts1r :- !. % Disable redefinition by cutting execution.
 nts1r :-
     % Redefine the system predicate `system:notrace/1` to customize its behavior.
     redefine_system_predicate(system:notrace/1),

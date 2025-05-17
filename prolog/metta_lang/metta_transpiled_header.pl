@@ -31,3 +31,19 @@
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
 
+:- dynamic(metta_function_asserted/3).
+:- multifile(metta_function_asserted/3).
+:- dynamic(metta_other_asserted/2).
+:- multifile(metta_other_asserted/2).
+:- dynamic(metta_function_asserted/3).
+:- multifile(metta_function_asserted/3).
+:- dynamic(metta_atom_asserted/2).
+:- multifile(metta_atom_asserted/2).
+:- dynamic(metta_atom_deduced/2).
+:- multifile(metta_atom_deduced/2).
+:- dynamic(metta_atom_in_file/2).
+:- multifile(metta_atom_in_file/2).
+:- dynamic(metta_atom_asserted_last/2).
+:- multifile(metta_atom_asserted_last/2).
+
+

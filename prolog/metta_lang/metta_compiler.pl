@@ -1783,6 +1783,7 @@ compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    compiler_assertz(InfoC).
 
 compiler_assertz(Info):-
+     send_to_pl_file(Info),
      once(try_optimize_prolog(ca,Info,Info2)),
      Info\=@=Info2,!,
      info_identity(Info,Id),
@@ -1793,7 +1794,6 @@ compiler_assertz(Info):- skip_redef(Info), !, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    send_to_pl_file(Info),
     once(locally_clause_asserted(Assert)->true;assertz(Assert)),!.
 
 

@@ -1057,12 +1057,12 @@ debug_info_filtered( Topic,_Info,fail(hideall,Topic,How)):- filter_matches_var(h
 debug_info_filtered( Topic, Info, [How,showall,Topic]):- (filter_matches_var(showall,Topic, How); filter_matches_var(showall,Info, How)),!.
 debug_info_filtered( Topic,_Info,fail(dont_show_any_qcompile(Topic))):- is_qcompiling, dont_show_any_qcompile,!.
 % Roy requested to make it easy to hide stdlib building in transpiler
-debug_info_filtered( Topic,_Info,fail(currently_stdlib1(Topic,How))):- currently_stdlib,   (filter_matches_var(hideall,stdlib,How);    filter_matches_var(hide,stdlib,How)),!.
 debug_info_filtered( Topic,_Info,fail(currently_stdlib2(Topic))):- currently_stdlib, !, \+ filter_matches_var(showall,stdlib,_), \+ filter_matches_var(show,stdlib,_),!.
+%debug_info_filtered( Topic,_Info,fail(currently_stdlib1(Topic,How))):- currently_stdlib,   (filter_matches_var(hideall,stdlib,How);    filter_matches_var(hide,stdlib,How)),!.
 debug_info_filtered( Topic,_Info, [How,show=Topic]):- filter_matches_var(show, Topic, How), !.
-debug_info_filtered( Topic,_Info, fail([default,hide,Topic])):- option_value(filter_default,Show), Show==hide, !.
+debug_info_filtered( Topic,_Info, fail([default,hide,Topic])):- option_value(default_show_hide,Show), Show==hide, !.
 debug_info_filtered( Topic,_Info, fail([hide=Topic,How])):- filter_matches_var(hide, Topic, How), !.
-debug_info_filtered( Topic,_Info, [show,Topic,'']):- option_value(filter_default,Show), Show==show, !.
+debug_info_filtered( Topic,_Info, [show,Topic,'']):- option_value(default_show_hide,Show), Show==show, !.
 %debug_info_filtered( Topic, Info):- some_debug_show(Why,Topic), !, debug_info_now([Why,Topic], Info),!.
 %debug_info_filtered( Topic, Info, [unfiltered_topic_and_info,Topic]):- unfiltered_topic_and_info( Topic, Info),!.
 %debug_info_filtered( Topic,_,fail(unfiltered_topic_and_info(Topic))).
@@ -1109,7 +1109,7 @@ debug_info_now(Topic, Info):-
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
  (should_comment(Topic, Info) ->
-   nop(format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]));
+    format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
     format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
   )))).
 
