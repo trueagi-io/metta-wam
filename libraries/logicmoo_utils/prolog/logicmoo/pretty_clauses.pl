@@ -630,6 +630,7 @@ without_ec_portray_hook(Goal):- exact_ec_portray_hook(1000,Goal).
 %pc_portray(X):- is_list(X),print_tree_unit(X).
 
 pc_portray(Term):- var(Term),!,fail.
+pc_portray(_):- \+ nb_current(pc_portray,true), \+ current_prolog_flag(pc_portray,true), !, fail.
 pc_portray(Term):- atom(Term), exists_file_safe(Term),public_file_link(Term,Public),write_q(Public).
 pc_portray(Term:L):- integer(L),atom(Term), exists_file_safe(Term),public_file_link(Term:L,Public),write_q(Public).
 pc_portray(mfl4(M,F,Term,L)):- integer(L),atom(Term), exists_file_safe(Term),public_file_link(Term:L,Public),write_q(mfl4(M,F,Public,L)).
@@ -901,21 +902,21 @@ any_line_count(_,0).
 /*
 
  _________________________________________________________________________
-|	Copyright (C) 1982						  |
-|									  |
-|	David Warren,							  |
-|		SRI International, 333 Ravenswood Ave., Menlo Park,	  |
-|		California 94025, USA;					  |
-|									  |
-|	Fernando Pereira,						  |
-|		Dept. of Architecture, University of Edinburgh,		  |
-|		20 Chambers St., Edinburgh EH1 1JZ, Scotland		  |
-|									  |
-|	This program may be used, copied, altered or included in other	  |
-|	programs only for academic purposes and provided that the	  |
-|	authorship of the initial program is aknowledged.		  |
-|	Use for commercial purposes without the previous written 	  |
-|	agreement of the authors is forbidden.				  |
+|   Copyright (C) 1982                        |
+|                                     |
+|   David Warren,                             |
+|       SRI International, 333 Ravenswood Ave., Menlo Park,   |
+|       California 94025, USA;                    |
+|                                     |
+|   Fernando Pereira,                         |
+|       Dept. of Architecture, University of Edinburgh,       |
+|       20 Chambers St., Edinburgh EH1 1JZ, Scotland          |
+|                                     |
+|   This program may be used, copied, altered or included in other    |
+|   programs only for academic purposes and provided that the     |
+|   authorship of the initial program is aknowledged.         |
+|   Use for commercial purposes without the previous written      |
+|   agreement of the authors is forbidden.                |
 |_________________________________________________________________________|
 
 */
@@ -2023,20 +2024,20 @@ write_ar_simple(Sep1, _Tab,Sep,[A|R]):-
  ( (wots(S,write_q([A|R])),atom_concat_safety('[',MR,S),atom_concat_safety(M,']',MR), write(M))->true
  ; (write_simple(A), write_simple_each(Sep,R))).
 
-%%	between_down(+Start, ?Count, +End) is nondet.
+%%  between_down(+Start, ?Count, +End) is nondet.
 %
-%	Similar to between/3, but can count down if Start > End.
+%   Similar to between/3, but can count down if Start > End.
 
 between_down(Start, End, Count) :-
-	Start =< End, !,
-	between(Start, End, Count).
+    Start =< End, !,
+    between(Start, End, Count).
 between_down(Start, End, Count) :-
-	nonvar(Count), !,
-	between(End, Start, Count).
+    nonvar(Count), !,
+    between(End, Start, Count).
 between_down(Start, End, Count) :-
-	Range is Start-End,
-	between(0, Range, X),
-	Count is Start-X.
+    Range is Start-End,
+    between(0, Range, X),
+    Count is Start-X.
 
 rev_append(L,R,LR):- is_list(LR),!, reverse(LR,RL),append(L1,R1,RL),reverse(L1,R),reverse(R1,L).
 rev_append(L,R,LR):- append(LL,RR,LR), (var(RR);RR \= [_|_]), !, rev_append(L,R1,LL),append(R1,RR,R).
@@ -2776,9 +2777,9 @@ space_op(':-').
 
 
 
-		 /*******************************
-		 *    SHARED WITH term_html.pl	*
-		 *******************************/
+         /*******************************
+         *    SHARED WITH term_html.pl  *
+         *******************************/
 
 %!  term(@Term, +Options)// is det.
 %
