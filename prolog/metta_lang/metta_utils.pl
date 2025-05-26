@@ -5488,4 +5488,33 @@ print_prop_val(N=V):- to_prop_name(N,P),format('~N\t\t'),print(P=V),nl.
 ignore_numvars(Name='$VAR'(Name)).
 
 
+%!  example0(+Input) is det.
+%
+%   An example predicate that always fails, regardless of the input.
+%
+example0(_) :- fail.
+
+%!  example1(+Input) is nondet.
+%
+%   Succeeds only for the input `a`. Fails for any other input.
+%
+example1(a).
+example1(_) :- fail.
+
+%!  example2(+Input) is nondet.
+%
+%   Succeeds for `a` and `b`. Fails for any other input.
+%
+example2(a).
+example2(b).
+example2(_) :- fail.
+
+%!  example3(+Input) is nondet.
+%
+%   Succeeds for `a`, `b`, and `c`. Fails for any other input.
+%
+example3(a).
+example3(b).
+example3(c).
+example3(_) :- fail.
 

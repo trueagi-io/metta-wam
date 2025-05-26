@@ -1095,6 +1095,7 @@ u_do_metta_exec02(From,Self,TermV,BaseEval,Term,_X,NamedVarsList,Was,VOutput,FOu
     in_answer_io(format('~N[')))),!,
 
    % Interactive looping with possible timing and stepping control
+   %TODO TIME time profile
    (
     forall_interactive(
     From, WasInteractive,Complete, %may_rtrace

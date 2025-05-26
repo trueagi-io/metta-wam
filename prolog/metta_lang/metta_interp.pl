@@ -1830,7 +1830,7 @@ with_answer_output(Goal, S) :-
 null_io(G) :-
     % Redirect output to a null stream and execute the Goal.
     null_user_output(Out), !,
-    with_output_to(Out, G).
+    with_output_to_s(Out, G).
 
 %!  user_io(:Goal) is det.
 %
@@ -1859,14 +1859,14 @@ user_io_0(G) :-
     current_prolog_flag(mettalog_rt, true), !,
     original_user_error(Out),
     ttyflush, !,
-    with_output_to(Out, G),
+    with_output_to_s(Out, G),
     flush_output(Out),
     ttyflush.
 user_io_0(G) :-
     % Otherwise, output to the original user output stream.
     original_user_output(Out),
     ttyflush, !,
-    with_output_to(Out, G),
+    with_output_to_s(Out, G),
     flush_output(Out),
     ttyflush.
 
@@ -1879,7 +1879,7 @@ user_io_0(G) :-
 user_err(G) :-
     % Redirect output to the original error stream and execute the Goal.
     original_user_error(Out), !,
-    with_output_to(Out, G).
+    with_output_to_s(Out, G).
 
 %!  with_output_to_s(+Stream, :Goal) is det.
 %
@@ -1889,9 +1889,13 @@ user_err(G) :-
 %   @arg Stream The stream to which output should be redirected.
 %   @arg Goal   The Prolog goal to execute with redirected output.
 %
-with_output_to_s(Out, G) :-
+with_output_to_s(Out, G):-
     % Save the current output stream.
     current_output(COut),
+    with_output_from_to_s(COut, Out, G).
+
+with_output_from_to_s(COut, Out, G):- COut==Out,!,call(G).
+with_output_from_to_s(COut, Out, G):-
     % Temporarily redirect output and execute the Goal.
     redo_call_cleanup(
         set_prolog_IO(user_input, Out, user_error),
@@ -4536,7 +4540,7 @@ metta_atom0(_Inherit,Space, Atom) :- typed_list(Space, _, L), !, member(Atom, L)
 metta_atom0(Inherit,X, Y) :- maybe_into_top_self(X, TopSelf), !, metta_atom0(Inherit,TopSelf, Y).
 
 
-metta_atom0(_Inherit,KB, Atom) :- woce(metta_atom_added(KB, Atom)).
+metta_atom0(_Inherit,KB, Atom) :- wocu(metta_atom_added(KB, Atom)).
 
 
 
@@ -4911,9 +4915,9 @@ maybe_xform(_OBO, _XForm) :-
 %   @arg OBO  The object being processed (e.g., `metta_atom(Space, Atom)`).
 
 % If `Load` is unbound, start tracing to diagnose the issue.
-metta_anew1(Load, _OBO) :-
-    var(Load), % Check if `Load` is uninstantiated.
-    trace,     % Enable tracing for debugging.
+metta_anew1(Load, OBO) :-
+    (var(Load);var(OBO)), % Check if `Load` is uninstantiated.
+    trace_or_throw(var_metta_anew1(Load, OBO)), % Enable tracing for debugging.
     !.
 % Resolve the mode for `Ch` using `metta_interp_mode/2`, then recurse with the resolved mode.
 metta_anew1(Ch, OBO) :-
@@ -5962,6 +5966,20 @@ call_for_term_variables5(Term,_,_,_,call_nth(Term,Count),VL,['Count'=Count|VL],R
 %   @arg NamedVarsList  A list of variable mappings within the term.
 %   @arg CopiedVars     A copy of the named variables for safe processing.
 %
+
+
+send_metta_callable(_Self,TermV,_Term,_X,_NamedVarsList,_Was):-
+        once((toplevel_interp_only(TermV),ignore(Res = '$VAR'('ExecRes')),send_to_pl_file(:- eval_H(TermV,Res)))), !.
+send_metta_callable(_Self,TermV,Term,_X,NamedVarsList,Was):-
+        once((compile_for_exec(Res,TermV,ExecGoal),!,
+        %format("~w ~w\n",[Res,ExecGoal]),
+        subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
+        ignore(Res = '$VAR'('ExecRes')),
+        copy_term_g(NamedVarsList,Was),
+        %term_variables(Term,Vars),
+        Call = do_metta_runtime(Res, ExecGoal),
+        send_to_pl_file(:- Call))), !.
+
 into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
    % wdmsg(mc(CALL)),
     CALL= call(TermV),
@@ -5991,6 +6009,8 @@ into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
      %var(RealRes),
      X = RealRes)))),!.
 
+into_metta_callable(Self,TermV,Term,X,NamedVarsList,Was):-
+   ignore(send_metta_callable(Self,TermV,Term,X,NamedVarsList,Was)),fail.
 
 into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
   \+ option_value('exec',interp),
@@ -6009,7 +6029,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
 
 
   Call = do_metta_runtime(Res, ExecGoal),
-  output_language(prolog, notrace((color_g_mesg('#114411', print_pl_source(:- Call  ))))),
+  output_language(prolog, notrace((color_g_mesg('#114412', print_pl_source(:- Call  ))))),
   %nl,writeq(Term),nl,
   ((\+ \+
   ((
@@ -6026,7 +6046,7 @@ into_metta_callable(_Self,TermV,Term,X,NamedVarsList,Was):-
 into_metta_callable(Self,TermV, OUT,X,NamedVarsList,Was):-
   toplevel_interp_only(TermV),
   into_metta_callable_H(Self,TermV,CALL,X,NamedVarsList,Was),!,
-  OUT=locally(nb_setval('eval_in_only', interp),CALL).
+  OUT= CALL,!. %locally(nb_setval('eval_in_only', interp),CALL).
 
 into_metta_callable(Self,TermV,CALL,X,NamedVarsList,Was):-
   into_metta_callable_H(Self,TermV,CALL,X,NamedVarsList,Was),!.
@@ -6524,35 +6544,6 @@ fbug(Info) :-
     % Otherwise, log the debug information using `write_src/1` with formatting.
     real_notrace(in_cmt(color_g_mesg('#2f2f2f', write_src(Info)))).
 
-%!  example0(+Input) is det.
-%
-%   An example predicate that always fails, regardless of the input.
-%
-example0(_) :- fail.
-
-%!  example1(+Input) is nondet.
-%
-%   Succeeds only for the input `a`. Fails for any other input.
-%
-example1(a).
-example1(_) :- fail.
-
-%!  example2(+Input) is nondet.
-%
-%   Succeeds for `a` and `b`. Fails for any other input.
-%
-example2(a).
-example2(b).
-example2(_) :- fail.
-
-%!  example3(+Input) is nondet.
-%
-%   Succeeds for `a`, `b`, and `c`. Fails for any other input.
-%
-example3(a).
-example3(b).
-example3(c).
-example3(_) :- fail.
 
 % eval_H(100, '&self', ['change-state!', '&var', [+, 1, ['get-state', '&var']]], OUT)
 
@@ -7689,37 +7680,41 @@ print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description) :-
 %     % Execute a runtime query:
 %     ?- do_metta_runtime(Result, my_goal(X)).
 %
-do_metta_runtime(_Var, _Call) :-
+do_metta_runtime(_Var, _Call) :- %trace,
     % Skip execution if the `compile` option is set to `save`.
     fast_option_value(compile, save), !.
 do_metta_runtime(Var, Eval) :-
     % If `Eval` is a list, compile it into an executable query (`Call`) and execute.
     is_list(Eval),
     compile_for_exec(Var, Eval, Call), !,
-    do_metta_runtime(Var, Call).
+    debug_info(always(do_metta),do_metta_runtime(Var, Eval,Call)),
+    must_det_ll(user_err(do_metta_runtime(Var, Call))).
 do_metta_runtime(Var, Goal) :-
     % Handle cases where `Var` is a flexible type variable (ftVar) by substituting
     % it into the `Goal`, producing a new query to execute.
     nonvar(Var),
     is_ftVar(Var),
-    subst(Goal, Var, NewVar, Call), !,
+    subst001(Goal, Var, NewVar, Call), !,
     do_metta_runtime(NewVar, Call).
 do_metta_runtime(Var, Call) :-
+ user_io((
+   debug_info(always(do_metta),do_metta_runtime(Var, Call)),
+    original_user_error(Err),
     % Extract the functor name from the goal (`Call`) to create a description.
     functor(Call, Func, _),
     atom_concat('Testing ', Func, Description),
     % Record the start times (wall clock and CPU time).
     current_times(WallStart, CPUStart),
     % Execute the query and collect results, outputting progress to `user_error`.
-    with_output_to(user_error, findall_or_skip(Var, Call, List)),
+    with_output_to(Err, findall_or_skip(Var, Call, List)),
     % Calculate elapsed times (wall clock and CPU).
     calculate_elapsed_time(WallStart, CPUStart, WallElapsedTime, CPUElapsedTime),
     % Output the collected results in a formatted manner.
-    with_output_to(user_error, metta_runtime_write_answers(List)),
+    with_output_to(Err, metta_runtime_write_answers(List)),
     % Print the elapsed times for the query execution.
     print_elapsed_time(WallElapsedTime, CPUElapsedTime, Description),
     % Flush any pending output to ensure smooth runtime interactions.
-    flush_metta_output.
+    flush_metta_output)).
 
 %!  findall_or_skip(+Var, +Call, -List) is det.
 %

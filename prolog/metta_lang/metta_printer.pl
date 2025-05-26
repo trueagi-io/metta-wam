@@ -316,7 +316,7 @@ print_pl_source0(P) :-
             member(Action, Actions),
             must_det_ll((
                 % Run Action and capture output in string form.
-                run_pl_source(with_output_to(string(Pt), call(Action, P))),
+                run_pl_source(with_output_to(string(Pt), w_no_crlf(call(Action, P)))),
                 % Attempt to determine string height; default to 0 on failure.
                 catch(string_height(Pt, H), _, H = 0)
             ))

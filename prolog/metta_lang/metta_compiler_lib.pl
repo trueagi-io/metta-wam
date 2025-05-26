@@ -304,13 +304,13 @@ transpiler_predicate_store(builtin, superpose, [1], '@doc', '@doc', [x(noeval,ea
 
 :- op(700,xfx,'=~').
 
-soon_compile_flow_control(_HeadIs, _LazyVars, RetResult, RetResultN, _ResultLazy, Convert, [inline(Converted)], ConvertedN) :-
+todo_compile_flow_control(_HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy, Convert, [inline(Converted)], _ConvertedN) :-
     Convert =~ ['superpose',ValueL],is_ftVar(ValueL),
     %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
     Converted = eval_args(['superpose',ValueL],RetResult),
     cname_var('MeTTa_SP_',ValueL).
 
-soon_compile_flow_control(HeadIs, _LazyVars, RetResult, RetResultN, _ResultLazy, Convert, [inline(Converted)], ConvertedN) :-
+todo_compile_flow_control(HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy, Convert, [inline(Converted)], _ConvertedN) :-
     Convert =~ ['superpose',ValueL],is_list(ValueL),
     %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
     cname_var('SP_Ret',RetResult),
@@ -522,10 +522,14 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
+
+% for etcs-combinator-data-uncurry-xp.metta
+use_py_random:- !, fail.
 use_py_random:- option_value('py-random', true), !.
 use_py_random:- \+ option_value('fast-random', true).
 
-use_rust_random:- \+ option_value('rust-random', false), !.
+% for etcs-combinator-data-uncurry-xp.metta
+use_rust_random:- fail, \+ option_value('rust-random', false), !.
 
 use_python_rng(X,Y):- notrace(use_python_rng0(X,Y)).
 use_python_rng0(rng(_, PyObj),PyObj):- py_is_object(PyObj),!.
@@ -735,7 +739,16 @@ transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'A
 'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
     eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
 
+setup_library_calls:-
+   user_io(forall(
+      transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,
+            MettaTypeResult,InternalTypeArgs,InternalTypeResult),
+      setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
+            MettaTypeResult,InternalTypeArgs,InternalTypeResult))).
 
+
+
+:- initialization(setup_library_calls,program).
 
 this_is_in_compiler_lib.
 

@@ -53,7 +53,7 @@
 
 % When the the `metta_interp` library is loaded, it makes sure the rest of the files are intially loaded in
 % the correct order independent of which file is loaded first the needed predicates and ops are defined.
-:- ensure_loaded(metta_interp).
+%:- ensure_loaded(metta_interp).
 
 % post match modew
 %:- style_check(-singleton).
@@ -85,8 +85,8 @@ self_eval0('True'). self_eval0('False'). % self_eval0('F').
 %self_eval0('Empty').
 self_eval0([]).
 self_eval0('%Undefined%').
-self_eval0('NotReducible').
-self_eval0(X):- atom(X),!,fail.
+self_eval0('NotReducible'):- !, fail.
+%self_eval0(X):- atom(X),!,fail.
 %self_eval0(X):- get_type(X,'hyperon::space::DynSpace'),!.
 self_eval0(X):- atom(X),!, X\=='NotReducible', \+ nb_bound(X,_),!.
 
@@ -230,7 +230,7 @@ eval_args(X,Y):- current_self(Self),
    eval_args(DEPTH,Self,X,Y).
 %eval_args(Eq,RetType,Depth,_Self,X,_Y):- forall(between(6,Depth,_),write(' ')),writeqln(eval_args(Eq,RetType,X)),fail.
 eval_args(Depth,Self,X,Y):-
-  user_io(eval_args('=',_RetType,Depth,Self,X,Y)).
+  eval_args('=',_RetType,Depth,Self,X,Y).
 
 symbol_impl_not_exists(compiler,'notcompiled',_).
 symbol_impl_exists(compiler,Sym,A):- symbol_impl_not_exists(interp,Sym,A).
@@ -307,12 +307,13 @@ eval_args(Eq,RetType,Depth,Self,X,Y):- atom(Eq),  ( Eq \== ('='),  Eq \== ('matc
 
 eval_args(_Eq,_RetType,_Dpth,_Slf,X,Y):- self_eval(X),!,Y=X.
 eval_args(Eq,RetType,Depth,Self,X,Y):-
-  eval_00(Eq,RetType,Depth,Self,X,Y).
+   record_subchain(eval_00(Eq,RetType,Depth,Self,X,Y),X,Y).
+
 %eval_ret(Eq,RetType,1000,Self,X,Y):- !,
 %  catch_metta_return(eval_ret(Eq,RetType,99,Self,X,Y),Y).
 
 eval_ret(Eq,RetType,Depth,Self,X,Y):-
-    eval_00(Eq,RetType,Depth,Self,X,Y), is_returned(Y).
+    record_subchain((eval_00(Eq,RetType,Depth,Self,X,Y), is_returned(Y)),X,Y).
 
 catch_metta_return(G,Y):-
  catch(G,metta_return(Y),ignore(retract(thrown_metta_return(Y)))),Y\=='Empty'.
@@ -486,7 +487,7 @@ eval_to_name(X,x(X)).
 
 is_mettalog_tracing(X,_):- var(X),!,fail.
 is_mettalog_tracing([X|_],Type):- !, is_mettalog_tracing(X,Type).
-is_mettalog_tracing(H,Type):- woce(metta_atom(_,[mettalog_trace,HH,Type])), \+ \+ H=HH, !.
+is_mettalog_tracing(H,Type):- wocu(metta_atom(_,[mettalog_trace,HH,Type])), \+ \+ H=HH, !.
 
 eval_08(Eq,RetType,Depth,Self,X,Y):- is_mettalog_tracing(X,Type),!,
    with_debug(Type,eval_09(Eq,RetType,Depth,Self,X,Y)).
@@ -561,7 +562,6 @@ eval_10(_Eq,_RetType,_Dpth,_Self,X,Y):- self_eval(X),!,unify_woc(X,Y).
 
 eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==[empty],!,fail.
 eval_10(_Eq,_RetType,_Dpth,_Self,X,_YO):- X==['Empty'],!,fail.
-eval_10(_Eq,_RetType,_Dpth,_Self,X,Y):- X=@=['runreduction',_],!,Y=X.
 eval_10(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
 eval_10(Eq,RetType,Depth,Self,X,Y):- var(X), !, % sanity_check_eval(eval_10_var,X),
   eval_20(Eq,RetType,Depth,Self,X,Y).
@@ -589,8 +589,8 @@ insanity_check_eval(_,_):- is_testing,!,fail.
 insanity_check_eval(Which,X):- var(X),!, \+ sub_var_safely(X,Which),debug_info(insanity_check_eval,insanity_check_eval(Which,X)),!,maybe_trace(insanity_check_eval).
 insanity_check_eval(Which,X):-  X=@=[_|_],debug_info(insanity_check_eval,insanity_check_eval(Which,X)),!,maybe_trace(insanity_check_eval).
 
-sanity_check_eval(_,_):- is_testing,!.
 sanity_check_eval(_,_):- !.
+sanity_check_eval(_,_):- is_testing,!.
 sanity_check_eval(Which,X):- tracing,notrace,!,call_cleanup(\+ insanity_check_eval(Which,X), maybe_trace(Which)),!.
 sanity_check_eval(Which,X):- \+ insanity_check_eval(Which,X), !.
 
@@ -640,12 +640,16 @@ eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):- !,
 
 
 eval_20(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
-eval_20(Eq,RetType,Depth,Self,Name,Y):-
+eval_20(Eq,RetType,Depth,Self,Name,Y):- % fail,
     atom(Name), !,
       ((Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
-      (eval_30(Eq,RetType,Depth,Self,Name,Y)*->true;Name=Y)))),
+      (atom_alias(Self,Name,Y)*->true;Name=Y)))),
       \+ \+ sanity_check_eval(eval_20_atom,Y).
+
+
+atom_alias(Self,X,Y):- fail, sub_selfs(Self,Sub), metta_function_asserted(Sub,X,Y).
+
 
 eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
     py_is_callable(Sym), is_list(Args), !,
@@ -1033,10 +1037,14 @@ eval_until_eq_tf(_Flags, _Eq, XType,YType,_Depth,_Self,X,Y,TF):- (var(X);var(Y))
 eval_until_eq_tf(Flags, Eq, XType,YType,Depth,Self,X,Y,TF):-
   eval_until_eq(Flags, Eq, XType,YType,Depth,Self,X,Y,TF).
 
-
+known_false(V1,V2):- var(V1),!,V2\==V1.
+known_false(V1,V2):- var(V2),!,V2\==V1.
+known_false([],Y):- Y\==[].
+known_false(Y,[]):- Y\==[].
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
-eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
-eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
+eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):- known_false(X,Y),!,TF='False'.
+%eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
+%eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
 %eval_until_eq(Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X\=@=Y,unify_woc(X,Y),!,check_returnval(Eq,XType,YType,Y,TF).
 eval_until_eq(_Flags,Eq,XType,YType,_Depth,_Self,X,Y,TF):- var(X),var(Y),!,as_tf_traceable(unify_woc(X,Y),TF),check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),!.
 %eval_until_eq(_Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  unify_woc(X,Y),!,check_returnval(Eq,XType,YType,Y,TF).
@@ -1276,9 +1284,9 @@ is_call_wrapper('no-rtrace!',quietly).
 is_call_wrapper(P1,P1):- same_meta_predicate(P1).
 is_call_wrapper(Bang,P1):- atom(Bang),atom_concat(P1,'!',Bang),same_meta_predicate_with_bang(P1).
 
-same_meta_predicate('woc'). same_meta_predicate('woce'). same_meta_predicate('wocf'). same_meta_predicate('woct').
+same_meta_predicate('woc'). same_meta_predicate('woce'). same_meta_predicate('wocf'). same_meta_predicate('woct'). same_meta_predicate('wocu').
 same_meta_predicate('once'). same_meta_predicate('ignore'). same_meta_predicate('rtrace').
-same_meta_predicate('mvar'). same_meta_predicate('add-').
+same_meta_predicate('mvar'). %same_meta_predicate('add-').
 
 same_meta_predicate_with_bang(P1):- same_meta_predicate(P1).
 same_meta_predicate_with_bang(F):- functor(P,F,1),predicate_property(P,meta_predicate(P)),arg(1,P,OO),once(OO=0;OO=':').
@@ -1327,6 +1335,10 @@ eval_20(Eq,RetType,Depth,Self,['assertTrue', X],TF):- !,
   eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'True'],TF).
 eval_20(Eq,RetType,Depth,Self,['assertFalse',X],TF):- !,
  eval_20(Eq,RetType,Depth,Self,['assertEqual',X,'False'],TF).
+eval_20(Eq,RetType,Depth,Self,['assertSame',X],TF):- !,
+ eval_20(Eq,RetType,Depth,Self,['assertEqual',X,X],TF).
+eval_20(Eq,RetType,Depth,Self,['assertEmpty',X],TF):- !,
+ eval_20(Eq,RetType,Depth,Self,['assertCount',0,X],TF).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqual',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
@@ -1341,6 +1353,14 @@ eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
         (findall_eval(Eq,_ARetType,Depth,Self,X,XX),
          findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          ( \+ equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY)), RetVal).
+
+eval_20(Eq,RetType,Depth,Self,['assertCount',Y,X],TF):- !,
+    loonit_assert_source_tf_empty(
+         ['assertCount',X,Y],XX,YY,
+         (findall_eval(Eq,_ARetType,Depth,Self,X,XL),length(XL,XX),
+                                     as_prolog_x(Depth,Self,Y,YY)),
+          equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY), RetVal).
+
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
@@ -2673,8 +2693,8 @@ eval_10(Eq,RetType,Depth,Self,['bind!',Other,Expression],RetVal):- !,
     make_nop(RetType,Value,RetVal))),
     check_returnval(Eq,RetType,RetVal).
 
-'mi_1_2__bind!'(Other,Expr,RetVal):- 'mx_1_2__bind!'(Other,Expr,RetVal).
-'mx_1_2__bind!'(Other,Expr,RetVal):-
+'mi__1_2_bind!'(Other,Expr,RetVal):- 'mx__1_2_bind!'(Other,Expr,RetVal).
+'mx__1_2_bind!'(Other,Expr,RetVal):-
     peek_scope(Eq,RetType,_Depth,Self),
     must((into_name(Self,Other,Name),!,
     eval(Expr,Value),
@@ -3544,7 +3564,7 @@ eval_20(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- (var(X) , var(Y)), !, as_tf(
 eval_40(_Eq,_RetType,_Depth,_Self,['==', X,Y],TF):- (var(X) , var(Y)), !, as_tf(X==Y,TF),!.
 
 eval_20(Eq,RetType,Depth,Self,['metta-unify',X,Y],TF):- !,
-   woc((ignore(get_operator_typedef(Self,'metta-unify',2,[XType,YType],RetType)),
+   wocu((ignore(get_operator_typedef(Self,'metta-unify',2,[XType,YType],RetType)),
          eval_until_eq_tf(['metta-unify',double_sided],Eq, XType, YType, Depth,Self, X, Y, TF))).
 
 eval_20(Eq,RetType,Depth,Self,['==',X,Y],TF):- fail, !,
@@ -3567,45 +3587,97 @@ same_terms(X,Y):- same_term(X,Y),!.
 same_terms(X,Y):- \+ compound(X), X==Y.
 % Main evaluation predicate with full caching
 
-transpiler_peek(Sym,Len,Type,Fn):-
-  transpiler_predicate_store(_, Sym, [Len], _, _, _, _),
+
+
+transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+  transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs),
+  debug_info(always(compiler),transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs)).
+
+transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+  is_list(TypeL), !, member(Type,TypeL),
+  transpiler_peek(Sym,Len,Type,Fn, Min, SpreadArgs).
+
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
+  if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
+  nonvar(Sym),
+  if_t((var(Len)),ignore(transpiler_predicate_store(_,Sym,[Len],_, _, _, _))),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
+  if_t(var(Len),between(1,10,Len)),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
   succ(Len,LenP1), current_predicate(Fn/LenP1),
-  nop(ok_call_predicate(Sym,Len)).
+  ok_call_predicate(Sym,Len,Type).
+
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
+  % if_t((var(Sym)),ignore(transpiler_predicate_nary_store(_, Sym,_  , _, _, _, _))),
+  if_t(var(Len),between(1,10,Len)),
+  if_t(var(Type),member(Type,['mx','me','mi','mc'])),
+  if_t(var(Min),between(0,Len, Min)),
+  (format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]);
+   format(atom(Fn),'~w__1_~w+_~w',[Type,Min,Sym])),
+  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  ok_call_predicate(Sym,Len,Type).
+
+/*
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
+  between(0,Len, Min),
+  if_t(var(Type),member(Type,['mx','mi','mc'])),
+  format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]),
+  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  ok_call_predicate(Sym,Len,Type).
+*/
 
 
 
-ok_call_predicate(Sym,Min, _Type):-
-  \+ transpiler_predicate_store(_,Sym,[Min],_,_,_,_),
-  \+ transpiler_predicate_nary_store(_,Sym,Min,_,_,_,_,_,_),
-  \+ transpiler_clause_store(Sym,[Min],_,_,_,_,_,_,_).
+ok_call_predicate(Fn/LenP1, Sym, Len, _Type):-
+  if_t(nb_current('eval_in_only', interp), \+ symbol_impl_exists(interp,Sym,Len)),
+  (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, exists_in_compiler)).
+ok_call_predicate(Fn/LenP1, Sym, Len, Type):-
+  (ok_call_predicate0( Sym, Len, Type)->
+    debug_info(always(eval_in),ok_call_predicate(Fn/LenP1, Sym, Len, Type));
+    (memoize_tf(debug_info(always(eval_in),cant_call_predicate( Sym, Len, Type))),fail)).
 
+exists_in_interp.
+symbol_file(Fn/LenP1,_Sym,_Len, P):- source_file(P,File),functor(PFn,Fn,LenP1),source_file(PFn,File).
 
-eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
-    length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mi',Fn)),
-    append(Args, [Res], PArgs),!,
-    with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
+ok_call_predicate(Sym, Len, _Type):-
+  if_t(nb_current('eval_in_only', interp), \+ symbol_impl_exists(interp,Sym,Len)).
+
+ok_call_predicate0( Sym, Len,_Type):- symbol_impl_not_exists(interp, Sym, Len),!.
+ok_call_predicate0( Sym, Len,_Type):- symbol_impl_exists(interp,Sym,Len), option_value(compile,false), !, fail.
+%ok_call_predicate(Fn/LenP1, Sym, Len, Type):- \+ symbol_impl_exists(interp,Sym,Len),!, \+ option_value(compile,false).
+ok_call_predicate0(_Sym,_Len,_Type):- option_value(compile,full).
+
 
 jiggle_args(Args,Ret,LenIsMin,LenIsMin,exactArgs,PArgs):- !, append(Args, [Ret], PArgs).
-jiggle_args(Args,Ret,_,Min,AsList,PArgs):-
+jiggle_args(Args,Ret,_,Min,SpreadArgs,PArgs):-
   length(Left,Min), append(Left,Right,Args),
-  jiggle_append(Left,Right,Ret, AsList, PArgs).
+  jiggle_append(Left,Right,Ret, SpreadArgs, PArgs).
 jiggle_append(Left,Right,Ret,restAsList, PArgs):- !, append(Left, [Right,Ret], PArgs),!.
 jiggle_append(Left,Right,Ret,exactArgs,PArgs):- append(Left, [Ret], PArgs), !, must_unify(Right,[]).
 
-eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :- symbol(Sym), is_list(Args),
+eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
+    fail,
+    symbol(Sym), is_list(Args),
     length(Args, Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mx',Fn)),
-    append(Args, [Res], PArgs),!,
+    transpiler_peek(Sym,Len,'mx',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
-eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):- symbol(Sym), is_list(Args),
+eval_40(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
+    %fail,
+    symbol(Sym), is_list(Args),
+    length(Args, Len),
+    transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
+    with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
+
+eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):-
+    %fail,
+    symbol(Sym), is_list(Args),
     length(Args,Len),
-    memoize_tf(transpiler_peek(Sym,Len,'mc',Fn)),
-    append(Args,[Res],PArgs),!,
-    with_metta_ctx(Eq,RetType,Depth,Self,[Sym|Args],apply(Fn,PArgs)).
+    transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
+    with_metta_ctx(Eq, RetType, Depth,Self, [Sym | Args] ,apply(Fn, PArgs)).
 
 
 
@@ -4099,7 +4171,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 
 % get a guarded definition
-eval_30_disabled(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
+eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
@@ -4311,10 +4383,12 @@ cwtl_goal(AlarmID, Goal) :-
     install_alarm(AlarmID),
     call(Goal).
 
+too_slow(_).
+
 eval_10(Eq,RetType,Depth,Self,X,Y):-
     as_prolog_x(Depth,Self,X,XX),
     eval_20(Eq,RetType,Depth,Self,XX,Y),
-    notrace(if_t( \+ sub_var_safely(Y,X), sanity_check_eval(eval_20_last(XX),Y))).
+    too_slow((notrace(if_t( \+ sub_var_safely(Y,X), sanity_check_eval(eval_20_last(XX),Y))))).
 
 eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
   eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,AEMore,AEAdjusted),
@@ -4327,8 +4401,17 @@ eval_20(Eq,RetType,Depth,Self,AEMore,ResOut):-
 sub_selfs(Self,Self).
 sub_selfs(Self,'&corelib'):- Self\=='&corelib'.
 
-eval_30(_Eq,_RetType,_Depth,Self,X,Y):- copy_term(X,XX), sub_selfs(Self,Sub),
-  metta_function_asserted(Sub,X,Y),XX=@=X, deterministic(YN), (YN=true->!;true).
+eval_30_dis(_Eq,_RetType,_Depth,Self,X,Y):- % \+ is_list(X),
+  copy_term(X,XX),
+  sub_selfs(Self,Sub),
+  metta_function_asserted(Sub,X,Y),
+  show_tf(XX=@=X),
+  XX=@=X,
+  deterministic(YN), (YN=true->!;true).
+
+
+
+
 
 eval_30(Eq,RetType,Depth,Self,[Op|X],Y):- nonvar(Op), !,
   must_or_die((eval_40(Eq,RetType,Depth,Self,[Op|X],Y))).

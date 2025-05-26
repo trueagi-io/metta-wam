@@ -952,7 +952,7 @@ For example:
   (@return "Random number generator instance with default behavior"))
 
 ;; Some code still uses the old syntax
-(iz random-int MeTTaLog)
+(iz random-int MeTTa)
 (@doc random-int
   (@desc "Returns random int number from range defined by two numbers (first and second argument)")
   (@params (
@@ -961,7 +961,7 @@ For example:
   (@return "Random int number from defined range"))
 (is-op-2 random-int random)
 
-(iz random-float MeTTaLog)
+(iz random-float MeTTa)
 (@doc random-float
   (@desc "Returns random float number from range defined by two numbers (first and second argument)")
   (@params (

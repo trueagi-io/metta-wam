@@ -9,5 +9,5 @@
     pack_attach(LU,[duplicate(replace),search(first)]),
     pack_attach(LSP,[duplicate(replace),search(first)]).
 
-:- ensure_loaded(library(metta_lang/metta_interp)).
+%:- ensure_loaded(library(metta_lang/metta_interp)).
 

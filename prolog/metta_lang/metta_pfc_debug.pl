@@ -1436,7 +1436,7 @@ pp_item(MM, H) :- \+ \+ (get_clause_vars_for_print(H, HH), fmt("~w ~p~N", [MM, H
 get_clause_vars_for_print(HB, HB) :- ground(HB), !.
 get_clause_vars_for_print(I, I) :- is_listing_hidden(skipVarnames), fail.
 get_clause_vars_for_print(H0, MHB) :- get_clause_vars_copy(H0, MHB), H0 \=@= MHB, !.
-get_clause_vars_for_print(HB, HB) :- numbervars(HB, 0, _, [singletons(true), attvars(skip)]), !.
+get_clause_vars_for_print(HB, HB) :- numbervars(HB, 0, _, [singletons(true), attvar(skip)]), !.
 
 %!  pfc_classify_facts(+Facts, -UserFacts, -PfcFacts, -Rules) is det.
 %
@@ -2636,7 +2636,7 @@ pfcShowSingleJust(JustNo, StepNo, C) :-
 %
 %   @arg Clause The clause to format and write.
 %
-fmt_cl(P) :- \+ \+ (numbervars(P, 666, _, [attvars(skip), singletons(true)]), write_src(P)), !.
+fmt_cl(P) :- \+ \+ (numbervars(P, 666, _, [attvar(skip), singletons(true)]), write_src(P)), !.
 fmt_cl(P) :- \+ \+ (pretty_numbervars(P, PP), numbervars(PP, 126, _, [attvar(skip), singletons(true)]),
    write_term(PP, [portray(true), portray_goal(fmt_cl)])), write('.').
 fmt_cl(S,_):- term_is_ansi(S), !, write_keeping_ansi(S).

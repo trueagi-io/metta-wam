@@ -128,7 +128,7 @@ is_syspred0(H, _Ln, _Prd) :-
     upcase_atom(H, U), downcase_atom(H, U), !, fail.
 is_syspred0(H, Len, Pred) :-
     % Check if the predicate with the given name and arity exists.
-    woce(current_predicate(H/Len)), Pred = H.
+    wocu(current_predicate(H/Len)), Pred = H.
 is_syspred0(H, Len, Pred) :-
     % Check for predicates with a '!' suffix.
     atom_concat(Mid, '!', H), H \== Mid, !, is_syspred0(Mid, Len, Pred).

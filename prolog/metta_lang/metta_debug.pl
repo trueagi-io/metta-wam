@@ -659,7 +659,7 @@ is_nodebug :- option_value(nodebug, false), !, fail.
 is_nodebug :- thread_self(Self), Self \== main, Self \== 0.
 % By default spawned threads would need nodebug=false
 is_nodebug :- is_mettalog_rt, !.
-%is_nodebug :- is_mettalog_release, !.
+is_nodebug :- is_mettalog_release, !.
 %is_nodebug :- is_user_repl, !.
 is_nodebug :-
     % Check if the option 'nodebug' is set to true.
@@ -802,8 +802,8 @@ is_douglas_machine:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolo
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
-sub_var_safely(Sub,Source):- woct(sub_var(Sub,Source)).
-sub_term_safely(Sub,Source):- woct(sub_term(Sub,Source)).
+sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_var(Sub,Source)).
+sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_term(Sub,Source)).
 
 maybe_abort_trace:- \+ is_flag(abort_trace), !.
 maybe_abort_trace:- abort_trace.
@@ -811,7 +811,7 @@ abort_trace:-
   redefine_system_predicate(system:trace/0),
   abolish(system:trace/0),
   assert(( (system:trace) :- system:trace_called)), !.
-system:trace_called:- notrace,format(user_error,'~nTRACE_CALLED~n',[]), once(bt),  current_prolog_flag(abort_trace,true), format(user_error,'~nTRACE_CALLED~n',[]), throw('aborted').
+system:trace_called:- notrace,format(user_error,'~nTRACE_CALLED~n',[]), current_prolog_flag(abort_trace,true), format(user_error,'~nTRACE_CALLED~n',[]), throw('aborted').
 system:trace_called:- break.
 
 
@@ -851,15 +851,17 @@ woc(Goal):- woc(error,Goal). % for developement purposes
 woce(Goal):-woc(error,Goal).
 wocf(Goal):-woc(false,Goal). % only use after 100% safe
 woct(Goal):-woc(true,Goal). % only use after 100% required
+wocu(Goal):-woc(true,Goal). % for debugging when occurs check is needed
 
 % woc(TFE,Goal):- !, locally(set_prolog_flag(occurs_check,TFE),Goal).
+woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 woc(TFE,Goal):- TFE==error, !, %fail,
    current_prolog_flag(occurs_check,Was),
    redo_call_cleanup( set_prolog_flag(occurs_check,TFE),
                       catch_oce(Goal),
                       set_prolog_flag(occurs_check,Was)).
 
-woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
+%woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,call(Goal).
 %woc(TFE,Goal):- current_prolog_flag(occurs_check,TFE),!,precopy_term(Goal,CGoal),!,call(CGoal),uncopy_term(Goal,CGoal).
 woc(TFE,Goal):- current_prolog_flag(occurs_check,Was),redo_call_cleanup(set_prolog_flag(occurs_check,TFE),Goal,set_prolog_flag(occurs_check,Was)).
 
@@ -868,8 +870,8 @@ catch_oce(CGoal):-
    Error = error(occurs_check(_,_),_),
    precopy_term(CGoal,Goal), catch(Goal,Error,(rtrace(Goal),maybe_rethrow(Error))), uncopy_term(CGoal,Goal).
 
-locally_clause_asserted(Assert):- woce(clause_asserted_occurs_warning(Assert)).
-locally_clause_asserted(H,B,R):- woce(clause_asserted_occurs_warning(H,B,R)).
+locally_clause_asserted(Assert):- wocu(clause_asserted_occurs_warning(Assert)).
+locally_clause_asserted(H,B,R):- wocu(clause_asserted_occurs_warning(H,B,R)).
 
 clause_asserted_occurs_warning(C):-
               expand_to_hb(C, H, B),
@@ -880,8 +882,8 @@ clause_asserted_occurs_warning(H,B,R):-
               clause_occurs_warning(H,B,R),
               variant(H+B, HB).
 
-locally_clause_unifies(Assert):- woce(clause_occurs_warning(Assert)).
-locally_clause_unifies(H,B,R):- woce(clause_occurs_warning(H,B,R)).
+locally_clause_unifies(Assert):- wocu(clause_occurs_warning(Assert)).
+locally_clause_unifies(H,B,R):- wocu(clause_occurs_warning(H,B,R)).
 
 clause_occurs_warning(C):-
               expand_to_hb(C, H, B),
@@ -1002,7 +1004,8 @@ currently_stdlib:- nb_current(compiler_context, Ctx), Ctx == corelib.
 
 filter_matches(Ele,Topic):- Ele=@=Topic,!.
 filter_matches(Ele,Topic):- string(Topic),!,contains_atom(Topic,Ele).
-filter_matches(Ele,Topic):- term_to_atom(Topic,Str),sub_atom(Str,_,_,_,Ele).
+filter_matches(Ele,Topic):- with_output_to(atom(Str),display(Topic)),!, sub_atom(Str,_,_,_,Ele),!.
+% filter_matches(Ele,Topic):- term_to_atom(Topic,Str),sub_atom(Str,_,_,_,Ele).
 
 filter_matches_var(Var, Topic):- filter_matches_var(Var, Topic,_).
 filter_matches_var(Var, Topic, [Var->Topic,Ele:List]):-
@@ -1043,16 +1046,20 @@ dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
 dont_show_any_qcompile.
 
-         debug_info( Topic, Info):- notrace(debug_info0( Topic, Info)).
-        debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
-                   ignore(( debug_info_filtered( Topic, Info , NewTopic),!,
+debug_info( Topic, Info):- notrace((debug_info0( Topic, Info), nb_setval(last_debug_info,debug_info(Topic, Info)))).
+debug_info0(Topic, Info) :- nb_current(last_debug_info,WAS), WAS =@= debug_info(Topic, Info),!.
+debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
+                   ignore((
+                            debug_info_filtered( Topic, Info , NewTopic),!,
                             if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
                             if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
 debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
+debug_info_filtered( always( Topic), Info, NewTopic):-!, debug_info_filtered(Topic, Info, NewTopic).
 debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
 debug_info_filtered( always(_Topic),  Info, fail(filter_matches_var(hideall,Info, How))):- filter_matches_var(hideall,Info, How),!.
 debug_info_filtered( always( Topic), _Info, [do,always,Topic]):-!.
+debug_info_filtered( alwayz( Topic), _Info, [do,alwayz,Topic]):-!.
 debug_info_filtered( Topic,_Info,fail(hideall,Topic,How)):- filter_matches_var(hideall,Topic, How), !.
 debug_info_filtered( Topic, Info, [How,showall,Topic]):- (filter_matches_var(showall,Topic, How); filter_matches_var(showall,Info, How)),!.
 debug_info_filtered( Topic,_Info,fail(dont_show_any_qcompile(Topic))):- is_qcompiling, dont_show_any_qcompile,!.
@@ -1092,13 +1099,14 @@ topic_color_string([Topic,Info],[],StrO):- !,
 topic_color_string(Topic,TopicColor,Str):-
    mesg_color(Topic, TopicColor), Topic = Str,!.
 %debug_info_now(Topic, Info):-!.
+
+debug_info_now(Topic, Info) :- nb_current(last_debug_info_written,WAS), WAS =@= debug_info(Topic, Info),!.
 debug_info_now(Topic, Info):-
  %writeln(debug_info_now(Topic, Info)),
  must_det_ll((
   stream_property(X, file_no(2)),
   %original_user_error(X),
-  stream_property(Out, file_no(1)),
-  flush_output(Out),
+  stream_property(Out, file_no(1)), flush_output(Out),
   flush_output(X),
   format(X,'~N',[]))),
     must_det_ll(topic_color_string(Topic, TopicColor, TopicStr)),
@@ -1111,10 +1119,12 @@ debug_info_now(Topic, Info):-
  (should_comment(Topic, Info) ->
     format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
     format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
-  )))).
+  )))),
+  nb_setval(last_debug_info_written,debug_info(Topic, Info)).
 
 %w_no_crlf(G):- call(G),!.
-w_no_crlf(G):- with_output_to(string(S),call(G)),trim_ws_right(S,TS),write(TS).
+w_no_crlf(G):- w_no_crlf(String,G),write(String).
+w_no_crlf(String,G):- with_output_to(string(S),call(G)),trim_ws_right(S,String).
 
 %trim_ws_right(S,S):-!.
 trim_ws_right(S,TS):- \+ string(S), catch(text_to_string(S,SS),_,sformat(SS,'~w',[S])),!,trim_ws_right(SS,TS).
@@ -1178,11 +1188,15 @@ print_tree_safe1(PTS):- catch(wots(S,print_tree_with_final(PTS,".")),_,fail),wri
 print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),write(S),writeln("."),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
-ppt0(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
+ppt0(PTS):- asserta((user:portray(X) :- !, metta_portray(X)),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
 %ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),throw(E),fail)),!.
 %pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
 %pptsafe(PTS):- asserta((user:portray(_) :- !, fail),Ref), call_cleanup(pptsafe1(PTS), erase(Ref)),!.
 ppt0(PTS):- write(PTS),writeln("."),!.
+
+metta_portray(A):- atomic(A), py_is_object(A), write_src_woi(A),!. % stream_property(X, file_no(2)),writeln(X,py_is_object(A)), !.
+%metta_portray(A):- stream_property(X, file_no(2)),writeln(X,metta_portray(A)), !.
+metta_portray(_):- !, fail.
 
 ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
@@ -1416,7 +1430,8 @@ is_debugging(Flag) :- debugging(Flag, TF), !, TF == true.
 
 trace_eval(P4, _, D1, Self, X, Y) :-
   \+ is_debugging(e),
-  \+ is_debugging(eval), !,
+  \+ is_debugging(eval),
+  \+ is_debugging(failure), !,
   call(P4, D1, Self, X, Y).
 
 
@@ -1435,6 +1450,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
         )),
 
         TraceTooLong = _,
+        TraceResultShown = _,
 
         quietly((
             if_t((nop(stop_rtrace), TraceLen > MaxTraceLen), (
@@ -1464,12 +1480,14 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
     Display = ignore((
         \+ \+ (
            flag(eval_num, EX1, EX1 + 1),
-           PrintRet == 1,
+           TraceResultShown \== 1,
+           TraceResultShown = 1,
+           once(PrintRet == 1 ; (Ret =@= retval(fail), is_debugging(failure))),
            (Y\==X -> Color=green;Color=[]),
            TraceTooLong \== 1,
            ((Ret \=@= retval(fail), nop(nonvar(Y)))
                 -> ansicall(Color,indentq(DR, EX1, '<--', [Why, Y]))
-                ; ansicall(red,indentq(DR, EX1, '<--', [Why, Ret]))
+                ; ansicall(red,indentq(DR, EX1, '<--', [Why, Ret, X]))
             )
         )
     )),
