@@ -45,6 +45,7 @@ is_If('if').
 
 :- initialization(setup_library_call(builtin, 'if', [3], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])), program).
 'mc__1_3_if'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
+
 :- initialization(setup_library_call(builtin, 'if', [2], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])), program).
 'mc__1_2_if'(If,Then,Result) :- (If*->Result=Then;fail).
 
@@ -161,6 +162,10 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 'mc__1_2_%'(A,B,R) :- number(A),number(B),!,R is A mod B.
 'mc__1_2_%'(A,B,['%',A,B]).
 
+% difference between type_should_be and should_be is that type_should_be will fail if the value is a variable, while should_be will not.
+type_should_be(_Type,Value) :- is_ftVar(Value), !, fail.
+type_should_be(Type,Value) :- should_be(Type,Value), !.
+
 %%%%%%%%%%%%%%%%%%%%% logic
 
 %:- initialization(setup_library_call(builtin, 'and', [2], '@doc', '@doc', [x(doeval,eager,[boolean]), x(doeval,eager,[boolean])], x(doeval,eager,[boolean])), program).
@@ -250,8 +255,15 @@ mc__1_1_not(_,'True').
 :- initialization(setup_library_call(builtin, 'cons-atom', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[list])], x(noeval,eager,[list])), program).
 'mc__1_2_cons-atom'(A,B,[A|B]).
 
+
 :- initialization(setup_library_call(builtin, 'decons-atom', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[list])), program).
 'mc__1_1_decons-atom'([A|B],[A,B]).
+
+
+
+check_type_error(_Check,_Error):- \+ option_value(typecheck, true), !.
+check_type_error( Check, Error):- if_t(Check, raise_type_error( Check, Error)).
+raise_type_error( Check, Error):- trace,throw(raise_type_error( Check, Error)).
 
 %:- initialization(setup_library_call(builtin, 'length', [1], '@doc', '@doc', [x(noeval,eager,[list])], x(noeval,eager,[number])), program).
 %'mc__1_1_length'(L,S) :- length(L,S).
@@ -312,11 +324,15 @@ todo_compile_flow_control(HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy
     cname_var('SP_Ret',RetResult),
     maplist(f2p_assign(HeadIs,RetResult),ValueL,CodeForValueL),
     list_to_disjuncts(CodeForValueL,Converted),!.
+
 :- initialization(setup_library_call(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])), program).
+/*
+'mc__1_1_collapse'(rtrace(T),O):-!, rtrace('mc__1_1_collapse'(T,O)).
 'mc__1_1_collapse'(ispu(X),[X]) :- !.
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispuU(X,true),[X]) :- !.
 'mc__1_1_collapse'(ispuU(A,Code),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
+'mc__1_1_collapse'(ispuU(A,Code),X) :- !, findall(A,Code,X). %,maplist(=(A),X).
 'mc__1_1_collapse'(ispen(Ret,Code,_),R) :- fullvar(Ret),!,findall(Ret,Code,R).
 'mc__1_1_collapse'(ispeEn(X,true,_),[X]) :- !.
 'mc__1_1_collapse'(ispeEn(A,Code,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
@@ -325,7 +341,10 @@ todo_compile_flow_control(HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy
 'mc__1_1_collapse'(ispeEnN(A,Code,_,_),X) :- atom(A),!,findall(_,Code,X),maplist(=(A),X).
 'mc__1_1_collapse'(ispeEnNC(Ret,Code,_,_,Common),R) :- fullvar(Ret),!,findall(Ret,(Common,Code),R).
 'mc__1_1_collapse'(ispeEnNC(A,Code,_,_,Common),X) :- atom(A),!,findall(_,(Common,Code),X),maplist(=(A),X).
-'mc__1_1_collapse'(X,_) :- format("Error in library collapse: ~w",[X]),throw(0).
+% --liberr=fail will continue on to findall
+'mc__1_1_collapse'(X,_) :- library_error("Error in library collapse: ~w",[X]).
+*/
+'mc__1_1_collapse'(S,List) :- findall(Ret,(as_p1_exec(S,Ret),Ret\=='Empty'),List).
 
 % --liberr=fail will fail after printing
 library_error(Fmt,Args):- sformat(S,Fmt,Args),format_e('~w',[S]),debug_info(liberr,S),!,
@@ -666,7 +685,7 @@ listing_order(Order, [Origin1, Fn1, Arity1, _], [Origin2, Fn2, Arity2, _]) :-
 'mc__1_2_metta-unify'(A,B,TF):- as_tf(unify_with_occurs_check(A,B),TF).
 
 :- initialization(setup_library_call(builtin, 'decons-ht', [3], '@doc', '@doc', [x(noeval,eager,[]),x(noeval,eager,[]),x(noeval,eager,[])],x(doeval,eager,[boolean])), program).
-'mc__1_3_decons-ht'(E,H,T,TF):- as_tf(E=[H|T],TF).
+'mc__1_3_decons-ht'(E,H,T,TF):- check_type_error( \+ iz_conz(E), 'decons-ht'(E,H,T)),  as_tf(unify_with_occurs_check(E,[H|T]),TF).
 
 transpiler_predicate_nary_store(builtin, 'py-atom-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-atom-call'(SymRef,Args,Ret) :- 'mc_n_1__py-atom-call!'(SymRef,Args,Ret).
@@ -725,65 +744,102 @@ metta_to_metta_macro_recurse(I,O):-
 metta_to_metta_macro_recurse(I,I).
 
 metta_to_metta_macro(NoList,NoList):- \+ is_list(NoList),!.
-metta_to_metta_macro([EQ,HeadIsN,AsBodyFnN], ['=',HeadIsC, AsBodyFnOut]):- EQ=='=', !,
- must_det_lls((
- copy_term(AsBodyFnN+HeadIsN,AsBodyFnC+HeadIsC,_),
- number_vars_wo_conficts(AsBodyFnC+HeadIsC,AsBodyFn+HeadIs),
- (AsBodyFnC+HeadIsC=AsBodyFn+HeadIs),
-    metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut),!,
+metta_to_metta_macro([EQ,HeadIs,AsBodyFn], ['=',HeadIs, AsBodyFnOut]):- EQ=='=', !,
+    metta_to_metta_body_macro(HeadIs,AsBodyFn,AsBodyFnOut).
+metta_to_metta_macro(AsBodyFn,AsBodyFnOut):-
+    metta_to_metta_body_macro('just-body',AsBodyFn,AsBodyFnOut).
+
+metta_to_metta_body_macro_recurse(Head,I,O):-
+  metta_to_metta_body_macro(Head,I,M),I\=@=M,!,
+  metta_to_metta_body_macro_recurse(Head,M,O).
+metta_to_metta_body_macro_recurse(_,I,I).
+
+metta_to_metta_body_macro(HeadIs,AsBodyFn,AsBodyFnOut):-
+ ((
+ copy_term(AsBodyFn,AsBodyFnC,_),
+ copy_term(AsBodyFnC,AsBodyFnCCopy),
+ %number_vars_wo_conficts(AsBodyFnC,AsBodyFn),
+ metta_body_macro(HeadIs, AsBodyFnC, AsBodyFnOut),!,
+ AsBodyFnC=@=AsBodyFnCCopy, % untainted the left hand variables
+ AsBodyFn=AsBodyFnC, % restore to original variable references
     \+ \+ if_t(AsBodyFn\=@=AsBodyFnOut,
-    ( debug_info(metta_macro_in,c(ppt([=,HeadIs, AsBodyFn]))),!,
-      debug_info(metta_macro_out,c(ppt([=,HeadIs, AsBodyFnOut]))))))),!.
-metta_to_metta_macro(Body,BodyOut):- metta_to_metta_macro(['=',[whatever],Body],['=',[whatever],BodyOut]).
+    (
+      debug_info(metta_macro_in,t((['=',HeadIs,AsBodyFn]))),!,
+      debug_info(metta_macro_out,t((['=',HeadIs,AsBodyFnOut]))))))),!.
+metta_to_metta_body_macro(_,Body,Body):-!.
 
-metta_to_metta_body_macro_recurse(_,I,I):-!.
 
+
+%metta_body_macro(_HeadIs, AsBodyFn, AsBodyFnOut):-!, AsBodyFnOut=AsBodyFn.
 metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
-   must_det_lls((metta_body_macro1(HeadIs, [], AsBodyFn, AsBodyFnE),
-    metta_body_macro2(HeadIs, [], AsBodyFnE, AsBodyFnMid),
+   must_det_lls((
+    nop((term_variables(HeadIs+AsBodyFn,Vars),copy_term(Vars,Copy),ss_freeze_vars(Vars,Copy))),
+    metta_body_macro_stack(td1,HeadIs, [], AsBodyFn, AsBodyFnE),
+    metta_body_macro_stack(bu,HeadIs, [], AsBodyFnE, AsBodyFnMidE),
+    metta_body_macro_stack(td2,HeadIs, [], AsBodyFnMidE, AsBodyFnMid),
    (AsBodyFn =@= AsBodyFnMid -> AsBodyFnMid = AsBodyFnOut ;
-     metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)))).
+     metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)),
+    nop((ss_unfreeze_vars(Vars,Copy))))).
 
-metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
-metta_body_macro1(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
-metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro1(HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
-metta_body_macro1(HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
-   maplist( metta_body_macro1(HeadIs, Stack), AsBodyFn, AsBodyFnMid),
+with_ss_unify(Inp,Goal):-
+    term_variables(Inp,Vars),copy_term(Inp+Vars,InpC+Copy),ss_freeze_vars(Vars,Copy),
+    call(Goal),Inp=@=InpC,
+    ss_unfreeze_vars(Vars,Copy).
+
+ss_freeze_var(Var,Copy):- put_attr(Var,cant_bind,Copy).
+ss_freeze_vars(Vars,Copy):- maplist(ss_freeze_var,Vars,Copy).
+cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),Copy=@=NewValue.
+ss_unfreeze_var(Var,_):- del_attr(Var,cant_bind),!.
+%ss_unfreeze_var(Var,Copy):- get_attr(Var,cant_bind,Now),Copy==Now,del_attr(Var,cant_bind),Var=@=Copy.
+ss_unfreeze_vars(Vars,Copy):- maplist(ss_unfreeze_var,Vars,Copy).
+
+metta_body_macro_stack(_,_HeadIs, _,_AsBodyFn, AsBodyFnO):- nonvar(AsBodyFnO),!,trace_break(nonvar(AsBodyFnO)).
+metta_body_macro_stack(_,_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ compound(AsBodyFn), !, AsBodyFn=AsBodyFnO.
+metta_body_macro_stack(_,_HeadIs, _, AsBodyFn, AsBodyFnO):- \+ is_list(AsBodyFn), !, AsBodyFn=AsBodyFnO.
+metta_body_macro_stack(_,HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):- fail, \+ is_funcall_op(Op),  !, maplist(metta_body_macro_stack(bu,HeadIs, Stack), [Op|AsBodyFn], AsBodyFnOut),!.
+
+metta_body_macro_stack(BU,HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
+  BU == bu,
+   once((copy_term(AsBodyFn,AsBodyFnCopy),
+   maplist( metta_body_macro_stack(BU,HeadIs, Stack), AsBodyFn, AsBodyFnMid),
+   AsBodyFn=@=AsBodyFnCopy)),
    [Op|AsBodyFnMid]=OpAsBodyMid,
    copy_term(OpAsBodyMid,OpAsBodyMidCopy),
-   metta_body_macro_pass(e,OpAsBodyMid,AsBodyFnOut),
+   metta_body_macro_pass(BU,OpAsBodyMid,AsBodyFnOut),
    OpAsBodyMid=@=OpAsBodyMidCopy,!.
 
-metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ compound(AsBodyFn), !.
-metta_body_macro2(_HeadIs, _, AsBodyFn, AsBodyFn):- \+ is_list(AsBodyFn), !.
-metta_body_macro2(HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
-   copy_term(OpAsBody,OpAsBodyMidCopy),
-   metta_body_macro_pass(f, OpAsBody , AsBodyFnOut),
-   OpAsBody=@=OpAsBodyMidCopy,!,
-   maplist( metta_body_macro2(HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally).
+metta_body_macro_stack(TD, HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
+  TD == td,
+   once((copy_term(OpAsBody,OpAsBodyMidCopy),
+   metta_body_macro_pass(TD, OpAsBody , AsBodyFnOut),
+   OpAsBody=@=OpAsBodyMidCopy)),
+   maplist( metta_body_macro_stack(TD,HeadIs, Stack), AsBodyFnOut,AsBodyFnOutReally),!.
 
-metta_body_macro_pass(e,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
-metta_body_macro_pass(e,['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
-metta_body_macro_pass(e,['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
-metta_body_macro_pass(e,['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
-metta_body_macro_pass(e,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
-metta_body_macro_pass(e,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
-metta_body_macro_pass(e,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
+metta_body_macro_stack(_,_HeadIs, _, AsBodyFn, AsBodyFn).
 
-metta_body_macro_pass(f,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
-metta_body_macro_pass(f,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 
-%metta_body_macro_pass(e,[eval,Next], Next).
-metta_body_macro_pass(e,AsBodyFnOut, AsBodyFnOut).
 
-metta_body_macro_pass(f,[NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
-metta_body_macro_pass(f,[eval,Eval], Eval).
+metta_body_macro_pass(_, [NonOp|More], AsBodyFn):- \+ callable(NonOp),!,[NonOp|More]= AsBodyFn.
+metta_body_macro_pass(bu,['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Var2]|Rest]).
+metta_body_macro_pass(bu,['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
+metta_body_macro_pass(bu,['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_pass(bu,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
+metta_body_macro_pass(bu,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
+metta_body_macro_pass(bu,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
 
-metta_body_macro_pass(f,['unique',Eval],
-   ['let',Var,['call-fn!','no_repeat_var',variant_by_type],
-     ['let',Res,Eval,['metta-unify',Var,Res],Res]]).
+metta_body_macro_pass(td1,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
+metta_body_macro_pass(td1,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
+%metta_body_macro_pass(bu,[eval,Next], Next).
 
-metta_body_macro_pass(f,AsBodyFnOut, AsBodyFnOut).
+% metta_body_macro_pass(td,[eval,Eval], Eval).
+metta_body_macro_pass(td1,['capture',Eval], Eval).
+
+metta_body_macro_pass(td2,['unique',Eval],
+   ['let',Var,['call-fn!','no_repeats_var'],
+     ['let',Res,Eval,['metta-unify',Var,Res],Res]]):- fail.
+
+metta_body_macro_pass(_,AsBodyFnOut, AsBodyFnOut).
+
 
 
 
