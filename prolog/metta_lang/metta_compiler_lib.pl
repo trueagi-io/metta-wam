@@ -276,7 +276,7 @@ lazy_member(P,R2) :- as_p1_exec(R2,P).
 %'mc__1_2_intersection'(S1,S2,R)
 
 :- initialization(setup_library_call(builtin, unique, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])), program).
-'mc__1_1_unique'(S,R) :- 'mc__1_1_collapse'(S,S0),list_to_set(S0,R).
+'mc__1_1_unique'(S,R) :- no_repeats_var(NR), as_p1_exec(S,R), R=NR.
 
 :- initialization(setup_library_call(builtin, 'unique-atom', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])), program).
 'mc__1_1_unique-atom'(S,R) :- list_to_set(S,R).
@@ -290,8 +290,27 @@ lazy_member(P,R2) :- as_p1_exec(R2,P).
 %%%%%%%%%%%%%%%%%%%%% superpose, collapse
 
 :- initialization(setup_library_call(builtin, superpose, [1], '@doc', '@doc', [x(doeval,eager,[])], x(noeval,eager,[])), program).
-'mc__1_1_superpose'(S,R) :- member(R,S).
+'mc__1_1_superpose'(S,R) :- nonvar(S), should_be(nonvar,S), \+ is_list(S), !, as_p1_expr(S,X), should_be(is_list,X), member(E,S), % as_p1_exec(E,R).
+                         as_p1_expr(E,Y),eval(Y,R). %
+'mc__1_1_superpose'(S,R) :- is_list(S), should_be(is_list,S), member(E,S), as_p1_exec(E,R).
 
+
+:- op(700,xfx,'=~').
+
+% old way to use the interpreted version
+todo_compile_flow_control(_HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy, Convert, [inline(Converted)], _ConvertedN) :-
+    Convert =~ ['superpose',ValueL],is_ftVar(ValueL),
+    %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
+    Converted = eval_args(['superpose',ValueL],RetResult),
+    cname_var('MeTTa_SP_',ValueL).
+
+% old compiled version
+todo_compile_flow_control(HeadIs, _LazyVars, RetResult, _RetResultN, _ResultLazy, Convert, [inline(Converted)], _ConvertedN) :-
+    Convert =~ ['superpose',ValueL],is_list(ValueL),
+    %maybe_unlistify(UValueL,ValueL,URetResult,RetResult),
+    cname_var('SP_Ret',RetResult),
+    maplist(f2p_assign(HeadIs,RetResult),ValueL,CodeForValueL),
+    list_to_disjuncts(CodeForValueL,Converted),!.
 :- initialization(setup_library_call(builtin, collapse, [1], '@doc', '@doc', [x(doeval,lazy,[])], x(doeval,eager,[])), program).
 'mc__1_1_collapse'(ispu(X),[X]) :- !.
 'mc__1_1_collapse'(ispuU(Ret,Code),R) :- fullvar(Ret),!,findall(Ret,Code,R).
@@ -355,7 +374,7 @@ unify_pattern(Space,Pattern):- is_metta_space(Space),!, match_pattern(Space, Pat
 % otherwise calls prolog unification (with occurs check later)
 unify_pattern(Atom, Pattern):- metta_unify(Atom, Pattern).
 
-metta_unify(Atom, Pattern):- Atom=Pattern.
+metta_unify(Atom, Pattern):- unify_with_occurs_check(Atom,Pattern).
 
 % TODO FIXME: sort out the difference between unify and match
 :- initialization(setup_library_call(builtin, unify, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])), program).
@@ -442,8 +461,16 @@ inline_comp(append(X,[],Y), true):- X=Y.
          'mc__1_1_collapse'(B,BB)),
          equal_enough_for_test_renumbered_l(alpha_equ,AA,BB), C).
 
+:- initialization(setup_library_call(builtin, 'assertNotAlphaEqual', [2], '@doc', '@doc', [x(doeval,lazy,[]),x(noeval,lazy,[])], x(doeval,eager,[])), program).
+'mc__1_2_assertNotAlphaEqual'(A,B,C) :-
+   loonit_assert_source_tf_empty(
+        ['assertNotAlphaEqual',A,B],AA,BB,
+        ('mc__1_1_collapse'(A,AA),
+         'mc__1_1_collapse'(B,BB)),
+         equal_enough_for_test_renumbered_l(not_alpha_equ,AA,BB), C).
+                  
 :- initialization(setup_library_call(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])), program).
-'mc__1_1_quote'(A,['quote',A]).
+'mc__1_1_quote'(A,['quote',AA]):- unify_with_occurs_check(A,AA).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
   Convert = ['quote',Quoted],!,
   f2p(HeadIs,LazyVars,QuotedResult,QuotedResultN,LazyRetQuoted,Quoted,QuotedCode,QuotedCodeN),
@@ -643,16 +670,38 @@ transpiler_predicate_nary_store(builtin, 'py-atom-call', 1, ['Atom'], 'Atom', 'A
 'mc_n_1__py-atom-call'(SymRef,Args,Ret) :- 'mc_n_1__py-atom-call!'(SymRef,Args,Ret).
 
 transpiler_predicate_nary_store(builtin, 'py-atom-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-'mc_n_1__py-atom-call!'(SymRef,Args,Ret) :-
-    py_call_method_and_args(SymRef,Args,Res),
-    py_metta_return_value(_RetType,Ret,Res).
+'mc_n_1__py-atom-call!'(SymRef,Args,Res) :-
+    py_call_method_and_args_sig(_RetType,[],SymRef,Args,Res).
+
+
+%transpiler_predicate_store(builtin, 'py-atom', [1], ['Atom'], 'Atom', [x(doeval,eager,[])], x(doeval,eager,[])).
+%'mc__1_1_py-atom'(SymRef,Res) :-
+%    py_atom(SymRef,Res).
+
+
+transpiler_predicate_store(builtin, 'eval-string', [1], ['String'], 'Atom', [x(doeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_eval-string'(String,Res) :-
+    eval_string(String,Res).
+
+transpiler_predicate_store(builtin,'eval-in-only', [1], ['Symbol','Atom'], 'Atom', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_1_eval-in-only'(Where,Eval,Res) :-
+    eval_in_only(Where,Eval,Res).
+
+transpiler_predicate_nary_store(builtin, 'py-atom', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+'mc_n_1__py-atom'(SymRef,Specialize,ResO) :-
+   py_atom(SymRef,Res), specialize_res(Res,Specialize,ResO).
+
+transpiler_predicate_nary_store(builtin, 'py-dot', 2, ['Atom','Atom'], 'Atom', 'Atom', [x(doeval,eager,[]),x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+'mc_n_2__py-dot'(Arg1,Arg2,Specialize,ResO) :-
+   make_py_dot(Arg1,Arg2,Res),specialize_res(Res,Specialize,ResO).
+
 
 transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-dot-call'(SymRef,Args,Ret) :- 'mc_n_1__py-dot-call!'(SymRef,Args,Ret).
 
 transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
-    eval_only_interp([['py-dot'|SymRef]|Args],Ret).
+    eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
     %make_py_dot(Arg1,Arg2,Res)
     %py_call_method_and_args(SymRef,Args,Res),
     %py_metta_return_value(_RetType,Ret,Res).
