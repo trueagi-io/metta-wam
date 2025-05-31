@@ -3540,7 +3540,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
   must_det_ll((py_eval_string(Arg,Res))).
 
-eval_40(Eq,RetType,Depth,Self,['length',L],Res):- fail, !, eval_args(Depth,Self,L,LL),
+eval_40_disabled(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 

@@ -81,7 +81,7 @@
 :- discontiguous(compile_flow_control/8).
 :- multifile(compile_flow_control/8).
 :- ensure_loaded(metta_compiler_lib).
-:- ensure_loaded(metta_compiler_lib_stdlib).
+%:- ensure_loaded(metta_compiler_lib_stdlib).
 
 non_arg_violation(_,_,_).
 
@@ -95,10 +95,7 @@ non_arg_violation(_,_,_).
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
-%setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :- !.
-setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult) :-
- debug_info(always(setup_mi_me),setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult)),
- must_det_lls((
+setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :-
     sum_list(LenArgs,LenArgsTotal),
     LenArgsTotalPlus1 is LenArgsTotal+1,
     findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
@@ -108,11 +105,9 @@ setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult) :-
     Hi =.. [FnNameWMiPrefix|AtomList0],
     create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
     He =.. [FnNameWMePrefix|AtomList0],
-    append(Eval,[RetVal],[FnName|AtomList0]),
-    Bi = ci(true,FnName,LenArgsTotal,Eval,RetVal,true,Goal),
-    % Bi =.. [ci,true,[],true,Goal],
+    Bi =.. [ci,true,[],true,Goal],
     compiler_assertz(Hi:-((Goal=Hc),Bi)),
-    compiler_assertz(He:-Hc))).
+    compiler_assertz(He:-Hc).
 
 setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,MettaTypeResult,InternalTypeArgs,InternalTypeResult) :-
     (transpiler_predicate_store(_,FnName,LenArgs,_,_,_,_) -> true ;
@@ -200,8 +195,6 @@ a_f_args(_A,_B):- bt,!,ds,break,trace.
 
 A @.. B:- a_f_args(A,B), A=..B.
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% Put any type definitions here
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,27 +227,18 @@ arg_eval_props(N,x(doeval,eager,[N])).
 %  N = expr code
 %  C = common code tp be called before both the exec and expr cases
 
-
-as_p1_exec(X,X) :- \+ compound(X), !.
-% as_p1_exec(X,Y) :- as_p1_expr(X,S),eval(S,Y).
 as_p1_exec(ispu(URet),URet) :- !.
 as_p1_exec(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_exec(ispeEn(ERet,ECode,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
-as_p1_exec(rtrace(T),TRet) :- !, rtrace(as_p1_exec(T,TRet)).
-as_p1_exec(call(P1,T),TRet) :- !, call(P1,as_p1_exec(T,TRet)).
-as_p1_exec(X,Y) :- as_p1_expr(X,S),eval(S,Y).
-%as_p1_exec(X,X) :- !.
+as_p1_exec(X,X) :- !.
 
-as_p1_expr(X,X) :- \+ compound(X), !.
 as_p1_expr(ispu(URet),URet) :- !.
 as_p1_expr(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_expr(ispeEn(_,_,NRet),NRet).
 as_p1_expr(ispeEnN(_,_,NRet,NCode),NRet) :- !, call(NCode).
 as_p1_expr(ispeEnNC(_,_,NRet,NCode,CCode),NRet) :- !,call(CCode),call(NCode).
-as_p1_expr(rtrace(T),TRet) :- !, rtrace(as_p1_expr(T,TRet)).
-as_p1_expr(call(P1,T),TRet) :- !, call(P1,as_p1_expr(T,TRet)).
 as_p1_expr(X,X) :- !.
 
 create_p1(URet,[],[ispu,URet]) :- !.
@@ -313,7 +297,7 @@ must_use_compiler(Fn,disable_interp(Fn)):- nb_current(disable_interp,WasDC), mem
 must_use_compiler(Fn,interp_disabled(Fn)):- use_evaluator(fa(Fn, _), interp, disabled).
 
 ci(_,_,_,G):- call(G).
-
+ci(_,_,_, _,_,_,G):- !, call(G).
 % Compiler is Disabled for Fn
 ci(PreInterp,Fn,Len,Eval,RetVal,_PreComp,_Compiled):- fail,
     once(must_use_interp(Fn,Why,TF)),
@@ -443,18 +427,10 @@ combine_transpiler_clause_store_and_maybe_recompile(FnName,LenArgs,FinalLazyArgs
       )
    ;
       % new, insert clause
-      current_compiler_context(CompCtx), % where expected to be stored (builtin,user,etc)
-      setup_library_call(CompCtx,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj),
+      compiler_assertz(transpiler_predicate_store(user,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj)),
+      setup_mi_me(FnName,LenArgs,FinalLazyArgsAdj,FinalLazyRetAdj),
       recompile_from_depends(FnName,LenArgs)
    ).
-
-create_mc_name(LenArgs,FnName,String) :-
-   length(LenArgs,L),
-   append(['mc_',L|LenArgs],[FnName],Parts),
-   atomic_list_concat(Parts,'_',String).
-
-current_compiler_context(CompCtx):- option_value(compiler_context,CompCtx),!.
-current_compiler_context(user).
 
 get_curried_name_structure(null,'',[],[]) :- !. % special null case
 get_curried_name_structure([],[],[],[]) :- !.
@@ -478,7 +454,7 @@ invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
    invert_curried_structure(F,LenArgs,ArgsFirst,Result).
 
 
-recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_code_from_depends,skip_redef_fa(FnName,LenArgs)),!.
+recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_redef_fa(FnName,LenArgs)),!.
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
@@ -506,7 +482,7 @@ max_integer_in_term(Term, Start, Max) :-
 
 number_vars_wo_conficts(X,XX):-
    copy_term(X,XX),
-   woct(max_integer_in_term(XX,0,N)),
+   woc(max_integer_in_term(XX,0,N)),
    succ(N,N2),
    numbervars(XX,N2,_,[attvar(skip)]).
 
@@ -519,10 +495,10 @@ recompile_from_depends_child(_ParentFA,Fn/Arity) :-
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
    create_prefixed_name('mc_',Arity,Fn,FnWPrefix),
    abolish(FnWPrefix/ArityP1),
- %  create_prefixed_name('mi_',Arity,Fn,FnWMiPrefix),
- %  abolish(FnWMiPrefix/ArityP1),
- %  create_prefixed_name('me_',Arity,Fn,FnWMePrefix),
- %  abolish(FnWMePrefix/ArityP1),
+   create_prefixed_name('mc_',Arity,Fn,FnWMiPrefix),
+   %abolish(FnWMiPrefix/ArityP1),
+   create_prefixed_name('mc_',Arity,Fn,FnWMePrefix),
+   %abolish(FnWMePrefix/ArityP1),
    % retract(transpiler_stub_created(Fn,Arity)),
    % create an ordered list of integers to make sure to do them in order
    findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
@@ -539,7 +515,7 @@ compile_for_assert_with_add(Head-Body) :-
 
 extract_info_and_remove_transpiler_clause_store(Fn,Arity,ClauseIDt,Head-Body) :-
    transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,Head,Body),
-   %format_e("Extracted clause: ~w:-~w\n",[Head,Body]),
+   %format_e("Extracted clause: ~w:~w:-~w\n",[Fn,Head,Body]),
    retract(transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_)).
 
 % !(compile-for-assert (plus1 $x) (+ 1 $x) )
@@ -547,12 +523,11 @@ compile_for_assert(HeadIsIn, AsBodyFnIn, Converted) :-
   compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted).
 
 compile_for_assert_2(HeadIsIn, AsBodyFnIn, Converted) :-
-  %must_det_lls
-  ((
+  must_det_lls((
   IN = ['=',HeadIsIn, AsBodyFnIn],
-  woct(metta_to_metta_macro_recurse(IN, OUT)),
+  metta_to_metta_macro_recurse(IN, OUT),
   OUT = ['=',HeadIs, AsBodyFn],
-  woct(compile_for_assert_3(HeadIs, AsBodyFn, Converted)))).
+  compile_for_assert_3(HeadIs, AsBodyFn, Converted))).
 
 compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    %must_det_lls((
@@ -560,27 +535,25 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
    subst_varnames(HeadIsIn+AsBodyFnIn,HeadIs+AsBodyFn),
    %leash(-all),trace,
    get_curried_name_structure(HeadIs,FnName,Args,LenArgs),
-   create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
    %ensure_callee_site(Space,FnName,LenArgs),
    remove_stub(Space,FnName,LenArgs),
    sum_list(LenArgs,LenArgsTotal),
-   nb_setval('$info_id',fa(FnName,LenArgsTotal)),
    LenArgsTotalPlus1 is LenArgsTotal+1,
    % retract any stubs
 
    (transpiler_stub_created(FnName,LenArgs) ->
-     (retract(transpiler_stub_created(FnName,LenArgs)),
+      retract(transpiler_stub_created(FnName,LenArgs)),
       findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+      create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
       H @.. [FnNameWPrefix|AtomList0],
       transpiler_debug(2,format_e("Retracting stub: ~q\n",[H]) ; true),
       retractall(H),
-      %create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
-      %H1 @.. [FnNameWMiPrefix|AtomList0],
-      %retractall(H1),
-      %create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
-      %H2 @.. [FnNameWMePrefix|AtomList0],
-      %retractall(H2),      
-      true)
+      create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
+      H1 @.. [FnNameWMiPrefix|AtomList0],
+      retractall(H1),
+      create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
+      H2 @.. [FnNameWMePrefix|AtomList0],
+      retractall(H2)
    ; true),
 
    %AsFunction = HeadIs,
@@ -612,7 +585,7 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
       %precompute_typeinfo(HResult,HeadIs,AsBodyFn,Ast,TypeInfo),
 
       %get_property_lazy(FinalLazyRet,FinalLazyOnlyRet),
-       setup_mi_me(FnName,LenArgs,FinalLazyArgsAdj,FinalLazyRetAdj),
+
         OldExpr = [defn,HeadIs,AsBodyFn],
 
         combine_transform_and_collect(OldExpr, Assignments, _NewExpr, VarMappings),
@@ -648,7 +621,6 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
       %ast_to_prolog(no_caller,HeadAST,HeadC),
       %append(Args,[HResult],HArgs),
       %HeadC @.. [FnNameWPrefix|HArgs],
-
 
       ast_to_prolog_aux(no_caller,[FnName/LenArgsPlus1],HeadAST,HeadC),
       %print_ast( yellow, [=,HeadAST,FullCode2]),
@@ -732,14 +704,14 @@ determine_eager_vars(lazy,lazy,A,[]) :- fullvar(A),!.
 determine_eager_vars(eager,eager,A,[A]) :- fullvar(A),!.
 determine_eager_vars(_,eager,A,EagerVars) :- is_list(A),A=[Var|_],fullvar(Var),!,  % avoid binding free var to 'if'
    maplist(determine_eager_vars(eager),_,A,EagerVars0),foldl(union_var,EagerVars0,[],EagerVars).
-determine_eager_vars(Lin,Lout,[IF,If,Then,Else],EagerVars) :- atom(IF), is_If(IF),!,
+determine_eager_vars(Lin,Lout,[IF,If,Then,Else],EagerVars) :- atom(IF),IF='if',!,
    determine_eager_vars(eager,_,If,EagerVarsIf),
    determine_eager_vars(Lin,LoutThen,Then,EagerVarsThen),
    determine_eager_vars(Lin,LoutElse,Else,EagerVarsElse),
    intersect_var(EagerVarsThen,EagerVarsElse,EagerVars0),
    union_var(EagerVarsIf,EagerVars0,EagerVars),
    (LoutThen=eager,LoutElse=eager -> Lout=eager ; Lout=lazy).
-determine_eager_vars(Lin,Lout,[IF,If,Then],EagerVars) :- atom(IF),is_If(IF),!,
+determine_eager_vars(Lin,Lout,[IF,If,Then],EagerVars) :- atom(IF),IF='if',!,
    determine_eager_vars(eager,_,If,EagerVars),
    determine_eager_vars(Lin,Lout,Then,_EagerVarsThen).
 % for case, treat it as nested if then else
@@ -907,11 +879,6 @@ transpile_interpret(Convert,Convert) :- \+ is_list(convert),!.
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, T, Converted, ConvertedN) :- compound(T),T=exec(X),!,
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, [eval,X], Converted, ConvertedN).
 
-f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :- fail,
-   atom(Convert), nb_bound(Convert,_),!, % TODO might need to look this up at evaluation time instead
-   atom_string(Convert,SConvert),
-   f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, ['eval-string',SConvert], Converted, ConvertedN),!.
-
 f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, Convert, Converted, ConvertedN) :-
    nb_bound(Convert,X),!, % TODO might need to look this up at evaluation time instead
    f2p(HeadIs, LazyVars, RetResult, RetResultN, ResultLazy, X, Converted, ConvertedN).
@@ -932,7 +899,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
-    once(number(Convert); atom(Convert);atomic(Convert);self_eval(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
 
 f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
      as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs
@@ -943,7 +910,6 @@ as_is_data_term(Term):- is_valid_nb_state(Term),!.
 as_is_data_term(Term):- \+ callable(Term),!.
 as_is_data_term(Term):- compound(Term),!,compound_name_arity(Term,F,A),as_is_no_convert_f_a(F,A).
 as_is_no_convert_f_a(rng,2).
-as_is_no_convert_f_a('Evaluation',_).
 
 
 /*
@@ -962,8 +928,7 @@ f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, '#\\'(Convert), Converted) :-
 
 % If Convert is a number or an atomic, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, RetResult, ResultLazy, Convert, Converted) :- % HeadIs\=@=Convert,
-    once(number(Convert); atom(Convert); atomic(Convert) %; data_term(Convert)
-    ),  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert); atomic(Convert) /*; data_term(Convert)*/ ),  % Check if Convert is a number or an atom
     (ResultLazy=x(_,eager,_) -> C2=Convert ; C2=[ispu,Convert]),
     Converted=[[assign,RetResult,C2]],
     % For OVER-REACHING categorization of dataobjs %
@@ -1836,33 +1801,24 @@ correct_assertz(call_fn_native(X,_Info,Y),InfoC):-
 correct_assertz(Info,Info).
 
 
-is_prolog_rule(Info):- strip_module(Info,_,Neck), compound(Neck), compound_name_arity(Neck,F,_), F == ':-'.
-is_compiler_data(Info):- strip_module(Info,_,Neck), compound(Neck), compound_name_arity(Neck,F,_), compiler_data(F/_),!.
+compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info).
 
-compiler_assertz(Info):- is_list(Info),!,maplist(compiler_assertz,Info),fail.
 
-compiler_assertz(Info):-
-   (is_prolog_rule(Info)-> debug_info(assertz_code, t(Info));
-   (is_compiler_data(Info)-> debug_info(assertz_compiler_data, t(Info));
-    debug_info(compiler_assertz, Info))),fail.
+compiler_assertz(Info):- debug_info(compiler_assertz, Info),fail.
 
 compiler_assertz(Info):- (once(correct_assertz(Info,InfoC))),Info\=@=InfoC,!,
    debug_info(compiler_assertz,correct_assertz(ca)),
    compiler_assertz(InfoC).
 
-compiler_assertz(Info):-
-     send_to_pl_file(Info),
-     once(try_optimize_prolog(ca,Info,Info2)),
-     Info\=@=Info2,!,
-     info_identity(Info,Id),
-     debug_info(compiler_assertz,optimized_code(Id,ca)),
+compiler_assertz(Info):- once(try_optimize_prolog(ca,Info,Info2)),Info\=@=Info2,!,
+     debug_info(compiler_assertz,optimize_prolog(ca)),
      compiler_assertz(Info2).
 
 compiler_assertz(Info):- skip_redef(Info), !, debug_info(skipping_redef,Info).
 compiler_assertz(Info):-
   once(unnumbervars_clause(Info,Assert)),
   transpiler_debug(2,output_prolog(Info)),
-    once(locally_clause_asserted(Assert)->true;assertz(Assert)),!.
+    once(clause_asserted(Assert)->true;assertz(Assert)),!.
 
 
 send_to_pl_file(Info):-
@@ -1914,9 +1870,6 @@ cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).
     %ignore(Expr='$VAR'(ExprV)), debug_var(ExprV,Expr).
 
-info_identity(_Info,ID):- nb_current('$info_id',ID),!.
-info_identity(_Info,info_id).
-
 
 skip_redef(Info):- \+ callable(Info),!,fail.
 skip_redef(Info:-_):- !,skip_redef_head(user,Info).
@@ -1939,27 +1892,26 @@ skip_redef_fa(Fn,LenArgs) :-
    functor(Info,FnWPrefix,LenArgsTotalPlus1),
    skip_redef_head(user,Info),!.
 
+into_fa(Fn/[Arity],Fn,Arity):- must_be(number,Arity).
+into_fa(Fn/Arity,Fn,Arity):- must_be(number,Arity).
+into_fa(FnArity,_Fn,_Arity):- throw(type_error(f/a,FnArity)).
 
 %must_det_lls(G):- catch(G,E,(wdmsg(E),fail)),!.
 %must_det_lls(G):- rtrace(G),!.
 %user:numbervars(Term):- varnumbers:numbervars(Term).
 
 must_det_lls(G):- tracing,!,call(G). % already tracing
-%must_det_lls(G):- is_nodebug,!,call(G). % is_mettalog_rt or is_user_repl
-must_det_lls(NC):- \+ compound(NC),!,must_det_ll1(NC).
-must_det_lls((A,B)):- !, must_det_ll1(A),must_det_lls(B).
-must_det_lls(G):- must_det_ll1(G).
-%must_det_lls((A,B)):- !, (A, B).
-%must_det_lls1(G):- !,call(G). % already tracing
+must_det_lls((A,B)):- !, (A, B).
+must_det_lls(G):- !,call(G). % already tracing
+must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls((G,B)):- catch(G,E,(wdmsg(E),fail)),!,must_det_lls(B).
 %must_det_lls((A,B)):- !, must_det_lls(A),must_det_lls(B).
 %must_det_lls(G):- tracing,!,(real_notrace(G)*->true;fail).
-must_det_ll1(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
+must_det_lls(G):- catch(G,E,(wdmsg(E),trace,rtrace(G),fail)),!.
 %must_det_lls(G):- must_det_ll(G).
-must_det_ll1(G):- ignore((notrace,nortrace)),trace,rtrace(G),!.
+must_det_lls(G):- ignore((notrace,nortrace,trace)),rtrace(G),!.
 
 extract_constraints(V,VS):- var(V),get_attr(V,cns,_Self=Set),!,extract_constraints(_Name,Set,VS),!.
-extract_constraints(V,VS):- var(V),VS=[],!.
 extract_constraints(V,VS):- var(V),!,ignore(get_types_of(V,Types)),extract_constraints(V,Types,VS),!.
 extract_constraints(Converted,VSS):- term_variables(Converted,Vars),
       % assign_vns(0,Vars,_),
@@ -1971,7 +1923,7 @@ extract_constraints(V,Types,V=Types).
 label_vns(S,G,E):- term_variables(G,Vars),assign_vns(S,Vars,E),!.
 assign_vns(S,[],S):-!.
 assign_vns(N,[V|Vars],O):- get_attr(V,vn,_),!, assign_vns(N,Vars,O).
-assign_vns(N,[V|Vars],O):- format(atom(VN),'~w',['$VAR'(N)]),
+assign_vns(N,[V|Vars],O):- format_e(atom(VN),'~w',['$VAR'(N)]),
   put_attr(V,vn,VN), N2 is N+1, assign_vns(N2,Vars,O).
 
 label_arg_types(_,_,[]):-!.
@@ -2501,138 +2453,29 @@ maybe_argo(_Caller,_F,_N,Arg,Arg):- is_list(Arg),!.
 maybe_argo(_Caller,_F,_N,Arg,Arg):- \+ compound(Arg),!.
 maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,[],Arg,ArgO).
 
-:- dynamic(maybe_optimize_prolog_term/4).
-:- dynamic(maybe_optimize_prolog_assertion/4).
+:- dynamic(maybe_optimize_prolog/4).
 
 try_optimize_prolog(Y,Convert,Optimized):- fail,
-   catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,Optimized)),!.
-try_optimize_prolog(_,Optimized,Optimized).
-/*
-try_optimize_prolog(Y,Convert,Optimized):-
-   catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,MaybeOptimized)),
-   actual_change(Convert,MaybeOptimized),!,
+   catch_warn(optimize_prolog(Y,[],Convert,MaybeOptimized)),
+   Convert\=@=MaybeOptimized,!,
    try_optimize_prolog(Y,MaybeOptimized,Optimized).
-*/
+try_optimize_prolog(_,Optimized,Optimized).
 
-optimize_prolog_term(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
-optimize_prolog_term(Y,FL,Converted,Optimized):-
+optimize_prolog(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
+optimize_prolog(Y,FL,Converted,Optimized):-
    copy_term(Converted,ConvertedC),
-   maybe_optimize_prolog_term(Y,FL,Converted,Optimized),
+   maybe_optimize_prolog(Y,FL,Converted,Optimized),
    \+ ((ConvertedC\=@=ConvertedC,
-       (debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),ignore((trace,throw(double_sided_unification)))),!.
-optimize_prolog_term(Y,FL,Converted,Optimized):- is_list(Converted),
-   maplist(optimize_prolog_term(Y,[list()|FL]),Converted,Optimized),!.
-optimize_prolog_term(Y,FL,Converted,Optimized):-
+       debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),!.
+optimize_prolog(Y,FL,Converted,Optimized):- is_list(Converted),
+   maplist(optimize_prolog(Y,[list()|FL]),Converted,Optimized),!.
+optimize_prolog(Y,FL,Converted,Optimized):-
    compound_name_arguments(Converted,F,Args),
-   maplist(optimize_prolog_term(Y,[F|FL]),Args,OArgs),
+   maplist(optimize_prolog(Y,[F|FL]),Args,OArgs),
    compound_name_arguments(Optimized,F,OArgs), !.
-optimize_prolog_term(_,_,Prolog,Prolog).
+optimize_prolog(_,_,Prolog,Prolog).
 
 
-actual_change(Body,BodyNew):- copy_term(Body+BodyNew,BodyC+BodyNewC,_), BodyC\=@=BodyNewC.
-
-maybe_optimize_prolog_assertion(Y,Stack,Cmpd,(:-BodyNew)):- fail, compound(Cmpd),(:-Body)=Cmpd,compound(Body),!,
-  maybe_optimize_prolog_assertion(Y,Stack,(cl:-Body),(cl:-BodyNew)).
-
-maybe_optimize_prolog_assertion(_,_,CmpdIn,(Cl:-BodyNew)):-
-  compound(CmpdIn),subst_vars(CmpdIn,Cmpd),
-  (Cl:-Body)=Cmpd,compound(Body),%copy_term(Body,BodyC),
-  must_optimize_whole_body(Cl,Body,BodyNew).
-
-must_optimize_whole_body(Head, Body, BodyNew) :-  fail,
-    term_variables(Body, Vars),
-    member(Var,Vars),
-    % Count variable usage across full term (Includes Head)
-    var_count_in_term(Head+Body,Var,Count),
-    %copy_term(Body,BodyC),
-    inline_var_maybe(Var, Count, Body, BodyNew),!.
-
-must_optimize_whole_body(_Cl, Body, BodyNew) :- fail,
-   sub_term_safely(Sub, Body), compound(Sub), Sub = (L = R),
-   L==R, subst001(Body, Sub , true, BodyNew), !.
-
-must_optimize_whole_body(Cl, Body, BodyNew) :- fail,
-     optimize_body(Cl, Body, BodyNew).
-
-
-label_body_singles(Head,Body):-
-   term_singletons(Body+Head,BodyS),
-   maplist(label_body_singles_2(Head),BodyS).
-label_body_singles_2(Head,Var):- sub_var_safely(Var,Head),!.
-label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
-
-
-optimize_body(HB,Body,BodyNew):-
-   %prolog_current_frame(Frame), prolog_frame_attribute(Frame, level, Depth),
-   %writeln(user_error,Depth=optimize_body(HB,Body,BodyNew)),
-   %if_t(Depth>186,trace),
-   optimize_body_step(HB,Body,BodyNew),!.
-optimize_body(_,Body,Body).
-
-optimize_body_step(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
-optimize_body_step(_HB,Body,BodyNew):- \+ compound(Body),!,Body=BodyNew.
-%optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, optimize_body(HB,VT,VTT).
-optimize_body_step( HB,with_space(V,T),with_space(V,TT)):-!, optimize_body(HB,T,TT).
-optimize_body_step( HB,limit(V,T),limit(V,TT)):-!, optimize_body(HB,T,TT).
-optimize_body_step( HB,findall(V,T,R),findall(V,TT,R)):-!, optimize_body(HB,T,TT).
-optimize_body_step( HB,loonit_assert_source_tf(V,T,R3,R4), loonit_assert_source_tf(V,TT,R3,R4)):-!,
-  optimize_body(HB,T,TT).
-
-optimize_body_step( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
-optimize_body_step( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
-optimize_body_step( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body_step( HB,(B1*->B2),(BN1*->BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body_step( HB,(B1->B2),(BN1*->BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-optimize_body_step( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
-
-
-optimize_body_step(Head,(B0,B1,B2),(B0,BN1)):- did_optimize_conj(Head,B1,B2,BN1).
-optimize_body_step(Head,(B1,B2,B3),(BN1,B3)):- did_optimize_conj(Head,B1,B2,BN1).
-optimize_body_step(Head,(B1,B2),(BN1)):- did_optimize_conj(Head,B1,B2,BN1).
-optimize_body_step(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
-
-% TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
-%optimize_body_step(_HB,==(Var, C), Var=C):- self_eval(C),!.
-%optimize_body_step( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
-%optimize_body_step(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
-optimize_body_step(_HB,Body,BodyNew):- Body=BodyNew.
-
-
-
-/*
-optimize_body(_Head,Body,BodyNew):- var(Body),!,Body=BodyNew.
-optimize_body(Head,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
-optimize_body(Head,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
-optimize_body(Head,(B1,B2),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
-optimize_body(Head,(B2,B1),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
-optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
-optimize_body(Head,(B1:-B2),(BN1:-BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
-optimize_body(Head,(B1;B2),(BN1;BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
-optimize_body(_Head,Body,BodyNew):- Body=BodyNew.
-*/
-
-
-var_count_in_term(Term, Var, Count) :-
-    term_occurrences(Var, Term, Count).
-
-term_occurrences(Var, Term, Count) :-
-    ( Term == Var -> Count = 1
-    ; compound(Term) ->
-        Term =.. [_|Args],
-        maplist(term_occurrences(Var), Args, Counts),
-        sum_list(Counts, Count)
-    ; Count = 0 ).
-
-% Inline variables with exactly two uses
-inline_var_maybe(Var, 2, Body, BodyNew) :-
-    sub_term_safely(Sub, Body), compound(Sub), Sub = (Left = Right),
-    inline_var(Var, 2, (Left = Right), Body, BodyNew).
-
-inline_var(Var, 2, (Left = Right), Body, Body):- Var == Left , Var \== Right, !,
-  Right=Var. % subst001(Body, Var , Right, BodyNew), !.
-
-inline_var(Var, 2, (Right = Left), Body, Body):- Var == Left , Var \== Right, !,
-  Right=Var. %subst001(Body, Var , Right, BodyNew), !.
 
 
 de_eval(eval(X),X):- compound(X),!.
@@ -2643,26 +2486,18 @@ call3(G):- call(G).
 call4(G):- call(G).
 call5(G):- call(G).
 
-trace_break:- trace_break((trace,break)).
-trace_break(G):-
-   stream_property(Err, file_no(2)),
-   current_output(Cur), Cur\=@=Err,!,
-   with_output_to(Err, trace_break(G)).
-trace_break(G):- nl, writeq(call(G)), trace,break.
-%    :- set_prolog_flag(gc,false).
+trace_break:- trace,break.
 
 :- if(debugging(metta(compiler_bugs))).
-    :- set_prolog_flag(gc,false).
+:- set_prolog_flag(gc,false).
 :- endif.
 
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).
 call_fr(G,Result,_):- Result=G.
 
-transpile_eval([Fn|Args],Res):- use_evaluator(fa(Fn,_), compiler, disabled),!, eval_in_only(interp,[Fn|Args],Res).
-transpile_eval(Convert,Res) :- nb_current('eval_in_only', interp),!, eval(Convert,Res).
 transpile_eval(Convert,Converted) :-
   transpile_eval(Convert,Converted,PrologCode),!,
-  eval_in_only(compiler,call(PrologCode)).
+  call(PrologCode).
 
 transpile_eval(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
@@ -2671,15 +2506,13 @@ transpile_eval(Convert0,LiConverted,PrologCode) :-
    %   PrologCode=PrologCode0,
    %   LiConverted=Converted0
    %;
-      metta_to_metta_body_macro_recurse('transpile_eval',Convert,ConvertMacr),
-      f2p(null,[],Converted,_,LE,ConvertMacr,Code1,_),
+      f2p(null,[],Converted,_,LE,Convert,Code1,_),
       lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
       ast_to_prolog(no_caller,[],Code,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted))
    %)
    .
 
-transpile_eval_nocache(Convert,Converted,true) :- nb_current('eval_in_only', interp),!, eval(Convert,Converted).
 transpile_eval_nocache(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
    subst_varnames(Convert0,Convert),
@@ -2715,10 +2548,10 @@ no_conflict_numbervars(Term):-
 %                   eval_args(_C, RetResult)).
 %
 functs_to_preds(I,OO):-
-   functs_to_preds0(I,OO),!.
+   must_det_lls(functs_to_preds0(I,OO)),!.
 
 functs_to_preds0([Eq,H,B],OO):- Eq == '=', !, % added cut to force compile_for_assert/3
-   compile_for_assert(H, B, OO),!.
+   must_det_lls(compile_for_assert(H, B, OO)),!.
 functs_to_preds0(EqHB,OO):- compile_head_for_assert(EqHB,OO),!.
 
 functs_to_preds0(I,OO):-
@@ -2742,9 +2575,65 @@ merge_and_optimize_head_and_body(Head,Converted,HeadO,Body):- nonvar(Head),
    merge_and_optimize_head_and_body(PreHead,(True,Converted),HeadO,Body).
 merge_and_optimize_head_and_body(AHead,Body,Head,BodyNew):-
    assertable_head(AHead,Head),
-   optimize_body(Head,Body,BodyNew).
+   must_optimize_body(Head,Body,BodyNew).
 
 
+
+maybe_optimize_prolog(_,_,Cmpd,(Cl:-BodyNew)):-
+  compound(Cmpd),
+  (Cl:-Body)=Cmpd,nonvar(Body),!,must_optimize_body(Cl,Body,BodyNew).
+
+assertable_head(x_assign(FList,R),Head):- FList =~ [F|List],
+   append(List,[R],NewArgs), atom(F), Head @.. [F|NewArgs],!.
+assertable_head(Head,Head).
+
+label_body_singles(Head,Body):-
+   term_singletons(Body+Head,BodyS),
+   maplist(label_body_singles_2(Head),BodyS).
+label_body_singles_2(Head,Var):- sub_var(Var,Head),!.
+label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
+
+must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimize_body(A,C,CC).
+must_optimize_body(_,B,C):- B =C.
+
+optimize_body(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
+%optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, must_optimize_body(HB,VT,VTT).
+optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4), loonit_assert_source_tf(V,TT,R3,R4)):-!,
+  must_optimize_body(HB,T,TT).
+
+optimize_body( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
+optimize_body( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, must_optimize_body(HB,B1,BN1), must_optimize_body(HB,B2,BN2), must_optimize_body(HB,B3,BN3).
+optimize_body( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body( HB,(B1*->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+
+
+optimize_body(Head,(B0,B1,B2),(B0,BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2,B3),(BN1,B3)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2),(BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+
+% TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
+%optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
+optimize_body( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
+%optimize_body(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
+optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
+
+/*
+optimize_body(_Head,Body,BodyNew):- var(Body),!,Body=BodyNew.
+optimize_body(Head,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1,B2),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B2,B1),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1:-B2),(BN1:-BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1;B2),(BN1;BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(_Head,Body,BodyNew):- Body=BodyNew.
+*/
 
 optimize_x_assign_1(_,Var,_,_):- is_ftVar(Var),!,fail.
 optimize_x_assign_1(HB,Compound,R,Code):- \+ compound(Compound),!, optimize_x_assign(HB,Compound,R,Code).
@@ -3338,9 +3227,9 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
   H @.. [Fh|Args],
   length(Args,N),
   N1 is N-1,
-  atomic_list_concat(['mc__1_',N1,'_',Fh],FPrefixed),
+  atomic_list_concat(['mc_',N1,'__',Fh],FPrefixed),
   H2 @.. [FPrefixed|Args],
-  clause_occurs_warning(H2,B,Ref),clause(HH,BB,Ref),
+  clause(H2,B,Ref),clause(HH,BB,Ref),
   strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
 
@@ -3479,55 +3368,7 @@ x_assign(X,X).
 
 
 
-ok_to_append('$VAR'):- !, fail.
-ok_to_append(_).
 
-p2s(P,S):- into_list_args(P,S).
-
-non_compound(S):- \+ compound(S).
-
-
-did_optimize_conj(Head,B1,B2,B12):-
- optimize_conj(Head,B1,B2,B12),
- actual_change(B12 , (B1,B2)),!.
-
-
-optimize_conjuncts(Head,(B1,B2,B3),BN):- B3\=(_,_),
-  did_optimize_conj(Head,B2,B3,B23),
-  optimize_conjuncts(Head,B1,B23,BN), !.
-optimize_conjuncts(Head,(B1,B2,B3),BN):-
-  did_optimize_conj(Head,B1,B2,B12),
-  optimize_conjuncts(Head,B12,B3,BN),!.
-%optimize_conjuncts(Head,(B1,B2),BN1):- optimize_conj(Head,B1,B2,BN1).
-optimize_conjuncts(Head,(B1,B2),BN1):- did_optimize_conj(Head,B1,B2,BN1),!.
-optimize_conjuncts(Head,B1,B2,OUT):-
-   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2),!,(BN1,BN2)=OUT.
-
-%optimize_conj(_, x_assign(Term, C), is_True(CC), eval_true(Term)):- 'True'==True, CC==C.
-%optimize_conj(_, x_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
-optimize_conj(_, B1,BT,B1):- assumed_true(BT),!.
-optimize_conj(_, BT,B1,B1):- assumed_true(BT),!.
-%optimize_conj(Head, x_assign(Term, C), x_assign(True,CC), Term):- 'True'==True,
-%     optimize_conj(Head, x_assign(Term, C), is_True(CC), CTerm).
-%optimize_conj(Head,B1,BT,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
-%optimize_conj(Head,BT,B1,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
-% optimize_conj(Head,B1,B2,OUT):- optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2),!,(BN1,BN2)=OUT.
-
-assumed_true(B2):- var(B2),!,fail.
-assumed_true(eval_true(B2)):-!,assumed_true(B2).
-assumed_true(B2):- B2== true,!.
-assumed_true(B2):- B2==x_assign('True', '$VAR'('_')),!.
-assumed_true(X==Y):- assumed_true(X=Y).
-assumed_true(X=Y):- var(X),var(Y), X=Y.
-assumed_true(X=Y):- is_ftVar(X),is_ftVar(Y), X=Y.
-
-
-filter_head_arg(H,F):- var(H),!,H=F.
-filter_head_arge(H,F):- H = F.
-
-code_callable(Term,_CTerm):- var(Term),!,fail.
-code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
-%code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 
 
 
@@ -3842,6 +3683,53 @@ assertable_head(u_assign(FList,R),Head):- FList =~ [F|List],
    Head @.. [F|NewArgs].
 assertable_head(Head,Head).
 
+ok_to_append('$VAR'):- !, fail.
+ok_to_append(_).
+
+p2s(P,S):- into_list_args(P,S).
+
+non_compound(S):- \+ compound(S).
+
+did_optimize_conj(Head,B1,B2,B12):- optimize_conj(Head,B1,B2,B12), B12\=@=(B1,B2),!.
+
+
+optimize_conjuncts(Head,(B1,B2,B3),BN):- B3\==(_,_),
+  did_optimize_conj(Head,B2,B3,B23),
+  optimize_conjuncts(Head,B1,B23,BN), !.
+optimize_conjuncts(Head,(B1,B2,B3),BN):-
+  did_optimize_conj(Head,B1,B2,B12),
+  optimize_conjuncts(Head,B12,B3,BN),!.
+%optimize_conjuncts(Head,(B1,B2),BN1):- optimize_conj(Head,B1,B2,BN1).
+optimize_conjuncts(Head,(B1,B2),BN1):- did_optimize_conj(Head,B1,B2,BN1),!.
+optimize_conjuncts(Head,B1,B2,(BN1,BN2)):-
+   must_optimize_body(Head,B1,BN1), must_optimize_body(Head,B2,BN2).
+
+optimize_conj(_, x_assign(Term, C), x_assign(True,CC), eval_true(Term)):- 'True'==True, CC==C.
+optimize_conj(_, x_assign(Term, C), is_True(CC), eval_true(Term)):- CC==C, !.
+optimize_conj(_, B1,BT,B1):- assumed_true(BT),!.
+optimize_conj(_, BT,B1,B1):- assumed_true(BT),!.
+%optimize_conj(Head, x_assign(Term, C), x_assign(True,CC), Term):- 'True'==True,
+%     optimize_conj(Head, x_assign(Term, C), is_True(CC), CTerm).
+%optimize_conj(Head,B1,BT,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
+%optimize_conj(Head,BT,B1,BN1):- assumed_true(BT),!, optimize_body(Head,B1,BN1).
+optimize_conj(Head,B1,B2,(BN1,BN2)):-
+   optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+
+assumed_true(B2):- var(B2),!,fail.
+assumed_true(eval_true(B2)):-!,assumed_true(B2).
+assumed_true(B2):- B2== true,!.
+assumed_true(B2):- B2==x_assign('True', '$VAR'('_')),!.
+assumed_true(X==Y):- assumed_true(X=Y).
+assumed_true(X=Y):- var(X),var(Y), X=Y.
+assumed_true(X=Y):- is_ftVar(X),is_ftVar(Y), X=Y.
+
+
+filter_head_arg(H,F):- var(H),!,H=F.
+filter_head_arge(H,F):- H = F.
+
+code_callable(Term,_CTerm):- var(Term),!,fail.
+code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
+%code_callable(Term, CTerm):- current_predicate(_,Term),!,Term=CTerm.
 
 :- discontiguous f2p/4.
 
@@ -4347,7 +4235,6 @@ compile_for_assert_eq(_Eq,H,B,Result):-
 :- dynamic(metta_compiled_predicate/3).
 
 same(X,Y):- X =~ Y.
-
 
 
 
