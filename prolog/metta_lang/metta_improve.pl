@@ -238,6 +238,9 @@ create_tests_file_for(Filename):- count_tests,
 create_tests:- forall(subtest_data(F/A),create_tests(F/A)).
 create_tests(F/A):- functor(P,F,A), forall(call(P),forall(print_mtest(P),nl)).
 
+:- dynamic(user:on_finish_load_metta/1).
+:- multifile(user:on_finish_load_metta/1).
+
 on_finish_load_metta(Filename):- 
    option_value(subtests,true), create_tests_file_for(Filename).
 

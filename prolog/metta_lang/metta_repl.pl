@@ -124,6 +124,8 @@ check_directory_exists(Dir) :-
 %     ?- check_file_exists_for_append('/home/user/.config/metta/repl_history.txt').
 %     true.
 %
+
+check_file_exists_for_append(_):- skip_cmd_history, !.
 check_file_exists_for_append(HistoryFile) :-
     % Check if the file exists and is accessible for appending.
     exists_file(HistoryFile),
@@ -154,8 +156,7 @@ check_file_exists_for_append(HistoryFile) :-
 %
 
 % Dummy to avoid errors on windows.
-save_history:- is_win64, !.
-save_history:- is_docker, !.
+save_history:- skip_cmd_history, !.
 save_history :-
     % Get the current input stream.
     current_input(Input),
@@ -175,6 +176,8 @@ save_history :-
 %     ?- load_and_trim_history.
 %     true.
 %
+
+load_and_trim_history :- skip_cmd_history, !.
 load_and_trim_history :-
     % Disable tracing for the following operations.
     notrace((
@@ -1204,7 +1207,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
                   InitialResultLeash =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
          %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
-           if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_io(give_time('Execution',Seconds)))))),
+           if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_err(give_time('Execution',Seconds)))))),
 
            color_g_mesg(green,
               ignore((NamedVarsList \=@= Was ->(not_compatio((
@@ -1935,6 +1938,7 @@ interact(Variables, Goal, Tracing) :-
 :- dynamic(is_installed_readline_editline/1).
 :- volatile(is_installed_readline_editline/1).
 
+install_readline_editline :-  skip_cmd_history, !.
 install_readline_editline :-  is_win64,!.
 install_readline_editline :-  is_docker,!.
 install_readline_editline :-
@@ -1960,6 +1964,7 @@ install_readline_editline :-
 %   Note: This setup is specific to the mettalog environment and does not use the default SWI-Prolog completions.
 %
 %   @see editline:el_wrap/4 for more details on wrapping input streams in editline.
+el_wrap_metta(_Input) :- skip_cmd_history, !.
 el_wrap_metta(Input) :-
     % If the input is already wrapped, do nothing.
     el_wrapped(Input),
@@ -1989,6 +1994,8 @@ el_wrap_metta(_NoTTY) :-
 %   File completions are commented out for potential future use.
 %
 /* previously: It would be nice to include file name completion here, but it was skipped for atom completion */
+
+add_metta_commands(_Input):- skip_cmd_history, !.
 add_metta_commands(Input) :-
     % TODO: File name completion would be useful, but it is currently skipped for Prolog atom completion.
     % Bind a function for atom and file completion. Commented out.
@@ -2024,8 +2031,11 @@ add_metta_commands(Input) :-
 %
 is_docker :- exists_file('/.dockerenv'),!.
 
-install_readline(_Input):- is_docker,!. % too chancy
-install_readline(_Input):- is_win64,!. % already installed
+skip_cmd_history:- current_prolog_flag(mettalog_rt, true),!.
+skip_cmd_history:- is_docker,!. % too chancy
+skip_cmd_history:- is_win64, !. % already installed
+
+install_readline(_Input):- skip_cmd_history, !.
 install_readline(Input):-
     % Check if readline is already installed for this Input.
     is_installed_readline_editline(Input), !.

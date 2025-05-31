@@ -928,7 +928,7 @@ handle_pragmas(_,_).
 test_file1(Self, Filename):-
   if_t(is_list(Self), handle_pragmas('&self',Self)),
   loonit_reset,
-  user_io(format(';=== !(test-file! ~w ~w) ===;',[Self, Filename])),
+  user_err(format(';=== !(test-file! ~w ~w) ===;',[Self, Filename])),
   include_metta1('&self', Filename),!,
   loonit_reset,!.
 
@@ -2094,7 +2094,9 @@ load_metta_buffer(Self, Filename) :-
     % Register the file as loaded in the knowledge base.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
-    user_err(((forall(
+    with_option(loading_file, Filename,
+    user_err((
+       (forall(
         user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount),
          (must_det_lls(maybe_name_vars(NamedVarsList)),
         with_option(loading_file, Filename,
@@ -2102,8 +2104,9 @@ load_metta_buffer(Self, Filename) :-
          (
           (must_det_lls(do_metta(file(Filename), Mode, Self, Expr, _O)) -> true
         ;  (ignore(rtrace(do_metta(file(Filename), Mode, Self, Expr, _O2))),
-                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr)))))))))))),
-    forall(on_finish_load_metta(Filename),true).
+                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))))),
+         forall(on_finish_load_metta(Filename),true))))).
+
 
 
 %!  is_file_stream_and_size(+Stream, -Size) is nondet.

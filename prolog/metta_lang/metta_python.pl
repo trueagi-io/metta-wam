@@ -910,7 +910,7 @@ py_eval_object(VO,VO).
 %
 %   @arg O The input object to check.
 py_is_function(O):- \+ py_is_object(O),!,fail.
-py_is_function(PyObject) :- maybe_py_deref(PyObject,PyObject2),!,py_is_function(PyObject2).
+%py_is_function(PyObject) :- maybe_py_deref(PyObject,PyObject2),!,py_is_function(PyObject2).
 py_is_function(PyObject) :-
     py_type(PyObject, Type),
     py_is_method_type(Type),!.

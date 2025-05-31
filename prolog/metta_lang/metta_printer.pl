@@ -244,7 +244,7 @@ print_pl_source(P) :-
     run_pl_source(print_pl_source0(P)).
 
 %pnotrace(G):- !, call(G).
-pnotrace(G):- notrace(G).
+pnotrace(G):- notrace(quietly(G)).
 %pnotrace(G):- quietly(G).
 
 %!  run_pl_source(+G) is det.

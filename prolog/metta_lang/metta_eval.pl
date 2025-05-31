@@ -209,7 +209,7 @@ get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 % If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
 eval_true(X):- \+ iz_conz(X), callable(X), !, call(X).
 eval_true([F,X,Y]):- F=='=alpha',!,'=alpha'(X,Y).
-eval_true(X):- eval_args(X,Y), is_True(Y) , !.
+eval_true(X):- eval_args(X,Y), \+ \+ is_True(Y).
 
 eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
@@ -640,7 +640,7 @@ eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):- !,
 
 
 eval_20(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
-eval_20(Eq,RetType,Depth,Self,Name,Y):- % fail,
+eval_20(Eq,RetType,_Depth,Self,Name,Y):- % fail,
     atom(Name), !,
       ((Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
@@ -648,7 +648,7 @@ eval_20(Eq,RetType,Depth,Self,Name,Y):- % fail,
       \+ \+ sanity_check_eval(eval_20_atom,Y).
 
 
-atom_alias(Self,X,Y):- fail, sub_selfs(Self,Sub), metta_function_asserted(Sub,X,Y).
+atom_alias(Self,X,Y):- sub_selfs(Self,Sub), metta_function_asserted(Sub,X,Y).
 
 
 eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
@@ -1042,7 +1042,7 @@ known_false(V1,V2):- var(V2),!,V2\==V1.
 known_false([],Y):- Y\==[].
 known_false(Y,[]):- Y\==[].
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
-eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):- known_false(X,Y),!,TF='False'.
+eval_until_eq(_Flags, _Eq, _XType, _YType,_Dpth,_Slf,X,Y,TF):- known_false(X,Y),!,TF='False'.
 %eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
 %eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
 %eval_until_eq(Flags,Eq,XType,YType,_Dpth,_Slf,X,Y,TF):-  X\=@=Y,unify_woc(X,Y),!,check_returnval(Eq,XType,YType,Y,TF).
@@ -1273,7 +1273,7 @@ eval_20(Eq,RetType,Depth,Self,['profile!',Cond],Res):- !, time_eval(profile(Cond
 eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
-eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_io('mc__1_1_listing!'(S,RetVal)).
+eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err('mc__1_1_listing!'(S,RetVal)).
 
 eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1), !,
     call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res)).
@@ -1354,7 +1354,7 @@ eval_20(Eq,_RetType,Depth,Self,['assertNotEqual',X,Y],RetVal):- !,
          findall_eval(Eq,_BRetType,Depth,Self,Y,YY)),
          ( \+ equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY)), RetVal).
 
-eval_20(Eq,RetType,Depth,Self,['assertCount',Y,X],TF):- !,
+eval_20(Eq,_RetType,Depth,Self,['assertCount',Y,X],RetVal):- !,
     loonit_assert_source_tf_empty(
          ['assertCount',X,Y],XX,YY,
          (findall_eval(Eq,_ARetType,Depth,Self,X,XL),length(XL,XX),
@@ -3540,7 +3540,7 @@ eval_40(_Eq,_RetType,_Depth,_Self,['py-type',Arg],Res):- !,
 eval_40(_Eq,_RetType,_Depth,_Self,['py-eval',Arg],Res):- !,
   must_det_ll((py_eval_string(Arg,Res))).
 
-eval_40_disabled(Eq,RetType,Depth,Self,['length',L],Res):- !, eval_args(Depth,Self,L,LL),
+eval_40(Eq,RetType,Depth,Self,['length',L],Res):- fail, !, eval_args(Depth,Self,L,LL),
    (is_list(LL)->length(LL,Res);Res=1),
    check_returnval(Eq,RetType,Res).
 
@@ -3668,15 +3668,19 @@ eval_40(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
     symbol(Sym), is_list(Args),
     length(Args, Len),
     transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
-    jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
+    %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, exists_in_compiler)),
+    !,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
 eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):-
-    %fail,
+    fail,
     symbol(Sym), is_list(Args),
     length(Args,Len),
     transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
-    jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
+    %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, this_is_in_compiler_lib)),
+    !,
     with_metta_ctx(Eq, RetType, Depth,Self, [Sym | Args] ,apply(Fn, PArgs)).
 
 

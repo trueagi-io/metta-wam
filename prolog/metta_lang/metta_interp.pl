@@ -7697,7 +7697,7 @@ do_metta_runtime(Var, Goal) :-
     subst001(Goal, Var, NewVar, Call), !,
     do_metta_runtime(NewVar, Call).
 do_metta_runtime(Var, Call) :-
- user_io((
+ user_err((
    debug_info(always(do_metta),do_metta_runtime(Var, Call)),
     original_user_error(Err),
     % Extract the functor name from the goal (`Call`) to create a description.

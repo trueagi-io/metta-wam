@@ -1483,7 +1483,7 @@ trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
            TraceResultShown \== 1,
            TraceResultShown = 1,
            once(PrintRet == 1 ; (Ret =@= retval(fail), is_debugging(failure))),
-           (Y\==X -> Color=green;Color=[]),
+           (Y\==X -> Color=green; Color=[]),
            TraceTooLong \== 1,
            ((Ret \=@= retval(fail), nop(nonvar(Y)))
                 -> ansicall(Color,indentq(DR, EX1, '<--', [Why, Y]))
