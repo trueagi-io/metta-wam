@@ -49,18 +49,19 @@ is_If('if').
 'mc__1_2_if'(If,Then,Result) :- (If*->Result=Then;fail).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then,Else],!,
+  Convert = [IF,Cond,Then,Else],nonvar(IF),is_If(IF),!,
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
   append(CondCode1,[[native(is_True),CondResult1]],If),
   compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
-  Convert = ['if',Cond,Then],!,
+  Convert = [IF,Cond,Then],nonvar(IF),is_If(IF),!,
+  debug_info(always(ompatiblity_error),f('unsupported if/2 in hyperon: ~w',[[IF,Cond,Then]])),
   f2p(HeadIs,LazyVars,CondResult,CondResultN,LazyRetCond,Cond,CondCode,CondCodeN),
   lazy_impedance_match(LazyRetCond,x(doeval,eager,[]),CondResult,CondCode,CondResultN,CondCodeN,CondResult1,CondCode1),
   append(CondCode1,[[native(is_True),CondResult1]],If),
-  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,'Empty',Converted, ConvertedN).
+  compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,[empty],Converted, ConvertedN).
 
 compile_test_then_else(HeadIs,RetResult,RetResultN,LazyVars,LazyEval,If,Then,Else,Converted, ConvertedN):-
   f2p(HeadIs,LazyVars,ThenResult,ThenResultN,ThenLazyEval,Then,ThenCode,ThenCodeN),
@@ -378,7 +379,7 @@ metta_unify(Atom, Pattern):- unify_with_occurs_check(Atom,Pattern).
 
 % TODO FIXME: sort out the difference between unify and match
 :- initialization(setup_library_call(builtin, unify, [3], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[])], x(doeval,eager,[])), program).
-'mc__1_3_unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),Atom=Pattern,as_p1_exec(P1,Ret).
+'mc__1_3_unify'(Space,Pattern,P1,Ret) :- unify_pattern(Space, Atom),unify_with_occurs_check(Atom,Pattern),as_p1_exec(P1,Ret).
 
 :- initialization(setup_library_call(builtin, unify, [4], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[]), x(doeval,lazy,[]), x(doeval,lazy,[])], x(doeval,eager,[])), program).
 'mc__1_4_unify'(Space,Pattern,Psuccess,PFailure,RetVal) :-
@@ -494,6 +495,7 @@ use_py_random:- option_value('py-random', true), !.
 use_py_random:- \+ option_value('fast-random', true).
 
 % for etcs-combinator-data-uncurry-xp.metta
+% use_rust_random:- !.
 use_rust_random:- fail, \+ option_value('rust-random', false), !.
 
 use_python_rng(X,Y):- notrace(use_python_rng0(X,Y)).
@@ -702,9 +704,18 @@ transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'At
 transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
     eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
-    %make_py_dot(Arg1,Arg2,Res)
-    %py_call_method_and_args(SymRef,Args,Res),
-    %py_metta_return_value(_RetType,Ret,Res).
+    
+setup_library_calls:-
+ locally(nb_setval(debug_context, stdlib),
+  locally(nb_setval(compiler_context, builtin),
+   user_err(forall(
+      transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,
+            MettaTypeResult,InternalTypeArgs,InternalTypeResult),
+         setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
+            MettaTypeResult,InternalTypeArgs,InternalTypeResult))))).
+
+
+:- initialization(setup_library_calls,program).
 
 this_is_in_compiler_lib.
 

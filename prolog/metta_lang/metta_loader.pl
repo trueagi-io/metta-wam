@@ -3165,7 +3165,8 @@ really_use_corelib_file(Dir, File) :-
              locally(nb_setval(suspend_answers, true),
             without_output(include_metta_directory_file('&corelib', Dir, Filename)))))),
      asserta(really_using_corelib_file),
-     debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))).
+     debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))),
+     nb_delete(compiler_context).
 
 without_output(G):- is_devel,!,call(G).
 without_output(G):- with_output_to(string(_), G).
