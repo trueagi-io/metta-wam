@@ -2095,7 +2095,7 @@ load_metta_buffer(Self, Filename) :-
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
     with_option(loading_file, Filename,
-    user_err((
+    user_io((
        (forall(
         user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount),
          (must_det_lls(maybe_name_vars(NamedVarsList)),
