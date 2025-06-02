@@ -361,14 +361,18 @@ library_error(Fmt,Args):- sformat(S,Fmt,Args),format_e('~w',[S]),debug_info(libe
 convert_space('&self','&top') :- !.
 convert_space(S,S).
 
-:- initialization(setup_library_call(builtin, 'add-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])), program).
-'mc__1_2_add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+transpiler_predicate_store(builtin, 'add-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_add-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),!,A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+'mc__1_2_add-atom'(Space,PredDecl,TF) :- convert_space(Space,Space1), %A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+             do_metta(python,load,Space1,PredDecl,TF).
 
-:- initialization(setup_library_call(builtin, 'remove-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])), program).
-'mc__1_2_remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),retractall(metta_atom_asserted(Space1,PredDecl)).
+transpiler_predicate_store(builtin, 'remove-atom', [2], '@doc', '@doc', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
+'mc__1_2_remove-atom'(Space,PredDecl,[]) :- convert_space(Space,Space1),!,retractall(metta_atom_asserted(Space1,PredDecl)).
+'mc__1_2_remove-atom'(Space,PredDecl,TF) :- convert_space(Space,Space1), %A=metta_atom_asserted(Space1,PredDecl),(call(A) -> true ; assertz(A)).
+             do_metta(python,unload,Space1,PredDecl,TF).
 
-:- initialization(setup_library_call(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])), program).
-'mc__1_1_get-atoms'(Space,Atoms) :- metta_atom(Space, Atoms).
+transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])).
+'mc__1_1_get-atoms'(Space,Atoms) :- metta_atom(Space, Atom),unify_with_occurs_check(Atoms,Atom).
 
 % This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
 match_pattern(Space, Pattern):-

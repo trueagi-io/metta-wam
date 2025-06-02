@@ -431,10 +431,20 @@ combine_transpiler_clause_store_and_maybe_recompile(FnName,LenArgs,FinalLazyArgs
       )
    ;
       % new, insert clause
-      compiler_assertz(transpiler_predicate_store(user,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj)),
-      setup_mi_me(FnName,LenArgs,FinalLazyArgsAdj,FinalLazyRetAdj),
+      current_compiler_context(CompCtx), % where expected to be stored (builtin,user,etc)
+      setup_library_call(CompCtx,FnName,LenArgs,todo,todo,FinalLazyArgsAdj,FinalLazyRetAdj),
       recompile_from_depends(FnName,LenArgs)
    ).
+
+create_mc_name(LenArgs,FnName,String) :-
+   length(LenArgs,L),
+   append(['mc_',L|LenArgs],[FnName],Parts),
+   atomic_list_concat(Parts,'_',String).
+
+current_compiler_context(Self):- current_self(Self), Self\=='&top', Self\==[], !. % atom(Self),
+current_compiler_context(Filename):- option_value(loading_file, Filename), Filename\==[], !.
+current_compiler_context(CompCtx):- option_value(compiler_context, CompCtx),!.
+current_compiler_context(user).
 
 get_curried_name_structure(null,'',[],[]) :- !. % special null case
 get_curried_name_structure([],[],[],[]) :- !.
@@ -486,7 +496,7 @@ max_integer_in_term(Term, Start, Max) :-
 
 number_vars_wo_conficts(X,XX):-
    copy_term(X,XX),
-   woc(max_integer_in_term(XX,0,N)),
+   woct(max_integer_in_term(XX,0,N)),
    succ(N,N2),
    numbervars(XX,N2,_,[attvar(skip)]).
 
@@ -499,10 +509,10 @@ recompile_from_depends_child(_ParentFA,Fn/Arity) :-
    %retract(transpiler_predicate_store(_,Fn,Arity,_,_,_,_)),
    create_prefixed_name('mc_',Arity,Fn,FnWPrefix),
    abolish(FnWPrefix/ArityP1),
-   create_prefixed_name('mc_',Arity,Fn,FnWMiPrefix),
-   %abolish(FnWMiPrefix/ArityP1),
-   create_prefixed_name('mc_',Arity,Fn,FnWMePrefix),
-   %abolish(FnWMePrefix/ArityP1),
+ %  create_prefixed_name('mi_',Arity,Fn,FnWMiPrefix),
+ %  abolish(FnWMiPrefix/ArityP1),
+ %  create_prefixed_name('me_',Arity,Fn,FnWMePrefix),
+ %  abolish(FnWMePrefix/ArityP1),
    % retract(transpiler_stub_created(Fn,Arity)),
    % create an ordered list of integers to make sure to do them in order
    findall(ClauseIDt,transpiler_clause_store(Fn,Arity,ClauseIDt,_,_,_,_,_,_),ClauseIdList),
@@ -2532,10 +2542,16 @@ call3(G):- call(G).
 call4(G):- call(G).
 call5(G):- call(G).
 
-trace_break:- trace,break.
+trace_break:- trace_break((trace,break)).
+trace_break(G):-
+   stream_property(Err, file_no(2)),
+   current_output(Cur), Cur\=@=Err,!,
+   with_output_to(Err, trace_break(G)).
+trace_break(G):- nl, writeq(call(G)), trace,break.
+%    :- set_prolog_flag(gc,false).
 
 :- if(debugging(metta(compiler_bugs))).
-:- set_prolog_flag(gc,false).
+   :- set_prolog_flag(gc,false).
 :- endif.
 
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).
