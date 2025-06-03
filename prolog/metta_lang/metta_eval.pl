@@ -1729,12 +1729,12 @@ unnumbervars_wco123(X,X).
 % =================================================================
 
 eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
-    term_variables(InputVarList,IVars),
-    term_variables(Expr,ActualVars),
-    ord_subtract(ActualVars,IVars,DontCopy),
-    copy_term(Expr+DontCopy,CExpr+CDontCopy),
-    DontCopy = CDontCopy,
+    term_variables(InputVarList,IVars), sort(IVars,SIVars),
+    term_variables(Expr,AVars), sort(AVars,SAVars),
+    ord_subtract(SAVars,SIVars,DontCopy),
+    copy_term(Expr+DontCopy,CExpr+DontCopy),
     eval_20(Eq, RetType, Depth, Self, CExpr, Result).
+
 
 
 eval_20(_Eq, _RetType, _Depth, _Self, ['sealed-un', InputVarList, Expr], Result) :- !,
