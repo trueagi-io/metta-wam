@@ -1728,7 +1728,16 @@ unnumbervars_wco123(X,X).
 % =================================================================
 % =================================================================
 
-eval_20(_Eq, _RetType, _Depth, _Self, ['sealed', InputVarList, Expr], Result) :- !,
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
+    term_variables(InputVarList,IVars),
+    term_variables(Expr,ActualVars),
+    ord_subtract(ActualVars,IVars,DontCopy),
+    copy_term(Expr+DontCopy,CExpr+CDontCopy),
+    DontCopy = CDontCopy,
+    eval_20(Eq, RetType, Depth, Self, CExpr, Result).
+
+
+eval_20(_Eq, _RetType, _Depth, _Self, ['sealed-un', InputVarList, Expr], Result) :- !,
     omit_atoms(InputVarList,OutputVarList),
     check_replace_with_local_var(OutputVarList, Expr, Result).
 

@@ -53,11 +53,17 @@
 	<List Name="RTE">
 	</List>
 	<Files AutoFolders="DirectoryView">
-		<Folder Name="../hyperon-experimental">
+		<Folder Name="../ReTTa">
 			<F
-				N="../hyperon-experimental/*.*"
+				N="../ReTTa/*.*"
 				Recurse="1"
-				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
+			<F
+				N="../ReTTa/*.d"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
+				L="1"/>
 		</Folder>
 	</Files>
 </Project>
