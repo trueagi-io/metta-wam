@@ -1733,7 +1733,7 @@ eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :- !,
     term_variables(Expr,AVars), sort(AVars,SAVars),
     ord_subtract(SAVars,SIVars,DontCopy),
     copy_term(Expr+DontCopy,CExpr+DontCopy),
-    eval_20(Eq, RetType, Depth, Self, CExpr, Result).
+    eval_args(Eq, RetType, Depth, Self, CExpr, Result).
 
 
 
