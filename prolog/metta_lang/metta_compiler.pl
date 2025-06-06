@@ -95,19 +95,48 @@ non_arg_violation(_,_,_).
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
-setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :-
+builtin_metta_function(F/A):- integer(A),atom(F),!,compound_name_arity(P,F,A),builtin_metta_function(P).
+%builtin_metta_function(Hc):- predicate_property(Hc,static),!.
+builtin_metta_function(Hc):- source_file(Hc,File),(source_file(this_is_in_compiler_lib,File);source_file(scan_exists_in_interp,File)),!.
+
+%in_to_out(FnName,_,[I],[O],cva(FnName,0,I,O)):-!.
+in_to_out(_,_,[],[],true):-!.
+in_to_out(FnName,N,[I|ArgsIn],[O|ArgsOut],Out):- succ(N,M),
+   in_to_out(FnName,M,ArgsIn,ArgsOut,More),
+   combine_code(cva(FnName,N,I,O),More,Out).
+
+cva(_,_,IO,IO).
+
+%setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :- !.
+setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult) :-
+ must_det_lls((
     sum_list(LenArgs,LenArgsTotal),
     LenArgsTotalPlus1 is LenArgsTotal+1,
-    findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
     create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
+    current_compiler_context(WasCompCtx),
+    if_t(builtin_metta_function(FnName/LenArgsTotalPlus1),
+      (set_option_value(compiler_context,builtin))),
+    current_compiler_context(NowCompCtx),
+    debug_info(always(setup_mi_me),setup_mi_me(NowCompCtx,FnName,LenArgs,InternalTypeArgs,InternalTypeResult)),
+    length(AtomList0,LenArgsTotalPlus1),
+    length(AtomList1,LenArgsTotalPlus1),
+    append(ArgsIn,[RetValO],AtomList1),
+    append(ArgsOut,[RetVal],AtomList0),
+    in_to_out(FnName,1,ArgsIn,ArgsOut,HeToHi),!,
+
+    %findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+
     Hc =.. [FnNameWPrefix|AtomList0],
     create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
     Hi =.. [FnNameWMiPrefix|AtomList0],
     create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
-    He =.. [FnNameWMePrefix|AtomList0],
-    Bi =.. [ci,true,[],true,Goal],
-    compiler_assertz(Hi:-((Goal=Hc),Bi)),
-    compiler_assertz(He:-Hc).
+    He =.. [FnNameWMePrefix|AtomList1],
+    append(Eval,[RetVal],[FnName|AtomList0]),
+    Bi = ci(true,FnName,LenArgsTotal,Eval,RetVal,true,Goal),
+    % Bi =.. [ci,true,[],true,Goal],
+    compiler_assertz(Hi:- ((Goal=Hc), Bi)),
+    compiler_assertz(He:- ( HeToHi, Hi, cva(FnName,0,RetVal,RetValO))))),
+    set_option_value(compiler_context,WasCompCtx).
 
 setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,MettaTypeResult,InternalTypeArgs,InternalTypeResult) :-
     (transpiler_predicate_store(_,FnName,LenArgs,_,_,_,_) -> true ;
@@ -2509,29 +2538,168 @@ maybe_argo(_Caller,_F,_N,Arg,Arg):- is_list(Arg),!.
 maybe_argo(_Caller,_F,_N,Arg,Arg):- \+ compound(Arg),!.
 maybe_argo(Caller,_F,_N,Arg,ArgO):- ast_to_prolog_aux(Caller,[],Arg,ArgO).
 
-:- dynamic(maybe_optimize_prolog/4).
+:- dynamic(maybe_optimize_prolog_term/4).
+:- dynamic(maybe_optimize_prolog_assertion/4).
 
-try_optimize_prolog(Y,Convert,Optimized):- fail,
-   catch_warn(optimize_prolog(Y,[],Convert,MaybeOptimized)),
-   Convert\=@=MaybeOptimized,!,
-   try_optimize_prolog(Y,MaybeOptimized,Optimized).
+try_optimize_prolog(Y,Convert,Optimized):-  fail,
+   once(catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,OptimizedM))),Convert\=@=OptimizedM,!,
+   try_optimize_prolog(Y, OptimizedM,Optimized).
 try_optimize_prolog(_,Optimized,Optimized).
 
-optimize_prolog(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
-optimize_prolog(Y,FL,Converted,Optimized):-
+
+try_harder_optimize_prolog(Y,Convert,Optimized):-  fail,
+   once(catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,OptimizedM))),Convert\=@=OptimizedM,!,
+   try_harder_optimize_prolog(OptimizedM,Optimized).
+try_harder_optimize_prolog(_,Optimized,Optimized).
+
+/*
+try_optimize_prolog(Y,Convert,Optimized):-
+   catch_warn(maybe_optimize_prolog_assertion(Y,[],Convert,MaybeOptimized)),
+   actual_change(Convert,MaybeOptimized),!,
+   try_optimize_prolog(Y,MaybeOptimized,Optimized).
+*/
+
+optimize_prolog_term(_,_,Converted,Optimized):- \+ compound(Converted),!,Converted=Optimized.
+optimize_prolog_term(Y,FL,Converted,Optimized):-
    copy_term(Converted,ConvertedC),
-   maybe_optimize_prolog(Y,FL,Converted,Optimized),
+   maybe_optimize_prolog_term(Y,FL,Converted,Optimized),
    \+ ((ConvertedC\=@=ConvertedC,
-       debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),!.
-optimize_prolog(Y,FL,Converted,Optimized):- is_list(Converted),
-   maplist(optimize_prolog(Y,[list()|FL]),Converted,Optimized),!.
-optimize_prolog(Y,FL,Converted,Optimized):-
+       (debug_info(double_sided_unification,t(ConvertedC\=@=ConvertedC)))),ignore((trace,throw(double_sided_unification)))),!.
+optimize_prolog_term(Y,FL,Converted,Optimized):- is_list(Converted),
+   maplist(optimize_prolog_term(Y,[list()|FL]),Converted,Optimized),!.
+optimize_prolog_term(Y,FL,Converted,Optimized):-
    compound_name_arguments(Converted,F,Args),
-   maplist(optimize_prolog(Y,[F|FL]),Args,OArgs),
+   maplist(optimize_prolog_term(Y,[F|FL]),Args,OArgs),
    compound_name_arguments(Optimized,F,OArgs), !.
-optimize_prolog(_,_,Prolog,Prolog).
+optimize_prolog_term(_,_,Prolog,Prolog).
 
 
+actual_change(Body,BodyNew):- copy_term(Body+BodyNew,BodyC+BodyNewC,_), BodyC\=@=BodyNewC.
+
+maybe_optimize_prolog_assertion(Y,Stack,Cmpd,(:-BodyNew)):-  compound(Cmpd),(:-Body)=Cmpd,compound(Body),!,
+  maybe_optimize_prolog_assertion(Y,Stack,(cl:-Body),(cl:-BodyNew)).
+
+maybe_optimize_prolog_assertion(_,_,CmpdIn,(Cl:-BodyNew)):-
+  compound(CmpdIn),subst_vars(CmpdIn,Cmpd),
+  (Cl:-Body)=Cmpd,compound(Body),%copy_term(Body,BodyC),
+  must_optimize_whole_body(Cl,Body,BodyNew).
+
+must_optimize_whole_body(Head, Body, BodyNew) :-  %fail,
+    term_variables(Body, Vars),
+    member(Var,Vars),
+    % Count variable usage across full term (Includes Head)
+    var_count_in_term(Head+Body,Var,Count),
+    %copy_term(Body,BodyC),
+    inline_var_maybe(Var, Count, Body, BodyNew), Body \=@= BodyNew, !.
+
+must_optimize_whole_body(_Cl, Body, BodyNew) :- fail,
+   sub_term_safely(Sub, Body), compound(Sub), Sub = (L = R),
+   L==R, subst001(Body, Sub , true, BodyNew), !.
+
+must_optimize_whole_body(Cl, Body, BodyNew) :- % fail,
+     optimize_body(Cl, Body, BodyNew).
+
+
+label_body_singles(Head,Body):-
+   term_singletons(Body+Head,BodyS),
+   maplist(label_body_singles_2(Head),BodyS).
+label_body_singles_2(Head,Var):- sub_var_safely(Var,Head),!.
+label_body_singles_2(_,Var):- ignore(Var='$VAR'('_')).
+
+
+optimize_body(HB,Body,BodyNew):-
+   %prolog_current_frame(Frame), prolog_frame_attribute(Frame, level, Depth),
+   %writeln(user_error,Depth=optimize_body(HB,Body,BodyNew)),
+   %if_t(Depth>186,trace),
+   optimize_body_step(HB,Body,BodyNew),!.
+optimize_body(_,Body,Body).
+
+optimize_body_step(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
+optimize_body_step(_HB,Body,BodyNew):- \+ compound(Body),!,Body=BodyNew.
+%optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, optimize_body(HB,VT,VTT).
+optimize_body_step( HB,with_space(V,T),with_space(V,TT)):-!, optimize_body(HB,T,TT).
+optimize_body_step( HB,limit(V,T),limit(V,TT)):-!, optimize_body(HB,T,TT).
+optimize_body_step( HB,findall(V,T,R),findall(V,TT,R)):-!, optimize_body(HB,T,TT).
+optimize_body_step( HB,loonit_assert_source_tf(V,T,R3,R4), loonit_assert_source_tf(V,TT,R3,R4)):-!,
+  optimize_body(HB,T,TT).
+
+optimize_body_step( HB,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
+optimize_body_step( HB,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2), optimize_body(HB,B3,BN3).
+optimize_body_step( HB,(B1:-B2),(BN1:-BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body_step( HB,(B1*->B2),(BN1*->BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body_step( HB,(B1->B2),(BN1*->BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+optimize_body_step( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
+
+
+optimize_body_step(Head,(B0,B1,B2),(B0,BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body_step(Head,(B1,B2,B3),(BN1,B3)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body_step(Head,(B1,B2),(BN1)):- did_optimize_conj(Head,B1,B2,BN1).
+optimize_body_step(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+
+% TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
+%optimize_body_step(_HB,==(Var, C), Var=C):- self_eval(C),!.
+%optimize_body_step( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
+%optimize_body_step(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
+optimize_body_step(_HB,Body,BodyNew):- Body=BodyNew.
+
+
+
+/*
+optimize_body(_Head,Body,BodyNew):- var(Body),!,Body=BodyNew.
+optimize_body(Head,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
+optimize_body(Head,(B1,B2),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B2,B1),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1:-B2),(BN1:-BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(Head,(B1;B2),(BN1;BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
+optimize_body(_Head,Body,BodyNew):- Body=BodyNew.
+*/
+
+
+var_count_in_term(Term, Var, Count) :-
+    term_occurrences(Var, Term, Count).
+
+term_occurrences(Var, Term, Count) :-
+    ( Term == Var -> Count = 1
+    ; compound(Term) ->
+        Term =.. [_|Args],
+        maplist(term_occurrences(Var), Args, Counts),
+        sum_list(Counts, Count)
+    ; Count = 0 ).
+
+var_in_pair(Var,Sub,(Left = Right)):-
+     (Sub = (P1, P2, _) ; Sub = (P1, P2)),
+     P2 = (Left = Right), Var == Right,
+    sub_var_safely(Var, P1),!.
+
+var_in_pair(Var,Sub,(Left = Right)):-
+     (Sub = (P1, P2, _) ; Sub = (P1, P2)),
+     P1 = (Left = Right), Var == Left,
+    sub_var_safely(Var, P2),!.
+
+% Inline variables with exactly two uses
+inline_var_maybe(Var, 2, Body, BodyNew) :-
+    sub_term_safely(Sub, Body), compound(Sub),
+    var_in_pair(Var,Sub, FoundEquality),
+    inline_var(Var, 2, FoundEquality, Body, BodyNew), !.
+
+inline_var_maybe(Var, 2, Body, BodyNew) :- fail,
+    sub_term_safely(Sub, Body), compound(Sub), Sub = (Left = Right),
+     (Var == Left ;  Var ==Right),
+    inline_var(Var, 2, (Left = Right), Body, BodyNew), !.
+
+%inline_var_maybe(_,_,Body,Body).
+
+inline_var(Var, 2, (Left = Right), Body, BodyNew):- Var == Left , Var \== Right, !,
+  %Right=Var,
+  subst001(Body, (Left = Right), true, BodyM),
+  subst001(BodyM, Var , Right, BodyNew), !.
+
+inline_var(Var, 2, (Right = Left), Body, BodyNew):- Var == Left , Var \== Right, !,
+  %Right=Var,
+  subst001(Body, (Right = Left), true, BodyM),
+  subst001(BodyM, Var , Right, BodyNew), !.
 
 
 de_eval(eval(X),X):- compound(X),!.
@@ -2551,15 +2719,17 @@ trace_break(G):- nl, writeq(call(G)), trace,break.
 %    :- set_prolog_flag(gc,false).
 
 :- if(debugging(metta(compiler_bugs))).
-   :- set_prolog_flag(gc,false).
+    :- set_prolog_flag(gc,false).
 :- endif.
 
 call_fr(G,Result,FA):- current_predicate(FA),!,call(G,Result).
 call_fr(G,Result,_):- Result=G.
 
+transpile_eval([Fn|Args],Res):- use_evaluator(fa(Fn,_), compiler, disabled),!, eval_in_only(interp,[Fn|Args],Res).
+transpile_eval(Convert,Res) :- nb_current('eval_in_only', interp),!, eval(Convert,Res).
 transpile_eval(Convert,Converted) :-
   transpile_eval(Convert,Converted,PrologCode),!,
-  call(PrologCode).
+  eval_in_only(compiler,call(PrologCode)).
 
 transpile_eval(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
@@ -2568,19 +2738,23 @@ transpile_eval(Convert0,LiConverted,PrologCode) :-
    %   PrologCode=PrologCode0,
    %   LiConverted=Converted0
    %;
-      f2p(null,[],Converted,_,LE,Convert,Code1,_),
+      metta_to_metta_body_macro_recurse('transpile_eval',Convert,ConvertMacr),
+      f2p(null,[],Converted,_,LE,ConvertMacr,Code1,_),
       lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
-      ast_to_prolog(no_caller,[],Code,PrologCode),
+      ast_to_prolog(no_caller,[],Code,PreOptimized),
+      try_optimize_prolog(transpile_eval,PreOptimized,PrologCode),
       compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted))
    %)
    .
 
+transpile_eval_nocache(Convert,Converted,true) :- nb_current('eval_in_only', interp),!, eval(Convert,Converted).
 transpile_eval_nocache(Convert0,LiConverted,PrologCode) :-
    %leash(-all),trace,
    subst_varnames(Convert0,Convert),
    f2p(null,[],Converted,_,LE,Convert,Code1,_),
    lazy_impedance_match(LE,x(doeval,eager,_),Converted,Code1,Converted,Code1,LiConverted,Code),
-   ast_to_prolog(no_caller,[],Code,PrologCode),
+   ast_to_prolog(no_caller,[],Code,PreOptimized),
+   try_optimize_prolog(transpile_eval,PreOptimized,PrologCode),
    compiler_assertz(transpiler_stored_eval(Convert,PrologCode,LiConverted)).
 
 arg_properties_widen(L,L,L) :- !.
