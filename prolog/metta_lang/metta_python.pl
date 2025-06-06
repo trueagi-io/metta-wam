@@ -910,6 +910,7 @@ py_eval_object(VO,VO).
 %
 %   @arg O The input object to check.
 py_is_function(O):- \+ py_is_object(O),!,fail.
+%py_is_function(PyObject) :- maybe_py_deref(PyObject,PyObject2),!,py_is_function(PyObject2).
 py_is_function(PyObject) :-
     py_type(PyObject, Type),
     py_is_method_type(Type),!.
@@ -2036,25 +2037,29 @@ delist1(R,R).  % Optionally, log a warning here if necessary.
 %       ?- rust_to_pl([rust_atom1, rust_atom2], PrologTerm).
 %
 rust_to_pl(L,P):- var(L),!,L=P.
+% nb_current(last_debug_info, debug_info(always(porting), hyperon_throws_error(should_be(number, W)))), py_call(W:get_object(),O),py_call(O:value,OO).
 % rust_to_pl([],P):- !,P=[].
 rust_to_pl(L,P):- is_list(L),!,maplist(rust_to_pl,L,P).
 rust_to_pl(R,P):- compound(R),!,compound_name_arguments(R,F,RR),maplist(rust_to_pl,RR,PP),
     compound_name_arguments(P,F,PP).
 rust_to_pl(R,P):- \+ py_is_object(R),!,P = R.
+
+% rust_to_pl(R,PT):- py_type(R,'GroundedAtom'), py_call(W:get_grounded_type(),O), py_call(repr(O),OO).
+
+rust_to_pl(R,P):- py_type(R,'ValueObject'),py_ocall(R:'value',L),!,rust_to_pl(L,P).
+rust_to_pl(R,PT):-
+            py_type(R,'GroundedAtom'),
+            py_ocall(R:get_grounded_type(),T),
+            rust_to_pl(T,TT),
+            py_ocall(R:get_object(),L), L\==R,
+            rust_to_pl(L,P),
+            combine_term_l(TT,P,PT), !.
 rust_to_pl(R,P):- py_type(R,'ExpressionAtom'),py_mcall(R:get_children(),L),!,maplist(rust_to_pl,L,P).
 rust_to_pl(R,P):- py_type(R,'SymbolAtom'),py_acall(R:get_name(),P),!.
 rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_scall(R:get_name(),N),!,as_var(N,P),!.
 %rust_to_pl(R,P):- py_type(R,'VariableAtom'),py_acall(R:get_name(),N),!,atom_concat('$',N,P).
 rust_to_pl(R,N):- py_type(R,'OperationObject'),py_acall(R:name(),N),!,cache_op(N,R).
 rust_to_pl(R,P):- py_type(R,'SpaceRef'),!,P = R.
-rust_to_pl(R,P):- py_type(R,'ValueObject'),py_ocall(R:'value'(),L),!,rust_to_pl(L,P).
-rust_to_pl(R,PT):-
-    py_type(R,'GroundedAtom'),
-    py_ocall(R:get_grounded_type(),T),
-    rust_to_pl(T,TT),
-    py_ocall(R:get_object(),L),!,
-    rust_to_pl(L,P),
-    combine_term_l(TT,P,PT).
 rust_to_pl(R,P):- py_is_list(R),py_m(R,L),R \== L,!,rust_to_pl(L,P).
 rust_to_pl(R,PT):- py_type(R,T),combine_term_l(T,R,PT),!.
 %rust_to_pl(R,P):- py_acall(R:'__repr__'(),P),!.
@@ -2143,8 +2148,9 @@ print_py(Py):- py_to_pl(Py,R), pp(R).
 %       ?- combine_term_l('Number', 42, PrologTerm).
 %
 combine_term_l('OperationObject',P,P):-!.
-combine_term_l('Number',P,P):-!.
+combine_term_l(_,P,V):- py_is_object(P), py_type(P,'ValueObject'),py_call(P:value,V),!.
 combine_term_l('Bool',P,P):-!.
+combine_term_l('Number',P,P):-!.
 combine_term_l('ValueObject',R,P):-R=P,!. %rust_to_pl(R,P),!.
 combine_term_l('%Undefined%',R,P):-rust_to_pl(R,P),!.
 combine_term_l('hyperon::space::DynSpace',P,P):-!.

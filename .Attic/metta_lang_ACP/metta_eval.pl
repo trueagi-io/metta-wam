@@ -641,7 +641,7 @@ eval_10(Eq,RetType,Depth,Self,['eval-in-only',Where,Eval],Y):- !,
 
 
 eval_20(_Eq,_RetType,Depth,_Self,X,Y):- overflow_depth(Depth),maybe_bt(depth),!,unify_woc(X,Y).
-eval_20(Eq,RetType,Depth,Self,Name,Y):- fail,
+eval_20(Eq,RetType,_Depth,Self,Name,Y):- % fail,
     atom(Name), !,
       ((Name=='NotReducible'->throw(metta_NotReducible);
       (nb_bound(Name,X)->do_expander(Eq,RetType,X,Y);
@@ -649,7 +649,7 @@ eval_20(Eq,RetType,Depth,Self,Name,Y):- fail,
       \+ \+ sanity_check_eval(eval_20_atom,Y).
 
 
-atom_alias(Self,X,Y):- fail, sub_selfs(Self,Sub), metta_function_asserted(Sub,X,Y).
+atom_alias(Self,X,Y):- sub_selfs(Self,Sub), metta_function_asserted(Sub,X,Y).
 
 
 eval_20(_Eq,RetType,Depth,Self,[Sym|Args],Res):-
@@ -1728,6 +1728,30 @@ unnumbervars_wco123(X,X).
 % =================================================================
 % =================================================================
 % =================================================================
+
+% eval_20(+Eq, +RetType, +Depth, +Self, +['sealed', InputVarList, Expr], -Result)
+% Evaluates a 'sealed' expression by copying only the necessary free variables and evaluating it.
+% This version avoids variable capture and enforces sealing semantics by copying only what’s needed.
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
+    !,  % Commit to this clause (cut), since we're handling the 'sealed' form specifically.
+    % Step 1: Get the variables explicitly listed in the input declaration
+    term_variables(InputVarList, IVars),
+    % Step 2: Sort them to prepare for set operations (ord_subtract requires sorted input)
+    sort(IVars, SIVars),
+    % Step 3: Find all variables actually used in the expression
+    term_variables(Expr, AVars),
+    % Step 4: Sort those variables to prepare for set operation
+    sort(AVars, SAVars),
+    % Step 5: Compute the variables in the expression that are NOT in the input list
+    % These are the "dangerous" variables we must be careful with (possibly from outer scopes)
+    ord_subtract(SAVars, SIVars, DontCopy),
+    % Step 6: Copy the expression and the "dangerous" vars — leaving other vars untouched
+    % This prevents side-effects or unification on external variables (sealing the scope)
+    copy_term(Expr + DontCopy, CExpr + DontCopy),
+    % Step 7: Recursively evaluate the copied expression in this sealed context
+    eval_args(Eq, RetType, Depth, Self, CExpr, Result).
+
+
 
 eval_20(_Eq, _RetType, _Depth, _Self, ['sealed', InputVarList, Expr], Result) :- !,
     omit_atoms(InputVarList,OutputVarList),

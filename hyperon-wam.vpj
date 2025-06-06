@@ -308,5 +308,6 @@
 			N="*.*"
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		<F N="vvv_tests.pl"/>
 	</Files>
 </Project>

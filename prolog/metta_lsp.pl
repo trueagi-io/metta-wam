@@ -1,4 +1,5 @@
-:- module(metta_lsp, []).
+:- module(metta_lsp, 
+    [ is_metta_lsp_file/0 ]).
 
 unused:- (prolog_load_context(directory, Value);Value='.'),
     absolute_file_name('../../libraries/',Dir,[relative_to(Value)]),
@@ -12,6 +13,8 @@ unused:- (prolog_load_context(directory, Value);Value='.'),
     pack_attach(MettaDir,[duplicate(replace),search(first)]),
     pack_attach(LSP,[duplicate(replace),search(first)]).
 
+
+is_metta_lsp_file.
 
 :- use_module(library(lsp_server_metta)).
 

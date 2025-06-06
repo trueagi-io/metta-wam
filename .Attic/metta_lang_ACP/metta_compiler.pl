@@ -95,24 +95,48 @@ non_arg_violation(_,_,_).
 :- dynamic(metta_compiled_predicate/3).
 :- multifile(metta_compiled_predicate/3).
 
+builtin_metta_function(F/A):- integer(A),atom(F),!,compound_name_arity(P,F,A),builtin_metta_function(P).
+%builtin_metta_function(Hc):- predicate_property(Hc,static),!.
+builtin_metta_function(Hc):- source_file(Hc,File),(source_file(this_is_in_compiler_lib,File);source_file(scan_exists_in_interp,File)),!.
+
+%in_to_out(FnName,_,[I],[O],cva(FnName,0,I,O)):-!.
+in_to_out(_,_,[],[],true):-!.
+in_to_out(FnName,N,[I|ArgsIn],[O|ArgsOut],Out):- succ(N,M),
+   in_to_out(FnName,M,ArgsIn,ArgsOut,More),
+   combine_code(cva(FnName,N,I,O),More,Out).
+
+cva(_,_,IO,IO).
+
 %setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :- !.
 setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult) :-
- debug_info(always(setup_mi_me),setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult)),
  must_det_lls((
     sum_list(LenArgs,LenArgsTotal),
     LenArgsTotalPlus1 is LenArgsTotal+1,
-    findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
     create_prefixed_name('mc_',LenArgs,FnName,FnNameWPrefix),
+    current_compiler_context(WasCompCtx),
+    if_t(builtin_metta_function(FnName/LenArgsTotalPlus1),
+      (set_option_value(compiler_context,builtin))),
+    current_compiler_context(NowCompCtx),
+    debug_info(always(setup_mi_me),setup_mi_me(NowCompCtx,FnName,LenArgs,InternalTypeArgs,InternalTypeResult)),
+    length(AtomList0,LenArgsTotalPlus1),
+    length(AtomList1,LenArgsTotalPlus1),
+    append(ArgsIn,[RetValO],AtomList1),
+    append(ArgsOut,[RetVal],AtomList0),
+    in_to_out(FnName,1,ArgsIn,ArgsOut,HeToHi),!,
+
+    %findall(Atom0, (between(1, LenArgsTotalPlus1, I0) ,Atom0='$VAR'(I0)), AtomList0),
+
     Hc =.. [FnNameWPrefix|AtomList0],
     create_prefixed_name('mi_',LenArgs,FnName,FnNameWMiPrefix),
     Hi =.. [FnNameWMiPrefix|AtomList0],
     create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
-    He =.. [FnNameWMePrefix|AtomList0],
+    He =.. [FnNameWMePrefix|AtomList1],
     append(Eval,[RetVal],[FnName|AtomList0]),
     Bi = ci(true,FnName,LenArgsTotal,Eval,RetVal,true,Goal),
     % Bi =.. [ci,true,[],true,Goal],
-    compiler_assertz(Hi:-((Goal=Hc),Bi)),
-    compiler_assertz(He:-Hc))).
+    compiler_assertz(Hi:- ((Goal=Hc), Bi)),
+    compiler_assertz(He:- ( HeToHi, Hi, cva(FnName,0,RetVal,RetValO))))),
+    set_option_value(compiler_context,WasCompCtx).
 
 setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,MettaTypeResult,InternalTypeArgs,InternalTypeResult) :-
     (transpiler_predicate_store(_,FnName,LenArgs,_,_,_,_) -> true ;
@@ -1898,15 +1922,26 @@ setup_pl_file(MeTTaFile) :-
     get_time(Now),
     format_time(atom(Timestamp), '%FT%T%:z', Now),
     format('%% Generated from ~w at ~w~n', [MeTTaFile, Timestamp]),
-    writeln(":- set_prolog_flag(mettalog_rt,true)."),
-    writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl=false'])."),
-    writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl'])."),
-    writeln(":- include(library(metta_lang/metta_transpiled_header))."),
-    writeln("%:- ensure_loaded(library(metta_lang/metta_interp))."),
-    writeln(":- ensure_loaded(library(metta_rt)). % avoids starting the REPL"),
     writeln(":- style_check(-discontiguous)."),
     writeln(":- style_check(-singleton)."),
+    %writeln("%:- set_prolog_flag(mettalog_rt,true)."),
+    %writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl=false'])."), writeln("%:- set_prolog_flag(mettalog_rt_args, ['--repl'])."),
+    writeln(":- include(library(metta_lang/metta_transpiled_header))."),
     nl.
+
+:- dynamic(user:on_finish_load_metta/1).
+:- multifile(user:on_finish_load_metta/1).
+
+on_finish_load_metta(MeTTaFile):-
+   atom_concat(MeTTaFile,'.pl',PlFile),
+   get_time(Now),
+   format_time(atom(Timestamp), '%FT%T%:z', Now),
+   sformat(S, '%% Finished generating ~w at ~w~n', [MeTTaFile, Timestamp]),
+   send_to_pl_file(PlFile,S),!,
+   send_to_pl_file(PlFile,":- normal_IO."),
+   send_to_pl_file(PlFile,":- initialization(transpiled_main, program)."),
+   setup_library_calls.
+
 
 cname_var(Sym,Expr):-  gensym(Sym,ExprV),
     put_attr(Expr,vn,ExprV).

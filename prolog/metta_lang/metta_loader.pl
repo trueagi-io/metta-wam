@@ -3138,6 +3138,7 @@ metta_atom_deduced('&corelib', Term) :- fail,
 load_corelib_file :- really_using_corelib_file, !.
 %load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
 load_corelib_file :-
+     setup_library_calls,
      % Load the standard Metta logic file from the source directory.
      must_det_lls((is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
      metta_atom('&corelib', [':', 'Any', 'Type']),

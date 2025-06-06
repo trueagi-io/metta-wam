@@ -209,7 +209,7 @@ get_type(Arg,Type):- eval_H(['get-type',Arg],Type).
 % If X is not callable, this predicate will attempt to evaluate the arguments of X (using eval_args/2) and succeed if the result is not False.
 eval_true(X):- \+ iz_conz(X), callable(X), !, call(X).
 eval_true([F,X,Y]):- F=='=alpha',!,'=alpha'(X,Y).
-eval_true(X):- eval_args(X,Y), is_True(Y) , !.
+eval_true(X):- eval_args(X,Y), \+ \+ is_True(Y).
 
 eval(Depth,Self,X,Y):- eval('=',_,Depth,Self,X,Y).
 eval(Eq,RetType,Depth,Self,X,Y):-
@@ -1728,6 +1728,30 @@ unnumbervars_wco123(X,X).
 % =================================================================
 % =================================================================
 % =================================================================
+
+% eval_20(+Eq, +RetType, +Depth, +Self, +['sealed', InputVarList, Expr], -Result)
+% Evaluates a 'sealed' expression by copying only the necessary free variables and evaluating it.
+% This version avoids variable capture and enforces sealing semantics by copying only what’s needed.
+eval_20(Eq, RetType, Depth, Self, ['sealed', InputVarList, Expr], Result) :-
+    !,  % Commit to this clause (cut), since we're handling the 'sealed' form specifically.
+    % Step 1: Get the variables explicitly listed in the input declaration
+    term_variables(InputVarList, IVars),
+    % Step 2: Sort them to prepare for set operations (ord_subtract requires sorted input)
+    sort(IVars, SIVars),
+    % Step 3: Find all variables actually used in the expression
+    term_variables(Expr, AVars),
+    % Step 4: Sort those variables to prepare for set operation
+    sort(AVars, SAVars),
+    % Step 5: Compute the variables in the expression that are NOT in the input list
+    % These are the "dangerous" variables we must be careful with (possibly from outer scopes)
+    ord_subtract(SAVars, SIVars, DontCopy),
+    % Step 6: Copy the expression and the "dangerous" vars — leaving other vars untouched
+    % This prevents side-effects or unification on external variables (sealing the scope)
+    copy_term(Expr + DontCopy, CExpr + DontCopy),
+    % Step 7: Recursively evaluate the copied expression in this sealed context
+    eval_args(Eq, RetType, Depth, Self, CExpr, Result).
+
+
 
 eval_20(_Eq, _RetType, _Depth, _Self, ['sealed', InputVarList, Expr], Result) :- !,
     omit_atoms(InputVarList,OutputVarList),

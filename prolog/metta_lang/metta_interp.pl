@@ -3486,7 +3486,6 @@ clear_space(S) :-
     nop(retractall(metta_type(S, _, _))),
     % Remove asserted atoms for the space.
     retractall(metta_atom_asserted(S, _)),
-    retractall(metta_other_asserted(S, _)),
     retractall(metta_function_asserted(S,_ , _)),
     !.
 
@@ -3974,7 +3973,7 @@ add_assertion_now(Self,Preds):-
 
 %load_hook(_Load,_Hooked):- !.
 load_hook(Load,Hooked):-
-   ignore(( \+ ((forall(load_hook0(Load,Hooked),true))))),!.
+  notrace(ignore(catch( ignore((( \+ ((forall(load_hook0(Load,Hooked),true)))))), _, true))),!.
 
 
 %!  rtrace_on_error(:Goal) is det.
@@ -3990,9 +3989,9 @@ load_hook(Load,Hooked):-
 %     ?- rtrace_on_error(writeln('Hello, World!')).
 %
 
+rtrace_on_error(G):- is_nodebug,!,catch(G,_,true).
 %rtrace_on_error(G):- is_user_repl, !, call(G).
-rtrace_on_error(G):- !, call(G).
-%rtrace_on_error(G):- catch(G,_,fail).
+%rtrace_on_error(G):- !, call(G).
 rtrace_on_error(G):-
   catch_err(G,E,
    (%notrace,
@@ -4167,10 +4166,13 @@ load_hook0(Load, Assertion) :-
 %     ?- load_hook1(my_load, '&corelib', '=', head, body).
 
 % load_hook1(_Load, '&corelib', _Eq, _H, _B) :- !.
+metta_asserted_hook(_Load, Self, StuffHook):- compiler_assertz_file( metta_atom_asserted(Self,StuffHook)), fail.
+metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == '=', compiler_assertz_file(metta_function_asserted(Self,H,B)), fail.
+% metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == 'ALT', compiler_assertz_file(metta_function_asserted(Self,H,B)), fail.
+metta_asserted_hook(_,_,_).
 
-metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == '=', compiler_assertz(metta_function_asserted(Self,H,B)),!.
-%metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == 'ALT=', compiler_assertz(metta_function_asserted(Self,H,B)),!.
-metta_asserted_hook(_Load, Self, StuffHook):- compiler_assertz( metta_other_asserted(Self,StuffHook)). %send_to_pl_file( metta_other_asserted(Self,StuffHook)))),!.
+compiler_assertz_file(X):-  clause_asserted(X), !, send_to_pl_file(X).
+compiler_assertz_file(X):- compiler_assertz(X), !.
 
 load_hook1(Load, Self, StuffHook) :-
     metta_asserted_hook(Load, Self, StuffHook), fail.
@@ -4383,8 +4385,8 @@ tf_to_trace(X,X).
 % multiple files.
 :- dynamic(metta_function_asserted/3).
 :- multifile(metta_function_asserted/3).
-:- dynamic(metta_other_asserted/2).
-:- multifile(metta_other_asserted/2).
+:- dynamic(metta_atom_asserted/2).
+:- multifile(metta_atom_asserted/2).
 :- dynamic(metta_function_asserted/3).
 :- multifile(metta_function_asserted/3).
 :- dynamic(metta_atom_asserted/2).
@@ -5971,14 +5973,15 @@ call_for_term_variables5(Term,_,_,_,call_nth(Term,Count),VL,['Count'=Count|VL],R
 send_metta_callable(_Self,TermV,_Term,_X,_NamedVarsList,_Was):-
         once((toplevel_interp_only(TermV),ignore(Res = '$VAR'('ExecRes')),send_to_pl_file(:- eval_H(TermV,Res)))), !.
 send_metta_callable(_Self,TermV,Term,_X,NamedVarsList,Was):-
-        once((compile_for_exec(Res,TermV,ExecGoal),!,
+     ignore((once((
+        catch(compile_for_exec(Res,TermV,ExecGoal),_,fail),!,
         %format("~w ~w\n",[Res,ExecGoal]),
         subst_vars(Res+ExecGoal,Res+Term,NamedVarsList),
         ignore(Res = '$VAR'('ExecRes')),
         copy_term_g(NamedVarsList,Was),
         %term_variables(Term,Vars),
         Call = do_metta_runtime(Res, ExecGoal),
-        send_to_pl_file(:- Call))), !.
+        send_to_pl_file(:- Call))))), !.
 
 into_metta_callable(_Self,CALL,Term,X,NamedVarsList,Was):- fail,
    % wdmsg(mc(CALL)),

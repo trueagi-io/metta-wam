@@ -1207,7 +1207,7 @@ print_result_output(WasInteractive,Complete,ResNum,Prev,NamedVarsList,Control,Re
                   InitialResultLeash =< ResNum, ResNum < Max) -> Stepping = true ; Stepping = false),
 
          %if_debugging(time,with_output_to(user_error,give_time('Execution',Seconds))),
-           if_t((Stepping==true;Complete==true),if_trace(time,color_g_mesg_ok(yellow,(user_err(give_time('Execution',Seconds)))))),
+           if_t((Stepping==true;Complete==true),if_trace(time,user_err(color_g_mesg_ok(yellow,(give_time('Execution',Seconds)))))),
 
            color_g_mesg(green,
               ignore((NamedVarsList \=@= Was ->(not_compatio((
@@ -1747,7 +1747,11 @@ prolog_only(Goal):-
 %     ?- write_compiled_exec(Result, my_goal).
 %     #114411: answer2(Result) :- my_goal
 %
+
 write_compiled_exec(Exec, Goal):-
+  notrace((ignore(catch(write_compiled_exec_unsafe(Exec, Goal),_,true)))).
+
+write_compiled_exec_unsafe(Exec, Goal):-
     % Compile the goal for execution and store the result in Res.
     compile_for_exec(Res, Exec, Goal),
     % Print the compiled goal with formatting.

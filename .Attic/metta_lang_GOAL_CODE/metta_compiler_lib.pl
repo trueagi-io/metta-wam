@@ -44,10 +44,9 @@ is_If('if').
 
 transpiler_predicate_store(builtin, IF, [3], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[]),x(doeval,lazy,[])], x(doeval,lazy,[])):- is_If(IF).
 'mc__1_3_if'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
-'mc__1_3_If'(If,Then,Else,Result) :- (If*->Result=Then;Result=Else).
+
 transpiler_predicate_store(builtin, IF, [2], '@doc', '@doc', [x(doeval,eager,[]),x(doeval,lazy,[])], x(doeval,lazy,[])):- is_If(IF).
 'mc__1_2_if'(If,Then,Result) :- (If*->Result=Then;fail).
-'mc__1_2_If'(If,Then,Result) :- (If*->Result=Then;fail).
 
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyEval,Convert, Converted, ConvertedN) :-
   Convert = [IF,Cond,Then,Else],nonvar(IF),is_If(IF),!,
@@ -388,8 +387,7 @@ transpiler_predicate_store(builtin, 'get-atoms', [1], '@doc', '@doc', [x(noeval,
 
 % This allows match to supply hits to the correct metta_atom/2 (Rather than sending a variable
 match_pattern(Space, Pattern):-
-    if_t(compound(Pattern),
-       (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
+    % if_t(compound(Pattern), (functor(Pattern,F,A,Type), functor(Atom,F,A,Type))),
     metta_atom(Space, Atom),
     unify_with_occurs_check(Atom,Pattern). % 0.262 secs.
     %Atom=Pattern. % 0.170 secs
@@ -435,7 +433,7 @@ transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom',
 'mc_n_1__call-p!'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 transpiler_predicate_nary_store(builtin, 'call-p', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[bool])).
-'mc_n_1__call-p'(Fn,List,Ret) :- (apply(Fn,List)*->Ret='True';Ret='False').
+'mc_n_1__call-p'(Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 inline_comp(apply(Fn,[]), Fn).
 inline_comp(append(X,[],Y), true):- X=Y.
@@ -450,6 +448,7 @@ transpiler_predicate_store(builtin, empty, [0], '@doc', '@doc', [], x(doeval,eag
 
 transpiler_predicate_store(builtin, 'eval', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_eval'(X,R) :- transpile_eval(X,R).
+%'mc__1_1_eval'(X,R) :- eval(X,R).
 
 transpiler_predicate_store(builtin, 'get-metatype', [1], '@doc', '@doc', [x(noeval,eager,[])], x(doeval,eager,[])).
 'mc__1_1_get-metatype'(X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
@@ -515,12 +514,13 @@ compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert,
   assign_or_direct_var_only(QuotedCode2,RetResult,QuotedResult2,QuotedCode1a),
   assign_or_direct_var_only(QuotedCode2,RetResultN,QuotedResult2,QuotedCode1N).
 
-%:- initialization(setup_library_call(builtin, 'chain', [3], '@doc', '@doc', [x(eval,eager,[]), x(noeval,eager,[]), x(eval,lazy,[])], x(noeval,eager,[])), program).
+%transpiler_predicate_store(builtin, 'chain', [3], '@doc', '@doc', [x(eval,eager,[]), x(noeval,eager,[]), x(eval,lazy,[])], x(noeval,eager,[])).
 
 
 
 %%%%%%%%%%%%%%%%%%%%% random number generation
 
+transpiler_predicate_store(builtin, 'random-int', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 
 % for etcs-combinator-data-uncurry-xp.metta
 use_py_random:- !, fail.
@@ -528,6 +528,7 @@ use_py_random:- option_value('py-random', true), !.
 use_py_random:- \+ option_value('fast-random', true).
 
 % for etcs-combinator-data-uncurry-xp.metta
+% use_rust_random:- !.
 use_rust_random:- fail, \+ option_value('rust-random', false), !.
 
 use_python_rng(X,Y):- notrace(use_python_rng0(X,Y)).

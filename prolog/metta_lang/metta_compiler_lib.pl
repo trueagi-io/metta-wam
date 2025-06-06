@@ -727,14 +727,14 @@ transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'At
 transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
 'mc_n_1__py-dot-call!'(SymRef,Args,Ret) :-
     eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
-    
+
 setup_library_calls:-
  locally(nb_setval(debug_context, stdlib),
-  locally(nb_setval(compiler_context, builtin),
    user_err(forall(
       transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,
             MettaTypeResult,InternalTypeArgs,InternalTypeResult),
-         setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
+        locally(nb_setval(compiler_context, Source),
+           setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
             MettaTypeResult,InternalTypeArgs,InternalTypeResult))))).
 
 
