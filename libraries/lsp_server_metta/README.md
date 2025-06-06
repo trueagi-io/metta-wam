@@ -205,31 +205,81 @@ au BufRead,BufNewFile *.metta    set filetype=metta
 As of version 0.11, Neovim now has easier support for configuring an LSP server without additional plugins.
 
 
-#### Connecting to a Running Server
+#### Socket Server
 
-Since neovim can't start its own LSP server that will connect over TCP, you'll have to start your own server, by running the following command in the Mettalog directory:
-
-```bash
-swipl -l libraries/lsp_server_metta/prolog/lsp_server_metta.pl -g lsp_server_metta:main -t 'halt' -- port 40222
-```
-
-Then create the following file at `~/.config/nvim/lsp/metta.lua`:
+To run from the `metta_wam` directory, put the following file at `~/.config/nvim/lsp/metta.lua`:
 
 ```lua
+local mettaDir = '/Users/james/Work/metta/metta-wam'
+local find_port = function()
+   local uv = vim.uv
+   local tcp = uv.new_tcp()
+   tcp:bind("127.0.0.1", 0)
+   local port = tcp:getsockname().port
+   tcp:close_reset()
+   return port
+end
 return {
-   cmd = vim.lsp.rpc.connect('127.0.0.1', 40222),
-   --                  this port argument ^
-   -- should match the above argument used when starting the server
+   cmd = function(...)
+      local server_port = find_port()
+      vim.system({ 'swipl',
+                   '-l', mettaDir .. '/libraries/lsp_server_metta/prolog/lsp_server_metta.pl',
+                   '-g', 'lsp_server_metta:main',
+                   '-t', 'halt',
+                   '--', 'port', server_port },
+         {},
+         function(...)
+            print("LSP PROCESS EXITED", ...)
+         end)
+         vim.ui.sleep(500) -- increase this if the connecting is timing out
+         return vim.lsp.rpc.connect('127.0.0.1', server_port)(...)
+   end,
+   cmd_cwd = mettaDir,
+   cmd_env = { METTALOG_DIR = mettaDir;
+               SWIPL_PACK_PATH = mettaDir .. '/libraries'; },
    root_markers = { '.git', },
    filetypes = { 'metta' },
 }
 ```
 
-Then need to enable the LSP by adding the following line to your `init.lua`:
+If the server has been installed as a pack:
+
+```lua
+local mettaDir = '/Users/james/Work/metta/metta-wam'
+local find_port = function()
+   local uv = vim.uv
+   local tcp = uv.new_tcp()
+   tcp:bind("127.0.0.1", 0)
+   local port = tcp:getsockname().port
+   tcp:close_reset()
+   return port
+end
+return {
+   cmd = function(...)
+      local server_port = find_port()
+      vim.system({ 'swipl',
+                   '-g', 'use_module(library(lsp_server_metta))',
+                   '-g', 'lsp_server_metta:main',
+                   '-t', 'halt',
+                   '--', 'port', server_port },
+         {},
+         function(...)
+            print("LSP PROCESS EXITED", ...)
+         end)
+         vim.ui.sleep(500) -- increase this if the connecting is timing out
+         return vim.lsp.rpc.connect('127.0.0.1', server_port)(...)
+   end,
+   root_markers = { '.git', },
+   filetypes = { 'metta' },
+}
+```
+
+In either case, you'll then need to enable the LSP by adding the following line to your `init.lua`:
 
 ```lua
 vim.lsp.enable({'metta'})
 ```
+
 #### Automatically Started Server Over stdio
 
 
