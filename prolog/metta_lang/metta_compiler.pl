@@ -497,7 +497,7 @@ invert_curried_structure(F,[L|LenArgs],Args,[Result|ArgsLast]) :-
    invert_curried_structure(F,LenArgs,ArgsFirst,Result).
 
 
-recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_from_depends,skip_redef_fa(FnName,LenArgs)),!.
+recompile_from_depends(FnName,LenArgs) :- skip_redef_fa(FnName,LenArgs),!,debug_info(recompile_code_from_depends,skip_redef_fa(FnName,LenArgs)),!.
 recompile_from_depends(FnName,LenArgs) :-
    transpiler_debug(2,(format_e("recompile_from_depends ~w/~w\n",[FnName,LenArgs]))),
    %LenArgs is LenArgsPlus1-1,
@@ -942,7 +942,7 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
-    once(number(Convert); atom(Convert);atomic(Convert)/*; data_term(Convert)*/),!.  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert);atomic(Convert);self_eval(Convert); data_term(Convert)),!.  % Check if Convert is a number or an atom
 
 f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
      as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs
@@ -1321,7 +1321,7 @@ f2p(HeadIs, LazyVars, RetResult, RetResultN, x(noeval,eager,[]), Convert, Conver
     assign_or_direct(NoEvalCodeCollected,RetResultN,list(NoEvalRetResults),ConvertedN), !.
 
 f2p(HeadIs,LazyVars,_,_,EvalArgs,Convert,_,_):-
-   format_e("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]),
+   format_e("Error in f2p ~w ~w ~w ~w\n",[HeadIs,LazyVars,Convert,EvalArgs]), bt,
    throw(0).
 
 /*
@@ -1354,6 +1354,7 @@ ast_to_prolog(Caller,DontStub,A,Result) :-
 
 ast_to_prolog_aux(_,_,A,A) :- fullvar(A),!.
 ast_to_prolog_aux(_,_,H,H):- \+ compound(H),!.
+ast_to_prolog_aux(_,_,inline(Code),Code) :- !.
 ast_to_prolog_aux(Caller,DontStub,list(A),B) :- !,maplist(ast_to_prolog_aux(Caller,DontStub),A,B).
 ast_to_prolog_aux(Caller,DontStub,list_with_tail(A,T),B) :- !,
    maplist(ast_to_prolog_aux(Caller,DontStub),A,A0),
@@ -1393,7 +1394,9 @@ ast_to_prolog_aux(Caller,DontStub,[transpiler_apply,Prefix,Fn,RetResults,RetResu
    A=..[transpiler_apply,Prefix,FnA,RetResultsA,RetResultA,RetResultsPartsA, RetResultsPartsNA, LazyResultPartsA,ConvertedPartsA, ConvertedNPartsA]
    %notice_callee(Caller,A)
    )).
-ast_to_prolog_aux(_,_,[ispu,R],ispu(R)) :- !.
+
+% ORIG ast_to_prolog_aux(_,_,[ispu,R],ispu(R)) :- !.
+ast_to_prolog_aux(_,_,[ispu,R],(R)) :- !.
 ast_to_prolog_aux(Caller,DontStub,[ispuU,R,Code0],ispuU(R,Code1)) :- !,
    ast_to_prolog(Caller,DontStub,Code0,Code1).
 ast_to_prolog_aux(Caller,DontStub,[ispeEn,R,Code0,Expr],ispeEn(R,Code1,Expr)) :- !,
@@ -1527,6 +1530,8 @@ ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :- ast_to_prolog_aux(Cal
 ast_to_prolog_aux(Caller,DontStub,[assign,A,X0],(A=X1)) :-   must_det_lls(label_type_assignment(A,X0)), ast_to_prolog_aux(Caller,DontStub,X0,X1),label_type_assignment(A,X1),!.
 ast_to_prolog_aux(Caller,DontStub,[prolog_match,A,X0],(A=X1)) :- ast_to_prolog_aux(Caller,DontStub,X0,X1),!.
 
+ast_to_prolog_aux(Caller,DontStub,[native_disjunct,Disjuncts],NewFArgs) :- combine_code_list_disjunct(Caller,DontStub,Disjuncts,NewFArgs).
+
 ast_to_prolog_aux(Caller,DontStub,[prolog_catch,Catch,Ex,Catcher],R) :-  ast_to_prolog(Caller,DontStub,Catch,Catch2), R=  catch(Catch2,Ex,Catcher).
 ast_to_prolog_aux(_Caller,_DontStub,[prolog_inline,Prolog],R) :- !, R= Prolog.
 ast_to_prolog_aux(Caller, DontStub, if_or_else(If,Else),R):-
@@ -1565,6 +1570,18 @@ ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):-
 %ast_to_prolog_aux(Caller,DontStub,[H|T],(HH,TT)) :- ast_to_prolog_aux(Caller,DontStub,H,HH),ast_to_prolog_aux(Caller,DontStub,T,TT).
 
 ast_to_prolog_aux(_,_,A,A).
+
+
+combine_code_list_disjunct(_Caller,_DontStub,[],false).
+combine_code_list_disjunct(Caller,DontStub,[H],H0) :- !,ast_to_prolog(Caller,DontStub,H,H0).
+combine_code_list_disjunct(Caller,DontStub,[H|T],R) :-
+   ast_to_prolog(Caller,DontStub,H,H0),
+   combine_code_list_disjunct(Caller,DontStub,T,T0),
+   (H0=false->
+      R=T0
+   ;
+      R=..[';',H0,T0]
+   ).
 
 combine_code_list(A,R) :- !,
    combine_code_list_aux(A,R0),
