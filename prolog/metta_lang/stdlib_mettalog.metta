@@ -721,10 +721,10 @@ For example:
 (@doc max-atom
   (@desc "Returns atom with maximum value in the expression (first argument). Only numbers are allowed.")
   (@params (
-    (@param "Expression containing atoms of Number type")))
+	(@param "Expression containing atoms of Number type")))
   (@return "Maximum value in the expression. Error if expression contains non-numeric value or is empty."))
 (: max-atom (-> Expression Number))
-(is-fn-1 max-atom max_list)
+(= (max-atom $L) (call-fn! max_list $L))
 
 (iz size-atom MeTTa)
 (@doc size-atom
