@@ -7704,7 +7704,7 @@ do_metta_runtime(Var, Call) :-
    debug_info(always(do_metta),do_metta_runtime(Var, Call)),
     original_user_error(Err),
     % Extract the functor name from the goal (`Call`) to create a description.
-    functor(Call, Func, _),
+    functor_chkd(Call, Func, _),
     atom_concat('Testing ', Func, Description),
     % Record the start times (wall clock and CPU time).
     current_times(WallStart, CPUStart),

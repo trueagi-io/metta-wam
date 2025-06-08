@@ -1692,8 +1692,16 @@ push_attributes_onto_var(att(Mod, Val, Rest), Var) :-
 eval_20(_Eq,_RetType,_Depth,_Self,['=alpha', X,Y],TF):- !,
    as_tf('=alpha'(X,Y),TF).
 
+lmax_var_number(V, Max, Max) :- \+ compound(V), !.
+lmax_var_number(V, Max, Max) :- compound_name_arity(V,_,0), !.
+lmax_var_number('$VAR'(I), Max0, Max) :- integer(I), !, Max is max(I, Max0).
+lmax_var_number(S, Max0, Max) :- functor(S, _, Ar), lmax_var_numberl(Ar, S, Max0, Max).
+lmax_var_numberl(0, _, Max, Max) :- !.
+lmax_var_numberl(I, T, Max0, Max) :- arg(I, T, Arg),
+    I2 is I+ -1, lmax_var_number(Arg, Max0, Max1), lmax_var_numberl(I2, T, Max1, Max).
+
 equal_renumbered(X0,Y0,XX,YY):-
-   max_var_number(X0+Y0,0,N),succ(N,N2),
+   lmax_var_number(X0+Y0,0,N),succ(N,N2),
    copy_term(X0+Y0,X+Y),
    term_variables(X,VXs), term_variables(Y,VYs),
    merge_same_named_vars(VXs,VYs,Same,Merges,LOXVs,LOYVs),
@@ -1709,7 +1717,7 @@ equal_renumbered(X0,Y0,XX,YY):-
 
 renumber_vars_wo_confict_tu(X,XXX):-
    copy_term(X,XX),
-   max_var_number(XX,0,N),
+   lmax_var_number(XX,0,N),
    succ(N,N2),
    numbervars(XX,N2,_,[attvar(skip)]), % TODO
    unnumbervars_wco123(XX,XXX).

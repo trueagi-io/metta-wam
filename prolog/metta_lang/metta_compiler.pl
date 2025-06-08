@@ -264,6 +264,9 @@ as_p1_exec(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_exec(ispeEn(ERet,ECode,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnN(ERet,ECode,_,_),ERet) :- !, call(ECode).
 as_p1_exec(ispeEnNC(ERet,ECode,_,_,CCode),ERet) :- !, call(CCode),call(ECode).
+as_p1_exec(rtrace(T),TRet) :- !, rtrace(as_p1_exec(T,TRet)).
+as_p1_exec(call(P1,T),TRet) :- !, call(P1,as_p1_exec(T,TRet)).
+%as_p1_exec(X,Y) :- as_p1_expr(X,S),eval(S,Y).
 as_p1_exec(X,X) :- !.
 
 as_p1_expr(X,X) :- \+ compound(X), !.
@@ -272,6 +275,8 @@ as_p1_expr(ispuU(URet,UCode),URet) :- !, call(UCode).
 as_p1_expr(ispeEn(_,_,NRet),NRet).
 as_p1_expr(ispeEnN(_,_,NRet,NCode),NRet) :- !, call(NCode).
 as_p1_expr(ispeEnNC(_,_,NRet,NCode,CCode),NRet) :- !,call(CCode),call(NCode).
+as_p1_expr(rtrace(T),TRet) :- !, rtrace(as_p1_expr(T,TRet)).
+as_p1_expr(call(P1,T),TRet) :- !, call(P1,as_p1_expr(T,TRet)).
 as_p1_expr(X,X) :- !.
 
 create_p1(URet,[],[ispu,URet]) :- !.
@@ -516,16 +521,16 @@ unnumbervars_wco(X,XXX):- compound(X),
    subst001(X,E,_,XX),unnumbervars_wco(XX,XXX).
 unnumbervars_wco(X,X).
 
-% max_integer_in_term(+Term, -Max)
-max_integer_in_term(Term, Start, Max) :-
+% max_var_integer_in_term(+Term, -Max)
+max_var_integer_in_term(Term, Start, Max) :-
         Box = box(Start),  % Correct initialization
-        forall( ( sub_term_safely(Int, Term), integer(Int), ( box(Int) @> Box )),
+        forall( ( sub_term_safely(CmpdVar, Term), compound(CmpdVar), CmpdVar = '$VAR'(Int), integer(Int), ( box(Int) @> Box )),
             nb_setarg(1, Box, Int)),
         arg(1, Box, Max),!.
 
 number_vars_wo_conficts(X,XX):-
    copy_term(X,XX),
-   woct(max_integer_in_term(XX,0,N)),
+   woct(max_var_integer_in_term(XX,0,N)),
    succ(N,N2),
    numbervars(XX,N2,_,[attvar(skip)]).
 
@@ -1990,7 +1995,7 @@ skip_redef_fa(Fn,LenArgs) :-
    create_prefixed_name('mc_',LenArgs,Fn,FnWPrefix),
    sum_list(LenArgs,LenArgsTotal),
    LenArgsTotalPlus1 is LenArgsTotal+1,
-   functor(Info,FnWPrefix,LenArgsTotalPlus1),
+   functor_chkd(Info,FnWPrefix,LenArgsTotalPlus1),
    skip_redef_head(user,Info),!.
 
 into_fa(Fn/[Arity],Fn,Arity):- must_be(number,Arity).
@@ -2034,7 +2039,7 @@ label_arg_types(F,N,[A|Args]):-
   label_arg_types(F,N2,Args).
 
 % label_arg_n_type(F,0,A):- !, label_type_assignment(A,F).
-label_arg_n_type(F,N,A):- compound(F),functor(F,Fn,Add),Is is Add+N, !, label_arg_n_type(Fn,Is,A).
+label_arg_n_type(F,N,A):- compound(F),functor_chkd(F,Fn,Add),Is is Add+N, !, label_arg_n_type(Fn,Is,A).
 label_arg_n_type(F,N,A):- add_type_to(A,arg(F,N)),!.
 
 add_type_to(V,T):- is_list(T), !, maplist(add_type_to(V),T).
@@ -2361,7 +2366,7 @@ test_combine_big :-
 in_type_set(Set,Type):- Set==Type,!.
 in_type_set(Set,Type):- compound(Set),arg(_,Set,Arg),in_type_set(Arg,Type).
 
-b_put_set(Set,Type):- functor(Set,_,Arg),!,b_put_nset(Set,Arg,Type).
+b_put_set(Set,Type):- functor_chkd(Set,_,Arg),!,b_put_nset(Set,Arg,Type).
 b_put_nset(Set,_,Type):- in_type_set(Set,Type),!.
 b_put_nset(Set,N,Type):- arg(N,Set,Arg),
    (compound(Arg)->b_put_set(Arg,Type);b_setarg(N,Set,[Type|Arg])).
@@ -2428,15 +2433,15 @@ find_compiled_refs(S, Refs):-
 append_sets(RefsL,Refs):- flatten(RefsL,Flat),list_to_set(Flat,Refs).
 compiled_info_s(S,Refs):-
    findall(Ref,(compiler_data(F/A),compiled_refs(S,F,A,Ref)),RefsL),append_sets(RefsL,Refs1),
-   findall(Ref,(current_predicate(S/A),functor(P,S,A),clause(P,_,Ref)),Refs2),append_sets([Refs1,Refs2],Refs).
+   findall(Ref,(current_predicate(S/A),functor_chkd(P,S,A),clause(P,_,Ref)),Refs2),append_sets([Refs1,Refs2],Refs).
 compiled_info_f(F,Refs):- compiled_info_s(F,Refs1), compiled_info_p(F,Refs2),append_sets([Refs1,Refs2],Refs).
 compiled_info_p(F,Refs):-
-   findall(Ref,(current_predicate(F/A),functor(P,F,A),current_module(M),
+   findall(Ref,(current_predicate(F/A),functor_chkd(P,F,A),current_module(M),
     \+ \+ predicate_property(M:P,_), \+ predicate_property(M:P,imported_from(_)),
     clause(M:P,_,Ref)),Refs).
 
 compiled_refs(Symbol,F,A,Info):-
- functor(P,F,A),clause(P,B,Ref), (\+ compiler_data_no_call(F/A) -> call(B)), symbol_in(2,Symbol,P),
+ functor_chkd(P,F,A),clause(P,B,Ref), (\+ compiler_data_no_call(F/A) -> call(B)), symbol_in(2,Symbol,P),
    (B==true->Info=Ref;Info=P).
 
 
@@ -2478,7 +2483,7 @@ ensure_callee_site(Space,Fn,Arity):-
     transpile_call_prefix(Fn,Arity,CFn),
 
  ((current_predicate(CFn/Arity) -> true ;
-  must_det_lls((( functor(CallP,CFn,Arity),
+  must_det_lls((( functor_chkd(CallP,CFn,Arity),
     CallP @.. [CFn|Args],
     transpile_impl_prefix(Fn,Arity,IFn),
     CallI @.. [IFn|Args],
@@ -2504,7 +2509,7 @@ prefix_impl_preds(Prefix,F,A):- prefix_impl_preds_pp(Prefix,F,A).
 prefix_impl_preds('mc__1_',F,A):- is_transpile_call_prefix(F,A,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
 prefix_impl_preds('mi__1_',F,A):- is_transpile_impl_prefix(F,A,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
 
-prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc__1_2_:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor(Preds,Fn,A),
+prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc__1_2_:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor_chkd(Preds,Fn,A),
     ((transpile_impl_prefix(Prefix);transpile_call_prefix(Prefix)),atom_list_concat([Prefix,_FNArity,'_',F],Fn)).
 
 maplist_and_conj(_,A,B):- fullvar(A),!,B=A.
@@ -2543,7 +2548,7 @@ extract_caller((CallerInt/CallerSz),CallerInt,CallerSz):-!.
 extract_caller(H:-_,CallerInt,CallerSz):- !, extract_caller(H,CallerInt,CallerSz).
 extract_caller([=,H,_],CallerInt,CallerSz):-  !, extract_caller(H,CallerInt,CallerSz).
 extract_caller(P,F,A):- \+ callable(P),!, F=P,A=0.
-extract_caller(P,F,A):- \+ is_list(P), functor(P,F,A).
+extract_caller(P,F,A):- \+ is_list(P), functor_chkd(P,F,A).
 
 
 maybe_lazy_list(_,_,_,[],[]):-!.
@@ -2908,7 +2913,7 @@ ensure_callee_site(Space,Fn,Arity):-
     transpile_call_prefix(Fn,CFn),
     %trace,
 ((current_predicate(CFn/Arity) -> true ;
-  must_det_lls((( functor(CallP,CFn,Arity),
+  must_det_lls((( functor_chkd(CallP,CFn,Arity),
     CallP @.. [CFn|Args],
     transpile_impl_prefix(Fn,IFn),
     CallI @.. [IFn|Args],
@@ -2922,7 +2927,7 @@ prefix_impl_preds(Prefix,F,A):- prefix_impl_preds_pp(Prefix,F,A).
 prefix_impl_preds('mc__',F,A):- is_transpile_call_prefix(F,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
 prefix_impl_preds('mi__',F,A):- is_transpile_impl_prefix(F,Fn),current_predicate(Fn/A), \+ prefix_impl_preds_pp(_,F,A).
 
-prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc__:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor(Preds,Fn,A),
+prefix_impl_preds_pp(Prefix,F,A):- predicate_property('mc__:'(_,_,_),file(File)),predicate_property(Preds,file(File)),functor_chkd(Preds,Fn,A),
     ((transpile_impl_prefix(Prefix);transpile_call_prefix(Prefix)),atom_concat(Prefix,F,Fn)).
 
 maplist_and_conj(_,A,B):- fullvar(A),!,B=A.
@@ -2961,7 +2966,7 @@ extract_caller((CallerInt/CallerSz),CallerInt,CallerSz):-!.
 extract_caller(H:-_,CallerInt,CallerSz):- !, extract_caller(H,CallerInt,CallerSz).
 extract_caller([=,H,_],CallerInt,CallerSz):-  !, extract_caller(H,CallerInt,CallerSz).
 extract_caller(P,F,A):- \+ callable(P),!, F=P,A=0.
-extract_caller(P,F,A):- \+ is_list(P), functor(P,F,A).
+extract_caller(P,F,A):- \+ is_list(P), functor_chkd(P,F,A).
 
 
 maybe_lazy_list(_,_,_,[],[]):-!.
@@ -3017,18 +3022,18 @@ u_assign_list2([F|List],R):- atom(F),append(List,[R],ListR),
      catch(quietly(as_tf(apply(F,List),R)),error(existence_error(procedure,F/_),_),
         quietly(catch(eval_args([F|List],R),_, R=[F|List])))).
 
-%u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor(_Eq,V),!,maplist(eval_args,VI,VO).
+%u_assign([V|VI],[V|VO]):- nonvar(V),is_metta_data_functor_chkd(_Eq,V),!,maplist(eval_args,VI,VO).
 
 u_assign_c((F:-List),R):- !, R = (F:-List).
 
 /*
 u_assign_c(Cmp,RR):-
-  functor(Cmp,F,_),
+  functor_chkd(Cmp,F,_),
   current_predicate(F,_),
   debug(todo,'u_assign_c INTERP: ~q',[Cmp]),!,
   call(Cmp,RR).*/
 u_assign_c(FList,RR):-
-  functor(FList,F,_), % (F == 'car-atom' -> trace ; true),
+  functor_chkd(FList,F,_), % (F == 'car-atom' -> trace ; true),
   (catch(quietlY(call(FList,R)),error(existence_error(procedure,F/_),_),
      catch(quietlY(as_tf(FList,R)),error(existence_error(procedure,F/_),_),
       ((p2m(FList,[F0|List0]),catch(eval_args([F0|List0],R),_, R=~[F0|List0])))))),!,
@@ -3397,7 +3402,7 @@ compile_flow_control2(HeadIs, LazyVars, RetResult, ResultLazy, Converter, Conver
    compile_flow_control2(HeadIs, LazyVars, RetResult, ResultLazy, Convert, Converted).
 
 compile_flow_control2(HeadIs, LazyVars, _Result, ResultLazy, Convert, Converted) :- fail,
-   functor(Convert,Func,PA),
+   functor_chkd(Convert,Func,PA),
    functional_predicate_arg(Func,PA,Nth),
    Convert =~ [Func|PredArgs],
    nth1(Nth,PredArgs,Result,FuncArgs),
@@ -3430,7 +3435,7 @@ is_clause_asserted(AC):- unnumbervars_clause(AC,UAC),
   strip_m(HH,HHH),HHH=@=H2,
   strip_m(BB,BBB),BBB=@=B,!.
 
-%get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
+%get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor_chkd(HH,F,A).
 
 
 % :- dynamic(needs_tabled/2).
@@ -3753,7 +3758,7 @@ predicate_function_canonical(is_Empty,'Empty').
 pi(PI):- PI is pi.
 
 % Retrieve Head of the List
-'car-atom'(List, Head):- eval_H(['car-atom', List], Head).
+% 'car-atom'(List, Head):- eval_H(['car-atom', List], Head).
 
 
 % Mapping any current predicate F/A to a function, if it's not tricky
@@ -3767,7 +3772,7 @@ predicate_arity(F,A):- metta_atom('&self',[:,F,[->|Args]]), length(Args,A).
 predicate_arity(F,A):- current_predicate(F/A).
 % Certain constructs should not be converted to functions.
 not_function(P):- atom(P),!,not_function(P,0).
-not_function(P):- callable(P),!,functor(P,F,A),not_function(F,A).
+not_function(P):- callable(P),!,functor_chkd(P,F,A),not_function(F,A).
 not_function(F,A):- is_arity_0(F,FF),!,not_function(FF,A).
 not_function(!,0).
 not_function(print,1).
@@ -3784,7 +3789,7 @@ not_function(A,0):- atom(A),!.
 not_function('True',0).
 not_function(F,A):- predicate_arity(F,A),AA is A+1, \+ decl_functional_predicate_arg(F,AA,_).
 
-needs_call_fr(P):- is_function(P,_Nth),functor(P,F,A),AA is A+1, \+ current_predicate(F/AA).
+needs_call_fr(P):- is_function(P,_Nth),functor_chkd(P,F,A),AA is A+1, \+ current_predicate(F/AA).
 
 is_control_structure(F,A):- atom(F), atom_concat('if-',_,F),A>2.
 
@@ -3803,7 +3808,7 @@ is_function(AsFunction, Nth) :- is_arity_0(AsFunction,F), \+ not_function(F,0), 
 is_function(AsFunction, Nth) :- is_arity_0(AsFunction,_), !,Nth=1.
 is_function(AsFunction, Nth) :-
     callable(AsFunction),
-    functor(AsFunction, Functor, A),
+    functor_chkd(AsFunction, Functor, A),
     \+ not_function(Functor, A),
     AA is A + 1,
     functional_predicate_arg_maybe(Functor, AA, Nth).
@@ -4139,9 +4144,9 @@ funct_with_result_is_nth_of_pred0(HeadIs,AsFunction, Result, _Nth, AsPred) :-
    nonvar(AsFunction),
    compound(AsFunction),
    \+ is_arity_0(AsFunction,_),
-   functor(AsFunction,F,A),
+   functor_chkd(AsFunction,F,A),
    HeadIs\=@=AsFunction,
-   \+ (compound(HeadIs), (is_arity_0(HeadIs,HF);functor(HeadIs,HF,_))-> HF==F),
+   \+ (compound(HeadIs), (is_arity_0(HeadIs,HF);functor_chkd(HeadIs,HF,_))-> HF==F),
    (into_x_assign(AsFunction, Result,AsPred)
        -> true
        ; (AA is A+1,
@@ -4284,7 +4289,7 @@ preds_to_functs0(X, X).
 % Converts a given predicate AsPred to its equivalent function term AsFunction
 pred_to_funct(AsPred, AsFunction, Result) :-
     compound(AsPred), % Checks if AsPred is a compound term
-    functor(AsPred, F, A), % Retrieves the functor F and arity A of AsPred
+    functor_chkd(AsPred, F, A), % Retrieves the functor F and arity A of AsPred
     functional_predicate_arg(F, A, Nth),!, % Finds the Nth argument where the result should be
     arg(Nth, AsPred, Result), % Retrieves the result from the Nth argument of AsPred
     remove_funct_arg(AsPred, Nth, AsFunction). % Constructs the function AsFunction by removing the Nth argument from AsPred
@@ -4292,7 +4297,7 @@ pred_to_funct(AsPred, AsFunction, Result) :-
 % If not found in functional_predicate_arg/3, it tries to construct AsFunction by removing the last argument from AsPred
 pred_to_funct(AsPred, AsFunction, Result) :-
     compound(AsPred), !,
-    functor(AsPred, _, Nth),
+    functor_chkd(AsPred, _, Nth),
     arg(Nth, AsPred, Result),
     remove_funct_arg(AsPred, Nth, AsFunction).
 
@@ -4314,7 +4319,7 @@ combine_clauses(HeadBodiesList, NewHead, NewCombinedBodies) :-
     findall(Head, member((Head:-_), HeadBodiesList), Heads),
     % Find the least general head among the collected Heads
     least_general_head(Heads, LeastHead),
-    functor(LeastHead,F,A),functor(NewHead,F,A),
+    functor_chkd(LeastHead,F,A),functor_chkd(NewHead,F,A),
     % Transform and combine bodies according to the new head found
     transform_and_combine_bodies(HeadBodiesList, NewHead, NewCombinedBodies)),
     \+ \+ (
@@ -4339,9 +4344,9 @@ lgu([H1|T], LGU) :-
 % This predicate is conceptual and will require more complex processing depending on the actual structures of the heads.
 generalization(Head1, Head2, GeneralizedHead) :-
     % Ensure the functor names and arities are the same between Head1 and Head2.
-    functor(Head1, Name, Arity),
-    functor(Head2, Name, Arity),
-    functor(GeneralizedHead, Name, Arity),
+    functor_chkd(Head1, Name, Arity),
+    functor_chkd(Head2, Name, Arity),
+    functor_chkd(GeneralizedHead, Name, Arity),
     % Generalize the arguments of the heads.
     generalize_args(Arity, Head1, Head2, GeneralizedHead).
 

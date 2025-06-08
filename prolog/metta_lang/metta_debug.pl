@@ -804,6 +804,8 @@ is_extreme_debug(_).
 
 sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_var(Sub,Source)).
 sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_term(Sub,Source)).
+functor_chkd(P,F,A):- compound(P),!,compound_name_arity(P,F,AA), if_t(A==0, (bt, prolog)), if_t(AA==0, (bt, prolog)), A=AA.
+functor_chkd(P,F,A):- functor(P,F,A), if_t(A==0, (bt, prolog)).
 
 maybe_abort_trace:- \+ is_flag(abort_trace), !.
 maybe_abort_trace:- abort_trace.

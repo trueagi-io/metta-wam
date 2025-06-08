@@ -820,6 +820,7 @@ complain_if_missing(_, About):-
 %     % Import a Python module named "example_py_module" into the Prolog environment.
 %     ?- import_metta1('&self', 'example_py_module').
 %
+import_metta1(_Slf, Module) :- nonvar(Module), assumed_loaded(Module),!.
 import_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta1(TopSelf, Module).
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
