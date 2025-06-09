@@ -67,6 +67,9 @@
 :- dynamic(symbol_impl_not_exists/3).
 :- discontiguous(symbol_impl_only/3).
 
+current_predicate_fast(FA):-
+  current_predicate(FA).
+
 %self_eval0(X):- var(X),!,fail.
 self_eval0(X):- \+ callable(X),!.
 self_eval0(X):- is_valid_nb_state(X),!.
@@ -1845,7 +1848,8 @@ eval_space_start(Eq,RetType,Depth,Self,[Op,Other|Args],Res):-
 
 
 eval_space(Eq,RetType,_Dpth,_Slf,['add-atom',Space,PredDecl],Res):- !,
-   do_metta(python,load,Space,PredDecl,TF),make_nop(RetType,TF,Res),check_returnval(Eq,RetType,Res).
+  do_metta(python,load,Space,PredDecl,TF),make_nop(RetType,TF,Res),check_returnval(Eq,RetType,Res).
+
 
 eval_space(Eq,RetType,_Dpth,_Slf,['remove-atom',Space,PredDecl],Res):- !,
    do_metta(python,unload_all,Space,PredDecl,TF),
@@ -2346,7 +2350,7 @@ into_listoid(AtomC,Atom):- AtomC = [Cons,H,T],Cons=='Cons',!, Atom=[H,[T]].
 into_listoid(AtomC,Atom):- is_list(AtomC),!,Atom=AtomC.
 into_listoid(AtomC,Atom):- typed_list(AtomC,_,Atom),!.
 
-:- if( \+  current_predicate( typed_list / 3 )).
+:- if( \+  current_predicate_fast( typed_list / 3 )).
 typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
 :- endif.
 
@@ -3075,12 +3079,13 @@ eval_20(_Eq,_RetType,_Dpth,_Slf,['current-function-arity',F],A):-
   current_function_arity(FF_mc,A).
 */
 
+
 current_predicate_arity(F,A):-
   metta_atom('&self',[:,F,[->|Args]]),
   !,
   length(Args,A).
 current_predicate_arity(F,A):-
-  current_predicate(F/A).
+  current_predicate_fast(F/A).
 
 current_function_arity(F,A):-
   current_predicate_arity(F,PA)
@@ -3123,10 +3128,10 @@ eval_20(_Eq,_RetType,_Depth,_Self,['compile!',Space],Res):- !,
     %((ignore(pfcRemove(do_compile(KB,X,_))),
    % pfcWatch,
     pfcAdd_Now(do_compile(KB,X,_)),
-    if_t( \+ current_predicate(X/_),
+    if_t( \+ current_predicate_fast(X/_),
        forall(metta_defn(KB,[X | Args] ,BodyFn),
        compile_metta_defn(KB,X,Len,Args,BodyFn,_Clause))),
-    if_t( \+ current_predicate(X/_),
+    if_t( \+ current_predicate_fast(X/_),
        (ignore(nortrace),forall(metta_defn(KB,[X | Args] ,BodyFn),
        (maybe_trace(compile_metta_defn),compile_metta_defn(KB,X,Len,Args,BodyFn,_ClauseU))))),
     % pfcNoWatch,
@@ -3158,7 +3163,7 @@ eval_20(Eq,RetType,Depth,Self,[MettaPred|More],Res):-
     len_or_unbound(More,Len),
 
   must_det_ll((
-    current_predicate(AE/Arity),
+    current_predicate_fast(AE/Arity),
     maplist(as_prolog_x(Depth,Self), More , Adjusted))),!,
     eval_201(Eq,RetType,Depth,Self,MettaPred,Adjusted,Arity,Len,Res),
     nonvar(Res),
@@ -3320,8 +3325,8 @@ must_use_eval(_,2):- !.
 %must_use_eval(_,2):- fail.
 
 call_as_p2a(F2,A,B):- unnegate_f2(F2,P2),!, \+ call_as_p2(P2,A,B).
-call_as_p2a(P2,A,B):- current_predicate(P2/2),!,call(P2,A,B).
-call_as_p2a(P2,A,B):- current_predicate(P2/3),!,call(P2,A,B,RetVal),f2_success(RetVal,A,B).
+call_as_p2a(P2,A,B):- current_predicate_fast(P2/2),!,call(P2,A,B).
+call_as_p2a(P2,A,B):- current_predicate_fast(P2/3),!,call(P2,A,B,RetVal),f2_success(RetVal,A,B).
 call_as_p2a(F,X,Y):- must_use_eval(F,2), !,
    once(eval([F,X,Y],RetVal)),
    f2_success(RetVal,X,Y).
@@ -3331,7 +3336,7 @@ call_as_p2a(F2,A,B):- eval_as_f2(F2,A,B,RetVal),f2_success(RetVal,A,B).
 
 f2_success(RetVal,A,B):- once(RetVal=='True';RetVal==A;RetVal==B).
 
-eval_as_f2(F2,A,B,RetVal):- current_predicate(F2/3),!,call(F2,A,B,RetVal),!.
+eval_as_f2(F2,A,B,RetVal):- current_predicate_fast(F2/3),!,call(F2,A,B,RetVal),!.
 eval_as_f2(F2,A,B,RetVal):- f2_to_p3(F2,P3),!,call(P3,A,B,RetVal).
 eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
    (TF == 'True'-> RetVal=A ;
@@ -3636,7 +3641,7 @@ transpiler_peek_impl(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   if_t(var(Len),between(1,10,Len)),
   format(atom(Fn),'~w__1_~w_~w',[Type,Len,Sym]),
-  succ(Len,LenP1), current_predicate(Fn/LenP1),
+  succ(Len,LenP1), current_predicate_fast(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
 
 transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
@@ -3646,7 +3651,7 @@ transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
   if_t(var(Min),between(0,Len, Min)),
   (format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]);
    format(atom(Fn),'~w__1_~w+_~w',[Type,Min,Sym])),
-  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  succ(Min,N1),succ(N1,LenP1), current_predicate_fast(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
 
 /*
@@ -3654,7 +3659,7 @@ transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
   between(0,Len, Min),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]),
-  succ(Min,N1),succ(N1,LenP1), current_predicate(Fn/LenP1),
+  succ(Min,N1),succ(N1,LenP1), current_predicate_fast(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
 */
 
@@ -3924,7 +3929,7 @@ is_host_predicate([AE|More],Pred,Len):-
 % predicate inherited by system
 eval_40(Eq,RetType,Depth,Self,[AE|More],TF):- allow_host_functions,
   is_host_predicate([AE|More],Pred,Len),
-  current_predicate(Pred/Len),!,
+  current_predicate_fast(Pred/Len),!,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   % adjust_args(Depth,Self,AE,More,Adjusted),
   maplist(as_prolog_x(Depth,Self), More , Adjusted),
@@ -3996,11 +4001,11 @@ is_host_function([AE|More],Pred,Len):-
 % function inherited from system
 eval_40(Eq,RetType,Depth,Self,[AE|More],Res):- allow_host_functions,
   is_host_function([AE|More],Pred,Len),  % thus maybe -fn or !
-  Len1 is Len+1, current_predicate(Pred/Len1), !,
+  Len1 is Len+1, current_predicate_fast(Pred/Len1), !,
   %fake_notrace( \+ is_user_defined_goal(Self,[AE|More])),!,
   %adjust_args(Depth,Self,AE,More,Adjusted),!,
   %Len1 is Len+1,
-  %current_predicate(Pred/Len1),
+  %current_predicate_fast(Pred/Len1),
   maplist(as_prolog_x(Depth,Self),More,Adjusted),
   append(Adjusted,[Res],Args),!,
   if_trace(host;prolog,ppt(apply(Pred,Args))),
