@@ -1915,6 +1915,7 @@ self_extend_py(Self,Module,File,R):-
 
 assumed_loaded(mettalog).
 assumed_loaded(random).
+assumed_loaded(corelib).
 
 %!  py_load_modfile(+Use) is det.
 %

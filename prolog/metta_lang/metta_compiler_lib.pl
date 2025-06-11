@@ -492,7 +492,7 @@ inline_comp(append(X,[],Y), true):- X=Y.
         ('mc__1_1_collapse'(A,AA),
          'mc__1_1_collapse'(B,BB)),
          equal_enough_for_test_renumbered_l(not_alpha_equ,AA,BB), C).
-                  
+
 :- initialization(setup_library_call(builtin, 'quote', [1], '@doc', '@doc', [x(noeval,eager,[])], x(noeval,eager,[])), program).
 'mc__1_1_quote'(A,['quote',AA]):- unify_with_occurs_check(A,AA).
 compile_flow_control(HeadIs,LazyVars,RetResult,RetResultN,LazyRetQuoted,Convert, QuotedCode1a, QuotedCode1N) :-
@@ -813,7 +813,7 @@ metta_body_macro_stack(BU,HeadIs, Stack, [Op|AsBodyFn], AsBodyFnOut):-
    OpAsBodyMid=@=OpAsBodyMidCopy,!.
 
 metta_body_macro_stack(TD, HeadIs, Stack, OpAsBody, AsBodyFnOutReally):-
-  TD == td,
+  (TD == td1 ; TD == td2),
    once((copy_term(OpAsBody,OpAsBodyMidCopy),
    metta_body_macro_pass(TD, OpAsBody , AsBodyFnOut),
    OpAsBody=@=OpAsBodyMidCopy)),
@@ -828,7 +828,7 @@ metta_body_macro_pass(bu,['if-unify',Var1,Var2|Rest], [if,['metta-unify',Var1,Va
 metta_body_macro_pass(bu,['if-equal',Var1,Var2|Rest], [if,['metta-equal',Var1,Var2]|Rest]).
 metta_body_macro_pass(bu,['if-decons-expr',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
 metta_body_macro_pass(bu,['if-decons',Expr,Head,Tail|Rest],[if,['decons-ht',Expr,Head,Tail]|Rest]).
-metta_body_macro_pass(bu,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
+metta_body_macro_pass(td1,['chain',[Ceval,Eval],Var|Rest], ['let',Var,Eval|Rest]):- Ceval == eval,!.
 metta_body_macro_pass(bu,['chain',Eval,Var|Rest], ['let',Var,Eval|Rest]).
 
 metta_body_macro_pass(td1,[['py-dot'|Args]|Rest], ['py-dot-call',Args|Rest]).
@@ -836,7 +836,7 @@ metta_body_macro_pass(td1,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 %metta_body_macro_pass(bu,[eval,Next], Next).
 
 % metta_body_macro_pass(td,[eval,Eval], Eval).
-metta_body_macro_pass(td1,['capture',Eval], Eval).
+%metta_body_macro_pass(td1,['capture',Eval], Eval).
 
 metta_body_macro_pass(td2,['unique',Eval],
    ['let',Var,['call-fn!','no_repeats_var'],

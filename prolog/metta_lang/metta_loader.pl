@@ -325,6 +325,21 @@ wwp(Fnicate, Dir) :-
         maplist(directory_file_path(Dir, Files), Paths),
         maplist(path_chars, Paths, CharPaths),
         maplist(wwp(Fnicate), CharPaths))), !.
+
+wwp(Fnicate, FileNext) :-
+    symbolic(FileNext), % \+ symbol_contains(FileNext, '/'),
+    \+ exists_directory(FileNext), \+ exists_file(FileNext),
+    current_self(Top),
+    ((call((
+        quietly(find_top_dirs(Top, Dir)),
+        % If Dir exists, process the remaining path within Dir.
+        exists_directory(Dir),
+        extension_search_order(Ext),
+        symbolic_list_concat(['builtins-',FileNext|Ext], Search),
+        absolute_file_name(Search,Found,[access(exist), file_errors(fail), relative_to(Dir)]),
+        exists_file(Found),
+        with_cwd(Dir, call(Fnicate, Search)))))), !.
+
 wwp(Fnicate, File) :-
     % Fallback case: directly apply Fnicate on the file.
     must_det_ll((call(Fnicate, File))).
@@ -488,6 +503,10 @@ find_top_dirs(Top, Dir) :-
     space_name(Self, SpaceName),
     % Use the space name to locate the directory
     find_top_dirs(SpaceName, Top, Dir).
+find_top_dirs(_Top, Dir) :- metta_builtin_mods_dir(Dir).
+
+metta_builtin_mods_dir(Dir):-
+   metta_library_dir(Value), absolute_file_name('./builtin_mods/', Dir, [relative_to(Value)]).
 
 %!  find_top_dirs(+SpaceName, +Top, -Dir) is det.
 %

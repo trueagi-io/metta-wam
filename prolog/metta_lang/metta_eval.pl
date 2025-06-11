@@ -945,6 +945,14 @@ eval_20(Eq,RetType,Depth,Self,['evalc',Eval,Other],Result):-!,
 eval_args_once(Eq,RetType,Depth,Space,Eval,Result):-
    eval_10(Eq,RetType,Depth,Space,Eval,Result)*->true;(Eval=Result).
 
+eval_20(Eq,RetType,Depth,Self,['call-unit!'|Program],Res):- !,
+    eval_args(Eq,RetType,Depth,Self,['call-for!',[]|Program],Res).
+
+eval_20(Eq,RetType,Depth,Self,['call-for!',Res|Program],Res):- !,
+    must((s2ps(Depth,Self,Program,ProgramL),
+          maplist(call_prog,ProgramL))).
+
+call_prog(P):- catch_warn(P).
 
 eval_20(Eq,RetType,Depth,Self,['capture',X],Res):- !,
    eval_args(Eq,RetType,Depth,Self,X, Res).
@@ -3972,7 +3980,8 @@ allow_host_functions.
 
 s2ps(S,P):- current_self(Self),s2ps(30,Self,S,P).
 
-s2ps(_,_,_Self,S,P):- S=='Nil',!,P=[].
+s2ps(_,_Self,S,P):- S=='Nil',!,P=[].
+s2ps(_,_Self,S,P):- S==[],!,P=[].
 s2ps(D,Self,S,P):- \+ is_list(S),!,as_prolog_x(D,Self,S, P).
 s2ps(D,Self,[F|S],P):- atom(F),!,maplist(as_prolog_x(D,Self),S,SS),join_s2ps(F,SS,P).
 s2ps(D,Self,[F|S],P):- is_list(F),!,maplist(as_prolog_x(D,Self),[F|S],SS),join_s2ps(call,SS,P).
@@ -4212,7 +4221,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 
 % get a guarded definition
-eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(get_defn_expansions_guarded,X),
+eval_30(Eq,RetType,Depth,Self,X,Y):- fail, can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),

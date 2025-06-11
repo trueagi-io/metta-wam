@@ -205,11 +205,15 @@ For example:
     (@param "Atom to return if condition is True")
     (@param "Atom to return if condition is False (optional)")))
   (@return "Either the second or third argument depending on the condition"))
-(: MettaMorph-If (-> Bool Atom Atom Atom))
+
 (: MettaMorph-If (-> Bool Atom Atom))
 (= (MettaMorph-If True $then) $then)
+; (= (MettaMorph-If False $then) (empty))
 (= (MettaMorph-If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
+
+(: MettaMorph-If (-> Bool Atom Atom Atom))
 (= (MettaMorph-If $cond $then $else) (if $cond $then $else))
+
 
 ;; Arity Assignments
 
@@ -624,7 +628,7 @@ For example:
   (@return "Result of atom's evaluation"))
 (: function (-> Atom Atom))
 
-(iz eval MinimalMeTTa)
+(iz eval MeTTa)
 (@doc eval
   (@desc "Evaluates input Atom, performs one step of the evaluation. Empty results (Empty, ()) are removed from the result set. If no results are produced for a non-grounded function, eval returns NotReducible.")
   (@params (
@@ -969,23 +973,6 @@ For example:
 	(@param "Range end")))
   (@return "Random float number from defined range"))
 (is-op-2 random-int random)
-
-(@doc file-read
-  (@desc "Function takes path to the file in form of string and reads file as string")
-  (@params (
-    (@param "Filepath (string atom)")))
-  (@return "Content of file (string atom), error if no file exists"))
-(= (file-read $filepath)
-   (call-fn file_read_content $filepath))
-
-(@doc file-write
-  (@desc "Function takes path to the file (string atom) and content to be written (string atom), creates file and puts content into it")
-  (@params (
-    (@param "Filepath (string atom)")
-    (@param "Content (string atom)")))
-  (@return "Unit atom if write successfull, error otherwise (if there is no such folder)"))
-(= (file-write $filepath $content)
-   (call-fn file_write_content $filepath $content))
 
 (iz collapse-bind MeTTa)
 (@doc collapse-bind
