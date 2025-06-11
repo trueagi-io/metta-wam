@@ -948,7 +948,7 @@ eval_args_once(Eq,RetType,Depth,Space,Eval,Result):-
 eval_20(Eq,RetType,Depth,Self,['call-unit!'|Program],Res):- !,
     eval_args(Eq,RetType,Depth,Self,['call-for!',[]|Program],Res).
 
-eval_20(Eq,RetType,Depth,Self,['call-for!',Res|Program],Res):- !,
+eval_20(_Eq,_RetType,Depth,Self,['call-for!',Res|Program],Res):- !,
     must((s2ps(Depth,Self,Program,ProgramL),
           maplist(call_prog,ProgramL))).
 
