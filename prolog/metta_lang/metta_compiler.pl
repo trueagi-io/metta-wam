@@ -947,7 +947,14 @@ f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :
 
 % If Convert is a number or an atom, it is considered as already converted.
 f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :-
-    once(number(Convert); atom(Convert);atomic(Convert);self_eval(Convert); data_term(Convert)),!.  % Check if Convert is a number or an atom
+    once(number(Convert); atom(Convert);atomic(Convert)),!.  % Check if Convert is a number or an atom
+
+f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- fail,
+    once(self_eval(Convert)),!.
+
+f2p(_HeadIs, _LazyVars, Convert, Convert, x(noeval,eager,[]), Convert, [], []) :- fail,
+    once(data_term(Convert)),!.
+
 
 f2p(_HeadIs, _LazyVars, AsIsNoConvert, AsIsNoConvert, x(doeval,eager,[]), AsIsNoConvert, [], []) :-
      as_is_data_term(AsIsNoConvert),!. % Check if Convert is kept AsIs

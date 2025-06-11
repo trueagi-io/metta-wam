@@ -836,7 +836,7 @@ metta_body_macro_pass(td1,[['py-atom'|Args]|Rest], ['py-atom-call',Args|Rest]).
 %metta_body_macro_pass(bu,[eval,Next], Next).
 
 % metta_body_macro_pass(td,[eval,Eval], Eval).
-%metta_body_macro_pass(td1,['capture',Eval], Eval).
+metta_body_macro_pass(td1,['capture',Eval], Eval).
 
 metta_body_macro_pass(td2,['unique',Eval],
    ['let',Var,['call-fn!','no_repeats_var'],
