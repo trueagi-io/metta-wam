@@ -579,7 +579,7 @@ compile_for_assert_3(HeadIsIn, AsBodyFnIn, Converted) :-
       %retractall(H1),
       %create_prefixed_name('me_',LenArgs,FnName,FnNameWMePrefix),
       %H2 @.. [FnNameWMePrefix|AtomList0],
-      %retractall(H2),      
+      %retractall(H2),
       true)
    ; true),
 

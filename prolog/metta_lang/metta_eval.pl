@@ -1287,7 +1287,8 @@ eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_c
 eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err('mc__1_1_listing!'(S,RetVal)).
 
 eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1), !,
-    call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res)).
+   (var(Cond) -> call(CallP1,Cond);
+    call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
 is_call_wrapper(NonAtom,_):- \+ atom(NonAtom),!,fail.
 is_call_wrapper('!',call).
@@ -1295,9 +1296,26 @@ is_call_wrapper('no-rtrace!',quietly).
 is_call_wrapper(P1,P1):- same_meta_predicate(P1).
 is_call_wrapper(Bang,P1):- atom(Bang),atom_concat(P1,'!',Bang),same_meta_predicate_with_bang(P1).
 
+:- multifile(same_meta_predicate/1).
+:- dynamic(same_meta_predicate/1).
 same_meta_predicate('woc'). same_meta_predicate('woce'). same_meta_predicate('wocf'). same_meta_predicate('woct'). same_meta_predicate('wocu').
 same_meta_predicate('once'). same_meta_predicate('ignore'). same_meta_predicate('rtrace').
 same_meta_predicate('mvar'). %same_meta_predicate('add-').
+same_meta_predicate(transaction).
+same_meta_predicate(transaction_updates).
+same_meta_predicate(snapshot).
+same_meta_predicate(await).
+same_meta_predicate(spawn).
+same_meta_predicate(lazy).
+
+% !(snapshot! (sequential (add-atom &self aaa) (add-atom &self bbb) (match &self aaa has_aaa not_has_aaa)))
+%(snapshot Goal)
+%Similar to transaction/1, but always discards the local Atomspace modifications. In other words, snapshot/1 allows a thread to examine a frozen state of the dynamic Atomspace and/or make isolated modifications without affecting other threads and without making permanent changes to the Atomspace.
+%Where transactions allow the Atomspace state to be updated atomically from one consistent state to the next, a snapshot allows reasoning about a consistent state.
+%transactional(Goal):- transaction(once(Goal),fail)).
+
+
+
 
 same_meta_predicate_with_bang(P1):- same_meta_predicate(P1).
 same_meta_predicate_with_bang(F):- functor(P,F,1),predicate_property(P,meta_predicate(P)),arg(1,P,OO),once(OO=0;OO=':').
