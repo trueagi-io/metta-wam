@@ -781,6 +781,8 @@ keep_output :- is_compatio, !, fail.
 % This directive allows the predicate `original_user_output/1` to be modified during runtime.
 :- dynamic(original_user_output/1).
 
+
+
 %!  original_user_output(-X) is nondet.
 %
 %   Retrieves the stream associated with the standard output (file descriptor 1).
@@ -793,6 +795,8 @@ keep_output :- is_compatio, !, fail.
 %   @example
 %     ?- original_user_output(Stream).
 %     Stream = <stream>.
+
+original_user_output(X) :- thread_self(Id), thread_util:has_console(Id, _, X, _),!.
 original_user_output(X) :- stream_property(X, file_no(1)).
 
 %!  original_user_error(-X) is nondet.
@@ -807,6 +811,7 @@ original_user_output(X) :- stream_property(X, file_no(1)).
 %   @example
 %     ?- original_user_error(Stream).
 %     Stream = <stream>.
+original_user_error(X) :- thread_self(Id), thread_util:has_console(Id, _, _, X),!.
 original_user_error(X) :- stream_property(X, file_no(2)).
 
 % Ensure that the original output stream is set if not already defined.
@@ -2343,6 +2348,7 @@ nocut.
 :- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
+:- ensure_loaded(metta_threads).
 :- ensure_loaded(metta_eval).
 :- nb_setval(self_space, '&top').
 
