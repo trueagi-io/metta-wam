@@ -1,4 +1,4 @@
-:- ensure_loaded(metta_compiler).
+
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous(transpiler_predicate_store/7).
 :- dynamic(transpiler_predicate_nary_store/9).
@@ -10,6 +10,7 @@ from_prolog_args(_,X,X).
 :-dynamic(pred_uses_fallback/2).
 :-dynamic(pred_uses_impl/2).
 
+:- ensure_loaded(metta_compiler).
 pred_uses_impl(F,A):- transpile_impl_prefix(F,A,Fn),current_predicate(Fn/A).
 
 use_interpreter:- fail.
@@ -785,14 +786,32 @@ metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
      metta_body_macro(HeadIs, AsBodyFnMid, AsBodyFnOut)),
     nop((ss_unfreeze_vars(Vars,Copy))))).
 
-with_ss_unify(Inp,Goal):-
-    term_variables(Inp,Vars),copy_term(Inp+Vars,InpC+Copy),ss_freeze_vars(Vars,Copy),
-    call(Goal),Inp=@=InpC,
-    ss_unfreeze_vars(Vars,Copy).
+with_ss_unify(Imp,Goal):-
+  with_ss_unify(fail_bind,Imp,Goal).
+fail_bind(_,_,_):- fail.
+throw_bind(Var,Copy,NewValue):-
+  bt,
+  show_var_info(copy=Copy),
+  show_var_info(newv=NewValue),
+  show_var_info(newv=Var),
+  trace,throw(throw_bind(Var,Copy,NewValue)).
 
-ss_freeze_var(Var,Copy):- put_attr(Var,cant_bind,Copy).
-ss_freeze_vars(Vars,Copy):- maplist(ss_freeze_var,Vars,Copy).
-cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),Copy=@=NewValue.
+show_var_info(V):- copy_term(V,C,G), original_user_error(UErr),numbervars(C,0,_,[]),with_output_to(UErr,(nl,writeq(bind(C,G)),nl)).
+
+with_ss_unify(E1,Inp,Goal):- term_variables(Inp,Vars),
+    setup_call_cleanup(
+    (ss_freeze_vars(E1,Vars,Copy),copy_term(Inp+Vars,InpC+Copy)),
+    (call(Goal),Inp=@=InpC),
+     ss_unfreeze_vars(Vars,Copy)).
+
+ss_freeze_var(E1,Var,Copy):- put_attr(Var,cant_bind,e1(E1,Var,Copy)).
+ss_freeze_vars(E1,Vars,Copy):- maplist(ss_freeze_var(E1),Vars,Copy).
+
+cant_bind:attr_unify_hook(e1(E1,Var,Copy),NewValue):- cant_bind_e1(E1,Var,Copy,NewValue).
+cant_bind_e1(_E1,_Var,_Cpy,NewValue):- compound(NewValue),NewValue = '$VAR'(_),!.
+cant_bind_e1(_E1,_Var,Copy,NewValue):- var(Copy),Copy=@=NewValue,!.
+cant_bind_e1( E1, Var,Copy,NewValue):- call(E1,Var,Copy,NewValue).
+
 ss_unfreeze_var(Var,_):- del_attr(Var,cant_bind),!.
 %ss_unfreeze_var(Var,Copy):- get_attr(Var,cant_bind,Now),Copy==Now,del_attr(Var,cant_bind),Var=@=Copy.
 ss_unfreeze_vars(Vars,Copy):- maplist(ss_unfreeze_var,Vars,Copy).

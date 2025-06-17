@@ -325,6 +325,21 @@ wwp(Fnicate, Dir) :-
         maplist(directory_file_path(Dir, Files), Paths),
         maplist(path_chars, Paths, CharPaths),
         maplist(wwp(Fnicate), CharPaths))), !.
+
+wwp(Fnicate, FileNext) :-
+    symbolic(FileNext), % \+ symbol_contains(FileNext, '/'),
+    \+ exists_directory(FileNext), \+ exists_file(FileNext),
+    current_self(Top),
+    ((call((
+        quietly(find_top_dirs(Top, Dir)),
+        % If Dir exists, process the remaining path within Dir.
+        exists_directory(Dir),
+        extension_search_order(Ext),
+        symbolic_list_concat(['builtins-',FileNext|Ext], Search),
+        absolute_file_name(Search,Found,[access(exist), file_errors(fail), relative_to(Dir)]),
+        exists_file(Found),
+        with_cwd(Dir, call(Fnicate, Search)))))), !.
+
 wwp(Fnicate, File) :-
     % Fallback case: directly apply Fnicate on the file.
     must_det_ll((call(Fnicate, File))).
@@ -488,6 +503,10 @@ find_top_dirs(Top, Dir) :-
     space_name(Self, SpaceName),
     % Use the space name to locate the directory
     find_top_dirs(SpaceName, Top, Dir).
+find_top_dirs(_Top, Dir) :- metta_builtin_mods_dir(Dir).
+
+metta_builtin_mods_dir(Dir):-
+   metta_library_dir(Value), absolute_file_name('./builtin_mods/', Dir, [relative_to(Value)]).
 
 %!  find_top_dirs(+SpaceName, +Top, -Dir) is det.
 %
@@ -820,6 +839,7 @@ complain_if_missing(_, About):-
 %     % Import a Python module named "example_py_module" into the Prolog environment.
 %     ?- import_metta1('&self', 'example_py_module').
 %
+import_metta1(_Slf, Module) :- nonvar(Module), assumed_loaded(Module),!.
 import_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta1(TopSelf, Module).
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
@@ -2095,7 +2115,7 @@ load_metta_buffer(Self, Filename) :-
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
     with_option(loading_file, Filename,
-    user_err((
+    user_io((
        (forall(
         user:metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, LineCount),
          (must_det_lls(maybe_name_vars(NamedVarsList)),
@@ -3137,7 +3157,9 @@ metta_atom_deduced('&corelib', Term) :- fail,
 %
 load_corelib_file :- really_using_corelib_file, !.
 %load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
-load_corelib_file :-
+load_corelib_file:- time(load_corelib_file_prof),!.
+load_corelib_file_prof :-
+     setup_library_calls,
      % Load the standard Metta logic file from the source directory.
      must_det_lls((is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
      metta_atom('&corelib', [':', 'Any', 'Type']),
@@ -3170,6 +3192,5 @@ really_use_corelib_file(Dir, File) :-
 
 without_output(G):- is_devel,!,call(G).
 without_output(G):- with_output_to(string(_), G).
-
 :- nb_setval(debug_context, 'init').
 

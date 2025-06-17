@@ -110,6 +110,7 @@ metta_atom_asserted(KB2,Y) ==> {metta_atom_asserted_hook(KB2,Y)}.
 ==> 'functional-predicate'('next-operation',1).
 ==> 'functional-predicate'('previous-operation',1).
 
+
 :- dynamic('op-complete'/1).
 
 'previous-operation'(none).
@@ -239,7 +240,6 @@ test_fwc:-
   f(_),
   pfcWhy1(e(_)),
   pfcWhy1(f(_)).
-
 
 %:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
 

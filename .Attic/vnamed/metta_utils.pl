@@ -860,7 +860,8 @@ remove_mds(_, GG, GG).
 %   to `t` or when the system is running in CGI mode.
 %
 %   The `notrace/0` predicate is used to disable tracing.
-never_rrtrace:- \+ extreme_tracing,!.
+
+%never_rrtrace:- \+ extreme_tracing,!.
 never_rrtrace :-
     % If `cant_rrtrace` is currently set to `t`, disable tracing using `notrace`.
     nb_current(cant_rrtrace, t),!,notrace.

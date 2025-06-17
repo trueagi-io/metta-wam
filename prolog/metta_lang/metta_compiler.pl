@@ -1976,8 +1976,8 @@ on_finish_load_metta(MeTTaFile):-
    setup_library_calls.
 
 
-cname_var(Sym,Expr):-  gensym(Sym,ExprV),
-    put_attr(Expr,vn,ExprV).
+cname_var(Sym,Expr):- ignore((atomic(Sym),gensym(Sym,ExprV),
+    var(Expr),put_attr(Expr,vn,ExprV))),!.
     %ignore(Expr='$VAR'(ExprV)), debug_var(ExprV,Expr).
 
 info_identity(_Info,ID):- nb_current('$info_id',ID),!.

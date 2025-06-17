@@ -163,6 +163,13 @@
 					L="1"/>
 			</Folder>
 		</Folder>
+		<Folder Name="prolog">
+			<F
+				N="prolog/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/;*.back"
+				L="1"/>
+		</Folder>
 		<Folder Name="python">
 			<F
 				N="python/*.*"

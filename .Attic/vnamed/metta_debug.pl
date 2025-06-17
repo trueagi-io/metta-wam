@@ -798,12 +798,15 @@ is_user_repl:- \+ option_value(user_repl, false).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
+is_douglas:- is_douglas_machine,!.
 is_douglas_machine:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolog_flag(os_argv,OSArgV), \+ member('--douglas=false',OSArgV),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
 
 sub_var_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_var(Sub,Source)).
 sub_term_safely(Sub,Source):- assertion(acyclic_term(Source)),woct(sub_term(Sub,Source)).
+functor_chkd(P,F,A):- compound(P),!,compound_name_arity(P,F,AA), if_t(A==0, (bt, prolog)), if_t(AA==0, (bt, prolog)), A=AA.
+functor_chkd(P,F,A):- functor(P,F,A), if_t(A==0, (bt, prolog)).
 
 maybe_abort_trace:- \+ is_flag(abort_trace), !.
 maybe_abort_trace:- abort_trace.
@@ -999,6 +1002,7 @@ debug_context_filter(Ctx):- nb_current(debug_context, Ctx), Ctx\==[],!.
 debug_context_filter(Ctx):- nb_current(compiler_context, Ctx), Ctx\==[], Ctx \== user,!.
 debug_context_filter('').
 
+%currently_stdlib:- is_douglas_machine, !, fail.
 currently_stdlib:- nb_current(debug_context, Ctx), Ctx == stdlib.
 currently_stdlib:- nb_current(compiler_context, Ctx), Ctx == corelib.
 
@@ -1044,10 +1048,12 @@ dont_show_any_qcompile:- filter_matches_var(show,qcompile),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,qcompile),!, fail.
 dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
+dont_show_any_qcompile:- is_douglas_machine, !, fail.
 dont_show_any_qcompile.
 
 debug_info( Topic, Info):- notrace((debug_info0( Topic, Info), nb_setval(last_debug_info,debug_info(Topic, Info)))).
 debug_info0(Topic, Info) :- nb_current(last_debug_info,WAS), WAS =@= debug_info(Topic, Info),!.
+%debug_info0( Topic, Info):- debug_info_now(Topic, Info), !.
 debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
                    ignore((
                             debug_info_filtered( Topic, Info , NewTopic),!,
@@ -1060,6 +1066,8 @@ debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topi
 debug_info_filtered( always(_Topic),  Info, fail(filter_matches_var(hideall,Info, How))):- filter_matches_var(hideall,Info, How),!.
 debug_info_filtered( always( Topic), _Info, [do,always,Topic]):-!.
 debug_info_filtered( alwayz( Topic), _Info, [do,alwayz,Topic]):-!.
+debug_info_filtered( hide( Topic), _Info, [show, How, Topic]):- (filter_matches_var(showall,Topic,How); filter_matches_var(show,Topic,How)),!.
+debug_info_filtered( hide( Topic), _Info, fail(hide,Topic)):- !.
 debug_info_filtered( Topic,_Info,fail(hideall,Topic,How)):- filter_matches_var(hideall,Topic, How), !.
 debug_info_filtered( Topic, Info, [How,showall,Topic]):- (filter_matches_var(showall,Topic, How); filter_matches_var(showall,Info, How)),!.
 debug_info_filtered( Topic,_Info,fail(dont_show_any_qcompile(Topic))):- is_qcompiling, dont_show_any_qcompile,!.
@@ -1433,6 +1441,8 @@ trace_eval(P4, _, D1, Self, X, Y) :-
   \+ is_debugging(eval),
   \+ is_debugging(failure), !,
   call(P4, D1, Self, X, Y).
+
+
 
 
 trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
