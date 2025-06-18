@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 %% Generated from /home/deb12user/metta-wam/prolog/vnamed/corelib.metta at 2025-05-30T01:56:15-07:00
+=======
+%% Generated from /home/deb12user/metta-wam/.Attic/vnamed/corelib.metta at 2025-06-17T11:56:31-07:00
+>>>>>>> Stashed changes
 :- style_check(-discontiguous).
 :- style_check(-singleton).
 :- include(library(metta_lang/metta_transpiled_header)).
@@ -14,7 +18,11 @@ top_call :-
     time(top_call_1).
 
 
+<<<<<<< Updated upstream
 %% Finished generating /home/deb12user/metta-wam/prolog/vnamed/corelib.metta at 2025-05-30T01:56:35-07:00
+=======
+%% Finished generating /home/deb12user/metta-wam/.Attic/vnamed/corelib.metta at 2025-06-17T11:56:31-07:00
+>>>>>>> Stashed changes
 
 :- normal_IO.
 :- initialization(transpiled_main, program).

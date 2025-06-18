@@ -757,7 +757,7 @@ pfcIsNotTraced(P) :-
 %
 compound_eles(Lvl, P, Arg) :-
     % If P is a variable, retrieve its attribute and treat it as a compound term.
-    var(P),!,get_attr(P, A, AV),compound_eles(Lvl, attvar(A, AV), Arg).
+    var(P),!,get_attrs(P, AV),compound_eles(Lvl, AV, Arg).
 compound_eles(Lvl, P, Arg) :-
     % If P is not a compound term or the level is less than 1, return P as the result.
     (\+ compound(P); Lvl < 1),!,Arg = P.
@@ -1227,8 +1227,7 @@ pp_facts(P, C) :-
     fmt("User added facts:", []),
     pp_items(user, User),
     % Draw a separator line.
-    draw_line,
-    draw_line,
+    draw_line, draw_line,
     % Print system-added (MettaLog-Pfc) facts.
     fmt("MettaLog-Pfc added facts:", []),
     pp_items(system, Pfc),

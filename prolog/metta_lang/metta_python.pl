@@ -984,11 +984,11 @@ ensure_rust_metta(MeTTa):-
 %   MeTTa-related Python calls.
 %
 %   @arg MeTTa The MeTTa instance that will be initialized.
-ensure_rust_metta0(MeTTa):-
+ensure_rust_metta0(MeTTa):- fail,
     ensure_mettalog_py(MettaLearner),           % Ensure MettaLearner is available.
     py_call_warg(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
     py_is_object(MeTTa).
-ensure_rust_metta0(MeTTa):-
+ensure_rust_metta0(MeTTa):- fail,
     py_call_warg('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
 ensure_rust_metta0(MeTTa):- ensure_rust_metta1(MeTTa).
 

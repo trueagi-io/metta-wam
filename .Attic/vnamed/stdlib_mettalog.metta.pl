@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 %% Generated from /home/deb12user/metta-wam/prolog/vnamed/stdlib_mettalog.metta at 2025-05-30T01:56:17-07:00
+=======
+%% Generated from /home/deb12user/metta-wam/.Attic/vnamed/stdlib_mettalog.metta at 2025-06-17T11:56:31-07:00
+>>>>>>> Stashed changes
 :- style_check(-discontiguous).
 :- style_check(-singleton).
 :- include(library(metta_lang/metta_transpiled_header)).
@@ -2647,7 +2651,22 @@ optimized_code(fa('subtraction-atom-by',3),ca).
 %  ;;                                                                        ;;
 %  ;; These functions assume strict equality comparisons.                    ;;
 %  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+<<<<<<< Updated upstream
 %% Finished generating /home/deb12user/metta-wam/prolog/vnamed/stdlib_mettalog.metta at 2025-05-30T01:56:33-07:00
+=======
+metta_atom_asserted('&corelib',['@doc','unique-atom',['@desc',"Function takes tuple and returns only unique entities. E.g. (unique-atom (a b c d d)) -> (a b c d)"],['@params',[['@param',"List of values"]]],['@return',"Unique values from input set"]]).
+metta_atom_asserted('&corelib',[:,'unique-atom',[->,'Expression','Expression']]).
+metta_atom_asserted('&corelib',['@doc','union-atom',['@desc',"Function takes two tuples and returns their union. E.g. (union-atom (a b b c) (b c c d)) -> (a b b c b c c d)"],['@params',[['@param',"List of values"],['@param',"List of values"]]],['@return',"Union of sets"]]).
+metta_atom_asserted('&corelib',[:,'union-atom',[->,'Expression','Expression','Expression']]).
+metta_atom_asserted('&corelib',['@doc','intersection-atom',['@desc',"Function takes two tuples and returns their intersection. E.g. (intersection-atom (a b c c) (b c c c d)) -> (b c c)"],['@params',[['@param',"List of values"],['@param',"List of values"]]],['@return',"Intersection of sets"]]).
+metta_atom_asserted('&corelib',[:,'intersection-atom',[->,'Expression','Expression','Expression']]).
+metta_atom_asserted('&corelib',['@doc','subtraction-atom',['@desc',"Function takes two tuples and returns their subtraction. E.g. !(subtraction-atom (a b b c) (b c c d)) -> (a b)"],['@params',[['@param',"List of values"],['@param',"List of values"]]],['@return',"Subtraction of sets"]]).
+metta_atom_asserted('&corelib',[:,'subtraction-atom',[->,'Expression','Expression','Expression']]).
+metta_atom_asserted('&corelib',[iz,'git-module!','MeTTa']).
+metta_atom_asserted('&corelib',['@doc','git-module!',['@desc',"Provides access to module in a remote git repo, from within MeTTa code. Similar to `register-module!`, this op will bypass the catalog search"],['@params',[['@param',"URL to github repo"]]],['@return',"Unit atom"]]).
+metta_atom_asserted('&corelib',[:,'git-module!',[->,'Atom',[->]]]).
+%% Finished generating /home/deb12user/metta-wam/.Attic/vnamed/stdlib_mettalog.metta at 2025-06-17T11:56:31-07:00
+>>>>>>> Stashed changes
 
 :- normal_IO.
 :- initialization(transpiled_main, program).
