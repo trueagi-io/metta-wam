@@ -1443,8 +1443,6 @@ trace_eval(P4, _, D1, Self, X, Y) :-
   call(P4, D1, Self, X, Y).
 
 
-
-
 trace_eval(P4, ReasonsToTrace, D1, Self, X, Y) :- !,
 
 

@@ -1068,11 +1068,6 @@ cont_sexpr_from_char(_EndChar, Stream, '{', Item) :- prolog_term_start('{'),
     read_list('}', Stream, List),
     univ_list_to_item(List,Item).
 
-% If '<', read an S-expression list.
-cont_sexpr_from_char(_EndChar, Stream, '<', Item) :- prolog_term_start('<'),
-    read_list('>', Stream, List),
-    univ_list_to_item(List,Item).
-
 % If '[', '{', etc. - using paren_pair_functor
 cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair_functor(Char, EndOfParen, Functor),
     read_list(EndOfParen, Stream, It3m),

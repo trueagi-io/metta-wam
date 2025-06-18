@@ -508,6 +508,15 @@ find_top_dirs(_Top, Dir) :- metta_builtin_mods_dir(Dir).
 metta_builtin_mods_dir(Dir):-
    metta_library_dir(Value), absolute_file_name('./builtin_mods/', Dir, [relative_to(Value)]).
 
+is_builtins_module(Module, Path):-
+    metta_builtin_mods_dir(Dir),
+    exists_directory(Dir),
+    extension_search_order(Ext),
+    member(Prefix,['builtins-','']),
+    symbolic_list_concat([Prefix,Module|Ext], Search),
+    absolute_file_name(Search,Path,[access(exist), file_errors(fail), relative_to(Dir)]),
+    exists_file(Path),!.
+
 %!  find_top_dirs(+SpaceName, +Top, -Dir) is det.
 %
 %   Finds or asserts the directory associated with `Top` within a `SpaceName`.
@@ -841,6 +850,7 @@ complain_if_missing(_, About):-
 %
 import_metta1(_Slf, Module) :- nonvar(Module), assumed_loaded(Module),!.
 import_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta1(TopSelf, Module).
+import_metta1(Self, Module) :- is_builtins_module(Module, Path), Module\=Path, !,import_metta1(Self, Path).
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
     current_predicate(py_is_module/1), py_is_module(Module),!,

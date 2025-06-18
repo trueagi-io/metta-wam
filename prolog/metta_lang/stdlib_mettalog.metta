@@ -675,8 +675,8 @@ For example:
 	(@param "Result if two atoms unified successfully")
 	(@param "Result otherwise")))
   (@return "Third argument when first two atoms are unifiable or fourth one otherwise"))
-
 (: if-unify (-> Atom Atom Atom Atom %Undefined%))
+
 (ALT= (if-unify $a $a $then $else) $then)
 (ALT= (if-unify $a $b $then $else)
   (case (if-unify-or-empty $a $b) ((Empty $else))) )

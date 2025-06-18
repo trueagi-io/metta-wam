@@ -323,7 +323,7 @@ pfcPrintFacts(P, C) :-
   pfcPrintf("User added facts:~n", []),
   pfcPrintitems(User),
   printLine,
-  pfcPrintf("MettaLog-Pfc added facts1:~n", []),
+  pfcPrintf("MettaLog-Pfc added facts:~n", []),
   pfcPrintitems(Pfc),
   printLine, !.
 
@@ -1227,9 +1227,14 @@ pp_facts(P, C) :-
     fmt("User added facts:", []),
     pp_items(user, User),
     % Draw a separator line.
-    draw_line, draw_line, bt, % ds,
+<<<<<<< Updated upstream
+    draw_line,
+    draw_line,
+=======
+    draw_line, draw_line,
+>>>>>>> Stashed changes
     % Print system-added (MettaLog-Pfc) facts.
-    fmt("MettaLog-Pfc added facts4:", []),
+    fmt("MettaLog-Pfc added facts:", []),
     pp_items(system, Pfc),
     % Final line to close the output.
     draw_line.
@@ -1274,8 +1279,11 @@ pp_deds(P, C) :-
     % Classify the facts, extracting only the Pfc (deduced) facts.
     pfc_classify_facts(L, _User, Pfc, _Rule),
     % Draw a line and print system-added deduced facts.
-    draw_line,bt,
+<<<<<<< Updated upstream
+    draw_line,fmt("MettaLog-Pfc added facts:", []),pp_items(system, Pfc),draw_line.
+=======
     draw_line,fmt("MettaLog-Pfc added facts2:", []),pp_items(system, Pfc),draw_line.
+>>>>>>> Stashed changes
 
 %!  show_deds_w(+Pattern) is nondet.
 %
@@ -1310,8 +1318,12 @@ show_info(F) :-
     % Draw a line and print user-added facts that match the pattern.
     draw_line, fmt("User added facts with ~q:", [F]), pp_items(user, User),
     % Draw separator lines and print system-added (Pfc) facts that match the pattern.
-    draw_line, draw_line, bt, % ds,
+<<<<<<< Updated upstream
+    draw_line, draw_line, fmt("MettaLog-Pfc added facts with ~q:", [F]), pp_items(system, Pfc),
+=======
+    draw_line, draw_line, % bt, % ds,
     fmt("MettaLog-Pfc added facts3 with ~q:", [F]), pp_items(system, Pfc),
+>>>>>>> Stashed changes
     % Final line to close the output.
     draw_line.
 

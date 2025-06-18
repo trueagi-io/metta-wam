@@ -1911,15 +1911,12 @@ symbol_glyph(A):- atom(A), upcase_atom(A,U),downcase_atom(A,D),!,U==D.
 
 
 compound_type_s_m_e(list,'(','.',')').
-compound_type_s_m_e(cmpd,S,E,M):- prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
+compound_type_s_m_e(cmpd,S,E,M):- !, prolog_term_start(S),compound_type_s_m_e(ocmpd,S,E,M),!.
 compound_type_s_m_e(ocmpd,'#(','.',')').
 compound_type_s_m_e(ocmpd,'[','|',']').
 compound_type_s_m_e(ocmpd,'{','|','}').
 compound_type_s_m_e(ocmpd,'(','@',')').
 
-%prolog_term_start(_):- fail.
-%prolog_term_start('#(').
-%prolog_term_start('{').
 prolog_term_start('[').
 
 paren_pair_functor('(',')',_).

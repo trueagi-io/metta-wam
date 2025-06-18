@@ -1843,8 +1843,7 @@ pfcUnique(post, Head, Tail) :-
    !, \+ is_clause_asserted(Head, Tail).
 */
 pfcUnique(_, Head, Tail) :-
-   copy_term_nat(v(Head, Tail), v(HeadC, TailC)),
-   \+ is_asserted_exact(HeadC, TailC), !.
+   \+ is_asserted_exact(Head, Tail), !.
 /*
 pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
 pfcUnique(_,H,B):- \+ (
@@ -4370,7 +4369,8 @@ pfcAsserta(P, Support) :-
 %     ?- pfcAssertz(foo, support_info).
 %
 pfcAssertz(P, Support) :-
-    (pfc_clause(P) ; assertz(P)),!,pfcAddSupport(P, Support).
+   % do_one_of(pfc_clause(P), assertz(P))
+    (pfc_clause(P) -> true ; assertz(P)), pfcAddSupport(P, Support).
 
 %!  pfc_clause(+Clause) is nondet.
 %

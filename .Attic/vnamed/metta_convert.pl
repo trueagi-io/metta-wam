@@ -1494,7 +1494,7 @@ read_clause_with_info(Stream) :-
 read_clause_with_info(Stream) :-
     % Handle errors while reading a clause.
     catch(read_clause_with_info_0(Stream), E,
-          ((user_io(write_src_cmt(E)), write_src_cmt(E)))).
+          ((user_err(write_src_cmt(E)), write_src_cmt(E)))).
 read_clause_with_info_0(Stream) :-
     % Set options for reading the clause with metadata.
     Options = [ variable_names(Bindings),

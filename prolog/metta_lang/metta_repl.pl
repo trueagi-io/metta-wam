@@ -298,6 +298,7 @@ set_metta_prompt:-
     %prompt1(P),
     metta_prompt(_, P).
 
+
 metta_prompt(G,S):- once(nb_current('$metta_prompt',G);prompt(G,G)),nb_setval('$metta_prompt',S),prompt(_,S).
 
 %! repl4 is det.
@@ -599,7 +600,6 @@ repl_read_next(Accumulated, Expr, Line):-
 maybe_write_prompt_now:- is_win64,!,metta_prompt(P, P),write_prompt_now(P).
 maybe_write_prompt_now:- thread_self(main),!.
 maybe_write_prompt_now:- metta_prompt(P, P),write_prompt_now(P),prompt(_, '').
-
 write_prompt_now(P):- flush_output(current_output), ttyflush, write(P), ttyflush, flush_output(current_output).
 
 % if stream error is not recoverable restart_reading

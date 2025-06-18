@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+;;#!/usr/bin/env python3
 
 #if __name__ != "mettalog":f
 
@@ -24,7 +24,7 @@ from collections import Counter
 from glob import glob
 from time import monotonic_ns, time
 import traceback
-from mettalog import *
+#from mettalog import *
 
 # Global Variables
 deref_op = False

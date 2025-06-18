@@ -323,7 +323,7 @@ pfcPrintFacts(P, C) :-
   pfcPrintf("User added facts:~n", []),
   pfcPrintitems(User),
   printLine,
-  pfcPrintf("MettaLog-Pfc added facts1:~n", []),
+  pfcPrintf("MettaLog-Pfc added facts:~n", []),
   pfcPrintitems(Pfc),
   printLine, !.
 
@@ -757,7 +757,7 @@ pfcIsNotTraced(P) :-
 %
 compound_eles(Lvl, P, Arg) :-
     % If P is a variable, retrieve its attribute and treat it as a compound term.
-    var(P),!,get_attr(P, A, AV),compound_eles(Lvl, attvar(A, AV), Arg).
+    var(P),!,get_attrs(P, AV),compound_eles(Lvl, AV, Arg).
 compound_eles(Lvl, P, Arg) :-
     % If P is not a compound term or the level is less than 1, return P as the result.
     (\+ compound(P); Lvl < 1),!,Arg = P.
@@ -1227,10 +1227,9 @@ pp_facts(P, C) :-
     fmt("User added facts:", []),
     pp_items(user, User),
     % Draw a separator line.
-    draw_line,
-    draw_line,
+    draw_line, draw_line,
     % Print system-added (MettaLog-Pfc) facts.
-    fmt("MettaLog-Pfc added facts4:", []),
+    fmt("MettaLog-Pfc added facts:", []),
     pp_items(system, Pfc),
     % Final line to close the output.
     draw_line.
@@ -1275,7 +1274,7 @@ pp_deds(P, C) :-
     % Classify the facts, extracting only the Pfc (deduced) facts.
     pfc_classify_facts(L, _User, Pfc, _Rule),
     % Draw a line and print system-added deduced facts.
-    draw_line,fmt("MettaLog-Pfc added facts2:", []),pp_items(system, Pfc),draw_line.
+    draw_line,fmt("MettaLog-Pfc added facts:", []),pp_items(system, Pfc),draw_line.
 
 %!  show_deds_w(+Pattern) is nondet.
 %

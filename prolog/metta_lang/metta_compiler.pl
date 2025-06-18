@@ -107,7 +107,7 @@ in_to_out(FnName,N,[I|ArgsIn],[O|ArgsOut],Out):- succ(N,M),
 
 cva(_,_,IO,IO).
 
-%setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :- !.
+%setup_mi_me(FnName,LenArgs,_InternalTypeArgs,_InternalTypeResult) :- !, bt.
 setup_mi_me(FnName,LenArgs,InternalTypeArgs,InternalTypeResult) :-
  must_det_lls((
     sum_list(LenArgs,LenArgsTotal),

@@ -1899,7 +1899,7 @@ self_extend_py(Self,Module,File,R):-
         (nonvar(File) -> Use = File ; Use = Module),
         pybug('extend-py!'(Use)),
         % py_call_warg(mettalog:use_mettalog()),
-        (assumed_loaded(Use) -> true ; py_load_modfile(Use)),
+        (Use == mettalog -> true ; py_load_modfile(Use)),
         % listing(ensure_rust_metta/1),
         % ensure_mettalog_py,
         nb_setval('$py_ready','true'),
@@ -1911,11 +1911,6 @@ self_extend_py(Self,Module,File,R):-
         % py_module_exists(Module),
         % py_call_warg(MeTTa:load_py_module(ToPython),Result),
         true)),!.
-
-
-assumed_loaded(mettalog).
-assumed_loaded(random).
-assumed_loaded(corelib).
 
 %!  py_load_modfile(+Use) is det.
 %

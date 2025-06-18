@@ -85,8 +85,9 @@
 % - async_policy/4: Specifies policies for executing asynchronous goals.
 :- meta_predicate
     spawn(0),
-    async(0,('-')),
-    async(0,('-'),('+')),
+    async_eval(0,('-')),
+    async_token(0,('-')),
+    async_token(0,('-'),('+')),
     async_policy('+',0,'-','+').
 
 :- multifile(same_meta_predicate/1).
@@ -163,7 +164,7 @@ spawn(Goal) :-
 %
 spawn(Goal, Options) :-
     term_variables(Goal, Vars),          % Collect free variables in Goal
-    async(Goal, Token, Options),         % Start async execution with options
+    async_token(Goal, Token, Options),         % Start async execution with options
     Id is random(1<<63),                 % Generate a unique ID for this task
     assert(spawn_token_needs_await(Id)), % Register task as needing await
     make_opts(Options, Opts),            % Process options into Opts format
@@ -264,7 +265,7 @@ lazy(Goal) :-
     spawn(Goal, [policy(lazy)]).
 
 
-%!  async(+Goal, -Token) is det.
+%!  async_token(+Goal, -Token) is det.
 %
 %   Executes `Goal` asynchronously in a background thread, returning a `Token`
 %   to track its status. This predicate is a shorthand for `async/3`, using
@@ -281,17 +282,30 @@ lazy(Goal) :-
 %
 %   @example
 %     % Run a goal asynchronously, retrieve its status using Token.
-%     ?- async(some_heavy_task(X), Token),
+%     ?- async_token(some_heavy_task(X), Token),
 %        % Other tasks can proceed here
 %        await(Token),  % Wait for `some_heavy_task/1` to complete
 %        writeln(X).
 %
 %   @see async/3 for specifying execution options.
 %
-async(Goal, Token) :-
-    async(Goal, Token, []).
+async_token(Goal, Token) :-
+    async_token(Goal, Token, []).
 
-%!  async(+Goal, -Token, +Options) is det.
+async_eval_token(Eval, Result, Token) :-
+    async_token(eval_args(Eval,Result), Token, []).
+
+async_eval(Eval, Result):-
+   async_eval_token(Eval, Ref, Token),
+   token_ref_result(Token, Ref, Result).
+
+token_ref_result(Token, Ref, Result):-
+   freeze(Result, (await(Token), Ref=Result)).
+
+materialize(Var):- attvar(Var),!,(frozen(Var,Body)->call(Body);true).
+materialize(Val):- term_attvars(Val,List),!,maplist(materialize,List).
+
+%!  async_token(+Goal, -Token, +Options) is det.
 %
 %   Execute `Goal` in a background thread, using `Options` to control execution policy.
 %   Returns a `Token` that can be used with `await/1` to synchronize with the task
@@ -318,20 +332,20 @@ async(Goal, Token) :-
 %
 %   @example
 %     % Example of executing a goal asynchronously with default (ephemeral) policy:
-%     ?- async(some_computation(Result), Token, [policy(ephemeral)]),
+%     ?- async_token(some_computation(Result), Token, [policy(ephemeral)]),
 %        % Do other work here
 %        await(Token),  % Blocks until some_computation/1 completes
 %        writeln(Result).
 %
 %     % Using the lazy policy to defer execution until needed:
-%     ?- async(another_computation(Output), Token, [policy(lazy)]),
+%     ?- async_token(another_computation(Output), Token, [policy(lazy)]),
 %        % other code executes without blocking
 %        await(Token),  % Triggers execution of another_computation/1 only now
 %        writeln(Output).
 %
 %   @see spawn/2 for a higher-level predicate without explicit token handling.
 %
-async(Goal, Token, Options) :-
+async_token(Goal, Token, Options) :-
     make_opts(Options, Opts),             % Prepare options in internal format
     opts_policy(Opts, Policy),            % Extract the execution policy
     async_policy(Policy, Goal, Token, Opts).  % Dispatch based on policy
@@ -434,7 +448,7 @@ ephemeral_worker(work(Goal, Vars, SolutionsQ)) :-
 %         Result = "Task Complete".
 %
 %     % Asynchronously run the simulated task.
-%     ?- async(simulated_task(Result), Token, [policy(ephemeral)]),
+%     ?- async_token(simulated_task(Result), Token, [policy(ephemeral)]),
 %        writeln("Doing other work while task runs..."),
 %        await(Token),                % Block until task completes
 %        writeln(Result).             % Output the result upon completion
@@ -638,8 +652,9 @@ maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], G
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
     % This part of the code is currently skipped with fail.
     fail,
+    \+ option_value(threading,false),
     % Check if InList has two or more elements.
-    InList = [_,_|_],
+    InList = [_,_|_],!,
     !,  % Cut to ensure threading is used.
     % Setup concurrent processing with cleanup.
     setup_call_cleanup(

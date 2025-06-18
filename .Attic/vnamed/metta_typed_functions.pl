@@ -56,23 +56,13 @@
 % of MeTTa expressions and data structures.
 %*********************************************************************************************
 
-decl_metta_fact_pred(P):- decl_metta_fact_pred(_,P).
-
-decl_metta_fact_pred(Where,P):- get_fa(P, F,A),
-   dynamic(F/A),multifile(F/A),discontiguous(F/A),
-   pfcAdd(metta_fact_pred(Where,F,A)).
 
 %calc_non_evalation_args:- forall()
-decl_metta_fact_pred_tf:-
-    decl_metta_fact_pred(metta_fact_pred/3),
-    decl_metta_fact_pred(default_isa/2),
-    decl_metta_fact_pred(desc_aka/2),
-    decl_metta_fact_pred(explicit_isa/2),
-    decl_metta_fact_pred(subtype/2).
 
-:- initialization(decl_metta_fact_pred_tf, now).
-
-:- initialization(decl_metta_fact_pred_tf, after_load).
+:- discontiguous default_isa/2.
+:- discontiguous desc_aka/2.
+:- discontiguous explicit_isa/2.
+:- discontiguous subtype/2.
 
 % MismatchBehavior
 % Handles type mismatches or argument mismatches during evaluation.
@@ -189,12 +179,10 @@ update_types([One|Patches],Before,After):- !, update_type(One,Before,Middle), up
 
 
 predicate_behavior_impl(_, 'get-type', 1, ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-predicate_behavior_impl(Self, 'foo', 2, DefaultTypes):- default_f_types(Self, DefaultTypes).
+predicate_behavior_impl('&self', 'foo', 2,['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
 predicate_behavior_impl(_, 'match', 4,    ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
 
 predicate_behavior_impl(_, 'case', 2,     ['MismatchOriginal', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-
-default_f_types(_,['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
 
 %(case (empty) ((Empty ())))
 
@@ -248,10 +236,10 @@ metta_defn_decl(Self, [Op | Args], Body, [let, ReturnVal, Body, ReturnVal], Retu
 %metta_defn_decl(Self, [Op | Args], [ [do_apply ,[Op | Args], Body] | Apply], [let, ReturnVal, [Body|Apply], ReturnVal], ReturnVal):- is_list( Args),
 %   metta_defn(Self, [[Op | Args] | Apply], Body).
 
-metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal], Body, ReturnVal):- fail, is_list(Parameters),
+metta_defn_fallback(_Self, [Op | Parameters], [let, ReturnVal, Body, ReturnVal], Body, ReturnVal):- is_list(Parameters),
    must_length(Parameters, Len),
    format(atom(Fn),'mc_~w__~w',[Len,Op]),
-   current_predicate_fast(Fn/_),
+   current_predicate(Fn/_),
    Body = ['call-fn',Fn|Parameters],!.
 metta_defn_fallback(_Self, [Op | Parameters], Body, Body, ReturnVal):- fail,
    Body = [let, [quote, ReturnVal], [quote, ['interp!', Op | Parameters]], ReturnVal], Op \=='interp!'.
@@ -375,7 +363,7 @@ finfo(Op, Len, Head):-
     ReturnVal = '$VAR'('_returnVal'),
     call_showing(transpiler_predicate_store(Op, LenP1, _, _)),
     call_showing(transpiler_clause_store(Op, LenP1, _, _, _, _, _, _, _)),
-    format(atom(Fn),'mc_~w__~w',[Len,Op]), % forall(current_predicate_fast(Fn/LenP1),listing(Fn/LenP1)),
+    format(atom(Fn),'mc_~w__~w',[Len,Op]), % forall(current_predicate(Fn/LenP1),listing(Fn/LenP1)),
     call_showing(Fn/LenP1),
     call_showing(function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, _RetType, Body, ReturnVal,_)),
     if_t(\+ function_declaration_scores(Self, Op, Len, Parameters, ParamTypes, __RetType, Body, ReturnVal,_),
@@ -385,11 +373,11 @@ finfo(Op, Len, Head):-
     true.
 
 call_showing(Var):- \+ callable(Var), !, write_src_nl(not(callable(Var))).
-call_showing(Atom):- atom(Atom), \+ current_predicate_fast(Atom/_, _), !, write_src_nl(unknown(Atom)).
-call_showing(Atom):- atom(Atom), !, forall(current_predicate_fast(Atom/N),call_showing(Atom/N)).
-call_showing(Op/Len):- \+ current_predicate_fast(Op/Len), !, write_src_nl(unknown(Op/Len)).
-call_showing(Op/Len):- !, forall(current_predicate_fast(Op/Len, SHOWP), call_showing(clause(SHOWP,Body), (SHOWP:-Body))).
-call_showing(SHOWP):- \+ current_predicate_fast(_, SHOWP), !, write_src_nl(unknown(SHOWP)).
+call_showing(Atom):- atom(Atom), \+ current_predicate(Atom/_, _), !, write_src_nl(unknown(Atom)).
+call_showing(Atom):- atom(Atom), !, forall(current_predicate(Atom/N),call_showing(Atom/N)).
+call_showing(Op/Len):- \+ current_predicate(Op/Len), !, write_src_nl(unknown(Op/Len)).
+call_showing(Op/Len):- !, forall(current_predicate(Op/Len, SHOWP), call_showing(clause(SHOWP,Body), (SHOWP:-Body))).
+call_showing(SHOWP):- \+ current_predicate(_, SHOWP), !, write_src_nl(unknown(SHOWP)).
 call_showing(SHOWP):- call_showing(SHOWP, SHOWP).
 
 call_showing(SHOWP, Template):-

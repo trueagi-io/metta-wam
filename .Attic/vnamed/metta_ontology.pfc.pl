@@ -95,6 +95,7 @@ merge_fp(T1,T2,N) :-
 ((metta_atom_asserted(KB,['==>',X,Y])/nonvar(KB)),
   metta_atom_asserted(KB2,X)) ==>
   metta_atom_asserted(KB2,Y).
+/*
 
 'functional-predicate'(Name,Arity) ==>
   {functor(P1,Name,Arity),
@@ -108,7 +109,6 @@ merge_fp(T1,T2,N) :-
 
 ==> 'functional-predicate'('next-operation',1).
 ==> 'functional-predicate'('previous-operation',1).
-
 
 :- dynamic('op-complete'/1).
 
@@ -131,13 +131,8 @@ merge_fp(T1,T2,N) :-
    'seen-operation'(Current)).
 
 
-(metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type_info(KB,H,T).
-(metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_defn_info(KB,II,T).
-(metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_defn_info(KB,H,[A1,A2|AL]).
-(metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_defn_info(KB,H,['wam-body'|AL]).
+% ==> 'next-operation'(next).
 
-
-==> 'next-operation'(next).
 
 ((properties(KB,A,B),{member(E,B),nonvar(E)})==>property(KB,A,E)).
 property(_,Op,E) ==> (form_op(Op),form_prop(E)).
@@ -148,12 +143,16 @@ property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 
 % (metta_compiled_predicate(KB,F,A)==>predicate_arity(KB,F,A)).
 
+(metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type_info(KB,H,T).
+(metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_function_asserted(KB,II,T).
+(metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
+(metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_function_asserted(KB,H,['wam-body'|AL]).
 
-metta_defn_info(KB,[F|Args],_)/length(Args,Len)
+metta_function_asserted(KB,[F|Args],_)/length(Args,Len)
   ==>src_code_for(KB,F,Len).
 
 'op-complete'(op(+,'=',F)),
-  metta_defn_info(KB,[F|Args],_)/length(Args,Len)
+  metta_function_asserted(KB,[F|Args],_)/length(Args,Len)
   ==>src_code_for(KB,F,Len),{nop(dedupe_cl(F))}.
 
 (src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
@@ -178,9 +177,8 @@ metta_params_and_return_type(KB,F,Len,Params,Ret),
 
 ensure_corelib_types:- pfcAdd(please_do_corelib_types).
 %(need_corelib_types, metta_atom_corelib(Term)) ==> metta_atom_asserted('&corelib', Term).
+(need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted(KB, Atom).
 :- dynamic(need_corelib_types/0).
-% (need_corelib_types, metta_atom(KB,Atom)) ==> metta_atom_asserted_noticed(KB, Atom).
-
 (please_do_corelib_types, { \+ need_corelib_types }) ==> need_corelib_types.
 'ensure-compiler!':- ensure_corelib_types.
 % if(Cond,Then,Else,Result):- eval_true(Cond)*-> eval(Then,Result); eval(Else,Result).
@@ -198,8 +196,8 @@ do_compile_space(KB) ==> (src_code_for(KB,F,Len) ==> do_compile(KB,F,Len)).
 do_compile(KB,F,Len),src_code_for(KB,F,Len) ==> really_compile(KB,F,Len).
 
 
-metta_defn_info(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
-   really_compile_src(KB,F,Len,Args,BodyFn),{nop(dedupe_ls(F))}.
+metta_function_asserted(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
+   really_compile_src(KB,F,Len,Args,BodyFn),{dedupe_ls(F)}.
 
 really_compile_src(KB,F,Len,Args,BodyFn),
    {compile_metta_defn(KB,F,Len,Args,BodyFn,Clause)}
@@ -210,6 +208,8 @@ really_compile_src(KB,F,Len,Args,BodyFn),
 %:- ensure_loaded('metta_ontology_level_1.pfc').
 
 
+:- endif.
+*/
 :- if(false).
 a==>b.
 b==>bb.
@@ -240,6 +240,7 @@ test_fwc:-
   pfcWhy1(e(_)),
   pfcWhy1(f(_)).
 
+
 %:- forall(==>(X,Y),pfcFwd(==>(X,Y))).
 
 %:- break.
@@ -255,7 +256,7 @@ end_of_file.
 
 /*
     really_compile(KB,F,Len)==>
-      ((metta_defn_info(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
+      ((metta_function_asserted(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
         ==> (compiled_clauses(KB,F,Clause))).
 */
 

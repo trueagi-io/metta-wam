@@ -98,7 +98,7 @@ self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Le
 %self_eval_ht(_,_).
 
 
-unify_woc(X,Y):- unify_with_occurs_warning(X,Y).
+unify_woc(X,Y):- materialize(X),materialize(Y),unify_with_occurs_warning(X,Y).
 
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
   nb_current(Name, X),!. % spaces and states are stored as compounds
@@ -254,7 +254,6 @@ declare_maybe_symbol_impl_exists(interp,Sym,A):-
 :- initialization(scan_exists_in_interp).
 show_symbol_impls:-
   listing(symbol_impl_exists).
-
 
 eval_20(X,Y):- current_self(Self),
    default_start_depth(DEPTH),
@@ -1250,7 +1249,7 @@ eval_20_to_mc2(_E20,Eq,RetType,Depth,Self,List,_Tail,_Sig,TF,Body,_Cvt,NewBody):
    ignore(TF='$VAR'('RetVal')),
    ignore(RetType='$VAR'('ERROR_RetType')),
    ignore(Depth=665), %'$VAR'('ERROR_Depth')),
-   ignore(Self='&self'),
+    ignore(Self= '&self'),
    ignore(Eq='$VAR'('ERROR_Eq')),
    numbervars(List+NewBody,0,_,[singleton(true)]).
 
@@ -2192,9 +2191,6 @@ eval20_failed_2(Eq,RetType,Depth,Self, Term, Res):-
    eval_args(Eq,RetType,Depth,Self, Term, Res).
 
 
-
-
-
 % =================================================================
 % =================================================================
 % =================================================================
@@ -2425,7 +2421,7 @@ eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],['Cons', AA, BB]):- fail, no_cons_
   eval_args(Eq,RetType,Depth,Self,A,AA), eval_args(Eq,RetType,Depth,Self,B,BB).
 
 %eval_20(_Eq,_RetType,Depth,Self,['::'|PL],Prolog):-  maplist(as_prolog_x(Depth,Self),PL,Prolog),!.
-%eval_20(_Eq,_RetType,Depth,Self,['@'|PL],Prolog):- as_prolog_x(Depth,Self,['@'|PL],Prolog),!.
+eval_20(_Eq,_RetType,Depth,Self,['@'|PL],[quote,Prolog]):- as_prolog_x(Depth,Self,['@'|PL],Prolog),!,call(Prolog).
 
 eval_20(Eq,RetType,Depth,Self,['Cons', A, B ],[AA|BB]):- fail,  \+ no_cons_reduce, !,
    eval_args(Eq,RetType,Depth,Self,A,AA), eval_args(Eq,RetType,Depth,Self,B,BB).
@@ -3338,6 +3334,8 @@ eval_30(Eq,RetType,Depth,Self,Var,Out):- var(Var), !, throw(var_eval_30(Eq,RetTy
 eval_30(Eq,RetType,Depth,Self,[Var|Types],Out):- var(Var), !, debug_info(always(eval),warn_eval_30(Eq,RetType,Depth,Self,[Var|Types],Out)),!,[Var|Types]=Out.
 eval_30(_Eq,_RetType,_Depth,_Self,['unique-atom-by',P2,List],RetVal):- !,
    unique_elements_by(P2,List,RetVal).
+
+%eval_30(Eq,RetType,Depth,Self,Var,Out):- eval_31(Eq,RetType,Depth,Self,Var,Out).
 
 unique_elements_by_xform(_, [], []).
 unique_elements_by_xform(P2, [H|T], R) :-
@@ -4267,7 +4265,7 @@ get_defn_expansions_guarded_low(_Eq,_RetType,_Depth,Self,ParamTypes,FRetType,[H|
 
 
 % get a guarded definition
-eval_30(Eq,RetType,Depth,Self,X,Y):- fail, can_be_ok(get_defn_expansions_guarded,X),
+eval_31(Eq,RetType,Depth,Self,X,Y):- fail, can_be_ok(get_defn_expansions_guarded,X),
     quietly((if_trace(defn, (curried_arity(X,F,A),finfo(F,A,X))),
     findall(guarded_defn(XX,ParamTypes,FRetType,B0),
            get_defn_expansions_guarded(Eq,RetType,Depth,Self,ParamTypes,FRetType,X,XX,B0),XXB0L))),
@@ -4314,7 +4312,8 @@ eval_defn_failure_guarded(_Eq,_RetType,Depth,_Self,_ParamTypes,X,Res):-
 %eval_40(Eq,RetType,Depth,Self,['If2',Cond,Then,_],Res):- trace,fail.
 
 eval_30(Eq,RetType,Depth,Self,X,Y):-  can_be_ok(maybe_eval_defn,X),
-       quietly( findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L) ),
+      % quietly
+      ( findall((rule(XX,B0,Nth,typs)),call_nth(get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0),Nth),XXB0L) ),
         XXB0L \==[], !, %trace,
         % maybe_trace(unknown),
         must_or_die((catch(eval_defn_bodies(Eq,RetType,Depth,Self,X,Y,XXB0L),metta_NotReducible,X=Y))).
@@ -4399,12 +4398,12 @@ get_defn_expansions(Eq,RetType,Depth,Self,X,XX,B0):-
 get_defn_expansionsA(_Eq,_RetType,_Depth,Self,[[H|HArgs]|Args],XX,B0):- symbol(H),
    is_list(HArgs),is_list(Args),
    same_len_copy(Args,NewArgs), same_len_copy(HArgs,NewHArgs),
-   quietly((metta_atom(Self,[=,[[HH|NewHArgs]|NewArgs],B0]),H==HH)),
+   quietly((metta_defn(Self,[[HH|NewHArgs]|NewArgs],B0),H==HH)),
    [[H|NewHArgs]|NewArgs]=XX,
    sanity_check_eval(curry0,B0).
 
 get_defn_expansionsB(_Eq,_RetType,_Depth,Self,[H|Args],[H|NewArgs],B0):- same_len_copy(Args,NewArgs),
-    quietly((metta_atom(Self,[=,[HH|NewArgs],B0]),H==HH)),
+    quietly((metta_defn(Self,[HH|NewArgs],B0),H==HH)),
     metta_defn(Self,[H|NewArgs],B0).
 
 get_defn_expansionsC(Eq,RetType,Depth,Self,[[H|Start]|T1],[[H|NewStart]|NewT1],[Y|T1]):- is_list(Start),

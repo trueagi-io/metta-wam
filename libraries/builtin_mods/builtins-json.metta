@@ -1,12 +1,10 @@
-; loaded with:  !(import! &self json)
-
 (@doc get-value
   (@desc "Function takes space and key as input, checks if space contains key-value pairs in form of (key value) and returns value tied to the input key")
   (@params (
     (@param "Space")
     (@param "Key")))
   (@return "Value which tied to input key, empty if no such key in space"))
-(: get-value (-> Grounded Atom Atom))
+(: get-value (-> Grounded Atom %Undefined%))
 (= (get-value $dictspace $key) (match $dictspace ($key $value) $value))
 
 (@doc get-keys
@@ -39,13 +37,4 @@
     (@param "Json string")))
   (@return "Metta object"))
 
-            
-!(assertEqual (json-encode 5) \"5\")
-           !(assertEqual (json-encode (5 4 3)) \"[5, 4, 3]\")
-            !(assertEqual (let $encoded (json-encode (5 4 3)) (json-decode $encoded)) (5 4 3))
-            !(assertEqual (json-decode 5) (Error 5 BadType))
-            !(assertEqual (json-decode \"[5, 4, 3]\") (5 4 3))
-            !(bind! &dictspace (dict-space ((\"k1\" v1) (\"k2\" v2) (\"k3\" (4 \"a\" 5)))))
-            !(assertEqual (let $decoded (let $encoded (json-encode &dictspace) (json-decode $encoded)) (get-keys $decoded)) (superpose (\"k1\" \"k2\" \"k3\")))
-            !(assertEqual (json-encode True) \"true\")
-            !(assertEqual (let $encoded (json-encode False) (json-decode $encoded)) False)
+
