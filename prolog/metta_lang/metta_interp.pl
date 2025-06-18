@@ -468,8 +468,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
 
-pfcAdd_Now(Cl):-
-  pfcAdd_Now0(Cl),!.
+pfcAdd_Now(Cl):- pfcAdd_Now0(Cl),!.
 
 pfcAdd_Now0(Cl):-
    once( \+ nb_current(allow_dupes,t)
@@ -481,7 +480,8 @@ pfcAdd_Now0(P) :-
     current_predicate(pfcAdd/1),!,
     once_writeq_nl(pfcAdd(P)),
     must_det_lls(pfcAdd(P)).
-pfcAdd_Now(P) :-
+
+pfcAdd_Now0(P) :-
     % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
     once_writeq_nl(assssssssssssssert(P)),
     must_det_lls(assert(P)).
@@ -4229,7 +4229,7 @@ load_hook_compiler1(Load, Self, Assertion):-
     % Convert functions to predicates.
     debug_info(assert_hooks,load_hook_compiler(Load, Self, Assertion)),
     catch(load_compiler(Load, Self, Assertion),Err,debug_info(always(assert_hooks),skip_load_hook_compiler(Err,Load, Self, Assertion))),!.
-load_hook_compiler(Load, Self, Assertion):-
+load_hook_compiler1(Load, Self, Assertion):-
   debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion)).
 
 load_compiler(Load, Self, Assertion):-
@@ -5056,7 +5056,7 @@ metta_anew0(Load, _Src, OBO) :- fail,
     !,
     metta_anew1(Load, OBO).  % Directly delegate to `metta_anew1/2`.
 % Default handling with output and logging behavior.
-metta_anew(Load, Src, OBO) :-
+metta_anew0(Load, Src, OBO) :-
     % Handle non-compatible I/O operations.
     not_compat_io((
         % Output information about the source if in Metta language.
@@ -7762,7 +7762,7 @@ findall_or_skip(Var, Call, List) :-
 
 umo:- use_metta_ontology.
 :- initialization((use_corelib_file),after_load /**/).
-:- initialization(profile(use_metta_ontology),after_load /**/).
+:- initialization(use_metta_ontology,after_load /**/).
 
 :- initialization(set_prolog_flag(metta_interp,ready)).
 %:- ensure_loaded(metta_runtime).

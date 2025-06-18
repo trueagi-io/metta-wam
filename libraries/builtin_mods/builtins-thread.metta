@@ -1,10 +1,6 @@
-<<<<<<< Updated upstream
-;; this is loaded as !(import &self threads)
-=======
-﻿
+
 ;!(in-module sys::thread)
 ;; this is loaded as !(import &self thread)
->>>>>>> Stashed changes
 
 ; This adds thread-related types to the type system
 (: ThreadHandle Type)
@@ -19,67 +15,36 @@
 
 ; ---- Transactions and Snapshots ----
 
+
 (@doc thread:snapshot!
   (@desc "Creates a snapshot of an evaluation query.")
   (@params (
-<<<<<<< Updated upstream
-	(@param "Expression (Atom)")))
-  (@return "Snapshot result (Any)"))
-(: thread:snapshot! (-> Atom Any))
-(= (thread:snapshot! $expr $result)
-   (call-for! $result
-	 (snapshot (eval_args $expr $result))))
-=======
 	(@param "List (Atom)")))
   (@return "Snapshot result (%Undefined%)"))
 (: thread:snapshot! (-> Atom %Undefined%))
 (= (thread:snapshot! $expr) (snapshot $expr))
->>>>>>> Stashed changes
 
 (@doc thread:transaction!
   (@desc "Runs a transaction on an evaluation query.")
   (@params (
-<<<<<<< Updated upstream
-	(@param "Expression (Atom)")))
-  (@return "Transaction result (Any)"))
-(: thread:transaction! (-> Atom Any))
-(= (thread:transaction! $expr $result)
-   (call-for! $result
-	 (transaction (eval_args $expr $result))))
-=======
 	(@param "List (Atom)")))
   (@return "Transaction result (%Undefined%)"))
 (: thread:transaction! (-> Atom %Undefined%))
 (= (thread:transaction! $expr) (transaction $expr))
->>>>>>> Stashed changes
 
 (@doc thread:current-transaction!
   (@desc "Retrieves the current snapshot or transaction.")
   (@params ())
-<<<<<<< Updated upstream
-  (@return "Transaction (Any)"))
-(: thread:current-transaction! (-> Any))
-(= (thread:current-transaction! $tx)
-   (call-for! $tx (current_transaction $tx)))
-=======
   (@return "Transaction (%Undefined%)"))
 (: thread:current-transaction! (-> %Undefined%))
 (= (thread:current-transaction!) (call-fn! current_transaction))
->>>>>>> Stashed changes
 
 (@doc thread:transaction-updates!
   (@desc "Retrieves updates for a transaction.")
   (@params ())
-<<<<<<< Updated upstream
-  (@return "Updates (Any)"))
-(: thread:transaction-updates! (-> Any))
-(= (thread:transaction-updates! $updates)
-   (call-unit! (transaction_updates $updates)))
-=======
   (@return "Updates (%Undefined%)"))
 (: thread:transaction-updates! (-> %Undefined%))
 (= (thread:transaction-updates!) (call-fn! transaction_updates))
->>>>>>> Stashed changes
 
 (@doc thread:show-transaction!
   (@desc "Displays the current transaction and updates.")
@@ -160,15 +125,9 @@
   (@desc "Waits for the specified thread handle and retrieves the result.")
   (@params (
     (@param "Thread handle (ThreadHandle)")))
-<<<<<<< Updated upstream
-  (@return "Result (Any)"))
-(: thread:await! (-> ThreadHandle Any))
-(= (thread:await! $handle $result)
-=======
   (@return "Result (%Undefined%)"))
 (: thread:await! (-> ThreadHandle %Undefined%))
 (= (thread:await! $handle)
->>>>>>> Stashed changes
    (call-for! $result
      (thread_join $handle $result)))
 
@@ -178,15 +137,9 @@
   (@params (
     (@param "Thread handle (ThreadHandle)")
     (@param "Timeout duration (Number)")))
-<<<<<<< Updated upstream
-  (@return "Result (Any)"))
-(: thread:timeout! (-> ThreadHandle Number Any))
-(= (thread:timeout! $handle $timeout $result)
-=======
   (@return "Result (%Undefined%)"))
 (: thread:timeout! (-> ThreadHandle Number %Undefined%))
 (= (thread:timeout! $handle $timeout)
->>>>>>> Stashed changes
    (call-for! $result
      (thread:cancel-after! $handle $timeout $result)))
 
@@ -235,17 +188,10 @@
   (@desc "Runs a thread with a timed limit.")
   (@params (
     (@param "Timeout duration (Number)")
-<<<<<<< Updated upstream
-    (@param "Expression (Atom)")))
-  (@return "Result (Any)"))
-(: thread:limit-time! (-> Number Atom Any))
-(= (thread:limit-time! $seconds $expr $result)
-=======
     (@param "List (Atom)")))
   (@return "Result (%Undefined%)"))
 (: thread:limit-time! (-> Number Atom %Undefined%))
 (= (thread:limit-time! $seconds $expr)
->>>>>>> Stashed changes
    (call-for! $result
      (cwtl $seconds (eval_args $expr $result))))
 
@@ -256,7 +202,7 @@
   (@params (
     (@param "Thread handle (ThreadHandle)")
     (@param "Timeout (Number)")))
-  (@return "Result (Any)"))
+  (@return "Result (%Undefined%)"))
 (: thread:cancel-after! (-> ThreadHandle Number (->)))
 (= (thread:cancel-after! $handle $timeout)
    (call-unit!
@@ -318,13 +264,23 @@
   (@desc "Executes a query with a locked mutex.")
   (@params (
     (@param "Mutex symbol (Atom)")
-    (@param "Query (Any)")))
+    (@param "Query (%Undefined%)")))
   (@return "Unit atom or Error"))
-(: thread:mutex-with! (-> Atom Any (->)))
+(: thread:mutex-with! (-> Atom %Undefined% (->)))
 (= (thread:mutex-with! $mutex-symbol $query)
    (call-unit! (with_mutex $mutex-symbol $query)))
 
 ; ---- Message Queues ----
+
+
+(: MessageQueue Type)
+
+;; Type detection for Message Queues
+(= (get-type $obj)
+   (call-for! MessageQueue
+     (atomic $obj)
+     (message_queue_property $queue $_)
+	 (== $queue $obj)))
 
 (@doc thread:queue-create!
   (@desc "Creates a message queue.")
@@ -339,9 +295,9 @@
   (@desc "Sends a message to a queue.")
   (@params (
     (@param "Queue (Atom)")
-    (@param "Message (Any)")))
+    (@param "Message (%Undefined%)")))
   (@return "Unit atom or Error"))
-(: thread:send-message! (-> Atom Any (->)))
+(: thread:send-message! (-> Atom %Undefined% (->)))
 (= (thread:send-message! $queue $msg)
    (call-unit! (thread_send_message $queue $msg)))
 
@@ -349,8 +305,8 @@
   (@desc "Receives a message from a queue.")
   (@params (
     (@param "Queue (Atom)")))
-  (@return "Message (Any)"))
-(: thread:receive-message! (-> Atom Any))
+  (@return "Message (%Undefined%)"))
+(: thread:receive-message! (-> Atom %Undefined%))
 (= (thread:receive-message! $queue $msg)
    (call-unit! (thread_get_message $queue $msg)))
 
@@ -479,8 +435,6 @@
    (call-unit!
 	 (set_thread_priority $thread $priority)))
 
-<<<<<<< Updated upstream
-=======
 
 
 ;; ----------------------------------------
@@ -605,4 +559,3 @@
 
      (engine:destroy $E)
        (println! "Engine test complete."))))
->>>>>>> Stashed changes
