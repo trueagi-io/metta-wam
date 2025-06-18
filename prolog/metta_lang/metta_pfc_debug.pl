@@ -1309,7 +1309,8 @@ show_info(F) :-
     % Draw a line and print user-added facts that match the pattern.
     draw_line, fmt("User added facts with ~q:", [F]), pp_items(user, User),
     % Draw separator lines and print system-added (Pfc) facts that match the pattern.
-    draw_line, draw_line, fmt("MettaLog-Pfc added facts with ~q:", [F]), pp_items(system, Pfc),
+    draw_line, draw_line, % bt, % ds,
+    fmt("MettaLog-Pfc added facts3 with ~q:", [F]), pp_items(system, Pfc),
     % Final line to close the output.
     draw_line.
 

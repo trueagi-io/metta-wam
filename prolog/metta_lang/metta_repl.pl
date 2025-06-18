@@ -296,9 +296,10 @@ repl3 :-
 set_metta_prompt:-
     with_output_to(atom(P), write_metta_prompt),
     %prompt1(P),
-    prompt(_, P).
+    metta_prompt(_, P).
 
 
+metta_prompt(G,S):- once(nb_current('$metta_prompt',G);prompt(G,G)),nb_setval('$metta_prompt',S),prompt(_,S).
 
 %! repl4 is det.
 %   Executes the REPL logic by reading the input, processing expressions, and handling directives or commands.
@@ -575,8 +576,8 @@ repl_read_next(NewAccumulated, Expr) :-
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
     if_t(flag(need_prompt,1,0),(format('~N'),set_metta_prompt)),
-        % On windows we need to output the prompt again
-    (is_win64-> (ttyflush,prompt(P, P),write(P), ttyflush) ; true),
+        % On windows we need to output the prompt again ; and now on linux since the prompt we are settign is ''
+    maybe_write_prompt_now,
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
@@ -592,10 +593,14 @@ repl_read_next(Accumulated, Expr, Line):-
     % Concatenate the accumulated input with the new line using a space between them.
     symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
-    format(atom(T),'| ~t',[]),prompt(_,T),
+    format(atom(T),'| ~t',[]),metta_prompt(_,T),
     repl_read_next(NewAccumulated, Expr).
 
 
+maybe_write_prompt_now:- is_win64,!,metta_prompt(P, P),write_prompt_now(P).
+maybe_write_prompt_now:- thread_self(main),!.
+maybe_write_prompt_now:- metta_prompt(P, P),write_prompt_now(P),prompt(_, '').
+write_prompt_now(P):- flush_output(current_output), ttyflush, write(P), ttyflush, flush_output(current_output).
 
 % if stream error is not recoverable restart_reading
 check_unbalanced_parens(SE):- var(SE),!. % no error

@@ -1843,7 +1843,8 @@ pfcUnique(post, Head, Tail) :-
    !, \+ is_clause_asserted(Head, Tail).
 */
 pfcUnique(_, Head, Tail) :-
-   \+ is_asserted_exact(Head, Tail), !.
+   copy_term_nat(v(Head, Tail), v(HeadC, TailC)),
+   \+ is_asserted_exact(HeadC, TailC), !.
 /*
 pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
 pfcUnique(_,H,B):- \+ (

@@ -90,11 +90,9 @@ history_file(Path) :-
 :- dynamic(metta_atom_asserted_last/2).
 :- multifile(metta_atom_asserted_last/2).
 
-
-%:- initialization(maybe_load_history, now).
-
-    %:- ensure_loaded(library(metta_lang/metta_interp)).
+:- time(ensure_loaded(library(metta_lang/metta_interp))).
 :- ensure_loaded(library(metta_rt)). % avoids starting the REPL
+:- initialization(maybe_load_history, now).
 :- setup_library_calls.
 :- dynamic(top_call/0).
 :- multifile(top_call/0).

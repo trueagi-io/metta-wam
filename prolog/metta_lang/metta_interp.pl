@@ -467,15 +467,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 %       does not interfere with the curried chainer logic.
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
-<<<<<<< Updated upstream
 
-pfcAdd_Now(Cl):-
-   once( \+ nb_current(allow_dupes,t)
-     ; sub_var_safely('&corelib',Cl )),
-    woct(clause_asserted(Cl)),!.
-
-pfcAdd_Now(P) :-
-=======
 pfcAdd_Now(Cl):-
   pfcAdd_Now0(Cl),!.
 
@@ -485,16 +477,11 @@ pfcAdd_Now0(Cl):-
     copy_term_nat(Cl,Cl2),woct(clause_asserted(Cl2)),!.
 
 pfcAdd_Now0(P) :-
->>>>>>> Stashed changes
     % If `pfcAdd/1` is defined, print the term using `once_writeq_nl` and call `pfcAdd/1`.
     current_predicate(pfcAdd/1),!,
     once_writeq_nl(pfcAdd(P)),
     must_det_lls(pfcAdd(P)).
-<<<<<<< Updated upstream
 pfcAdd_Now(P) :-
-=======
-pfcAdd_Now0(P) :-
->>>>>>> Stashed changes
     % If `pfcAdd/1` is not defined, print the term using `once_writeq_nl` and assert it.
     once_writeq_nl(assssssssssssssert(P)),
     must_det_lls(assert(P)).
@@ -797,11 +784,8 @@ keep_output :- is_compatio, !, fail.
 % This directive allows the predicate `original_user_output/1` to be modified during runtime.
 :- dynamic(original_user_output/1).
 
-<<<<<<< Updated upstream
-=======
 
 
->>>>>>> Stashed changes
 %!  original_user_output(-X) is nondet.
 %
 %   Retrieves the stream associated with the standard output (file descriptor 1).
@@ -814,11 +798,8 @@ keep_output :- is_compatio, !, fail.
 %   @example
 %     ?- original_user_output(Stream).
 %     Stream = <stream>.
-<<<<<<< Updated upstream
-=======
 
 original_user_output(X) :- thread_self(Id), thread_util:has_console(Id, _, X, _),!.
->>>>>>> Stashed changes
 original_user_output(X) :- stream_property(X, file_no(1)).
 
 %!  original_user_error(-X) is nondet.
@@ -833,10 +814,7 @@ original_user_output(X) :- stream_property(X, file_no(1)).
 %   @example
 %     ?- original_user_error(Stream).
 %     Stream = <stream>.
-<<<<<<< Updated upstream
-=======
 original_user_error(X) :- thread_self(Id), thread_util:has_console(Id, _, _, X),!.
->>>>>>> Stashed changes
 original_user_error(X) :- stream_property(X, file_no(2)).
 
 % Ensure that the original output stream is set if not already defined.
@@ -2373,10 +2351,7 @@ nocut.
 :- ensure_loaded(metta_convert).
 :- ensure_loaded(metta_types).
 :- ensure_loaded(metta_space).
-<<<<<<< Updated upstream
-=======
 :- ensure_loaded(metta_threads).
->>>>>>> Stashed changes
 :- ensure_loaded(metta_eval).
 :- nb_setval(self_space, '&top').
 
@@ -4205,15 +4180,6 @@ metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == '=', compiler_assertz_file(me
 % metta_asserted_hook(_Load, Self, [Eq,H,B]):- Eq == 'ALT', compiler_assertz_file(metta_function_asserted(Self,H,B)), fail.
 metta_asserted_hook(_,_,_).
 
-<<<<<<< Updated upstream
-compiler_assertz_file(X):-  clause_asserted(X), !, send_to_pl_file(X).
-compiler_assertz_file(X):- compiler_assertz(X), !.
-
-load_hook1(Load, Self, StuffHook) :-
-    metta_asserted_hook(Load, Self, StuffHook), fail.
-
-load_hook1(Load, Self, Fact) :-
-=======
 compiler_assertz_file(X):- copy_term_nat(X,Y), is_clause_asserted(Y), !, send_to_pl_file(X).
 compiler_assertz_file(X):- compiler_assertz(X), !.
 
@@ -4226,22 +4192,14 @@ load_hook11(Load, Self, StuffHook) :-
     metta_asserted_hook(Load, Self, StuffHook), fail.
 
 load_hook11(Load, Self, Fact) :-
->>>>>>> Stashed changes
     % Ensure the Metta compiler is ready for use.
     once(use_metta_compiler),!,
     %debug_info(assert_hooks,use_metta_compiler(Load, Self, Fact)),
     woc(load_hook_compiler(Load, Self, Fact)).
-<<<<<<< Updated upstream
-load_hook1(Load, Self, Fact):-
-    %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
-    woc(load_hook_compiler(Load, Self, Fact)),!.
-load_hook1(Load, Self, Fact) :-
-=======
 load_hook11(Load, Self, Fact):-
     %debug_info(assert_hooks,not_use_metta_compiler(Load, Self, Fact)),
     woc(load_hook_compiler(Load, Self, Fact)),!.
 load_hook11(Load, Self, Fact) :-
->>>>>>> Stashed changes
     % Skip processing if the `metta_interp` flag is not set to `ready`.
     % \+ is_metta_interp_ready,
     % debug_info(assert_hooks,load_hook_not_ready(Load, Self, Fact)),
@@ -4250,23 +4208,12 @@ load_hook11(Load, Self, Fact) :-
     woc(load_hook_compiler(Load, Self, Fact)).
 
 metta_atom_asserted_hook(Self,Assertion):-
-<<<<<<< Updated upstream
-  nop(woc(load_hook(load, metta_atom_asserted(Self,Assertion)))).
-=======
   (woc(load_hook(load, metta_atom_asserted(Self,Assertion)))).
->>>>>>> Stashed changes
 
 is_metta_interp_ready :- current_prolog_flag(metta_interp, ready).
 
 :- dynamic(did_load_hook_compiler/3).
 
-<<<<<<< Updated upstream
-load_hook_compiler(Load, Self, Assertion):-
-  \+ \+ ((did_load_hook_compiler(Load, Self, Assertion1),Assertion1=@=Assertion)),!,
-    %debug_info(skip_load_repeated_hook_compiler(Load, Self, Assertion)),!.
-    debug_info(skip_2nd(Load, Self, Assertion)),!.
-load_hook_compiler(Load, Self, Assertion):-
-=======
 
 load_hook_compiler(Load, Self, StuffHook):-
   with_ss_unify(throw_bind,StuffHook,
@@ -4277,23 +4224,15 @@ load_hook_compiler1(Load, Self, Assertion):-
     %debug_info(skip_load_repeated_hook_compiler(Load, Self, Assertion)),!.
     debug_info(hide(skip_2nd),skip_2nd(Load, Self, Assertion)),!.
 load_hook_compiler1(Load, Self, Assertion):-
->>>>>>> Stashed changes
     asserta(did_load_hook_compiler(Load, Self, Assertion)),
     Assertion = [Eq, _, _], Eq == '=', !,
     % Convert functions to predicates.
     debug_info(assert_hooks,load_hook_compiler(Load, Self, Assertion)),
     catch(load_compiler(Load, Self, Assertion),Err,debug_info(always(assert_hooks),skip_load_hook_compiler(Err,Load, Self, Assertion))),!.
-<<<<<<< Updated upstream
 load_hook_compiler(Load, Self, Assertion):-
   debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion)).
 
 load_compiler(Load, Self, Assertion):-
-=======
-load_hook_compiler1(Load, Self, Assertion):-
-  debug_info(assert_hooks,skip_load_hook_compiler(Load, Self, Assertion)).
-
-load_compiler1(Load, Self, Assertion):-
->>>>>>> Stashed changes
     woc(functs_to_preds(Assertion, Preds)), !,
     % Assert the converted predicates into the knowledge base.
     woc(assert_preds(Self, Load, Preds)), !.
@@ -5105,10 +5044,6 @@ metta_anew(Ch, Src, OBO) :-
     metta_interp_mode(Ch, Mode),  % Determine the mode for `Ch`.
     !,
     metta_anew(Mode, Src, OBO).   % Recur with the resolved mode.
-<<<<<<< Updated upstream
-% If silent loading is enabled, process the object without additional output.
-metta_anew(Load, _Src, OBO) :- fail,
-=======
 
 metta_anew(Load, Src, OBO):- metta_anew0(Load, Src, OBO).
 /*metta_anew(Load, Src, OBO):-
@@ -5117,16 +5052,11 @@ metta_anew(Load, Src, OBO):- metta_anew0(Load, Src, OBO).
 
 % If silent loading is enabled, process the object without additional output.
 metta_anew0(Load, _Src, OBO) :- fail,
->>>>>>> Stashed changes
     silent_loading,  % Check if silent loading is active.
     !,
     metta_anew1(Load, OBO).  % Directly delegate to `metta_anew1/2`.
 % Default handling with output and logging behavior.
-<<<<<<< Updated upstream
 metta_anew(Load, Src, OBO) :-
-=======
-metta_anew0(Load, Src, OBO) :-
->>>>>>> Stashed changes
     % Handle non-compatible I/O operations.
     not_compat_io((
         % Output information about the source if in Metta language.
@@ -7402,10 +7332,7 @@ with_leash_visible(Leash,Visible,Goal):-
 %   Configures or redefines the `system:notrace/0` predicate.
 %   The redefined version writes debug information to `write_src_uo/1` when called.
 %
-<<<<<<< Updated upstream
-=======
 nts0 :- !.
->>>>>>> Stashed changes
 nts0 :-
     % Redefine the system predicate `system:notrace/0`.
     redefine_system_predicate(system:notrace/0),
@@ -7541,11 +7468,6 @@ stack_times_16 :-
     set_prolog_flag(stack_limit, X_16).
 
 :- initialization(stack_times_16,after_load /**/).
-<<<<<<< Updated upstream
-:- initialization(use_corelib_file,after_load /**/).
-:- initialization(use_metta_ontology,after_load /**/).
-=======
->>>>>>> Stashed changes
 
 %!  immediate_ignore is det.
 %
@@ -7838,15 +7760,10 @@ findall_or_skip(Var, Call, List) :-
     % Execute the query using `findall/3` to collect results into `List`.
     findall(Var, Call, List).
 
-<<<<<<< Updated upstream
-=======
 umo:- use_metta_ontology.
-cumo:- ensure_loaded(library('metta_ontology_comp.pfc.pl')).
-:- cumo.
 :- initialization((use_corelib_file),after_load /**/).
-%:- initialization(profile(use_metta_ontology),after_load /**/).
+:- initialization(profile(use_metta_ontology),after_load /**/).
 
->>>>>>> Stashed changes
 :- initialization(set_prolog_flag(metta_interp,ready)).
 %:- ensure_loaded(metta_runtime).
 %:- initialization(set_prolog_flag(gc,false).
@@ -7889,7 +7806,4 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 
 
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes

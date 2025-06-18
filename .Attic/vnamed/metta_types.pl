@@ -2100,6 +2100,7 @@ is_special_op(_Slf, F) :-
 %
 is_eval_kind(ParamType) :-
     % Ignore unbound parameter types and assume 'Any' as default.
+    ignore(ParamType = 'Any'),
     ignore(ParamType = 'EagerAny').
     %ignore(ParamType = '%Undefined%').
 

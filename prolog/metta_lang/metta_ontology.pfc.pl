@@ -95,8 +95,8 @@ merge_fp(T1,T2,N) :-
 ((metta_atom_asserted(KB,['==>',X,Y])/nonvar(KB)),
   metta_atom_asserted(KB2,X)) ==>
   metta_atom_asserted(KB2,Y).
-
 /*
+
 'functional-predicate'(Name,Arity) ==>
   {functor(P1,Name,Arity),
    functor(P2,Name,Arity),

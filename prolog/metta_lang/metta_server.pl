@@ -215,9 +215,9 @@ accept_vspace_connections(MSpace,ListenFd) :-
             % Open the socket as a stream
             tcp_open_socket(RemoteFd, Stream),
             % Generate a unique symbol for the thread alias
-            nb_setval(self_space,MSpace),
+           (nb_setval(self_space,MSpace),
             % Handle the connection by processing incoming goals
-            ignore(handle_vspace_peer(Stream)),
+            ignore(handle_vspace_peer(Stream))),
             % Ensure the stream is closed when done
             catch(close(Stream),_,true)
             ),

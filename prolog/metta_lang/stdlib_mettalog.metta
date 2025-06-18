@@ -692,7 +692,7 @@ For example:
 (= (if-unify-or-empty $a $a) unified)
 (= (if-unify-or-empty $a $b) (empty))
 
-(iz cons-atom MinimalMeTTa)
+(iz cons-atom MeTTa)
 (@doc cons-atom
   (@desc "Constructs an expression using two arguments")
   (@params (
@@ -702,7 +702,7 @@ For example:
 (: cons-atom (-> Atom Expression Expression))
 ; AKA? (: cons (-> Atom Atom Atom))
 
-(iz decons-atom MinimalMeTTa)
+(iz decons-atom MeTTa)
 (@doc decons-atom
   (@desc "Works as a reverse to cons-atom function. It gets Expression as an input and returns it split into head and tail, e.g. (decons-atom (Cons X Nil)) -> (Cons (X Nil))")
   (@params (
@@ -1021,8 +1021,8 @@ For example:
   (@return "Template with substituted variable"))
 (: atom-subst (-> Atom Variable Atom Atom))
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(= (atom-subst $atom $var $templ)
-  (function (chain (eval (id $atom)) $var (return $templ))) )
+;(= (atom-subst $atom $var $templ)
+;  (function (chain (eval (id $atom)) $var (return $templ))) )
 
 (iz if-decons-expr MinimalMeTTaHelper)
 (@doc if-decons-expr
@@ -1036,10 +1036,9 @@ For example:
   (@return "Either template with head and tail replaced by values or default value"))
 (: if-decons-expr (-> Expression Variable Variable Atom Atom Atom))
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(= (if-decons-expr $atom $head $tail $then $else)
-  (if-decons $atom $head $tail $then $else))
+(= (if-decons-expr $atom $head $tail $then $else) (if-decons $atom $head $tail $then $else))
 (: if-decons (-> Expression Variable Variable Atom Atom Atom))
-(ALT= (if-decons-expr $atom $head $tail $then $else)
+(= (if-decons $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
     (return $else)
     (chain (decons-atom $atom) $list
@@ -1104,6 +1103,7 @@ For example:
 
 
 ; BEGIN - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
+/*
 (: (
 (: switch (-> %Undefined% Expression Atom))
 (= (switch $atom $cases)
@@ -1124,6 +1124,8 @@ For example:
     (chain (eval (switch $atom $tail)) $ret (return $ret)) )))
 
 ) Comment)  
+*/
+
 ; ENDOF - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
 
 
@@ -1212,7 +1214,7 @@ For example:
     (@param "First type")
     (@param "Second type")))
   (@return "True or False"))
-(= (match-type-or $folded $next $type)
+(ALT= (match-type-or $folded $next $type)
   (function
     (chain (eval (match-types $next $type True False)) $matched
       (chain (eval (or $folded $matched)) $or (return $or)) )))
@@ -1226,7 +1228,7 @@ For example:
     (@param "Filter predicate")))
   (@return "Filtered list"))
 (: filter-atom (-> Expression Variable Atom Expression))
-(= (filter-atom $list $var $filter)
+(ALT= (filter-atom $list $var $filter)
   (function (eval (if-decons-expr $list $head $tail
     (chain (eval (filter-atom $tail $var $filter)) $tail-filtered
       (chain (eval (atom-subst $head $var $filter)) $filter-expr
@@ -1274,7 +1276,7 @@ For example:
 
 (iz separate-errors MinimalMeTTaHelper)
 (: separate-errors (-> Expression Expression Expression))
-(= (separate-errors $succ-err $res)
+(ALT= (separate-errors $succ-err $res)
   (function (if-unify $succ-err ($suc $err)
     (if-unify $res ($a $_b)
       (eval (if-error $a
@@ -1284,7 +1286,7 @@ For example:
     (return $succ-err) )))
 
 (iz check-alternatives MinimalMeTTaHelper)
-(= (check-alternatives $atom)
+(ALT= (check-alternatives $atom)
   (function
     (chain (collapse-bind $atom) $collapsed
       ;(chain (eval (print-alternatives! $atom $collapsed)) $_
@@ -1296,7 +1298,7 @@ For example:
           (return (Error (check-alternatives $atom) "list of results was not filtered correctly")) )))))
 
 (iz interpret MeTTa)
-(= (interpret $atom $type $space)
+(ALT= (interpret $atom $type $space)
   (function (chain (eval (get-metatype $atom)) $meta
     (eval (if-equal $type Atom
       (return $atom)
@@ -1313,7 +1315,7 @@ For example:
         ))))))))))
 
 (iz interpret-expression MinimalMeTTaHelper)
-(= (interpret-expression $atom $type $space)
+(ALT= (interpret-expression $atom $type $space)
   (function (eval (if-decons $atom $op $args
     (chain (eval (get-type $op $space)) $op-type
       (chain (eval (is-function $op-type)) $is-func
@@ -1337,7 +1339,7 @@ For example:
     (return (Error $expr "Non-empty expression atom is expected")) ))))
 
 (iz interpret-args MinimalMeTTaHelper)
-(= (interpret-args $atom $args $arg-types $ret-type $space)
+(ALT= (interpret-args $atom $args $arg-types $ret-type $space)
   (function (if-unify $args ()
     (eval (if-decons $arg-types $actual-ret-type $type-tail
       (chain (eval (== () $type-tail)) $correct-type-len
@@ -1360,13 +1362,13 @@ For example:
       (return (Error (interpret-atom $atom $args $arg-types $space) "Non-empty expression atom is expected")) )))))
 
 (iz interpret-args-tail MinimalMeTTaHelper)
-(= (interpret-args-tail $atom $head $args-tail $args-tail-types $ret-type $space)
+(ALT= (interpret-args-tail $atom $head $args-tail $args-tail-types $ret-type $space)
   (function (chain (eval (interpret-args $atom $args-tail $args-tail-types $ret-type $space)) $reduced-tail
     (eval (return-on-error $reduced-tail
       (chain (cons-atom $head $reduced-tail) $ret (return $ret)) )))))
 
 (iz interpret-tuple MinimalMeTTaHelper)
-(= (interpret-tuple $atom $space)
+(ALT= (interpret-tuple $atom $space)
   (function (if-unify $atom ()
     (return $atom)
     (eval (if-decons $atom $head $tail
@@ -1378,7 +1380,7 @@ For example:
       (return (Error (interpret-tuple $atom $space) "Non-empty expression atom is expected as an argument")) )))))
 
 (iz metta-call MinimalMeTTaHelper)
-(= (metta-call $atom $type $space)
+(ALT= (metta-call $atom $type $space)
   (function (eval (if-error $atom (return $atom)
     (chain (eval $atom) $result
       (eval (if-equal $result NotReducible (return $atom)

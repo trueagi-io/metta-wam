@@ -831,10 +831,14 @@ cleanup_results(Tag) :-
 
 mc_unit(repl_x):- repl_x.
 
+
+can_open_console_x:- getenv('DISPLAY', _),
+    absolute_file_name(path(xterm), _XTerm, [access(execute)]).
+
 repl_x :-
     repl_x(_).
 
-repl_x(Title) :- can_open_console, !,
+repl_x(Title) :- can_open_console_x, !,
     thread_self(Me),
     thread_create(thread_run_repl_x(Me, Title),
                   _Id,
@@ -848,20 +852,70 @@ repl_x(Title) :- can_open_console, !,
     ->  fail
     ).
 repl_x(Title) :-
+    print_message(error, cannot_attach_console_x(Title)),
+    fail.
+
+
+thread_has_console_x :- current_prolog_flag(break_level, _), !.
+thread_has_console_x :- thread_self(Id), thread_has_console_x(Id), !.
+thread_has_console_x(main) :- !.
+thread_has_console_x(Id) :- thread_util:has_console(Id, _, _, _).
+
+console_title_x(Thread, Title) :-
+    current_prolog_flag(console_menu_version, qt), !, human_x_id(Thread, Id),
+    format(atom(Title), 'Thread ~w', [Id]).
+console_title_x(Thread, Title) :-
+    current_prolog_flag(system_thread_id, SysId), human_x_id(Thread, Id), format(atom(Title),
+    'MeTTa Thread ~w (~d) X-REPL', [Id, SysId]).
+
+human_x_id(Thread, Id) :- atom(Thread), !, Id=Thread.
+human_x_id(Thread, Id) :- thread_property(Th, alias(Id)), (Th==Thread; Thread==Id), !.
+human_x_id(Thread, Id) :- thread_property(Th, id(Id)), (Th==Thread; Thread==Id), !.
+human_x_id(Thread, Id) :- format(atom(Id),'~q',[Thread]), !.
+
+
+attach_console_x :- attach_console_x(_).
+
+attach_console_x(_) :- thread_has_console_x, !.
+attach_console_x(Title) :- can_open_console_x, !,
+    thread_self(Id),
+    (   var(Title)
+    ->  console_title_x(Id, Title)
+    ;   true
+    ),
+    thread_util:open_console(Title, In, Out, Err),
+    assert(thread_util:has_console(Id, In, Out, Err)),
+    set_stream(In, alias(user_input)),
+    set_stream(Out, alias(user_output)),
+    set_stream(Err, alias(user_error)),
+    set_stream(In, alias(current_input)),
+    set_stream(Out, alias(current_output)),
+    thread_util:enable_line_editing(In, Out, Err),
+    thread_at_exit(detach_console_x(Id)).
+attach_console_x(Title) :-
     print_message(error, cannot_attach_console(Title)),
     fail.
+
+detach_console_x(Id) :-
+    (   retract(thread_util:has_console(Id, In, Out, Err))
+    ->  thread_util:disable_line_editing(In, Out, Err),
+        close(In, [force(true)]),
+        close(Out, [force(true)]),
+        close(Err, [force(true)])
+    ;   true
+    ).
 
 
 thread_run_repl_x :-
     set_prolog_flag(query_debug_settings, debug(false, false)),
-    attach_console(_Title),
+    attach_console_x(_Title),
     print_message(banner, thread_welcome),
-    prolog.
+    repl.
 
 thread_run_repl_x(Creator, Title) :-
     set_prolog_flag(query_debug_settings, debug(false, false)),
     Error=error(Formal, _),
-    (   catch(attach_console(Title), Error, true)
+    (   catch(attach_console_x(Title), Error, true)
     ->  (   var(Formal)
         ->  thread_send_message(Creator, title(Title)),
             print_message(banner, thread_welcome),
