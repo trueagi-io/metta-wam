@@ -656,7 +656,7 @@ def py_call_w_args(callable_obj, *w_args):
             elif param.default is inspect.Parameter.empty:
                 raise TypeError(f"Missing required positional argument: '{param.name}'\n"
                                 f"{arg_info(callable_obj, w_args)}")
-       elif param.kind == param.VAR_POSITIONAL:
+        elif param.kind == param.VAR_POSITIONAL:
             while args and not isinstance(args[0], (dict, list, tuple)):
                 method_args.append(args.pop(0))
             break
