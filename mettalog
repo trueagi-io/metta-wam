@@ -1244,7 +1244,7 @@ save_checksums() {
   if [[ -z "$checksum_file" ]]; then
     checksum_file="$dir/lastbuilt.checksum"
   fi
-  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
+  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" -o -name "*.py" \) \
     -exec sha256sum "{}" + | sort > "$checksum_file"
   DEBUG "Checksums saved to $checksum_file"
 }

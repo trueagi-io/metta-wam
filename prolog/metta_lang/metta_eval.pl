@@ -1319,13 +1319,11 @@ pre_post_e20(eval_ne,pre).
 pre_post_e20(_,post).
 gen20(E20):-
      pre_post_e20(E20,Pre),
-     draw_line,draw_line,
-     fmt(E20+Pre),
-     draw_line,
+     in_cmt((draw_line,draw_line,fmt(E20+Pre))),
      forall(EVAL20=..[E20,Eq,RetType1,Depth,Self,Sig,TF],
       forall(clause(EVAL20,Body,Ref),
          ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(clause(EVAL20,Body,Ref),Pre,E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
-                  ppt(NewHead:-NewBody))))),draw_line.
+                  compiler_assertz_verbose(NewHead:-NewBody))))),in_cmt((draw_line)).
 
 
 
@@ -3738,7 +3736,7 @@ gen_m_head_impl(restAsList):-
       forall(clause(P,_Body),
       compiler_assertz_verbose(m_head_impl_va(F,Len,Pre,MC)))))).
 compiler_assertz_verbose(G):-
-   writeln(G),
+   writeq(G),nl,
    debug_info(always(compiler_assertz), compiler_assertz(G)),
    compiler_assertz(G).
 
