@@ -4360,8 +4360,9 @@ eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
             eval_defn_failure_guarded(Eq,RetType,Depth,Self,ParamTypes,X,Y)).
 
 
-%must_or_die(G):- call(G).
-must_or_die(G):- call(G)*->true;(trace,must(G)).
+must_or_die(G):- call(G).
+%must_or_die(G):-
+%call(G)*->true;(trace,must(G)).
 
 true_or_log_fail(Depth,Goal,LogFail):- (call(Goal)
           -> true ; ((if_trace(e,color_g_mesg('#713700',indentq2(Depth,failure(LogFail)))),!),!,fail)).
