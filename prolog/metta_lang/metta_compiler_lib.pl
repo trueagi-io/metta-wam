@@ -8,13 +8,17 @@
 
 decl_ddm(F,A):- multifile(F/A),dynamic(F/A),discontiguous(F/A).
 
-:- decl_ddm(mc_n1,4).
-:- decl_ddm(mc_n2,5).
 
 :- forall(between(1,10,N), decl_ddm(mc,N)).
 :- forall(between(1,10,N), decl_ddm(mi,N)).
 :- forall(between(1,10,N), decl_ddm(me,N)).
 :- forall(between(1,10,N), decl_ddm(mb,N)).
+:- forall(between(1,10,N), decl_ddm(mx,N)).
+:- forall(between(1,10,N), decl_ddm(ms,N)).
+
+:- forall(between(3,10,N), decl_ddm(mx_n,N)).
+:- forall(between(3,10,N), decl_ddm(mc_n,N)).
+:- forall(between(3,10,N), decl_ddm(ms_n,N)).
 
 non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaled_Type(NonEval),!.
 
@@ -445,25 +449,25 @@ case_list_to_if_list(Var, [[Pattern, Result] | Tail], Out, IfEvalFailed, EvalFai
 %%%%%%%%%%%%%%%%%%%%% arithmetic
 
 transpiler_predicate_store(builtin, '+', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-mc('+',A,B,R) :- integer(A),integer(B),!,plus(A,B,R).
-mc('+',A,B,R) :- number(A),number(B),!,R is A+B.
+mx('+',A,B,R) :- integer(A),integer(B),!,plus(A,B,R).
+mx('+',A,B,R) :- number(A),number(B),!,R is A+B.
 
 
 transpiler_predicate_store(builtin, '-', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-mc('-',A,B,R) :- integer(A),integer(B),!,plus(B,R,A).
-mc('-',A,B,R) :- number(A),number(B),!,R is A-B.
+mx('-',A,B,R) :- integer(A),integer(B),!,plus(B,R,A).
+mx('-',A,B,R) :- number(A),number(B),!,R is A-B.
 
 
 transpiler_predicate_store(builtin, '*', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-mc('*',A,B,R) :- number(A),number(B),!,R is A*B.
+mx('*',A,B,R) :- number(A),number(B),!,R is A*B.
 
 
 transpiler_predicate_store(builtin, '/', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-mc('/',A,B,R) :- number(A),number(B),!,R is A/B.
+mx('/',A,B,R) :- number(A),number(B),!,R is A/B.
 
 
 transpiler_predicate_store(builtin, '%', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[number])).
-mc('%',A,B,R) :- number(A),number(B),!,R is A mod B.
+mx('%',A,B,R) :- number(A),number(B),!,R is A mod B.
 
 
 % difference between type_should_be and should_be is that type_should_be will fail if the value is a variable, while should_be will not.
@@ -528,25 +532,25 @@ mc(not,_,'True').
 
 % not sure about the signature for this one
 transpiler_predicate_store(builtin, '==', [2], '@doc', '@doc', [x(doeval,eager,[]), x(doeval,eager,[])], x(doeval,eager,[boolean])).
-%mc('==',A,B,TF):- eval_40(['==',A,B],TF).
-mc('==',A,B,TF) :- var(A),!,as_tf(A==B,TF).
-mc('==',A,B,TF) :- as_tf(A=@=B,TF).
+%mx('==',A,B,TF):- eval_40(['==',A,B],TF).
+mx('==',A,B,TF) :- var(A),!,as_tf(A==B,TF).
+mx('==',A,B,TF) :- as_tf(A=@=B,TF).
 
 transpiler_predicate_store(builtin, '<', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-mc('<',A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
-%mc('<',A,B,['<',A,B]).
+mx('<',A,B,R) :- number(A),number(B),!,(A<B -> R='True' ; R='False').
+%mx('<',A,B,['<',A,B]).
 
 transpiler_predicate_store(builtin, '>', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-mc('>',A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
-%mc('>',A,B,['>',A,B]).
+mx('>',A,B,R) :- number(A),number(B),!,(A>B -> R='True' ; R='False').
+%mx('>',A,B,['>',A,B]).
 
 transpiler_predicate_store(builtin, '>=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-mc('>=',A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
-%mc('>=',A,B,['>=',A,B]).
+mx('>=',A,B,R) :- number(A),number(B),!,(A>=B -> R='True' ; R='False').
+%mx('>=',A,B,['>=',A,B]).
 
 transpiler_predicate_store(builtin, '<=', [2], '@doc', '@doc', [x(doeval,eager,[number]), x(doeval,eager,[number])], x(doeval,eager,[boolean])).
-mc('<=',A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
-mc('<=',A,B,['<=',A,B]).
+mx('<=',A,B,R) :- number(A),number(B),!,(A=<B -> R='True' ; R='False'). % note that Prolog has a different syntax '=<'
+mx('<=',A,B,['<=',A,B]).
 
 %%%%%%%%%%%%%%%%%%%%% lists
 
@@ -714,20 +718,20 @@ mc('unify',Space,Pattern,Psuccess,PFailure,RetVal) :-
 
 %%%%%%%%%%%%%%%%%%%%% variable arity functions
 
-transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doeval,eager,[]), x(doeval,eager,[])).
-'mc_n_0__progn'(List,Ret) :- append(_,[Ret],List).
+%transpiler_predicate_nary_store(builtin, progn, 0, [], 'Atom', 'Atom', [], x(doeval,eager,[]), x(doeval,eager,[])).
+%mx_n0(progn,List,Ret) :-
 
 transpiler_predicate_nary_store(builtin, 'call-fn!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-mc_n1('call-fn!',Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
+mc_n(1,'call-fn!',Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
 
 transpiler_predicate_nary_store(builtin, 'call-fn', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
-mc_n1('call-fn',Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
+mx_n(1,'call-fn',Fn,List,Ret) :- append(List,[Ret],List2),apply(Fn,List2).
 
 transpiler_predicate_nary_store(builtin, 'call-p!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[bool])).
-mc_n1('call-p!',Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
+mc_n(1,'call-p!',Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 transpiler_predicate_nary_store(builtin, 'call-p', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[bool])).
-mc_n1('call-p',Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
+mx_n(1,'call-p',Fn,List,Ret) :- (apply(Fn,List)->Ret='True';Ret='False').
 
 inline_comp(apply(Fn,[]), Fn).
 inline_comp(append(X,[],Y), true):- X=Y.
@@ -748,7 +752,7 @@ transpiler_predicate_store(builtin, 'get-metatype', [1], '@doc', '@doc', [x(noev
 mc('get-metatype',X,Y) :- 'get-metatype'(X,Y). % use the code in the interpreter for now
 
 transpiler_predicate_store(builtin, 'println!', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-mc('println!',X,[]) :- println_impl(X).
+mx('println!',X,[]) :- println_impl(X).
 
 transpiler_predicate_store(builtin, 'format-args', [2], '@doc', '@doc', [x(doeval,eager,[]),x(noeval,eager,[])], x(doeval,eager,[])).
 mc('format-args',EFormat,EArgs,Str) :-
@@ -756,7 +760,7 @@ mc('format-args',EFormat,EArgs,Str) :-
     user_io(with_output_to_str( Str, format_nth_args(FormatChars, 0, EArgs))).
 
 transpiler_predicate_store(builtin, 'stringToChars', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
-mc('stringToChars',S,C) :- string_chars(S,C).
+mx('stringToChars',S,C) :- string_chars(S,C).
 
 transpiler_predicate_store(builtin, 'repr', [1], '@doc', '@doc', [x(doeval,eager,[])], x(doeval,eager,[])).
 mc('repr',A,S) :- with_output_to_str(S, write_src_woi(A)).
@@ -838,12 +842,12 @@ is_rng_or_main(Value,PyObj):- py_is_object(Value),!,Value=PyObj.
 is_rng_or_main(_,'random').
 
 
-mc('random-int',RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-int',RNGId, Min, Max]), N).
-mc('random-int',RNGId, Min, Max, N):-
+mx('random-int',RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-int',RNGId, Min, Max]), N).
+mx('random-int',RNGId, Min, Max, N):-
    use_python_rng(RNGId,RNG),!,
    MaxM1 is Max-1,
    py_call(RNG:'randint'(Min, MaxM1), N).
-mc('random-int',RNGId, Min, Max, N):-
+mx('random-int',RNGId, Min, Max, N):-
     maplist(must_be(integer), [Min, Max]),
     MaxM1 is Max -1,
     with_random_generator(RNGId, random_between(Min, MaxM1, N) ).
@@ -851,11 +855,11 @@ mc('random-int',RNGId, Min, Max, N):-
 
 transpiler_predicate_store(builtin, 'random-float', [3], '@doc', '@doc', [x(doeval, eager, []), x(doeval, eager, []), x(doeval, eager, [])], x(doeval, eager, [])).
 % !(let $rg (new-random-generator 1) ((random-float $rg 1 7) (random-float $rg 1 7)))
-mc('random-float',RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-float',RNGId, Min, Max]), N).
-mc('random-float',RNGId, Min, Max, N):-
+mx('random-float',RNGId, Min, Max, N):- use_rust_random,!,rust_metta_run(exec(['random-float',RNGId, Min, Max]), N).
+mx('random-float',RNGId, Min, Max, N):-
     use_python_rng(RNGId,RNG),!,
     py_call(RNG:'uniform'(Min, Max), N).
-mc('random-float',RNGId, Min, Max, N):-
+mx('random-float',RNGId, Min, Max, N):-
     with_random_generator(RNGId, random_float_between(Min, Max, N)).
 
 
@@ -868,13 +872,13 @@ transpiler_predicate_store(builtin, 'set-random-seed', [2], '@doc', '@doc', [x(d
 
 */
 
-mc('set-random-seed',RNGId, Seed, RetVal):- use_rust_random,!,rust_metta_run(exec(['set-random-seed',RNGId, Seed]), RetVal).
+mx('set-random-seed',RNGId, Seed, RetVal):- use_rust_random,!,rust_metta_run(exec(['set-random-seed',RNGId, Seed]), RetVal).
 
-mc('set-random-seed',RNGId, Seed, RetVal):-
+mx('set-random-seed',RNGId, Seed, RetVal):-
     use_python_rng(RNGId,RNG),!,
     py_call(RNG:'seed'(Seed), _),
     RetVal = [].
-mc('set-random-seed',RNGId, Seed, RetVal):-
+mx('set-random-seed',RNGId, Seed, RetVal):-
      with_random_generator(RNGId, set_random(seed(Seed))),
      RetVal = [].
 
@@ -882,14 +886,14 @@ mc('set-random-seed',RNGId, Seed, RetVal):-
 transpiler_predicate_store(builtin, 'new-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 
 % !(new-random-generator 66)
-mc('new-random-generator',Seed, RNGId) :- use_rust_random,!,
+mx('new-random-generator',Seed, RNGId) :- use_rust_random,!,
         gensym('&rng_', RNGId),rust_metta_run(exec(['bind!',RNGId,['new-random-generator', Seed]]), _).
-mc('new-random-generator',Seed, RNG) :- use_py_random,!,
+mx('new-random-generator',Seed, RNG) :- use_py_random,!,
     py_call('random':'Random'(Seed), PyObj),
     gensym('&rng_', RNGId),
     RNG = rng(RNGId, PyObj),
     update_rng(RNG, PyObj).
-mc('new-random-generator',Seed, RNG) :-
+mx('new-random-generator',Seed, RNG) :-
     S = getrand(Old),
     G = (set_random(seed(Seed)),
          getrand(New)
@@ -907,12 +911,12 @@ mc('new-random-generator',Seed, RNG) :-
 transpiler_predicate_store(builtin, 'reset-random-generator', [1], '@doc', '@doc', [x(doeval, eager, [])], x(doeval, eager, [])).
 % !(reset-random-generator &rng_1) -> &rng_1
 % Not tested.
-mc('reset-random-generator',RNGId, RNG):-use_rust_random,!,rust_metta_run(exec(['reset-random-generator', RNGId]), RNG).
-mc('reset-random-generator',RNGId, RNGId):-
+mx('reset-random-generator',RNGId, RNG):-use_rust_random,!,rust_metta_run(exec(['reset-random-generator', RNGId]), RNG).
+mx('reset-random-generator',RNGId, RNGId):-
     use_py_random,!,py_call('random':'Random'(), PyObj),
     RNG = rng(RNGId, PyObj),
     update_rng(RNG, _).
-mc('reset-random-generator',RNGId, RNGId):-
+mx('reset-random-generator',RNGId, RNGId):-
    %getrnd(NewState), % Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())
    % arg(2, RNGId, NewState) % maybe was previous state?
    update_rng(RNGId, _). % unbound RNG defaults to systems RNG until the first time it is used after reset
@@ -983,9 +987,6 @@ mc('transpiler-listing',Sorted) :-
   predsort(listing_order,Unsorted,Sorted).
 
 
-
-
-
 transpiler_predicate_store(builtin, 'metta-equals', [2], '@doc', '@doc', [x(noeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[boolean])).
 mc('metta-equals',A,B,TF):- as_tf(A=@=B,TF).
 
@@ -996,12 +997,19 @@ transpiler_predicate_store(builtin, 'decons-ht', [3], '@doc', '@doc', [x(noeval,
 mc('decons-ht',E,H,T,TF):- check_type_error( \+ iz_conz(E), 'decons-ht'(E,H,T)),  as_tf(unify_with_occurs_check(E,[H|T]),TF).
 
 transpiler_predicate_nary_store(builtin, 'py-atom-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
-mc_n1('py-atom-call',SymRef,Args,Ret) :- mc_n1('py-atom-call!',SymRef,Args,Ret).
+mx_n(1,'py-atom-call',SymRef,Args,Ret) :- mc_n(1,'py-atom-call!',SymRef,Args,Ret).
 
 transpiler_predicate_nary_store(builtin, 'py-atom-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-mc_n1('py-atom-call!',SymRef,Args,Res) :-
+mc_n(1,'py-atom-call!',SymRef,Args,Res) :-
     py_call_method_and_args_sig(_RetType,[],SymRef,Args,Res).
 
+transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
+mx_n(1,'py-dot-call',SymRef,Args,Ret) :- mc_n(1,'py-dot-call!',SymRef,Args,Ret).
+
+
+transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+mc_n(1,'py-dot-call!',SymRef,Args,Ret) :-
+    eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
 
 %transpiler_predicate_store(builtin, 'py-atom', [1], ['Atom'], 'Atom', [x(doeval,eager,[])], x(doeval,eager,[])).
 %mc('py-atom',SymRef,Res) :-
@@ -1009,7 +1017,7 @@ mc_n1('py-atom-call!',SymRef,Args,Res) :-
 
 
 transpiler_predicate_store(builtin, 'eval-string', [1], ['String'], 'Atom', [x(doeval,eager,[])], x(doeval,eager,[])).
-mc('eval-string',String,Res) :-
+mx('eval-string',String,Res) :-
     eval_string(String,Res).
 
 transpiler_predicate_store(builtin,'eval-in-only', [1], ['Symbol','Atom'], 'Atom', [x(doeval,eager,[]), x(noeval,eager,[])], x(doeval,eager,[])).
@@ -1017,20 +1025,13 @@ mc('eval-in-only',Where,Eval,Res) :-
     eval_in_only(Where,Eval,Res).
 
 transpiler_predicate_nary_store(builtin, 'py-atom', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-mc_n1('py-atom',SymRef,Specialize,ResO) :-
+mx_n(1,'py-atom',SymRef,Specialize,ResO) :-
    py_atom(SymRef,Res), specialize_res(Res,Specialize,ResO).
 
-transpiler_predicate_nary_store(builtin, 'py-dot', 2, ['Atom','Atom'], 'Atom', 'Atom', [x(doeval,eager,[]),x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-mc_n2('py-dot',Arg1,Arg2,Specialize,ResO) :-
+%transpiler_predicate_nary_store(builtin, 'py-dot', 2, ['Atom','Atom'], 'Atom', 'Atom', [x(doeval,eager,[]),x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
+mx_n(2,'py-dot',Arg1,Arg2,Specialize,ResO) :-
    make_py_dot(Arg1,Arg2,Res),specialize_res(Res,Specialize,ResO).
 
-
-transpiler_predicate_nary_store(builtin, 'py-dot-call', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(doeval,eager,[]), x(doeval,eager,[])).
-mc_n1('py-dot-call',SymRef,Args,Ret) :- mc_n1('py-dot-call!',SymRef,Args,Ret).
-
-transpiler_predicate_nary_store(builtin, 'py-dot-call!', 1, ['Atom'], 'Atom', 'Atom', [x(doeval,eager,[])], x(noeval,eager,[]), x(doeval,eager,[])).
-mc_n1('py-dot-call!',SymRef,Args,Ret) :-
-    eval_in_only(interp,[['py-dot'|SymRef]|Args],Ret).
 
 setup_library_calls:-!.
 setup_library_calls:-

@@ -302,8 +302,11 @@ async_eval(Eval, Result):-
 token_ref_result(Token, Ref, Result):-
    freeze(Result, (await(Token), Ref=Result)).
 
+materialize(_):- !.
+/*
 materialize(Var):- attvar(Var),!,(frozen(Var,Body)->call(Body);true).
 materialize(Val):- term_attvars(Val,List),!,maplist(materialize,List).
+*/
 
 %!  async_token(+Goal, -Token, +Options) is det.
 %
@@ -650,8 +653,12 @@ maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], G
 %   @arg Res The result.
 %
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
+ \+ option_value(threading,false),!,
+ with_metta_ctx(Eq, RetType, Depth, MSpace, metta_hyperpose_v0(eval, InList, Res)).
+
+metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
     % This part of the code is currently skipped with fail.
-    fail,
+    % fail,
     \+ option_value(threading,false),
     % Check if InList has two or more elements.
     InList = [_,_|_],!,

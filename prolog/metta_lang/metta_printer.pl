@@ -890,7 +890,8 @@ w_color(Color,Goal):-
            with_output_to(user_error,ansi_format([fg(Color)], '~w', [Text]))))).
 
 materialize_vns(Term,NewTerm):- materialize_vns(get_vnamed,Term,NewTerm).
-materialize_vns(P2,Term,NewTerm):- term_attvars(Term,List), materialize_vnl(P2,List,Term,MidTerm),!,term_variables(MidTerm,MList),materialize_vnl(P2,MList,MidTerm,NewTerm),!.
+materialize_vns(P2,Term,NewTerm):- term_attvars(Term,List), materialize_vnl(P2,List,Term,MidTerm),!,
+   term_variables(MidTerm,MList),materialize_vnl(P2,MList,MidTerm,NewTerm),!.
 materialize_vnl(_P2,[],IO,IO):-!.
 materialize_vnl(P2,[Var|List],Term,NewTerm):- call(P2,Var,VNamed), subst001(Term,Var,VNamed,MidTerm),!,materialize_vnl(P2,List,MidTerm,NewTerm).
 materialize_vnl(P2,[_|List],Term,NewTerm):- materialize_vnl(P2,List,Term,NewTerm).
