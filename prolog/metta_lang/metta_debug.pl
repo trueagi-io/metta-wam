@@ -923,11 +923,21 @@ unify_with_occurs_warning_real(H,HH):-
    woct(H=HH).
 
 
+goal_color(Goal,  InfoColor):- compound(Goal),arg(_,Goal,Arg),compound(Arg),!,goal_color(Arg,  InfoColor).
+goal_color(Goal,  InfoColor):- mesg_color(Goal,  InfoColor).
+
+in_color(Goal):-
+  goal_color(Goal,  InfoColor),!,
+  ansicall_no_nl(InfoColor,Goal),!.
+
+ansicall_no_nl(InfoColor,Goal):-
+  ansicall(InfoColor,Goal).
+
 ppt_red(G):- !, ansicall(red,write_src_wi(G)).
 ppt_red(G):- ppt(red,G).
 
 ppt(Color,G):- \+ simple_compound_a1(G), !, ansicall(Color,write_src_wi(G)),!.
-ppt(Color,G):- ansicall(Color,ppt(G)),!.
+ppt(Color,G):- ansicall(Color,ppt((G))),!.
 
 maybe_rethrow(Error):- woct((show_error(Error),throw(Error))).
 show_error(Error):- wdmsg(Error),bt,wdmsg(Error),trace.
@@ -1125,8 +1135,8 @@ debug_info_now(Topic, Info):-
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
  (should_comment(Topic, Info) ->
-    format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
-    format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
+    format(X,'/* ~@:TTTTTTTTTT ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
+    format(X,'% ~@:ZZZZZZZ~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
   )))),
   nb_setval(last_debug_info_written,debug_info(Topic, Info)).
 
@@ -1193,9 +1203,10 @@ debug_pp_now(Info):- debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_tree(Info),!.
 
 print_tree_safe1(PTS):- catch(wots(S,print_tree_with_final(PTS,".")),_,fail),writeln(S),!.
-print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),write(S),writeln("."),!.
+print_tree_safe1(PTS):- catch(wots(S,print_term(ss(PTS),[])),_,fail),write(S),writeln("."),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
+ppt0(PTS):- compound(PTS), PTS=in_cmt(Cmt),!,in_cmt(ppt0(Cmt)),!.
 ppt0(PTS):- asserta((user:portray(X) :- !, metta_portray(X)),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
 %ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),throw(E),fail)),!.
 %pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
@@ -1208,7 +1219,7 @@ metta_portray(_):- !, fail.
 
 ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
-ppt(O):- format('~N'),ppt0(O),format('~N').
+ppt(O):- format('~N'),ppt0((O)),format('~N').
 %ppt0(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.

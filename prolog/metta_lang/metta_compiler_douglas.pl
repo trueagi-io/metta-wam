@@ -1245,10 +1245,13 @@ must_optimize_body(A,B,CC):- once(optimize_body(A,B,C)), C \=@= B,!, must_optimi
 must_optimize_body(_,B,C):- B =C.
 
 optimize_body(_HB,Body,BodyNew):- is_ftVar(Body),!,Body=BodyNew.
+optimize_body(_HB,Body,BodyNew):- \+ compound(Body),!,Body=BodyNew.
+
 %optimize_body( HB,eval_args(VT,R),eval_args(VT,R)):-!, must_optimize_body(HB,VT,VTT).
 optimize_body( HB,with_space(V,T),with_space(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,limit(V,T),limit(V,TT)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,findall(V,T,R),findall(V,TT,R)):-!, must_optimize_body(HB,T,TT).
+optimize_body( HB,findall_ne(V,T,R),findall_ne(V,TT,R)):-!, must_optimize_body(HB,T,TT).
 optimize_body( HB,loonit_assert_source_tf(V,T,R3,R4), loonit_assert_source_tf(V,TT,R3,R4)):-!,
   must_optimize_body(HB,T,TT).
 
@@ -1260,7 +1263,16 @@ optimize_body( HB,(B1->B2),(BN1*->BN2)):-!, must_optimize_body(HB,B1,BN1), optim
 optimize_body( HB,(B1;B2),(BN1;BN2)):-!, optimize_body(HB,B1,BN1), optimize_body(HB,B2,BN2).
 % TODO FIXME optimize_body( HB,(B1,B2),(BN1)):- optimize_conjuncts(HB,(B1,B2),BN1).
 %optimize_body(_HB,==(Var, C), Var=C):- self_eval(C),!.
+optimize_body(Head,(B1,B2),(BN1)):- lexical_true(B2),!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B2,B1),(BN1)):- lexical_true(B2),!, optimize_body(Head,B1,BN1).
+optimize_body(Head,(B1,B2,B3),(BN1)):- lexical_true(B2),!,optimize_body(Head,(B1,B3),(BN1)).
 optimize_body( HB,x_assign(A,B),R):- optimize_x_assign_1(HB,A,B,R),!.
+
+optimize_body(FL,Converted,Optimized):-
+   compound_name_arguments(Converted,F,Args),
+   maplist(optimize_body([F|FL]),Args,OArgs),
+   compound_name_arguments(Optimized,F,OArgs), !.
+
 %optimize_body(_HB,x_assign(A,B),x_assign(AA,B)):- p2s(A,AA),!.
 optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 
@@ -1268,8 +1280,6 @@ optimize_body(_HB,Body,BodyNew):- Body=BodyNew.
 optimize_body(_Head,Body,BodyNew):- var(Body),!,Body=BodyNew.
 optimize_body(Head,(B1*->B2;B3),(BN1*->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
 optimize_body(Head,(B1->B2;B3),(BN1->BN2;BN3)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2), optimize_body(Head,B3,BN3).
-optimize_body(Head,(B1,B2),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
-optimize_body(Head,(B2,B1),(BN1)):- B2==true,!, optimize_body(Head,B1,BN1).
 optimize_body(Head,(B1,B2),(BN1,BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 optimize_body(Head,(B1:-B2),(BN1:-BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
 optimize_body(Head,(B1;B2),(BN1;BN2)):-!, optimize_body(Head,B1,BN1), optimize_body(Head,B2,BN2).
@@ -1422,12 +1432,12 @@ ast_to_prolog_aux(Caller,DontStub,(H,T),(HH,TT)) :- ast_to_prolog_aux(Caller,Don
 ast_to_prolog_aux(Caller,DontStub,do_metta_runtime(T,G),do_metta_runtime(T,GGG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG),combine_code(GG,GGG).
 ast_to_prolog_aux(Caller,DontStub,loonit_assert_source_tf(T,G),loonit_assert_source_tf(T,GG)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
 ast_to_prolog_aux(Caller,DontStub,findall(T,G,L),findall(T,GG,L)) :- !, ast_to_prolog_aux(Caller,DontStub,G,GG).
-ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):- 
-   \+ is_list(FArgs), 
+ast_to_prolog_aux(Caller,DontStub,FArgs,NewFArgs):-
+   \+ is_list(FArgs),
    compound(FArgs),!,
    compound_name_arguments(FArgs, Name, Args),
    maplist(ast_to_prolog_aux(Caller,DontStub),Args,NewArgs),
-   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.  
+   compound_name_arguments(NewCompound, Name, NewArgs),NewFArgs=NewCompound.
 
 
 %ast_to_prolog_aux(Caller,DontStub,[H],HH) :- ast_to_prolog_aux(Caller,DontStub,H,HH).
@@ -1778,7 +1788,7 @@ f2p(HeadIs, LazyVars, list(Converted), _ResultLazy, Convert, Codes) :- %HeadIs\=
    is_list(Convert),!,
    length(Convert, N),
    % create an eval-args list. TODO FIXME revisit this after working out how lists handle evaluation
-   % such as maplist(=(ResultLazy), EvalArgs), 
+   % such as maplist(=(ResultLazy), EvalArgs),
    length(EvalArgs, N),
    maplist(=(eager), EvalArgs),
    maplist(f2p_skip_atom(HeadIs, LazyVars),Converted,EvalArgs,Convert,Allcodes),

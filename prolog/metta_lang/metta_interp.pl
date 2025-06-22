@@ -3980,7 +3980,8 @@ add_assertion_now(Self,Preds):-
 %     % Process a load operation with hooks:
 %     ?- load_hook(my_file, Hooked).
 
-%load_hook(_Load,_Hooked):- !.
+load_hook(_Load,_Hooked):- !.
+
 load_hook(Load,Hooked):-
   notrace(ignore(catch( ignore((( \+ ((forall(load_hook0(Load,Hooked),true)))))), _, true))),!.
 
@@ -4404,6 +4405,9 @@ tf_to_trace(X,X).
 % multiple files.
 :- dynamic(metta_function_asserted/3).
 :- multifile(metta_function_asserted/3).
+:- dynamic(metta_type_info/3).
+:- multifile(metta_type_info/3).
+
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
 :- dynamic(metta_function_asserted/3).
@@ -4872,7 +4876,7 @@ metta_eq_def(Eq, KB, H, B) :-
 %   @arg B  The body of the definition.
 metta_defn(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    metta_eq_def('=', KB, H, B).
+    metta_function_asserted(KB, H, B).
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -4886,7 +4890,7 @@ metta_defn(KB, H, B) :-
 % metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB, H, B) :-
     % Use `:` to associate the head with a type in the given knowledge base.
-    metta_eq_def(':', KB, H, B).
+    metta_type_info(KB, H, B).
 % metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 
 % typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -5919,7 +5923,7 @@ into_simple_op(Load, [Op | O], op(Load, Op, S)) :-
 %     Result = as_tf(foo, TF),
 %     Vars = [].
 %
-call_for_term_variables(TermV, catch_red(show_failure(TermR)), NewNamedVarsList, X) :-
+call_for_term_variables(TermV, catch_red((TermR)), NewNamedVarsList, X) :-
     % Substitute variables in the term, producing a processed term and an initial named variable list.
     subst_vars(TermV, Term, NamedVarsList),
     % Debugging output: Show substitutions and variable analysis.

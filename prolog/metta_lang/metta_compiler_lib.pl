@@ -1033,17 +1033,19 @@ mx_n(2,'py-dot',Arg1,Arg2,Specialize,ResO) :-
    make_py_dot(Arg1,Arg2,Res),specialize_res(Res,Specialize,ResO).
 
 
-setup_library_calls:-!.
+
 setup_library_calls:-
- locally(nb_setval(debug_context, stdlib),
-   user_err(forall(
+ locally(nb_setval(debug_context, stdlib), user_err(forall(setup_inits,true))).
+
+setup_inits :-
+  forall(
       transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,
             MettaTypeResult,InternalTypeArgs,InternalTypeResult),
         locally(nb_setval(compiler_context, Source),
            setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
-            MettaTypeResult,InternalTypeArgs,InternalTypeResult))))).
+            MettaTypeResult,InternalTypeArgs,InternalTypeResult))).
 
-
+setup_inits :- gen20,gen30.
 %:- initialization(setup_library_calls,program).
 
 this_is_in_compiler_lib.
@@ -1093,12 +1095,14 @@ metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
 
 with_ss_unify(Inp,Goal):-
     term_variables(Inp,Vars),copy_term(Inp+Vars,InpC+Copy),ss_freeze_vars(Vars,Copy),
-    call(Goal),Inp=@=InpC,
+    call(Goal),%Inp=@=InpC,
     ss_unfreeze_vars(Vars,Copy).
 
 ss_freeze_var(Var,Copy):- put_attr(Var,cant_bind,Copy).
 ss_freeze_vars(Vars,Copy):- maplist(ss_freeze_var,Vars,Copy).
-cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),Copy=@=NewValue.
+cant_bind:attr_unify_hook(Copy,NewValue):- NewValue='$VAR'(_),!.
+cant_bind:attr_unify_hook(Copy,NewValue):- var(NewValue),!.
+cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),!,Copy=@=NewValue.
 ss_unfreeze_var(Var,_):- del_attr(Var,cant_bind),!.
 %ss_unfreeze_var(Var,Copy):- get_attr(Var,cant_bind,Now),Copy==Now,del_attr(Var,cant_bind),Var=@=Copy.
 ss_unfreeze_vars(Vars,Copy):- maplist(ss_unfreeze_var,Vars,Copy).
