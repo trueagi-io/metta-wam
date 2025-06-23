@@ -239,7 +239,6 @@ repl2 :-
     if_t(option_value(repl,disable),throw('$aborted')),
     % Load the REPL history and clean it up if necessary.
     ignore(catch(load_and_trim_history,_,true)),
-
     % Begin an infinite loop using repeat to keep REPL active.
     repeat,
     % Reset internal caches for better performance.
@@ -310,13 +309,15 @@ metta_prompt(G,S):- once(nb_current('$metta_prompt',G);prompt(G,G)),nb_setval('$
 %     ?- repl4.
 %     metta>
 %
-repl4 :-
+repl4 :- quietly(repl5).
+repl5 :-
     % Reset the evaluation number to ensure expressions are counted properly.
     notrace((reset_eval_num,
     % Write the result of the previous evaluation (if any) to the output.
     write_answer_output,
     % The following command to reset terminal settings is commented out for now.
     % ignore(shell('stty sane ; stty echo')),
+    set_option_value('had_interaction', true),
     % Read the next expression from the REPL input.
     catch(repl_read(Expr),stream_error(_,E),(writeln(E),throw(restart_reading))),
     % Check if the input is either `end_of_file` or empty on Windows; if so, throw `end_of_input`.

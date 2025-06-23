@@ -7000,14 +7000,12 @@ do_loon_prev :-
 %     % Check if interaction is needed:
 %     ?- need_interaction.
 %
+need_interaction :- option_value('had_interaction', true), !, fail. % Check if the `had_interaction` option is not set to true.
+need_interaction :- option_value('need_interaction', true), !.
+need_interaction :- (is_converting ; is_compiling ; is_pyswip),!,fail. % Ensure the system is not converting, compiling, or using `pyswip`.
+need_interaction :- option_value('toplevel_metta_file', true), !, fail. % Ensure no Metta files are currently loaded.
+need_interaction :- option_value('repl', true), !.
 need_interaction :-
-    % Check if the `had_interaction` option is not set to true.
-    \+ option_value('had_interaction', true),
-    % Ensure the system is not converting, compiling, or using `pyswip`.
-    \+ is_converting, \+ is_compiling, \+ is_pyswip, !,
-    % Check if both `prolog` and `repl` options are false.
-    option_value('prolog', false),
-    option_value('repl', false),
     % Ensure no Metta files are currently loaded.
     \+ metta_file(_Self, _Filename, _Directory).
 
@@ -7041,6 +7039,10 @@ pre_halt1 :- % Generate a `loonit_report` and fail.
 pre_halt2 :-
     % Skip halting if the system is compiling.
     is_compiling, !, fail.
+
+pre_halt2:-
+    \+ need_interaction, !, fail.
+
 pre_halt2 :-
     % If the `prolog` option is true, start Prolog and retry `pre_halt2`.
     option_value('prolog', true), !,
@@ -7078,6 +7080,9 @@ pre_halt2 :-
 maybe_halt(_) :-
     % Perform preliminary halting checks (`pre_halt1`) and fail.
     once(pre_halt1), fail.
+maybe_halt(_) :-
+    % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
+    current_prolog_flag(mettalog_rt, true), !.
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
     option_value('repl', false), \+ current_prolog_flag(mettalog_rt, true), !, halt(Seven).
@@ -7090,9 +7095,6 @@ maybe_halt(_) :-
 maybe_halt(Seven) :-
     % Log the halting attempt and fail.
     debug_info(main,not_compatio(fbugio(maybe_halt(Seven)))), fail.
-maybe_halt(_) :-
-    % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
-    current_prolog_flag(mettalog_rt, true), !.
 maybe_halt(H) :-
     % If no other conditions apply, halt with the specified exit code.
     halt(H).
