@@ -1736,6 +1736,7 @@ is_non_eval_kind(Var) :-
 is_non_eval_kind('Atom').
 is_non_eval_kind('Expression').
 is_non_eval_kind('LazyBool').
+is_non_eval_kind('Variable').
 is_non_eval_kind(Type):- type_is_type(Type,'NonEval').
 % is_non_eval_kind('Variable').
 is_non_eval_kind(Type) :- fail,

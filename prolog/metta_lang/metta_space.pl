@@ -1604,13 +1604,14 @@ merge_named(N, V, [N | VarNames], [V | Vars]) :-
 call_metta(KB, Query, _Vars) :-
     % Execute the query directly if it matches an asserted atom.
     metta_atom(KB, Query), nocut.
+/*
 call_metta(_KB, Query, _Vars) :-
     % Convert the query to a PySWIP-compatible call.
     metta_to_pyswip([], Query, Call), !,
     % Execute the PySWIP call.
     %print(user:Call), nl,  % (Commented-out code left unchanged)
     user:call(Call).
-
+*/
 %!  metta_to_pyswip(+PS, +Query, -Call) is det.
 %
 %   Converts a query into a PySWIP-compatible call.
