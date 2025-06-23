@@ -311,7 +311,7 @@ metta_prompt(G,S):- once(nb_current('$metta_prompt',G);prompt(G,G)),nb_setval('$
 %     metta>
 %
 repl4 :- quietly(repl5).
-repl4 :-
+repl5 :-
     % Reset the evaluation number to ensure expressions are counted properly.
     notrace((reset_eval_num,
     % Write the result of the previous evaluation (if any) to the output.

@@ -259,9 +259,9 @@ end_of_file.
 
 
 /*
-    really_compile(KB,F,Len)==>
-      ((metta_function_asserted(KB,[F|Args],BodyFn)/compile_metta_defn(KB,F,Len,Args,BodyFn,Clause))
-        ==> (compiled_clauses(KB,F,Clause))).
+    really_compile(KB,Op,Len)==>
+      ((metta_function_asserted(KB,[Op|Args],BodyFn)/compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause))
+        ==> (compiled_clauses(KB,Op,Clause))).
 */
 
 

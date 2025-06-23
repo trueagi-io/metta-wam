@@ -72,12 +72,33 @@ o_woc(G):- call(G).
 % o_woc(G):- woc(G).
 
 :- dynamic('$metta_setup':on_init_metta/1).
+:- multifile('$metta_setup':on_init_metta/1).
+
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
 % only on main thread
 do_metta_setup:- thread_self(Self), Self\==main,!.
-do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
-                        ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),do_metta_setup(Goal)).
+
+:- multifile(setup_inits/0).
+:- dynamic(setup_inits/0).
+setup_inits :- do_metta_setup.
+
+do_metta_setup(Goal):-
+   debug_info(main, do_metta_setup(Goal)),
+   profile_warn(0.33,ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+
+profile_warn(Goal):-
+  profile_warn(0.33, Goal).
+
+profile_warn(Estimate, Goal):-
+  get_time(Start),
+  setup_call_cleanup(true,
+     ((Goal,deterministic(YN)),(YN==true->true;maybe_profile_warn(Start,Estimate,nondet(Goal)))),
+      maybe_profile_warn(Start,Estimate,ended(Goal))).
+
+maybe_profile_warn(Start,Estimate,Goal):- get_time(Now), Span is Now - Start,
+   (Span<Estimate -> true ; debug_info(profile_warn,overtime(Span>Estimate,Goal))).
 
 
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
@@ -169,7 +190,8 @@ do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
 %   - Facilitates maintainability and portability of the codebase.
 %   - Supports dynamic pack management during runtime without requiring manual adjustments.
 %
-attach_mettalog_packs:- (prolog_load_context(directory, Value); Value='.'),
+attach_mettalog_packs:- profile_warn(0.33,attach_mettalog_packs_slow).
+attach_mettalog_packs_slow:- (prolog_load_context(directory, Value); Value='.'),
    % Resolve the absolute path to the '../../libraries/' directory.
    absolute_file_name('../../libraries/', Dir, [relative_to(Value)]),
    % Build paths for specific libraries/packs.
@@ -612,7 +634,7 @@ is_flag0(What, _FWhatTrue, _FWhatFalse) :-
 is_compiling :-
     current_prolog_flag(os_argv, ArgV),member(E, ArgV),
     % Check if compilation-specific arguments are present.
-    (E == qcompile_mettalog; E == qsave_program),!.
+    (E == qcompile_mettalog; E == qsave_program; E== 'qcompile_mettalog.'),!.
 
 %!  is_compiled is nondet.
 %
@@ -966,12 +988,9 @@ switch_to_mettarust :-
 %     ; libswipl: ['swipl', '-g', 'main', '--', 'arg1', 'arg2'].
 %
 show_os_argv :-
-    % If compatibility mode is enabled, do nothing and succeed silently.
-    is_compatio, !.
-show_os_argv :-
     % Retrieve and print the command-line arguments using the 'os_argv' Prolog flag.
     current_prolog_flag(os_argv, ArgV),
-    if_verbose(main,(write('; libswipl: '), writeln(ArgV))).
+    debug_info(cmdargs,'; libswipl: '+os_argv=ArgV).
 
 %!  is_pyswip is det.
 %
@@ -1523,16 +1542,19 @@ set_option_value_interp(N,V):-
     % If N is a comma-separated list, split and set each option individually.
     symbol(N), symbolic_list_concat(List,',',N),
     List \= [_], % Ensure it's not a single-element list.
-    !,forall(member(E,List), set_option_value_interp(E,V)).
+    !,forall(member(E,List), set_option_value_interp(E,V)),!.
+
 
 set_option_value_interp(N,V):- maybe_mispelled(N,NN),!,set_option_value_interp(NN,V).
 set_option_value_interp(N,V):- maybe_mispelled(V,VV),!,set_option_value_interp(N,VV).
 set_option_value_interp(N,V):- atom(V), undress_value(V, List), V\==List,!,set_option_value_interp(N,List).
 set_option_value_interp(N,V):- nb_current(N,Was),Was==V,!.
+set_option_value_interp(N,V):- \+ different_from(N,V),!,ignore(forall(on_set_value(false,N,V), true)).
 set_option_value_interp(N,V):-
     % Directly set the option value and trigger any callbacks.
     % Note can be used for debugging purposes (commented out).
-    if_t(different_from(N,V),debug_info(cmdargs,(N==V))),
+    debug_info(cmdargs,(N==V)),
+    retractall(default_flags_not_changed),
     Note = true,
     %fbugio(Note,set_option_value(N,V)), % Uncomment for debugging.
     ignore(set_option_value(N,V)), % Set the value for the option.
@@ -1603,7 +1625,7 @@ on_set_value(Note,N,V):-
     % Extract trace-specific flag.
     symbol_concat('trace-on-',F,N),nocut,
      % Debugging output.
-    if_trace(main,not_compatio(fbugio(Note,set_debug(F,V)))),
+    debug_info(main,not_compatio(fbugio(Note,set_debug(F,V)))),
     % Enable or disable trace based on value.
     set_debug(F,V).
 on_set_value(Note,N,V):-
@@ -1612,7 +1634,7 @@ on_set_value(Note,N,V):-
     % Check if the value is debug-like.
     is_debug_like(V,TF),
     % Debugging output.
-    if_trace(main,not_compatio(fbugio(Note,set_debug(N,TF)))),
+    debug_info(main,not_compatio(fbugio(Note,set_debug(N,TF)))),
     % Enable or disable debug mode based on value.
     set_debug(N,TF).
 
@@ -2283,7 +2305,7 @@ show_options_values :-
 
 
 
-
+find_missing_cuts :- !. % skip for now.. maybe reenable on developer machine
 find_missing_cuts :-
     once(prolog_load_context(source, File);prolog_load_context(file, File)),!,
     is_extreme_debug((debug_info(nondet_src,c(find_missing_cuts(File))))).
@@ -2731,8 +2753,8 @@ metta_cmd_args(Rest) :-
     % Fall back to using all arguments from the `argv` flag.
     current_prolog_flag(argv, Rest).
 
-:- dynamic(has_run_cmd_args/0).  % Informs the interpreter that the definition of the predicate(s) may change during execution.
-:- volatile(has_run_cmd_args/0). % Declare that the clauses of specified predicates should not be saved to the program.
+:- dynamic(has_ran_cmd_args_prescan/0).  % Informs the interpreter that the definition of the predicate(s) may change during execution.
+:- volatile(has_ran_cmd_args_prescan/0). % Declare that the clauses of specified predicates should not be saved to the program.
 
 %!  run_cmd_args_prescan is det.
 %
@@ -2740,10 +2762,10 @@ metta_cmd_args(Rest) :-
 %
 run_cmd_args_prescan :-
     % Skip the prescan if it has already been completed.
-    has_run_cmd_args, !.
+    has_ran_cmd_args_prescan, !.
 run_cmd_args_prescan :-
     % Mark that the prescan has been executed.
-    assert(has_run_cmd_args),
+    assert(has_ran_cmd_args_prescan),
     % Perform the prescan using `do_cmdline_load_metta/1`.
     do_cmdline_load_metta(prescan), setup_show_hide_debug.
 
@@ -3166,7 +3188,15 @@ skip_cmdarg('-g').
 skip_cmdarg('-x').
 
 :- dynamic(is_reseting_default_flags/0).
+:- volatile(is_reseting_default_flags/0).
+
+:- dynamic(default_flags_not_changed/0).
+:- volatile(default_flags_not_changed/0).
+%default_flags_not_changed.
+%:- initialization(default_flags_not_changed, now).
+
 reset_default_flags:- is_reseting_default_flags,!.
+reset_default_flags:- default_flags_not_changed, !.
 reset_default_flags:-
     asserta(is_reseting_default_flags),!,
     forall(option_value_def(A,B), set_option_value(A,B)),
@@ -3184,6 +3214,7 @@ reset_cmdline_flags:-
     current_prolog_flag(os_argv,[Exec|ArgV]),
     if_t(ArgV\==Rest,
       (debug_info(initialize,os_argv([Exec|ArgV])),process_metta_cmd_arg_flags(ArgV))),
+    asserta(default_flags_not_changed),
     retractall(is_reseting_cmdline_flags).
 
             %metta_cmd_args(Rest),process_metta_cmd_arg_flags(Rest),
@@ -4404,6 +4435,9 @@ tf_to_trace(X,X).
 % multiple files.
 :- dynamic(metta_function_asserted/3).
 :- multifile(metta_function_asserted/3).
+:- dynamic(metta_type_info/3).
+:- multifile(metta_type_info/3).
+
 :- dynamic(metta_atom_asserted/2).
 :- multifile(metta_atom_asserted/2).
 :- dynamic(metta_function_asserted/3).
@@ -6890,26 +6924,24 @@ catch_red_ignore(G) :-
 %     % Start loon with a specific reason:
 %     ?- loon(toplevel).
 %
-
-% loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
 loon(Why) :-
     % If in compilation mode, log the event and succeed.
     is_compiling, !,
-    if_trace(main,not_compatio(fbug(compiling_loon(Why)))), !.
+    debug_info(main,loon((compiling_loon(Why)))), !.
 % loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
 loon(Why) :-
     % If the program is already compiled and not in the `toplevel` phase,
     % log the event and succeed.
     is_compiled, Why \== toplevel, !,
-    if_trace(main,not_compatio(fbugio(compiled_loon(Why)))), !.
+    debug_info(main,loon((compiled_loon(Why)))), !.
 loon(Why) :-
     % If `loon` has already begun for any reason, log the event and skip further processing.
-    began_loon(_), !,
-    if_trace(main,not_compatio(fbugio(skip_loon(Why)))).
+    began_loon(When), !,
+    debug_info(main,loon((skip_loon(Why, already_began(When))))).
 loon(Why) :-
     % Otherwise, log the beginning of `loon`, record it, and start `do_loon`.
-    if_trace(main,not_compatio(fbugio(began_loon(Why)))),
+    debug_info(main,loon((began_loon(Why)))),
     assert(began_loon(Why)),
   do_loon.
 
@@ -6927,7 +6959,7 @@ do_loon :- prolog_load_context(reloading, true),!.
 % Execute a sequence of initialization tasks, ignoring errors where needed.
 do_loon :-
    % install_readline_editline,
-   % nts1,
+   nts1,
    % install_ontology,
    metta_final, !, % saves statistics for comparison
    % ensure_corelib_types,
@@ -6972,14 +7004,12 @@ do_loon_prev :-
 %     % Check if interaction is needed:
 %     ?- need_interaction.
 %
+need_interaction :- option_value('had_interaction', true), !, fail. % Check if the `had_interaction` option is not set to true.
+need_interaction :- option_value('need_interaction', true), !.
+need_interaction :- (is_converting ; is_compiling ; is_pyswip),!,fail. % Ensure the system is not converting, compiling, or using `pyswip`.
+need_interaction :- option_value('toplevel_metta_file', true), !, fail. % Ensure no Metta files are currently loaded.
+need_interaction :- option_value('repl', true), !.
 need_interaction :-
-    % Check if the `had_interaction` option is not set to true.
-    \+ option_value('had_interaction', true),
-    % Ensure the system is not converting, compiling, or using `pyswip`.
-    \+ is_converting, \+ is_compiling, \+ is_pyswip, !,
-    % Check if both `prolog` and `repl` options are false.
-    option_value('prolog', false),
-    option_value('repl', false),
     % Ensure no Metta files are currently loaded.
     \+ metta_file(_Self, _Filename, _Directory).
 
@@ -7109,7 +7139,10 @@ ensure_mettalog_system_compilable:-
 %     % Prepare the MettaLog system:
 %     ?- ensure_mettalog_system.
 %
-ensure_mettalog_system:-
+
+%ensure_mettalog_system:- getenv('DISPLAY',_),!,profile(ensure_mettalog_system_slow),!.
+ensure_mettalog_system:- profile_warn(1.1, ensure_mettalog_system_slow),!.
+ensure_mettalog_system_slow:-
  must_det_lls((
     debug_info(initialize,ensure_mettalog_system),
     abolish(began_loon/1),
@@ -7139,7 +7172,7 @@ ensure_mettalog_system:-
     %ensure_loaded(library(flybase_main)),
     %autoload_all,
     %make,
-    autoload_all,
+    %autoload_all,
     %pack_install(predicate_streams, [upgrade(true),global(true)]),
     %pack_install(logicmoo_utils, [upgrade(true),global(true)]),
     %pack_install(dictoo, [upgrade(true),global(true)]),
@@ -7230,11 +7263,13 @@ qcompile_mettalog :-
     qsave_program(Name),
     % Exit the program with success status.
     true)),
-    inform_compiler_success,
-    debug_info(qcompile,inform_compiler_success),
+    inform_compiler_success(Name),
     halt(0).
 
-inform_compiler_success:- ignore((catch((getenv('METTALOG_COMPILE_SUCCESS',STAMP),tell(STAMP),told),_,true))).
+inform_compiler_success(Name):- getenv('METTALOG_COMPILE_SUCCESS',STAMP),tell(STAMP),told,!,debug_info(qcompile,informed_compiler_success(Name)).
+inform_compiler_success(Name):-
+   debug_info(always(qcompile),failed(informed_compiler_success(Name))),
+   throw(failed(inform_compiler_success(Name))).
 
 %!  qsave_program is det.
 %
@@ -7242,7 +7277,10 @@ inform_compiler_success:- ignore((catch((getenv('METTALOG_COMPILE_SUCCESS',STAMP
 %   The save name is generated using `next_save_name/1`.
 %
 
-qsave_program:-
+qsave_program:- profile_warn(45, qsave_program_slow).
+
+qsave_program_slow:-is_compiled,!.
+qsave_program_slow:-
  must_det_lls((
     % Ensure the system is initialized.
     ensure_mettalog_system,
@@ -7256,6 +7294,7 @@ qsave_program:-
 qsave_program(Name) :-
     % Attempt to save the program.
     if_verbose(main,write_src_nl(start(qsave_program(Name)))),
+    autoload_all,
     catch_err(qsave_program(Name, [
         class(development),
         autoload(true),
@@ -7760,7 +7799,13 @@ findall_or_skip(Var, Call, List) :-
     % Execute the query using `findall/3` to collect results into `List`.
     findall(Var, Call, List).
 
+doug:- listing(setup_inits).
+
+setup_inits :- use_corelib_file.
+setup_inits :- use_metta_ontology.
 umo:- use_metta_ontology.
+
+
 :- initialization((use_corelib_file),after_load /**/).
 :- initialization(use_metta_ontology,after_load /**/).
 
