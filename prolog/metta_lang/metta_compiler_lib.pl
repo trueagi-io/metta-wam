@@ -8,17 +8,20 @@
 
 decl_ddm(F,A):- multifile(F/A),dynamic(F/A),discontiguous(F/A).
 
+:- decl_ddm(decl_va,4).
+:- decl_ddm(decl_fa,4).
 
-:- forall(between(1,10,N), decl_ddm(mc,N)).
-:- forall(between(1,10,N), decl_ddm(mi,N)).
-:- forall(between(1,10,N), decl_ddm(me,N)).
-:- forall(between(1,10,N), decl_ddm(mb,N)).
-:- forall(between(1,10,N), decl_ddm(mx,N)).
-:- forall(between(1,10,N), decl_ddm(ms,N)).
 
-:- forall(between(3,10,N), decl_ddm(mx_n,N)).
-:- forall(between(3,10,N), decl_ddm(mc_n,N)).
-:- forall(between(3,10,N), decl_ddm(ms_n,N)).
+:- forall(between(1,12,N), decl_ddm(mc,N)).
+:- forall(between(1,12,N), decl_ddm(mi,N)).
+:- forall(between(1,12,N), decl_ddm(me,N)).
+:- forall(between(1,12,N), decl_ddm(mb,N)).
+:- forall(between(1,12,N), decl_ddm(mx,N)).
+:- forall(between(1,12,N), decl_ddm(ms,N)).
+
+:- forall(between(3,12,N), decl_ddm(mx_n,N)).
+:- forall(between(3,12,N), decl_ddm(mc_n,N)).
+:- forall(between(3,12,N), decl_ddm(ms_n,N)).
 
 non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaled_Type(NonEval),!.
 
@@ -180,9 +183,141 @@ call_by_ftype(F, Len, Goal, ReturnVal) :-
     (OutOfClausesBehavior haz_value 'FailureOriginal' -> throw(metta_notreducable(Original)) ; (!, fail))).
 
 
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8,X9],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8,X9],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut):-decl_fa(F,10,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut):-decl_fa(F,9,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4,X5,X6,X7],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4,X5,X6,X7],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4,X5,X6,X7],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4,X5,X6,X7],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,X7,ROut):-decl_fa(F,8,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4,X5,X6],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4,X5,X6],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4,X5,X6],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4,X5,X6],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,X6,ROut):-decl_fa(F,7,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+mi(F,X0,X1,X2,X3,X4,X5,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4,X5],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4,X5],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4,X5],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4,X5],ROut).
+mi(F,X0,X1,X2,X3,X4,X5,ROut):-decl_fa(F,6,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+mi(F,X0,X1,X2,X3,X4,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3,X4],ROut).
+mi(F,X0,X1,X2,X3,X4,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3,X4],ROut).
+mi(F,X0,X1,X2,X3,X4,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3,X4],ROut).
+mi(F,X0,X1,X2,X3,X4,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3,X4],ROut).
+mi(F,X0,X1,X2,X3,X4,ROut):-decl_fa(F,5,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+mi(F,X0,X1,X2,X3,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[X3],ROut).
+mi(F,X0,X1,X2,X3,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2,X3],ROut).
+mi(F,X0,X1,X2,X3,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2,X3],ROut).
+mi(F,X0,X1,X2,X3,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2,X3],ROut).
+mi(F,X0,X1,X2,X3,ROut):-decl_fa(F,4,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+mi(F,X0,X1,X2,ROut):-decl_va(F,3,mi,Op),call(Op,3,F,X0,X1,X2,[],ROut).
+mi(F,X0,X1,X2,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[X2],ROut).
+mi(F,X0,X1,X2,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1,X2],ROut).
+mi(F,X0,X1,X2,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1,X2],ROut).
+mi(F,X0,X1,X2,ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,ROut).
+mi(F,X0,X1,ROut):-decl_va(F,2,mi,Op),call(Op,2,F,X0,X1,[],ROut).
+mi(F,X0,X1,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[X1],ROut).
+mi(F,X0,X1,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0,X1],ROut).
+mi(F,X0,X1,ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,ROut).
+mi(F,X0,ROut):-decl_va(F,1,mi,Op),call(Op,1,F,X0,[],ROut).
+mi(F,X0,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[X0],ROut).
+mi(F,X0,ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,ROut).
+mi(F,ROut):-decl_va(F,0,mi,Op),call(Op,0,F,[],ROut).
+mi(F,ROut):-decl_fa(F,0,mi,Op),call(Op,F,ROut).
+
+
+m_n(0,0,F,[],ROut):-decl_va(F,0,mi,Op),call(Op,F,ROut).
+m_n(0,0,F,[],ROut):-decl_fa(F,0,mi,Op),call(Op,F,ROut).
+m_n(1,0,F,[X0],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,ROut).
+m_n(1,0,F,[X0],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,ROut).
+m_n(2,0,F,[X0,X1],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(2,0,F,[X0,X1],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(3,0,F,[X0,X1,X2],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(3,0,F,[X0,X1,X2],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(4,0,F,[X0,X1,X2,X3],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(4,0,F,[X0,X1,X2,X3],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(5,0,F,[X0,X1,X2,X3,X4],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(5,0,F,[X0,X1,X2,X3,X4],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(6,0,F,[X0,X1,X2,X3,X4,X5],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(6,0,F,[X0,X1,X2,X3,X4,X5],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(7,0,F,[X0,X1,X2,X3,X4,X5,X6],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(7,0,F,[X0,X1,X2,X3,X4,X5,X6],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(8,0,F,[X0,X1,X2,X3,X4,X5,X6,X7],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(8,0,F,[X0,X1,X2,X3,X4,X5,X6,X7],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(9,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(9,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(10,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_va(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(10,0,F,[X0,X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_fa(F,0,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(0,1,F,X0,[],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,ROut).
+m_n(0,1,F,X0,[],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,ROut).
+m_n(1,1,F,X0,[X1],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(1,1,F,X0,[X1],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(2,1,F,X0,[X1,X2],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(2,1,F,X0,[X1,X2],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(3,1,F,X0,[X1,X2,X3],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(3,1,F,X0,[X1,X2,X3],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(4,1,F,X0,[X1,X2,X3,X4],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(4,1,F,X0,[X1,X2,X3,X4],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(5,1,F,X0,[X1,X2,X3,X4,X5],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(5,1,F,X0,[X1,X2,X3,X4,X5],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(6,1,F,X0,[X1,X2,X3,X4,X5,X6],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(6,1,F,X0,[X1,X2,X3,X4,X5,X6],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(7,1,F,X0,[X1,X2,X3,X4,X5,X6,X7],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(7,1,F,X0,[X1,X2,X3,X4,X5,X6,X7],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(8,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(8,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(9,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_va(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(9,1,F,X0,[X1,X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_fa(F,1,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(0,2,F,X0,X1,[],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(0,2,F,X0,X1,[],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,ROut).
+m_n(1,2,F,X0,X1,[X2],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(1,2,F,X0,X1,[X2],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(2,2,F,X0,X1,[X2,X3],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(2,2,F,X0,X1,[X2,X3],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(3,2,F,X0,X1,[X2,X3,X4],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(3,2,F,X0,X1,[X2,X3,X4],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(4,2,F,X0,X1,[X2,X3,X4,X5],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(4,2,F,X0,X1,[X2,X3,X4,X5],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(5,2,F,X0,X1,[X2,X3,X4,X5,X6],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(5,2,F,X0,X1,[X2,X3,X4,X5,X6],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(6,2,F,X0,X1,[X2,X3,X4,X5,X6,X7],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(6,2,F,X0,X1,[X2,X3,X4,X5,X6,X7],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(7,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(7,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(8,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_va(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(8,2,F,X0,X1,[X2,X3,X4,X5,X6,X7,X8,X9],ROut):-decl_fa(F,2,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(0,3,F,X0,X1,X2,[],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(0,3,F,X0,X1,X2,[],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,ROut).
+m_n(1,3,F,X0,X1,X2,[X3],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(1,3,F,X0,X1,X2,[X3],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,ROut).
+m_n(2,3,F,X0,X1,X2,[X3,X4],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(2,3,F,X0,X1,X2,[X3,X4],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,ROut).
+m_n(3,3,F,X0,X1,X2,[X3,X4,X5],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(3,3,F,X0,X1,X2,[X3,X4,X5],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,ROut).
+m_n(4,3,F,X0,X1,X2,[X3,X4,X5,X6],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(4,3,F,X0,X1,X2,[X3,X4,X5,X6],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,ROut).
+m_n(5,3,F,X0,X1,X2,[X3,X4,X5,X6,X7],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(5,3,F,X0,X1,X2,[X3,X4,X5,X6,X7],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,ROut).
+m_n(6,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(6,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,ROut).
+m_n(7,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8,X9],ROut):-decl_va(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+m_n(7,3,F,X0,X1,X2,[X3,X4,X5,X6,X7,X8,X9],ROut):-decl_fa(F,3,mi,Op),call(Op,F,X0,X1,X2,X3,X4,X5,X6,X7,X8,X9,ROut).
+
+
+
+
+
+
 ensure_ready_mi(_, _).
-mi(F, ROut) :-
-    ensure_ready_mi(F, 0),
+mi(F, ROut) :- ensure_ready_mi(F, 0),
     true,
     mci(F, R),
     i_c(F, 0, R, ROut).
@@ -1094,14 +1229,15 @@ metta_body_macro(HeadIs, AsBodyFn, AsBodyFnOut):-
     nop((ss_unfreeze_vars(Vars,Copy))))).
 
 with_ss_unify(Inp,Goal):-
-    term_variables(Inp,Vars),copy_term(Inp+Vars,InpC+Copy),ss_freeze_vars(Vars,Copy),
+    term_variables(Inp,Vars),copy_term(Vars,Copy),
+    ss_freeze_vars(Vars,Copy),
     call(Goal),%Inp=@=InpC,
     ss_unfreeze_vars(Vars,Copy).
 
 ss_freeze_var(Var,Copy):- put_attr(Var,cant_bind,Copy).
 ss_freeze_vars(Vars,Copy):- maplist(ss_freeze_var,Vars,Copy).
-cant_bind:attr_unify_hook(Copy,NewValue):- NewValue='$VAR'(_),!.
-cant_bind:attr_unify_hook(Copy,NewValue):- var(NewValue),!.
+cant_bind:attr_unify_hook(_Copy,NewValue):- NewValue='$VAR'(_),!.
+cant_bind:attr_unify_hook(_Copy,NewValue):- var(NewValue),!.
 cant_bind:attr_unify_hook(Copy,NewValue):- var(Copy),!,Copy=@=NewValue.
 ss_unfreeze_var(Var,_):- del_attr(Var,cant_bind),!.
 %ss_unfreeze_var(Var,Copy):- get_attr(Var,cant_bind,Now),Copy==Now,del_attr(Var,cant_bind),Var=@=Copy.

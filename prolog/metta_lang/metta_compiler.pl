@@ -398,7 +398,7 @@ info_assertz(Info):-
   %transpiler_debug(2,output_prolog(Info)),
   info_assertz(Info,Assert))),!.
 
-info_assertz(Info,Assert):- is_clause_asserted(Assert),!,writeln(skip(Info)).
+info_assertz(Info,Assert):- is_clause_asserted(Assert),!,debug_info(compiler_assertz,skip(Info)).
 info_assertz( Info,Assert):- send_to_pl_file(==>(Info)), pfcAdd(Assert),!.
 info_assertz_old(Info,Assert):-
   must_det_lls((get_side_effects(pfcAdd(Assert),SifeEffects),
@@ -410,8 +410,8 @@ send_se_to_pl_file(Goal):- send_to_pl_file(:- Goal).
 
 
 compiler_assertz_verbose(G):- seen_check(compiler_assertz_verbose(G)),!.
-compiler_assertz_verbose(G):-
-  with_se_verbose(compiler_assertz(G)).
+%compiler_assertz_verbose(G):- with_se_verbose(compiler_assertz(G)).
+compiler_assertz_verbose(G):- compiler_assertz(G).
 
 with_se_verbose(Goal):-
   locally(nb_setval('$se_verbose',true),Goal).
@@ -481,7 +481,7 @@ solid_varnames(G,SG):- copy_term_nat(G,SG),term_variables(G,GVars),term_variable
 
 send_to_txt_file(PlFile,Info):- Info \= (:- _), seen_check(send_to_txt_file(PlFile,Info)),!.
 send_to_txt_file(PlFile,Info):-
-    if_t((nb_current('$se_verbose',true);true),
+    if_t((nb_current('$se_verbose',true)),
               inform_send_pl_file(PlFile,Info)),
     setup_call_cleanup(open(PlFile, append, Stream, [encoding(utf8)]),
       with_output_to(Stream, maybe_write_info(Info)), close(Stream)),!.
