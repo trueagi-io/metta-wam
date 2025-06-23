@@ -308,6 +308,9 @@
 			N="*.*"
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		<F N="mymod.py"/>
+		<F N="rust_rand.py"/>
+		<F N="setup.py"/>
 		<F N="vvv_tests.pl"/>
 	</Files>
 </Project>

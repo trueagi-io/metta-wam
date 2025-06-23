@@ -1235,9 +1235,9 @@ eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 % =================================================================
 % =================================================================
 
-gen10:-
+make_i2c:-
   shell(clear),
-  make,forall(gen20,true).
+  make,forall(gen_i2c,true).
 
 is_like_eval_20(E20):-
   is_like_call_eval_20(E20),
@@ -1308,19 +1308,22 @@ divide_for_tail(Sig,Left,[]):- is_list(Sig), Left=Sig,!.
 divide_for_tail(Sig,[],Sig):- \+ compound(Sig),!.
 divide_for_tail([H|T],[H|Left],Tail):-  divide_for_tail(T,Left,Tail).
 
-gen20:-!.
-gen20:- forall(is_like_eval_20(E20),gen20(E20)).
+
+gen_i2c:- forall(is_like_eval_20(E20),gen_i2c(E20)).
 
 e20_functor(E20,MC):- pre_post_e20(E20,Pre),pre_post_functor(Pre,MC),!.
 e20_functor(_,mx).
 
-pre_post_e20(eval_20,pre).
-pre_post_e20(eval_10,pre).
-pre_post_e20(eval_args,pre).
 pre_post_e20(eval,pre).
 pre_post_e20(eval_ne,pre).
+pre_post_e20(eval_10,pre).
+pre_post_e20(eval_20,pre).
+pre_post_e20(eval_py_atom,pre).
+pre_post_e20(eval_args,pre).
+pre_post_e20(eval_30,post).
+pre_post_e20(eval_40,post).
 pre_post_e20(_,post).
-gen20(E20):-
+gen_i2c(E20):-
      pre_post_e20(E20,Pre),
      nop(in_cmt((draw_line,draw_line,fmt(E20+Pre)))),
      forall(EVAL20=..[E20,Eq,RetType1,Depth,Self,Sig,TF],
@@ -3724,15 +3727,15 @@ m_head_impl_va(pre,'py-dot!',_,mc_n2('py-dot'),2).
 m_head_impl_va(post,'py-dot',_,mx_n2('py-dot'),2).
 */
 
-gen30:- forall(gen30(_),true).
+gen_mdecl:- forall(gen_mdecl(_),true).
 
-gen30(exactArgs):-
+gen_mdecl(exactArgs):-
     forall(pre_post_functor(Pre,MC),
       forall(between(0,10,Len),
      ((length(Args,Len), append([F|Args],[_Ret],AfterMC), P=..[MC|AfterMC]),
       forall(clause(P,_Body),
       compiler_assertz_verbose(m_head_impl(F,Len,Pre,MC)))))).
-gen30(restAsList):-
+gen_mdecl(restAsList):-
     forall(pre_post_functor_va(Pre,MC),
       forall(between(0,10,Len),
      ((length(Args,Len), append([Len,F|Args],[_AsList,_Ret],AfterMC), P=..[MC|AfterMC]),

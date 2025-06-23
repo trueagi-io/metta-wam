@@ -1169,10 +1169,9 @@ mx_n(2,'py-dot',Arg1,Arg2,Specialize,ResO) :-
 
 
 
-setup_library_calls:-
- locally(nb_setval(debug_context, stdlib), user_err(forall(setup_inits,true))).
+:- writeln('; maybe ?- setup_library_calls.').
 
-setup_inits :-
+setup_library_calls :-
   forall(
       transpiler_predicate_store(Source,FnName,LenArgs,MettaTypeArgs,
             MettaTypeResult,InternalTypeArgs,InternalTypeResult),
@@ -1180,7 +1179,20 @@ setup_inits :-
            setup_library_call(Source,FnName,LenArgs,MettaTypeArgs,
             MettaTypeResult,InternalTypeArgs,InternalTypeResult))).
 
-setup_inits :- gen20,gen30.
+setup_inits :- setup_library_calls.
+
+setup_inits :- gen_i2c.
+
+setup_inits :- gen_mdecl.
+
+:- writeln('; maybe ?- gen_i2c, gen_mdecl.').
+
+
+:- writeln('; maybe ?-  do_setup_inits.').
+do_setup_inits:-
+   locally(nb_setval(debug_context, stdlib), user_err(forall(setup_inits,true))).
+
+
 %:- initialization(setup_library_calls,program).
 
 this_is_in_compiler_lib.

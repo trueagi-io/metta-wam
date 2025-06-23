@@ -1032,8 +1032,8 @@ nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
 :- dynamic(did_setup_show_hide_debug/0).
 
 %setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
-%setup_show_hide_debug:- did_setup_show_hide_debug,!.
-%setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+setup_show_hide_debug:- did_setup_show_hide_debug,!.
+setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
 setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
@@ -1070,6 +1070,7 @@ debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
                             if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
                             if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
+debug_info_filtered( Topic,_Info, [do,not_yet(setup_show_hide_debug),Topic]):- \+ did_setup_show_hide_debug,!, reset_default_flags.
 debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
 debug_info_filtered( always( Topic), Info, NewTopic):-!, debug_info_filtered(Topic, Info, NewTopic).
 debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
@@ -1119,6 +1120,7 @@ topic_color_string(Topic,TopicColor,Str):-
 %debug_info_now(Topic, Info):-!.
 
 debug_info_now(Topic, Info) :- nb_current(last_debug_info_written,WAS), WAS =@= debug_info(Topic, Info),!.
+
 debug_info_now(Topic, Info):-
  %writeln(debug_info_now(Topic, Info)),
  must_det_ll((
@@ -1135,8 +1137,8 @@ debug_info_now(Topic, Info):-
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
  (should_comment(Topic, Info) ->
-    format(X,'/* ~@:TTTTTTTTTT ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
-    format(X,'% ~@:ZZZZZZZ~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
+    format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
+    format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
   )))),
   nb_setval(last_debug_info_written,debug_info(Topic, Info)).
 

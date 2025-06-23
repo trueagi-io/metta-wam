@@ -1229,6 +1229,14 @@ fi
 export RUST_BACKTRACE=full
 
 
+write_checksums() {
+    local dir="$1"
+    local output_file="$2"
+
+    find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
+        ! -name "*.metta.pl" \
+        -exec sha256sum "{}" + | sort > "$output_file"
+}
 
 
 # Set default reference file name based on hostname
@@ -1244,8 +1252,7 @@ save_checksums() {
   if [[ -z "$checksum_file" ]]; then
     checksum_file="$dir/lastbuilt.checksum"
   fi
-  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" -o -name "*.py" \) \
-    -exec sha256sum "{}" + | sort > "$checksum_file"
+  write_checksums "$dir" "$checksum_file"
   DEBUG "Checksums saved to $checksum_file"
 }
 # Function to check if any files have changed in $INTERP_SRC_DIR
@@ -1258,7 +1265,7 @@ check_for_changes() {
   fi
 
   if [[ ! -f "$checksum_file" ]]; then
-    #echo "No checksum file found in $dir. Needs rebuilt."
+    DEBUG "No checksum file found in $dir. Needs rebuilt."
     #need_compile=1
     return 1
   fi
@@ -1266,18 +1273,19 @@ check_for_changes() {
   local temp_file
   temp_file=$(mktemp)
 
-  find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
-    -exec sha256sum "{}" + | sort > "$temp_file"
+  write_checksums "$dir" "$temp_file"
 
   if diff -q "$checksum_file" "$temp_file" &> /dev/null; then
-    #echo "No changes detected in $dir."
+    DEBUG "No changes detected in $dir."
     rm "$temp_file"
     return 0
   else
-    # echo "Changes detected in $dir!"
+    DEBUG "Changes detected in $dir!"
     # Suppress diff output completely
     # (you could log it somewhere instead if needed)
-    rm "$temp_file"
+    #rm -f "$executable_image"
+    #mv "$temp_file" "$checksum_file"
+    rm "$temp_file"    
     return 2
   fi
 }
@@ -1298,7 +1306,7 @@ if [[ -f "$INTERP_SRC_DIR/skip_compile" ]]; then
 fi
 
 
-if [[ "$exe" == "force" ]]; then
+if [[ "$exe" =~ ^force ]]; then
     exe=true
     rm -f "$INTERP_SRC_DIR/skip_compile"
     need_compile=1
@@ -1306,24 +1314,24 @@ fi
 
 if [[ "$exe" == "true" ]]; then
     # Find the most recent reference file based on modification time
-    reference_file=$(find "$INTERP_SRC_DIR" -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
+    executable_image=$(find "$INTERP_SRC_DIR" -maxdepth 1 -type f -name "${DefaultSav}*" -not -name "*.*" -printf "%T@ %p\n" | sort -k1,1nr | head -n 1 | cut -f2- -d" ")
 
     # If no reference file is found, set a default one
-    if [[ -z "$reference_file" ]]; then      
-        reference_file="$INTERP_SRC_DIR/${DefaultSav}"
-        DEBUG "Setting exe based on $reference_file"	
+    if [[ -z "$executable_image" ]]; then      
+        executable_image="$INTERP_SRC_DIR/${DefaultSav}"
+        DEBUG "Setting exe based on $executable_image"	
     fi
 
     # If the reference file does not exist, compilation is required
-    if [[ ! -e "$reference_file" ]]; then
-        DEBUG "${ORANGE}Reference file $reference_file does not exist. Compiler will be called."
+    if [[ ! -e "$executable_image" ]]; then
+        DEBUG "${ORANGE}Executable file $executable_image does not exist. Compiler will be called."
         need_compile=1
     else
         # Check if any .pl file is newer than the reference file
 	if check_for_changes; then
 	  DEBUG "✅ Checksum OK: No changes detected in \$INTERP_SRC_DIR"
 	elif [[ $? -eq 1 ]]; then
-	  DEBUG "⚠️  Checksum file not found."
+	  do_DEBUG "⚠️  Checksum file not found."
 	  need_compile=1
 	else
 	  DEBUG "❌ Checksum MISMATCH: removing $INTERP_SRC_DIR/skip_compile"
@@ -1344,9 +1352,9 @@ fi
 
 if [[ $need_compile -eq 1 ]]; then
 
-    if [[ -f "$reference_file" ]]; then
+    if [[ -f "$executable_image" ]]; then
         # was "should" (therefore requested)
-	rm -f "$reference_file"
+	rm -f "$executable_image"
     fi
 
     # Detect TMPDIR only if we are going to compile
@@ -1396,15 +1404,15 @@ compiler_cleanup() {
 
 	# If the success file is missing, remove the binary
 
-	if [[ -f "$reference_file" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
+	if [[ -f "$executable_image" && -f "$METTALOG_COMPILE_SUCCESS" ]]; then
 	    rm -f "$METTALOG_COMPILE_SUCCESS"
 	    save_checksums
-	    DEBUG "{$GREEN}CREATED $reference_file"
+	    DEBUG "{$GREEN}CREATED $executable_image"
 	    STYLE=EXE
 	else
 	    
 	    
-	    do_DEBUG "${ORANGE}Missing $reference_file OR $METTALOG_COMPILE_SUCCESS!${NC}"
+	    do_DEBUG "${ORANGE}Missing $executable_image OR $METTALOG_COMPILE_SUCCESS!${NC}"
 	    
 	    DEFSAVE="$INTERP_SRC_DIR/${DefaultSav}"
 
@@ -1427,7 +1435,7 @@ compiler_cleanup() {
 
 	    do_DEBUG "${RED}Fallback: Using interpreter instead of compiled image.${NC}"
 	    touch "$INTERP_SRC_DIR/skip_compile"
-	    unset reference_file
+	    unset executable_image
 	    exe=false
 
 	fi
@@ -1460,12 +1468,12 @@ if [[ $need_compile -eq 1 && "$exe" == "true" ]]; then
 
     # Construct the compilation command    
     #--successfile=$METTALOG_COMPILE_SUCCESS ${SWI_OPTIONS[*]}
-    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$reference_file"
+    MAKE_REF_FILE="swipl -l '$INTERP_SRC_DIR/metta_interp.pl' -g 'qcompile_mettalog.' --  ${ADD_COMPILE_ARG[*]} --exeout=$executable_image"
     DEBUG "MAKE_REF_FILE = $MAKE_REF_FILE"
 
     # Execute the compilation command
     set +e
-    DEBUG "${BOLD}Compiling $reference_file..."    
+    DEBUG "${BOLD}Compiling $executable_image..."    
     eval "$MAKE_REF_FILE" 
     # trap reset_settings  compiler_cleanup SIGINT SIGTERM EXIT
     )
@@ -1478,7 +1486,7 @@ fi
 
 # If exe is explicitly set to false, enforce the non-executable mode
 if [[ "$exe" == "false" ]]; then
-    unset reference_file
+    unset executable_image
     #rm -f "$TEMP_DIR/metta_cache/??*"
     #rm -f "$TEMP_DIR/tmp.??*"
     STYLE=INTERP    
@@ -1493,7 +1501,7 @@ fi
 DEBUG STYLE="$STYLE"
 
 if [[ "$STYLE" == "EXE" ]]; then
-  MLOG="swipl -x $reference_file ${SWI_OPTIONS[*]}"
+  MLOG="swipl -x $executable_image ${SWI_OPTIONS[*]}"
 else
   MLOG="swipl ${SWI_OPTIONS[*]} $INTERP_SRC_DIR/metta_interp.pl"
 fi
