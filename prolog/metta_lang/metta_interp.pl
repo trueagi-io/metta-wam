@@ -3183,7 +3183,10 @@ skip_cmdarg('-g').
 skip_cmdarg('-x').
 
 :- dynamic(is_reseting_default_flags/0).
+:- volatile(is_reseting_default_flags/0).
+
 :- dynamic(default_flags_not_changed/0).
+:- volatile(default_flags_not_changed/0).
 %default_flags_not_changed.
 %:- initialization(default_flags_not_changed, now).
 
@@ -6920,21 +6923,21 @@ catch_red_ignore(G) :-
 loon(Why) :-
     % If in compilation mode, log the event and succeed.
     is_compiling, !,
-    debug_info(main,not_compatio(fbug(compiling_loon(Why)))), !.
+    debug_info(main,loon((compiling_loon(Why)))), !.
 % loon( _Y):- current_prolog_flag(os_argv,ArgV),member('-s',ArgV),!.
 % Why\==toplevel,Why\==default, Why\==program,!
 loon(Why) :-
     % If the program is already compiled and not in the `toplevel` phase,
     % log the event and succeed.
     is_compiled, Why \== toplevel, !,
-    debug_info(main,not_compatio(fbugio(compiled_loon(Why)))), !.
+    debug_info(main,loon((compiled_loon(Why)))), !.
 loon(Why) :-
     % If `loon` has already begun for any reason, log the event and skip further processing.
-    began_loon(_), !,
-    debug_info(main,not_compatio(fbugio(skip_loon(Why)))).
+    began_loon(When), !,
+    debug_info(main,loon((skip_loon(Why, already_began(When))))).
 loon(Why) :-
     % Otherwise, log the beginning of `loon`, record it, and start `do_loon`.
-    debug_info(main,not_compatio(fbugio(began_loon(Why)))),
+    debug_info(main,loon((began_loon(Why)))),
     assert(began_loon(Why)),
   do_loon.
 
@@ -6952,7 +6955,7 @@ do_loon :- prolog_load_context(reloading, true),!.
 % Execute a sequence of initialization tasks, ignoring errors where needed.
 do_loon :-
    % install_readline_editline,
-   % nts1,
+   nts1,
    % install_ontology,
    metta_final, !, % saves statistics for comparison
    % ensure_corelib_types,

@@ -1233,9 +1233,23 @@ write_checksums() {
     local dir="$1"
     local output_file="$2"
 
-    find "$dir" -type f \( -name "*.pl" -o -name "*.metta" \) \
-        ! -name "*.metta.pl" \
-        -exec sha256sum "{}" + | sort > "$output_file"
+    temp_checksum_file=$(mktemp)
+
+    for base_dir in "$METTALOG_DIR/libraries/builtin_mods" "$dir"; do
+        find "$base_dir" -type f \( -name "*.pl" -o -name "*.metta" -o -name "*.py" \) \
+            ! -name "*.metta.unused.pl" | while read -r file; do
+            cleaned=$(sed -e 's/^[[:space:]]*//' \
+                          -e '/^%/d' \
+                          -e '/^#/d' \
+                          -e '/^\/\//d' \
+                          -e '/^;/d' \
+                          -e '/^$/d' "$file")
+            echo "$cleaned" | sha256sum | awk "{print \$1, \"$file\"}" >> "$temp_checksum_file"
+        done
+    done
+
+    sort "$temp_checksum_file" > "$output_file"
+    rm -f "$temp_checksum_file"
 }
 
 

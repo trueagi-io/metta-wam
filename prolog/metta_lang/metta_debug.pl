@@ -1070,7 +1070,7 @@ debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
                             if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
                             if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
-debug_info_filtered( Topic,_Info, [do,not_yet(setup_show_hide_debug),Topic]):- \+ did_setup_show_hide_debug,!, reset_default_flags.
+debug_info_filtered( Topic,_Info, [do,not_yet(setup_show_hide_debug),Topic]):- \+ did_setup_show_hide_debug, is_douglas, !.
 debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
 debug_info_filtered( always( Topic), Info, NewTopic):-!, debug_info_filtered(Topic, Info, NewTopic).
 debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
