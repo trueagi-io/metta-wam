@@ -4,8 +4,8 @@
 %:- ensure_loaded(library(mettalog_rt)).
 
 % Basic S-expression parser (stub)
-parse_sexpr_for_py(StringExpr, Parsed) :- facaded,!, StringExp= Parsed,!.
-parse_sexpr_for_py(StringExpr, Parsed) :- parse_sexpr(StringExpr, Parsed).
+parse_all_for_py(StringExpr, Parsed) :- facaded,!, StringExp= Parsed,!.
+parse_all_for_py(StringExpr, Parsed) :- parse_sexpr(StringExpr, Parsed).
 
 % Simple evaluator (replace with real MeTTa interpreter)
 eval_sexpr_for_py(StringExpr, Parsed) :- facaded,!, StringExp= Parsed,!.
