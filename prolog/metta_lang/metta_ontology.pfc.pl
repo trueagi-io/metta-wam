@@ -145,38 +145,38 @@ merge_fp(T1,T2,N) :-
 ((properties(KB,A,B),{member(E,B),nonvar(E)})==>property(KB,A,E)).
 property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 
-((property(KB,F,PA),p_arity(PA,A)) ==> (predicate_arity(KB,F,A))).
-((property(KB,F,FA),f_arity(FA,A)) ==> (functional_arity(KB,F,A))).
+((property(KB,Op,PA),p_arity(PA,A)) ==> (predicate_arity(KB,Op,A))).
+((property(KB,Op,FA),f_arity(FA,A)) ==> (functional_arity(KB,Op,A))).
 
 
-% (metta_compiled_predicate(KB,F,A)==>predicate_arity(KB,F,A)).
+% (metta_compiled_predicate(KB,Op,A)==>predicate_arity(KB,Op,A)).
 
 
-metta_function_asserted(KB,[F|Args],_)/length(Args,Len)
-  ==>src_code_for(KB,F,Len).
+metta_function_asserted(KB,[Op|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,Op,Len).
 
-'op-complete'(op(+,'=',F)),
-  metta_function_asserted(KB,[F|Args],_)/length(Args,Len)
-  ==>src_code_for(KB,F,Len),{nop(dedupe_cl(F))}.
+'op-complete'(op(+,'=',Op)),
+  metta_function_asserted(KB,[Op|Args],_)/length(Args,Len)
+  ==>src_code_for(KB,Op,Len),{nop(dedupe_cl(Op))}.
 
-(src_code_for(KB,F,Len)==>function_arity(KB,F,Len)).
+(src_code_for(KB,Op,Len)==>function_arity(KB,Op,Len)).
 
-('op-complete'(op(+,':',F))
+('op-complete'(op(+,':',Op))
  ==>
- (( metta_type_info(KB,F,TypeList)/is_list(TypeList),
+ (( metta_type_info(KB,Op,TypeList)/is_list(TypeList),
   {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
-  metta_params_and_return_type(KB,F,Len,Params,Ret),{do_once(show_deds_w(F))})).
+  metta_params_and_return_type(KB,Op,Len,Params,Ret),{do_once(show_deds_w(Op))})).
 
-metta_params_and_return_type(KB,F,Len,Params,Ret),
+metta_params_and_return_type(KB,Op,Len,Params,Ret),
   {is_absorbed_return_type(Params,Ret)}
-   ==>(function_arity(KB,F,Len),is_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len)).
+   ==>(function_arity(KB,Op,Len),is_absorbed_return(KB,Op,Len,Ret),predicate_arity(KB,Op,Len)).
 
-metta_params_and_return_type(KB,F,Len,Params,Ret),
+metta_params_and_return_type(KB,Op,Len,Params,Ret),
  { is_non_absorbed_return_type(Params,Ret),  Len1 is Len+1}
-  ==>(function_arity(KB,F,Len),is_non_absorbed_return(KB,F,Len,Ret),predicate_arity(KB,F,Len1)).
+  ==>(function_arity(KB,Op,Len),is_non_absorbed_return(KB,Op,Len,Ret),predicate_arity(KB,Op,Len1)).
 
-(need_corelib_types,op_decl(F,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
-   metta_params_and_return_type('&corelib',F,Len,Params,Ret).
+(need_corelib_types,op_decl(Op,Params,Ret),{nonvar(Ret),length(Params,Len)})==>
+   metta_params_and_return_type('&corelib',Op,Len,Params,Ret).
 
 
 ensure_corelib_types:- pfcAdd(please_do_corelib_types).
@@ -192,21 +192,21 @@ ensure_corelib_types:- pfcAdd(please_do_corelib_types).
 
 :- dynamic(can_compile/2).
 
-src_code_for(KB,F,Len) ==>  ( \+ metta_compiled_predicate(KB,F,Len) ==> do_compile(KB,F,Len)).
+src_code_for(KB,Op,Len) ==>  ( \+ metta_compiled_predicate(KB,Op,Len) ==> do_compile(KB,Op,Len)).
 
-do_compile_space(KB) ==> (src_code_for(KB,F,Len) ==> do_compile(KB,F,Len)).
+do_compile_space(KB) ==> (src_code_for(KB,Op,Len) ==> do_compile(KB,Op,Len)).
 
 %do_compile_space('&self').
 
-do_compile(KB,F,Len),src_code_for(KB,F,Len) ==> really_compile(KB,F,Len).
+do_compile(KB,Op,Len),src_code_for(KB,Op,Len) ==> really_compile(KB,Op,Len).
 
 
-metta_function_asserted(KB,[F|Args],BodyFn),really_compile(KB,F,Len)/length(Args,Len)==>
-   really_compile_src(KB,F,Len,Args,BodyFn),{nop(dedupe_ls(F))}.
+metta_function_asserted(KB,[Op|Args],BodyFn),really_compile(KB,Op,Len)/length(Args,Len)==>
+   really_compile_src(KB,Op,Len,Args,BodyFn),{nop(dedupe_ls(Op))}.
 
-really_compile_src(KB,F,Len,Args,BodyFn),
-   {compile_metta_defn(KB,F,Len,Args,BodyFn,Clause)}
-       ==> (compiled_clauses(KB,F,Clause)).
+really_compile_src(KB,Op,Len,Args,BodyFn),
+   {compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause)}
+       ==> (compiled_clauses(KB,Op,Clause)).
 
 */
 
