@@ -1104,7 +1104,7 @@
 
     ; the following block of code determines if, after a check move, the king can escape by any means (block etc)
     (let $list_of_checkmate_moves 
-        (collapse (
+        (collapse 
           (let $test_move (superpose $checkmate_moves)
             (let*
               ( 
@@ -1123,7 +1123,7 @@
                        (== $king_status False))
                     ; if no moves possible for human, Greedy Chess has found checkmate, success! 
                     $test_move
-                    (empty))))))
+                    (empty)))))
         (if (== $list_of_checkmate_moves ())
           (empty)
           (let*
