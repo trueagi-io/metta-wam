@@ -1,6 +1,5 @@
 
-;(= (exp $arg) ((py-atom math.exp) $arg))
-(= (exp $arg) (call-for! $res [is $res [exp $arg]]))
+
 
 /*
     exp(Arg,Res) :- Res is exp(Arg).
@@ -11,15 +10,22 @@
 
 
 */
-
+;(= (exp $arg) ((py-atom math.exp) $arg))
+(= (exp $arg) (call-for! $res [is $res [exp $arg]]))
 ;(= (log $arg) ((py-atom math.log) $arg))
 (= (log $arg) (call-fn! log $arg))
-
-
 (= (softplus $arg)
    (index-atom ; HACK against (unset VAL)
       (log (+ 1.0 (exp $arg)))  1)
 )
+
+/*
+
+!(log (+ 1.0 (exp 99)))
+
+Deterministic: (unset 9.889030319346946e+42)
+
+*/
 
 ; see https://docs.pytorch.org/docs/stable/generated/torch.nn.ELU.html#torch.nn.ELU
 (= (elu $arg)

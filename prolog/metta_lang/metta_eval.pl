@@ -100,17 +100,23 @@ self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Le
 
 unify_woc(X,Y):- materialize(X),materialize(Y),unify_with_occurs_warning(X,Y).
 
+:- thread_local(metta_bound_value/3).
+:- dynamic(metta_bound_value/3).
+% :- volatile(metta_bound_value/3).
+
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  nb_current(Name, X),!. % spaces and states are stored as compounds
-nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
+ current_self(Self), metta_bound_value(Self, Name, X),!. % spaces and states are stored as compounds
+%nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
+%  call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
 
 call_in_shared_space(G):- call_in_shared_thread(main,G).
 call_in_shared_thread(Thread,Goal):- thread_self(Self),Thread==Self,!,call(Goal).
 call_in_shared_thread(_Thread,Goal):- call(Goal). % should use call_in_thread/2 (but it blocks lazy calls)
 
+
+nb_bind(Name,Value):- current_self(Self), retractall(metta_bound_value(Self,Name, _)), !, asserta( metta_bound_value(Self,Name, Value)).
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
-%nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
 nb_bind(Name,Value):-
    duplicate_deep_term(Value,NewValue),
    call_in_shared_space(nb_linkval(Name,NewValue)),!.
@@ -1456,6 +1462,13 @@ eval_20(Eq,_RetType,Depth,Self,['assertCount',Y,X],RetVal):- !,
                                      as_prolog_x(Depth,Self,Y,YY)),
           equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY), RetVal).
 
+%  !(assertUnit (println! "hi"))   ;; maybe  !(assertUnit 1) ;; sshould thrown an error?
+eval_20(Eq,_RetType,Depth,Self,['assertUnit', Body],RetVal):- !,
+    loonit_assert_source_tf_empty(
+         ['assertUnit', Body], Res, Body,
+         (findall_eval(Eq,_ARetType,Depth,Self, ['call-for!','UnitAtom',Body], XL),
+          ([XL]=='UnitAtom'->Res=[];Res=failed(Body,XL))),
+          Res==[], RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
