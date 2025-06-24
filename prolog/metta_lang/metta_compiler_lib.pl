@@ -1,6 +1,6 @@
 
 
-:- if(true).
+:- if(false).
 
 :- include(metta_compiler_lib_roy).
 

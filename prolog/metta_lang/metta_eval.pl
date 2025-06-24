@@ -3425,23 +3425,23 @@ call_as_p2a(P2,A,B):- current_predicate_fast(P2/3),!,call(P2,A,B,RetVal),f2_succ
 call_as_p2a(F,X,Y):- must_use_eval(F,2), !,
    once(eval([F,X,Y],RetVal)),
    f2_success(RetVal,X,Y).
-%call_as_p2(F2,A,B):- f2_to_p2(F2,P2),F2\==P2,!,call(P2,A,B).
-call_as_p2a(F2,A,B):- f2_to_p3(F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
+%call_as_p2(F2,A,B):- f2_to_p2(Pre,F2,P2),F2\==P2,!,call(P2,A,B).
+call_as_p2a(F2,A,B):- f2_to_p3(_Pre,F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
 call_as_p2a(F2,A,B):- eval_as_f2(F2,A,B,RetVal),f2_success(RetVal,A,B).
 
 f2_success(RetVal,A,B):- once(RetVal=='True';RetVal==A;RetVal==B).
 
 eval_as_f2(F2,A,B,RetVal):- current_predicate_fast(F2/3),!,call(F2,A,B,RetVal),!.
-eval_as_f2(F2,A,B,RetVal):- f2_to_p3(F2,P3),!,call(P3,A,B,RetVal).
+eval_as_f2(F2,A,B,RetVal):- f2_to_p3(_Pre,F2,P3),!,call(P3,A,B,RetVal).
 eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
    (TF == 'True'-> RetVal=A ;
     TF == 'False'-> fail ; RetVal = TF).
 
-f2_to_p2(F2,P2):-
-  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
+f2_to_p2(Pre,F2,P2):-
+  transpiler_peek(Pre,F2,2,[mx,me,mi,mc],P2,_,exactArgs).
 
-f2_to_p3(F2,P2):-
-  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
+f2_to_p3(Pre,F2,P2):-
+  transpiler_peek(Pre,F2,2,[mx,me,mi,mc],P2,_,exactArgs).
 
 
 
@@ -3719,17 +3719,66 @@ same_terms(X,Y):- same_term(X,Y),!.
 same_terms(X,Y):- \+ compound(X), X==Y.
 % Main evaluation predicate with full caching
 
+/*
+
+m_head_impl_va(pre,'py-atom!',_,mc_n1('py-atom'),1).
+m_head_impl_va(post,'py-atom',_,mx_n1('py-atom'),1).
+m_head_impl_va(pre,'py-dot!',_,mc_n2('py-dot'),2).
+m_head_impl_va(post,'py-dot',_,mx_n2('py-dot'),2).
+*/
+info(_).
+
+gen_mdecl:- forall(gen_mdecl(_),true).
+
+gen_mdecl(exactArgs):-
+    forall(pre_post_functor(Pre,MC),
+      forall(between(0,10,Len),
+     ((length(Args,Len), append([F|Args],[_Ret],AfterMC), P=..[MC|AfterMC]),
+      forall(clause(P,_Body),
+      if_t(ground(F),compiler_assertz_verbose(m_head_impl(F,Len,Pre,MC))))))).
+gen_mdecl(restAsList):-
+    forall(pre_post_functor_va(Pre,MC),
+      forall(between(0,10,Len),
+     ((length(Args,Len), append([Len,F|Args],[_AsList,_Ret],AfterMC), P=..[MC|AfterMC]),
+      forall(clause(P,_Body),
+      if_t(ground(F),compiler_assertz_verbose(m_head_impl_va(F,Len,Pre,MC))))))).
 
 
-transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
-  transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs),
-  debug_info(always(compiler),transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs)).
+pre_post_functor(pre,mc).
+pre_post_functor(post,mx).
+pre_post_functor_va(pre,mc_n).
+pre_post_functor_va(post,mx_n).
 
-transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+:- dynamic(m_head_impl/4).
+m_head_impl('random-int',3,post,mx).
+
+:- dynamic(m_head_impl_va/4).
+m_head_impl_va('py-dot!',2,post,mc_n).
+m_head_impl_va('py-dot',2,post,mx_n).
+m_head_impl_va('py-atom!',1,post,mc_n).
+m_head_impl_va('py-atom',1,post,mx_n).
+
+m_head_impl(Pre,Sym,Len, Type,Fn, Min, exactArgs):-
+   if_t((var(Pre),nonvar(Type)),pre_post_functor(Pre,Type)),
+   m_head_impl(Sym,Min,Pre,IsType),!, Min=Len, Fn =.. [IsType,Sym].
+m_head_impl(Pre,Sym,Len, Type,Fn, Min, restAsList):-
+   if_t((var(Pre),nonvar(Type)),pre_post_functor(Pre,Type)),
+   m_head_impl_va(Sym,Min,Pre,IsType), Min =< Len, !, Fn =.. [IsType,Min,Sym].
+
+
+transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+  member(Sym,['random-int','random-seed']),
+  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),
+  debug_info(always(compiler),transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs)).
+
+transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
   is_list(TypeL), !, member(Type,TypeL),
-  transpiler_peek(Sym,Len,Type,Fn, Min, SpreadArgs).
+  transpiler_peek(Pre,Sym,Len,Type,Fn, Min, SpreadArgs).
 
-transpiler_peek_impl(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
+transpiler_peek_impl(Pre,Sym,Len,Type,Fn, Min, SpreadArgs):-
+  m_head_impl(Pre,Sym,Len,Type,Fn, Min, SpreadArgs),!.
+
+transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
   nonvar(Sym),
   if_t((var(Len)),ignore(transpiler_predicate_store(_,Sym,[Len],_, _, _, _))),
@@ -3739,7 +3788,7 @@ transpiler_peek_impl(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   succ(Len,LenP1), current_predicate_fast(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
 
-transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
+transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, restAsList):-
   % if_t((var(Sym)),ignore(transpiler_predicate_nary_store(_, Sym,_  , _, _, _, _))),
   if_t(var(Len),between(1,10,Len)),
   if_t(var(Type),member(Type,['mx','me','mi','mc'])),
@@ -3750,7 +3799,7 @@ transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
   ok_call_predicate(Sym,Len,Type).
 
 /*
-transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
+transpiler_peek_impl(Pre,Sym,Len,Type,Fn, Min, restAsList):-
   between(0,Len, Min),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]),
@@ -3791,7 +3840,7 @@ eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
     fail,
     symbol(Sym), is_list(Args),
     length(Args, Len),
-    transpiler_peek(Sym,Len,'mx',Fn, Min, AsList),
+    transpiler_peek(pre,Sym,Len,['mx','me'],Fn, Min, AsList),
     jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
@@ -3799,7 +3848,7 @@ eval_40(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
     %fail,
     symbol(Sym), is_list(Args),
     length(Args, Len),
-    transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
+    transpiler_peek(post,Sym,Len,['mi','mc','me','mx'],Fn, Min, AsList),
     jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, exists_in_compiler)),
     !,

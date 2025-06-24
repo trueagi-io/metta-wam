@@ -51,7 +51,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-:- if(true).
+:- if(false).
 
 :- include(metta_compiler_roy).
 
