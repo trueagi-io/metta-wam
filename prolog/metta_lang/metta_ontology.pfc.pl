@@ -135,6 +135,28 @@ merge_fp(T1,T2,N) :-
 (metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_function_asserted(KB,H,['wam-body'|AL]).
 (metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type_info(KB,H,T).
 
+metta_type_info(KB,Op,ArTypeDecl)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len))==>
+    metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType).
+
+metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len)) ==>
+    metta_type_info(KB,Op,ArTypeDecl).
+
+%metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)==>function_arity(Op,Len)
+
+metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(constraintFor(Op,Len,ParamTypes,RetType,argNType,_Fact,Nonvar,Nth), Nth>0) ==> argNType(KB,Op,Len,Nth,Nonvar).
+metta_params_and_return_type(KB,Op,Len,_ParamTypes,RetType) ==> returnType(KB,Op,Len,RetType).
+
+
+non_evaluated_type('Atom').
+non_evaluated_type('Expression').
+non_evaluated_type('Varaible').
+non_evaluated_type('Symbol').
+
+(argNType(KB, Op, Len, Nth, Type)/nonvar(Type), non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,false).
+(argNType(KB, Op, Len, Nth, Type)/nonvar(Type), \+ non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,true).
+
+
+
 (metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_function_asserted(KB,II,T).
 (metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
 
@@ -142,6 +164,9 @@ merge_fp(T1,T2,N) :-
 % ==> 'next-operation'(next).
 
 /*
+extracts_to_function
+
+
 ((properties(KB,A,B),{member(E,B),nonvar(E)})==>property(KB,A,E)).
 property(_,Op,E) ==> (form_op(Op),form_prop(E)).
 
