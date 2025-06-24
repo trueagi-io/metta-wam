@@ -4906,7 +4906,7 @@ metta_eq_def(Eq, KB, H, B) :-
 %   @arg B  The body of the definition.
 metta_defn(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    metta_eq_def('=', KB, H, B).
+    metta_function_asserted(KB, H, B).
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -7043,6 +7043,7 @@ pre_halt1 :- % Generate a `loonit_report` and fail.
 pre_halt2 :-
     % Skip halting if the system is compiling.
     is_compiling, !, fail.
+
 pre_halt2 :-
     % If the `prolog` option is true, start Prolog and retry `pre_halt2`.
     option_value('prolog', true), !,

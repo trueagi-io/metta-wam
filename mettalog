@@ -1299,7 +1299,7 @@ check_for_changes() {
     # (you could log it somewhere instead if needed)
     #rm -f "$executable_image"
     #mv "$temp_file" "$checksum_file"
-    rm "$temp_file"    
+    rm "$temp_file"
     return 2
   fi
 }
