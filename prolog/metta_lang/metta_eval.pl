@@ -1235,71 +1235,44 @@ eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 % =================================================================
 % =================================================================
 
-make_i2c:-
+gen_eval_20_stubs:-
   shell(clear),
-  make,forall(gen_i2c,true).
+  make,forall(ge20,true).
+
 
 is_like_eval_20(E20):-
-  is_like_call_eval_20(E20),
-  \+ atom_concat(find,_,E20),
-  functor(P,E20,6),
-  source_file(scan_exists_in_interp,File),
-  source_file(P,File).
+  current_predicate(E20/6),once(atom_concat('eval',_,E20);atom_concat(_,'eval',E20)),
+  \+ atom_concat(find,_,E20), functor(P,E20,6),source_file(scan_exists_in_interp,File),source_file(P,File).
 
-
-is_like_call_eval_20(E20):-
-  findall(E20,(current_predicate(E20/6),once(atom_concat('eval',_,E20);atom_concat(_,'eval',E20))),E20L),!,
-  sort(E20L,E20S),member(E20,E20S).
-
-eval_20_to_mc2(Op,clause(EVAL20,CBody,CRef),_E20,Eq,RetType,Depth,Self,List,_Tail,Sig,TF,Body,_Cvt,NewBody):-
-   cvt_body(Body,Body1),cvt_body(Body1,NewBody),
-   try_restore_variable_names(_Module, EVAL20, CBody, CRef),
+eval_20_to_mc2(_E20,Eq,RetType,Depth,Self,List,_Tail,_Sig,TF,Body,_Cvt,NewBody):-
+   cvt_body(Body,NewBody),
    ignore(TF='$VAR'('RetVal')),
    ignore(RetType='$VAR'('ERROR_RetType')),
    ignore(Depth=665), %'$VAR'('ERROR_Depth')),
-   ignore(Op= '$VAR'('Op')),
-   ignore(Sig= '$VAR'('Sig')),
-   ignore(Self= '&self'),
+    ignore(Self= '&self'),
    ignore(Eq='$VAR'('ERROR_Eq')),
    numbervars(List+NewBody,0,_,[singleton(true)]).
 
-try_restore_variable_names(Module, Head, Body, Ref) :-
-   prolog_listing:restore_variable_names(Module, Head, Body, Ref, [variable_names(source)]).
 
-eval_20_to_mc(Ref,_Pre,E20,Eq,RetType,Depth,Self,[H|Left],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==[],
-   must_det_lls((append([H|Left],[TF],List),
-   e20_functor(E20,MC),
-   prepend_functor(MC,List,Cvt),!,
-   eval_20_to_mc2(H,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
+eval_20_to_mc(E20,Eq,RetType,Depth,Self,[H|Left],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==[], append([H|Left],[TF],List),
+   prepend_functor(mev,[E20|List],Cvt),!,
+    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
 
-eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,Head,Tail,Sig,TF,Body,Cvt,NewBody):- Head==[],
-   must_det_lls((Tail==Sig, append([Sig],[TF],List),
-   prepend_functor(meva,[Pre,E20|List],Cvt),!,
-   eval_20_to_mc2(_,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
+eval_20_to_mc(E20,Eq,RetType,Depth,Self,[],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==Sig, append([Sig],[TF],List),
+   prepend_functor(meva,[E20|List],Cvt),!,
+    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
 
-eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,[F|MinArgs],Tail,Sig,TF,Body,Cvt,(info(E20),NewBody)):- append([F|MinArgs],[Tail,TF],List),
-   length(MinArgs,MinLen),
-   pre_post_functor_va(Pre,MC),
-   prepend_functor(MC,[MinLen|List],Cvt),!,
-    eval_20_to_mc2(F,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
-
-eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,_Head,Tail,Sig,TF,Body,Cvt,NewBody):-
-   must_det_lls((append([Sig],[TF],List),
-   prepend_functor(meva_odd,[Pre,E20|List],Cvt),!,
-   eval_20_to_mc2(_,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
+eval_20_to_mc(E20,Eq,RetType,Depth,Self,_,Tail,Sig,TF,Body,Cvt,NewBody):- append([Sig],[TF],List),
+   prepend_functor(meval2,[E20|List],Cvt),!,
+    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
 
 cvt_body(Body,Body):- \+ compound(Body),!.
-cvt_body((Body,Skip),CvtBody):- Body==fail,!,CvtBody=(Body, skipped(Skip)).
+cvt_body((Body,_),CvtBody):- Body==fail,!,CvtBody=Body.
 cvt_body(Body,Body):- is_ftVar(Body),!.
 cvt_body(Body,Body):- compound_name_arguments(Body,F,A),dont_cvt_functor(F,A),!.
-cvt_body(Body,mce(Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E20),pre_post_e20(E20,pre),!.
-cvt_body(Body,mxe(E20,Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E20),pre_post_e20(E20,post),!.
-cvt_body(Body,e(E20,Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_call_eval_20(E20),!.
-cvt_body(mce(Sig,TF), OUT):- is_list(Sig),append(Sig,[TF],SigTF), OUT=..[mi|SigTF].
-%cvt_body(e(E20,Sig,TF), OUT):- is_list(Sig),append(Sig,TF,SigTF), OUT=..[mee|SigTF].
+cvt_body(Body,e(E,Sig,TF)):- compound(Body),Body=..[E,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E),!.
 cvt_body(Body,CvtBody):- compound_name_arguments(Body,F,Args),cvt_functor(F,CvtF),maplist(cvt_body(),Args,CvtArgs),compound_name_arguments(CvtBody,CvtF,CvtArgs).
 cvt_functor(must_det_lls,must).
-cvt_functor(must_det_ll,must).
 cvt_functor(F,F).
 dont_cvt_functor('$VAR',1).
 
@@ -1308,28 +1281,12 @@ divide_for_tail(Sig,Left,[]):- is_list(Sig), Left=Sig,!.
 divide_for_tail(Sig,[],Sig):- \+ compound(Sig),!.
 divide_for_tail([H|T],[H|Left],Tail):-  divide_for_tail(T,Left,Tail).
 
-
-gen_i2c:- forall(is_like_eval_20(E20),gen_i2c(E20)).
-
-e20_functor(E20,MC):- pre_post_e20(E20,Pre),pre_post_functor(Pre,MC),!.
-e20_functor(_,mx).
-
-pre_post_e20(eval,pre).
-pre_post_e20(eval_ne,pre).
-pre_post_e20(eval_10,pre).
-pre_post_e20(eval_20,pre).
-pre_post_e20(eval_py_atom,pre).
-pre_post_e20(eval_args,pre).
-pre_post_e20(eval_30,post).
-pre_post_e20(eval_40,post).
-pre_post_e20(_,post).
-gen_i2c(E20):-
-     pre_post_e20(E20,Pre),
-     nop(in_cmt((draw_line,draw_line,fmt(E20+Pre)))),
+ge20:-
+  forall(is_like_eval_20(E20),
      forall(EVAL20=..[E20,Eq,RetType1,Depth,Self,Sig,TF],
-      forall(clause(EVAL20,Body,Ref),
-         ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(clause(EVAL20,Body,Ref),Pre,E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
-                  compiler_assertz_verbose(NewHead:-NewBody))))),nop(in_cmt((draw_line))).
+      forall(clause(EVAL20,Body),
+         ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
+                  ppt(NewHead:-NewBody)))))).
 
 
 
@@ -1350,7 +1307,7 @@ eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(C
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
 eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- current_predicate('mc__1_1_listing!'/2),!, user_err('mc__1_1_listing!'(S,RetVal)).
-eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err(mc('listing!',S,RetVal)).
+eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err(mci('listing!',S,RetVal)).
 
 eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),listing\==CallP1, !,
    (var(Cond) -> call(CallP1,Cond);
@@ -3425,23 +3382,23 @@ call_as_p2a(P2,A,B):- current_predicate_fast(P2/3),!,call(P2,A,B,RetVal),f2_succ
 call_as_p2a(F,X,Y):- must_use_eval(F,2), !,
    once(eval([F,X,Y],RetVal)),
    f2_success(RetVal,X,Y).
-%call_as_p2(F2,A,B):- f2_to_p2(Pre,F2,P2),F2\==P2,!,call(P2,A,B).
-call_as_p2a(F2,A,B):- f2_to_p3(_Pre,F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
+%call_as_p2(F2,A,B):- f2_to_p2(F2,P2),F2\==P2,!,call(P2,A,B).
+call_as_p2a(F2,A,B):- f2_to_p3(F2,P3),F2\==P3,!,call(P3,A,B,RetVal),f2_success(RetVal,A,B).
 call_as_p2a(F2,A,B):- eval_as_f2(F2,A,B,RetVal),f2_success(RetVal,A,B).
 
 f2_success(RetVal,A,B):- once(RetVal=='True';RetVal==A;RetVal==B).
 
 eval_as_f2(F2,A,B,RetVal):- current_predicate_fast(F2/3),!,call(F2,A,B,RetVal),!.
-eval_as_f2(F2,A,B,RetVal):- f2_to_p3(_Pre,F2,P3),!,call(P3,A,B,RetVal).
+eval_as_f2(F2,A,B,RetVal):- f2_to_p3(F2,P3),!,call(P3,A,B,RetVal).
 eval_as_f2(F2,A,B,RetVal):- once(eval([F2,A,B],TF)),
    (TF == 'True'-> RetVal=A ;
     TF == 'False'-> fail ; RetVal = TF).
 
-f2_to_p2(Pre,F2,P2):-
-  transpiler_peek(Pre,F2,2,[mx,me,mi,mc],P2,_,exactArgs).
+f2_to_p2(F2,P2):-
+  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
 
-f2_to_p3(Pre,F2,P2):-
-  transpiler_peek(Pre,F2,2,[mx,me,mi,mc],P2,_,exactArgs).
+f2_to_p3(F2,P2):-
+  transpiler_peek(F2,2,[mx,me,mi,mc],P2,_,exactArgs).
 
 
 
@@ -3719,65 +3676,17 @@ same_terms(X,Y):- same_term(X,Y),!.
 same_terms(X,Y):- \+ compound(X), X==Y.
 % Main evaluation predicate with full caching
 
-/*
-
-m_head_impl_va(pre,'py-atom!',_,mc_n1('py-atom'),1).
-m_head_impl_va(post,'py-atom',_,mx_n1('py-atom'),1).
-m_head_impl_va(pre,'py-dot!',_,mc_n2('py-dot'),2).
-m_head_impl_va(post,'py-dot',_,mx_n2('py-dot'),2).
-*/
-info(_).
-
-gen_mdecl:- forall(gen_mdecl(_),true).
-
-gen_mdecl(exactArgs):-
-    forall(pre_post_functor(Pre,MC),
-      forall(between(0,10,Len),
-     ((length(Args,Len), append([F|Args],[_Ret],AfterMC), P=..[MC|AfterMC]),
-      forall(clause(P,_Body),
-      if_t(ground(F),compiler_assertz_verbose(m_head_impl(F,Len,Pre,MC))))))).
-gen_mdecl(restAsList):-
-    forall(pre_post_functor_va(Pre,MC),
-      forall(between(0,10,Len),
-     ((length(Args,Len), append([Len,F|Args],[_AsList,_Ret],AfterMC), P=..[MC|AfterMC]),
-      forall(clause(P,_Body),
-      if_t(ground(F),compiler_assertz_verbose(m_head_impl_va(F,Len,Pre,MC))))))).
 
 
-pre_post_functor(pre,mc).
-pre_post_functor(post,mx).
-pre_post_functor_va(pre,mc_n).
-pre_post_functor_va(post,mx_n).
+transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+  transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs),
+  debug_info(always(compiler),transpiler_peek(Sym,Len,TypeL,Fn, Min, SpreadArgs)).
 
-:- dynamic(m_head_impl/4).
-m_head_impl('random-int',3,post,mx).
-
-:- dynamic(m_head_impl_va/4).
-m_head_impl_va('py-dot!',2,post,mc_n).
-m_head_impl_va('py-dot',2,post,mx_n).
-m_head_impl_va('py-atom!',1,post,mc_n).
-m_head_impl_va('py-atom',1,post,mx_n).
-
-m_head_impl(Pre,Sym,Len, Type,Fn, Min, exactArgs):-
-   if_t((var(Pre),nonvar(Type)),pre_post_functor(Pre,Type)),
-   m_head_impl(Sym,Min,Pre,IsType),!, Min=Len, Fn =.. [IsType,Sym].
-m_head_impl(Pre,Sym,Len, Type,Fn, Min, restAsList):-
-   if_t((var(Pre),nonvar(Type)),pre_post_functor(Pre,Type)),
-   m_head_impl_va(Sym,Min,Pre,IsType), Min =< Len, !, Fn =.. [IsType,Min,Sym].
-
-
-transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
-  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),
-  debug_info(always(compiler),transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs)).
-
-transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
+transpiler_peek_impl(Sym,Len,TypeL,Fn, Min, SpreadArgs):-
   is_list(TypeL), !, member(Type,TypeL),
-  transpiler_peek(Pre,Sym,Len,Type,Fn, Min, SpreadArgs).
+  transpiler_peek(Sym,Len,Type,Fn, Min, SpreadArgs).
 
-transpiler_peek_impl(Pre,Sym,Len,Type,Fn, Min, SpreadArgs):-
-  m_head_impl(Pre,Sym,Len,Type,Fn, Min, SpreadArgs),!.
-
-transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   if_t((var(Sym)),ignore(transpiler_predicate_store(_, Sym,_  , _, _, _, _))),
   nonvar(Sym),
   if_t((var(Len)),ignore(transpiler_predicate_store(_,Sym,[Len],_, _, _, _))),
@@ -3787,7 +3696,7 @@ transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, exactArgs):-  Len=Min,
   succ(Len,LenP1), current_predicate_fast(Fn/LenP1),
   ok_call_predicate(Sym,Len,Type).
 
-transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, restAsList):-
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
   % if_t((var(Sym)),ignore(transpiler_predicate_nary_store(_, Sym,_  , _, _, _, _))),
   if_t(var(Len),between(1,10,Len)),
   if_t(var(Type),member(Type,['mx','me','mi','mc'])),
@@ -3798,7 +3707,7 @@ transpiler_peek_impl(_Pre,Sym,Len,Type,Fn, Min, restAsList):-
   ok_call_predicate(Sym,Len,Type).
 
 /*
-transpiler_peek_impl(Pre,Sym,Len,Type,Fn, Min, restAsList):-
+transpiler_peek_impl(Sym,Len,Type,Fn, Min, restAsList):-
   between(0,Len, Min),
   if_t(var(Type),member(Type,['mx','mi','mc'])),
   format(atom(Fn),'~w_n_~w__~w',[Type,Min,Sym]),
@@ -3836,9 +3745,10 @@ jiggle_append(Left,Right,Ret,restAsList, PArgs):- !, append(Left, [Right,Ret], P
 jiggle_append(Left,Right,Ret,exactArgs,PArgs):- append(Left, [Ret], PArgs), !, must_unify(Right,[]).
 
 eval_20(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
+    fail,
     symbol(Sym), is_list(Args),
     length(Args, Len),
-    transpiler_peek(pre,Sym,Len,['mx','me'],Fn, Min, AsList),
+    transpiler_peek(Sym,Len,'mx',Fn, Min, AsList),
     jiggle_args(Args,Res,Len,Min,AsList,PArgs), ! ,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
@@ -3846,11 +3756,22 @@ eval_40(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
     %fail,
     symbol(Sym), is_list(Args),
     length(Args, Len),
-    transpiler_peek(post,Sym,Len,['mi','mc','me','mx'],Fn, Min, AsList),
+    transpiler_peek(Sym,Len,'mi',Fn, Min, AsList),
     jiggle_args(Args,Res,Len,Min,AsList,PArgs),
     %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, exists_in_compiler)),
     !,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
+
+eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):-
+    fail,
+    symbol(Sym), is_list(Args),
+    length(Args,Len),
+    transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
+    %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, this_is_in_compiler_lib)),
+    !,
+    with_metta_ctx(Eq, RetType, Depth,Self, [Sym | Args] ,apply(Fn, PArgs)).
+
 
 
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(Fn,PArgs).
@@ -4362,8 +4283,7 @@ eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
 
 
 must_or_die(G):- call(G).
-%must_or_die(G):-
-%call(G)*->true;(trace,must(G)).
+%must_or_die(G):- call(G)*->true;(trace,must(G)).
 
 true_or_log_fail(Depth,Goal,LogFail):- (call(Goal)
           -> true ; ((if_trace(e,color_g_mesg('#713700',indentq2(Depth,failure(LogFail)))),!),!,fail)).

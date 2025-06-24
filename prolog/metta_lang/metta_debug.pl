@@ -798,7 +798,7 @@ is_user_repl:- \+ option_value(user_repl, false).
 
 is_extreme_debug:- is_douglas.
 is_douglas:- current_prolog_flag(os_argv,OSArgV), \+ \+ member('--douglas',OSArgV),!.
-is_douglas:- is_douglas_machine,!.
+%is_douglas:- is_douglas_machine,!.
 is_douglas_machine:- gethostname(X),(X=='HOSTAGE.';X=='HOSTAGE'),!,current_prolog_flag(os_argv,OSArgV), \+ member('--douglas=false',OSArgV),!.
 is_extreme_debug(G):- is_douglas, !, call(G).
 is_extreme_debug(_).
