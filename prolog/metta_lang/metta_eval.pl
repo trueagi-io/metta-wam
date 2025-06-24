@@ -1259,7 +1259,7 @@ eval_20_to_mc2(Op,clause(EVAL20,CBody,CRef),_E20,Eq,RetType,Depth,Self,List,_Tai
    ignore(Depth=665), %'$VAR'('ERROR_Depth')),
    ignore(Op= '$VAR'('Op')),
    ignore(Sig= '$VAR'('Sig')),
-    ignore(Self= '&self'),
+   ignore(Self= '&self'),
    ignore(Eq='$VAR'('ERROR_Eq')),
    numbervars(List+NewBody,0,_,[singleton(true)]).
 
