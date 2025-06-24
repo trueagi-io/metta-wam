@@ -1235,44 +1235,71 @@ eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 % =================================================================
 % =================================================================
 
-gen_eval_20_stubs:-
+make_i2c:-
   shell(clear),
-  make,forall(ge20,true).
-
+  make,forall(gen_i2c,true).
 
 is_like_eval_20(E20):-
-  current_predicate(E20/6),once(atom_concat('eval',_,E20);atom_concat(_,'eval',E20)),
-  \+ atom_concat(find,_,E20), functor(P,E20,6),source_file(scan_exists_in_interp,File),source_file(P,File).
+  is_like_call_eval_20(E20),
+  \+ atom_concat(find,_,E20),
+  functor(P,E20,6),
+  source_file(scan_exists_in_interp,File),
+  source_file(P,File).
 
-eval_20_to_mc2(_E20,Eq,RetType,Depth,Self,List,_Tail,_Sig,TF,Body,_Cvt,NewBody):-
-   cvt_body(Body,NewBody),
+
+is_like_call_eval_20(E20):-
+  findall(E20,(current_predicate(E20/6),once(atom_concat('eval',_,E20);atom_concat(_,'eval',E20))),E20L),!,
+  sort(E20L,E20S),member(E20,E20S).
+
+eval_20_to_mc2(Op,clause(EVAL20,CBody,CRef),_E20,Eq,RetType,Depth,Self,List,_Tail,Sig,TF,Body,_Cvt,NewBody):-
+   cvt_body(Body,Body1),cvt_body(Body1,NewBody),
+   try_restore_variable_names(_Module, EVAL20, CBody, CRef),
    ignore(TF='$VAR'('RetVal')),
    ignore(RetType='$VAR'('ERROR_RetType')),
    ignore(Depth=665), %'$VAR'('ERROR_Depth')),
-    ignore(Self= '&self'),
+   ignore(Op= '$VAR'('Op')),
+   ignore(Sig= '$VAR'('Sig')),
+   ignore(Self= '&self'),
    ignore(Eq='$VAR'('ERROR_Eq')),
    numbervars(List+NewBody,0,_,[singleton(true)]).
 
+try_restore_variable_names(Module, Head, Body, Ref) :-
+   prolog_listing:restore_variable_names(Module, Head, Body, Ref, [variable_names(source)]).
 
-eval_20_to_mc(E20,Eq,RetType,Depth,Self,[H|Left],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==[], append([H|Left],[TF],List),
-   prepend_functor(mev,[E20|List],Cvt),!,
-    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
+eval_20_to_mc(Ref,_Pre,E20,Eq,RetType,Depth,Self,[H|Left],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==[],
+   must_det_lls((append([H|Left],[TF],List),
+   e20_functor(E20,MC),
+   prepend_functor(MC,List,Cvt),!,
+   eval_20_to_mc2(H,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
 
-eval_20_to_mc(E20,Eq,RetType,Depth,Self,[],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==Sig, append([Sig],[TF],List),
-   prepend_functor(meva,[E20|List],Cvt),!,
-    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
+eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,Head,Tail,Sig,TF,Body,Cvt,NewBody):- Head==[],
+   must_det_lls((Tail==Sig, append([Sig],[TF],List),
+   prepend_functor(meva,[Pre,E20|List],Cvt),!,
+   eval_20_to_mc2(_,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
 
-eval_20_to_mc(E20,Eq,RetType,Depth,Self,_,Tail,Sig,TF,Body,Cvt,NewBody):- append([Sig],[TF],List),
-   prepend_functor(meval2,[E20|List],Cvt),!,
-    eval_20_to_mc2(E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
+eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,[F|MinArgs],Tail,Sig,TF,Body,Cvt,(info(E20),NewBody)):- append([F|MinArgs],[Tail,TF],List),
+   length(MinArgs,MinLen),
+   pre_post_functor_va(Pre,MC),
+   prepend_functor(MC,[MinLen|List],Cvt),!,
+    eval_20_to_mc2(F,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody).
+
+eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,_Head,Tail,Sig,TF,Body,Cvt,NewBody):-
+   must_det_lls((append([Sig],[TF],List),
+   prepend_functor(meva_odd,[Pre,E20|List],Cvt),!,
+   eval_20_to_mc2(_,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
 
 cvt_body(Body,Body):- \+ compound(Body),!.
-cvt_body((Body,_),CvtBody):- Body==fail,!,CvtBody=Body.
+cvt_body((Body,Skip),CvtBody):- Body==fail,!,CvtBody=(Body, skipped(Skip)).
 cvt_body(Body,Body):- is_ftVar(Body),!.
 cvt_body(Body,Body):- compound_name_arguments(Body,F,A),dont_cvt_functor(F,A),!.
-cvt_body(Body,e(E,Sig,TF)):- compound(Body),Body=..[E,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E),!.
+cvt_body(Body,mce(Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E20),pre_post_e20(E20,pre),!.
+cvt_body(Body,mxe(E20,Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E20),pre_post_e20(E20,post),!.
+cvt_body(Body,e(E20,Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_call_eval_20(E20),!.
+cvt_body(mce(Sig,TF), OUT):- is_list(Sig),append(Sig,[TF],SigTF), OUT=..[mi|SigTF].
+%cvt_body(e(E20,Sig,TF), OUT):- is_list(Sig),append(Sig,TF,SigTF), OUT=..[mee|SigTF].
 cvt_body(Body,CvtBody):- compound_name_arguments(Body,F,Args),cvt_functor(F,CvtF),maplist(cvt_body(),Args,CvtArgs),compound_name_arguments(CvtBody,CvtF,CvtArgs).
 cvt_functor(must_det_lls,must).
+cvt_functor(must_det_ll,must).
 cvt_functor(F,F).
 dont_cvt_functor('$VAR',1).
 
@@ -1281,12 +1308,28 @@ divide_for_tail(Sig,Left,[]):- is_list(Sig), Left=Sig,!.
 divide_for_tail(Sig,[],Sig):- \+ compound(Sig),!.
 divide_for_tail([H|T],[H|Left],Tail):-  divide_for_tail(T,Left,Tail).
 
-ge20:-
-  forall(is_like_eval_20(E20),
+
+gen_i2c:- forall(is_like_eval_20(E20),gen_i2c(E20)).
+
+e20_functor(E20,MC):- pre_post_e20(E20,Pre),pre_post_functor(Pre,MC),!.
+e20_functor(_,mx).
+
+pre_post_e20(eval,pre).
+pre_post_e20(eval_ne,pre).
+pre_post_e20(eval_10,pre).
+pre_post_e20(eval_20,pre).
+pre_post_e20(eval_py_atom,pre).
+pre_post_e20(eval_args,pre).
+pre_post_e20(eval_30,post).
+pre_post_e20(eval_40,post).
+pre_post_e20(_,post).
+gen_i2c(E20):-
+     pre_post_e20(E20,Pre),
+     nop(in_cmt((draw_line,draw_line,fmt(E20+Pre)))),
      forall(EVAL20=..[E20,Eq,RetType1,Depth,Self,Sig,TF],
-      forall(clause(EVAL20,Body),
-         ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
-                  ppt(NewHead:-NewBody)))))).
+      forall(clause(EVAL20,Body,Ref),
+         ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(clause(EVAL20,Body,Ref),Pre,E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
+                  compiler_assertz_verbose(NewHead:-NewBody))))),nop(in_cmt((draw_line))).
 
 
 
@@ -1307,7 +1350,7 @@ eval_20(Eq,RetType,Depth,Self,['cpu-time',Cond],Res):- !, ctime_eval(eval_args(C
 eval_20(Eq,RetType,Depth,Self,['wall-time',Cond],Res):- !, wtime_eval(eval_args(Cond),eval_args(Eq,RetType,Depth,Self,Cond,Res)).
 eval_20(Eq,RetType,Depth,Self,['time!',Cond],['Time',Seconds,Res]):- !, wtimed_call(eval_args(Eq,RetType,Depth,Self,Cond,Res), Seconds).
 eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- current_predicate('mc__1_1_listing!'/2),!, user_err('mc__1_1_listing!'(S,RetVal)).
-eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err(mci('listing!',S,RetVal)).
+eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err(mc('listing!',S,RetVal)).
 
 eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),listing\==CallP1, !,
    (var(Cond) -> call(CallP1,Cond);
