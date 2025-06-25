@@ -532,6 +532,10 @@ maybe_write_info1(Info):- fail, once(try_harder_optimize_prolog(wa,Info,Info2)),
      maybe_write_info1(Info2).
 maybe_write_info1(Info):- maybe_write_info2(Info), !.
 
+is_immediately_called(Cmpd):- compound(Cmpd) compound_name_arity(Cmpd,F,A),is_immediately_called_fa(F,A).
+is_immediately_called_fa(eval_H,_). is_immediately_called_fa(mi,_).  is_immediately_called_fa(normalIO,_).
+
+maybe_write_info2((:-B)):-  is_immediately_called(B), into_plnamed((:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
 maybe_write_info2((:-B)):-  into_plnamed((top_call:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
 maybe_write_info2((H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt(Info2), nl,nl.
 maybe_write_info2('==>'(H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt('==>'(Info2)), nl,nl.
