@@ -6227,9 +6227,19 @@ t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
 t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 */
 
-engine_eval_args(E,X,Y):- string(X), parse_sexpr(X,M),engine_eval_args(E,M,Y).
-engine_eval_args(_,X,Y):-
-  user:eval_args(X,Y).
+py_engine_eval_args(E,X,Y):- string(X), parse_sexpr(X,M), !, py_engine_eval_args(E,M,Y).
+py_engine_eval_args(E,X,Y):- atom(X), atom_string(X,M),!, py_engine_eval_args(E,M,Y).
+py_engine_eval_args(_,exec(X),Y):- !,user:eval_args(X,R),py_returnable(R,Y).
+py_engine_eval_args(E,['!',X],Y):- !, py_engine_eval_args(E,exec(X),Y).
+py_engine_eval_args(_,X, Y):- do_metta(python, +, '&self', X, R),py_returnable(R,Y).
+
+py_parse_sexpr(Res, Result):- atom(Res), atom_string(Res,String), !, py_parse_sexpr(String, Result).
+py_parse_sexpr(Exp, Result):- is_list(Exp),!,Exp=Result.
+py_parse_sexpr(Str, Result):- parse_sexpr(Str, Res),py_returnable(Res, Result).
+
+py_returnable(Res, Result):- \+ compound(Res), !, Result=Res.
+py_returnable(exec(Res), Result):- !, Result=['!',Res].
+py_returnable(Res, Result):- Result=Res.
 
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 

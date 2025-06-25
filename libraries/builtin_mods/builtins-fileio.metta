@@ -159,15 +159,19 @@ Or for read-and-return:
   (@return "Result of the body expression. The file is closed afterward, even if the body fails or throws an error."))
 
 
+; !(with-file-handle(file-open! "somefile.txt" "r") $fh (file-read-to-string! $fh))
+
+
 (: with-file-handle! (-> Atom Variable Atom Atom))
 (= (with-file-handle $open_expr $fh $body)
   (function
 	;; open the file
-	(let $fh (eval $open_expr)
+   (let $fh (eval $open_expr)
 	;; run the body, binding result
 	 (let $result (eval $body)
 	  ;; ensure closing
-		(progn (file-close! $fh) 
+		(progn
+		  (file-close! $fh) 
 		  (return $result))))))
 
 
