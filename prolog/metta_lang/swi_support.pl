@@ -234,14 +234,14 @@ with_option(N, V, G) :-
 %     Value = inf.
 %
 was_option_value(N, V) :-
-    % Check if the option is stored as a non-backtrackable variable.
-    nb_current(N, VV), VV \== [], !, V = VV.
-was_option_value(N, V) :-
     % Check if the option is set as a Prolog flag.
     current_prolog_flag(N, VV), !, V = VV.
 was_option_value(N, V) :-
     % Check if the option is available in the load context.
     prolog_load_context(N, VV), !, V = VV.
+was_option_value(N, V) :-
+    % Check if the option is stored as a non-backtrackable variable.
+    nb_current(N, VV), VV \== [], !, V = VV.
 
 %!  option_else(+Name, -Value, +Else) is det.
 %
@@ -324,7 +324,7 @@ option_value(N, V) :-
 %
 option_value0(N, V) :-
     % Retrieve and convert the option value.
-    was_option_value(N, V).
+    was_option_value(N, VV),once((p2mE(VV, V2), p2mE(V, V1))), V1 = V2.
 option_value0(_N, []).
 
 %!  p2mE(+Input, -Output) is det.

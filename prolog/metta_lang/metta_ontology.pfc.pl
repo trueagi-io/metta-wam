@@ -143,6 +143,29 @@ metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(arrow_type(ArTypeDec
 
 %metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)==>function_arity(Op,Len)
 
+/*
+
+
+   arrow_type([Ar|TypeDecl],ParamTypes,RetType)
+
+skelectalFor(Op,ParamTypes,RetType,Relation,isa(Arg,ArgType),Arg,Nth):-
+   length(ParamTypes,Len),length(Args,Len),relation_args(Relation,Op,Args,Ret),nth0(Nth,[Ret|Args],Arg),nth0(Nth,[RetType|ParamTypes],ArgType).
+
+skelectalFor(Relation,nthOf(Op,Nth,Arg),Arg,Nth):-relation_args(Relation,Op,Args,Ret),nth1(Nth,Args,Arg).
+skelectalFor(Relation,resultOf(Op,Ret),Arg,0):-relation_args(Relation,Op,_Args,Ret).
+
+    constraintFor(Op,Len,[Ar|ATypes],Rel,ArgType,Nth):- Ar=='->',!,skelectalFor(Op,Len,[Op|ATypes],argNIsa,Rel,ArgType,Nth).
+    argumentsFor(Op,Len,Args,Rel,ArgType,Nth):- skelectalFor(Op,Len,[Op|Args],argNOf,Rel,Arg,Nth).
+
+
+constraintFor(Op,_ParamTypes,RetType,resultIsa(Op,RetType),RetType,0).
+interConstraintsOf(Op,ParamTypes,RetType,LitsOf):- length(ParamTypes findall(Fact,constraintFor(Op,Len,ParamTypes,RetType,Fact,Nonvar,Nth),Lits),
+    var_shared_groups(Lits,Groups).
+
+var_shared_groups(Lits,Groups):- partition(ground,Lits,Grounds,NonGrounds),
+
+*/
+
 metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(constraintFor(Op,Len,ParamTypes,RetType,argNType,_Fact,Nonvar,Nth), Nth>0) ==> argNType(KB,Op,Len,Nth,Nonvar).
 metta_params_and_return_type(KB,Op,Len,_ParamTypes,RetType) ==> returnType(KB,Op,Len,RetType).
 
@@ -156,10 +179,18 @@ non_evaluated_type('Symbol').
 (argNType(KB, Op, Len, Nth, Type)/nonvar(Type), \+ non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,true).
 
 
-
 (metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_function_asserted(KB,II,T).
 (metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
 
+ensure_corelib_types.
+
+compiled_clauses(_KB,_Op,Clause)==>{compiler_assertz_verbose(Clause)}.
+
+((metta_function_asserted(KB,[Op|Args],BodyFn),{length(Args,Len),compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause),
+      send_to_pl_file(in_cmt(call(write_src_wi(['=',[Op|Args],BodyFn]))))}) ==> compiled_clauses(KB,Op,Clause)).
+
+
+info(_).
 
 % ==> 'next-operation'(next).
 
@@ -188,7 +219,7 @@ metta_function_asserted(KB,[Op|Args],_)/length(Args,Len)
 
 ('op-complete'(op(+,':',Op))
  ==>
- (( metta_type_info(KB,Op,TypeList)/is_list(TypeList),
+ (( metta_type(KB,Op,TypeList)/is_list(TypeList),
   {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
   metta_params_and_return_type(KB,Op,Len,Params,Ret),{do_once(show_deds_w(Op))})).
 
@@ -385,7 +416,7 @@ properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")
 properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
 properties('&corelib','sealed', [variable_scoping, qhelp("Variable scoping.")]).
 properties('&corelib','function', [function_definition, qhelp("Function block.")]).
-properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).
+properties('&corelib','return', [function_definition, qhelp("Ret value of a function block."), return_value]).
 properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
 
 % --- Error Handling and Advanced Control Flow ---
@@ -512,7 +543,7 @@ properties('&corelib','union', [nondet_sets, qhelp("It gives the union of 2 list
 properties('&corelib','stringToChars', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]).
 properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
 properties('&corelib','format-args', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]).
-properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).
+properties('&corelib','flip', [random, qhelp("Ret a random boolean."), random_boolean]).
 
 
 

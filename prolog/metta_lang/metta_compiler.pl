@@ -502,7 +502,7 @@ solid_varnames(G,SG):- copy_term_nat(G,SG),term_variables(G,GVars),term_variable
 
 send_to_txt_file(PlFile,Info):- Info \= (:- _), seen_check(send_to_txt_file(PlFile,Info)),!.
 send_to_txt_file(PlFile,Info):-
-    if_t((nb_current('$se_verbose',true)),
+    if_t((nb_current('$se_verbose',true);true),
               inform_send_pl_file(PlFile,Info)),
     ensure_in_file(PlFile,Info).
 
@@ -532,7 +532,7 @@ maybe_write_info1(Info):- fail, once(try_harder_optimize_prolog(wa,Info,Info2)),
      maybe_write_info1(Info2).
 maybe_write_info1(Info):- maybe_write_info2(Info), !.
 
-is_immediately_called(Cmpd):- compound(Cmpd) compound_name_arity(Cmpd,F,A),is_immediately_called_fa(F,A).
+is_immediately_called(Cmpd):- compound(Cmpd), compound_name_arity(Cmpd,F,A),is_immediately_called_fa(F,A).
 is_immediately_called_fa(eval_H,_). is_immediately_called_fa(mi,_).  is_immediately_called_fa(normalIO,_).
 
 maybe_write_info2((:-B)):-  is_immediately_called(B), into_plnamed((:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
