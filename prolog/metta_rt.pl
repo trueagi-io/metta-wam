@@ -1,3 +1,4 @@
+﻿:- module(metta_rt,[]).
 
 :- set_prolog_flag(mettalog_rt,true).
 
@@ -23,7 +24,8 @@ normal_IO:- stream_property(I,file_no(0)),
    set_prolog_IO(I,O,E),!.
 
 
-ii:- interp_src_dir(Dir),
+:- interp_src_dir(Dir),
    absolute_file_name('metta_interp',File,[relative_to(Dir)]),
-   load_files(File, [qcompile(auto)]).
+   user:load_files(File, [qcompile(auto)]).
+
 

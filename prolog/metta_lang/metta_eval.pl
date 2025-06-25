@@ -1967,6 +1967,7 @@ eval_space(Eq,RetType,_Dpth,_Slf,['atom-count',Space],Count):- !,
     %findall(Atom, metta_atom(Space, Atom),Atoms),
     %length(Atoms,Count).
 
+
 eval_space(Eq,RetType,_Dpth,_Slf,['atom-replace',Space,Rem,Add],TF):- !,
    copy_term(Rem,RCopy), as_tf((metta_atom_iter_ref(Space,RCopy,Ref), RCopy=@=Rem,erase(Ref), do_metta(Space,load,Add)),TF),
  check_returnval(Eq,RetType,TF).

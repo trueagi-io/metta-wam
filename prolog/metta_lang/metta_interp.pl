@@ -6227,6 +6227,10 @@ t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
 t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 */
 
+engine_eval_args(E,X,Y):- string(X), parse_sexpr(X,M),engine_eval_args(E,M,Y).
+engine_eval_args(_,X,Y):-
+  user:eval_args(X,Y).
+
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 
 %!  print_goals(+TermV) is det.

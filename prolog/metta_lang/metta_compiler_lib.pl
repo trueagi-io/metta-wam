@@ -1182,7 +1182,7 @@ mx_n(1,'py-atom',SymRef,Specialize,ResO) :-
 mx_n(2,'py-dot',Arg1,Arg2,Specialize,ResO) :-
    make_py_dot(Arg1,Arg2,Res),specialize_res(Res,Specialize,ResO).
 
-
+% (py-dot math exp  True (-> Number Number Number)   )
 
 setup_library_calls :-
   forall(
