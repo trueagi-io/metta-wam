@@ -6227,19 +6227,34 @@ t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
 t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 */
 
-py_engine_eval_args(E,X,Y):- string(X), parse_sexpr(X,M), !, py_engine_eval_args(E,M,Y).
-py_engine_eval_args(E,X,Y):- atom(X), atom_string(X,M),!, py_engine_eval_args(E,M,Y).
-py_engine_eval_args(_,exec(X),Y):- !,user:eval_args(X,R),py_returnable(R,Y).
-py_engine_eval_args(E,['!',X],Y):- !, py_engine_eval_args(E,exec(X),Y).
-py_engine_eval_args(_,X, Y):- do_metta(python, +, '&self', X, R),py_returnable(R,Y).
+:- dynamic user:hyperlog_engine_state/2.
+:- nodebug(hyperlog).
 
-py_parse_sexpr(Res, Result):- atom(Res), atom_string(Res,String), !, py_parse_sexpr(String, Result).
-py_parse_sexpr(Exp, Result):- is_list(Exp),!,Exp=Result.
-py_parse_sexpr(Str, Result):- parse_sexpr(Str, Res),py_returnable(Res, Result).
+hyperlog_startup(EngineID) :-
+    assertz(user:hyperlog_engine_state(EngineID, running)).
+
+hyperlog_shutdown(EngineID) :-
+    retractall(user:hyperlog_engine_state(EngineID, _)).
+
+hyperlog_set( _, Name, Value) :- set_option_value_interp(Name,Value).
+
+hyperlog_parse_all(ID, S, P) :- hyperlog_parse(ID, S, P).
+
+hyperlog_parse(ID, Res, Result):- atom(Res), atom_string(Res,String), !, hyperlog_parse(ID, String, Result).
+hyperlog_parse( _, Exp, Result):- is_list(Exp),!,Exp=Result.
+hyperlog_parse( _, Str, Result):- parse_sexpr(Str, Res),py_returnable(Res, Result).
+
+hyperlog_run(ID,X,Y):- string(X), parse_sexpr(X,M), !, hyperlog_run(ID,M,Y).
+hyperlog_run(ID,X,Y):- atom(X), atom_string(X,M),!, hyperlog_run(ID,M,Y).
+hyperlog_run(_,exec(X),Y):- !,user:eval_args(X,R),py_returnable(R,Y).
+hyperlog_run(ID,['!',X],Y):- !, hyperlog_run(ID,exec(X),Y).
+hyperlog_run(_,X, Y):- do_metta(python, +, '&self', X, R),py_returnable(R,Y).
 
 py_returnable(Res, Result):- \+ compound(Res), !, Result=Res.
 py_returnable(exec(Res), Result):- !, Result=['!',Res].
 py_returnable(Res, Result):- Result=Res.
+
+
 
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 
