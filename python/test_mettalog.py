@@ -14,7 +14,7 @@ class TestMeTTaLog(unittest.TestCase):
         self.assertIn("15", result)
 
     def test_function_def(self):
-        self.mlog.run("(= (f $x) (+ 40))")
+        self.mlog.run("(= (f $x) (+ $x 40))")
         result = self.mlog.run("(f 2)")
         self.assertIn("42", result)
 

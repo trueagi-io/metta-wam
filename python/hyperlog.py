@@ -30,10 +30,9 @@ ensure_mettalog_modules :-
     ( current_predicate(eval_args/3) -> true ; ensure_loaded(library(metta_rt)) ).
 
 parse_metta_expr(X, X) :- facaded, !.
-parse_metta_expr(String, Parsed) :-
-    atom_string(String, AtomStr),
+parse_metta_expr(String, Result) :-
     ensure_mettalog_modules,
-    user:parse_sexpr(AtomStr, Parsed).
+    user:py_parse_sexpr(String, Result).
 
 parse_for_py(_ID, S, P) :- parse_metta_expr(S, P).
 parse_all_for_py(_ID, S, P) :- parse_metta_expr(S, P).
@@ -41,14 +40,13 @@ parse_all_for_py(_ID, S, P) :- parse_metta_expr(S, P).
 eval_sexpr_for_py(_ID, Input, Input) :- facaded, !.
 eval_sexpr_for_py(ID, Input, Result) :-
     ensure_mettalog_modules,
-    user:engine_eval_args(ID, Input, Result).
+    user:py_engine_eval_args(ID, Input, Result).
 
 run_for_py(ID, String, Result) :- metta_eval(ID, String, Result).
 
 metta_eval(_ID, Eval, Eval) :- facaded, !.
-metta_eval(ID, String, Result) :-
-    parse_metta_expr(String, Parsed),
-    user:engine_eval_args(ID, Parsed, Result).
+metta_eval(ID, Eval, Result) :-
+    user:py_engine_eval_args(ID, Eval, Result).
 
 :- ensure_mettalog_modules.
 
@@ -77,7 +75,9 @@ def pretty_print_result(result, prefix="  => "):
             for i, item in enumerate(result):
                 print(f"{prefix}[{i}] {item}")
         except Exception as e:
-            print(f"{prefix}Error iterating result: {e}")
+            print(f"Error iterating result: {e}")
+
+            print(f"{prefix}{result}")
     elif isinstance(result, (list, tuple, set)):
         for i, item in enumerate(result):
             print(f"{prefix}[{i}] {item}")
@@ -146,7 +146,7 @@ class MeTTaLogImpl:
     def parse(self, code):
         if self.debug:
             print(f"[{self.engine_id}] parse: {code}")
-        return janus.apply("user", "parse_for_py", self.engine_id, code)
+        return janus.apply_once("user", "parse_for_py", self.engine_id, code)
 
     def run(self, code):
         if self.debug:
@@ -171,6 +171,8 @@ class MeTTaLogImpl:
             new_facade.run(code)
         return new_facade
 
+    def load(self, file): return self.query(f"(include {file})")
+    def import_(self, file): return self.query(f"(import &self {file})")
     def transaction(self, code): return self.query(f"(thread:transaction! {code})")
     def snapshot(self, code): return self.query(f"(thread:snapshot! {code})")
     def spawn(self, code): return self.query(f"(thread:spawn! {code})")
@@ -192,7 +194,7 @@ def main():
 
     # ➕ Run a simple arithmetic expression
     # This will just return the parsed form if in facade mode
-    res = metta.run("(+ 10 5)")
+    res = metta.run("!(+ 10 5)")
     pretty_print_result(res)
 
     # 🧠 Define a rule: (f $x) = (+ $x 40)
@@ -201,12 +203,12 @@ def main():
 
     # 🔁 Apply the rule: (f 2)
     # This should produce (+ 2 40) → 42 (if not in facade)
-    res = metta.run("(f 2)")
+    res = metta.run("!(f 2)")
     pretty_print_result(res)
 
     # 📦 Parse an expression: "(+ 2 2)"
     # Parsing just returns the syntax tree
-    parsed = metta.parse("(+ 2 2)")
+    parsed = metta.parse("(+ (f 0) 2)")
     pretty_print_result(parsed)
 
     # 🧮 Evaluate the parsed expression

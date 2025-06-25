@@ -41,7 +41,7 @@ packages = ["mettalog", "hyperon_ref", "mettalog_sandbox"]
 package-dir = { "hyperon_ref" = "hyperon_ref", "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox"  }
 # Specify hyperonpy.py as a py_modules entry
 #py-modules = ["hyperonpy","mettalogpy"]
-py-modules = ["mettalogpy"]
+py-modules = ["mettalogpy","hyperlog"]
 
 [tool.cibuildwheel]
 #before-all = "sh -c ./python/install-hyperonc.sh"

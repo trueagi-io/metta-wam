@@ -1098,13 +1098,14 @@
 ; Note:         Relies on `attemptcheckmate_match`, `move_piece`, 
 ;               `any_moves_to_escape`, and `reset_pieces`.
 ;***********************************************************************
+
 (= (attemptcheckmate) 
   (let $checkmate_moves (collapse (attemptcheckmate_match))
     ;(if (== $checkmate_moves ()) (empty) (car-atom $checkmate_moves))))  <-- works alone for check!
 
     ; the following block of code determines if, after a check move, the king can escape by any means (block etc)
     (let $list_of_checkmate_moves 
-        (collapse 
+        (collapse
           (let $test_move (superpose $checkmate_moves)
             (let*
               ( 
@@ -2778,7 +2779,7 @@
 ;   - Uses (case ...) to map string input to handler atoms
 ;***************************************************************
 
-(= (command-loop)
+(= (command-once)
   (progn 
     (println! "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
@@ -2792,14 +2793,38 @@
           ("q"  (println! "Quitting MeTTa Greedy Chess."))
           ($_   (println! "Invalid command, please try again or enter c for a list of commands."))
           )))
-    (if (== $command "q") 
-      ()
-      (command-loop))
-      ))
+    (if (== $command "q") False True)))
+
+
+;-----------;
+(= (command-loop)
+  (progn 
+	  (command-once)
+	  (command-loop)))
 
 ;-----------;
 (= (main_loop) 
   (progn
-    (chess)           ; Start the chess game
-    (command-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
-!(main_loop)
+	(chess)           ; Start the chess game
+	(command-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
+;;!(main_loop)
+
+(= (do-lots) ; return 80 times
+    (superpose 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1))
+
+(= (do-lots-more) ; return 80 ^ 8 times
+	((do-lots)(do-lots)(do-lots)(do-lots)
+				(do-lots)(do-lots)(do-lots)(do-lots)))
+
+(= (do-lots-of-lots-more) ; return 80 ^ 64 times
+	(superpose ((do-lots-more)(do-lots-more)(do-lots-more)(do-lots-more)
+				(do-lots-more)(do-lots-more)(do-lots-more)(do-lots-more))))
+
+
+(= (command-not-loop)
+  ((do-lots-of-lots-more)
+   (command-once)))
+
