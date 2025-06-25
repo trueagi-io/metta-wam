@@ -5,7 +5,7 @@ DEBUG_MODE = 1
 the_modules_and_globals=None
 
 import traceback
-#import math
+import math
 import random
 
 def print_debug(Lvl, Message):
@@ -105,10 +105,11 @@ def with_explicit_trace(func, *args, **kwargs):
 
         debug_output = buffer.getvalue()
         buffer.close()
-        print_debug(1, debug_output)
-        flush_stdout_stderr()
+        if (DEBUG_MODE>1):
+              print_debug(1, debug_output)
+              flush_stdout_stderr()
 
-        if not DEBUG_MODE==0:
+        if not DEBUG_MODE > 1:
             raise  # Re-raises the current exception (no need to use `raise e`)
 
         return None

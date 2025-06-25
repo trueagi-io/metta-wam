@@ -1032,8 +1032,9 @@ nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
 :- dynamic(did_setup_show_hide_debug/0).
 
 %setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
-%setup_show_hide_debug:- did_setup_show_hide_debug,!.
-%setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+setup_show_hide_debug:- did_setup_show_hide_debug,!.
+setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+setup_show_hide_debug:- run_cmd_args_prescan, fail.
 setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
@@ -1070,6 +1071,7 @@ debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
                             if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
                             if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
+debug_info_filtered( Topic,_Info, [do,not_yet(setup_show_hide_debug),Topic]):- \+ did_setup_show_hide_debug, is_douglas, !.
 debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
 debug_info_filtered( always( Topic), Info, NewTopic):-!, debug_info_filtered(Topic, Info, NewTopic).
 debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
@@ -1135,8 +1137,8 @@ debug_info_now(Topic, Info):-
   %number_vars_wo_conficts1(Info,RNVInfo),
   if_t(var(RNVInfo),Info=RNVInfo),
  (should_comment(Topic, Info) ->
-    format(X,'/* ~@:TTTTTTTTTT ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
-    format(X,'% ~@:ZZZZZZZ~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
+    format(X,'/* ~@: ~@ */~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]);
+    format(X,'% ~@:~n~@ ~n',[maybe_ansicall(TopicColor,write(TopicStr)),maybe_ansicall(InfoColor,w_no_crlf(debug_pp_info(RNVInfo)))]))
   )))),
   nb_setval(last_debug_info_written,debug_info(Topic, Info)).
 
@@ -1203,7 +1205,7 @@ debug_pp_now(Info):- debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_tree(Info),!.
 
 print_tree_safe1(PTS):- catch(wots(S,print_tree_with_final(PTS,".")),_,fail),writeln(S),!.
-print_tree_safe1(PTS):- catch(wots(S,print_term(ss(PTS),[])),_,fail),write(S),writeln("."),!.
+print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),write(S),writeln("."),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
 ppt0(PTS):- compound(PTS), PTS=in_cmt(Cmt),!,in_cmt(ppt0(Cmt)),!.
@@ -1219,7 +1221,7 @@ metta_portray(_):- !, fail.
 
 ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
-ppt(O):- format('~N'),ppt0((O)),format('~N').
+ppt(O):- format('~N'),ppt0(O),format('~N').
 %ppt0(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.

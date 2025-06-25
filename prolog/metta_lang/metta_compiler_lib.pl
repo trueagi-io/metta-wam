@@ -41,9 +41,15 @@ i_c(_, _, A, AA):- notrace( \+ is_list(A) ), !,A=AA.
 i_c(F, N, A, AA):- non_eval_arg(F,N),!,A=AA.
 i_c(_, _, A, AA):- eval(A,AA).
 
-ee(_Let_type,E,R):- nonvar(R), E=R,!.
-ee(_Let_type,E,R):- is_list(E), !, eval_args(E,ER),ER=R.
-ee(_Let_type,E,R):- E=R,!.
+ee(_Let_type,_,E,R):- nonvar(R), E=R,!.
+ee(_Let_type,_,E,R):- is_list(E), !, eval_args(E,ER),ER=R.
+ee(_Let_type,_,E,R):- E=R,!.
+
+mc('while!',Bool,Goal,Out):-
+ repeat,
+    ((eval(Bool,TF)->is_True(TF))
+         ->(once(mc(Goal,Out)),fail)
+          ;(!,true)).
 
 mci(F, R) :- call_by_ftype(F, 0, mc(F, R), R).
 mci(F, X0, R) :- call_by_ftype(F, 1, mc(F, X0, R), R).

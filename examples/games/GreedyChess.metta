@@ -2806,25 +2806,23 @@
 (= (main_loop) 
   (progn
 	(chess)           ; Start the chess game
-	(command-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
-;;!(main_loop)
+	(command-not-a-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
 
-(= (do-lots) ; return 80 times
-    (superpose 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
-				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
-				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
-				1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1))
+(= (do-10x) ; return 10 times
+    (superpose (0 1 2 3 4 5 6 7 8 9)))
 
-(= (do-lots-more) ; return 80 ^ 8 times
-	((do-lots)(do-lots)(do-lots)(do-lots)
-				(do-lots)(do-lots)(do-lots)(do-lots)))
-
-(= (do-lots-of-lots-more) ; return 80 ^ 64 times
-	(superpose ((do-lots-more)(do-lots-more)(do-lots-more)(do-lots-more)
-				(do-lots-more)(do-lots-more)(do-lots-more)(do-lots-more))))
+(= (do-10000x) ; return 10,000 times
+	(((do-10x)(do-10x)) ; 100 x
+	 ((do-10x)(do-10x)))) ; 100
 
 
-(= (command-not-loop)
-  ((do-lots-of-lots-more)
-   (command-once)))
+(= (command-not-a-loop)
+  (let $_ (do-10000x) 
+	(limit! 1 (command-once))))
 
+(= (while-loop)
+ (let $_ (set-state! &keep-going True)
+    (while! (get-state &keep-going)
+	   (set-state! &keep-going (limit! 1 (command-once))))))
+
+!(main_loop)

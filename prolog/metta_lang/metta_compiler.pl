@@ -406,7 +406,8 @@ info_assertz(Info):-
   %transpiler_debug(2,output_prolog(Info)),
   info_assertz(Info,Assert))),!.
 
-info_assertz(Info,Assert):- is_clause_asserted(Assert),!,debug_info(compiler_assertz,skip(Info)).
+info_assertz(Info,Assert):- is_clause_asserted(Assert),!,send_to_pl_file(==>(Info)),
+  debug_info(compiler_assertz,skip(Info)).
 info_assertz( Info,Assert):- send_to_pl_file(==>(Info)), pfcAdd(Assert),!.
 info_assertz_old(Info,Assert):-
   must_det_lls((get_side_effects(pfcAdd(Assert),SifeEffects),
@@ -478,10 +479,10 @@ seen_check(G):- functor(G,F,A),seen_check(G,F,A),!.
 seen_check(G,F,A):- functor(C,F,A),nb_current(F,C),G=@=C,!.
 seen_check(G,F,_):- nb_setval(F,G),fail.
 
-inform_send_pl_file(PlFile):- seen_check(inform_send_pl_file(PlFile)),!.
-inform_send_pl_file(PlFile):- in_cmt(user_err(ppt(inform_send_pl_file(PlFile)))),!.
+inform_send_one_file(PlFile):- seen_check(inform_send_one_file(PlFile)),!.
+inform_send_one_file(PlFile):- in_cmt(user_err(ppt(inform_send_one_file(PlFile)))),!.
 inform_send_pl_file(PlFile,Info):-
-  inform_send_pl_file(PlFile),
+  inform_send_one_file(PlFile),
   \+ \+ ignore((user_err(cppt(Info)))).
 
 cppt(PlFile):- seen_check(cppt(PlFile)),!.
@@ -499,16 +500,11 @@ solid_varnames(G,SG):- is_ftVar(G),!,SG=G.
 solid_varnames(G,SG):- copy_term_nat(G,SG),term_variables(G,GVars),term_variables(SG,SGVars),maplist(solid_varnames,GVars,SGVars).
 
 
-
-send_to_txt_file(PlFile,Info):- Info \= (:- _), seen_check(send_to_txt_file(PlFile,Info)),!.
+send_to_txt_file(PlFile,Info):- (Info \= ( :- _)), clause_asserted(is_in_file(PlFile,Info)),!.
 send_to_txt_file(PlFile,Info):-
-    if_t((nb_current('$se_verbose',true);true),
-              inform_send_pl_file(PlFile,Info)),
-    ensure_in_file(PlFile,Info).
-
-ensure_in_file(PlFile,Info):- clause_asserted(is_in_file(PlFile,Info)),!.
-ensure_in_file(PlFile,Info):-
     assertz(is_in_file(PlFile,Info)),
+    if_t((nb_current('$se_verbose',true);is_douglas),
+              inform_send_pl_file(PlFile,Info)),
     setup_call_cleanup(open(PlFile, append, Stream, [encoding(utf8)]),
       with_output_to(Stream, maybe_write_info(Info)), close(Stream)),!.
 
@@ -535,7 +531,8 @@ maybe_write_info1(Info):- maybe_write_info2(Info), !.
 is_immediately_called(Cmpd):- compound(Cmpd), compound_name_arity(Cmpd,F,A),is_immediately_called_fa(F,A).
 is_immediately_called_fa(eval_H,_). is_immediately_called_fa(mi,_).  is_immediately_called_fa(normalIO,_).
 
-maybe_write_info2((:-B)):-  is_immediately_called(B), into_plnamed((:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
+maybe_write_info2( Info ):- \+ compound(Info), !, writeq(Info),writeln('.').
+maybe_write_info2((:-B)):-  is_immediately_called(B), !,nl, no_conflict_numbervars(B), portray_clause(:- B), nl,nl.
 maybe_write_info2((:-B)):-  into_plnamed((top_call:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
 maybe_write_info2((H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt(Info2), nl,nl.
 maybe_write_info2('==>'(H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt('==>'(Info2)), nl,nl.
@@ -1909,6 +1906,18 @@ compile_flow_control(_HeadIs,_RetType,_RetResult,[Convert|_],_Converted):- \+ ca
 compile_flow_control(_HeadIs,_RetType,RetResult,Convert, Converted):-
     Convert=~ ['call-fn!',Fn|Args], append([call,Fn|Args],[RetResult],CallFnArgs),
     must_det_lls(Converted=..CallFnArgs).
+
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
+   Convert=~'while!'(Test,Then),
+   f2p(HeadIs,'Bool',BoolValue,Test,BoolCode),
+   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
+   Converted =
+     ( FinalResult=result([]),
+       repeat,
+        ((BoolCode->is_True(BoolValue))
+             ->(once((ThenCode,nb_setarg(1,FinalResult,RetResult))),fail)
+              ;(!,true)),
+        arg(1,FinalResult,RetResult)).
 
 compile_flow_control(_HeadIs,_RetType,_RetResult,Convert, Converted):-
    Convert==[empty],!, Converted= fail.

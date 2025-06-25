@@ -179,6 +179,7 @@ non_evaluated_type('Symbol').
 (argNType(KB, Op, Len, Nth, Type)/nonvar(Type), \+ non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,true).
 
 
+
 (metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_function_asserted(KB,II,T).
 (metta_atom_asserted(KB,[C,H,A1,A2|AL])/(C=='=')) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
 
@@ -219,7 +220,7 @@ metta_function_asserted(KB,[Op|Args],_)/length(Args,Len)
 
 ('op-complete'(op(+,':',Op))
  ==>
- (( metta_type(KB,Op,TypeList)/is_list(TypeList),
+ (( metta_type_info(KB,Op,TypeList)/is_list(TypeList),
   {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
   metta_params_and_return_type(KB,Op,Len,Params,Ret),{do_once(show_deds_w(Op))})).
 
@@ -416,7 +417,7 @@ properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")
 properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
 properties('&corelib','sealed', [variable_scoping, qhelp("Variable scoping.")]).
 properties('&corelib','function', [function_definition, qhelp("Function block.")]).
-properties('&corelib','return', [function_definition, qhelp("Ret value of a function block."), return_value]).
+properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).
 properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
 
 % --- Error Handling and Advanced Control Flow ---
@@ -543,7 +544,7 @@ properties('&corelib','union', [nondet_sets, qhelp("It gives the union of 2 list
 properties('&corelib','stringToChars', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]).
 properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
 properties('&corelib','format-args', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]).
-properties('&corelib','flip', [random, qhelp("Ret a random boolean."), random_boolean]).
+properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).
 
 
 
