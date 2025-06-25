@@ -1,35 +1,21 @@
 import os
 import atexit
-import tempfile
-import collections.abc
-from hyperon import *
-from hyperon.ext import register_atoms
-from hyperon.atoms import OperationAtom
+
 import janus_swi as janus
 
-
-PROLOG_BOOTSTRAP = r"""
+def _initialize_prolog_driver():
+    janus.consult("hyperlog", 
+r"""
 
 :- use_module(library(debug)).
 :- nodebug(hyperlog).
 
 ensure_mettalog_modules :-
-    ( current_predicate(eval_args/3) -> true ; ensure_loaded(library(metta_rt)) ).
+    ensure_loaded(library(metta_rt)).
 
 :- ensure_mettalog_modules.
 
-"""
-
-def _write_temp_prolog_file(code: str):
-    tmp = tempfile.NamedTemporaryFile("w+", suffix=".pl", delete=False)
-    tmp.write(code)
-    tmp.flush()
-    return tmp.name
-
-
-def _initialize_prolog_driver():
-    temp_file = _write_temp_prolog_file(PROLOG_BOOTSTRAP)
-    janus.consult(temp_file)
+""")
 
 
 # ✅ Prolog bootstrap happens at module load (similar to __init__)
@@ -37,19 +23,26 @@ _initialize_prolog_driver()
 
 
 def pretty_print_result(result, prefix="  => "):
-    if isinstance(result, collections.abc.Iterator) and not isinstance(result, (str, bytes, list, tuple, dict, set)):
+    if not isinstance(result, (str, bytes, list, tuple, set)):
         try:
+            # Attempt indexed iteration (like for generators or custom iterables)
             for i, item in enumerate(result):
                 print(f"{prefix}[{i}] {item}")
-        except Exception as e:
-            print(f"Error iterating result: {e}")
+            return
+        except Exception: pass
 
-            print(f"{prefix}{result}")
-    elif isinstance(result, (list, tuple, set)):
-        for i, item in enumerate(result):
-            print(f"{prefix}[{i}] {item}")
-    else:
-        print(f"{prefix}{result}")
+        try:
+            # Attempt flat iteration (like for sets, dict keys, etc.)
+            for item in result:
+                print(f"{prefix}{item}")
+            return
+
+        except Exception: pass
+
+    # Final fallback: just print the object
+    print(f"{prefix}{result}")
+
+
 
 
 class MeTTaLogImpl:
