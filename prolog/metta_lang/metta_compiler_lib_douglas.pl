@@ -23,7 +23,7 @@ decl_ddm(F,A):- multifile(F/A),dynamic(F/A),discontiguous(F/A).
 :- forall(between(3,12,N), decl_ddm(mc_n,N)).
 :- forall(between(3,12,N), decl_ddm(ms_n,N)).
 
-non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaled_Type(NonEval),!.
+non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaluated_type(NonEval),!.
 
 e_i(F, N, A, AA):- i_c(F, N, A, AA).
 

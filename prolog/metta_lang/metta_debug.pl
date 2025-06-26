@@ -849,7 +849,8 @@ woc(Goal):- current_prolog_flag(occurs_check,error), !, precopy_term(Goal,CGoal)
 
 %woc(Goal):- is_douglas_machine,!,woc(error,Goal). % for developement purposes
 woc(Goal):- (is_mettalog_rt;is_mettalog_release),!,woc(true,Goal).
-woc(Goal):- woc(error,Goal). % for developement purposes
+%woc(Goal):- woc(error,Goal). % for developement purposes
+woc(Goal):- woce(Goal). % for developement purposes
 
 woce(Goal):-woc(error,Goal).
 wocf(Goal):-woc(false,Goal). % only use after 100% safe

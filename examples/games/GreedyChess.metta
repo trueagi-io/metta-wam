@@ -2806,14 +2806,16 @@
 (= (main_loop) 
   (progn
 	(chess)           ; Start the chess game
-	(command-not-a-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
+	;; (command-not-a-loop)
+	(while-loop)
+	))  ; Enter the recursive command-processing loop until quit command 'q'
 
 (= (do-10x) ; return 10 times
     (superpose (0 1 2 3 4 5 6 7 8 9)))
 
 (= (do-10000x) ; return 10,000 times
-	(((do-10x)(do-10x)) ; 100 x
-	 ((do-10x)(do-10x)))) ; 100
+	(let $_ (both (do-10x) (do-10x)) ; 100 x
+	  (let $_ (both (do-10x)(do-10x)) ()))) ; 100
 
 
 (= (command-not-a-loop)
@@ -2824,5 +2826,6 @@
  (let $_ (set-state! &keep-going True)
     (while! (get-state &keep-going)
 	   (set-state! &keep-going (limit! 1 (command-once))))))
+
 
 !(main_loop)

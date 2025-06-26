@@ -5783,9 +5783,9 @@ do_metta(From, How, Self, Src, Out) :-
     must_det_ll((normalize_space(string(TaxM), Src),
                  convert_tax(How, Self, TaxM, Expr, NewHow))),
     do_metta(From, NewHow, Self, Expr, Out).
-do_metta(From, _, Self, exec(Expr), Out) :- !,
+do_metta(From, Load, Self, exec(Expr), Out) :- !,
     % Directly execute Metta expressions wrapped in `exec`.
-    do_metta(From, exec, Self, Expr, Out).
+    do_metta(From, x(Load), Self, Expr, Out).
 % Prolog CALL
 do_metta(From, _, Self, call(Expr), Out) :- !,
     % Handle explicit Prolog calls wrapped in `call`.
@@ -5804,11 +5804,11 @@ do_metta(From, call, Self, TermV, FOut) :- !,
 % Non Exec
 do_metta(_File, Load, Self, Src, Out) :-
     % Handle non-executable inputs for modes other than `exec`.
-    Load \== exec, !,
+    Load \== x(+), !,
     if_t(into_simple_op(Load, Src, OP), pfcAdd_Now('next-operation'(OP))),
     dont_give_up(as_tf(asserted_do_metta(Self, Load, Src), Out)).
 % Doing Exec
-do_metta(file(Filename), exec, Self, TermV, Out) :-
+do_metta(file(Filename), x(+), Self, TermV, Out) :-
     % Handle executable terms when processing files.
    must_det_ll((inc_exec_num(Filename),
                  get_exec_num(Filename, Nth),
@@ -5818,7 +5818,7 @@ do_metta(file(Filename), exec, Self, TermV, Out) :-
      file_answers(Filename, Nth, Ans),
      \+ is_transpiling,
         check_answers_for(TermV, Ans))), !,
-    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    if_t(into_simple_op(x(+), TermV, OP), pfcAdd_Now('next-operation'(OP))),
      must_det_ll((
       ensure_increments((color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
@@ -5827,9 +5827,9 @@ do_metta(file(Filename), exec, Self, TermV, Out) :-
                           call(do_metta_exec(file(Filename), Self,
                                              ['assertEqualToResult', TermV, Ans], Out)))))).
 %   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode.
-do_metta(From, exec, Self, TermV, Out) :- !,
+do_metta(From, x(+), Self, TermV, Out) :- !,
     % Simplify the term into an operation (if possible) and register it.
-    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    if_t(into_simple_op(x(+), TermV, OP), pfcAdd_Now('next-operation'(OP))),
     % Attempt to execute the term, preventing failure propagation.
     dont_give_up(do_metta_exec(From, Self, TermV, Out)).
 

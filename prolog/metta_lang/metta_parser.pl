@@ -478,10 +478,12 @@ svar_fixname(I,O):-
     % Perform final adjustments on the variable name by replacing special characters.
  notrace((
   notrace(catch(fix_varcase(I,M0),_,fail)),
-  atom_subst(M0,'@','_AT_',M1),
-  atom_subst(M1,'?','_Q_',M2),
-  atom_subst(M2,':','_C_',M3),
-  atom_subst(M3,'-','_',O),
+  atom_subst(M0,'@','_xATx_',M1),
+  atom_subst(M1,'?','_xQx_',M2),
+  atom_subst(M2,':','_xCx_',M3),
+  %atom_subst(M3,'-','_xDx_',O),
+  atom_subst(M3,'-','_',M4),
+  atom_subst(M4,'#','_xHx_',O),
   ok_var_name(O))),!.
 
 %=

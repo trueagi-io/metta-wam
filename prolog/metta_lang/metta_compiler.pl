@@ -436,18 +436,58 @@ catst:-
 
 cvt_tru(List,Updates):- \+ compound(List),!,Updates=List.
 cvt_tru(List,Updates):- is_list(List), !, maplist(cvt_tru,List,Updates).
-cvt_tru(asserta(Ref),asserta((H:-B))):- clause(H,B,Ref).
-cvt_tru(assertz(Ref),assertz((H:-B))):- clause(H,B,Ref).
-cvt_tru(erased(Ref),erase_ref((H:-B),Ref)):- clause(H,B,Ref).
+cvt_tru(asserta(Ref),asserta((H:-B))):- catch(clause(H,B,Ref),_,fail).
+cvt_tru(assertz(Ref),assertz((H:-B))):- catch(clause(H,B,Ref),_,fail).
+cvt_tru(erased(Ref),erase_ref((H:-B),Ref)):- catch(clause(H,B,Ref),_,fail).
 cvt_tru(U,U).
 
-print_side_effects(P):- cvt_tru(P,Q),ppt(Q).
+print_side_effects(P):- is_list(P),maplist(print_side_effects,P),!.
+print_side_effects(P):- cvt_tru(P,Q),!,pp_se(Q).
+
+pp_se(SE):- \+ compound(SE), !, ppt(SE).
+pp_se(SE):- dont_print_se(SE),!.
+pp_se(assertz(SE)):- !, pp_se(SE),!.
+pp_se(SE:-True):- True==true,!,pp_se(SE).
+pp_se(metta_atom_asserted('&top','$COMMENT'(Str,_,_))):- nonvar(Str),!, pp_se(in_cmt((Str))).
+pp_se(metta_atom_asserted('&top',Expr)):- nonvar(Expr),!, pp_se(in_cmt(call(write_src_wi(Expr)))),!.
+pp_se(SE):- maybe_write_info(SE).
 
 do_side_effects(List):- is_list(List), !, maplist(do_side_effects,List).
 do_side_effects(Goal):- must_det_lls(call(Goal)).
 
 erase_ref(_,Ref):- erase(Ref),!.
 erase_ref(G,_):- ignore(retract(G)).
+
+dont_print_se_eq(metta_atom_asserted('&top',end_of_file)).
+dont_print_se(Cmpd):- dont_print_se_eq(Cmpd1), Cmpd=@=Cmpd1,!.
+
+
+dont_print_se(Cmpd):- \+ compound(Cmpd),!, fail.
+dont_print_se(Cmpd):- compound_name_arguments(Cmpd,Name,Arity), dont_print_se_fa(Name,Arity).
+dont_print_se(asserta(SE)):- !, dont_print_se(SE).
+dont_print_se(assertz(SE)):- !, dont_print_se(SE).
+dont_print_se(erase_ref(SE,_)):- !, dont_print_se(SE).
+dont_print_se((_:SE)):- !, dont_print_se(SE).
+dont_print_se((SE:-True)):- True==true,!,dont_print_se(SE).
+dont_print_se_fa(last_source_file,_).
+dont_print_se_fa('$spft$',_).
+dont_print_se_fa(compiled_clauses,_).
+
+convert_to_pfctrans(Expr):-
+  current_self(Self),
+  get_side_effects(pfcAdd(metta_atom_asserted(Self,Expr)),SideEffects),
+  print_side_effects(SideEffects).
+
+
+convert_to_pl(Expr):-
+  convert_to_prolog(Expr,Out), !,
+  print_side_effects(Out).
+
+convert_to_prolog([Eq,H,B],Out):- Eq == '=',
+    compile_for_assert(H, B, Out).
+convert_to_prolog(exec(Eval), (:- findall(Res,Out))):-
+    compile_for_exec(Res,Eval,Out).
+convert_to_prolog(Expr,metta_atom_asserted(Self,Expr)):- current_self(Self).
 
 unnumbervars_clause(Cl,ClU):-
   woc((copy_term_nat(Cl,AC),unnumbervars(AC,UA),copy_term_nat(UA,ClU))),!.
@@ -515,7 +555,7 @@ maybe_write_info(in_color(P)):-
   numbervars(SG,0,_,[attvar(skip)]), ansicall(C,maybe_write_info(SG)),!.
 
 maybe_write_info(in_color(Info)):- !, in_color(maybe_write_info(Info)),!.
-maybe_write_info(in_cmt(Info)):- !, setup_call_cleanup(format('~N/*~n',[]),maybe_write_info(Info),format(' */~n',[])).
+maybe_write_info(in_cmt(Info)):- !, setup_call_cleanup(format('~N/*~n',[]),maybe_write_info(Info),format('~N*/~n',[])).
 maybe_write_info(Info):- string(Info),!,writeln(Info).
 maybe_write_info(Info):- \+ compound(Info),!, ppt(Info).
 maybe_write_info(Info):- \+ \+ (no_conflict_numbervars(Info), maybe_write_info0(Info)).
@@ -696,8 +736,14 @@ arg_type_hints(arg('println!',0),'UnitAtom').
 arg_type_hints(arg(F,Arg),[arg(F,Arg)|Types]):-
    findall(Type,get_farg_type(F,Arg,Type),List),merge_types(List,Types),Types\==[].
 
-get_farg_type(F,Arg,Type):- get_type(F,Res),(Res=[Ar|List],Ar=='->'), (Arg==0->last(List,TypeM);nth1(Arg,List,TypeM)),(nonvar(TypeM)->TypeM=Type;Type='%Var').
-get_val_type(Val,Type):- get_type(Val,TypeM),(nonvar(TypeM)->TypeM=Type;Type='%Var%').
+get_type_src(I,T):- buffer_src_isa(I,T).
+get_type_src(I,T):- compiler_self(Self),metta_type_info(Self,I,T).
+
+
+get_farg_type(F,Arg,Type):- get_type_src(F,Res),(Res=[Ar|List],Ar=='->'), (Arg==0->last(List,TypeM);nth1(Arg,List,TypeM)),(nonvar(TypeM)->TypeM=Type;Type='%Var%').
+get_farg_type(F,Arg,Type):- compiler_self(KB), metta_params_and_return_type(KB,F,_,ParamTypes,RetType),
+   (Arg==0->(RetType=TypeM);nth1(Arg,ParamTypes,TypeM)),(nonvar(TypeM)->TypeM=Type;Type='%Var%').
+get_val_type(Val,Type):- get_type_src(Val,TypeM),(nonvar(TypeM)->TypeM=Type;Type='%Var%').
 get_val_types(Val,Types):- findall(Type,get_val_type(Val,Type),List),merge_types(List,Types).
 merge_types(List,Types):- list_to_set(List,Types),!.
 
@@ -708,7 +754,7 @@ get_types_of(V,Types):- compound(V),V=list(_),!,Types=['Expression'].
 get_types_of(V,Types):- compound(V),V=arg(_,_),!,Types=[V].
 get_types_of(V,Types):- findall(Type,get_type_for_args(V,Type),Types).
 
-get_type_for_args(V,Type):- get_type(V,Type), Type\==[], Type\=='%Undefined%', Type\=='list'.
+get_type_for_args(V,Type):- get_type_src(V,Type), Type\==[], Type\=='%Undefined%', Type\=='list'.
 
 set_types_of(V,_Types):- nonvar(V),!.
 set_types_of(V,Types):- list_to_set(Types,Set),put_attr(V,cns,_Self=Set),   nop(wdmsg(V=Types)).
@@ -1468,6 +1514,7 @@ functs_to_preds0(I,OO):-
    OO = ':-'(HH,BB))).
 
 
+
 % ?- compile_for_exec(RetResult, is(pi+pi), Converted).
 
 compile_for_exec(Res,I,O):-
@@ -1713,6 +1760,8 @@ compile_for_assert_eq(':-',HeadIn, BodyIn, Converted):-
 ensure_corelib_types_file.
 
 
+
+
 compile_for_assert(HeadInC, AsBodyFn, ConvertedO):-
  call(ensure_corelib_types),
  compile_for_assert_now(HeadInC, AsBodyFn, Converted),
@@ -1912,12 +1961,36 @@ compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
    f2p(HeadIs,'Bool',BoolValue,Test,BoolCode),
    f2p(HeadIs,RetType,RetResult,Then,ThenCode),
    Converted =
-     ( FinalResult=result([]),
+     ( FinalResult=result_holder([]),
        repeat,
         ((BoolCode->is_True(BoolValue))
-             ->(once((ThenCode,nb_setarg(1,FinalResult,RetResult))),fail)
+             ->(((ThenCode,nb_setarg(1,FinalResult,RetResult))), fail)
               ;(!,true)),
         arg(1,FinalResult,RetResult)).
+
+
+%is_p2_bang(WTL):- metta_params_and_return_type(KB,WTL,2,_,_RetType), get_type_src(WTL,'MeTTaLog').
+is_p2_bang('limit!'). is_p2_bang('offset!').
+is_p2_bang('max-time!').
+is_p2_bang('call-for!').
+is_p2_bang('unique-by!').
+is_p2_bang('with-output-to!').
+wtl_type_pred(WTL,P2):- atom(WTL),atom_concat(P2,'!',WTL),is_p2_bang(P2).
+wtl_type_pred(WTL,Arg1Type,P2):- wtl_type_pred(WTL,P2),get_farg_type(WTL,1,Arg1Type).
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
+   Convert=~ [WTL,Test,Then], nonvar(WTL),
+   wtl_type_pred(WTL,Arg1Type,P2), % 'limit!' 'with-time-limit!' etc
+   f2p(HeadIs,Arg1Type,Arg1Value,Test,Arg1Code),
+   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
+   Converted =
+     ( Arg1Code, call(P2, Arg1Value, ThenCode)).
+
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
+   Convert=~ [Call,Then], nonvar(Call), is_call_wrapper(Call, P1), % once!  rtrace! , etc
+   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
+   Converted =.. [P1, ThenCode],!.
+
+
 
 compile_flow_control(_HeadIs,_RetType,_RetResult,Convert, Converted):-
    Convert==[empty],!, Converted= fail.
@@ -2233,14 +2306,31 @@ is_evaled_f(chain).
 is_evaled_f('@').
 is_evaled_f(superpose).
 is_evaled_f(if).
+is_evaled_f(S):- symbol(S), from_pfc_true(returnType(_, S, _, _)).
+is_evaled_f(S):- from_pfc_true(compiled_clauses(_,S,_)).
+
+from_pfc_true(G):- !,call(G).
+from_pfc_true(G):- catch(clause(G,true,_),_,fail).
 
 %f2p_assign(_Op, _HeadIs, Nth,_RetType,V,Value,is_True(V)):- Value=='True'.
-f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(var(Value),RetType)))*/):- is_ftVar(Value), is_non_eval_kind(RetType), ValueR=Value,!.
-f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(var(Value),RetType)))*/):- \+ callable(Value), is_non_eval_kind(RetType), ValueR=Value,!.
-f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(var(Value),RetType)))*/):- atom(Value), is_non_eval_kind(RetType), ValueR=Value,!.
-f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(var(Value),RetType)))*/):- \+ is_list(Value), is_non_eval_kind(RetType), ValueR=Value,!.
-f2p_assign(Op, _HeadIs, Nth, RetType,ValueR,Value,info(is_non_eval_kind(Op,Nth,RetType))):- is_non_eval_kind(RetType),
-  is_list(Value), \+ is_evaled(Value), ValueR=Value,!.
+% /*info(is_non_eval_kind(var(Value),RetType)))*/
+f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,eval_for_var(RetType, Value,ValueR) ):- is_ftVar(Value),
+   is_non_eval_kind(RetType),!. %, ValueR=Value,!.
+f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true ):- \+ callable(Value), is_non_eval_kind(RetType), ValueR=Value,!.
+f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true ):- atom(Value), is_non_eval_kind(RetType), ValueR=Value,!.
+f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true ):- \+ is_list(Value), is_non_eval_kind(RetType), ValueR=Value,!.
+
+
+f2p_assign(Op, _HeadIs, Nth, RetType,ValueR,Value,info(is_non_eval_kind_lst(Op,Nth,RetType))):-
+      is_non_eval_kind(RetType),
+      is_list(Value), \+ is_evaled(Value), ValueR=Value,!.
+
+f2p_assign(Op, HeadIs, Nth, RetType,ValueR,SrcValue,info(is_non_eval_kind_eval(Op,Nth,RetType,NewRetType))):-
+ fail,
+  is_non_eval_kind(RetType),
+  is_list(SrcValue), is_evaled(SrcValue),
+  ValueR=as_p1(SrcValue,Code,NewValueR),
+  f2p(HeadIs,NewRetType,NewValueR,SrcValue,Code).
 
 %f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,info(is_non_eval_kind(Value,RetType))):- is_non_eval_kind(RetType), ValueR=Value,!.
 f2p_assign(_Op, _HeadIs, _Nth,_RetType,ValueR,Value,true/*info(is_nsVar(Value))*/):- is_nsVar(Value),Value=ValueR,!.
@@ -2252,6 +2342,18 @@ f2p_assign(_Op, _HeadIs, _Nth,_RetType,ValueR,Value,true/*info(\+ is_list(Value)
   \+ is_list(Value),Value=ValueR,!.
 %f2p_assign(_Op, _HeadIs, Nth,_RetType,ValueR,Value,ValueR=Value):- \+ compound(Value),!.
 %f2p_assign(_Op, _HeadIs, Nth,_RetType,ValueR,Value,ValueR=Value):- \+ is_list(Value),!.
+
+
+f2p_assign(_Op, HeadIs, _Nth, RetType,ValueR,SrcValue,as_p1(RetType,NewRetType,SrcValue,Code,NewValueR,ValueR)):-
+ fail,
+  is_non_eval_kind(RetType),
+  is_list(SrcValue), is_evaled(SrcValue),
+  f2p(HeadIs,NewRetType,NewValueR,SrcValue,Code), !.
+
+f2p_assign(_Op, HeadIs, _Nth, RetType,ValueR,SrcValue,as_e1(RetType,NewRetType,SrcValue,Code,NewValueR,ValueR)):-
+ fail,
+  is_list(SrcValue), is_evaled(SrcValue),
+  f2p(HeadIs,NewRetType,NewValueR,SrcValue,Code), !.
 
 f2p_assign(Op, HeadIs, Nth,RetType,ValueResult,Value,CodeForValue):-
    f2p([op(Op,Nth)|HeadIs],RetType,ValueResult,Value,CodeForValue),!.
@@ -2628,7 +2730,7 @@ f2q(HeadIs,RetType,RetResult,Convert, Converted):-
 
 symbol_impl(_,'println!',1,'println_impl',[->]).
 %symbol_impl(Self,Symbol,mi(Symbol)):- metta_type(Self,Symbol,[Arr|_]),Arr=='->',!.
-symbol_impl(Self,Symbol,Len,mi(Symbol),RetType):- returnType(Self,Symbol,Len,RetType).
+symbol_impl(Self,Symbol,Len,mi(Symbol),RetType):- from_pfc_true(returnType(Self,Symbol,Len,RetType)).
 symbol_impl(Self,Symbol,Len,me(Symbol),_):- metta_defn(Self,[Symbol|Args],_),length(Args,Len).
 symbol_impl(_,   Symbol,me(Symbol),_).
 
@@ -2823,14 +2925,18 @@ f2q(HeadIs,RetType,RetResult,Convert, Converted) :- is_list(Convert), %not_funca
       combine_code(Conjs,Code,Converted))).
 
 compiler_self(Self):- current_self(Self).
+compiler_self('&corelib'):- current_self(Self), '&corelib' \== Self.
+compiler_self('&top'):- current_self(Self), '&top' \== Self.
+
 
 include_varnames(N=Var):- atomic(N),put_attr(Var,vn,N).
 include_varnames(N=Var):- compound(N),arg(N,1,Name),!,include_varnames(Name=Var).
 include_varnames(_).
-buffer_file_src(Filename, Expr):- metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount), maplist(include_varnames,NamedVarsList).
+buffer_file_src(Filename, Expr):- metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
+  maplist(include_varnames,NamedVarsList).
 
 buffer_src(Expr):- metta_file_buffer(0, _Ord, _Kind, Expr, _NamedVarsList, _Filename, _LineCount).
-buffer_src_isa(I,T):- buffer_src([Colon, Op, T]),Op == I, (Colon == ':'; Colon == 'iz').
+buffer_src_isa(I,T):- buffer_src([Colon, Op, T]),Op = I, (Colon == ':'; Colon == 'iz').
 
 get_operator_typedef_cmp(Self,Symbol,Len,ParamTypes,RetType):- get_operator_typedef1(Self,Symbol,Len,ParamTypes,RetType),!.
 get_operator_typedef_cmp(_Self,Symbol,Len,ParamTypes,RetType):-

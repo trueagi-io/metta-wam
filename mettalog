@@ -909,8 +909,8 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*|--show*|--hide*|--test*|-O)
-		#add_to_list "$arg" ADD_COMPILE_ARG
+           --douglas*|--show*|--corelib*|--hide*|--test*|-O)
+		add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue
 		;;

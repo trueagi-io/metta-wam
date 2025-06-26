@@ -3,7 +3,7 @@ always_fix_prolog_term(Why,Coded,Fixd):-
    maybe_fix_prolog_term(Why,Coded,Fixd),!.
 always_fix_prolog_term(_,Coded,Coded):-!.
 
-maybe_fix_prolog_term(Why,Coded,Fixd):-
+maybe_fix_prolog_term(Why,Coded,Fixd):- fail,
   once(fix_prolog_term(Why,[],Coded,M)), Coded\=@=M,!,
   always_fix_prolog_term(Why,M,Fixd).
 
