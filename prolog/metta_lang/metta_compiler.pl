@@ -3742,9 +3742,9 @@ precompiled_types_new(Value):-
   %extract_constraints(Out,VS),
   renumvars(Out+VS,COut+CVS),
   %CVS = VS, COut = Out,
-  in_color((
+  in_cmt(in_color((
     pp_se(COut),
-    maplist(ppt_cns,CVS))))).
+    maplist(ppt_cns,CVS)))))).
 
 ppt_cns(put_attr(Var,cns,_=List)):- ppt(Var=List),!.
 ppt_cns(_).
