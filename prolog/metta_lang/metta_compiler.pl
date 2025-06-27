@@ -731,7 +731,8 @@ label_arg_types(F,N,[A|Args]):-
   label_arg_types(F,N2,Args).
 
 % label_arg_n_type(F,0,A):- !, label_type_assignment(A,F).
-label_arg_n_type(F,N,A):- compound(F),functor_chkd(F,Fn,Add),Is is Add+N, !, label_arg_n_type(Fn,Is,A).
+label_arg_n_type(F,N,A):- is_arity_0(F,Fn),!,label_arg_n_type(Fn,N,A).
+label_arg_n_type(F,N,A):- compound(F),!,functor_chkd(F,Fn,Add),Is is Add+N, !, label_arg_n_type(Fn,Is,A).
 label_arg_n_type(F,N,A):- add_type_to(A,arg(F,N)),!.
 
 add_type_to_var(_,Var):- nonvar(Var),!.
@@ -3742,9 +3743,9 @@ precompiled_types_new(Value):-
   %extract_constraints(Out,VS),
   renumvars(Out+VS,COut+CVS),
   %CVS = VS, COut = Out,
-  in_cmt(in_color((
+  maybe_write_info(in_cmt(call(in_color((
     pp_se(COut),
-    maplist(ppt_cns,CVS)))))).
+    maplist(ppt_cns,CVS)))))))).
 
 ppt_cns(put_attr(Var,cns,_=List)):- ppt(Var=List),!.
 ppt_cns(_).

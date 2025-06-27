@@ -1616,10 +1616,9 @@ non_arg_violation(Self, RequireType, BecomingValue):-
    nop(nopped_non_arg_violation(Self, RequireType, BecomingValue)).
 
 
-cns:attr_unify_hook(WAS, NewValue) :- attvar(NewValue), get_attr(NewValue,cns,WAS2),!,
-   arg(2,WAS,List1),arg(2,WAS2,List2),append(List1,List2,List12),list_to_set(List12,Set),
+cns:attr_unify_hook(WAS, NewValue) :- attvar(NewValue), get_attr(NewValue,cns,WAS2),
+   compound(WAS),compound(WAS2),arg(2,WAS,List1),arg(2,WAS2,List2),append(List1,List2,List12),list_to_set(List12,Set),
    setarg(2,WAS,Set),setarg(2,WAS2,Set),!.
-
 
 cns:attr_unify_hook(_,_):- nb_current(suspend_type_unificaton, true),!.
 
