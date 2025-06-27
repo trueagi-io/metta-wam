@@ -3852,6 +3852,7 @@ is_plain_list(L):- notrace(quietly(is_plain_list0(L))).
 is_plain_list0(L):- \+ is_list(L),!,fail.
 is_plain_list0([]):- !.
 is_plain_list0([QUOTE,_]):- QUOTE=='quote',!.
+is_plain_list0([Colon,_,_]):- Colon==':',!.
 is_plain_list0([R|L]):- is_plain_obj(R),!,maplist(is_value_obj,L).
 
 is_value_obj(L):- notrace(quietly(is_value_obj0(L))).
@@ -3950,8 +3951,8 @@ into_equality(OpN,Nth,Var,List,Code):- is_list(List), !,
    add_types_into(OpN,Nth,Var, List, MightF, Args),
    ignore(maybe_cond(OpN,Nth,[MightF|Args])),
    append(CodeL,[Call],LLL),
-   (((is_list(VarL),VarL=[V],var(V))) -> (VarP=V,Var=VarP) ; VarP=..['S'|VarL]),
-   Call = ( =(VarP,Var) ),
+   (((is_list(VarL),VarL=[V],var(V))) -> (VarP=V,Var=VarP,Call=true) ; (VarP=VarL,Call='S'(VarP,Var))),
+
    if_t(has_returnType(MightF),add_type_to(Var,arg(MightF,0))),
    list_to_conjuncts(LLL,Code))).
 into_equality(OpN,Nth,_Var,Comp,  Code):- compound_name_arguments(Comp,F,Args),maplist_nth(arg_equality([F,arg(Nth)|OpN]),1,Args,DFArgs),compound_name_arguments(Code,F,DFArgs).
@@ -3962,7 +3963,7 @@ walk_src_for_constraints(_,_,Out):- not_compound(Out),!.
 walk_src_for_constraints(_,_,Out):- ground(Out),!.
 walk_src_for_constraints(_,_,assign_now(BodyVar,Var)):- !, add_type_to(Var,val(BodyVar)).
 
-walk_src_for_constraints(_,_,Comp=Var):- var(Var),compound(Comp),compound_name_arguments(Comp,'S',[MightF|Args]),!,
+walk_src_for_constraints(_,_,'S'(),Comp=Var):- var(Var),compound(Comp),compound_name_arguments(Comp,'S',[MightF|Args]),!,
    if_t(callable(MightF),maplist_nth(walk_src_for_constraints(MightF),1,Args)).
 
 
