@@ -4904,9 +4904,18 @@ metta_eq_def(Eq, KB, H, B) :-
 %   @arg KB The knowledge base in which the definition is made.
 %   @arg H  The head of the definition.
 %   @arg B  The body of the definition.
-metta_defn(KB, H, B) :-
+metta_defn1(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    metta_function_asserted(KB, H, B).
+    metta_eq_def('=', KB, H, B).
+    
+    
+metta_defn(KB, I, T):- metta_defn1(KB, I, T)
+   *-> true
+   ; metta_defn2(KB, I, T).
+
+metta_defn2(KB, H, B) :- metta_function_asserted(KB, H, B).
+metta_defn2(KB, H, B) :- inherit_into(KB,KB2), metta_function_asserted(KB2, H, B).
+
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -4920,7 +4929,18 @@ metta_defn(KB, H, B) :-
 % metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB, H, B) :-
     % Use `:` to associate the head with a type in the given knowledge base.
-    metta_type_info(KB, H, B).
+    metta_eq_def(':', KB, H, B).
+
+metta_type(KB, I, T):- metta_type1(KB, I, T)
+   *->true
+   ; quietly((buffer_src([Colon, Op, T]),Op = I, (Colon == ':'; Colon == 'iz'))).
+
+metta_type1(KB, H, B) :- metta_type_info(KB, H, B).
+metta_type1(KB, H, B) :- inherit_into(KB,KB2), metta_type_info(KB2, H, B).
+
+
+
+
 % metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 
 % typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).

@@ -909,7 +909,9 @@ get_vnamed('$'(N), VNamed):- into_vnamed(N,VNamed),!.
 dvar_form(T):- \+ compound(T),!,fail.
 dvar_form('$VAR'(_)).
 
-into_plnamed(Term,NewTerm):- sub_term_safely(Sub,Term), \+ dvar_form(Sub), get_vnamed(Sub,VName),into_vnamed(VName,Replc),Replc\==Sub,!,subst001(Term,Sub,Replc,MidTerm),!,into_plnamed(MidTerm,NewTerm).
+into_plnamed(Term,NewTerm):- Term=NewTerm,!.
+into_plnamed(Term,NewTerm):- sub_term_safely(Sub,Term), \+ dvar_form(Sub), get_vnamed(Sub,VName),into_vnamed(VName,Replc),Replc\==Sub,!,
+    subst001(Term,Sub,Replc,MidTerm),!,into_plnamed(MidTerm,NewTerm).
 into_plnamed(Term,NewTerm):- materialize_vns(into_vnamed,Term,NewTerm).
 
 into_vnamed(S,'$VAR'(NS)):- mvar_str(S,N), vn_format(N,NS).

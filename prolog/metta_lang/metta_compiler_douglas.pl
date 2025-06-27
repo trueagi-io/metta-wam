@@ -632,7 +632,6 @@ extract_constraints(Converted,VSS):- term_variables(Converted,Vars),
        maplist(extract_constraints,Vars,VSS).
 extract_constraints(V,[],V=[]):-!.
 extract_constraints(V,Types,V=Types).
-\
 
 label_vns(S,G,E):- term_variables(G,Vars),assign_vns(S,Vars,E),!.
 assign_vns(S,[],S):-!.
