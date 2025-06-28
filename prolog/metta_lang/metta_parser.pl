@@ -1044,16 +1044,16 @@ cont_sexpr_from_char(EndChar, Stream, '!', Item) :-
      ; true
      ; nb_current('$file_src_depth', 0)),
 
-    cont_sexpr_once(EndChar, Stream, Subr), !,
+    with_depth_plus_one(cont_sexpr(EndChar, Stream, Subr)), !,
     Item = exec(Subr).
 
 % allow in mettalog the special ` ,(<eval this>) ` form in intepreter
-cont_sexpr_from_char(EndChar, Stream, ',', Item) :-
+cont_sexpr_from_char(EndChar, Stream, ',', Item) :- fail, % some cases users have written ( A,(B))
     peek_char(Stream, Next),
     Next == '(',
     %\+ paren_pair_functor(_, Next, _),
     %Next \== ' ',
-    cont_sexpr_once(EndChar, Stream, Subr), !,
+    with_depth_plus_one(cont_sexpr(EndChar, Stream, Subr)), !,
     Item = exec(Subr).
 
 % If '(', read an S-expression list.
@@ -1082,7 +1082,7 @@ cont_sexpr_from_char(_EndChar, Stream, Char, Item) :- paren_pair_functor(Char, E
 
 % If '#' followed by '(', read SExpr as Prolog Expression
 cont_sexpr_from_char(EndChar, Stream, '#', Item) :- peek_char(Stream, '('),
-    cont_sexpr_once(EndChar, Stream, Subr),
+    with_depth_plus_one(cont_sexpr(EndChar, Stream, Subr)),
     univ_maybe_var(Item, Subr).
 
 % Unexpected end character
@@ -1330,10 +1330,24 @@ read_single_line_comment(Stream) :-
     % read_char(Stream, ';'),  % Skip the ';' character.
     read_line_char(Stream, line_char(Line1, Col)),
     %succ(Col0, Col1),
-    read_line_to_string(Stream, Comment),
-    atom_length(Comment,Len), EndCol is Col + Len,
-   Range = range(line_char(Line1, Col), line_char(Line1, EndCol)),
+    read_line_to_string_maybe_more(Stream, Comment),
+    %atom_length(Comment,Len), EndCol is Col + Len,
+    read_line_char(Stream, line_char(Line2, EndCol)),
+   Range = range(line_char(Line1, Col), line_char(Line2, EndCol)),
    push_item_range('$COMMENT'(Comment, Line1, Col), Range).
+
+
+read_line_to_string_maybe_more(Stream, Comment):-
+   read_line_to_string(Stream, CommentStart),
+   peek_string(Stream, 5, LookAhead),
+   (start_line_comment(LookAhead) ->
+     (read_line_to_string_maybe_more(Stream, CommentCont), atomics_to_string([CommentStart,"\n",CommentCont],Comment)) ;  CommentStart = Comment).
+
+start_line_comment(Var):- var(Var), !, fail.
+start_line_comment(end_of_file):- !, fail.
+start_line_comment(String):- string(String), string_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment(String):- atom(String), atom_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment([C|Chars]):- C==';' -> true ; (C\=='\n',C\=='\r',is_like_space(C),!,start_line_comment(Chars)).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %
@@ -1458,16 +1472,22 @@ read_nested_block_comment(Stream, Level, Acc, Comment) :-
 % @arg List The list read from the stream.
 % @arg EndChar that denotes the end of the list.
 read_list(EndChar,  Stream, List):-
-  nb_current('$file_src_depth', LvL),
-  flag('$file_src_ordinal',Ordinal,Ordinal+1),
-  succ(LvL,LvLNext),
+ with_depth_plus_one((
   read_position(Stream, Line, Col, CharPos, _),
- setup_call_cleanup(
-  nb_setval('$file_src_depth', LvLNext),
-  catch(read_list_cont(EndChar,  Stream, List),
+   catch(read_list_cont(EndChar,  Stream, List),
         stream_error(Where,Why),
-        throw(stream_error(Line:Col:CharPos-Where,Why))),
-  nb_setval('$file_src_depth', LvL)).
+        throw(stream_error(Line:Col:CharPos-Where,Why))))).
+
+with_depth_plus_one(Goal):-
+    nb_current('$file_src_depth', LvL),
+    flag('$file_src_ordinal',Ordinal,Ordinal+1),
+    succ(LvL,LvLNext),
+   setup_call_cleanup(
+    nb_setval('$file_src_depth', LvLNext),
+      Goal,
+    nb_setval('$file_src_depth', LvL)).
+
+
 
 read_list_cont(EndChar,  Stream, List) :-
     skip_spaces(Stream),  % Skip any leading spaces before reading.
