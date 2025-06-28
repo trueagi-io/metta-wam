@@ -98,4 +98,3 @@
 !(assertEqual
    (get-state (let $x (new-state 1) $x))
    1)
-

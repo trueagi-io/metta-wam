@@ -1,17 +1,15 @@
 [build-system]
 # setuptools >68.0.0 is incompatible with macos-13
-# setuptools_scm >7.1.0 is incompatible with Python 3.7
-# Specify only what's necessary for the build process
-# requires = ["setuptools==68.0.0", "conan==2.5.0", "cmake==3.24", "setuptools_scm[toml]==7.1.0"]
-requires = ["setuptools==68.0.0", "wheel"]
+# urllib3 >=2.1.0 is incompatible with Conan 2.13
+requires = ["setuptools==68.0.0", "conan==2.16.1", "urllib3==2.0.7", "cmake==3.24", "setuptools_scm[toml]==8.2.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mettalog"
+name = "hyperon"
 description = "Hyperon API in Python"
 readme = "README.md"
-requires-python = ">=3.7"
-keywords = ["metta", "mettalog", "hyperon", "opencog"]
+requires-python = ">=3.8"
+keywords = ["metta", "hyperon", "opencog"]
 license = {text = "MIT License"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -26,26 +24,23 @@ dynamic = [
 ]
 
 [project.scripts]
-mettalog-py = "hyperon.metta:main"
-mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
+metta = "hyperon.metta:main"
+metta-py = "hyperon.metta:main"
 
 [project.optional-dependencies]
 dev = [
     "build==0.10.0",
     "pytest==7.3.2",
-    "janus_swi"
 ]
 
 [tool.setuptools]
-packages = ["mettalog", "hyperon_ref", "mettalog_sandbox"]
-package-dir = { "hyperon_ref" = "hyperon_ref", "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox"  }
-# Specify hyperonpy.py as a py_modules entry
-#py-modules = ["hyperonpy","mettalogpy"]
-py-modules = ["mettalogpy","hyperlog"]
+packages = [ "hyperon" ]
+package-dir = { "hyperon" = "hyperon" }
 
 [tool.cibuildwheel]
-#before-all = "sh -c ./python/install-hyperonc.sh"
+before-all = "sh -c ./python/install-hyperonc.sh"
+# There is no Rust toolchain is available for musllinux-i686 environment.
+# Other musllinux platforms are opted out to decrease the build time.
 skip = "*musllinux*"
 test-requires = ["pytest==7.3.2"]
 test-command = "pytest {project}/python/tests"
-

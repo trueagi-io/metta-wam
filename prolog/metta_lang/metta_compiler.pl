@@ -94,7 +94,13 @@ get_clause_pred(UAC,F,A):- expand_to_hb(UAC,H,_),strip_m(H,HH),functor(HH,F,A).
 
 
 add_assertion(Space,List):- is_list(List),!,maplist(add_assertion(Space),List).
-add_assertion(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+add_assertion(Space,List):- add_assertion_u(Space,List),!.
+
+add_assertion_u(AC):- current_self(Space), add_assertion_u(Space,AC).
+
+add_assertion_u(Space,List):- is_list(List),!,maplist(add_assertion_u(Space),List).
+add_assertion_u(Space,AC):- unnumbervars_clause(AC,UAC), add_assertion1(Space,UAC).
+
 add_assertion1(_,AC):- /*'&self':*/is_clause_asserted(AC),!.
 add_assertion1(_,AC):- compiler_assertz(AC),!.
 %add_assertion1(_,AC):- get_clause_pred(AC,F,A), \+ needs_tabled(F,A), !, pfcAdd(/*'&self':*/AC),!.
@@ -587,7 +593,7 @@ maybe_write_info(in_cmt(Info)):- !, setup_call_cleanup(format('~N/*~n',[]),maybe
 maybe_write_info(Info):- string(Info),!,writeln(Info).
 maybe_write_info(Info):- \+ compound(Info),!, ppt(Info).
 maybe_write_info(Info):- \+ \+ (no_conflict_numbervars(Info), maybe_write_info0(Info)).
-maybe_write_info0((:-B)):-  compound(B),gensym(top_call_,Sym),!,maybe_write_info1((Sym:-B)), maybe_write_info2((:- Sym)).
+maybe_write_info0((:-B)):-  compound(B),gensym(top_call_,Sym),!,maybe_write_info1((Sym:-B)),add_assertion_u(Sym:-B), maybe_write_info2((:- Sym)).
 maybe_write_info0(Info):- maybe_write_info1(Info).
 
 maybe_write_info1(Info):- fail, once(try_harder_optimize_prolog(wa,Info,Info2)),
@@ -601,7 +607,7 @@ is_immediately_called_fa(eval_H,_). is_immediately_called_fa(mi,_).  is_immediat
 
 maybe_write_info2( Info ):- \+ compound(Info), !, writeq(Info),writeln('.').
 maybe_write_info2((:-B)):-  is_immediately_called(B), !,nl, no_conflict_numbervars(B), portray_clause(:- B), nl,nl.
-maybe_write_info2((:-B)):-  into_plnamed((top_call:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), portray_clause(Info2), nl,nl.
+maybe_write_info2((:-B)):-  into_plnamed((top_call:- time(B)),Info2), !,nl,nl, no_conflict_numbervars(Info2), add_assertion_u(Info2), portray_clause(Info2), nl,nl.
 maybe_write_info2((H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt(Info2), nl,nl.
 maybe_write_info2('==>'(H:-B)):- into_plnamed((H:-B),Info2), !,nl,nl, no_conflict_numbervars(Info2),ppt('==>'(Info2)), nl,nl.
 maybe_write_info2( Info ):- into_plnamed(Info,Info2), !, writeq(Info2),writeln('.').
@@ -876,7 +882,7 @@ transform_top(Var, Var, [], C, C) :- fullvar(Var), !.
 transform_top(Var, Var, [], C, C) :- as_is_data_term(Var), !.
 transform_top(Var, Var, [], C, C) :- Var==[], !.
 transform_top(Var, Var, [], C, C) :- \+ is_list(Var).
-transform_top([Fn|Args], [Fn|NewArgs], Assignments, C0, C2) :- atom(Fn), !, transform_list_subcalls(Args, NewArgs, Assignments, C0, C2).
+transform_top([Fn|Args], [Fn|NewVarL], Assignments, C0, C2) :- atom(Fn), !, transform_list_subcalls(Args, NewVarL, Assignments, C0, C2).
 transform_top(List, ListOut, Assignments, C0, C2) :- is_list(List), !, transform_list_subcalls(List, ListOut, Assignments, C0, C2).
 transform_top(Anything, Anything, [], C, C).
 
@@ -895,10 +901,10 @@ transform_subcall(Var, Var, [], C, C) :-
     \+ is_list(Var), !.
 transform_subcall([], [], [], C, C) :- !.
 transform_subcall([Fn|Args], TmpVar, [Assignment|Arest], C0, C2) :- atom(Fn), !,
-    transform_list_subcalls(Args, NewArgs, Aargs, C0, C1),
+    transform_list_subcalls(Args, NewVarL, Aargs, C0, C1),
     gensym('_temp_', TempName),
     TmpVar = '$VAR'(TempName),
-    Assignment = (TmpVar - eval([Fn|NewArgs])),
+    Assignment = (TmpVar - eval([Fn|NewVarL])),
     append(Aargs, [], Arest),
     C2 is C1.
 
@@ -1302,8 +1308,13 @@ iz_conz(B):- compound(B), B=[_|_].
 %'=~'(A,B):- var(A),iz_conz(B),!,A=B.
 %'=~'(A,B):- iz_conz(A),var(B),!,A=B.
 %'=~'(A,B):- iz_conz(A),iz_conz(B),!,A=B.
-'=~'(A,B):- into_list_args(A,AA),copy_term(AA,AAA,_G),copy_term_nat(AAA,AAAC),!,into_list_args(B,BB),
-  !,AAAC=BB,!,AAAC=@=AAA,AA=AAAC,!.
+
+'=~'(A,B):- quietly('=~_impl'(A,B)).
+
+'=~_impl'(A,B):- iz_conz(B),B=[F|Args],nonvar(F),!,'=~'(A,[FF|Args]),F=FF.
+'=~_impl'(A,B):- \+ iz_conz(B),compound(B),compound_name_arguments(B,F,Args),!,'=~'(A,[F|Args]).
+'=~_impl'(A,B):- into_list_args(A,AA),copy_term(AA,AAA,G),copy_term_nat(AAA,AAAC),!,into_list_args(B,BB),
+  !,AAAC=BB,!,AAAC=@=AAA,AA=AAAC,!,maplist(call,G).
 
 % non-singleton Variable
 is_nsVar(NS):- is_ftVar(NS), NS\=@= '$VAR'('_').
@@ -1707,8 +1718,8 @@ compile_head_args(Head, NewHead, HeadCode):- skip_mizer, Head= NewHead,HeadCode 
 compile_head_args(Head, NewHead, HeadCode) :-
    must_det_ll(
      (as_functor_args(Head,Functor,A,Args),
-      maplist(compile_one_head_arg(Head),NewArgs,Args,CodeL),
-      as_functor_args(NewHead,Functor,A,NewArgs),
+      maplist(compile_one_head_arg(Head),NewVarL,Args,CodeL),
+      as_functor_args(NewHead,Functor,A,NewVarL),
       list_to_conjuncts(CodeL,HeadCode))),!.
 
 compile_one_head_arg(_Head, NewArg, Arg, true):- is_ftVar(Arg),NewArg=Arg,!.
@@ -1725,9 +1736,9 @@ compile_head_variablization(Head, NewHead, HeadCode) :-
    must_det_ll(
      (as_functor_args(Head,Functor,A,Args),
       % Find non-singleton variables in Args
-      fix_non_singletons(Args, NewArgs, Conditions),
+      fix_non_singletons(Args, NewVarL, Conditions),
       list_to_conjunction(Conditions,HeadCode),
-      as_functor_args(NewHead,Functor,A,NewArgs))).
+      as_functor_args(NewHead,Functor,A,NewVarL))).
 
 
 is_f('S'):- fail.
@@ -1755,12 +1766,12 @@ s2ca([F|Args],C):- is_mf(F), is_list(Args),!,maplist(s2c,Args,ArgsL), must_det_l
 s2ca([H|T],[HH|TT]):- s2ca(H,HH),s2ca(T,TT).
 
 
-fix_non_singletons(Args, NewArgs, [Code|Conditions]) :-
+fix_non_singletons(Args, NewVarL, [Code|Conditions]) :-
    sub_term_loc(Var, Args, Loc1), is_nsVar(Var),
-   sub_term_loc_replaced(==(Var), _Var2, Args, Loc2, ReplVar2, NewArgsM),
+   sub_term_loc_replaced(==(Var), _Var2, Args, Loc2, ReplVar2, NewVarLM),
    Loc1 \=@= Loc2,
    Code = same(ReplVar2,Var),
-   fix_non_singletons(NewArgsM, NewArgs, Conditions), !.
+   fix_non_singletons(NewVarLM, NewVarL, Conditions), !.
 fix_non_singletons(Args, Args, []):-!.
 
 
@@ -1768,20 +1779,20 @@ sub_term_loc(A,A,self).
 sub_term_loc(E,Args,e(N,nth1)+Loc):- is_list(Args),!, nth1(N,Args,ST),sub_term_loc(E,ST,Loc).
 sub_term_loc(E,Args,e(N,arg)+Loc):- compound(Args),arg(N,Args,ST),sub_term_loc(E,ST,Loc).
 
-sub_term_loc_replaced(P1,E,Args,LOC,Var,NewArgs):- is_list(Args), !, sub_term_loc_l(nth1,P1,E,Args,LOC,Var,NewArgs).
-sub_term_loc_replaced(P1,E,FArgs,LOC,Var,NewArgsLWRet):- compound(FArgs), \+ is_nsVar(FArgs),!,
+sub_term_loc_replaced(P1,E,Args,LOC,Var,NewVarL):- is_list(Args), !, sub_term_loc_l(nth1,P1,E,Args,LOC,Var,NewVarL).
+sub_term_loc_replaced(P1,E,FArgs,LOC,Var,NewVarLLWRet):- compound(FArgs), \+ is_nsVar(FArgs),!,
    compound_name_arguments(FArgs, Name, Args),
-   sub_term_loc_l(arg,P1,E,Args,LOC,Var,NewArgs),
-   must_det_llu(compound_name_arguments(NewCompound, Name, NewArgs)),NewArgsLWRet=NewCompound.
+   sub_term_loc_l(arg,P1,E,Args,LOC,Var,NewVarL),
+   must_det_llu(compound_name_arguments(NewCompound, Name, NewVarL)),NewVarLLWRet=NewCompound.
 sub_term_loc_replaced(P1,A,A,self,Var,Var):- call(P1,A),!.
 
 
-sub_term_loc_l(Nth,P1,E,Args,e(N,Nth)+Loc,Var,NewArgs):-
+sub_term_loc_l(Nth,P1,E,Args,e(N,Nth)+Loc,Var,NewVarL):-
    reverse(Args,RevArgs),
    append(Left,[ST|Right],RevArgs),
    sub_term_loc_replaced(P1,E,ST,Loc,Var,ReplaceST),
-   append(Left,[ReplaceST|Right],RevNewArgs),
-   reverse(RevNewArgs,NewArgs),
+   append(Left,[ReplaceST|Right],RevNewVarL),
+   reverse(RevNewVarL,NewVarL),
    length([_|Right], N),!.
 
 
@@ -1802,7 +1813,7 @@ fix_equals_in_head(Comp,Converted):-
    fix_equals_in_head(Convert,Converted).
 fix_equals_in_head((A:B),iz(A,B)):- !.
 fix_equals_in_head(u_assign(_NN,FList,R),HeadO):- FList =~ [F|List],
-   append(List,[R],NewArgs), symbol(F), must_det_llu(Head=..[F|NewArgs]),!, fix_equals_in_head(Head,HeadO).
+   append(List,[R],NewVarL), symbol(F), must_det_llu(Head=..[F|NewVarL]),!, fix_equals_in_head(Head,HeadO).
 fix_equals_in_head(Convert,MCConvert):- prepend_functor(mc,Convert,MCConvert),!.
 
 
@@ -2004,8 +2015,8 @@ convert_fromi(Converted, Converted):- \+ compound(Converted),!.
 convert_fromi((A,B), (AA,BB)):- !, convert_fromi(A,AA), convert_fromi(B,BB).
 convert_fromi(Converting, Converted):- is_list(Converting),!,maplist(convert_fromi(),Converting, Converted).
 convert_fromi(Converting, Converted):- compound_name_arguments(Converting,F,Args),!,
-   maplist(convert_fromi(),Args, NewArgs),!,
-   compound_name_arguments(Converted,F,NewArgs).
+   maplist(convert_fromi(),Args, NewVarL),!,
+   compound_name_arguments(Converted,F,NewVarL).
 
 %convert_fromi(Converting, Converted):- compile_flow_control(Converting, Converted).
 is_fqVar(Var2):- is_ftVar(Var2),!.
@@ -2025,7 +2036,7 @@ compile_flow_control(_HeadIs,_RetType,_RetResult,Convert,_Converted):- \+ compou
 compile_flow_control(_HeadIs,_RetType,_RetResult,[Convert|_],_Converted):- \+ callable(Convert),!,fail.
 
 compile_flow_control(_HeadIs,_RetType,RetResult,Convert, Converted):-
-    Convert=~ ['call-fn!',Fn|Args], append([call,Fn|Args],[RetResult],CallFnArgs),
+    Convert=~ ['call-fn!',Fn|Args], !, append([call,Fn|Args],[RetResult],CallFnArgs),
     must_det_lls(Converted=..CallFnArgs).
 
 compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
@@ -2039,28 +2050,6 @@ compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
              ->(((ThenCode,nb_setarg(1,FinalResult,RetResult))), fail)
               ;(!,true)),
         arg(1,FinalResult,RetResult)).
-
-
-%is_p2_bang(WTL):- metta_params_and_return_type(KB,WTL,2,_,_RetType), get_type_src(WTL,'MeTTaLog').
-is_p2_bang('limit!'). is_p2_bang('offset!').
-is_p2_bang('max-time!').
-is_p2_bang('call-for!').
-is_p2_bang('unique-by!').
-is_p2_bang('with-output-to!').
-wtl_type_pred(WTL,P2):- atom(WTL),atom_concat(P2,'!',WTL),is_p2_bang(P2).
-wtl_type_pred(WTL,Arg1Type,P2):- wtl_type_pred(WTL,P2),get_farg_type(WTL,1,Arg1Type).
-compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
-   Convert=~ [WTL,Test,Then], nonvar(WTL),
-   wtl_type_pred(WTL,Arg1Type,P2), % 'limit!' 'with-time-limit!' etc
-   f2p(HeadIs,Arg1Type,Arg1Value,Test,Arg1Code),
-   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
-   Converted =
-     ( Arg1Code, call(P2, Arg1Value, ThenCode)).
-
-compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
-   Convert=~ [Call,Then], nonvar(Call), is_call_wrapper(Call, P1), % once!  rtrace! , etc
-   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
-   Converted =.. [P1, ThenCode],!.
 
 
 
@@ -2386,6 +2375,8 @@ from_pfc_true(G):- catch(clause(G,true,_),_,fail).
 
 %f2p_assign(_Op, _HeadIs, Nth,_RetType,V,Value,is_True(V)):- Value=='True'.
 % /*info(is_non_eval_kind(var(Value),RetType)))*/
+f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value, true ):- is_ftVar(Value),is_ftVar(ValueR),
+   is_non_eval_kind(RetType),Value=ValueR,!. %, ValueR=Value,!.
 f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,eval_for_var(RetType, Value,ValueR) ):- is_ftVar(Value),
    is_non_eval_kind(RetType),!. %, ValueR=Value,!.
 f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true ):- \+ callable(Value), is_non_eval_kind(RetType), ValueR=Value,!.
@@ -2570,8 +2561,29 @@ compile_flow_control(HeadIs,RetType,_RetResult,Convert, Converted) :-
    f2p(HeadIs,RetType,AtomResult,MeTTaValue,AtomCode),
    Converted = (AtomCode,throw(metta_return(AtomResult))).
 
+
+% !(compile-body! (function 1))
+% !(compile-body! (function (throw 1)))
+% !(compile-body! (superpose ((throw 1) (throw 2))))
+compile_flow_control(HeadIs,RetType,RetResult,Convert, CodeForExpr) :- % dif_functors(HeadIs,Convert),
+   Convert =~ ['eval', Expr],
+   f2p(HeadIs,RetType,RetResult,Expr, CodeForExpr).
+
+compile_flow_control(HeadIs,RetType,RetResult,Convert, (CodeForSpace,Converted)) :- % dif_functors(HeadIs,Convert),
+   Convert =~ ['evalc', Expr, Space],
+   f2p(HeadIs, 'Space', RetSpace, Space, CodeForSpace),
+   f2p(HeadIs,RetType,RetResult, Expr,CodeForExpr),
+   Converted = with_space(RetSpace,CodeForExpr).
+
+
 compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted) :-
-   Convert =~ [function| BodyR], !,
+   Convert =~ ['function',Body], !,
+   f2p(HeadIs,RetType,RetResult, Body, BodyCode),
+   Converted = catch(BodyCode,metta_return(FunctionResult),FunctionResult=RetResult),!.
+
+
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted) :-
+   Convert =~ ['function'| BodyR], !,
    f2p(HeadIs,RetType,RetResult,['and2'(function,RetType)|BodyR], BodyCode),
    Converted = catch(BodyCode,metta_return(FunctionResult),FunctionResult=RetResult),!.
 
@@ -2584,9 +2596,34 @@ compile_flow_control(HeadIs,RetType,RetResult,Convert,BodyCode) :-
    f2p(HeadIs,RetType,RetResult,['and2'(AND2,RetType)|BodyR], BodyCode).
 
 compile_flow_control(HeadIs,RetType,RetResult, Convert, (Code1,Eval1Result=Result,Converted)) :- % dif_functors(HeadIs,Convert),
-   Convert =~ chain(Eval1,Result,Eval2),!,
+   Convert =~ 'chain'(Eval1,Result,Eval2),!,
    f2p(HeadIs, _ERetType, Eval1Result, Eval1, Code1),
    f2p(HeadIs, RetType, RetResult, Eval2, Converted).
+
+
+%is_p2_bang(WTL):- metta_params_and_return_type(KB,WTL,2,_,_RetType), get_type_src(WTL,'MeTTaLog').
+is_p2_bang('limit!'). is_p2_bang('offset!').
+is_p2_bang('max-time!').
+is_p2_bang('call-for!').
+is_p2_bang('unique-by!').
+is_p2_bang('with-output-to!').
+wtl_type_pred(WTL,P2):- atom(WTL),atom_concat(P2,'!',WTL),is_p2_bang(P2).
+wtl_type_pred(WTL,Arg1Type,P2):- wtl_type_pred(WTL,P2),get_farg_type(WTL,1,Arg1Type).
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
+   Convert=~ [WTL,Test,Then], nonvar(WTL),
+   wtl_type_pred(WTL,Arg1Type,P2), % 'limit!' 'with-time-limit!' etc
+   f2p(HeadIs,Arg1Type,Arg1Value,Test,Arg1Code),
+   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
+   Converted =
+     ( Arg1Code, call(P2, Arg1Value, ThenCode)).
+
+compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted):-
+   Convert=~ [Call,Then], nonvar(Call), is_call_wrapper(Call, P1), % once!  rtrace! , etc
+   f2p(HeadIs,RetType,RetResult,Then,ThenCode),
+   Converted =.. [P1, ThenCode],!.
+
+
+
 
 
 % If Convert is an "or" function, we convert it to the equivalent ";" (or) predicate.
@@ -2648,9 +2685,9 @@ compile_flow_control(HeadIs,RetType,RetResult,Convert, once(u_assign(NN,Body,Ret
 compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted) :-
   Convert=~ first_of(Body),
   must_det_ll((as_functor_args(Body,F,A,Args),
-  as_functor_args(Quot,quot,A,NewArgs),
+  as_functor_args(Quot,quot,A,NewVarL),
   as_functor_args(QConvert,quot,A,Args))),
-  get_inline_case_list([F|NewArgs],Quot,DefList),!,
+  get_inline_case_list([F|NewVarL],Quot,DefList),!,
   must_det_ll((f2p(HeadIs,RetType,RetResult,[case,QConvert,DefList],Converted))).*/
 compile_flow_control(HeadIs,RetType,RetResult,Convert, once(Converted)) :-
   Convert=~ first_of(Body),!, f2p(HeadIs,RetType,RetResult,Body,Converted).
@@ -2698,7 +2735,7 @@ compile_flow_control(HeadIs,RetType,RetResult,SOR, (AsPredO, Converted)) :-
 
 % If Convert is a "not" function, we convert it to the equivalent ";" (or) predicate.
 compile_flow_control(HeadIs,RetType,RetResult,Convert, \+ eval_true(AsPredO)) :- !,
-  Convert =~ not(AsPredI),
+  Convert =~ 'not'(AsPredI),
   must_det_ll(f2p(HeadIs,RetType,RetResult,AsPredI, AsPredO)).
 
 each_result(HeadIs,RetType,RetResult,Convert,Converted):-
@@ -2706,7 +2743,8 @@ each_result(HeadIs,RetType,RetResult,Convert,Converted):-
    into_equals(ear,OneResult,RetResult,Code2),
    combine_code(Code1,Code2,Converted).
 
- /*
+
+/*
 compile_flow_control(HeadIs,RetType,RetResult,Convert, Converted) :- % dif_functors(HeadIs,Convert),
    Convert =~ if(Cond,Then),!,
    f2p(HeadIs,RetType,CondResult,Cond,CondCode),
@@ -2850,12 +2888,12 @@ f2q(HeadIs,RetType,RetResult,Converting, (PreArgs,Converted)):- fail,
         \+ \+ (member(E,Args), non_simple_arg(E)),
           cname_var('Self',Self),
           %Self = '$VAR'('RetType'),
-          maplist(type_fit_childs('=',Self),_RetTypes1,ArgsCode,Args,NewArgs),
+          maplist(type_fit_childs('=',Self),_RetTypes1,ArgsCode,Args,NewVarL),
             list_to_conjunction(ArgsCode,PreArgs),
             nop(non_compat_io(color_g_mesg('magenta',
-              ((write_src(type_fit_childs('=',F,_RetTypes2,PreArgs,Args,NewArgs)),nl))))),
-        as_functor_args(Convert,F,A,NewArgs),
-        \+ (member(E,NewArgs), non_simple_arg(E)),!,
+              ((write_src(type_fit_childs('=',F,_RetTypes2,PreArgs,Args,NewVarL)),nl))))),
+        as_functor_args(Convert,F,A,NewVarL),
+        \+ (member(E,NewVarL), non_simple_arg(E)),!,
         f2p(HeadIs,RetType,RetResult,Convert, Converted).
 
 
@@ -2865,9 +2903,9 @@ f2q(HeadIs,RetType,RetResult,Converting, (PreArgs,Converted)):- fail,
 f2q(HeadIs,RetType,RetResult,Convert, Converted) :- fail,
  must_det_ll((
   as_functor_args(Convert,F,A,Args),
-  as_functor_args(Quot,quot,A,NewArgs),
+  as_functor_args(Quot,quot,A,NewVarL),
   as_functor_args(QConvert,quot,A,Args))),
-  get_inline_case_list([F|NewArgs],Quot,DefList),!,
+  get_inline_case_list([F|NewVarL],Quot,DefList),!,
   must_det_ll((f2p(HeadIs,RetType,RetResult,case(QConvert,DefList),Converted))).
 
 is_non_evaluatable(S):- \+ compound(S),!.
@@ -3007,6 +3045,8 @@ include_varnames(_).
 buffer_file_src(Filename, Expr):- metta_file_buffer(0, _Ord, _Kind, Expr, NamedVarsList, Filename, _LineCount),
   maplist(include_varnames,NamedVarsList).
 
+
+buffer_src_any(Expr):-  metta_file_buffer(_, _Ord, _Kind, Expr, _NamedVarsList, _Filename, _LineCount).
 buffer_src(Expr):- metta_file_buffer(0, _Ord, _Kind, Expr, _NamedVarsList, _Filename, _LineCount).
 buffer_src_isa(I,T):- quietly((buffer_src([Colon, Op, T]),Op = I, (Colon == ':'; Colon == 'iz'))).
 
@@ -3069,19 +3109,28 @@ f2q(HeadIs,RetType,RetResult,Convert, Converted) :- fail, is_list(Convert),
    once((sexpr_s2p(Convert,IS), \+ IS=@=Convert)), !,  % Check if Convert is a list and not in predicate form
    must_det_ll((f2p(HeadIs,RetType,RetResult, IS, Converted))).  % Proceed with the conversion of the predicate form of the list.
 
-f2q(HeadIs,RetType,RetResultL, ConvertL, Converted) :- is_list(ConvertL),
-   ConvertL = [Convert],
-   f2p(HeadIs,RetType,RetResult,Convert, Code),!,
-   into_equals(13,RetResultL,[RetResult],Equals),
-   combine_code(Code,Equals,Converted).
 
 % list not headed by s symbol
-skip_f2q(HeadIs,RetType,RetResult, ConvertL, Converted) :- is_list(ConvertL), %mctrace(compiler),
-   maplist(not_funcall,ConvertL),
-   f2p_assign_args(RetType,list,HeadIs,RetType,RetResultL,ConvertL, ConvertedL),
+f2q(HeadIs,RetType,RetResult, ConvertL, Converted) :- is_list(ConvertL), %mctrace(compiler),
+   not_funcall(ConvertL), nonvar(RetType), is_pro_eval_kind(RetType), is_nonspecific_type(RetType),
+   ConvertL=[First|_Args],
+   \+ not_funcall(First),
+   maplist(f2p(HeadIs,RetType),RetResultL, ConvertL, ConvertedL),
    list_to_conjuncts(ConvertedL,Conjs),
-   into_u_assign(14,RetResultL,RetResult,Code),
-   trace,combine_code(Conjs,Code,Converted).
+   into_equals(13,RetResultL,RetResult,Code),
+   combine_code(Conjs,Code,Converted).
+
+f2q(HeadIs,RetType,RetResult, ConvertL, Converted) :- is_list(ConvertL), %mctrace(compiler),
+   not_funcall(ConvertL), nonvar(RetType), is_pro_eval_kind(RetType), is_nonspecific_type(RetType),
+   ConvertL=[First|_Args],
+   not_funcall(First),
+   maplist(f2p(HeadIs,RetType),RetResultL, ConvertL, ConvertedL),
+   list_to_conjuncts(ConvertedL,Conjs),
+   into_equals(14,RetResultL,RetResult,Code),
+   combine_code(Conjs,Code,Converted).
+
+
+
 /*
 f2q(HeadIs,RetType,RetResult, ConvertL, (ConvertedL,ParamL=RetResult)) :- is_list(ConvertL),
   RetResult == '%Undefined%', length(ConvertL,Len),length(ParamTypes,Len), maplist(=(RetResult),ParamTypes),
@@ -3685,19 +3734,19 @@ transform(OneHead, NewHead, Body, NewBody):- create_unifier(OneHead,NewHead,Guar
     type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):- H\==':',
        ignore(get_operator_typedef1(Self,H,ParamTypes,RType)),
        ignore(eager_for_type(RType,RetType)),!,
-       must_det_ll((maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+       must_det_ll((maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewVarL),
        into_arg_code(CodeForArgs,MCodeForArgs),
        into_arg_code([MCodeForArgs,'eval_args'(XX,Y)],FullCodeForArgs),
 
-       XX = [H|NewArgs],
+       XX = [H|NewVarL],
        Y = _)).
        %eval_args(Eq,RetType,CodeForArg,Depth,Self,XX,Y).
 
     type_fit_childs(Eq,Depth,Self,RetType,FullCodeForArgs,[H|Args],Y):-
        must_det_ll((ignore(get_operator_typedef1(Self,H,ParamTypes,RetType)),
-       maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewArgs),
+       maplist(type_fit_childs(Eq,Depth,Self),ParamTypes,CodeForArgs,Args,NewVarL),
        into_arg_code(CodeForArgs,FullCodeForArgs),
-       Y = [H|NewArgs])).
+       Y = [H|NewVarL])).
     type_fit_childs(_Eq,_Depth,_Self,_RetType,true,X,Y):-!,must_det_ll((X=Y)).
 
     eager_for_type(_RType,'Atom'):- !, fail.
@@ -3723,8 +3772,8 @@ transform(OneHead, NewHead, Body, NewBody):- create_unifier(OneHead,NewHead,Guar
       eval_args(Eq,SomeType,Depth,Self,XX,Y).
     eval_evals(Eq,Depth,Self,RetType,[H|Args],Y):-
        ignore(get_operator_typedef1(Self,H,ParamTypes,RetType)),
-       maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewArgs),
-       XX = [H|NewArgs],Y=XX.
+       maplist(eval_evals(Eq,Depth,Self),ParamTypes,Args,NewVarL),
+       XX = [H|NewVarL],Y=XX.
     eval_evals(_Eq,_Depth,_Self,_RetType,X,X):-!.
 
 
@@ -3817,15 +3866,19 @@ label_arg_e_type(F,N,A):- compound(F),functor_chkd(F,Fn,Add),Is is Add+N, !, lab
 label_arg_e_type(F,N,A):- add_type_to(A,arg(F,N)),!.
 
 
-skip_some([At|ListIn],List):- At=='@',!, append(List,[_],ListIn),!.
-skip_some([At|ListIn],ListIn):- nonvar(At),skip_me_f(At),!.
-skip_some(List,List).
+skip_some([At|ListIn],List,1,1):- At=='@',!, append(List,[_],ListIn),!.
+skip_some([At|ListIn],ListIn,1,0):- nonvar(At),skip_me_f(At),!.
+skip_some(List,List,0,0).
 
-add_types_into(_OpN,_Nth,Return,[F],F, []):- if_t(var(Return),if_t(has_returnType(F),add_type_to_var(arg(F,0),Return))),!.
-add_types_into( OpN, Nth,Return,ListIn,F, Args):-
+add_types_into(_OpN,_Nth,Return,[F],[F],[F],[F],0,0):- if_t(var(Return),if_t(has_returnType(F),add_type_to_var(arg(F,0),Return))),!.
+add_types_into( OpN, Nth,Return,ListIn,VarL,NewVarL,List,SS,SE):-
  must_det_lls((
-   skip_some(ListIn,List),
+   skip_some(ListIn,List,SS,SE),
+   length(LL,SS),length(LR,SE),append([LL,List,LR],ListIn),
+   length(VL,SS),length(VR,SE),append([VL,NewVarL,VR],VarL),
+   LL=VL, ignore(LR=VR),
    List = [F|Args],
+   if_t(has_returnType(F),NewVarL = [F|_]),
    if_t(var(Return),if_t(has_returnType(F),add_type_to_var(arg(F,0),Return))),
    label_each_arg_type(OpN,Nth,Return,F,1,Args),
    if_t( \+ has_arg_types(F),maplist(add_type_to_var(ele(Return)),List)))).
@@ -3837,7 +3890,7 @@ into_equality_option(OpN,Nth,Var,Body,Code):-
              -> Code=BodyCode
              ;  combine_code(BodyCode,assign_now(BodyVar,Var),Code)).
 
-into_equality_call(_, _, X, X, true):- atom(X),!.
+into_equality_call(_, _, X, X, true):- atom(X), \+ is_src_bound(X).
 into_equality_call(OpN,Nth,Var,Else,Code):-
   %if_t(is_value_obj(Else),must_det_lls(add_type_to(Var,val(Else)))),
   %if_t(is_value_obj(Var),must_det_lls(add_type_to(Else,val(Var)))),
@@ -3851,16 +3904,23 @@ is_plain_obj(L):- is_plain_list(L).
 is_plain_list(L):- notrace(quietly(is_plain_list0(L))).
 is_plain_list0(L):- \+ is_list(L),!,fail.
 is_plain_list0([]):- !.
-is_plain_list0([QUOTE,_]):- QUOTE=='quote',!.
-is_plain_list0([Colon,_,_]):- Colon==':',!.
-is_plain_list0([R|L]):- is_plain_obj(R),!,maplist(is_value_obj,L).
+is_plain_list0([QUOTE,Arg]):- QUOTE=='quote',!, \+ is_src_bound(Arg),!.
+is_plain_list0([Colon,A,B]):- Colon==':',!, \+ is_src_bound(A), \+ is_src_bound(B).
+is_plain_list0([F|L]):- \+ callable(F),!,maplist(is_value_obj,L).
+
+is_src_bound_nd(Var):- buffer_src_any(([BIND,Var|_])),(BIND=='bind!';BIND=='import!').
+is_src_bound(Symbol):- is_src_bound_nd(Var), Symbol==Var,!.
+is_src_bound(Symbol):- atom(Symbol),atom_concat('&',_,Symbol).
 
 is_value_obj(L):- notrace(quietly(is_value_obj0(L))).
+is_value_obj0(L):- atom(L), !, \+ is_src_bound(L).
 is_value_obj0(L):- is_plain_obj(L),!.
 is_value_obj0(L):- self_eval(L),!.
 is_value_obj0(L):- not_compound(L),!.
 
 into_equality(_OpN,_Nth,Var,Value,true):- var(Value),Var=Value,!.
+into_equality(_OpN,_Nth,Var,Value,get_value(Value,Var)):- is_src_bound(Value),!,add_type_to(Var, bind(Value)).
+into_equality(_OpN,_Nth,Var,Value,get_value(Var,Value)):- is_src_bound(Var),!.
 into_equality(_OpN,_Nth,Var,Value,true):- is_value_obj(Value),Var=Value,!.
 
 into_equality(_OpN,_Nth,Var,Value,Var=Value):- number(Value),      !,add_type_to(Var,'Number').
@@ -3943,19 +4003,41 @@ into_equality(OpN,Nth,Var,Convert,Code):-
    into_equality_call(OpN,Nth,Var,Body,Code).
 
 
+build_new_call(MightF, Nth, New, Old, Use):- (use_old_arg(MightF, Nth, Old) -> Use = Old ; Use = New).
 
+use_old_arg( MightF,_Nth,_Old):- \+ symbol(MightF),!,fail.
+use_old_arg(_MightF, Nth,_Old):- \+ integer(Nth),!,fail.
+use_old_arg( 'bind!',  1,_Old).
+use_old_arg('import!', 1,_Old).
+use_old_arg( MightF, A,   Old):- get_farg_type(MightF, A, Type), Type=='Symbol', symbol(Old), !.
+%use_old_arg('set-random-seed', 1,_Old):- !.
+use_old_arg( MightF, A,  _Old):- get_farg_type(MightF, A, Type), Type=='Variable',!.
 
 into_equality(OpN,Nth,Var,List,Code):- is_list(List), !,
   must_det_lls((
+   length(List,FullLen),
+   length(VarL,FullLen),
+   length(NewCall,FullLen),
    maplist_nth(into_equality_call([arg(Nth)|OpN]),1,VarL,List,CodeL),
-   add_types_into(OpN,Nth,Var, List, MightF, Args),
+   add_types_into(OpN,Nth,Var, List, VarL,[MightF|NewVarL],[_|Args],SS,SE),
    ignore(maybe_cond(OpN,Nth,[MightF|Args])),
-   append(CodeL,[Call],LLL),
-   (((is_list(VarL),VarL=[V],var(V))) -> (VarP=V,Var=VarP,Call=true) ; (VarP=VarL,Call='S'(VarP,Var))),
-
+   %writeln(List->[MightF|Args]),
+   length([MightF|Args],SM),length(LL,SS),length(LR,SE),append([LL,[MightF|Args],LR],List),
+   length([MightF|NewMiddle],SM),                       append([LL,[MightF|NewMiddle],LR],NewCall),
+   (((is_list(VarL),VarL=[V],var(V),fail)) -> (NewCall=V,Var=NewCall,Call=true) ; (maplist_nth(build_new_call(MightF),1,NewVarL,Args,NewMiddle),
+     re_comp(NewCall,ReComp), Call='='(ReComp,Var))),
+   if_t((has_returnType(MightF),is_list(NewVarL)),add_types_into(OpN,Nth,Var,[MightF|NewVarL],[MightF|Args],_,_,_,_)),
    if_t(has_returnType(MightF),add_type_to(Var,arg(MightF,0))),
+   append(CodeL,[Call],LLL),
    list_to_conjuncts(LLL,Code))).
 into_equality(OpN,Nth,_Var,Comp,  Code):- compound_name_arguments(Comp,F,Args),maplist_nth(arg_equality([F,arg(Nth)|OpN]),1,Args,DFArgs),compound_name_arguments(Code,F,DFArgs).
+
+de_comp(DeComp,Comp):- is_list(DeComp),!,Comp=DeComp.
+de_comp(DeComp,Comp):- is_ftVar(DeComp),!,Comp=DeComp.
+de_comp(DeComp,Comp):- compound_name_arguments(DeComp,'S',[Comp]),!.
+
+re_comp(Comp,ReComp):- compound_name_arguments(ReComp,'S',[Comp]),!.
+
 
 walk_src_for_constraints(Out):- walk_src_for_constraints([],0,Out).
 walk_src_for_constraints(F,A,Var):- var(Var), !, ignore((atom(F),integer(A), add_type_to(Var,arg(F,A)))).
@@ -3963,14 +4045,13 @@ walk_src_for_constraints(_,_,Out):- not_compound(Out),!.
 walk_src_for_constraints(_,_,Out):- ground(Out),!.
 walk_src_for_constraints(_,_,assign_now(BodyVar,Var)):- !, add_type_to(Var,val(BodyVar)).
 
-walk_src_for_constraints(_,_,'S'(),Comp=Var):- var(Var),compound(Comp),compound_name_arguments(Comp,'S',[MightF|Args]),!,
+walk_src_for_constraints(_,_,'='(DeComp,Var)):- de_comp(DeComp,Comp),var(Var),is_list(Comp),Comp=[MightF|Args],!,
    if_t(callable(MightF),maplist_nth(walk_src_for_constraints(MightF),1,Args)).
-
 
 walk_src_for_constraints(_,_,Comp):- compound_name_arguments(Comp,F,Args),maplist_nth(walk_src_for_constraints([F|Args]),1,Args).
 
 not_compound(C):- is_ftVar(C),!.
-not_compound(C):- \+ compound(C),!.
+not_compound(C):- \+ compound(C), !, \+ is_src_bound(C).
 
 % One List
 maplist_nth(_,_,[]):-!.

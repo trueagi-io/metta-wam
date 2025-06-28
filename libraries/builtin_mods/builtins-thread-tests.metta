@@ -20,39 +20,39 @@
   (@desc "Creates a snapshot of an evaluation query.")
   (@params (
 	(@param "List (Atom)")))
-  (@return "Snapshot result (%Undefined%)"))
-(: thread:snapshot! (-> Atom %Undefined%))
+  (@return "Snapshot result (Undefined%)"))
+(: thread:snapshot!  (-> Atom %Undefined%))
 (= (thread:snapshot! $expr) (snapshot $expr))
 
 (@doc thread:transaction!
   (@desc "Runs a transaction on an evaluation query.")
   (@params (
 	(@param "List (Atom)")))
-  (@return "Transaction result (%Undefined%)"))
-(: thread:transaction! (-> Atom %Undefined%))
+  (@return "Transaction result (Undefined%)"))
+(: thread:transaction!  (-> Atom %Undefined%))
 (= (thread:transaction! $expr) (transaction $expr))
 
 (@doc thread:current-transaction!
   (@desc "Retrieves the current snapshot or transaction.")
   (@params ())
-  (@return "Transaction (%Undefined%)"))
-(: thread:current-transaction! (-> %Undefined%))
+  (@return "Transaction (Undefined%)"))
+(: thread:current-transaction!  (-> %Undefined%))
 (= (thread:current-transaction!) (call-fn! current_transaction))
 
 (@doc thread:transaction-updates!
   (@desc "Retrieves updates for a transaction.")
   (@params ())
-  (@return "Updates (%Undefined%)"))
-(: thread:transaction-updates! (-> %Undefined%))
+  (@return "Updates (Undefined%)"))
+(: thread:transaction-updates!  (-> %Undefined%))
 (= (thread:transaction-updates!) (call-fn! transaction_updates))
 
 (@doc thread:show-transaction!
   (@desc "Displays the current transaction and updates.")
   (@params ())
   (@return "Unit atom or Error"))
-(: thread:show-transaction! (-> (->)))
+(: thread:show-transaction!  (-> (->)))
 (= (thread:show-transaction!)
-   (call-unit! (@
+   (call-unit! ( @
 	 (current_transaction $tx)
 	 (format 'Current transaction: ~w~n' [$tx])
 	 (transaction_updates $updates)
@@ -65,7 +65,7 @@
   (@params (
 	(@param "List (Atom)")))
   (@return "Thread handle (ThreadHandle)"))
-(: thread:spawn-lazy! (-> Atom ThreadHandle))
+(: thread:spawn-lazy!  (-> Atom ThreadHandle))
 (= (thread:spawn-lazy! $eval $handle)
    (call-for! $handle
 	 (lazy_thread $eval $handle)))
@@ -76,7 +76,7 @@
   (@params (
 	(@param "Expression to evaluate (Atom)")))
   (@return "Value (Atom)"))
-(: thread:async! (-> Atom Atom))
+(: thread:async!  (-> Atom Atom))
 (= (thread:async! $eval) (call-fn! async_eval $eval))
 
 
@@ -85,9 +85,9 @@
   (@params (
 	(@param "Expression to evaluate (Atom)")))
   (@return "Token (Token)"))
-(: thread:async-token! (-> Atom Variable Token))
+(: thread:async-token!  (-> Atom Variable Token))
 (= (thread:async-token! $eval $result)
-   (call-fn! async_eval_token $eval $result))
+   (call-fn async_eval_token $eval $result))
 
 (@doc thread:async-policy!
   (@desc "Starts an asynchronous operation with a policy and token as result.")
@@ -95,9 +95,9 @@
 	(@param "List (Atom)")
 	(@param "Policy (Atom)")))
   (@return "Token (Token)"))
-(: thread:async-policy! (-> Atom Atom Token))
+(: thread:async-policy!  (-> Atom Atom Token))
 (= (thread:async-policy! $eval $policy $token)
-   (call-for! $token
+   (call-for $token
 	 (async_thread_with_policy $eval $token $policy)))
 
 (@doc thread:await-token!
@@ -105,9 +105,9 @@
   (@params (
 	(@param "Token (Token)")))
   (@return "Unit atom or Error"))
-(: thread:await-token! (-> Token (->)))
+(: thread:await-token!  (-> Token (->)))
 (= (thread:await-token! $token)
-   (call-unit! (await_token $token)))
+   (call-unit! ( await_token $token)))
 
 ; ---- Thread Management and Execution ----
 
@@ -116,7 +116,7 @@
   (@params (
     (@param "Goal (Atom)")))
   (@return "Thread handle (ThreadHandle)"))
-(: thread:spawn! (-> Atom ThreadHandle))
+(: thread:spawn!  (-> Atom ThreadHandle))
 (= (thread:spawn! $eval)
    (call-for! $handle
      (thread_create $eval $handle ())))
@@ -125,8 +125,8 @@
   (@desc "Waits for the specified thread handle and retrieves the result.")
   (@params (
     (@param "Thread handle (ThreadHandle)")))
-  (@return "Result (%Undefined%)"))
-(: thread:await! (-> ThreadHandle %Undefined%))
+  (@return "Result (Undefined%)"))
+(: thread:await!  (-> ThreadHandle %Undefined%))
 (= (thread:await! $handle)
    (call-for! $result
      (thread_join $handle $result)))
@@ -137,8 +137,8 @@
   (@params (
     (@param "Thread handle (ThreadHandle)")
     (@param "Timeout duration (Number)")))
-  (@return "Result (%Undefined%)"))
-(: thread:timeout! (-> ThreadHandle Number %Undefined%))
+  (@return "Result (Undefined%)"))
+(: thread:timeout!  (-> ThreadHandle Number %Undefined%))
 (= (thread:timeout! $handle $timeout)
    (call-for! $result
      (thread:cancel-after! $handle $timeout $result)))
@@ -159,7 +159,7 @@
     (@param "Limit (Number)")
     (@param "List (Atom)")))
   (@return "Results or Error"))
-(: thread:limit-results! (-> Number Atom Atom))
+(: thread:limit-results!  (-> Number Atom Atom))
 (= (thread:limit-results! $limit $expr)
    (call-for! $result (limit $limit (eval $expr $result))))
 
@@ -170,7 +170,7 @@
   (@params (
     (@param "List of Atoms to evaluate (Expression)")))
   (@return "List of results (Expression)"))
-(: thread:hyperpose! (-> Expression Expression))
+(: thread:hyperpose!  (-> Expression Expression))
 (= (thread:hyperpose! $exprs)
    (hyperpose $exprs))
 
@@ -179,18 +179,18 @@
   (@params (
     (@param "List of Atoms to evaluate (Expression)")))
   (@return "First result (Atom)"))
-(: thread:race! (-> Expression Atom))
+(: thread:race!  (-> Expression Atom))
 (= (thread:race! $exprs)
    (call-for! $result
-     (thread_race $exprs $result)))
+     ( first_solution $result $exprs)))
 
 (@doc thread:limit-time!
   (@desc "Runs a thread with a timed limit.")
   (@params (
     (@param "Timeout duration (Number)")
     (@param "List (Atom)")))
-  (@return "Result (%Undefined%)"))
-(: thread:limit-time! (-> Number Atom %Undefined%))
+  (@return "Result (Undefined%)"))
+(: thread:limit-time!  (-> Number Atom %Undefined%))
 (= (thread:limit-time! $seconds $expr)
    (call-for! $result
      (cwtl $seconds (eval_args $expr $result))))
@@ -202,12 +202,12 @@
   (@params (
     (@param "Thread handle (ThreadHandle)")
     (@param "Timeout (Number)")))
-  (@return "Result (%Undefined%)"))
-(: thread:cancel-after! (-> ThreadHandle Number (->)))
+  (@return "Result (Undefined%)"))
+(: thread:cancel-after!  (-> ThreadHandle Number (->)))
 (= (thread:cancel-after! $handle $timeout)
    (call-unit!
-	 (thread_create
-	   ((thread:sleep! $timeout) (thread:cancel! $handle))
+	 ( thread_create
+	   (eval ((thread:sleep! $timeout) (thread:cancel! $handle)))
 	   $_ [(detached true)])))
 
 (@doc thread:is-complete
@@ -227,7 +227,7 @@
     (@param "Thread handle (ThreadHandle)")
     (@param "Message (Atom)")))
   (@return "Unit atom or Error"))
-(: thread:error! (-> ThreadHandle Atom (->)))
+(: thread:error!  (-> ThreadHandle Atom (->)))
 (= (thread:error! $handle $msg)
    (throw (error (thread_error $msg $handle))))
 
@@ -238,37 +238,37 @@
   (@params (
     (@param "Mutex symbol (Atom)")))
   (@return "Unit atom or Error"))
-(: thread:mutex-create! (-> Atom (->)))
+(: thread:mutex-create!  (-> Atom (->)))
 (= (thread:mutex-create! $mutex-symbol)
-   (call-unit! (mutex_create $mutex-symbol)))
+   (call-unit! ( mutex_create $mutex-symbol)))
 
 (@doc thread:mutex-lock!
   (@desc "Locks a mutex with a given symbol.")
   (@params (
     (@param "Mutex symbol (Atom)")))
   (@return "Unit atom or Error"))
-(: thread:mutex-lock! (-> Atom (->)))
+(: thread:mutex-lock!  (-> Atom (->)))
 (= (thread:mutex-lock! $mutex-symbol)
-   (call-unit! (mutex_lock $mutex-symbol)))
+   (call-unit! ( mutex_lock $mutex-symbol)))
 
 (@doc thread:mutex-unlock!
   (@desc "Unlocks a mutex with a given symbol.")
   (@params (
     (@param "Mutex symbol (Atom)")))
   (@return "Unit atom or Error"))
-(: thread:mutex-unlock! (-> Atom (->)))
+(: thread:mutex-unlock!  (-> Atom (->)))
 (= (thread:mutex-unlock! $mutex-symbol)
-   (call-unit! (mutex_unlock $mutex-symbol)))
+   (call-unit! ( mutex_unlock $mutex-symbol)))
 
 (@doc thread:mutex-with!
   (@desc "Executes a query with a locked mutex.")
   (@params (
     (@param "Mutex symbol (Atom)")
-    (@param "Query (%Undefined%)")))
+    (@param "Query (Undefined%)")))
   (@return "Unit atom or Error"))
-(: thread:mutex-with! (-> Atom %Undefined% (->)))
+(: thread:mutex-with!  (-> Atom %Undefined% (->)))
 (= (thread:mutex-with! $mutex-symbol $query)
-   (call-unit! (with_mutex $mutex-symbol $query)))
+   (call-unit! ( with_mutex $mutex-symbol $query)))
 
 ; ---- Message Queues ----
 
@@ -278,37 +278,37 @@
 ;; Type detection for Message Queues
 (= (get-type $obj)
    (call-for! MessageQueue
-     (atomic $obj)
-     (message_queue_property $queue $_)
-	 (== $queue $obj)))
+     ( (atomic $obj)
+        (message_queue_property $queue $_)
+	    (== $queue $obj))))
 
 (@doc thread:queue-create!
   (@desc "Creates a message queue.")
   (@params (
     (@param "Queue (Atom)")))
   (@return "Unit atom or Error"))
-(: thread:queue-create! (-> Atom (->)))
+(: thread:queue-create!  (-> Atom (->)))
 (= (thread:queue-create! $queue)
-   (call-unit! (message_queue_create $queue)))
+   (call-unit! ( message_queue_create $queue)))
 
 (@doc thread:send-message!
   (@desc "Sends a message to a queue.")
   (@params (
     (@param "Queue (Atom)")
-    (@param "Message (%Undefined%)")))
+    (@param "Message (Undefined%)")))
   (@return "Unit atom or Error"))
-(: thread:send-message! (-> Atom %Undefined% (->)))
+(: thread:send-message!  (-> Atom %Undefined% (->)))
 (= (thread:send-message! $queue $msg)
-   (call-unit! (thread_send_message $queue $msg)))
+   (call-unit! ( thread_send_message $queue $msg)))
 
 (@doc thread:receive-message!
   (@desc "Receives a message from a queue.")
   (@params (
     (@param "Queue (Atom)")))
-  (@return "Message (%Undefined%)"))
-(: thread:receive-message! (-> Atom %Undefined%))
-(= (thread:receive-message! $queue)
-   (call-fn! thread_get_message $queue))
+  (@return "Message (Undefined%)"))
+(: thread:receive-message!  (-> Atom %Undefined%))
+(= (thread:receive-message! $queue $msg)
+   (call-unit! ( thread_get_message $queue $msg)))
 
 ; ---- Thread Management ----
 
@@ -317,17 +317,17 @@
   (@params (
     (@param "Priority level (Integer)")))
   (@return "Unit atom or Error"))
-(: thread:set-priority! (-> Number (->)))
+(: thread:set-priority!  (-> Number (->)))
 (= (thread:set-priority! $level)
    (call-unit!
-     (thread_self $id)
-     (thread_set_priority $id $level)))
+     ( (thread_self $id)
+        (thread_set_priority $id $level))))
 
 (@doc thread:self!
   (@desc "Retrieves the ID of the current thread.")
   (@params ())
   (@return "Thread ID (ThreadHandle)"))
-(: thread:self! (-> Unit ThreadHandle))
+(: thread:self!  (-> Unit ThreadHandle))
 (= (thread:self! $id)
    (call-for! $id
      (thread_self $id)))
@@ -336,7 +336,7 @@
   (@desc "Lists all threads with their properties.")
   (@params ())
   (@return "List of threads (Expression)"))
-(: thread:list! (-> Unit Expression))
+(: thread:list!  (-> Unit Expression))
 (= (thread:list! $threads)
    (call-for! $threads
      (findall (thread $id $status $eval-query)
@@ -348,7 +348,7 @@
   (@params (
     (@param "Seconds (Number)")))
   (@return "Unit atom or Error"))
-(: thread:sleep! (-> Number (->)))
+(: thread:sleep!  (-> Number (->)))
 (= (thread:sleep! $seconds)
    (call-unit! (sleep $seconds)))
 
@@ -359,7 +359,7 @@
 	(@param "List to be evaluated in the thread")
 	(@param "Options Expression (TODO)")))
   (@return "Thread handle or error if thread creation fails"))
-(: thread:create-with-options! (-> Atom Expression ThreadHandle))
+(: thread:create-with-options!  (-> Atom Expression ThreadHandle))
 (= (thread:create-with-options! $eval $opt)
    (call-for! $id
 	 (thread_create $eval $id $opt)))
@@ -369,7 +369,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Unit atom or Error"))
-(: thread:join! (-> ThreadHandle (->)))
+(: thread:join!  (-> ThreadHandle (->)))
 (= (thread:join! $thread)
    (call-unit!
 	 (thread_join $thread)))
@@ -379,7 +379,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Unit atom or Error"))
-(: thread:detach! (-> ThreadHandle (->)))
+(: thread:detach!  (-> ThreadHandle (->)))
 (= (thread:detach! $thread)
    (call-unit!
 	 (detach_thread $thread)))
@@ -389,7 +389,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Unit atom or Error"))
-(: thread:suspend! (-> ThreadHandle (->)))
+(: thread:suspend!  (-> ThreadHandle (->)))
 (= (thread:suspend! $thread)
    (call-unit!
 	 (suspend_thread $thread)))
@@ -399,7 +399,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Unit atom or Error"))
-(: thread:resume! (-> ThreadHandle (->)))
+(: thread:resume!  (-> ThreadHandle (->)))
 (= (thread:resume! $thread)
    (call-unit!
 	 (resume_thread $thread)))
@@ -409,7 +409,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Unit atom or Error"))
-(: thread:cancel! (-> ThreadHandle (->)))
+(: thread:cancel!  (-> ThreadHandle (->)))
 (= (thread:cancel! $thread)
    (call-unit!
 	 (cancel_thread $thread)))
@@ -419,7 +419,7 @@
   (@params (
 	(@param "Thread handle")))
   (@return "Thread status (running, suspended, completed)"))
-(: thread:status! (-> ThreadHandle Atom))
+(: thread:status!  (-> ThreadHandle Atom))
 (= (thread:status! $thread)
    (call-for! $status
 	 (thread_property $thread (status $status))))
@@ -430,7 +430,7 @@
 	(@param "Thread handle")
 	(@param "Priority level (integer)")))
   (@return "Unit atom or Error"))
-(: thread:priority! (-> ThreadHandle Number (->)))
+(: thread:priority!  (-> ThreadHandle Number (->)))
 (= (thread:priority! $thread $priority)
    (call-unit!
 	 (set_thread_priority $thread $priority)))
@@ -464,16 +464,14 @@
   (@param "Goal: Expression to evaluate")
   (@param "Options: Expression of (key value) pairs")))
   (@return "Engine handle"))
-(: engine:create (-> Atom EngineHandle))
-(= (engine:create $eval) (engine:create $eval ()))
-(: engine:create (-> Atom Expression EngineHandle))
+(: engine:create (-> %Undefined% Atom Expression EngineHandle))
 (= (engine:create $eval $options)
    (call-for! $handle (@ engine_create $template (@ eval_args $eval $template) $handle $options)))
 
 (@doc engine:next
   (@desc "Requests the engine to produce the next answer. Starts the engine or resumes after a yield.")
   (@params ((@param "Engine handle (EngineHandle)")))
-  (@return "Bound result or failure (%Undefined%)"))
+  (@return "Bound result or failure (Undefined%)"))
 (: engine:next (-> EngineHandle %Undefined%))
 (= (engine:next $handle)
    (call-fn! engine_next $handle))
@@ -481,7 +479,7 @@
 (@doc engine:next-reified
   (@desc "Returns the next result in reified form: the(Answer), no, or throw(Exception).")
   (@params ((@param "Engine handle (EngineHandle)")))
-  (@return "Reified result (%Undefined%)"))
+  (@return "Reified result (Undefined%)"))
 (: engine:next-reified (-> EngineHandle %Undefined%))
 (= (engine:next-reified $handle)
    (call-fn! engine_next_reified $handle)) 
@@ -492,7 +490,7 @@
   (@return "Unit atom or Error"))
 (: engine:destroy (-> EngineHandle (->)))
 (= (engine:destroy $handle)
-   (call-unit! (engine_destroy $handle)))
+   (call-unit! ( engine_destroy $handle)))
 
 (@doc engine:post
   (@desc "Posts a term into the engine to be consumed via engine:fetch. Must be followed by engine:next.")
@@ -500,20 +498,20 @@
   (@return "Unit atom or Error"))
 (: engine:post (-> EngineHandle Atom (->)))
 (= (engine:post $handle $term)
-   (call-unit! (engine_post $handle $term)))
+   (call-unit! ( engine_post $handle $term)))
 
 (@doc engine:yield
   (@desc "From inside an engine: yield a value to the engine:next caller. Execution resumes on next.")
-  (@params ((@param "Value to yield (%Undefined%)")))
+  (@params ((@param "Value to yield (Undefined%)")))
   (@return "Unit atom or Error"))
 (: engine:yield (-> %Undefined% (->)))
 (= (engine:yield $value)
-   (call-unit! (engine_yield $value)))
+   (call-unit! ( engine_yield $value)))
 
 (@doc engine:fetch
   (@desc "From within the engine: receives a value posted from outside via engine:post. Fails if none exists.")
   (@params ())
-  (@return "Posted value (%Undefined%)"))
+  (@return "Posted value (Undefined%)"))
 (: engine:fetch (-> %Undefined%))
 (= (engine:fetch) (call-fn! engine_fetch))
 
@@ -527,7 +525,7 @@
 (@doc engine:property
   (@desc "Gets a property of the engine, such as status, alias, parent, etc.")
   (@params ((@param "Engine handle (EngineHandle)")))
-  (@return "Engine property (%Undefined%)"))
+  (@return "Engine property (Undefined%)"))
 (: engine:property (-> EngineHandle %Undefined%))
 (= (engine:property $handle)
    (call-for! $prop (engine_property $handle $prop)))
@@ -552,7 +550,7 @@
 (= (engine-quick-tests)
    (let
       $E (engine:create (superpose (1 2 3)))
-	(progn
+	(do
        (println! ("Result 1: " (engine:next $E)))
        (println! ("Result 2: " (engine:next $E)))
        (println! ("Result 3: " (engine:next $E)))
@@ -561,3 +559,9 @@
 
      (engine:destroy $E)
        (println! "Engine test complete."))))
+
+
+(= (tadd $t $u) (let $_ (sleep! $t) (+ $t $u)))
+!(tad 1 2)
+
+!(hyperpose ((tadd 1 0)(tadd 1 1)(tadd 1 2)(tadd 1 3)))
