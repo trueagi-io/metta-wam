@@ -936,7 +936,7 @@ include_metta1(Self, RelFilename):-
     % Register the file in Prolog knowledge base as part of the MeTTa context.
     pfcAdd_Now(metta_file(Self, Filename, Directory)),
     % Mark the file as loaded into the current knowledge base.
-    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    %pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Include the file's directory content into the current module context.
     include_metta_directory_file(Self, Directory, Filename))),
     % Register the file status in the knowledge base and optionally list it.
@@ -1852,28 +1852,33 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, In) :-
     make_metta_file_buffer(use_fast_buffer, Filename, In),
     load_metta_buffer(Self, Filename).
 
-%!  make_metta_file_buffer(+TFMakeFile, +FileName, +InStream) is det.
+
+ensure_metta_buffer(Filename):- user:metta_file_buffer(0, _Ord, _Kind, _Expr, _NamedVarsList, Filename, _LineCount),!.
+ensure_metta_buffer(Filename):- make_metta_file_buffer(use_fast_buffer, Filename, _InStream),!.
+
+
+%!  make_metta_file_buffer(+TFMakeFile, +Filename, +InStream) is det.
 %
 %   Creates a buffer file for a MeTTa file if `TFMakeFile` is true.
 %
 %   This predicate generates a buffer file (`BufferFile`) with a `.buffer~` extension
-%   based on `FileName`. It processes each expression from `InStream` using
+%   based on `Filename`. It processes each expression from `InStream` using
 %   `maybe_write_bf/3`, which writes expressions to the buffer file if `TFMakeFile`
 %   is true.
 %
 %   @arg TFMakeFile  A flag indicating whether to create a buffer file.
-%   @arg FileName    The base file name for the `.metta` file.
+%   @arg Filename    The base file name for the `.metta` file.
 %   @arg InStream    The input stream for reading file content.
 %
 %   @example
 %     % Create a buffer file for "example.metta" if the flag is true.
 %     ?- make_metta_file_buffer(true, 'example.metta', InStream).
 %
-make_metta_file_buffer(TFMakeFile, FileName, InStream) :-
+make_metta_file_buffer(TFMakeFile, Filename, InStream) :-
     % Generate buffer file name with `.buffer~` extension.
-    cache_file(FileName, BufferFile),
+    cache_file(Filename, BufferFile),
     % Process expressions from the input stream with optional buffering.
-    process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
+    process_expressions(Filename, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
 
 
 :- use_module(library(system)).   % for absolute_file_name/3
@@ -3085,7 +3090,7 @@ progress_bar_example :-
 progress_bar_example.
 
 :- dynamic(using_corelib_file/0).
-:- dynamic(really_using_corelib_file/0).
+:- dynamic(already_using_corelib_file/0).
 
 %!  use_corelib_file is det.
 %
@@ -3157,7 +3162,7 @@ metta_atom_deduced('&corelib', Term) :- fail,
 %
 %   Loads the core library file if it hasn't already been loaded.
 %
-%   This predicate first checks if the core library is already in use (`really_using_corelib_file`).
+%   This predicate first checks if the core library is already in use (`already_using_corelib_file`).
 %   If not, it attempts to load the file from the Metta source directory. Currently, it defaults to
 %   `stdlib_mettalog.metta`, with `corelib.metta` as a commented alternative.
 %
@@ -3165,15 +3170,21 @@ metta_atom_deduced('&corelib', Term) :- fail,
 %     % Load the core library if it's not already loaded.
 %     ?- load_corelib_file.
 %
-load_corelib_file :- really_using_corelib_file, !.
+
+load_corelib_file :- already_using_corelib_file, !.
+load_corelib_file :- option_value(corelib,false),!.
+load_corelib_file :- option_value(corelib,skip),!.
 %load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
 load_corelib_file:- once(load_corelib_file_prof),!.
 load_corelib_file_prof :-
-     setup_library_calls,
+     asserta(already_using_corelib_file),
+     use_metta_ontology,
      % Load the standard Metta logic file from the source directory.
-     must_det_lls((is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
-     metta_atom('&corelib', [':', 'Any', 'Type']),
-     really_use_corelib_file(Dir, 'corelib.metta'))).
+     must_det_lls((is_metta_src_dir(Dir),
+     %really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
+      really_use_corelib_file(Dir, 'corelib.metta'),
+      assertion(metta_atom('&corelib', [':', 'Any', 'Type'])))),
+     setup_library_calls.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 
 %!  really_use_corelib_file(+Dir, +File) is det.
@@ -3196,7 +3207,7 @@ really_use_corelib_file(Dir, File) :-
           locally(nb_setval(compiler_context, builtin),
              locally(nb_setval(suspend_answers, true),
             without_output(include_metta_directory_file('&corelib', Dir, Filename)))))),
-     asserta(really_using_corelib_file),
+
      debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))),
      nb_delete(compiler_context).
 
