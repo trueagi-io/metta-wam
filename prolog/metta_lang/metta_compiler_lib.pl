@@ -1,3 +1,11 @@
+
+
+:- if(false).
+
+:- include(metta_compiler_lib_roy).
+
+:- else.
+
 :- ensure_loaded(metta_compiler).
 :- dynamic(transpiler_predicate_store/7).
 :- discontiguous(transpiler_predicate_store/7).
@@ -23,7 +31,7 @@ decl_ddm(F,A):- multifile(F/A),dynamic(F/A),discontiguous(F/A).
 :- forall(between(3,12,N), decl_ddm(mc_n,N)).
 :- forall(between(3,12,N), decl_ddm(ms_n,N)).
 
-non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaled_Type(NonEval),!.
+non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaluated_type(NonEval),!.
 
 e_i(F, N, A, AA):- i_c(F, N, A, AA).
 
@@ -33,7 +41,15 @@ i_c(_, _, A, AA):- notrace( \+ is_list(A) ), !,A=AA.
 i_c(F, N, A, AA):- non_eval_arg(F,N),!,A=AA.
 i_c(_, _, A, AA):- eval(A,AA).
 
+ee(_Let_type,_,E,R):- nonvar(R), E=R,!.
+ee(_Let_type,_,E,R):- is_list(E), !, eval_args(E,ER),ER=R.
+ee(_Let_type,_,E,R):- E=R,!.
 
+mc('while!',Bool,Goal,Out):-
+ repeat,
+    ((eval(Bool,TF)->is_True(TF))
+         ->(once(mc(Goal,Out)),fail)
+          ;(!,true)).
 
 mci(F, R) :- call_by_ftype(F, 0, mc(F, R), R).
 mci(F, X0, R) :- call_by_ftype(F, 1, mc(F, X0, R), R).
@@ -117,6 +133,8 @@ function_declaration_lib(_Self, F, Len, Params, ParamTypes, RetType, Body, _Wrap
 
 :- op(700,xfx,('haz_value')).
 
+retrace :- ignore(nortrace),notrace,trace.
+
 % Main Logic
 call_by_ftype(F, Len, Goal, ReturnVal) :-
     un_mc(_,Goal,Len,[F | Parameters], ReturnVal), !,
@@ -130,10 +148,15 @@ call_by_ftype(F, Len, Goal, ReturnVal) :-
 
     % Validate enums dynamically using explicit_isa to ensure valid inputs
     %validate_function_type_enums(MismatchBehavior, NoMatchBehavior, EvaluationOrder, SuccessBehavior, FailureBehavior, OutOfClausesBehavior),
+    debug_info(predicate_behavior(Self, F, Len, MismatchBehavior)),
 
     % Retrieve all clauses for the predicate
     findall(thbr(ParamTypes, Params, Body, ReturnVal, RetType),
               function_declaration_lib(Self, F, Len, Params, ParamTypes, RetType, Body, _WrappedBody, ReturnVal), Clauses),
+
+    debug_info(predicate_clauses(Clauses)),
+
+    retrace,
 
     % Extract parameter types and group them by index across all clauses
     findall(Types, (member(thbr(Types, _, _, _, RetType), Clauses)), ParamTypesPerClause),
@@ -1167,9 +1190,7 @@ mx_n(1,'py-atom',SymRef,Specialize,ResO) :-
 mx_n(2,'py-dot',Arg1,Arg2,Specialize,ResO) :-
    make_py_dot(Arg1,Arg2,Res),specialize_res(Res,Specialize,ResO).
 
-
-
-:- writeln('; maybe ?- setup_library_calls.').
+% (py-dot math exp  True (-> Number Number Number)   )
 
 setup_library_calls :-
   forall(
@@ -1185,10 +1206,6 @@ setup_inits :- gen_i2c.
 
 setup_inits :- gen_mdecl.
 
-:- writeln('; maybe ?- gen_i2c, gen_mdecl.').
-
-
-:- writeln('; maybe ?-  do_setup_inits.').
 do_setup_inits:-
    locally(nb_setval(debug_context, stdlib), user_err(forall(setup_inits,true))).
 
@@ -1305,4 +1322,4 @@ metta_body_macro_pass(_,AsBodyFnOut, AsBodyFnOut).
 
 
 
-
+:- endif.

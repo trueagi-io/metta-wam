@@ -1032,7 +1032,7 @@ compiled_info_p(F,Refs):-
 
 compiled_refs(Symbol,F,A,Info):-
  functor_chkd(P,F,A),clause(P,B,Ref), (\+ compiler_data_no_call(F/A) -> call(B) ; true), symbol_in(2,Symbol,P),
-   (B==true->Info=Ref;Info=P).
+   (B==true->Info=Ref;Info= (P:-B) ).
 
 
 symbol_in(_, Symbol, P):-Symbol=@=P,!.
@@ -1160,16 +1160,26 @@ iz_conz(B):- compound(B), B=[_|_].
 %'=~'(A,B):- var(A),iz_conz(B),!,A=B.
 %'=~'(A,B):- iz_conz(A),var(B),!,A=B.
 %'=~'(A,B):- iz_conz(A),iz_conz(B),!,A=B.
-'=~'(A,B):- into_list_args(A,AA),copy_term(AA,AAA,_G),copy_term_nat(AAA,AAAC),!,into_list_args(B,BB),
-  !,AAAC=BB,!,AAAC=@=AAA,AA=AAAC,!.
+
+'=~'(A,B):- quietly('=~_impl'(A,B)).
+
+'=~_impl'(A,B):- iz_conz(B),B=[F|Args],nonvar(F),!,'=~'(A,[FF|Args]),F=FF.
+'=~_impl'(A,B):- \+ iz_conz(B),compound(B),compound_name_arguments(B,F,Args),!,'=~'(A,[F|Args]).
+'=~_impl'(A,B):- into_list_args(A,AA),copy_term(AA,AAA,G),copy_term_nat(AAA,AAAC),!,into_list_args(B,BB),
+  !,AAAC=BB,!,AAAC=@=AAA,AA=AAAC,!,maplist(call,G).
 
 % non-singleton Variable
 is_nsVar(NS):- is_ftVar(NS), NS\=@= '$VAR'('_').
 
 skip_me( AA,AAA):- \+ compound(AA),!,AA=AAA.
 skip_me([A,_,C|AA],AAA):- A == u_assign,AAA=[C|AA],!.
-skip_me([A,B,C|AA],AAA):- symbol(A),metta_meta_f(A),!,skip_me([B,C|AA],AAA).
+skip_me([A,B,C|AA],AAA):- symbol(A),skip_me_f(A),!,skip_me([B,C|AA],AAA).
 skip_me(AA,AA).
+
+skip_me_f('@').
+skip_me_f('call-fn').
+skip_me_f(A):- metta_meta_f(A),!.
+skip_me_f(A):- atom(A),atom_concat(L,'!',A),!,skip_me_f(L).
 
 into_list_args(A,AA):- into_list_args0(A,AAA),!,skip_me(AAA,AAAA),AAAA=AA.
 into_list_args0(A,A):- is_ftVar(A).
@@ -1182,6 +1192,40 @@ into_list_args0([H|T],[H|T]):-!.
 into_list_args0(u_assign(_NN,List, A),[H|T]):- append(List,[A],[H|T]),!.
 into_list_args0(holds(A),AA):- !, into_list_args(A,AA),!.
 into_list_args0(C,[F|Args]):- must_det_llu(compound_name_arguments(C,F,Args)),!.
+
+
+
+%constraintFor(Op,Len,[Ar|ATypes],Rel,ArgType,Nth):- Ar=='->',!,skelectalFor(Op,Len,[Op|ATypes],argNIsa,Rel,ArgType,Nth).
+%argumentsFor(Op,Len,Args,Rel,ArgType,Nth):- skelectalFor(Op,Len,Relation,Args,Ret,Pred,Rel,Arg,Nth)
+
+constraintFor(Op,_Len,Args,Ret,Pred,Rel,Arg,Nth):- %relation_args(MaybeOp,Len,Relation,Args,Ret),ignore(MaybeOp=Op),
+   nth0(Nth,[Ret|Args],Arg),s_or_p_term(Rel,[Pred,Op,Nth,Arg]).
+
+relation_args(Op,Len,Relation,Args,Ret):- (nonvar(Args);nonvar(Len)),!,
+   length(Args,Len),
+   append([Op|Args],[Ret],OpArgsWRet),
+   s_or_p_term(Relation,OpArgsWRet).
+
+relation_args(Op,Len,Relation,Args,Ret):- (nonvar(Op),nonvar(Relation)),!,
+   Relation =.. List, append(_,[Op|ArgsWRet],List),
+   append(Args,[Ret],ArgsWRet),length(Args,Len).
+
+
+s_or_p_term(Relation,OpArgsWRet):- nonvar(Relation),nonvar(OpArgsWRet),!,Relation =.. List, append(_,OpArgsWRet,List).
+s_or_p_term(Relation,[Op|ArgsWRet]):- var(Relation), is_list(ArgsWRet),!, (var(Op)-> Relation =.. [v,Op|ArgsWRet] ; Relation =..[Op|ArgsWRet]).
+s_or_p_term(Relation,OpArgsWRet):- nonvar(Relation),var(OpArgsWRet), Relation =.. List, append(Left,[Op|ArgsWRet],List), is_ok_op(Left,[Op|ArgsWRet]),!.
+
+is_ok_op([],[Op|_ArgsWRet]):- nonvar(Op), !, \+ metta_meta_f(Op).
+is_ok_op([NotOp],[Op|_ArgsWRet]):- metta_meta_f(NotOp), \+ metta_meta_f(Op).
+
+is_metta_meta_f(Op):- nonvar(Op), metta_meta_f(Op).
+
+
+metta_meta_f(v).
+metta_meta_f(M):- atom(M), atom_chars(M,Chars),metta_meta_chars(Chars).
+%metta_meta_chars([_]).
+metta_meta_chars([m,_]).
+
 
 
 
@@ -2167,6 +2211,7 @@ f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(
 f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,true/*info(is_non_eval_kind(var(Value),RetType)))*/):- \+ is_list(Value), is_non_eval_kind(RetType), ValueR=Value,!.
 f2p_assign(Op, _HeadIs, Nth, RetType,ValueR,Value,info(is_non_eval_kind(Op,Nth,RetType))):- is_non_eval_kind(RetType),
   is_list(Value), \+ is_evaled(Value), ValueR=Value,!.
+
 
 %f2p_assign(_Op, _HeadIs, _Nth, RetType,ValueR,Value,info(is_non_eval_kind(Value,RetType))):- is_non_eval_kind(RetType), ValueR=Value,!.
 f2p_assign(_Op, _HeadIs, _Nth,_RetType,ValueR,Value,true/*info(is_nsVar(Value))*/):- is_nsVar(Value),Value=ValueR,!.
