@@ -450,24 +450,6 @@ For example:
   (@return "appends a return argument to a form and calls it"))
 (: call-fn! (-> Atom Atom))
 
-
-(iz call-unit! MeTTaLog)
-(@doc call-unit!
-  (@desc "Calls code and returns the Unit atom on Success unless there is an Error")
-  (@params (
-	(@param "Form to be called by host system")))
-  (@return "Unit atom or Error"))
-(: call-unit! (-> Atom (->)))
-
-(iz call-for! MeTTaLog)
-(@doc call-for!
-  (@desc "Calls code (2nd argument...) and returns the first Argument on Success unless there is an Error")
-  (@params (
-	(@param "Value to be returned")
-	(@param "Form to be called by host system")))
-  (@return "returns the first argument"))
-(: call-for! (-> Atom Atom Atom))
-
 (iz call-string! MeTTaLog)
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
@@ -1345,7 +1327,7 @@ For example:
     (chain (eval (type-cast $atom $type $space)) $ret (return $ret)) ))))
 
 (iz interpret-func MinimalMeTTaHelper)
-(ALT= (interpret-func $expr $type $ret-type $space)
+(= (interpret-func $expr $type $ret-type $space)
   (function (eval (if-decons $expr $op $args
     (chain (eval (interpret $op $type $space)) $reduced-op
       (eval (return-on-error $reduced-op

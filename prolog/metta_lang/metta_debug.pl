@@ -923,21 +923,11 @@ unify_with_occurs_warning_real(H,HH):-
    woct(H=HH).
 
 
-goal_color(Goal,  InfoColor):- compound(Goal),arg(_,Goal,Arg),compound(Arg),!,goal_color(Arg,  InfoColor).
-goal_color(Goal,  InfoColor):- mesg_color(Goal,  InfoColor).
-
-in_color(Goal):-
-  goal_color(Goal,  InfoColor),!,
-  ansicall_no_nl(InfoColor,Goal),!.
-
-ansicall_no_nl(InfoColor,Goal):-
-  ansicall(InfoColor,Goal).
-
 ppt_red(G):- !, ansicall(red,write_src_wi(G)).
 ppt_red(G):- ppt(red,G).
 
 ppt(Color,G):- \+ simple_compound_a1(G), !, ansicall(Color,write_src_wi(G)),!.
-ppt(Color,G):- ansicall(Color,ppt((G))),!.
+ppt(Color,G):- ansicall(Color,ppt(G)),!.
 
 maybe_rethrow(Error):- woct((show_error(Error),throw(Error))).
 show_error(Error):- wdmsg(Error),bt,wdmsg(Error),trace.
@@ -1032,8 +1022,8 @@ nb_current_listify(N,L):- option_value(N,V),!,listify(V,L),!.
 :- dynamic(did_setup_show_hide_debug/0).
 
 %setup_show_hide_debug:- is_qcompiling,!,asserta(did_setup_show_hide_debug).
-setup_show_hide_debug:- did_setup_show_hide_debug,!.
-setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
+%setup_show_hide_debug:- did_setup_show_hide_debug,!.
+%setup_show_hide_debug:- asserta(did_setup_show_hide_debug),fail.
 setup_show_hide_debug:- nb_current_listify(show,Showing),maplist(set_tf_debug(true),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(hide,Showing),maplist(set_tf_debug(false),Showing), fail.
 setup_show_hide_debug:- nb_current_listify(showall,Showing),maplist(set_tf_debug(true),Showing), fail.
@@ -1070,7 +1060,6 @@ debug_info0( Topic, Info):- ignore(catch(((nop(setup_show_hide_debug),!,
                             if_t( \+ iz_conz(NewTopic), nop(debug_info_now(NewTopic, Info))),
                             if_t( iz_conz(NewTopic),(NewTopic=[_|ThisTopic], debug_info_now(ThisTopic, Info))))))),E,(dumpST,trace,writeln(E),fail))),!.
 
-debug_info_filtered( Topic,_Info, [do,not_yet(setup_show_hide_debug),Topic]):- \+ did_setup_show_hide_debug, is_douglas, !.
 debug_info_filtered( Topic, Info, NewTopic):- var(Topic),!, debug_info_filtered(unknown, Info, NewTopic).
 debug_info_filtered( always( Topic), Info, NewTopic):-!, debug_info_filtered(Topic, Info, NewTopic).
 debug_info_filtered( always( Topic), _Info, fail(filter_matches_var(hideall,Topic, How))):- filter_matches_var(hideall,Topic, How),!.
@@ -1120,7 +1109,6 @@ topic_color_string(Topic,TopicColor,Str):-
 %debug_info_now(Topic, Info):-!.
 
 debug_info_now(Topic, Info) :- nb_current(last_debug_info_written,WAS), WAS =@= debug_info(Topic, Info),!.
-
 debug_info_now(Topic, Info):-
  %writeln(debug_info_now(Topic, Info)),
  must_det_ll((
@@ -1205,10 +1193,9 @@ debug_pp_now(Info):- debug_pp_src(Info),!.
 debug_pp_now(Info):- debug_pp_tree(Info),!.
 
 print_tree_safe1(PTS):- catch(wots(S,print_tree_with_final(PTS,".")),_,fail),writeln(S),!.
-print_tree_safe1(PTS):- catch(wots(S,print_term(ss(PTS),[])),_,fail),write(S),writeln("."),!.
+print_tree_safe1(PTS):- catch(wots(S,print_term(PTS,[])),_,fail),write(S),writeln("."),!.
 %pptsafe1(PTS):- catch(wots(S,print(PTS)),_,fail),writeln(S),!.
 %ppt0(PTS):- print_tree_safe1(PTS),!.
-ppt0(PTS):- compound(PTS), PTS=in_cmt(Cmt),!,in_cmt(ppt0(Cmt)),!.
 ppt0(PTS):- asserta((user:portray(X) :- !, metta_portray(X)),Ref), call_cleanup(print_tree_safe1(PTS), erase(Ref)),!.
 %ppt0(PTS):- catch(((print_term(PTS,[]))),E,(nl,nl,writeq(PTS),nl,nl,wdmsg(E),throw(E),fail)),!.
 %pptsafe(PTS):- break,catch((rtrace(print_term(PTS,[]))),E,wdmsg(E)),break.
@@ -1221,7 +1208,7 @@ metta_portray(_):- !, fail.
 
 ppt1(PTS):- ppt0(PTS).
 %ppt(Info):-ignore(catch(notrace(ppt0(Info)),E,ansicall(red,(nl,writeln(err(ppt0(E))),nl,nop(rtrace(ppt(Info))),debug_pp_term(Info))))),!.
-ppt(O):- format('~N'),ppt0((O)),format('~N').
+ppt(O):- format('~N'),ppt0(O),format('~N').
 %ppt0(O):- print(O).
 
 %debug_pp_tree(Info):- ignore(catch(notrace(write_src_wi(Info)),E,((writeq(Info),nl,nop(((display(E=Info),bt))))))),!.
