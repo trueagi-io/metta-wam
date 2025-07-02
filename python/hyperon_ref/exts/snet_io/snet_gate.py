@@ -4,6 +4,7 @@ import os
 from snet import sdk
 from hyperon import *
 
+
 class SNetSDKWrapper:
 
     def __init__(self):
@@ -46,7 +47,7 @@ class SNetSDKWrapper:
 
     def organization_list(self):
         return self.snet_sdk.get_organization_list()
-    
+
     def service_list(self, org_id):
         return self.snet_sdk.get_services_list(org_id)
 
@@ -72,7 +73,7 @@ class SNetSDKWrapper:
         space = GroundingSpaceRef()
         service_client = self.create_service_client(org_id, service_id, **kwargs)
         space.add_atom(E(S('='), E(S(org_id), S(service_id)),
-                   service_client.get_operation_atom()))
+                         service_client.get_operation_atom()))
         atoms = service_client.generate_callers()
         for atom in atoms:
             space.add_atom(atom)
@@ -115,7 +116,7 @@ class SNetSDKWrapper:
             service_client = self.create_service_client(*args, **kwargs)
             return [service_client.get_operation_atom()]
         return [E(S('Error'), E(S('snet-sdk'), command_a, *args_a),
-                    ValueAtom(f'unknown command {repr(command_a)}'))]
+                  ValueAtom(f'unknown command {repr(command_a)}'))]
 
 def pretty_print_atoms(input_atoms):
     len_threshold = 50
@@ -248,6 +249,7 @@ class ServiceCall:
                                 ValueAtom(func_name), ValueAtom(self.io_types[i][0]), kwargs))
             atoms += [metta_fun_type, function_expr]
         return atoms
+
 
 @register_atoms()
 def snet_atoms():
