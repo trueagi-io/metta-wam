@@ -450,24 +450,6 @@ For example:
   (@return "appends a return argument to a form and calls it"))
 (: call-fn! (-> Atom Atom))
 
-
-(iz call-unit! MeTTaLog)
-(@doc call-unit!
-  (@desc "Calls code and returns the Unit atom on Success unless there is an Error")
-  (@params (
-	(@param "Form to be called by host system")))
-  (@return "Unit atom or Error"))
-(: call-unit! (-> Atom (->)))
-
-(iz call-for! MeTTaLog)
-(@doc call-for!
-  (@desc "Calls code (2nd argument...) and returns the first Argument on Success unless there is an Error")
-  (@params (
-	(@param "Value to be returned")
-	(@param "Form to be called by host system")))
-  (@return "returns the first argument"))
-(: call-for! (-> Atom Atom Atom))
-
 (iz call-string! MeTTaLog)
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
@@ -914,7 +896,7 @@ For example:
   (@desc "Returns True if input value is NaN. False - otherwise")
   (@params (
     (@param "Number")))
-  (@return "True/False"))
+  (@return "True/False")) 
 (is-pred isnan-math is_NaN)
 
 (iz isinf-math MeTTa)
@@ -926,30 +908,71 @@ For example:
 ; this is deduced: (: isinf (-> Number Bool))
 (is-pred isinf-math is_Inf)
 
+(: random-int (-> RandomGenerator Number Number Number))
+(iz random-int UseRust)
+(@doc random-int
+  (@desc "Returns random int number from range defined by two numbers (second and third argument)")
+  (@params (
+    (@param "Random number generator instance")
+    (@param "Range start")
+    (@param "Range end")))
+  (@return "Random int number from defined range"))
+
+(iz random-float UseRust)
+(: random-float (-> RandomGenerator Number Number Number))
+(@doc random-float
+  (@desc "Returns random float number from range defined by two numbers (second and third argument)")
+  (@params (
+    (@param "Random number generator instance")
+    (@param "Range start")
+    (@param "Range end")))
+  (@return "Random float number from defined range"))
+
+(iz set-random-seed MeTTa)
+(iz set-random-seed UseRust)
+(: set-random-seed (-> RandomGenerator Number (->)))
+(@doc set-random-seed
+  (@desc "Sets a new seed (second argument) for random number generator (first argument)")
+  (@params (
+    (@param "Random number generator instance")
+    (@param "Seed")))
+  (@return "Unit atom"))
+
+(iz new-random-generator MeTTa)
+(iz new-random-generator UseRust)
+(: new-random-generator (-> Number RandomGenerator))
+(@doc new-random-generator
+  (@desc "Creates new random number generator instance using seed as input (first argument)")
+  (@params (
+    (@param "Seed")))
+  (@return "Instance of random number generator"))
+
+(iz reset-random-generator MeTTa)
+(: reset-random-generator (-> RandomGenerator RandomGenerator))
+(@doc reset-random-generator
+  (@desc "Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())")
+  (@params (
+    (@param "Random number generator instance")))
+  (@return "Random number generator instance with default behavior"))
+
 ;; Some code still uses the old syntax
-(iz random-int-2 MeTTa)
-(@doc random-int-2
+(iz random-int MeTTa)
+(@doc random-int
   (@desc "Returns random int number from range defined by two numbers (first and second argument)")
   (@params (
 	(@param "Range start")
 	(@param "Range end")))
   (@return "Random int number from defined range"))
-(is-op-2 random-int-2 random)
+(is-op-2 random-int random)
 
-(iz random-float-2 MeTTa)
-(@doc random-float-2
+(iz random-float MeTTa)
+(@doc random-float
   (@desc "Returns random float number from range defined by two numbers (first and second argument)")
   (@params (
 	(@param "Range start")
 	(@param "Range end")))
   (@return "Random float number from defined range"))
-(is-op-2 random-int-2 random)
-
-
-
-
-
-
+(is-op-2 random-int random)
 
 (iz collapse-bind MeTTa)
 (@doc collapse-bind
@@ -1304,7 +1327,7 @@ For example:
     (chain (eval (type-cast $atom $type $space)) $ret (return $ret)) ))))
 
 (iz interpret-func MinimalMeTTaHelper)
-(ALT= (interpret-func $expr $type $ret-type $space)
+(= (interpret-func $expr $type $ret-type $space)
   (function (eval (if-decons $expr $op $args
     (chain (eval (interpret $op $type $space)) $reduced-op
       (eval (return-on-error $reduced-op

@@ -256,12 +256,12 @@ record_subchain(Goal,X,Y):-
 record_subchain(_Goal,X,[],_Y):- subtest_ans_count(0,X),!,fail.
 %record_subchain( Goal,X,[], Y):- subtest_same(1,X),!,X=Y.
 record_subchain( Goal,X,[], Y):- !,
-    ( call_nth(Goal,Nth)
+    ( woct(call_nth(Goal,Nth))
       *-> ignore( \+ maybe_record_subtest(X,[],X,[],X,[],Nth,Y)) ; (ignore( \+ maybe_record_subtest(X,[],X,[],X,[],0,'Empty')),!,fail)).
 
 record_subchain(Goal,X,XVs,Y):-
    copy_term(X+XVs,XX+XXVs), copy_term(X+XVs,XC+XCVs), numbervars(XCVs,0,_,[attvar(skip)]),
-   (    call_nth(Goal,Nth)
+   ( woct(call_nth(Goal,Nth))
      *-> ignore( \+ maybe_record_subtest(X,XVs,XX,XXVs,XC,XCVs,Nth,Y)) ; (ignore( \+ maybe_record_subtest(X,XVs,XX,XXVs,XC,XCVs,0,'Empty')),!,fail)).
 
 maybe_record_subtest(_X,_XVs,_XX,_XXVs,XC,_XCVs,Nth,_Y):- Nth\==1,!,maybe_nth_x(XC,Nth),!.

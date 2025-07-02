@@ -87,7 +87,7 @@
   (@return "Token (Token)"))
 (: thread:async-token! (-> Atom Variable Token))
 (= (thread:async-token! $eval $result)
-   (call-fn! async_eval_token $eval $result))
+   (call-fn async_eval_token $eval $result))
 
 (@doc thread:async-policy!
   (@desc "Starts an asynchronous operation with a policy and token as result.")
@@ -97,7 +97,7 @@
   (@return "Token (Token)"))
 (: thread:async-policy! (-> Atom Atom Token))
 (= (thread:async-policy! $eval $policy $token)
-   (call-for! $token
+   (call-for $token
 	 (async_thread_with_policy $eval $token $policy)))
 
 (@doc thread:await-token!
@@ -464,9 +464,7 @@
   (@param "Goal: Expression to evaluate")
   (@param "Options: Expression of (key value) pairs")))
   (@return "Engine handle"))
-(: engine:create (-> Atom EngineHandle))
-(= (engine:create $eval) (engine:create $eval ()))
-(: engine:create (-> Atom Expression EngineHandle))
+(: engine:create (-> %Undefined% Atom Expression EngineHandle))
 (= (engine:create $eval $options)
    (call-for! $handle (@ engine_create $template (@ eval_args $eval $template) $handle $options)))
 
@@ -552,7 +550,7 @@
 (= (engine-quick-tests)
    (let
       $E (engine:create (superpose (1 2 3)))
-	(progn
+	(do
        (println! ("Result 1: " (engine:next $E)))
        (println! ("Result 2: " (engine:next $E)))
        (println! ("Result 3: " (engine:next $E)))
