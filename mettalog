@@ -909,8 +909,8 @@ function handle_args {
                 continue
 		;;
 
-           --douglas*|--show*|--hide*|--test*|-O)
-		#add_to_list "$arg" ADD_COMPILE_ARG
+           --douglas*|--show*|--corelib*|--hide*|--test*|-O)
+		add_to_list "$arg" ADD_COMPILE_ARG
 		add_to_list "$arg" PRE_METTALOG_OPTIONS
                 continue
 		;;
@@ -1299,7 +1299,7 @@ check_for_changes() {
     # (you could log it somewhere instead if needed)
     #rm -f "$executable_image"
     #mv "$temp_file" "$checksum_file"
-    rm "$temp_file"    
+    rm "$temp_file"
     return 2
   fi
 }
