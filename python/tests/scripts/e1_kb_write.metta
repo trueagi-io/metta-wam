@@ -18,7 +18,7 @@
    (frog $x))
 
 ; Define conditional
-(: ift (-> Bool Atom %Undefined%))
+(: ift (-> Bool Atom Atom))
 (= (ift True $then) $then)
 
 ; For anything that is green, assert it is Green in &kb

@@ -72,21 +72,16 @@ o_woc(G):- call(G).
 % o_woc(G):- woc(G).
 
 :- dynamic('$metta_setup':on_init_metta/1).
-:- multifile('$metta_setup':on_init_metta/1).
-
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
 % only on main thread
 do_metta_setup:- thread_self(Self), Self\==main,!.
 do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),do_metta_setup(Goal)).
 
-:- multifile(setup_inits/0).
-:- dynamic(setup_inits/0).
-setup_inits :- do_metta_setup.
-
 do_metta_setup(Goal):-
    debug_info(main, do_metta_setup(Goal)),
    profile_warn(0.33,ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+
 
 profile_warn(Goal):-
   profile_warn(0.33, Goal).
@@ -1599,17 +1594,17 @@ on_set_value(_Note,noninteractive,true):- nocut, ignore(noninteractive),!.
 on_set_value(_Note,abort_trace,true):- nocut, ignore(abort_trace),!.
 
 on_set_value(_Note,show, Value):-
-    if_t( \+ option_value(default_show_hide,_), set_option_value(default_show_hide,hide)),
+    if_t( \+ option_value(default_show_hide,_), set_option_value_interp(default_show_hide,hide)),
     listify(Value,List), maplist(set_tf_debug(true),List).
 on_set_value(_Note,hide,Value):-
-    if_t( \+ option_value(default_show_hide,_), (set_option_value(default_show_hide,show))),
+    if_t( \+ option_value(default_show_hide,_), (set_option_value_interp(default_show_hide,show))),
     listify(Value,List), maplist(set_tf_debug(false),List).
 
 on_set_value(_Note,trace, Value):-
-    if_t( \+ option_value(default_trace_notrace,_), set_option_value(default_trace_notrace,notrace)),
+    if_t( \+ option_value(default_trace_notrace,_), set_option_value_interp(default_trace_notrace,notrace)),
     listify(Value,List), maplist(set_tf_debug(true),List).
 on_set_value(_Note,notrace,Value):-
-    if_t( \+ option_value(default_trace_notrace,_), (set_option_value(default_trace_notrace,trace))),
+    if_t( \+ option_value(default_trace_notrace,_), (set_option_value_interp(default_trace_notrace,trace))),
     listify(Value,List), maplist(set_tf_debug(false),List).
 
 
@@ -3288,7 +3283,7 @@ cmdline_load_file(Self, Filemask) :-
         (
             must_det_ll((
                 % Ensure compatibility checks and write debug output.
-                if_trace((loading; main), not_compatio((nl, write('; '), write_src(Src), nl))),
+                debug_info((loading; main), not_compatio((nl, write('; '), write_src(Src), nl))),
                 % Execute the file loading logic with error handling.
                 catch_red(Src),
                 !,
@@ -4011,7 +4006,8 @@ add_assertion_now(Self,Preds):-
 %     % Process a load operation with hooks:
 %     ?- load_hook(my_file, Hooked).
 
-%load_hook(_Load,_Hooked):- !.
+load_hook(_Load,_Hooked):- !.
+
 load_hook(Load,Hooked):-
   notrace(ignore(catch( ignore((( \+ ((forall(load_hook0(Load,Hooked),true)))))), _, true))),!.
 
@@ -4904,18 +4900,9 @@ metta_eq_def(Eq, KB, H, B) :-
 %   @arg KB The knowledge base in which the definition is made.
 %   @arg H  The head of the definition.
 %   @arg B  The body of the definition.
-metta_defn1(KB, H, B) :-
+metta_defn(KB, H, B) :-
     % Use `=` to define the relation in the given knowledge base.
-    metta_eq_def('=', KB, H, B).
-    
-    
-metta_defn(KB, I, T):- metta_defn1(KB, I, T)
-   *-> true
-   ; metta_defn2(KB, I, T).
-
-metta_defn2(KB, H, B) :- metta_function_asserted(KB, H, B).
-metta_defn2(KB, H, B) :- inherit_into(KB,KB2), metta_function_asserted(KB2, H, B).
-
+    metta_function_asserted(KB, H, B).
 
 %!  metta_type(+KB, +H, +B) is det.
 %
@@ -4929,18 +4916,7 @@ metta_defn2(KB, H, B) :- inherit_into(KB,KB2), metta_function_asserted(KB2, H, B
 % metta_type(KB,H,B):- if_or_else(metta_atom(KB,[':',H,B]),not_metta_atom_corelib(KB,[':',H,B])).
 metta_type(KB, H, B) :-
     % Use `:` to associate the head with a type in the given knowledge base.
-    metta_eq_def(':', KB, H, B).
-
-metta_type(KB, I, T):- metta_type1(KB, I, T)
-   *->true
-   ; quietly((buffer_src([Colon, Op, T]),Op = I, (Colon == ':'; Colon == 'iz'))).
-
-metta_type1(KB, H, B) :- metta_type_info(KB, H, B).
-metta_type1(KB, H, B) :- inherit_into(KB,KB2), metta_type_info(KB2, H, B).
-
-
-
-
+    metta_type_info(KB, H, B).
 % metta_type(S,H,B):- S == '&corelib', metta_atom_stdlib_types([':',H,B]).
 
 % typed_list(Cmpd,Type,List):-  compound(Cmpd), Cmpd\=[_|_], compound_name_arguments(Cmpd,Type,[List|_]),is_list(List).
@@ -5038,7 +5014,7 @@ metta_anew1(unload, OBO) :-
         clause(Head2, Body2, Ref), % Retrieve the clause again for validation.
         (Head + Body) =@= (Head2 + Body2), % Check if the clauses are equivalent.
         erase(Ref),               % Erase the clause.
-        if_trace(atomspace,pp_m(unload(Cl)))          % Log the unload operation.
+        debug_info(atomspace,pp_m(unload(Cl)))          % Log the unload operation.
     )), !.
 % Handle `unload_all` by retracting all matching clauses.
 metta_anew1(unload_all, OBO) :-
@@ -5046,7 +5022,7 @@ metta_anew1(unload_all, OBO) :-
     must_det_ll((
         load_hook(unload_all, OBO),  % Execute the unload_all hook.
         subst_vars(OBO, Cl),         % Substitute variables in `OBO`.
-        if_trace(atomspace,once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
+        debug_info(atomspace,once_writeq_nl_now(yellow, retractall(Cl))), % Log and retract all matching clauses.
         retractall(Cl)      %to_metta(Cl).
     )).
 % Alternative `unload_all` operation with detailed clause handling.
@@ -5115,7 +5091,7 @@ metta_anew0(Load, Src, OBO) :-
     not_compat_io((
         % Output information about the source if in Metta language.
         output_language(metta, (
-            if_trace((atomspace;loading;load), color_g_mesg('#ffa500', ((
+            debug_info((atomspace;loading;load), color_g_mesg('#ffa500', ((
                 format('~N '),  % Newline for separation.
                   % format('~N'),
                 nop(copy_term(Src,OSrc,Names)),
@@ -5129,7 +5105,7 @@ metta_anew0(Load, Src, OBO) :-
         )),
         % Output information about the operation and object.
         output_language(prolog, (
-            if_trace((atomspace;loading), color_g_mesg('#4f4f0f', (((
+            debug_info((atomspace;loading), color_g_mesg('#4f4f0f', (((
                 write('; Action: '),  % Indicate the action being performed.
                 copy_term(OBO,OBOS,VarNames),
                 materialize_vns(OBO,OBOVns),
@@ -5758,7 +5734,7 @@ call_sexpr(How, Self, Tax, _S, Out) :-
 /*
 do_metta(File,Load,Self,Cmt,Out):-
   fail,
-  if_trace(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
+  debug_info(do_metta, fbug(do_metta(File,Load,Self,Cmt,Out))),fail.
 */
 do_metta_f(File, Load, Self, In, Out):-
    copy_term(do_metta_f(File, Load, Self, In, Out),
@@ -5785,7 +5761,7 @@ do_metta(From, comment(Load), Self, [Expr], Out) :- !,
     do_metta(From, comment(Load), Self, Expr, Out).
 do_metta(From, comment(Load), Self, Cmt, Out) :-
     % Write the comment and handle specific cases of MettaLog comments.
-    if_trace((loading;load,comment),write_comment(Cmt)), !,
+    debug_info((loading;load,comment),write_comment(Cmt)), !,
     send_to_pl_file(call(write_comment('% ',Cmt))),
     ignore((symbolic(Cmt),
             symbolic_list_concat([_, Src], 'MeTTaLog only: ', Cmt),
@@ -5803,9 +5779,9 @@ do_metta(From, How, Self, Src, Out) :-
     must_det_ll((normalize_space(string(TaxM), Src),
                  convert_tax(How, Self, TaxM, Expr, NewHow))),
     do_metta(From, NewHow, Self, Expr, Out).
-do_metta(From, Load, Self, exec(Expr), Out) :- !,
+do_metta(From, _, Self, exec(Expr), Out) :- !,
     % Directly execute Metta expressions wrapped in `exec`.
-    do_metta(From, x(Load), Self, Expr, Out).
+    do_metta(From, exec, Self, Expr, Out).
 % Prolog CALL
 do_metta(From, _, Self, call(Expr), Out) :- !,
     % Handle explicit Prolog calls wrapped in `call`.
@@ -5824,11 +5800,11 @@ do_metta(From, call, Self, TermV, FOut) :- !,
 % Non Exec
 do_metta(_File, Load, Self, Src, Out) :-
     % Handle non-executable inputs for modes other than `exec`.
-    Load \== x(+), !,
+    Load \== exec, !,
     if_t(into_simple_op(Load, Src, OP), pfcAdd_Now('next-operation'(OP))),
     dont_give_up(as_tf(asserted_do_metta(Self, Load, Src), Out)).
 % Doing Exec
-do_metta(file(Filename), x(+), Self, TermV, Out) :-
+do_metta(file(Filename), exec, Self, TermV, Out) :-
     % Handle executable terms when processing files.
    must_det_ll((inc_exec_num(Filename),
                  get_exec_num(Filename, Nth),
@@ -5838,7 +5814,7 @@ do_metta(file(Filename), x(+), Self, TermV, Out) :-
      file_answers(Filename, Nth, Ans),
      \+ is_transpiling,
         check_answers_for(TermV, Ans))), !,
-    if_t(into_simple_op(x(+), TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
      must_det_ll((
       ensure_increments((color_g_mesg_ok('#ffa509',
        (writeln(';; In file as:  '),
@@ -5847,9 +5823,9 @@ do_metta(file(Filename), x(+), Self, TermV, Out) :-
                           call(do_metta_exec(file(Filename), Self,
                                              ['assertEqualToResult', TermV, Ans], Out)))))).
 %   Handles the direct execution of Metta terms (`TermV`) in the `exec` mode.
-do_metta(From, x(+), Self, TermV, Out) :- !,
+do_metta(From, exec, Self, TermV, Out) :- !,
     % Simplify the term into an operation (if possible) and register it.
-    if_t(into_simple_op(x(+), TermV, OP), pfcAdd_Now('next-operation'(OP))),
+    if_t(into_simple_op(exec, TermV, OP), pfcAdd_Now('next-operation'(OP))),
     % Attempt to execute the term, preventing failure propagation.
     dont_give_up(do_metta_exec(From, Self, TermV, Out)).
 
@@ -5973,7 +5949,7 @@ into_simple_op(Load, [Op | O], op(Load, Op, S)) :-
 %     Result = as_tf(foo, TF),
 %     Vars = [].
 %
-call_for_term_variables(TermV, catch_red(show_failure(TermR)), NewNamedVarsList, X) :-
+call_for_term_variables(TermV, catch_red((TermR)), NewNamedVarsList, X) :-
     % Substitute variables in the term, producing a processed term and an initial named variable list.
     subst_vars(TermV, Term, NamedVarsList),
     % Debugging output: Show substitutions and variable analysis.
@@ -6246,35 +6222,6 @@ eval_H(Term,X):-
 t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
 t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 */
-
-:- dynamic user:hyperlog_engine_state/2.
-:- nodebug(hyperlog).
-
-hyperlog_startup(EngineID) :-
-    assertz(user:hyperlog_engine_state(EngineID, running)).
-
-hyperlog_shutdown(EngineID) :-
-    retractall(user:hyperlog_engine_state(EngineID, _)).
-
-hyperlog_set( _, Name, Value) :- set_option_value_interp(Name,Value).
-
-hyperlog_parse_all(ID, S, P) :- hyperlog_parse(ID, S, P).
-
-hyperlog_parse(ID, Res, Result):- atom(Res), atom_string(Res,String), !, hyperlog_parse(ID, String, Result).
-hyperlog_parse( _, Exp, Result):- is_list(Exp),!,Exp=Result.
-hyperlog_parse( _, Str, Result):- parse_sexpr(Str, Res),py_returnable(Res, Result).
-
-hyperlog_run(ID,X,Y):- string(X), parse_sexpr(X,M), !, hyperlog_run(ID,M,Y).
-hyperlog_run(ID,X,Y):- atom(X), atom_string(X,M),!, hyperlog_run(ID,M,Y).
-hyperlog_run(_,exec(X),Y):- !,user:eval_args(X,R),py_returnable(R,Y).
-hyperlog_run(ID,['!',X],Y):- !, hyperlog_run(ID,exec(X),Y).
-hyperlog_run(_,X, Y):- do_metta(python, +, '&self', X, R),py_returnable(R,Y).
-
-py_returnable(Res, Result):- \+ compound(Res), !, Result=Res.
-py_returnable(exec(Res), Result):- !, Result=['!',Res].
-py_returnable(Res, Result):- Result=Res.
-
-
 
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 
@@ -6973,8 +6920,6 @@ catch_red_ignore(G) :-
 %     % Start loon with a specific reason:
 %     ?- loon(toplevel).
 %
-
-% loon(Why):- began_loon(Why),!,fbugio(begun_loon(Why)).
 loon(Why) :-
     % If in compilation mode, log the event and succeed.
     is_compiling, !,
@@ -7094,6 +7039,10 @@ pre_halt1 :- % Generate a `loonit_report` and fail.
 pre_halt2 :-
     % Skip halting if the system is compiling.
     is_compiling, !, fail.
+
+pre_halt2:-
+    \+ need_interaction, !, fail.
+
 pre_halt2 :-
     % If the `prolog` option is true, start Prolog and retry `pre_halt2`.
     option_value('prolog', true), !,
@@ -7131,6 +7080,9 @@ pre_halt2 :-
 maybe_halt(_) :-
     % Perform preliminary halting checks (`pre_halt1`) and fail.
     once(pre_halt1), fail.
+maybe_halt(_) :-
+    % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
+    current_prolog_flag(mettalog_rt, true), !.
 maybe_halt(Seven) :-
     % If the REPL is disabled (`repl = false`), halt with the specified exit code.
     option_value('repl', false), \+ current_prolog_flag(mettalog_rt, true), !, halt(Seven).
@@ -7142,10 +7094,7 @@ maybe_halt(_) :-
     once(pre_halt2), fail.
 maybe_halt(Seven) :-
     % Log the halting attempt and fail.
-    if_trace(main,not_compatio(fbugio(maybe_halt(Seven)))), fail.
-maybe_halt(_) :-
-    % If the Prolog runtime flag `mettalog_rt` is true, prevent halting.
-    current_prolog_flag(mettalog_rt, true), !.
+    debug_info(main,not_compatio(fbugio(maybe_halt(Seven)))), fail.
 maybe_halt(H) :-
     % If no other conditions apply, halt with the specified exit code.
     halt(H).
@@ -7190,8 +7139,7 @@ ensure_mettalog_system_compilable:-
 %     % Prepare the MettaLog system:
 %     ?- ensure_mettalog_system.
 %
-
-%ensure_mettalog_system:- getenv('DISPLAY',_),!,profile(ensure_mettalog_system_slow),!.
+ensure_mettalog_system:- getenv('DISPLAY',_),!,profile(ensure_mettalog_system_slow),!.
 ensure_mettalog_system:- profile_warn(1.1, ensure_mettalog_system_slow),!.
 ensure_mettalog_system_slow:-
  must_det_lls((
@@ -7344,7 +7292,8 @@ qsave_program_slow:-
 
 qsave_program(Name) :-
     % Attempt to save the program.
-    if_verbose(main,write_src_nl(start(qsave_program(Name)))),
+    %bt,
+    debug_info(main,start(qsave_program(Name))),
     autoload_all,
     catch_err(qsave_program(Name, [
         class(development),
@@ -7353,7 +7302,7 @@ qsave_program(Name) :-
         toplevel(loon(toplevel)),
         stand_alone(false)
     ]), E, writeln(E)), !,
-    if_verbose(main,write_src_nl(done(qsave_program(Name)))).
+    debug_info(main,write_src_nl(done(qsave_program(Name)))).
 
 :- ensure_loaded(library(flybase_main)).
 :- ensure_loaded(metta_server).
@@ -7850,13 +7799,12 @@ findall_or_skip(Var, Call, List) :-
     % Execute the query using `findall/3` to collect results into `List`.
     findall(Var, Call, List).
 
-doug:- listing(setup_inits).
-
-setup_inits :- use_corelib_file.
-setup_inits :- use_metta_ontology.
 umo:- use_metta_ontology.
-:- initialization((use_corelib_file),after_load /**/).
-:- initialization(use_metta_ontology,after_load /**/).
+
+:- writeln('; maybe ?- use_corelib_file.').
+%:- initialization((use_corelib_file),after_load /**/).
+:- writeln('; maybe ?- use_metta_ontology.').
+%:- initialization(use_metta_ontology,after_load /**/).
 
 :- initialization(set_prolog_flag(metta_interp,ready)).
 %:- ensure_loaded(metta_runtime).
@@ -7894,10 +7842,7 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 
 :- find_missing_cuts.
 
-
+:- writeln('; maybe ?- do_metta_setup.').
 :- thread_initialization(do_metta_setup).
-
-
-
-
+:- writeln('; did ?- do_metta_setup.').
 

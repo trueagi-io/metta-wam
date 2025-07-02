@@ -1612,15 +1612,6 @@ prevent_type_violations(Self, BecomingValue,RequireType):- non_arg_violation(Sel
 %type_list_violations(BecomingValue,RequireType):- (RType,RequireType),non_arg_violation(_Self, RequireType, BecomingValue).
 
 % TODO make sure it is inclusive rather than exclusive
-non_arg_violation(Self, RequireType, BecomingValue):-
-   nop(nopped_non_arg_violation(Self, RequireType, BecomingValue)).
-
-
-cns:attr_unify_hook(WAS, NewValue) :- attvar(NewValue), get_attr(NewValue,cns,WAS2),
-   compound(WAS),compound(WAS2),arg(2,WAS,List1),arg(2,WAS2,List2),append(List1,List2,List12),list_to_set(List12,Set),
-   setarg(2,WAS,Set),setarg(2,WAS2,Set),!.
-
-cns:attr_unify_hook(_,_):- nb_current(suspend_type_unificaton, true),!.
 
 cns:attr_unify_hook(_Slf=_TypeList,_NewValue):- nb_current(suspend_type_unificaton, true),!.
 cns:attr_unify_hook(Self= TypeList, NewValue) :-
@@ -1632,8 +1623,7 @@ cns_attr_unify_hook(Self,TypeList,NewValue) :-
     attvar(NewValue), !, dont_put_attr(NewValue, cns, Self = TypeList).
 cns_attr_unify_hook(Self , TypeList, NewValue) :-
     % Retrieve the type of the new value and check if it can be assigned.
-    show_failure_when(argtypes,
-              can_assign_value_typelist(Self, NewValue, TypeList)).
+    show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
 
 can_assign_value_typelist(Self, NewValue, TypeList):-
     default_depth(DEFAULT_DEPTH),get_type(DEFAULT_DEPTH, Self, NewValue, Was),

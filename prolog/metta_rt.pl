@@ -1,4 +1,4 @@
-﻿:- module(metta_rt,[]).
+:- module(metta_rt,[]).
 
 :- set_prolog_flag(mettalog_rt,true).
 

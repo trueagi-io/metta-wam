@@ -307,8 +307,8 @@
     (@param "Queue (Atom)")))
   (@return "Message (%Undefined%)"))
 (: thread:receive-message! (-> Atom %Undefined%))
-(= (thread:receive-message! $queue)
-   (call-fn! thread_get_message $queue))
+(= (thread:receive-message! $queue $msg)
+   (call-unit! (thread_get_message $queue $msg)))
 
 ; ---- Thread Management ----
 

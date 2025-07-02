@@ -27,10 +27,9 @@
 
 ; error: compile expects a function name
 !(assertEqual
-  (let $x
-    ((py-dot
-      (case (compile &jspace (ffff a b))
-        (((Error $1 (JettaCompileError $2)) $2)))
-      "find") "function")
-    (< 0 $x))
+  (< 0
+     ((py-dot
+       (case (compile &jspace (ffff a b))
+         (((Error $1 (JettaCompileError $2)) $2)))
+      "find") "function name"))
   True)

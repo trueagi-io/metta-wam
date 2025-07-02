@@ -48,18 +48,18 @@ class RegexMatchableObject(MatchableObject):
                 return [{"matched_pattern": S(pattern)}]
         return []
 
-def parseImpl(atom, metta):
+def parseImpl(atom, run_context):
     try:
         s = atom.get_object().content
         if type(s) != str:
             raise IncorrectArgumentError()
-        return [SExprParser(repr(s)[1:-1]).parse(metta.tokenizer())]
+        return [SExprParser(repr(s)[1:-1]).parse(run_context.tokenizer())]
     except Exception as e:
         raise IncorrectArgumentError()
 
 
 @register_atoms(pass_metta=True)
-def text_ops(metta):
+def text_ops(run_context):
     """Add text operators
 
     repr: convert Atom to string.
@@ -73,7 +73,7 @@ def text_ops(metta):
 
     reprAtom = OperationAtom('repr', lambda a: [ValueAtom(repr(a), 'String')],
                              ['Atom', 'String'], unwrap=False)
-    parseAtom = OperationAtom('parse', lambda s: parseImpl(s, metta), ['String', 'Atom'], unwrap=False)
+    parseAtom = OperationAtom('parse', lambda s: parseImpl(s, run_context), ['String', 'Atom'], unwrap=False)
     stringToCharsAtom = OperationAtom('stringToChars', lambda s: [E(*[ValueAtom(Char(c)) for c in str(s)[1:-1]])],
                                       ['String', 'Atom'], unwrap=False)
     charsToStringAtom = OperationAtom('charsToString', lambda a: [ValueAtom("".join([str(c)[1:-1] for c in a.get_children()]))],
@@ -137,28 +137,20 @@ def find_py_obj(path, mod=None):
             raise RuntimeError(f'Failed to find "{path}"')
     return obj
 
-def get_py_atom(path, typ=AtomType.UNDEFINED, unwrap=True, mod=None):
+def get_py_atom(path, typ=AtomType.UNDEFINED, mod=None):
     name = str(path.get_object().content if isinstance(path, GroundedAtom) else path)
     if mod is not None:
         if not isinstance(mod, GroundedAtom):
             raise NoReduceError()
         mod = mod.get_object().content
     obj = find_py_obj(name, mod)
-    if isinstance(typ, GroundedAtom):
-        typ = typ.get_object().content
-    if isinstance(typ, bool):
-        unwrap = typ
-        typ = AtomType.UNDEFINED
-    else:
-        if isinstance(unwrap, GroundedAtom):
-            unwrap = unwrap.get_object().content
     if callable(obj):
-        return [OperationAtom(name, obj, typ, unwrap=unwrap)]
+        return [OperationAtom(name, obj, typ, unwrap=True)]
     else:
         return [ValueAtom(obj, typ)]
 
-def do_py_dot(mod, path, typ=AtomType.UNDEFINED, unwrap=True):
-    return get_py_atom(path, typ, unwrap,  mod)
+def do_py_dot(mod, path, typ=AtomType.UNDEFINED):
+    return get_py_atom(path, typ, mod)
 
 @register_atoms
 def py_obj_atoms():

@@ -239,7 +239,6 @@ repl2 :-
     if_t(option_value(repl,disable),throw('$aborted')),
     % Load the REPL history and clean it up if necessary.
     ignore(catch(load_and_trim_history,_,true)),
-
     % Begin an infinite loop using repeat to keep REPL active.
     repeat,
     % Reset internal caches for better performance.

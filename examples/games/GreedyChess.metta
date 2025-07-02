@@ -1098,14 +1098,13 @@
 ; Note:         Relies on `attemptcheckmate_match`, `move_piece`, 
 ;               `any_moves_to_escape`, and `reset_pieces`.
 ;***********************************************************************
-
 (= (attemptcheckmate) 
   (let $checkmate_moves (collapse (attemptcheckmate_match))
     ;(if (== $checkmate_moves ()) (empty) (car-atom $checkmate_moves))))  <-- works alone for check!
 
     ; the following block of code determines if, after a check move, the king can escape by any means (block etc)
     (let $list_of_checkmate_moves 
-        (collapse
+        (collapse (
           (let $test_move (superpose $checkmate_moves)
             (let*
               ( 
@@ -1124,7 +1123,7 @@
                        (== $king_status False))
                     ; if no moves possible for human, Greedy Chess has found checkmate, success! 
                     $test_move
-                    (empty)))))
+                    (empty))))))
         (if (== $list_of_checkmate_moves ())
           (empty)
           (let*
@@ -2779,7 +2778,7 @@
 ;   - Uses (case ...) to map string input to handler atoms
 ;***************************************************************
 
-(= (command-once)
+(= (command-loop)
   (progn 
     (println! "Please enter your command.")
     (let $command ((py-atom input))   ; get user command
@@ -2793,39 +2792,14 @@
           ("q"  (println! "Quitting MeTTa Greedy Chess."))
           ($_   (println! "Invalid command, please try again or enter c for a list of commands."))
           )))
-    (if (== $command "q") False True)))
-
-
-;-----------;
-(= (command-loop)
-  (progn 
-	  (command-once)
-	  (command-loop)))
+    (if (== $command "q") 
+      ()
+      (command-loop))
+      ))
 
 ;-----------;
 (= (main_loop) 
   (progn
-	(chess)           ; Start the chess game
-	;; (command-not-a-loop)
-	(while-loop)
-	))  ; Enter the recursive command-processing loop until quit command 'q'
-
-(= (do-10x) ; return 10 times
-    (superpose (0 1 2 3 4 5 6 7 8 9)))
-
-(= (do-10000x) ; return 10,000 times
-	(let $_ (both (do-10x) (do-10x)) ; 100 x
-	  (let $_ (both (do-10x)(do-10x)) ()))) ; 100
-
-
-(= (command-not-a-loop)
-  (let $_ (do-10000x) 
-	(limit! 1 (command-once))))
-
-(= (while-loop)
- (let $_ (set-state! &keep-going True)
-    (while! (get-state &keep-going)
-	   (set-state! &keep-going (limit! 1 (command-once))))))
-
-
+    (chess)           ; Start the chess game
+    (command-loop)))  ; Enter the recursive command-processing loop until quit command 'q'
 !(main_loop)

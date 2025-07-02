@@ -88,6 +88,43 @@ merge_fp(T1,T2,N) :-
   N1 is N-1,
   merge_fp(T1,T2,N1).
 
+
+
+
+%constraintFor(Op,Len,[Ar|ATypes],Rel,ArgType,Nth):- Ar=='->',!,skelectalFor(Op,Len,[Op|ATypes],argNIsa,Rel,ArgType,Nth).
+%argumentsFor(Op,Len,Args,Rel,ArgType,Nth):- skelectalFor(Op,Len,Relation,Args,Ret,Pred,Rel,Arg,Nth)
+
+constraintFor(Op,_Len,Args,Ret,Pred,Rel,Arg,Nth):- %relation_args(MaybeOp,Len,Relation,Args,Ret),ignore(MaybeOp=Op),
+   nth0(Nth,[Ret|Args],Arg),s_or_p_term(Rel,[Pred,Op,Nth,Arg]).
+
+relation_args(Op,Len,Relation,Args,Ret):- (nonvar(Args);nonvar(Len)),!,
+   length(Args,Len),
+   append([Op|Args],[Ret],OpArgsWRet),
+   s_or_p_term(Relation,OpArgsWRet).
+
+relation_args(Op,Len,Relation,Args,Ret):- (nonvar(Op),nonvar(Relation)),!,
+   Relation =.. List, append(_,[Op|ArgsWRet],List),
+   append(Args,[Ret],ArgsWRet),length(Args,Len).
+
+
+s_or_p_term(Relation,OpArgsWRet):- nonvar(Relation),nonvar(OpArgsWRet),!,Relation =.. List, append(_,OpArgsWRet,List).
+s_or_p_term(Relation,[Op|ArgsWRet]):- var(Relation), is_list(ArgsWRet),!, (var(Op)-> Relation =.. [v,Op|ArgsWRet] ; Relation =..[Op|ArgsWRet]).
+s_or_p_term(Relation,OpArgsWRet):- nonvar(Relation),var(OpArgsWRet), Relation =.. List, append(Left,[Op|ArgsWRet],List), is_ok_op(Left,[Op|ArgsWRet]),!.
+
+is_ok_op([],[Op|_ArgsWRet]):- nonvar(Op), !, \+ metta_meta_f(Op).
+is_ok_op([NotOp],[Op|_ArgsWRet]):- metta_meta_f(NotOp), \+ metta_meta_f(Op).
+
+is_metta_meta_f(Op):- nonvar(Op), metta_meta_f(Op).
+
+
+metta_meta_f(v).
+metta_meta_f(M):- atom(M), atom_chars(M,Chars),metta_meta_chars(Chars).
+metta_meta_chars([_]).
+metta_meta_chars([m,_]).
+
+
+
+
 :- set_prolog_flag(pfc_term_expansion,true).
 
 %metta_atom_asserted(KB2,Y) ==> {metta_atom_asserted_hook(KB2,Y)}.
@@ -138,12 +175,6 @@ merge_fp(T1,T2,N) :-
 metta_type_info(KB,Op,ArTypeDecl)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len))==>
     metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType).
 
-metta_type_info(KB,Op,ArTypeDecl)/(arrow_type(ArTypeDecl,ParamTypes,_),length(ParamTypes,Len),nth1(Nth,ParamTypes,Nonvar))==>
-    argNType(KB,Op,Len,Nth,Nonvar).
-
-
-
-
 metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len)) ==>
     metta_type_info(KB,Op,ArTypeDecl).
 
@@ -172,21 +203,17 @@ var_shared_groups(Lits,Groups):- partition(ground,Lits,Grounds,NonGrounds),
 
 */
 
-metta_params_and_return_type(KB,Op,Len,ParamTypes,_RetType)/nth1(Nth,ParamTypes,Nonvar) ==> argNType(KB,Op,Len,Nth,Nonvar).
-
+metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType)/(constraintFor(Op,Len,ParamTypes,RetType,argNType,_Fact,Nonvar,Nth), Nth>0) ==> argNType(KB,Op,Len,Nth,Nonvar).
 metta_params_and_return_type(KB,Op,Len,_ParamTypes,RetType) ==> returnType(KB,Op,Len,RetType).
 
 
 non_evaluated_type('Atom').
 non_evaluated_type('Expression').
-non_evaluated_type('Variable').
+non_evaluated_type('Varaible').
 non_evaluated_type('Symbol').
-
-:- dynamic(argIsEvaled/5).
 
 (argNType(KB, Op, Len, Nth, Type)/nonvar(Type), non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,false).
 (argNType(KB, Op, Len, Nth, Type)/nonvar(Type), \+ non_evaluated_type(Type)) ==> argIsEvaled(KB,Op,Len,Nth,true).
-
 
 
 (metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],C=='=',H=II)) ==> metta_function_asserted(KB,II,T).
@@ -229,7 +256,7 @@ metta_function_asserted(KB,[Op|Args],_)/length(Args,Len)
 
 ('op-complete'(op(+,':',Op))
  ==>
- (( metta_type_info(KB,Op,TypeList)/is_list(TypeList),
+ (( metta_type(KB,Op,TypeList)/is_list(TypeList),
   {params_and_return_type(TypeList,Len,Params,Ret)}) ==>
   metta_params_and_return_type(KB,Op,Len,Params,Ret),{do_once(show_deds_w(Op))})).
 
@@ -426,7 +453,7 @@ properties('&corelib','let', [variable_assignment, qhelp("Variable assignment.")
 properties('&corelib','let*', [variable_assignment, qhelp("Sequential variable assignment."), sequential]).
 properties('&corelib','sealed', [variable_scoping, qhelp("Variable scoping.")]).
 properties('&corelib','function', [function_definition, qhelp("Function block.")]).
-properties('&corelib','return', [function_definition, qhelp("Return value of a function block."), return_value]).
+properties('&corelib','return', [function_definition, qhelp("Ret value of a function block."), return_value]).
 properties('&corelib','Error', [error_handling, qhelp("Defines or triggers an error.")]).
 
 % --- Error Handling and Advanced Control Flow ---
@@ -553,7 +580,7 @@ properties('&corelib','union', [nondet_sets, qhelp("It gives the union of 2 list
 properties('&corelib','stringToChars', [string_operations, qhelp("Convert a string to a list of chars."), string_to_chars]).
 properties('&corelib','charsToString', [string_operations, qhelp("Convert a list of chars to a string."), chars_to_string]).
 properties('&corelib','format-args', [string_operations, qhelp("Generate a formatted string using a format specifier."), format_args]).
-properties('&corelib','flip', [random, qhelp("Return a random boolean."), random_boolean]).
+properties('&corelib','flip', [random, qhelp("Ret a random boolean."), random_boolean]).
 
 
 

@@ -45,12 +45,11 @@
 
 ; error: cannot resolve symbol
 !(assertEqual
-  (let $x
+  (< 0
      ((py-dot
        (case (jetta &jspace "(foof 11 4)")
          (((Error $1 (JettaCompileError $2)) $2)))
-      "find") "resolve")
-     (< 0 $x))
+      "find") "CannotResolveSymbol"))
   True)
 
 ; TODO: fix the behavior (one or multiple results)

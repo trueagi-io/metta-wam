@@ -170,7 +170,7 @@ predicate_behavior(Self, Op, Len, ObjList) :-
            predicate_behavior_fallback(Self, Op, Len, TypeList)),
     findall(Patch,get_type(Op,Patch),Patches),
     update_types(Patches,TypeList,Updated),
-    %length(ObjList,10),
+    length(ObjList,10),
     maplist(=(Updated),ObjList).
 
 % default

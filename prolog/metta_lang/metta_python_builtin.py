@@ -5,7 +5,7 @@ DEBUG_MODE = 1
 the_modules_and_globals=None
 
 import traceback
-import math
+#import math
 import random
 
 def print_debug(Lvl, Message):
