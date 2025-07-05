@@ -421,14 +421,7 @@ py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwarg
    maplist(py_arg,NewList,PyArgs),
    py_list([F|PyArgs],PyList),
    py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
-py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_call_method_and_args_final(F,PyArgs, Py))).
-
-py_call_method_and_args_final(F,PyArgs, Py):- py_call(callable(F), '@'(true)), !, compound_name_arguments(Call,'__call__',PyArgs),py_ocall_direct(F:Call,Py).
-%py_call_method_and_args_final(F,PyArgs, Py):- py_type(F,Function),Function==function, compound_name_arguments(Call,'__call__',PyArgs),py_call(F:Call,Py),!.
-py_call_method_and_args_final(F,PyArgs, Py):- py_obi(py_call_method_and_args([F|PyArgs]),Py).
-
-
-
+py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
 
 pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
 % Handle compound terms like (key=value)
@@ -991,11 +984,11 @@ ensure_rust_metta(MeTTa):-
 %   MeTTa-related Python calls.
 %
 %   @arg MeTTa The MeTTa instance that will be initialized.
-ensure_rust_metta0(MeTTa):- fail,
+ensure_rust_metta0(MeTTa):-
     ensure_mettalog_py(MettaLearner),           % Ensure MettaLearner is available.
     py_call_warg(MettaLearner:'get_metta'(),MeTTa),  % Call the `get_metta` method.
     py_is_object(MeTTa).
-ensure_rust_metta0(MeTTa):- fail,
+ensure_rust_metta0(MeTTa):-
     py_call_warg('mettalog':'MeTTaLog'(), MeTTa).    % Fallback: Call MeTTaLog constructor.
 ensure_rust_metta0(MeTTa):- ensure_rust_metta1(MeTTa).
 

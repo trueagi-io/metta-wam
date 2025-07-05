@@ -757,7 +757,7 @@ pfcIsNotTraced(P) :-
 %
 compound_eles(Lvl, P, Arg) :-
     % If P is a variable, retrieve its attribute and treat it as a compound term.
-    var(P),!,get_attrs(P, AV),compound_eles(Lvl, AV, Arg).
+    var(P),!,get_attr(P, A, AV),compound_eles(Lvl, attvar(A, AV), Arg).
 compound_eles(Lvl, P, Arg) :-
     % If P is not a compound term or the level is less than 1, return P as the result.
     (\+ compound(P); Lvl < 1),!,Arg = P.
@@ -1227,7 +1227,8 @@ pp_facts(P, C) :-
     fmt("User added facts:", []),
     pp_items(user, User),
     % Draw a separator line.
-    draw_line, draw_line,
+    draw_line,
+    draw_line,
     % Print system-added (MettaLog-Pfc) facts.
     fmt("MettaLog-Pfc added facts:", []),
     pp_items(system, Pfc),
@@ -1309,8 +1310,7 @@ show_info(F) :-
     % Draw a line and print user-added facts that match the pattern.
     draw_line, fmt("User added facts with ~q:", [F]), pp_items(user, User),
     % Draw separator lines and print system-added (Pfc) facts that match the pattern.
-    draw_line, draw_line, % bt, % ds,
-    fmt("MettaLog-Pfc added facts3 with ~q:", [F]), pp_items(system, Pfc),
+    draw_line, draw_line, fmt("MettaLog-Pfc added facts with ~q:", [F]), pp_items(system, Pfc),
     % Final line to close the output.
     draw_line.
 

@@ -97,7 +97,7 @@
 %
 must_ex(X) :-
     % Attempt to execute the Goal with exception handling.
-    catch(X, E, (wdmsg(X->E),trace,X)) *-> true
+    catch(X, E, rtrace(E)) *-> true
     ;  % If the Goal fails, log the failure and retry with tracing.
     (dmsg(failed(must_ex(X))), rtrace(X)).
 
@@ -1843,8 +1843,7 @@ pfcUnique(post, Head, Tail) :-
    !, \+ is_clause_asserted(Head, Tail).
 */
 pfcUnique(_, Head, Tail) :-
-   copy_term_nat(v(Head, Tail), v(HeadC, TailC)),
-   \+ is_asserted_exact(HeadC, TailC), !.
+   \+ is_asserted_exact(Head, Tail), !.
 /*
 pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
 pfcUnique(_,H,B):- \+ (

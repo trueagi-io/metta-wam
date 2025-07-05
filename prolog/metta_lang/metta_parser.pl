@@ -1311,13 +1311,7 @@ import_op(Op):- atom_contains(Op,"load").
 % @arg Reason The reason for the error.
 throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
-    guess_file(Stream,File),
-    throw(stream_error(File:Line:Col:CharPos, Reason)).
-
-guess_file(Stream,File):- stream_property(Stream,file_name(File)),!.
-%guess_file(Stream,File):- stream_property(Stream,file_no(Num)),Num=<2,!,File=file_no(Num).
-%guess_file(Stream,File):- stream_property(Stream,alias(File)),!.
-guess_file(Stream,File):- findall(Prop,stream_property(Stream,Prop),File),!.
+    throw(stream_error(Line:Col:CharPos, Reason)).
 
 %! read_single_line_comment(+Stream:stream) is det.
 %
@@ -1463,8 +1457,8 @@ read_list(EndChar,  Stream, List):-
  setup_call_cleanup(
   nb_setval('$file_src_depth', LvLNext),
   catch(read_list_cont(EndChar,  Stream, List),
-        stream_error(Where,Why),
-        throw(stream_error(Line:Col:CharPos-Where,Why))),
+        stream_error(_Where,Why),
+        throw(stream_error(Line:Col:CharPos,Why))),
   nb_setval('$file_src_depth', LvL)).
 
 read_list_cont(EndChar,  Stream, List) :-

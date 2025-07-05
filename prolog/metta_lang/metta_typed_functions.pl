@@ -56,23 +56,13 @@
 % of MeTTa expressions and data structures.
 %*********************************************************************************************
 
-decl_metta_fact_pred(P):- decl_metta_fact_pred(_,P).
-
-decl_metta_fact_pred(Where,P):- get_fa(P, F,A),
-   dynamic(F/A),multifile(F/A),discontiguous(F/A),
-   pfcAdd(metta_fact_pred(Where,F,A)).
 
 %calc_non_evalation_args:- forall()
-decl_metta_fact_pred_tf:-
-    decl_metta_fact_pred(metta_fact_pred/3),
-    decl_metta_fact_pred(default_isa/2),
-    decl_metta_fact_pred(desc_aka/2),
-    decl_metta_fact_pred(explicit_isa/2),
-    decl_metta_fact_pred(subtype/2).
 
-:- initialization(decl_metta_fact_pred_tf, now).
-
-:- initialization(decl_metta_fact_pred_tf, after_load).
+:- discontiguous default_isa/2.
+:- discontiguous desc_aka/2.
+:- discontiguous explicit_isa/2.
+:- discontiguous subtype/2.
 
 % MismatchBehavior
 % Handles type mismatches or argument mismatches during evaluation.
@@ -189,12 +179,10 @@ update_types([One|Patches],Before,After):- !, update_type(One,Before,Middle), up
 
 
 predicate_behavior_impl(_, 'get-type', 1, ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-predicate_behavior_impl(Self, 'foo', 2, DefaultTypes):- default_f_types(Self, DefaultTypes).
+predicate_behavior_impl('&self', 'foo', 2,['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
 predicate_behavior_impl(_, 'match', 4,    ['MismatchFail', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
 
 predicate_behavior_impl(_, 'case', 2,     ['MismatchOriginal', 'NoMatchFail', 'OrderClause', 'Nondeterministic', 'ClauseFailNonDet', 'FailureEmpty']).
-
-default_f_types(_,['MismatchOriginal', 'NoMatchOriginal', 'OrderFittest', 'Nondeterministic', 'ClauseFailNonDet', 'FailureOriginal']).
 
 %(case (empty) ((Empty ())))
 

@@ -85,9 +85,8 @@
 % - async_policy/4: Specifies policies for executing asynchronous goals.
 :- meta_predicate
     spawn(0),
-    async_eval(0,('-')),
-    async_token(0,('-')),
-    async_token(0,('-'),('+')),
+    async(0,('-')),
+    async(0,('-'),('+')),
     async_policy('+',0,'-','+').
 
 :- multifile(same_meta_predicate/1).
@@ -164,7 +163,7 @@ spawn(Goal) :-
 %
 spawn(Goal, Options) :-
     term_variables(Goal, Vars),          % Collect free variables in Goal
-    async_token(Goal, Token, Options),         % Start async execution with options
+    async(Goal, Token, Options),         % Start async execution with options
     Id is random(1<<63),                 % Generate a unique ID for this task
     assert(spawn_token_needs_await(Id)), % Register task as needing await
     make_opts(Options, Opts),            % Process options into Opts format
@@ -265,7 +264,7 @@ lazy(Goal) :-
     spawn(Goal, [policy(lazy)]).
 
 
-%!  async_token(+Goal, -Token) is det.
+%!  async(+Goal, -Token) is det.
 %
 %   Executes `Goal` asynchronously in a background thread, returning a `Token`
 %   to track its status. This predicate is a shorthand for `async/3`, using
@@ -282,33 +281,17 @@ lazy(Goal) :-
 %
 %   @example
 %     % Run a goal asynchronously, retrieve its status using Token.
-%     ?- async_token(some_heavy_task(X), Token),
+%     ?- async(some_heavy_task(X), Token),
 %        % Other tasks can proceed here
 %        await(Token),  % Wait for `some_heavy_task/1` to complete
 %        writeln(X).
 %
 %   @see async/3 for specifying execution options.
 %
-async_token(Goal, Token) :-
-    async_token(Goal, Token, []).
+async(Goal, Token) :-
+    async(Goal, Token, []).
 
-async_eval_token(Eval, Result, Token) :-
-    async_token(eval_args(Eval,Result), Token, []).
-
-async_eval(Eval, Result):-
-   async_eval_token(Eval, Ref, Token),
-   token_ref_result(Token, Ref, Result).
-
-token_ref_result(Token, Ref, Result):-
-   freeze(Result, (await(Token), Ref=Result)).
-
-materialize(_):- !.
-/*
-materialize(Var):- attvar(Var),!,(frozen(Var,Body)->call(Body);true).
-materialize(Val):- term_attvars(Val,List),!,maplist(materialize,List).
-*/
-
-%!  async_token(+Goal, -Token, +Options) is det.
+%!  async(+Goal, -Token, +Options) is det.
 %
 %   Execute `Goal` in a background thread, using `Options` to control execution policy.
 %   Returns a `Token` that can be used with `await/1` to synchronize with the task
@@ -335,20 +318,20 @@ materialize(Val):- term_attvars(Val,List),!,maplist(materialize,List).
 %
 %   @example
 %     % Example of executing a goal asynchronously with default (ephemeral) policy:
-%     ?- async_token(some_computation(Result), Token, [policy(ephemeral)]),
+%     ?- async(some_computation(Result), Token, [policy(ephemeral)]),
 %        % Do other work here
 %        await(Token),  % Blocks until some_computation/1 completes
 %        writeln(Result).
 %
 %     % Using the lazy policy to defer execution until needed:
-%     ?- async_token(another_computation(Output), Token, [policy(lazy)]),
+%     ?- async(another_computation(Output), Token, [policy(lazy)]),
 %        % other code executes without blocking
 %        await(Token),  % Triggers execution of another_computation/1 only now
 %        writeln(Output).
 %
 %   @see spawn/2 for a higher-level predicate without explicit token handling.
 %
-async_token(Goal, Token, Options) :-
+async(Goal, Token, Options) :-
     make_opts(Options, Opts),             % Prepare options in internal format
     opts_policy(Opts, Policy),            % Extract the execution policy
     async_policy(Policy, Goal, Token, Opts).  % Dispatch based on policy
@@ -451,7 +434,7 @@ ephemeral_worker(work(Goal, Vars, SolutionsQ)) :-
 %         Result = "Task Complete".
 %
 %     % Asynchronously run the simulated task.
-%     ?- async_token(simulated_task(Result), Token, [policy(ephemeral)]),
+%     ?- async(simulated_task(Result), Token, [policy(ephemeral)]),
 %        writeln("Doing other work while task runs..."),
 %        await(Token),                % Block until task completes
 %        writeln(Result).             % Output the result upon completion
@@ -653,15 +636,10 @@ maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], G
 %   @arg Res The result.
 %
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
- \+ option_value(threading,false),!,
- with_metta_ctx(Eq, RetType, Depth, MSpace, metta_hyperpose_v0(eval, InList, Res)).
-
-metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
     % This part of the code is currently skipped with fail.
-    % fail,
-    \+ option_value(threading,false),
+    fail,
     % Check if InList has two or more elements.
-    InList = [_,_|_],!,
+    InList = [_,_|_],
     !,  % Cut to ensure threading is used.
     % Setup concurrent processing with cleanup.
     setup_call_cleanup(
@@ -838,14 +816,10 @@ cleanup_results(Tag) :-
 
 mc_unit(repl_x):- repl_x.
 
-
-can_open_console_x:- getenv('DISPLAY', _),
-    absolute_file_name(path(xterm), _XTerm, [access(execute)]).
-
 repl_x :-
     repl_x(_).
 
-repl_x(Title) :- can_open_console_x, !,
+repl_x(Title) :- can_open_console, !,
     thread_self(Me),
     thread_create(thread_run_repl_x(Me, Title),
                   _Id,
@@ -859,70 +833,20 @@ repl_x(Title) :- can_open_console_x, !,
     ->  fail
     ).
 repl_x(Title) :-
-    print_message(error, cannot_attach_console_x(Title)),
-    fail.
-
-
-thread_has_console_x :- current_prolog_flag(break_level, _), !.
-thread_has_console_x :- thread_self(Id), thread_has_console_x(Id), !.
-thread_has_console_x(main) :- !.
-thread_has_console_x(Id) :- thread_util:has_console(Id, _, _, _).
-
-console_title_x(Thread, Title) :-
-    current_prolog_flag(console_menu_version, qt), !, human_x_id(Thread, Id),
-    format(atom(Title), 'Thread ~w', [Id]).
-console_title_x(Thread, Title) :-
-    current_prolog_flag(system_thread_id, SysId), human_x_id(Thread, Id), format(atom(Title),
-    'MeTTa Thread ~w (~d) X-REPL', [Id, SysId]).
-
-human_x_id(Thread, Id) :- atom(Thread), !, Id=Thread.
-human_x_id(Thread, Id) :- thread_property(Th, alias(Id)), (Th==Thread; Thread==Id), !.
-human_x_id(Thread, Id) :- thread_property(Th, id(Id)), (Th==Thread; Thread==Id), !.
-human_x_id(Thread, Id) :- format(atom(Id),'~q',[Thread]), !.
-
-
-attach_console_x :- attach_console_x(_).
-
-attach_console_x(_) :- thread_has_console_x, !.
-attach_console_x(Title) :- can_open_console_x, !,
-    thread_self(Id),
-    (   var(Title)
-    ->  console_title_x(Id, Title)
-    ;   true
-    ),
-    thread_util:open_console(Title, In, Out, Err),
-    assert(thread_util:has_console(Id, In, Out, Err)),
-    set_stream(In, alias(user_input)),
-    set_stream(Out, alias(user_output)),
-    set_stream(Err, alias(user_error)),
-    set_stream(In, alias(current_input)),
-    set_stream(Out, alias(current_output)),
-    thread_util:enable_line_editing(In, Out, Err),
-    thread_at_exit(detach_console_x(Id)).
-attach_console_x(Title) :-
     print_message(error, cannot_attach_console(Title)),
     fail.
-
-detach_console_x(Id) :-
-    (   retract(thread_util:has_console(Id, In, Out, Err))
-    ->  thread_util:disable_line_editing(In, Out, Err),
-        close(In, [force(true)]),
-        close(Out, [force(true)]),
-        close(Err, [force(true)])
-    ;   true
-    ).
 
 
 thread_run_repl_x :-
     set_prolog_flag(query_debug_settings, debug(false, false)),
-    attach_console_x(_Title),
+    attach_console(_Title),
     print_message(banner, thread_welcome),
-    repl.
+    prolog.
 
 thread_run_repl_x(Creator, Title) :-
     set_prolog_flag(query_debug_settings, debug(false, false)),
     Error=error(Formal, _),
-    (   catch(attach_console_x(Title), Error, true)
+    (   catch(attach_console(Title), Error, true)
     ->  (   var(Formal)
         ->  thread_send_message(Creator, title(Title)),
             print_message(banner, thread_welcome),
