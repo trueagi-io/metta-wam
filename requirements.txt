@@ -32,7 +32,7 @@ pyswip @ git+https://github.com/logicmoo/pyswip
 #-e /opt/hyperon/hyperon-experimental/python[dev]
 hyperon
 ##-e reqs/metta_kernel
-#-e ./python[dev] .
+-e ./python[dev]
 #metakernel
 #calysto
 yasi
@@ -40,4 +40,5 @@ hyperon-das
 #==0.4.1
 hyperon-das-atomdb
 #==0.3.2
+packaging==23.2
 
