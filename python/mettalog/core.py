@@ -163,8 +163,7 @@ class MeTTaLog:
 
     def result(self):
         return self._real_attrs.get("__result__")
-    
-    
+
     def add_method(self, name, func):
         def wrapped(*args, **kwargs):
             self._history.append(("method", {"name": name, "args": args, "kwargs": kwargs}))
@@ -174,11 +173,10 @@ class MeTTaLog:
             node._meta["kind"] = MeTTaMemberKind.METHOD
             node._meta["return_type"] = type(result).__name__
             return result if self._autounbox and isinstance(result, (str, int, float)) else node
-    
+
         self._real_attrs[name] = wrapped
         self._methods[name] = wrapped
-    
-    
+
     def simulate(self, new_name=None):
         copy = MeTTaLog(
             name=new_name or self._name,
@@ -196,56 +194,47 @@ class MeTTaLog:
                 copy._real_attrs[key] = val
         copy._real_items = dict(self._real_items)
         return copy
-    
-    
+
     def simulate_module(self, new_name=None):
         mod = self.simulate(new_name=new_name)
         mod._meta["kind"] = MeTTaMemberKind.MODULE
         mod._history = []
         return mod
-    
-    
+
     def __repr__(self):
         return f"<MeTTaLog '{self._name}'>"
-    
-    
+
     def __str__(self):
         result = self._real_attrs.get("__result__")
         return result if isinstance(result, str) else f"<MeTTaLog: {self._name}>"
-    
-    
+
     def __int__(self):
         result = self._real_attrs.get("__result__")
         if isinstance(result, int):
             return result
         raise TypeError(f"{self._name} result is not an int")
-    
-    
+
     def __float__(self):
         result = self._real_attrs.get("__result__")
         if isinstance(result, (float, int)):
             return float(result)
         raise TypeError(f"{self._name} result is not a float")
-    
-    
+
     def __dir__(self):
         # Blend mocked and dynamically created members
         static = set(self._real_attrs.keys())
         return sorted(static | MeTTaLog._mock_attrs)
-    
-    
+
     @staticmethod
     def report():
         print("\n=== MeTTaLog Trace ===")
         for kind, name, path, functor, result in MeTTaLog._trace:
             print(f"{kind.upper()} {name} via {functor} ? {result}")
-    
-    
+
     @staticmethod
     def to_prolog_facts():
         return MeTTaLog.to_atomspace()
-    
-    
+
     @staticmethod
     def to_atomspace():
         def render(entry):
@@ -272,9 +261,9 @@ class MeTTaLog:
                 kwargs_sexpr = " ".join(f":{k} {repr(v)}" for k, v in kwargs.items())
                 return f"(call '{name} ({args_sexpr} {kwargs_sexpr}))"
             return f"; unknown {entry}"
-    
+
         facts = [render(e) for e in MeTTaLog._trace]
-    
+
         # Emit kind information and return type facts for each created node
         for obj in globals().values():
             if isinstance(obj, MeTTaLog):
@@ -284,7 +273,7 @@ class MeTTaLog:
                 return_type = obj._meta.get("return_type")
                 if return_type:
                     facts.append(f"(has-return-type '{obj._name} '{return_type})")
-    
+
                 return "\n".join(facts)
 
 
