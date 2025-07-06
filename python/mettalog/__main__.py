@@ -221,7 +221,9 @@ def demo_hyperonic():
     metta = MeTTa(env_builder=Environment.test_env())
 
     def assertEqualMettaRunnerResults(a, b):
-        return a.EQUALS(b)
+        if isinstance(a, MeTTaLog):
+            return a.EQUALS(b)
+        #print(type(a))
         
 
     # Check that (repr (my atom)) == "(my atom)"
@@ -258,6 +260,7 @@ def demo_hyperonic():
 if __name__ == "__main__":
     demo()
     demo_dynamic()
-    demo_hyperonic()
+    #demo_hyperonic()
     print(MeTTaLog.to_atomspace())
+    print(MeTTaLog.report())
     #print(mettalog.core.quick_selftest())

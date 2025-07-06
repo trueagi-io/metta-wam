@@ -27,7 +27,7 @@ dynamic = [
 
 [project.scripts]
 #mettalog-py = "hyperon.metta:main"
-#mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
+mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
 
 [project.optional-dependencies]
 dev = [
@@ -37,11 +37,11 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["mettalog", "hyperon_ref", "mettalog_sandbox"]
-package-dir = { "hyperon_ref" = "hyperon_ref", "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox"  }
+packages = ["mettalog", "hyperon_ref", "mettalog_sandbox", "mettalog_libraries", "mettalog_py2metta"]
+package-dir = { "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox", "mettalog_libraries" = "../libraries", "mettalog_py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref"  }
 # Specify hyperonpy.py as a py_modules entry
 #py-modules = ["hyperonpy","mettalogpy"]
-#py-modules = ["mettalogpy"]
+py-modules = ["mettalogpy", "hyperlog"]
 
 [tool.cibuildwheel]
 #before-all = "sh -c ./python/install-hyperonc.sh"

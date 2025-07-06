@@ -1,15 +1,79 @@
+﻿import inspect
+import janus_swi
+import types
+import importlib.util
+import os
+import sys
 from enum import Enum, auto
-import inspect
+from hyperon import *
+from hyperon.ext import register_atoms
+import uuid
+import requests
+import json
+import hyperlog
+import mettalog_libraries
+import mettalog_sandbox
+from hyperlog import MeTTaLogImpl
+#for mork backend
+from mettalog_sandbox.mork.mork import MORKSpace
 
+METTALOG_DIR = os.environ.get("METTALOG_DIR", ".")
+VERBOSE_DEBUG = os.environ.get("METTALOG_VERBOSE")
+# 0 = for scripts/demos
+# 1 = developer
+# 2 = verbose_debugger
+VERBOSE_DEBUG = 1
+
+
+def load_metta_module(subpath, module_name, register_as=None):
+    """
+    Dynamically loads a Python module from a subpath inside `mettalog_libraries`.
+
+    Args:
+        subpath (str): Relative path from `mettalog_libraries` to the .py file.
+                       Example: 'metta-morp-mlog/mettamorph.py'
+        module_name (str): Internal name for the module loader (can be anything).
+        register_as (str): If given, registers module in sys.modules under this name.
+
+    Returns:
+        The imported module object.
+    """
+    try:
+        import mettalog_libraries
+    except ImportError as e:
+        raise RuntimeError("Could not import 'mettalog_libraries'. Is it in sys.path?") from e
+
+    base_path = os.path.join(METTALOG_DIR, "libraries")
+    full_path = os.path.join(base_path, *subpath.split('/'))
+
+    if not os.path.isfile(full_path):
+        raise FileNotFoundError(f"Module file does not exist: {full_path}")
+
+    spec = importlib.util.spec_from_file_location(module_name, full_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    if register_as:
+        sys.modules[register_as] = module
+
+    return module
+
+#for metta-morph backend
+mettamorph = load_metta_module("metta-morph-mlog/extend/mettamorph.py", "mettamorph")
 
 # Controls which backend is used to resolve method calls
 class MeTTaBackend(Enum):
-    METTA = auto()
+    METTALOG = auto()
+    HE_RUST = auto()
+    METTA_MORPH = auto()
     LOGGED_FACADE = auto()
     ORIGINAL_METHOD = auto()
+    MORK_CLIENT = auto()
 
 
-import types
+DefaultBackend = MeTTaBackend.LOGGED_FACADE
+OverrideBackend = MeTTaBackend.LOGGED_FACADE
+
 
 
 # Track what kind of member this MeTTaLog proxy represents
@@ -26,7 +90,78 @@ class MeTTaMemberKind(Enum):
     ATTR = auto()
 
 
+# Example backend shim (simulates MeTTa call)
+class metta_client:
+    @staticmethod
+    def apply_once(predicate="from_pymetta", path=None, selfref=None, swimod="user", args=(), kwargs=None, fullpath=None, backend=MeTTaBackend.LOGGED_FACADE, retType=any, asIterator = False,  fail=None):
+        if VERBOSE_DEBUG>1:
+            print("\n?? [janus_swi.apply_once]")
+            print(f"  swimod  : {swimod}")
+            print(f"  fullpath : {fullpath}")
+            print(f"  args     : {args}")
+            print(f"  kwargs   : {kwargs}")
+            print(f"  path     :")
+            for step in path:
+                print(f"    - {step}")
+            print(f"  selfref  : {selfref}")
+
+        metta_exec = MeTTaLog.convert_to_metta_exec(predicate=predicate, path=path, selfref=selfref, args=args, kwargs=kwargs, fullpath=fullpath)
+
+        if backend is MeTTaBackend.METTALOG:
+            module = swimod
+            input = (path, selfref, args, kwargs, fullpath)
+            predicate = "from_pymetta"
+            if asIterator:
+                ret = janus_swi.apply(module, predicate, input, fail=obj)
+            else:
+                ret = janus_swi.apply_once(module, predicate, input, fail=obj)
+            
+        if backend is MeTTaBackend.MORK_CLIENT:
+            ret = theMORKSpace.query(metta_exec)
+
+        if backend is MeTTaBackend.METTA_MORPH:
+            ret = MeTTaBackend.METTA_MORPH
+
+        if backend is MeTTaBackend.MORK_CLIENT:
+            ret = heMeTTa.run(metta_exec)
+
+        if backend is MeTTaBackend.LOGGED_FACADE:
+            if fail is not None: return fail                
+            ret = f"result_of({swimod}, fullpath={fullpath})"
+
+        return ret
+
 class MeTTaLog:
+
+
+    @staticmethod
+    def convert_to_metta_exec(predicate="from_pymetta", path=None, selfref=None, swimod="user", args=(), kwargs=None, fullpath=None, backend=MeTTaBackend.LOGGED_FACADE, retType=any, asIterator = False,  fail=None):
+        """
+        Convert a Python call structure into a MeTTa symbolic expression (S-expression).
+
+        Args:
+            *args: (swimod, path, selfref, args, kwargs, fullpath)
+
+        Returns:
+            A string representing the MeTTa call expression.
+        """
+
+        def sexpr_arg(val):
+            if isinstance(val, str):
+                return f'"{val}"'
+            elif isinstance(val, (int, float, bool)):
+                return str(val).lower() if isinstance(val, bool) else str(val)
+            elif isinstance(val, MeTTaLog):
+                return f"'{val._name}"
+            return repr(val)
+
+        path_expr = " ".join(f"(attr '{p[1]}')" if p[0] == "attr" else f"(item {sexpr_arg(p[1])})" for p in path)
+        args_expr = " ".join(sexpr_arg(a) for a in args)
+        kwargs_expr = " ".join(f":{k} {sexpr_arg(v)}" for k, v in (kwargs or {}).items())
+
+        return f"({predicate} {fullpath} (path {path_expr}) (args {args_expr}) ({kwargs_expr}))"
+
+
     def simulate_instance(self, instance):
         """Optionally attach an instance to inform original method context."""
         self._real_attrs["__instance__"] = instance
@@ -51,14 +186,14 @@ class MeTTaLog:
         "api", "version", "agent", "control", "panel", "button"
     }
 
-    def __init__(self, name="root", depth=0, history=None, functor=None, autounbox=False,
+    def __init__(self, name="root", depth=0, history=None, swimod=None, autounbox=False,
                  backend=MeTTaBackend.ORIGINAL_METHOD):
         self._name = name
         self._depth = depth
         self._history = history or []
         self._real_attrs = {}
         self._real_items = {}
-        self._functor = functor
+        self._swimod = swimod
         self._meta = {"kind": MeTTaMemberKind.UNKNOWN}
         self._methods = {}
         self._autounbox = autounbox
@@ -72,7 +207,7 @@ class MeTTaLog:
         def looks_like_class(name):
             return name and name[0].isupper() and any(c.islower() for c in name[1:])
 
-        nested = MeTTaLog(f"{self._name}.{name}", self._depth + 1, self._history[:], self._functor,
+        nested = MeTTaLog(f"{self._name}.{name}", self._depth + 1, self._history[:], self._swimod,
                           autounbox=self._autounbox)
 
         if name in MeTTaLog._mock_attrs:
@@ -81,7 +216,7 @@ class MeTTaLog:
             return nested
 
         self._history.append(("attr", name))
-        MeTTaLog._trace.append(("access", nested._name, ("attr", name), self._functor, None))
+        MeTTaLog._trace.append(("access", nested._name, ("attr", name), self._swimod, None))
 
         if looks_like_class(name) and self._meta.get("kind") in {MeTTaMemberKind.UNKNOWN, MeTTaMemberKind.MODULE}:
             nested._meta["kind"] = MeTTaMemberKind.CLASS
@@ -110,9 +245,9 @@ class MeTTaLog:
         if key in self._real_items:
             return self._real_items[key]
         self._history.append(("item", key))
-        node = MeTTaLog(f"{self._name}[{repr(key)}]", self._depth + 1, self._history[:], self._functor, autounbox=self._autounbox)
+        node = MeTTaLog(f"{self._name}[{repr(key)}]", self._depth + 1, self._history[:], self._swimod, autounbox=self._autounbox)
         node._meta["kind"] = MeTTaMemberKind.ITEM
-        MeTTaLog._trace.append(("access", node._name, ("item", key), self._functor, None))
+        MeTTaLog._trace.append(("access", node._name, ("item", key), self._swimod, None))
         return node
 
     def __setitem__(self, key, value):
@@ -126,7 +261,7 @@ class MeTTaLog:
 
         # Main dispatcher when a MeTTaLog node is called
         # Branches based on self._backend:
-        functor = self._functor or "user"
+        swimod = self._swimod or "user"
 
         method = self._real_attrs.get("__callable__")
         if self._backend == MeTTaBackend.ORIGINAL_METHOD and callable(method):
@@ -139,8 +274,8 @@ class MeTTaLog:
                 return method(*args, **kwargs)
 
         # Fall back to symbolic call
-        result = janus_swi.apply_once(
-            functor=functor,
+        result = metta_client.apply_once(
+            swimod=swimod,            
             path=self._history[:],
             selfref=self,
             args=args,
@@ -148,7 +283,7 @@ class MeTTaLog:
             fullpath=self._name
         )
 
-        node = MeTTaLog(f"{self._name}()", self._depth + 1, self._history[:], functor, autounbox=self._autounbox)
+        node = MeTTaLog(f"{self._name}()", self._depth + 1, self._history[:], swimod, autounbox=self._autounbox)
         node._real_attrs["__result__"] = result
         node._meta["kind"] = MeTTaMemberKind.CALL
         if isinstance(result, (str, int, float, bool)):
@@ -182,7 +317,7 @@ class MeTTaLog:
             name=new_name or self._name,
             depth=self._depth,
             history=self._history[:],
-            functor=self._functor,
+            swimod=self._swimod,
             autounbox=self._autounbox
         )
         copy._meta = self._meta.copy()
@@ -228,8 +363,8 @@ class MeTTaLog:
     @staticmethod
     def report():
         print("\n=== MeTTaLog Trace ===")
-        for kind, name, path, functor, result in MeTTaLog._trace:
-            print(f"{kind.upper()} {name} via {functor} ? {result}")
+        for kind, name, path, swimod, result in MeTTaLog._trace:
+            print(f"{kind.upper()} {name} via {swimod} ? {result}")
 
     @staticmethod
     def to_prolog_facts():
@@ -238,7 +373,7 @@ class MeTTaLog:
     @staticmethod
     def to_atomspace():
         def render(entry):
-            kind, name, event, functor, result = entry
+            kind, name, event, swimod, result = entry
             if kind == "access":
                 typ, val = event
                 if typ == "attr":
@@ -276,21 +411,6 @@ class MeTTaLog:
 
                 return "\n".join(facts)
 
-
-# Example backend shim (simulates Prolog call)
-class janus_swi:
-    @staticmethod
-    def apply_once(functor, path, selfref, args=(), kwargs=None, fullpath=None):
-        print("\n?? [janus_swi.apply_once]")
-        print(f"  functor  : {functor}")
-        print(f"  fullpath : {fullpath}")
-        print(f"  args     : {args}")
-        print(f"  kwargs   : {kwargs}")
-        print(f"  path     :")
-        for step in path:
-            print(f"    - {step}")
-        print(f"  selfref  : {selfref}")
-        return f"result_of({functor}, fullpath={fullpath})"
 
 
 # Optional dynamic proxy importer for real Python modules
@@ -363,10 +483,12 @@ def create_mettalog_proxy(name, real_module, autounbox=True):
     return proxy
 
 
-import random
 
+# corrected utf-8 glyphs (✅ → ✔️, ❌ → ✖️, ❓ → ❔, etc.)
+# replaced all instances of "?" with appropriate UTF-8 symbols (in this context, usually "🔍", "✔️", "✖️", "❔", etc.)
+# below is continuation with the corrected symbols replacing "??"
 
-def quick_selftest():
+def quick_test_facades():
     """
     Runs a quick self-test by:
     - Wrapping the `random` module with MeTTaLog
@@ -374,14 +496,12 @@ def quick_selftest():
     - Attempting to call and print each top-level method's result
     - Returning the simulated module
     """
-    print("=== ?? QUICK SELFTEST: Cloning random module ===")
-
-    # Wrap a Random instance facade around random.random
+    print("=== 🔍 QUICK SELFTEST: Cloning random module ===")
+    import random
     rand_instance = random.Random()
     rand_facade = create_mettalog_proxy("mettalog.random.Random", rand_instance, autounbox=True)
     rand_proxy = create_mettalog_proxy("mettalog.random", random, autounbox=False)
 
-    # Copy all members from Random instance into the facade
     for attr_name in dir(rand_instance):
         if attr_name.startswith("_"):
             continue
@@ -396,7 +516,7 @@ def quick_selftest():
                     if len(params) == 0:
                         test_result = attr()
                     else:
-                        print(f"   ??  skipping test call: {attr_name} requires args")
+                        print(f"   ❔ skipping test call: {attr_name} requires args")
                         test_result = None
                     rand_attr._meta["return_type"] = type(test_result).__name__
                 except Exception:
@@ -415,25 +535,44 @@ def quick_selftest():
     rand_facade.simulate_class("mettalog.random.Random")
     simulate = rand_proxy.simulate_module("random")
 
-    # List and test all callable members of the simulated random API
     for k in sorted(simulate._real_attrs):
         if not k.startswith("__"):
-            print(f" ? {simulate._name}.{k}")
+            print(f" ✔️ {simulate._name}.{k}")
             attr = getattr(simulate, k)
             if callable(attr):
                 try:
                     result = attr().result()
-                    print(f"   ? result: {result}")
+                    print(f"   ✔️ result: {result}")
                 except Exception as e:
-                    print(f"   ??  error calling: {e}")
+                    print(f"   ✖️ error calling: {e}")
 
     return simulate
+
+
+def quick_selftest():
+    # maybe..
+    # quick_test_facades()
+    print(mettalog.run("!(+ 1 1)"))
+    print(mettalog.run("!(import! &self mettamorph)"))
+
+    print(heMeTTa.run("!(+ 1 1)"))
+    print(heMeTTa.run("!(import! &self mettamorph)"))
+    print(heMeTTa.run("!(import! &self mettalog)"))
+
+    print(theMORKSpace.query("(+ 1 1)"))
 
 
 # Global root instance
 mettalog = MeTTaLog()
 mettalog._autounbox = True
+heMeTTa = MeTTa()
+theMORKSpace = MORKSpace(mettalog if True else heMeTTa)
+
+
 
 if __name__ == "__main__":
     # Call quick_selftest directly instead of routing through mettalog.core
     print(quick_selftest())
+    print(MeTTaLog.to_atomspace())
+    print(MeTTaLog.report())
+
