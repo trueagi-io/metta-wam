@@ -95,7 +95,7 @@ class metta_client:
     @staticmethod
     def apply_once(predicate="from_pymetta", path=None, selfref=None, swimod="user", args=(), kwargs=None, fullpath=None, backend=MeTTaBackend.LOGGED_FACADE, retType=any, asIterator = False,  fail=None):
         if VERBOSE_DEBUG>1:
-            print("\n?? [janus_swi.apply_once]")
+            print("\n🔍 [janus_swi.apply_once]")
             print(f"  swimod  : {swimod}")
             print(f"  fullpath : {fullpath}")
             print(f"  args     : {args}")
@@ -239,7 +239,7 @@ class MeTTaLog:
                 elif isinstance(value, float):
                     assigned_type = "float"
                 self._real_attrs[f"__meta__::{name}"] = {"assigned_type": assigned_type}
-            print(f"?? Set attr: {self._name}.{name} = {value}")
+            print(f"🔍 Set attr: {self._name}.{name} = {value}")
 
     def __getitem__(self, key):
         if key in self._real_items:
@@ -252,7 +252,7 @@ class MeTTaLog:
 
     def __setitem__(self, key, value):
         self._real_items[key] = value
-        print(f"?? Set item: {self._name}[{repr(key)}] = {value}")
+        print(f"🔍 Set item: {self._name}[{repr(key)}] = {value}")
 
     def __call__(self, *args, **kwargs):
         # Prevent method call if a real value (like a number or string) is stored instead
@@ -364,7 +364,7 @@ class MeTTaLog:
     def report():
         print("\n=== MeTTaLog Trace ===")
         for kind, name, path, swimod, result in MeTTaLog._trace:
-            print(f"{kind.upper()} {name} via {swimod} ? {result}")
+            print(f"{kind.upper()} {name} via {swimod} 🔍 {result}")
 
     @staticmethod
     def to_prolog_facts():
