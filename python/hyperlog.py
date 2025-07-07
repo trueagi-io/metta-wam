@@ -16,14 +16,13 @@ f"""
 
 ensure_mettalog_modules:- user:user_ensure_mettalog_modules.
 user_ensure_mettalog_modules :-
-    pack_list_installed,
+    %pack_list_installed,
     user:ensure_loaded(library(metta_rt)),
-    pwd,
+    %pwd,
     %user:listing(user:metta_atom_asserted/2),
     %user:listing(user:hyperlog_startup/1),
-                 % listing(user:metta_function_asserted),
-                 % listing(user:compiled_clauses),
-                  
+    % listing(user:metta_function_asserted),
+    % listing(user:compiled_clauses),          
     !.
 
 
@@ -189,7 +188,8 @@ def main():
     res = metta.run(parsed)
     pretty_print_result(res)
 
-    janus.cmd("user","prolog")
+    #janus.cmd("user","prolog")
+    janus.cmd("janus","py_shell")
 
 
 if __name__ == "__main__":
