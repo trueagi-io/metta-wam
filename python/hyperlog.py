@@ -4,19 +4,40 @@ import atexit
 import janus_swi as janus
 
 def _initialize_prolog_driver():
-    janus.consult("hyperlog", 
-r"""
 
+    dir = METTALOG_DIR
+
+    janus.consult("hyperlog", 
+f"""
+
+% :- set_default_module(user).
 :- use_module(library(debug)).
 :- nodebug(hyperlog).
 
-ensure_mettalog_modules :-
-    ensure_loaded(library(metta_rt)).
+ensure_mettalog_modules:- user:user_ensure_mettalog_modules.
+user_ensure_mettalog_modules :-
+    pack_list_installed,
+    user:ensure_loaded(library(metta_rt)),
+    pwd,
+    %user:listing(user:metta_atom_asserted/2),
+    %user:listing(user:hyperlog_startup/1),
+                 % listing(user:metta_function_asserted),
+                 % listing(user:compiled_clauses),
+                  
+    !.
 
-:- ensure_mettalog_modules.
+
+:- initialization(user:ensure_mettalog_modules).
 
 """)
 
+
+METTALOG_DIR = os.environ.get("METTALOG_DIR", ".")
+VERBOSE_DEBUG = os.environ.get("METTALOG_VERBOSE")
+# 0 = for scripts/demos
+# 1 = developer
+# 2 = verbose_debugger
+VERBOSE_DEBUG = 1
 
 # ✅ Prolog bootstrap happens at module load (similar to __init__)
 _initialize_prolog_driver()
@@ -150,6 +171,14 @@ def main():
     res = metta.run("!(f 2)")
     pretty_print_result(res)
 
+    metta.run("!(add-atom &self (= (g $x) (+ $x 40)))")
+    res = metta.run("!(g 3)")
+    pretty_print_result(res)
+
+    # res = metta.run("!(help!)")
+    # pretty_print_result(res)
+
+
     # 📦 Parse an expression: "(+ 2 2)"
     # Parsing just returns the syntax tree
     parsed = metta.parse("!(+ (f 0) 2)")
@@ -159,6 +188,8 @@ def main():
     # This will run the expression if not in facade mode
     res = metta.run(parsed)
     pretty_print_result(res)
+
+    janus.cmd("user","prolog")
 
 
 if __name__ == "__main__":

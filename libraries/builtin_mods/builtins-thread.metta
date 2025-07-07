@@ -561,3 +561,12 @@
 
      (engine:destroy $E)
        (println! "Engine test complete."))))
+
+
+
+(= (tadd $t $u) (let $_ (sleep! $t) (+ $t $u)))
+
+!(tad 1 2)
+
+
+!(hyperpose ((tadd 1 0)(tadd 1 1)(tadd 1 2)(tadd 1 3)))

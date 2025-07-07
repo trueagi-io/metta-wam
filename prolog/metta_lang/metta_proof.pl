@@ -1,9 +1,12 @@
 
 
 metta_why(True):- forall(mpred_why(True),true),fail.
+
+metta_why(List):- is_list(List), current_self(KB),metta_why(metta_atom(KB,List)).
 metta_why(metta_atom(KB,True)):- !,forall(metta_atom(KB,True),forall(metta_why(metta_atom_asserted(KB,True)),true)).
-metta_why(metta_type(KB,H,B)):- !, metta_why(metta_atom(KB,[':',H,B])).
-metta_why(metta_defn(KB,H,B)):- !, metta_why(metta_atom(KB,['=',H,B])).
+metta_why(metta_type(KB,H,B)):- !, metta_why(metta_atom_asserted(KB,[':',H,B])).
+metta_why(metta_defn(KB,H,B)):- !, metta_why(metta_atom_asserted(KB,['=',H,B])).
+metta_why(H:-B):- !, metta_why(compiled_clauses(_KB,_Op,(H:-B))).
 metta_why(_True).
 
 interpC(Goal):-

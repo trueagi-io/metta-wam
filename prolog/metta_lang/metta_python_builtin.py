@@ -1,11 +1,12 @@
 import sys
 #import numpy
 
-DEBUG_MODE = 2
+DEBUG_MODE = 1
 the_modules_and_globals=None
 
 import traceback
-import sys
+import math
+import random
 
 def print_debug(Lvl, Message):
     if DEBUG_MODE >= Lvl:
@@ -76,7 +77,7 @@ def with_explicit_trace(func, *args, **kwargs):
         flush_stdout_stderr()
         buffer = io.StringIO()
         buffer.write("=" * 60 + "\n")
-        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit1):\n")
         buffer.write("=" * 60 + "\n")
 
         exc_type, exc_value, exc_tb = sys.exc_info()
@@ -104,10 +105,11 @@ def with_explicit_trace(func, *args, **kwargs):
 
         debug_output = buffer.getvalue()
         buffer.close()
-        print_debug(1, debug_output)
-        flush_stdout_stderr()
+        if (DEBUG_MODE>1):
+              print_debug(1, debug_output)
+              flush_stdout_stderr()
 
-        if not DEBUG_MODE==0:
+        if not DEBUG_MODE > 1:
             raise  # Re-raises the current exception (no need to use `raise e`)
 
         return None
@@ -702,7 +704,7 @@ def py_call_w_args(callable_obj, *w_args):
     except Exception as e:
         buffer = io.StringIO()
         buffer.write("=" * 60 + "\n")
-        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit2):\n")
         buffer.write("=" * 60 + "\n")
         traceback.print_exception(type(e), e, e.__traceback__, file=buffer)
         buffer.write(arg_info(callable_obj, method_args, kwargs))
@@ -940,7 +942,7 @@ def py_call_kw_args(kwargs, callable_obj, *w_args):
         flush_stdout_stderr()
         buffer = io.StringIO()
         buffer.write("="*60 + "\n")
-        buffer.write("EXCEPTION TRACEBACK (explicit):\n")
+        buffer.write("EXCEPTION TRACEBACK (explicit3):\n")
         buffer.write("="*60 + "\n")
         exc_type, exc_value, exc_tb = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_tb, file=buffer)

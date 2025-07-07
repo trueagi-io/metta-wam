@@ -36,12 +36,17 @@ dev = [
     "janus_swi"
 ]
 
+
 [tool.setuptools]
-packages = ["mettalog", "hyperon_ref", "mettalog_sandbox", "mettalog_libraries", "mettalog_py2metta"]
-package-dir = { "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox", "mettalog_libraries" = "../libraries", "mettalog_py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref"  }
+packages = ["mettalog", "hyperon_ref", "mettalog_sandbox", "mettalog_libraries", "mettalog_py2metta", "mork"]
+package-dir = { "mettalog"="mettalog", "mettalog_sandbox"="sandbox", "mettalog_libraries" = "../libraries", "mettalog_py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref", "mork" = "../libraries/mork-sys/MORK/python" }
+
+
+
 # Specify hyperonpy.py as a py_modules entry
 #py-modules = ["hyperonpy","mettalogpy"]
-py-modules = ["mettalogpy", "hyperlog"]
+#  ln -s ../libraries/metta-morph-mlog/exted/mettamorph.py mettamorph.py
+py-modules = ["mettalogpy", "hyperlog", "mettamorph"]
 
 [tool.cibuildwheel]
 #before-all = "sh -c ./python/install-hyperonc.sh"

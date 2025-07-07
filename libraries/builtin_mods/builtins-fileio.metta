@@ -53,7 +53,7 @@
 	 (open $path $mode $stream [ (type text) ]))))
 (= (file-open-err! $path $opt)
    (call-for! $_err
-	 (format (string $msg)
+   (format (string $msg)
 	   "Failed to open file with provided path=~w and options=~w"
 	   [$path $opt])
 	 (throw (error (file_open_error $msg)))))

@@ -1612,18 +1612,61 @@ prevent_type_violations(Self, BecomingValue,RequireType):- non_arg_violation(Sel
 %type_list_violations(BecomingValue,RequireType):- (RType,RequireType),non_arg_violation(_Self, RequireType, BecomingValue).
 
 % TODO make sure it is inclusive rather than exclusive
+non_arg_violation(Self, RequireType, BecomingValue):-
+   nop(nopped_non_arg_violation(Self, RequireType, BecomingValue)).
 
-cns:attr_unify_hook(_Slf=_TypeList,_NewValue):- nb_current(suspend_type_unificaton, true),!.
-cns:attr_unify_hook(Self= TypeList, NewValue) :-
+
+was_cyclic(NewValue):- compound(NewValue), arg(_,NewValue,E), compound(E), sub_term_safely(Sub, E), Sub == NewValue, !.
+
+
+accept_vname(WAS, NewValue):- !.
+accept_vname(WAS, NewValue):- \+ compound(NewValue),!.
+accept_vname(WAS, NewValue):- was_cyclic(NewValue), !.
+%accept_vname(WAS, NewValue):- sub_term_safely(Sub, NewValue), Sub == WAS, !.
+accept_vname(_=List, NewValue):- sub_term_safely(Sub, NewValue), Sub == List, !.
+accept_vname(Var=_, NewValue):- sub_term_safely(Sub, NewValue), Sub == Var, !.
+accept_vname(WAS, NewValue):-  arg(1,NewValue,Named), compound(Named),!.
+accept_vname(WAS, NewValue):-  duplicate_term(WAS=NewValue,NEXT), setarg(1,NewValue,NEXT),!.
+
+%accept_was(WAS, NewValue):- !.
+%accept_was( WAS, NewValue):- compound(NewValue), sub_term_safely(Sub, NewValue), Sub == WAS, !.
+accept_was(WAS, _NewValue):- \+ compound(WAS),!.
+accept_was(_WAS, NewValue):- was_cyclic(NewValue), !.
+%accept_was( WAS, NewValue):- sub_term_safely(Sub, WAS), Sub == was(NewValue),!.
+accept_was( WAS, NewValue):- sub_term_safely(Sub, WAS), compound(Sub), Sub = was(OldValue),!, NewValue = OldValue.
+accept_was( WAS, NewValue):- WAS = (Self= TypeList), duplicate_term(NewValue,NewNewValue), setarg(2,WAS,[was(NewNewValue)|TypeList]),!.
+%accept_was( WAS, NewValue):- var(NewValue),!.
+
+member_eq_was(WasNamed,TypeList):- member(EQ,TypeList),EQ==WasNamed,!.
+
+cns:attr_unify_hook(WAS, NewValue) :- attvar(NewValue), get_attr(NewValue,cns,WAS2),
+   compound(WAS),compound(WAS2),arg(2,WAS,List1),arg(2,WAS2,List2),append(List1,List2,List12),list_to_set(List12,Set),
+   setarg(2,WAS,Set),setarg(2,WAS2,Set),!.
+cns:attr_unify_hook(_,_):- nb_current(suspend_type_unificaton, true),!,accept_was(WAS, NewValue),!.
+cns:attr_unify_hook(WAS, NewValue) :- notrace(quietly(cns_attr_unify_hook_pt0(WAS, NewValue))),!.
+cns:attr_unify_hook(WAS, NewValue) :- notrace(quietly(cns_attr_unify_hook_pt1(WAS, NewValue))),!.
+
+cns_attr_unify_hook_pt0(WAS, NewValue) :- attvar(NewValue), put_attr(NewValue,cns,WAS),!,accept_was(WAS, NewValue),!.
+cns_attr_unify_hook_pt0(WAS, NewValue) :- compound(NewValue), NewValue='$VAR'(_),!,accept_was(WAS, NewValue),!,accept_vname(WAS, NewValue).
+
+
+%cns:attr_unify_hook(WAS, NewValue) :-  accept_was(WAS, NewValue),!.
+
+
+%cns:attr_unify_hook(_Slf=_TypeList,_NewValue):- nb_current(suspend_type_unificaton, true),!.
+
+
+cns_attr_unify_hook_pt1(Self= TypeList, NewValue) :-
   show_failure_when(argtypes,maplist(prevent_type_violations(Self,NewValue),TypeList)),
-  show_failure_when(argtypes,cns_attr_unify_hook(Self,TypeList, NewValue)).
+  show_failure_when(argtypes,cns_attr_unify_hook_pt2(Self,TypeList, NewValue)).
 
-cns_attr_unify_hook(Self,TypeList,NewValue) :-
+cns_attr_unify_hook_pt2(Self,TypeList,NewValue) :-
     % If the new value is an attributed variable, assign the same attribute.
     attvar(NewValue), !, dont_put_attr(NewValue, cns, Self = TypeList).
-cns_attr_unify_hook(Self , TypeList, NewValue) :-
+cns_attr_unify_hook_pt2(Self , TypeList, NewValue) :- !, fail,
     % Retrieve the type of the new value and check if it can be assigned.
-    show_failure_when(argtypes,can_assign_value_typelist(Self, NewValue, TypeList)).
+    show_failure_when(argtypes,
+              can_assign_value_typelist(Self, NewValue, TypeList)).
 
 can_assign_value_typelist(Self, NewValue, TypeList):-
     default_depth(DEFAULT_DEPTH),get_type(DEFAULT_DEPTH, Self, NewValue, Was),
@@ -1732,17 +1775,55 @@ cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==
 %
 is_non_eval_kind(Var) :-
     % If the input is a variable, succeed.
-    var(Var), !, fail.
+    var(Var), !, maybe_var_kind(Var,N),is_non_eval_kind(N).
+is_non_eval_kind(Type):- type_is_type(Type,'DontEvalType'),!.
+is_non_eval_kind(List):- (type_element(List, Each)*->!;fail),is_non_eval_kind(Each).
+is_non_eval_kind(Type):- \+ symbol(Type),!,fail.
+is_non_eval_kind(Type):- symbol_contains(Type,'Eager'),!,fail.
+is_non_eval_kind(Type):- symbol_contains(Type,'Atom').
+is_non_eval_kind(Type):- symbol_contains(Type,'Code').
+is_non_eval_kind(Type):- symbol_contains(Type,'Expression').
+is_non_eval_kind(Type):- symbol_contains(Type,'Template').
+is_non_eval_kind(Type):- symbol_contains(Type,'Lazy').
 is_non_eval_kind('Atom').
 is_non_eval_kind('Expression').
 is_non_eval_kind('LazyBool').
-is_non_eval_kind(Type):- type_is_type(Type,'NonEval').
+is_non_eval_kind('Variable').
+%is_non_eval_kind(Type):- symbol(Type), symbol_concat(_,'Handle',Type).
 % is_non_eval_kind('Variable').
 is_non_eval_kind(Type) :- fail,
     % If the type is non-variable, not 'Any', and non-specific, succeed.
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
 
-type_is_type(_Type,_IsType):- fail.
+type_is_type(Type,IsType):- buffer_src_isa(Type,Is),((ground(Is)->IsType==Is; (!,fail))).
+
+is_code_kind(Kind):- var(Kind),!,maybe_var_kind(Kind,N),is_non_eval_kind(N).
+is_code_kind(Type):- type_is_type(Type,'CodeType'),!.
+is_code_kind(List):- (type_element(List, Each)*->!;fail),is_code_kind(Each).
+is_code_kind(Type):- \+ symbol(Type),!,fail.
+is_code_kind(Type):- symbol_contains(Type,'Code').
+is_code_kind(Type):- symbol_contains(Type,'Eval').
+is_code_kind(Type):- symbol_contains(Type,'Lazy').
+is_code_kind('LazyBool').
+is_code_kind('CodeExpressions').
+is_code_kind('CodeAtom').
+
+is_material_type(Type):- nonvar(Type), type_is_type(Type,'MaterialType'),!.
+
+maybe_var_kind(Kind,N):- attvar(Kind),get_attr(Kind,vn,Named),atom(Named),N=Named.
+
+is_verbatum_noncode_kind(X):- is_non_eval_kind(X), \+ is_code_kind(X).
+
+is_ok_noneval(RetType):- var(RetType),!,fail.
+is_ok_noneval(RetType):- is_non_eval_kind(RetType),!.
+is_ok_noneval('%Undefined%'):- !,fail.
+is_ok_noneval(MT):- is_material_type(MT),!,fail.
+is_ok_noneval(_).
+
+non_evaluated_type('Atom').
+non_evaluated_type('Expression').
+non_evaluated_type('Variable').
+non_evaluated_type('Symbol').
 
 %!  is_nonspecific_type(+Type) is nondet.
 %
@@ -1763,7 +1844,7 @@ is_nonspecific_type0(Var) :-
 
 is_nonspecific_type0('%Undefined%').
 is_nonspecific_type0('ErrorType').
-is_nonspecific_type0('Expression').
+% is_nonspecific_type0('Expression').
 % is_nonspecific_type([]).
 is_nonspecific_type0('Atom').
 is_nonspecific_type0(Type):- type_is_type(Type,'NonSpecific').
@@ -1781,8 +1862,7 @@ formated_data_type('Symbol').
 formated_data_type('Bool').
 formated_data_type('Char').
 formated_data_type('String').
-formated_data_type([List | _]) :-
-    List == 'List'.
+formated_data_type(List):- type_element(List, _Each),!.
 formated_data_type(Type):- type_is_type(Type,'DataFormat').
 
 %!  is_nonspecific_any(+Type) is nondet.
@@ -1798,6 +1878,7 @@ is_nonspecific_any(Any) :-
 %
 %   Helper predicate that defines non-specific "any" types.
 %
+is_nonspecific_any0(Var):- var(Var),!.
 is_nonspecific_any0('EagerAny').
 is_nonspecific_any0('LazyAny').
 is_nonspecific_any0('Any').
@@ -1895,18 +1976,39 @@ narrow_types([A], A).
 %
 %   @arg Type The type to check.
 %
+is_pro_eval_kind(S) :- var(S),!,maybe_var_kind(S,N),is_pro_eval_kind(N).
+is_pro_eval_kind('%Undefined%'):-!.
+is_pro_eval_kind(S) :- symbol(S),symbol_contains(S, 'Eager').
+is_pro_eval_kind(A) :- is_non_eval_kind(A),!,fail.
+is_pro_eval_kind(_A) :- !.
+
+/*
 is_pro_eval_kind(Var) :-
     % If the input is a variable, succeed.
     var(Var), !.
-is_pro_eval_kind(A) :- is_non_eval_kind(A),!,fail.
+is_pro_eval_kind(Type):- type_is_type(Type,'DoEvalType'),!.
+is_pro_eval_kind(List):- (type_element(List, Each)*->!;fail),is_pro_eval_kind(Each).
 is_pro_eval_kind(SDT) :- % Check if the type is a formatted data type.
     formated_data_type(SDT), !.
-is_pro_eval_kind(A) :-
-    A == '%Undefined%', !.
+is_pro_eval_kind('%Undefined%').
 is_pro_eval_kind(A) :-
     % Check for non-specific "any" types.
     is_nonspecific_any(A), !.
 is_pro_eval_kind(_A) :- !.
+*/
+
+type_element(List, Each):- var(List),!,fail.
+type_element([Type1,Each], Each):- type_can_have_eles(Type1),!.
+type_element(List, Each):- compound(List), each_type_element(List, Each).
+
+each_type_element(A,B):- \+ compound(A),!, B=A.
+each_type_element('NarrowTypeFn'(A, LT), Each):- each_type_element(A,Each);each_type_element(LT,Each).
+%type_element('NarrowTypeFn'(A, LT), Each):- type_element(A,Each);type_element(LT,Each).
+
+type_can_have_eles(Var):- !, fail.
+type_can_have_eles('Expression').
+type_can_have_eles('List').
+
 
 %!  is_feo_f(+F) is nondet.
 %
@@ -1972,9 +2074,13 @@ is_self_return('ErrorType').
 %   @arg Params The parameters associated with the return type check.
 %   @arg Var    The return type to be checked.
 %
+
+/*
 is_non_absorbed_return_type(Params, Var) :-
     % Fail if the type is an absorbed return type.
     \+ is_absorbed_return_type(Params, Var).
+*/
+is_non_absorbed_return_type(_Params, _Var) :- !.
 
 :- endif.
 

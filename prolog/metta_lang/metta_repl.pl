@@ -208,6 +208,7 @@ load_and_trim_history :-
 %     metta>
 %
 repl :-
+    install_readline_editline1,
     flag(need_prompt,_,1),
     % Catch any end_of_input exception and terminate the REPL gracefully.
     catch(repl2, end_of_input, true).
@@ -296,9 +297,10 @@ repl3 :-
 set_metta_prompt:-
     with_output_to(atom(P), write_metta_prompt),
     %prompt1(P),
-    prompt(_, P).
+    metta_prompt(_, P).
 
 
+metta_prompt(G,S):- once(nb_current('$metta_prompt',G);prompt(G,G)),nb_setval('$metta_prompt',S),prompt(_,S).
 
 %! repl4 is det.
 %   Executes the REPL logic by reading the input, processing expressions, and handling directives or commands.
@@ -308,13 +310,15 @@ set_metta_prompt:-
 %     ?- repl4.
 %     metta>
 %
-repl4 :-
+repl4 :- quietly(repl5).
+repl5 :-
     % Reset the evaluation number to ensure expressions are counted properly.
     notrace((reset_eval_num,
     % Write the result of the previous evaluation (if any) to the output.
     write_answer_output,
     % The following command to reset terminal settings is commented out for now.
     % ignore(shell('stty sane ; stty echo')),
+    set_option_value('had_interaction', true),
     % Read the next expression from the REPL input.
     catch(repl_read(Expr),stream_error(_,E),(writeln(E),throw(restart_reading))),
     % Check if the input is either `end_of_file` or empty on Windows; if so, throw `end_of_input`.
@@ -575,8 +579,8 @@ repl_read_next(NewAccumulated, Expr) :-
 % Read the next line of input, accumulate it, and continue processing.
 repl_read_next(Accumulated, Expr) :-
     if_t(flag(need_prompt,1,0),(format('~N'),set_metta_prompt)),
-        % On windows we need to output the prompt again
-    (is_win64-> (ttyflush,prompt(P, P),write(P), ttyflush) ; true),
+        % On windows we need to output the prompt again ; and now on linux since the prompt we are settign is ''
+    maybe_write_prompt_now,
     % Read a line from the current input stream.
     read_line_to_string(current_input, Line),
     % switch prompts after the first line is read
@@ -592,10 +596,14 @@ repl_read_next(Accumulated, Expr, Line):-
     % Concatenate the accumulated input with the new line using a space between them.
     symbolics_to_string([Accumulated, "\n", Line], NewAccumulated), !,
     % Continue reading and processing the new accumulated input.
-    format(atom(T),'| ~t',[]),prompt(_,T),
+    format(atom(T),'| ~t',[]),metta_prompt(_,T),
     repl_read_next(NewAccumulated, Expr).
 
 
+maybe_write_prompt_now:- is_win64,!,metta_prompt(P, P),write_prompt_now(P).
+maybe_write_prompt_now:- thread_self(main),!.
+maybe_write_prompt_now:- metta_prompt(P, P),write_prompt_now(P),prompt(_, '').
+write_prompt_now(P):- flush_output(current_output), ttyflush, write(P), ttyflush, flush_output(current_output).
 
 % if stream error is not recoverable restart_reading
 check_unbalanced_parens(SE):- var(SE),!. % no error
@@ -2038,6 +2046,7 @@ is_docker :- exists_file('/.dockerenv'),!.
 skip_cmd_history:- current_prolog_flag(mettalog_rt, true),!.
 skip_cmd_history:- is_docker,!. % too chancy
 skip_cmd_history:- is_win64, !. % already installed
+%skip_cmd_history:- !.
 
 install_readline(_Input):- skip_cmd_history, !.
 install_readline(Input):-
@@ -2058,7 +2067,7 @@ install_readline(Input):-
     % Catch potential errors when loading history (currently ignored).
     %nop(catch(load_history,_,true)),
     % Unwrap the Prolog input wrapper, so that the custom readline features can be used.
-    ignore(el_unwrap(Input)),
+    %ignore(el_unwrap(Input)),
     % Wrap the input with the Metta readline handler.
     ignore(el_wrap_metta(Input)),
     load_metta_history_from_txt_file('~/.config/metta/history.txt'),
@@ -2120,6 +2129,7 @@ add_history(Hist):- add_history1(Hist).
 %
 :- dynamic setup_done/0.
 :- volatile setup_done/0.
+:- thread_local setup_done/0.
 
 % If setup_done is already asserted, skip the rest of the predicate.
 install_readline_editline1 :-
@@ -2128,6 +2138,8 @@ install_readline_editline1 :-
 
 % If setup_done is not true, assert it and continue with the installation process.
 install_readline_editline1 :-
+   %use_module(library(readline)),
+   %current_input(Input),install_readline(Input),
    asserta(setup_done). % Assert that setup is now complete.
 
 % previously: Various other initialization tasks were included here, but they have been commented out as overkill.

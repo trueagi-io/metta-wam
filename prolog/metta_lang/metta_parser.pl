@@ -1311,7 +1311,13 @@ import_op(Op):- atom_contains(Op,"load").
 % @arg Reason The reason for the error.
 throw_stream_error(Stream, Reason) :-
     read_position(Stream, Line, Col, CharPos, _),
-    throw(stream_error(Line:Col:CharPos, Reason)).
+    guess_file(Stream,File),
+    throw(stream_error(File:Line:Col:CharPos, Reason)).
+
+guess_file(Stream,File):- stream_property(Stream,file_name(File)),!.
+%guess_file(Stream,File):- stream_property(Stream,file_no(Num)),Num=<2,!,File=file_no(Num).
+%guess_file(Stream,File):- stream_property(Stream,alias(File)),!.
+guess_file(Stream,File):- findall(Prop,stream_property(Stream,Prop),File),!.
 
 %! read_single_line_comment(+Stream:stream) is det.
 %
@@ -1322,10 +1328,24 @@ read_single_line_comment(Stream) :-
     % read_char(Stream, ';'),  % Skip the ';' character.
     read_line_char(Stream, line_char(Line1, Col)),
     %succ(Col0, Col1),
-    read_line_to_string(Stream, Comment),
-    atom_length(Comment,Len), EndCol is Col + Len,
-   Range = range(line_char(Line1, Col), line_char(Line1, EndCol)),
+    read_line_to_string_maybe_more(Stream, Comment),
+    %atom_length(Comment,Len), EndCol is Col + Len,
+    read_line_char(Stream, line_char(Line2, EndCol)),
+   Range = range(line_char(Line1, Col), line_char(Line2, EndCol)),
    push_item_range('$COMMENT'(Comment, Line1, Col), Range).
+
+
+read_line_to_string_maybe_more(Stream, Comment):-
+   read_line_to_string(Stream, CommentStart),
+   peek_string(Stream, 5, LookAhead),
+   (start_line_comment(LookAhead) ->
+     (read_line_to_string_maybe_more(Stream, CommentCont), atomics_to_string([CommentStart,"\n",CommentCont],Comment)) ;  CommentStart = Comment).
+
+start_line_comment(Var):- var(Var), !, fail.
+start_line_comment(end_of_file):- !, fail.
+start_line_comment(String):- string(String), string_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment(String):- atom(String), atom_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment([C|Chars]):- C==';' -> true ; (C\=='\n',C\=='\r',is_like_space(C),!,start_line_comment(Chars)).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %
@@ -1457,8 +1477,8 @@ read_list(EndChar,  Stream, List):-
  setup_call_cleanup(
   nb_setval('$file_src_depth', LvLNext),
   catch(read_list_cont(EndChar,  Stream, List),
-        stream_error(_Where,Why),
-        throw(stream_error(Line:Col:CharPos,Why))),
+        stream_error(Where,Why),
+        throw(stream_error(Line:Col:CharPos-Where,Why))),
   nb_setval('$file_src_depth', LvL)).
 
 read_list_cont(EndChar,  Stream, List) :-

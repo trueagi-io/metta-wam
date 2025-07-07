@@ -6,40 +6,96 @@
   (@desc "The universal type; any value belongs to this type."))
 (: Any Type)
 
-(: RandomGenerator Type)
-(@doc RandomGenerator
-  (@desc "Type representing a random number generator."))
+(@doc DontEvalType
+  (@desc "Marks types that should not be evaluated unless forced."))
+(: DontEvalType Type)
+
+(@doc DoEvalType
+  (@desc "Marks types that should be evaluated when passed as a parameter."))
+(: DoEvalType Type)
+
+(@doc MaterialType
+  (@desc "Material types indicate that a value should be evaluated until it becomes this type. Examples include: String, Symbol, Expression.  and Atom and Any are not a Material types"))
+(: MaterialType Type)
+
+; In fileio
+;(: Stream MaterialType)
+;(type-coercion String Stream open-for-read)
+(type-coercion (String Location) String repr)
+(type-coercion String (String Location) parse)
+(type-coercion Number String repr)
+(type-coercion String Number parse)
+
+; Material types can usually be parse'd/repr'd from String
+(: Bool MaterialType)
+(: Expression MaterialType)
+(: (String Location) MaterialType)
+(: Number MaterialType)
+(: String MaterialType)
+(: Symbol MaterialType)
+(: Variable MaterialType)
+; but not all
+(: SpaceType MaterialType)
+(: StateMonad MaterialType)
 
 (@doc Atom
   (@desc "Type representing any atom."))
 (: Atom Type)
+(: Atom DontEvalType)
 
-(@doc LazyEvaluatable
-  (@desc "A type of Atom/Value that hyperon does not implicitly evaluate"))
-(: LazyEvaluatable Type)
-(:> Atom LazyEvaluatable)
+(@doc Expression
+  (@desc "Type representing an S-Expression, which is a combination of atoms."))
+(: Expression Type)
+(:> Expression Atom)
+
+(@doc CodeType
+  (@desc "A type of Atom/Value that represents code to evaluate (such as then/else forms)"))
+(: CodeType Type)
+(:> CodeType DontEvalType)
+(:> CodeType Type)
+
+(@doc (-> $res)
+  (@desc "A type of Atom/Value that represents code to evaluate (such as then/else forms)."))
+(: (-> $res) CodeType)
+(:> (-> $res) Atom)
+
+(@doc (Expression (Eval $res))
+  (@desc "Type representing an S-Expression, with several Atoms of subtype (Eval $res)."))
+(: (Expression (Eval $res)) Type)
+(: (Expression (Eval $res)) CodeType)
+(:> (Expression (Eval $res)) Expression)
+
+(@doc HostCode
+  (@desc "Type representing a Host Expression, specially compiled by the host."))
+(: HostCode Type)
+(:> HostCode Atom)
+(: HostCode DontEvalType)
+(: HostCode CodeType)
+
+(@doc LazyBool
+  (@desc "A (-> $res) that when evaluated returns True or False but doesn't imply evaluation will always occur. Used for lazy conditional logic."))
+(: LazyBool Type)
+(:> LazyBool Bool)
+(: LazyBool DontEvalType)
+(: LazyBool CodeType)
+
+
+;; Inference Rule: All types not explicitly declared as DontEvalType default to DoEvalType
+(==>
+   (, (: $type Type) (not (ist &corelib (: $type DontEvalType))))
+   (: $type DoEvalType))
 
 (@doc Bool
   (@desc "Boolean type of True or False."))
 (: Bool Type)
 
-(@doc LazyBool
-  (@desc "A LazyEvaluatable that when evaluated returns True or False."))
-(: LazyBool Type)
-(:> LazyBool LazyEvaluatable)
-
-(@doc Expression
-  (@desc "Type representing an S-Expression, which is a combination of atoms."))
-(: Expression Type)
-(:> Expression LazyEvaluatable)
-
 (@doc Number
   (@desc "Numeric type, including integers and floating-point numbers."))
 (: Number Type)
 
-(@doc hyperon::space::DynSpace
+(@doc SpaceType
   (@desc "Dynamic space type, representing an Atomspace."))
-(: hyperon::space::DynSpace Type)
+(: SpaceType Type)
 
 (@doc ReturnType
   (@desc "Type representing a function's return value."))
@@ -68,10 +124,12 @@
 (@doc %Undefined%
   (@desc "Special type representing an undefined value or type."))
 (: %Undefined% Type)
+(: %Undefined% DoEvalType)
 
 (@doc Variable
   (@desc "Type representing a variable in the language."))
 (: Variable Type)
+(: Variable MaterialType) ; Material types indicate somehnting should be evaluated until it becomes this type. exmamples String, Symbol, Expression, 
 
 (@doc :
   (@desc "Type declarion operator"))
@@ -80,33 +138,31 @@
 (: : %Undefined%) ; match hyperons weirdd return value of !(get-type :)
 
 
-(: if-empty (-> Atom Atom Atom Atom))
-(: if-non-empty-expression (-> Atom Atom Atom Atom))
-(: if-not-reducible (-> Atom Atom Atom Atom))
-(: return (-> Atom ReturnType))
-(: switch (-> %Undefined% Expression Atom))
-(: unify (-> Atom Atom Atom Atom %Undefined%))
+(: if-empty (-> (-> $res) (-> $res) (-> $res) $res))
+(: if-non-empty-expression (-> (-> $res) (-> $res) (-> $res) $res))
+(: switch (-> %Undefined% Expression %Undefined%))
+(: unify (-> Atom Atom (-> $res) (-> $res) $res))
 
 ;(: current-predicate-arity (-> Predicate Number)) ; returns only the first type of a symbol
 
 (: get-vtype (-> Atom Atom)) ; returns only the first type of a symbol
-(: get-vtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+(: get-vtype (-> Atom SpaceType Atom)) ; returns only the first type of a symbol
 
 (: get-types (-> Atom Atom)) ; returns only the first type of a symbol
-(: get-types (-> Atom hyperon::space::DynSpace Atom)) ; returns only the first type of a symbol
+(: get-types (-> Atom SpaceType Atom)) ; returns only the first type of a symbol
 
 (: get-dtype (-> Atom Atom)) ; returns only the data value types of a symbol
-(: get-dtype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the data value types of a symbol
+(: get-dtype (-> Atom SpaceType Atom)) ; returns only the data value types of a symbol
 
 (: get-ftype (-> Atom Atom)) ; returns only the function types of a symbol
-(: get-ftype (-> Atom hyperon::space::DynSpace Atom)) ; returns only the function types of a symbol
+(: get-ftype (-> Atom SpaceType Atom)) ; returns only the function types of a symbol
 
 (: pragma! (-> Atom Atom (->)))
 ;(: = (-> Atom Atom %Undefined%))
-(: match (-> hyperon::space::DynSpace Atom Atom %Undefined%))
+(: match (-> SpaceType MatchAtom (-> $res) $res))
 ;(: case (-> Expression Atom Atom))
 (: combine (-> $t $t $t))
-(: import! (-> hyperon::space::DynSpace Atom (->)))
+(: import! (-> SpaceType Atom (->)))
 
 
 (@doc type-check
@@ -206,12 +262,12 @@ For example:
     (@param "Atom to return if condition is False (optional)")))
   (@return "Either the second or third argument depending on the condition"))
 
-(: MettaMorph-If (-> Bool Atom Atom))
+(: MettaMorph-If (-> Bool (-> $res) $res))
 (= (MettaMorph-If True $then) $then)
 ; (= (MettaMorph-If False $then) (empty))
 (= (MettaMorph-If False $then) (let $n 0 (let $n 1 $n))) ; Placeholder for False condition
 
-(: MettaMorph-If (-> Bool Atom Atom Atom))
+(: MettaMorph-If (-> Bool (-> $res) (-> $res) $res))
 (= (MettaMorph-If $cond $then $else) (if $cond $then $else))
 
 
@@ -272,9 +328,9 @@ For example:
 
 ;; Space Subtype Relation
 
-(@doc hyperon::space::DynSpace
+(@doc SpaceType
   (@desc "Dynamic space type, representing an Atomspace."))
-(:> hyperon::space::DynSpace Grounded)
+(:> SpaceType Grounded)
 
 
 
@@ -381,7 +437,7 @@ For example:
     (@param "Catcher")
     (@param "Recover")))
   (@return "Result of Form if no exception is raised. Result of Recover (with bindings from Catcher) if an exception is caught."))
-(: catch (-> Atom Atom Atom Atom))
+(: catch (-> (-> $res) ErrorType (-> $res) $res))
 
 (iz max-time! MeTTaLog)
 (@doc max-time!
@@ -390,7 +446,7 @@ For example:
     (@param "Time (in seconds)")
     (@param "Form")))
   (@return "Result of Form if execution completes within Time. Raises an exception otherwise."))
-(: max-time! (-> Number Atom Atom))
+(: max-time! (-> Number (-> $res) $res))
 
 (iz sleep! MeTTaLog)
 (@doc sleep!
@@ -407,7 +463,7 @@ For example:
     (@param "Limit")
     (@param "Form")))
   (@return "First Limit results of Form."))
-(: limit! (-> Number Atom Atom))
+(: limit! (-> Number (-> $res) $res))
 
 (iz number-of MeTTaLog)
 (@doc number-of
@@ -424,7 +480,7 @@ For example:
     (@param "Count")
     (@param "Form")))
   (@return "Results of Form after ignoring the first Count results that are generated."))
-(: offset! (-> Number Atom Atom))
+(: offset! (-> Number (-> $res) $res))
 
 (iz call! MeTTaLog)
 (@doc call!
@@ -432,7 +488,7 @@ For example:
   (@params (
     (@param "Form")))
   (@return "True if the call succeeds, False otherwise."))
-(: call! (-> Atom Atom))
+(: call! (-> (VarArg Atom) %Undefined%))
 
 (iz call-p! MeTTaLog)
 (@doc call-p!
@@ -440,7 +496,7 @@ For example:
   (@params (
     (@param "Form")))
   (@return "True if the call succeeds, False otherwise."))
-(: call-p! (-> Atom Atom))
+(: call-p! (-> (VarArg Atom) Bool))
 
 (iz call-fn! MeTTaLog)
 (@doc call-fn!
@@ -448,15 +504,42 @@ For example:
   (@params (
     (@param "Form")))
   (@return "appends a return argument to a form and calls it"))
-(: call-fn! (-> Atom Atom))
+(: call-fn! (-> (VarArg Atom) Atom))
+
+
+(iz call-unit! MeTTaLog)
+(@doc call-unit!
+  (@desc "Calls code and returns the Unit atom on Success unless there is an Error")
+  (@params (
+	(@param "Form to be called by host system")))
+  (@return "Unit atom or Error"))
+(: call-unit! (-> (VarArg MatchQ) (->)))
+
+(iz call-for! MeTTaLog)
+(@doc call-for!
+  (@desc "Calls code (2nd argument...) and returns the first Argument on Success unless there is an Error")
+  (@params (
+	(@param "Value to be returned")
+	(@param "Form to be called by host system")))
+  (@return "returns the first argument"))
+(: call-for! (-> (Atom $t) (VarArg MatchQ) $t))
 
 (iz call-string! MeTTaLog)
 (@doc call-string!
   (@desc "Executes String as Prolog code. For example, (call-string! \"member(1,[1,2,3])\") returns [()] while (call-string! \"member(4,[1,2,3])\") returns []. (call-string! \"member(X,[1,2,3])\") returns [(1), (2), (3)].")
   (@params (
     (@param "PrologSrc")))
-  (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list."))
+  (@return "A list of the binding values. If there are no bindings but the Prolog query is True, returns the empty list, if fails returns Empty."))
 (: call-string! (-> String Atom))
+
+(iz finally MeTTaLog)
+(@doc finally
+  (@desc "Same as (setup-call-cleanup! true Form Cleanup). setup-call-cleanup! is recommended instead if Cleanup is intended to undo prior side-effects - place those side-effects in Setup.")
+  (@params (
+    (@param "Form")
+    (@param "Cleanup")))
+  (@return "Result of Form."))
+(: finally (-> (-> $res) (-> $res) $res))
 
 (iz call-cleanup! MeTTaLog)
 (@doc call-cleanup!
@@ -465,7 +548,7 @@ For example:
     (@param "Form")
     (@param "Cleanup")))
   (@return "Result of Form."))
-(: call-cleanup! (-> Atom Atom Atom))
+(: call-cleanup! (-> (-> $res) (-> $res) $res))
 
 (iz setup-call-cleanup! MeTTaLog)
 (@doc setup-call-cleanup!
@@ -475,7 +558,7 @@ For example:
     (@param "Form")
     (@param "Cleanup")))
   (@return "Result of Form."))
-(: setup-call-cleanup! (-> Atom Atom Atom Atom))
+(: setup-call-cleanup! (-> (-> $res) (-> $res) (-> $res) $res))
 
 (iz predicate-arity MeTTaLog)
 (@doc predicate-arity
@@ -491,22 +574,6 @@ For example:
     (@param "Function")))
   (@return "Arity of Function."))
 
-(iz open! MeTTaLog)
-(@doc open!
-  (@desc "Opens Filename as a stream under Mode. Mode is one of read, write, append, or update. Mode append opens the file for writing, positioning the file pointer at the end. Mode update opens the file for writing, positioning the file pointer at the beginning of the file without truncating the file.")
-  (@params (
-    (@param "Filename")
-    (@param "Mode")))
-  (@return "Stream"))
-(: open! (-> String Atom Stream))
-
-(iz close! MeTTaLog)
-(@doc close!
-  (@desc "Closes Steam, returning True on success.")
-  (@params (
-    (@param "Stream")))
-  (@return "Boolean"))
-(: close! (-> Stream Boolean))
 
 (iz with-output-to! MeTTaLog)
 (@doc with-output-to!
@@ -515,7 +582,7 @@ For example:
     (@param "Stream")
     (@param "Expression")))
   (@return "Result of Expression"))
-(: with-output-to! (-> Stream Expression Atom))
+(: with-output-to! (-> Stream (-> $res) $res))
 
 (iz load-file! MeTTaLog)
 (@doc load-file!
@@ -524,7 +591,7 @@ For example:
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
-(: load-file! (-> hyperon::space::DynSpace String Expression))
+(: load-file! (-> SpaceType String (->)))
 
 (iz load-ascii MeTTa)
 (@doc load-ascii
@@ -533,7 +600,7 @@ For example:
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
-(: load-ascii (-> hyperon::space::DynSpace String Expression))
+(: load-ascii (-> SpaceType (String Location) Expression))
 
 (iz transfer! MeTTa)
 (@doc transfer!
@@ -541,7 +608,7 @@ For example:
   (@params (
     (@param "Filename")))
   (@return "Expression"))
-(: transfer! (-> String (->)))
+(: transfer! (-> (String Location) (->)))
 
 (iz save-space! MeTTa)
 (@doc save-space!
@@ -550,7 +617,7 @@ For example:
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
-(: save-space! (-> hyperon::space::DynSpace String Expression))
+(: save-space! (-> SpaceType (String Location) (->)))
 
 (iz rtrace! MeTTaLog)
 (@doc rtrace!
@@ -558,7 +625,7 @@ For example:
   (@params (
     (@param "Atom to be evaluated")))
   (@return "Result of evaluation"))
-(: rtrace! (-> Atom Atom))
+(: rtrace! (-> (-> $res) $res))
 
 (iz rust MeTTaLog)
 (@doc rust
@@ -566,7 +633,7 @@ For example:
   (@params (
     (@param "Atom to be entered into the space")))
   (@return "Result of entering Atom into the space"))
-(: rust (-> Atom Atom))
+(: rust (-> (-> $res) $res))
 
 (iz rust! MeTTaLog)
 (@doc rust!
@@ -574,7 +641,7 @@ For example:
   (@params (
     (@param "Atom to be evaluated")))
   (@return "Result of evaluation"))
-(: rust! (-> Atom Atom))
+(: rust! (-> (-> $res) $res))
 
 (iz coerce MeTTaLog)
 (@doc coerce
@@ -594,7 +661,7 @@ For example:
     (@param "Pattern to be matched against expression to be reduced")
     (@param "Result of reduction or transformation of the first pattern")))
   (@return "Not reduced itself unless custom equalities over equalities are added") )
-(: = (-> $t $t Atom))
+(: = (-> $t $t %Undefined%))
 ;(: = (-> Atom Atom Atom))
 
 (iz ErrorType MeTTa)
@@ -616,8 +683,9 @@ For example:
   (@params (
     (@param "Value to be returned")))
   (@return "Passed argument"))
-; probably should be (: return (-> $t $t)) 
-(: return (-> Atom Atom))
+; probably should be 
+(: return (-> $t $t))
+;;(: return (-> Atom Atom))
 
 
 (iz function MinimalMeTTa)
@@ -626,15 +694,15 @@ For example:
   (@params (
     (@param "Atom to be evaluated")))
   (@return "Result of atom's evaluation"))
-(: function (-> Atom Atom))
+(: function (-> (-> $res) $res))
 
 (iz eval MeTTa)
 (@doc eval
-  (@desc "Evaluates input Atom, performs one step of the evaluation. Empty results (Empty, ()) are removed from the result set. If no results are produced for a non-grounded function, eval returns NotReducible.")
+  (@desc "Evaluates input atom, performs one step of the evaluation. Empty results (Empty, ()) are removed from the result set. If no results are produced for a non-grounded function, eval returns NotReducible.")
   (@params (
     (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")))
   (@return "Result of evaluation"))
-(: eval (-> Atom Atom))
+(: eval (-> (-> $res) $res))
 
 (iz eval MinimalMeTTa)
 (@doc evalc
@@ -643,7 +711,9 @@ For example:
     (@param "Atom to be evaluated, can be reduced via equality expression (= ...) or by calling a grounded function")
     (@param "Space to evaluate atom in its context")))
   (@return "Result of evaluation"))
-(: evalc (-> Atom Grounded %Undefined%))
+(: evalc (-> (-> $res) Grounded %Undefined%))
+(ML= (evalc $eval $space)
+  (with-space $space (eval $eval)))
 
 (iz chain MinimalMeTTa)
 (@doc chain
@@ -653,18 +723,20 @@ For example:
     (@param "Variable")
     (@param "Template which will be evaluated at the end with Variable substituted")))
   (@return "Result of evaluating third input argument"))
-(: chain (-> Atom Variable Atom Atom))
+(: chain (-> (-> $res) Variable (-> $res) $res))
+(ML= (chain $eval $var $after)
+  (let $var $eval $after))
 
 (iz unify MeTTa)
 (@doc unify
   (@desc "Like Match but allows any sort of container for the first argument. (Match only allows MeTTa spaces.)")
   (@params (
 	(@param "The collection or space to match or the first atom to unify with")
-	(@param "Second atom to unify with")
-	(@param "Result if two atoms unified successfully")
-	(@param "Result otherwise")))
-  (@return "Third argument when found or fourth one otherwise"))
-(: unify (-> Atom Atom Atom Atom Atom))
+    (@param "Second atom to unify with")
+    (@param "Result if two atoms unified successfully")
+    (@param "Result otherwise")))
+  (@return "Third argument when first two atoms are matched of forth one otherwise"))
+(: unify (-> Atom Atom (-> $res) (-> $res) $res))
 
 (iz if-unify MinimalMeTTaHelper)
 (@doc if-unify
@@ -675,11 +747,11 @@ For example:
 	(@param "Result if two atoms unified successfully")
 	(@param "Result otherwise")))
   (@return "Third argument when first two atoms are unifiable or fourth one otherwise"))
-(: if-unify (-> Atom Atom Atom Atom %Undefined%))
-
-(ALT= (if-unify $a $a $then $else) $then)
-(ALT= (if-unify $a $b $then $else)
-  (case (if-unify-or-empty $a $b) ((Empty $else))) )
+(: if-unify (-> Atom Atom (-> $res) (-> $res) $res))
+(HE= (if-unify $a $b $then $else)
+  (case (if-unify-or-empty $a $b) 
+	  ((unified $then) 
+	   (Empty $else))))
 
 (iz if-unify-or-empty MinimalMeTTaHelper)
 (@doc if-unify-or-empty
@@ -692,7 +764,7 @@ For example:
 (= (if-unify-or-empty $a $a) unified)
 (= (if-unify-or-empty $a $b) (empty))
 
-(iz cons-atom MinimalMeTTa)
+(iz cons-atom MeTTa)
 (@doc cons-atom
   (@desc "Constructs an expression using two arguments")
   (@params (
@@ -702,15 +774,22 @@ For example:
 (: cons-atom (-> Atom Expression Expression))
 ; AKA? (: cons (-> Atom Atom Atom))
 
-(iz decons-atom MinimalMeTTa)
+(iz decons-atom MeTTa)
 (@doc decons-atom
   (@desc "Works as a reverse to cons-atom function. It gets Expression as an input and returns it split into head and tail, e.g. (decons-atom (Cons X Nil)) -> (Cons (X Nil))")
   (@params (
     (@param "Expression to be Deconsed")))
   (@return "Deconsed expression"))
-(: decons-atom (-> Expression Expression))
-; AKA? (: decons (-> Atom Atom))
+(: decons-atom (-> Expression Atom))
+(ML= (decons-atom $term)
+  (eval-for! ($h $t) (@ unify_with_occurs_check $term [$h | $t])))
 
+;; TODO in MeTTaLog
+(@doc context-space
+  (@desc "Returns the space which is used as a context space in atom evaluation")
+  (@params ())
+  (@return "Context space"))
+(: context-space (-> SpaceType))
 
 (iz min-atom MeTTa)
 (@doc min-atom
@@ -718,8 +797,8 @@ For example:
   (@params (
     (@param "Expression containing atoms of Number type")))
   (@return "Minimum value in the expression. Error if expression contains non-numeric value or is empty."))
-(: min-atom (-> Expression Number))
-(= (min-atom $L) (call-fn! min_list $L))
+(: min-atom (-> (Expression Number) Number))
+(ML= (min-atom $L) (call-fn! min_list $L))
 
 (iz max-atom MeTTa)
 (@doc max-atom
@@ -727,8 +806,8 @@ For example:
   (@params (
 	(@param "Expression containing atoms of Number type")))
   (@return "Maximum value in the expression. Error if expression contains non-numeric value or is empty."))
-(: max-atom (-> Expression Number))
-(= (max-atom $L) (call-fn! max_list $L))
+(: max-atom (-> (Expression Number) Number))
+(ML= (max-atom $L) (call-fn! max_list $L))
 
 (iz size-atom MeTTa)
 (@doc size-atom
@@ -896,7 +975,7 @@ For example:
   (@desc "Returns True if input value is NaN. False - otherwise")
   (@params (
     (@param "Number")))
-  (@return "True/False")) 
+  (@return "True/False"))
 (is-pred isnan-math is_NaN)
 
 (iz isinf-math MeTTa)
@@ -908,71 +987,33 @@ For example:
 ; this is deduced: (: isinf (-> Number Bool))
 (is-pred isinf-math is_Inf)
 
-(: random-int (-> RandomGenerator Number Number Number))
-(iz random-int UseRust)
-(@doc random-int
-  (@desc "Returns random int number from range defined by two numbers (second and third argument)")
-  (@params (
-    (@param "Random number generator instance")
-    (@param "Range start")
-    (@param "Range end")))
-  (@return "Random int number from defined range"))
 
-(iz random-float UseRust)
-(: random-float (-> RandomGenerator Number Number Number))
-(@doc random-float
-  (@desc "Returns random float number from range defined by two numbers (second and third argument)")
-  (@params (
-    (@param "Random number generator instance")
-    (@param "Range start")
-    (@param "Range end")))
-  (@return "Random float number from defined range"))
 
-(iz set-random-seed MeTTa)
-(iz set-random-seed UseRust)
-(: set-random-seed (-> RandomGenerator Number (->)))
-(@doc set-random-seed
-  (@desc "Sets a new seed (second argument) for random number generator (first argument)")
-  (@params (
-    (@param "Random number generator instance")
-    (@param "Seed")))
-  (@return "Unit atom"))
-
-(iz new-random-generator MeTTa)
-(iz new-random-generator UseRust)
-(: new-random-generator (-> Number RandomGenerator))
-(@doc new-random-generator
-  (@desc "Creates new random number generator instance using seed as input (first argument)")
-  (@params (
-    (@param "Seed")))
-  (@return "Instance of random number generator"))
-
-(iz reset-random-generator MeTTa)
-(: reset-random-generator (-> RandomGenerator RandomGenerator))
-(@doc reset-random-generator
-  (@desc "Resets instance of random number generator (first argument) to its default behavior (StdRng::from_os_rng())")
-  (@params (
-    (@param "Random number generator instance")))
-  (@return "Random number generator instance with default behavior"))
 
 ;; Some code still uses the old syntax
-(iz random-int MeTTa)
-(@doc random-int
+(iz random-int-2 MeTTa)
+(@doc random-int-2
   (@desc "Returns random int number from range defined by two numbers (first and second argument)")
   (@params (
 	(@param "Range start")
 	(@param "Range end")))
   (@return "Random int number from defined range"))
-(is-op-2 random-int random)
+(is-op-2 random-int-2 random)
 
-(iz random-float MeTTa)
-(@doc random-float
+(iz random-float-2 MeTTa)
+(@doc random-float-2
   (@desc "Returns random float number from range defined by two numbers (first and second argument)")
   (@params (
 	(@param "Range start")
 	(@param "Range end")))
   (@return "Random float number from defined range"))
-(is-op-2 random-int random)
+(is-op-2 random-int-2 random)
+
+
+
+
+
+
 
 (iz collapse-bind MeTTa)
 (@doc collapse-bind
@@ -981,7 +1022,7 @@ For example:
     (@param "Minimal MeTTa operation to be evaluated")))
   (@return "All alternative evaluations"))
 ;; collapse-bind because `collapse` doesnt guarantee shared bindings
-(: collapse-bind (-> Atom Expression))
+(: collapse-bind (-> (-> $res) Expression))
 
 (iz superpose-bind MeTTa)
 (@doc superpose-bind
@@ -990,7 +1031,7 @@ For example:
     (@param "Expression in form (Atom Binding)")))
   (@return "Non-deterministic list of Atoms"))
 ;; superpose-bind because `superpose` doesnt guarentee shared bindings
-(: superpose-bind (-> Expression Atom))
+(: superpose-bind (-> (Expression (Eval $res)) Atom))
 
 ; Helper Minimal Metta?
 (@doc metta
@@ -1000,7 +1041,9 @@ For example:
     (@param "Type of input atom")
     (@param "Atomspace where intepretation should take place")))
   (@return "Result of interpretation"))
+  
 (: metta (-> Atom Type Grounded Atom))
+(: metta (-> (-> $res) (Type $t) SpaceType $res))
 
 (iz id MinimalMeTTa)
 (@doc id
@@ -1008,10 +1051,17 @@ For example:
   (@params (
     (@param "Input argument")))
   (@return "Input argument"))
-(: id (-> Atom Atom))
+(: id (-> $t $t))
 (= (id $x) $x)
 
-(iz atom-subst MinimalMeTTa)
+(@doc noeval
+  (@desc "Returns its argument")
+  (@params (
+    (@param "Input argument")))
+  (@return "Input argument"))
+(: noeval (-> Atom Atom))
+(= (noeval $x) $x)
+
 (@doc atom-subst
   (@desc "Substitutes variable passed as a second argument in the third argument by the first argument")
   (@params (
@@ -1020,9 +1070,8 @@ For example:
     (@param "Template to replace variable by the value")))
   (@return "Template with substituted variable"))
 (: atom-subst (-> Atom Variable Atom Atom))
-;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
 (= (atom-subst $atom $var $templ)
-  (function (chain (eval (id $atom)) $var (return $templ))) )
+  (function (chain (eval (noeval $atom)) $var (return $templ))) )
 
 (iz if-decons-expr MinimalMeTTaHelper)
 (@doc if-decons-expr
@@ -1034,50 +1083,18 @@ For example:
     (@param "Template to return if first argument is a non-empty expression")
     (@param "Default value to return otherwise")))
   (@return "Either template with head and tail replaced by values or default value"))
-(: if-decons-expr (-> Expression Variable Variable Atom Atom Atom))
+(: if-decons-expr (-> Expression Variable Variable (-> $res) (-> $res) $res))
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(= (if-decons-expr $atom $head $tail $then $else)
-  (if-decons $atom $head $tail $then $else))
-(: if-decons (-> Expression Variable Variable Atom Atom Atom))
-(ALT= (if-decons-expr $atom $head $tail $then $else)
+(= (if-decons-expr $atom $head $tail $then $else) (if-decons $atom $head $tail $then $else))
+
+
+(: if-decons (-> Expression Variable Variable (-> $res) (-> $res) $res))
+(= (if-decons $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
     (return $else)
     (chain (decons-atom $atom) $list
       (if-unify $list ($head $tail) (return $then) (return $else)) )))))
 
-(iz if-error MinimalMeTTaHelper)
-(@doc if-error
-  (@desc "Checks if first argument is an error atom. Returns second argument if so or third argument otherwise.")
-  (@params (
-    (@param "Atom to be checked for the error")
-    (@param "Value to return if first argument is an error")
-    (@param "Value to return otherwise")))
-  (@return "Second or third argument"))
-(: if-error (-> Atom Atom Atom Atom))
-;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
-(= (if-error $atom $then $else)
-  (function (chain (eval (get-metatype $atom)) $meta
-    (eval (if-equal $meta Expression
-      (eval (if-equal $atom ()
-        (return $else)
-        (chain (decons-atom $atom) $list
-          (if-unify $list ($head $tail)
-            (eval (if-equal $head Error (return $then) (return $else)))
-            (return $else) ))))
-      (return $else) )))))
-
-(iz return-on-error MinimalMeTTaHelper)
-(@doc return-on-error
-  (@desc "Returns first argument if it is Empty or an error. Returns second argument otherwise.")
-  (@params (
-    (@param "Previous evaluation result")
-    (@param "Atom for further evaluation")))
-  (@return "Return previous result if it is an error or Empty or continue evaluation"))
-(: return-on-error (-> Atom Atom Atom))
-(= (return-on-error $atom $then)
-  (function (eval (if-equal $atom Empty (return (return Empty))
-    (eval (if-error $atom (return (return $atom))
-      (return $then) ))))))
 
 
 ; Difference between `switch` and `case` is a way how they interpret `Empty`
@@ -1097,57 +1114,10 @@ For example:
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result which corresponds to the pattern which is matched with the passed atom first"))
 
-(: switch (-> Atom Atom Atom))
+(-> %Undefined% Expression %Undefined%) 
 (= (switch $atom $list) (case (eval $atom) $list))
 
 
-
-
-; BEGIN - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
-(: (
-(: switch (-> %Undefined% Expression Atom))
-(= (switch $atom $cases)
-  (function (chain (decons-atom $cases) $list
-    (chain (eval (switch-internal $atom $list)) $res
-      (chain (eval (if-equal $res NotReducible Empty $res)) $x (return $x)) ))))
-
-(iz switch-internal HelperMM)
-(@doc switch-internal
-  (@desc "This function is being called inside switch function to test one of the cases and it calls switch once again if current condition is not met")
-  (@params (
-    (@param "Atom (it will be evaluated)")
-    (@param "Deconsed tuple of pairs mapping condition patterns to results")))
-  (@return "Result of evaluating of Atom bound to met condition"))
-(= (switch-internal $atom (($pattern $template) $tail))
-  (function (if-unify $atom $pattern
-    (return $template)
-    (chain (eval (switch $atom $tail)) $ret (return $ret)) )))
-
-) Comment)  
-; ENDOF - Yes, Douglas turned this sourcecode form into a a Value with the type Comment
-
-
-(iz is-function MinimalMeTTaHelper)
-; TODO: Type is used here, but there is no definition for the -> type
-; constructor for instance, thus in practice it matches because -> has
-; %Undefined% type. We need to assign proper type to -> and other type
-; constructors but it is not possible until we support vararg types.
-(@doc is-function
-  (@desc "Function checks if input type is a function type")
-  (@params (
-    (@param "Type atom")))
-  (@return "True if type is a function type, False - otherwise"))
-(: is-function (-> Type Bool))
-;; This impl is old and maybe not sufficiant?
-(= (is-function $type)
-  (function (chain (eval (get-metatype $type)) $meta
-    (eval (switch ($type $meta) (
-      (($type Expression)
-        (eval (if-decons-expr $type $head $_tail
-          (if-unify $head -> (return True) (return False))
-          (return (Error (is-function $type) "is-function non-empty expression as an argument")) )))
-      (($type $meta) (return False))
-    ))))))
 
 (iz type-cast MeTTa)
 (@doc type-cast
@@ -1159,7 +1129,7 @@ For example:
   (@return "Atom if casting is successful, (Error ... BadType) otherwise"))
 (: type-cast (-> Atom Atom Atom Atom))
 ;; This implementation is old and may not be sufficient.
-(ALT= (type-cast $atom $type $space)
+(HE= (type-cast $atom $type $space)
   (function (chain (eval (get-metatype $atom)) $meta
     (eval (if-equal $type $meta
       (return $atom)
@@ -1212,7 +1182,7 @@ For example:
     (@param "First type")
     (@param "Second type")))
   (@return "True or False"))
-(= (match-type-or $folded $next $type)
+(HE= (match-type-or $folded $next $type)
   (function
     (chain (eval (match-types $next $type True False)) $matched
       (chain (eval (or $folded $matched)) $or (return $or)) )))
@@ -1226,7 +1196,7 @@ For example:
     (@param "Filter predicate")))
   (@return "Filtered list"))
 (: filter-atom (-> Expression Variable Atom Expression))
-(= (filter-atom $list $var $filter)
+(HE= (filter-atom $list $var $filter)
   (function (eval (if-decons-expr $list $head $tail
     (chain (eval (filter-atom $tail $var $filter)) $tail-filtered
       (chain (eval (atom-subst $head $var $filter)) $filter-expr
@@ -1263,132 +1233,17 @@ For example:
     (@param "Variable")
     (@param "Operation")))
   (@return "Result of applying operation to the list of values"))
-(: foldl-atom (-> Expression Atom Variable Variable Atom Atom))
+(: foldl-atom (-> Expression Atom Variable Variable Atom %Undefined%))
 (= (foldl-atom $list $init $a $b $op)
   (function (eval (if-decons-expr $list $head $tail
     (chain (eval (atom-subst $init $a $op)) $op-init
       (chain (eval (atom-subst $head $b $op-init)) $op-head
-        (chain $op-head $head-folded
-          (chain (eval (foldl-atom $tail $head-folded $a $b $op)) $res (return $res)) )))
-    (return $init) ))))
+        (chain (context-space) $space
+          (chain (metta $op-head %Undefined% $space) $head-folded
+            (chain (eval (foldl-atom $tail $head-folded $a $b $op)) $res (return $res)) ))))
+      (return $init) ))))
 
-(iz separate-errors MinimalMeTTaHelper)
-(: separate-errors (-> Expression Expression Expression))
-(= (separate-errors $succ-err $res)
-  (function (if-unify $succ-err ($suc $err)
-    (if-unify $res ($a $_b)
-      (eval (if-error $a
-        (chain (cons-atom $res $err) $err' (return ($suc $err')))
-        (chain (cons-atom $res $suc) $suc' (return ($suc' $err))) ))
-      (return $succ-err))
-    (return $succ-err) )))
 
-(iz check-alternatives MinimalMeTTaHelper)
-(= (check-alternatives $atom)
-  (function
-    (chain (collapse-bind $atom) $collapsed
-      ;(chain (eval (print-alternatives! $atom $collapsed)) $_
-      (chain (eval (foldl-atom $collapsed (() ()) $succ-err $res
-        (eval (separate-errors $succ-err $res)))) $separated
-        (if-unify $separated ($success $error)
-          (chain (eval (if-equal $success () $error $success)) $filtered
-            (chain (superpose-bind $filtered) $ret (return $ret)) )
-          (return (Error (check-alternatives $atom) "list of results was not filtered correctly")) )))))
-
-(iz interpret MeTTa)
-(= (interpret $atom $type $space)
-  (function (chain (eval (get-metatype $atom)) $meta
-    (eval (if-equal $type Atom
-      (return $atom)
-      (eval (if-equal $type $meta
-        (return $atom)
-        (eval (switch ($type $meta) (
-          (($type Variable) (return $atom))
-          (($type Symbol)
-            (chain (eval (type-cast $atom $type $space)) $ret (return $ret)))
-          (($type Grounded)
-            (chain (eval (type-cast $atom $type $space)) $ret (return $ret)))
-          (($type Expression)
-            (chain (eval (check-alternatives (eval (interpret-expression $atom $type $space)))) $ret (return $ret)))
-        ))))))))))
-
-(iz interpret-expression MinimalMeTTaHelper)
-(= (interpret-expression $atom $type $space)
-  (function (eval (if-decons $atom $op $args
-    (chain (eval (get-type $op $space)) $op-type
-      (chain (eval (is-function $op-type)) $is-func
-        (if-unify $is-func True
-          (chain (eval (interpret-func $atom $op-type $type $space)) $reduced-atom
-            (chain (eval (metta-call $reduced-atom $type $space)) $ret (return $ret)) )
-          (chain (eval (interpret-tuple $atom $space)) $reduced-atom
-            (chain (eval (metta-call $reduced-atom $type $space)) $ret (return $ret)) ))))
-    (chain (eval (type-cast $atom $type $space)) $ret (return $ret)) ))))
-
-(iz interpret-func MinimalMeTTaHelper)
-(= (interpret-func $expr $type $ret-type $space)
-  (function (eval (if-decons $expr $op $args
-    (chain (eval (interpret $op $type $space)) $reduced-op
-      (eval (return-on-error $reduced-op
-        (eval (if-decons $type $arrow $arg-types
-          (chain (eval (interpret-args $expr $args $arg-types $ret-type $space)) $reduced-args
-            (eval (return-on-error $reduced-args
-              (chain (cons-atom $reduced-op $reduced-args) $r (return $r)))))
-          (return (Error $type "Function type expected")) )))))
-    (return (Error $expr "Non-empty expression atom is expected")) ))))
-
-(iz interpret-args MinimalMeTTaHelper)
-(= (interpret-args $atom $args $arg-types $ret-type $space)
-  (function (if-unify $args ()
-    (eval (if-decons $arg-types $actual-ret-type $type-tail
-      (chain (eval (== () $type-tail)) $correct-type-len
-        (eval (if $correct-type-len
-      (eval (match-types $actual-ret-type $ret-type
-        (return ())
-        (return (Error $atom BadType)) ))
-          (return (Error $atom BadType)) )))
-      (return (Error $atom "Too many arguments")) ))
-    (eval (if-decons $args $head $tail
-      (eval (if-decons $arg-types $head-type $tail-types
-        (chain (eval (interpret $head $head-type $space)) $reduced-head
-          ; check that head was changed otherwise Error or Empty in the head
-          ; can be just an argument which is passed by intention
-          (eval (if-equal $reduced-head $head
-            (chain (eval (interpret-args-tail $atom $reduced-head $tail $tail-types $ret-type $space)) $ret (return $ret))
-            (eval (return-on-error $reduced-head
-              (chain (eval (interpret-args-tail $atom $reduced-head $tail $tail-types $ret-type $space)) $ret (return $ret)) )))))
-        (return (Error $atom BadType)) ))
-      (return (Error (interpret-atom $atom $args $arg-types $space) "Non-empty expression atom is expected")) )))))
-
-(iz interpret-args-tail MinimalMeTTaHelper)
-(= (interpret-args-tail $atom $head $args-tail $args-tail-types $ret-type $space)
-  (function (chain (eval (interpret-args $atom $args-tail $args-tail-types $ret-type $space)) $reduced-tail
-    (eval (return-on-error $reduced-tail
-      (chain (cons-atom $head $reduced-tail) $ret (return $ret)) )))))
-
-(iz interpret-tuple MinimalMeTTaHelper)
-(= (interpret-tuple $atom $space)
-  (function (if-unify $atom ()
-    (return $atom)
-    (eval (if-decons $atom $head $tail
-      (chain (eval (interpret $head %Undefined% $space)) $rhead
-        (eval (if-equal $rhead Empty (return Empty)
-          (chain (eval (interpret-tuple $tail $space)) $rtail
-            (eval (if-equal $rtail Empty (return Empty)
-              (chain (cons-atom $rhead $rtail) $ret (return $ret)) ))))))
-      (return (Error (interpret-tuple $atom $space) "Non-empty expression atom is expected as an argument")) )))))
-
-(iz metta-call MinimalMeTTaHelper)
-(= (metta-call $atom $type $space)
-  (function (eval (if-error $atom (return $atom)
-    (chain (eval $atom) $result
-      (eval (if-equal $result NotReducible (return $atom)
-        (eval (if-equal $result Empty (return Empty)
-          (eval (if-error $result (return $result)
-            (chain (eval (interpret $result $type $space)) $ret (return $ret)) )))))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Standard library written in MeTTa ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
 ; TODO: Type is used here, but there is no definition for the -> type
 ; constructor for instance, thus in practice it matches because -> has
@@ -1422,9 +1277,9 @@ For example:
     (@param "Result when condition is True")
     (@param "Result when condition is False")))
   (@return "Second or third argument") )
-(: if (-> Bool Atom Atom $t))
-(ALT= (if True $then $else) $then)
-(ALT= (if False $then $else) $else)
+(: if (-> Bool (-> $res) (-> $res) $res))
+(HE= (if True $then $else) $then)
+(HE= (if False $then $else) $else)
 ;`$then`, `$else` should be of `Atom` type to avoid evaluation
 ; and infinite cycle in inference
 
@@ -1437,10 +1292,10 @@ For example:
     (@param "Second argument")))
   (@return "True if any of input arguments is True, False - otherwise"))
 (: or (-> Bool LazyBool Bool))
-(ALT= (or False False) False)
-(ALT= (or False True) True)
-(ALT= (or True False) True)
-(ALT= (or True True) True)
+(HE= (or False False) False)
+(HE= (or False True) True)
+(HE= (or True False) True)
+(HE= (or True True) True)
 
 (iz and MeTTa)
 (@doc and
@@ -1450,10 +1305,10 @@ For example:
     (@param "Second argument")))
   (@return "Returns True if both arguments are True, False - otherwise"))
 (: and (-> Bool LazyBool Bool))
-(ALT= (and False False) False)
-(ALT= (and False True) False)
-(ALT= (and True False) False)
-(ALT= (and True True) True)
+(HE= (and False False) False)
+(HE= (and False True) False)
+(HE= (and True False) False)
+(HE= (and True True) True)
 
 (iz not MeTTa)
 (@doc not
@@ -1462,8 +1317,8 @@ For example:
     (@param "Argument")))
   (@return "Negates boolean input argument (False -> True, True -> False)"))
 (: not (-> Bool Bool))
-(ALT= (not True) False)
-(ALT= (not False) True)
+(HE= (not True) False)
+(HE= (not False) True)
 
 (iz let MeTTa)
 (@doc let
@@ -1473,8 +1328,8 @@ For example:
     (@param "Expression to be bound to variable (it is being reduced before bind)")
     (@param "Expression which will be reduced and in which variable (first argument) could be used")))
   (@return "Result of third argument's evaluation"))
-(: let (-> Atom %Undefined% Atom Atom))
-(ALT= (let $pattern $atom $template)
+(: let (-> Atom %Undefined% (-> $res) Atom))
+(HE= (let $pattern $atom $template)
   (if-unify $atom $pattern $template Empty))
 
 (iz let* MeTTa)
@@ -1484,8 +1339,8 @@ For example:
     (@param "Tuple of tuples with variables and their bindings")
     (@param "Expression which will be evaluated if each pair can be unified")))
   (@return "Second argument or Empty"))
-(: let* (-> Expression Atom %Undefined%))
-(ALT= (let* $pairs $template)
+(: let* (-> Expression (-> $res) $res))
+(HE= (let* $pairs $template)
   (eval (if-decons-expr $pairs ($pattern $atom) $tail
     (let $pattern $atom (let* $tail $template))
     $template )))
@@ -1498,13 +1353,13 @@ For example:
   (@return "Quoted atom"))
 
 (@doc add-reduct-rust1
-  (@desc "Adds atom into the atomspace reducing it first")
+  (@desc "Reduces atom (second argument) and adds it into the atomspace (first argument)")
   (@params (
     (@param "Atomspace to add atom into")
     (@param "Atom to add")))
   (@return "Unit atom"))
   
-(: add-reduct-rust1 (-> hyperon::space::DynSpace %Undefined% (->)))
+(: add-reduct-rust1 (-> SpaceType %Undefined% (->)))
 (= (add-reduct-minimal $dst $atom) (add-atom $dst $atom))
 (iz add-reduct MeTTa)
 (: add-reduct (-> Grounded %Undefined% (->)))
@@ -1549,8 +1404,8 @@ For example:
   (@params (
     (@param "Expression")))
   (@return "First atom of an expression"))
-(: car-atom (-> Expression Atom))
-(ALT= (car-atom $atom)
+(: car-atom (-> Expression %Undefined%))
+(HE= (car-atom $atom)
   (eval (if-decons-expr $atom $head $_
     $head
     (Error (car-atom $atom) "car-atom expects a non-empty expression as an argument") )))
@@ -1562,7 +1417,7 @@ For example:
     (@param "Expression")))
   (@return "Tail of an expression"))
 (: cdr-atom (-> Expression Expression))
-(= (cdr-atom $atom)
+(HE= (cdr-atom $atom)
   (eval (if-decons-expr $atom $_ $tail
     $tail
     (Error (cdr-atom $atom) "cdr-atom expects a non-empty expression as an argument") )))
@@ -1586,14 +1441,14 @@ For example:
 (= (unquote (quote $atom)) $atom)
 
 ; TODO: there is no way to define operation which consumes any number of
-; arguments  and returns unit
+; arguments and returns unit
 (iz nop MeTTa)
 (@doc nop
   (@desc "Outputs unit atom")
   (@params ())
   (@return "Unit atom"))
 (: nop (-> EmptyType))
-(ALT= (nop) ())
+(HE= (nop) ())
   
 (iz nop MeTTa)
 (@doc nop
@@ -1602,7 +1457,7 @@ For example:
     (@param "Anything")))
   (@return "Unit atom"))
 (: nop (-> Atom (->)))
-(ALT= (nop $x) ())
+(HE= (nop $x) ())
 
 (iz empty MeTTa)
 ; TODO: can be replaced by Empty atom and removed, kept for compatibility
@@ -1611,9 +1466,8 @@ For example:
   (@params ())
   (@return "Nothing"))
 (: empty (-> %Undefined%))
-(ALT= (empty) (let a b never-happens))
-;For testing
-;(= (empty) Empty)
+(= (empty) (let a b never-happens))
+(HE= (empty) Empty)
 
 ;(= (empty-rust1) (let a b never-happens))
 ; TODO: MINIMAL added for compatibility, remove after migration
@@ -1627,6 +1481,11 @@ For example:
 	(@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set"))
 (: unique (-> Atom Atom))
+(ML= (unique $code)
+  (unique-by == $code))
+(: unique (-> Atom %Undefined%))
+(= (unique $arg) (let $c (collapse $arg) (let $u (unique-atom $c) (superpose $u))))
+
 
 (iz union MeTTa)
 (@doc union
@@ -1635,7 +1494,11 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets"))
-(: union (-> Atom Atom Atom))
+(: union (-> (-> $res) (-> $res) $res))
+(= (union $arg1 $arg2)
+   (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
+     (let $u (union-atom $c1 $c2) (superpose $u)))))
+
 
 (iz intersection MeTTa)
 (@doc intersection
@@ -1644,7 +1507,10 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets"))
-(: intersection (-> Atom Atom Atom))
+(: intersection (-> (-> $res) (-> $res) $res))
+(= (intersection $arg1 $arg2)
+   (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
+     (let $u (intersection-atom $c1 $c2) (superpose $u)))))
 
 (iz subtraction MeTTa)
 (@doc subtraction
@@ -1653,8 +1519,10 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets"))
-(: subtraction (-> Atom Atom Atom))
-
+(: subtraction (-> (-> $res) (-> $res) $res))
+(= (subtraction $arg1 $arg2)
+   (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
+     (let $u (subtraction-atom $c1 $c2) (superpose $u)))))
 
 (@doc add-reducts
   (@desc "Function takes space and expression, evaluates atoms in it and adds them into given space")
@@ -1664,7 +1532,7 @@ For example:
   (@return "Unit atom"))
 (: add-reducts (-> Grounded %Undefined% (->)))
 (= (add-reducts $space $tuple)
-    (foldl-atom $tuple () $a $b (eval (add-atom $space $b))))
+    (foldl-atom $tuple () $a $b (add-atom $space $b)))
 
 (@doc add-atoms
   (@desc "Function takes space and expression and adds atoms in Expression into given space without reducing them")
@@ -1674,15 +1542,26 @@ For example:
   (@return "Unit atom"))
 (: add-atoms (-> Grounded Expression (->)))
 (= (add-atoms $space $tuple)
-    (foldl-atom $tuple () $a $b (eval (add-atom $space $b))))
+    (foldl-atom $tuple () $a $b (add-atom $space $b)))
 
-
+(@doc assertIncludes
+  (@desc "Checks if the content in the second argument is included in the results of the first argument's evaluation")
+  (@params (
+    (@param "First expression")
+    (@param "Second expression")))
+  (@return "Unit atom if the second argument is included in the results of the first argument's evaluation, error - otherwise"))
+(: assertIncludes (-> (-> $res) Expression (->)))
+(= (assertIncludes $atom $content)
+    (let $eval_atom (collapse $atom)
+        (let $diff (subtraction-atom $content $eval_atom)
+            (if (== $diff ())
+                ()
+                (Error (assertIncludes $atom $content) 
+                  (assertIncludes error: $diff not included in result: $eval_atom))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Documentation formatting functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(iz @doc MeTTa)
 (@doc @doc
   (@desc "Used for documentation purposes. Function documentation starts with @doc")
   (@params (
@@ -1787,7 +1666,7 @@ For example:
   (@params (
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
-(: get-doc (-> Atom Atom))
+(: get-doc (-> Atom %Undefined%))
 (= (get-doc $atom)
   (let $meta-type (get-metatype $atom)
     (case $meta-type (
@@ -1800,7 +1679,7 @@ For example:
   (@params (
     (@param "Atom/Function name for which documentation is needed")))
   (@return "Documentation for the given atom/function"))
-(: get-doc-single-atom (-> Atom Atom))
+(: get-doc-single-atom (-> Atom %Undefined%))
 (= (get-doc-single-atom $atom)
   (let $top-space (mod-space! top)
   (let $type (get-type-space $top-space $atom)
@@ -1815,7 +1694,7 @@ For example:
     (@param "Function name for which documentation is needed")
     (@param "Type notation for this function")))
   (@return "Documentation for the given function"))
-(: get-doc-function (-> Atom Type Atom))
+(: get-doc-function (-> Atom Type %Undefined%))
 (= (get-doc-function $name $type)
   (let $top-space (mod-space! top)
   (unify $top-space (@doc $name $desc (@params $params) $ret)
@@ -1843,7 +1722,7 @@ For example:
   (@params (
     (@param "List of parameters in form of ((@param Description) (@param Description)...)")
     (@param "Return value's description in form of (@return Description)")
-    (@param "Type notation without -> starting symbol e.g. (Atom Atom Atom)")))
+    (@param "Type notation without -> starting symbol e.g. (Atom Atom %Undefined%)")))
   (@return "United list of params and return value each augmented with its type. E.g. (((@param (@type Atom) (@desc Description)) (@param (@type Atom) (@desc Description2))) (@return (@type Atom) (@desc Description)))"))
 (: get-doc-params (-> Expression Atom Expression (Expression Atom)))
 (= (get-doc-params $params $ret $types)
@@ -1864,7 +1743,7 @@ For example:
   (@params (
     (@param "Atom's name to get documentation for")))
   (@return "Documentation on input Atom"))
-(: get-doc-atom (-> Atom Atom))
+(: get-doc-atom (-> Atom %Undefined%))
 (= (get-doc-atom $atom)
   (let $top-space (mod-space! top)
   (let $type (get-type-space $top-space $atom)
@@ -1959,7 +1838,7 @@ For example:
     (@param "Atomspace to add atom into")
     (@param "Atom to add")))
   (@return "Unit atom"))
-(: add-atom (-> hyperon::space::DynSpace Atom (->)))
+(: add-atom (-> SpaceType Atom (->)))
 
 (iz get-type MeTTa)
 (@doc get-type
@@ -1968,7 +1847,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom"))
 (: get-type (-> Atom Atom))
-(: get-type (-> Atom hyperon::space::DynSpace Atom))
+(: get-type (-> Atom SpaceType Atom))
 
 (iz get-type-space MeTTa)
 (@doc get-type-space
@@ -1978,7 +1857,7 @@ For example:
     (@param "Atom to get type for")))
   (@return "Type notation or %Undefined% if there is no type for input Atom in provided atomspace"))
 (iz get-type-space MeTTa)
-(: get-type-space (-> hyperon::space::DynSpace Atom Atom))
+(: get-type-space (-> SpaceType Atom Atom))
 (= (get-type-space $space $atom)
 	(get-type $atom $space))
 
@@ -2000,6 +1879,7 @@ For example:
     (@param "Atom to be evaluated if arguments are equal")
     (@param "Atom to be evaluated if arguments are not equal")))
   (@return "Evaluated third or fourth argument"))
+(: if-equal (-> Atom Atom (-> $res) (-> $res) $res))
 
 
 (iz new-space MeTTa)
@@ -2007,7 +1887,7 @@ For example:
   (@desc "Creates new Atomspace which could be used further in the program as a separate from &self Atomspace")
   (@params ())
   (@return "Reference to a new space"))
-(: new-space (-> hyperon::space::DynSpace))
+(: new-space (-> SpaceType))
 
 
 (iz remove-atom MeTTa)
@@ -2017,7 +1897,7 @@ For example:
     (@param "Reference to the space from which the Atom needs to be removed")
     (@param "Atom to be removed")))
   (@return "Unit atom"))
-(: remove-atom (-> hyperon::space::DynSpace Atom (->)))
+(: remove-atom (-> SpaceType Atom (->)))
 
 
 (iz get-atoms MeTTa)
@@ -2027,7 +1907,7 @@ For example:
     (@param "Reference to the space")))
   (@return "List of all atoms in the input space"))
 
-(: get-atoms (-> hyperon::space::DynSpace Atom))
+(: get-atoms (-> SpaceType Atom))
 
 
 
@@ -2067,11 +1947,11 @@ For example:
     (@param "Atomspace to search pattern")
     (@param "Pattern atom to be searched")
     (@param "Output template typically containing variables from the input pattern")))
-  (@return "If match was successful it outputs template (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Empty - otherwise"))
+  (@return "If match was successfull it outputs template (third argument) with filled variables (if any were present in pattern) using matched pattern (second argument). Empty - otherwise"))
 
-(: match (-> Atom Atom Atom %Undefined%))
+(: match (-> SpaceType MatchAtom (-> $res) $res))
 
-;(ALT= (match $space $pattern $template)
+;(HE= (match $space $pattern $template)
 ;  (unify $space $pattern $template Empty))
 
 (iz register-module! MeTTa)
@@ -2080,7 +1960,7 @@ For example:
   (@params (
     (@param "File system path")))
   (@return "Unit atom"))
-(: register-module! (-> Atom (->)))
+(: register-module! (-> (String Location) (->)))
 
 
 (iz mod-space! MeTTa)
@@ -2089,7 +1969,7 @@ For example:
   (@params (
     (@param "Module name")))
   (@return "Space name"))
-(: mod-space! (-> Atom hyperon::space::DynSpace))
+(: mod-space! (-> Atom SpaceType))
 
 (= (mod-space! self) &self)
 (= (mod-space! top) &self)
@@ -2118,8 +1998,13 @@ For example:
   (@params (
     (@param "First expression")
     (@param "Second expression")))
-  (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
-(: assertEqual (-> Atom Atom Atom))
+  (@return "Unit atom if both expressions after evaluation are equal, error - otherwise"))
+(: assertEqual (-> (-> $res) (-> $res) (->)))
+(= (assertEqual $actual $expected)
+   (chain (context-space) $space
+     (chain (metta (collapse $actual) %Undefined% $space) $actual-results
+       (chain (metta (collapse $expected) %Undefined% $space) $expected-results
+         (_assert-results-are-equal $actual-results $expected-results (assertEqual $actual $expected)) ))))
 
 (iz assertNotEqual MeTTaLog)
 (@doc assertNotEqual
@@ -2128,18 +2013,7 @@ For example:
     (@param "First expression")
     (@param "Second expression")))
   (@return "Unit atom if both expressions after evaluation are not equal, error - otherwise"))
-(: assertNotEqual (-> Atom Atom Atom))
-
-
-(iz assertEqualToResult MeTTa)
-(@doc assertEqualToResult
-  (@desc "Same as assertEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
-  (@params (
-    (@param "First expression (it will be evaluated)")
-    (@param "Second expression (it won't be evaluated)")))
-  (@return "Unit atom if both expression after evaluation is equal, error - otherwise"))
-(: assertEqualToResult (-> Atom Atom Atom))
-
+(: assertNotEqual (-> (-> $res) (-> $res) (->)))
 (iz assertAlphaEqual MeTTa)
 (@doc assertAlphaEqual
   (@desc "Compares (sets of) results of evaluation of two expressions using alpha equality")
@@ -2147,6 +2021,26 @@ For example:
     (@param "First expression")
     (@param "Second expression")))
   (@return "Unit atom if both expressions after evaluation are alpha equal, error - otherwise"))
+(: assertAlphaEqual (-> (-> $res) (-> $res) (->)))
+(= (assertAlphaEqual $actual $expected)
+   (chain (context-space) $space
+     (chain (metta (collapse $actual) %Undefined% $space) $actual-results
+       (chain (metta (collapse $expected) %Undefined% $space) $expected-results
+         (_assert-results-are-alpha-equal $actual-results $expected-results (assertAlphaEqual $actual $expected)) ))))
+
+(iz assertEqualToResult MeTTa)
+(@doc assertEqualToResult
+  (@desc "Same as assertEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
+  (@params (
+    (@param "First expression (it will be evaluated)")
+    (@param "Second expression containing the expected evaluation results (it won't be evaluated)")))
+  (@return "Unit atom if both expressions after evaluation of the first argument are equal, error - otherwise"))
+(: assertEqualToResult (-> (-> $res) Expression (->)))
+(= (assertEqualToResult $actual $expected-results)
+   (chain (context-space) $space
+     (chain (metta (collapse $actual) %Undefined% $space) $actual-results
+       (_assert-results-are-equal $actual-results $expected-results (assertEqualToResult $actual $expected-results)) )))
+
 
 (iz assertNotEqualToResult MeTTaLog)
 (@doc assertNotEqualToResult
@@ -2155,7 +2049,7 @@ For example:
     (@param "First expression (it will be evaluated)")
     (@param "Second expression (it won't be evaluated)")))
   (@return "Unit atom if both expressions after evaluation are not equal, error - otherwise"))
-(: assertNotEqualToResult (-> Atom Atom Atom))
+(: assertNotEqualToResult (-> (-> $res) Expression (->)))
 
 (@doc assertAlphaEqualToResult
   (@desc "Same as assertAlphaEqual but it doesn't evaluate second argument. Second argument is considered as a set of values of the first argument's evaluation")
@@ -2163,6 +2057,11 @@ For example:
     (@param "First expression (it will be evaluated)")
     (@param "Second expression (it won't be evaluated)")))
   (@return "Unit atom if both expressions after evaluation of the first argument are alpha equal, error - otherwise"))
+(: assertAlphaEqualToResult (-> (-> $res) Expression (->)))
+(= (assertAlphaEqualToResult $actual $expected-results)
+   (chain (context-space) $space
+     (chain (metta (collapse $actual) %Undefined% $space) $actual-results
+       (_assert-results-are-alpha-equal $actual-results $expected-results (assertAlphaEqualToResult $actual $expected-results)) )))
 
 
 (iz superpose MeTTa)
@@ -2171,6 +2070,7 @@ For example:
   (@params (
     (@param "Tuple to be converted")))
   (@return "Argument converted to nondeterministic result"))
+(: superpose (-> (Expression (Eval $res)) $res))
 (: superpose (-> Expression %Undefined%))
 
 (iz collapse MeTTa)
@@ -2179,8 +2079,21 @@ For example:
   (@params (
     (@param "Atom which will be evaluated")))
   (@return "Tuple"))
-(: collapse (-> Atom Atom))
-  
+(: collapse (-> (-> $res) Expression))
+(= (collapse $atom)
+  (function
+    (chain (context-space) $space
+      (chain (collapse-bind (metta $atom %Undefined% $space)) $eval
+        (chain (eval (foldl-atom $eval () $res $item (_collapse-add-next-atom-from-collapse-bind-result $res $item))) $result
+          (return $result) )))))
+
+(@doc _collapse-add-next-atom-from-collapse-bind-result
+  (@desc "Adds atom from collapse-bind result to the passed list")
+  (@params (
+    (@param "List to add an atom into")
+    (@param "collapse-bind result to extract atom from, should be a pair of atom and bindings")))
+  (@return "List with new atom as a head"))
+
 (iz case MeTTa)
 (@doc case
   (@desc "Subsequently tests multiple pattern-matching conditions (second argument) for the given value (first argument)")
@@ -2188,7 +2101,7 @@ For example:
     (@param "Atom (it will be evaluated)")
     (@param "Tuple of pairs mapping condition patterns to results")))
   (@return "Result of evaluating Atom bound to met condition"))
-(: case (-> Atom Expression Atom))
+(: case (-> (-> $res) (Expression (Atom (-> $res))) %Undefined%))
 
 (iz capture MeTTa)
 (@doc capture
@@ -2220,11 +2133,15 @@ For example:
   (@params (
     (@param "Form")))
   (@return "None"))
-(: do (-> Expression %Undefined%))
+(: do (-> (-> $res) $res))
 
 (iz pragma! MeTTa)
 (@doc pragma!
-  (@desc "Changes global key's (first argument) value to a new one (second argument)")
+  (@desc "Changes global key's (first argument) value to a new one (second argument).
+Possible pragmas:
+  (pragma! type-check auto) - check type of the atom before evaluation
+  (pragma! interpreter bare-minimal) - use minimal MeTTa semantics when evaluating atom
+  (pragma! max-stack-depth <number>) - limit depth of the interpreter's stack, 0 - no limit (default behavior)")
   (@params (
     (@param "Key's name")
     (@param "New value")))
@@ -2240,7 +2157,7 @@ For example:
     (@param "Module name")))
   (@return "Unit atom"))
 
-(: import! (-> Atom Atom (->)))
+(: import! (-> SpaceType (String Location) (->)))
 
 (iz include MeTTa)
 (@doc include
@@ -2248,7 +2165,7 @@ For example:
   (@params (
     (@param "Name of metta script to import")))
   (@return "Unit atom"))
-(: include (-> Atom Atom))
+(: include (-> (String Location) Expression))
 
 
 (iz include! MeTTa)
@@ -2258,7 +2175,7 @@ For example:
     (@param "Space")
     (@param "Filename")))
   (@return "Expression"))
-(: include! (-> hyperon::space::DynSpace String Expression))
+(: include! (-> SpaceType String Expression))
 
 (iz bind! MeTTa)
 (@doc bind!
@@ -2284,9 +2201,10 @@ For example:
 (@doc println!
   (@desc "Prints a line of text to the console")
   (@params (
-    (@param "Expression/atom to be printed out")))
+    (@param "Expression/atom to be printed out afer evaluation")))
   (@return "Unit atom"))
 (: println! (-> %Undefined% (->)))
+(= (println! $term) (println-atom (eval $term)))
 
 
 (iz format-args MeTTa)
@@ -2296,15 +2214,15 @@ For example:
     (@param "Expression with {} symbols to be replaced")
     (@param "Atoms to be placed inside expression instead of {}")))
   (@return "Expression with replaced {} with atoms"))
-(: format-args (-> String Atom String))
+(: format-args (-> String Expression String))
 
 
 (iz sealed MeTTa)
 (@doc sealed
   (@desc "Replaces all occurrences of any var from var list (first argument) inside atom (second argument) by unique variable. Can be used to create a locally scoped variables")
   (@params (
-	(@param "Variable list e.g. ($x $y)")
-	(@param "Atom which uses those variables")))
+    (@param "Variable list e.g. ($x $y)")
+    (@param "Atom which uses those variables")))
   (@return "Second argument but with variables being replaced with unique variables"))
 (: sealed (-> Expression Atom Atom))
 
@@ -2470,6 +2388,13 @@ For example:
 	(@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set based on predicate"))
 (: unique-by (-> Atom Atom Atom))
+(= (unique-by $op $code)
+	(let $answers (new-queue)
+	 (let $result (eval $code)
+	    (if (enque-by $op $answers $result)
+	       $result
+		   (empty)))))
+
 
 (iz union-by MeTTaLog)
 (@doc union-by
@@ -2480,7 +2405,7 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets based on predicate"))
-(: union-by (-> Atom Atom Atom Atom))
+(: union-by (-> Symbol (-> $res) (-> $res) $res))
 
 (iz intersection-by MeTTaLog)
 (@doc intersection-by
@@ -2491,7 +2416,7 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets based on predicate"))
-(: intersection-by (-> Atom Atom Atom Atom))
+(: intersection-by (-> Symbol (-> $res) (-> $res) $res))
 
 (iz subtraction-by MeTTaLog)
 (@doc subtraction-by
@@ -2502,7 +2427,7 @@ For example:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets based on predicate"))
-(: subtraction-by (-> Atom Atom Atom Atom))
+(: subtraction-by (-> Symbol (-> $res) (-> $res) $res))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2587,7 +2512,7 @@ For example:
 
 (iz =references MeTTaLog)
 (@doc =references
-  (@desc "Predicate that determines if two atoms reference the **same** underlying entity in memory. 
+  (@desc "Predicate that determines if two atoms reference the **same** underlying entity in memory.  like lisps `EQ` 
   This is the strictest form of equality, ensuring the atoms are not just identical in structure but are literally the **same instance**.")
   (@params (
 	(@param "First atom")
@@ -2628,9 +2553,9 @@ For example:
     (@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
     (@param "List of values")))
   (@return "Unique values from input set based on predicate"))
-(: unique-atom-by (-> Atom Expression Expression))
+(: unique-atom-by (-> Symbol Expression Expression))
 (= (unique-atom-by $Pred $L1)
-  (collapse (unique-by $Pred (superpose $L1))))
+  (collapse (unique-by $Pred (superpose-atom $L1))))
 
 
 (iz union-atom-by MeTTaLog)
@@ -2643,8 +2568,8 @@ For example:
     (@param "List of values")))
   (@return "Union of sets based on predicate"))
 (= (union-atom-by $Pred $L1 $L2)
-  (collapse (union-by $Pred (superpose $L1) (superpose $L2))))
-(: union-atom-by (-> Atom Expression Expression Expression))
+  (collapse (union-by $Pred (superpose-atom $L1) (superpose-atom $L2))))
+(: union-atom-by (-> Symbol Expression Expression Expression))
 
 (iz intersection-atom-by MeTTaLog)
 (@doc intersection-atom-by
@@ -2656,8 +2581,8 @@ For example:
     (@param "List of values")))
   (@return "Intersection of sets based on predicate"))
 (= (intersection-atom-by $Pred $L1 $L2)
-  (collapse (intersection-by $Pred (superpose $L1) (superpose $L2))))
-(: intersection-atom-by (-> Atom Expression Expression Expression))
+  (collapse (intersection-by $Pred (superpose-atom $L1) (superpose-atom $L2))))
+(: intersection-atom-by (-> Symbol Expression Expression Expression))
 
 (iz subtraction-atom-by MeTTaLog)
 (@doc subtraction-atom-by
@@ -2669,7 +2594,7 @@ For example:
     (@param "List of values")))
   (@return "Subtraction of sets based on predicate"))
 (= (subtraction-atom-by $Pred $L1 $L2)
-  (collapse (subtraction-by $Pred (superpose $L1) (superpose $L2))))
+  (collapse (subtraction-by $Pred (superpose-atom $L1) (superpose-atom $L2))))
 (: subtraction-atom-by (-> Atom Expression Expression Expression))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2687,49 +2612,84 @@ For example:
 ;;                                                                        ;;
 ;; These functions assume strict equality comparisons.                    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+(iz unique-atom MeTTa)
 (@doc unique-atom
   (@desc "Function takes tuple and returns only unique entities. E.g. (unique-atom (a b c d d)) -> (a b c d)")
   (@params (
-	(@param "List of values")))
+    (@param "List of values")))
   (@return "Unique values from input set"))
-(ALT= (unique-atom $L1)
-  (collapse (unique (superpose $L1))))
+(= (unique-atom $L1)
+  (collapse (unique (superpose-atom $L1))))
 (: unique-atom (-> Expression Expression))
 
+(iz union-atom MeTTa)
 (@doc union-atom
   (@desc "Function takes two tuples and returns their union. E.g. (union-atom (a b b c) (b c c d)) -> (a b b c b c c d)")
   (@params (
-	(@param "List of values")
-	(@param "List of values")))
+    (@param "List of values")
+    (@param "List of values")))
   (@return "Union of sets"))
-(ALT= (union-atom $L1 $L2)
-  (collapse (union (superpose $L1) (superpose $L2))))
 (: union-atom (-> Expression Expression Expression))
+(= (union-atom $L1 $L2)
+  (collapse (union (superpose-atom $L1) (superpose-atom $L2))))
 
+(iz intersection-atom MeTTa)
 (@doc intersection-atom
   (@desc "Function takes two tuples and returns their intersection. E.g. (intersection-atom (a b c c) (b c c c d)) -> (b c c)")
   (@params (
-	(@param "List of values")
-	(@param "List of values")))
+    (@param "List of values")
+    (@param "List of values")))
   (@return "Intersection of sets"))
-(ALT= (intersection-atom $L1 $L2)
-  (collapse (intersection (superpose $L1) (superpose $L2))))
 (: intersection-atom (-> Expression Expression Expression))
+(= (intersection-atom $L1 $L2)
+  (collapse (intersection (superpose-atom $L1) (superpose-atom $L2))))
 
+(iz subtraction-atom MeTTa)
 (@doc subtraction-atom
   (@desc "Function takes two tuples and returns their subtraction. E.g. !(subtraction-atom (a b b c) (b c c d)) -> (a b)")
   (@params (
-	(@param "List of values")
-	(@param "List of values")))
+    (@param "List of values")
+    (@param "List of values")))
   (@return "Subtraction of sets"))
-(ALT= (subtraction-atom $L1 $L2)
-  (collapse (subtraction (superpose $L1) (superpose $L2))))
 (: subtraction-atom (-> Expression Expression Expression))
+(= (subtraction-atom $L1 $L2)
+  (collapse (subtraction (superpose-atom $L1) (superpose-atom $L2))))
 
 
+(iz superpose-atom MeTTa)
+(@doc superpose-atom
+  (@desc "Function take a tuple and returns each element E.g. !(format-args "{}" ((superpose-atom (1 (+ 1 1) 3)))) -> [\"1\" \"(+ 1 1)\" \"3\"])")
+  (@params (
+	(@param "List of values")))
+  (@return "Each element non-deterministically"))
+(: superpose-atom (-> Expression Atom))
+(ML= (superpose-atom $L1)
+  (call-for! $ele (@ member $ele $L1)))
 
 
+(iz println-atom! MeTTa)
+(@doc println-atom!
+  (@desc "Prints an Atom it without evaluation")
+  (@params (
+	(@param "Anything")))
+  (@return "Unit atom"))
+(: println-atom! (-> Atom (->)))
+(ML= (println-atom! $term)
+  (call-unit! (@ write-src $term)))
+(HE= (println-atom! $term)
+  (println! (format-args "{}" ($term))))
+
+
+(iz with-space MeTTaLog)
+(@doc with-space
+  (@desc "Temporally override &self while running MeTTa")
+  (@params (
+	(@param "Space to evaluate from inside of")
+	(@param "Anything")))
+  (@return "Result of evaluation"))
+(: with-space (-> Grounded @Body ))
+(ML= (with-space $space |.| $Body)
+  (@ with_space $space $Body))
 
 
 
@@ -2743,3 +2703,21 @@ For example:
   (@return "Unit atom"))
 (: git-module! (-> Atom (->)))
 	
+
+(iz get-vtype CodeFunction)
+(iz get-types CodeFunction)
+(iz get-dtype CodeFunction)
+(iz get-ftype CodeFunction)
+(iz pragma! CodeFunction)
+(iz py-chain CodeFunction)
+(iz cons-atom CodeFunction)
+(iz type-cast CodeFunction)
+(iz filter-atom CodeFunction)
+(iz nop CodeFunction)
+(iz get-metatype CodeFunction)
+(iz capture CodeFunction)
+(iz sealed CodeFunction)
+(iz git-module! CodeFunction)
+
+
+
