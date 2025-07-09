@@ -4659,13 +4659,6 @@ into_equality_fct(OpN, Nth, RetType, Var, Comp, 'S'(Var, Code, RetType)):-
 
 
 
-
-
-
-
-:- endif.
-
-
 end_of_file.
 
 
