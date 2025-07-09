@@ -433,6 +433,8 @@ echo -e "${BLUE}Starting the installation process.${NC}."
 # ## Ensure pip and python3-venv are installed and upgraded
 # This function ensures that python3-venv and pip are installed and ready for use.
 ensure_venv_and_pip() {
+
+    ( cd python && source ./install_mettalog_python_libs.sh )
     # Check if Python is installed
     if ! command -v python3 &> /dev/null; then
         echo -e "${RED}Python3 is not installed. Please install Python3 to continue${NC}."
