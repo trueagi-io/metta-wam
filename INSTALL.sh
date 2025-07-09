@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # ## Ensure the script is being sourced, not executed
 # The script must be sourced so that it can set environment variables and return properly.
-IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != "${0}" ]] && echo 1 || echo 0)
+IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != ${0} ]] && echo 1 || echo 0)
 
 # If the script is executed (not sourced), display an error and exit.
 if [ "$IS_SOURCED" -eq "0" ]; then

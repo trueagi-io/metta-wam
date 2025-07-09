@@ -53,13 +53,19 @@ ensure_mc_va(FA,N,Rel):- atom(Rel),assert(has_va(Rel,N,FA)).
 
 non_eval_arg(F,N):- argIsa(F,N,NonEval),non_evaluated_type(NonEval),!.
 
-e_i(F, N, A, AA):- i_c(F, N, A, AA).
+e_i(FunctType, F, N, A, AA):- i_c(FunctType, F, N, A, AA).
 
 argIsa(F,N,T):- metta_atom([:,F,[->|Args]]),nth1(N,Args,T).
 
-i_c(_, _, A, AA):- notrace( \+ is_list(A) ), !,A=AA.
-i_c(F, N, A, AA):- non_eval_arg(F,N),!,A=AA.
-i_c(_, _, A, AA):- eval(A,AA).
+i_c(_FunctType, _, _, A, AA):- notrace( \+ compound(A) ), !,A=AA.
+i_c(FunctType, F, N, as_p1(CType, RetType, NewRetType, NewValueR, SrcValue, Code), NewValueR):-
+    debug_info(i_c,i_c(FunctType, fa(F,N),as_p1(CType, RetType, NewRetType, NewValueR, SrcValue, Code))),
+    fail, !,
+   (call(Code)*->true;(SrcValue=NewValueR)).
+
+i_c(_FunctType, _, _, A, AA):- notrace( \+ is_list(A) ), !,A=AA.
+i_c(_FunctType, F, N, A, AA):- non_eval_arg(F,N),!,A=AA.
+i_c(_FunctType, _, _, A, AA):- eval(A,AA).
 
 ee(_Let_type,_,E,R):- nonvar(R), E=R,!.
 ee(_Let_type,_,E,R):- is_list(E), !, eval_args(E,ER),ER=R.
@@ -355,15 +361,17 @@ ensure_evaled(_,X,Y):- eval(X,Y).
 
 get_value(Var,X):- var(Var),!, clause(get_value(Var,X),Body),call(Body).
 get_value('&self',X):- current_self(X),!.
-get_value(Var,X):- nb_bound(Var,X).
+get_value(Var,X):- nb_bound(Var,X),!.
+get_value(X,X):- nonvar(X),!.
 
 
 
 decl_fa(F,A,MI,MC):- ensure_compiled, decl_fa_1(F,A,MI,MC),MI\==MC.
 
+decl_fa_1(_,_,s,mi):- !.
 decl_fa_1(F,A,_MI,MC):- has_fa(F,A,MC),!.
 decl_fa_1(F,A,_MI,MC):- is_data_functor(F,A),!,MC=ml.
-decl_fa_1(_,_,s,mi).
+
 decl_fa_1(_,_,mo,mc). %:- trace.
 
 decl_va(F,A,MI,MC):- ensure_compiled, decl_va_1(F,A,MI,MC),MI\==MC.
@@ -460,133 +468,133 @@ ensure_ready_mi(_, _).
 mi(F, ROut) :- ensure_ready_mi(F, 0),
     true,
     mo(F, R),
-    i_c(F, 0, R, ROut).
+    i_c(_FunctType, F, 0, R, ROut).
 
 mi(F, X0, ROut) :-
     ensure_ready_mi(F, 1),
-    (i_c(F, 1, X0, A0)),
+    (i_c(FunctType, F, 1, X0, A0)),
     mo(F, A0, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, ROut) :-
     ensure_ready_mi(F, 2),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1)),
     mo(F, A0, A1, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, ROut) :-
     ensure_ready_mi(F, 3),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2)),
     mo(F, A0, A1, A2, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, ROut) :-
     ensure_ready_mi(F, 4),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3)),
     mo(F, A0, A1, A2, A3, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, ROut) :-
     ensure_ready_mi(F, 5),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4)),
     mo(F, A0, A1, A2, A3, A4, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, X5, ROut) :-
     ensure_ready_mi(F, 6),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4), i_c(F, 6, X5, A5)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4), i_c(FunctType, F, 6, X5, A5)),
     mo(F, A0, A1, A2, A3, A4, A5, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, X5, X6, ROut) :-
     ensure_ready_mi(F, 7),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4), i_c(F, 6, X5, A5), i_c(F, 7, X6, A6)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4), i_c(FunctType, F, 6, X5, A5), i_c(FunctType, F, 7, X6, A6)),
     mo(F, A0, A1, A2, A3, A4, A5, A6, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, X5, X6, X7, ROut) :-
     ensure_ready_mi(F, 8),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4), i_c(F, 6, X5, A5), i_c(F, 7, X6, A6), i_c(F, 8, X7, A7)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4), i_c(FunctType, F, 6, X5, A5), i_c(FunctType, F, 7, X6, A6), i_c(FunctType, F, 8, X7, A7)),
     mo(F, A0, A1, A2, A3, A4, A5, A6, A7, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, X5, X6, X7, X8, ROut) :-
     ensure_ready_mi(F, 9),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4), i_c(F, 6, X5, A5), i_c(F, 7, X6, A6), i_c(F, 8, X7, A7), i_c(F, 9, X8, A8)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4), i_c(FunctType, F, 6, X5, A5), i_c(FunctType, F, 7, X6, A6), i_c(FunctType, F, 8, X7, A7), i_c(FunctType, F, 9, X8, A8)),
     mo(F, A0, A1, A2, A3, A4, A5, A6, A7, A8, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 mi(F, X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, ROut) :-
     ensure_ready_mi(F, 10),
-    (i_c(F, 1, X0, A0), i_c(F, 2, X1, A1), i_c(F, 3, X2, A2), i_c(F, 4, X3, A3), i_c(F, 5, X4, A4), i_c(F, 6, X5, A5), i_c(F, 7, X6, A6), i_c(F, 8, X7, A7), i_c(F, 9, X8, A8), i_c(F, 10, X9, A9)),
+    (i_c(FunctType, F, 1, X0, A0), i_c(FunctType, F, 2, X1, A1), i_c(FunctType, F, 3, X2, A2), i_c(FunctType, F, 4, X3, A3), i_c(FunctType, F, 5, X4, A4), i_c(FunctType, F, 6, X5, A5), i_c(FunctType, F, 7, X6, A6), i_c(FunctType, F, 8, X7, A7), i_c(FunctType, F, 9, X8, A8), i_c(FunctType, F, 10, X9, A9)),
     mo(F, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, R),
-    i_c(F, 0, R, ROut).
+    i_c(FunctType, F, 0, R, ROut).
 
 ensure_ready_me(_, _).
 me(F, ROut) :-
     ensure_ready_me(F, 0),
     mi(F, R),
-    e_i(F, 0, R, ROut).
+    e_i(_FunctType, F, 0, R, ROut).
 
 me(F, X0, ROut) :-
     ensure_ready_me(F, 1),
-    (e_i(F, 1, X0, A0)),
+    (e_i(FunctType, F, 1, X0, A0)),
     mi(F, A0, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, ROut) :-
     ensure_ready_me(F, 2),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1)),
     mi(F, A0, A1, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, ROut) :-
     ensure_ready_me(F, 3),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2)),
     mi(F, A0, A1, A2, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, ROut) :-
     ensure_ready_me(F, 4),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3)),
     mi(F, A0, A1, A2, A3, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, ROut) :-
     ensure_ready_me(F, 5),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4)),
     mi(F, A0, A1, A2, A3, A4, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, X5, ROut) :-
     ensure_ready_me(F, 6),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4), e_i(F, 6, X5, A5)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4), e_i(FunctType, F, 6, X5, A5)),
     mi(F, A0, A1, A2, A3, A4, A5, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, X5, X6, ROut) :-
     ensure_ready_me(F, 7),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4), e_i(F, 6, X5, A5), e_i(F, 7, X6, A6)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4), e_i(FunctType, F, 6, X5, A5), e_i(FunctType, F, 7, X6, A6)),
     mi(F, A0, A1, A2, A3, A4, A5, A6, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, X5, X6, X7, ROut) :-
     ensure_ready_me(F, 8),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4), e_i(F, 6, X5, A5), e_i(F, 7, X6, A6), e_i(F, 8, X7, A7)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4), e_i(FunctType, F, 6, X5, A5), e_i(FunctType, F, 7, X6, A6), e_i(FunctType, F, 8, X7, A7)),
     mi(F, A0, A1, A2, A3, A4, A5, A6, A7, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, X5, X6, X7, X8, ROut) :-
     ensure_ready_me(F, 9),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4), e_i(F, 6, X5, A5), e_i(F, 7, X6, A6), e_i(F, 8, X7, A7), e_i(F, 9, X8, A8)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4), e_i(FunctType, F, 6, X5, A5), e_i(FunctType, F, 7, X6, A6), e_i(FunctType, F, 8, X7, A7), e_i(FunctType, F, 9, X8, A8)),
     mi(F, A0, A1, A2, A3, A4, A5, A6, A7, A8, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 me(F, X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, ROut) :-
     ensure_ready_me(F, 10),
-    (e_i(F, 1, X0, A0), e_i(F, 2, X1, A1), e_i(F, 3, X2, A2), e_i(F, 4, X3, A3), e_i(F, 5, X4, A4), e_i(F, 6, X5, A5), e_i(F, 7, X6, A6), e_i(F, 8, X7, A7), e_i(F, 9, X8, A8), e_i(F, 10, X9, A9)),
+    (e_i(FunctType, F, 1, X0, A0), e_i(FunctType, F, 2, X1, A1), e_i(FunctType, F, 3, X2, A2), e_i(FunctType, F, 4, X3, A3), e_i(FunctType, F, 5, X4, A4), e_i(FunctType, F, 6, X5, A5), e_i(FunctType, F, 7, X6, A6), e_i(FunctType, F, 8, X7, A7), e_i(FunctType, F, 9, X8, A8), e_i(FunctType, F, 10, X9, A9)),
     mi(F, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, R),
-    e_i(F, 0, R, ROut).
+    e_i(FunctType, F, 0, R, ROut).
 
 
 from_prolog_args(_,X,X).

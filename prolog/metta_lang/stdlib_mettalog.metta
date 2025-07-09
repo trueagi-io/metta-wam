@@ -1,7 +1,82 @@
-;; Type Declarations with Documentation
+
 
 (is-mettalog)
 
+;; !(pragma! UndeclaredArg Atom)
+;; !(pragma! UndeclaredArg %Undefined%)
+;; !(pragma! UndeclaredReturn %Undefined%)
+;; !(pragma! UndeclaredReturn Atom)
+
+(: : (-> Atom) )
+(: : (-> Atom Atom) )
+(: : (-> Atom Atom Atom) )
+(: : (-> Atom Atom Atom Atom) )
+
+(: :> (-> Atom) )
+(: :> (-> Atom Atom) )
+(: :> (-> Atom Atom Atom) )
+(: :> (-> Atom Atom Atom Atom) )
+
+(: iz (-> Atom) )
+(: iz (-> Atom Atom) )
+(: iz (-> Atom Atom Atom) )
+(: iz (-> Atom Atom Atom Atom) )
+
+(: RelationType Type)
+(:> RelationType Type)
+(: DataFunctor RelationType)
+(: Constructor RelationType)
+
+(: ==> (-> Atom Atom Atom))
+
+(==> (, $A $_) $A)
+(==> (, $_ $B) $B)
+(==> (, $A $B $C) (, (, $A $B) $C))
+(==> (, $A $B $C $D) (, (, $A $B $C) $D))
+(==> (, $A $B $C $D $E) (, (, $A $B $C) (, $D $E)))
+(==>
+  (: $Rel DataFunctor)
+  (, 
+	(argNType $Rel $_ Atom)
+	(returnType $Rel Atom)))
+
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom Atom Atom)))
+(: @doc DataFunctor)
+(: @desc DataFunctor)
+(: @param DataFunctor)
+(: @return DataFunctor)
+(: @doc-formal DataFunctor)
+(: @item DataFunctor)
+
+(: = DataFunctor)
+(: HE= DataFunctor)
+
+(: @doc (-> Atom Atom Atom Atom Atom))
+(: @doc (-> Atom Atom Atom))
+
+
+
+
+(==>
+  (: $Rel Constructor)
+  (, 
+	(argNType $Rel $_ %Undefined%)
+	(returnType $Rel Atom)))
+
+
+;;(iz (@kind function) DataFunctor)
+;;(iz (@kind atom) DataFunctor)
+(iz (@kind $_) DataFunctor)
+(iz @type DataFunctor)
+(iz @params DataFunctor)
+
+;; Type Declarations with Documentation
 (@doc Any
   (@desc "The universal type; any value belongs to this type."))
 (: Any Type)
@@ -848,6 +923,11 @@ For example:
    (call-fn! pow $B $P))
 
 
+
+(: is-op-1 DataFunctor)
+(: is-op-2 DataFunctor)
+(: is-pred DataFunctor)
+
 (==> (is-op-1 $m $p) (is-fn-1 $m $p))
 (==> (is-op-1 $m $_) (: $m (-> Number Number)))
 (==> (is-op-2 $m $p) (is-fn-2 $m $p))
@@ -855,13 +935,14 @@ For example:
 (==> (is-pred $m $p) (is-pred-1 $m $p))
 (==> (is-pred $m $_) (: $m (-> Number Bool)))
 
-(==> (is-fn-1 $m $p) (= ($m $a) (call-fn! $p $a)))
-(==> (is-fn-r $m $p) (= ($m $a) (call-fn-r! $p $a)))
-(==> (is-fn-2 $m $p) (= ($m $a $b) (call-fn! $p $a $b)))
-(==> (is-fn-21 $m $p) (= ($m $L $N) (call-fn! $p $N $L)))
-(==> (is-fn-3 $m $p) (= ($m $a $b $c) (call-fn! $p $a $b $c)))
-(==> (is-pred-1 $m $p) (= ($m $a) (call-p! $p $a)))
-(==> (is-pred-2 $m $p) (= ($m $a $b) (call-p! $p $a $b)))
+
+(: is-fn-1   DataFunctor) (==> (is-fn-1   $m $p) (= ($m $a)       (call-fn! $p $a)))
+(: is-fn-r   DataFunctor) (==> (is-fn-r   $m $p) (= ($m $a)       (call-fn-r! $p $a)))
+(: is-fn-2   DataFunctor) (==> (is-fn-2   $m $p) (= ($m $a $b)    (call-fn! $p $a $b)))
+(: is-fn-2   DataFunctor) (==> (is-fn-21  $m $p) (= ($m $L $N)    (call-fn! $p $N $L)))
+(: is-fn-3   DataFunctor) (==> (is-fn-3   $m $p) (= ($m $a $b $c) (call-fn! $p $a $b $c)))
+(: is-pred-1 DataFunctor) (==> (is-pred-1 $m $p) (= ($m $a)       (call-p! $p $a)))
+(: is-pred-2 DataFunctor) (==> (is-pred-2 $m $p) (= ($m $a $b)    (call-p! $p $a $b)))
 
 (is-fn-1 py-list py_list)
 
@@ -1481,10 +1562,9 @@ For example:
 	(@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set"))
 (: unique (-> Atom Atom))
-(ML= (unique $code)
-  (unique-by == $code))
+(ML= (unique $code) (unique-by == $code))
 (: unique (-> Atom %Undefined%))
-(= (unique $arg) (let $c (collapse $arg) (let $u (unique-atom $c) (superpose $u))))
+(HE= (unique $arg) (let $c (collapse $arg) (let $u (unique-atom $c) (superpose $u))))
 
 
 (iz union MeTTa)
@@ -1495,9 +1575,11 @@ For example:
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets"))
 (: union (-> (-> $res) (-> $res) $res))
-(= (union $arg1 $arg2)
+(HE= (union $arg1 $arg2)
    (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
      (let $u (union-atom $c1 $c2) (superpose $u)))))
+(ML= (union $code1 $code2)
+  (union-by == $code1 $code2))
 
 
 (iz intersection MeTTa)
@@ -1508,9 +1590,12 @@ For example:
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets"))
 (: intersection (-> (-> $res) (-> $res) $res))
-(= (intersection $arg1 $arg2)
+(HE= (intersection $arg1 $arg2)
    (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
      (let $u (intersection-atom $c1 $c2) (superpose $u)))))
+(ML= (intersection $code1 $code2)
+  (intersection-by == $code1 $code2))
+
 
 (iz subtraction MeTTa)
 (@doc subtraction
@@ -1520,9 +1605,11 @@ For example:
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets"))
 (: subtraction (-> (-> $res) (-> $res) $res))
-(= (subtraction $arg1 $arg2)
+(HE= (subtraction $arg1 $arg2)
    (let $c1 (collapse $arg1) (let $c2 (collapse $arg2)
      (let $u (subtraction-atom $c1 $c2) (superpose $u)))))
+(ML= (subtraction $code1 $code2)
+  (subtraction-by == $code1 $code2))
 
 (@doc add-reducts
   (@desc "Function takes space and expression, evaluates atoms in it and adds them into given space")
@@ -2079,13 +2166,16 @@ For example:
   (@params (
     (@param "Atom which will be evaluated")))
   (@return "Tuple"))
-(: collapse (-> (-> $res) Expression))
+(: collapse Atom Atom)
+(: collapse (-> (-> $res) (Expression $res)))
 (= (collapse $atom)
   (function
     (chain (context-space) $space
       (chain (collapse-bind (metta $atom %Undefined% $space)) $eval
         (chain (eval (foldl-atom $eval () $res $item (_collapse-add-next-atom-from-collapse-bind-result $res $item))) $result
           (return $result) )))))
+
+
 
 (@doc _collapse-add-next-atom-from-collapse-bind-result
   (@desc "Adds atom from collapse-bind result to the passed list")
@@ -2387,7 +2477,7 @@ Possible pragmas:
 	(@param "Comparator predicate (e.g., =alpha, =identical, =will, =u=, =references)")
 	(@param "Non-deterministic set of values")))
   (@return "Unique non-deterministic values from input set based on predicate"))
-(: unique-by (-> Atom Atom Atom))
+(: unique-by (-> (-> $res $res Bool) (-> $res) $res))
 (= (unique-by $op $code)
 	(let $answers (new-queue)
 	 (let $result (eval $code)
@@ -2405,7 +2495,7 @@ Possible pragmas:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Union of sets based on predicate"))
-(: union-by (-> Symbol (-> $res) (-> $res) $res))
+(: union-by (-> (-> $res $res Bool) (-> $res) (-> $res) $res))
 
 (iz intersection-by MeTTaLog)
 (@doc intersection-by
@@ -2416,7 +2506,7 @@ Possible pragmas:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Intersection of sets based on predicate"))
-(: intersection-by (-> Symbol (-> $res) (-> $res) $res))
+(: intersection-by (-> (-> $res $res Bool) (-> $res) (-> $res) $res))
 
 (iz subtraction-by MeTTaLog)
 (@doc subtraction-by
@@ -2427,7 +2517,7 @@ Possible pragmas:
 	(@param "Non-deterministic set of values")
 	(@param "Another non-deterministic set of values")))
   (@return "Non-deterministic Subtraction of sets based on predicate"))
-(: subtraction-by (-> Symbol (-> $res) (-> $res) $res))
+(: subtraction-by (-> (-> $res $res Bool) (-> $res) (-> $res) $res))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

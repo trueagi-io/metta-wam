@@ -1,65 +1,4 @@
-﻿/*
- * Project: MeTTaLog - A MeTTa to Prolog Transpiler/Interpreter
- * Description: This file is part of the source code for a transpiler designed to convert
- *              MeTTa language programs into Prolog, utilizing the SWI-Prolog compiler for
- *              optimizing and transforming function/logic programs. It handles different
- *              logical constructs and performs conversions between functions and predicates.
- *
- * Author: Douglas R. Miles
- * Contact: logicmoo@gmail.com / dmiles@logicmoo.org
- * License: LGPL
- * Repository: https://github.com/trueagi-io/metta-wam
- *             https://github.com/logicmoo/hyperon-wam
- * Created Date: 8/23/2023
- * Last Modified: $LastChangedDate$  # You will replace this with Git automation
- *
- * Usage: This file is a part of the transpiler that transforms MeTTa programs into Prolog. For details
- *        on how to contribute or use this project, please refer to the repository README or the project documentation.
- *
- * Contribution: Contributions are welcome! For contributing guidelines, please check the CONTRIBUTING.md
- *               file in the repository.
- *
- * Notes:
- * - Ensure you have SWI-Prolog installed and properly configured to use this transpiler.
- * - This project is under active development, and we welcome feedback and contributions.
- *
- * Acknowledgments: Special thanks to all contributors and the open source community for their support and contributions.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the
- *    distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-:- if(false).
-
-:- include(metta_compiler_roy).
-
-:- else.
-
-
-
-% ==============================
+﻿% ==============================
 % MeTTa to Prolog transpilation (which uses the Host SWI-Prolog compiler)
 % Aimed at compiling/optimizing and transforming
 % Prolog predicates to functional equivalents and vice versa, with special attention
@@ -227,7 +166,6 @@ setup_library_call(Source, FnName, LenArgs, MettaTypeArgs, MettaTypeResult, Inte
     (transpiler_predicate_store(_, FnName, LenArgs, _, _, _, _) -> true ;
       compiler_assertz(transpiler_predicate_store(Source, FnName, LenArgs, MettaTypeArgs, MettaTypeResult, InternalTypeArgs, InternalTypeResult))),
     setup_mi_me(FnName, LenArgs, InternalTypeArgs, InternalTypeResult)
-
     .
 
 setup_mi_me(_, _, _, _).
@@ -3100,7 +3038,8 @@ symbol_impl(Self, Symbol, Len, _Args, _ParamL, _ConvertedL, mi(Symbol), _ParamTy
 symbol_impl(Self, Symbol, Len, _Args, _ParamL, _ConvertedL, me(Symbol), _ParamTypes, _):- \+ \+ (metta_defn(Self, [Symbol|DeclArgs], _), length(DeclArgs, DeclLen), DeclLen==Len).
 symbol_impl(_, Symbol, _Len, _Args, _ParamL, _ConvertedL, 's'(Symbol), _ParamTypes, _RetType).
 
-
+ensure_code(EC,B,A):- list(EC),EC=[Ar|_],Ar=='->', !, B=A,!.
+ensure_code(_,B,A):-!,B=A.
 
 f2q(HeadIs, CType, Caller, Nth, RetType, RetResult, SrcValue, Converted):-
       (is_non_eval_kind(RetType)/*;is_non_eval_kind(CType)*/),
@@ -3366,6 +3305,7 @@ get_operator_typedef_cmp_nd(_Self, Symbol, Len, ParamTypes, RetType):-
 
 get_operator_typedef_cmp_nd(_Self, Symbol, Len, ParamTypes, RetType):- quietly((buffer_src([Colon, [Op | Info], RetType]),
    Colon == ':', Symbol==Op, length(Info, Len), all_atom(Len, ParamTypes, _))), !.
+
 get_operator_typedef_cmp_nd(_Self, Symbol, Len, ParamTypes, RetType):- quietly((buffer_src_isa(Symbol, T), nonvar(T), all_atom_type(T))), !, all_atom(Len, ParamTypes, RetType).
 get_operator_typedef_cmp_nd(_Self, Symbol, Len, ParamTypes, RetType):- quietly((buffer_src_isa(Symbol, T), nonvar(T), all_eval_arg_type(T))), !, all_eval_args(Len, ParamTypes, RetType).
 get_operator_typedef_cmp_nd(_Self, _Symbol, Len, ParamTypes, 'Any'):- Len ==0, !, all_atom(Len, ParamTypes, _).
@@ -3387,6 +3327,7 @@ all_eval_args(Len, ParamTypes, RetType):- (integer(Len);is_list(ParamTypes)), !,
 
 all_atom_type('MinimalMeTTaHelper').
 all_atom_type('MeTTaLog').
+all_atom_type('DataFunctor').
 all_atom_type('EvalNoArgs').
 all_atom_type('NoEvalArgs').
 all_eval_arg_type('EvalArgs').

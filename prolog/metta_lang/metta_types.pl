@@ -1776,6 +1776,8 @@ cant_assign(Number,Other):- formated_data_type(Number), symbol(Other), Number\==
 is_non_eval_kind(Var) :-
     % If the input is a variable, succeed.
     var(Var), !, maybe_var_kind(Var,N),is_non_eval_kind(N).
+
+is_non_eval_kind(Type):- is_list(Type), Type = [Ar|_], Ar == '->', !.
 is_non_eval_kind(Type):- type_is_type(Type,'DontEvalType'),!.
 is_non_eval_kind(List):- (type_element(List, Each)*->!;fail),is_non_eval_kind(Each).
 is_non_eval_kind(Type):- \+ symbol(Type),!,fail.
@@ -1799,6 +1801,7 @@ type_is_type(Type,IsType):- buffer_src_isa(Type,Is),((ground(Is)->IsType==Is; (!
 
 is_code_kind(Kind):- var(Kind),!,maybe_var_kind(Kind,N),is_non_eval_kind(N).
 is_code_kind(Type):- type_is_type(Type,'CodeType'),!.
+is_code_kind(Type):- is_list(Type), Type = [Ar|PR], Ar == '->', last(PR,R), \+ \+ is_eval_kind(R).
 is_code_kind(List):- (type_element(List, Each)*->!;fail),is_code_kind(Each).
 is_code_kind(Type):- \+ symbol(Type),!,fail.
 is_code_kind(Type):- symbol_contains(Type,'Code').
