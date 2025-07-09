@@ -1,4 +1,5 @@
-#!/bin/bash -vex
+#!/usr/bin/env bash
+set -vex
 # Run this file with source ./INSTALL.md
 # ```
 #
@@ -18,7 +19,7 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != ${0} ]] && echo 1 || echo 0)
 # If the script is executed (not sourced), display an error and exit.
 if [ "$IS_SOURCED" -eq "0" ]; then
     echo -e "${RED}This script must be sourced, not executed. Use 'source $0 $@'${NC}."
-    exit 1  # Exit is appropriate here since it's not sourced.
+     (return 1) 2>/dev/null || exit 1  # Exit is appropriate here since it's not sourced.
 fi
 
 # ## Display help if "--help" is in the arguments
@@ -59,7 +60,7 @@ fi
 # These default values are set unless the user overrides them through command-line arguments.
 FORCE_REINSTALL_SWI=0
 SWI_INSTALL="src"
-EASY_INSTALL="?"
+EASY_INSTALL="Y"
 INSTALL_TYPE="non_docker"
 
 # ## Detect environment (GitHub Actions, Jenkins, Docker, etc.)
@@ -124,32 +125,60 @@ done
 
 # ## Prompt functions
 # Function to prompt for user confirmation with 'N' as the default
+
+
+# if INSTALL_TYPE=="docker_vm" have it return with default instead of trying to read the terminal
 confirm_with_default() {
-    echo -e -n "$2"
+    local default="$1"
+    local prompt="$2"
+
+    # If running in docker_vm mode, auto-select default
+    if [ "$INSTALL_TYPE" == "docker_vm" ]; then
+        echo "$default"
+        if [[ "$default" =~ ^[Yy]$ ]]; then
+            return 0
+        else
+            return 1
+        fi
+    fi
+
+    echo -en "$prompt"
+
     while true; do
-        if [ "$1" == "N" ]; then
+        if [ "$default" == "N" ]; then
             read -s -p " (y/N): " -n 1 yn
         else
-            read -s -p " (${1}/n): " -n 1 yn
+            read -s -p " (${default}/n): " -n 1 yn
         fi
 
         if [ -z "$yn" ]; then
-            yn="$1"
+            yn="$default"
         fi
 
-        case $yn in
-            [Yy]* ) echo "Y" && return 0;;
-            [Nn]* ) echo "N" && return 1;;
-            * ) echo -e "${YELLOW}Please answer yes or no${NC}.";;
+        case "$yn" in
+            [Yy]* ) echo "Y"; return 0 ;;
+            [Nn]* ) echo "N"; return 1 ;;
+            * ) echo -e "${YELLOW}Please answer yes or no${NC}." ;;
         esac
     done
 }
 
+
+
 prompt_for_input() {
-    # Function to prompt for input with a default value to be used later
-    read -e -i "$2" -p "$1" value
-    echo -e "${value:-$2}"
+    local prompt="$1"
+    local default="$2"
+
+    # If in docker_vm mode, skip prompt and return default
+    if [ "$INSTALL_TYPE" == "docker_vm" ]; then
+        echo "$default"
+        return
+    fi
+
+    read -e -i "$default" -p "$prompt" value
+    echo "${value:-$default}"
 }
+
 
 # ## Version comparison
 # Function to compare versions
