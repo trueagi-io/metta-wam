@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != ${0} ]] && echo 1 || echo 0)
 
 # If the script is executed (not sourced), display an error and exit.
-if [ "$IS_SOURCED" -eq "0" ]; then
+if [ "$IS_SOURCED" -eq "$0" ]; then
     echo -e "${RED}This script must be sourced, not executed. Use 'source $0 $@'${NC}."
      (return 1) 2>/dev/null || exit 1  # Exit is appropriate here since it's not sourced.
 fi
