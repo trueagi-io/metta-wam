@@ -36,9 +36,9 @@ hyperon
 #metakernel
 #calysto
 yasi
-hyperon-das
+#hyperon-das
 #==0.4.1
-hyperon-das-atomdb
+#hyperon-das-atomdb
 #==0.3.2
 packaging==23.2
 
