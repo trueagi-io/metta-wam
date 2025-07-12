@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mettalog"
-description = "Hyperon API in Python"
+description = "Hyperon MeTTaLog API in Python"
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["metta", "mettalog", "hyperon", "opencog"]
@@ -27,7 +27,7 @@ dynamic = [
 
 [project.scripts]
 #mettalog-py = "hyperon.metta:main"
-mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
+mettalog-repl = "mettalog.sandbox.repl.metta_repl:main"
 
 [project.optional-dependencies]
 dev = [
@@ -38,8 +38,8 @@ dev = [
 
 
 [tool.setuptools]
-packages = ["mettalog", "hyperon_ref", "mettalog_sandbox", "mettalog_libraries", "mettalog_py2metta", "mork"]
-package-dir = { "mettalog"="mettalog", "mettalog_sandbox"="sandbox", "mettalog_libraries" = "../libraries", "mettalog_py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref", "mork" = "../libraries/mork-sys/MORK/python" }
+packages = ["mettalog", "hyperon_ref", "mettalog.sandbox", "mettalog.libraries", "mettalog.py2metta", "mork"]
+package-dir = { "mettalog"="mettalog", "mettalog.sandbox"="sandbox", "mettalog.libraries" = "../libraries", "mettalog.py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref", "mork" = "../libraries/mork-sys/MORK/python" }
 
 
 

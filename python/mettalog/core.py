@@ -11,11 +11,11 @@ import uuid
 import requests
 import json
 import hyperlog
-import mettalog_libraries
-import mettalog_sandbox
+import mettalog.libraries
+import mettalog.sandbox
 from hyperlog import MeTTaLogImpl
 #for mork backend
-from mettalog_sandbox.mork.mork import MORKSpace
+from mettalog.sandbox.mork.mork import MORKSpace
 
 METTALOG_DIR = os.environ.get("METTALOG_DIR", ".")
 VERBOSE_DEBUG = os.environ.get("METTALOG_VERBOSE")
