@@ -1,7 +1,14 @@
 #LEFT
 import sys
+import time
+from datetime import datetime
+import os
+import argparse
+import re
+from openai import OpenAI
 
 # Global control state and translation context
+client = OpenAI()
 log_path = None
 next_verifier_context = ""
 next_translator_advice = ""
@@ -70,8 +77,7 @@ MODEL_CONTEXT_LIMITS = {
 }
 
 FALLBACK_TOKENS = 18000
-import os
-import argparse
+
 
 # ANSI escape color codes for consistent styling
 GRAY = "\033[90m"
@@ -161,10 +167,6 @@ def extract_metadata_notes(block_text):
 
 def metta_to_prolog_prompt(metta_code: str, prompt_Ltext: str, prompt_name: str, model: str, model_context: int) -> str:
     prompt_text = f"""You are a symbolic AI expert translating MeTTa to Prolog.
-
-{prompt_Ltext.strip()}
-
-Instructions:
 
 {prompt_Ltext.strip()}
 
@@ -287,10 +289,6 @@ def convert_block(metta_block, input_name, prompt_text, model, model_context, te
 def extract_balanced_blocks(text: str, min_lines=2, min_chars=None):
     return extract_blocks_with_soft_min(text, min_lines, min_chars)
 
-import re
-from openai import OpenAI
-client = OpenAI()
-
 def extract_blocks_with_soft_min(text: str, min_lines=1, min_chars=0):
     lines = text.splitlines()
     block = []
@@ -369,12 +367,13 @@ def main():
     parser.add_argument("-m", "--model", help=model_help, default="gpt-4.1")
     parser.add_argument("-mv", "--mverify", help="Optional second model to verify and correct Prolog output", default="gpt-4.1")
     parser.add_argument("-t", "--temperature", type=float, help="Sampling temperature", default=0.3)
-    parser.add_argument("--preview", action="store_true", help="Preview extracted MeTTa blocks without calling GPT")
+    parser.add_argument("--preview", action="store_true", help="Preview extracted MeTTa blocks without calling GPT")    
     parser.add_argument("--preview-blocks", action="store_true", help="Print block boundaries and preview content without converting")
+    parser.add_argument("-trans", "--translation", type=str, default="default")
+    parser.add_argument("--list-translations", action="store_true", default=False)
     parser.add_argument("-mt", "--max-tokens", type=int, help="Override token window for chunk sizing")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose", default=False)
     parser.add_argument("-vv", "--very-verbose", action="store_true", help="Very verbose (show GPT input/output)", default=False)
-
     parser.add_argument("--dump-state", action="store_true", help="Show next_translator_advice and next_verifier_context")
     parser.add_argument("--chunk", type=int, help="Override chunk size in characters")
     parser.add_argument("--no-verify", action="store_true", help="Disable verifier pass entirely")
@@ -404,10 +403,10 @@ def main():
 
     if args.verbose:
         print(f"📐 Model '{args.model}' allows ~{model_context} tokens (~{model_context*4:,} chars)")
-        print(f"🔢 Enforcing 50% safety chunk size: {chars_min:,} characters")
+        print(f"🔢 Enforcing 10% safety chunk size: {chars_min:,} characters")
 
     if len(metta_code) > chars_min:
-        print(f"⚠️ Input exceeds 50% of model context window ({len(metta_code):,} chars > {chars_min:,}).")
+        print(f"⚠️ Input exceeds 10% of model context window ({len(metta_code):,} chars > {chars_min:,}).")
         print(f"🔀 Splitting input into safe-sized chunks for conversion...")
 
     if args.output != "-":

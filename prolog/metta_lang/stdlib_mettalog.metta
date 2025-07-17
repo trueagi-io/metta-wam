@@ -7,21 +7,6 @@
 ;; !(pragma! UndeclaredReturn %Undefined%)
 ;; !(pragma! UndeclaredReturn Atom)
 
-(: : (-> Atom) )
-(: : (-> Atom Atom) )
-(: : (-> Atom Atom Atom) )
-(: : (-> Atom Atom Atom Atom) )
-
-(: :> (-> Atom) )
-(: :> (-> Atom Atom) )
-(: :> (-> Atom Atom Atom) )
-(: :> (-> Atom Atom Atom Atom) )
-
-(: iz (-> Atom) )
-(: iz (-> Atom Atom) )
-(: iz (-> Atom Atom Atom) )
-(: iz (-> Atom Atom Atom Atom) )
-
 (: RelationType Type)
 (:> RelationType Type)
 (: DataFunctor RelationType)
@@ -40,7 +25,7 @@
 	(argNType $Rel $_ Atom)
 	(returnType $Rel Atom)))
 
-(==> (: $Rel DataFunctor) (: $Rel (-> Atom)))
+;(==> (: $Rel DataFunctor) (: $Rel (-> Atom)))
 (==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom)))
 (==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom)))
 (==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom)))
@@ -53,13 +38,16 @@
 (: @return DataFunctor)
 (: @doc-formal DataFunctor)
 (: @item DataFunctor)
+(: : DataFunctor)
+(: :> DataFunctor)
+(: iz DataFunctor)
+
 
 (: = DataFunctor)
 (: HE= DataFunctor)
 
 (: @doc (-> Atom Atom Atom Atom Atom))
 (: @doc (-> Atom Atom Atom))
-
 
 
 
@@ -72,9 +60,9 @@
 
 ;;(iz (@kind function) DataFunctor)
 ;;(iz (@kind atom) DataFunctor)
-(iz (@kind $_) DataFunctor)
-(iz @type DataFunctor)
-(iz @params DataFunctor)
+(: (@kind $_) DataFunctor)
+(: @type DataFunctor)
+(: @params DataFunctor)
 
 ;; Type Declarations with Documentation
 (@doc Any
@@ -979,15 +967,15 @@ For example:
   (@return "Integer part of float"))
 (is-op-1 trunc-math trunc)
 
-(iz ceil MeTTa)
+(iz ceil-math MeTTa)
 (@doc ceil-math
   (@desc "Returns the smallest integer greater than or equal to the input value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Integer value greater than or equal to the input"))
-(is-op-1 ceil-math ceil)
+(is-op-1 ceil-math ceiling)
 
-(iz floor MeTTa)
+(iz floor-math MeTTa)
 (@doc floor-math
   (@desc "Returns the smallest integer less than or equal to the input value (first argument)")
   (@params (
@@ -995,15 +983,15 @@ For example:
   (@return "Integer value less than or equal to the input"))
 (is-op-1 floor-math floor)
 
-(iz round MeTTa)
+(iz round-math MeTTa)
 (@doc round-math
   (@desc "Returns the nearest integer to the input float value (first argument)")
   (@params (
     (@param "Float value")))
   (@return "Nearest integer to the input"))
-(is-op-1 round round)
+(is-op-1 round-math round)
 
-(iz sin MeTTa)
+(iz sin-math MeTTa)
 (@doc sin-math
   (@desc "Returns result of the sine function for an input value in radians (first argument)")
   (@params (
@@ -1168,14 +1156,13 @@ For example:
 ;; Maybe Implement from Interpreter? But our transpiler should brilliantt enbought to make this awesome prolog code instead
 (= (if-decons-expr $atom $head $tail $then $else) (if-decons $atom $head $tail $then $else))
 
-
+; (iz if-decons MeTTa) ?
 (: if-decons (-> Expression Variable Variable (-> $res) (-> $res) $res))
 (= (if-decons $atom $head $tail $then $else)
   (function (eval (if-equal $atom ()
     (return $else)
     (chain (decons-atom $atom) $list
       (if-unify $list ($head $tail) (return $then) (return $else)) )))))
-
 
 
 ; Difference between `switch` and `case` is a way how they interpret `Empty`

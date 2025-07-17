@@ -358,6 +358,7 @@ s(F,ROut):-decl_va(F,0,s,Op),call(Op,0,F,[],ROut).
 s(F,ROut):-decl_fa(F,0,s,Op),call(Op,F,ROut).
 
 ensure_evaled(_,X,Y):- eval(X,Y).
+%ensure_evaled(NeedsToBe,X,Y):- eval(X,Y), get_type(Y,Type), is_subtype(Type,NeedsToBe).
 
 get_value(Var,X):- var(Var),!, clause(get_value(Var,X),Body),call(Body).
 get_value('&self',X):- current_self(X),!.

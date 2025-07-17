@@ -39,7 +39,7 @@ def load_metta_module(subpath, module_name, register_as=None):
         The imported module object.
     """
     try:
-        import mettalog_libraries
+        import mettalog.libraries
     except ImportError as e:
         raise RuntimeError("Could not import 'mettalog_libraries'. Is it in sys.path?") from e
 

@@ -103,6 +103,5 @@ chmod +x py2metta.sh
 ---
 
 Let us know if you'd like to add:
-- 🔁 Loop unrolling
 - 🧪 Test generation
 - 🧠 Semantic annotations

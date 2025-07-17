@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-set -vex
+
 # Run this file with source ./INSTALL.md
-# ```
 #
 # ## ANSI escape codes for colors
 # These codes are used to colorize output in the terminal for better readability.
+
 YELLOW='\033[1;33m'
 BLUE='\033[1;36m' # Lighter shade of blue
 RED='\033[0;31m'
@@ -19,7 +19,7 @@ IS_SOURCED=$( [[ "${BASH_SOURCE[0]}" != ${0} ]] && echo 1 || echo 0)
 # If the script is executed (not sourced), display an error and exit.
 if [ "$IS_SOURCED" -eq "$0" ]; then
     echo -e "${RED}This script must be sourced, not executed. Use 'source $0 $@'${NC}."
-     (return 1) 2>/dev/null || exit 1  # Exit is appropriate here since it's not sourced.
+    exit 1  # Exit is appropriate here since it's not sourced.
 fi
 
 # ## Display help if "--help" is in the arguments
