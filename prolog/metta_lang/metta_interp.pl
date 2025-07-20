@@ -500,7 +500,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
 
-pfcAdd_Now(Cl):- pfcAdd_Now0(Cl),!.
+pfcAdd_Now(Cl):- retractall(Cl),pfcAdd_Now0(Cl),!.
 
 pfcAdd_Now0(Cl):-
    once( \+ nb_current(allow_dupes,t)
@@ -7038,7 +7038,7 @@ qsave_program(Name) :-
 %   is allowed, it handles modifications to `system:notrace/1` to customize its behavior.
 %
 
-%nts1 :- !. % Disable redefinition by cutting execution.
+nts1 :- !. % Disable redefinition by cutting execution.
 nts1 :- is_flag(notrace),!.
 nts1 :- no_interupts(nts1r).
 %nts1r :- !. % Disable redefinition by cutting execution.
@@ -7054,8 +7054,9 @@ nts1r :-
   meta_predicate(system:notrace(0)),
     % Define the new behavior for `system:notrace/1`.
     % The redefined version executes the goal (`G`) with `once/1` and succeeds deterministically.
-    asserta(( system:notrace(G) :- (!, once(G),! ))).
-    %asserta(( system:notrace(G) :- (!, unotrace(G),! )))
+    %asserta(( system:notrace(G) :- (!, once(G),! ))).
+    %asserta(( system:notrace(G) :- (!, quietly(G),! ))).
+    asserta(( system:notrace(G) :- (!, unotrace(G),! ))).
 nts1r :-
     % Ensure that further redefinitions of `nts1` are not allowed after the first.
     !.

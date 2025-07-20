@@ -9,7 +9,7 @@
 :- multifile(metta_compiled_predicate/3).
 
 :- multifile(each_recompile/0).
-
+:- discontiguous expression_processor/1.
 
 %:- include(metta_compiler_werk).
 
@@ -45,7 +45,7 @@ add_assertion_u(Space, AC):- unnumbervars_clause(AC, UAC), add_assertion1(Space,
 
 add_assertion1(_, AC):- /*'&self':*/is_clause_asserted(AC), !.
 add_assertion1(_, AC):- compiler_assertz(AC), !.
-%add_assertion1(_, AC):- get_clause_pred(AC, F, A), \+ needs_tabled(F, A), !, pfcAdd(/*'&self':*/AC), !.
+%add_assertion1(_, AC):- get_clause_pred(AC, F, A), \+ needs_tabled(F, A), !, pfcAdd_Now(/*'&self':*/AC), !.
 
 add_assertion1(Space, ACC) :-
  must_det_ll((
@@ -360,9 +360,9 @@ info_assertz(Info):-
 
 info_assertz(Info, Assert):- is_clause_asserted(Assert), !, send_to_pl_file(==>(Info)),
   debug_info(compiler_assertz, skip(Info)).
-info_assertz( Info, Assert):- send_to_pl_file(==>(Info)), pfcAdd(Assert), make_recompile_dirty, !.
+info_assertz( Info, Assert):- send_to_pl_file(==>(Info)), pfcAdd_Now(Assert), make_recompile_dirty, !.
 info_assertz_old(Info, Assert):-
-  must_det_lls((get_side_effects(pfcAdd(Assert), SifeEffects),
+  must_det_lls((get_side_effects(pfcAdd_Now(Assert), SifeEffects),
   once((SifeEffects==[] -> send_to_pl_file(==>(Info)) ; send_se_to_pl_file(SifeEffects))),
   maplist(do_side_effects, SifeEffects))), !.
 
@@ -443,12 +443,14 @@ write_translation(Expr):-
 
 
 % Convert Meta expressions to PFC assertions with side effect printing
+expression_processor(convert_to_pfctrans).
 convert_to_pfctrans(Expr):-
   current_self(Self),
-  get_side_effects(pfcAdd(metta_atom_asserted(Self, Expr)), SideEffects),
+  get_side_effects(pfcAdd_Now(metta_atom_asserted(Self, Expr)), SideEffects),
   print_side_effects(SideEffects).
 
 % Convert Meta expressions to Prolog form and print
+expression_processor(convert_to_pl).
 convert_to_pl(Expr):-
  allow_type_violations((show_doing_src(Expr),
   convert_to_prolog(Expr, Out), !,
@@ -458,6 +460,7 @@ extract_cmmt(Cmt, _Str):- \+ compound(Cmt), !, fail.
 extract_cmmt('$COMMENT'(Str, _, _), Str):- nonvar(Str).
 
 
+expression_processor(show_doing_src).
 show_doing_src(Cmt):- extract_cmmt(Cmt, _Str), !.
 show_doing_src(Expr) :- pp_se(in_cmt(call(write_src_wi(Expr)))).
 
@@ -486,7 +489,7 @@ unnumbervars_clause(Cl, ClU):-
 %add_buffer_file_src(KB, Filename):-
   %find_directory()
   %metta_file(Self, Filename, Directory),
-  %pfcAdd(loaded_file_src(KB, Filename)).
+  %pfcAdd_Now(loaded_file_src(KB, Filename)).
 
 % File handling and logging
 send_to_metta_pl_file(MeTTaFile, Info):-
@@ -498,6 +501,7 @@ metta_to_plfile(MeTTaFile, PlFile):-
   atom_concat(MeTTaFile, '.pl', PlFile), % append .pl to the .metta name
   ensure_compiled_created(MeTTaFile, PlFile).
 
+expression_processor(send_to_pl_file).
 send_to_pl_file(Info):-
   ignore((current_pl_file(PlFile),
     send_to_txt_file(PlFile, Info))).
@@ -1622,7 +1626,7 @@ compile_metta_defn(KB, F, Len, Args, [WB|AL], ClauseU):- 'wam-body'==WB, !,
     if_t(var(Arity), length(Args, Arity)),
     if_t(var(Len), ignore(Len is Arity-1)),
     if_t(var(Len), if_t(integer(SLen), Len = SLen)),
-    pfcAdd(metta_compiled_predicate(KB, F, Len)),
+    pfcAdd_Now(metta_compiled_predicate(KB, F, Len)),
     Clause=(H:-B), s2c([F|Args], H), maplist(s2c, AL, ALB),
     list_to_conjuncts(ALB, B),
     %nl, print_tree(Clause), nl,
@@ -1630,14 +1634,14 @@ compile_metta_defn(KB, F, Len, Args, [WB|AL], ClauseU):- 'wam-body'==WB, !,
 compile_metta_defn(KB, F, Len, Args, BodyFn, ClauseU):-
    must_det_ll((
         if_t(var(Len), length(Args, Len)),
-        pfcAdd(metta_compiled_predicate(KB, F, Len)),
+        pfcAdd_Now(metta_compiled_predicate(KB, F, Len)),
         compile_for_assert([F|Args], BodyFn, Clause),
         add_unnumbered_clause(KB, F, Len, Clause, ClauseU))).
 
 add_unnumbered_clause(KB, F, Len, ClauseN, Clause):-
     must_det_ll((
        unnumbervars_clause(ClauseN, Clause),
-       pfcAdd(metta_compiled_predicate(KB, F, Len)),
+       pfcAdd_Now(metta_compiled_predicate(KB, F, Len)),
        add_assertion(KB, Clause))), !.
 merge_structures([F|HeadAsFunction0], AsBodyFn0, A, B, (=(NewVar, Cept), C)):- fail,
    append(Left, [Merge|Right], HeadAsFunction0), nonvar(Merge),
@@ -1855,7 +1859,7 @@ compile_for_assert_eq(':-', HeadIn, BodyIn, Converted):-
 
 ensure_corelib_types_file.
 
-ensure_corelib_types:- pfcAdd(please_do_corelib_types).
+ensure_corelib_types:- pfcAdd_Now(please_do_corelib_types).
 
 each_recompile:- ensure_corelib_types.
 

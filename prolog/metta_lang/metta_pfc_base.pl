@@ -130,6 +130,9 @@ quietly_ex(X) :-
 %     ?- control_arg_types(foo, bar).
 %     false.  % As the logic starts with `fail/0`, this will always be false.
 %
+control_arg_types( A, _) :- \+ compound(A),!,fail.
+control_arg_types((H :- B), H) :- B==true,!.
+control_arg_types((H :- B), H) :- !, is_all_var_name_stuff(B), call(B).
 control_arg_types(A, B) :-
     % Immediately fail to ensure control only through the subsequent logic.
     fail,
@@ -139,6 +142,11 @@ control_arg_types(A, B) :-
     A \== B,
     % Use a cut to prevent further backtracking.
     !.
+
+is_all_var_name_stuff(C):- \+ compound(C), !, fail,C == true.
+is_all_var_name_stuff(name_variable(_,_)):- !.
+is_all_var_name_stuff((A,B)):- !,is_all_var_name_stuff(A),is_all_var_name_stuff(B).
+
 
 %:- listing(control_arg_types/3).
 
@@ -1601,8 +1609,8 @@ pfcPost_rev(S, Term) :-
 %
 % Check and fix argument types before posting.
 pfcPost1(Fact, S) :-
-   control_arg_types(Fact, Fixed),
-   !, pfcPost1(Fixed, S).
+   control_arg_types(Fact, Fixed), !,
+   pfcPost1(Fixed, S).
 % Handle exceptions during posting and enforce occurs check.
 pfcPost1(P, S) :-
    locally(set_prolog_flag(occurs_check, true),
@@ -1720,6 +1728,7 @@ is_asserted_exact(MHB) :-
 %
 %   @see clause/3, clause_property/2.
 %
+is_asserted_exact(M, H, B) :- is_all_var_name_stuff(B),is_asserted_exact(M, H, true),!.
 is_asserted_exact(M, H, B) :-
    M = MM,  % Ensure module names match.
    % Search for clause, trying both module forms.
@@ -1746,6 +1755,7 @@ is_asserted_exact(M, H, B) :-
 %
 %   @see clause/3, strip_m/2, =@=/2.
 %
+is_asserted_exact(M, H, B, Ref) :- is_all_var_name_stuff(B),is_asserted_exact(M, H, true, Ref),!.
 is_asserted_exact(_, H, B, Ref) :-
    % Retrieve the clause by reference.
    clause(CH, CB, Ref),
@@ -1860,6 +1870,8 @@ pfcUnique(_,H,B):- \+ (
 goals_to_callables(Goals,Callables):-
    list_to_conjuncts(Goals,Callables).
 
+to_attributed_clause(HB,HB):- ground(HB),!.
+to_attributed_clause(HB,HB):- \+ compound(HB),!.
 to_attributed_clause(HB,HB):- term_attvars(HB,AV), AV==[],!.
 to_attributed_clause(M:HB,M:AC):- nonvar(HB),!,to_attributed_clause1(HB,AC).
 to_attributed_clause(HB,AC):- to_attributed_clause1(HB,AC).
@@ -2551,8 +2563,7 @@ pfcRetractAll(P) :-
 %
 pfcRetractAll(Fact, S) :-
    % Normalize the arguments for proper handling.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcRetractAll(Fixed, S).
 
 pfcRetractAll(P, S) :-
@@ -2659,8 +2670,7 @@ pfcRetractAll_v2(P, _) :-
 %
 pfcRemove(Fact) :-
    % Normalize the argument type.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcRemove(Fixed).
 pfcRemove(P) :-
    % Withdraw all support for the entity.
@@ -3123,8 +3133,7 @@ may_cheat :-
 %
 pfcFwd(Fact) :-
    % Normalize the argument types.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcFwd(Fixed).
 
 pfcFwd(Fact) :-
@@ -3426,8 +3435,7 @@ pfc_eval_rhs([Head | Tail], Support) :-
 %
 pfc_eval_rhs1(Fact, S) :-
    % Normalize argument types before further processing.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfc_eval_rhs1(Fixed, S).
 pfc_eval_rhs1({Action}, Support) :-
    % Handle evaluable Prolog code wrapped in `{}`.

@@ -134,6 +134,7 @@ merge_fp(T1,T2,N) :-
 
 (metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_function_asserted(KB,H,['wam-body'|AL]).
 (metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type_info(KB,H,T).
+(metta_atom_asserted(KB,[C,H,T])/(C=='iz')) ==> metta_type_info(KB,H,T).
 
 metta_type_info(KB,Op,ArTypeDecl)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len))==>
     metta_params_and_return_type(KB,Op,Len,ParamTypes,RetType).
@@ -183,16 +184,18 @@ metta_params_and_return_type(KB,Op,Len,[P|ParamTypes],RetType)/(maplist(is_verba
 
 
 
-(metta_atom_asserted(KB,[C,H,T|Nil])/(Nil==[],is_metta_decl_f(C),H=II)) ==> metta_function_asserted(KB,II,T).
-(metta_atom_asserted(KB,[C,H,A1,A2|AL])/is_metta_decl_f(C)) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
+(metta_atom_asserted(KB,[C,H,T]),{is_metta_decl_f(C)}) ==> metta_function_asserted(KB,H,T).
+%(metta_atom_asserted(KB,[C,H,T|Nil]),{Nil==[],is_metta_decl_f(C)}) ==> metta_function_asserted(KB,H,T).
+(metta_atom_asserted(KB,[C,H,A1,A2|AL]),{is_metta_decl_f(C)}) ==> metta_function_asserted(KB,H,[A1,A2|AL]).
 
 %ensure_corelib_types.
 
 compiled_clauses(_KB,_Op,Clause)==>{compiler_assertz_verbose(Clause)}.
 
-((metta_function_asserted(KB,[Op|Args],BodyFn),{length(Args,Len),compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause),
-      send_to_pl_file(in_cmt(call(write_src_wi(['=',[Op|Args],BodyFn]))))}) ==> compiled_clauses(KB,Op,Clause)).
+actually_compile('True') ==>( ((metta_function_asserted(KB,[Op|Args],BodyFn),{length(Args,Len),compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause),
+      send_to_pl_file(in_cmt(call(write_src_wi(['=',[Op|Args],BodyFn]))))}) ==> compiled_clauses(KB,Op,Clause))).
 
+actually_compile('False').
 
 info(_).
 

@@ -1364,6 +1364,10 @@ eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),
    (var(Cond) -> call(CallP1,Cond);
     call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
+eval_20(Eq,RetType,Depth,Self,['call-p1!',Meta1,Cond],Res):- !,
+   ((var(Cond);var(Cond)) -> Res=['call-p1!',Meta1,Cond] ;
+    call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
+
 is_call_wrapper(NonAtom,_):- \+ atom(NonAtom),!,fail.
 is_call_wrapper('!',call).
 is_call_wrapper('no-rtrace!',quietly).

@@ -60,7 +60,7 @@ decl_metta_fact_pred(P):- decl_metta_fact_pred(_,P).
 
 decl_metta_fact_pred(Where,P):- get_fa(P, F,A),
    dynamic(F/A),multifile(F/A),discontiguous(F/A),
-   pfcAdd(metta_fact_pred(Where,F,A)).
+   pfcAdd_Now(metta_fact_pred(Where,F,A)).
 
 %calc_non_evalation_args:- forall()
 decl_metta_fact_pred_tf:-
