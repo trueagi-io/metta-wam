@@ -362,8 +362,10 @@ deepen(Depth,Depth2):- Depth2 is Depth -1.
 visible_kb(_Self,_KB).
 
 %get_operator_return_type(Self,OpParams,FRetType),
+was_no_eval(NoEval,X):- is_list(NoEval),[No,X]=NoEval,No=='noeval',!.
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
+eval_01(_Eq,RetType,_Depth,_Self,NoEval,X):- was_no_eval(NoEval,X),ignore(RetType='Atom'),!.
 eval_01(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,
    unify_woc(X,Y).
 eval_01(Eq,RetType,Depth,Self,X,Y):-
@@ -632,7 +634,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ is_list(X), !,
   as_prolog_x(Depth,Self,X,XX),
   eval_20(Eq,RetType,Depth,Self,XX,Y),sanity_check_eval(eval_20_not_list,Y).
 
-eval_10(_Eq,RetType,_Depth,_Self,['noeval',X],X):- ignore(RetType='Atom'),!.
+eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval' ignore(RetType='Atom'),!.
 
 eval_args_alone(X):- var(X),!,fail.
 %eval_args_alone(X):- \+ callable(X), \+ py_is_callable(X).
