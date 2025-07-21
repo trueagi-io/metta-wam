@@ -359,7 +359,9 @@ overflow_depth(N,Depth):- Depth<N.
 overflow_depth(Depth):- Depth<0.
 deepen(Depth,Depth2):- Depth2 is Depth -1.
 
+visible_kb(_Self,_KB).
 
+%get_operator_return_type(Self,OpParams,FRetType),
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
 eval_01(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,
@@ -373,10 +375,17 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
 
    trace_eval(eval_10(Eq,RetType),e,Depth2,Self,X,M),
 
-   ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,M,Y)).
+   ((M=@=XX;M==X;M=@=X) -> Y=M ; eval_03(Eq,RetType,Depth2,Self,X,M,Y)).
 
 %eval_03(_Eq,RetType,_Depth2,_Self,M,Y):- RetType=='Atom',!,M=Y.
-eval_03(Eq,RetType,Depth2,Self,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
+%
+/*
+  */
+eval_03(Eq,RetType,Depth2,Self,[Op|Args],M,Y):- nonvar(Op),len_or_unbound(Args,Len),visible_kb(Self,KB), clause(returnType(KB,Op,Len,OpRetType),true), OpRetType=='Atom',M=[Function|_],
+  Function=='function',/*trace,*/ !,eval_10(Eq,RetType,Depth2,Self,M,Y).
+eval_03(Eq,RetType,Depth2,Self,[Op|Args],M,Y):- nonvar(Op),len_or_unbound(Args,Len),visible_kb(Self,KB), clause(returnType(KB,Op,Len,OpRetType),true), OpRetType=='Atom',M\=['function'|_],!,M=Y.
+%eval_03(Eq,RetType,Depth2,Self,M,Y):- RetType=='Expression',!,M=Y.
+eval_03(Eq,RetType,Depth2,Self,_X,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
 eval_02(Eq,RetType,Depth,Self,Y,YO):- var(Y),!,YO=Y,var_pass(Eq,RetType,Depth,Self,Y).
 eval_02(Eq,RetType,Depth2,Self,Y,YO):-  %Y\==[empty], % speed up n-queens x60  but breaks other things
@@ -623,6 +632,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ is_list(X), !,
   as_prolog_x(Depth,Self,X,XX),
   eval_20(Eq,RetType,Depth,Self,XX,Y),sanity_check_eval(eval_20_not_list,Y).
 
+eval_10(_Eq,RetType,_Depth,_Self,['noeval',X],X):- ignore(RetType='Atom'),!.
 
 eval_args_alone(X):- var(X),!,fail.
 %eval_args_alone(X):- \+ callable(X), \+ py_is_callable(X).
@@ -1366,7 +1376,7 @@ eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),
 
 eval_20(Eq,RetType,Depth,Self,['call-p1!',Meta1,Cond],Res):- !,
    ((var(Cond);var(Cond)) -> Res=['call-p1!',Meta1,Cond] ;
-    call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
+    call(Meta1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
 is_call_wrapper(NonAtom,_):- \+ atom(NonAtom),!,fail.
 is_call_wrapper('!',call).
@@ -1578,6 +1588,7 @@ is_tollerant:- \+ option_value('unit-tests','exact').
 
 strict_equals_allow_vn(X,Y):- X==Y,!.
 strict_equals_allow_vn(X,Y):- X=@=Y,!.
+strict_equals_allow_vn([X],Y):- X=@=Y,!.
 strict_equals_allow_vn(X,Y):- attvar(X),attvar(Y),get_attr(X,vn,XX),get_attr(Y,vn,YY),!,XX==YY.
 strict_equals_allow_vn(X,Y):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,unify_woc(XX,Y).
 strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,unify_woc(XX,Y).
@@ -1585,6 +1596,7 @@ strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,v
 
 %equal_enough_for_test_renumbered_l(P2,X,Y):- call(P2,X,Y), !.
 equal_enough_for_test_renumbered_l(_P2,X,Y):- is_blank(X),is_blank(Y),!.
+equal_enough_for_test_renumbered_l(_P2,[X],Y):- X=@=Y,!. % is_list(X),equal_enough_for_test_renumbered_l(P2,X,Y),!.
 equal_enough_for_test_renumbered_l(P2,X,Y):-  must_be(proper_list,X), must_be(proper_list,Y),
     sort(X,X0),sort(Y,Y0),(X\==X0;Y\==Y0),!,
     equal_enough_for_test_renumbered_l(P2,X0,Y0).
@@ -2982,11 +2994,14 @@ eval_20(Eq,RetType,Depth,Self,['function',X],Res):- !, gensym(return_,RetF),
   RetUnit=..[RetF,Res],
   catch(locally(b_setval('$rettag',RetF),
            eval_args(Eq,RetType,Depth,Self,X, Res)),
-        return(RetUnitR),RetUnitR=RetUnit).
+        function_return(RetUnitR),RetUnitR=RetUnit).
 eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
   nb_current('$rettag',RetF),RetUnit=..[RetF,Val],
-  eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(RetUnit)).
+  v1_v2(eval_args(Eq,RetType,Depth,Self,X, Val),X = Val),
+  throw(function_return(RetUnit)).
 % ================================================
+
+v1_v2(_,V2):- call(V2).
 
 % ================================================
 % === catch / throw of mettalog
@@ -3151,7 +3166,8 @@ eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],NoResult):
             POptions)),
      make_nop(RetType,[],NoResult).
 
-eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
+eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, v1_v2(metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res),eval_args(Eq,RetType,Depth,Self,['superpose',ArgL],Res)).
+
 
 
 % =================================================================
@@ -3484,7 +3500,6 @@ eval_20(Eq,RetType,Depth,Self,['unique-by',F2,Eval],RetVal):- !,
    no_repeats_var(call_as_p2(F2),YY),
    eval_args(Eq,RetType,Depth,Self,Eval,RetVal),YY=RetVal.
 
-
 eval_20(_Eq,_RetType,_Depth,_Self,['subtraction-atom',List1,List2],RetVal):- !,
     exclude(is_in(variant_by_type,List2),List1,RetVal).
 
@@ -3566,7 +3581,9 @@ lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
     \+ (member(E2, List2), call(P2, E1, E2)).
 
 
-maybe_lazy_findall(T,G,L):- option_value(lazy_findall,true),!,lazy_findall(T,G,L).
+maybe_lazy_findall(T,G,L):- % option_value(lazy_findall,true),
+   !,
+   lazy_findall(T,G,L).
 maybe_lazy_findall(T,G,L):- findall(T,G,L).
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-

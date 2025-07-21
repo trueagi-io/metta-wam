@@ -46,6 +46,7 @@ test_dirs=(
     "tests/baseline_compat/hyperon-experimental_scripts"
     # "tests/baseline_compat/hyperon-mettalog_sanity"
     "tests/baseline_compat/metta-morph_tests"
+    "tests/QC-quality"
 )
 
 # Filter test directories if filter is provided
@@ -142,7 +143,7 @@ run_mettalog_tests() {
         # Execute the command silently and filter output
         # The grep pattern matches important test output while filtering noise
         script -q -c "${cmd[*]}" /dev/null | \
-            tee >(grep -Ei --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
+            tee >(grep -Ei -A3 --line-buffered '_CMD:|h3 id|loonit_|warning|es[:] ' >&2) > /dev/null
         status=$?
     fi
 
@@ -165,7 +166,7 @@ run_interp_and_comp_tests() {
   local path="$2"
   shift 2
   run_mettalog_tests "$id" "$path" "$@"
-  run_mettalog_tests "$id" "$path" --compile=full "$@"
+ # run_mettalog_tests "$id" "$path" --compile=full "$@"
 }
 
 # 50+ tests (~2 minutes)

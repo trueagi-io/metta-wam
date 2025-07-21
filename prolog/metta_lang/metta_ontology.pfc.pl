@@ -195,7 +195,8 @@ compiled_clauses(_KB,_Op,Clause)==>{compiler_assertz_verbose(Clause)}.
 actually_compile('True') ==>( ((metta_function_asserted(KB,[Op|Args],BodyFn),{length(Args,Len),compile_metta_defn(KB,Op,Len,Args,BodyFn,Clause),
       send_to_pl_file(in_cmt(call(write_src_wi(['=',[Op|Args],BodyFn]))))}) ==> compiled_clauses(KB,Op,Clause))).
 
-actually_compile('False').
+%actually_compile('False').
+actually_compile('True').
 
 info(_).
 
