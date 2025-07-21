@@ -353,9 +353,13 @@ overflow_depth(N,Depth):- Depth<N.
 overflow_depth(Depth):- Depth<0.
 deepen(Depth,Depth2):- Depth2 is Depth -1.
 
+visible_kb(_Self,_KB).
 
+%get_operator_return_type(Self,OpParams,FRetType),
+was_no_eval(NoEval,X):- is_list(NoEval),[No,X]=NoEval,No=='noeval',!.
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
+eval_01(_Eq,RetType,_Depth,_Self,NoEval,X):- was_no_eval(NoEval,X),ignore(RetType='Atom'),!.
 eval_01(_Eq,_RetType,_Dpth,_Slf,X,Y):- notrace(self_eval(X)),!,
    unify_woc(X,Y).
 eval_01(Eq,RetType,Depth,Self,X,Y):-
@@ -617,6 +621,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ is_list(X), !,
   as_prolog_x(Depth,Self,X,XX),
   eval_20(Eq,RetType,Depth,Self,XX,Y),sanity_check_eval(eval_20_not_list,Y).
 
+eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval' ignore(RetType='Atom'),!.
 
 eval_args_alone(X):- var(X),!,fail.
 %eval_args_alone(X):- \+ callable(X), \+ py_is_callable(X).
@@ -1403,6 +1408,8 @@ println_impl(X):- ttyflush,
 %println_impl(X):- user_io((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 %println_impl(X):- ((ansi_format(fg('#c7ea46'),"~N~@~N",[write_sln(X)]))),flush_output.
 
+println_impl(X,R):- println_impl(X),R=[].
+
 princ_impl(X):- user_io((write_sln(X))),flush_output,ttyflush.
 
 write_sln(X):- string(X), !, write(X),flush_output.
@@ -1551,6 +1558,7 @@ is_tollerant:- \+ option_value('unit-tests','exact').
 
 strict_equals_allow_vn(X,Y):- X==Y,!.
 strict_equals_allow_vn(X,Y):- X=@=Y,!.
+strict_equals_allow_vn([X],Y):- X=@=Y,!.
 strict_equals_allow_vn(X,Y):- attvar(X),attvar(Y),get_attr(X,vn,XX),get_attr(Y,vn,YY),!,XX==YY.
 strict_equals_allow_vn(X,Y):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,unify_woc(XX,Y).
 strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,vn,_),!,unify_woc(XX,Y).
@@ -1558,6 +1566,7 @@ strict_equals_allow_vn(Y,X):- attvar(X),var(Y),get_attr(X,vn,XX),\+ get_attr(Y,v
 
 %equal_enough_for_test_renumbered_l(P2,X,Y):- call(P2,X,Y), !.
 equal_enough_for_test_renumbered_l(_P2,X,Y):- is_blank(X),is_blank(Y),!.
+equal_enough_for_test_renumbered_l(_P2,[X],Y):- X=@=Y,!. % is_list(X),equal_enough_for_test_renumbered_l(P2,X,Y),!.
 equal_enough_for_test_renumbered_l(P2,X,Y):-  must_be(proper_list,X), must_be(proper_list,Y),
     sort(X,X0),sort(Y,Y0),(X\==X0;Y\==Y0),!,
     equal_enough_for_test_renumbered_l(P2,X0,Y0).
@@ -2961,6 +2970,8 @@ eval_20(Eq,RetType,Depth,Self,['return',X],_):- !,
   eval_args(Eq,RetType,Depth,Self,X, Val), throw(return(RetUnit)).
 % ================================================
 
+v1_v2(_,V2):- call(V2).
+
 % ================================================
 % === catch / throw of mettalog
 eval_20(Eq,RetType,Depth,Self,['catch',X,EX,Handler],Res):- !,
@@ -3124,7 +3135,8 @@ eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],NoResult):
             POptions)),
      make_nop(RetType,[],NoResult).
 
-eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
+eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, v1_v2(metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res),eval_args(Eq,RetType,Depth,Self,['superpose',ArgL],Res)).
+
 
 
 % =================================================================
