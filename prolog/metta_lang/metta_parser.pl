@@ -1328,10 +1328,24 @@ read_single_line_comment(Stream) :-
     % read_char(Stream, ';'),  % Skip the ';' character.
     read_line_char(Stream, line_char(Line1, Col)),
     %succ(Col0, Col1),
-    read_line_to_string(Stream, Comment),
-    atom_length(Comment,Len), EndCol is Col + Len,
-   Range = range(line_char(Line1, Col), line_char(Line1, EndCol)),
+    read_line_to_string_maybe_more(Stream, Comment),
+    %atom_length(Comment,Len), EndCol is Col + Len,
+    read_line_char(Stream, line_char(Line2, EndCol)),
+   Range = range(line_char(Line1, Col), line_char(Line2, EndCol)),
    push_item_range('$COMMENT'(Comment, Line1, Col), Range).
+
+
+read_line_to_string_maybe_more(Stream, Comment):-
+   read_line_to_string(Stream, CommentStart),
+   peek_string(Stream, 5, LookAhead),
+   (start_line_comment(LookAhead) ->
+     (read_line_to_string_maybe_more(Stream, CommentCont), atomics_to_string([CommentStart,"\n",CommentCont],Comment)) ;  CommentStart = Comment).
+
+start_line_comment(Var):- var(Var), !, fail.
+start_line_comment(end_of_file):- !, fail.
+start_line_comment(String):- string(String), string_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment(String):- atom(String), atom_chars(String,Chars),!,start_line_comment(Chars).
+start_line_comment([C|Chars]):- C==';' -> true ; (C\=='\n',C\=='\r',is_like_space(C),!,start_line_comment(Chars)).
 
 %! read_position(+Stream:stream, -Line:integer, -Col:integer, -CharPos:integer) is det.
 %

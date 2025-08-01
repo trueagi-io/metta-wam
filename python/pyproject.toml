@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mettalog"
-description = "Hyperon API in Python"
+description = "Hyperon MeTTaLog API in Python"
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["metta", "mettalog", "hyperon", "opencog"]
@@ -26,8 +26,8 @@ dynamic = [
 ]
 
 [project.scripts]
-mettalog-py = "hyperon.metta:main"
-mettalog-repl = "mettalog_sandbox.repl.metta_repl:main"
+#mettalog-py = "hyperon.metta:main"
+mettalog-repl = "mettalog.sandbox.repl.metta_repl:main"
 
 [project.optional-dependencies]
 dev = [
@@ -36,12 +36,17 @@ dev = [
     "janus_swi"
 ]
 
+
 [tool.setuptools]
-packages = ["mettalog", "hyperon_ref", "mettalog_sandbox"]
-package-dir = { "hyperon_ref" = "hyperon_ref", "mettalog" = "mettalog", "mettalog_sandbox" = "sandbox"  }
+packages = ["mettalog", "hyperon_ref", "mettalog.sandbox", "mettalog.libraries", "mettalog.py2metta", "mork"]
+package-dir = { "mettalog"="mettalog", "mettalog.sandbox"="sandbox", "mettalog.libraries" = "../libraries", "mettalog.py2metta" = "../libraries/py2metta", "hyperon_ref" = "hyperon_ref", "mork" = "../libraries/mork-sys/MORK/python" }
+
+
+
 # Specify hyperonpy.py as a py_modules entry
 #py-modules = ["hyperonpy","mettalogpy"]
-py-modules = ["mettalogpy"]
+#  ln -s ../libraries/metta-morph-mlog/exted/mettamorph.py mettamorph.py
+py-modules = ["mettalogpy", "hyperlog", "mettamorph"]
 
 [tool.cibuildwheel]
 #before-all = "sh -c ./python/install-hyperonc.sh"

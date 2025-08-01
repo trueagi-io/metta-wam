@@ -359,33 +359,28 @@ wwp(Fnicate, File) :-
 %     Order = ['.py'] ;
 %     Order = [''].
 %
-extension_search_order(['.metta']).
-extension_search_order(['.py']).
 extension_search_order(['']).
+extension_search_order(['.py']).
+extension_search_order(['.metta']).
 
 :- if(\+ current_predicate(load_metta_file/2)).
 
-%!  load_metta_file(+Self, +Filemask) is det.
+%!  load_metta_file(+Self, +Filename) is det.
 %
 %   Loads a `.metta` file or other supported files based on the file mask.
 %
-%   Attempts to load the specified `Filemask`. If the `Filemask` has a `.metta`
+%   Attempts to load the specified `Filename`. If the `Filename` has a `.metta`
 %   extension, `load_metta/2` is used. Otherwise, `load_flybase/1` is called.
 %
 %   @arg Self The calling module or context.
-%   @arg Filemask The file name or pattern to load.
+%   @arg Filename The file name or pattern to load.
 %
 %   @example
 %     % Load a file with .metta extension.
 %     ?- load_metta_file(module, 'example.metta').
 %
-load_metta_file(Self, Filemask) :-
-    symbol_concat(_, '.metta', Filemask), !,
-    % Load the file if it has a .metta extension
-    load_metta(Self, Filemask).
-load_metta_file(_Slf, Filemask) :-
-    % Otherwise, use the flybase loader for the file mask
-    load_flybase(Filemask).
+load_metta_file(Self, Filename) :-
+   load_metta(Self, Filename), !.
 
 :- endif.
 
@@ -848,13 +843,14 @@ complain_if_missing(_, About):-
 %     % Import a Python module named "example_py_module" into the Prolog environment.
 %     ?- import_metta1('&self', 'example_py_module').
 %
+
 import_metta1(_Slf, Module) :- nonvar(Module), assumed_loaded(Module),!.
 import_metta1(Self, Module) :- maybe_into_top_self(Self, TopSelf), !, import_metta1(TopSelf, Module).
-import_metta1(Self, Module) :- is_builtins_module(Module, Path), Module\=Path, !,import_metta1(Self, Path).
+import_metta1(Self, Module) :- is_builtins_module(Module, Path), Module\==Path, !,import_metta1(Self, Path).
 import_metta1(Self, Module):-
     % If the Module is a valid Python module, extend the current Prolog context with Python.
     current_predicate(py_is_module/1), py_is_module(Module),!,
-    must_det_ll(self_extend_py(Self, Module)),!.
+    must_det_lls(self_extend_py(Self, Module)),!.
 import_metta1(Self, Filename):-
     % If Filename is not a valid symbol or file does not exist, use wildcards for import.
     (\+ symbol(Filename); \+ exists_file(Filename)),!,
@@ -872,8 +868,8 @@ import_metta1(Self, RelFilename):-
     pfcAdd_Now(metta_file(Self, Filename, Directory)),
     % Suspend Prolog answers during the inclusion of the MeTTa file.
     locally(nb_setval(suspend_answers, true),
-    % Include the file and load its content into the specified directory.
-    include_metta_directory_file(Self, Directory, Filename)))).
+     % Include the file and load its content into the specified directory.
+     use_dir_file(import, Self, Directory, Filename)))).
 
 % Ensure Metta persistency and parsing functionalities are loaded.
 :- ensure_loaded(metta_persists).
@@ -933,15 +929,35 @@ include_metta1(Self, RelFilename):-
     gen_tmp_file(false, Filename),
     % Extract the directory path from the filename.
     directory_file_path(Directory, _, Filename),
+    use_dir_file(include, Self, Directory, Filename))).
+
+
+
+use_dir_file(How, Self, Directory, Filename):- user_io(writeln(use_dir_file(How, Self, Directory, Filename))),fail.
+%use_dir_file(How, Self, Directory, Filename):- Filename=='PLN.py',!.
+
+use_dir_file(How, Self, _Directory, Filename) :-
+    symbol_concat(_, '.py', Filename), !,
+    py_load_modfile_py(Filename),
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)).
+
+% Load the file if it has a .metta extension
+use_dir_file(How, Self, Directory, Filename):-
+ symbol_concat(_, '.metta', Filename), !,
+ must_det_ll((
     % Register the file in Prolog knowledge base as part of the MeTTa context.
     pfcAdd_Now(metta_file(Self, Filename, Directory)),
     % Mark the file as loaded into the current knowledge base.
-    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
+    %pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Include the file's directory content into the current module context.
     include_metta_directory_file(Self, Directory, Filename))),
     % Register the file status in the knowledge base and optionally list it.
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     nop(listing(user:loaded_into_kb/2)).
+
+use_dir_file(How, _Slf, _Dir, Filename) :-
+    % Otherwise, use the flybase loader for the file mask
+    load_flybase(Filename).
 
 
 test_file(Filename):- test_file([], Filename).
@@ -1690,6 +1706,9 @@ accept_line2(Self, S) :-
 %     ?- load_metta_file_stream('example.metta', '&self', In).
 %
 load_metta_file_stream(Filename, Self, In) :- maybe_into_top_self(Self, TopSelf), !, load_metta_file_stream(Filename, TopSelf, In).
+
+load_metta_file_stream(Filename, Self, In) :- \+ symbol_concat(_, '.metta', Filename),
+    trace, throw(giveup(load_metta_file_stream(Filename, Self, In))).
 load_metta_file_stream(Filename, Self, In) :-
     % Check if the filename is atomic and exists, then get file size.
     if_t((atomic(Filename), exists_file(Filename)), size_file(Filename, Size)),
@@ -1852,28 +1871,34 @@ load_metta_file_stream_fast(_Size, _P2, Filename, Self, In) :-
     make_metta_file_buffer(use_fast_buffer, Filename, In),
     load_metta_buffer(Self, Filename).
 
-%!  make_metta_file_buffer(+TFMakeFile, +FileName, +InStream) is det.
+
+ensure_metta_buffer(Filename):- user:metta_file_buffer(0, _Ord, _Kind, _Expr, _NamedVarsList, Filename, _LineCount),!.
+ensure_metta_buffer(Filename):- symbol_concat(_, '.metta', Filename), !, make_metta_file_buffer(use_fast_buffer, Filename, _InStream),!.
+ensure_metta_buffer(Filename):- trace,fbug(ensure_metta_buffer(Filename)),fail.
+
+
+%!  make_metta_file_buffer(+TFMakeFile, +Filename, +InStream) is det.
 %
 %   Creates a buffer file for a MeTTa file if `TFMakeFile` is true.
 %
 %   This predicate generates a buffer file (`BufferFile`) with a `.buffer~` extension
-%   based on `FileName`. It processes each expression from `InStream` using
+%   based on `Filename`. It processes each expression from `InStream` using
 %   `maybe_write_bf/3`, which writes expressions to the buffer file if `TFMakeFile`
 %   is true.
 %
 %   @arg TFMakeFile  A flag indicating whether to create a buffer file.
-%   @arg FileName    The base file name for the `.metta` file.
+%   @arg Filename    The base file name for the `.metta` file.
 %   @arg InStream    The input stream for reading file content.
 %
 %   @example
 %     % Create a buffer file for "example.metta" if the flag is true.
 %     ?- make_metta_file_buffer(true, 'example.metta', InStream).
 %
-make_metta_file_buffer(TFMakeFile, FileName, InStream) :-
+make_metta_file_buffer(TFMakeFile, Filename, InStream) :-
     % Generate buffer file name with `.buffer~` extension.
-    cache_file(FileName, BufferFile),
+    cache_file(Filename, BufferFile),
     % Process expressions from the input stream with optional buffering.
-    process_expressions(FileName, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
+    process_expressions(Filename, InStream, maybe_write_bf(TFMakeFile, BufferFile)).
 
 
 :- use_module(library(system)).   % for absolute_file_name/3
@@ -2114,15 +2139,46 @@ metta_file_buffer(+, Expr, NamedVarsList, Filename, LineCount) :-
 %
 load_metta_buffer(Self, Filename) :- maybe_into_top_self(Self, TopSelf), !, load_metta_buffer(TopSelf, Filename).
 load_metta_buffer(Self, Filename) :-
+   ensure_metta_buffer(Filename),
+   pfcAdd_Now(user:loading_into_kb(Self, Filename)),
+   load_existing_buffer(Self, Filename).
+
+
+load_existing_buffer(Self, Filename):- option_value('process',How), How\==true,How\==false,symbol(How),!,
+    with_existing_buffer(process_metta_expr(file(Filename), Self, How), Filename),!,
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)).
+load_existing_buffer(Self, Filename):-
+    with_existing_buffer(run_metta_expr(Filename, Self), Filename),!,
+    pfcAdd_Now(user:loaded_into_kb(Self, Filename)).
+
+process_metta_expr(Filename, Self, How, Expr):- call(metta_processor(Filename,Self,How),Expr, Convert), !,
+     run_metta_expr(Filename, Self, Convert).
+
+metta_processor(_Filename,_Self,P1,Expr,[] ):- current_predicate(P1/1),!,call(P1,Expr),!.
+metta_processor(_Filename,_Self,P2,Expr,New):- current_predicate(P2/1),!,call(P2,Expr,New),!.
+metta_processor( Filename, Self,PU,Expr,[] ):-  do_metta(file(Filename), PU, Self, Expr, _O2).
+
+
+run_metta_expr(_Filename, _Self, Expr):- Expr==[],!.
+run_metta_expr( Filename, Self, Expr):- option_value(printer, Printer), Printer\==[], !, print_metta_expr(file(Filename), Self, Printer, Expr).
+run_metta_expr( Filename, Self, Expr):- import_metta_expr(file(Filename), Self, Expr).
+
+print_metta_expr(_Filename, _Self, false, _Expr):- !.
+print_metta_expr( Filename,  Self, true, Expr):- import_metta_expr(file(Filename), Self, Expr).
+print_metta_expr(_Filename, _Self, Method, Expr):- call(Method, Expr).
+
+
+
+import_metta_expr(Filename, Self, Expr):- do_metta(file(Filename), +, Self, Expr, _O2).
+
+with_existing_buffer(P1, Filename) :-
     % Set execution number, load answer file, and reset execution.
     atom_concat(Filename,'.pl',PlFile), % append .pl to the .metta name
     write_new_plfile(Filename,PlFile),
     set_exec_num(Filename, 1),
     load_answer_file(Filename),
     set_exec_num(Filename, 0),
-    Mode = '+',
     % Register the file as loaded in the knowledge base.
-    pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     % Process each buffered expression.
     with_option(loading_file, Filename,
     user_io((
@@ -2132,10 +2188,11 @@ load_metta_buffer(Self, Filename) :-
         with_option(loading_file, Filename,
          with_option(file_loc, LineCount,
          (
-          (must_det_lls(do_metta(file(Filename), Mode, Self, Expr, _O)) -> true
-        ;  (ignore(rtrace(do_metta(file(Filename), Mode, Self, Expr, _O2))),
-                   trace, pp_m(unknown_do_metta(file(Filename), Mode, Self, Expr))))))))),
+          (must_det_lls(call(P1,Expr)) -> true
+        ;  (ignore(rtrace(call(P1,Expr))),
+                   trace, pp_m(unknown(call(P1,Expr)))))))))),
          forall(on_finish_load_metta(Filename),true))))).
+
 
 
 
@@ -2159,10 +2216,10 @@ load_metta_buffer(Self, Filename) :-
 %
 is_file_stream_and_size(Stream, Size) :-
     % Check if the stream is associated with a file.
-    stream_property(Stream, file_name(FileName)),
+    stream_property(Stream, file_name(Filename)),
     % Check if the file is accessible and get its size.
-    exists_file(FileName),
-    size_file(FileName, Size).
+    exists_file(Filename),
+    size_file(Filename, Size).
 
 %!  maybe_read_pl(+In, -Expr) is nondet.
 %
@@ -3085,7 +3142,7 @@ progress_bar_example :-
 progress_bar_example.
 
 :- dynamic(using_corelib_file/0).
-:- dynamic(really_using_corelib_file/0).
+:- dynamic(already_using_corelib_file/0).
 
 %!  use_corelib_file is det.
 %
@@ -3157,7 +3214,7 @@ metta_atom_deduced('&corelib', Term) :- fail,
 %
 %   Loads the core library file if it hasn't already been loaded.
 %
-%   This predicate first checks if the core library is already in use (`really_using_corelib_file`).
+%   This predicate first checks if the core library is already in use (`already_using_corelib_file`).
 %   If not, it attempts to load the file from the Metta source directory. Currently, it defaults to
 %   `stdlib_mettalog.metta`, with `corelib.metta` as a commented alternative.
 %
@@ -3165,15 +3222,21 @@ metta_atom_deduced('&corelib', Term) :- fail,
 %     % Load the core library if it's not already loaded.
 %     ?- load_corelib_file.
 %
-load_corelib_file :- really_using_corelib_file, !.
+
+load_corelib_file :- already_using_corelib_file, !.
+load_corelib_file :- option_value(corelib,false),!.
+load_corelib_file :- option_value(corelib,skip),!.
 %load_corelib_file :- is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'corelib.metta'), !.
 load_corelib_file:- once(load_corelib_file_prof),!.
 load_corelib_file_prof :-
-     setup_library_calls,
+     asserta(already_using_corelib_file),
+     use_metta_ontology,
      % Load the standard Metta logic file from the source directory.
-     must_det_lls((is_metta_src_dir(Dir), really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
-     metta_atom('&corelib', [':', 'Any', 'Type']),
-     really_use_corelib_file(Dir, 'corelib.metta'))).
+     must_det_lls((is_metta_src_dir(Dir),
+     %really_use_corelib_file(Dir, 'stdlib_mettalog.metta'),
+      really_use_corelib_file(Dir, 'corelib.metta'),
+      assertion(metta_atom('&corelib', [':', 'Any', 'Type'])))),
+     setup_library_calls.
 % !(import! &corelib "src/canary/stdlib_mettalog.metta")
 
 %!  really_use_corelib_file(+Dir, +File) is det.
@@ -3196,7 +3259,7 @@ really_use_corelib_file(Dir, File) :-
           locally(nb_setval(compiler_context, builtin),
              locally(nb_setval(suspend_answers, true),
             without_output(include_metta_directory_file('&corelib', Dir, Filename)))))),
-     asserta(really_using_corelib_file),
+
      debug(lsp(main), "~q", [end_really_use_corelib_file(Dir, File)]))),
      nb_delete(compiler_context).
 

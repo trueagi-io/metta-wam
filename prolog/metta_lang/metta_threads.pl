@@ -654,7 +654,7 @@ maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], G
 %
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
  \+ option_value(threading,false),!,
- with_metta_ctx(Eq, RetType, Depth, MSpace, metta_hyperpose_v0(eval, InList, Res)).
+ with_metta_ctx(Eq, RetType, Depth, MSpace, ['hyperpose'|InList], metta_hyperpose_v0(eval, InList, Res)).
 
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
     % This part of the code is currently skipped with fail.

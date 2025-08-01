@@ -130,6 +130,9 @@ quietly_ex(X) :-
 %     ?- control_arg_types(foo, bar).
 %     false.  % As the logic starts with `fail/0`, this will always be false.
 %
+control_arg_types( A, _) :- \+ compound(A),!,fail.
+control_arg_types((H :- B), H) :- B==true,!.
+control_arg_types((H :- B), H) :- !, is_all_var_name_stuff(B), call(B).
 control_arg_types(A, B) :-
     % Immediately fail to ensure control only through the subsequent logic.
     fail,
@@ -139,6 +142,11 @@ control_arg_types(A, B) :-
     A \== B,
     % Use a cut to prevent further backtracking.
     !.
+
+is_all_var_name_stuff(C):- \+ compound(C), !, fail,C == true.
+is_all_var_name_stuff(name_variable(_,_)):- !.
+is_all_var_name_stuff((A,B)):- !,is_all_var_name_stuff(A),is_all_var_name_stuff(B).
+
 
 %:- listing(control_arg_types/3).
 
@@ -1601,8 +1609,8 @@ pfcPost_rev(S, Term) :-
 %
 % Check and fix argument types before posting.
 pfcPost1(Fact, S) :-
-   control_arg_types(Fact, Fixed),
-   !, pfcPost1(Fixed, S).
+   control_arg_types(Fact, Fixed), !,
+   pfcPost1(Fixed, S).
 % Handle exceptions during posting and enforce occurs check.
 pfcPost1(P, S) :-
    locally(set_prolog_flag(occurs_check, true),
@@ -1720,6 +1728,7 @@ is_asserted_exact(MHB) :-
 %
 %   @see clause/3, clause_property/2.
 %
+is_asserted_exact(M, H, B) :- is_all_var_name_stuff(B),is_asserted_exact(M, H, true),!.
 is_asserted_exact(M, H, B) :-
    M = MM,  % Ensure module names match.
    % Search for clause, trying both module forms.
@@ -1746,6 +1755,7 @@ is_asserted_exact(M, H, B) :-
 %
 %   @see clause/3, strip_m/2, =@=/2.
 %
+is_asserted_exact(M, H, B, Ref) :- is_all_var_name_stuff(B),is_asserted_exact(M, H, true, Ref),!.
 is_asserted_exact(_, H, B, Ref) :-
    % Retrieve the clause by reference.
    clause(CH, CB, Ref),
@@ -1843,7 +1853,7 @@ pfcUnique(post, Head, Tail) :-
    !, \+ is_clause_asserted(Head, Tail).
 */
 pfcUnique(_, Head, Tail) :-
-   copy_term_nat(v(Head, Tail), v(HeadC, TailC)),
+   to_attributed_clause( Head:-Tail , HeadC:-TailC),
    \+ is_asserted_exact(HeadC, TailC), !.
 /*
 pfcUnique(_,H,B):- \+ is_asserted(H,B),!.
@@ -1855,6 +1865,28 @@ pfcUnique(_,H,B):- \+ (
     strip_m(BB, BBB),
     BBB=@=B).
 */
+
+
+goals_to_callables(Goals,Callables):-
+   list_to_conjuncts(Goals,Callables).
+
+to_attributed_clause(HB,HB):- ground(HB),!.
+to_attributed_clause(HB,HB):- \+ compound(HB),!.
+to_attributed_clause(HB,HB):- term_attvars(HB,AV), AV==[],!.
+to_attributed_clause(M:HB,M:AC):- nonvar(HB),!,to_attributed_clause1(HB,AC).
+to_attributed_clause(HB,AC):- to_attributed_clause1(HB,AC).
+to_attributed_clause1((H:-B), AssertThis):- !,
+   copy_term((H:-B), (CH :- CB), Goals),
+   conjuncts_to_list(CB,CBL),append(Goals,CBL,CBLGoals),
+   list_to_set(CBLGoals,Set),
+   goals_to_callables(Set,Callables),!,
+   AssertThis = (CH:-Callables),!.
+
+to_attributed_clause1(HB, AssertThis):-
+  copy_term( HB, Copy, CBLGoals),
+  list_to_set(CBLGoals,Set),
+  goals_to_callables(Set,Callables),
+  AssertThis = (Copy:-Callables),!.
 
 %!  pfcSetSearch(+Mode) is det.
 %
@@ -2531,8 +2563,7 @@ pfcRetractAll(P) :-
 %
 pfcRetractAll(Fact, S) :-
    % Normalize the arguments for proper handling.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcRetractAll(Fixed, S).
 
 pfcRetractAll(P, S) :-
@@ -2639,8 +2670,7 @@ pfcRetractAll_v2(P, _) :-
 %
 pfcRemove(Fact) :-
    % Normalize the argument type.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcRemove(Fixed).
 pfcRemove(P) :-
    % Withdraw all support for the entity.
@@ -3103,8 +3133,7 @@ may_cheat :-
 %
 pfcFwd(Fact) :-
    % Normalize the argument types.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfcFwd(Fixed).
 
 pfcFwd(Fact) :-
@@ -3169,6 +3198,8 @@ fc_rule_check(_).
 %   @arg Fact  The original fact.
 %   @arg F     A copy of the original fact for further processing.
 %
+
+%TODO fcpt(Fact, (H:-B)):- !, forall(B, fcpt(Fact, H)).
 fcpt(Fact, F) :-
    % Retrieve positive triggers associated with the fact.
    pfcGetTriggerQuick('$pt$'(F, Body)),
@@ -3191,6 +3222,8 @@ fcpt(_, _).
 %   @arg Fact  The original fact.
 %   @arg F     A copy of the original fact for further processing.
 %
+
+%TODO fcnt(Fact, (H:-B)):- !, forall(B, fcnt(Fact, H)).
 fcnt(_Fact, F) :-
    % Retrieve and process negative triggers.
    pfc_spft(X, _, '$nt$'(F, Condition, Body)),
@@ -3402,8 +3435,7 @@ pfc_eval_rhs([Head | Tail], Support) :-
 %
 pfc_eval_rhs1(Fact, S) :-
    % Normalize argument types before further processing.
-   control_arg_types(Fact, Fixed),
-   !,
+   control_arg_types(Fact, Fixed), !,
    pfc_eval_rhs1(Fixed, S).
 pfc_eval_rhs1({Action}, Support) :-
    % Handle evaluable Prolog code wrapped in `{}`.
@@ -3512,6 +3544,9 @@ trigger_trigger1(Trigger, Body) :-
 pfc_call(P) :-
    % Handle cases where the input is a variable.
    var(P),!, pfcFact(P).
+
+%TODO pfc_call(P :- B):- !, (pfc_call(B)*->pfc_call(P);clause_u(P,B)).
+
 pfc_call(P) :-
    % Ensure the input is callable; throw an error if not.
    \+ callable(P), throw(pfc_call(P)).
@@ -4339,7 +4374,7 @@ pfcType(_, fact(_FT)) :-
 %
 pfcAssert(P, Support) :-
     % If the clause already exists, skip assertion; otherwise, assert it.
-    (pfc_clause(P) ; assert(P)),
+    (pfc_clause(P) ; assert_w_attrs(P)),
     !,
     % Add support information to the asserted clause or fact.
     pfcAddSupport(P, Support).
@@ -4356,7 +4391,7 @@ pfcAssert(P, Support) :-
 %     ?- pfcAsserta(foo, support_info).
 %
 pfcAsserta(P, Support) :-
-    (pfc_clause(P) ; asserta(P)),!,pfcAddSupport(P, Support).
+    (pfc_clause(P) ; assert_w_attrs_a(P)),!,pfcAddSupport(P, Support).
 
 %!  pfcAssertz(+P, +Support) is det.
 %
@@ -4370,7 +4405,13 @@ pfcAsserta(P, Support) :-
 %     ?- pfcAssertz(foo, support_info).
 %
 pfcAssertz(P, Support) :-
-    (pfc_clause(P) ; assertz(P)),!,pfcAddSupport(P, Support).
+    (pfc_clause(P) ; assert_w_attrs_z(P)),!,pfcAddSupport(P, Support).
+
+
+
+assert_w_attrs(P):-to_attributed_clause(P,A),assert(A).
+assert_w_attrs_a(P):-to_attributed_clause(P,A),asserta(A).
+assert_w_attrs_z(P):-to_attributed_clause(P,A),assertz(A).
 
 %!  pfc_clause(+Clause) is nondet.
 %
@@ -4383,7 +4424,7 @@ pfcAssertz(P, Support) :-
 %     ?- pfc_clause((foo :- bar)).
 %     true.
 %
-pfc_clause((Head :- Body)) :-
+pfc_clause_hb(Head, Body) :-
     !,
     % Copy the Head and Body to prevent unwanted unification.
     copy_term(Head, Head_copy),
@@ -4393,6 +4434,10 @@ pfc_clause((Head :- Body)) :-
     % Ensure the copied terms are variants of the original.
     variant(Head, Head_copy),
     variant(Body, Body_copy).
+
+pfc_clause((Head :- Body)) :- pfc_clause_hb(Head, Body)*->true;
+   (to_attributed_clause(Head:-Body,HeadC:-BodyC),
+     pfc_clause_hb(HeadC, BodyC)).
 pfc_clause(Head) :-
     % Handle unit clauses without a body.
     copy_term(Head, Head_copy),

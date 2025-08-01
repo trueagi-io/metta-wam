@@ -100,17 +100,23 @@ self_eval_ht(F,X):- !, nonvar(F),is_list(X),length(X,Len),is_self_eval_l_fa(F,Le
 
 unify_woc(X,Y):- materialize(X),materialize(Y),unify_with_occurs_warning(X,Y).
 
+:- thread_local(metta_bound_value/3).
+:- dynamic(metta_bound_value/3).
+% :- volatile(metta_bound_value/3).
+
 nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  nb_current(Name, X),!. % spaces and states are stored as compounds
-nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
-  call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
+ current_self(Self), metta_bound_value(Self, Name, X),!. % spaces and states are stored as compounds
+%nb_bound(Name,X):- atom(Name), % atom_concat('&', _, Name),
+%  call_in_shared_space(nb_current(Name, X)),!.  % spaces and states are stored as compounds
 
 call_in_shared_space(G):- call_in_shared_thread(main,G).
 call_in_shared_thread(Thread,Goal):- thread_self(Self),Thread==Self,!,call(Goal).
 call_in_shared_thread(_Thread,Goal):- call(Goal). % should use call_in_thread/2 (but it blocks lazy calls)
 
+
+nb_bind(Name,Value):- current_self(Self), retractall(metta_bound_value(Self,Name, _)), !, asserta( metta_bound_value(Self,Name, Value)).
 nb_bind(Name,Value):- nb_current(Name,Was),same_term(Value,Was),!.
-%nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
+nb_bind(Name,Value):- call_in_shared_space(nb_current(Name,Was)),same_term(Value,Was),!.
 nb_bind(Name,Value):-
    duplicate_deep_term(Value,NewValue),
    call_in_shared_space(nb_linkval(Name,NewValue)),!.
@@ -356,7 +362,7 @@ deepen(Depth,Depth2):- Depth2 is Depth -1.
 visible_kb(_Self,_KB).
 
 %get_operator_return_type(Self,OpParams,FRetType),
-was_no_eval(NoEval,X):- is_list(NoEval),[No,X]=NoEval,No=='noeval',!.
+was_no_eval(NoEvalX,X):- is_list(NoEvalX),[NoEval,X]=NoEvalX,NoEval=='noeval',!.
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
 eval_01(_Eq,RetType,_Depth,_Self,NoEval,X):- was_no_eval(NoEval,X),ignore(RetType='Atom'),!.
@@ -621,7 +627,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ is_list(X), !,
   as_prolog_x(Depth,Self,X,XX),
   eval_20(Eq,RetType,Depth,Self,XX,Y),sanity_check_eval(eval_20_not_list,Y).
 
-eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval' ignore(RetType='Atom'),!.
+eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval', ignore(RetType='Atom'),!.
 
 eval_args_alone(X):- var(X),!,fail.
 %eval_args_alone(X):- \+ callable(X), \+ py_is_callable(X).
@@ -1240,9 +1246,9 @@ eval_20(Eq,RetType,Depth,Self,['let*',[[Var,Val]|LetRest],Body],RetVal):- !,
 % =================================================================
 % =================================================================
 
-gen_eval_20_stubs:-
+make_i2c:-
   shell(clear),
-  make,forall(gen20,true).
+  make,forall(gen_i2c,true).
 
 is_like_eval_20(E20):-
   is_like_call_eval_20(E20),
@@ -1274,7 +1280,7 @@ try_restore_variable_names(Module, Head, Body, Ref) :-
 eval_20_to_mc(Ref,_Pre,E20,Eq,RetType,Depth,Self,[H|Left],Tail,Sig,TF,Body,Cvt,NewBody):- Tail==[],
    must_det_lls((append([H|Left],[TF],List),
    e20_functor(E20,MC),
-   prepend_functor(MC,[E20|List],Cvt),!,
+   prepend_functor(MC,List,Cvt),!,
    eval_20_to_mc2(H,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
 
 eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,Head,Tail,Sig,TF,Body,Cvt,NewBody):- Head==[],
@@ -1294,7 +1300,7 @@ eval_20_to_mc(Ref,Pre,E20,Eq,RetType,Depth,Self,_Head,Tail,Sig,TF,Body,Cvt,NewBo
    eval_20_to_mc2(_,Ref,E20,Eq,RetType,Depth,Self,List,Tail,Sig,TF,Body,Cvt,NewBody))).
 
 cvt_body(Body,Body):- \+ compound(Body),!.
-cvt_body((Body,_),CvtBody):- Body==fail,!,CvtBody=Body.
+cvt_body((Body,Skip),CvtBody):- Body==fail,!,CvtBody=(Body, skipped(Skip)).
 cvt_body(Body,Body):- is_ftVar(Body),!.
 cvt_body(Body,Body):- compound_name_arguments(Body,F,A),dont_cvt_functor(F,A),!.
 cvt_body(Body,mce(Sig,TF)):- compound(Body),Body=..[E20,_Eq,_RetType,_Depth,_Self,Sig,TF],is_like_eval_20(E20),pre_post_e20(E20,pre),!.
@@ -1304,6 +1310,7 @@ cvt_body(mce(Sig,TF), OUT):- is_list(Sig),append(Sig,[TF],SigTF), OUT=..[mi|SigT
 %cvt_body(e(E20,Sig,TF), OUT):- is_list(Sig),append(Sig,TF,SigTF), OUT=..[mee|SigTF].
 cvt_body(Body,CvtBody):- compound_name_arguments(Body,F,Args),cvt_functor(F,CvtF),maplist(cvt_body(),Args,CvtArgs),compound_name_arguments(CvtBody,CvtF,CvtArgs).
 cvt_functor(must_det_lls,must).
+cvt_functor(must_det_ll,must).
 cvt_functor(F,F).
 dont_cvt_functor('$VAR',1).
 
@@ -1312,23 +1319,30 @@ divide_for_tail(Sig,Left,[]):- is_list(Sig), Left=Sig,!.
 divide_for_tail(Sig,[],Sig):- \+ compound(Sig),!.
 divide_for_tail([H|T],[H|Left],Tail):-  divide_for_tail(T,Left,Tail).
 
-gen20:- forall(is_like_eval_20(E20),gen20(E20)).
+
+each_recompile :- gen_i2c.
+
+gen_i2c:- forall(is_like_eval_20(E20),gen_i2c(E20)).
 
 e20_functor(E20,MC):- pre_post_e20(E20,Pre),pre_post_functor(Pre,MC),!.
 e20_functor(_,mx).
 
-pre_post_e20(eval_20,pre).
-pre_post_e20(eval_args,pre).
 pre_post_e20(eval,pre).
 pre_post_e20(eval_ne,pre).
+pre_post_e20(eval_10,pre).
+pre_post_e20(eval_20,pre).
+pre_post_e20(eval_py_atom,pre).
+pre_post_e20(eval_args,pre).
+pre_post_e20(eval_30,post).
+pre_post_e20(eval_40,post).
 pre_post_e20(_,post).
-gen20(E20):-
+gen_i2c(E20):-
      pre_post_e20(E20,Pre),
-     in_cmt((draw_line,draw_line,fmt(E20+Pre))),
+     nop(in_cmt((draw_line,draw_line,fmt(E20+Pre)))),
      forall(EVAL20=..[E20,Eq,RetType1,Depth,Self,Sig,TF],
       forall(clause(EVAL20,Body,Ref),
          ignore((divide_for_tail(Sig,Left,Tail),eval_20_to_mc(clause(EVAL20,Body,Ref),Pre,E20,Eq,RetType1,Depth,Self,Left,Tail,Sig,TF,Body,NewHead,NewBody),
-                  compiler_assertz_verbose(NewHead:-NewBody))))),in_cmt((draw_line)).
+                  compiler_assertz_verbose(NewHead:-NewBody))))),nop(in_cmt((draw_line))).
 
 
 
@@ -1354,6 +1368,10 @@ eval_20(_Eq,_RetType,_Depth,_Self,['listing!',S],RetVal):- !, user_err(mci('list
 eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),listing\==CallP1, !,
    (var(Cond) -> call(CallP1,Cond);
     call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
+
+eval_20(Eq,RetType,Depth,Self,['call-p1-eval!',Meta1,Cond],Res):- !,
+   ((var(Cond);var(Cond)) -> Res=['call-p1-eval!',Meta1,Cond] ;
+    call(Meta1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
 is_call_wrapper(NonAtom,_):- \+ atom(NonAtom),!,fail.
 is_call_wrapper('!',call).
@@ -1457,6 +1475,13 @@ eval_20(Eq,_RetType,Depth,Self,['assertCount',Y,X],RetVal):- !,
                                      as_prolog_x(Depth,Self,Y,YY)),
           equal_enough_for_test_renumbered_l(strict_equals_allow_vn,XX,YY), RetVal).
 
+%  !(assertUnit (println! "hi"))   ;; maybe  !(assertUnit 1) ;; sshould thrown an error?
+eval_20(Eq,_RetType,Depth,Self,['assertUnit', Body],RetVal):- !,
+    loonit_assert_source_tf_empty(
+         ['assertUnit', Body], Res, Body,
+         (findall_eval(Eq,_ARetType,Depth,Self, ['call-for!','UnitAtom',Body], XL),
+          ([XL]=='UnitAtom'->Res=[];Res=failed(Body,XL))),
+          Res==[], RetVal).
 
 eval_20(Eq,_RetType,Depth,Self,['assertEqualToResult',X,Y],RetVal):- !,
    loonit_assert_source_tf_empty(
@@ -3479,7 +3504,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['subtraction-by',P2,Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_subtraction(call_as_p2(P2),
+                  RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3488,7 +3514,8 @@ eval_20(_Eq,_RetType,_Depth,_Self,['union-atom',List1,List2],RetVal):- !,
     append(List1a,List2,RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
-    lazy_union(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_union(variant_by_type,
+                  RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3496,6 +3523,8 @@ eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
     lazy_union(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
+
+% call_as_p2(==)
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
 % !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
@@ -3551,7 +3580,9 @@ lazy_subtraction(P2,E1^Call1, E2^Call2, E1) :-
     \+ (member(E2, List2), call(P2, E1, E2)).
 
 
-maybe_lazy_findall(T,G,L):- option_value(lazy_findall,true),!,lazy_findall(T,G,L).
+maybe_lazy_findall(T,G,L):- % option_value(lazy_findall,true),
+   !,
+   lazy_findall(T,G,L).
 maybe_lazy_findall(T,G,L):- findall(T,G,L).
 
 eval_20(Eq,RetType,Depth,Self,PredDecl,Res):-
@@ -3861,6 +3892,17 @@ eval_40(Eq, RetType, Depth, Self, [Sym | Args], Res) :-
     !,
     with_metta_ctx(Eq, RetType, Depth, Self, [Sym | Args], apply(Fn, PArgs)).
 
+eval_40(Eq,RetType,Depth,Self,[Sym|Args],Res):-
+    fail,
+    symbol(Sym), is_list(Args),
+    length(Args,Len),
+    transpiler_peek(Sym,Len,'mc',Fn, Min,AsList),
+    jiggle_args(Args,Res,Len,Min,AsList,PArgs),
+    %length(PArgs,LenP1), (symbol_file(Fn/LenP1,Sym,Len, scan_exists_in_interp);symbol_file(Fn/LenP1,Sym,Len, this_is_in_compiler_lib)),
+    !,
+    with_metta_ctx(Eq, RetType, Depth,Self, [Sym | Args] ,apply(Fn, PArgs)).
+
+
 
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,apply(Fn,PArgs)):- !, apply(Fn,PArgs).
 with_metta_ctx(_Eq,_RetType,_Depth,_Self,_MeTTaSrc,Goal):-  Goal.
@@ -3896,6 +3938,10 @@ eval_adjust_args(_Eq,_RetType,ResIn,ResOut,_Depth,_Self,AEMore,AEAdjusted):-
 eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
   (eval_args(Eq, _, Depth, Self, AIn, AE) *-> true ; AIn=AE),
   adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
+
+:-dynamic(did_arrow_types/2).
+cache_arrow_types(AE,Len):- did_arrow_types(AE,Len),!.
+cache_arrow_types(AE,Len):- asserta(did_arrow_types(AE,Len)),fail.
 
 cache_arrow_types(AE,Len):- arg_type_n(AE,Len,_,_),!.
 cache_arrow_types(AE,Len):-
@@ -4371,8 +4417,7 @@ eval_defn_bodies_guarded(Eq,RetType,Depth,Self,X,Y,XXB0L):-
 
 
 must_or_die(G):- call(G).
-%must_or_die(G):-
-%call(G)*->true;(trace,must(G)).
+%must_or_die(G):- call(G)*->true;(trace,must(G)).
 
 true_or_log_fail(Depth,Goal,LogFail):- (call(Goal)
           -> true ; ((if_trace(e,color_g_mesg('#713700',indentq2(Depth,failure(LogFail)))),!),!,fail)).

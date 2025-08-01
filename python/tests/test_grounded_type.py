@@ -153,12 +153,13 @@ class GroundedTypeTest(unittest.TestCase):
 
     def test_conversion_between_rust_and_python(self):
         metta = MeTTa(env_builder=Environment.test_env())
+        metta.run('!(import! &self random)', flat=True)
         integer = metta.run('!(+ 1 (random-int &rng 4 5))', flat=True)[0].get_object()
         self.assertEqual(integer, ValueObject(5))
         float = metta.run('!(+ 1.0 (random-float &rng 4 5))', flat=True)[0].get_object()
         self.assertTrue(float.value >= 5.0 and float.value < 6)
         bool = metta.run('!(not (flip))', flat=True)[0].get_object()
-        self.assertTrue(bool.value or  not bool.value)
+        self.assertTrue(bool.value or not bool.value)
         false = metta.run('!(not True)', flat=True)[0].get_object()
         self.assertEqual(false, ValueObject(False))
 
@@ -173,6 +174,12 @@ class GroundedTypeTest(unittest.TestCase):
         metta.register_atom("return-bool", OperationAtom("return-bool", lambda: True))
         float = metta.run('!(return-bool)', flat=True)[0].get_object()
         self.assertEqual(float, ValueObject(True))
+
+    def test_grounded_override(self):
+        metta = MeTTa(env_builder=Environment.test_env())
+        metta.register_atom(r'\+', OperationAtom('+', lambda a, b: a + b))
+        atom = metta.parse_single('+')
+        self.assertEqual(type(atom.get_object()), OperationObject)
 
     def test_assert_grounded_value_type(self):
         with self.assertRaises(AssertionError) as cm:

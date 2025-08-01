@@ -60,7 +60,7 @@ decl_metta_fact_pred(P):- decl_metta_fact_pred(_,P).
 
 decl_metta_fact_pred(Where,P):- get_fa(P, F,A),
    dynamic(F/A),multifile(F/A),discontiguous(F/A),
-   pfcAdd(metta_fact_pred(Where,F,A)).
+   pfcAdd_Now(metta_fact_pred(Where,F,A)).
 
 %calc_non_evalation_args:- forall()
 decl_metta_fact_pred_tf:-
@@ -170,7 +170,7 @@ predicate_behavior(Self, Op, Len, ObjList) :-
            predicate_behavior_fallback(Self, Op, Len, TypeList)),
     findall(Patch,get_type(Op,Patch),Patches),
     update_types(Patches,TypeList,Updated),
-    length(ObjList,10),
+    %length(ObjList,10),
     maplist(=(Updated),ObjList).
 
 % default

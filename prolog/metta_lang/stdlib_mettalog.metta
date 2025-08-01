@@ -2,17 +2,113 @@
 
 (is-mettalog)
 
+;; !(pragma! UndeclaredArg Atom)
+;; !(pragma! UndeclaredArg %Undefined%)
+;; !(pragma! UndeclaredReturn %Undefined%)
+;; !(pragma! UndeclaredReturn Atom)
+
+(: RelationType Type)
+(:> RelationType Type)
+(: DataFunctor RelationType)
+(: Constructor RelationType)
+
+(: ==> (-> Atom Atom Atom))
+
+(==> (, $A $_) $A)
+(==> (, $_ $B) $B)
+(==> (, $A $B $C) (, (, $A $B) $C))
+(==> (, $A $B $C $D) (, (, $A $B $C) $D))
+(==> (, $A $B $C $D $E) (, (, $A $B $C) (, $D $E)))
+(==>
+  (: $Rel DataFunctor)
+  (, 
+	(argNType $Rel $_ Atom)
+	(returnType $Rel Atom)))
+
+;(==> (: $Rel DataFunctor) (: $Rel (-> Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom Atom)))
+(==> (: $Rel DataFunctor) (: $Rel (-> Atom Atom Atom Atom Atom Atom Atom)))
+(: @doc DataFunctor)
+(: @desc DataFunctor)
+(: @param DataFunctor)
+(: @return DataFunctor)
+(: @doc-formal DataFunctor)
+(: @item DataFunctor)
+(: : DataFunctor)
+(: :> DataFunctor)
+(: iz DataFunctor)
+
+
+(: = DataFunctor)
+(: HE= DataFunctor)
+
+(: @doc (-> Atom Atom Atom Atom Atom))
+(: @doc (-> Atom Atom Atom))
+
+
+
+(==>
+  (: $Rel Constructor)
+  (, 
+	(argNType $Rel $_ %Undefined%)
+	(returnType $Rel Atom)))
+
+
+;;(iz (@kind function) DataFunctor)
+;;(iz (@kind atom) DataFunctor)
+(: (@kind $_) DataFunctor)
+(: @type DataFunctor)
+(: @params DataFunctor)
+
+;; Type Declarations with Documentation
 (@doc Any
   (@desc "The universal type; any value belongs to this type."))
 (: Any Type)
 
-(: RandomGenerator Type)
-(@doc RandomGenerator
-  (@desc "Type representing a random number generator."))
+(@doc DontEvalType
+  (@desc "Marks types that should not be evaluated unless forced."))
+(: DontEvalType Type)
+
+(@doc DoEvalType
+  (@desc "Marks types that should be evaluated when passed as a parameter."))
+(: DoEvalType Type)
+
+(@doc MaterialType
+  (@desc "Material types indicate that a value should be evaluated until it becomes this type. Examples include: String, Symbol, Expression.  and Atom and Any are not a Material types"))
+(: MaterialType Type)
+
+; In fileio
+;(: Stream MaterialType)
+;(type-coercion String Stream open-for-read)
+(type-coercion (String Location) String repr)
+(type-coercion String (String Location) parse)
+(type-coercion Number String repr)
+(type-coercion String Number parse)
+
+; Material types can usually be parse'd/repr'd from String
+(: Bool MaterialType)
+(: Expression MaterialType)
+(: (String Location) MaterialType)
+(: Number MaterialType)
+(: String MaterialType)
+(: Symbol MaterialType)
+(: Variable MaterialType)
+; but not all
+(: SpaceType MaterialType)
+(: StateMonad MaterialType)
 
 (@doc Atom
   (@desc "Type representing any atom."))
 (: Atom Type)
+(: Atom DontEvalType)
+
+(: RandomGenerator Type)
+(@doc RandomGenerator
+  (@desc "Type representing a random number generator."))
 
 (@doc LazyEvaluatable
   (@desc "A type of Atom/Value that hyperon does not implicitly evaluate"))

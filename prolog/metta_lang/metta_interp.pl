@@ -64,6 +64,8 @@
 % The previously commented out line was for iso_latin_1 encoding.
 % UTF-8 is more universal and can handle a wider range of characters.
 :- encoding(utf8).
+%:- use_module(library(readline)).
+
 
 o_quietly(G):- call(G).
 % o_quietly(G):- quietly(G).
@@ -72,12 +74,38 @@ o_woc(G):- call(G).
 % o_woc(G):- woc(G).
 
 :- dynamic('$metta_setup':on_init_metta/1).
+:- multifile('$metta_setup':on_init_metta/1).
+
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
+
+msu:do_metta_setup_safe:- nop(ignore(notrace(catch(do_metta_setup,_,true)))).
 % only on main thread
 do_metta_setup:- thread_self(Self), Self\==main,!.
-do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
-                        ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),do_metta_setup(Goal)).
+
+:- multifile(each_recompile/0).
+:- dynamic(each_recompile/0).
+:- multifile(setup_inits/0).
+:- dynamic(setup_inits/0).
+
+setup_inits :- do_metta_setup.
+
+do_metta_setup(Goal):-
+   debug_info(main, do_metta_setup(Goal)),
+   profile_warn(0.33,ignore(catch(Goal, Err, format(user_error, '; Goal: ~q   Caused: ~q', [Goal, Err])))).
+
+profile_warn(Goal):-
+  profile_warn(0.33, Goal).
+
+profile_warn(Estimate, Goal):-
+  get_time(Start),
+  setup_call_cleanup(true,
+     ((Goal,deterministic(YN)),(YN==true->true;maybe_profile_warn(Start,Estimate,nondet(Goal)))),
+      maybe_profile_warn(Start,Estimate,ended(Goal))).
+
+maybe_profile_warn(Start,Estimate,Goal):- get_time(Now), Span is Now - Start,
+   (Span<Estimate -> true ; debug_info(profile_warn,overtime(Span>Estimate,Goal))).
 
 
 % Set the 'RUST_BACKTRACE' environment variable to 'full'.
@@ -106,7 +134,7 @@ do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
 :- initialization(set_prolog_flag(backtrace_depth, 100)).
 
 % Set the maximum goal depth for backtraces, limiting the display of deeply nested goal calls.
-:- initialization(set_prolog_flag(backtrace_goal_dept, 100)).
+:- initialization(set_prolog_flag(backtrace_goal_depth, 100)).
 
 % Enable showing line numbers in the backtrace, which can help pinpoint where in the source code an error occurred.
 :- initialization(set_prolog_flag(backtrace_show_lines, true)).
@@ -117,7 +145,10 @@ do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
 
 % Enable debugging on errors.
 % When an error occurs, this setting will automatically start the Prolog debugger, providing detailed information about the error.
+:- initialization(set_prolog_flag(debug_on_error, true), now).
 :- initialization(set_prolog_flag(debug_on_error, true)).
+%:- initialization(set_prolog_flag(debug_on_interrupt, true), now).
+:- ignore(set_prolog_flag(debug_on_interrupt, true)).
 
 % !(set-prolog-flag debug-on-error True)
 
@@ -159,8 +190,10 @@ do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
 :- flush_output.
 */
 
-%:- initialization(set_prolog_flag(debug_on_interrupt,true).
-%:- initialization(set_prolog_flag(compile_meta_arguments,control).
+% Enable debugging on interrupt signals now and later
+
+%:- initialization(set_prolog_flag(debug_on_interrupt, true)).
+%:- initialization(set_prolog_flag(compile_meta_arguments,control)).
 
 %   Load required Prolog packs and set up their paths dynamically.
 %
@@ -169,7 +202,8 @@ do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),
 %   - Facilitates maintainability and portability of the codebase.
 %   - Supports dynamic pack management during runtime without requiring manual adjustments.
 %
-attach_mettalog_packs:- (prolog_load_context(directory, Value); Value='.'),
+attach_mettalog_packs:- profile_warn(0.33,attach_mettalog_packs_slow).
+attach_mettalog_packs_slow:- (prolog_load_context(directory, Value); Value='.'),
    % Resolve the absolute path to the '../../libraries/' directory.
    absolute_file_name('../../libraries/', Dir, [relative_to(Value)]),
    % Build paths for specific libraries/packs.
@@ -468,7 +502,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
 
-pfcAdd_Now(Cl):- pfcAdd_Now0(Cl),!.
+pfcAdd_Now(Cl):- ignore(catch(retractall(Cl),_,true)),pfcAdd_Now0(Cl),!.
 
 pfcAdd_Now0(Cl):-
    once( \+ nb_current(allow_dupes,t)
@@ -612,7 +646,7 @@ is_flag0(What, _FWhatTrue, _FWhatFalse) :-
 is_compiling :-
     current_prolog_flag(os_argv, ArgV),member(E, ArgV),
     % Check if compilation-specific arguments are present.
-    (E == qcompile_mettalog; E == qsave_program),!.
+    (E == qcompile_mettalog; E == qsave_program; E== 'qcompile_mettalog.'),!.
 
 %!  is_compiled is nondet.
 %
@@ -1523,7 +1557,8 @@ set_option_value_interp(N,V):-
     % If N is a comma-separated list, split and set each option individually.
     symbol(N), symbolic_list_concat(List,',',N),
     List \= [_], % Ensure it's not a single-element list.
-    !,forall(member(E,List), set_option_value_interp(E,V)).
+    !,forall(member(E,List), set_option_value_interp(E,V)),!.
+
 
 set_option_value_interp(N,V):- maybe_mispelled(N,NN),!,set_option_value_interp(NN,V).
 set_option_value_interp(N,V):- maybe_mispelled(V,VV),!,set_option_value_interp(N,VV).
@@ -1533,6 +1568,7 @@ set_option_value_interp(N,V):-
     % Directly set the option value and trigger any callbacks.
     % Note can be used for debugging purposes (commented out).
     if_t(different_from(N,V),debug_info(cmdargs,(N==V))),
+    retractall(default_flags_not_changed),
     Note = true,
     %fbugio(Note,set_option_value(N,V)), % Uncomment for debugging.
     ignore(set_option_value(N,V)), % Set the value for the option.
@@ -2283,7 +2319,7 @@ show_options_values :-
 
 
 
-
+find_missing_cuts :- !. % skip for now.. maybe reenable on developer machine
 find_missing_cuts :-
     once(prolog_load_context(source, File);prolog_load_context(file, File)),!,
     is_extreme_debug((debug_info(nondet_src,c(find_missing_cuts(File))))).
@@ -2731,8 +2767,8 @@ metta_cmd_args(Rest) :-
     % Fall back to using all arguments from the `argv` flag.
     current_prolog_flag(argv, Rest).
 
-:- dynamic(has_run_cmd_args/0).  % Informs the interpreter that the definition of the predicate(s) may change during execution.
-:- volatile(has_run_cmd_args/0). % Declare that the clauses of specified predicates should not be saved to the program.
+:- dynamic(has_ran_cmd_args_prescan/0).  % Informs the interpreter that the definition of the predicate(s) may change during execution.
+:- volatile(has_ran_cmd_args_prescan/0). % Declare that the clauses of specified predicates should not be saved to the program.
 
 %!  run_cmd_args_prescan is det.
 %
@@ -2740,10 +2776,10 @@ metta_cmd_args(Rest) :-
 %
 run_cmd_args_prescan :-
     % Skip the prescan if it has already been completed.
-    has_run_cmd_args, !.
+    has_ran_cmd_args_prescan, !.
 run_cmd_args_prescan :-
     % Mark that the prescan has been executed.
-    assert(has_run_cmd_args),
+    assert(has_ran_cmd_args_prescan),
     % Perform the prescan using `do_cmdline_load_metta/1`.
     do_cmdline_load_metta(prescan), setup_show_hide_debug.
 
@@ -3166,7 +3202,15 @@ skip_cmdarg('-g').
 skip_cmdarg('-x').
 
 :- dynamic(is_reseting_default_flags/0).
+:- volatile(is_reseting_default_flags/0).
+
+:- dynamic(default_flags_not_changed/0).
+:- volatile(default_flags_not_changed/0).
+%default_flags_not_changed.
+%:- initialization(default_flags_not_changed, now).
+
 reset_default_flags:- is_reseting_default_flags,!.
+reset_default_flags:- default_flags_not_changed, !.
 reset_default_flags:-
     asserta(is_reseting_default_flags),!,
     forall(option_value_def(A,B), set_option_value(A,B)),
@@ -3184,6 +3228,7 @@ reset_cmdline_flags:-
     current_prolog_flag(os_argv,[Exec|ArgV]),
     if_t(ArgV\==Rest,
       (debug_info(initialize,os_argv([Exec|ArgV])),process_metta_cmd_arg_flags(ArgV))),
+    asserta(default_flags_not_changed),
     retractall(is_reseting_cmdline_flags).
 
             %metta_cmd_args(Rest),process_metta_cmd_arg_flags(Rest),
@@ -3215,7 +3260,7 @@ process_as_flag(M) :- set_option_value_interp(M,true).
 %     ?- install_ontology.
 %
 install_ontology :-
-    ensure_corelib_types.
+    profile_warn(ensure_corelib_types).
 
 %!  load_ontology is det.
 %
@@ -4601,9 +4646,10 @@ transform_about([Eq, [Smile, Pred, Super], Cond], t(type,type,Pred, Super), Cond
 transform_about([Eq, [Pred | Args], Cond],        t(pred,head,Pred, Args), Cond) :-  Eq == '=', !.
 % General proven fact
 transform_about([Pred | Args],                    t(pred,fact,Pred, Args), true):- !.
-transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, PredArgs=..[Pred | Args],!.
+transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, compound_name_arguments(PredArgs,Pred,Args),!.
 transform_about(Pred,                             t(pred,fact,Pred,_Args), true).
 
+add_indexed_fact(_OBO):-!.
 add_indexed_fact(OBO):- arg(1,OBO,KB), arg(2,OBO,Fact), add_fact(KB, Fact),!.
 
 add_fact(KB, Fact):-
@@ -6193,6 +6239,40 @@ t1('=',_,StackMax,Self,Term,X):- eval_args('=',_,StackMax,Self,Term,X).
 t2('=',_,StackMax,Self,Term,X):- fail, subst_args('=',_,StackMax,Self,Term,X).
 */
 
+:- dynamic user:hyperlog_engine_state/2.
+:- nodebug(hyperlog).
+
+:- public(hyperlog_startup/1).
+:- export(hyperlog_startup/1).
+
+hyperlog_startup(EngineID) :-
+    user:hyperlog_engine_state(EngineID, running),!.
+hyperlog_startup(EngineID) :-
+    assertz(user:hyperlog_engine_state(EngineID, running)).
+
+hyperlog_shutdown(EngineID) :-
+    retractall(user:hyperlog_engine_state(EngineID, _)).
+
+hyperlog_set( _, Name, Value) :- set_option_value_interp(Name,Value).
+
+hyperlog_parse_all(ID, S, P) :- hyperlog_parse(ID, S, P).
+
+hyperlog_parse(ID, Res, Result):- atom(Res), atom_string(Res,String), !, hyperlog_parse(ID, String, Result).
+hyperlog_parse( _, Exp, Result):- is_list(Exp),!,Exp=Result.
+hyperlog_parse( _, Str, Result):- parse_sexpr(Str, Res),py_returnable(Res, Result).
+
+hyperlog_run(ID,X,Y):- string(X), parse_sexpr(X,M), !, hyperlog_run(ID,M,Y).
+hyperlog_run(ID,X,Y):- atom(X), atom_string(X,M),!, hyperlog_run(ID,M,Y).
+hyperlog_run(_,exec(X),Y):- !,user:eval_args(X,R),py_returnable(R,Y).
+hyperlog_run(ID,['!',X],Y):- !, hyperlog_run(ID,exec(X),Y).
+hyperlog_run(_,X, Y):- do_metta(python, +, '&self', X, R),py_returnable(R,Y).
+
+py_returnable(Res, Result):- \+ compound(Res), !, Result=Res.
+py_returnable(exec(Res), Result):- !, Result=['!',Res].
+py_returnable(Res, Result):- Result=Res.
+
+
+
 %eval_H(Term,X):- if_or_else((subst_args(Term,X),X\==Term),(eval_args(Term,Y),Y\==Term)).
 
 %!  print_goals(+TermV) is det.
@@ -7503,13 +7583,14 @@ immediate_ignore:- ignore(((
 %     % Load the Metta ontology:
 %     ?- use_metta_ontology.
 %
-use_metta_ontology:- ensure_loaded(library('metta_ontology.pfc.pl')).
+use_metta_ontologyr:- profile_warn(ensure_loaded(library('metta_ontology.pfc.pl'))).
+use_metta_ontology.
 % use_metta_ontology:- load_pfc_file('metta_ontology.pl.pfc').
 %:- use_metta_ontology.
 %:- initialization(use_metta_ontology).
 %:- initialization(loon(program),program).
 %:- initialization(loon(default)).
-
+:- initialization(use_metta_ontologyr, program).
 %!  flush_metta_output is det.
 %
 %   Ensures that any pending output is flushed to the terminal, ensuring smooth
@@ -7760,7 +7841,21 @@ findall_or_skip(Var, Call, List) :-
     % Execute the query using `findall/3` to collect results into `List`.
     findall(Var, Call, List).
 
-umo:- use_metta_ontology.
+doug:- listing(user:setup_inits/0),listing(user:each_recompile/0).
+
+:- dynamic(user:recompile_is_dirty/0).
+make_recompile_dirty:- !.
+make_recompile_dirty:- assert_if_new(recompile_is_dirty).
+ensure_compiled:- retract(recompile_is_dirty),!,
+   locally(nb_setval(debug_context, stdlib), user_err(forall(each_recompile,true))).
+ensure_compiled:- !.
+
+:- initialization(do_setup_inits, program).
+do_setup_inits:-
+   locally(nb_setval(debug_context, stdlib), user_err(forall(setup_inits,true))).
+setup_inits :- use_corelib_file.
+setup_inits :- use_metta_ontology.
+umo:- use_metta_ontologyr.
 :- initialization((use_corelib_file),after_load /**/).
 :- initialization(use_metta_ontology,after_load /**/).
 
@@ -7801,8 +7896,7 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 :- find_missing_cuts.
 
 
-:- thread_initialization(do_metta_setup).
-
+:- thread_initialization(msu:do_metta_setup_safe).
 
 
 

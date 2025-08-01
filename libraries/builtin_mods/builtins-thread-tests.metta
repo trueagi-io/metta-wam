@@ -21,7 +21,7 @@
   (@params (
 	(@param "List (Atom)")))
   (@return "Snapshot result (%Undefined%)"))
-(: thread:snapshot! (-> Atom %Undefined%))
+(: thread:snapshot! (-> CodeAtom %Undefined%))
 (= (thread:snapshot! $expr) (snapshot $expr))
 
 (@doc thread:transaction!
@@ -29,7 +29,7 @@
   (@params (
 	(@param "List (Atom)")))
   (@return "Transaction result (%Undefined%)"))
-(: thread:transaction! (-> Atom %Undefined%))
+(: thread:transaction! (-> CodeAtom %Undefined%))
 (= (thread:transaction! $expr) (transaction $expr))
 
 (@doc thread:current-transaction!
@@ -65,7 +65,7 @@
   (@params (
 	(@param "List (Atom)")))
   (@return "Thread handle (ThreadHandle)"))
-(: thread:spawn-lazy! (-> Atom ThreadHandle))
+(: thread:spawn-lazy! (-> CodeAtom ThreadHandle))
 (= (thread:spawn-lazy! $eval $handle)
    (call-for! $handle
 	 (lazy_thread $eval $handle)))
@@ -76,7 +76,7 @@
   (@params (
 	(@param "Expression to evaluate (Atom)")))
   (@return "Value (Atom)"))
-(: thread:async! (-> Atom $res))
+(: thread:async! (-> CodeAtom $res))
 (= (thread:async! $eval) (call-fn! async_eval $eval))
 
 
@@ -85,7 +85,7 @@
   (@params (
 	(@param "Expression to evaluate (Atom)")))
   (@return "Token (Token)"))
-(: thread:async-token! (-> Atom Variable Token))
+(: thread:async-token! (-> CodeAtom Variable Token))
 (= (thread:async-token! $eval $result)
    (call-fn! async_eval_token $eval $result))
 
@@ -95,7 +95,7 @@
 	(@param "Code (Atom)")
 	(@param "Policy (Atom)")))
   (@return "Token (Token)"))
-(: thread:async-policy! (-> Atom Atom Token))
+(: thread:async-policy! (-> CodeAtom Atom Token))
 (= (thread:async-policy! $eval $policy $token)
    (call-for! $token
 	 (async_thread_with_policy $eval $token $policy)))
@@ -116,7 +116,7 @@
   (@params (
     (@param "Goal (Atom)")))
   (@return "Thread handle (ThreadHandle)"))
-(: thread:spawn! (-> Atom ThreadHandle))
+(: thread:spawn! (-> CodeAtom ThreadHandle))
 (= (thread:spawn! $eval)
    (call-for! $handle
      (thread_create $eval $handle ())))
@@ -159,7 +159,7 @@
     (@param "Limit (Number)")
     (@param "List (Atom)")))
   (@return "Results or Error"))
-(: thread:limit-results! (-> Number Atom Atom))
+(: thread:limit-results! (-> Number CodeAtom Atom))
 (= (thread:limit-results! $limit $expr)
    (call-for! $result (limit $limit (eval $expr $result))))
 
@@ -190,7 +190,7 @@
     (@param "Timeout duration (Number)")
     (@param "List (Atom)")))
   (@return "Result (%Undefined%)"))
-(: thread:limit-time! (-> Number Atom %Undefined%))
+(: thread:limit-time! (-> Number CodeAtom %Undefined%))
 (= (thread:limit-time! $seconds $expr)
    (call-for! $result
      (cwtl $seconds (eval_args $expr $result))))
@@ -359,7 +359,7 @@
 	(@param "List to be evaluated in the thread")
 	(@param "Options Expression (TODO)")))
   (@return "Thread handle or error if thread creation fails"))
-(: thread:create-with-options! (-> Atom Expression ThreadHandle))
+(: thread:create-with-options! (-> CodeAtom Expression ThreadHandle))
 (= (thread:create-with-options! $eval $opt)
    (call-for! $id
 	 (thread_create $eval $id $opt)))
@@ -464,7 +464,7 @@
   (@param "Goal: Expression to evaluate")
   (@param "Options: Expression of (key value) pairs")))
   (@return "Engine handle"))
-(: engine:create (-> Atom EngineHandle))
+(: engine:create (-> CodeAtom EngineHandle))
 (= (engine:create $eval) (engine:create $eval ()))
 (: engine:create (-> Atom Expression EngineHandle))
 (= (engine:create $eval $options)
@@ -563,7 +563,10 @@
        (println! "Engine test complete."))))
 
 
+
 (= (tadd $t $u) (let $_ (sleep! $t) (+ $t $u)))
+
 !(tad 1 2)
+
 
 !(hyperpose ((tadd 1 0)(tadd 1 1)(tadd 1 2)(tadd 1 3)))

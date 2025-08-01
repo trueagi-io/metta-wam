@@ -1,4 +1,32 @@
 
+always_fix_prolog_term(Why,Coded,Fixd):- %fail,
+   maybe_fix_prolog_term(Why,Coded,Fixd),!.
+always_fix_prolog_term(_,Coded,Coded):-!.
+
+maybe_fix_prolog_term(Why,Coded,Fixd):- %fail,
+  once(fix_prolog_term(Why,[],Coded,M)), Coded\=@=M,!,
+  always_fix_prolog_term(Why,M,Fixd).
+
+fix_prolog_term(_,_,Coded,Fixd):- \+ compound(Coded),!,Coded=Fixd.
+fix_prolog_term(_,_,Coded,Fixd):- is_ftVar(Coded),!,Coded=Fixd.
+fix_prolog_term(Y,FL,Coded,Fixd):-
+   copy_term(Coded,CodedC),
+   do_fix_prolog_term(Y,FL,Coded,Fixd),
+   \+ ((CodedC\=@=CodedC,
+       (debug_info(double_sided_unification,t(CodedC\=@=CodedC)))),ignore((trace,throw(double_sided_unification)))),!.
+fix_prolog_term(Y,FL,Coded,Fixd):- is_list(Coded),
+   maplist(fix_prolog_term(Y,[list()|FL]),Coded,Fixd),!.
+fix_prolog_term(Y,FL,Coded,Fixd):-
+   compound_name_arguments(Coded,F,Args),
+   maplist(fix_prolog_term(Y,[F|FL]),Args,OArgs),
+   compound_name_arguments(Fixd,F,OArgs), !.
+fix_prolog_term(_,_,Prolog,Prolog).
+
+
+do_fix_prolog_term(_Y,_FL,u_assign(NN,Var,Nonvar),u_assign(NN,Nonvar,Var)):- is_ftVar(Var), \+ is_ftVar(Nonvar).
+
+
+
 :- dynamic(maybe_optimize_prolog_term/4).
 :- dynamic(maybe_optimize_prolog_assertion/4).
 

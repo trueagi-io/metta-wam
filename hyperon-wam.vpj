@@ -147,6 +147,13 @@
 				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"
 				L="1"/>
 		</Folder>
+		<Folder Name="../metta-morph">
+			<F
+				N="../metta-morph/*.*"
+				Recurse="1"
+				Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/;*.back"
+				L="1"/>
+		</Folder>
 		<Folder Name="../metta-src-conversions">
 			<F
 				N="../metta-src-conversions/*.*"
@@ -308,6 +315,9 @@
 			N="*.*"
 			Recurse="1"
 			Excludes=".git/;*.metta.html;*.bak;build/;.*/;*~*/"/>
+		<F N="mymod.py"/>
+		<F N="rust_rand.py"/>
+		<F N="setup.py"/>
 		<F N="vvv_tests.pl"/>
 	</Files>
 </Project>

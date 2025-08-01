@@ -421,7 +421,14 @@ py_call_method_and_args(F,List, Py):- select([Kw|Args],List,NewList), Kw=='Kwarg
    maplist(py_arg,NewList,PyArgs),
    py_list([F|PyArgs],PyList),
    py_obi(py_call_method_and_args_kw(KeyWordArgs,PyList),Py))),!.
-py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_obi(py_call_method_and_args([F|PyArgs]),Py))),!.
+py_call_method_and_args(F,List, Py):- must_det_lls((maplist(py_arg,List,PyArgs),py_call_method_and_args_final(F,PyArgs, Py))).
+
+py_call_method_and_args_final(F,PyArgs, Py):- py_call(callable(F), '@'(true)), !, compound_name_arguments(Call,'__call__',PyArgs),py_ocall_direct(F:Call,Py).
+%py_call_method_and_args_final(F,PyArgs, Py):- py_type(F,Function),Function==function, compound_name_arguments(Call,'__call__',PyArgs),py_call(F:Call,Py),!.
+py_call_method_and_args_final(F,PyArgs, Py):- py_obi(py_call_method_and_args([F|PyArgs]),Py).
+
+
+
 
 pair_arg(NonCompound,_,_):- \+ compound(NonCompound), !,fail.
 % Handle compound terms like (key=value)
@@ -1930,9 +1937,10 @@ assumed_loaded(corelib).
 %       ?- py_load_modfile('path_to_python_file.py').
 %
 py_load_modfile(Use):- py_ocall(mettalog:load_functions(Use),R),!,pybug(R).
-py_load_modfile(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),
+py_load_modfile(Use):- py_load_modfile_py(Use).
+py_load_modfile_py(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),
     py_load_modfile(File).
-py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src).
+py_load_modfile_py(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src).
 
 %!  file_to_modname(+Filename, -ModName) is det.
 %
