@@ -1000,12 +1000,9 @@ switch_to_mettarust :-
 %     ; libswipl: ['swipl', '-g', 'main', '--', 'arg1', 'arg2'].
 %
 show_os_argv :-
-    % If compatibility mode is enabled, do nothing and succeed silently.
-    is_compatio, !.
-show_os_argv :-
     % Retrieve and print the command-line arguments using the 'os_argv' Prolog flag.
     current_prolog_flag(os_argv, ArgV),
-    if_verbose(main,(write('; libswipl: '), writeln(ArgV))).
+    debug_info(cmdargs,'; libswipl: '+os_argv=ArgV).
 
 %!  is_pyswip is det.
 %

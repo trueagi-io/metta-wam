@@ -1797,7 +1797,7 @@ is_non_eval_kind(Type) :- fail,
     % If the type is non-variable, not 'Any', and non-specific, succeed.
     nonvar(Type), Type \== 'Any', is_nonspecific_type(Type), !.
 
-type_is_type(Type,IsType):- metta_atom_file_buffer_isa(Type,Is),((ground(Is)->IsType==Is; (!,fail))).
+type_is_type(Type,IsType):- buffer_src_isa(Type,Is),((ground(Is)->IsType==Is; (!,fail))).
 
 
 is_code_kind(Kind):- var(Kind),!,maybe_var_kind(Kind,N),is_non_eval_kind(N).

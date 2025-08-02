@@ -1163,16 +1163,16 @@ predicate_function_canonical(is_Empty,'Empty').
 
 pi(PI):- PI is pi.
 
-metta_atom_file_buffer_isa(I,T):- metta_atom_file_buffer([':',I,T]).
+buffer_src_isa(I,T):- metta_atom_file_buffer([':',I,T]).
 
 
 always_function_in_src(F,_):- \+ symbol(F), fail.
 always_function_in_src('If',_).
-always_function_in_src(F,_):- metta_atom_file_buffer_isa(F,'SrcFunction'),!.
+always_function_in_src(F,_):- buffer_src_isa(F,'SrcFunction'),!.
 always_function_in_src(F,A):- A1 is A + 1, predicate_arity(F,A1).
 
 always_predicate_in_src(F,_):- \+ symbol(F), fail.
-always_predicate_in_src(F,_):- metta_atom_file_buffer_isa(F,'SrcPredicate'),!.
+always_predicate_in_src(F,_):- buffer_src_isa(F,'SrcPredicate'),!.
 always_predicate_in_src(':',2).
 always_predicate_in_src('iz',2).
 always_predicate_in_src('=',_).
@@ -1864,15 +1864,15 @@ interpet_this(_,F,_,_):- interpet_this_f(F),!.
 interpet_this(Convert,F,A,Args):- compile_this(Convert,F,A,Args),!,fail.
 interpet_this(_,_,_,_).
 
-interpet_this_f(F):- metta_atom_file_buffer_isa(F,'Compiled'),!,fail.
-interpet_this_f(F):- metta_atom_file_buffer_isa(F,'Interpreted'),!.
+interpet_this_f(F):- buffer_src_isa(F,'Compiled'),!,fail.
+interpet_this_f(F):- buffer_src_isa(F,'Interpreted'),!.
 interpet_this_f(F):- op_decl(F, [ 'Number', 'Number' ], 'Number').
 
 compile_this(Convert):- as_functor_args(Convert,F,A,Args), compile_this(Convert,F,A,Args).
 compile_this(_,F,_,_):- \+ symbolic(F),!, fail.
 compile_this(_,F,_,_):- compile_this_f(F),!.
 
-compile_this_f(F):- metta_atom_file_buffer_isa(F,'Compiled').
+compile_this_f(F):- buffer_src_isa(F,'Compiled').
 compile_this_f(F):- interpet_this_f(F),!,fail.
 compile_this_f(F):- compile_this_s(F),!.
 compile_this_f(F):- metta_atom_file_buffer([':',F,[Ar|_]]), Ar=='->', !.
