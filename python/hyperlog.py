@@ -43,24 +43,24 @@ _initialize_prolog_driver()
 
 
 def pretty_print_result(result, prefix="  => "):
-    if not isinstance(result, (str, bytes, list, tuple, set)):
+    if not isinstance(result, (str, bytes)):
         try:
             # Attempt indexed iteration (like for generators or custom iterables)
             for i, item in enumerate(result):
-                print(f"{prefix}[{i}] {item}")
+                print(f"{prefix}[{i}] {item}  type:{type(item)}")
             return
         except Exception: pass
 
         try:
             # Attempt flat iteration (like for sets, dict keys, etc.)
             for item in result:
-                print(f"{prefix}{item}")
+                print(f"{prefix}{item} type:{type(item)}")
             return
 
         except Exception: pass
 
     # Final fallback: just print the object
-    print(f"{prefix}{result}")
+    print(f"{prefix}{result}  type:{type(result)}")
 
 
 
@@ -154,8 +154,8 @@ def main():
     # 🚀 Initialize a MeTTaLog engine instance
     # Enables debug output and starts in facade mode (no evaluation, just passthrough)
     print("creating mettalog engine...")
-    metta = MeTTaLogImpl(debug=True, facade=True)
-
+    metta = MeTTaLogImpl(debug=True, facade=False)
+    print("created")
     # ➕ Run a simple arithmetic expression
     # This will just return the parsed form if in facade mode
     res = metta.run("!(+ 10 5)")
@@ -189,7 +189,16 @@ def main():
     pretty_print_result(res)
 
     #janus.cmd("user","prolog")
-    janus.cmd("janus","py_shell")
+    import sys
+    if len(sys.argv) > 1:
+        first_arg = sys.argv[1]
+        # python -m hyperlog repl
+        # or
+        # python -m hyperlog prolog
+        janus.cmd("user", first_arg)
+    else:
+        janus.cmd("janus","py_shell")
+
 
 
 if __name__ == "__main__":
