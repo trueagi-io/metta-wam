@@ -1581,6 +1581,10 @@ cleanup() {
         IF_REALLY_DO "rm -f '$TEE_FILE'"
         TEE_FILE=
     fi
+
+    # if swi-prolog controls the exit vs if we do
+    [[ "$METTA_CMD_EXIT_STATUS" -eq 7 ]] && METTA_CMD_EXIT_STATUS=0
+
     if [ "$IS_SOURCED" -eq 1 ]; then
         return $METTA_CMD_EXIT_STATUS
     else

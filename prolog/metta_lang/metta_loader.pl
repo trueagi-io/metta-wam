@@ -933,16 +933,16 @@ include_metta1(Self, RelFilename):-
 
 
 
-use_dir_file(How, Self, Directory, Filename):- user_io(writeln(use_dir_file(How, Self, Directory, Filename))),fail.
+use_dir_file(How, Self, Directory, Filename):- debug_info(load_dir_file(How, Self, Directory, Filename)),fail.
 %use_dir_file(How, Self, Directory, Filename):- Filename=='PLN.py',!.
 
-use_dir_file(How, Self, _Directory, Filename) :-
+use_dir_file(_How, Self, _Directory, Filename) :-
     symbol_concat(_, '.py', Filename), !,
     py_load_modfile_py(Filename),
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)).
 
 % Load the file if it has a .metta extension
-use_dir_file(How, Self, Directory, Filename):-
+use_dir_file(_How, Self, Directory, Filename):-
  symbol_concat(_, '.metta', Filename), !,
  must_det_ll((
     % Register the file in Prolog knowledge base as part of the MeTTa context.
@@ -955,7 +955,7 @@ use_dir_file(How, Self, Directory, Filename):-
     pfcAdd_Now(user:loaded_into_kb(Self, Filename)),
     nop(listing(user:loaded_into_kb/2)).
 
-use_dir_file(How, _Slf, _Dir, Filename) :-
+use_dir_file(_How, _Slf, _Dir, Filename) :-
     % Otherwise, use the flybase loader for the file mask
     load_flybase(Filename).
 

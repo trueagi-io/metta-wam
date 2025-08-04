@@ -1238,6 +1238,7 @@ must_not_error(X):- ncatch(X, E, (rethrow_abort(E); (writeq(E = X), pp(etrace = 
 always_rethrow('$aborted').
 always_rethrow(md_failed(_,_,_)).
 always_rethrow(return(_)).
+always_rethrow(unwind(halt(_))).
 always_rethrow(metta_throw(_)).
 always_rethrow(metta_return(_)).
 always_rethrow(function_return(_)).

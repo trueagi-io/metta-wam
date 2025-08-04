@@ -1790,7 +1790,7 @@ real_notrace(Goal) :-
         % Execute the goal once.
         once(Goal),
         % Restore the original tracing state and skip level.
-        '$restore_trace'(Flags, SkipLevel)
+        ignore((nonvar(Flags),nonvar(SkipLevel),'$restore_trace'(Flags, SkipLevel)))
     ).
 
 :- volatile(is_answer_output_stream/2).
@@ -6794,6 +6794,8 @@ pre_halt2 :-
 %     % Attempt to halt the system with exit code 7:
 %     ?- maybe_halt(7).
 %
+
+maybe_halt(Seven) :- (Seven == 7 ; Seven == 0), current_prolog_flag(mettalog_failures, true), !, maybe_halt(1).
 maybe_halt(_) :-
     % Perform preliminary halting checks (`pre_halt1`) and fail.
     once(pre_halt1), fail.

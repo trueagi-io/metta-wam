@@ -944,6 +944,7 @@ loonit_asserts1(TestSrc, Pre, G) :-
         write_pass_fail(TestSrc, 'FAIL', G),
         %display(G),
         flag(loonit_failure, X, X + 1),
+        set_prolog_flag(mettalog_failures, true),
         % Optional trace or REPL on failure based on settings.
         if_t(option_value('on-fail', 'repl'), repl),
         if_t(option_value('on-fail', 'trace'),
