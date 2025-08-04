@@ -78,6 +78,8 @@ o_woc(G):- call(G).
 
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
+
+msu:do_metta_setup_safe:- nop(ignore(notrace(catch(do_metta_setup,_,true)))).
 % only on main thread
 do_metta_setup:- thread_self(Self), Self\==main,!.
 do_metta_setup:- forall('$metta_setup':on_init_metta(Goal),do_metta_setup(Goal)).
@@ -500,7 +502,7 @@ once_writeq_nl(P):- once_writeq_nl_now(cyan, P), nb_setval('$once_writeq_ln', P)
 % pfcAdd_Now(P):- pfcAdd(P),!.
 
 
-pfcAdd_Now(Cl):- retractall(Cl),pfcAdd_Now0(Cl),!.
+pfcAdd_Now(Cl):- ignore(catch(retractall(Cl),_,true)),pfcAdd_Now0(Cl),!.
 
 pfcAdd_Now0(Cl):-
    once( \+ nb_current(allow_dupes,t)
@@ -3253,7 +3255,7 @@ process_as_flag(M) :- set_option_value_interp(M,true).
 %     ?- install_ontology.
 %
 install_ontology :-
-    ensure_corelib_types.
+    profile_warn(ensure_corelib_types).
 
 %!  load_ontology is det.
 %
@@ -4530,9 +4532,10 @@ transform_about([Eq, [Smile, Pred, Super], Cond], t(type,type,Pred, Super), Cond
 transform_about([Eq, [Pred | Args], Cond],        t(pred,head,Pred, Args), Cond) :-  Eq == '=', !.
 % General proven fact
 transform_about([Pred | Args],                    t(pred,fact,Pred, Args), true):- !.
-transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, PredArgs=..[Pred | Args],!.
+transform_about(PredArgs,                         t(pred,fact,Pred, Args), true):- compound(PredArgs),!, compound_name_arguments(PredArgs,Pred,Args),!.
 transform_about(Pred,                             t(pred,fact,Pred,_Args), true).
 
+add_indexed_fact(_OBO):-!.
 add_indexed_fact(OBO):- arg(1,OBO,KB), arg(2,OBO,Fact), add_fact(KB, Fact),!.
 
 add_fact(KB, Fact):-
@@ -7257,7 +7260,7 @@ immediate_ignore:- ignore(((
 %     % Load the Metta ontology:
 %     ?- use_metta_ontology.
 %
-use_metta_ontologyr:- ensure_loaded(library('metta_ontology.pfc.pl')).
+use_metta_ontologyr:- profile_warn(ensure_loaded(library('metta_ontology.pfc.pl'))).
 use_metta_ontology.
 % use_metta_ontology:- load_pfc_file('metta_ontology.pl.pfc').
 %:- use_metta_ontology.
@@ -7569,7 +7572,7 @@ complex_relationship3_ex(Likelihood1, Likelihood2, Likelihood3) :-
 :- find_missing_cuts.
 
 
-:- thread_initialization(do_metta_setup).
+:- thread_initialization(msu:do_metta_setup_safe).
 
 
 

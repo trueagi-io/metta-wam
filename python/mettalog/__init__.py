@@ -1,10 +1,16 @@
 ﻿import sys
 import os
 import types
+from types import SimpleNamespace
 import importlib
 import importlib.util
-from .core import MeTTaLog
+from .core import MeTTaLog, do_register_atoms
 from .import_hook import *
+from .core import *
+#from .runtime import *
+#from .runtime import load_functions as mod_load_functions
+#import .runtime
+#from .vspace import *
 
 UseNativeTypeResults = False
 

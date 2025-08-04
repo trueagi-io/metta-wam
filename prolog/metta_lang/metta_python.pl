@@ -1022,7 +1022,7 @@ ensure_mettalog_py(MettaLearner):-
     is_mettalog(MettaLearner), !.  % Check if MettaLearner is already known.
 ensure_mettalog_py(MettaLearner):-
     with_safe_argv(  % Ensure safety for argument passing.
-        (add_wanted_py_lib_dirs,  % Ensure the Python library directory is available.
+        ( add_wanted_py_lib_dirs,  % Ensure the Python library directory is available.
             %py_call_warg('mettalog',MettaLearner),
             %py_call_warg('motto',_),
             %py_call_warg('motto.sparql_gate':'sql_space_atoms'(),Res1),pybug(Res1),
@@ -1831,8 +1831,10 @@ py_ready.
 %
 
 %pybug(P):- py_pp(P),!.
-pybug(P):- \+ py_ready,!,fbug(P).
-pybug(P):- fbug(P).
+pybug(P):- \+ py_ready,!,pyfbug(P).
+pybug(P):- pyfbug(P).
+
+pyfbug(P):- user_err(dmsg(fbug(P))).
 
 %!  pypp(+P) is det.
 %
@@ -1844,8 +1846,8 @@ pybug(P):- fbug(P).
 %   @example Log a Python term after conversion:
 %       ?- pypp(PythonTerm).
 %
-pypp(P):- py_to_pl(P,PL),!,fbug(PL),!.
-pypp(P):- fbug(P),!.
+pypp(P):- py_to_pl(P,PL),!,pybug(PL),!.
+pypp(P):- pybug(P),!.
 
 %!  'extend-py!'(+Module, -R) is det.
 %
@@ -1936,10 +1938,20 @@ assumed_loaded(corelib).
 %   @example Load a Python module file:
 %       ?- py_load_modfile('path_to_python_file.py').
 %
-py_load_modfile(Use):- py_ocall(mettalog:load_functions(Use),R),!,pybug(R).
-py_load_modfile(Use):- exists_directory(Use),!,directory_file_path(Use,'_init_.py',File),
+
+py_load_modfile_maybe_load_functions(Use):- py_is_module(mettalog), py_call(mettalog:load_functions,NotNone), NotNone\==[], py_ocall(mettalog:load_functions(Use),R),!,pybug(R).
+
+py_load_modfile_maybe_register_atoms(Use):- must_det_ll((py_is_module(mettalog), py_call(mettalog:do_register_atoms,NotNone),NotNone\==[], py_ocall(mettalog:do_register_atoms(Use),R),!,pybug(R))).
+
+py_load_modfile(Use):- py_load_modfile_maybe_load_functions(Use),!.
+py_load_modfile(Use):- py_load_modfile_py(Use),!.
+py_load_modfile_py(Use):- exists_directory(Use),directory_file_path(Use,'_init_.py',File),!,
     py_load_modfile(File).
-py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src).
+py_load_modfile_py(Use):- file_to_modname(Use,Mod),pybug(file_to_modname(Use,Mod)),read_file_to_string(Use,Src,[]),!,py_module(Mod,Src),
+   py_find_module(Mod, ModuleObj),assert(named_mod(Mod, ModuleObj)),pybug(named_mod(Mod, ModuleObj)),!,
+   ignore(py_load_modfile_maybe_register_atoms(ModuleObj)).
+
+py_find_module(ModuleName, ModuleObj):- py_call(sys:modules:'__getitem__'(ModuleName), ModuleObj).
 
 %!  file_to_modname(+Filename, -ModName) is det.
 %
@@ -1956,6 +1968,7 @@ py_load_modfile(Use):- file_to_modname(Use,Mod),read_file_to_string(Use,Src,[]),
 file_to_modname(Filename,ModName):- symbol_concat('../',Name,Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- symbol_concat('./',Name,Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- symbol_concat(Name,'/_init_.py',Filename),!,file_to_modname(Name,ModName).
+file_to_modname(Filename,ModName):- symbol_concat(Name,'/',Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- symbol_concat(Name,'.py',Filename),!,file_to_modname(Name,ModName).
 file_to_modname(Filename,ModName):- replace_in_string(["/"="."],Filename,ModName).
 
@@ -2118,7 +2131,7 @@ rust_metta_exec(S):-rust_metta_exec(S,Py),print_py(Py).
 %   @arg N The name of the operation.
 %   @arg R The corresponding Python object.
 %
-cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),fbug(cached_py_op(N,R)).
+cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),pybug(cached_py_op(N,R)).
 
  :-volatile(cached_py_type/2).
 
@@ -2130,7 +2143,7 @@ cache_op(N,R):- asserta_if_new(cached_py_op(N,R)),fbug(cached_py_op(N,R)).
 %   @arg N The name of the type.
 %   @arg R The corresponding Python object.
 %
-cache_type(N,R):- asserta_if_new(cached_py_type(N,R)),fbug(cached_py_type(N,R)).
+cache_type(N,R):- asserta_if_new(cached_py_type(N,R)),pybug(cached_py_type(N,R)).
 
 %!  print_py(+Py) is det.
 %
@@ -2299,6 +2312,7 @@ called from Python or Rust, and likewise, call Python or Rust functions from wit
 %   @example Ensure Python library directories are added:
 %       ?- add_wanted_py_lib_dirs.
 %
+add_wanted_py_lib_dirs:- !.
 add_wanted_py_lib_dirs:-
     with_safe_argv((
         forall(wanted_py_lib_dir(GParentDir),ignore(catch(maybe_py_add_lib_dir(GParentDir),_,true))),

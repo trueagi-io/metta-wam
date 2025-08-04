@@ -1,6 +1,7 @@
 import sys
 import os
 import types
+from types import SimpleNamespace
 import importlib
 import importlib.util
 from .core import MeTTaLog

@@ -949,25 +949,31 @@ test_locally_setting_flags:-
   forall((locally(set_prolog_flag(locally_tested_flag,1),
      ((member(X,[1,2,3]),print_locally_tested_flag))),
         writeln(X),print_locally_tested_flag),nl).
+
 :- thread_initialization(set_prolog_flag(locally_tested_flag,0)).
 
 %:- initialization(set_prolog_flag(occurs_check,error)).
 %:- initialization(set_prolog_flag(occurs_check,true)).
-set_occurs_check_default:- thread_self(GC),GC==gc,!.
-set_occurs_check_default:- is_bg_thread,!.
-set_occurs_check_default:- thread_self(Self),set_occurs_check_default(Self),!.
+
+%ti:set_occurs_check_default:- thread_self(GC),GC==gc,!.
+%ti:set_occurs_check_default:- !.
+%listing(ti:set_occurs_check_default).
+%ti:set_occurs_check_default:- thread_self(NonMain),NonMain\==main,!.
+ti:set_occurs_check_default:- thread_self(Self),ti:set_occurs_check_default(Self),!.
 
 is_bg_thread:- thread_self(NonMain),NonMain\==main.
 
-set_occurs_check_default(NonMain):- NonMain\==main,set_prolog_flag(occurs_check,false).
-set_occurs_check_default(main):- \+ is_douglas,set_prolog_flag(occurs_check,false).
-set_occurs_check_default(_):- set_prolog_flag(occurs_check,false),set_more_douglas.
+ti:set_occurs_check_default(NonMain):- NonMain\==main,set_prolog_flag(occurs_check,false).
+ti:set_occurs_check_default(main):- \+ user:is_douglas,set_prolog_flag(occurs_check,false).
+ti:set_occurs_check_default(_):- set_prolog_flag(occurs_check,false),si:set_more_douglas.
 
-set_more_douglas:- thread_self(Self), (Self\==main->true;set_prolog_flag(gc,false)).
+si:set_more_douglas:- thread_self(Self), (Self\==main->true;set_prolog_flag(gc,false)).
 
 
-:- initialization(set_occurs_check_default).
-:- thread_initialization(set_occurs_check_default).
+:- initialization(ti:set_occurs_check_default).
+%:- thread_initialization(ti:set_occurs_check_default).
+
+:- true.
 
 %debug_info_goal(_Topic,_Info):- \+ is_douglas,!.
 debug_info_goal(Topic,Info):- \+ unfiltered_topic_and_info(Topic,Info),!.
@@ -1056,6 +1062,7 @@ boot_debug_show(stdlib).
 boot_debug_show(cmdargs).
 some_debug_show(boot, X):- boot_debug_show(X).
 
+
 dont_show_any_qcompile:- filter_matches_var(hidall,qcompile),!.
 dont_show_any_qcompile:- filter_matches_var(show,qcompile),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,qcompile),!, fail.
@@ -1063,6 +1070,9 @@ dont_show_any_qcompile:- filter_matches_var(show,stdlib),!, fail.
 dont_show_any_qcompile:- filter_matches_var(showall,stdlib),!, fail.
 dont_show_any_qcompile:- is_douglas_machine, !, fail.
 dont_show_any_qcompile.
+
+
+
 
 debug_info( Topic, Info):- notrace((debug_info0( Topic, Info), nb_setval(last_debug_info,debug_info(Topic, Info)))).
 debug_info0(Topic, Info) :- nb_current(last_debug_info,WAS), WAS =@= debug_info(Topic, Info),!.
@@ -1178,6 +1188,7 @@ should_comment(_Topic, _Info).
 
 is_code_topic(assertz_code).
 is_code_topic(compiler_assertz).
+
 
 maybe_ansicall(Nil,Goal):- Nil == [],!,call(Goal).
 maybe_ansicall(Color,Goal):-!,ansicall(Color,Goal).

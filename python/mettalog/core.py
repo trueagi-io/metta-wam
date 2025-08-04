@@ -1,21 +1,29 @@
-﻿import inspect
+﻿import os
+import sys
+import re
+import shutil
+import inspect
 import janus_swi
 import types
 import importlib.util
-import os
-import sys
 from enum import Enum, auto
 from hyperon import *
 from hyperon.ext import register_atoms
+import ctypes
+from ctypes import *
 import uuid
 import requests
 import json
 import hyperlog
-import mettalog.libraries
-import mettalog.sandbox
+#import mettalog.libraries
+#import mettalog.sandbox
 from hyperlog import MeTTaLogImpl
+from mettalog.rust_iface import hellow
+from .rust_iface import hellow2
+#from mettalog.vspace import *
+#from .runtime import load_functions as mod_load_functions
 #for mork backend
-from mettalog.sandbox.mork.mork import MORKSpace
+
 
 METTALOG_DIR = os.environ.get("METTALOG_DIR", ".")
 VERBOSE_DEBUG = os.environ.get("METTALOG_VERBOSE")
@@ -41,7 +49,8 @@ def load_metta_module(subpath, module_name, register_as=None):
     try:
         import mettalog.libraries
     except ImportError as e:
-        raise RuntimeError("Could not import 'mettalog_libraries'. Is it in sys.path?") from e
+        ""
+        #raise RuntimeError("Could not import 'mettalog.libraries'. Is it in sys.path?") from e
 
     base_path = os.path.join(METTALOG_DIR, "libraries")
     full_path = os.path.join(base_path, *subpath.split('/'))
@@ -117,7 +126,7 @@ class metta_client:
                 ret = janus_swi.apply_once(module, predicate, input, fail=obj)
             
         if backend is MeTTaBackend.MORK_CLIENT:
-            ret = theMORKSpace.query(metta_exec)
+            ret = GetMorkSpace().query(metta_exec)
 
         if backend is MeTTaBackend.METTA_MORPH:
             ret = MeTTaBackend.METTA_MORPH
@@ -131,8 +140,15 @@ class metta_client:
 
         return ret
 
+def do_register_atoms(mod):
+    #from mettalog import mod_load_functions
+    #mod_load_functions(mod)
+    return mod
+
 class MeTTaLog:
 
+    #def len(self):
+    #    return 0
 
     @staticmethod
     def convert_to_metta_exec(predicate="from_pymetta", path=None, selfref=None, swimod="user", args=(), kwargs=None, fullpath=None, backend=MeTTaBackend.LOGGED_FACADE, retType=any, asIterator = False,  fail=None):
@@ -558,16 +574,24 @@ def quick_selftest():
     print(heMeTTa.run("!(+ 1 1)"))
     print(heMeTTa.run("!(import! &self mettamorph)"))
     print(heMeTTa.run("!(import! &self mettalog)"))
-
+    theMORKSpace = GetMorkSpace()
     print(theMORKSpace.query("(+ 1 1)"))
 
 
 # Global root instance
-mettalog = MeTTaLog()
-mettalog._autounbox = True
+theMettaLog = MeTTaLog()
+theMettaLog._autounbox = True
 heMeTTa = MeTTa()
-theMORKSpace = MORKSpace(mettalog if True else heMeTTa)
-
+theMORKSpace = None
+def GetMorkSpace(use_mettalog=True):
+    from mettalog.sandbox.mork.mork import MORKSpace
+    global theMORKSpace    
+    # only if assigned here
+    #  global mettalog, heMeTTa    
+    if theMORKSpace is None: 
+        backend = theMettaLog if use_mettalog else heMeTTa
+        theMORKSpace = MORKSpace(backend)
+    return theMORKSpace
 
 
 if __name__ == "__main__":

@@ -362,7 +362,7 @@ deepen(Depth,Depth2):- Depth2 is Depth -1.
 visible_kb(_Self,_KB).
 
 %get_operator_return_type(Self,OpParams,FRetType),
-was_no_eval(NoEval,X):- is_list(NoEval),[No,X]=NoEval,No=='noeval',!.
+was_no_eval(NoEvalX,X):- is_list(NoEvalX),[NoEval,X]=NoEvalX,NoEval=='noeval',!.
 
 eval_01(_Eq,_RetType,Depth,_Self,X,YO):- Depth<0,bt,trace,!,X=YO.
 eval_01(_Eq,RetType,_Depth,_Self,NoEval,X):- was_no_eval(NoEval,X),ignore(RetType='Atom'),!.
@@ -385,7 +385,7 @@ eval_01(Eq,RetType,Depth,Self,X,Y):-
   */
 eval_03(Eq,RetType,Depth2,Self,[Op|Args],M,Y):- nonvar(Op),len_or_unbound(Args,Len),visible_kb(Self,KB), clause(returnType(KB,Op,Len,OpRetType),true), OpRetType=='Atom',M=[Function|_],
   Function=='function',/*trace,*/ !,eval_10(Eq,RetType,Depth2,Self,M,Y).
-eval_03(Eq,RetType,Depth2,Self,[Op|Args],M,Y):- nonvar(Op),len_or_unbound(Args,Len),visible_kb(Self,KB), clause(returnType(KB,Op,Len,OpRetType),true), OpRetType=='Atom',M\=['function'|_],!,M=Y.
+eval_03(_Eq,RetType,_Depth2,Self,[Op|Args],M,Y):- nonvar(Op),len_or_unbound(Args,Len),visible_kb(Self,KB), clause(returnType(KB,Op,Len,OpRetType),true), ignore(RetType='Atom'), OpRetType=='Atom',M\=['function'|_],!,M=Y.
 %eval_03(Eq,RetType,Depth2,Self,M,Y):- RetType=='Expression',!,M=Y.
 eval_03(Eq,RetType,Depth2,Self,_X,M,Y):- eval_01(Eq,RetType,Depth2,Self,M,Y).
 
@@ -634,7 +634,7 @@ eval_10(Eq,RetType,Depth,Self,X,Y):-  \+ is_list(X), !,
   as_prolog_x(Depth,Self,X,XX),
   eval_20(Eq,RetType,Depth,Self,XX,Y),sanity_check_eval(eval_20_not_list,Y).
 
-eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval' ignore(RetType='Atom'),!.
+eval_10(_Eq,RetType,_Depth,_Self,[NoEval,X],X):- NoEval=='noeval', ignore(RetType='Atom'),!.
 
 eval_args_alone(X):- var(X),!,fail.
 %eval_args_alone(X):- \+ callable(X), \+ py_is_callable(X).
@@ -1376,8 +1376,8 @@ eval_20(Eq,RetType,Depth,Self,[Meta1,Cond],Res):- is_call_wrapper(Meta1,CallP1),
    (var(Cond) -> call(CallP1,Cond);
     call(CallP1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
-eval_20(Eq,RetType,Depth,Self,['call-p1!',Meta1,Cond],Res):- !,
-   ((var(Cond);var(Cond)) -> Res=['call-p1!',Meta1,Cond] ;
+eval_20(Eq,RetType,Depth,Self,['call-p1-eval!',Meta1,Cond],Res):- !,
+   ((var(Cond);var(Cond)) -> Res=['call-p1-eval!',Meta1,Cond] ;
     call(Meta1,eval_args(Eq,RetType,Depth,Self,Cond,Res))).
 
 is_call_wrapper(NonAtom,_):- \+ atom(NonAtom),!,fail.
@@ -3343,7 +3343,14 @@ eval_20_disabled(Eq,OuterRetType,Depth,Self,['range',A,B],OO):- fail, (is_list(A
     eval_20(Eq,OuterRetType,Depth,Self,['range',AA,BB],OO),!.
 
 
+
+
 /*
+ !(println! (get-atom (superpose (&kb1 &kb2)))
+
+
+
+
   fromNumber(Var1,Var2):- var(Var1),var(Var2),!,
    freeze(Var1,fromNumber(Var1,Var2)),
    freeze(Var2,fromNumber(Var1,Var2)).
@@ -3362,6 +3369,17 @@ eval_20(Eq,RetType,Depth,Self,['fromNumber',NE],RetVal):- !,
 %  - E1^Call1: The first goal (Call1) generating elements (E1)
 %  - E2^Call2: The second goal (Call2) generating elements (E2)
 %  - E: The resulting element that is part of the union of the two sets
+/*
+(superpose (1 2 3 4))
+(chain (superpose (1 2 3 4)) $E1 Atom)
+
+X ^ member(X,[1,2,C,D])
+*/
+
+%$X
+
+%(union $X $Y) (sp (1 2 3 4 5 6))
+
 lazy_union(P2, E1^Call1, E2^Call2, E) :-
     % Step 1: Use lazy_findall/3 to declare that all elements satisfying Call1 are supposedly in List1
     maybe_lazy_findall(E1, Call1, List1),
@@ -3511,7 +3529,8 @@ eval_20(Eq,RetType,Depth,Self,['subtraction',Eval1,Eval2],RetVal):- !,
                   RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['subtraction-by',P2,Eval1,Eval2],RetVal):- !,
-    lazy_subtraction(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_subtraction(call_as_p2(P2),
+                  RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3520,7 +3539,8 @@ eval_20(_Eq,_RetType,_Depth,_Self,['union-atom',List1,List2],RetVal):- !,
     append(List1a,List2,RetVal).
 
 eval_20(Eq,RetType,Depth,Self,['union',Eval1,Eval2],RetVal):- !,
-    lazy_union(variant_by_type,RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
+    lazy_union(variant_by_type,
+                  RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
 
@@ -3528,6 +3548,8 @@ eval_20(Eq,RetType,Depth,Self,['union-by',P2,Eval1,Eval2],RetVal):- !,
     lazy_union(call_as_p2(P2),RetVal1^eval_args(Eq,RetType,Depth,Self,Eval1,RetVal1),
                   RetVal2^eval_args(Eq,RetType,Depth,Self,Eval2,RetVal2),
                   RetVal).
+
+% call_as_p2(==)
 
 %eval_20(Eq,RetType,_Dpth,_Slf,['py-list',Atom_list],CDR_Y):-
 % !, Atom=[_|CDR],!,do_expander(Eq,RetType,Atom_list, CDR_Y ).
@@ -3941,6 +3963,10 @@ eval_adjust_args(Eq,RetType,ResIn,ResOut,Depth,Self,[AIn|More],[AE|Adjusted]):-
   (eval_args(Eq, _, Depth, Self, AIn, AE) *-> true ; AIn=AE),
   adjust_args_90(Eq,RetType,ResIn,ResOut,Depth,Self,AE,More,Adjusted).
 
+:-dynamic(did_arrow_types/2).
+cache_arrow_types(AE,Len):- did_arrow_types(AE,Len),!.
+cache_arrow_types(AE,Len):- asserta(did_arrow_types(AE,Len)),fail.
+
 cache_arrow_types(AE,Len):- arg_type_n(AE,Len,_,_),!.
 cache_arrow_types(AE,Len):-
   forall((
@@ -3949,7 +3975,7 @@ cache_arrow_types(AE,Len):-
      ignore((nth1(N,Args,Type),maybe_non_eval(AE,Len,N,Type))))).
   %arg_type_n(AE,Len,_,_)
 
-find_arrow_types(KB,AE,Len,Args):- metta_type(KB,AE,Arrow),arrow_type(Arrow,Args,_Ret),length(Args,Len).
+find_arrow_types(KB,AE,Len,Args):- metta_type_info(KB,AE,Arrow),arrow_type(Arrow,Args,_Ret),length(Args,Len).
 % next line can cause infloops
 % find_arrow_types(KB,AE,Len,ParamTypes):- get_operator_typedef(KB, AE,Len, ParamTypes, _RetType).
 

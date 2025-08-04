@@ -1,6 +1,27 @@
 :- module(metta_rt,[]).
 
 
+/*
+  Maybe finds unsafe threading code if it exists
+
+
+    user:on_eof:- lazy_findall(X,(use_module(library(lists)),member(X,[1,2,3])),List),forall(member(X,List),write(X)).
+
+    :- dynamic system:term_expansion/4.
+    :- multifile system:term_expansion/4.
+    :- module_transparent system:term_expansion/4.
+
+
+    system:term_expansion(In, Pos, _Out, _PosOut) :-
+        nonvar(Pos), nonvar(In),
+        prolog_load_context(file, File),
+        source_location(File, LineNo),
+        once(In==end_of_file; In==begin_of_file; (0 is LineNo mod 10); (compound(In), (In = ( :- _ )))),
+        writeln([In,File, LineNo]),
+       once(user:on_eof),
+       fail.
+
+*/
 
 
 :- (prolog_load_context(directory, Value);Value='.'), absolute_file_name('../libraries/',Dir,[relative_to(Value),file_type(directory)]),

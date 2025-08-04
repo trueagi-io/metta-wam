@@ -51,8 +51,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-%********************************************************************************************* 
-% PROGRAM FUNCTION: processes, cleans, and structures FlyBase dataset tables for efficient 
+%*********************************************************************************************
+% PROGRAM FUNCTION: processes, cleans, and structures FlyBase dataset tables for efficient
 % querying and analysis.
 %*********************************************************************************************
 
@@ -62,7 +62,7 @@
 
 %!  fix_header_names(+Fn, +Header, -GNames) is det.
 %
-%   Processes a list of header names and generates a list of argument types 
+%   Processes a list of header names and generates a list of argument types
 %   (`GNames`) based on the provided function (`Fn`) and the headers.
 %
 %   This predicate applies the function `Fn` to each element in the `Header` list
@@ -88,10 +88,10 @@ fix_header_names(Fn, Header, GNames) :-
 %!  fix_header_names(+FL, +Fn, +ID, -Out) is det.
 %
 %   Standardizes and processes header identifiers (`ID`) into a desired format (`Out`).
-%   This includes removing prefixes and suffixes, converting plural forms to singular, 
+%   This includes removing prefixes and suffixes, converting plural forms to singular,
 %   and handling list-related terms.
 %
-%   This predicate supports a variety of naming conventions and transformations, 
+%   This predicate supports a variety of naming conventions and transformations,
 %   ensuring consistent and usable header names.
 %
 %   @arg FL   A list of fields used for validation or transformation rules.
@@ -111,86 +111,86 @@ fix_header_names(Fn, Header, GNames) :-
 
 %fix_header_names(FL,Fn,ID,Out):- member(RF,['#',' ','_','_id','_ID']),symbol_concat(MID,RF,ID),!,fix_header_names(FL,Fn,MID,Out).
 % Numeric IDs are returned as-is since they require no transformation.
-fix_header_names(_FL, _Fn, ID, Out) :- 
+fix_header_names(_FL, _Fn, ID, Out) :-
     % Check if the input ID is a number.
     number(ID), !, Out = ID.
 % Handle list types like `listOf(ID)` by recursively processing the inner `ID`.
-fix_header_names(FL, Fn, listOf(ID), listOf(Out)) :- 
+fix_header_names(FL, Fn, listOf(ID), listOf(Out)) :-
     % Recursively process the `ID` inside the `listOf` structure.
     fix_header_names(FL, Fn, ID, Out), !.
 % Process list types with a separator, such as `listOf(ID, Sep)`.
-fix_header_names(FL, Fn, listOf(ID, Sep), listOf(Out, Sep)) :- 
+fix_header_names(FL, Fn, listOf(ID, Sep), listOf(Out, Sep)) :-
     % Process the `ID` recursively, maintaining the separator.
     fix_header_names(FL, Fn, ID, Out), !.
 % Remove suffixes or unwanted characters like `#`, space, or `_` at the end.
-fix_header_names(FL, Fn, ID, Out) :- 
+fix_header_names(FL, Fn, ID, Out) :-
     % Identify and remove specific suffixes.
-    member(RF, ['#', ' ', '_']), 
+    member(RF, ['#', ' ', '_']),
     % Strip the suffix from the identifier.
-    symbol_concat(MID, RF, ID), 
+    symbol_concat(MID, RF, ID),
     % Process the stripped identifier.
     !,fix_header_names(FL, Fn, MID, Out).
 % Remove unwanted prefixes like `#`, space, or `_` at the beginning.
-fix_header_names(FL, Fn, ID, Out) :- 
+fix_header_names(FL, Fn, ID, Out) :-
     % Identify and remove specific prefixes.
-    member(RF, ['#', ' ', '_']), 
+    member(RF, ['#', ' ', '_']),
     % Strip the prefix from the identifier.
-    symbol_concat(RF, MID, ID), 
+    symbol_concat(RF, MID, ID),
     % Process the stripped identifier.
     !,fix_header_names(FL, Fn, MID, Out).
 % Standardize compound names separated by `__` or spaces.
-fix_header_names(FL, Fn, ID, Out) :- 
+fix_header_names(FL, Fn, ID, Out) :-
     % Handle names with double underscores or spaces.
-    member(RF, ['__', ' ']), 
+    member(RF, ['__', ' ']),
     % Split the identifier into multiple parts.
-    symbolic_list_concat(MIDL, RF, ID), 
+    symbolic_list_concat(MIDL, RF, ID),
     % Ensure the identifier has multiple parts.
-    MIDL \= [_], 
+    MIDL \= [_],
     % Rejoin the parts using underscores.
-    symbolic_list_concat(MIDL, '_', MID), 
+    symbolic_list_concat(MIDL, '_', MID),
     % Process the standardized name.
     !,fix_header_names(FL, Fn, MID, Out).
 % Handle plural or list-related terms like `(es)`, `(s)`, or `ids`.
-fix_header_names(FL, Fn, ID, listOf(AOut)) :- 
+fix_header_names(FL, Fn, ID, listOf(AOut)) :-
     % Identify suffixes related to plurals or lists.
-    member(RF, ['(es)', '(s)', 'ids']), 
+    member(RF, ['(es)', '(s)', 'ids']),
     % Split the identifier by the suffix.
-    symbolic_list_concat([Left, Right], RF, ID), 
+    symbolic_list_concat([Left, Right], RF, ID),
     % Rejoin the parts with an underscore.
-    symbolic_list_concat([Left, Right], '_', MID), 
+    symbolic_list_concat([Left, Right], '_', MID),
     % Process the standardized name recursively.
     !,fix_header_names(FL, Fn, MID, AOut), !.
 % Process specific mappings like `IDs` to `ID` to create a `listOf` format.
-fix_header_names(FL, Fn, TT, listOf(AOut)) :- 
+fix_header_names(FL, Fn, TT, listOf(AOut)) :-
     % Map specific patterns like `IDs` to `ID`.
-    member(IDs = ID, ['IDs' = 'ID']), 
+    member(IDs = ID, ['IDs' = 'ID']),
     % Concatenate the type with `IDs` to form the original term.
-    symbol_concat(Type, IDs, TT), 
+    symbol_concat(Type, IDs, TT),
     % Replace `IDs` with `ID` to standardize the term.
-    symbol_concat(Type, ID, MID), 
+    symbol_concat(Type, ID, MID),
     % Process the updated name recursively.
     fix_header_names(FL, Fn, MID, AOut), !.
 % Handle `_IDs` to `_ID` and convert to `listOf` format.
-fix_header_names(FL, Fn, ID, listOf(AOut)) :- 
+fix_header_names(FL, Fn, ID, listOf(AOut)) :-
     % Map `_IDs` patterns to `_ID`.
-    member(RFS = RF, ['_IDs' = '_ID', 'IDs' = 'ID']), 
+    member(RFS = RF, ['_IDs' = '_ID', 'IDs' = 'ID']),
     % Split the identifier by the pattern.
-    symbolic_list_concat([Left, Right], RFS, ID), 
+    symbolic_list_concat([Left, Right], RFS, ID),
     % Rejoin the parts with the updated term.
-    symbolic_list_concat([Left, Right], RF, MID), 
+    symbolic_list_concat([Left, Right], RF, MID),
     % Process the updated name recursively.
     !,fix_header_names(FL, Fn, MID, AOut), !.
 % Retain non-generic names unchanged.
-fix_header_names(_, _, Name, Name) :- 
+fix_header_names(_, _, Name, Name) :-
     % Ensure the name is specific and not too generic.
     \+ too_generic(Name), !.
 % Retain compound names with multiple underscores unchanged.
-fix_header_names(_, _, Name, Name) :- 
+fix_header_names(_, _, Name, Name) :-
     % Ensure the name has multiple underscore-separated parts.
     symbolic_list_concat([_, _|_], '_', Name), !.
 % fix_header_names(_, Fn, ID, Out):- symbolic_list_concat([Fn, ID], '_column_', Out).
-% fix_header_names(FieldList, Fn, ID, Out):- 
-%     symbolic_list_concat([Fn, ID], '_', Out), 
+% fix_header_names(FieldList, Fn, ID, Out):-
+%     symbolic_list_concat([Fn, ID], '_', Out),
 %     \+ member(Out, FieldList).
 % Default case: retain the name unchanged.
 fix_header_names(_, _, Name, Name).
@@ -198,10 +198,10 @@ fix_header_names(_, _, Name, Name).
 %!  pmt is det.
 %
 %   Processes all FlyBase tables and generates missing column data where applicable.
-%   For each table in `flybase_tables/1`, if column data (`flybase_cols/2`) is 
+%   For each table in `flybase_tables/1`, if column data (`flybase_cols/2`) is
 %   missing, this predicate generates the column table entry by invoking `get_fbt/1`.
 %
-%   This predicate is a utility to ensure all FlyBase tables have their 
+%   This predicate is a utility to ensure all FlyBase tables have their
 %   associated column data registered in the database.
 %
 %   @example
@@ -227,12 +227,12 @@ pmt :-
 %!  use_flybase_cols(+Table, +Columns) is det.
 %
 %   Associates column information with a FlyBase table and registers its arity.
-%   This predicate processes the provided column names (`Columns`) for the 
+%   This predicate processes the provided column names (`Columns`) for the
 %   specified table (`Table`), applies header fixes, and stores the resulting
 %   information for use in the database.
 %
 %   - Standardizes column names using `fix_header_names/3`.
-%   - Asserts the column information into the knowledge base as 
+%   - Asserts the column information into the knowledge base as
 %     `flybase_col_names(Table, Columns, ArgTypes)`.
 %   - Registers the arity of the table using `do_arity_2_names/2`.
 %
@@ -376,11 +376,11 @@ clip_id(Nth, ID) :-
 %!  setup_flybase_cols is det.
 %
 %   Processes all FlyBase tables with their columns to ensure proper setup.
-%   This predicate iterates over all entries in `flybase_cols/2`, retrieving 
-%   each table and its associated columns, and calls `use_flybase_cols/2` 
+%   This predicate iterates over all entries in `flybase_cols/2`, retrieving
+%   each table and its associated columns, and calls `use_flybase_cols/2`
 %   to process and register the column information for each table.
 %
-%   This predicate ensures that all column data for FlyBase tables is standardized 
+%   This predicate ensures that all column data for FlyBase tables is standardized
 %   and properly asserted into the knowledge base.
 %
 %   @example
@@ -405,7 +405,7 @@ setup_flybase_cols :-
 %
 %   Asserts FlyBase data into the knowledge base after processing it.
 %
-%   This predicate takes a list of data (`DataL`) and processes it according 
+%   This predicate takes a list of data (`DataL`) and processes it according
 %   to the given function name (`Fn`) and argument types (`ArgTypes`).
 %   - Empty data lists and single-element lists are ignored.
 %   - The data is transformed using `fast_column/2`, combined into a term using
@@ -459,7 +459,7 @@ assert_MeTTa(Fn,DataL0):-
 
 %!  make_assertion(+Fn, +Cols, +NewData, +OldData) is det.
 %
-%   Creates or processes assertions based on the provided function, columns, 
+%   Creates or processes assertions based on the provided function, columns,
 %   and data. Delegates to `make_assertion4/4` if called with this signature.
 %
 %   @arg Fn       The function name for the assertion.
@@ -523,8 +523,8 @@ make_assertion(ArgTypes, Fn, DataL0, Data, DataL0) :-
 %!  reprefix(+Prefixes, +Replacement) is det.
 %
 %   Defines mappings from multiple prefixes to a single standardized replacement.
-%   This predicate is used to unify or simplify the prefixes of identifiers 
-%   by replacing any of the given prefixes (`Prefixes`) with the desired 
+%   This predicate is used to unify or simplify the prefixes of identifiers
+%   by replacing any of the given prefixes (`Prefixes`) with the desired
 %   replacement (`Replacement`).
 %
 %   The predicate itself defines static mappings and is not executed directly.
@@ -585,19 +585,19 @@ reprefix(['FB:FB'], 'FB').
 %
 
 % Base case: If the input is already a list, return it as-is.
-as_list(A, New) :- 
-    is_list(A), 
-    !, 
+as_list(A, New) :-
+    is_list(A),
+    !,
     A = New.
 % Wrap single non-symbolic, non-string inputs into a list.
-as_list(N, [N]) :- 
-    \+ symbol(N), 
-    \+ string(N), 
+as_list(N, [N]) :-
+    \+ symbol(N),
+    \+ string(N),
     !.
 % Commented-out case: Handle unbound variables.
-% as_list(A, New) :- 
-%     var(A), 
-%     !, 
+% as_list(A, New) :-
+%     var(A),
+%     !,
 %     New = [A].
 % Map specific symbols or strings to empty lists.
 as_list('-', []).
@@ -607,24 +607,24 @@ as_list("", []).
 as_list(' ', []).
 as_list(" ", []).
 % Commented-out case: Wrap any input into a list.
-% as_list(N, [N]) :- 
+% as_list(N, [N]) :-
 %     !.
 % Recursively process nested inputs.
-as_list(_, S, O) :- 
-    as_list(S, O), 
+as_list(_, S, O) :-
+    as_list(S, O),
     !.
 % Split the input into a list using a member of the given separator list.
-as_list(SepL, A, List) :- 
-    member(Sep, SepL), 
-    catch_ignore(symbolic_list_concat(List, Sep, A)), 
-    List \= [_], 
+as_list(SepL, A, List) :-
+    member(Sep, SepL),
+    catch_ignore(symbolic_list_concat(List, Sep, A)),
+    List \= [_],
     !.
 % Split input using default separators and fix individual elements.
-as_list([], A, ListO) :- 
-    member(Sep, ['|', ',', ';']), 
-    catch_ignore(symbolic_list_concat(List, Sep, A)), 
-    List \= [_], 
-    !, 
+as_list([], A, ListO) :-
+    member(Sep, ['|', ',', ';']),
+    catch_ignore(symbolic_list_concat(List, Sep, A)),
+    List \= [_],
+    !,
     maplist(fix_concept, List, ListO).
 % Default case: Wrap the input into a list if no other rule matches.
 as_list(_Sep, A, [A]).
@@ -633,7 +633,7 @@ as_list(_Sep, A, [A]).
 %
 %   Checks if a given header contains a `listOf(_)` term.
 %
-%   This predicate succeeds if `Header` is a list and contains at least one element 
+%   This predicate succeeds if `Header` is a list and contains at least one element
 %   of the form `listOf(_)`.
 %
 %   @arg Header  The input to be checked. It is expected to be a list of terms.
@@ -664,7 +664,7 @@ has_list(Header) :-
 %   - Converts symbols to numbers when applicable.
 %   - Handles special cases like prefixed strings and quoted identifiers.
 %
-%   Commented-out code sections suggest additional transformations or cases that 
+%   Commented-out code sections suggest additional transformations or cases that
 %   might be applied if uncommented.
 %
 %   @arg Input   The input concept to process (e.g., a string, symbol, or list).
@@ -683,44 +683,44 @@ has_list(Header) :-
 %     ?- fix_concept1('BRCA1(gene name)', Output).
 %     Output = BRCA1.
 %
-fix_concept1(A, L) :- 
+fix_concept1(A, L) :-
     % Split the input using the '|' delimiter into a list.
-    as_list(['|'], A, L), 
+    as_list(['|'], A, L),
     % Ensure the result differs from the original input.
     (L\=@=[A], A\=@=L).
 % Convert symbols that represent numbers into numeric form.
-fix_concept1(A, N) :-  
-    symbol_number(A, N), 
+fix_concept1(A, N) :-
+    symbol_number(A, N),
     !.
 % Commented-out transformation: Handle prefixed strings.
-% fix_concept1(A, AO) :- 
-%     reprefix(List, To), 
-%     member(E, List), 
-%     symbol_concat(E, AM, A), 
+% fix_concept1(A, AO) :-
+%     reprefix(List, To),
+%     member(E, List),
+%     symbol_concat(E, AM, A),
 %     symbol_concat(To, AM, AO).
 % Commented-out transformation: Handle FlyBase identifiers.
-% fix_concept1(A, AO) :- 
-%     symbol_concat('FB', _, A), 
-%     symbolic_list_concat([Type, Number], ':', A), 
-%     !, 
+% fix_concept1(A, AO) :-
+%     symbol_concat('FB', _, A),
+%     symbolic_list_concat([Type, Number], ':', A),
+%     !,
 %     symbol_concat(Type, Number, AO).
 % Process quoted identifiers (e.g., `"gene_name"`) and convert to strings.
-fix_concept1(A, AO) :- 
-    symbol_concat('"', Mid, A), 
-    symbol_concat(AS, '"', Mid), 
+fix_concept1(A, AO) :-
+    symbol_concat('"', Mid, A),
+    symbol_concat(AS, '"', Mid),
     symbol_string(AS, AO).
 % Handle gene names by removing the `(gene name)` suffix.
-fix_concept1(A, AO) :- 
-    symbol_concat(AO, '(gene name)', A), 
+fix_concept1(A, AO) :-
+    symbol_concat(AO, '(gene name)', A),
     AO \== ''.
 % Return the input as-is if it is already a symbol.
-fix_concept1(A, N) :- 
-    symbol(A), 
-    !, 
+fix_concept1(A, N) :-
+    symbol(A),
+    !,
     N = A.
 % Commented-out transformation: Handle numbers represented as strings.
-% fix_concept(S, A) :- 
-%     number_string(A, S), 
+% fix_concept(S, A) :-
+%     number_string(A, S),
 %     !.
 
 % =======================================
@@ -730,7 +730,7 @@ fix_concept1(A, N) :-
 %!  fix_concept(+Input, -Output) is det.
 %
 %   Standardizes a given concept (`Input`) into a normalized form (`Output`).
-%   This predicate applies various transformations recursively to handle lists, 
+%   This predicate applies various transformations recursively to handle lists,
 %   non-symbolic inputs, and other cases defined by `fix_concept1/2`.
 %
 %   @arg Input   The input concept to standardize (e.g., a symbol, string, or list).
@@ -751,30 +751,30 @@ fix_concept1(A, N) :-
 %
 
 % Case 1: If the input is a list, recursively apply `fix_concept` to each element.
-fix_concept(A, New) :- 
-    is_list(A), !, 
+fix_concept(A, New) :-
+    is_list(A), !,
     % Recursively process each element of the list.
     maplist(fix_concept, A, L), !, New = L.
 % Case 2: If the input is not a symbol, return it as-is.
-fix_concept(A, New) :- 
+fix_concept(A, New) :-
     \+ symbol(A), !, New = A.
 % Case 3: Process the input using `fix_concept1/2` and handle intermediate results.
-fix_concept(S, O) :- 
+fix_concept(S, O) :-
     % Apply `fix_concept1` once to transform the input.
-    once(fix_concept1(S, M)), 
+    once(fix_concept1(S, M)),
     % Check if the transformed result differs from the original input.
-    S \=@= M, !, 
+    S \=@= M, !,
     % Recursively process the transformed result.
     fix_concept(M, O).
 % Case 4: Default case: unify the input with the output.
-fix_concept(A, New) :- 
+fix_concept(A, New) :-
     % Directly unify the input and output.
     =(A, New), !.
 
 %!  fix_columns_nth(+Table, +ColumnIndex) is det.
 %
 %   Specifies columns that require special handling for a given table.
-%   This predicate acts as a knowledge base for column indices that need 
+%   This predicate acts as a knowledge base for column indices that need
 %   adjustments or transformations in various FlyBase tables.
 %
 %   @arg Table        The name of the table (e.g., `'genome-cyto-seq'`).
@@ -885,7 +885,7 @@ file_to_sep(_, '\t').
 %!  load_flybase(+Sep, +File, +Stream, +Fn) is det.
 %
 %   Loads FlyBase data from a stream, processes it, and associates it with a given predicate.
-%   This predicate initializes the process of loading FlyBase data from a file 
+%   This predicate initializes the process of loading FlyBase data from a file
 %   or stream, creating a `data_pred/2` association and invoking `load_flybase_sv/4`.
 %
 %   @arg Sep     The field separator used in the file (e.g., `','`, `'\t'`).
@@ -916,8 +916,8 @@ load_flybase(Sep, File, Stream, Fn) :-
 %!  load_flybase_sv(+Sep, +File, +Stream, +Fn) is det.
 %
 %   Loads FlyBase data from a stream and processes it line by line.
-%   This predicate manages the reading and processing of FlyBase data until 
-%   the stream reaches its end. It handles header information, argument types, 
+%   This predicate manages the reading and processing of FlyBase data until
+%   the stream reaches its end. It handles header information, argument types,
 %   and line-by-line parsing, and invokes `load_fb_data/6` to finalize processing.
 %
 %   @arg Sep     The field separator used in the file (e.g., `','`, `'\t'`).
@@ -955,7 +955,7 @@ load_flybase_sv(Sep, File, Stream, Fn) :-
         % Read the first line of the stream into `Chars0`.
         read_line_to_chars(Stream, Chars0),
         % Log the first line for debugging purposes.
-        wdmsg(Chars0),
+        nop((text_to_string(Chars0,Str0),wdmsg(Str0))),
         % Process the first line of characters.
         once(load_flybase_chars(ArgTypes, File, Stream, Fn, Sep, Chars0)),
         !,
@@ -967,7 +967,7 @@ load_flybase_sv(Sep, File, Stream, Fn) :-
               % Read the next line from the stream.
               read_line_to_chars(Stream, Chars),
               % Log the current line for debugging purposes.
-              wdmsg(Chars),
+              nop((text_to_string(Chars,Str),wdmsg(Str))),
               % Process the current line of characters.
               once(load_flybase_chars(ArgTypes, File, Stream, Fn, Sep, Chars)),
               % Stop processing if a termination condition is met.
@@ -988,12 +988,12 @@ load_flybase_sv(Sep, File, Stream, Fn) :-
 %
 %   Attempts to determine and fix the header names for a FlyBase file.
 %
-%   This predicate tries to extract header names (`Header`) from the given file 
-%   (`File`) or associated predicate (`Fn`) and standardizes them into argument 
-%   types (`ArgTypes`). If successful, it computes the primary column index (`N`) 
+%   This predicate tries to extract header names (`Header`) from the given file
+%   (`File`) or associated predicate (`Fn`) and standardizes them into argument
+%   types (`ArgTypes`). If successful, it computes the primary column index (`N`)
 %   and constructs `NArgTypes` as `[N|ArgTypes]`.
 %
-%   If headers cannot be determined, it processes the first line of the stream to 
+%   If headers cannot be determined, it processes the first line of the stream to
 %   derive the argument types using `load_flybase_chars/6`.
 %
 %   @arg Sep         The field separator used in the file (e.g., `','`, `'\t'`).
@@ -1101,7 +1101,7 @@ is_really_header_row([H|_], _Names) :-
 
 %read_csv_stream(Sep,CharsStream,Header):- read_string(CharsStream, "\n", "\r\t ",_,)
 % Case 1: Split the header using a symbolic separator and `symbolic_list_concat/3`.
-read_csv_stream(Sep, CharsStream, Header) :-
+read_csv_stream(Sep, CharsStream, Header) :- fail,
     % Read the next line from the stream as a string.
     read_line_to_string(CharsStream, Chars),
     % If the line is the end of file, unify Header with `end_of_file`.
@@ -1109,7 +1109,7 @@ read_csv_stream(Sep, CharsStream, Header) :-
     % Otherwise, split the line into a header list using the separator.
     ; symbolic_list_concat(Header, Sep, Chars)).
 % Case 2: Split the header using a string-based separator if `full_canon` is disabled.
-read_csv_stream(Sep, CharsStream, Header) :-
+read_csv_stream(Sep, CharsStream, Header) :- fail,
     % Check that the `full_canon` option is not enabled.
     \+ option_value(full_canon, []),
     !,
@@ -1135,8 +1135,8 @@ read_csv_stream(Sep, CharsStream, Header) :-
 %
 %   Parses a line of CSV data into a header row.
 %
-%   This predicate processes a line of CSV data (`Chars`) using the specified 
-%   separator (`Sep`). It opens the string as a stream and uses `read_csv_stream/3` 
+%   This predicate processes a line of CSV data (`Chars`) using the specified
+%   separator (`Sep`). It opens the string as a stream and uses `read_csv_stream/3`
 %   to parse the header row into a list of terms.
 %
 %   @arg Sep     The field separator used in the CSV (e.g., `','`, `'\t'`).
@@ -1225,8 +1225,8 @@ attempt_header_row(Sep, Chars, Fn, Header, ArgTypes) :-
 % Case 1: Handle comment or invalid lines.
 load_flybase_chars(ArgTypes, File, _Stream, _Fn, Sep, Chars) :-
     % Skip lines that are comments or do not match the expected format.
-    (\+ member(Sep, Chars) ; 
-     (['#', '#', ' ' | _] = Chars) ; 
+    (\+ member(Sep, Chars) ;
+     (['#', '#', ' ' | _] = Chars) ;
      (ground(ArgTypes), ['#' | _] = Chars)),
     % Log the comment or skipped line.
     % writeln(comment(Sep) = Chars),  % Commented-out logging line.
@@ -1236,8 +1236,8 @@ load_flybase_chars(ArgTypes, File, _Stream, _Fn, Sep, Chars) :-
 % Case 2: Detect and process a header row.
 load_flybase_chars([N | ArgTypes], File, Stream, Fn, Sep, Chars) :-
     % If `ArgTypes` is unbound and the line contains the separator and starts with `#`.
-    var(ArgTypes), 
-    member(Sep, Chars), 
+    var(ArgTypes),
+    member(Sep, Chars),
     ['#' | _] = Chars,
     % Log potential header lines.
     (format("~n ; Maybe Header: ~s", [Chars])),
@@ -1268,11 +1268,11 @@ load_flybase_chars([N | ArgTypes], File, Stream, Fn, Sep, Chars) :-
 %   Processes FlyBase data from a file or stream based on the specified mode.
 %
 %   This predicate handles FlyBase data in multiple cases:
-%   - Stops processing if the data or file has reached its end (`end_of_file`) 
+%   - Stops processing if the data or file has reached its end (`end_of_file`)
 %     or if the `done_reading/1` flag is asserted.
-%   - Processes data row by row, either using `read_csv_stream/3` or 
+%   - Processes data row by row, either using `read_csv_stream/3` or
 %     `csv_read_row/3`, depending on the mode (`is_swipl`).
-%   - Handles large data sets with `repeat` and termination conditions based on 
+%   - Handles large data sets with `repeat` and termination conditions based on
 %     the maximum rows per file or reaching the end of the file.
 %
 %   @arg ArgTypes  The argument types of the data being processed.

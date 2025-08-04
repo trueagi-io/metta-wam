@@ -1799,6 +1799,7 @@ is_non_eval_kind(Type) :- fail,
 
 type_is_type(Type,IsType):- buffer_src_isa(Type,Is),((ground(Is)->IsType==Is; (!,fail))).
 
+
 is_code_kind(Kind):- var(Kind),!,maybe_var_kind(Kind,N),is_non_eval_kind(N).
 is_code_kind(Type):- type_is_type(Type,'CodeType'),!.
 is_code_kind(Type):- is_list(Type), Type = [Ar|PR], Ar == '->', last(PR,R), \+ \+ is_eval_kind(R).

@@ -133,7 +133,7 @@ merge_fp(T1,T2,N) :-
 */
 
 (metta_atom_asserted(KB,[C,H|AL])/(C==':-')) ==> metta_function_asserted(KB,H,['wam-body'|AL]).
-(metta_atom_asserted(KB,[C,H,T])/(C==':')) ==> metta_type_info(KB,H,T).
+((metta_atom_asserted(KB,[C,H,T]),{C==':'}) ==> metta_type_info(KB,H,T)).
 (metta_atom_asserted(KB,[C,H,T])/(C=='iz')) ==> metta_type_info(KB,H,T).
 
 metta_type_info(KB,Op,ArTypeDecl)/(arrow_type(ArTypeDecl,ParamTypes,RetType),length(ParamTypes,Len))==>
