@@ -970,7 +970,7 @@ For example:
   (@params (
     (@param "Float value")))
   (@return "Integer part of float"))
-(is-op-1 trunc-math trunc)
+(= (trunc-math $x) (call-fn! truncate $x))
 
 (iz ceil-math MeTTa)
 (@doc ceil-math
@@ -1050,7 +1050,8 @@ For example:
   (@params (
     (@param "Number")))
   (@return "True/False"))
-(is-pred isnan-math is_NaN)
+; (is-pred isnan-math is_NaN) 
+(= (isnan-math $x) (call-fn! isnan $x))
 
 (iz isinf-math MeTTa)
 (@doc isinf-math
@@ -1059,8 +1060,8 @@ For example:
     (@param "Number")))
   (@return "True/False"))
 ; this is deduced: (: isinf (-> Number Bool))
-(is-pred isinf-math is_Inf)
-
+; (is-pred isinf-math is_Inf)  
+(= (isinf-math $x) (call-fn! isinf $x))
 
 
 

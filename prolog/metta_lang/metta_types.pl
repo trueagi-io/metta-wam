@@ -2387,6 +2387,18 @@ is_comp_op('=\\=', 2).       % Arithmetic inequality
 %     ?- is_math_op('sqrt', 1, Status).
 %     Status = exists.
 %
+% Define a 2-argument version of truncate, compatible with call-fn!
+truncate(X, R) :- R is truncate(X).
+
+% Check for NaN (Not a Number)
+isnan(X, true) :- float(X), \+ X =:= X, !.
+isnan(_, false).
+
+% Check for Infinity
+isinf(X, true) :- float(X), (X =:= 1.0Inf ; X =:= -1.0Inf), !.
+isinf(_, false).
+
+is_math_op('truncate', 2, exists).  % Truncate to integer
 is_math_op('*', 2, exists).         % Multiplication
 is_math_op('**', 2, exists).        % Exponentiation
 is_math_op('+', 1, exists).         % Unary Plus
