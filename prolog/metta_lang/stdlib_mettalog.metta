@@ -957,7 +957,12 @@ For example:
     (@param "Base")
     (@param "Input number")))
   (@return "Result of log function"))
-(is-op-2 log-math log2)
+; (is-op-2 log-math log2) corrected this implementation
+(= (log-math $base $x)  
+  (function   
+    (eval (if (or (<= $base 0)  (or (== $base 1) (<= $x 0)))  
+      (return (Error log-math "Invalid logarithm arguments"))  
+      (return (/ (call-fn! log $x) (call-fn! log $base)))))))
 
 (iz trunc-math MeTTa)
 (@doc trunc-math
