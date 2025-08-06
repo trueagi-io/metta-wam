@@ -3813,6 +3813,10 @@ pre_post_functor_va(post,mx_n).
 
 :- dynamic(m_head_impl/4).
 m_head_impl('random-int',3,post,mx).
+m_head_impl('random-float',3,post,mx).  
+m_head_impl('new-random-generator',1,post,mx). 
+m_head_impl('set-random-seed',2,post,mx). 
+m_head_impl('reset-random-generator',1,post,mx).
 
 :- dynamic(m_head_impl_va/4).
 m_head_impl_va('py-dot!',2,post,mc_n).
@@ -3828,9 +3832,8 @@ m_head_impl(Pre,Sym,Len, Type,Fn, Min, restAsList):-
    m_head_impl_va(Sym,Min,Pre,IsType), Min =< Len, !, Fn =.. [IsType,Min,Sym].
 
 
-transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):- nonvar(Sym),
-  member(Sym,['random-int','random-seed']),
-  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),
+transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-  
+  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),  
   debug_info(always(compiler),transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs)).
 
 transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
