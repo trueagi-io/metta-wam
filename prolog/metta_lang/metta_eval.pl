@@ -4288,7 +4288,7 @@ allow_clp:- false_flag.
 eval_selfless_1([F|XY],TF):- allow_clp, \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
 eval_selfless_1(['>',X,Y],TF):-!,as_tf_nowarn(X>Y,TF).
 eval_selfless_1(['<',X,Y],TF):-!,as_tf_nowarn(X<Y,TF).
-eval_selfless_1(['=>',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
+eval_selfless_1(['>=',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
 eval_selfless_1(['<=',X,Y],TF):-!,as_tf_nowarn(X=<Y,TF).
 eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
@@ -4316,7 +4316,7 @@ compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
 compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
 %compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
 %compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(clpfd,['>=',X,Y],TF):-!,as_tf(X#>=Y,TF).
 compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
 %compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,_,_):- Lib == clpfd,!,fail.
@@ -4324,7 +4324,7 @@ compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
 compare_selfless0(Lib,['<',X,Y],TF):-!,as_tf(Lib:{X<Y},TF).
-compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
+compare_selfless0(Lib,['>=',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
 compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
 compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
 
