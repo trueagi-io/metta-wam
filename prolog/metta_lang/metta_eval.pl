@@ -3168,7 +3168,10 @@ eval_20(Eq,RetType,Depth,Self,['concurrent-forall!',Gen,Test|Options],NoResult):
             POptions)),
      make_nop(RetType,[],NoResult).
 
-eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !, v1_v2(metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res),eval_args(Eq,RetType,Depth,Self,['superpose',ArgL],Res)).
+eval_20(Eq,RetType,Depth,Self,['hyperpose',ArgL],Res):- !,
+   metta_hyperpose(Eq,RetType,Depth,Self,ArgL,Res).
+
+         %eval_args(Eq,RetType,Depth,Self,['superpose',ArgL],Res)).
 
 
 

@@ -163,6 +163,9 @@ class GroundedTypeTest(unittest.TestCase):
         false = metta.run('!(not True)', flat=True)[0].get_object()
         self.assertEqual(false, ValueObject(False))
 
+        false = metta.run('!(format-args "test {}" ("string"))', flat=True)[0].get_object()
+        self.assertEqual(false, ValueObject("test string"))
+
     def test_python_value_conversion(self):
         metta = MeTTa(env_builder=Environment.test_env())
         metta.register_atom("return-int", OperationAtom("return-int", lambda: 42))
@@ -172,8 +175,12 @@ class GroundedTypeTest(unittest.TestCase):
         float = metta.run('!(return-float)', flat=True)[0].get_object()
         self.assertEqual(float, ValueObject(4.2))
         metta.register_atom("return-bool", OperationAtom("return-bool", lambda: True))
-        float = metta.run('!(return-bool)', flat=True)[0].get_object()
-        self.assertEqual(float, ValueObject(True))
+        bool = metta.run('!(return-bool)', flat=True)[0].get_object()
+        self.assertEqual(bool, ValueObject(True))
+
+        metta.register_atom("return-str", OperationAtom("return-str", lambda: "some string"))
+        str = metta.run('!(return-str)', flat=True)[0].get_object()
+        self.assertEqual(str, ValueObject("some string"))
 
     def test_grounded_override(self):
         metta = MeTTa(env_builder=Environment.test_env())

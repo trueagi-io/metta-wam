@@ -503,6 +503,25 @@ ccml_nth:attr_unify_hook(_Nth, _Var).
 %   @arg InList The input list of elements.
 %   @arg OutList The output list with results of applying P2.
 %
+
+metta_goal(Goal, Elem1,Elem2, call(Goal, Elem1, Elem2)).
+
+metta_concurrent_maplist(Goal, List1, List2) :-
+    thread:same_length(List1, List2),
+    choose_worker_count(List1,WorkerCount),
+    maplist(user:metta(Goal), List1, List2, Goals),
+    concurrent(WorkerCount, Goals, []).
+
+choose_worker_count(List1, WorkerCount) :-
+    length(List1, Len), !,
+    current_prolog_flag(cpu_count, CPUs),
+    ( CPUs < 2 -> Count = 8 ;  Count is CPUs * 4 ),
+    min(Count, Len, WorkerCount).
+
+
+metta_hyperpose_v0(P2, InList, OutList) :- !,
+    metta_concurrent_maplist(P2, InList, OutList).
+
 metta_hyperpose_v0(P2, InList, OutList) :-
     % Get the number of available CPU cores.
     current_prolog_flag(cpu_count, Count),
@@ -654,7 +673,8 @@ maplist_([X1|Xs1], [X2|Xs2], [X3|Xs3], [X4|Xs4], [X5|Xs5], [X6|Xs6], [X7|Xs7], G
 %
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
  \+ option_value(threading,false),!,
- with_metta_ctx(Eq, RetType, Depth, MSpace, ['hyperpose'|InList], metta_hyperpose_v0(eval, InList, Res)).
+ %with_metta_ctx(Eq, RetType, Depth, MSpace, ['hyperpose'|InList], metta_hyperpose_v0(eval, InList, Res)).
+  with_metta_ctx(Eq, RetType, Depth, MSpace, ['hyperpose'|InList], metta_hyperpose_v0(eval_args(Eq, RetType, Depth, MSpace), InList, Res)).
 
 metta_hyperpose(Eq, RetType, Depth, MSpace, InList, Res) :-
     % This part of the code is currently skipped with fail.
