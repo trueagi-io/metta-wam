@@ -504,19 +504,7 @@ ccml_nth:attr_unify_hook(_Nth, _Var).
 %   @arg OutList The output list with results of applying P2.
 %
 
-metta_goal(Goal, Elem1,Elem2, call(Goal, Elem1, Elem2)).
 
-metta_concurrent_maplist(Goal, List1, List2) :-
-    thread:same_length(List1, List2),
-    choose_worker_count(List1,WorkerCount),
-    maplist(user:metta(Goal), List1, List2, Goals),
-    concurrent(WorkerCount, Goals, []).
-
-choose_worker_count(List1, WorkerCount) :-
-    length(List1, Len), !,
-    current_prolog_flag(cpu_count, CPUs),
-    ( CPUs < 2 -> Count = 8 ;  Count is CPUs * 4 ),
-    min(Count, Len, WorkerCount).
 
 
 metta_hyperpose_v0(P2, InList, OutList) :- !,
@@ -573,6 +561,25 @@ separate_goals_and_outputs([thread(Goal, OutputVar) | GoalsWithOutputs],
 %   @arg InList The input list of elements.
 %   @arg OutList The output list with results of applying P2.
 %
+
+
+
+choose_worker_count(List1, WorkerCount) :-
+    length(List1, Len), !,
+    current_prolog_flag(cpu_count, CPUs),
+    ( CPUs < 2 -> Count = 8 ;  Count is CPUs * 4 ),
+    WorkerCount is min(Count, Len).
+
+
+ml_goal_2(Goal, Elem1,Elem2, call(Goal, Elem1, Elem2)).
+
+
+metta_concurrent_maplist(Goal, List1, List2) :- List1 = [_,_|_],
+    thread:same_length(List1, List2),
+    choose_worker_count(List1,WorkerCount), !,
+    maplist(ml_goal_2(Goal), List1, List2, Goals),
+    concurrent(WorkerCount, Goals, []).
+
 metta_concurrent_maplist(P2, InList, OutList) :-
     % Check if InList has two or more elements.
     InList = [_,_|_],
@@ -586,14 +593,12 @@ metta_concurrent_maplist(P2, InList, OutList) :-
              % Cleanup the results after processing.
              cleanup_results(Tag)).
 
-metta_concurrent_maplist(P2, InList, OutList) :-
-    % Fallback to standard maplist if threading isn't used.
-    maplist(P2, InList, OutList).
+metta_concurrent_maplist(P2, InList, OutList) :- maplist(P2, InList, OutList).
 
 
 metta_concurrent_maplist(Goal, List1, List2, List3, List4) :-
     same_length_4(List1, List2, List3, List4),
-    workers(List1, WorkerCount),
+    choose_worker_count(List1, WorkerCount),
     !, maplist(ml_goal_4(Goal), List1, List2, List3, List4, Goals),
     concurrent(WorkerCount, Goals, []).
 metta_concurrent_maplist(M:Goal, List1, List2, List3, List4) :- maplist(once_in_module_4(M, Goal), List1, List2, List3, List4).
@@ -605,7 +610,7 @@ once_in_module_4(M, Goal, Arg1, Arg2, Arg3, Arg4) :- call(M:Goal, Arg1, Arg2, Ar
 
 metta_concurrent_maplist(Goal, E1, E2, E3, E4, E5) :-
     same_length_5(E1, E2, E3, E4, E5),
-    workers(E1, WorkerCount),
+    choose_worker_count(E1, WorkerCount),
     !, maplist(ml_goal_5(Goal), E1, E2, E3, E4, E5, Goals),
     concurrent(WorkerCount, Goals, []).
 metta_concurrent_maplist(M:Goal, E1, E2, E3, E4, E5) :- maplist(once_in_module_5(M, Goal), E1, E2, E3, E4, E5).
@@ -616,7 +621,7 @@ once_in_module_5(M, Goal, E1, E2, E3, E4, E5) :- call(M:Goal, E1, E2, E3, E4, E5
 
 metta_concurrent_maplist(Goal, E1, E2, E3, E4, E5, E6) :-
     same_length_6(E1, E2, E3, E4, E5, E6),
-    workers(E1, WorkerCount),
+    choose_worker_count(E1, WorkerCount),
     !, maplist(ml_goal_6(Goal), E1, E2, E3, E4, E5, E6, Goals),
     concurrent(WorkerCount, Goals, []).
 metta_concurrent_maplist(M:Goal, E1, E2, E3, E4, E5, E6) :- maplist(once_in_module_6(M, Goal), E1, E2, E3, E4, E5, E6).
