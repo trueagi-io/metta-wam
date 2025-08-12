@@ -3816,6 +3816,10 @@ pre_post_functor_va(post,mx_n).
 
 :- dynamic(m_head_impl/4).
 m_head_impl('random-int',3,post,mx).
+m_head_impl('random-float',3,post,mx).  
+m_head_impl('new-random-generator',1,post,mx). 
+m_head_impl('set-random-seed',2,post,mx). 
+m_head_impl('reset-random-generator',1,post,mx).
 
 :- dynamic(m_head_impl_va/4).
 m_head_impl_va('py-dot!',2,post,mc_n).
@@ -3831,9 +3835,8 @@ m_head_impl(Pre,Sym,Len, Type,Fn, Min, restAsList):-
    m_head_impl_va(Sym,Min,Pre,IsType), Min =< Len, !, Fn =.. [IsType,Min,Sym].
 
 
-transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):- nonvar(Sym),
-  member(Sym,['random-int','random-seed']),
-  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),
+transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-  
+  transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs),  
   debug_info(always(compiler),transpiler_peek(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs)).
 
 transpiler_peek_impl(Pre,Sym,Len,TypeL,Fn, Min, SpreadArgs):-
@@ -4288,7 +4291,7 @@ allow_clp:- false_flag.
 eval_selfless_1([F|XY],TF):- allow_clp, \+ ground(XY),!,fake_notrace(args_to_mathlib(XY,Lib)),!,eval_selfless3(Lib,[F|XY],TF).
 eval_selfless_1(['>',X,Y],TF):-!,as_tf_nowarn(X>Y,TF).
 eval_selfless_1(['<',X,Y],TF):-!,as_tf_nowarn(X<Y,TF).
-eval_selfless_1(['=>',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
+eval_selfless_1(['>=',X,Y],TF):-!,as_tf_nowarn(X>=Y,TF).
 eval_selfless_1(['<=',X,Y],TF):-!,as_tf_nowarn(X=<Y,TF).
 eval_selfless_1(['\\=',X,Y],TF):-!,as_tf(dif(X,Y),TF).
 
@@ -4316,7 +4319,7 @@ compare_selfless0(_,[F|_],_TF):- \+ atom(F),!,fail.
 compare_selfless0(clpfd,['\\=',X,Y],TF):-!,as_tf(X #\=Y,TF).
 %compare_selfless0(clpfd,['>',X,Y],TF):-!,as_tf(X#>Y,TF).
 %compare_selfless0(clpfd,['<',X,Y],TF):-!,as_tf(X#<Y,TF).
-compare_selfless0(clpfd,['=>',X,Y],TF):-!,as_tf(X#>=Y,TF).
+compare_selfless0(clpfd,['>=',X,Y],TF):-!,as_tf(X#>=Y,TF).
 compare_selfless0(clpfd,['<=',X,Y],TF):-!,as_tf(X#=<Y,TF).
 %compare_selfless0(clpfd,[F|Stuff],TF):- atom_concat('#',F,SharpF),P=..[SharpF|Stuff],!,as_tf(P,TF).
 compare_selfless0(Lib,_,_):- Lib == clpfd,!,fail.
@@ -4324,7 +4327,7 @@ compare_selfless0(Lib,['\\=',X,Y],TF):-!,as_tf(Lib:{X \=Y}, TF).
 compare_selfless0(Lib,['=',X,Y],TF):-!,as_tf(Lib:{X =Y}, TF).
 compare_selfless0(Lib,['>',X,Y],TF):-!,as_tf(Lib:{X>Y},TF).
 compare_selfless0(Lib,['<',X,Y],TF):-!,as_tf(Lib:{X<Y},TF).
-compare_selfless0(Lib,['=>',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
+compare_selfless0(Lib,['>=',X,Y],TF):-!,as_tf(Lib:{X>=Y},TF).
 compare_selfless0(Lib,['<=',X,Y],TF):-!,as_tf(Lib:{X=<Y},TF).
 compare_selfless0(Lib,[F|Stuff],TF):- P=..[F|Stuff],!,as_tf(Lib:{P},TF).
 
