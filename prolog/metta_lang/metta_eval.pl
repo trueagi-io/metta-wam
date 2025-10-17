@@ -1057,6 +1057,8 @@ known_false(V1,V2):- var(V2),!,V2\==V1.
 known_false([],Y):- Y\==[].
 known_false(Y,[]):- Y\==[].
 eval_until_eq(_Flags, Eq, XType, YType,_Dpth,_Slf,X,Y,TF):-  X==Y,!,check_returnval(Eq,XType,X),check_returnval(Eq,YType,Y),TF='True'.
+% Numeric equality should coerce between integers and floats (e.g., 0 == 0.0)
+eval_until_eq(_Flags, _Eq, _XType, _YType,_Dpth,_Slf,X,Y,TF):- number(X), number(Y),!, (X =:= Y -> TF='True' ; TF='False').
 eval_until_eq(_Flags, _Eq, _XType, _YType,_Dpth,_Slf,X,Y,TF):- known_false(X,Y),!,TF='False'.
 %eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn(X=:=Y,TF)),!.
 %eval_until_eq(_Flags,_Eq,_XType,_YType,_Dpth,_Slf,X,Y,TF):- notrace(as_tf_nowarn('#='(X,Y),TF)),!.
