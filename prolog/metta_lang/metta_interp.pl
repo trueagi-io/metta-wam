@@ -76,6 +76,9 @@ o_woc(G):- call(G).
 :- dynamic('$metta_setup':on_init_metta/1).
 :- multifile('$metta_setup':on_init_metta/1).
 
+:- multifile(thread_util:has_console/4).
+:- dynamic(thread_util:has_console/4).
+
 on_metta_setup(Goal):-
    assertz('$metta_setup':on_init_metta(Goal)).
 
